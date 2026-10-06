@@ -96,13 +96,18 @@ inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexc
 
 /// eight bytes as a little-endian word (compilers fold this into one load on
 /// little-endian targets)
-inline std::uint64_t read_eight_bytes(const char* p) noexcept
+inline std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 {
-    const auto* b = reinterpret_cast<const unsigned char*>(p); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     return static_cast<std::uint64_t>(b[0]) | (static_cast<std::uint64_t>(b[1]) << 8u)
            | (static_cast<std::uint64_t>(b[2]) << 16u) | (static_cast<std::uint64_t>(b[3]) << 24u)
            | (static_cast<std::uint64_t>(b[4]) << 32u) | (static_cast<std::uint64_t>(b[5]) << 40u)
            | (static_cast<std::uint64_t>(b[6]) << 48u) | (static_cast<std::uint64_t>(b[7]) << 56u);
+}
+
+/// eight bytes as a little-endian word
+inline std::uint64_t read_eight_bytes(const char* p) noexcept
+{
+    return read_eight_bytes(reinterpret_cast<const unsigned char*>(p)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
 }  // namespace detail

@@ -18,6 +18,8 @@
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
+#include <type_traits> // conditional, integral_constant, true_type, false_type
+#include <utility> // move
 
 #include <nlohmann/detail/bit_ops.hpp>
 #include <nlohmann/detail/input/pow5_table.hpp>
@@ -35,10 +37,13 @@
 #endif
 
 // This file contains the value-conversion helpers used by the lexer to turn an
-// already-validated number token into a value, without the locale/errno
-// overhead of std::strtoull/std::strtod where possible. They are free functions
-// so the lexer stays focused on scanning (see lexer::convert_number()) and so
-// that other parsers of JSON text can convert tokens exactly like it does.
+// already-validated number token into a value. Integers and binary32/binary64
+// floats (float, double, and long double where it is binary64) are converted
+// by the library itself, without the locale/errno overhead of
+// std::strtoull/std::strtod and correctly rounded; other long double formats
+// use std::from_chars or std::strtold. They are free functions so the lexer
+// stays focused on scanning (see lexer::convert_number()) and so that other
+// parsers of JSON text can convert tokens exactly like it does.
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -115,198 +120,133 @@ bool parse_integer_signed(const char* first, const char* last, NumberIntegerType
 }
 
 /*!
-@brief exact fast path for parsing a `double` (Clinger's algorithm)
-
-For the common case - at most 19 significant digits, a decimal exponent in
-[-22, 22], and a significand below 2^53 - the value equals significand *
-10^exp computed in IEEE-754 double arithmetic, which is exact under
-round-to-nearest because both operands are exactly representable. This is the
-same fast path used by fast_float/simdjson; the general cases are left to
-std::strtod. The parser only activates for number_float_t == double; float and
-long double keep the std::strtof/std::strtold paths (see the templated overload
-below).
-
-@param[in]  first  pointer to the first character of the number
-@param[in]  last   pointer past the last character
-@param[out] out    the parsed value on success
-@return true if the value was parsed exactly; false to fall back to strtod
+@brief parameters of the IEEE-754 binary32 and binary64 formats for the float
+       conversion (after fast_float's binary_format)
 */
-inline bool parse_float_fast(const char* first, const char* last, double& out) noexcept
+template<int Digits>
+struct ieee_binary_format;
+
+template<>
+struct ieee_binary_format<24> // binary32
 {
-#if defined(FLT_EVAL_METHOD) && FLT_EVAL_METHOD != 0
-    // Clinger's fast path is only exact when double operations are evaluated in
-    // true double precision. On platforms that keep intermediates in extended
-    // precision (e.g. the x87 FPU on 32-bit x86, where FLT_EVAL_METHOD == 2) the
-    // single significand * 10^scale step is double-rounded and can be 1 ULP off,
-    // so decline and let the caller fall back to the correctly-rounded
-    // std::from_chars / std::strtod path.
-    static_cast<void>(first);
-    static_cast<void>(last);
-    static_cast<void>(out);
-    return false;
-#else
-    static const std::array<double, 23> powers_of_ten =
+    static constexpr int mantissa_bits() noexcept
     {
-        {
-            1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
-            1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22
-        }
-    };
+        return 23;
+    }
+    static constexpr int sign_bit() noexcept
+    {
+        return 31;
+    }
+    static constexpr int minimum_exponent() noexcept
+    {
+        return -127;
+    }
+    static constexpr int infinite_power() noexcept
+    {
+        return 0xFF;
+    }
+    // w * 10^q with w < 2^64 is below half the smallest subnormal number for
+    // q < smallest_power_of_ten() and at least infinity for q > largest_power_of_ten()
+    static constexpr int smallest_power_of_ten() noexcept
+    {
+        return -64;
+    }
+    static constexpr int largest_power_of_ten() noexcept
+    {
+        return 38;
+    }
+    // w * 10^q can only be exactly between two numbers for q in this range
+    static constexpr int min_exponent_round_to_even() noexcept
+    {
+        return -17;
+    }
+    static constexpr int max_exponent_round_to_even() noexcept
+    {
+        return 10;
+    }
+    // Clinger's fast path: w and 10^|q| are exact
+    static constexpr int max_exponent_fast_path() noexcept
+    {
+        return 10;
+    }
+    static constexpr std::uint64_t max_mantissa_fast_path() noexcept
+    {
+        return std::uint64_t{2} << 23u;
+    }
+    // a midpoint between two numbers has at most this many significant digits
+    static constexpr std::int64_t max_digits() noexcept
+    {
+        return 114;
+    }
+};
 
-    const char* p = first;
-    bool negative = false;
-    if (p != last && (*p == '-' || *p == '+'))
-    {
-        negative = (*p == '-');
-        ++p;
-    }
-
-    std::uint64_t significand = 0;
-    int num_digits = 0;
-    int fractional_digits = 0;
-    bool seen_dot = false;
-    bool any_digit = false;
-    for (; p != last; ++p)
-    {
-        const char c = *p;
-        if (c >= '0' && c <= '9')
-        {
-            any_digit = true;
-            if (JSON_HEDLEY_UNLIKELY(num_digits >= 19))
-            {
-                return false; // significand may not fit into uint64_t
-            }
-            significand = (significand * 10u) + static_cast<std::uint64_t>(c - '0');
-            ++num_digits;
-            fractional_digits += static_cast<int>(seen_dot);
-        }
-        else if (c == '.')
-        {
-            if (JSON_HEDLEY_UNLIKELY(seen_dot))
-            {
-                return false;
-            }
-            seen_dot = true;
-        }
-        else if (c == 'e' || c == 'E')
-        {
-            ++p;
-            break;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    if (JSON_HEDLEY_UNLIKELY(!any_digit))
-    {
-        return false;
-    }
-
-    int exponent = 0;
-    if (p != last) // an exponent part remains
-    {
-        bool exp_negative = false;
-        if (p != last && (*p == '-' || *p == '+'))
-        {
-            exp_negative = (*p == '-');
-            ++p;
-        }
-        bool any_exp_digit = false;
-        for (; p != last; ++p)
-        {
-            if (JSON_HEDLEY_UNLIKELY(*p < '0' || *p > '9'))
-            {
-                return false;
-            }
-            exponent = (exponent * 10) + (*p - '0');
-            any_exp_digit = true;
-            if (JSON_HEDLEY_UNLIKELY(exponent > 9999))
-            {
-                return false;
-            }
-        }
-        if (JSON_HEDLEY_UNLIKELY(!any_exp_digit))
-        {
-            return false;
-        }
-        if (exp_negative)
-        {
-            exponent = -exponent;
-        }
-    }
-
-    const int scale = exponent - fractional_digits;
-    if (JSON_HEDLEY_UNLIKELY(significand >= (static_cast<std::uint64_t>(1) << 53)))
-    {
-        return false; // significand not exactly representable as double
-    }
-
-    auto result = static_cast<double>(significand);
-    if (scale >= 0)
-    {
-        if (JSON_HEDLEY_UNLIKELY(scale > 22))
-        {
-            return false;
-        }
-        result *= powers_of_ten[static_cast<std::size_t>(scale)];
-    }
-    else
-    {
-        if (JSON_HEDLEY_UNLIKELY(-scale > 22))
-        {
-            return false;
-        }
-        result /= powers_of_ten[static_cast<std::size_t>(-scale)];
-    }
-    out = negative ? -result : result;
-    return true;
-#endif
-}
-
-/// fast float path is only exact for `double`; decline for float/long double
-template<typename FloatType>
-bool parse_float_fast(const char* /*first*/, const char* /*last*/, FloatType& /*out*/) noexcept
+template<>
+struct ieee_binary_format<53> // binary64
 {
-    return false;
-}
+    static constexpr int mantissa_bits() noexcept
+    {
+        return 52;
+    }
+    static constexpr int sign_bit() noexcept
+    {
+        return 63;
+    }
+    static constexpr int minimum_exponent() noexcept
+    {
+        return -1023;
+    }
+    static constexpr int infinite_power() noexcept
+    {
+        return 0x7FF;
+    }
+    static constexpr int smallest_power_of_ten() noexcept
+    {
+        return -342;
+    }
+    static constexpr int largest_power_of_ten() noexcept
+    {
+        return 308;
+    }
+    static constexpr int min_exponent_round_to_even() noexcept
+    {
+        return -4;
+    }
+    static constexpr int max_exponent_round_to_even() noexcept
+    {
+        return 23;
+    }
+    static constexpr int max_exponent_fast_path() noexcept
+    {
+        return 22;
+    }
+    static constexpr std::uint64_t max_mantissa_fast_path() noexcept
+    {
+        return std::uint64_t{2} << 52u;
+    }
+    static constexpr std::int64_t max_digits() noexcept
+    {
+        return 769;
+    }
+};
 
 /*!
-@brief parse a float with std::from_chars (Eisel-Lemire) when available
+@brief whether @a FloatType is IEEE-754 binary32 or binary64
 
-std::from_chars is locale-independent, correctly rounded, and - via the
-Eisel-Lemire algorithm in modern standard libraries - much faster than strtod
-over the whole value range (not just the Clinger subset). It is used only when
-__cpp_lib_to_chars indicates full floating-point support and only when it
-consumes the entire token ([first, last)). An under-/overflow (result_out_of_range) also declines, so
-the caller's strtod fallback supplies the well-defined ±inf/0 result the parser
-expects (side-stepping the P4168 divergence between implementations).
-
-@return true if the value was parsed exactly and fully; false to fall back
+These formats (float, double, and long double where it is binary64, e.g.
+with MSVC or on Apple arm64) are converted by parse_float_native(). The
+predicate is the one the serializer uses to choose Grisu2.
 */
 template<typename FloatType>
-bool parse_float_from_chars(const char* first, const char* last, FloatType& out) noexcept
+struct has_native_float_format
 {
-    // JSON_HAS_CPP_17 must gate the use as well as the <charconv> include above:
-    // some standard libraries (e.g. libstdc++ 15) define __cpp_lib_to_chars even
-    // in C++14 mode, where <charconv> is not included.
-#if defined(JSON_HAS_CPP_17) && defined(__cpp_lib_to_chars)
-    const auto result = std::from_chars(first, last, out);
-    return result.ec == std::errc() && result.ptr == last;
-#else
-    static_cast<void>(first);
-    static_cast<void>(last);
-    static_cast<void>(out);
-    return false;
-#endif
-}
+    static constexpr bool value =
+        (std::numeric_limits<FloatType>::is_iec559 && std::numeric_limits<FloatType>::digits == 24 && std::numeric_limits<FloatType>::max_exponent == 128) ||
+        (std::numeric_limits<FloatType>::is_iec559 && std::numeric_limits<FloatType>::digits == 53 && std::numeric_limits<FloatType>::max_exponent == 1024);
+};
 
-/// whether the eight bytes of @a v (see read_eight_bytes()) are ASCII digits
-/// (after fast_float's is_made_of_eight_digits_fast)
-inline bool is_eight_digits(std::uint64_t v) noexcept
-{
-    return ((v & 0xF0F0F0F0F0F0F0F0u) | (((v + 0x0606060606060606u) & 0xF0F0F0F0F0F0F0F0u) >> 4u)) == 0x3333333333333333u;
-}
+/// the C++ type (float or double) that holds a binary32 or binary64 @a FloatType
+template<typename FloatType>
+using native_float_t = typename std::conditional<std::numeric_limits<FloatType>::digits == 24, float, double>::type;
 
 /// the value of the eight ASCII digits in @a v (see read_eight_bytes()), three
 /// multiplications instead of eight (after simdjson and fast_float)
@@ -317,31 +257,157 @@ inline std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
     return static_cast<std::uint32_t>(((v & 0x0000FFFF0000FFFFu) * 42949672960001u) >> 32u);
 }
 
+/// whether [first, last) contains a digit other than '0'
+inline bool has_nonzero_digit(const char* first, const char* last) noexcept
+{
+    for (; first != last; ++first)
+    {
+        if (*first != '0')
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+/// the value of the validated exponent digits [+-]?[0-9]+ in [first, last),
+/// saturated far beyond every range
+inline std::int64_t parse_float_exponent(const char* first, const char* last) noexcept
+{
+    const bool negative = *first == '-';
+    first += (*first == '-' || *first == '+') ? 1 : 0;
+    constexpr std::int64_t saturation = 100000000000000000; // 10^17
+    std::int64_t value = 0;
+    for (; first != last; ++first)
+    {
+        if (value < saturation)
+        {
+            value = (value * 10) + (*first - '0');
+        }
+    }
+    return negative ? -value : value;
+}
+
+/// a float token as w * 10^exponent, see parse_float_significand()
+struct float_significand
+{
+    std::uint64_t w = 0;         ///< the first (at most 19) significant digits
+    std::int64_t exponent = 0;   ///< the decimal exponent of the last digit in w
+    bool negative = false;       ///< whether the token starts with '-'
+    bool truncated = false;      ///< whether nonzero digits follow the ones in w
+};
+
 /*!
-@brief the double nearest to w * 10^q (Eisel-Lemire)
+@brief split a validated number token into sign, significand, and exponent
+
+The lexer has validated the token against the JSON grammar and knows where its
+parts are, so this needs no character classification: the integer part ends at
+@a decimal_point_position (or @a mantissa_end), the fraction at @a mantissa_end,
+and an exponent follows. At most 19 significant digits are kept; the value then
+lies in [w, w + 1) * 10^exponent, and is exactly w * 10^exponent unless
+truncated is set.
+
+@param[in] first                   pointer to the first character of the token
+@param[in] last                    pointer past the last character
+@param[in] decimal_point_position  index of the '.' in the token, or
+                                   std::string::npos if there is none
+@param[in] mantissa_end            index of the 'e'/'E', or the token length
+*/
+inline float_significand parse_float_significand(const char* first, const char* last,
+        std::size_t decimal_point_position, std::size_t mantissa_end) noexcept
+{
+    float_significand s;
+    const char* p = first;
+    s.negative = *p == '-';
+    p += s.negative ? 1 : 0;
+    const bool has_dot = decimal_point_position != std::string::npos;
+    const char* const mantissa_last = first + mantissa_end;
+    const char* const integer_last = has_dot ? first + decimal_point_position : mantissa_last;
+
+    std::uint64_t w = 0;
+    int remaining = 19; // digits that still fit into w
+    if (*p != '0') // the integer part is "0" or [1-9][0-9]*
+    {
+        while (remaining >= 8 && integer_last - p >= 8)
+        {
+            w = (w * 100000000u) + parse_eight_digits(read_eight_bytes(p));
+            p += 8;
+            remaining -= 8;
+        }
+        for (; remaining > 0 && p != integer_last; ++p, --remaining)
+        {
+            w = (w * 10u) + static_cast<std::uint64_t>(*p - '0');
+        }
+        s.exponent = integer_last - p;
+        s.truncated = has_nonzero_digit(p, integer_last);
+    }
+
+    if (has_dot)
+    {
+        p = integer_last + 1;
+        if (w == 0)
+        {
+            // zeros after the decimal point of "0." are not significant
+            const char* const zeros = p;
+            while (p != mantissa_last && *p == '0')
+            {
+                ++p;
+            }
+            s.exponent -= p - zeros;
+        }
+        const char* const digits = p;
+        while (remaining >= 8 && mantissa_last - p >= 8)
+        {
+            w = (w * 100000000u) + parse_eight_digits(read_eight_bytes(p));
+            p += 8;
+            remaining -= 8;
+        }
+        for (; remaining > 0 && p != mantissa_last; ++p, --remaining)
+        {
+            w = (w * 10u) + static_cast<std::uint64_t>(*p - '0');
+        }
+        s.exponent -= p - digits;
+        s.truncated = s.truncated || has_nonzero_digit(p, mantissa_last);
+    }
+
+    if (mantissa_last != last)
+    {
+        s.exponent += parse_float_exponent(mantissa_last + 1, last);
+    }
+    s.w = w;
+    return s;
+}
+
+/*!
+@brief the bits of the float nearest to w * 10^q (Eisel-Lemire)
 
 The algorithm of Daniel Lemire, "Number Parsing at a Gigabyte per Second"
 (Software: Practice and Experience, 2021), after fast_float's compute_float
 (used under the MIT license). With a 128-bit approximation of 5^q, the product
-is always sufficient to round correctly for w with at most 19 digits (Noble
-Mushtak and Daniel Lemire, "Fast number parsing without fallback", Software:
-Practice and Experience, 2023). Only integer arithmetic is used, so the result
-does not depend on the floating-point environment.
+is always sufficient to round correctly for w < 2^64 (Noble Mushtak and Daniel
+Lemire, "Fast number parsing without fallback", Software: Practice and
+Experience, 2023). Only integer arithmetic is used, so the result does not
+depend on the floating-point environment.
 
+It is always inlined, like decimal_to_float(), so that hot loops of callers
+keep the whole conversion inline.
+
+@tparam Format  ieee_binary_format<24> (binary32) or ieee_binary_format<53> (binary64)
 @param[in] q  decimal exponent
-@param[in] w  significand, w != 0
+@param[in] w  significand
 @return the IEEE-754 bits of the positive result (0 for underflow, infinity
         for overflow)
 */
-inline std::uint64_t eisel_lemire(std::int64_t q, std::uint64_t w) noexcept
+template<typename Format>
+JSON_HEDLEY_ALWAYS_INLINE std::uint64_t eisel_lemire(std::int64_t q, std::uint64_t w) noexcept
 {
-    constexpr int mantissa_bits = 52;
-    constexpr std::uint64_t infinity = std::uint64_t{0x7FF} << mantissa_bits;
-    if (q < pow5_128_smallest_power)
+    constexpr int mantissa_bits = Format::mantissa_bits();
+    constexpr std::uint64_t infinity = static_cast<std::uint64_t>(Format::infinite_power()) << mantissa_bits;
+    if (w == 0 || q < Format::smallest_power_of_ten())
     {
         return 0;
     }
-    if (q > pow5_128_largest_power)
+    if (q > Format::largest_power_of_ten())
     {
         return infinity;
     }
@@ -365,8 +431,8 @@ inline std::uint64_t eisel_lemire(std::int64_t q, std::uint64_t w) noexcept
     const auto upperbit = static_cast<int>(product.high >> 63u);
     const int shift = upperbit + 64 - mantissa_bits - 3;
     std::uint64_t mantissa = product.high >> static_cast<unsigned>(shift);
-    // floor(log2(10^q)) + 63 + 1023, with log2(10) ~ 217706 / 2^16
-    std::int64_t power2 = (((152170 + 65536) * q) >> 16) + 63 + upperbit - lz + 1023;
+    // floor(log2(10^q)) + 63 + bias, with log2(10) ~ 217706 / 2^16
+    std::int64_t power2 = (((152170 + 65536) * q) >> 16) + 63 + upperbit - lz - Format::minimum_exponent();
 
     if (power2 <= 0) // subnormal
     {
@@ -375,17 +441,18 @@ inline std::uint64_t eisel_lemire(std::int64_t q, std::uint64_t w) noexcept
             return 0;
         }
         mantissa >>= static_cast<unsigned>(-power2 + 1);
+        // no tie is possible here: that needs a small |q|
         mantissa += (mantissa & 1u);
         mantissa >>= 1u;
         // rounding up may produce the smallest normal number
         power2 = (mantissa < (std::uint64_t{1} << mantissa_bits)) ? 0 : 1;
-        return mantissa | (static_cast<std::uint64_t>(power2) << mantissa_bits);
+        return (mantissa & ((std::uint64_t{1} << mantissa_bits) - 1)) | (static_cast<std::uint64_t>(power2) << mantissa_bits);
     }
 
-    // a value exactly between two doubles rounds to even; this can only
+    // a value exactly between two floats rounds to even; this can only
     // happen for small |q|, where 5^q is exact
-    if (product.low <= 1 && q >= -4 && q <= 23 && (mantissa & 3u) == 1
-            && (mantissa << static_cast<unsigned>(shift)) == product.high)
+    if (product.low <= 1 && q >= Format::min_exponent_round_to_even() && q <= Format::max_exponent_round_to_even()
+            && (mantissa & 3u) == 1 && (mantissa << static_cast<unsigned>(shift)) == product.high)
     {
         mantissa &= ~std::uint64_t{1};
     }
@@ -397,198 +464,420 @@ inline std::uint64_t eisel_lemire(std::int64_t q, std::uint64_t w) noexcept
         ++power2;
     }
     mantissa &= ~(std::uint64_t{1} << mantissa_bits);
-    if (power2 >= 0x7FF)
+    if (power2 >= Format::infinite_power())
     {
         return infinity;
     }
     return mantissa | (static_cast<std::uint64_t>(power2) << mantissa_bits);
 }
 
-/*!
-@brief parse a validated float token with the Eisel-Lemire algorithm
-
-The significand is accumulated eight digits at a time where possible. A token
-with more than 19 significant digits is truncated to w; the value then lies
-in [w, w + 1) * 10^q, and it is only returned if both ends round to the same
-double, which covers all but a few such tokens.
-
-@param[in]  first  pointer to the first character of the token
-@param[in]  last   pointer past the last character
-@param[out] out    the correctly rounded value on success (±infinity if it
-                   overflows, like strtod)
-@return true on success; false if strtod must decide
-*/
-inline bool parse_float_eisel_lemire(const char* first, const char* last, double& out) noexcept
+/// an unsigned integer of up to 4096 bits for digit_comparison() (32-bit limbs,
+/// so only 32x32->64-bit multiplications are needed)
+class float_bigint
 {
-    const char* p = first;
-    const bool negative = (p != last && *p == '-');
-    if (negative)
+  public:
+    explicit float_bigint(std::uint64_t value) noexcept
     {
-        ++p;
+        for (; value != 0; value >>= 32u)
+        {
+            limbs[count++] = static_cast<std::uint32_t>(value);
+        }
     }
 
-    std::uint64_t w = 0;
-    unsigned int digits = 0; // significant digits in w
-    std::int64_t exponent = 0;
-    bool truncated = false;
-    bool in_fraction = false;
-    for (;;)
+    /// *this = *this * factor + summand
+    void multiply_add(std::uint32_t factor, std::uint32_t summand) noexcept
     {
-        // eight digits at a time, as long as they fit into w
-        while (w != 0 && digits <= 19u - 8u && last - p >= 8)
+        std::uint64_t carry = summand;
+        for (std::size_t i = 0; i < count; ++i)
         {
-            const std::uint64_t v = read_eight_bytes(p);
-            if (!is_eight_digits(v))
-            {
-                break;
-            }
-            w = (w * 100000000u) + parse_eight_digits(v);
-            digits += 8u;
-            exponent -= in_fraction ? 8 : 0;
-            p += 8;
+            const std::uint64_t product = (static_cast<std::uint64_t>(limbs[i]) * factor) + carry;
+            limbs[i] = static_cast<std::uint32_t>(product);
+            carry = product >> 32u;
         }
-        if (p == last)
+        if (carry != 0)
         {
-            break;
+            JSON_ASSERT(count < limbs.size());
+            limbs[count++] = static_cast<std::uint32_t>(carry);
         }
-        const char c = *p;
-        if (c >= '0' && c <= '9')
+    }
+
+    /// *this = *this * 5^n
+    void multiply_power_of_five(std::int64_t n) noexcept
+    {
+        static const std::array<std::uint32_t, 14> powers =
         {
-            if (w == 0 && c == '0')
-            {
-                // leading zeros are not significant, but scale a fraction
-                exponent -= in_fraction ? 1 : 0;
-            }
-            else if (digits < 19u)
-            {
-                w = (w * 10u) + static_cast<std::uint64_t>(c - '0');
-                ++digits;
-                exponent -= in_fraction ? 1 : 0;
-            }
-            else
-            {
-                // dropped: the value lies between w and w + 1 (in units of
-                // the last kept digit) unless all dropped digits are zero
-                truncated = truncated || c != '0';
-                exponent += in_fraction ? 0 : 1;
-            }
-            ++p;
+            {1u, 5u, 25u, 125u, 625u, 3125u, 15625u, 78125u, 390625u, 1953125u, 9765625u, 48828125u, 244140625u, 1220703125u}
+        };
+        for (; n >= 13; n -= 13)
+        {
+            multiply_add(powers[13], 0);
         }
-        else if (c == '.')
+        multiply_add(powers[static_cast<std::size_t>(n)], 0);
+    }
+
+    /// *this = *this * 2^n
+    void shift_left(std::int64_t n) noexcept
+    {
+        if (count == 0)
         {
-            in_fraction = true;
-            ++p;
+            return;
+        }
+        const auto limb_shift = static_cast<std::size_t>(n / 32);
+        const auto bit_shift = static_cast<unsigned>(n % 32);
+        JSON_ASSERT(count + limb_shift + 1 <= limbs.size());
+        if (bit_shift != 0)
+        {
+            std::uint32_t carry = 0;
+            for (std::size_t i = 0; i < count; ++i)
+            {
+                const std::uint32_t limb = limbs[i];
+                limbs[i] = (limb << bit_shift) | carry;
+                carry = limb >> (32u - bit_shift);
+            }
+            if (carry != 0)
+            {
+                limbs[count++] = carry;
+            }
+        }
+        if (limb_shift != 0)
+        {
+            for (std::size_t i = count; i-- > 0;)
+            {
+                limbs[i + limb_shift] = limbs[i];
+            }
+            for (std::size_t i = 0; i < limb_shift; ++i)
+            {
+                limbs[i] = 0;
+            }
+            count += limb_shift;
+        }
+    }
+
+    /// -1, 0, or 1 if *this is less than, equal to, or greater than @a other
+    int compare(const float_bigint& other) const noexcept
+    {
+        if (count != other.count)
+        {
+            return count < other.count ? -1 : 1;
+        }
+        for (std::size_t i = count; i-- > 0;)
+        {
+            if (limbs[i] != other.limbs[i])
+            {
+                return limbs[i] < other.limbs[i] ? -1 : 1;
+            }
+        }
+        return 0;
+    }
+
+  private:
+    std::array<std::uint32_t, 128> limbs{{}};
+    std::size_t count = 0;
+};
+
+/*!
+@brief round a token exactly when eisel_lemire() cannot decide (slow path)
+
+The value v of the token lies strictly between two adjacent floats, whose
+lower one has the bits @a lower, and the result depends on whether v is below,
+at, or above the midpoint m between them. Both are compared exactly as big
+integers: v = D * 10^s with the significant digits D (at most
+Format::max_digits() of them, more than any midpoint has; further nonzero
+digits only put v above m) and m = (2 * mantissa + 1) * 2^(e - 1). This is the
+digit comparison of fast_float (Daniel Lemire and contributors, used under the
+MIT license), simplified by starting from the two candidates.
+
+@param[in] first  pointer to the first character of the token
+@param[in] last   pointer past the last character
+@param[in] lower  the bits of the float below v
+@return the bits of the correctly rounded result
+*/
+template<typename Format>
+std::uint64_t digit_comparison(const char* first, const char* last, std::uint64_t lower) noexcept
+{
+    const char* p = first + ((*first == '-') ? 1 : 0);
+
+    // D, in chunks of up to 9 digits, and s
+    float_bigint digits(0);
+    std::int64_t count = 0;
+    std::int64_t point = 0; // the value is 0.D... * 10^point
+    bool truncated = false;
+    std::uint32_t chunk = 0;
+    int chunk_digits = 0;
+    static const std::array<std::uint32_t, 10> powers_of_ten = {{1u, 10u, 100u, 1000u, 10000u, 100000u, 1000000u, 10000000u, 100000000u, 1000000000u}};
+    const auto append = [&](char c) noexcept
+    {
+        if (count < Format::max_digits())
+        {
+            chunk = (chunk * 10u) + static_cast<std::uint32_t>(c - '0');
+            ++count;
+            if (++chunk_digits == 9)
+            {
+                digits.multiply_add(powers_of_ten[9], chunk);
+                chunk = 0;
+                chunk_digits = 0;
+            }
         }
         else
         {
-            break; // 'e' or 'E'
+            truncated = truncated || c != '0';
+        }
+    };
+    bool significant = false;
+    for (; p != last && *p >= '0' && *p <= '9'; ++p)
+    {
+        significant = significant || *p != '0';
+        if (significant)
+        {
+            append(*p);
+            ++point;
         }
     }
-
-    if (p != last)
+    if (p != last && *p == '.')
     {
-        ++p; // 'e' or 'E'
-        bool exp_negative = false;
-        if (p != last && (*p == '-' || *p == '+'))
+        for (++p; p != last && *p >= '0' && *p <= '9'; ++p)
         {
-            exp_negative = (*p == '-');
-            ++p;
-        }
-        std::int64_t exp_value = 0;
-        for (; p != last; ++p)
-        {
-            // saturate: any exponent beyond this under- or overflows anyway
-            if (exp_value < 100000)
+            significant = significant || *p != '0';
+            if (significant)
             {
-                exp_value = (exp_value * 10) + (*p - '0');
+                append(*p);
+            }
+            else
+            {
+                --point;
             }
         }
-        exponent += exp_negative ? -exp_value : exp_value;
     }
-
-    std::uint64_t bits = 0;
-    if (w != 0)
+    if (chunk_digits != 0)
     {
-        bits = eisel_lemire(exponent, w);
-        if (truncated && (w + 1 == 0 || eisel_lemire(exponent, w + 1) != bits))
-        {
-            return false;
-        }
+        digits.multiply_add(powers_of_ten[static_cast<std::size_t>(chunk_digits)], chunk);
     }
-    bits |= negative ? (std::uint64_t{1} << 63u) : 0u;
-    static_assert(sizeof(double) == sizeof(std::uint64_t), "double must have 64 bits");
-    std::memcpy(&out, &bits, sizeof(out));
-    return true;
+    if (p != last)
+    {
+        point += parse_float_exponent(p + 1, last);
+    }
+    const std::int64_t s = point - count; // v = D * 10^s
+
+    // the midpoint above the lower candidate
+    constexpr int mantissa_bits = Format::mantissa_bits();
+    const std::uint64_t exponent_field = lower >> mantissa_bits;
+    std::uint64_t mantissa = lower & ((std::uint64_t{1} << mantissa_bits) - 1);
+    std::int64_t e = 1 + Format::minimum_exponent() - mantissa_bits; // of the smallest subnormal number
+    if (exponent_field != 0)
+    {
+        mantissa |= std::uint64_t{1} << mantissa_bits;
+        e += static_cast<std::int64_t>(exponent_field) - 1;
+    }
+    float_bigint midpoint((2 * mantissa) + 1);
+    const std::int64_t midpoint_exponent = e - 1; // m = midpoint * 2^midpoint_exponent
+
+    // compare D * 5^s * 2^s with midpoint * 2^midpoint_exponent
+    if (s >= 0)
+    {
+        digits.multiply_power_of_five(s);
+    }
+    else
+    {
+        midpoint.multiply_power_of_five(-s);
+    }
+    const std::int64_t shift = s - midpoint_exponent;
+    if (shift >= 0)
+    {
+        digits.shift_left(shift);
+    }
+    else
+    {
+        midpoint.shift_left(-shift);
+    }
+    const int order = digits.compare(midpoint);
+    const bool round_up = order > 0 || (order == 0 && (truncated || (mantissa & 1u) != 0));
+    return lower + (round_up ? 1u : 0u);
 }
 
-/// Eisel-Lemire is only implemented for `double`
-template<typename FloatType>
-bool parse_float_eisel_lemire(const char* /*first*/, const char* /*last*/, FloatType& /*out*/) noexcept
+/// the double with the IEEE-754 bits @a bits
+inline void float_from_bits(std::uint64_t bits, double& value) noexcept
 {
-    return false;
+    static_assert(sizeof(double) == sizeof(std::uint64_t), "double must have 64 bits");
+    std::memcpy(&value, &bits, sizeof(value));
+}
+
+/// the float with the IEEE-754 bits @a bits (the lower 32)
+inline void float_from_bits(std::uint64_t bits, float& value) noexcept
+{
+    static_assert(sizeof(float) == sizeof(std::uint32_t), "float must have 32 bits");
+    const auto bits32 = static_cast<std::uint32_t>(bits);
+    std::memcpy(&value, &bits32, sizeof(value));
+}
+
+/// the powers of ten that are exact in binary64 (up to 10^22)
+inline double exact_power_of_ten(std::int64_t n, double /*tag*/) noexcept
+{
+    static const std::array<double, 23> powers =
+    {
+        {
+            1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
+            1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22
+        }
+    };
+    return powers[static_cast<std::size_t>(n)];
+}
+
+/// the powers of ten that are exact in binary32 (up to 10^10)
+inline float exact_power_of_ten(std::int64_t n, float /*tag*/) noexcept
+{
+    static const std::array<float, 11> powers =
+    {
+        {1e0f, 1e1f, 1e2f, 1e3f, 1e4f, 1e5f, 1e6f, 1e7f, 1e8f, 1e9f, 1e10f}
+    };
+    return powers[static_cast<std::size_t>(n)];
 }
 
 /*!
-@brief check whether Clinger's fast path can still succeed for a float token
+@brief the binary32/binary64 value of a significand that was not truncated
 
-parse_float_fast() needs a significand below 2^53. A mantissa with 17 or
-more significant digits is at least 10^16 and therefore always exceeds it,
-so calling the fast path would walk the token one extra time only to
-decline before strtod has to run anyway.
+The result is (-1)^negative * w * 10^exponent, correctly rounded (ties to
+even): with Clinger's fast path where w and 10^|exponent| are exact, so that a
+single floating-point operation rounds (only where intermediate results are not
+kept in extended precision, see FLT_EVAL_METHOD), and with eisel_lemire()
+otherwise. A value too large for the type becomes ±infinity, a value too small
+±0.
 
-Significant digits are the mantissa's digits from the first nonzero one on;
-the sign, the decimal point, leading zeros, and the exponent do not count.
-The answer is derived from indices - the digits are not scanned again - so
-this stays off the hot path of the number scanners.
+This is the core of the conversion that other parsers of JSON text share: they
+can split a token themselves and still get the lexer's result. It is always
+inlined, so that their hot loops keep the whole conversion inline.
 
-@param[in] token                   the validated number token ('.' as decimal point)
-@param[in] decimal_point_position  index of the '.' in @a token, or
-                                   std::string::npos if there is none
-@param[in] mantissa_end            offset just past the last mantissa byte
-@return false if parse_float_fast() is guaranteed to decline
+@param[in] s  the significand, with s.truncated == false
 */
-inline bool mantissa_fits_clinger(const char* token, std::size_t decimal_point_position, std::size_t mantissa_end) noexcept
+template<typename FloatType>
+JSON_HEDLEY_ALWAYS_INLINE FloatType decimal_to_float(const float_significand& s) noexcept
 {
-    // 10^16 already exceeds 2^53, so 17 digits can never fit
-    constexpr std::size_t limit = 17;
+    using result_type = native_float_t<FloatType>;
+    using format = ieee_binary_format<std::numeric_limits<FloatType>::digits>;
+    JSON_ASSERT(!s.truncated);
 
-    const std::size_t neg = (token[0] == '-') ? 1u : 0u;
-    const std::size_t has_dot = (decimal_point_position != std::string::npos) ? 1u : 0u;
-    // the JSON grammar restricts the integer part to "0" or [1-9][0-9]*, so
-    // a leading zero can only be a lone "0", which is not significant
-    const std::size_t lead_zero = (token[neg] == '0') ? 1u : 0u;
-    JSON_ASSERT(mantissa_end >= neg + has_dot + lead_zero);
-    std::size_t digits = mantissa_end - neg - has_dot - lead_zero;
-
-    if (JSON_HEDLEY_LIKELY(digits < limit))
+#if !defined(FLT_EVAL_METHOD) || FLT_EVAL_METHOD == 0
+    if (s.exponent >= -format::max_exponent_fast_path() && s.exponent <= format::max_exponent_fast_path()
+            && s.w <= format::max_mantissa_fast_path())
     {
-        return true;
-    }
-
-    // Only a number below 1 can carry further insignificant zeros, and only
-    // while the count stays at the limit does removing them change the
-    // answer - so this loop is skipped for all but a few tokens. The
-    // fraction is located through decimal_point_position rather than by
-    // searching '.'.
-    if (lead_zero != 0)
-    {
-        JSON_ASSERT(has_dot != 0); // an integer "0" cannot reach the limit
-        for (std::size_t i = decimal_point_position + 1;
-                digits >= limit && i < mantissa_end && token[i] == '0'; ++i)
+        auto value = static_cast<result_type>(s.w);
+        if (s.exponent < 0)
         {
-            --digits;
+            value /= exact_power_of_ten(-s.exponent, result_type{});
         }
+        else
+        {
+            value *= exact_power_of_ten(s.exponent, result_type{});
+        }
+        const FloatType result = s.negative ? -value : value;
+        return result;
+    }
+#endif
+
+    result_type value{};
+    float_from_bits(eisel_lemire<format>(s.exponent, s.w) | (s.negative ? (std::uint64_t{1} << format::sign_bit()) : 0u), value);
+    const FloatType result = value;
+    return result;
+}
+
+/*!
+@brief convert a validated number token to the nearest binary32/binary64 value
+
+The conversion is correctly rounded (ties to even) and independent of the
+locale and of the C and C++ libraries:
+1. parse_float_significand() splits the token into w * 10^q.
+2. If no digits were dropped, decimal_to_float() rounds w * 10^q (Clinger's
+   fast path or Eisel-Lemire).
+3. Otherwise, the value lies in [w, w + 1) * 10^q: if eisel_lemire() rounds
+   both ends to the same value, so does the token (in all but rare cases).
+4. Otherwise, digit_comparison() compares the token exactly with the midpoint
+   between the two candidates.
+A value too large for the type becomes ±infinity (the parser reports
+out_of_range.406), a value too small ±0.
+
+@param[in] first                   pointer to the first character of the token
+@param[in] last                    pointer past the last character
+@param[in] decimal_point_position  index of the '.' in the token, or
+                                   std::string::npos if there is none
+@param[in] mantissa_end            index of the 'e'/'E', or the token length
+*/
+template<typename FloatType>
+FloatType parse_float_native(const char* first, const char* last,
+                             std::size_t decimal_point_position, std::size_t mantissa_end) noexcept
+{
+    using result_type = native_float_t<FloatType>;
+    using format = ieee_binary_format<std::numeric_limits<FloatType>::digits>;
+    static_assert(std::numeric_limits<result_type>::digits == std::numeric_limits<FloatType>::digits, "unexpected float format");
+
+    const float_significand s = parse_float_significand(first, last, decimal_point_position, mantissa_end);
+    if (JSON_HEDLEY_LIKELY(!s.truncated))
+    {
+        return decimal_to_float<FloatType>(s);
     }
 
-    return digits < limit;
+    std::uint64_t bits = eisel_lemire<format>(s.exponent, s.w);
+    if (JSON_HEDLEY_UNLIKELY(bits != eisel_lemire<format>(s.exponent, s.w + 1)))
+    {
+        bits = digit_comparison<format>(first, last, bits);
+    }
+    result_type value{};
+    float_from_bits(bits | (s.negative ? (std::uint64_t{1} << format::sign_bit()) : 0u), value);
+    const FloatType result = value;
+    return result;
+}
+
+/*!
+@brief parse a float with std::from_chars when available
+
+Only used for the formats parse_float_native() does not convert (long double
+formats other than binary64). std::from_chars is locale-independent and
+correctly rounded. It is used only when __cpp_lib_to_chars indicates full
+floating-point support and only when it consumes the entire token ([first,
+last)). An under-/overflow (result_out_of_range) also declines, so the
+caller's strtold fallback supplies the well-defined ±inf/0 result the parser
+expects (side-stepping the P4168 divergence between implementations).
+
+@return true if the value was parsed exactly and fully; false to fall back
+*/
+template<typename FloatType>
+bool parse_float_from_chars(const char* first, const char* last, FloatType& out) noexcept
+{
+    // JSON_HAS_CPP_17 must gate the use as well as the <charconv> include above:
+    // some standard libraries (e.g. libstdc++ 15) define __cpp_lib_to_chars even
+    // in C++14 mode, where <charconv> is not included.
+#if defined(JSON_HAS_CPP_17) && defined(__cpp_lib_to_chars)
+    const auto result = std::from_chars(first, last, out);
+    return result.ec == std::errc() && result.ptr == last;
+#else
+    static_cast<void>(first);
+    static_cast<void>(last);
+    static_cast<void>(out);
+    return false;
+#endif
+}
+
+/// binary32 and binary64: the library's own conversion, which always succeeds
+template<typename FloatType>
+bool convert_float_fast(const char* first, const char* last, std::size_t decimal_point_position,
+                        std::size_t mantissa_end, FloatType& value, std::true_type /*native*/) noexcept
+{
+    value = parse_float_native<FloatType>(first, last, decimal_point_position, mantissa_end);
+    return true;
+}
+
+/// other formats (long double on x87, binary128, double-double): std::from_chars, if available
+template<typename FloatType>
+bool convert_float_fast(const char* first, const char* last, std::size_t /*decimal_point_position*/,
+                        std::size_t /*mantissa_end*/, FloatType& value, std::false_type /*native*/) noexcept
+{
+    return parse_float_from_chars(first, last, value);
 }
 
 /*!
 @brief convert a validated float token without the C library, if possible
 
-Tries std::from_chars (when available), Clinger's exact fast path (double
-only, skipped when it cannot succeed), and the Eisel-Lemire algorithm (double
-only).
+float, double, and long double where it is binary64 are always converted, by
+parse_float_native(). Other long double formats are converted with
+std::from_chars where the standard library supports it.
 
 @param[in]  first                   pointer to the first character of the token
 @param[in]  last                    pointer past the last character
@@ -604,19 +893,8 @@ template<typename FloatType>
 bool convert_float_fast(const char* first, const char* last, std::size_t decimal_point_position,
                         std::size_t mantissa_end, FloatType& value) noexcept
 {
-    if (parse_float_from_chars(first, last, value))
-    {
-        return true;
-    }
-    // Skipping a fast path that cannot succeed is lossless and saves a full
-    // extra pass over the token's bytes, which otherwise shows up on
-    // high-precision inputs such as canada.json
-    if (mantissa_fits_clinger(first, decimal_point_position, mantissa_end)
-            && parse_float_fast(first, last, value))
-    {
-        return true;
-    }
-    return parse_float_eisel_lemire(first, last, value);
+    return convert_float_fast(first, last, decimal_point_position, mantissa_end, value,
+                              std::integral_constant<bool, has_native_float_format<FloatType>::value> {});
 }
 
 /// std::strtof, std::strtod, or std::strtold, chosen by the type of @a f
@@ -640,36 +918,45 @@ inline void strtof_by_type(long double& f, const char* str, char** endptr) noexc
     f = std::strtold(str, endptr);
 }
 
-/// return the decimal point of the current locale
-inline char get_decimal_point() noexcept
+/// return the decimal point of the current locale (it may be longer than one byte)
+inline std::string get_decimal_point()
 {
     const auto* loc = localeconv();
     JSON_ASSERT(loc != nullptr);
-    return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
+    return (loc->decimal_point == nullptr || *loc->decimal_point == '\0') ? "." : loc->decimal_point;
 }
 
 /*!
 @brief convert a validated float token with strtof/strtod/strtold
 
+Only used for what convert_float_fast() does not convert: long double formats
+other than binary64 where std::from_chars is unavailable or reports an under-
+or overflow, and floating-point types that are not IEEE-754 (see
+has_native_float_format).
+
 These functions expect the decimal point of the *current* locale, so it is
 looked up right before the conversion instead of once when the lexer is
 constructed: a locale change in between (by a parser callback, a SAX
-handler, or another thread) must not truncate the value (#5198). The
-token has been validated before, so if the conversion stops early and the
-decimal point changed in the meantime, the locale changed between the
+handler, or another thread) must not truncate the value (#5198). A
+single-byte decimal point is substituted in place and restored afterwards,
+because the token is also handed to the SAX interface. A longer one (e.g.,
+the two-byte U+066B of ar_EG.UTF-8 or fa_IR.UTF-8) is put into a copy of the
+token instead (#5660).
+
+The token has been validated before, so if the conversion stops early and
+the decimal point changed in the meantime, the locale changed between the
 lookup and the call, and the conversion is repeated with the new decimal
-point. If the decimal point did not change, a retry cannot succeed: the
-locale's decimal point is not a single character (e.g., the two-byte
-U+066B of ar_EG.UTF-8 or fa_IR.UTF-8) and cannot be substituted in place.
-The value strtod parsed up to that point is kept, as before this change.
+point. If it did not change, the value strtod parsed up to that point is
+kept.
 
 Note that changing the locale in another thread *while* strtod runs is
 undefined behavior of the C library, which this function cannot prevent.
 
-@param[in,out] token                   the token with '.' as decimal point; its
-                                       decimal point is replaced during the
-                                       conversion and restored afterwards
-                                       (data() must be NUL-terminated)
+@param[in,out] token                   the token with '.' as decimal point; a
+                                       single-byte decimal point is put in
+                                       place during the conversion and
+                                       restored afterwards (data() must be
+                                       NUL-terminated)
 @param[in]     decimal_point_position  index of the '.' in @a token, or
                                        std::string::npos if there is none
 @param[out]    value                   the converted value
@@ -678,37 +965,75 @@ template<typename StringType, typename FloatType>
 void convert_float_locale_aware(StringType& token, std::size_t decimal_point_position, FloatType& value)
 {
     const bool has_dot = decimal_point_position != std::string::npos;
-    char decimal_point = get_decimal_point();
+    std::string decimal_point = get_decimal_point();
     for (;;)
     {
-        const bool substitute = has_dot && decimal_point != '.';
-        if (substitute)
-        {
-            token[decimal_point_position] = static_cast<typename StringType::value_type>(decimal_point);
-        }
-
         char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        strtof_by_type(value, token.data(), &endptr);
-
-        if (substitute)
+        bool complete = false;
+        if (!has_dot || decimal_point.size() == 1)
         {
-            // the caller hands the token on (e.g. to the SAX interface) with '.'
-            token[decimal_point_position] = '.';
+            const bool substitute = has_dot && decimal_point[0] != '.';
+            if (substitute)
+            {
+                token[decimal_point_position] = static_cast<typename StringType::value_type>(decimal_point[0]);
+            }
+            strtof_by_type(value, token.data(), &endptr);
+            if (substitute)
+            {
+                // the caller hands the token on (e.g. to the SAX interface) with '.'
+                token[decimal_point_position] = '.';
+            }
+            complete = endptr == token.data() + token.size();
+        }
+        else
+        {
+            std::string copy(token.data(), token.size());
+            copy.replace(decimal_point_position, 1, decimal_point);
+            strtof_by_type(value, copy.c_str(), &endptr);
+            complete = endptr == copy.c_str() + copy.size();
         }
 
-        if (JSON_HEDLEY_LIKELY(endptr == token.data() + token.size()))
+        if (JSON_HEDLEY_LIKELY(complete))
         {
             return;
         }
 
         // retry only if the locale changed; otherwise, this would loop forever
-        const char current_decimal_point = get_decimal_point();
+        std::string current_decimal_point = get_decimal_point();
         if (current_decimal_point == decimal_point)
         {
             return;
         }
-        decimal_point = current_decimal_point;
+        decimal_point = std::move(current_decimal_point);
     }
+}
+
+/*!
+@brief convert a validated float token like the lexer does
+
+For parsers of JSON text other than the lexer, which converts its own token
+buffer in place. float, double, and long double where it is binary64 are
+converted without allocation and independent of the locale; only other long
+double formats that std::from_chars does not support need a copy of the token
+for convert_float_locale_aware().
+
+@param[in] first                   pointer to the first character of the token
+@param[in] last                    pointer past the last character
+@param[in] decimal_point_position  index of the '.' in the token, or
+                                   std::string::npos if there is none
+@param[in] mantissa_end            index of the 'e'/'E', or the token length
+@return the value, ±infinity if it overflows
+*/
+template<typename FloatType>
+FloatType convert_float(const char* first, const char* last, std::size_t decimal_point_position, std::size_t mantissa_end)
+{
+    FloatType value{};
+    if (!convert_float_fast(first, last, decimal_point_position, mantissa_end, value))
+    {
+        std::string token(first, last);
+        convert_float_locale_aware(token, decimal_point_position, value);
+    }
+    return value;
 }
 
 }  // namespace detail
