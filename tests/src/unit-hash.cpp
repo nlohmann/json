@@ -12,6 +12,7 @@
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
 
+#include <limits>
 #include <set>
 #include <string>
 #include <unordered_set>
@@ -147,6 +148,22 @@ TEST_CASE("hash<nlohmann::json>")
     // a std::unordered_set relies on this same consistency between == and hash
     const std::unordered_set<json> numbers {json(0), json(static_cast<unsigned>(0)), json(0.0)};
     CHECK(numbers.size() == 1);
+
+    // -0.0 compares equal to 0 and 0.0
+    CHECK(json(-0.0) == json(0));
+    CHECK(std::hash<json> {}(json(-0.0)) == std::hash<json> {}(json(0)));
+    CHECK(std::hash<json> {}(json(-0.0)) == std::hash<json> {}(json(0.0)));
+
+    // the ends of the integer ranges, which equal floats exactly
+    const auto int_min = (std::numeric_limits<json::number_integer_t>::min)();
+    const auto int_max = (std::numeric_limits<json::number_integer_t>::max)();
+    const auto two_63 = json::number_unsigned_t(1) << 63U;
+    CHECK(json(int_min) == json(-9223372036854775808.0));
+    CHECK(std::hash<json> {}(json(int_min)) == std::hash<json> {}(json(-9223372036854775808.0)));
+    CHECK(json(two_63) == json(9223372036854775808.0));
+    CHECK(std::hash<json> {}(json(two_63)) == std::hash<json> {}(json(9223372036854775808.0)));
+    CHECK(json(json::number_unsigned_t(int_max)) == json(int_max));
+    CHECK(std::hash<json> {}(json(json::number_unsigned_t(int_max))) == std::hash<json> {}(json(int_max)));
 }
 
 TEST_CASE("hash<nlohmann::ordered_json>")

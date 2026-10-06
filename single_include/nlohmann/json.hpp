@@ -7664,14 +7664,16 @@ std::size_t hash(const BasicJsonType& j, const std::size_t depth = 0)
         case BasicJsonType::value_t::number_unsigned:
         case BasicJsonType::value_t::number_float:
         {
-            // operator== converts between number_integer, number_unsigned, and
-            // number_float before comparing, so equal numbers of different
-            // internal types (0, 0U, 0.0) must hash the same. Combining a
-            // single shared type tag with the value converted to
-            // number_float_t keeps the hash consistent with operator== for
-            // every pair of numbers it considers equal.
+            // operator== compares numbers by their mathematical value across
+            // number_integer, number_unsigned, and number_float, so equal
+            // numbers of different internal types (0, 0U, 0.0) must hash the
+            // same. Two equal numbers have the same value, which converts to
+            // the same number_float_t, so all numbers share one type tag and
+            // hash that converted value. Adding zero turns -0.0 (equal to 0)
+            // into 0.0, as std::hash need not map both to the same hash.
             const auto number_type = static_cast<std::size_t>(BasicJsonType::value_t::number_float);
-            const auto h = std::hash<number_float_t> {}(j.template get<number_float_t>());
+            const auto value = j.template get<number_float_t>() + static_cast<number_float_t>(0);
+            const auto h = std::hash<number_float_t> {}(value);
             return combine(number_type, h);
         }
 

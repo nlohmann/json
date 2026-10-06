@@ -37,3 +37,5 @@ whether they are stored as `#!cpp 0`, `#!cpp 0U`, or `#!cpp 0.0`.
 
 - Added in version 1.0.0.
 - Extended for arbitrary basic_json types in version 3.10.5.
+- Numbers that compare equal hash equally since version 3.13.0; before, `#!cpp 0`, `#!cpp 0U`, and `#!cpp 0.0` had
+  different hash values.
