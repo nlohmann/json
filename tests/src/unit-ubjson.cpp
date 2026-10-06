@@ -802,6 +802,32 @@ TEST_CASE("UBJSON")
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
                     std::vector<uint8_t> const vec3 = {'H', 'i', 2, '1', '.'};
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
+                    // Reject NULs where they are read, including trailing NULs and payloads cut off after one.
+                    SECTION("NUL in high-precision number (issue #5753)")
+                    {
+                        for (const auto& vec : std::vector<std::vector<uint8_t>>
+                    {
+                        {'H', 'i', 3, '1', 0, 'x'},
+                        {'H', 'i', 2, '1', 0},
+                        {'H', 'i', 3, '1', 0}
+                    })
+                        {
+                            CAPTURE(vec)
+                            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text; last byte: 0x00", json::parse_error);
+                            CHECK(json::from_ubjson(vec, true, false).is_discarded());
+                            CHECK(json::from_ubjson(vec, false, false).is_discarded());
+                        }
+
+                        std::vector<uint8_t> const nested = {'[', 'H', 'i', 3, '1', 0, 'x', ']'};
+                        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(nested), "[json.exception.parse_error.115] parse error at byte 6: syntax error while parsing UBJSON high-precision number: invalid number text; last byte: 0x00", json::parse_error);
+                        CHECK(json::from_ubjson(nested, true, false).is_discarded());
+
+                        std::vector<uint8_t> const valid = {'H', 'i', 1, '1'};
+                        const auto j = json::from_ubjson(valid);
+                        CHECK(j.is_number_unsigned());
+                        CHECK(j == json(1));
+                    }
+
                     std::vector<uint8_t> const vec_overflow = {'H', 'i', 5, '1', 'e', '4', '0', '0'};
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec_overflow), "[json.exception.out_of_range.406] number overflow parsing '1e400'", json::out_of_range&);
                     std::vector<uint8_t> const vec4 = {'H', 2, '1', '0'};
