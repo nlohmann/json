@@ -139,8 +139,12 @@ whenever any of the other conditions above was not met.
   element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the
   view has no `basic_json` value to point at, so the exception is created without one, regardless of how
   `BasicJsonType` was built.
-- **`dump()` and comparison are not (yet) provided** by `basic_json_view`. For now,
-  [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you can do those things with.
+- **Ordering comparisons are not provided** by `basic_json_view` -- there is no `#!cpp operator<`.
+  [`operator==`](../api/basic_json_view/operator_eq.md) and [`operator!=`](../api/basic_json_view/operator_ne.md) are
+  provided, though: two views, or a view and a `BasicJsonType` value, compare equal exactly when
+  [`materialize()`](../api/basic_json_view/materialize.md) or [`parse()`](../api/basic_json/parse.md) would produce
+  equal values for them, without ever building a tree to do it. For ordering, too,
+  [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you can compare.
 
 ## Getting values out without copying
 
@@ -165,6 +169,23 @@ Two conversions never copy at all:
   [`basic_json::parse()`](../api/basic_json/parse.md)) would.
 
 Both results are only valid as long as the view -- and, for a string with no escapes, the borrowed source text -- is.
+
+## Writing a view back
+
+[`dump()`](../api/basic_json_view/dump.md) serializes a view directly from the flat index, without ever building a
+`basic_json` value. An object's members are written in document order, not sorted by key, and *every* occurrence of a
+repeated key is written, not only the last one -- the same two ways [iteration](#what-is-different) already differs
+from a [`materialize()`](../api/basic_json_view/materialize.md)d value, see above. `#!cpp materialize().dump()` gives
+a different result in both respects for a `json_view`.
+
+By default, numbers are written the way [`basic_json::dump()`](../api/basic_json/dump.md) would.
+[`number_format::source`](../api/basic_json_view/number_format.md) instead copies every number exactly as it was
+written in the source text -- a price like `#!cpp 19.90`, a long order or account ID with more digits than any number
+type holds, or a high-precision coordinate -- something `basic_json` cannot do at all, since parsing already reduces
+a number to its parsed `#!cpp double`/`#!cpp int64_t` value.
+
+[`operator<<`](../api/basic_json_view/operator_ltlt.md) writes a view to a stream the way `basic_json`'s does, using
+the stream's `width`/`fill` for indentation.
 
 ## Choosing between `json`, `ordered_json`, the SAX interface, and `json_view`
 

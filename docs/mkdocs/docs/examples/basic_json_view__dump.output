@@ -1,0 +1,14 @@
+{"id":2,"temp":87.3}
+{
+  "name": "cache",
+  "host": "db1",
+  "port": 6379,
+  "timeout": 30
+}
+
+{
+  "host": "db1",
+  "name": "cache",
+  "port": 6379,
+  "timeout": 30
+}

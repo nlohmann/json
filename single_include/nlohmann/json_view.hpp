@@ -29,6 +29,9 @@
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <map> // map
 #include <memory> // unique_ptr
+#ifndef JSON_NO_IO
+    #include <ostream> // ostream
+#endif
 #include <string> // string
 #include <tuple> // tuple_element, tuple_size
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_base_of, is_integral, is_same, remove_cv, remove_extent
@@ -1575,6 +1578,326 @@ inline bool build(document_data& d, const char* src, std::size_t size, bool comm
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+// #include <nlohmann/detail/view/compare.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <algorithm> // sort, stable_sort
+#include <cstddef> // size_t
+#include <string> // string
+#include <utility> // move, pair
+#include <vector> // vector
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+// Equality of views, and of views with basic_json values, with the semantics
+// of basic_json's operator== applied to the values parse() would produce:
+// numbers compare by value across their types, an object is compared by its
+// members with duplicate keys resolved as parse() resolves them (the last
+// value, at the position of the first occurrence), and in document order if
+// the object type keeps an order (ordered_json), by key otherwise.
+
+/// one side of a comparison: a view
+template<typename BasicJsonType, typename View>
+class view_side
+{
+  public:
+    using string_view_t = typename View::string_view_t;
+
+    explicit view_side(const View& v) noexcept
+        : m_view(v)
+    {}
+
+    value_t type() const noexcept
+    {
+        return m_view.type();
+    }
+
+    std::size_t size() const noexcept
+    {
+        return m_view.size();
+    }
+
+    string_view_t string() const
+    {
+        return m_view.get_string();
+    }
+
+    /// a number, boolean, or null as a basic_json value (no allocation)
+    BasicJsonType scalar() const
+    {
+        switch (m_view.type())
+        {
+            case value_t::number_integer:
+                return BasicJsonType(m_view.template get<typename BasicJsonType::number_integer_t>());
+            case value_t::number_unsigned:
+                return BasicJsonType(m_view.template get<typename BasicJsonType::number_unsigned_t>());
+            case value_t::number_float:
+                return BasicJsonType(m_view.template get<typename BasicJsonType::number_float_t>());
+            case value_t::boolean:
+                return BasicJsonType(m_view.template get<bool>());
+            case value_t::null:
+            case value_t::object:
+            case value_t::array:
+            case value_t::string:
+            case value_t::binary:
+            case value_t::discarded:
+            default:
+                return BasicJsonType(nullptr);
+        }
+    }
+
+    void elements(std::vector<view_side>& out) const
+    {
+        out.reserve(m_view.size());
+        for (const View e : m_view)
+        {
+            out.emplace_back(e);
+        }
+    }
+
+    /// the members as parse() keeps them: one per key, the last value at the
+    /// position of the first occurrence; in that order, or sorted by key
+    void members(std::vector<std::pair<string_view_t, view_side>>& out, bool ordered) const
+    {
+        struct member
+        {
+            string_view_t key;
+            View value;
+            std::size_t position;
+        };
+        std::vector<member> all;
+        all.reserve(m_view.size());
+        std::size_t position = 0;
+        for (auto it = m_view.begin(); it != m_view.end(); ++it)
+        {
+            all.push_back(member{it.key(), it.value(), position++});
+        }
+        std::stable_sort(all.begin(), all.end(), [](const member & a, const member & b)
+        {
+            return a.key < b.key;
+        });
+        std::vector<member> unique;
+        unique.reserve(all.size());
+        for (std::size_t i = 0; i < all.size();)
+        {
+            std::size_t last = i;
+            while (last + 1 < all.size() && all[last + 1].key == all[i].key)
+            {
+                ++last;
+            }
+            unique.push_back(member{all[i].key, all[last].value, all[i].position});
+            i = last + 1;
+        }
+        if (ordered)
+        {
+            std::sort(unique.begin(), unique.end(), [](const member & a, const member & b)
+            {
+                return a.position < b.position;
+            });
+        }
+        out.reserve(unique.size());
+        for (const member& m : unique)
+        {
+            out.emplace_back(m.key, view_side(m.value));
+        }
+    }
+
+  private:
+    View m_view;
+};
+
+/// the other side of a comparison: a basic_json value
+template<typename BasicJsonType, typename StringView>
+class json_side
+{
+  public:
+    using string_view_t = StringView;
+
+    explicit json_side(const BasicJsonType& j) noexcept
+        : m_json(&j)
+    {}
+
+    value_t type() const noexcept
+    {
+        return m_json->type();
+    }
+
+    std::size_t size() const noexcept
+    {
+        return m_json->size();
+    }
+
+    string_view_t string() const
+    {
+        const auto& s = m_json->template get_ref<const typename BasicJsonType::string_t&>();
+        return string_view_t(s.data(), s.size());
+    }
+
+    BasicJsonType scalar() const
+    {
+        return *m_json;
+    }
+
+    void elements(std::vector<json_side>& out) const
+    {
+        out.reserve(m_json->size());
+        for (const auto& e : *m_json)
+        {
+            out.emplace_back(e);
+        }
+    }
+
+    void members(std::vector<std::pair<string_view_t, json_side>>& out, bool ordered) const
+    {
+        out.reserve(m_json->size());
+        for (auto it = m_json->cbegin(); it != m_json->cend(); ++it)
+        {
+            out.emplace_back(string_view_t(it.key().data(), it.key().size()), json_side(it.value()));
+        }
+        if (!ordered)
+        {
+            std::sort(out.begin(), out.end(), [](const std::pair<string_view_t, json_side>& a, const std::pair<string_view_t, json_side>& b)
+            {
+                return a.first < b.first;
+            });
+        }
+    }
+
+  private:
+    const BasicJsonType* m_json;
+};
+
+/// whether two sides are equal; iterative, so that the nesting depth is
+/// limited by memory only
+template<typename BasicJsonType, typename A, typename B>
+bool equal(const A& a0, const B& b0)
+{
+    using string_view_t = typename A::string_view_t;
+    const bool ordered = is_ordered_map<typename BasicJsonType::object_t>::value;
+
+    struct frame
+    {
+        std::vector<A> elements_a{};
+        std::vector<B> elements_b{};
+        std::vector<std::pair<string_view_t, A>> members_a{};
+        std::vector<std::pair<string_view_t, B>> members_b{};
+        bool object = false;
+        std::size_t next = 0;
+    };
+    std::vector<frame> stack;
+    A a = a0;
+    B b = b0;
+    for (;;)
+    {
+        const value_t ta = a.type();
+        const value_t tb = b.type();
+        const bool numbers = (ta == value_t::number_integer || ta == value_t::number_unsigned || ta == value_t::number_float)
+                             && (tb == value_t::number_integer || tb == value_t::number_unsigned || tb == value_t::number_float);
+        if (ta == value_t::discarded || tb == value_t::discarded)
+        {
+            // basic_json decides (JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON)
+            if (ta != tb || !(BasicJsonType(value_t::discarded) == BasicJsonType(value_t::discarded)))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!numbers && ta != tb)
+            {
+                return false;
+            }
+            if (ta == value_t::string)
+            {
+                if (!(a.string() == b.string()))
+                {
+                    return false;
+                }
+            }
+            else if (ta == value_t::array || ta == value_t::object)
+            {
+                if (a.size() != b.size() && ta == value_t::array)
+                {
+                    return false;
+                }
+                frame f;
+                f.object = ta == value_t::object;
+                if (f.object)
+                {
+                    a.members(f.members_a, ordered);
+                    b.members(f.members_b, ordered);
+                    if (f.members_a.size() != f.members_b.size())
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    a.elements(f.elements_a);
+                    b.elements(f.elements_b);
+                }
+                stack.push_back(std::move(f));
+            }
+            else if (!(a.scalar() == b.scalar())) // numbers (also of different types), null, boolean
+            {
+                return false;
+            }
+        }
+
+        // the next pair of values
+        for (;;)
+        {
+            if (stack.empty())
+            {
+                return true;
+            }
+            frame& f = stack.back();
+            const std::size_t count = f.object ? f.members_a.size() : f.elements_a.size();
+            if (f.next == count)
+            {
+                stack.pop_back();
+                continue;
+            }
+            if (f.object)
+            {
+                if (!(f.members_a[f.next].first == f.members_b[f.next].first))
+                {
+                    return false;
+                }
+                a = f.members_a[f.next].second;
+                b = f.members_b[f.next].second;
+            }
+            else
+            {
+                a = f.elements_a[f.next];
+                b = f.elements_b[f.next];
+            }
+            ++f.next;
+            break;
+        }
+    }
+}
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/view/document_data.hpp>
 
 // #include <nlohmann/detail/view/errors.hpp>
@@ -2212,12 +2535,18 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <cstddef> // size_t
+#include <cstdint> // int64_t, uint64_t
 #include <string> // string
+#include <type_traits> // integral_constant
 
 // #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/document_data.hpp>
+
 // #include <nlohmann/detail/view/macro_scope.hpp>
 
 // #include <nlohmann/detail/view/node.hpp>
+
+// #include <nlohmann/detail/view/scan.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -2265,6 +2594,96 @@ NLOHMANN_VIEW_NOINLINE FloatType float_value(const char* first, const node& n)
         }
     }
     return convert_float<FloatType>(first, last, dot, mantissa_end);
+}
+
+/*!
+@brief the digits of a float token with at most 19 digits, from its layout
+
+The digit layout recorded while parsing says where the integer digits, the
+fraction digits, and the exponent are, so the digits are read eight at a
+time without scanning.
+
+@param[in] p  first character of the token
+@param[in] e  end of the token
+@param[in] limit  end of the readable memory (the source text)
+*/
+NLOHMANN_VIEW_ALWAYS_INLINE float_significand layout_decimal(const unsigned char* p, const unsigned char* e, unsigned int_digits, unsigned frac_digits, const unsigned char* limit) noexcept
+{
+    const bool negative = *p == '-';
+    p += negative ? 1 : 0;
+    std::uint64_t w = parse_upto19(p, int_digits, limit);
+    p += int_digits;
+    std::int64_t q = 0;
+    if (frac_digits != 0)
+    {
+        w = (w * int_pow10(frac_digits)) + parse_upto19(p + 1, frac_digits, limit);
+        p += 1 + frac_digits;
+        q = -static_cast<std::int64_t>(frac_digits);
+    }
+    if (p != e)
+    {
+        // [eE][+-]digits; huge exponents saturate (the parser rejected overflow)
+        ++p;
+        const bool exp_negative = *p == '-';
+        p += (*p == '-' || *p == '+') ? 1 : 0;
+        std::int64_t exp_value = 0;
+        for (; p != e; ++p)
+        {
+            if (exp_value < 0x10000000)
+            {
+                exp_value = (exp_value * 10) + (*p - '0');
+            }
+        }
+        q += exp_negative ? -exp_value : exp_value;
+    }
+
+    float_significand d;
+    d.w = w;
+    d.exponent = q;
+    d.negative = negative;
+    return d;
+}
+
+/*!
+@brief the value of a float token with at most 19 digits, from its layout
+
+The result is correctly rounded by the lexer's conversion
+(detail::decimal_to_float(): Clinger's fast path where both operands are
+exact, else the Eisel-Lemire algorithm, which needs no fallback for up to 19
+digits), so it is the value parse() produces.
+*/
+template<typename FloatType>
+NLOHMANN_VIEW_ALWAYS_INLINE FloatType layout_float(const unsigned char* p, const unsigned char* e, unsigned int_digits, unsigned frac_digits, const unsigned char* limit) noexcept
+{
+    return decimal_to_float<FloatType>(layout_decimal(p, e, int_digits, frac_digits, limit));
+}
+
+/// the value of the float token of a node, as parse() converts it; floats and
+/// doubles with at most 19 digits are converted from the digit layout
+template<typename FloatType>
+FloatType float_value(const document_data& d, const node& n)
+{
+    return float_value<FloatType>(d, n, std::integral_constant<bool, has_native_float_format<FloatType>::value> {});
+}
+
+template<typename FloatType>
+FloatType float_value(const document_data& d, const node& n, std::true_type /*binary32 or binary64*/)
+{
+    const unsigned int_digits = n.extra & 0xFFu;
+    const unsigned frac_digits = n.extra >> 8u;
+    if (NLOHMANN_VIEW_LIKELY(int_digits + frac_digits <= 19)) // (255 marks "many")
+    {
+        // (a float token not written by an edit is in the text)
+        const auto* const first = reinterpret_cast<const unsigned char*>(d.src + n.off); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        return layout_float<FloatType>(first, first + n.len, int_digits, frac_digits, reinterpret_cast<const unsigned char*>(d.src + d.size)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    }
+    return float_value<FloatType>(d.str(n), n);
+}
+
+template<typename FloatType>
+FloatType float_value(const document_data& d, const node& n, std::false_type /*other*/)
+{
+    return float_value<FloatType>(d.str(n), n);
 }
 
 }  // namespace view
@@ -2335,7 +2754,7 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 ++n;
                 break;
             case value_t::number_float:
-                sax.number_float(float_value<typename BasicJsonType::number_float_t>(d.str(*n), *n), no_token);
+                sax.number_float(float_value<typename BasicJsonType::number_float_t>(d, *n), no_token);
                 ++n;
                 break;
             case value_t::boolean:
@@ -2561,6 +2980,431 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+// #include <nlohmann/detail/view/serializer.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <algorithm> // max
+#include <array> // array
+#include <cmath> // isfinite
+#include <cstddef> // size_t
+#include <cstdint> // uint8_t, uint32_t
+#include <cstring> // memcpy, memset
+#include <limits> // numeric_limits
+#include <type_traits> // integral_constant
+#include <vector> // vector
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/document_data.hpp>
+
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+// #include <nlohmann/detail/view/node.hpp>
+
+// #include <nlohmann/detail/view/number.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+/// append-only output buffer: writes through a raw pointer into a string that
+/// is resized ahead, and trimmed by finish()
+template<typename StringType>
+class output_buffer
+{
+  public:
+    output_buffer(StringType& out, std::size_t estimate)
+        : m_out(sized(out, estimate))
+        , m_pos(&m_out[0])
+        , m_end(m_pos + m_out.size())
+    {}
+
+    void finish()
+    {
+        m_out.resize(static_cast<std::size_t>(m_pos - m_out.data()));
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE void reserve(std::size_t n)
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(m_end - m_pos) < n))
+        {
+            grow(n);
+        }
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE void put(char c)
+    {
+        reserve(1);
+        *m_pos++ = c;
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE void put(const char* s, std::size_t n)
+    {
+        reserve(n);
+        std::memcpy(m_pos, s, n);
+        m_pos += n;
+    }
+
+    void put_repeated(char c, std::size_t n)
+    {
+        reserve(n);
+        std::memset(m_pos, c, n);
+        m_pos += n;
+    }
+
+  private:
+    static StringType& sized(StringType& out, std::size_t estimate)
+    {
+        out.resize((std::max)(estimate, static_cast<std::size_t>(64)));
+        return out;
+    }
+
+    NLOHMANN_VIEW_NOINLINE void grow(std::size_t n)
+    {
+        const auto used = static_cast<std::size_t>(m_pos - m_out.data());
+        m_out.resize((std::max)(m_out.size() * 2, used + n + 256));
+        m_pos = &m_out[0] + used;
+        m_end = &m_out[0] + m_out.size();
+    }
+
+    StringType& m_out;
+    char* m_pos;
+    char* m_end;
+};
+
+/// how the view's dump() writes a value
+struct dump_style
+{
+    bool pretty = false;           ///< indent >= 0
+    std::size_t indent = 0;        ///< characters per level
+    char indent_char = ' ';
+    bool ensure_ascii = false;
+    bool source_numbers = false;   ///< copy number tokens from the source
+};
+
+/*!
+@brief write a view's subtree as basic_json::dump() writes the value
+
+The output of a subtree equals ordered_json::parse(text).dump() of it for
+the same arguments (members in document order): strings are escaped by the
+same rules, with the library's scanning kernels; floats are written with
+the library's conversion; integers are copied from the source, where they
+are canonical (except "-0", which parse() reads as 0). The walk is
+iterative, so the nesting depth is limited by memory only.
+*/
+template<typename BasicJsonType>
+class view_serializer
+{
+    using string_t = typename BasicJsonType::string_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+
+  public:
+    view_serializer(const document_data& d, string_t& out, std::size_t estimate, const dump_style& style)
+        : m_doc(d), m_out(out, estimate), m_style(style)
+    {}
+
+    void dump(const node* root)
+    {
+        struct frame
+        {
+            const node* pos; ///< next element, or key of the next member
+            const node* end;
+            bool object;
+            bool first;  ///< nothing written yet
+        };
+        std::vector<frame> stack;
+        const node* n = root;
+        for (;;)
+        {
+            // write the value at n
+            if (is_container(*n))
+            {
+                const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
+                if (n->len == 0)
+                {
+                    m_out.put(object ? "{}" : "[]", 2);
+                }
+                else
+                {
+                    m_out.put(object ? '{' : '[');
+                    stack.push_back(frame{document_data::first_child(n), document_data::child_end(n), object, true});
+                }
+            }
+            else
+            {
+                write_scalar(*n);
+            }
+
+            // go to the next value: close finished containers, then separate
+            for (;;)
+            {
+                if (stack.empty())
+                {
+                    m_out.finish();
+                    return;
+                }
+                frame& f = stack.back();
+                if (f.pos == f.end)
+                {
+                    const bool object = f.object;
+                    stack.pop_back();
+                    newline(stack.size());
+                    m_out.put(object ? '}' : ']');
+                    continue;
+                }
+                if (!f.first)
+                {
+                    m_out.put(',');
+                }
+                f.first = false;
+                newline(stack.size());
+                if (f.object)
+                {
+                    write_string(*f.pos);
+                    if (m_style.pretty)
+                    {
+                        m_out.put(": ", 2);
+                    }
+                    else
+                    {
+                        m_out.put(':');
+                    }
+                    n = f.pos + 1;
+                }
+                else
+                {
+                    n = f.pos;
+                }
+                f.pos = document_data::after(n);
+                break;
+            }
+        }
+    }
+
+  private:
+    void newline(std::size_t level)
+    {
+        if (m_style.pretty)
+        {
+            m_out.put('\n');
+            m_out.put_repeated(m_style.indent_char, level * m_style.indent);
+        }
+    }
+
+    void write_scalar(const node& n)
+    {
+        switch (static_cast<value_t>(n.kind))
+        {
+            case value_t::null:
+                m_out.put("null", 4);
+                break;
+            case value_t::boolean:
+                if ((n.flags & node_flags::is_true) != 0)
+                {
+                    m_out.put("true", 4);
+                }
+                else
+                {
+                    m_out.put("false", 5);
+                }
+                break;
+            case value_t::string:
+                write_string(n);
+                break;
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            {
+                const char* const token = m_doc.str(n);
+                const std::uint32_t len = number_length(n);
+                if (!m_style.source_numbers && len == 2 && token[0] == '-' && token[1] == '0')
+                {
+                    m_out.put('0'); // parse() reads -0 as the integer 0
+                }
+                else
+                {
+                    m_out.put(token, len);
+                }
+                break;
+            }
+            case value_t::number_float:
+                if (m_style.source_numbers)
+                {
+                    m_out.put(m_doc.str(n), n.len);
+                }
+                else
+                {
+                    write_float(float_value<number_float_t>(m_doc, n));
+                }
+                break;
+            case value_t::object:    // LCOV_EXCL_LINE (containers are written by dump())
+            case value_t::array:     // LCOV_EXCL_LINE
+            case value_t::binary:    // LCOV_EXCL_LINE (not in a document)
+            case value_t::discarded: // LCOV_EXCL_LINE
+            default:                 // LCOV_EXCL_LINE
+                break;               // LCOV_EXCL_LINE
+        }
+    }
+
+    /// as serializer::dump_float()
+    void write_float(number_float_t x)
+    {
+        if (!std::isfinite(x))
+        {
+            m_out.put("null", 4);
+            return;
+        }
+        write_float(x, std::integral_constant < bool,
+                    (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128)
+                    || (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024) > {});
+    }
+
+    void write_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
+    {
+        std::array<char, 64> buf{};
+        const char* const end = ::nlohmann::detail::to_chars(buf.data(), buf.data() + buf.size(), x);
+        m_out.put(buf.data(), static_cast<std::size_t>(end - buf.data()));
+    }
+
+    void write_float(number_float_t x, std::false_type /*is_ieee_single_or_double*/)
+    {
+        // other types (e.g. long double) are rare: the library writes them
+        const string_t s = BasicJsonType(x).dump();
+        m_out.put(s.data(), s.size());
+    }
+
+    void write_string(const node& n)
+    {
+        const char* const s = m_doc.str(n);
+        m_out.put('"');
+        if ((n.flags & node_flags::escaped) == 0 && !m_style.ensure_ascii)
+        {
+            // a string without escape sequences has nothing to escape
+            m_out.put(s, n.len);
+        }
+        else if (m_style.ensure_ascii)
+        {
+            write_escaped<true>(reinterpret_cast<const unsigned char*>(s), n.len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        }
+        else
+        {
+            write_escaped<false>(reinterpret_cast<const unsigned char*>(s), n.len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        }
+        m_out.put('"');
+    }
+
+    /// as serializer::dump_escaped() for valid UTF-8 (the view has no other)
+    template<bool EnsureAscii>
+    void write_escaped(const unsigned char* s, std::size_t n)
+    {
+        std::size_t i = 0;
+        while (i < n)
+        {
+            std::size_t run = 0;
+            if (!EnsureAscii)
+            {
+                run = string_bulk_run(s + i, n - i);
+            }
+            else if (is_ascii_copyable(s[i]))
+            {
+                run = find_ascii_copyable_run(s + i, n - i);
+            }
+            if (run != 0)
+            {
+                m_out.put(reinterpret_cast<const char*>(s + i), run); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                i += run;
+                continue;
+            }
+            std::uint32_t codepoint = s[i];
+            std::size_t len = 1;
+            if (codepoint >= 0xC0)
+            {
+                len = 2;
+                if (codepoint >= 0xE0)
+                {
+                    len = codepoint >= 0xF0 ? 4 : 3;
+                }
+                codepoint &= 0xFFu >> (len + 1);
+                for (std::size_t k = 1; k < len; ++k)
+                {
+                    codepoint = (codepoint << 6u) | (s[i + k] & 0x3Fu);
+                }
+            }
+            write_codepoint<EnsureAscii>(codepoint, s + i, len);
+            i += len;
+        }
+    }
+
+    template<bool EnsureAscii>
+    void write_codepoint(std::uint32_t codepoint, const unsigned char* bytes, std::size_t len)
+    {
+        switch (codepoint)
+        {
+            case 0x08:
+                m_out.put("\\b", 2);
+                return;
+            case 0x09:
+                m_out.put("\\t", 2);
+                return;
+            case 0x0A:
+                m_out.put("\\n", 2);
+                return;
+            case 0x0C:
+                m_out.put("\\f", 2);
+                return;
+            case 0x0D:
+                m_out.put("\\r", 2);
+                return;
+            case 0x22:
+                m_out.put("\\\"", 2);
+                return;
+            case 0x5C:
+                m_out.put("\\\\", 2);
+                return;
+            default:
+                break;
+        }
+        if (codepoint <= 0x1F || (EnsureAscii && codepoint >= 0x7F))
+        {
+            if (codepoint <= 0xFFFF)
+            {
+                write_u_escape(codepoint);
+            }
+            else
+            {
+                write_u_escape(0xD7C0u + (codepoint >> 10u));
+                write_u_escape(0xDC00u + (codepoint & 0x3FFu));
+            }
+            return;
+        }
+        m_out.put(reinterpret_cast<const char*>(bytes), len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) LCOV_EXCL_LINE (printable characters are copied in runs)
+    }
+
+    void write_u_escape(std::uint32_t u)
+    {
+        static constexpr const char* hex = "0123456789abcdef";
+        const std::array<char, 6> e = {{'\\', 'u', hex[(u >> 12u) & 0xFu], hex[(u >> 8u) & 0xFu], hex[(u >> 4u) & 0xFu], hex[u & 0xFu]}};
+        m_out.put(e.data(), e.size());
+    }
+
+    const document_data& m_doc;
+    output_buffer<string_t> m_out;
+    const dump_style m_style;
+};
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/view/string_ref.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -2734,7 +3578,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const nod
         case value_t::number_integer:
             return static_cast<T>(static_cast<typename BasicJsonType::number_integer_t>(static_cast<std::int64_t>(integer_bits(n))));
         case value_t::number_float:
-            return static_cast<T>(float_value<typename BasicJsonType::number_float_t>(d.str(n), n));
+            return static_cast<T>(float_value<typename BasicJsonType::number_float_t>(d, n));
         case value_t::boolean:
             return static_cast<T>((n.flags & node_flags::is_true) != 0);
         case value_t::null:
@@ -3284,6 +4128,96 @@ class basic_json_view
         return {m_doc->str(*m_node), detail::view::number_length(*m_node)};
     }
 
+    ///////////////////
+    // serialization //
+    ///////////////////
+
+    /// how dump() writes numbers
+    enum class number_format
+    {
+        /// as basic_json::dump(): integers canonically, floats with the
+        /// library's shortest round-trip digits ("1.5", "100.0", "1e+100")
+        shortest,
+        /// the number text of the source as it is ("1.50", "1E2", "-0", all
+        /// digits of a long integer)
+        source,
+    };
+
+    /// the text of this value; with number_format::shortest, the output of
+    /// ordered_json::parse(text).dump() with the same arguments (members in
+    /// document order, all of them should a key occur more than once)
+    string_t dump(const int indent = -1, const char indent_char = ' ', const bool ensure_ascii = false,
+                  const number_format numbers = number_format::shortest) const
+    {
+        string_t out;
+        if (m_node == nullptr)
+        {
+            out = "<discarded>"; // as basic_json::dump() of a discarded value
+            return out;
+        }
+        detail::view::dump_style style;
+        style.pretty = indent >= 0;
+        style.indent = indent >= 0 ? static_cast<std::size_t>(indent) : 0;
+        style.indent_char = indent_char;
+        style.ensure_ascii = ensure_ascii;
+        style.source_numbers = numbers == number_format::source;
+        // the compact text is about as long as the source text of the value
+        const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 64;
+        detail::view::view_serializer<BasicJsonType>(*m_doc, out, estimate, style).dump(m_node);
+        return out;
+    }
+
+#ifndef JSON_NO_IO
+    /// as operator<< of basic_json: a stream width > 0 is the indentation,
+    /// the fill character the indentation character
+    friend std::ostream& operator<<(std::ostream& o, const basic_json_view& v)
+    {
+        const bool pretty = o.width() > 0;
+        const auto indentation = pretty ? o.width() : 0;
+        o.width(0);
+        const string_t s = v.dump(pretty ? static_cast<int>(indentation) : -1, o.fill());
+        return o.write(s.data(), static_cast<std::streamsize>(s.size()));
+    }
+#endif
+
+    ////////////////
+    // comparison //
+    ////////////////
+
+    /// whether the values parse() would produce for two views are equal, as
+    /// by BasicJsonType's operator== (numbers by value, objects by their
+    /// members with duplicate keys resolved as parse() resolves them)
+    friend bool operator==(const basic_json_view& a, const basic_json_view& b)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), side(b));
+    }
+
+    friend bool operator!=(const basic_json_view& a, const basic_json_view& b)
+    {
+        return !(a == b);
+    }
+
+    /// whether the value parse() would produce for a view equals a value
+    friend bool operator==(const basic_json_view& a, const BasicJsonType& j)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), json_side_t(j));
+    }
+
+    friend bool operator==(const BasicJsonType& j, const basic_json_view& a)
+    {
+        return a == j;
+    }
+
+    friend bool operator!=(const basic_json_view& a, const BasicJsonType& j)
+    {
+        return !(a == j);
+    }
+
+    friend bool operator!=(const BasicJsonType& j, const basic_json_view& a)
+    {
+        return !(a == j);
+    }
+
     /////////////////
     // materialize //
     /////////////////
@@ -3315,6 +4249,30 @@ class basic_json_view
     basic_json_view(const document_data* d, const node* n) noexcept
         : m_doc(d), m_node(n)
     {}
+
+    using json_side_t = detail::view::json_side<BasicJsonType, string_view_t>;
+
+    static detail::view::view_side<BasicJsonType, basic_json_view> side(const basic_json_view& v) noexcept
+    {
+        return detail::view::view_side<BasicJsonType, basic_json_view>(v);
+    }
+
+    /// the number of source bytes of this value (estimated for values with
+    /// decoded strings)
+    std::size_t source_extent() const noexcept
+    {
+        const node* const next = document_data::after(m_node);
+        const bool in_source = (m_node->flags & detail::view::node_flags::storage) == 0;
+        if (!in_source)
+        {
+            return m_node->len;
+        }
+        if (next != m_doc->tape + m_doc->tape_size && (next->flags & detail::view::node_flags::storage) == 0 && next->off >= m_node->off)
+        {
+            return next->off - m_node->off;
+        }
+        return m_doc->size - m_node->off;
+    }
 
     /// the value of the first member with this key, or a discarded view
     /// (object required)

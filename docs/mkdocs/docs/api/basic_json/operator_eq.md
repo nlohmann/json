@@ -171,6 +171,8 @@ Linear.
 
 - [operator!=](operator_ne.md) compare for inequality
 - [operator<=>](operator_spaceship.md) comparison: 3-way (C++20)
+- [basic_json_view::operator==](../basic_json_view/operator_eq.md) - the same comparison on a zero-copy view, without
+  building a `basic_json` value for it
 
 ## Version history
 
