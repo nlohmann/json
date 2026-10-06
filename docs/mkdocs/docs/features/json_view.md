@@ -250,6 +250,57 @@ edits. See [`basic_json_document`'s Edits](../api/basic_json_document/index.md#e
 throws (the *basic* guarantee, not the strong one `dump()` and the read-only functions provide). How edits are kept in
 the index is described in the [architecture overview](../home/architecture.md#node-index-of-json-views).
 
+## Images
+
+[`save()`](../api/basic_json_document/save.md) writes a document as an *image*: a byte buffer that
+[`load()`](../api/basic_json_document/load.md) reads back into a document without parsing -- no lexing, no building
+the node index, nothing but copying the nodes and pointing the text and the decoded strings at the image. Where
+[`parse_copy()`](../api/basic_json_document/parse_copy.md) still has to scan the whole input,
+[`load()`](../api/basic_json_document/load.md) turns that scan into a copy of the node index alone.
+
+**Why.** A document that is parsed once and then read many times -- a configuration loaded at startup, a template
+rendered on every request, a large reference dataset a worker process needs in memory -- pays for parsing once but
+can amortize [`save()`](../api/basic_json_document/save.md)'s cost across every later load. That makes images useful
+for a cache: save a document the first time it is parsed (to a file, a shared-memory segment, an in-process cache),
+and [`load()`](../api/basic_json_document/load.md) it on every later use instead of parsing the source text again.
+They are just as useful for handing a parsed document to another process (or a forked worker) running the same build
+of the library, since [`load()`](../api/basic_json_document/load.md) turns the transfer into a copy of the node index
+plus pointers into the received bytes, not a re-parse.
+
+**Choosing a check.** [`load()`](../api/basic_json_document/load.md) takes an
+[`image_check`](../api/basic_json_document/load.md#image_check) that trades validation against speed:
+`image_check::full` (the default) checks everything the parser itself guarantees, so a checked image is exactly as
+safe to read and serialize as a freshly parsed document -- the right choice whenever the image did not come straight
+from this process's own [`save()`](../api/basic_json_document/save.md), such as a file or a network peer.
+`image_check::bounds` only checks structure and bounds -- cheaper, since it skips scanning the text and the decoded
+strings -- and fits a cache the process trusts, one it wrote and reads back itself. `image_check::none` skips
+validation entirely, for an image trusted as much as the process's own memory. See
+[`load()`'s Notes](../api/basic_json_document/load.md#notes) for exactly what each level does and does not guarantee.
+
+??? example "Example: cache a parsed configuration as an image"
+
+    ```cpp
+    --8<-- "examples/basic_json_document__save.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/basic_json_document__save.output"
+    ```
+
+!!! warning "Experimental"
+
+    The image format is versioned but not yet stable, and may change in an incompatible way before it is declared
+    stable. It is little-endian only, and tied to the library build that wrote it -- use it to cache a document or to
+    hand one to another process running the *same* build, not as a long-term storage format; keep the original JSON
+    text if a saved document needs to be readable by a future library version.
+
+The idea of a document you can read without parsing comes from zero-copy formats such as
+[FlatBuffers](https://github.com/google/flatbuffers) and [YaFF](https://github.com/yandex/yaff); the check
+[`load()`](../api/basic_json_document/load.md) runs follows the idea of FlatBuffers' Verifier. No code is taken from
+either.
+
 ## Choosing between `json`, `ordered_json`, the SAX interface, and `json_view`
 
 | | [`json`](../api/json.md) / [`ordered_json`](../api/ordered_json.md) | [SAX interface](parsing/sax_interface.md) | [`json_document`](../api/json_document.md) / [`json_view`](../api/json_view.md) | [`json_editable_document`](../api/json_editable_document.md) / [`json_editable_view`](../api/json_editable_view.md) |
@@ -258,6 +309,7 @@ the index is described in the [architecture overview](../home/architecture.md#no
 | **Mutability** | freely mutable | not applicable (a one-shot event stream) | read-only | [`set`](../api/basic_json_document/set.md)/[`push_back`](../api/basic_json_document/push_back.md)/[`insert`](../api/basic_json_document/insert.md)/[`erase`](../api/basic_json_document/erase.md) edit in place; the source text is never rewritten |
 | **What you get** | a full tree you can read, write, and keep as long as you like | a sequence of callbacks; whatever your handler builds from them | a flat index plus, on demand, [`materialize()`](../api/basic_json_view/materialize.md)d `json`/`ordered_json` values for the parts you actually use | the same, plus [`dump()`](../api/basic_json_view/dump.md) of an edited document that keeps the member order and, with [`number_format::source`](../api/basic_json_view/number_format.md), the spelling of every untouched number |
 | **Typical use** | general-purpose JSON handling: config, request/response bodies you build or modify, anything you hold onto | validating or projecting a text into your own data structure without ever holding the whole thing as JSON | large or high-volume input where you only need part of it, or need it repeatedly, and can keep the source text (or a copy) alive for as long as the document lives | a document you read, patch a few fields of, and write back -- a configuration file, for instance -- where the rest of it should come back exactly as it was |
+| **Caching/reload** | not applicable -- re-parse, or roll your own serialization | not applicable | [`save()`](../api/basic_json_document/save.md)/[`load()`](../api/basic_json_document/load.md): cache the parsed index as an image and reload it without parsing | same, saving the document's current -- possibly edited -- state |
 
 ## Version history
 

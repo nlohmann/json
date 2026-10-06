@@ -52,10 +52,16 @@ bookkeeping edits need, and calling any of them on one fails to compile (`#!cpp 
 ## Member functions
 
 - [(constructor)](basic_json_document.md)
+
+### Parsing
+
 - [**parse**](parse.md) (_static_) - deserialize from a compatible input, borrowing or owning it as appropriate
 - [**parse_copy**](parse_copy.md) (_static_) - deserialize a copy of a compatible input
 - [**accept**](accept.md) (_static_) - check whether the input is valid JSON
 - [**read**](read.md) - (re-)parse into this document, reusing its memory
+
+### Access
+
 - [**root**](root.md) - the view of the root value
 - [**is_discarded**](is_discarded.md) - return whether the last parse failed
 - [**source**](source.md) - the parsed text
@@ -63,6 +69,14 @@ bookkeeping edits need, and calling any of them on one fails to compile (`#!cpp 
 - [**node_count**](node_count.md) - the number of index entries (values plus object keys)
 - [**memory_usage**](memory_usage.md) - the number of bytes held by the document
 - [**shrink_to_fit**](shrink_to_fit.md) - release unused index capacity
+
+### Images
+
+- [**save**](save.md) - the document as an image that `load()` reads without parsing
+- [**load**](load.md) (_static_) - read an image written by `save()`
+
+### Edits
+
 - [**set**](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers
   to (`#!cpp Editable` documents only)
 - [**push_back**](push_back.md) - append to an array (`#!cpp Editable` documents only)

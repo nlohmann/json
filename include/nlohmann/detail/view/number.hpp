@@ -27,42 +27,75 @@ namespace view
 {
 
 /*!
+@brief locate the decimal point and the end of the mantissa of a float token
+
+Also checks that the token is a JSON number. Tokens of the parser and of edits
+always are; an image loaded with image_check::bounds can hold any bytes, which
+must not reach the conversion (it expects a well-formed token).
+*/
+inline bool float_token_layout(const char* first, const char* last, std::size_t& dot, std::size_t& mantissa_end) noexcept
+{
+    const auto digit = [last](const char* q)
+    {
+        return q != last && is_digit(static_cast<unsigned char>(*q));
+    };
+    const char* p = first;
+    p += (p != last && *p == '-') ? 1 : 0;
+    if (!digit(p) || (*p == '0' && digit(p + 1)))
+    {
+        return false;
+    }
+    while (digit(p))
+    {
+        ++p;
+    }
+    dot = std::string::npos;
+    if (p != last && *p == '.')
+    {
+        dot = static_cast<std::size_t>(p - first);
+        if (!digit(++p))
+        {
+            return false;
+        }
+        while (digit(p))
+        {
+            ++p;
+        }
+    }
+    mantissa_end = static_cast<std::size_t>(p - first);
+    if (p != last && (*p == 'e' || *p == 'E'))
+    {
+        ++p;
+        p += (p != last && (*p == '+' || *p == '-')) ? 1 : 0;
+        if (!digit(p))
+        {
+            return false;
+        }
+        while (digit(p))
+        {
+            ++p;
+        }
+    }
+    return p == last;
+}
+
+/*!
 @brief the value of the float token of a node, as parse() converts it
 
 Uses the lexer's conversion (detail::convert_float), so that the values are
 bit-identical to parse(): float and double are converted without allocation
-and independent of the locale. The digit layout recorded while parsing locates
-the decimal point and the exponent without scanning the token.
+and independent of the locale. A token that is not a JSON number (only in a
+damaged image loaded with image_check::bounds) yields 0.
 */
 template<typename FloatType>
 NLOHMANN_VIEW_NOINLINE FloatType float_value(const char* first, const node& n)
 {
     const char* const last = first + n.len;
-    const std::size_t neg = first[0] == '-' ? 1 : 0;
-    const std::size_t int_digits = n.extra & 0xFFu;
-    const std::size_t frac_digits = n.extra >> 8u;
-    std::size_t dot = std::string::npos;
-    std::size_t mantissa_end = n.len;
-    if (int_digits != 255 && frac_digits != 255)
+    std::size_t dot = 0;
+    std::size_t mantissa_end = 0;
+    if (NLOHMANN_VIEW_UNLIKELY(!float_token_layout(first, last, dot, mantissa_end)))
     {
-        dot = frac_digits != 0 ? neg + int_digits : std::string::npos;
-        mantissa_end = neg + int_digits + (frac_digits != 0 ? 1 + frac_digits : 0);
-    }
-    else
-    {
-        // more digits than the layout records: locate them
-        for (std::size_t i = 0; i < n.len; ++i)
-        {
-            if (first[i] == '.')
-            {
-                dot = i;
-            }
-            else if (first[i] == 'e' || first[i] == 'E')
-            {
-                mantissa_end = i;
-                break;
-            }
-        }
+        return FloatType{};
     }
     return convert_float<FloatType>(first, last, dot, mantissa_end);
 }
@@ -93,16 +126,20 @@ NLOHMANN_VIEW_ALWAYS_INLINE float_significand layout_decimal(const unsigned char
     }
     if (p != e)
     {
-        // [eE][+-]digits; huge exponents saturate (the parser rejected overflow)
+        // [eE][+-]digits; huge exponents saturate (the parser rejected
+        // overflow). The token is not read beyond e, and the digits are taken
+        // as unsigned, so that a token that is not well-formed (a damaged
+        // image loaded with image_check::bounds) yields a wrong value, but no
+        // overflow.
         ++p;
-        const bool exp_negative = *p == '-';
-        p += (*p == '-' || *p == '+') ? 1 : 0;
+        const bool exp_negative = p != e && *p == '-';
+        p += (p != e && (*p == '-' || *p == '+')) ? 1 : 0;
         std::int64_t exp_value = 0;
         for (; p != e; ++p)
         {
             if (exp_value < 0x10000000)
             {
-                exp_value = (exp_value * 10) + (*p - '0');
+                exp_value = (exp_value * 10) + static_cast<unsigned char>(*p - '0');
             }
         }
         q += exp_negative ? -exp_value : exp_value;

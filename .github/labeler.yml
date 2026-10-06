@@ -51,7 +51,7 @@ labels:
     - "include/nlohmann/detail/view/.*"
     - "single_include/nlohmann/json_view\\.hpp"
     - "tests/src/unit-json_view.*"
-    - "tests/src/fuzzer-parse_json_view\\.cpp"
+    - "tests/src/fuzzer-(parse_json_view|json_view_image)\\.cpp"
     - "tools/amalgamate/config_json_view\\.json"
     - "docs/mkdocs/docs/features/json_view\\.md"
     - "docs/mkdocs/docs/api/basic_json_(document|view)/.*"

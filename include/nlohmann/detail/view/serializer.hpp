@@ -317,7 +317,9 @@ class view_serializer
         m_out.put('"');
     }
 
-    /// as serializer::dump_escaped() for valid UTF-8 (the view has no other)
+    /// as serializer::dump_escaped(); strings of a document are valid UTF-8,
+    /// except in a damaged image loaded with image_check::bounds, for which
+    /// this throws what basic_json::dump() throws for the string
     template<bool EnsureAscii>
     void write_escaped(const unsigned char* s, std::size_t n)
     {
@@ -341,12 +343,13 @@ class view_serializer
             }
             std::uint32_t codepoint = s[i];
             std::size_t len = 1;
-            if (codepoint >= 0xC0)
+            if (codepoint >= 0x80)
             {
-                len = 2;
-                if (codepoint >= 0xE0)
+                len = validate_one_utf8(s + i, n - i);
+                if (NLOHMANN_VIEW_UNLIKELY(len == 0))
                 {
-                    len = codepoint >= 0xF0 ? 4 : 3;
+                    invalid_utf8(s, n);
+                    return;
                 }
                 codepoint &= 0xFFu >> (len + 1);
                 for (std::size_t k = 1; k < len; ++k)
@@ -357,6 +360,13 @@ class view_serializer
             write_codepoint<EnsureAscii>(codepoint, s + i, len);
             i += len;
         }
+    }
+
+    /// throw what basic_json::dump() throws for a string that is not valid UTF-8
+    NLOHMANN_VIEW_NOINLINE static void invalid_utf8(const unsigned char* s, std::size_t n)
+    {
+        const string_t dumped = BasicJsonType(string_t(reinterpret_cast<const char*>(s), n)).dump(); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        static_cast<void>(dumped);
     }
 
     template<bool EnsureAscii>

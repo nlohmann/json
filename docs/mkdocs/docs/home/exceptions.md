@@ -388,6 +388,23 @@ A UBJSON high-precision number could not be parsed.
     [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A
     ```
 
+### json.exception.parse_error.116
+
+[`basic_json_document::load()`](../api/basic_json_document/load.md) rejected an
+[image](../features/json_view.md#images): either the bytes are not one [`save()`](../api/basic_json_document/save.md)
+could have written (too short, an unknown magic number or format version, or sizes that do not fit the buffer), or
+they are, but fail the requested [`image_check`](../api/basic_json_document/load.md#image_check).
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.parse_error.116] parse error: invalid json_document image: the check failed
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0, together with [images](../features/json_view.md#images).
+
 ## Iterator errors
 
 This exception is thrown if iterators passed to a library function do not match
@@ -822,6 +839,26 @@ from JSON text.
 
     This exception was added in version 3.13.0, together with editable [`json_document`s](../features/json_view.md).
 
+### json.exception.type_error.320
+
+[`basic_json_document::save()`](../api/basic_json_document/save.md) cannot write an
+[image](../features/json_view.md#images) of a [discarded](../api/basic_json_document/is_discarded.md) document.
+[`save()`](../api/basic_json_document/save.md) and [`load()`](../api/basic_json_document/load.md) also throw this
+exception on a big-endian target, since the image format is little-endian only.
+
+!!! failure "Example messages"
+
+    ```
+    [json.exception.type_error.320] cannot save a discarded json_document
+    ```
+    ```
+    [json.exception.type_error.320] json_document images need a little-endian target
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0, together with [images](../features/json_view.md#images).
+
 ### json.exception.type_error.321
 
 A discarded value (one created by [`parse()`](../api/basic_json/parse.md) with a callback that returns `false` for the
@@ -1068,7 +1105,9 @@ MessagePack's ext type and BSON's binary subtype are each stored in a single byt
 so they do not support an input of 4 GiB or more. The same 32-bit limit applies to an **editable** document's own
 storage: [`set`](../api/basic_json_document/set.md) and [`push_back`](../api/basic_json_document/push_back.md) throw
 this exception once the strings and number tokens written by edits reach 4 GiB in total, or once more than
-4294967295 arrays/objects have had an element set or appended to them.
+4294967295 arrays/objects have had an element set or appended to them. The same limit applies to an
+[image](../features/json_view.md#images): [`save()`](../api/basic_json_document/save.md) throws it if the node
+count, the text, or the decoded strings it would write would individually reach 4 GiB.
 
 !!! failure "Example messages"
 
@@ -1077,6 +1116,9 @@ this exception once the strings and number tokens written by edits reach 4 GiB i
     ```
     ```
     [json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document
+    ```
+    ```
+    [json.exception.out_of_range.416] images of 4 GiB or more are not supported by json_document
     ```
 
 !!! note
