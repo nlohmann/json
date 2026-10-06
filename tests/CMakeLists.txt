@@ -135,9 +135,6 @@ json_test_set_test_options(test-disabled_exceptions
         #$<$<CXX_COMPILER_ID:MSVC>:/EH>
 )
 
-# raise timeout of expensive Unicode test
-json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
-
 # only the #972 regression test needs thirdparty/fifo_map on its include path
 json_test_set_test_options(test-regression1 LINK_LIBRARIES fifo_map_include)
 

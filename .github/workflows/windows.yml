@@ -178,7 +178,7 @@ jobs:
       - name: Build
         run: cmake --build build --parallel 10
       - name: Test
-        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+        run: cd build ; ctest -j 10 -C Debug --output-on-failure
 
   clang-cl-12:
     runs-on: windows-2022
@@ -195,7 +195,7 @@ jobs:
       - name: Build
         run: cmake --build build --config Debug --parallel 10
       - name: Test
-        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+        run: cd build ; ctest -j 10 -C Debug --output-on-failure
 
   ci_module_cpp20:
     runs-on: windows-2022
