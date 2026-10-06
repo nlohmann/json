@@ -55,7 +55,7 @@ always use the scalar path regardless of this macro.
 
 Parsing always produces SAX events internally; [`parse`](../api/basic_json/parse.md) simply feeds them to a consumer
 that builds a complete `basic_json` value tree (a DOM) in memory. For documents too large to comfortably hold as
-a DOM, two alternatives avoid building it:
+a DOM, three alternatives avoid building it:
 
 - Implement the [SAX interface](parsing/sax_interface.md) directly and pass it to
   [`sax_parse`](../api/basic_json/sax_parse.md); only the parts of the input you choose to keep ever become
@@ -64,6 +64,12 @@ a DOM, two alternatives avoid building it:
   discard finished elements as soon as they are handled, so memory usage stays bounded by one element (plus the
   unparsed remainder of the input) instead of the whole document -- see the [recipe for streaming a large homogeneous
   array](parsing/parser_callbacks.md#recipe-streaming-a-large-homogeneous-array).
+- Parse into a [`json_document`](json_view.md) (`#!cpp <nlohmann/json_view.hpp>`) instead of a `basic_json`. It keeps
+  the input text and builds a flat index of 16 bytes per value; strings and numbers are not copied, but read from the
+  text when needed. Read-only [views](../api/basic_json_view/index.md) give the familiar element access, and only the
+  parts you [`materialize()`](../api/basic_json_view/materialize.md) become `basic_json` values. A document that
+  borrows the text instead of owning a copy needs the text to outlive it; see
+  [choosing between `json`, the SAX interface, and `json_view`](json_view.md#choosing-between-json-ordered_json-the-sax-interface-and-json_view).
 
 If the data is naturally record-oriented, consider [JSON Lines](parsing/json_lines.md) instead of one large JSON
 document: reading and parsing it line by line with `#!cpp std::getline` means only one line's value is ever in memory
@@ -209,6 +215,7 @@ those headers are then never processed by the compiler at all.
 - [Architecture](../home/architecture.md) - how input adapters, the lexer, and the serializer fit together
 - [Parsing](parsing/index.md) - the available parsing functions and inputs
 - [SAX interface](parsing/sax_interface.md) - parse without building a DOM
+- [Zero-copy JSON views](json_view.md) - parse into a flat index of the text and read it without building a DOM
 - [Binary formats](binary_formats/index.md) - compact alternatives to JSON text
 - [Object Order](object_order.md) - `json` vs. `ordered_json` and other `ObjectType` choices
 - [Template Parameter Requirements](types/template_parameters.md) - custom container and allocator types

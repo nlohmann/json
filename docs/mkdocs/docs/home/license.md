@@ -23,3 +23,5 @@ The class contains a port of the shortest double-to-decimal conversion of [Żmij
 The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
 
 The class contains an adapted version of the Eisel-Lemire algorithm, its table of powers of five, and its digit comparison for long numbers from [fast_float](https://github.com/fastfloat/fast_float) by Daniel Lemire and contributors, which is available under the [MIT License](https://opensource.org/licenses/MIT) (used here), the Apache 2.0 License, and the Boost Software License. Copyright &copy; 2021 The fast_float authors
+
+The view's parser (`<nlohmann/json_view.hpp>`) contains techniques and code adapted from [yyjson](https://github.com/ibireme/yyjson) by YaoYuan, which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above): table-driven decoding of `\u` escapes and fixed-offset unrolled checks.

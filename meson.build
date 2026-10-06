@@ -16,6 +16,7 @@ if not meson.is_subproject()
 install_headers('single_include/nlohmann/json.hpp', subdir: 'nlohmann')
 install_headers('single_include/nlohmann/json_fwd.hpp', subdir: 'nlohmann')
 install_headers('single_include/nlohmann/json_literals.hpp', subdir: 'nlohmann')
+install_headers('single_include/nlohmann/json_view.hpp', subdir: 'nlohmann')
 
 pkgc = import('pkgconfig')
 pkgc.generate(name: 'nlohmann_json',

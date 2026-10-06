@@ -1043,6 +1043,23 @@ MessagePack's ext type and BSON's binary subtype are each stored in a single byt
 
     This exception was added in version 3.13.0. Before that, subtypes above 255 were silently truncated modulo 256 instead of raising an error.
 
+### json.exception.out_of_range.416
+
+[`basic_json_document::parse()`](../api/basic_json_document/parse.md) and the other parsing functions of
+[`basic_json_document`](../api/basic_json_document/index.md) index a value's position in the source text in 32 bits,
+so they do not support an input of 4 GiB or more.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.out_of_range.416] input of 4 GiB or more is not supported by json_document
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0, together with [`<nlohmann/json_view.hpp>`](../features/json_view.md).
+    [`basic_json::parse()`](../api/basic_json/parse.md) has no such limit.
+
 ## Further exceptions
 
 This exception is thrown in case of errors that cannot be classified with the

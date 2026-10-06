@@ -51,6 +51,11 @@ The public headers are in [`include/nlohmann`](https://github.com/nlohmann/json/
   [`adl_serializer`](../api/adl_serializer/index.md),
   [`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md), and
   [`ordered_map`](../api/ordered_map.md).
+- [`json_view.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_view.hpp) is a separate,
+  optional header that defines [`basic_json_document`](../api/basic_json_document/index.md) and
+  [`basic_json_view`](../api/basic_json_view/index.md), a flat-index, read-only, non-owning way to look at a parsed
+  JSON text; see [Zero-copy JSON views](../features/json_view.md). It builds on `json.hpp` internals (it requires the
+  same library version) and has its own `detail/view/` subdirectory.
 
 Everything else lives in [`detail/`](https://github.com/nlohmann/json/tree/develop/include/nlohmann/detail) and namespace `nlohmann::detail`, which is not part of the public API. Paths
 below are relative to `include/nlohmann`.
@@ -74,7 +79,9 @@ below are relative to `include/nlohmann`.
 | Macros | [`detail/macro_scope.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/macro_scope.hpp), [`detail/macro_unscope.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/macro_unscope.hpp), [`detail/abi_macros.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/abi_macros.hpp) |
 
 The single-header version [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp)
-is generated from these files with `make amalgamate` and must not be edited by hand.
+is generated from these files with `make amalgamate` and must not be edited by hand. The same command also generates
+[`single_include/nlohmann/json_view.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_view.hpp)
+from `json_view.hpp` and `detail/view/`.
 
 ## Template parameters
 
@@ -163,6 +170,74 @@ Objects, arrays, strings, and binary values are allocated on the heap with `Allo
 pointer to them. This keeps a `basic_json` value small: one pointer-sized union and one byte for the type. The class
 maintains the invariant that the pointer matching `m_type` is never null; `assert_invariant()` checks it with
 [runtime assertions](../features/assertions.md).
+
+## Node index of JSON views
+
+A [`basic_json_document`](../api/basic_json_document/index.md) (see [Zero-copy JSON views](../features/json_view.md))
+does not build a tree of values. Its parser
+([`detail/view/builder.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/builder.hpp))
+writes a flat array of 16-byte nodes, one per value and one per object key, in document order. A
+[`basic_json_view`](../api/basic_json_view/index.md) is a pointer to the document and a pointer to one node. The layout
+is `struct node` in
+[`detail/view/node.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/node.hpp)
+(the numbers are bit offsets, 32 bits per row):
+
+```mermaid
+packet-beta
+  0-7: "kind"
+  8-15: "flags"
+  16-31: "extra"
+  32-63: "off"
+  64-95: "len"
+  96-127: "next"
+```
+
+| Bytes | Field   | Type       | Contents                                                                                                                      |
+|-------|---------|------------|-------------------------------------------------------------------------------------------------------------------------------|
+| 0     | `kind`  | `uint8_t`  | the type, numbered as [`value_t`](../api/basic_json/value_t.md): 0 null, 1 object, 2 array, 3 string, 4 boolean, 5 signed integer, 6 unsigned integer, 7 float |
+| 1     | `flags` | `uint8_t`  | bits 0-1: where a string's bytes are (0: the source text, 1: the buffer of decoded strings, for strings with escapes); bit 2: the value of a boolean |
+| 2-3   | `extra` | `uint16_t` | numbers: the number of integer digits (low byte) and fraction digits (high byte), 255 for more; otherwise 0                      |
+| 4-7   | `off`   | `uint32_t` | where the value starts: the first byte after a string's opening quote (or its position in the buffer of decoded strings), the first byte of a number or literal, the bracket of an array or object |
+| 8-11  | `len`   | `uint32_t` | strings: the length after decoding; floats and literals: the length of the token; arrays and objects: the number of elements |
+| 12-15 | `next`  | `uint32_t` | arrays and objects: the number of nodes of the subtree, including the node itself                                              |
+
+- **Integers** keep their converted value in bytes 8-15 instead of `len` and `next`; the length of their token follows
+  from the number of digits in `extra` (and the sign). Non-negative integers are unsigned integers, as with
+  [`parse`](../api/basic_json/parse.md).
+- **Floats** keep only their token. The digit layout in `extra` lets the conversion read the digits without scanning the
+  token again, and only when the value is read.
+- **Object members** are the node of the key (a string) followed by the nodes of the value.
+- **Navigation** needs no pointers: the elements of an array or object follow its node, and the node after a value's
+  subtree is `next` nodes further for an array or object, and the next node otherwise (`document_data::after`). Views
+  step from element to element this way and skip whole subtrees in constant time.
+- **Offsets** are 32 bits wide, so a document is limited to 4 GiB (`out_of_range.416`).
+
+For example, `#!json {"a": [1, 2.5]}` becomes five nodes. Each node's elements follow it, and `next` leads from an
+array or object past its subtree:
+
+```mermaid
+flowchart LR
+    n0["0: object<br>len 1, next 5"]
+    n1["1: key a"]
+    n2["2: array<br>len 2, next 3"]
+    n3["3: unsigned integer 1"]
+    n4["4: float 2.5"]
+    e(["end"])
+    n0 --> n1 --> n2 --> n3 --> n4 --> e
+    n0 -. next .-> e
+    n2 -. next .-> e
+```
+
+| Node | `kind`               | `extra` | `off` | `len` | `next` |
+|------|----------------------|---------|-------|-------|--------|
+| 0    | 1 (object)           | 0       | 0     | 1     | 5      |
+| 1    | 3 (string)           | 0       | 2     | 1     | 0      |
+| 2    | 2 (array)            | 0       | 6     | 2     | 3      |
+| 3    | 6 (unsigned integer) | 0x0001  | 7     | -     | -      |
+| 4    | 7 (float)            | 0x0101  | 10    | 3     | 0      |
+
+All `flags` are 0. The integer's bytes 8-15 hold its value, 1; its `extra` says it has one digit. The float's `extra`
+says it has one integer and one fraction digit, and its `len` is that of the token `2.5`.
 
 ## Input adapters
 

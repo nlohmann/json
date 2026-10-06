@@ -118,12 +118,15 @@ jobs:
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json.json -s .
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json_fwd.json -s .
           cp include/nlohmann/json_literals.hpp $INCLUDE_DIR/json_literals.hpp
+          # the configuration of json_view.hpp comes with the pull request until
+          # it is on develop; the tool itself is still develop's
+          python3 $TOOL_DIR/amalgamate.py -c $MAIN_DIR/tools/amalgamate/config_json_view.json -s .
 
           # the header list of the Bazel "json" target must match the files in include/
           cmake -P cmake/scripts/gen_bazel_build_file.cmake
 
           ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=none --quiet \
-            $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json_fwd.hpp
+            $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json_fwd.hpp $INCLUDE_DIR/json_view.hpp
 
           # fail loudly if a directory is renamed or removed: find would only warn
           # about the missing path and silently drop its files from the check
