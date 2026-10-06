@@ -25,6 +25,7 @@
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <map> // map
@@ -81,9 +82,11 @@
 
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy
 #include <new> // operator new, placement new
 #include <string> // string
+#include <vector> // vector
 
 // #include <nlohmann/json.hpp>
 // #include <nlohmann/detail/view/macro_scope.hpp>
@@ -279,6 +282,17 @@ struct document_data
     std::size_t inline_cap = 0;
     std::string arena{}; ///< decoded strings that contained escapes // NOLINT(readability-redundant-member-init)
     std::string owned{}; ///< owned copy of the input, if any // NOLINT(readability-redundant-member-init)
+
+    // hash indexes of large objects (see object_index.hpp)
+    static constexpr std::uint32_t index_min_members = 128;
+    struct object_index
+    {
+        std::size_t start;  ///< first slot in index_slots
+        std::uint32_t mask; ///< slot count - 1 (a power of two minus one)
+    };
+    std::vector<object_index> indexes{}; // NOLINT(readability-redundant-member-init)
+    std::vector<std::uint32_t> index_slots{}; // NOLINT(readability-redundant-member-init)
+    std::vector<std::uint32_t> large_objects{}; ///< positions of the objects to index (noted while parsing) // NOLINT(readability-redundant-member-init)
     std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
     bool discarded = true;
 
@@ -306,7 +320,7 @@ struct document_data
         }
     };
 
-    document_data() noexcept = default;
+    document_data() = default;
     document_data(const document_data&) = delete;
     document_data(document_data&&) = delete;
     document_data& operator=(const document_data&) = delete;
@@ -395,6 +409,344 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/json.hpp>
 // #include <nlohmann/detail/view/macro_scope.hpp>
 
+// #include <nlohmann/detail/view/simd.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2018-2025 The simdjson authors <https://github.com/simdjson/simdjson>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <array> // array
+#include <atomic> // atomic
+#include <cstddef> // size_t
+#include <cstdint> // uint8_t, uint64_t
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+
+// Vector code for long runs of string bytes. NEON (AArch64) and SSE2 (x86-64)
+// belong to the baseline instruction sets and are used by default. The vector
+// UTF-8 check needs NEON or SSSE3. SSSE3 is not part of x86-64, and the code
+// must not depend on the flags of a translation unit (two translation units
+// with different flags would have different definitions of the same inline
+// functions): the check is compiled for SSSE3 with a function attribute and
+// used where the CPU has SSSE3 (all x86-64 CPUs since about 2011), else the
+// portable check. JSON_VIEW_USE_SSSE3 skips the CPU check (for code compiled
+// for SSSE3 anyway); JSON_VIEW_NO_SIMD selects the portable code.
+#if !defined(JSON_VIEW_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && NLOHMANN_VIEW_LITTLE_ENDIAN
+    #include <arm_neon.h>
+    #define NLOHMANN_VIEW_NEON 1
+#else
+    #define NLOHMANN_VIEW_NEON 0
+#endif
+#if !defined(JSON_VIEW_NO_SIMD) && !NLOHMANN_VIEW_NEON && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
+    #include <emmintrin.h>
+    #define NLOHMANN_VIEW_SSE2 1
+#else
+    #define NLOHMANN_VIEW_SSE2 0
+#endif
+#if NLOHMANN_VIEW_SSE2 && defined(JSON_VIEW_USE_SSSE3)
+    #include <tmmintrin.h>
+    #define NLOHMANN_VIEW_SSSE3 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#else
+    #define NLOHMANN_VIEW_SSSE3 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#endif
+#if NLOHMANN_VIEW_SSE2 && !NLOHMANN_VIEW_SSSE3 && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
+    // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3)
+    #include <cpuid.h>
+    #include <tmmintrin.h>
+    #define NLOHMANN_VIEW_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define NLOHMANN_VIEW_SSSE3_TARGET __attribute__((target("ssse3")))
+#elif NLOHMANN_VIEW_SSE2 && !NLOHMANN_VIEW_SSSE3 && defined(_MSC_VER)
+    // (MSVC compiles intrinsics of any instruction set)
+    #include <intrin.h>
+    #include <tmmintrin.h>
+    #define NLOHMANN_VIEW_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define NLOHMANN_VIEW_SSSE3_TARGET
+#else
+    #define NLOHMANN_VIEW_SSSE3_DISPATCH 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define NLOHMANN_VIEW_SSSE3_TARGET
+#endif
+#define NLOHMANN_VIEW_VECTOR (NLOHMANN_VIEW_NEON || NLOHMANN_VIEW_SSE2)
+#define NLOHMANN_VIEW_VECTOR_UTF8 (NLOHMANN_VIEW_NEON || NLOHMANN_VIEW_SSSE3 || NLOHMANN_VIEW_SSSE3_DISPATCH)
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+#if NLOHMANN_VIEW_VECTOR
+/*!
+@brief the first byte of a string run that is a quote, a backslash, a control
+character, or not ASCII, 16 bytes per step
+
+Stops at such a byte, or where fewer than 16 bytes are left (the caller tells
+the two apart). A signed compare with 0x20 finds control characters and
+non-ASCII bytes at once.
+*/
+NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (e - p >= 16)
+    {
+#if NLOHMANN_VIEW_NEON
+        const uint8x16_t in = vld1q_u8(p);
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
+                                            vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
+        // one nibble per byte (the usual NEON replacement of x86's movemask, see
+        // D. Kutenin, "Porting x86 vector bitmask optimizations to Arm NEON", 2022)
+        const std::uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+        if (bits != 0)
+        {
+            return p + (count_trailing_zeros(bits) >> 2u);
+        }
+#else
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p)));
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
+        const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+        if (bits != 0)
+        {
+            return p + count_trailing_zeros(bits);
+        }
+#endif
+        p += 16;
+    }
+    return p;
+}
+#endif
+
+#if NLOHMANN_VIEW_SSSE3_DISPATCH
+/// whether the CPU has SSSE3 (CPUID leaf 1, ECX bit 9)
+inline bool cpu_ssse3() noexcept
+{
+#if defined(_MSC_VER) && !defined(__clang__)
+    std::array<int, 4> regs {{}};
+    __cpuid(regs.data(), 1);
+    return (static_cast<unsigned>(regs[2]) & (1u << 9u)) != 0;
+#else
+    unsigned eax = 0;
+    unsigned ebx = 0;
+    unsigned ecx = 0;
+    unsigned edx = 0;
+    return __get_cpuid(1, &eax, &ebx, &ecx, &edx) != 0 && (ecx & (1u << 9u)) != 0;
+#endif
+}
+
+/// whether the CPU has SSSE3, asked once: the answer is kept in an atomic
+/// that is initialized at compile time, so that neither a guard of a local
+/// static nor a global constructor is needed (threads that ask at the same
+/// time all store the same answer)
+NLOHMANN_VIEW_ALWAYS_INLINE bool cpu_has_ssse3() noexcept
+{
+    static std::atomic<int> known{0}; // 0: not asked yet, 1: no, 2: yes
+    int state = known.load(std::memory_order_relaxed);
+    if (NLOHMANN_VIEW_UNLIKELY(state == 0))
+    {
+        state = cpu_ssse3() ? 2 : 1;
+        known.store(state, std::memory_order_relaxed);
+    }
+    return state == 2;
+}
+#endif
+
+#if NLOHMANN_VIEW_VECTOR_UTF8
+/// Tables of the UTF-8 check of J. Keiser and D. Lemire, "Validating UTF-8 In
+/// Less Than One Instruction Per Byte" (2021), as in simdjson ("lookup4"): each
+/// maps a nibble (high and low nibble of the previous byte, high nibble of the
+/// current byte) to the errors it allows; a byte pair is ill-formed if all
+/// three have an error bit in common.
+template<typename Dummy = void>
+struct utf8_lookup4
+{
+    static constexpr std::uint8_t too_short = 1u << 0u, too_long = 1u << 1u, overlong_3 = 1u << 2u, too_large = 1u << 3u;
+    static constexpr std::uint8_t surrogate = 1u << 4u, overlong_2 = 1u << 5u, too_large_1000 = 1u << 6u, overlong_4 = 1u << 6u;
+    static constexpr std::uint8_t two_conts = 1u << 7u, carry = too_short | too_long | two_conts;
+    static const std::array<std::uint8_t, 16> byte_1_high;
+    static const std::array<std::uint8_t, 16> byte_1_low;
+    static const std::array<std::uint8_t, 16> byte_2_high;
+};
+
+template<typename Dummy>
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_1_high =
+{
+    {
+        too_long, too_long, too_long, too_long, too_long, too_long, too_long, too_long,
+        two_conts, two_conts, two_conts, two_conts,
+        too_short | overlong_2, too_short, too_short | overlong_3 | surrogate, too_short | too_large | too_large_1000 | overlong_4
+    }
+};
+
+template<typename Dummy>
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_1_low =
+{
+    {
+        carry | overlong_3 | overlong_2 | overlong_4, carry | overlong_2, carry, carry,
+        carry | too_large, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
+        carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
+        carry | too_large | too_large_1000, carry | too_large | too_large_1000 | surrogate, carry | too_large | too_large_1000, carry | too_large | too_large_1000
+    }
+};
+
+template<typename Dummy>
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_2_high =
+{
+    {
+        too_short, too_short, too_short, too_short, too_short, too_short, too_short, too_short,
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large_1000 | overlong_4),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
+        too_short, too_short, too_short, too_short
+    }
+};
+
+/// the end of scan_string_vector from block, where the vector loop stopped
+/// (ill-formed UTF-8, or fewer than 16 bytes left): one byte or sequence at a
+/// time, from the start of a sequence that crosses into the block
+inline const unsigned char* scan_string_finish(const unsigned char* p, const unsigned char* block, const unsigned char* e, const std::uint8_t* plain) noexcept
+{
+    for (int i = 1; i <= 3 && block - i >= p; ++i)
+    {
+        const unsigned char c = block[-i];
+        if (c < 0x80)
+        {
+            break;
+        }
+        if (c >= 0xC0)
+        {
+            const int len = 2 + static_cast<int>(c >= 0xE0) + static_cast<int>(c >= 0xF0);
+            if (len > i)
+            {
+                block -= i;
+            }
+            break;
+        }
+    }
+    for (p = block; p != e;)
+    {
+        if (*p < 0x80)
+        {
+            if (plain[*p] == 0)
+            {
+                return p;
+            }
+            ++p;
+            continue;
+        }
+        const std::size_t n = validate_one_utf8(p, static_cast<std::size_t>(e - p));
+        if (n == 0)
+        {
+            return p;
+        }
+        p += n;
+    }
+    return p;
+}
+
+/*!
+@brief the rest of a string from p (a character boundary), 16 bytes per step
+
+The first quote, backslash, or control character is found with vector
+compares, and the UTF-8 check covers the bytes up to it. Returns where the
+string scan stops, like scan_string_run: before ill-formed UTF-8 and for the
+last bytes of the input, the bytes are checked one sequence at a time. Out of
+line, so that no constants of the check occupy registers in the parse loop.
+On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()).
+*/
+NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e, const std::uint8_t* plain) noexcept
+{
+    using lookup = utf8_lookup4<>;
+    const unsigned char* block = p;
+#if NLOHMANN_VIEW_NEON
+    const uint8x16_t t1h = vld1q_u8(lookup::byte_1_high.data());
+    const uint8x16_t t1l = vld1q_u8(lookup::byte_1_low.data());
+    const uint8x16_t t2h = vld1q_u8(lookup::byte_2_high.data());
+    uint8x16_t prev = vdupq_n_u8(0);
+    while (e - block >= 16)
+    {
+        const uint8x16_t in = vld1q_u8(block);
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))), vcltq_u8(in, vdupq_n_u8(0x20)));
+        const uint8x16_t prev1 = vextq_u8(prev, in, 15);
+        const uint8x16_t sc = vandq_u8(vandq_u8(vqtbl1q_u8(t1h, vshrq_n_u8(prev1, 4)), vqtbl1q_u8(t1l, vandq_u8(prev1, vdupq_n_u8(0x0F)))), vqtbl1q_u8(t2h, vshrq_n_u8(in, 4)));
+        const uint8x16_t must23 = vorrq_u8(vqsubq_u8(vextq_u8(prev, in, 14), vdupq_n_u8(0xE0 - 0x80)), vqsubq_u8(vextq_u8(prev, in, 13), vdupq_n_u8(0xF0 - 0x80)));
+        const uint8x16_t err = veorq_u8(vandq_u8(must23, vdupq_n_u8(0x80)), sc);
+        const std::uint64_t special_bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+        const std::uint64_t err_bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(vtstq_u8(err, err)), 4)), 0);
+        if (special_bits != 0)
+        {
+            // errors up to the special byte count (an incomplete sequence
+            // before a quote shows at the quote); the bytes after it do not
+            const unsigned k = static_cast<unsigned>(count_trailing_zeros(special_bits)) >> 2u;
+            const std::uint64_t upto = k == 15 ? ~std::uint64_t{0} :
+                                       (std::uint64_t{1} << (4u * (k + 1u))) - 1u;
+            if ((err_bits & upto) == 0)
+            {
+                return block + k;
+            }
+            break;
+        }
+        if (err_bits != 0)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#else
+    // the same with SSSE3 (pshufb for the table lookups; nibbles from 16-bit
+    // shifts, as there are no byte shifts)
+    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data())));
+    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data())));
+    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data())));
+    const __m128i nibble = _mm_set1_epi8(0x0F);
+    const __m128i zero = _mm_setzero_si128();
+    __m128i prev = zero;
+    while (e - block >= 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block)));
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_cmpeq_epi8(_mm_subs_epu8(in, _mm_set1_epi8(0x1F)), zero)); // in < 0x20
+        const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
+        const __m128i sc = _mm_and_si128(_mm_and_si128(_mm_shuffle_epi8(t1h, _mm_and_si128(_mm_srli_epi16(prev1, 4), nibble)),
+                                         _mm_shuffle_epi8(t1l, _mm_and_si128(prev1, nibble))),
+                                         _mm_shuffle_epi8(t2h, _mm_and_si128(_mm_srli_epi16(in, 4), nibble)));
+        const __m128i must23 = _mm_or_si128(_mm_subs_epu8(_mm_alignr_epi8(in, prev, 14), _mm_set1_epi8(0xE0 - 0x80)),
+                                            _mm_subs_epu8(_mm_alignr_epi8(in, prev, 13), _mm_set1_epi8(0xF0 - 0x80)));
+        const __m128i err = _mm_xor_si128(_mm_and_si128(must23, _mm_set1_epi8(static_cast<char>(-128))), sc);
+        const auto special_bits = static_cast<unsigned>(_mm_movemask_epi8(special));
+        const auto err_bits = ~static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(err, zero))) & 0xFFFFu;
+        if (special_bits != 0)
+        {
+            const unsigned k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
+            if ((err_bits & ((2u << k) - 1u)) == 0)
+            {
+                return block + k;
+            }
+            break;
+        }
+        if (err_bits != 0)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#endif
+    return scan_string_finish(p, block, e, plain);
+}
+#endif
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 
 // Scanning primitives of the view's parser. The unrolled checks at fixed
 // offsets follow yyjson (https://github.com/ibireme/yyjson, MIT license): the
@@ -441,20 +793,43 @@ NLOHMANN_VIEW_ALWAYS_INLINE std::uint16_t load16(const unsigned char* p) noexcep
 
 /// Advance over plain string bytes and well-formed UTF-8. Stops at a quote,
 /// a backslash, a control character, ill-formed UTF-8, or the end. The first
-/// 16 bytes are checked one by one, so that the position advances by
-/// constants in predicted branches (most strings are short); longer runs
-/// continue eight bytes at a time.
+/// bytes are checked one by one, so that the position advances by constants
+/// in predicted branches: 16 for keys, whose lengths repeat from record to
+/// record, and 8 for string values (Value) where a vector loop follows, as
+/// their lengths vary more. Longer runs continue 16 bytes at a time with NEON
+/// or SSE2, else eight bytes at a time. With SSE2, the run is checked 16 bytes
+/// at a time from its first byte instead: on x86-64, one compare that finds
+/// the end of most keys and short values is faster than a branch per byte (on
+/// AArch64, where a NEON mask costs more and branches predict well, slower).
+template<bool Value = false>
 NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned char* p, const unsigned char* e) noexcept
 {
     const std::uint8_t* plain = string_plain();
     for (;;)
     {
+#if NLOHMANN_VIEW_SSE2
+        p = vector_plain_run(p, e);
+#else
         if (e - p >= 16)
         {
 #define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(plain[p[i]] != 0)) {} else { p += (i); goto stop; }
-            NLOHMANN_VIEW_REPEAT16(NLOHMANN_VIEW_STEP)
+            NLOHMANN_VIEW_STEP(0) NLOHMANN_VIEW_STEP(1) NLOHMANN_VIEW_STEP(2) NLOHMANN_VIEW_STEP(3)
+            NLOHMANN_VIEW_STEP(4) NLOHMANN_VIEW_STEP(5) NLOHMANN_VIEW_STEP(6) NLOHMANN_VIEW_STEP(7)
+            if (!Value || !NLOHMANN_VIEW_VECTOR)
+            {
+                NLOHMANN_VIEW_STEP(8) NLOHMANN_VIEW_STEP(9) NLOHMANN_VIEW_STEP(10) NLOHMANN_VIEW_STEP(11)
+                NLOHMANN_VIEW_STEP(12) NLOHMANN_VIEW_STEP(13) NLOHMANN_VIEW_STEP(14) NLOHMANN_VIEW_STEP(15)
+                p += 8;
+            }
 #undef NLOHMANN_VIEW_STEP
-            p += 16;
+            p += 8;
+#if NLOHMANN_VIEW_VECTOR
+            p = vector_plain_run(p, e);
+            if (p != e && plain[*p] == 0)
+            {
+                goto stop;
+            }
+#else
             while (e - p >= 8)
             {
                 const std::uint64_t special = swar_string_special(read_eight_bytes(p));
@@ -465,8 +840,10 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
                 }
                 p += 8;
             }
+#endif
             continue;
         }
+#endif
         while (p != e && plain[*p] != 0)
         {
             ++p;
@@ -475,11 +852,23 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
         {
             return p;
         }
+#if !NLOHMANN_VIEW_SSE2
 stop:
+#endif
         if (*p < 0x80)
         {
             return p; // quote, backslash, or control character
         }
+#if NLOHMANN_VIEW_VECTOR_UTF8
+#if NLOHMANN_VIEW_SSSE3_DISPATCH
+        if (NLOHMANN_VIEW_LIKELY(cpu_has_ssse3()))
+#endif
+        {
+            // non-ASCII: the vector check, out of line
+            return scan_string_vector(p, e, plain);
+        }
+#endif
+#if !NLOHMANN_VIEW_VECTOR_UTF8 || NLOHMANN_VIEW_SSSE3_DISPATCH
         // non-ASCII: a run of well-formed sequences (the library's check, so
         // that exactly what json::parse accepts is accepted)
         do
@@ -492,6 +881,7 @@ stop:
             p += n;
         }
         while (p != e && *p >= 0x80);
+#endif
     }
 }
 
@@ -659,6 +1049,13 @@ class builder
     // inline for the first 64 levels
     frame shallow[64]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): not initialized on purpose; filled as containers open
     std::vector<frame> deep{};
+
+    /// remember an object to index after parsing (out of line, so that the
+    /// parse loop only has a call for it)
+    NLOHMANN_VIEW_NOINLINE void note_large_object(std::uint32_t idx)
+    {
+        doc.large_objects.push_back(idx);
+    }
 
     NLOHMANN_VIEW_NOINLINE bool fail(error_code c, const unsigned char* at) noexcept
     {
@@ -1045,7 +1442,7 @@ class builder
     switch (cur())                                                                              \
     {                                                                                           \
         case '"':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!string())) { return false; }                      \
+            if (NLOHMANN_VIEW_UNLIKELY(!string<true>())) { return false; }                \
             goto NEXT;                                                                          \
         case '{':                                                                               \
             open(value_t::object);                                                              \
@@ -1129,7 +1526,7 @@ obj_key:
             {
                 return fail(error_code::expected_key);
             }
-            if (NLOHMANN_VIEW_UNLIKELY(!string()))
+            if (NLOHMANN_VIEW_UNLIKELY(!string<false>()))
             {
                 return false;
             }
@@ -1170,18 +1567,26 @@ obj_next:
                 if (enabled(TrailingCommas) && cur() == '}')
                 {
                     ++p;
-                    goto close_container;
+                    goto close_object;
                 }
                 goto obj_key;
             }
             if (cur() == '}')
             {
                 ++p;
-                goto close_container;
+                goto close_object;
             }
             return fail(error_code::expected_object_end);
 
 #undef NLOHMANN_VIEW_VALUE
+
+close_object:
+            // a large object gets a hash index (objects only, so that closing
+            // an array pays nothing for this)
+            if (NLOHMANN_VIEW_UNLIKELY(cur_count >= document_data::index_min_members))
+            {
+                cold.note_large_object(cur_idx);
+            }
 
 close_container:
             close();
@@ -1232,7 +1637,7 @@ root_done:
             switch (cur())
             {
                 case '"':
-                    return string();
+                    return string<true>();
                 case 't':
                     return literal("true", 4, value_t::boolean, node_flags::is_true);
                 case 'f':
@@ -1355,14 +1760,19 @@ indent_done:
             const auto idx = static_cast<std::uint32_t>(emit(k, 0, 0, static_cast<std::size_t>(p - b), 0) - base);
             if (depth != 0)
             {
-                const frame f = {cur_idx, cur_count, cur_is_object};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    cold.shallow[depth - 1] = f;
+                    // field by field: a frame put together on the stack and
+                    // copied would be read back wider than it was written,
+                    // and that load waits until the stores are done
+                    frame& f = cold.shallow[depth - 1];
+                    f.idx = cur_idx;
+                    f.count = cur_count;
+                    f.is_object = cur_is_object;
                 }
                 else
                 {
-                    cold.deep.push_back(f);
+                    cold.deep.push_back(frame{cur_idx, cur_count, cur_is_object});
                 }
             }
             ++depth;
@@ -1378,19 +1788,21 @@ indent_done:
             n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
             if (--depth != 0)
             {
-                frame f{};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    f = cold.shallow[depth - 1];
+                    const frame& f = cold.shallow[depth - 1];
+                    cur_idx = f.idx;
+                    cur_count = f.count;
+                    cur_is_object = f.is_object;
                 }
                 else
                 {
-                    f = cold.deep.back();
+                    const frame f = cold.deep.back();
                     cold.deep.pop_back();
+                    cur_idx = f.idx;
+                    cur_count = f.count;
+                    cur_is_object = f.is_object;
                 }
-                cur_idx = f.idx;
-                cur_count = f.count;
-                cur_is_object = f.is_object;
             }
         }
 
@@ -1519,12 +1931,13 @@ indent_done:
             return true;
         }
 
-        /// a string (value or key) at p
+        /// a string at p: a value (Value) or a key
+        template<bool Value>
         NLOHMANN_VIEW_ALWAYS_INLINE bool string()
         {
             ++p; // opening quote
             const unsigned char* const s = p;
-            p = scan_string_run(p, e);
+            p = scan_string_run<Value>(p, e);
             if (NLOHMANN_VIEW_LIKELY(p != e && *p == '"'))
             {
                 emit(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
@@ -2377,6 +2790,142 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/node.hpp>
 
+// #include <nlohmann/detail/view/object_index.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstddef> // size_t
+#include <cstdint> // uint32_t, uint64_t
+#include <cstring> // memcmp
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/document_data.hpp>
+
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+// #include <nlohmann/detail/view/node.hpp>
+
+
+// Hash indexes of large objects, so that a lookup does not compare thousands
+// of keys (as Boost.JSON switches from a linear search to a hash table for
+// large objects). An object with document_data::index_min_members members or
+// more gets an open-addressing table after parsing; its node stores the
+// number of the table (1-based) in `extra`. A slot holds the offset of a key
+// node from its object node (0: empty). Of duplicate keys, the first is kept,
+// as for the linear search.
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+/// hash of a key: its bytes, eight at a time, in a fixed byte order
+inline std::uint64_t key_hash(const char* s, std::size_t n) noexcept
+{
+    std::uint64_t h = 0x9E3779B97F4A7C15u * (n + 1);
+    const auto* p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    while (n >= 8)
+    {
+        h = (h ^ read_eight_bytes(p)) * 0xBF58476D1CE4E5B9u;
+        h ^= h >> 29u;
+        p += 8;
+        n -= 8;
+    }
+    std::uint64_t w = 0;
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        w |= static_cast<std::uint64_t>(p[i]) << (8u * i);
+    }
+    h = (h ^ w) * 0x94D049BB133111EBu;
+    return h ^ (h >> 31u);
+}
+
+/// build the table of a large object
+inline void build_object_index(document_data& d, node* obj)
+{
+    if (d.indexes.size() >= 0xFFFFu)
+    {
+        return; // LCOV_EXCL_LINE (the number must fit `extra`; more large objects are searched linearly)
+    }
+    std::size_t cap = 16;
+    while (cap < 2 * static_cast<std::size_t>(obj->len))
+    {
+        cap *= 2;
+    }
+    const std::size_t start = d.index_slots.size();
+    d.index_slots.resize(start + cap, 0);
+    std::uint32_t* const slots = d.index_slots.data() + start;
+    const std::size_t mask = cap - 1;
+    for (const node* k = document_data::first_child(obj), *end = document_data::child_end(obj); k != end; k = document_data::after(k + 1))
+    {
+        const char* const key = d.str(*k);
+        const std::uint64_t hash = key_hash(key, k->len); // (a cast of the call would be useless where std::uint64_t is std::size_t)
+        std::size_t i = static_cast<std::size_t>(hash) & mask;
+        bool duplicate = false;
+        while (slots[i] != 0)
+        {
+            const node* const other = obj + slots[i];
+            if (other->len == k->len && (k->len == 0 || std::memcmp(d.str(*other), key, k->len) == 0))
+            {
+                duplicate = true; // keep the first
+                break;
+            }
+            i = (i + 1) & mask;
+        }
+        if (!duplicate)
+        {
+            slots[i] = static_cast<std::uint32_t>(k - obj);
+        }
+    }
+    d.indexes.push_back(document_data::object_index{start, static_cast<std::uint32_t>(mask)});
+    obj->extra = static_cast<std::uint16_t>(d.indexes.size());
+}
+
+/// build the tables of the large objects the parser noted
+inline void build_object_indexes(document_data& d)
+{
+    for (const std::uint32_t i : d.large_objects)
+    {
+        build_object_index(d, d.tape + i);
+    }
+}
+
+/// the key node of the first member with this key of an indexed object, or
+/// nullptr
+inline const node* find_indexed(const document_data& d, const node* obj, const char* key, std::size_t n) noexcept
+{
+    const document_data::object_index& ix = d.indexes[obj->extra - 1u];
+    const std::uint32_t* const slots = d.index_slots.data() + ix.start;
+    const std::uint64_t hash = key_hash(key, n); // (a cast of the call would be useless where std::uint64_t is std::size_t)
+    std::size_t i = static_cast<std::size_t>(hash) & ix.mask;
+    for (;;)
+    {
+        const std::uint32_t s = slots[i];
+        if (s == 0)
+        {
+            return nullptr;
+        }
+        const node* const k = obj + s;
+        if (k->len == n && (n == 0 || std::memcmp(d.str(*k), key, n) == 0))
+        {
+            return k;
+        }
+        i = (i + 1) & ix.mask;
+    }
+}
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -2446,6 +2995,10 @@ class short_key
 /// nullptr; most keys are rejected by their length, from the index alone
 inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
+    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0))
+    {
+        return find_indexed(d, object, key, n); // a large object
+    }
     const node* const end = document_data::child_end(object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
@@ -2804,6 +3357,8 @@ BasicJsonType materialize(const document_data& d, const node* n)
 NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/node.hpp>
+
+// #include <nlohmann/detail/view/object_index.hpp>
 
 // #include <nlohmann/detail/view/pointer.hpp>
 //     __ _____ _____ _____
@@ -4502,7 +5057,9 @@ class basic_json_document
         }
         return sizeof(document_data) + (m_data->inline_cap * sizeof(detail::view::node))
                + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
-               + m_data->arena.capacity() + m_data->owned.capacity();
+               + m_data->arena.capacity() + m_data->owned.capacity()
+               + (m_data->indexes.capacity() * sizeof(document_data::object_index)) + (m_data->index_slots.capacity() * sizeof(std::uint32_t))
+               + (m_data->large_objects.capacity() * sizeof(std::uint32_t));
     }
 
     /// release unused capacity of the index and the decoded strings; like
@@ -4572,6 +5129,9 @@ class basic_json_document
         d.size = size;
         d.tape_size = 0;
         d.arena.clear();
+        d.indexes.clear();
+        d.index_slots.clear();
+        d.large_objects.clear();
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
@@ -4587,6 +5147,7 @@ class basic_json_document
         {
             d.base[0] = d.src;
             d.base[1] = d.arena.data();
+            detail::view::build_object_indexes(d);
             d.discarded = false;
             return;
         }
@@ -4754,6 +5315,13 @@ class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert
 #undef NLOHMANN_VIEW_THROW
 #undef NLOHMANN_VIEW_LITTLE_ENDIAN
 #undef NLOHMANN_VIEW_REPEAT16
+#undef NLOHMANN_VIEW_NEON
+#undef NLOHMANN_VIEW_SSE2
+#undef NLOHMANN_VIEW_SSSE3
+#undef NLOHMANN_VIEW_SSSE3_DISPATCH
+#undef NLOHMANN_VIEW_SSSE3_TARGET
+#undef NLOHMANN_VIEW_VECTOR
+#undef NLOHMANN_VIEW_VECTOR_UTF8
 
 
 #endif  // INCLUDE_NLOHMANN_JSON_VIEW_HPP_

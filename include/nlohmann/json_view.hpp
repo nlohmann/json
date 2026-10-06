@@ -25,6 +25,7 @@
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <map> // map
@@ -56,6 +57,7 @@
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/materialize.hpp>
 #include <nlohmann/detail/view/node.hpp>
+#include <nlohmann/detail/view/object_index.hpp>
 #include <nlohmann/detail/view/pointer.hpp>
 #include <nlohmann/detail/view/serializer.hpp>
 #include <nlohmann/detail/view/string_ref.hpp>
@@ -926,7 +928,9 @@ class basic_json_document
         }
         return sizeof(document_data) + (m_data->inline_cap * sizeof(detail::view::node))
                + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
-               + m_data->arena.capacity() + m_data->owned.capacity();
+               + m_data->arena.capacity() + m_data->owned.capacity()
+               + (m_data->indexes.capacity() * sizeof(document_data::object_index)) + (m_data->index_slots.capacity() * sizeof(std::uint32_t))
+               + (m_data->large_objects.capacity() * sizeof(std::uint32_t));
     }
 
     /// release unused capacity of the index and the decoded strings; like
@@ -996,6 +1000,9 @@ class basic_json_document
         d.size = size;
         d.tape_size = 0;
         d.arena.clear();
+        d.indexes.clear();
+        d.index_slots.clear();
+        d.large_objects.clear();
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
@@ -1011,6 +1018,7 @@ class basic_json_document
         {
             d.base[0] = d.src;
             d.base[1] = d.arena.data();
+            detail::view::build_object_indexes(d);
             d.discarded = false;
             return;
         }

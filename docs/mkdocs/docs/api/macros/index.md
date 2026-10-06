@@ -37,6 +37,8 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
 - [**JSON_USE_GLOBAL_UDLS**](json_use_global_udls.md) - place user-defined string literals (UDLs) into the global namespace
 - [**JSON_USE_SIMDUTF**](json_use_simdutf.md) - use the simdutf library to accelerate UTF-8 validation
+- [**JSON_VIEW_NO_SIMD**](json_view_no_simd.md) - use only portable code in the parser of `json_view.hpp`
+- [**JSON_VIEW_USE_SSSE3**](json_view_use_ssse3.md) - validate non-ASCII strings with SSSE3 in the parser of `json_view.hpp`
 
 ## Library version
 

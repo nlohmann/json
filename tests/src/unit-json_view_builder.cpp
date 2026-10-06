@@ -17,6 +17,7 @@
 #endif
 using nlohmann::json;
 
+#include <array>
 #include <cstdint>
 #include <fstream>
 #include <map>
@@ -137,6 +138,32 @@ void check_same(const std::string& text)
             if (b.ok && accepted)
             {
                 CHECK(value_of(b) == json::parse(text, nullptr, true, comments, trailing_commas));
+            }
+        }
+    }
+}
+
+// a string value and a key must be accepted or rejected as json::parse does,
+// and give its value (cheaper than check_same: the options do not matter)
+void check_string(const std::string& content)
+{
+    for (const std::string& text :
+            {
+                "[\"" + content + "\"]", "{\"" + content + "\":1}"
+            })
+    {
+        const bool accepted = json::accept(text);
+        for (const bool sentinel :
+                {
+                    true, false
+                })
+        {
+            const built b = build(text, false, false, sentinel);
+            if (b.ok != accepted || (accepted && value_of(b) != json::parse(text)))
+            {
+                CAPTURE(text)
+                CHECK(b.ok == accepted);
+                CHECK((b.ok && accepted ? value_of(b) == json::parse(text) : true));
             }
         }
     }
@@ -398,6 +425,84 @@ TEST_CASE("json_view builder")
             const built b = build(text, false, false, true);
             REQUIRE(b.ok);
             CHECK(value_of(b) == json::parse(text));
+        }
+    }
+}
+
+TEST_CASE("json_view builder: strings across vector blocks")
+{
+    // Strings are scanned 8 or 16 bytes at a time (NEON, SSE2, or SWAR) and
+    // non-ASCII text with the vector UTF-8 check (NEON, SSSE3) or one sequence
+    // at a time. Sequences are placed so that they start at every offset
+    // around the block boundaries of keys (16, 32) and values (8, 24), with
+    // text of several lengths after them.
+    const std::array<std::size_t, 16> prefixes = {{0, 6, 7, 8, 13, 14, 15, 16, 21, 22, 23, 24, 29, 30, 31, 32}};
+    const std::array<std::size_t, 3> suffixes = {{0, 3, 17}};
+    const auto around = [&](const std::string & seq, std::size_t prefix, std::size_t suffix)
+    {
+        return std::string(prefix, 'a') + seq + std::string(suffix, 'b');
+    };
+
+    SECTION("every two-byte sequence")
+    {
+        for (unsigned lead = 0x80; lead <= 0xFF; ++lead)
+        {
+            for (unsigned second = 0; second <= 0xFF; ++second)
+            {
+                if (second == '"' || second == '\\')
+                {
+                    continue;
+                }
+                const std::string seq = {static_cast<char>(lead), static_cast<char>(second)};
+                check_string(around(seq, prefixes[(lead + second) % 16], suffixes[second % 3]));
+            }
+        }
+    }
+
+    SECTION("three- and four-byte sequences")
+    {
+        const std::array<unsigned, 8> conts = {{0x7F, 0x80, 0x8F, 0x90, 0x9F, 0xA0, 0xBF, 0xC0}};
+        for (unsigned lead = 0xE0; lead <= 0xF7; ++lead)
+        {
+            for (const unsigned b2 : conts)
+            {
+                for (const unsigned b3 : conts)
+                {
+                    for (const std::size_t prefix : prefixes)
+                    {
+                        std::string seq = {static_cast<char>(lead), static_cast<char>(b2), static_cast<char>(b3)};
+                        if (lead >= 0xF0)
+                        {
+                            seq += static_cast<char>(prefix % 2 == 0 ? 0x80 : 0xBF);
+                        }
+                        check_string(around(seq, prefix, suffixes[prefix % 3]));
+                        // cut short before the end of the string
+                        check_string(around(seq.substr(0, seq.size() - 1), prefix, suffixes[prefix % 3]));
+                    }
+                }
+            }
+        }
+    }
+
+    SECTION("long runs of text with one damaged byte")
+    {
+        const std::array<const char*, 7> chars = {{"a", "\xc3\xa9", "\xe3\x81\x82", "\xf0\x9f\x98\x80", "\xed\x9f\xbf", "\xef\xbf\xbf", "\xf4\x8f\xbf\xbf"}};
+        const std::array<char, 11> damage = {{'\x80', '\xbf', '\xc0', '\xc1', '\xe0', '\xed', '\xf5', '\xff', '\x1f', '"', '\\'}};
+        std::mt19937 rng(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+        for (int i = 0; i < 4000; ++i)
+        {
+            std::string text;
+            const auto n = rng() % 60;
+            for (unsigned k = 0; k < n; ++k)
+            {
+                text += chars[rng() % chars.size()];
+            }
+            check_string(text);
+            if (!text.empty())
+            {
+                text[rng() % text.size()] = damage[rng() % damage.size()];
+                check_string(text);
+            }
         }
     }
 }

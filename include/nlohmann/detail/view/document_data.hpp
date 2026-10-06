@@ -10,9 +10,11 @@
 
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy
 #include <new> // operator new, placement new
 #include <string> // string
+#include <vector> // vector
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
@@ -37,6 +39,17 @@ struct document_data
     std::size_t inline_cap = 0;
     std::string arena{}; ///< decoded strings that contained escapes // NOLINT(readability-redundant-member-init)
     std::string owned{}; ///< owned copy of the input, if any // NOLINT(readability-redundant-member-init)
+
+    // hash indexes of large objects (see object_index.hpp)
+    static constexpr std::uint32_t index_min_members = 128;
+    struct object_index
+    {
+        std::size_t start;  ///< first slot in index_slots
+        std::uint32_t mask; ///< slot count - 1 (a power of two minus one)
+    };
+    std::vector<object_index> indexes{}; // NOLINT(readability-redundant-member-init)
+    std::vector<std::uint32_t> index_slots{}; // NOLINT(readability-redundant-member-init)
+    std::vector<std::uint32_t> large_objects{}; ///< positions of the objects to index (noted while parsing) // NOLINT(readability-redundant-member-init)
     std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
     bool discarded = true;
 
@@ -64,7 +77,7 @@ struct document_data
         }
     };
 
-    document_data() noexcept = default;
+    document_data() = default;
     document_data(const document_data&) = delete;
     document_data(document_data&&) = delete;
     document_data& operator=(const document_data&) = delete;

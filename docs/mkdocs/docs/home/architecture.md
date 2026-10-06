@@ -196,7 +196,7 @@ packet-beta
 |-------|---------|------------|-------------------------------------------------------------------------------------------------------------------------------|
 | 0     | `kind`  | `uint8_t`  | the type, numbered as [`value_t`](../api/basic_json/value_t.md): 0 null, 1 object, 2 array, 3 string, 4 boolean, 5 signed integer, 6 unsigned integer, 7 float |
 | 1     | `flags` | `uint8_t`  | bits 0-1: where a string's bytes are (0: the source text, 1: the buffer of decoded strings, for strings with escapes); bit 2: the value of a boolean |
-| 2-3   | `extra` | `uint16_t` | numbers: the number of integer digits (low byte) and fraction digits (high byte), 255 for more; otherwise 0                      |
+| 2-3   | `extra` | `uint16_t` | numbers: the number of integer digits (low byte) and fraction digits (high byte), 255 for more; objects: the number of their hash index (1-based), or 0; otherwise 0 |
 | 4-7   | `off`   | `uint32_t` | where the value starts: the first byte after a string's opening quote (or its position in the buffer of decoded strings), the first byte of a number or literal, the bracket of an array or object |
 | 8-11  | `len`   | `uint32_t` | strings: the length after decoding; floats and literals: the length of the token; arrays and objects: the number of elements |
 | 12-15 | `next`  | `uint32_t` | arrays and objects: the number of nodes of the subtree, including the node itself                                              |
@@ -211,6 +211,11 @@ packet-beta
   subtree is `next` nodes further for an array or object, and the next node otherwise (`document_data::after`). Views
   step from element to element this way and skip whole subtrees in constant time.
 - **Offsets** are 32 bits wide, so a document is limited to 4 GiB (`out_of_range.416`).
+- **Large objects** (128 members or more) get a hash index after parsing
+  ([`detail/view/object_index.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/object_index.hpp)):
+  an open-addressing table whose slots hold the distance from the object's node to a key's node, so that a lookup does
+  not compare every key. The object's `extra` holds the number of its table. Only 65,535 tables fit into `extra`;
+  objects beyond them are searched linearly.
 
 For example, `#!json {"a": [1, 2.5]}` becomes five nodes. Each node's elements follow it, and `next` leads from an
 array or object past its subtree:

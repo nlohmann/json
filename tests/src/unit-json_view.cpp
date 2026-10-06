@@ -1277,3 +1277,60 @@ TEST_CASE("json_view comparison")
         CHECK(a.root() != json_document::parse(other).root());
     }
 }
+
+TEST_CASE("json_view large objects")
+{
+    // objects with 128 members or more are looked up with a hash index
+    for (const std::size_t members :
+            {
+                127u, 128u, 129u, 10000u
+            })
+    {
+        CAPTURE(members)
+        std::string text = "{";
+        for (std::size_t i = 0; i < members; ++i)
+        {
+            text += (i != 0 ? ",\"" : "\"") + std::string(i % 23, 'k') + std::to_string(i) + (i % 7 == 0 ? "\\n" : "") + "\":" + std::to_string(i);
+        }
+        text += R"(,"":"empty key","k1":"a duplicate of an earlier key"})";
+        const json_document d = json_document::parse(text);
+        const json_view v = d.root();
+        const json j = json::parse(text);
+        for (std::size_t i = 0; i < members; ++i)
+        {
+            const std::string key = std::string(i % 23, 'k') + std::to_string(i) + (i % 7 == 0 ? "\n" : "");
+            CHECK(v[key].get<std::size_t>() == i);
+            CHECK(v.contains(key));
+            CHECK(v.find(key).key() == key);
+            CHECK(v.at(key).get<std::size_t>() == i);
+            CHECK(!v.contains(key + "x"));
+        }
+        CHECK(v[""].get_string() == "empty key");
+        CHECK(v["k1"].get<int>() == 1); // the first of duplicate keys, as for small objects
+        CHECK(!v.contains("missing"));
+        CHECK_THROWS_WITH_AS(v.at("missing"), "[json.exception.out_of_range.403] key 'missing' not found", json::out_of_range&);
+        CHECK(v == j);
+        CHECK(v.materialize() == j);
+    }
+
+    SECTION("nested, reused, and in arrays")
+    {
+        std::string inner = "{";
+        for (int i = 0; i < 300; ++i)
+        {
+            inner += (i != 0 ? ",\"m" : "\"m") + std::to_string(i) + "\":" + std::to_string(i);
+        }
+        inner += '}';
+        const std::string text = "[" + inner + ",{\"x\":" + inner + "}," + inner + "]";
+        json_document d = json_document::parse(text);
+        CHECK(d.root()[0]["m299"].get<int>() == 299);
+        CHECK(d.root()[1]["x"]["m150"].get<int>() == 150);
+        CHECK(d.root()[2]["m0"].get<int>() == 0);
+        const std::size_t with_index = d.memory_usage();
+        d.read(std::string("{\"small\": 1}"));
+        CHECK(d.root()["small"].get<int>() == 1);
+        d.read(text);
+        CHECK(d.root()[2]["m7"].get<int>() == 7);
+        CHECK(d.memory_usage() >= with_index / 2);
+    }
+}
