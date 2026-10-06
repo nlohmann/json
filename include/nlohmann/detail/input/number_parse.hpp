@@ -249,8 +249,9 @@ template<typename FloatType>
 using native_float_t = typename std::conditional<std::numeric_limits<FloatType>::digits == 24, float, double>::type;
 
 /// the value of the eight ASCII digits in @a v (see read_eight_bytes()), three
-/// multiplications instead of eight (after simdjson and fast_float)
-inline std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
+/// multiplications instead of eight (after simdjson and fast_float); always
+/// inlined, as GCC otherwise calls it in the number loops
+JSON_HEDLEY_ALWAYS_INLINE std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
 {
     v = ((v & 0x0F0F0F0F0F0F0F0Fu) * 2561u) >> 8u;
     v = ((v & 0x00FF00FF00FF00FFu) * 6553601u) >> 16u;
