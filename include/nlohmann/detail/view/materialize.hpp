@@ -36,26 +36,32 @@ iterative, so the nesting depth is limited by memory only, as for parse().
 Without a lexer the handler records no source positions
 (JSON_DIAGNOSTIC_POSITIONS).
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable>
 BasicJsonType materialize(const document_data& d, const node* n)
 {
     using string_t = typename BasicJsonType::string_t;
     using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>>;
+    using nav = navigation<Editable>;
+
+    // the open containers: their next element (or key of the next member),
+    // their end, and whether they are objects; sized once from the
+    // document's deepest nesting (for a subtree an upper bound)
+    struct frame
+    {
+        const node* pos;
+        const node* end;
+        bool object;
+    };
 
     BasicJsonType result;
     sax_t sax(result, true);
     const string_t no_token{};
-    // the ends of the open containers, and whether they are objects; sized
-    // once from the document's deepest nesting (for a subtree an upper bound)
-    struct open_container
-    {
-        const node* end;
-        bool is_object;
-    };
-    std::vector<open_container> open((std::max)(d.max_depth, std::size_t{1}));
+    std::vector<frame> open((std::max)(d.max_depth, std::size_t{1}));
     std::size_t depth = 0;
     for (;;)
     {
+        // false positive: n comes from nav::value(), which never returns null for a valid index
+        // @infer-ignore NULLPTR_DEREFERENCE
         switch (static_cast<value_t>(n->kind))
         {
             case value_t::object:
@@ -72,69 +78,68 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 }
                 if (NLOHMANN_VIEW_UNLIKELY(depth == open.size()))
                 {
-                    open.resize(depth * 2); // (deeper than the document's recorded nesting)
+                    open.resize(depth * 2); // (deeper than the recorded nesting, e.g. after edits)
                 }
-                open[depth++] = open_container{document_data::child_end(n), object};
-                n = document_data::first_child(n);
+                open[depth++] = frame{nav::first(d, n), nav::end(d, n), object};
                 break;
             }
             case value_t::string:
             {
                 string_t s(d.str(*n), n->len);
                 sax.string(s);
-                ++n;
                 break;
             }
             case value_t::number_integer:
                 sax.number_integer(static_cast<typename BasicJsonType::number_integer_t>(static_cast<std::int64_t>(integer_bits(*n))));
-                ++n;
                 break;
             case value_t::number_unsigned:
                 sax.number_unsigned(static_cast<typename BasicJsonType::number_unsigned_t>(integer_bits(*n)));
-                ++n;
                 break;
             case value_t::number_float:
                 sax.number_float(float_value<typename BasicJsonType::number_float_t>(d, *n), no_token);
-                ++n;
                 break;
             case value_t::boolean:
                 sax.boolean((n->flags & node_flags::is_true) != 0);
-                ++n;
                 break;
             case value_t::null:
             case value_t::binary:
             case value_t::discarded:
             default:
                 sax.null();
-                ++n;
                 break;
         }
+
+        // the next value: close finished containers, then read the key
         for (;;)
         {
             if (depth == 0)
             {
                 return result;
             }
-            if (n != open[depth - 1].end)
+            frame& f = open[depth - 1];
+            if (f.pos == f.end)
             {
-                break;
+                if (f.object)
+                {
+                    sax.end_object();
+                }
+                else
+                {
+                    sax.end_array();
+                }
+                --depth;
+                continue;
             }
-            if (open[depth - 1].is_object)
+            const node* entry = f.pos;
+            if (f.object)
             {
-                sax.end_object();
+                string_t key(d.str(*entry), entry->len);
+                sax.key(key);
+                ++entry;
             }
-            else
-            {
-                sax.end_array();
-            }
-            --depth;
-        }
-        if (open[depth - 1].is_object)
-        {
-            // the key of the next member
-            string_t key(d.str(*n), n->len);
-            sax.key(key);
-            ++n;
+            n = nav::value(entry);
+            f.pos = document_data::after(entry);
+            break;
         }
     }
 }

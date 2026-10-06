@@ -88,18 +88,20 @@ class short_key
 /// nullptr (the search stops at the first match; materialize() and parse()
 /// keep the last value of a duplicate key instead); most keys are rejected by
 /// their length, from the index alone
-inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
+template<bool Editable>
+const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
-    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0))
+    using nav = navigation<Editable>;
+    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0) && (!Editable || (object->flags & node_flags::moved) == 0))
     {
-        return find_indexed(d, object, key, n); // a large object
+        return find_indexed(d, object, key, n); // a large object (whose members have not been edited)
     }
-    const node* const end = document_data::child_end(object);
+    const node* const end = nav::end(d, object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
     {
         const short_key probe(k, n);
-        for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+        for (const node* m = nav::first(d, object); m != end; m = document_data::after(m + 1))
         {
             if (m->len == n && probe.matches(reinterpret_cast<const unsigned char*>(d.str(*m)))) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             {
@@ -108,7 +110,7 @@ inline const node* find_member(const document_data& d, const node* object, const
         }
         return nullptr;
     }
-    for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+    for (const node* m = nav::first(d, object); m != end; m = document_data::after(m + 1))
     {
         if (d.key_equals(*m, key, n))
         {
@@ -119,11 +121,13 @@ inline const node* find_member(const document_data& d, const node* object, const
 }
 
 /// the number of members of an object with this key (duplicates included)
-inline std::size_t count_members(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
+template<bool Editable>
+std::size_t count_members(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
+    using nav = navigation<Editable>;
     std::size_t result = 0;
-    const node* const end = document_data::child_end(object);
-    for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+    const node* const end = nav::end(d, object);
+    for (const node* m = nav::first(d, object); m != end; m = document_data::after(m + 1))
     {
         if (d.key_equals(*m, key, n))
         {
@@ -133,28 +137,16 @@ inline std::size_t count_members(const document_data& d, const node* object, con
     return result;
 }
 
-/// whether an integer type is accepted as an array index by the view's
-/// operator[] and at(): every integer type but bool and size_t, which has its
-/// own overload
-template<typename T>
-struct is_index_type : std::integral_constant < bool,
-    std::is_integral<T>::value && !std::is_same<T, bool>::value && !std::is_same<T, std::size_t>::value >
-{};
-
-/// an integer as an index: negative values, and values that do not fit a
-/// size_t, map to the largest size_t (out of range for every array)
-template<typename SizeType, typename IntegerType>
-SizeType to_index(IntegerType idx) noexcept
+/// the entry of the element of an array at an index below its size (a link
+/// in the moved sequences of editable documents)
+template<bool Editable>
+const node* element_at(const document_data& d, const node* array, std::size_t idx) noexcept
 {
-    const IntegerType zero = 0;
-    const auto result = static_cast<SizeType>(idx); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): negative values are mapped below
-    return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
-}
-
-/// the element of an array at an index below its size
-inline const node* element_at(const node* array, std::size_t idx) noexcept
-{
-    const node* e = document_data::first_child(array);
+    const node* e = navigation<Editable>::first(d, array);
+    if (Editable && (array->flags & node_flags::moved) != 0 && d.edits->moved_cap[array->off] != 0)
+    {
+        return e + idx; // a growable block: one link per element
+    }
     for (std::size_t i = 0; i < idx; ++i)
     {
         e = document_data::after(e);
@@ -162,13 +154,14 @@ inline const node* element_at(const node* array, std::size_t idx) noexcept
     return e;
 }
 
-/// the last element of a non-empty array, or the key of the last member of a
-/// non-empty object
-inline const node* last_child(const node* container) noexcept
+/// the entry of the last element of a non-empty array, or the key of the
+/// last member of a non-empty object
+template<bool Editable>
+const node* last_child(const document_data& d, const node* container) noexcept
 {
     const std::size_t value_offset = container->kind == static_cast<std::uint8_t>(value_t::object) ? 1 : 0;
-    const node* const end = document_data::child_end(container);
-    const node* last = document_data::first_child(container);
+    const node* const end = navigation<Editable>::end(d, container);
+    const node* last = navigation<Editable>::first(d, container);
     for (const node* c = document_data::after(last + value_offset); c != end; c = document_data::after(c + value_offset))
     {
         last = c;
