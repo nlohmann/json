@@ -2317,6 +2317,58 @@ TEST_CASE("parser class")
 #endif
     }
 
+    SECTION("comments before separators")
+    {
+        // The parser first checks for the expected ':' or ',' and only then
+        // falls back to the full token switch, which skips comments. A comment
+        // directly before a separator takes that fallback.
+        json _;
+
+        SECTION("ignored")
+        {
+            const std::vector<std::pair<std::string, json>> inputs =
+            {
+                {"{\"a\" /* c */ : 1}", {{"a", 1}}},
+                {"{\"a\" // c\n: 1}", {{"a", 1}}},
+                {R"({"a": 1, "b" /* c */ : 2})", {{"a", 1}, {"b", 2}}},
+                {R"({"a": 1 /* c */ , "b": 2})", {{"a", 1}, {"b", 2}}},
+                {"{\"a\": 1 // c\n, \"b\": 2}", {{"a", 1}, {"b", 2}}},
+                {"[1 /* c */ , 2]", {1, 2}},
+                {"[1 // c\n, 2]", {1, 2}},
+                {"{\"a\" /* c */ /* d */ : [1 // c\n , 2 /**/ ] /**/ , \"b\" : 3}", {{"a", {1, 2}}, {"b", 3}}}
+            };
+            for (const auto& input : inputs)
+            {
+                CAPTURE(input.first)
+                CHECK(json::parse(input.first, nullptr, true, true) == input.second);
+                CHECK(json::accept(input.first, true));
+            }
+        }
+
+        SECTION("ignored, with trailing commas")
+        {
+            CHECK(json::parse(std::string("[1 /* c */ , ]"), nullptr, true, true, true) == json({1}));
+            CHECK(json::parse(std::string("{\"a\": 1 /* c */ , }"), nullptr, true, true, true) == json({{"a", 1}}));
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::string("[1 /* c */ , ]"), nullptr, true, true),
+                                 "[json.exception.parse_error.101] parse error at line 1, column 14: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal", json::parse_error);
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::string("{\"a\": 1 /* c */ , }"), nullptr, true, true),
+                                 "[json.exception.parse_error.101] parse error at line 1, column 19: syntax error while parsing object key - unexpected '}'; expected string literal", json::parse_error);
+        }
+
+        SECTION("not ignored")
+        {
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::string("{\"a\" /* c */ : 1}")),
+                                 "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing object separator - invalid literal; last read: '\"a\" /'; expected ':'", json::parse_error);
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::string("{\"a\": 1, \"b\" /* c */ : 2}")),
+                                 "[json.exception.parse_error.101] parse error at line 1, column 14: syntax error while parsing object separator - invalid literal; last read: '\"b\" /'; expected ':'", json::parse_error);
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::string("{\"a\": 1 /* c */ , \"b\": 2}")),
+                                 "[json.exception.parse_error.101] parse error at line 1, column 9: syntax error while parsing object - invalid literal; last read: '1 /'; expected '}'", json::parse_error);
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::string("[1 /* c */ , 2]")),
+                                 "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing array - invalid literal; last read: '1 /'; expected ']'", json::parse_error);
+            CHECK(!json::accept(std::string("[1 /* c */ , 2]")));
+        }
+    }
+
 #if JSON_DIAGNOSTIC_POSITIONS
     // Macro for all test cases for start_pos and end_pos
 #define SETUP_TESTCASES() \
