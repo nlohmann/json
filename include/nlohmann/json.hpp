@@ -676,6 +676,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// constructor for rvalue binary arrays (internal type)
         json_value(binary_t&& value) : binary(create<binary_t>(std::move(value))) {}
 
+        /// constructors taking ownership of an already created value
+        explicit json_value(string_t* value) noexcept : string(value) {}
+        explicit json_value(object_t* value) noexcept : object(value) {}
+        explicit json_value(array_t* value) noexcept : array(value) {}
+
 private:
         // raw, allocation-free transfer of m_data from src to dst: no
         // set_parents()/assert_invariant() (the former is O(#children) per
@@ -1004,6 +1009,18 @@ public:
                 break;
         }
 #endif
+    }
+
+    /// @brief replace the stored value with an already created one
+    /// The new value must be created before calling this function: if its
+    /// creation throws, the current value is left untouched.
+    void replace_value(value_t t, const json_value& v) noexcept
+    {
+        m_data.m_value.destroy(m_data.m_type);
+        m_data.m_value = v;
+        m_data.m_type = t;
+        set_parents();
+        assert_invariant();
     }
 
     iterator set_parents(iterator it, std::ptrdiff_t count_set_parents)
@@ -2265,8 +2282,8 @@ public:
         if (is_an_object)
         {
             // the initializer list is a list of pairs -> create an object
-            m_data.m_type = value_t::object;
             m_data.m_value = value_t::object;
+            m_data.m_type = value_t::object;
 
             for (auto& element_ref : init)
             {
@@ -2288,8 +2305,8 @@ public:
             }
 #endif
             // the initializer list describes an array -> create an array
-            m_data.m_type = value_t::array;
             m_data.m_value.array = create<array_t>(init.begin(), init.end());
+            m_data.m_type = value_t::array;
         }
 
         set_parents();
@@ -2302,8 +2319,8 @@ public:
     static basic_json binary(const typename binary_t::container_type& init)
     {
         auto res = basic_json();
-        res.m_data.m_type = value_t::binary;
         res.m_data.m_value = init;
+        res.m_data.m_type = value_t::binary;
         return res;
     }
 
@@ -2313,8 +2330,8 @@ public:
     static basic_json binary(const typename binary_t::container_type& init, typename binary_t::subtype_type subtype)
     {
         auto res = basic_json();
-        res.m_data.m_type = value_t::binary;
         res.m_data.m_value = binary_t(init, subtype);
+        res.m_data.m_type = value_t::binary;
         return res;
     }
 
@@ -2324,8 +2341,8 @@ public:
     static basic_json binary(typename binary_t::container_type&& init)
     {
         auto res = basic_json();
-        res.m_data.m_type = value_t::binary;
         res.m_data.m_value = std::move(init);
+        res.m_data.m_type = value_t::binary;
         return res;
     }
 
@@ -2335,8 +2352,8 @@ public:
     static basic_json binary(typename binary_t::container_type&& init, typename binary_t::subtype_type subtype)
     {
         auto res = basic_json();
-        res.m_data.m_type = value_t::binary;
         res.m_data.m_value = binary_t(std::move(init), subtype);
+        res.m_data.m_type = value_t::binary;
         return res;
     }
 
