@@ -607,3 +607,88 @@ TEST_CASE("bad my_allocator::construct")
         j["test"].push_back("should not leak");
     }
 }
+
+namespace
+{
+std::size_t counting_allocator_allocations = 0;
+std::size_t counting_allocator_deallocations = 0;
+
+template<class T>
+struct counting_allocator : std::allocator<T>
+{
+    using std::allocator<T>::allocator;
+
+    T* allocate(std::size_t n)
+    {
+        ++counting_allocator_allocations;
+        return std::allocator<T>::allocate(n);
+    }
+
+    void deallocate(T* p, std::size_t n)
+    {
+        ++counting_allocator_deallocations;
+        std::allocator<T>::deallocate(p, n);
+    }
+
+    template <class U>
+    struct rebind
+    {
+        using other = counting_allocator<U>;
+    };
+};
+} // namespace
+
+TEST_CASE("destructor performs no allocation, only deallocation")
+{
+    // see https://github.com/nlohmann/json/issues/4842 and
+    // https://github.com/nlohmann/json/issues/5135: destroying nested
+    // arrays/objects used to allocate a temporary stack (first with
+    // std::allocator, later - after #4842 - with the provided allocator).
+    // Since that stack could itself throw bad_alloc from inside the
+    // noexcept destructor (#5135), destroy() no longer allocates anything:
+    // it only ever frees what is already there.
+    using counting_json = nlohmann::basic_json<std::map,
+          std::vector,
+          std::string,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          counting_allocator>;
+
+    SECTION("array")
+    {
+        auto* j = new counting_json({1, {2, {3, 4}}, 5}); // NOLINT(cppcoreguidelines-owning-memory)
+        const auto allocations_before = counting_allocator_allocations;
+        const auto deallocations_before = counting_allocator_deallocations;
+        delete j; // NOLINT(cppcoreguidelines-owning-memory)
+        CHECK(counting_allocator_allocations == allocations_before);
+        CHECK(counting_allocator_deallocations > deallocations_before);
+    }
+
+    SECTION("object")
+    {
+        auto* j = new counting_json({{"a", {{"b", {1, 2}}}}, {"c", 3}}); // NOLINT(cppcoreguidelines-owning-memory)
+        const auto allocations_before = counting_allocator_allocations;
+        const auto deallocations_before = counting_allocator_deallocations;
+        delete j; // NOLINT(cppcoreguidelines-owning-memory)
+        CHECK(counting_allocator_allocations == allocations_before);
+        CHECK(counting_allocator_deallocations > deallocations_before);
+    }
+
+    SECTION("mixed tree of empty/non-empty arrays and objects")
+    {
+        auto* j = new counting_json( // NOLINT(cppcoreguidelines-owning-memory)
+        {
+            {"empty_obj", counting_json::object()},
+            {"empty_arr", counting_json::array()},
+            {"nested", {{"a", counting_json::array({1, 2, counting_json::object()})}, {"b", 3}}},
+            {"tail", counting_json::array({counting_json::array({1}), 2, counting_json::array({3})})}
+        });
+        const auto allocations_before = counting_allocator_allocations;
+        const auto deallocations_before = counting_allocator_deallocations;
+        delete j; // NOLINT(cppcoreguidelines-owning-memory)
+        CHECK(counting_allocator_allocations == allocations_before);
+        CHECK(counting_allocator_deallocations > deallocations_before);
+    }
+}
