@@ -50,7 +50,8 @@ JSON-RPC request (`rpc`):
 | dump | serialize a parsed document (compact) |
 
 `bench_corpus.cpp` runs parse, traverse, and dump on any list of files, so that no library is tuned to a handful of
-documents.
+documents. Its dump also writes the numbers as they are in the input: `json_view` with `number_format::source`, and
+yyjson with numbers read as raw text (`YYJSON_READ_NUMBER_AS_RAW`), without converting them.
 
 `bench_edit.cpp` measures read-modify-write: parse, apply the same logical edits with each library's own API, and
 serialize (compact). Workloads: `patch` (a handful of edits at fixed places) and `update` (edits in every record).

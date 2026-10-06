@@ -5409,7 +5409,11 @@ namespace view
 {
 
 /// append-only output buffer: writes through a raw pointer into a string that
-/// is resized ahead, and trimmed by finish()
+/// is resized ahead, and trimmed by finish(). The estimate is reserved, and the
+/// string grows in steps of 64 KiB within it: resize() fills the new bytes
+/// with zeros (before C++23, a string cannot grow without), and a small step
+/// is filled while the writer is about to use it, in the cache, instead of
+/// filling the whole estimate in memory first.
 template<typename StringType>
 class output_buffer
 {
@@ -5471,16 +5475,31 @@ class output_buffer
     }
 
   private:
+    /// the size of a growth step (a function: std::min() takes a reference,
+    /// which a static constexpr member does not have before C++17)
+    static constexpr std::size_t step() noexcept
+    {
+        return 65536;
+    }
+
     static StringType& sized(StringType& out, std::size_t estimate)
     {
-        out.resize((std::max)(estimate, static_cast<std::size_t>(64)));
+        out.reserve(estimate);
+        out.resize((std::min)((std::max)(estimate, static_cast<std::size_t>(64)), step()));
         return out;
     }
 
     NLOHMANN_VIEW_NOINLINE void grow(std::size_t n)
     {
         const auto used = static_cast<std::size_t>(m_pos - m_out.data());
-        m_out.resize((std::max)(m_out.size() * 2, used + n + 256));
+        // (a step does not go beyond the reserved estimate, so that a good
+        // estimate is never copied to a larger allocation)
+        const std::size_t size = (std::max)((std::min)(m_out.size() + step(), m_out.capacity()), used + n + 256);
+        if (size > m_out.capacity())
+        {
+            m_out.reserve((std::max)(m_out.capacity() * 2, size));
+        }
+        m_out.resize(size);
         m_pos = &m_out[0] + used;
         m_end = &m_out[0] + m_out.size();
     }

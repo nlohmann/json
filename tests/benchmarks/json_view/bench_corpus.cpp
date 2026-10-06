@@ -15,7 +15,8 @@
 // count, string bytes, sum of numbers) before anything is timed. Workloads:
 // parse (build and free a document), traverse (visit every value, convert
 // every number), dump (compact), and for json_view also dump with the source
-// number text. Results go to bench_corpus.csv.
+// number text, compared with yyjson writing numbers read as raw text
+// (YYJSON_READ_NUMBER_AS_RAW). Results go to bench_corpus.csv.
 #include <nlohmann/json_view.hpp>
 
 #if JSON_VIEW_BENCH_BOOST
@@ -272,6 +273,7 @@ int main(int argc, char** argv)
         };
         json_document vd = json_document::parse(s);
         yyjson_doc* yd = yyjson_read(s.data(), s.size(), 0);
+        yyjson_doc* yd_raw = yyjson_read(s.data(), s.size(), YYJSON_READ_NUMBER_AS_RAW);
         simdjson::dom::parser sjd;
         const simdjson::dom::element se = sjd.parse(ps).value_unsafe();
         const std::vector<std::pair<std::string, std::vector<engine>>> workloads =
@@ -304,6 +306,7 @@ int main(int argc, char** argv)
                     {"yyjson", [&] { std::size_t n = 0; char* o = yyjson_write(yd, 0, &n); g_sink = static_cast<double>(n); std::free(o); }},
                     {"simdjson DOM", [&] { std::string o = simdjson::to_string(se); g_sink = static_cast<double>(o.size()); }},
                     {"json_view (source numbers)", [&] { std::string o = vd.root().dump(-1, ' ', false, json_view::number_format::source); g_sink = static_cast<double>(o.size()); }},
+                    {"yyjson (raw numbers)", [&] { std::size_t n = 0; char* o = yyjson_write(yd_raw, 0, &n); g_sink = static_cast<double>(n); std::free(o); }},
                 }
             },
         };
@@ -333,6 +336,7 @@ int main(int argc, char** argv)
             std::fflush(stdout);
         }
         yyjson_doc_free(yd);
+        yyjson_doc_free(yd_raw);
     }
     std::fclose(csv);
 }
