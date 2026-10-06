@@ -30,6 +30,11 @@ namespace view
     NLOHMANN_VIEW_THROW(type_error::create(id, concat(prefix, type), nullptr));
 }
 
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(int id, const std::string& msg)
+{
+    NLOHMANN_VIEW_THROW(type_error::create(id, msg, nullptr));
+}
+
 [[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_out_of_range(int id, const std::string& msg)
 {
     NLOHMANN_VIEW_THROW(out_of_range::create(id, msg, nullptr));
