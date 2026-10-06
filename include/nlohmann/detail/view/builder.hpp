@@ -828,14 +828,19 @@ indent_done:
             const auto idx = static_cast<std::uint32_t>(emit(k, 0, 0, static_cast<std::size_t>(p - b), 0) - base);
             if (depth != 0)
             {
-                const frame f = {cur_idx, cur_count, cur_is_object};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    cold.shallow[depth - 1] = f;
+                    // field by field: a frame put together on the stack and
+                    // copied would be read back wider than it was written,
+                    // and that load waits until the stores are done
+                    frame& f = cold.shallow[depth - 1];
+                    f.idx = cur_idx;
+                    f.count = cur_count;
+                    f.is_object = cur_is_object;
                 }
                 else
                 {
-                    cold.deep.push_back(f);
+                    cold.deep.push_back(frame{cur_idx, cur_count, cur_is_object});
                 }
             }
             ++depth;
@@ -851,19 +856,21 @@ indent_done:
             n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
             if (--depth != 0)
             {
-                frame f{};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    f = cold.shallow[depth - 1];
+                    const frame& f = cold.shallow[depth - 1];
+                    cur_idx = f.idx;
+                    cur_count = f.count;
+                    cur_is_object = f.is_object;
                 }
                 else
                 {
-                    f = cold.deep.back();
+                    const frame f = cold.deep.back();
                     cold.deep.pop_back();
+                    cur_idx = f.idx;
+                    cur_count = f.count;
+                    cur_is_object = f.is_object;
                 }
-                cur_idx = f.idx;
-                cur_count = f.count;
-                cur_is_object = f.is_object;
             }
         }
 

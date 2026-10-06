@@ -67,13 +67,19 @@ NLOHMANN_VIEW_ALWAYS_INLINE std::uint16_t load16(const unsigned char* p) noexcep
 /// in predicted branches: 16 for keys, whose lengths repeat from record to
 /// record, and 8 for string values (Value) where a vector loop follows, as
 /// their lengths vary more. Longer runs continue 16 bytes at a time with NEON
-/// or SSE2, else eight bytes at a time.
+/// or SSE2, else eight bytes at a time. With SSE2, the run is checked 16 bytes
+/// at a time from its first byte instead: on x86-64, one compare that finds
+/// the end of most keys and short values is faster than a branch per byte (on
+/// AArch64, where a NEON mask costs more and branches predict well, slower).
 template<bool Value = false>
 NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned char* p, const unsigned char* e) noexcept
 {
     const std::uint8_t* plain = string_plain();
     for (;;)
     {
+#if NLOHMANN_VIEW_SSE2
+        p = vector_plain_run(p, e);
+#else
         if (e - p >= 16)
         {
 #define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(plain[p[i]] != 0)) {} else { p += (i); goto stop; }
@@ -107,6 +113,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
 #endif
             continue;
         }
+#endif
         while (p != e && plain[*p] != 0)
         {
             ++p;
@@ -115,7 +122,9 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
         {
             return p;
         }
+#if !NLOHMANN_VIEW_SSE2
 stop:
+#endif
         if (*p < 0x80)
         {
             return p; // quote, backslash, or control character

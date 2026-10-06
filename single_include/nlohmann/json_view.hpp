@@ -917,13 +917,19 @@ NLOHMANN_VIEW_ALWAYS_INLINE std::uint16_t load16(const unsigned char* p) noexcep
 /// in predicted branches: 16 for keys, whose lengths repeat from record to
 /// record, and 8 for string values (Value) where a vector loop follows, as
 /// their lengths vary more. Longer runs continue 16 bytes at a time with NEON
-/// or SSE2, else eight bytes at a time.
+/// or SSE2, else eight bytes at a time. With SSE2, the run is checked 16 bytes
+/// at a time from its first byte instead: on x86-64, one compare that finds
+/// the end of most keys and short values is faster than a branch per byte (on
+/// AArch64, where a NEON mask costs more and branches predict well, slower).
 template<bool Value = false>
 NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned char* p, const unsigned char* e) noexcept
 {
     const std::uint8_t* plain = string_plain();
     for (;;)
     {
+#if NLOHMANN_VIEW_SSE2
+        p = vector_plain_run(p, e);
+#else
         if (e - p >= 16)
         {
 #define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(plain[p[i]] != 0)) {} else { p += (i); goto stop; }
@@ -957,6 +963,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
 #endif
             continue;
         }
+#endif
         while (p != e && plain[*p] != 0)
         {
             ++p;
@@ -965,7 +972,9 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
         {
             return p;
         }
+#if !NLOHMANN_VIEW_SSE2
 stop:
+#endif
         if (*p < 0x80)
         {
             return p; // quote, backslash, or control character
@@ -1873,14 +1882,19 @@ indent_done:
             const auto idx = static_cast<std::uint32_t>(emit(k, 0, 0, static_cast<std::size_t>(p - b), 0) - base);
             if (depth != 0)
             {
-                const frame f = {cur_idx, cur_count, cur_is_object};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    cold.shallow[depth - 1] = f;
+                    // field by field: a frame put together on the stack and
+                    // copied would be read back wider than it was written,
+                    // and that load waits until the stores are done
+                    frame& f = cold.shallow[depth - 1];
+                    f.idx = cur_idx;
+                    f.count = cur_count;
+                    f.is_object = cur_is_object;
                 }
                 else
                 {
-                    cold.deep.push_back(f);
+                    cold.deep.push_back(frame{cur_idx, cur_count, cur_is_object});
                 }
             }
             ++depth;
@@ -1896,19 +1910,21 @@ indent_done:
             n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
             if (--depth != 0)
             {
-                frame f{};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    f = cold.shallow[depth - 1];
+                    const frame& f = cold.shallow[depth - 1];
+                    cur_idx = f.idx;
+                    cur_count = f.count;
+                    cur_is_object = f.is_object;
                 }
                 else
                 {
-                    f = cold.deep.back();
+                    const frame f = cold.deep.back();
                     cold.deep.pop_back();
+                    cur_idx = f.idx;
+                    cur_count = f.count;
+                    cur_is_object = f.is_object;
                 }
-                cur_idx = f.idx;
-                cur_count = f.count;
-                cur_is_object = f.is_object;
             }
         }
 
