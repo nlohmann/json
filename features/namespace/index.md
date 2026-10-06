@@ -15,6 +15,7 @@ The complete default namespace name is derived as follows:
   - [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) defined non-zero appends `_psp`.
   - [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) defined non-zero appends `_snul`.
   - [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) defined non-zero appends `_sbu8`.
+  - [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md) defined non-zero appends `_ekmo`.
 - The inline namespace ends with the suffix `_v` followed by the 3 components of the version number separated by underscores. To omit the version component, see [Disabling the version component](#disabling-the-version-component) below.
 
 For example, the namespace name for version 3.11.2 with `JSON_DIAGNOSTICS` defined to `1` is:

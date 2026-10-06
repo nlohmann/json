@@ -35,6 +35,7 @@ Important notes
 
 - When using [`get<ENUM_TYPE>()`](https://json.nlohmann.me/api/basic_json/get/index.md), undefined JSON values will default to the first specified conversion. Select this default pair carefully. See example 1 below.
 - If an enum or JSON value is specified in multiple conversions, the first matching conversion from the top of the list will be returned when converting to or from JSON. See example 2 below.
+- Maps with enum keys (e.g., `std::map<ENUM_TYPE, T>`) are stored as arrays of `[key, value]` pairs by default. Define [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md) to store them as objects with the converted keys. Such maps can be read from both forms.
 
 ## Examples
 
@@ -165,6 +166,7 @@ Output:
 - [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md)
 - [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum_strict/index.md)
 - [`JSON_DISABLE_ENUM_SERIALIZATION`](https://json.nlohmann.me/api/macros/json_disable_enum_serialization/index.md)
+- [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md)
 
 ## Version history
 

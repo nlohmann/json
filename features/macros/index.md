@@ -20,6 +20,14 @@ This macro overrides [`catch`](https://en.cppreference.com/w/cpp/language/try_ca
 
 See [full documentation of `JSON_CATCH_USER(exception)`](https://json.nlohmann.me/api/macros/json_throw_user/index.md).
 
+## `JSON_DELETE_DEPRECATED_FUNCTIONS`
+
+When defined to `1`, all deprecated functions are declared as deleted instead of only being marked as deprecated, so code that still calls them no longer compiles. This way, you can find all calls that need to be replaced before version 4.0.0 removes these functions.
+
+The macro can also be set with the CMake option [`JSON_DeleteDeprecatedFunctions`](https://json.nlohmann.me/integration/cmake/#json_deletedeprecatedfunctions) (`OFF` by default).
+
+See [full documentation of `JSON_DELETE_DEPRECATED_FUNCTIONS`](https://json.nlohmann.me/api/macros/json_delete_deprecated_functions/index.md).
+
 ## `JSON_DIAGNOSTICS`
 
 This macro enables extended diagnostics for exception messages. Possible values are `1` to enable or `0` to disable (default).
@@ -64,7 +72,7 @@ See [full documentation of `JSON_DISABLE_ENUM_SERIALIZATION`](https://json.nlohm
 
 ## `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`
 
-When defined to `1`, a JSON value can no longer be created from a one-element `std::tuple` holding a reference to a JSON value, such as the result of `std::forward_as_tuple(j)`. This lets `std::tuple` convert such tuples element-wise.
+When defined to `1`, a JSON value can no longer be created from a one-element `std::tuple` holding a reference to a JSON value, such as the result of `std::forward_as_tuple(j)`. This lets `std::tuple` convert such tuples element-wise. This is planned to become the default in version 4.0.0.
 
 See [full documentation of `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](https://json.nlohmann.me/api/macros/json_disable_tuple_reference_conversion/index.md).
 
@@ -149,6 +157,12 @@ See [full documentation of `JSON_USE_GLOBAL_UDLS`](https://json.nlohmann.me/api/
 When defined to `1`, the library restores the legacy behavior in which a discarded value compared equal to itself. This behavior is [deprecated](https://json.nlohmann.me/integration/migration_guide/#miscellaneous-functions) and switched off (`0`) by default.
 
 See [full documentation of `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](https://json.nlohmann.me/api/macros/json_use_legacy_discarded_value_comparison/index.md).
+
+## `JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`
+
+When defined to `1`, maps with enum keys (e.g., `std::map<E, T>`) are stored as objects, using the enum's conversion for the keys, instead of arrays of `[key, value]` pairs. It is switched off (`0`) by default.
+
+See [full documentation of `JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md).
 
 ## `JSON_USE_SIMDUTF`
 

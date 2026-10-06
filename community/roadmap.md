@@ -64,6 +64,8 @@ The following macros guard changes that are planned to become the default in ver
 | [`JSON_PRECISE_STREAM_POSITION`](../api/macros/json_precise_stream_position.md)                                  | `0`         | `1`: reading from a stream does not consume the character after a number                                                      | –                                                                                                                  | 3.13.0 |
 | [`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md)                                          | `0`         | `1`: a NUL byte in the input is a parse error instead of the end of input                                                     | [`JSON_StrictNulHandling`](../integration/cmake.md#json_strictnulhandling)                                         | 3.13.0 |
 | [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md)                                            | `0`         | `1`: `to_cbor`, `to_ubjson`, `to_bjdata`, and `to_bson` throw for strings that are not valid UTF-8 by default                 | [`JSON_StrictBinaryUTF8`](../integration/cmake.md#json_strictbinaryutf8)                                           | 3.13.0 |
+| [`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md)            | `0`         | `1`: a `basic_json` value can no longer be created from a one-element tuple of a reference to it, such as `std::forward_as_tuple(j)`| [`JSON_DisableTupleReferenceConversion`](../integration/cmake.md#json_disabletuplereferenceconversion)             | 3.13.0 |
+| [`JSON_DELETE_DEPRECATED_FUNCTIONS`](../api/macros/json_delete_deprecated_functions.md)                          | `0`         | removed: the deprecated functions are removed (see below); the `from_*(ptr, len)` overloads stay deleted                      | [`JSON_DeleteDeprecatedFunctions`](../integration/cmake.md#json_deletedeprecatedfunctions)                         | 3.13.0 |
 
 For example, the following makes a 3.x release behave like version 4.0 with respect to these changes:
 
@@ -75,6 +77,8 @@ For example, the following makes a 3.x release behave like version 4.0 with resp
 #define JSON_PRECISE_STREAM_POSITION 1
 #define JSON_STRICT_NUL_HANDLING 1
 #define JSON_STRICT_BINARY_UTF8 1
+#define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 1
+#define JSON_DELETE_DEPRECATED_FUNCTIONS 1
 #include <nlohmann/json.hpp>
 ```
 
@@ -84,8 +88,13 @@ way to achieve this.
 ### Removal of deprecated functions
 
 Version 4.0 will remove all deprecated functions. Compiling with deprecation warnings enabled shows which of them your
-code still uses. The [migration guide](../integration/migration_guide.md#replace-deprecated-functions) shows how to
-replace each of them.
+code still uses. Defining [`JSON_DELETE_DEPRECATED_FUNCTIONS`](../api/macros/json_delete_deprecated_functions.md) to
+`1` turns these warnings into errors, as the deprecated functions are then deleted. The
+[migration guide](../integration/migration_guide.md#replace-deprecated-functions) shows how to replace each of them.
+
+The `from_*` overloads taking a pointer and a length are not removed in version 4.0, but stay deleted. Without them, a
+call like `from_cbor(ptr, len)` would still compile: it would read `ptr` as a NUL-terminated string and convert `len`
+to the `strict` parameter.
 
 | Deprecated                                                                                                                                                                                                                                         | Since  | Migration                                                                        |
 |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|----------------------------------------------------------------------------------|
@@ -97,6 +106,7 @@ replace each of them.
 | [`json_pointer::operator string_t`](../api/json_pointer/operator_string_t.md)                                                                                                                                                                      | 3.11.0 | [JSON Pointers](../integration/migration_guide.md#json-pointers)                 |
 | [`json_pointer`](../api/json_pointer/index.md) with a `basic_json` type as template argument, and the overloads of `value`, `contains`, `operator[]`, and `at` accepting such a pointer                                                           | 3.11.0 | [JSON Pointers](../integration/migration_guide.md#json-pointers)                 |
 | Comparing a [`json_pointer`](../api/json_pointer/index.md) with a string via [`operator==`](../api/json_pointer/operator_eq.md) or [`operator!=`](../api/json_pointer/operator_ne.md)                                                              | 3.11.2 | [JSON Pointers](../integration/migration_guide.md#json-pointers)                 |
+| [`from_bjdata`](../api/basic_json/from_bjdata.md) and [`from_bon8`](../api/basic_json/from_bon8.md) with `(ptr, len)`                                                                                                                              | 3.13.0 | [Parsing](../integration/migration_guide.md#parsing)                             |
 
 The deprecated legacy comparison of discarded values is controlled by a macro and therefore listed in the table above.
 

@@ -114,6 +114,20 @@ ns::TS_STOPPED -> "stopped", ns::Color::red -> "red"
 3.14 -> -1, 3.14 -> 3
 ```
 
+## Maps with enum keys
+
+By default, maps with enum keys, such as `std::map<TaskState, std::string>`, are stored as arrays of `[key, value]` pairs, because JSON object keys must be strings. Define [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md) before including the library to store them as objects, with the keys converted by the enum's `to_json()` function:
+
+```
+std::map<TaskState, std::string> m = {{TS_STOPPED, "aa"}, {TS_COMPLETED, "bb"}};
+
+json j = m;
+// default:                                   [["stopped","aa"],["completed","bb"]]
+// with JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS: {"completed":"bb","stopped":"aa"}
+```
+
+Either form can be read back, with or without the macro.
+
 ## Notes
 
 Just as in [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) above,

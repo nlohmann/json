@@ -61,6 +61,11 @@ Some aspects of the library can be configured by defining preprocessor macros **
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](https://json.nlohmann.me/api/macros/json_disable_enum_serialization/index.md) - switch off default serialization/deserialization functions for enums
 - [**JSON_DISABLE_TUPLE_REFERENCE_CONVERSION**](https://json.nlohmann.me/api/macros/json_disable_tuple_reference_conversion/index.md) - switch off conversion from a one-element tuple of a JSON reference
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) - control implicit conversions
+- [**JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS**](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md) - opt in to storing maps with enum keys as objects
+
+## Deprecated functions
+
+- [**JSON_DELETE_DEPRECATED_FUNCTIONS**](https://json.nlohmann.me/api/macros/json_delete_deprecated_functions/index.md) - opt in to deleting the deprecated functions ahead of their removal in version 4.0.0
 
 ## Comparison behavior
 

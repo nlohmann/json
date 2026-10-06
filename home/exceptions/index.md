@@ -700,6 +700,8 @@ Example messages
 [json.exception.type_error.302] type must be string, but is object
 ```
 
+This exception is also thrown with [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md) if a key of a map with enum keys is not converted to a string, for instance, because the enum is stored as an integer.
+
 ### json.exception.type_error.303
 
 To retrieve a reference to a value stored in a `basic_json` object with `get_ref`, the type of the reference must match the value type. For instance, for a JSON array, the `ReferenceType` must be `array_t &`.
@@ -896,6 +898,16 @@ Serializing `[1,2,3]` to BSON:
 Tip
 
 Encapsulate the JSON value in an object. That is, instead of serializing `true`, serialize `{"value": true}`
+
+### json.exception.type_error.318
+
+With [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md), a map with enum keys is stored as an object. This exception is thrown if two of its keys are converted to the same string, so one of the entries would be lost. This happens, for instance, if [`NLOHMANN_JSON_SERIALIZE_ENUM`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/index.md) does not list an enumerator and it is therefore converted like the first listed one.
+
+Example message
+
+```
+[json.exception.type_error.318] duplicate object key 'red'
+```
 
 ## Out of range
 

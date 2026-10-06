@@ -6,6 +6,10 @@ This page collects some guidelines on how to future-proof your code for future v
 
 The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0), see the [roadmap](https://json.nlohmann.me/community/roadmap/#removal-of-deprecated-functions) for an overview. All deprecations are annotated with [`HEDLEY_DEPRECATED_FOR`](https://nemequ.github.io/hedley/api-reference.html#HEDLEY_DEPRECATED_FOR) to report which function to use instead.
 
+Find all calls of deprecated functions
+
+Define [`JSON_DELETE_DEPRECATED_FUNCTIONS`](https://json.nlohmann.me/api/macros/json_delete_deprecated_functions/index.md) to `1` (or set the CMake option [`JSON_DeleteDeprecatedFunctions`](https://json.nlohmann.me/integration/cmake/#json_deletedeprecatedfunctions)) to delete all deprecated functions. Every remaining call then fails to compile, even if deprecation warnings are disabled, so your code is ready for version 4.0.0 unreleased once it compiles with the macro.
+
 ### Parsing
 
 - Function `friend std::istream& operator<<(basic_json&, std::istream&)` is deprecated since 3.0.0. Please use [`friend std::istream& operator>>(std::istream&, basic_json&)`](https://json.nlohmann.me/api/operator_gtgt/index.md) instead.
@@ -22,7 +26,7 @@ The following functions have been deprecated and will be removed in the next maj
   ss >> j;
   ```
 
-- Passing iterator pairs or pointer/length pairs to parsing functions ([`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md), [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md), [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md), and [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md)) via initializer lists is deprecated since 3.8.0. Instead, pass two iterators; for instance, call `from_cbor(ptr, ptr+len)` instead of `from_cbor({ptr, len})`. Likewise, passing a pointer and a length as two separate arguments to `from_cbor`, `from_msgpack`, `from_ubjson`, and `from_bson` is deprecated since 3.8.0; call `from_cbor(ptr, ptr+len)` instead of `from_cbor(ptr, len)`.
+- Passing iterator pairs or pointer/length pairs to parsing functions ([`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md), [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md), [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md), and [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md)) via initializer lists is deprecated since 3.8.0. Instead, pass two iterators; for instance, call `from_cbor(ptr, ptr+len)` instead of `from_cbor({ptr, len})`. Likewise, passing a pointer and a length as two separate arguments to `from_cbor`, `from_msgpack`, `from_ubjson`, and `from_bson` is deprecated since 3.8.0, and to [`from_bjdata`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) and [`from_bon8`](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) since 3.13.0; call `from_cbor(ptr, ptr+len)` instead of `from_cbor(ptr, len)`. These overloads will not be removed in version 4.0.0, but deleted, so a call like `from_cbor(ptr, len)` cannot compile and convert `len` to the `strict` parameter.
 
   ```
   const char* s = "[1,2,3]";

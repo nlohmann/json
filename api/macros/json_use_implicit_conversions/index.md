@@ -34,7 +34,7 @@ Implicit conversions can also be controlled with the CMake option [`JSON_Implici
 
 ## Examples
 
-Example: implicit conversion
+Example: implicit and explicit conversions
 
 This is an example for an implicit conversion:
 

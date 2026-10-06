@@ -35,6 +35,7 @@ Important notes
 
 - Undefined input throws [`out_of_range.410`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range410) in both directions: when serializing an enum value not listed in the conversions, and when deserializing (e.g., via [`get<ENUM_TYPE>()`](https://json.nlohmann.me/api/basic_json/get/index.md)) a JSON value that matches no conversion; example: `"enum value out of range for <type>"`.
 - If an enum or JSON value is specified in multiple conversions, the first matching conversion from the top of the list will be returned when converting to or from JSON. See example 2 below.
+- Maps with enum keys (e.g., `std::map<ENUM_TYPE, T>`) are stored as arrays of `[key, value]` pairs by default. Define [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md) to store them as objects with the converted keys. Such maps can be read from both forms.
 
 ## Examples
 
@@ -224,6 +225,7 @@ deserialization failed: [json.exception.out_of_range.410] enum value out of rang
 - [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md)
 - [`NLOHMANN_JSON_SERIALIZE_ENUM`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/index.md)
 - [`JSON_DISABLE_ENUM_SERIALIZATION`](https://json.nlohmann.me/api/macros/json_disable_enum_serialization/index.md)
+- [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md)
 
 ## Version history
 

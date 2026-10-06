@@ -123,3 +123,9 @@ Output:
 ## Version history
 
 - Added in version 3.13.0 unreleased.
+
+Deprecation
+
+- Overload (2) replaces calls to `from_bon8` with a pointer and a length as first two parameters, which has been deprecated in version 3.13.0 unreleased. This overload will be removed in version 4.0.0. Please replace all calls like `from_bon8(ptr, len, ...);` with `from_bon8(ptr, ptr+len, ...);`.
+
+You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated function.

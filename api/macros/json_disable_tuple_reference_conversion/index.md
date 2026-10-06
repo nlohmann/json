@@ -101,3 +101,4 @@ int main()
 ## Version history
 
 - Added in version 3.13.0 unreleased.
+- Planned to become the default (with the macro removed) in version 4.0.0.
