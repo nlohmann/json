@@ -125,10 +125,23 @@ meson wrap install nlohmann_json
 Please see the Meson project for any issues regarding the packaging.
 
 The provided `meson.build` can also be used as an alternative to CMake for installing `nlohmann_json` system-wide in
-which case a [pkg-config](pkg-config.md) file is installed. To use it, have your build system require the
-`nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the
-[`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than
-using the subproject directly.
+which case a [pkg-config](pkg-config.md) file and the CMake package config files are installed. To use it, have your build system require
+the `nlohmann_json` pkg-config dependency, or use [`find_package(nlohmann_json)`](cmake.md#external) in CMake. In Meson,
+it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a
+subproject fallback, rather than using the subproject directly.
+
+The options that change the library's configuration are available in Meson as well, named like the
+[CMake options](cmake.md#cmake-options) without the `JSON_` prefix: `MultipleHeaders`, `GlobalUDLs`,
+`ImplicitConversions`, `DisableEnumSerialization`, `DisableTupleReferenceConversion`, `Diagnostics`,
+`Diagnostic_Positions`, `LegacyDiscardedValueComparison`, and `StrictNulHandling`. They have the same defaults as in CMake, except that
+`MultipleHeaders` is `false`. Set them with `-D` when setting up the build, or with the subproject name as prefix when
+the library is used as a subproject:
+
+```shell
+meson setup build -Dnlohmann_json:Diagnostics=true
+```
+
+The resulting compile definitions are part of the Meson dependency, the pkg-config file, and the CMake target.
 
 ??? example "Example: Wrap"
 
