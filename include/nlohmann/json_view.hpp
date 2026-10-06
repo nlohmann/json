@@ -50,6 +50,8 @@
 #include <nlohmann/detail/view/builder.hpp>
 #include <nlohmann/detail/view/compare.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
+#include <nlohmann/detail/view/edit.hpp>
+#include <nlohmann/detail/view/edit_storage.hpp>
 #include <nlohmann/detail/view/errors.hpp>
 #include <nlohmann/detail/view/input.hpp>
 #include <nlohmann/detail/view/iterator.hpp>
@@ -65,7 +67,7 @@
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable>
 class basic_json_document;
 
 /*!
@@ -74,11 +76,13 @@ class basic_json_document;
 Trivially copyable (two pointers). Valid as long as the document is alive and
 has not been re-parsed, and as long as a borrowed source text is alive.
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable = false>
 class basic_json_view
 {
     using node = detail::view::node;
     using document_data = detail::view::document_data;
+    /// how the index is walked (with edits only for editable documents)
+    using navigation = detail::view::navigation<Editable>;
 
   public:
     using value_t = detail::value_t;
@@ -271,7 +275,7 @@ class basic_json_view
         {
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
-        return idx < m_node->len ? basic_json_view(m_doc, detail::view::element_at(m_node, idx)) : basic_json_view();
+        return idx < m_node->len ? basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx))) : basic_json_view();
     }
 
     /// (an int argument would be ambiguous between size_type and const char*)
@@ -327,7 +331,7 @@ class basic_json_view
         {
             detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
         }
-        return basic_json_view(m_doc, detail::view::element_at(m_node, idx));
+        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
     }
 
     basic_json_view at(int idx) const
@@ -399,7 +403,7 @@ class basic_json_view
     {
         if (is_structured() && m_node->len != 0)
         {
-            return basic_json_view(m_doc, detail::view::last_child(m_node) + (is_object() ? 1 : 0));
+            return basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
         }
         return front();
     }
@@ -416,7 +420,7 @@ class basic_json_view
         {
             return end();
         }
-        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
+        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? iterator(m_doc, k, true) : end();
     }
 
@@ -433,7 +437,7 @@ class basic_json_view
     /// whether this is an object with a member with this key
     bool contains(string_view_t key) const
     {
-        return is_object() && detail::view::find_member(*m_doc, m_node, key.data(), key.size()) != nullptr;
+        return is_object() && detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size()) != nullptr;
     }
 
     bool contains(const char* key) const
@@ -480,7 +484,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, document_data::first_child(m_node), is_object());
+            return iterator(m_doc, navigation::first(*m_doc, m_node), is_object());
         }
         return iterator(m_doc, m_node, false);
     }
@@ -489,7 +493,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, document_data::child_end(m_node), is_object());
+            return iterator(m_doc, navigation::end(*m_doc, m_node), is_object());
         }
         return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false);
     }
@@ -589,7 +593,7 @@ class basic_json_view
         style.source_numbers = numbers == number_format::source;
         // the compact text is about as long as the source text of the value
         const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 64;
-        detail::view::view_serializer<BasicJsonType>(*m_doc, out, estimate, style).dump(m_node);
+        detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
         return out;
     }
 
@@ -619,6 +623,19 @@ class basic_json_view
     }
 
     friend bool operator!=(const basic_json_view& a, const basic_json_view& b)
+    {
+        return !(a == b);
+    }
+
+    /// a view of an editable document compares with one of a read-only document
+    template < bool E, typename std::enable_if < E != Editable, int >::type = 0 >
+    friend bool operator==(const basic_json_view& a, const basic_json_view<BasicJsonType, E>& b)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), detail::view::view_side<BasicJsonType, basic_json_view<BasicJsonType, E>>(b));
+    }
+
+    template < bool E, typename std::enable_if < E != Editable, int >::type = 0 >
+    friend bool operator!=(const basic_json_view& a, const basic_json_view<BasicJsonType, E>& b)
     {
         return !(a == b);
     }
@@ -656,7 +673,7 @@ class basic_json_view
         {
             return BasicJsonType(value_t::discarded);
         }
-        return detail::view::materialize<BasicJsonType>(*m_doc, m_node);
+        return detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
     }
 
     /// byte offset of this value in the source text (for strings: of the
@@ -664,12 +681,14 @@ class basic_json_view
     /// a discarded view and for strings with escapes, which are decoded
     std::size_t source_offset() const noexcept
     {
-        return m_node != nullptr && (m_node->flags & detail::view::node_flags::storage) == 0
+        return m_node != nullptr && (m_node->flags & (detail::view::node_flags::storage | detail::view::node_flags::moved | detail::view::node_flags::is_new)) == 0
                ? m_node->off : static_cast<std::size_t>(-1);
     }
 
   private:
-    template<typename> friend class basic_json_document;
+    template<typename, bool> friend class basic_json_document;
+    template<typename, bool> friend class basic_json_view;
+    template<typename, typename> friend class detail::view::editor;
     friend iterator;
 
     basic_json_view(const document_data* d, const node* n) noexcept
@@ -687,6 +706,11 @@ class basic_json_view
     /// decoded strings)
     std::size_t source_extent() const noexcept
     {
+        if (Editable && m_doc->edits != nullptr)
+        {
+            // positions of moved and new values are not source offsets
+            return m_node == m_doc->tape ? m_doc->size + m_doc->edits->text_used : 64;
+        }
         const node* const next = document_data::after(m_node);
         const bool in_source = (m_node->flags & detail::view::node_flags::storage) == 0;
         if (!in_source)
@@ -704,8 +728,8 @@ class basic_json_view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
-        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
-        return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        return k != nullptr ? basic_json_view(m_doc, navigation::value(k + 1)) : basic_json_view();
     }
 
     // --- get() dispatch ---
@@ -796,7 +820,7 @@ Borrowed parses keep a pointer to the caller's text, which must outlive the
 document. Owned parses (parse_copy, rvalue std::string, streams, and inputs
 that are not contiguous byte ranges) keep their own copy.
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable = false>
 class basic_json_document
 {
     using document_data = detail::view::document_data;
@@ -805,7 +829,7 @@ class basic_json_document
                   "json_view supports 64-bit integer types only");
 
   public:
-    using view_type = basic_json_view<BasicJsonType>;
+    using view_type = basic_json_view<BasicJsonType, Editable>;
     using value_t = detail::value_t;
 
     /// an empty (discarded) document
@@ -930,7 +954,8 @@ class basic_json_document
                + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
                + m_data->arena.capacity() + m_data->owned.capacity()
                + (m_data->indexes.capacity() * sizeof(document_data::object_index)) + (m_data->index_slots.capacity() * sizeof(std::uint32_t))
-               + (m_data->large_objects.capacity() * sizeof(std::uint32_t));
+               + (m_data->large_objects.capacity() * sizeof(std::uint32_t))
+               + (m_data->edits != nullptr ? m_data->edits->bytes : 0);
     }
 
     /// release unused capacity of the index and the decoded strings; like
@@ -949,7 +974,8 @@ class basic_json_document
         // unchanged
         const bool shrink_arena = d.arena.capacity() > d.arena.size();
         std::string arena(shrink_arena ? d.arena : std::string());
-        const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap;
+        // (edits link to the nodes of the index, which then stays in place)
+        const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap && d.edits == nullptr;
         const bool into_header = d.tape_size <= d.inline_cap;
         node* fresh = (shrink_tape && !into_header) ? static_cast<node*>(::operator new (d.tape_size * sizeof(node))) : d.inline_tape;
 
@@ -967,8 +993,162 @@ class basic_json_document
         }
     }
 
+    ///////////
+    // edits //
+    ///////////
+
+    // The source text is never written; new values go to storage owned by
+    // the document. A view keeps referring to the same value: after an
+    // assignment it sees the new value, and edits elsewhere do not affect it.
+    // A view of an erased value keeps its last value. An edit of an
+    // array/object invalidates the iterators over it. Values are accepted as
+    // views (of any document), BasicJsonType values, and everything
+    // BasicJsonType can be constructed from.
+
+    using string_view_t = typename view_type::string_view_t;
+    using json_pointer = typename BasicJsonType::json_pointer;
+
+    /// replace a value (a view of this document); returns a view of it
+    template<typename V>
+    view_type set(view_type target, V&& value)
+    {
+        return editor().set(target, std::forward<V>(value));
+    }
+
+    /// set a member (added if missing; a null value becomes an object);
+    /// returns a view of the member value
+    template<typename V>
+    view_type set(view_type object, string_view_t key, V&& value)
+    {
+        return editor().set(object, key, std::forward<V>(value));
+    }
+
+    /// assign an existing array element; returns a view of it
+    template < typename I, typename V, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    view_type set(view_type array, I idx, V && value)
+    {
+        return editor().set(array, index(idx), std::forward<V>(value));
+    }
+
+    /// set the value at a JSON pointer: its parent must exist; an object
+    /// member is set (added if missing), an array element assigned, and "-"
+    /// or the size of the array appends
+    template<typename V>
+    view_type set(const json_pointer& ptr, V&& value)
+    {
+        if (ptr.empty())
+        {
+            return set(root(), std::forward<V>(value));
+        }
+        const view_type parent = root().at(ptr.parent_pointer());
+        const auto& token = ptr.back();
+        if (parent.is_array())
+        {
+            const std::size_t idx = token == "-" ? parent.size() : pointer_index(token);
+            if (idx == parent.size())
+            {
+                return push_back(parent, std::forward<V>(value));
+            }
+            return set(parent, idx, std::forward<V>(value));
+        }
+        return set(parent, string_view_t(token.data(), token.size()), std::forward<V>(value));
+    }
+
+    /// append to an array (a null value becomes an array); returns a view of
+    /// the new element
+    template<typename V>
+    view_type push_back(view_type array, V&& value)
+    {
+        return editor().push_back(array, std::forward<V>(value));
+    }
+
+    /// insert into an array before position idx (idx <= size()); returns a
+    /// view of the new element
+    template < typename I, typename V, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    view_type insert(view_type array, I idx, V && value)
+    {
+        return editor().insert(array, index(idx), std::forward<V>(value));
+    }
+
+    /// remove all members with this key; returns their number
+    std::size_t erase(view_type object, string_view_t key)
+    {
+        return editor().erase(object, key);
+    }
+
+    /// remove an array element
+    template < typename I, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    void erase(view_type array, I idx)
+    {
+        editor().erase(array, index(idx));
+    }
+
+    /// remove the value at a JSON pointer; returns the number of removed
+    /// values
+    std::size_t erase(const json_pointer& ptr)
+    {
+        if (ptr.empty())
+        {
+            detail::view::throw_out_of_range(405, "JSON pointer has no parent");
+        }
+        const view_type parent = root().at(ptr.parent_pointer());
+        const auto& token = ptr.back();
+        if (parent.is_array())
+        {
+            erase(parent, pointer_index(token));
+            return 1;
+        }
+        return erase(parent, string_view_t(token.data(), token.size()));
+    }
+
   private:
     using input_kind = detail::view::input_kind;
+
+    detail::view::editor<BasicJsonType, view_type> editor()
+    {
+        static_assert(Editable, "only an editable document can be edited: use basic_json_document<BasicJsonType, true> (json_editable_document)");
+        if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
+        {
+            detail::view::throw_invalid_iterator(202, "view does not belong to this document");
+        }
+        return detail::view::editor<BasicJsonType, view_type>(*m_data);
+    }
+
+    /// an index (out_of_range.401 if negative)
+    template<typename I>
+    static std::size_t index(I idx)
+    {
+        return index(idx, std::is_signed<I> {});
+    }
+
+    template<typename I>
+    static std::size_t index(I idx, std::true_type /*signed*/)
+    {
+        if (idx < 0)
+        {
+            detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+        }
+        return static_cast<std::size_t>(idx);
+    }
+
+    template<typename I>
+    static std::size_t index(I idx, std::false_type /*unsigned*/)
+    {
+        return static_cast<std::size_t>(idx);
+    }
+
+    /// the array index of a JSON pointer token (json_pointer's rules)
+    template<typename StringType>
+    static std::size_t pointer_index(const StringType& token)
+    {
+        std::size_t idx = 0;
+        const detail::view::index_status status = detail::view::array_index(token, idx);
+        if (status != detail::view::index_status::ok)
+        {
+            detail::view::throw_array_index_error(status, token);
+        }
+        return idx;
+    }
 
     /// create the storage (sized for the input) on first use
     void ensure_data(const char* src, std::size_t size)
@@ -999,6 +1179,8 @@ class basic_json_document
         d.src = src;
         d.size = size;
         d.tape_size = 0;
+        d.edits.reset(); // (views of the previous text end here anyway)
+        d.base[2] = nullptr;
         d.arena.clear();
         d.indexes.clear();
         d.index_slots.clear();
@@ -1136,6 +1318,14 @@ using json_view = basic_json_view<json>;
 using ordered_json_document = basic_json_document<ordered_json>;
 /// a value of an ordered_json_document
 using ordered_json_view = basic_json_view<ordered_json>;
+/// an editable parsed JSON text for json
+using json_editable_document = basic_json_document<json, true>;
+/// a value of a json_editable_document
+using json_editable_view = basic_json_view<json, true>;
+/// an editable parsed JSON text for ordered_json
+using ordered_json_editable_document = basic_json_document<ordered_json, true>;
+/// a value of an ordered_json_editable_document
+using ordered_json_editable_view = basic_json_view<ordered_json, true>;
 
 NLOHMANN_JSON_NAMESPACE_END
 

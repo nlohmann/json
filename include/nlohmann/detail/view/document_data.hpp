@@ -12,6 +12,9 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
 #include <cstring> // memcpy
+#include <functional> // less
+#include <map> // map
+#include <memory> // unique_ptr
 #include <new> // operator new, placement new
 #include <string> // string
 #include <vector> // vector
@@ -50,8 +53,29 @@ struct document_data
     std::vector<object_index> indexes{}; // NOLINT(readability-redundant-member-init)
     std::vector<std::uint32_t> index_slots{}; // NOLINT(readability-redundant-member-init)
     std::vector<std::uint32_t> large_objects{}; ///< positions of the objects to index (noted while parsing) // NOLINT(readability-redundant-member-init)
-    std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
+    std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena, edit arena (indexed by flags & node_flags::storage)
     bool discarded = true;
+
+    /// The storage of edits (editable documents only; see edit_storage.hpp).
+    /// Edits never move or resize the parsed index, so views stay valid: an
+    /// array/object whose elements change gets node_flags::moved, and its
+    /// elements then live in a separate sequence (a header node, then the
+    /// entries), whose entries link to the values.
+    struct edit_state
+    {
+        std::vector<node*> moved{};                    ///< element sequences of moved arrays/objects (header node first) // NOLINT(readability-redundant-member-init)
+        std::vector<std::size_t> moved_cap{};          ///< capacity in nodes of a growable block; 0: a fixed sequence (a new value) // NOLINT(readability-redundant-member-init)
+        std::vector<std::unique_ptr<node[]>> chunks{}; ///< storage of new values and blocks; never moved // NOLINT(readability-redundant-member-init,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        std::map<const node*, node*, std::less<const node*>> regions{}; ///< new arrays/objects: root -> container that uses it as its element sequence (nullptr: linked from a block) // NOLINT(readability-redundant-member-init)
+        node* chunk_cur = nullptr;
+        node* chunk_end = nullptr;
+        std::size_t chunk_next = 64;
+        std::vector<std::unique_ptr<char[]>> texts{}; ///< edit arena, the current buffer last; earlier ones stay alive for string views // NOLINT(readability-redundant-member-init,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        std::size_t text_used = 0;
+        std::size_t text_cap = 0;
+        std::size_t bytes = 0; ///< memory held by edits
+    };
+    std::unique_ptr<edit_state> edits{}; ///< created by the first edit // NOLINT(readability-redundant-member-init)
 
     /// one allocation for the header and room for `nodes` nodes; large
     /// documents get a separate node array instead (so it can be trimmed)
@@ -135,6 +159,78 @@ struct document_data
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* child_end(const node* n) noexcept
     {
         return n + n->next;
+    }
+
+    /// (editable documents) first element or key, also of a moved container
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* first_child_edited(const node* n) const noexcept
+    {
+        return NLOHMANN_VIEW_LIKELY((n->flags & node_flags::moved) == 0) ? n + 1 : edits->moved[n->off] + 1;
+    }
+
+    /// (editable documents) end of the elements, also of a moved container
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* child_end_edited(const node* n) const noexcept
+    {
+        if (NLOHMANN_VIEW_LIKELY((n->flags & node_flags::moved) == 0))
+        {
+            return n + n->next;
+        }
+        const node* const h = edits->moved[n->off];
+        return h + h->next;
+    }
+
+    /// (editable documents) the value at an element position: entries of
+    /// moved sequences are links. The link case is out of line, so that this
+    /// compiles to a predicted branch rather than a select that delays the
+    /// following loads.
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* deref(const node* n) noexcept
+    {
+        return NLOHMANN_VIEW_LIKELY(n->kind != kind_link) ? n : follow_link(n);
+    }
+
+    static NLOHMANN_VIEW_NOINLINE const node* follow_link(const node* n) noexcept
+    {
+        return link_target(*n);
+    }
+};
+
+/// How the index is walked: views of read-only documents follow the node
+/// array alone and compile without any of the edit handling; views of
+/// editable documents also follow moved element sequences and links.
+template<bool Editable>
+struct navigation
+{
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& /*d*/, const node* n) noexcept
+    {
+        return n + 1;
+    }
+
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* end(const document_data& /*d*/, const node* n) noexcept
+    {
+        return n + n->next;
+    }
+
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* value(const node* n) noexcept
+    {
+        return n;
+    }
+};
+
+template<>
+struct navigation<true>
+{
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& d, const node* n) noexcept
+    {
+        return d.first_child_edited(n);
+    }
+
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* end(const document_data& d, const node* n) noexcept
+    {
+        return d.child_end_edited(n);
+    }
+
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* value(const node* n) noexcept
+    {
+        return document_data::deref(n);
     }
 };
 

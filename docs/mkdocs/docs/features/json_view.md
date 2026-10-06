@@ -187,14 +187,77 @@ a number to its parsed `#!cpp double`/`#!cpp int64_t` value.
 [`operator<<`](../api/basic_json_view/operator_ltlt.md) writes a view to a stream the way `basic_json`'s does, using
 the stream's `width`/`fill` for indentation.
 
+## Editing a document
+
+Everything above is read-only: a `json_document`/`json_view` lets you look at a parsed text without copying it, but
+not change it. [`basic_json_document<BasicJsonType, true>`](../api/basic_json_document/index.md) -- more conveniently
+spelled [`json_editable_document`](../api/json_editable_document.md) or
+[`ordered_json_editable_document`](../api/ordered_json_editable_document.md) -- also lets you
+[`set`](../api/basic_json_document/set.md) a value, [`push_back`](../api/basic_json_document/push_back.md) onto or
+[`insert`](../api/basic_json_document/insert.md) into an array, and [`erase`](../api/basic_json_document/erase.md)
+an object member or an array element, still without ever building a `basic_json` tree for parts you do not touch.
+
+`#!cpp Editable` defaults to `#!cpp false`, so `json_document`/`ordered_json_document` are unaffected -- they carry
+none of the bookkeeping edits need, and calling `set`/`push_back`/`insert`/`erase` on one is a compile error, not a
+runtime one.
+
+### Why: editing without reformatting
+
+The `#!cpp 19.90` price from [above](#writing-a-view-back) is exactly the kind of value that makes editing a `json`
+or `ordered_json` value in place lossy. Say you parse a configuration file, patch one field, and write it back:
+
+- **`json`** re-sorts every key on the way in (`object_t` is a `#!cpp std::map`) and rewrites every number to its
+  shortest round-trip form on the way out -- a one-field patch turns into a diff that reorders the whole file and
+  rewrites `#!cpp 19.90` to `#!cpp 19.9`.
+- **`ordered_json`** keeps the key order, but still rewrites every number the same way: parsing has already reduced
+  it to a `#!cpp double`/`#!cpp int64_t`, and there is no way back to how it was spelled in the source text.
+
+An editable document keeps both. [`dump()`](../api/basic_json_view/dump.md) of an edited document writes members in
+document order -- a member [`set`](../api/basic_json_document/set.md) added goes at the end, exactly where it was
+inserted, and an [`erase`](../api/basic_json_document/erase.md)d member simply leaves a gap: everything around it
+keeps its place -- and [`number_format::source`](../api/basic_json_view/number_format.md) keeps the exact spelling
+of every number an edit did not itself touch; a number an edit *did* touch is written the way
+[`BasicJsonType::dump()`](../api/basic_json/dump.md) would write it, since there is no source spelling for a brand
+new value.
+
+??? example "Example: patch a configuration, keeping member order and number spellings"
+
+    ```cpp
+    --8<-- "examples/json_editable_document.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/json_editable_document.output"
+    ```
+
+### What stays valid, and what an edit costs
+
+The source text itself is **never written**, and the parsed index never moves -- a value keeps the node it was
+parsed into for as long as it is not itself replaced. So every [view](../api/basic_json_view/index.md) taken before
+an edit, including a previously obtained [`root()`](../api/basic_json_document/root.md), stays valid and, if it
+still refers to the edited value, sees the edit; a view of a value a later edit drops or replaces just keeps showing
+what it last held. New values go to storage the document allocates and owns on demand. The one thing an edit does
+invalidate is the **iterators** taken over an edited array or object: the first time one of its elements is set,
+appended to, inserted into, or erased, its elements move from the parsed, fixed layout to a growable block of links
+so that [`push_back`](../api/basic_json_document/push_back.md) can later grow it in amortized constant time --
+existing elements are not touched, but an iterator that was walking the old layout no longer matches. A string
+obtained with
+[`get_string()`](../api/basic_json_view/get_string.md) is unaffected either way and stays valid across further
+edits. See [`basic_json_document`'s Edits](../api/basic_json_document/index.md#edits) for the details, and
+[`set`'s Exception safety](../api/basic_json_document/set.md#exception-safety) for what an edit guarantees if it
+throws (the *basic* guarantee, not the strong one `dump()` and the read-only functions provide). How edits are kept in
+the index is described in the [architecture overview](../home/architecture.md#node-index-of-json-views).
+
 ## Choosing between `json`, `ordered_json`, the SAX interface, and `json_view`
 
-| | [`json`](../api/json.md) / [`ordered_json`](../api/ordered_json.md) | [SAX interface](parsing/sax_interface.md) | [`json_document`](../api/json_document.md) / [`json_view`](../api/json_view.md) |
-|---|---|---|---|
-| **Ownership** | owns every value | owns nothing; you decide what to keep, in your handler | borrows or owns the *text*; the index is always owned by the document |
-| **Mutability** | freely mutable | not applicable (a one-shot event stream) | read-only |
-| **What you get** | a full tree you can read, write, and keep as long as you like | a sequence of callbacks; whatever your handler builds from them | a flat index plus, on demand, [`materialize()`](../api/basic_json_view/materialize.md)d `json`/`ordered_json` values for the parts you actually use |
-| **Typical use** | general-purpose JSON handling: config, request/response bodies you build or modify, anything you hold onto | validating or projecting a text into your own data structure without ever holding the whole thing as JSON | large or high-volume input where you only need part of it, or need it repeatedly, and can keep the source text (or a copy) alive for as long as the document lives |
+| | [`json`](../api/json.md) / [`ordered_json`](../api/ordered_json.md) | [SAX interface](parsing/sax_interface.md) | [`json_document`](../api/json_document.md) / [`json_view`](../api/json_view.md) | [`json_editable_document`](../api/json_editable_document.md) / [`json_editable_view`](../api/json_editable_view.md) |
+|---|---|---|---|---|
+| **Ownership** | owns every value | owns nothing; you decide what to keep, in your handler | borrows or owns the *text*; the index is always owned by the document | same as `json_document`; edits go to storage the document owns |
+| **Mutability** | freely mutable | not applicable (a one-shot event stream) | read-only | [`set`](../api/basic_json_document/set.md)/[`push_back`](../api/basic_json_document/push_back.md)/[`insert`](../api/basic_json_document/insert.md)/[`erase`](../api/basic_json_document/erase.md) edit in place; the source text is never rewritten |
+| **What you get** | a full tree you can read, write, and keep as long as you like | a sequence of callbacks; whatever your handler builds from them | a flat index plus, on demand, [`materialize()`](../api/basic_json_view/materialize.md)d `json`/`ordered_json` values for the parts you actually use | the same, plus [`dump()`](../api/basic_json_view/dump.md) of an edited document that keeps the member order and, with [`number_format::source`](../api/basic_json_view/number_format.md), the spelling of every untouched number |
+| **Typical use** | general-purpose JSON handling: config, request/response bodies you build or modify, anything you hold onto | validating or projecting a text into your own data structure without ever holding the whole thing as JSON | large or high-volume input where you only need part of it, or need it repeatedly, and can keep the source text (or a copy) alive for as long as the document lives | a document you read, patch a few fields of, and write back -- a configuration file, for instance -- where the rest of it should come back exactly as it was |
 
 ## Version history
 

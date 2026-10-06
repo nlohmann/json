@@ -115,9 +115,10 @@ the library's conversion; integers are copied from the source, where they
 are canonical (except "-0", which parse() reads as 0). The walk is
 iterative, so the nesting depth is limited by memory only.
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable>
 class view_serializer
 {
+    using nav = navigation<Editable>;
     using string_t = typename BasicJsonType::string_t;
     using number_float_t = typename BasicJsonType::number_float_t;
 
@@ -150,7 +151,7 @@ class view_serializer
                 else
                 {
                     m_out.put(object ? '{' : '[');
-                    stack.push_back(frame{document_data::first_child(n), document_data::child_end(n), object, true});
+                    stack.push_back(frame{nav::first(m_doc, n), nav::end(m_doc, n), object, true});
                 }
             }
             else
@@ -192,13 +193,14 @@ class view_serializer
                     {
                         m_out.put(':');
                     }
-                    n = f.pos + 1;
+                    n = nav::value(f.pos + 1);
+                    f.pos = document_data::after(f.pos + 1);
                 }
                 else
                 {
-                    n = f.pos;
+                    n = nav::value(f.pos);
+                    f.pos = document_data::after(f.pos);
                 }
-                f.pos = document_data::after(n);
                 break;
             }
         }
@@ -250,9 +252,9 @@ class view_serializer
                 break;
             }
             case value_t::number_float:
-                if (m_style.source_numbers)
+                if (m_style.source_numbers && (n.flags & node_flags::storage) != node_flags::edited)
                 {
-                    m_out.put(m_doc.str(n), n.len);
+                    m_out.put(m_doc.str(n), n.len); // (a float set by an edit is written as with shortest)
                 }
                 else
                 {
@@ -299,9 +301,9 @@ class view_serializer
     {
         const char* const s = m_doc.str(n);
         m_out.put('"');
-        if ((n.flags & node_flags::escaped) == 0 && !m_style.ensure_ascii)
+        if ((n.flags & node_flags::storage) == 0 && !m_style.ensure_ascii)
         {
-            // a string without escape sequences has nothing to escape
+            // a string of the source without escape sequences has nothing to escape
             m_out.put(s, n.len);
         }
         else if (m_style.ensure_ascii)

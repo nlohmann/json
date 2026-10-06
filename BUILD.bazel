@@ -70,6 +70,8 @@ cc_library(
         "include/nlohmann/detail/view/builder.hpp",
         "include/nlohmann/detail/view/compare.hpp",
         "include/nlohmann/detail/view/document_data.hpp",
+        "include/nlohmann/detail/view/edit.hpp",
+        "include/nlohmann/detail/view/edit_storage.hpp",
         "include/nlohmann/detail/view/errors.hpp",
         "include/nlohmann/detail/view/input.hpp",
         "include/nlohmann/detail/view/iterator.hpp",

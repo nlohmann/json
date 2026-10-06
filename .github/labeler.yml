@@ -55,8 +55,8 @@ labels:
     - "tools/amalgamate/config_json_view\\.json"
     - "docs/mkdocs/docs/features/json_view\\.md"
     - "docs/mkdocs/docs/api/basic_json_(document|view)/.*"
-    - "docs/mkdocs/docs/api/(ordered_)?json_(document|view)\\.md"
-    - "docs/mkdocs/docs/examples/(basic_json_(document|view)__|(ordered_)?json_(document|view)).*"
+    - "docs/mkdocs/docs/api/(ordered_)?json_(editable_)?(document|view)\\.md"
+    - "docs/mkdocs/docs/examples/(basic_json_(document|view)__|(ordered_)?json_(editable_)?(document|view)).*"
     - "tests/benchmarks/src/benchmarks_view\\.cpp"
 
 - label: "aspect: json_view"
