@@ -6193,7 +6193,6 @@ NLOHMANN_JSON_NAMESPACE_END
     #include <optional> // optional
 #endif
 
-#include <algorithm> // copy
 #include <iterator> // begin, end
 #include <memory> // allocator_traits
 #include <string> //  basic_string, char_traits
@@ -6833,9 +6832,9 @@ namespace detail
 //////////////////
 
 /*
- * Note all external_constructor<>::construct functions need to call
- * j.m_data.m_value.destroy(j.m_data.m_type) to avoid a memory leak in case j contains an
- * allocated value (e.g., a string). See bug issue
+ * Note all external_constructor<>::construct functions need to store the new
+ * value with j.replace_value(), which destroys the old one to avoid a memory
+ * leak in case j contains an allocated value (e.g., a string). See bug issue
  * https://github.com/nlohmann/json/issues/2865 for more information.
  *
  * A value that has to be allocated is created before the old one is destroyed:
@@ -6851,10 +6850,7 @@ struct external_constructor<value_t::boolean>
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::boolean_t b) noexcept
     {
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::boolean;
-        j.m_data.m_value = b;
-        j.assert_invariant();
+        j.replace_value(value_t::boolean, b);
     }
 };
 
@@ -6865,20 +6861,14 @@ struct external_constructor<value_t::string>
     static void construct(BasicJsonType& j, const typename BasicJsonType::string_t& s)
     {
         const typename BasicJsonType::json_value value(s);
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::string;
-        j.m_data.m_value = value;
-        j.assert_invariant();
+        j.replace_value(value_t::string, value);
     }
 
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::string_t&& s)
     {
         const typename BasicJsonType::json_value value(std::move(s));
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::string;
-        j.m_data.m_value = value;
-        j.assert_invariant();
+        j.replace_value(value_t::string, value);
     }
 
     template < typename BasicJsonType, typename CompatibleStringType,
@@ -6886,11 +6876,8 @@ struct external_constructor<value_t::string>
                              int > = 0 >
     static void construct(BasicJsonType& j, const CompatibleStringType& str)
     {
-        auto* created = j.template create<typename BasicJsonType::string_t>(str);
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::string;
-        j.m_data.m_value.string = created;
-        j.assert_invariant();
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::string_t>(str));
+        j.replace_value(value_t::string, value);
     }
 };
 
@@ -6901,20 +6888,14 @@ struct external_constructor<value_t::binary>
     static void construct(BasicJsonType& j, const typename BasicJsonType::binary_t& b)
     {
         const typename BasicJsonType::json_value value(b);
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::binary;
-        j.m_data.m_value = value;
-        j.assert_invariant();
+        j.replace_value(value_t::binary, value);
     }
 
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::binary_t&& b)
     {
         const typename BasicJsonType::json_value value(std::move(b));
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::binary;
-        j.m_data.m_value = value;
-        j.assert_invariant();
+        j.replace_value(value_t::binary, value);
     }
 };
 
@@ -6924,10 +6905,7 @@ struct external_constructor<value_t::number_float>
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::number_float_t val) noexcept
     {
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::number_float;
-        j.m_data.m_value = val;
-        j.assert_invariant();
+        j.replace_value(value_t::number_float, val);
     }
 };
 
@@ -6937,10 +6915,7 @@ struct external_constructor<value_t::number_unsigned>
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::number_unsigned_t val) noexcept
     {
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::number_unsigned;
-        j.m_data.m_value = val;
-        j.assert_invariant();
+        j.replace_value(value_t::number_unsigned, val);
     }
 };
 
@@ -6950,10 +6925,7 @@ struct external_constructor<value_t::number_integer>
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::number_integer_t val) noexcept
     {
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::number_integer;
-        j.m_data.m_value = val;
-        j.assert_invariant();
+        j.replace_value(value_t::number_integer, val);
     }
 };
 
@@ -6964,22 +6936,14 @@ struct external_constructor<value_t::array>
     static void construct(BasicJsonType& j, const typename BasicJsonType::array_t& arr)
     {
         const typename BasicJsonType::json_value value(arr);
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::array;
-        j.m_data.m_value = value;
-        j.set_parents();
-        j.assert_invariant();
+        j.replace_value(value_t::array, value);
     }
 
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
     {
         const typename BasicJsonType::json_value value(std::move(arr));
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::array;
-        j.m_data.m_value = value;
-        j.set_parents();
-        j.assert_invariant();
+        j.replace_value(value_t::array, value);
     }
 
     template < typename BasicJsonType, typename CompatibleArrayType,
@@ -6993,43 +6957,23 @@ struct external_constructor<value_t::array>
         using std::begin;
         using std::end;
 
-        auto* created = j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::array;
-        j.m_data.m_value.array = created;
-        j.set_parents();
-        j.assert_invariant();
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr)));
+        j.replace_value(value_t::array, value);
     }
 
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, const std::vector<bool>& arr)
     {
-        typename BasicJsonType::array_t elements;
-        elements.reserve(arr.size());
-        for (const bool x : arr)
-        {
-            elements.push_back(x);
-        }
-        const typename BasicJsonType::json_value value(std::move(elements));
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::array;
-        j.m_data.m_value = value;
-        j.set_parents();
-        j.assert_invariant();
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(arr.begin(), arr.end()));
+        j.replace_value(value_t::array, value);
     }
 
     template<typename BasicJsonType, typename T,
              enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
     static void construct(BasicJsonType& j, const std::valarray<T>& arr)
     {
-        typename BasicJsonType::array_t elements(arr.size());
-        std::copy(std::begin(arr), std::end(arr), elements.begin());
-        const typename BasicJsonType::json_value value(std::move(elements));
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::array;
-        j.m_data.m_value = value;
-        j.set_parents();
-        j.assert_invariant();
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(std::begin(arr), std::end(arr)));
+        j.replace_value(value_t::array, value);
     }
 
 #if JSON_HAS_RANGE_VIEW_CONVERSION
@@ -7037,20 +6981,15 @@ struct external_constructor<value_t::array>
              enable_if_t<is_compatible_range_view<std::remove_cvref_t<CompatibleArrayType>>::value, int> = 0>
     static void construct(BasicJsonType& j, CompatibleArrayType && arr)
     {
+        // no range constructor: a view's begin() and end() may have different
+        // types, and the view may only be iterable once
         typename BasicJsonType::array_t elements;
         for (auto&& x : std::forward<CompatibleArrayType>(arr))
         {
             elements.push_back(x);
         }
         const typename BasicJsonType::json_value value(std::move(elements));
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::array;
-        j.m_data.m_value = value;
-        // set the parents only once all elements are in place: a push_back
-        // that reallocates moves the earlier elements, which does not keep
-        // their parent pointers
-        j.set_parents();
-        j.assert_invariant();
+        j.replace_value(value_t::array, value);
     }
 #endif
 };
@@ -7062,22 +7001,14 @@ struct external_constructor<value_t::object>
     static void construct(BasicJsonType& j, const typename BasicJsonType::object_t& obj)
     {
         const typename BasicJsonType::json_value value(obj);
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::object;
-        j.m_data.m_value = value;
-        j.set_parents();
-        j.assert_invariant();
+        j.replace_value(value_t::object, value);
     }
 
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
     {
         const typename BasicJsonType::json_value value(std::move(obj));
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::object;
-        j.m_data.m_value = value;
-        j.set_parents();
-        j.assert_invariant();
+        j.replace_value(value_t::object, value);
     }
 
     template < typename BasicJsonType, typename CompatibleObjectType,
@@ -7087,12 +7018,8 @@ struct external_constructor<value_t::object>
         using std::begin;
         using std::end;
 
-        auto* created = j.template create<typename BasicJsonType::object_t>(begin(obj), end(obj));
-        j.m_data.m_value.destroy(j.m_data.m_type);
-        j.m_data.m_type = value_t::object;
-        j.m_data.m_value.object = created;
-        j.set_parents();
-        j.assert_invariant();
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(begin(obj), end(obj)));
+        j.replace_value(value_t::object, value);
     }
 };
 
@@ -27941,6 +27868,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// constructor for rvalue binary arrays (internal type)
         json_value(binary_t&& value) : binary(create<binary_t>(std::move(value))) {}
 
+        /// constructors taking ownership of an already created value
+        explicit json_value(string_t* value) noexcept : string(value) {}
+        explicit json_value(object_t* value) noexcept : object(value) {}
+        explicit json_value(array_t* value) noexcept : array(value) {}
+
 private:
         // raw, allocation-free transfer of m_data from src to dst: no
         // set_parents()/assert_invariant() (the former is O(#children) per
@@ -28269,6 +28201,18 @@ public:
                 break;
         }
 #endif
+    }
+
+    /// @brief replace the stored value with an already created one
+    /// The new value must be created before calling this function: if its
+    /// creation throws, the current value is left untouched.
+    void replace_value(value_t t, const json_value& v) noexcept
+    {
+        m_data.m_value.destroy(m_data.m_type);
+        m_data.m_value = v;
+        m_data.m_type = t;
+        set_parents();
+        assert_invariant();
     }
 
     iterator set_parents(iterator it, std::ptrdiff_t count_set_parents)
