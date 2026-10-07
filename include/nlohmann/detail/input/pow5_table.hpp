@@ -22,6 +22,10 @@ namespace detail
 constexpr std::int64_t pow5_128_smallest_power = -342;
 constexpr std::int64_t pow5_128_largest_power = 308;
 
+// every entry of pow5_128() holds two 64-bit halves of 5^q, one per covered power of 5
+static_assert((pow5_128_largest_power - pow5_128_smallest_power + 1) * 2 == 1302,
+              "pow5_128_smallest_power/pow5_128_largest_power must match the size of the pow5_128() table");
+
 /*!
 @brief 128-bit approximations of 5^q for q in [-342, 308]
 
