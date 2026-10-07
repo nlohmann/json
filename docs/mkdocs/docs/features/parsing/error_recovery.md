@@ -73,7 +73,7 @@ If the item is complete, but cannot be passed on as it is, it is replaced, and p
 
 | Mistake                                                             | Formats                 | Repair                                                                  |
 |---------------------------------------------------------------------|-------------------------|-------------------------------------------------------------------------|
-| tag                                                                 | CBOR                    | ignored                                                                 |
+| tag, if `tag_handler` is `cbor_tag_handler_t::error` (the default)  | CBOR                    | ignored                                                                 |
 | simple value other than `false`, `true`, and `null`, like undefined | CBOR                    | `#!json null`                                                           |
 | number too large for a custom `number_float_t`, like `float`        | all                     | infinity                                                                |
 | character (`C`) that is not ASCII                                   | BJData, UBJSON          | U+FFFD                                                                  |
@@ -85,8 +85,8 @@ If the item is complete, but cannot be passed on as it is, it is replaced, and p
 | document whose size does not match its content                      | BSON                    | kept                                                                    |
 
 CBOR tags and simple values are repaired as [RFC 8949, Section 6.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-6.1)
-suggests for converting CBOR to JSON. Note that [`sax_parse`](../../api/basic_json/sax_parse.md) has no parameter for
-CBOR tags, so every tag is an error there; when recovering, tags are ignored like with
+suggests for converting CBOR to JSON. By default, [`sax_parse`](../../api/basic_json/sax_parse.md) reports every tag as
+an error; when recovering, tags are then ignored like with
 [`cbor_tag_handler_t::ignore`](../../api/basic_json/cbor_tag_handler_t.md). Strings that are not valid UTF-8 are no
 error: like [`from_cbor`](../../api/basic_json/from_cbor.md) and the other functions by default, `sax_parse` passes
 them on as they are.

@@ -1271,6 +1271,20 @@ class binary_reader
     }
 
     /*!
+    @brief reports a nested indefinite-length CBOR string or byte array
+    @param[in] type_name  name of the rejected string type
+    @param[in] context  parsing context for the error message
+    @return false, so that the caller stops reading
+    */
+    bool cbor_indefinite_string_error(const char* type_name, const char* context)
+    {
+        auto last_token = get_token_string();
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                            exception_message(concat("indefinite-length ", type_name,
+                                              " is not allowed inside indefinite-length ", type_name, "; last byte: 0x", last_token), context), nullptr));
+    }
+
+    /*!
     @brief reads a definite-length CBOR string
 
     Reads everything @ref get_cbor_string accepts except the indefinite-length
@@ -1279,12 +1293,13 @@ class binary_reader
     into the same string.
 
     @param[out] result  string the bytes are appended to
+    @param[in] inside_indefinite  whether the bytes belong to an indefinite-length string
 
     @return whether string creation completed
 
     @pre @a current is not EOF
     */
-    bool get_cbor_string_chunk(string_t& result)
+    bool get_cbor_string_chunk(string_t& result, const bool inside_indefinite)
     {
         switch (current)
         {
@@ -1345,7 +1360,7 @@ class binary_reader
             {
                 auto last_token = get_token_string();
                 return report_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                    exception_message(concat("expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x", last_token), "string"), nullptr));
+                                    exception_message(concat("expected length specification (0x60-0x7B)", inside_indefinite ? "" : " or indefinite string type (0x7F)", "; last byte: 0x", last_token), "string"), nullptr));
             }
         }
     }
@@ -1363,13 +1378,9 @@ class binary_reader
     */
     bool get_cbor_string(string_t& result, const char* context = "string")
     {
-        // number of indefinite-length strings that have been opened and not
-        // closed yet. RFC 8949, Section 3.2.3 does not permit nesting them,
-        // but this reader has always accepted it, so the open levels are
-        // counted instead of recursed through, which overflowed the stack for
-        // an input of repeated 0x7F bytes (see #5104). Every chunk is appended
-        // to the same result, so no per-level state is needed.
-        std::size_t open = 0;
+        // read chunks iteratively, but reject a second indefinite-length
+        // level as required by RFC 8949, Section 3.2.3
+        bool indefinite = false;
 
         while (true)
         {
@@ -1380,29 +1391,28 @@ class binary_reader
 
             if (current == 0x7F) // UTF-8 string (indefinite length)
             {
-                ++open;
-                get();
-                continue;
-            }
-
-            // a break marker closes the innermost indefinite-length string;
-            // outside of one it is not a string and falls through to the error
-            if (open != 0 && current == 0xFF)
-            {
-                if (--open == 0)
+                if (JSON_HEDLEY_UNLIKELY(indefinite))
                 {
-                    return check_string_utf8(result, context);
+                    return cbor_indefinite_string_error("string", "string");
                 }
+                indefinite = true;
                 get();
                 continue;
             }
 
-            if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(result)))
+            // a break marker closes the indefinite-length string; outside
+            // of one it falls through to the error below
+            if (indefinite && current == 0xFF)
+            {
+                return check_string_utf8(result, context);
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(result, indefinite)))
             {
                 return false;
             }
 
-            if (open == 0)
+            if (!indefinite)
             {
                 return check_string_utf8(result, context);
             }
@@ -1498,12 +1508,13 @@ class binary_reader
     read into the same byte array.
 
     @param[out] result  byte array the bytes are appended to
+    @param[in] inside_indefinite  whether the bytes belong to an indefinite-length string
 
     @return whether byte array creation completed
 
     @pre @a current is not EOF
     */
-    bool get_cbor_binary_chunk(binary_t& result)
+    bool get_cbor_binary_chunk(binary_t& result, const bool inside_indefinite)
     {
         switch (current)
         {
@@ -1568,7 +1579,7 @@ class binary_reader
             {
                 auto last_token = get_token_string();
                 return report_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                    exception_message(concat("expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x", last_token), "binary"), nullptr));
+                                    exception_message(concat("expected length specification (0x40-0x5B)", inside_indefinite ? "" : " or indefinite binary array type (0x5F)", "; last byte: 0x", last_token), "binary"), nullptr));
             }
         }
     }
@@ -1586,9 +1597,9 @@ class binary_reader
     */
     bool get_cbor_binary(binary_t& result)
     {
-        // the open indefinite-length byte arrays are counted rather than
-        // recursed through, for the reason given in @ref get_cbor_string
-        std::size_t open = 0;
+        // read chunks iteratively, but reject a second indefinite-length
+        // level as required by RFC 8949, Section 3.2.3
+        bool indefinite = false;
 
         while (true)
         {
@@ -1599,29 +1610,28 @@ class binary_reader
 
             if (current == 0x5F) // Binary data (indefinite length)
             {
-                ++open;
-                get();
-                continue;
-            }
-
-            // a break marker closes the innermost indefinite-length byte
-            // array; outside of one it falls through to the error below
-            if (open != 0 && current == 0xFF)
-            {
-                if (--open == 0)
+                if (JSON_HEDLEY_UNLIKELY(indefinite))
                 {
-                    return true;
+                    return cbor_indefinite_string_error("binary array", "binary");
                 }
+                indefinite = true;
                 get();
                 continue;
             }
 
-            if (JSON_HEDLEY_UNLIKELY(!get_cbor_binary_chunk(result)))
+            // a break marker closes the indefinite-length string; outside
+            // of one it falls through to the error below
+            if (indefinite && current == 0xFF)
+            {
+                return true;
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!get_cbor_binary_chunk(result, indefinite)))
             {
                 return false;
             }
 
-            if (open == 0)
+            if (!indefinite)
             {
                 return true;
             }
@@ -3737,6 +3747,15 @@ class binary_reader
             {
                 return false;
             }
+            // the lexer would stop at a NUL and accept the digits before it
+            if (JSON_HEDLEY_UNLIKELY(current == '\0'))
+            {
+                static_cast<void>(report_error(chars_read, "00", parse_error::create(115, chars_read,
+                                               exception_message("invalid number text; last byte: 0x00", "high-precision number"), nullptr)));
+                // when recovering, the number ends at the NUL, as it would in
+                // JSON text, and the rest of its bytes are skipped
+                return recover_high_precision_number(number_vector, size - i - 1);
+            }
             number_vector.push_back(static_cast<char>(current));
         }
 
@@ -3812,12 +3831,14 @@ class binary_reader
     parser for JSON text, or passes null if there is none.
 
     @param[in] number_vector  the number's text
+    @param[in] remaining      the number of bytes of the number that are not
+                              read yet; they are skipped
     @return whether the SAX parser asked to recover and accepted the value
     */
     template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
-    bool recover_high_precision_number(const std::vector<char>& number_vector)
+    bool recover_high_precision_number(const std::vector<char>& number_vector, const std::size_t remaining = 0)
     {
-        if (!repair_requested())
+        if (!repair_requested() || !skip_bytes(remaining, "number"))
         {
             return false;
         }
@@ -3861,7 +3882,7 @@ class binary_reader
 
     /// @copydoc recover_high_precision_number
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
-    constexpr std::false_type recover_high_precision_number(const std::vector<char>& /*number_vector*/) const noexcept
+    constexpr std::false_type recover_high_precision_number(const std::vector<char>& /*number_vector*/, const std::size_t /*remaining*/ = 0) const noexcept
     {
         return {};
     }

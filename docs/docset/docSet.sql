@@ -131,6 +131,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_string', 'Meth
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_ubjson', 'Function', 'api/basic_json/to_ubjson/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::value', 'Method', 'api/basic_json/value/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::value_t', 'Enum', 'api/basic_json/value_t/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::with_t', 'Type', 'api/basic_json/with_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::~basic_json', 'Method', 'api/basic_json/~basic_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json', 'Class', 'api/json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer', 'Class', 'api/json_pointer/index.html');

@@ -1400,6 +1400,8 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
             {json::input_format_t::ubjson, {'[', 'H', 'i', 5, '1', '2', 'a', 'b', 'c', 'H', 'i', 2, '1', '.', 'H', 'i', 3, 'a', 'b', 'c', 'H', 'i', 3, '4', '.', '5', ']'}, {12, 1, nullptr, 4.5}, 3},
             // BJData, too
             {json::input_format_t::bjdata, {'[', 'C', 0xFF, 'H', 'i', 2, '-', '1', 'H', 'i', 2, '-', 'x', ']'}, {replacement_character(), -1, nullptr}, 2},
+            // a NUL ends a high-precision number, as it ends JSON text
+            {json::input_format_t::ubjson, {'[', 'H', 'i', 4, '1', '2', 0, '9', 'H', 'i', 2, 0, '1', 'i', 3, ']'}, {12, nullptr, 3}, 2},
             // BON8: members whose key is not a string are skipped
             {json::input_format_t::bon8, {0x89, 0x91, 0x92, 0xC9, 0x40, 0x82, 0x91, 0x92, 0x61, 0x93}, {{"a", 3}}, 2},
             {json::input_format_t::bon8, {0x8B, 0x91, 0x85, 0x91, 0xFE, 0xFA, 0x8B, 'x', 0x91, 0xFE, 0x61, 0x93, 0xFE}, {{"a", 3}}, 2},
@@ -1515,6 +1517,11 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
         const auto bon8 = parse_binary_recovering({0x88, 0x61, 0x91, 0xFE}, json::input_format_t::bon8);
         CHECK(bon8.errors == 1);
         CHECK(bon8.value == json({{"a", 1}}));
+
+        // an indefinite-length string inside an indefinite-length string
+        const auto nested = parse_binary_recovering({0x82, 0x01, 0x7F, 0x7F, 0x61, 'a', 0xFF, 0xFF}, json::input_format_t::cbor);
+        CHECK(nested.errors == 1);
+        CHECK(nested.value == json({1}));
 
         // a skipped member that the input ends in
         const auto truncated = parse_binary_recovering({0xA2, 0x01, 0x82, 0x01}, json::input_format_t::cbor);
