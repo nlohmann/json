@@ -888,6 +888,15 @@ TEST_CASE("regression tests 2")
         CHECK(j == k);
     }
 
+    SECTION("issue #4552 - UTF-8 invalid characters are not always ignored when dumping with error_handler_t::ignore")
+    {
+        json node;
+        node["test"] = "test\334\005";
+        CHECK(node.dump(-1, ' ', false, json::error_handler_t::ignore) == "{\"test\":\"test\\u0005\"}");
+        CHECK(node.dump(-1, ' ', false, json::error_handler_t::keep) == "{\"test\":\"test\334\\u0005\"}");
+        CHECK(node.dump(-1, ' ', true, json::error_handler_t::keep) == "{\"test\":\"test\334\\u0005\"}");
+    }
+
 #ifdef JSON_HAS_CPP_17
     SECTION("issue #5066 - MSVC converts json to std::variant<json> via the conversion operator")
     {
