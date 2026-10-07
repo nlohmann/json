@@ -25,15 +25,36 @@ work items are tracked in the [GitHub milestones](https://github.com/nlohmann/js
 
 ## What the project will not do
 
-- **Break the public API of version 3.x.** See the
-  [contribution guidelines](https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md#break-the-public-api)
-  for what counts as a breaking change, and what is not covered by this guarantee.
+- **Break the public API of version 3.x.** See [API stability](#api-stability) for what this covers.
 - **Require a newer C++ standard than C++11.**
 - **Break JSON conformance** or enable non-standard extensions by default.
 - **Add dependencies** or require a build step. The library remains header-only, and the single header
   `json.hpp` remains a complete distribution.
 - **Trade simplicity for speed or memory efficiency.** Performance improvements are welcome, but the library is not
   meant to compete with the fastest JSON libraries, see [Design goals](../home/design_goals.md).
+
+## API stability
+
+Releases follow [semantic versioning](https://semver.org): a minor or patch release of version 3.x does not break code
+that uses the public API. In particular, a 3.x release does not:
+
+- change the signature of a function (its parameter types, return type, number of parameters, or the const-ness of a
+  member function);
+- remove or rename a function or class;
+- change which exceptions a function throws, or the [exception ids](../home/exceptions.md);
+- change access specifiers or default arguments.
+
+The following are **not** part of the public API and may change in any release, including patch releases:
+
+- The text of exception messages returned by `what()`. Use the [exception id](../home/exceptions.md) to tell errors
+  apart.
+- The ABI, including `sizeof(basic_json)` and the memory layout of its values. Recompile your code when you upgrade the
+  library. The [versioned inline namespace](../features/namespace.md) turns mixing versions into a link error.
+- Everything in namespace `nlohmann::detail`, and macros and type traits that are not documented in the
+  [API reference](../api/basic_json/index.md).
+
+Changes that would break the public API are only added behind a macro whose default keeps the 3.x behavior, see
+[Version 4.0](#version-40).
 
 ## Version 4.0
 

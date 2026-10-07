@@ -205,14 +205,8 @@ API of the 3.x.y version is broken. This includes:
 - Changing access specifiers.
 - Changing default arguments.
 
-The following are **not** part of the public API and may change in any release, including patch releases:
-
-- The text of exception messages returned by `what()`. Use the
-  [exception id](https://json.nlohmann.me/home/exceptions/) to tell errors apart.
-- The ABI, including `sizeof(basic_json)` and the memory layout of its values. Recompile your code when you upgrade the
-  library.
-- Everything in namespace `nlohmann::detail`, and macros and type traits that are not documented in the
-  [API reference](https://json.nlohmann.me/api/basic_json/).
+What is and is not covered by this guarantee is described in the
+[roadmap](https://json.nlohmann.me/community/roadmap/#api-stability).
 
 Although these guidelines may seem restrictive, they are essential for maintaining the library’s utility.
 
