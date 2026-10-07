@@ -2716,10 +2716,15 @@ class binary_reader
                                is_ndarray can only return `true` when its initial value
                                is `false`
     @param[in] prefix  type marker if already read, otherwise set to 0
+    @param[in] ndarray_dtype  the element type marker of the enclosing bjdata ndarray if
+                              already known (it precedes the dimension vector read here),
+                              otherwise 0; used to emit the "_ArrayType_" annotation key
+                              before "_ArraySize_" if a dimension vector turns out to
+                              describe an ndarray
 
     @return whether size determination completed
     */
-    bool get_ubjson_size_value(std::size_t& result, bool& is_ndarray, char_int_type prefix = 0)
+    bool get_ubjson_size_value(std::size_t& result, bool& is_ndarray, char_int_type prefix = 0, char_int_type ndarray_dtype = 0)
     {
         if (prefix == 0)
         {
@@ -2832,8 +2837,34 @@ class binary_reader
                         }
                     }
 
+                    if (JSON_HEDLEY_UNLIKELY(!sax->start_object(3)))
+                    {
+                        return false;
+                    }
+
+                    // the element type precedes the dimension vector (see get_ubjson_size_type)
+                    // and is passed down as ndarray_dtype; emit it here so the annotation keys
+                    // follow the documented _ArrayType_, _ArraySize_, _ArrayData_ order
+                    if (ndarray_dtype != 0)
+                    {
+                        const char* type_name = bjd_type_name(ndarray_dtype);
+                        if (JSON_HEDLEY_UNLIKELY(type_name == nullptr))
+                        {
+                            auto last_token = get_token_string();
+                            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                                    exception_message("invalid byte: 0x" + last_token, "type"), nullptr));
+                        }
+
+                        string_t type_key = "_ArrayType_";
+                        string_t type = type_name; // sax->string() takes a reference
+                        if (JSON_HEDLEY_UNLIKELY(!sax->key(type_key) || !sax->string(type)))
+                        {
+                            return false;
+                        }
+                    }
+
                     string_t key = "_ArraySize_";
-                    if (JSON_HEDLEY_UNLIKELY(!sax->start_object(3) || !sax->key(key) || !sax->start_array(dim.size())))
+                    if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(dim.size())))
                     {
                         return false;
                     }
@@ -2941,7 +2972,7 @@ class binary_reader
                                         exception_message(concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
             }
 
-            const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
+            const bool is_error = get_ubjson_size_value(result.first, is_ndarray, 0, result.second);
             // an ndarray was read here only if the flag flipped; when it was
             // seeded true, get_ubjson_size_value() already rejected the nested
             // dimension vector
@@ -3134,27 +3165,17 @@ class binary_reader
         if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
         {
             size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
-            const char* type_name = bjd_type_name(size_and_type.second);
-            string_t key = "_ArrayType_";
-            if (JSON_HEDLEY_UNLIKELY(type_name == nullptr))
-            {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message("invalid byte: 0x" + last_token, "type"), nullptr));
-            }
 
-            string_t type = type_name; // sax->string() takes a reference
-            if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->string(type)))
-            {
-                return false;
-            }
-
+            // the "_ArrayType_" and "_ArraySize_" annotation keys were already emitted by
+            // get_ubjson_size_value() (the type marker is known before the dimension vector
+            // that determines size_and_type.first is read, so it is emitted first there to
+            // match the documented _ArrayType_, _ArraySize_, _ArrayData_ key order)
             if (size_and_type.second == 'C' || size_and_type.second == 'B')
             {
                 size_and_type.second = 'U';
             }
 
-            key = "_ArrayData_";
+            string_t key = "_ArrayData_";
             if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(size_and_type.first) ))
             {
                 return false;
