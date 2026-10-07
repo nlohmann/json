@@ -36,13 +36,14 @@ work items are tracked in the [GitHub milestones](https://github.com/nlohmann/js
 ## API stability
 
 Releases follow [semantic versioning](https://semver.org): a minor or patch release of version 3.x does not break code
-that uses the public API. In particular, a 3.x release does not:
+that uses the public API, unless that code opts in to a change with a macro as described [below](#version-40). In
+particular, a 3.x release does not:
 
-- change the signature of a function (its parameter types, return type, number of parameters, or the const-ness of a
-  member function);
+- change the signature of a function: the types or order of its existing parameters, its return type, or the
+  const-ness of a member function. New parameters may be added if they have a default value;
 - remove or rename a function or class;
 - change which exceptions a function throws, or the [exception ids](../home/exceptions.md);
-- change access specifiers or default arguments.
+- change access specifiers, or change or remove existing default arguments. New default arguments may be added.
 
 Exceptions to these rules, for instance when fixing a bug requires changing the exception a function throws, are
 documented in the [release notes](../home/releases.md).
@@ -51,8 +52,8 @@ The following are **not** part of the public API and may change in any release, 
 
 - The text of exception messages returned by `what()`. Use the [exception id](../home/exceptions.md) to tell errors
   apart.
-- The ABI, including `sizeof(basic_json)` and the memory layout of its values. Recompile your code when you upgrade the
-  library. The [versioned inline namespace](../features/namespace.md) turns mixing versions into a link error.
+- The ABI, including `sizeof(basic_json)` and the memory layout of its values. The
+  [versioned inline namespace](../features/namespace.md) turns mixing versions into a link error.
 - Everything in namespace `nlohmann::detail`, and macros and type traits that are not documented in the
   [API reference](../api/basic_json/index.md).
 
