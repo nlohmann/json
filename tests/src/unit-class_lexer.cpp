@@ -899,7 +899,7 @@ TEST_CASE("Eisel-Lemire float conversion")
         };
 
         const std::uint64_t max = (std::numeric_limits<std::uint64_t>::max)();
-        const std::array<std::pair<std::uint64_t, std::uint64_t>, 10> edge_cases =
+        const std::array<std::pair<std::uint64_t, std::uint64_t>, 13> edge_cases =
         {
             {
                 {0, 0},
@@ -912,6 +912,9 @@ TEST_CASE("Eisel-Lemire float conversion")
                 {max, max},
                 {max, 2},
                 {0xFFFFFFFF00000000u, 0x100000001u},
+                {0x100000001u, 0xFFFFFFFF00000000u},
+                {max, 1},
+                {2, max},
             }
         };
 
@@ -919,10 +922,6 @@ TEST_CASE("Eisel-Lemire float conversion")
         {
             check_product(test.first, test.second);
         }
-
-        check_product(0x100000001u, 0xFFFFFFFF00000000u);
-        check_product(max, 1);
-        check_product(2, max);
 
         // whichever implementation the compiler gets (with or without a
         // 128-bit integer type or a builtin / intrinsic)

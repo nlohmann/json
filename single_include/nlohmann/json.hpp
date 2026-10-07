@@ -8789,15 +8789,15 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <cstdint> // uint64_t
 #if !defined(__SIZEOF_INT128__) && defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
-    #include <intrin.h> // __umulh, _umul128
+    #include <intrin0.h> // __umulh, _umul128
 #endif
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
 
 // Portable bit-level helpers for the number and string scanners. They use
-// compiler builtins where available and plain C++ otherwise, so they need no
-// platform headers and work regardless of byte order.
+// compiler builtins or platform-specific intrinsics where available and plain
+// C++ otherwise, so they work regardless of byte order.
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
