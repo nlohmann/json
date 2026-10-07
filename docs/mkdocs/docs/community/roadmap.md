@@ -44,6 +44,9 @@ that uses the public API. In particular, a 3.x release does not:
 - change which exceptions a function throws, or the [exception ids](../home/exceptions.md);
 - change access specifiers or default arguments.
 
+Exceptions to these rules, for instance when fixing a bug requires changing the exception a function throws, are
+documented in the [release notes](../home/releases.md).
+
 The following are **not** part of the public API and may change in any release, including patch releases:
 
 - The text of exception messages returned by `what()`. Use the [exception id](../home/exceptions.md) to tell errors
