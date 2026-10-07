@@ -24445,8 +24445,8 @@ boundaries compute_boundaries(FloatType value)
 //
 //      -e <= 60   or   e >= -60 := alpha
 
-constexpr int kAlpha = -60;
-constexpr int kGamma = -32;
+JSON_INLINE_VARIABLE constexpr int kAlpha = -60;
+JSON_INLINE_VARIABLE constexpr int kGamma = -32;
 
 struct cached_power // c = f * 2^e ~= 10^k
 {
