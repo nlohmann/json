@@ -809,3 +809,178 @@ TEST_CASE("serializer buffers are flushed mid-string and mid-binary")
         CHECK(j.dump(2) == "{\n  \"bytes\": [" + expected_pretty_bytes + "],\n  \"subtype\": null\n}");
     }
 }
+
+TEST_CASE("serialization boundary values for the write buffer")
+{
+    // write_buffer is a std::array<char, 1024> (write_buffer_size). put_string()
+    // guards it with two checks, and each must be exercised exactly on and one
+    // past its own boundary: a heap overflow in a different manual buffer path
+    // (the dump(1100) indent buffer) once survived 100% line coverage because
+    // every test that touched it only ever grew the buffer by a single step,
+    // never landing on the exact edge of the comparison that protects it.
+    //
+    // - straight-through: put_string() bypasses write_buffer entirely and
+    //   writes directly to the output adapter once `length >= write_buffer.size()`.
+    // - flush-then-copy: otherwise, if `write_buffer_pos + length > write_buffer.size()`,
+    //   put_string() flushes what is pending and then memcpy's the new run into
+    //   the freshly emptied buffer.
+
+    SECTION("top-level string exercises the straight-through guard (length >= 1024)")
+    {
+        // dump() of a bare string writes the opening quote with put_char()
+        // (write_buffer_pos: 0 -> 1), then the body with put_string(). With
+        // write_buffer_pos == 1, `1 + length > 1024` and `length >= 1024` flip
+        // together at length 1024, so 1023/1024/1025 cover "just under",
+        // "exactly at" and "just over" the guard in one move: 1023 is copied
+        // into the buffer (filling it exactly), 1024 and 1025 bypass it.
+        for (const std::size_t len :
+                {
+                    std::size_t{1023}, std::size_t{1024}, std::size_t{1025}
+                })
+        {
+            CAPTURE(len)
+            const std::string body(len, 'a');
+            const json j = body;
+            const std::string expected = '"' + body + '"';
+
+            CHECK(j.dump() == expected);
+
+            std::ostringstream o;
+            o << j;
+            CHECK(o.str() == expected);
+        }
+    }
+
+    SECTION("string nested in an array exercises the flush-then-copy guard")
+    {
+        // json::array({body}) writes '[' then '"' before the body, so
+        // write_buffer_pos == 2 when put_string() is entered for it. The
+        // body's last byte then lands at logical offset 2 + len: len == 1022
+        // lands exactly on offset 1024 (2 + 1022 == write_buffer.size(), so the
+        // strict "> " guard does not fire and the body fits snugly), while
+        // len == 1023 lands one past it at offset 1025 (2 + 1023 > 1024),
+        // which must flush what's pending before copying the body in.
+        for (const std::size_t len :
+                {
+                    std::size_t{1022}, std::size_t{1023}
+                })
+        {
+            CAPTURE(len)
+            const std::string body(len, 'a');
+            const json j = json::array({body});
+            const std::string expected = "[\"" + body + "\"]";
+
+            CHECK(j.dump() == expected);
+
+            std::ostringstream o;
+            o << j;
+            CHECK(o.str() == expected);
+
+            CHECK(json::parse(j.dump()) == j);
+        }
+    }
+}
+
+TEST_CASE("serialization boundary values for the string buffer")
+{
+    // string_buffer is a std::array<char, 512>. dump_escaped_impl() flushes it
+    // mid-string once fewer than 13 bytes remain (`string_buffer.size() - bytes
+    // < 13`), 13 being one more than the most a single code point can ever
+    // write at once (a surrogate pair: two back-to-back "\uXXXX" escapes, 12
+    // bytes). Every write into string_buffer that this check protects happens
+    // in steps of 2 (a simple "\\x" escape) or 6 (one "\uXXXX" unit), so
+    // `bytes` only ever takes even values at the point the check runs - the
+    // tightest values actually reachable are therefore 498 (512 - 498 == 14,
+    // one simple escape away from the threshold) and 500 (512 - 500 == 12,
+    // where the flush fires immediately and resets bytes to 0).
+
+    SECTION("a run of 2-byte escapes lands bytes on, and one step past, the flush threshold")
+    {
+        for (const int count :
+                {
+                    249, 250, 251
+                })
+        {
+            CAPTURE(count)
+            const json j = std::string(static_cast<std::size_t>(count), '\n');
+            std::string expected = "\"";
+            for (int i = 0; i < count; ++i)
+            {
+                expected += "\\n";
+            }
+            expected += '"';
+            CHECK(j.dump() == expected);
+        }
+    }
+
+    SECTION("an ASCII prefix leaves the tightest reachable margin before a 12-byte surrogate pair")
+    {
+        // U+1F600 (the "\xF0\x9F\x98\x80" UTF-8 bytes) is dumped under
+        // ensure_ascii as the 12-byte surrogate pair "\ud83d\ude00"; that
+        // write happens in a single step with no intermediate flush check, so
+        // it is the write most exposed by an off-by-one in the "< 13" guard.
+        // A prefix of 249 newlines leaves exactly 14 bytes of headroom
+        // (512 - 498), the smallest margin the guard ever actually allows
+        // into a new code point; 250 newlines instead trigger the guard's own
+        // flush first, so the emoji starts from a freshly emptied (512-byte)
+        // buffer, and 251 repeats that with one more escape already past the
+        // reset. Together they cover the margin the guard allows landing on,
+        // one step before, and one step after - all must still produce the
+        // identical, correct escapes.
+        for (const int prefix_count :
+                {
+                    249, 250, 251
+                })
+        {
+            CAPTURE(prefix_count)
+            const std::string prefix(static_cast<std::size_t>(prefix_count), '\n');
+            const std::string emoji = "\xF0\x9F\x98\x80";
+            const json j = prefix + emoji;
+
+            std::string expected_prefix;
+            for (int i = 0; i < prefix_count; ++i)
+            {
+                expected_prefix += "\\n";
+            }
+
+            // newline escaping does not depend on ensure_ascii: only the
+            // emoji differs (raw UTF-8 bytes vs. a \u-escaped surrogate pair)
+            CHECK(j.dump(-1, ' ', false) == '"' + expected_prefix + emoji + '"');
+            CHECK(j.dump(-1, ' ', true) == '"' + expected_prefix + "\\ud83d\\ude00\"");
+            CHECK(json::parse(j.dump(-1, ' ', true)) == j);
+            CHECK(json::parse(j.dump(-1, ' ', false)) == j);
+        }
+    }
+
+    SECTION("SWAR bulk-copy stride: k plain bytes followed by a byte handled individually")
+    {
+        // string_bulk_run()/find_ascii_copyable_run() (string_scan.hpp) scan 8
+        // bytes at a time and fall back to a byte-at-a-time tail scan for
+        // what is left over. k from 0 to 17 spans zero, one and two full
+        // 8-byte strides plus a 1-byte tail, so every possible stopping point
+        // within and right after the SIMD stride is covered.
+        for (std::size_t k = 0; k <= 17; ++k)
+        {
+            CAPTURE(k)
+            const std::string prefix(k, 'a');
+
+            // (a) the run is stopped by a quote that must itself be escaped
+            {
+                const json j = prefix + "\"";
+                CHECK(j.dump() == '"' + prefix + "\\\"" + '"');
+            }
+
+            // (b) the run is stopped by a control character
+            {
+                const json j = prefix + "\x01";
+                CHECK(j.dump() == '"' + prefix + "\\u0001" + '"');
+            }
+
+            // (c) the run is stopped by a non-ASCII byte under ensure_ascii
+            {
+                const json j = prefix + "\xC3\xA9"; // prefix + 'é'
+                CHECK(j.dump(-1, ' ', true) == '"' + prefix + "\\u00e9" + '"');
+            }
+        }
+    }
+}
