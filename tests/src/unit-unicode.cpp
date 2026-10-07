@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <algorithm>
 #include <fstream>
 #include <string>
 #include "make_test_data_available.hpp"
@@ -67,8 +68,11 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
     static std::string s_replaced2;
     static std::string s_replaced_ascii;
     static std::string s_replaced2_ascii;
+    static std::string s_kept;
+    static std::string s_kept2;
+    static std::string s_kept_ascii;
 
-    // dumping with ignore/replace must not throw in any case
+    // dumping with ignore/replace/keep must not throw in any case
     s_ignored = j.dump(-1, ' ', false, json::error_handler_t::ignore);
     s_ignored2 = j2.dump(-1, ' ', false, json::error_handler_t::ignore);
     s_ignored_ascii = j.dump(-1, ' ', true, json::error_handler_t::ignore);
@@ -77,6 +81,9 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
     s_replaced2 = j2.dump(-1, ' ', false, json::error_handler_t::replace);
     s_replaced_ascii = j.dump(-1, ' ', true, json::error_handler_t::replace);
     s_replaced2_ascii = j2.dump(-1, ' ', true, json::error_handler_t::replace);
+    s_kept = j.dump(-1, ' ', false, json::error_handler_t::keep);
+    s_kept2 = j2.dump(-1, ' ', false, json::error_handler_t::keep);
+    s_kept_ascii = j.dump(-1, ' ', true, json::error_handler_t::keep);
 
     if (success_expected)
     {
@@ -86,6 +93,7 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
         // all dumps should agree on the string
         CHECK(s_strict == s_ignored);
         CHECK(s_strict == s_replaced);
+        CHECK(s_strict == s_kept);
     }
     else
     {
@@ -97,6 +105,20 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
 
         // check that replace string contains a replacement character
         CHECK(s_replaced.find("\xEF\xBF\xBD") != std::string::npos);
+
+        // ignore drops the invalid bytes, keep copies them
+        CHECK(s_ignored != s_kept);
+        CHECK(s_ignored_ascii != s_kept_ascii);
+
+        // unless a byte needs escaping, keep copies the input unchanged
+        const bool needs_escaping = std::any_of(json_string.begin(), json_string.end(), [](char c)
+        {
+            return static_cast<unsigned char>(c) < 0x20 || c == '"' || c == '\\';
+        });
+        if (!needs_escaping)
+        {
+            CHECK(s_kept == "\"" + json_string + "\"");
+        }
     }
 
     // check that prefix and suffix are preserved
@@ -108,6 +130,8 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
     CHECK(s_replaced2.substr(s_replaced2.size() - 4, 3) == "xyz");
     CHECK(s_replaced2_ascii.substr(1, 3) == "abc");
     CHECK(s_replaced2_ascii.substr(s_replaced2_ascii.size() - 4, 3) == "xyz");
+    CHECK(s_kept2.substr(1, 3) == "abc");
+    CHECK(s_kept2.substr(s_kept2.size() - 4, 3) == "xyz");
 }
 
 void check_utf8string(bool success_expected, int byte1, int byte2, int byte3, int byte4);
