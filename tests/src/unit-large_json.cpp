@@ -352,6 +352,11 @@ TEST_CASE("tests on deeply nested JSONs")
             const json without_discarded_buried = bury(value);
             CHECK(*dig(without_discarded_buried) == without_discarded_above);
         }
+    }
+}
+
+namespace
+{
 json nested_array(const std::size_t depth, json leaf)
 {
     json j = std::move(leaf);
@@ -448,6 +453,64 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         CHECK(json::from_bjdata(json::to_bjdata(ndarray)) == ndarray);
     }
 
+    SECTION("byte-exact across the switch-over")
+    {
+        // nested one-element arrays around the recursion bound: the exact
+        // bytes a writer produces do not depend on whether it stayed on the
+        // call stack or moved to the heap one partway through
+        for (const std::size_t depth :
+                {
+                    nlohmann::detail::recursion_depth_limit() - 1, nlohmann::detail::recursion_depth_limit(),
+                    nlohmann::detail::recursion_depth_limit() + 1, nlohmann::detail::recursion_depth_limit() + 2
+                })
+        {
+            CAPTURE(depth);
+            const json array = nested_array(depth, json(0));
+
+            std::vector<std::uint8_t> expected_cbor(depth, 0x81);
+            expected_cbor.push_back(0x00);
+            CHECK(json::to_cbor(array) == expected_cbor);
+
+            std::vector<std::uint8_t> expected_msgpack(depth, 0x91);
+            expected_msgpack.push_back(0x00);
+            CHECK(json::to_msgpack(array) == expected_msgpack);
+
+            std::string expected_ubjson(depth, '[');
+            expected_ubjson += "i";
+            expected_ubjson += '\0';
+            expected_ubjson.append(depth, ']');
+            const auto packed_ubjson = json::to_ubjson(array);
+            CHECK(std::string(packed_ubjson.begin(), packed_ubjson.end()) == expected_ubjson);
+        }
+    }
+
+    SECTION("a deep object, and a BJData ndarray, past the recursion bound")
+    {
+        const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 50;
+
+        const json object = nested_object(depth, json(42));
+        CHECK(json::from_cbor(json::to_cbor(object)) == object);
+        CHECK(json::from_msgpack(json::to_msgpack(object)) == object);
+        CHECK(json::from_ubjson(json::to_ubjson(object, true, true)) == object);
+        CHECK(json::from_bjdata(json::to_bjdata(object)) == object);
+
+        const json ndarray = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2, 3}}, {"_ArrayData_", {1, 2, 3, 4, 5, 6}}});
+        const json deep_ndarray = nested_array(depth, ndarray);
+        CHECK(json::from_bjdata(json::to_bjdata(deep_ndarray)) == deep_ndarray);
+    }
+
+    SECTION("a discarded value past the recursion bound still throws type_error.321")
+    {
+        const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 50;
+        const json discarded_leaf(json::value_t::discarded);
+        const json deep_discarded = nested_array(depth, discarded_leaf);
+
+        CHECK_THROWS_WITH_AS(json::to_cbor(deep_discarded), "[json.exception.type_error.321] cannot serialize discarded value to CBOR", json::type_error);
+        CHECK_THROWS_WITH_AS(json::to_msgpack(deep_discarded), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error);
+        CHECK_THROWS_WITH_AS(json::to_ubjson(deep_discarded), "[json.exception.type_error.321] cannot serialize discarded value to UBJSON", json::type_error);
+        CHECK_THROWS_WITH_AS(json::to_bjdata(deep_discarded), "[json.exception.type_error.321] cannot serialize discarded value to BJData", json::type_error);
+    }
+
     SECTION("does not overflow the C++ stack")
     {
         const std::size_t depth = 100000;
@@ -455,19 +518,36 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
 
         std::vector<std::uint8_t> packed;
         CHECK_NOTHROW(packed = json::to_cbor(j));
-        CHECK(packed.size() > depth);
+        CHECK(json::from_cbor(packed) == j);
 
         CHECK_NOTHROW(packed = json::to_msgpack(j));
-        CHECK(packed.size() > depth);
+        CHECK(json::from_msgpack(packed) == j);
 
         CHECK_NOTHROW(packed = json::to_ubjson(j));
-        CHECK(packed.size() > depth);
+        CHECK(json::from_ubjson(packed) == j);
 
         CHECK_NOTHROW(packed = json::to_ubjson(j, true, false));
-        CHECK(packed.size() > depth);
+        CHECK(json::from_ubjson(packed) == j);
 
         CHECK_NOTHROW(packed = json::to_bjdata(j));
-        CHECK(packed.size() > depth);
+        CHECK(json::from_bjdata(packed) == j);
+    }
+
+    SECTION("regression test for https://issues.oss-fuzz.com/issues/566583014")
+    {
+        // 200000 nested one-element CBOR arrays, the innermost holding null;
+        // round-tripping this used to recurse once per level on the way back
+        // out through to_cbor(), deep enough to overflow the stack
+        std::vector<std::uint8_t> v(200000, 0x81);
+        v.push_back(0xf6);
+        const json j = json::from_cbor(v);
+        CHECK(json::to_cbor(j) == v);
+
+        // the MessagePack analogue: fixarray of 1 nesting down to nil
+        std::vector<std::uint8_t> v_msgpack(200000, 0x91);
+        v_msgpack.push_back(0xc0);
+        const json j_msgpack = json::from_msgpack(v_msgpack);
+        CHECK(json::to_msgpack(j_msgpack) == v_msgpack);
     }
 }
 
