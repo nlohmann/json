@@ -12,8 +12,10 @@
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
 
+#include <limits>
 #include <set>
 #include <string>
+#include <unordered_set>
 
 namespace
 {
@@ -91,6 +93,9 @@ TEST_CASE("hash<nlohmann::json>")
     // Collect hashes for different JSON values and make sure that they are distinct
     // We cannot compare against fixed values, because the implementation of
     // std::hash may differ between compilers.
+    //
+    // numbers that compare equal under operator== (0 == 0U == 0.0) must hash
+    // equally, so they are only inserted once below and checked separately.
 
     std::set<std::size_t> hashes;
 
@@ -107,10 +112,7 @@ TEST_CASE("hash<nlohmann::json>")
 
     // number
     hashes.insert(std::hash<json> {}(json(0)));
-    hashes.insert(std::hash<json> {}(json(static_cast<unsigned>(0))));
-
     hashes.insert(std::hash<json> {}(json(-1)));
-    hashes.insert(std::hash<json> {}(json(0.0)));
     hashes.insert(std::hash<json> {}(json(42.23)));
 
     // array
@@ -132,7 +134,36 @@ TEST_CASE("hash<nlohmann::json>")
     // discarded
     hashes.insert(std::hash<json> {}(json(json::value_t::discarded)));
 
-    CHECK(hashes.size() == 21);
+    CHECK(hashes.size() == 19);
+
+    // numbers that compare equal under operator== must hash equally,
+    // regardless of which of number_integer, number_unsigned, or
+    // number_float actually holds the value
+    CHECK(json(0) == json(static_cast<unsigned>(0)));
+    CHECK(json(0) == json(0.0));
+    CHECK(std::hash<json> {}(json(0)) == std::hash<json> {}(json(static_cast<unsigned>(0))));
+    CHECK(std::hash<json> {}(json(0)) == std::hash<json> {}(json(0.0)));
+    CHECK(std::hash<json> {}(json(-1)) == std::hash<json> {}(json(-1.0)));
+
+    // a std::unordered_set relies on this same consistency between == and hash
+    const std::unordered_set<json> numbers {json(0), json(static_cast<unsigned>(0)), json(0.0)};
+    CHECK(numbers.size() == 1);
+
+    // -0.0 compares equal to 0 and 0.0
+    CHECK(json(-0.0) == json(0));
+    CHECK(std::hash<json> {}(json(-0.0)) == std::hash<json> {}(json(0)));
+    CHECK(std::hash<json> {}(json(-0.0)) == std::hash<json> {}(json(0.0)));
+
+    // the ends of the integer ranges, which equal floats exactly
+    const auto int_min = (std::numeric_limits<json::number_integer_t>::min)();
+    const auto int_max = (std::numeric_limits<json::number_integer_t>::max)();
+    const auto two_63 = json::number_unsigned_t(1) << 63U;
+    CHECK(json(int_min) == json(-9223372036854775808.0));
+    CHECK(std::hash<json> {}(json(int_min)) == std::hash<json> {}(json(-9223372036854775808.0)));
+    CHECK(json(two_63) == json(9223372036854775808.0));
+    CHECK(std::hash<json> {}(json(two_63)) == std::hash<json> {}(json(9223372036854775808.0)));
+    CHECK(json(json::number_unsigned_t(int_max)) == json(int_max));
+    CHECK(std::hash<json> {}(json(json::number_unsigned_t(int_max))) == std::hash<json> {}(json(int_max)));
 }
 
 TEST_CASE("hash<nlohmann::ordered_json>")
@@ -156,10 +187,7 @@ TEST_CASE("hash<nlohmann::ordered_json>")
 
     // number
     hashes.insert(std::hash<ordered_json> {}(ordered_json(0)));
-    hashes.insert(std::hash<ordered_json> {}(ordered_json(static_cast<unsigned>(0))));
-
     hashes.insert(std::hash<ordered_json> {}(ordered_json(-1)));
-    hashes.insert(std::hash<ordered_json> {}(ordered_json(0.0)));
     hashes.insert(std::hash<ordered_json> {}(ordered_json(42.23)));
 
     // array
@@ -181,7 +209,10 @@ TEST_CASE("hash<nlohmann::ordered_json>")
     // discarded
     hashes.insert(std::hash<ordered_json> {}(ordered_json(ordered_json::value_t::discarded)));
 
-    CHECK(hashes.size() == 21);
+    CHECK(hashes.size() == 19);
+
+    CHECK(std::hash<ordered_json> {}(ordered_json(0)) == std::hash<ordered_json> {}(ordered_json(static_cast<unsigned>(0))));
+    CHECK(std::hash<ordered_json> {}(ordered_json(0)) == std::hash<ordered_json> {}(ordered_json(0.0)));
 }
 
 TEST_CASE("hash of deeply nested values")
