@@ -152,6 +152,8 @@ We take pride in the library being used by [numerous customers across various in
 - Changing access specifiers.
 - Changing default arguments.
 
+What is and is not covered by this guarantee is described in the [roadmap](https://json.nlohmann.me/community/roadmap/#api-stability).
+
 Although these guidelines may seem restrictive, they are essential for maintaining the library’s utility.
 
 Breaking changes may be introduced when they are guarded with a feature macro such as [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/) which allows selectively changing the behavior of the library. In next steps, the current behavior can then be deprecated. Using feature macros then allows users to test their code against the library in the next major release.

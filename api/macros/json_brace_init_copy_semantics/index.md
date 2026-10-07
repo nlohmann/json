@@ -43,7 +43,7 @@ json j2 = {"text"};  // "text", not ["text"]
 json j3 = {{1, 2}};  // [1,2], not [[1,2]]
 ```
 
-Code that relies on these producing arrays must use `json::array()` instead (see below). Lists with more than one element, and a single `[string, value]` pair such as `{{"key", "value"}}`, which still creates an object, are not affected. The library's own conversions are not affected either: for example, `std::tuple<int>{5}` still becomes `[5]`.
+Code that relies on these producing arrays must use `json::array()` instead (see below). Lists with more than one element, and a single `[string, value]` pair *written as a braced list*, such as `{{"key", "value"}}`, which still creates an object, are not affected. This exception is based on how the pair is written, not on the shape of its value: an existing JSON value that happens to be a two-element array with a string as its first element, such as `json arr = {"key", 42};`, is still copied by `json j{arr};` rather than turned into an object. The library's own conversions are not affected either: for example, `std::tuple<int>{5}` still becomes `[5]`.
 
 ABI compatibility
 
