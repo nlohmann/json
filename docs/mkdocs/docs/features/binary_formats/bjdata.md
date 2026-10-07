@@ -141,8 +141,14 @@ The library uses the following mapping from JSON values types to BJData types ac
       parsed back as a regular array,
     - every entry of `"_ArraySize_"` is a positive integer, and their product is representable as a `std::size_t`,
     - `"_ArrayData_"` is an array holding exactly that many elements, and
-    - every element of `"_ArrayData_"` is a number of the kind named by `"_ArrayType_"` (a floating-point number for
-      `single` and `double`, an integer otherwise).
+    - every element of `"_ArrayData_"` is a number of the kind named by `"_ArrayType_"`: for the integer types, a
+      value that fits the named width; for `double`, any value; for `single`, a value that survives narrowing to
+      `float` and back without change (for instance, `0.1` does not, since it is not exactly representable as
+      `float`).
+
+    An annotated object is always read back with its keys in the order shown above, `"_ArrayType_"`, `"_ArraySize_"`,
+    `"_ArrayData_"`, regardless of the order the ND-array's header stores them in on the wire. This matters for
+    `ordered_json`, whose comparison takes key order into account.
 
     The current version of this library does not yet support automatic detection of and conversion from a nested JSON
     array input to a BJData ND-array.
