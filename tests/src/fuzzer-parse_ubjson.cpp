@@ -10,7 +10,9 @@
 This file implements a parser test suitable for fuzz testing. Given a byte
 array data, it performs the following steps:
 
+- j0 = from_ubjson(data, allow_exceptions = false)
 - j1 = from_ubjson(data)
+- assert(j0 is discarded if parsing j1 fails, and j0 == j1 otherwise)
 - vec2 = to_ubjson(j1, use_size = false, use_type = false)
 - vec3 = to_ubjson(j1, use_size = true, use_type = false)
 - vec4 = to_ubjson(j1, use_size = true, use_type = true)
@@ -38,14 +40,47 @@ drivers.
 
 using json = nlohmann::json;
 
+// compares dumps rather than values, because NaN != NaN; keep writes strings
+// byte for byte, so ill-formed UTF-8 that a binary reader accepts cannot throw
+static bool same_value(const json& lhs, const json& rhs)
+{
+    return lhs.dump(-1, ' ', false, json::error_handler_t::keep) == rhs.dump(-1, ' ', false, json::error_handler_t::keep);
+}
+
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    std::vector<uint8_t> const vec1(data, data + size);
+
+    // step 0: parse input without exceptions; a parse error must then be
+    // reported as a discarded value, never thrown
+    json j_noexcept;
+    bool noexcept_threw = false;
+    try
+    {
+        j_noexcept = json::from_ubjson(vec1, true, false);
+    }
+    catch (const json::parse_error&)
+    {
+        assert(false);
+    }
+    catch (const json::exception&)
+    {
+        // type and out-of-range errors are not parse errors and still throw
+        noexcept_threw = true;
+    }
+    // whether step 1 succeeded; if not, the catch blocks below check that
+    // step 0 failed, too
+    bool parsed = false;
+
     try
     {
         // step 1: parse input
-        std::vector<uint8_t> const vec1(data, data + size);
         json const j1 = json::from_ubjson(vec1);
+        parsed = true;
+
+        // without exceptions, the same input must give the same value
+        assert(!noexcept_threw && !j_noexcept.is_discarded() && same_value(j_noexcept, j1));
 
         try
         {
@@ -77,14 +112,17 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     catch (const json::parse_error&)
     {
         // parse errors are ok, because input may be random bytes
+        assert(parsed || noexcept_threw || j_noexcept.is_discarded());
     }
     catch (const json::type_error&)
     {
         // type errors can occur during parsing, too
+        assert(parsed || noexcept_threw || j_noexcept.is_discarded());
     }
     catch (const json::out_of_range&)
     {
         // out of range errors may happen if provided sizes are excessive
+        assert(parsed || noexcept_threw || j_noexcept.is_discarded());
     }
 
     // return 0 - non-zero return values are reserved for future use
