@@ -38,7 +38,7 @@ using nlohmann::json;
 #include <vector>
 
 #include "sax_countdown.hpp"
-#include "test_sax.hpp"
+#include "sax_event_loggers.hpp"
 #include "test_utils.hpp"
 
 using utils::SaxCountdown;

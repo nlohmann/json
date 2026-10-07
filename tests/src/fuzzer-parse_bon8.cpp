@@ -25,12 +25,8 @@ The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <cassert>
 #include <sstream>
-#include <nlohmann/json.hpp>
 #include "fuzzer_common.hpp"
-
-using nlohmann::json;
 
 namespace
 {

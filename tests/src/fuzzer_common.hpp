@@ -13,6 +13,8 @@
 #include <cassert> // assert
 #include <nlohmann/json.hpp>
 
+using nlohmann::json; // NOLINT(google-global-names-in-headers): shared by all fuzzer drivers
+
 // the round-trip checks of the drivers are assertions; NDEBUG would compile them away
 #ifdef NDEBUG
     #error "the fuzzer drivers must be built without NDEBUG"
@@ -20,9 +22,9 @@
 
 // compares dumps rather than values, because NaN != NaN; keep writes strings
 // byte for byte, so ill-formed UTF-8 that a binary reader accepts cannot throw
-inline bool same_value(const nlohmann::json& lhs, const nlohmann::json& rhs)
+inline bool same_value(const json& lhs, const json& rhs)
 {
-    return lhs.dump(-1, ' ', false, nlohmann::json::error_handler_t::keep) == rhs.dump(-1, ' ', false, nlohmann::json::error_handler_t::keep);
+    return lhs.dump(-1, ' ', false, json::error_handler_t::keep) == rhs.dump(-1, ' ', false, json::error_handler_t::keep);
 }
 
 // step 0 of each driver: parse the input without exceptions; a parse error
@@ -30,18 +32,18 @@ inline bool same_value(const nlohmann::json& lhs, const nlohmann::json& rhs)
 // out-of-range errors are not parse errors and still throw; then @a threw is
 // set and null is returned.
 template<typename Parse>
-nlohmann::json parse_without_exceptions(Parse parse, bool& threw)
+json parse_without_exceptions(Parse parse, bool& threw)
 {
     threw = false;
     try
     {
         return parse();
     }
-    catch (const nlohmann::json::parse_error&)
+    catch (const json::parse_error&)
     {
         assert(false);
     }
-    catch (const nlohmann::json::exception&)
+    catch (const json::exception&)
     {
         threw = true;
     }

@@ -298,7 +298,7 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    out_of_range::create(406, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr));
+                                                    out_of_range::create(exception_id::number_overflow, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr));
                         }
 
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_float(res, m_lexer.get_string())))
@@ -519,7 +519,7 @@ class parser
     bool syntax_error(SAX& sax, const std::string& message)
     {
         return sax.parse_error(m_lexer.get_position(), m_lexer.get_token_string(),
-                               parse_error::create(101, m_lexer.get_position(), message, nullptr));
+                               parse_error::create(exception_id::syntax_error, m_lexer.get_position(), message, nullptr));
     }
 
     std::string exception_message(const token_type expected, const std::string& context)

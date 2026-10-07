@@ -51,11 +51,7 @@ The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <cassert>
-#include <nlohmann/json.hpp>
 #include "fuzzer_common.hpp"
-
-using nlohmann::json;
 
 // value-stable comparison for the round-trip checks below; see the note
 // above on why this compares dump()s rather than the json values directly

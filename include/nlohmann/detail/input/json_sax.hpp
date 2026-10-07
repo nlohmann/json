@@ -192,7 +192,7 @@ bool check_container_size(SAX& sax, std::size_t len, const char* kind, BasicJson
 {
     if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref->max_size()))
     {
-        return sax.parse_error(0, "", out_of_range::create(408, concat("excessive ", kind, " size: ", std::to_string(len)), ref));
+        return sax.parse_error(0, "", out_of_range::create(exception_id::container_too_large, concat("excessive ", kind, " size: ", std::to_string(len)), ref));
     }
     return true;
 }

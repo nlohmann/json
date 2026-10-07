@@ -639,7 +639,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     object = nullptr;  // silence warning, see #821
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.12.0", nullptr)); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(detail::exception_id::internal_error, "961c151d2e87f2686a955a9be24d316f1362bf21 3.12.0", nullptr)); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -2287,7 +2287,7 @@ public:
             // if an object is wanted but impossible, throw an exception
             if (JSON_HEDLEY_UNLIKELY(manual_type == value_t::object && !is_an_object))
             {
-                JSON_THROW(type_error::create(301, "cannot create object from initializer list", nullptr));
+                JSON_THROW(type_error::create(detail::exception_id::object_from_non_pairs, "cannot create object from initializer list", nullptr));
             }
         }
 
@@ -2407,7 +2407,7 @@ public:
         // make sure the iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(201, "iterators are not compatible", nullptr));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::iterators_incompatible, "iterators are not compatible", nullptr));
         }
 
         // copy type from the first iterator
@@ -2426,7 +2426,7 @@ public:
                 if (JSON_HEDLEY_UNLIKELY(!first.m_it.primitive_iterator.is_begin()
                                          || !last.m_it.primitive_iterator.is_end()))
                 {
-                    JSON_THROW(invalid_iterator::create(204, "iterators out of range", first.m_object));
+                    JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_range_out_of_range, "iterators out of range", first.m_object));
                 }
                 break;
             }
@@ -2494,7 +2494,7 @@ public:
             case value_t::null:
             case value_t::discarded:
             default:
-                JSON_THROW(invalid_iterator::create(206, detail::concat("cannot construct with iterators from ", first.m_object->type_name()), first.m_object));
+                JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_range_of_null, detail::concat("cannot construct with iterators from ", first.m_object->type_name()), first.m_object));
         }
 
         set_parents();
@@ -2882,7 +2882,7 @@ public:
             return *ptr;
         }
 
-        JSON_THROW(type_error::create(303, detail::concat("incompatible ReferenceType for get_ref, actual type is ", obj.type_name()), &obj));
+        JSON_THROW(type_error::create(detail::exception_id::incompatible_reference_type, detail::concat("incompatible ReferenceType for get_ref, actual type is ", obj.type_name()), &obj));
     }
 
   public:
@@ -3320,7 +3320,7 @@ public:
         // at only works for objects
         if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
         {
-            detail::throw_cannot_use_with(304, "at()", j);
+            detail::throw_cannot_use_with(detail::exception_id::at_wrong_type, "at()", j);
         }
 
         auto it = object_lookup(j, std::forward<KeyType>(key));
@@ -3330,7 +3330,7 @@ public:
             // std::map or ordered_map) never moves from its argument, so key is still
             // valid here regardless of whether KeyType was deduced as an rvalue reference
             // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved)
-            JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(key), "' not found"), &j));
+            JSON_THROW(out_of_range::create(detail::exception_id::key_not_found, detail::concat("key '", string_t(key), "' not found"), &j));
         }
         return it->second;
     }
@@ -3345,12 +3345,12 @@ public:
         // at only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
         {
-            detail::throw_cannot_use_with(304, "at()", j);
+            detail::throw_cannot_use_with(detail::exception_id::at_wrong_type, "at()", j);
         }
 
         if (JSON_HEDLEY_UNLIKELY(idx >= j.m_data.m_value.array->size()))
         {
-            JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), &j));
+            JSON_THROW(out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat("array index ", std::to_string(idx), " is out of range"), &j));
         }
 
         return (*j.m_data.m_value.array)[idx];
@@ -3381,6 +3381,15 @@ public:
     {
         m_data.m_value.object = object;
         m_data.m_type = value_t::object;
+    }
+
+    /// @brief throws because operator[] is not supported for the type of this value
+    /// @param[in] argument  the kind of the operator's argument, "numeric" or "string"
+    /// @throw type_error.305 always
+    JSON_HEDLEY_NO_RETURN void throw_subscript_wrong_type(const char* argument) const
+    {
+        detail::throw_cannot_use_with(detail::exception_id::subscript_wrong_type,
+                                      detail::concat("operator[] with a ", argument, " argument").c_str(), *this);
     }
 
   public:
@@ -3487,7 +3496,7 @@ public:
             return m_data.m_value.array->operator[](idx);
         }
 
-        detail::throw_cannot_use_with(305, "operator[] with a numeric argument", *this);
+        throw_subscript_wrong_type("numeric");
     }
 
     /// @brief access specified array element
@@ -3501,7 +3510,7 @@ public:
             return m_data.m_value.array->operator[](idx);
         }
 
-        detail::throw_cannot_use_with(305, "operator[] with a numeric argument", *this);
+        throw_subscript_wrong_type("numeric");
     }
 
     /// @brief access specified object element
@@ -3521,7 +3530,7 @@ public:
             return set_parent(result.first->second);
         }
 
-        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
+        throw_subscript_wrong_type("string");
     }
 
     /// @brief access specified object element
@@ -3536,7 +3545,7 @@ public:
             return it->second;
         }
 
-        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
+        throw_subscript_wrong_type("string");
     }
 
     // these two functions resolve a (const) char * ambiguity affecting Clang and MSVC
@@ -3572,7 +3581,7 @@ public:
             return set_parent(result.first->second);
         }
 
-        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
+        throw_subscript_wrong_type("string");
     }
 
     /// @brief access specified object element
@@ -3589,7 +3598,7 @@ public:
             return it->second;
         }
 
-        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
+        throw_subscript_wrong_type("string");
     }
 
   private:
@@ -3613,7 +3622,7 @@ public:
         // value only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            detail::throw_cannot_use_with(306, "value()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::value_wrong_type, "value()", *this);
         }
 
         const auto it = find(std::forward<KeyType>(key));
@@ -3628,7 +3637,7 @@ public:
         // value only works for arrays and objects
         if (JSON_HEDLEY_UNLIKELY(!is_structured()))
         {
-            detail::throw_cannot_use_with(306, "value()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::value_wrong_type, "value()", *this);
         }
 
         return ptr.get_checked_or_null(this);
@@ -3795,7 +3804,7 @@ public:
         // make sure the iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(this != pos.m_object))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this));
         }
 
         IteratorType result = end();
@@ -3811,7 +3820,7 @@ public:
             {
                 if (JSON_HEDLEY_UNLIKELY(!pos.m_it.primitive_iterator.is_begin()))
                 {
-                    JSON_THROW(invalid_iterator::create(205, "iterator out of range", this));
+                    JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_out_of_range, "iterator out of range", this));
                 }
 
                 m_data.m_value.destroy(m_data.m_type);
@@ -3837,7 +3846,7 @@ public:
             case value_t::null:
             case value_t::discarded:
             default:
-                detail::throw_cannot_use_with(307, "erase()", *this);
+                detail::throw_cannot_use_with(detail::exception_id::erase_wrong_type, "erase()", *this);
         }
 
         return result;
@@ -3853,7 +3862,7 @@ public:
         // make sure the iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(this != first.m_object || this != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(203, "iterators do not fit current value", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_range_from_other_value, "iterators do not fit current value", this));
         }
 
         IteratorType result = end();
@@ -3870,7 +3879,7 @@ public:
                 if (JSON_HEDLEY_UNLIKELY(!first.m_it.primitive_iterator.is_begin()
                                          || !last.m_it.primitive_iterator.is_end()))
                 {
-                    JSON_THROW(invalid_iterator::create(204, "iterators out of range", this));
+                    JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_range_out_of_range, "iterators out of range", this));
                 }
 
                 m_data.m_value.destroy(m_data.m_type);
@@ -3898,7 +3907,7 @@ public:
             case value_t::null:
             case value_t::discarded:
             default:
-                detail::throw_cannot_use_with(307, "erase()", *this);
+                detail::throw_cannot_use_with(detail::exception_id::erase_wrong_type, "erase()", *this);
         }
 
         return result;
@@ -3912,7 +3921,7 @@ public:
         // this erase only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            detail::throw_cannot_use_with(307, "erase()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::erase_wrong_type, "erase()", *this);
         }
 
         const auto erased = m_data.m_value.object->erase(std::forward<KeyType>(key));
@@ -3927,7 +3936,7 @@ public:
         // this erase only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            detail::throw_cannot_use_with(307, "erase()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::erase_wrong_type, "erase()", *this);
         }
 
         const auto it = object_lookup(*this, std::forward<KeyType>(key));
@@ -3969,14 +3978,14 @@ public:
         {
             if (JSON_HEDLEY_UNLIKELY(idx >= size()))
             {
-                JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
+                JSON_THROW(out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
             }
 
             m_data.m_value.array->erase(m_data.m_value.array->begin() + static_cast<difference_type>(idx));
         }
         else
         {
-            detail::throw_cannot_use_with(307, "erase()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::erase_wrong_type, "erase()", *this);
         }
     }
 
@@ -4465,7 +4474,7 @@ public:
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            detail::throw_cannot_use_with(308, "push_back()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::push_back_wrong_type, "push_back()", *this);
         }
 
         // transform a null object into an array
@@ -4496,7 +4505,7 @@ public:
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            detail::throw_cannot_use_with(308, "push_back()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::push_back_wrong_type, "push_back()", *this);
         }
 
         // transform a null object into an array
@@ -4526,7 +4535,7 @@ public:
         // push_back only works for null objects or objects
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            detail::throw_cannot_use_with(308, "push_back()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::push_back_wrong_type, "push_back()", *this);
         }
 
         // transform a null object into an object
@@ -4580,7 +4589,7 @@ public:
         // emplace_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            detail::throw_cannot_use_with(311, "emplace_back()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::emplace_wrong_type, "emplace_back()", *this);
         }
 
         // transform a null object into an array
@@ -4603,7 +4612,7 @@ public:
         // emplace only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            detail::throw_cannot_use_with(311, "emplace()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::emplace_wrong_type, "emplace()", *this);
         }
 
         // transform a null object into an object
@@ -4655,14 +4664,14 @@ public:
             // check if iterator pos fits to this JSON value
             if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
             {
-                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
+                JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this));
             }
 
             // insert to array and return iterator
             return insert_iterator(pos, val);
         }
 
-        detail::throw_cannot_use_with(309, "insert()", *this);
+        detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
     }
 
     /// @brief inserts element into array
@@ -4675,7 +4684,7 @@ public:
             // check if iterator pos fits to this JSON value
             if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
             {
-                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
+                JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this));
             }
 
             // moving into a local first keeps this safe even if val aliases
@@ -4684,7 +4693,7 @@ public:
             return insert_iterator(pos, std::move(tmp));
         }
 
-        detail::throw_cannot_use_with(309, "insert()", *this);
+        detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
     }
 
     /// @brief inserts copies of element into array
@@ -4697,14 +4706,14 @@ public:
             // check if iterator pos fits to this JSON value
             if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
             {
-                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
+                JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this));
             }
 
             // insert to array and return iterator
             return insert_iterator(pos, cnt, val);
         }
 
-        detail::throw_cannot_use_with(309, "insert()", *this);
+        detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
     }
 
     /// @brief inserts range of elements into array
@@ -4714,30 +4723,30 @@ public:
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            detail::throw_cannot_use_with(309, "insert()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
         }
 
         // check if iterator pos fits to this JSON value
         if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::insert_range_incompatible, "iterators do not fit", this));
         }
 
         if (JSON_HEDLEY_UNLIKELY(first.m_object == this))
         {
-            JSON_THROW(invalid_iterator::create(211, "passed iterators may not belong to container", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::insert_range_into_itself, "passed iterators may not belong to container", this));
         }
 
         // passed iterators must belong to arrays
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_array()))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to arrays", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_from_other_value, "iterators first and last must point to arrays", this));
         }
 
         // insert to array and return iterator
@@ -4751,13 +4760,13 @@ public:
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            detail::throw_cannot_use_with(309, "insert()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
         }
 
         // check if iterator pos fits to this JSON value
         if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this));
         }
 
         // copy the values first: ilist may refer to elements of this array
@@ -4779,19 +4788,19 @@ public:
         // insert only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            detail::throw_cannot_use_with(309, "insert()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::insert_range_incompatible, "iterators do not fit", this));
         }
 
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_from_other_value, "iterators first and last must point to objects", this));
         }
 
         m_data.m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
@@ -4808,7 +4817,7 @@ public:
         // j, not the copy made below)
         if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
         {
-            detail::throw_cannot_use_with(312, "update()", j);
+            detail::throw_cannot_use_with(detail::exception_id::update_wrong_type, "update()", j);
         }
 
         // copy first: j may be *this or one of its descendants, and is
@@ -4826,13 +4835,13 @@ public:
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", this));
+            JSON_THROW(invalid_iterator::create(detail::exception_id::insert_range_incompatible, "iterators do not fit", this));
         }
 
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            detail::throw_cannot_use_with(312, "update()", *first.m_object);
+            detail::throw_cannot_use_with(detail::exception_id::update_wrong_type, "update()", *first.m_object);
         }
 
         // copy first: the range may belong to *this or one of its
@@ -4868,7 +4877,7 @@ public:
 
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            detail::throw_cannot_use_with(312, "update()", *this);
+            detail::throw_cannot_use_with(detail::exception_id::update_wrong_type, "update()", *this);
         }
     }
 
@@ -5031,7 +5040,7 @@ public:
         }
         else
         {
-            detail::throw_cannot_use_with(310, "swap(array_t&)", *this);
+            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(array_t&)", *this);
         }
     }
 
@@ -5048,7 +5057,7 @@ public:
         }
         else
         {
-            detail::throw_cannot_use_with(310, "swap(object_t&)", *this);
+            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(object_t&)", *this);
         }
     }
 
@@ -5064,7 +5073,7 @@ public:
         }
         else
         {
-            detail::throw_cannot_use_with(310, "swap(string_t&)", *this);
+            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(string_t&)", *this);
         }
     }
 
@@ -5080,7 +5089,7 @@ public:
         }
         else
         {
-            detail::throw_cannot_use_with(310, "swap(binary_t&)", *this);
+            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(binary_t&)", *this);
         }
     }
 
@@ -5096,7 +5105,7 @@ public:
         }
         else
         {
-            detail::throw_cannot_use_with(310, "swap(binary_t::container_type&)", *this);
+            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(binary_t::container_type&)", *this);
         }
     }
 
@@ -6558,7 +6567,7 @@ public:
                         if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
-                            JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), &parent));
+                            JSON_THROW(out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat("array index ", std::to_string(idx), " is out of range"), &parent));
                         }
 
                         // default case: insert add offset
@@ -6577,7 +6586,7 @@ public:
                 case value_t::binary:
                 case value_t::discarded:
                 default:
-                    JSON_THROW(out_of_range::create(411, detail::concat("cannot add value: the JSON Patch 'add' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+                    JSON_THROW(out_of_range::create(detail::exception_id::patch_add_parent_not_container, detail::concat("cannot add value: the JSON Patch 'add' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
             }
         };
 
@@ -6600,7 +6609,7 @@ public:
                 }
                 else
                 {
-                    JSON_THROW(out_of_range::create(403, detail::concat("key '", last_path, "' not found"), this));
+                    JSON_THROW(out_of_range::create(detail::exception_id::key_not_found, detail::concat("key '", last_path, "' not found"), this));
                 }
             }
             else if (parent.is_array())
@@ -6612,7 +6621,7 @@ public:
             {
                 // the parent of a "remove" target must be an object or array
                 // (see #5396)
-                JSON_THROW(out_of_range::create(413, detail::concat("cannot remove value: the JSON Patch 'remove' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+                JSON_THROW(out_of_range::create(detail::exception_id::patch_remove_parent_not_container, detail::concat("cannot remove value: the JSON Patch 'remove' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
             }
         };
 
@@ -6643,7 +6652,7 @@ public:
         // type check: top level value must be an array
         if (JSON_HEDLEY_UNLIKELY(!json_patch.is_array()))
         {
-            JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects", &json_patch));
+            JSON_THROW(parse_error::create(detail::exception_id::patch_not_an_array, 0, "JSON patch must be an array of objects", &json_patch));
         }
 
         // iterate and apply the operations
@@ -6664,14 +6673,14 @@ public:
                 if (JSON_HEDLEY_UNLIKELY(it == val.m_data.m_value.object->end()))
                 {
                     // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-                    JSON_THROW(parse_error::create(105, 0, detail::concat(error_msg, " must have member '", member, "'"), &val));
+                    JSON_THROW(parse_error::create(detail::exception_id::patch_invalid_operation, 0, detail::concat(error_msg, " must have member '", member, "'"), &val));
                 }
 
                 // check if the result is of type string
                 if (JSON_HEDLEY_UNLIKELY(string_type && !it->second.is_string()))
                 {
                     // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-                    JSON_THROW(parse_error::create(105, 0, detail::concat(error_msg, " must have string member '", member, "'"), &val));
+                    JSON_THROW(parse_error::create(detail::exception_id::patch_invalid_operation, 0, detail::concat(error_msg, " must have string member '", member, "'"), &val));
                 }
 
                 // no error: return value
@@ -6681,7 +6690,7 @@ public:
             // type check: every element of the array must be an object
             if (JSON_HEDLEY_UNLIKELY(!val.is_object()))
             {
-                JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects", &val));
+                JSON_THROW(parse_error::create(detail::exception_id::patch_not_an_array, 0, "JSON patch must be an array of objects", &val));
             }
 
             // collect mandatory members
@@ -6717,7 +6726,7 @@ public:
 
                     if (JSON_HEDLEY_UNLIKELY(is_proper_prefix(from_ptr, ptr)))
                     {
-                        JSON_THROW(out_of_range::create(414, detail::concat("cannot move value: 'from' path '", from_path, "' is a proper prefix of 'path' '", path, "'"), &result));
+                        JSON_THROW(out_of_range::create(detail::exception_id::patch_move_into_child, detail::concat("cannot move value: 'from' path '", from_path, "' is a proper prefix of 'path' '", path, "'"), &result));
                     }
 
                     // the "from" location must exist - use at()
@@ -6764,7 +6773,7 @@ public:
                     // throw an exception if the test fails
                     if (JSON_HEDLEY_UNLIKELY(!success))
                     {
-                        JSON_THROW(other_error::create(501, detail::concat("unsuccessful: ", val.dump()), &val));
+                        JSON_THROW(other_error::create(detail::exception_id::patch_test_failed, detail::concat("unsuccessful: ", val.dump()), &val));
                     }
 
                     break;
@@ -6775,7 +6784,7 @@ public:
                 {
                     // op must be "add", "remove", "replace", "move", "copy", or
                     // "test"
-                    JSON_THROW(parse_error::create(105, 0, detail::concat("operation value '", op, "' is invalid"), &val));
+                    JSON_THROW(parse_error::create(detail::exception_id::patch_invalid_operation, 0, detail::concat("operation value '", op, "' is invalid"), &val));
                 }
             }
         }

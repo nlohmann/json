@@ -36,7 +36,7 @@ using nlohmann::json;
 #include <string>
 #include <valarray>
 
-#include "test_sax.hpp"
+#include "sax_event_loggers.hpp"
 
 using utils::SaxEventLogger;
 using utils::SaxEventLoggerExitAfterKey;

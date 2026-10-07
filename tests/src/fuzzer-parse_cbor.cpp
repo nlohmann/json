@@ -21,11 +21,7 @@ The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <cassert>
-#include <nlohmann/json.hpp>
 #include "fuzzer_common.hpp"
-
-using nlohmann::json;
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

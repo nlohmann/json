@@ -420,7 +420,7 @@ inline void to_json(BasicJsonType& j, const EnumKeyedMap& map)
         auto& key_string = *key.template get_ptr<typename BasicJsonType::string_t*>();
         if (JSON_HEDLEY_UNLIKELY(!obj.emplace(key_string, BasicJsonType(p.second)).second))
         {
-            JSON_THROW(type_error::create(318, concat("duplicate object key '", key_string, "'"), &key));
+            JSON_THROW(type_error::create(exception_id::enum_key_duplicate, concat("duplicate object key '", key_string, "'"), &key));
         }
     }
     external_constructor<value_t::object>::construct(j, std::move(obj));
