@@ -3308,3 +3308,43 @@ TEST_CASE("UBJSON and BJData integer markers at every range edge")
         }
     }
 }
+
+TEST_CASE("UBJSON large strings (chunked reader)")
+{
+    // get_ubjson_string() reads through get_string(), which reads in bounded
+    // chunks (binary_reader.hpp, chunk_size == 4096); make sure roundtripping
+    // is correct for lengths around and beyond that chunk size, for both
+    // vector (iterator) and pointer inputs.
+    //
+    // A binary value is not included here: plain UBJSON (unlike BJData, see
+    // the "BJData large strings and binaries" test) has no reader-side binary
+    // type, so even the optimized uint8_t-array encoding of a binary value is
+    // read back element-by-element as a JSON array of numbers rather than
+    // through get_binary() - it never reaches the chunked path this test is
+    // about (see the "roundtrip only works to an array of numbers" case
+    // above).
+    for (const std::size_t len :
+            {
+                std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
+                std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
+            })
+    {
+        CAPTURE(len)
+
+        const json j_string = std::string(len, 'x');
+        const std::vector<std::uint8_t> v_string = json::to_ubjson(j_string);
+        CHECK(json::from_ubjson(v_string) == j_string);
+        // pointer input exercises the std::memcpy fast path
+        CHECK(json::from_ubjson(reinterpret_cast<const char*>(v_string.data()),
+                                reinterpret_cast<const char*>(v_string.data()) + v_string.size()) == j_string);
+
+        // a truncated payload must still be reported as an error
+        if (len > 16)
+        {
+            std::vector<std::uint8_t> truncated = v_string;
+            truncated.resize(truncated.size() - 8);
+            json _;
+            CHECK_THROWS_AS(_ = json::from_ubjson(truncated), json::parse_error);
+        }
+    }
+}

@@ -2482,3 +2482,43 @@ TEST_CASE("MessagePack numbers use the active union member (see #5644)")
         CHECK(json::from_msgpack(result) == j);
     }
 }
+
+TEST_CASE("MessagePack large strings and binaries (chunked reader)")
+{
+    // get_msgpack_string()/get_msgpack_binary() both read through get_binary(),
+    // which reads in bounded chunks (binary_reader.hpp, chunk_size == 4096);
+    // make sure roundtripping is correct for lengths around and beyond that
+    // chunk size, for both vector (iterator) and pointer inputs.
+    for (const std::size_t len :
+            {
+                std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
+                std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
+            })
+    {
+        CAPTURE(len)
+
+        // string
+        const json j_string = std::string(len, 'x');
+        const std::vector<std::uint8_t> v_string = json::to_msgpack(j_string);
+        CHECK(json::from_msgpack(v_string) == j_string);
+        // pointer input exercises the std::memcpy fast path
+        CHECK(json::from_msgpack(reinterpret_cast<const char*>(v_string.data()),
+                                 reinterpret_cast<const char*>(v_string.data()) + v_string.size()) == j_string);
+
+        // binary
+        const json j_binary = json::binary(std::vector<std::uint8_t>(len, 0xCD));
+        const std::vector<std::uint8_t> v_binary = json::to_msgpack(j_binary);
+        CHECK(json::from_msgpack(v_binary) == j_binary);
+        CHECK(json::from_msgpack(reinterpret_cast<const char*>(v_binary.data()),
+                                 reinterpret_cast<const char*>(v_binary.data()) + v_binary.size()) == j_binary);
+
+        // a truncated payload must still be reported as an error
+        if (len > 16)
+        {
+            std::vector<std::uint8_t> truncated = v_string;
+            truncated.resize(truncated.size() - 8);
+            json _;
+            CHECK_THROWS_AS(_ = json::from_msgpack(truncated), json::parse_error);
+        }
+    }
+}

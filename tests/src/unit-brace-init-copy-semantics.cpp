@@ -72,6 +72,28 @@ TEST_CASE("JSON_BRACE_INIT_COPY_SEMANTICS")
         CHECK(j7 == json::array({1, 2}));
     }
 
+    SECTION("single-element brace initialization copies a pair-shaped array value (#5662)")
+    {
+        // a JSON value that happens to be a 2-element array whose first
+        // element is a string must still be copied, not turned into an
+        // object; only a braced list written in the source, such as the
+        // inner {"key", "value"} of {{"key", "value"}}, describes an object
+        json const pair_shaped = json::array({"key", 42});
+
+        json const j1{pair_shaped};
+        CHECK(j1.is_array());
+        CHECK(j1 == pair_shaped);
+
+        json const j2 = {pair_shaped};
+        CHECK(j2.is_array());
+        CHECK(j2 == pair_shaped);
+
+        // the same holds for an rvalue of the same shape
+        json const j3{json::array({"key", 42})};
+        CHECK(j3.is_array());
+        CHECK(j3 == pair_shaped);
+    }
+
     SECTION("what the macro does not change")
     {
         // lists with more than one element are unaffected
