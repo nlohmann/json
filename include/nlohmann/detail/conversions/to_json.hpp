@@ -414,7 +414,7 @@ inline void to_json(BasicJsonType& j, const EnumKeyedMap& map)
         BasicJsonType key = p.first;
         if (JSON_HEDLEY_UNLIKELY(!key.is_string()))
         {
-            JSON_THROW(type_error::create(302, concat("type must be string, but is ", key.type_name()), &key));
+            throw_type_must_be("string", key);
         }
 
         auto& key_string = *key.template get_ptr<typename BasicJsonType::string_t*>();

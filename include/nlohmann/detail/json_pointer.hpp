@@ -166,7 +166,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         reference_tokens.erase(reference_tokens.begin());
@@ -178,7 +178,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         return reference_tokens.front();
@@ -204,7 +204,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         reference_tokens.pop_back();
@@ -216,7 +216,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         return reference_tokens.back();
@@ -244,6 +244,21 @@ class json_pointer
     }
 
   private:
+    /// @throw out_of_range.405 always
+    JSON_HEDLEY_NO_RETURN static void throw_no_parent()
+    {
+        JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+    }
+
+    /// @throw out_of_range.404 always
+    template<typename BasicJsonContext>
+    JSON_HEDLEY_NO_RETURN static void throw_unresolved(const string_t& reference_token, BasicJsonContext context)
+    {
+        static_cast<void>(reference_token); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(context);
+        JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", reference_token, "'"), context));
+    }
+
     /*!
     @brief result of @ref parse_array_index
 
@@ -333,7 +348,7 @@ class json_pointer
             case array_index_status::not_a_number:
                 JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
             case array_index_status::unresolved:
-                JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
+                throw_unresolved(s, nullptr);
             case array_index_status::exceeds_size_type:
                 JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));
             case array_index_status::ok:
@@ -349,7 +364,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         json_pointer result = *this;
@@ -520,7 +535,7 @@ class json_pointer
                 case detail::value_t::binary:
                 case detail::value_t::discarded:
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", reference_token, "'"), ptr));
+                    throw_unresolved(reference_token, ptr);
             }
         }
 
@@ -577,7 +592,7 @@ class json_pointer
                 case detail::value_t::binary:
                 case detail::value_t::discarded:
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", reference_token, "'"), ptr));
+                    throw_unresolved(reference_token, ptr);
             }
         }
 
@@ -639,7 +654,7 @@ class json_pointer
                 case detail::value_t::binary:
                 case detail::value_t::discarded:
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", reference_token, "'"), ptr));
+                    throw_unresolved(reference_token, ptr);
             }
         }
 

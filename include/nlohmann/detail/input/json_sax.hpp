@@ -176,6 +176,27 @@ template<typename ArrayType>
 inline void reserve_array(ArrayType& /*arr*/, std::size_t /*len*/, priority_tag<0> /*unused*/)
 {}
 
+/*!
+@brief reports an object or array whose announced size exceeds max_size()
+
+Shared by json_sax_dom_parser and json_sax_dom_callback_parser.
+
+@param[in] sax   the SAX parser to report the error to
+@param[in] len   the number of elements announced by the input, or unknown_size()
+@param[in] kind  "object" or "array"
+@param[in] ref   the object or array that was just created
+@return whether parsing should continue (false after reporting out_of_range.408)
+*/
+template<typename SAX, typename BasicJsonType>
+bool check_container_size(SAX& sax, std::size_t len, const char* kind, BasicJsonType* ref)
+{
+    if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref->max_size()))
+    {
+        return sax.parse_error(0, "", out_of_range::create(408, concat("excessive ", kind, " size: ", std::to_string(len)), ref));
+    }
+    return true;
+}
+
 #if JSON_DIAGNOSTIC_POSITIONS
 /*!
 @brief set the diagnostic positions of a value the DOM SAX parsers just stored
@@ -185,6 +206,35 @@ befriends this struct, as the position members are private.
 */
 struct diagnostic_positions
 {
+    /*!
+    @param[in,out] v  the object or array whose opening brace or bracket was just read
+    @param[in] lexer  the lexer that read it, or nullptr to leave @a v alone
+    */
+    template<typename BasicJsonType, typename LexerType>
+    static void set_container_start(BasicJsonType& v, LexerType* lexer)
+    {
+        if (lexer)
+        {
+            // Lexer has read the first character of the container, so
+            // subtract 1 from the position to get the correct start position.
+            v.start_position = lexer->get_position() - 1;
+        }
+    }
+
+    /*!
+    @param[in,out] v  the object or array whose closing brace or bracket was just read
+    @param[in] lexer  the lexer that read it, or nullptr to leave @a v alone
+    */
+    template<typename BasicJsonType, typename LexerType>
+    static void set_container_end(BasicJsonType& v, LexerType* lexer)
+    {
+        if (lexer)
+        {
+            // Lexer's position is past the closing brace or bracket, so set that as the end position.
+            v.end_position = lexer->get_position();
+        }
+    }
+
     /*!
     @param[in,out] v  the value that was just parsed
     @param[in] lexer  the lexer that read it, or nullptr to leave @a v alone
@@ -349,22 +399,11 @@ class json_sax_dom_parser
         ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        // Manually set the start position of the object here.
         // Ensure this is after the call to handle_value to ensure correct start position.
-        if (m_lexer_ref)
-        {
-            // Lexer has read the first character of the object, so
-            // subtract 1 from the position to get the correct start position.
-            ref_stack.back()->start_position = m_lexer_ref->get_position() - 1;
-        }
+        diagnostic_positions::set_container_start(*ref_stack.back(), m_lexer_ref);
 #endif
 
-        if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
-        {
-            return parse_error(0, "", out_of_range::create(408, concat("excessive object size: ", std::to_string(len)), ref_stack.back()));
-        }
-
-        return true;
+        return check_container_size(*this, len, "object", ref_stack.back());
     }
 
     bool key(string_t& val)
@@ -383,11 +422,7 @@ class json_sax_dom_parser
         JSON_ASSERT(ref_stack.back()->is_object());
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        if (m_lexer_ref)
-        {
-            // Lexer's position is past the closing brace, so set that as the end position.
-            ref_stack.back()->end_position = m_lexer_ref->get_position();
-        }
+        diagnostic_positions::set_container_end(*ref_stack.back(), m_lexer_ref);
 #endif
 
         ref_stack.back()->set_parents();
@@ -400,17 +435,13 @@ class json_sax_dom_parser
         ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        // Manually set the start position of the array here.
         // Ensure this is after the call to handle_value to ensure correct start position.
-        if (m_lexer_ref)
-        {
-            ref_stack.back()->start_position = m_lexer_ref->get_position() - 1;
-        }
+        diagnostic_positions::set_container_start(*ref_stack.back(), m_lexer_ref);
 #endif
 
-        if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
+        if (JSON_HEDLEY_UNLIKELY(!check_container_size(*this, len, "array", ref_stack.back())))
         {
-            return parse_error(0, "", out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
+            return false;
         }
 
         if (len != detail::unknown_size())
@@ -427,11 +458,7 @@ class json_sax_dom_parser
         JSON_ASSERT(ref_stack.back()->is_array());
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        if (m_lexer_ref)
-        {
-            // Lexer's position is past the closing bracket, so set that as the end position.
-            ref_stack.back()->end_position = m_lexer_ref->get_position();
-        }
+        diagnostic_positions::set_container_end(*ref_stack.back(), m_lexer_ref);
 #endif
 
         ref_stack.back()->set_parents();
@@ -611,21 +638,11 @@ class json_sax_dom_callback_parser
         {
 
 #if JSON_DIAGNOSTIC_POSITIONS
-            // Manually set the start position of the object here.
             // Ensure this is after the call to handle_value to ensure correct start position.
-            if (m_lexer_ref)
-            {
-                // Lexer has read the first character of the object, so
-                // subtract 1 from the position to get the correct start position.
-                ref_stack.back()->start_position = m_lexer_ref->get_position() - 1;
-            }
+            diagnostic_positions::set_container_start(*ref_stack.back(), m_lexer_ref);
 #endif
 
-            // check object limit
-            if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
-            {
-                return parse_error(0, "", out_of_range::create(408, concat("excessive object size: ", std::to_string(len)), ref_stack.back()));
-            }
+            return check_container_size(*this, len, "object", ref_stack.back());
         }
         return true;
     }
@@ -695,11 +712,7 @@ class json_sax_dom_callback_parser
             {
 
 #if JSON_DIAGNOSTIC_POSITIONS
-                if (m_lexer_ref)
-                {
-                    // Lexer's position is past the closing brace, so set that as the end position.
-                    ref_stack.back()->end_position = m_lexer_ref->get_position();
-                }
+                diagnostic_positions::set_container_end(*ref_stack.back(), m_lexer_ref);
 #endif
 
                 ref_stack.back()->set_parents();
@@ -742,20 +755,13 @@ class json_sax_dom_callback_parser
         {
 
 #if JSON_DIAGNOSTIC_POSITIONS
-            // Manually set the start position of the array here.
             // Ensure this is after the call to handle_value to ensure correct start position.
-            if (m_lexer_ref)
-            {
-                // Lexer has read the first character of the array, so
-                // subtract 1 from the position to get the correct start position.
-                ref_stack.back()->start_position = m_lexer_ref->get_position() - 1;
-            }
+            diagnostic_positions::set_container_start(*ref_stack.back(), m_lexer_ref);
 #endif
 
-            // check array limit
-            if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
+            if (JSON_HEDLEY_UNLIKELY(!check_container_size(*this, len, "array", ref_stack.back())))
             {
-                return parse_error(0, "", out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
+                return false;
             }
 
             if (len != detail::unknown_size())
@@ -779,11 +785,7 @@ class json_sax_dom_callback_parser
             {
 
 #if JSON_DIAGNOSTIC_POSITIONS
-                if (m_lexer_ref)
-                {
-                    // Lexer's position is past the closing bracket, so set that as the end position.
-                    ref_stack.back()->end_position = m_lexer_ref->get_position();
-                }
+                diagnostic_positions::set_container_end(*ref_stack.back(), m_lexer_ref);
 #endif
 
                 ref_stack.back()->set_parents();

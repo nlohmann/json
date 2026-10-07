@@ -307,6 +307,20 @@ void templated_json_throw(ExceptionType exception)
     (void)exception;
 }
 
+/*!
+@brief throws because @a j does not have the type a conversion expects
+@param[in] expected  the expected type(s), e.g. "array" or "binary or array"
+@param[in] j         the value with the wrong type
+@throw type_error.302 always
+*/
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN inline void throw_type_must_be(const char* expected, const BasicJsonType& j)
+{
+    static_cast<void>(expected); // unused when JSON_NOEXCEPTION is defined
+    static_cast<void>(j);
+    JSON_THROW(type_error::create(302, concat("type must be ", expected, ", but is ", j.type_name()), &j));
+}
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 

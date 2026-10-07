@@ -3266,7 +3266,7 @@ public:
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, detail::concat("type must be binary, but is ", type_name()), this));
+            detail::throw_type_must_be("binary", *this);
         }
 
         return *get_ptr<binary_t*>();
@@ -3278,7 +3278,7 @@ public:
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, detail::concat("type must be binary, but is ", type_name()), this));
+            detail::throw_type_must_be("binary", *this);
         }
 
         return *get_ptr<const binary_t*>();

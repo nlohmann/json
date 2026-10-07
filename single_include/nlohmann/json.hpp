@@ -5499,6 +5499,20 @@ void templated_json_throw(ExceptionType exception)
     (void)exception;
 }
 
+/*!
+@brief throws because @a j does not have the type a conversion expects
+@param[in] expected  the expected type(s), e.g. "array" or "binary or array"
+@param[in] j         the value with the wrong type
+@throw type_error.302 always
+*/
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN inline void throw_type_must_be(const char* expected, const BasicJsonType& j)
+{
+    static_cast<void>(expected); // unused when JSON_NOEXCEPTION is defined
+    static_cast<void>(j);
+    JSON_THROW(type_error::create(302, concat("type must be ", expected, ", but is ", j.type_name()), &j));
+}
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -5591,7 +5605,7 @@ inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_null()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be null, but is ", j.type_name()), &j));
+        throw_type_must_be("null", j);
     }
     n = nullptr;
 }
@@ -5645,7 +5659,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
         case value_t::binary:
         case value_t::discarded:
         default:
-            JSON_THROW(type_error::create(302, concat("type must be number, but is ", j.type_name()), &j));
+            throw_type_must_be("number", j);
     }
 }
 
@@ -5654,7 +5668,7 @@ inline void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t&
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_boolean()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be boolean, but is ", j.type_name()), &j));
+        throw_type_must_be("boolean", j);
     }
     b = *j.template get_ptr<const typename BasicJsonType::boolean_t*>();
 }
@@ -5664,7 +5678,7 @@ inline void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& 
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be string, but is ", j.type_name()), &j));
+        throw_type_must_be("string", j);
     }
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
@@ -5680,7 +5694,7 @@ inline void from_json(const BasicJsonType& j, StringType& s)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be string, but is ", j.type_name()), &j));
+        throw_type_must_be("string", j);
     }
 
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
@@ -5726,7 +5740,7 @@ inline void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
+        throw_type_must_be("array", j);
     }
     l.clear();
     std::transform(j.rbegin(), j.rend(),
@@ -5743,7 +5757,7 @@ inline void from_json(const BasicJsonType& j, std::valarray<T>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
+        throw_type_must_be("array", j);
     }
     l.resize(j.size());
     std::transform(j.begin(), j.end(), std::begin(l),
@@ -5848,7 +5862,7 @@ void())
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
+        throw_type_must_be("array", j);
     }
 
     from_json_array_impl(j, arr, priority_tag<3> {});
@@ -5867,7 +5881,7 @@ auto from_json(const BasicJsonType& j, identity_tag<std::array<T, N>> tag)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
+        throw_type_must_be("array", j);
     }
 
     return from_json_inplace_array_impl(j, tag, make_index_sequence<N> {});
@@ -5878,7 +5892,7 @@ inline void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& 
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_binary()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be binary, but is ", j.type_name()), &j));
+        throw_type_must_be("binary", j);
     }
 
     bin = *j.template get_ptr<const typename BasicJsonType::binary_t*>();
@@ -5899,7 +5913,7 @@ inline void from_json(const BasicJsonType& j, CompatibleArrayType& bin)
     }
     else
     {
-        JSON_THROW(type_error::create(302, concat("type must be binary or array, but is ", j.type_name()), &j));
+        throw_type_must_be("binary or array", j);
     }
 }
 
@@ -5920,7 +5934,7 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be object, but is ", j.type_name()), &j));
+        throw_type_must_be("object", j);
     }
 
     ConstructibleObjectType ret;
@@ -5975,7 +5989,7 @@ inline void from_json(const BasicJsonType& j, ArithmeticType& val)
         case value_t::binary:
         case value_t::discarded:
         default:
-            JSON_THROW(type_error::create(302, concat("type must be number, but is ", j.type_name()), &j));
+            throw_type_must_be("number", j);
     }
 }
 
@@ -6047,7 +6061,7 @@ auto from_json(const BasicJsonType& j, TupleRelated&& t)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
+        throw_type_must_be("array", j);
     }
 
     return from_json_tuple_impl(j, std::forward<TupleRelated>(t), priority_tag<3> {});
@@ -6060,14 +6074,14 @@ void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
+        throw_type_must_be("array", j);
     }
     m.clear();
     for (const auto& p : j)
     {
         if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
         {
-            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &p));
+            throw_type_must_be("array", p);
         }
         m.emplace(p.at(0).template get<typename MapType::key_type>(), p.at(1).template get<typename MapType::mapped_type>());
     }
@@ -6134,7 +6148,7 @@ inline void from_json(const BasicJsonType& j, std_fs::path& p)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
-        JSON_THROW(type_error::create(302, concat("type must be string, but is ", j.type_name()), &j));
+        throw_type_must_be("string", j);
     }
     const auto& s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
     // Checking for C++20 standard or later can be insufficient in case the
@@ -7208,7 +7222,7 @@ inline void to_json(BasicJsonType& j, const EnumKeyedMap& map)
         BasicJsonType key = p.first;
         if (JSON_HEDLEY_UNLIKELY(!key.is_string()))
         {
-            JSON_THROW(type_error::create(302, concat("type must be string, but is ", key.type_name()), &key));
+            throw_type_must_be("string", key);
         }
 
         auto& key_string = *key.template get_ptr<typename BasicJsonType::string_t*>();
@@ -7789,7 +7803,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t, uintmax_t
-#include <cstdio> // snprintf
 #include <cstring> // memcpy
 #include <iterator> // back_inserter
 #include <limits> // numeric_limits
@@ -12591,6 +12604,27 @@ template<typename ArrayType>
 inline void reserve_array(ArrayType& /*arr*/, std::size_t /*len*/, priority_tag<0> /*unused*/)
 {}
 
+/*!
+@brief reports an object or array whose announced size exceeds max_size()
+
+Shared by json_sax_dom_parser and json_sax_dom_callback_parser.
+
+@param[in] sax   the SAX parser to report the error to
+@param[in] len   the number of elements announced by the input, or unknown_size()
+@param[in] kind  "object" or "array"
+@param[in] ref   the object or array that was just created
+@return whether parsing should continue (false after reporting out_of_range.408)
+*/
+template<typename SAX, typename BasicJsonType>
+bool check_container_size(SAX& sax, std::size_t len, const char* kind, BasicJsonType* ref)
+{
+    if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref->max_size()))
+    {
+        return sax.parse_error(0, "", out_of_range::create(408, concat("excessive ", kind, " size: ", std::to_string(len)), ref));
+    }
+    return true;
+}
+
 #if JSON_DIAGNOSTIC_POSITIONS
 /*!
 @brief set the diagnostic positions of a value the DOM SAX parsers just stored
@@ -12600,6 +12634,35 @@ befriends this struct, as the position members are private.
 */
 struct diagnostic_positions
 {
+    /*!
+    @param[in,out] v  the object or array whose opening brace or bracket was just read
+    @param[in] lexer  the lexer that read it, or nullptr to leave @a v alone
+    */
+    template<typename BasicJsonType, typename LexerType>
+    static void set_container_start(BasicJsonType& v, LexerType* lexer)
+    {
+        if (lexer)
+        {
+            // Lexer has read the first character of the container, so
+            // subtract 1 from the position to get the correct start position.
+            v.start_position = lexer->get_position() - 1;
+        }
+    }
+
+    /*!
+    @param[in,out] v  the object or array whose closing brace or bracket was just read
+    @param[in] lexer  the lexer that read it, or nullptr to leave @a v alone
+    */
+    template<typename BasicJsonType, typename LexerType>
+    static void set_container_end(BasicJsonType& v, LexerType* lexer)
+    {
+        if (lexer)
+        {
+            // Lexer's position is past the closing brace or bracket, so set that as the end position.
+            v.end_position = lexer->get_position();
+        }
+    }
+
     /*!
     @param[in,out] v  the value that was just parsed
     @param[in] lexer  the lexer that read it, or nullptr to leave @a v alone
@@ -12764,22 +12827,11 @@ class json_sax_dom_parser
         ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        // Manually set the start position of the object here.
         // Ensure this is after the call to handle_value to ensure correct start position.
-        if (m_lexer_ref)
-        {
-            // Lexer has read the first character of the object, so
-            // subtract 1 from the position to get the correct start position.
-            ref_stack.back()->start_position = m_lexer_ref->get_position() - 1;
-        }
+        diagnostic_positions::set_container_start(*ref_stack.back(), m_lexer_ref);
 #endif
 
-        if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
-        {
-            return parse_error(0, "", out_of_range::create(408, concat("excessive object size: ", std::to_string(len)), ref_stack.back()));
-        }
-
-        return true;
+        return check_container_size(*this, len, "object", ref_stack.back());
     }
 
     bool key(string_t& val)
@@ -12798,11 +12850,7 @@ class json_sax_dom_parser
         JSON_ASSERT(ref_stack.back()->is_object());
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        if (m_lexer_ref)
-        {
-            // Lexer's position is past the closing brace, so set that as the end position.
-            ref_stack.back()->end_position = m_lexer_ref->get_position();
-        }
+        diagnostic_positions::set_container_end(*ref_stack.back(), m_lexer_ref);
 #endif
 
         ref_stack.back()->set_parents();
@@ -12815,17 +12863,13 @@ class json_sax_dom_parser
         ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        // Manually set the start position of the array here.
         // Ensure this is after the call to handle_value to ensure correct start position.
-        if (m_lexer_ref)
-        {
-            ref_stack.back()->start_position = m_lexer_ref->get_position() - 1;
-        }
+        diagnostic_positions::set_container_start(*ref_stack.back(), m_lexer_ref);
 #endif
 
-        if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
+        if (JSON_HEDLEY_UNLIKELY(!check_container_size(*this, len, "array", ref_stack.back())))
         {
-            return parse_error(0, "", out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
+            return false;
         }
 
         if (len != detail::unknown_size())
@@ -12842,11 +12886,7 @@ class json_sax_dom_parser
         JSON_ASSERT(ref_stack.back()->is_array());
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        if (m_lexer_ref)
-        {
-            // Lexer's position is past the closing bracket, so set that as the end position.
-            ref_stack.back()->end_position = m_lexer_ref->get_position();
-        }
+        diagnostic_positions::set_container_end(*ref_stack.back(), m_lexer_ref);
 #endif
 
         ref_stack.back()->set_parents();
@@ -13026,21 +13066,11 @@ class json_sax_dom_callback_parser
         {
 
 #if JSON_DIAGNOSTIC_POSITIONS
-            // Manually set the start position of the object here.
             // Ensure this is after the call to handle_value to ensure correct start position.
-            if (m_lexer_ref)
-            {
-                // Lexer has read the first character of the object, so
-                // subtract 1 from the position to get the correct start position.
-                ref_stack.back()->start_position = m_lexer_ref->get_position() - 1;
-            }
+            diagnostic_positions::set_container_start(*ref_stack.back(), m_lexer_ref);
 #endif
 
-            // check object limit
-            if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
-            {
-                return parse_error(0, "", out_of_range::create(408, concat("excessive object size: ", std::to_string(len)), ref_stack.back()));
-            }
+            return check_container_size(*this, len, "object", ref_stack.back());
         }
         return true;
     }
@@ -13110,11 +13140,7 @@ class json_sax_dom_callback_parser
             {
 
 #if JSON_DIAGNOSTIC_POSITIONS
-                if (m_lexer_ref)
-                {
-                    // Lexer's position is past the closing brace, so set that as the end position.
-                    ref_stack.back()->end_position = m_lexer_ref->get_position();
-                }
+                diagnostic_positions::set_container_end(*ref_stack.back(), m_lexer_ref);
 #endif
 
                 ref_stack.back()->set_parents();
@@ -13157,20 +13183,13 @@ class json_sax_dom_callback_parser
         {
 
 #if JSON_DIAGNOSTIC_POSITIONS
-            // Manually set the start position of the array here.
             // Ensure this is after the call to handle_value to ensure correct start position.
-            if (m_lexer_ref)
-            {
-                // Lexer has read the first character of the array, so
-                // subtract 1 from the position to get the correct start position.
-                ref_stack.back()->start_position = m_lexer_ref->get_position() - 1;
-            }
+            diagnostic_positions::set_container_start(*ref_stack.back(), m_lexer_ref);
 #endif
 
-            // check array limit
-            if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
+            if (JSON_HEDLEY_UNLIKELY(!check_container_size(*this, len, "array", ref_stack.back())))
             {
-                return parse_error(0, "", out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
+                return false;
             }
 
             if (len != detail::unknown_size())
@@ -13194,11 +13213,7 @@ class json_sax_dom_callback_parser
             {
 
 #if JSON_DIAGNOSTIC_POSITIONS
-                if (m_lexer_ref)
-                {
-                    // Lexer's position is past the closing bracket, so set that as the end position.
-                    ref_stack.back()->end_position = m_lexer_ref->get_position();
-                }
+                diagnostic_positions::set_container_end(*ref_stack.back(), m_lexer_ref);
 #endif
 
                 ref_stack.back()->set_parents();
@@ -13892,8 +13907,7 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(current != char_traits<char_type>::eof()))
             {
-                return sax->parse_error(chars_read, get_token_string(), parse_error::create(110, chars_read,
-                                        exception_message(concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
+                return last_byte_error(110, concat("expected end of input; last byte: 0x", get_token_string()), "value");
             }
         }
 
@@ -14015,8 +14029,7 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                    exception_message(concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr));
+            return last_byte_error(112, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document");
         }
         return true;
     }
@@ -14208,9 +14221,7 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 1))
         {
-            auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
+            return last_byte_error(112, concat("string length must be at least 1, is ", std::to_string(len)), "string");
         }
 
         if (JSON_HEDLEY_UNLIKELY(!get_string(len - static_cast<NumberType>(1), result)))
@@ -14220,10 +14231,7 @@ class binary_reader
 
         if (JSON_HEDLEY_UNLIKELY(get() != 0x00))
         {
-            auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message("BSON string is not null-terminated",
-                                            "string"), nullptr));
+            return last_byte_error(112, "BSON string is not null-terminated", "string");
         }
 
         return check_string_utf8(result, "string");
@@ -14243,9 +14251,7 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
-            auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(concat("byte array length cannot be negative, is ", std::to_string(len)), "binary"), nullptr));
+            return last_byte_error(112, concat("byte array length cannot be negative, is ", std::to_string(len)), "binary");
         }
 
         // All BSON binary values have a subtype
@@ -14335,9 +14341,7 @@ class binary_reader
 
             default: // anything else is not supported (yet)
             {
-                std::array<char, 3> cr{{}};
-                static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                const std::string cr_str{cr.data()};
+                const std::string cr_str = hex_byte(static_cast<std::uint8_t>(element_type));
                 return sax->parse_error(element_type_parse_position, cr_str,
                                         parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
             }
@@ -14663,9 +14667,7 @@ class binary_reader
             {
                 if (tag_handler == cbor_tag_handler_t::error)
                 {
-                    auto last_token = get_token_string();
-                    return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                            exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
+                    return unexpected_byte("invalid byte", "value");
                 }
 
                 // ignore and store: the tag value is already in the head, so
@@ -14685,9 +14687,7 @@ class binary_reader
                 {
                     case cbor_tag_handler_t::error:
                     {
-                        auto last_token = get_token_string();
-                        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                                exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
+                        return unexpected_byte("invalid byte", "value");
                     }
 
                     case cbor_tag_handler_t::ignore:
@@ -14761,9 +14761,7 @@ class binary_reader
 
             default: // anything else (0xFF is handled inside the other types)
             {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
+                return unexpected_byte("invalid byte", "value");
             }
         }
     }
@@ -14776,10 +14774,7 @@ class binary_reader
     */
     bool cbor_indefinite_string_error(const char* type_name, const char* context)
     {
-        auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                exception_message(concat("indefinite-length ", type_name,
-                                        " is not allowed inside indefinite-length ", type_name, "; last byte: 0x", last_token), context), nullptr));
+        return last_byte_error(113, concat("indefinite-length ", type_name, " is not allowed inside indefinite-length ", type_name, "; last byte: 0x", get_token_string()), context);
     }
 
     /*!
@@ -14856,9 +14851,7 @@ class binary_reader
 
             default:
             {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(concat("expected length specification (0x60-0x7B)", inside_indefinite ? "" : " or indefinite string type (0x7F)", "; last byte: 0x", last_token), "string"), nullptr));
+                return last_byte_error(113, concat("expected length specification (0x60-0x7B)", inside_indefinite ? "" : " or indefinite string type (0x7F)", "; last byte: 0x", get_token_string()), "string");
             }
         }
     }
@@ -14988,9 +14981,7 @@ class binary_reader
                 break;
         }
 
-        auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                exception_message(concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr));
+        return last_byte_error(113, concat("only string keys are supported, but found ", found, "; last byte: 0x", get_token_string()), "object key");
     }
 
     /*!
@@ -15071,9 +15062,7 @@ class binary_reader
 
             default:
             {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(concat("expected length specification (0x40-0x5B)", inside_indefinite ? "" : " or indefinite binary array type (0x5F)", "; last byte: 0x", last_token), "binary"), nullptr));
+                return last_byte_error(113, concat("expected length specification (0x40-0x5B)", inside_indefinite ? "" : " or indefinite binary array type (0x5F)", "; last byte: 0x", get_token_string()), "binary");
             }
         }
     }
@@ -15707,9 +15696,7 @@ class binary_reader
 
             default: // anything else
             {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
+                return unexpected_byte("invalid byte", "value");
             }
         }
     }
@@ -15790,9 +15777,7 @@ class binary_reader
 
             default:
             {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", last_token), "string"), nullptr));
+                return last_byte_error(113, concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", get_token_string()), "string");
             }
         }
     }
@@ -15884,9 +15869,7 @@ class binary_reader
                 break;
         }
 
-        auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                exception_message(concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr));
+        return last_byte_error(113, concat("only string keys are supported, but found ", found, "; last byte: 0x", get_token_string()), "object key");
     }
 
     /*!
@@ -16195,8 +16178,7 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                    exception_message("string length must not be negative", "string"), nullptr));
+            return last_byte_error(113, "string length must not be negative", "string");
         }
         return true;
     }
@@ -16307,7 +16289,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(message, "string"), nullptr));
+        return last_byte_error(113, message, "string");
     }
 
     /*!
@@ -16392,8 +16374,7 @@ class binary_reader
         }
         if (JSON_HEDLEY_UNLIKELY(number < 0))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                    exception_message("count in an optimized container must be positive", "size"), nullptr));
+            return last_byte_error(113, "count in an optimized container must be positive", "size");
         }
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::size_t>(number)))
         {
@@ -16505,7 +16486,7 @@ class binary_reader
                 }
                 if (is_ndarray) // ndarray dimensional vector can only contain integers and cannot embed another array
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message("ndarray dimensional vector is not allowed", "size"), nullptr));
+                    return last_byte_error(113, "ndarray dimensional vector is not allowed", "size");
                 }
                 std::vector<size_t> dim;
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
@@ -16582,7 +16563,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(message, "size"), nullptr));
+        return last_byte_error(113, message, "size");
     }
 
     /*!
@@ -16615,9 +16596,7 @@ class binary_reader
             if (input_format == input_format_t::bjdata
                     && JSON_HEDLEY_UNLIKELY(is_bjd_excluded_optimized_type(result.second)))
             {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(concat("marker 0x", last_token, " is not a permitted optimized array type"), "type"), nullptr));
+                return last_byte_error(112, concat("marker 0x", get_token_string(), " is not a permitted optimized array type"), "type");
             }
 
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("type")))
@@ -16632,9 +16611,7 @@ class binary_reader
                 {
                     return false;
                 }
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
+                return last_byte_error(112, concat("expected '#' after type information; last byte: 0x", get_token_string()), "size");
             }
 
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
@@ -16653,8 +16630,7 @@ class binary_reader
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
             {
-                return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                        exception_message("ndarray requires both type and size", "size"), nullptr));
+                return last_byte_error(112, "ndarray requires both type and size", "size");
             }
             return is_error;
         }
@@ -16786,9 +16762,7 @@ class binary_reader
                 }
                 if (JSON_HEDLEY_UNLIKELY(current > 127))
                 {
-                    auto last_token = get_token_string();
-                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                            exception_message(concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
+                    return last_byte_error(113, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", get_token_string()), "char");
                 }
                 string_t s(1, static_cast<typename string_t::value_type>(current));
                 return sax->string(s);
@@ -16809,8 +16783,7 @@ class binary_reader
             default: // anything else
                 break;
         }
-        auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message("invalid byte: 0x" + last_token, "value"), nullptr));
+        return unexpected_byte("invalid byte", "value");
     }
 
     /*!
@@ -16834,9 +16807,7 @@ class binary_reader
             string_t key = "_ArrayType_";
             if (JSON_HEDLEY_UNLIKELY(type_name == nullptr))
             {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message("invalid byte: 0x" + last_token, "type"), nullptr));
+                return unexpected_byte("invalid byte", "type");
             }
 
             string_t type = type_name; // sax->string() takes a reference
@@ -16919,9 +16890,7 @@ class binary_reader
         // do not accept ND-array size in objects in BJData
         if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
         {
-            auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message("BJData object does not support ND-array size in optimized format", "object"), nullptr));
+            return last_byte_error(112, "BJData object does not support ND-array size in optimized format", "object");
         }
 
         if (size_and_type.first != npos)
@@ -17072,20 +17041,6 @@ class binary_reader
     static constexpr bool is_bon8_continuation(const char_int_type c) noexcept
     {
         return 0x80 <= c && c <= 0xBF;
-    }
-
-    /*!
-    @brief report a parse error at the last read byte
-
-    @param[in] detail   a detailed error message
-    @param[in] context  further context information
-    @return false
-    */
-    bool bon8_error(const std::string& detail, const char* context)
-    {
-        auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                exception_message(concat(detail, ": 0x", last_token), context), nullptr));
     }
 
     /*!
@@ -17303,7 +17258,7 @@ class binary_reader
         }
 
         // 0xFE: end of container where a value is expected
-        return bon8_error("invalid byte", "value");
+        return unexpected_byte("invalid byte", "value");
     }
 
     /*!
@@ -17430,7 +17385,7 @@ class binary_reader
             current = byte;
         }
 
-        return bon8_error("expected a string; last byte", "key");
+        return unexpected_byte("expected a string; last byte", "key");
     }
 
     /*!
@@ -17553,7 +17508,7 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(!valid_second))
             {
-                return bon8_error("invalid UTF-8 byte", "string");
+                return unexpected_byte("invalid UTF-8 byte", "string");
             }
 
             result.push_back(static_cast<typename string_t::value_type>(byte));
@@ -17567,7 +17522,7 @@ class binary_reader
                 }
                 if (JSON_HEDLEY_UNLIKELY(!is_bon8_continuation(current)))
                 {
-                    return bon8_error("invalid UTF-8 byte", "string");
+                    return unexpected_byte("invalid UTF-8 byte", "string");
                 }
                 result.push_back(static_cast<typename string_t::value_type>(current));
             }
@@ -17886,9 +17841,7 @@ class binary_reader
 
         if (error_handler == error_handler_t::strict)
         {
-            auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                    exception_message("invalid string: ill-formed UTF-8 byte", context), nullptr));
+            return last_byte_error(113, "invalid string: ill-formed UTF-8 byte", context);
         }
 
         result = sanitize_utf8(result, error_handler);
@@ -17990,13 +17943,34 @@ class binary_reader
     }
 
     /*!
+    @brief reports a parse error at the last read byte
+    @param[in] id_      the id of the parse_error exception
+    @param[in] detail   a detailed error message
+    @param[in] context  further context information
+    @return the result of the SAX parser's parse_error()
+    */
+    bool last_byte_error(const int id_, const std::string& detail, const std::string& context) const
+    {
+        return sax->parse_error(chars_read, get_token_string(), parse_error::create(id_, chars_read, exception_message(detail, context), nullptr));
+    }
+
+    /*!
+    @brief reports the last read byte as unexpected (parse_error.112)
+    @param[in] detail   what is wrong with the byte, e.g. "invalid byte"
+    @param[in] context  further context information
+    @return the result of the SAX parser's parse_error()
+    */
+    bool unexpected_byte(const char* detail, const std::string& context) const
+    {
+        return last_byte_error(112, concat(detail, ": 0x", get_token_string()), context);
+    }
+
+    /*!
     @return a string representation of the last read byte
     */
     std::string get_token_string() const
     {
-        std::array<char, 3> cr{{}};
-        static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(current))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        return std::string{cr.data()};
+        return hex_byte(static_cast<std::uint8_t>(current));
     }
 
     /*!
@@ -20051,7 +20025,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         reference_tokens.erase(reference_tokens.begin());
@@ -20063,7 +20037,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         return reference_tokens.front();
@@ -20089,7 +20063,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         reference_tokens.pop_back();
@@ -20101,7 +20075,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         return reference_tokens.back();
@@ -20129,6 +20103,21 @@ class json_pointer
     }
 
   private:
+    /// @throw out_of_range.405 always
+    JSON_HEDLEY_NO_RETURN static void throw_no_parent()
+    {
+        JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+    }
+
+    /// @throw out_of_range.404 always
+    template<typename BasicJsonContext>
+    JSON_HEDLEY_NO_RETURN static void throw_unresolved(const string_t& reference_token, BasicJsonContext context)
+    {
+        static_cast<void>(reference_token); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(context);
+        JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", reference_token, "'"), context));
+    }
+
     /*!
     @brief result of @ref parse_array_index
 
@@ -20218,7 +20207,7 @@ class json_pointer
             case array_index_status::not_a_number:
                 JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
             case array_index_status::unresolved:
-                JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
+                throw_unresolved(s, nullptr);
             case array_index_status::exceeds_size_type:
                 JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));
             case array_index_status::ok:
@@ -20234,7 +20223,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            throw_no_parent();
         }
 
         json_pointer result = *this;
@@ -20405,7 +20394,7 @@ class json_pointer
                 case detail::value_t::binary:
                 case detail::value_t::discarded:
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", reference_token, "'"), ptr));
+                    throw_unresolved(reference_token, ptr);
             }
         }
 
@@ -20462,7 +20451,7 @@ class json_pointer
                 case detail::value_t::binary:
                 case detail::value_t::discarded:
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", reference_token, "'"), ptr));
+                    throw_unresolved(reference_token, ptr);
             }
         }
 
@@ -20524,7 +20513,7 @@ class json_pointer
                 case detail::value_t::binary:
                 case detail::value_t::discarded:
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", reference_token, "'"), ptr));
+                    throw_unresolved(reference_token, ptr);
             }
         }
 
@@ -30482,7 +30471,7 @@ public:
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, detail::concat("type must be binary, but is ", type_name()), this));
+            detail::throw_type_must_be("binary", *this);
         }
 
         return *get_ptr<binary_t*>();
@@ -30494,7 +30483,7 @@ public:
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, detail::concat("type must be binary, but is ", type_name()), this));
+            detail::throw_type_must_be("binary", *this);
         }
 
         return *get_ptr<const binary_t*>();
