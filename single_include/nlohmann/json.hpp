@@ -20459,9 +20459,15 @@ class json_pointer
             string_t reference_string;
             const BasicJsonType* value;
 
-            flatten_task(string_t reference_string_, const BasicJsonType* value_)
+            flatten_task(string_t reference_string_, const BasicJsonType* value_) noexcept
                 : reference_string(std::move(reference_string_)), value(value_)
             {}
+
+            flatten_task(const flatten_task&) = default;
+            flatten_task(flatten_task&&) = default;
+            flatten_task& operator=(const flatten_task&) = default;
+            flatten_task& operator=(flatten_task&&) = default;
+            ~flatten_task() = default;
 
         };
 
