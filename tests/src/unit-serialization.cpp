@@ -945,8 +945,15 @@ TEST_CASE("serialization boundary values for the string buffer")
 
             // newline escaping does not depend on ensure_ascii: only the
             // emoji differs (raw UTF-8 bytes vs. a \u-escaped surrogate pair)
-            CHECK(j.dump(-1, ' ', false) == '"' + expected_prefix + emoji + '"');
-            CHECK(j.dump(-1, ' ', true) == '"' + expected_prefix + "\\ud83d\\ude00\"");
+            std::string expected_raw = "\"";
+            expected_raw += expected_prefix;
+            expected_raw += emoji;
+            expected_raw += '"';
+            std::string expected_ascii = "\"";
+            expected_ascii += expected_prefix;
+            expected_ascii += R"(\ud83d\ude00")";
+            CHECK(j.dump(-1, ' ', false) == expected_raw);
+            CHECK(j.dump(-1, ' ', true) == expected_ascii);
             CHECK(json::parse(j.dump(-1, ' ', true)) == j);
             CHECK(json::parse(j.dump(-1, ' ', false)) == j);
         }

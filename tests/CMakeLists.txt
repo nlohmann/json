@@ -138,9 +138,12 @@ json_test_set_test_options(test-disabled_exceptions
 # only the #972 regression test needs thirdparty/fifo_map on its include path
 json_test_set_test_options(test-regression1 LINK_LIBRARIES fifo_map_include)
 
-# GCC's false -Warray-bounds error with JSON_DIAGNOSTICS only shows up when optimizing (#5742)
+# GCC's false -Warray-bounds error with JSON_DIAGNOSTICS only shows up when optimizing (#5742).
+# -O3 makes the optimizer-driven warnings of the ci_test_gcc flag set (-Winline,
+# -Wsuggest-attribute=...) fire on the library's inline functions; they are not
+# what this test checks, so turn them off for it.
 json_test_set_test_options(test-diagnostics-optimized
-    COMPILE_OPTIONS $<$<CXX_COMPILER_ID:GNU>:-O3 -Werror=array-bounds>
+    COMPILE_OPTIONS $<$<CXX_COMPILER_ID:GNU>:-O3 -Werror=array-bounds -Wno-inline -Wno-suggest-attribute=pure -Wno-suggest-attribute=const>
 )
 
 #############################################################################
