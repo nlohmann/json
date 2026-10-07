@@ -35,7 +35,7 @@ std::size_t hash_iteratively(const BasicJsonType& j);
 @brief hash a JSON value
 
 The hash function tries to rely on std::hash where possible. Furthermore, the
-type of the JSON value is taken into account, so null, false, and numbers all
+type of the JSON value is taken into account, so null, false, and numbers may
 hash differently from each other, but any two numbers that compare equal
 under operator== hash equally regardless of which of number_integer,
 number_unsigned, or number_float actually holds the value.
@@ -123,6 +123,10 @@ std::size_t hash(const BasicJsonType& j, const std::size_t depth = 0)
             // the same number_float_t, so all numbers share one type tag and
             // hash that converted value. Adding zero turns -0.0 (equal to 0)
             // into 0.0, as std::hash need not map both to the same hash.
+            // The converse does not hold: converting a number_float_t value
+            // to an integer type is lossy, so the result can hash
+            // differently, and unequal numbers that convert to the same
+            // number_float_t (e.g., 2^53 and 2^53 + 1) share a hash.
             const auto number_type = static_cast<std::size_t>(BasicJsonType::value_t::number_float);
             const auto value = j.template get<number_float_t>() + static_cast<number_float_t>(0);
             const auto h = std::hash<number_float_t> {}(value);

@@ -7,9 +7,14 @@ namespace std {
 ```
 
 Return a hash value for a JSON object. The hash function tries to rely on `std::hash` where possible. Furthermore, the
-type of the JSON value is taken into account, so `#!json null`, `#!cpp false`, and numbers all hash differently from
+type of the JSON value is taken into account, so `#!json null`, `#!cpp false`, and numbers may hash differently from
 each other. Numbers that compare equal under [`operator==`](operator_eq.md) always hash equally, regardless of
-whether they are stored as `#!cpp 0`, `#!cpp 0U`, or `#!cpp 0.0`.
+whether they are stored as signed integer, unsigned integer, or floating-point number.
+
+Numbers are hashed by their value converted to `number_float_t`. Converting an integer to `number_float_t` therefore
+keeps its hash, but converting a floating-point number to an integer type is lossy and can change it: `#!cpp 0.5`
+converts to `#!cpp 0`, which need not have the same hash. Unequal numbers can also share a hash value, for example two
+large integers that convert to the same `number_float_t`.
 
 ## Examples
 
@@ -27,7 +32,8 @@ whether they are stored as `#!cpp 0`, `#!cpp 0U`, or `#!cpp 0.0`.
     --8<-- "examples/std_hash.output"
     ```
 
-    Note the output is platform-dependent.
+    The hash values shown are examples only. They depend on the platform, the compiler, and the compiler version, and
+    they can change between versions of this library. Do not persist them or rely on specific values.
 
 ## See also
 
