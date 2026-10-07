@@ -52,3 +52,15 @@ option(
     value: false,
     description: 'Enable strict NUL-byte handling',
 )
+option(
+    'StrictBinaryUTF8',
+    type: 'boolean',
+    value: false,
+    description: 'Enable UTF-8 checks in the CBOR, UBJSON, BJData, and BSON writers',
+)
+option(
+    'DeleteDeprecatedFunctions',
+    type: 'boolean',
+    value: false,
+    description: 'Delete the deprecated functions instead of only deprecating them',
+)

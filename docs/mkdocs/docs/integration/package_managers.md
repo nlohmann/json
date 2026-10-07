@@ -133,7 +133,8 @@ subproject fallback, rather than using the subproject directly.
 The options that change the library's configuration are available in Meson as well, named like the
 [CMake options](cmake.md#cmake-options) without the `JSON_` prefix: `MultipleHeaders`, `GlobalUDLs`,
 `ImplicitConversions`, `DisableEnumSerialization`, `DisableTupleReferenceConversion`, `Diagnostics`,
-`Diagnostic_Positions`, `LegacyDiscardedValueComparison`, and `StrictNulHandling`. They have the same defaults as in CMake, except that
+`Diagnostic_Positions`, `LegacyDiscardedValueComparison`, `StrictNulHandling`, `StrictBinaryUTF8`, and
+`DeleteDeprecatedFunctions`. They have the same defaults as in CMake, except that
 `MultipleHeaders` is `false`. Set them with `-D` when setting up the build, or with the subproject name as prefix when
 the library is used as a subproject:
 

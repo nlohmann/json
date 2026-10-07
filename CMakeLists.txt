@@ -216,6 +216,12 @@ endif()
 if (JSON_StrictNulHandling)
     string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_STRICT_NUL_HANDLING=1")
 endif()
+if (JSON_StrictBinaryUTF8)
+    string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_STRICT_BINARY_UTF8=1")
+endif()
+if (JSON_DeleteDeprecatedFunctions)
+    string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_DELETE_DEPRECATED_FUNCTIONS=1")
+endif()
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"

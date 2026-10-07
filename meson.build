@@ -39,6 +39,12 @@ endif
 if get_option('StrictNulHandling')
     json_defines += 'JSON_STRICT_NUL_HANDLING=1'
 endif
+if get_option('StrictBinaryUTF8')
+    json_defines += 'JSON_STRICT_BINARY_UTF8=1'
+endif
+if get_option('DeleteDeprecatedFunctions')
+    json_defines += 'JSON_DELETE_DEPRECATED_FUNCTIONS=1'
+endif
 
 cpp_args = []
 foreach define : json_defines
