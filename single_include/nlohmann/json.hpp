@@ -8912,6 +8912,10 @@ namespace detail
 constexpr std::int64_t pow5_128_smallest_power = -342;
 constexpr std::int64_t pow5_128_largest_power = 308;
 
+// every entry of pow5_128() holds two 64-bit halves of 5^q, one per covered power of 5
+static_assert((pow5_128_largest_power - pow5_128_smallest_power + 1) * 2 == 1302,
+              "pow5_128_smallest_power/pow5_128_largest_power must match the size of the pow5_128() table");
+
 /*!
 @brief 128-bit approximations of 5^q for q in [-342, 308]
 
@@ -10225,10 +10229,10 @@ void convert_float_locale_aware(StringType& token, std::size_t decimal_point_pos
         }
         else
         {
-            std::string copy(token.data(), token.size());
-            copy.replace(decimal_point_position, 1, decimal_point);
-            strtof_by_type(value, copy.c_str(), &endptr);
-            complete = endptr == copy.c_str() + copy.size();
+            std::string buffer(token.data(), token.size());
+            buffer.replace(decimal_point_position, 1, decimal_point);
+            strtof_by_type(value, buffer.c_str(), &endptr);
+            complete = endptr == buffer.c_str() + buffer.size();
         }
 
         if (JSON_HEDLEY_LIKELY(complete))
