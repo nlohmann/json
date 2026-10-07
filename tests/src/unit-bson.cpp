@@ -1993,3 +1993,47 @@ TEST_CASE("Invalid document size handling")
         CHECK(json::from_bson(v, true, false).is_discarded());
     }
 }
+
+TEST_CASE("BSON large strings and binaries (chunked reader)")
+{
+    // get_bson_string()/get_bson_binary() both read through get_string()/
+    // get_binary(), which read in bounded chunks (binary_reader.hpp,
+    // chunk_size == 4096); make sure roundtripping is correct for lengths
+    // around and beyond that chunk size, for both vector (iterator) and
+    // pointer inputs. BSON only accepts an object at the top level, so the
+    // string/binary value is wrapped in one.
+    for (const std::size_t len :
+            {
+                std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
+                std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
+            })
+    {
+        CAPTURE(len)
+
+        // string
+        const json j_string = {{"k", std::string(len, 'x')}};
+        const std::vector<std::uint8_t> v_string = json::to_bson(j_string);
+        CHECK(json::from_bson(v_string) == j_string);
+        // pointer input exercises the std::memcpy fast path
+        CHECK(json::from_bson(reinterpret_cast<const char*>(v_string.data()),
+                              reinterpret_cast<const char*>(v_string.data()) + v_string.size()) == j_string);
+
+        // binary (BSON binary values always carry a subtype, so give one
+        // explicitly; otherwise from_bson() would round-trip to subtype 0
+        // rather than back to the original "no subtype" value)
+        const json j_binary = {{"k", json::binary(std::vector<std::uint8_t>(len, 0xCD), std::uint8_t{0})}};
+        const std::vector<std::uint8_t> v_binary = json::to_bson(j_binary);
+        CHECK(json::from_bson(v_binary) == j_binary);
+        CHECK(json::from_bson(reinterpret_cast<const char*>(v_binary.data()),
+                              reinterpret_cast<const char*>(v_binary.data()) + v_binary.size()) == j_binary);
+
+        // a truncated payload must still be reported as an error
+        if (len > 16)
+        {
+            std::vector<std::uint8_t> truncated = v_string;
+            truncated.resize(truncated.size() - 8);
+            json _;
+            CHECK_THROWS_AS(_ = json::from_bson(truncated), json::parse_error);
+        }
+    }
+}
