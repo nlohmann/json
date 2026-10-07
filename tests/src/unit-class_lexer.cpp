@@ -801,7 +801,7 @@ TEST_CASE("lexer escape fast path")
         // digits and non-hex bytes, at varying distances from the start of
         // the string, to compare the two scanners on many more shapes than
         // are practical to enumerate by hand.
-        std::mt19937 gen(7654321); // NOLINT(cert-msc32-c,cert-msc51-cpp)
+        std::mt19937 gen(7654321); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
         const std::string hex_alphabet = "0123456789AaBbCcDdEeFf";
         std::uniform_int_distribution<std::size_t> pick_hex(0, hex_alphabet.size() - 1);
         std::uniform_int_distribution<int> pick_byte(1, 255); // never NUL
@@ -1599,7 +1599,7 @@ template<typename Json, typename Bits>
 void check_parse(const std::string& token, Bits expected, Bits infinity)
 {
     std::stringstream stream(token);
-    if ((expected & ~(Bits{1} << (8 * sizeof(Bits) - 1))) == infinity)
+    if ((expected & ~(Bits{1} << ((8 * sizeof(Bits)) - 1))) == infinity)
     {
         Json _;
         CHECK_THROWS_WITH_AS(_ = Json::parse(token), ("[json.exception.out_of_range.406] number overflow parsing '" + token + "'").c_str(), typename Json::out_of_range&);

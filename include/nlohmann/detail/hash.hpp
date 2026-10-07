@@ -35,8 +35,10 @@ std::size_t hash_iteratively(const BasicJsonType& j);
 @brief hash a JSON value
 
 The hash function tries to rely on std::hash where possible. Furthermore, the
-type of the JSON value is taken into account to have different hash values for
-null, 0, 0U, and false, etc.
+type of the JSON value is taken into account, so null, false, and numbers may
+hash differently from each other, but any two numbers that compare equal
+under operator== hash equally regardless of which of number_integer,
+number_unsigned, or number_float actually holds the value.
 
 Hashing an array or an object hashes its elements, which used to call this
 function again once per nesting level, so a value nested deeply enough
@@ -55,8 +57,6 @@ template<typename BasicJsonType>
 std::size_t hash(const BasicJsonType& j, const std::size_t depth = 0)
 {
     using string_t = typename BasicJsonType::string_t;
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
 
     const auto type = static_cast<std::size_t>(j.type());
@@ -113,21 +113,24 @@ std::size_t hash(const BasicJsonType& j, const std::size_t depth = 0)
         }
 
         case BasicJsonType::value_t::number_integer:
-        {
-            const auto h = std::hash<number_integer_t> {}(j.template get<number_integer_t>());
-            return combine(type, h);
-        }
-
         case BasicJsonType::value_t::number_unsigned:
-        {
-            const auto h = std::hash<number_unsigned_t> {}(j.template get<number_unsigned_t>());
-            return combine(type, h);
-        }
-
         case BasicJsonType::value_t::number_float:
         {
-            const auto h = std::hash<number_float_t> {}(j.template get<number_float_t>());
-            return combine(type, h);
+            // operator== compares numbers by their mathematical value across
+            // number_integer, number_unsigned, and number_float, so equal
+            // numbers of different internal types (0, 0U, 0.0) must hash the
+            // same. Two equal numbers have the same value, which converts to
+            // the same number_float_t, so all numbers share one type tag and
+            // hash that converted value. Adding zero turns -0.0 (equal to 0)
+            // into 0.0, as std::hash need not map both to the same hash.
+            // The converse does not hold: converting a number_float_t value
+            // to an integer type is lossy, so the result can hash
+            // differently, and unequal numbers that convert to the same
+            // number_float_t (e.g., 2^53 and 2^53 + 1) share a hash.
+            const auto number_type = static_cast<std::size_t>(BasicJsonType::value_t::number_float);
+            const auto value = j.template get<number_float_t>() + static_cast<number_float_t>(0);
+            const auto h = std::hash<number_float_t> {}(value);
+            return combine(number_type, h);
         }
 
         case BasicJsonType::value_t::binary:
