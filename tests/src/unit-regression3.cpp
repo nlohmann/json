@@ -22,6 +22,14 @@
 // scoped enum, so get<std::byte>() (needed below to get<std::vector<std::byte>>()
 // from a plain JSON array, not just from an already-binary value) relies on
 // enum serialization being enabled
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #if defined(JSON_DISABLE_ENUM_SERIALIZATION) && (JSON_DISABLE_ENUM_SERIALIZATION == 1)
     #define SKIP_TESTS_FOR_ENUM_SERIALIZATION
 #endif
@@ -887,19 +895,23 @@ TEST_CASE("issue #5676 - SAX parsing of CBOR tags")
                           true, false, false, json::cbor_tag_handler_t::store));
     CHECK(iterator_parsed == expected);
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
     json span_parsed;
     nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> span_sax(span_parsed);
     CHECK(json::sax_parse(nlohmann::detail::span_input_adapter(cbor.data(), cbor.size()), &span_sax,
                           json::input_format_t::cbor, true, false, false, json::cbor_tag_handler_t::store));
     CHECK(span_parsed == expected);
+#endif
 
     const std::string text = "null";
     CHECK(json::sax_parse(text, &acceptor, json::input_format_t::json,
                           true, false, false, json::cbor_tag_handler_t::store));
     CHECK(json::sax_parse(text.begin(), text.end(), &acceptor, json::input_format_t::json,
                           true, false, false, json::cbor_tag_handler_t::store));
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
     CHECK(json::sax_parse(nlohmann::detail::span_input_adapter(text.data(), text.size()), &acceptor,
                           json::input_format_t::json, true, false, false, json::cbor_tag_handler_t::store));
+#endif
 }
 
 TEST_CASE("issue #5402 - update(merge_objects=true) overwrites a primitive with an object")
