@@ -34,6 +34,10 @@ using nlohmann::json;
 #include <utility>
 #include <vector>
 
+// the static table in to_json has an exit-time destructor
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
+
 namespace
 {
 enum class diag_color
@@ -78,3 +82,5 @@ TEST_CASE("diagnostics with optimization")
         CHECK_THROWS_WITH_AS(j[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
     }
 }
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP
