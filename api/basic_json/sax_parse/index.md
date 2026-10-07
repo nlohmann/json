@@ -8,7 +8,8 @@ static bool sax_parse(InputType&& i,
                       input_format_t format = input_format_t::json,
                       const bool strict = true,
                       const bool ignore_comments = false,
-                      const bool ignore_trailing_commas = false);
+                      const bool ignore_trailing_commas = false,
+                      const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
 
 // (2)
 template<class IteratorType, class SAX, class SentinelType = IteratorType>
@@ -17,14 +18,15 @@ static bool sax_parse(IteratorType first, SentinelType last,
                       input_format_t format = input_format_t::json,
                       const bool strict = true,
                       const bool ignore_comments = false,
-                      const bool ignore_trailing_commas = false);
+                      const bool ignore_trailing_commas = false,
+                      const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
 ```
 
 Read from input and generate SAX events
 
 1. Read from a compatible input.
 
-1. Read from a pair of character iterators, or an iterator and a sentinel of a different type (C++20 ranges support)
+1. Read from a pair of character iterators, or an iterator and a sentinel of a different type (C++20 ranges support).
 
    The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to the iterator type with `operator!=`.
 
@@ -67,6 +69,8 @@ The SAX event lister must follow the interface of [`json_sax`](https://json.nloh
 `ignore_comments` (in) : whether comments should be ignored and treated like whitespace (`true`) or yield a parse error (`false`); (optional, `false` by default)
 
 `ignore_trailing_commas` (in) : whether trailing commas in arrays or objects should be ignored and treated like whitespace (`true`) or yield a parse error (`false`); (optional, `false` by default)
+
+`tag_handler` (in) : how to handle CBOR tags; see [`cbor_tag_handler_t`](https://json.nlohmann.me/api/basic_json/cbor_tag_handler_t/index.md). Ignored for formats other than CBOR (optional, `cbor_tag_handler_t::error` by default).
 
 `first` (in) : iterator to the start of a character range
 
@@ -284,6 +288,7 @@ result: false
 - Added in version 3.2.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Added `ignore_trailing_commas` in version 3.13.0 unreleased.
+- Added `tag_handler` in version 3.13.0 unreleased.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0 unreleased.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0 unreleased.
 - `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 unreleased to optionally leave a `std::istream` positioned right after the parsed value when `strict` is `false`.

@@ -9,9 +9,9 @@ enum class cbor_tag_handler_t
 };
 ```
 
-This enumeration is used in the [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) function to choose how to treat tags:
+This enumeration is used in [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) and [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) to choose how to treat tags:
 
-error : throw a `parse_error` exception in case of a tag
+error : report a parse error in case of a tag (the `from_cbor` overloads throw a `parse_error` exception by default)
 
 ignore : ignore tags
 
