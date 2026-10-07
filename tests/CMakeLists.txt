@@ -8,6 +8,7 @@ set(JSON_SIMDUTF_VERSION 9.1.0 CACHE STRING "The simdutf version used by JSON_Te
 
 set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
+set(JSON_TestShard     "" CACHE STRING "Build only a part of the unit tests, given as <index>/<count> (e.g. 0/2), to split them across CI jobs with a time limit.")
 
 # using an env var, since this will also affect targets executing cmake (such as "ci_test_compiler_default")
 if (NOT "" STREQUAL "$ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS}")
@@ -134,11 +135,13 @@ json_test_set_test_options(test-disabled_exceptions
         #$<$<CXX_COMPILER_ID:MSVC>:/EH>
 )
 
-# raise timeout of expensive Unicode test
-json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
-
 # only the #972 regression test needs thirdparty/fifo_map on its include path
 json_test_set_test_options(test-regression1 LINK_LIBRARIES fifo_map_include)
+
+# GCC's false -Warray-bounds error with JSON_DIAGNOSTICS only shows up when optimizing (#5742)
+json_test_set_test_options(test-diagnostics-optimized
+    COMPILE_OPTIONS $<$<CXX_COMPILER_ID:GNU>:-O3 -Werror=array-bounds>
+)
 
 #############################################################################
 # add unit tests
@@ -288,6 +291,33 @@ elseif(NOT json_32bit_test)
     list(FILTER files EXCLUDE REGEX src/unit-32bit.cpp)
 endif()
 
+# with JSON_TestShard=<index>/<count>, keep every <count>-th unit test file,
+# starting at <index> (the glob is sorted, so the split is stable)
+set(test_shard_index 0)
+if(NOT "${JSON_TestShard}" STREQUAL "")
+    if(NOT JSON_TestShard MATCHES "^([0-9]+)/([1-9][0-9]*)$")
+        message(FATAL_ERROR "JSON_TestShard must be <index>/<count>, e.g. 0/2, not '${JSON_TestShard}'.")
+    endif()
+    set(test_shard_index ${CMAKE_MATCH_1})
+    set(test_shard_count ${CMAKE_MATCH_2})
+    if(NOT test_shard_index LESS test_shard_count)
+        message(FATAL_ERROR "JSON_TestShard: the index must be less than the count, not '${JSON_TestShard}'.")
+    endif()
+    list(LENGTH files test_file_count)
+    set(shard_files "")
+    set(file_position 0)
+    foreach(file ${files})
+        math(EXPR file_shard "${file_position} % ${test_shard_count}")
+        if(file_shard EQUAL test_shard_index)
+            list(APPEND shard_files ${file})
+        endif()
+        math(EXPR file_position "${file_position} + 1")
+    endforeach()
+    set(files ${shard_files})
+    list(LENGTH files shard_file_count)
+    message(STATUS "Test shard ${JSON_TestShard}: ${shard_file_count} of ${test_file_count} unit test files")
+endif()
+
 foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
 endforeach()
@@ -304,6 +334,9 @@ if(json_32bit_test_only)
     # Skip all other tests in this file
     return()
 endif()
+
+# the following variants of single test files are only built in the first shard
+if(test_shard_index EQUAL 0)
 
 # test legacy comparison of discarded values
 json_test_set_test_options(test-comparison_legacy
@@ -331,6 +364,8 @@ json_test_add_test_for(src/unit-diagnostic-positions.cpp
     NAME test-diagnostic-positions_only
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
+
+endif()
 
 # *DO NOT* use json_test_set_test_options() below this line
 

@@ -10,7 +10,9 @@
 
 #include <nlohmann/json.hpp>
 
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <map>
 #include <string>
 #include <type_traits>
@@ -196,6 +198,198 @@ struct void_erase_map : std::map<Key, T, Compare, Allocator>
 
 using void_erase_json = nlohmann::basic_json<void_erase_map>;
 
+// wraps an iterator, but only offers the LegacyForwardIterator operations,
+// like the iterators of std::unordered_map and other hash maps
+template<class BaseIterator>
+class forward_only_iterator
+{
+    BaseIterator m_it{};
+
+  public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = typename std::iterator_traits<BaseIterator>::value_type;
+    using difference_type = typename std::iterator_traits<BaseIterator>::difference_type;
+    using pointer = typename std::iterator_traits<BaseIterator>::pointer;
+    using reference = typename std::iterator_traits<BaseIterator>::reference;
+
+    forward_only_iterator() = default;
+    explicit forward_only_iterator(BaseIterator it) : m_it(it) {}
+
+    BaseIterator base() const
+    {
+        return m_it;
+    }
+
+    reference operator*() const
+    {
+        return *m_it;
+    }
+    pointer operator->() const
+    {
+        return &*m_it;
+    }
+    forward_only_iterator& operator++()
+    {
+        ++m_it;
+        return *this;
+    }
+    forward_only_iterator operator++(int)
+    {
+        auto result = *this;
+        ++m_it;
+        return result;
+    }
+
+    friend bool operator==(const forward_only_iterator& lhs, const forward_only_iterator& rhs)
+    {
+        return lhs.m_it == rhs.m_it;
+    }
+    friend bool operator!=(const forward_only_iterator& lhs, const forward_only_iterator& rhs)
+    {
+        return lhs.m_it != rhs.m_it;
+    }
+};
+
+// An ObjectType whose iterators are forward-only, as those of hash maps are;
+// it has no rbegin() and its iterators no operator--. A hash map is not used
+// directly for the same reason as in no_key_compare_map above.
+template<class Key, class T, class Compare, class Allocator>
+class forward_only_map
+{
+    using map_t = std::map<Key, T, Compare, Allocator>;
+    map_t data;
+
+  public:
+    using key_type = typename map_t::key_type;
+    using mapped_type = typename map_t::mapped_type;
+    using value_type = typename map_t::value_type;
+    using size_type = typename map_t::size_type;
+    using allocator_type = typename map_t::allocator_type;
+    using iterator = forward_only_iterator<typename map_t::iterator>;
+    using const_iterator = forward_only_iterator<typename map_t::const_iterator>;
+
+    forward_only_map() noexcept(std::is_nothrow_default_constructible<map_t>::value) : data() {}
+
+    template<class InputIt>
+    forward_only_map(InputIt first, InputIt last) : data(first, last) {}
+
+    iterator begin() noexcept
+    {
+        return iterator(data.begin());
+    }
+    iterator end() noexcept
+    {
+        return iterator(data.end());
+    }
+    const_iterator begin() const noexcept
+    {
+        return const_iterator(data.begin());
+    }
+    const_iterator end() const noexcept
+    {
+        return const_iterator(data.end());
+    }
+    const_iterator cbegin() const noexcept
+    {
+        return const_iterator(data.cbegin());
+    }
+    const_iterator cend() const noexcept
+    {
+        return const_iterator(data.cend());
+    }
+
+    bool empty() const noexcept
+    {
+        return data.empty();
+    }
+    size_type size() const noexcept
+    {
+        return data.size();
+    }
+    size_type max_size() const noexcept
+    {
+        return data.max_size();
+    }
+    void clear() noexcept
+    {
+        data.clear();
+    }
+
+    iterator find(const key_type& key)
+    {
+        return iterator(data.find(key));
+    }
+    const_iterator find(const key_type& key) const
+    {
+        return const_iterator(data.find(key));
+    }
+    size_type count(const key_type& key) const
+    {
+        return data.count(key);
+    }
+
+    std::pair<iterator, bool> emplace(const key_type& key, const mapped_type& value)
+    {
+        const auto result = data.emplace(key, value);
+        return {iterator(result.first), result.second};
+    }
+
+    std::pair<iterator, bool> insert(const value_type& value)
+    {
+        const auto result = data.insert(value);
+        return {iterator(result.first), result.second};
+    }
+
+    template<class InputIt>
+    void insert(InputIt first, InputIt last)
+    {
+        data.insert(first, last);
+    }
+
+    mapped_type& operator[](const key_type& key)
+    {
+        return data[key];
+    }
+
+    mapped_type& at(const key_type& key)
+    {
+        return data.at(key);
+    }
+    const mapped_type& at(const key_type& key) const
+    {
+        return data.at(key);
+    }
+
+    iterator erase(iterator pos)
+    {
+        return iterator(data.erase(pos.base()));
+    }
+    iterator erase(iterator first, iterator last)
+    {
+        return iterator(data.erase(first.base(), last.base()));
+    }
+    size_type erase(const key_type& key)
+    {
+        return data.erase(key);
+    }
+
+    void swap(forward_only_map& other) noexcept(noexcept(data.swap(other.data)))
+    {
+        data.swap(other.data);
+    }
+
+    friend bool operator==(const forward_only_map& lhs, const forward_only_map& rhs)
+    {
+        return lhs.data == rhs.data;
+    }
+    friend bool operator<(const forward_only_map& lhs, const forward_only_map& rhs)
+    {
+        return lhs.data < rhs.data;
+    }
+};
+
+using forward_only_json = nlohmann::basic_json<forward_only_map>;
+
 } // namespace
 
 TEST_CASE("object type whose erase() returns void")
@@ -322,3 +516,46 @@ TEST_CASE("object type without key_compare")
     }
 }
 
+
+TEST_CASE("object type with forward-only iterators")
+{
+    CHECK(std::is_same<std::iterator_traits<forward_only_json::object_t::iterator>::iterator_category,
+          std::forward_iterator_tag>::value);
+
+    SECTION("destroying nested objects and arrays")
+    {
+        forward_only_json j;
+        j["a"] = 1;
+        j["b"]["c"] = "x";
+        j["b"]["d"] = forward_only_json::array();
+        j["b"]["d"].push_back(forward_only_json::object());
+        j["b"]["d"].push_back(true);
+        j["b"]["e"]["f"]["g"] = nullptr;
+        j["h"] = forward_only_json::object();
+        j["i"]["j"] = 2;
+
+        CHECK(j.size() == 4);
+        CHECK(j["b"].size() == 3);
+        CHECK(j["b"]["d"].size() == 2);
+        CHECK(j["b"]["e"]["f"]["g"].is_null());
+
+        CHECK(j.erase("b") == 1);
+        CHECK(j.size() == 3);
+        j = 42;
+        CHECK(j == 42);
+    }
+
+    SECTION("destroying a deeply nested object")
+    {
+        constexpr std::size_t depth = 100000;
+        forward_only_json j;
+        forward_only_json* cur = &j;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            (*cur)["s"] = i;
+            cur = &(*cur)["o"];
+        }
+        CHECK(j["o"]["o"]["s"] == 2);
+        // destroyed at the end of scope without recursing per level
+    }
+}

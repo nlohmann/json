@@ -16,6 +16,14 @@
     #define JSON_TEST_STRICT_NUL_HANDLING_ENABLED 1
 #endif
 
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
@@ -291,6 +299,7 @@ TEST_CASE("deserialization")
             }));
         }
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
         SECTION("operator<<")
         {
             std::stringstream ss;
@@ -299,6 +308,7 @@ TEST_CASE("deserialization")
             j << ss;
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
         }
+#endif
 
         SECTION("operator>>")
         {
@@ -423,6 +433,7 @@ TEST_CASE("deserialization")
             CHECK_THROWS_WITH_AS(_ = json::parse(nullptr), "[json.exception.parse_error.101] parse error: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
         }
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
         SECTION("operator<<")
         {
             std::stringstream ss;
@@ -430,6 +441,7 @@ TEST_CASE("deserialization")
             json j;
             CHECK_THROWS_WITH_AS(j << ss, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
         }
+#endif
 
         SECTION("operator>>")
         {
@@ -1148,9 +1160,9 @@ TEST_CASE("deserialization")
         {
             std::istringstream s(bom + "123 456");
             json j;
-            j << s;
+            s >> j;
             CHECK(j == 123);
-            j << s;
+            s >> j;
             CHECK(j == 456);
         }
     }

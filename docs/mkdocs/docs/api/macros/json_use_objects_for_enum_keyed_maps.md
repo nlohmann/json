@@ -69,7 +69,7 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## Examples
 
-??? example "Default behavior (macro not defined)"
+??? example "Example: default behavior (macro not defined)"
 
     Without the macro, a map with enum keys is stored as an array of pairs:
 
@@ -96,7 +96,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     }
     ```
 
-??? example "Objects for enum-keyed maps (macro defined to 1)"
+??? example "Example: objects for enum-keyed maps (macro defined to 1)"
 
     With the macro, the same map is stored as an object:
 

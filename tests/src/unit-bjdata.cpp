@@ -9,6 +9,14 @@
 #include "doctest_compatibility.h"
 
 #define JSON_TESTS_PRIVATE
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
@@ -106,10 +114,59 @@ TEST_CASE("BJData")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
+            // a discarded value cannot be serialized to BJData
             json const j = json::value_t::discarded;
-            const auto result = json::to_bjdata(j);
-            CHECK(result.empty());
+            CHECK_THROWS_WITH_AS(json::to_bjdata(j), "[json.exception.type_error.321] cannot serialize discarded value to BJData", json::type_error&);
+        }
+
+        SECTION("discarded values nested in a container")
+        {
+            json const discarded = json::value_t::discarded;
+
+            SECTION("in an array")
+            {
+                json const j = {1, discarded, 2};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_bjdata(j), "[json.exception.type_error.321] (/1) cannot serialize discarded value to BJData", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_bjdata(j), "[json.exception.type_error.321] cannot serialize discarded value to BJData", json::type_error&);
+#endif
+            }
+
+            SECTION("as an object value")
+            {
+                json j;
+                j["a"] = 1;
+                j["b"] = discarded;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_bjdata(j), "[json.exception.type_error.321] (/b) cannot serialize discarded value to BJData", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_bjdata(j), "[json.exception.type_error.321] cannot serialize discarded value to BJData", json::type_error&);
+#endif
+            }
+
+            SECTION("nested deeper (array in object in array)")
+            {
+                json inner_array = {1, discarded};
+                json middle_object;
+                middle_object["x"] = inner_array;
+                json const j = {middle_object};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_bjdata(j), "[json.exception.type_error.321] (/0/x/1) cannot serialize discarded value to BJData", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_bjdata(j), "[json.exception.type_error.321] cannot serialize discarded value to BJData", json::type_error&);
+#endif
+            }
+
+            SECTION("optimized array of all-discarded elements")
+            {
+                json const j = {discarded, discarded};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_bjdata(j, true, true), "[json.exception.type_error.321] (/0) cannot serialize discarded value to BJData", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_bjdata(j, true, true), "[json.exception.type_error.321] cannot serialize discarded value to BJData", json::type_error&);
+#endif
+            }
         }
 
         SECTION("null")
@@ -1229,6 +1286,32 @@ TEST_CASE("BJData")
                     CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1A", json::parse_error);
                     std::vector<uint8_t> const vec3 = {'H', 'i', 2, '1', '.'};
                     CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1.", json::parse_error);
+                    // Reject NULs where they are read, including trailing NULs and payloads cut off after one.
+                    SECTION("NUL in high-precision number (issue #5753)")
+                    {
+                        for (const auto& vec : std::vector<std::vector<uint8_t>>
+                    {
+                        {'H', 'i', 3, '1', 0, 'x'},
+                        {'H', 'i', 2, '1', 0},
+                        {'H', 'i', 3, '1', 0}
+                    })
+                        {
+                            CAPTURE(vec)
+                            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text; last byte: 0x00", json::parse_error);
+                            CHECK(json::from_bjdata(vec, true, false).is_discarded());
+                            CHECK(json::from_bjdata(vec, false, false).is_discarded());
+                        }
+
+                        std::vector<uint8_t> const nested = {'[', 'H', 'i', 3, '1', 0, 'x', ']'};
+                        CHECK_THROWS_WITH_AS(_ = json::from_bjdata(nested), "[json.exception.parse_error.115] parse error at byte 6: syntax error while parsing BJData high-precision number: invalid number text; last byte: 0x00", json::parse_error);
+                        CHECK(json::from_bjdata(nested, true, false).is_discarded());
+
+                        std::vector<uint8_t> const valid = {'H', 'i', 1, '1'};
+                        const auto j = json::from_bjdata(valid);
+                        CHECK(j.is_number_unsigned());
+                        CHECK(j == json(1));
+                    }
+
                     std::vector<uint8_t> const vec_overflow = {'H', 'i', 5, '1', 'e', '4', '0', '0'};
                     CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec_overflow), "[json.exception.out_of_range.406] number overflow parsing '1e400'", json::out_of_range);
                     std::vector<uint8_t> const vec4 = {'H', 2, '1', '0'};
@@ -4489,4 +4572,34 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
             }
         }
     }
+}
+
+TEST_CASE("issue #5648 - from_bjdata(ptr, len) must read len bytes, not treat ptr as a C string")
+{
+    // to_bjdata() encodes the integer 0 as the two bytes 'i' 0x00 (a BJData
+    // type marker followed by the value byte 0x00), so the packed data
+    // below contains a 0x00 byte before its end.
+    const json j = {{"a", 0}};
+    const std::vector<std::uint8_t> packed = json::to_bjdata(j);
+    bool contains_nul = false;
+    for (const auto byte : packed)
+    {
+        contains_nul |= (byte == 0x00);
+    }
+    REQUIRE(contains_nul);
+
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+    // before the fix, from_bjdata had no (ptr, len) overload, so this call
+    // bound to from_bjdata(InputType&&, bool strict) instead: ptr was read
+    // as a NUL-terminated C string (stopping at the embedded 0x00 byte), and
+    // len was silently converted to the strict flag. The deprecated
+    // overload added for this issue forwards to from_bjdata(ptr, ptr + len,
+    // ...) instead, like from_ubjson's deprecated (ptr, len) overload does.
+    json result;
+    CHECK_NOTHROW(result = json::from_bjdata(packed.data(), packed.size()));
+    CHECK(result == j);
+
+    // len must not collapse into the strict flag either
+    CHECK(json::from_bjdata(packed.data(), packed.size(), false) == j);
+#endif
 }
