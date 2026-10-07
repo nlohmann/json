@@ -3,6 +3,14 @@
 Each parser of the library (JSON, BJData, BON8, BSON, CBOR, MessagePack, and UBJSON) can be fuzz tested. Currently,
 [libFuzzer](https://llvm.org/docs/LibFuzzer.html) and [afl++](https://github.com/AFLplusplus/AFLplusplus) are supported.
 
+## What the fuzzers check
+
+Each fuzzer driver (`tests/src/fuzzer-parse_*.cpp`) parses its input twice: once with `allow_exceptions = false` and
+once with exceptions. Both calls must agree. Where parsing with exceptions fails, the call without exceptions must
+return a discarded value (or throw the same kind of non-parse error), and it must never throw a `parse_error`. Where
+parsing succeeds, both calls must return the same value. The drivers then serialize the value, parse the result back,
+and check that nothing was lost. The drivers check all of this with `assert`, so they refuse to build with `NDEBUG`.
+
 ## Corpus creation
 
 For most effective fuzzing, a [corpus](https://llvm.org/docs/LibFuzzer.html#corpus) should be provided. A corpus is a
@@ -54,6 +62,9 @@ Then pass the corpus directory as command-line argument (assuming it is located 
 The fuzzer should be able to run indefinitely without crashing. In case of a crash, the tested input is dumped into
 a file starting with `crash-`.
 
+To also detect memory leaks, build with AddressSanitizer (`FUZZER_ENGINE="-fsanitize=fuzzer,address"`): libFuzzer then
+runs LeakSanitizer by default (`-detect_leaks=1`). LeakSanitizer is not available with Apple Clang on macOS.
+
 ## afl++
 
 To use afl++, you need to pass `-fsanitize=fuzzer` as `FUZZER_ENGINE`. It will be replaced by a `libAFLDriver.a` to
@@ -76,7 +87,9 @@ directory `out`.
 
 The library is further fuzz-tested 24/7 by Google's [OSS-Fuzz project](https://github.com/google/oss-fuzz). It uses
 the same `fuzzers` target as above and also relies on the `FUZZER_ENGINE` variable. See the used
-[build script](https://github.com/google/oss-fuzz/blob/master/projects/json/build.sh) for more information.
+[build script](https://github.com/google/oss-fuzz/blob/master/projects/json/build.sh) for more information. Its default
+`address` sanitizer includes LeakSanitizer, so OSS-Fuzz and the CIFuzz workflow (`.github/workflows/cifuzz.yml`) report
+memory leaks, too.
 
 In case the build at OSS-Fuzz fails, an issue will be created automatically.
 

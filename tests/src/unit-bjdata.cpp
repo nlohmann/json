@@ -4603,3 +4603,49 @@ TEST_CASE("issue #5648 - from_bjdata(ptr, len) must read len bytes, not treat pt
     CHECK(json::from_bjdata(packed.data(), packed.size(), false) == j);
 #endif
 }
+
+TEST_CASE("BJData large strings and binaries (chunked reader)")
+{
+    // Strings share get_ubjson_string() -> get_string() -> get_bytes() with
+    // plain UBJSON. Binary values are different: only a Draft 3 optimized
+    // array (type marker 'B') is read back as a binary value, through
+    // get_binary() -> get_bytes() (see parse_ubjson_internal()'s "If BJData
+    // type marker is 'B'" branch); Draft 2 (the default) writes a binary
+    // value as a plain array of uint8_t numbers instead (see the "round trip
+    // of a binary value is value-stable, not byte-stable" test above), which
+    // never reaches get_bytes(). Both reads happen in bounded chunks
+    // (binary_reader.hpp, chunk_size == 4096); check lengths around and
+    // beyond that size, for both vector (iterator) and pointer inputs.
+    for (const std::size_t len :
+            {
+                std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
+                std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
+            })
+    {
+        CAPTURE(len)
+
+        // string
+        const json j_string = std::string(len, 'x');
+        const std::vector<std::uint8_t> v_string = json::to_bjdata(j_string);
+        CHECK(json::from_bjdata(v_string) == j_string);
+        // pointer input exercises the std::memcpy fast path
+        CHECK(json::from_bjdata(reinterpret_cast<const char*>(v_string.data()),
+                                reinterpret_cast<const char*>(v_string.data()) + v_string.size()) == j_string);
+
+        // binary, forced into the Draft 3 optimized ('B' marker) encoding
+        const json j_binary = json::binary(std::vector<std::uint8_t>(len, 0xCD));
+        const std::vector<std::uint8_t> v_binary = json::to_bjdata(j_binary, true, true, json::bjdata_version_t::draft3);
+        CHECK(json::from_bjdata(v_binary) == j_binary);
+        CHECK(json::from_bjdata(reinterpret_cast<const char*>(v_binary.data()),
+                                reinterpret_cast<const char*>(v_binary.data()) + v_binary.size()) == j_binary);
+
+        // a truncated payload must still be reported as an error
+        if (len > 16)
+        {
+            std::vector<std::uint8_t> truncated = v_string;
+            truncated.resize(truncated.size() - 8);
+            json _;
+            CHECK_THROWS_AS(_ = json::from_bjdata(truncated), json::parse_error);
+        }
+    }
+}
