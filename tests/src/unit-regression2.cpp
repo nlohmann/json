@@ -1490,7 +1490,6 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
     SECTION("binary formats repair numbers that are out of range")
     {
         // CBOR: a double too large for a float number_float_t
-        using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
         float_json cbor;
         BasicRecoveringParser<float_json> sax(cbor);
         const std::vector<std::uint8_t> cbor_input = {0x82, 0xFB, 0x7E, 0x37, 0xE4, 0x3C, 0x88, 0x00, 0x75, 0x9C, 0x01}; // [1e300, 1]
