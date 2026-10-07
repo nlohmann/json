@@ -987,10 +987,10 @@ void convert_float_locale_aware(StringType& token, std::size_t decimal_point_pos
         }
         else
         {
-            std::string copy(token.data(), token.size());
-            copy.replace(decimal_point_position, 1, decimal_point);
-            strtof_by_type(value, copy.c_str(), &endptr);
-            complete = endptr == copy.c_str() + copy.size();
+            std::string buffer(token.data(), token.size());
+            buffer.replace(decimal_point_position, 1, decimal_point);
+            strtof_by_type(value, buffer.c_str(), &endptr);
+            complete = endptr == buffer.c_str() + buffer.size();
         }
 
         if (JSON_HEDLEY_LIKELY(complete))
