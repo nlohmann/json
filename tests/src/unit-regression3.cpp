@@ -533,7 +533,7 @@ TEST_CASE("regression tests 3")
     }
 #endif
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     SECTION("issue #4916 - constructing array from C++20 ranges view does not work")
     {
         std::vector<int> nums{1, 2, 37, 42, 21};
@@ -548,7 +548,7 @@ TEST_CASE("regression tests 3")
 #endif
 
     // owning_view is not available in libstdc++ < 12
-#if JSON_HAS_RANGES && !defined(__MINGW32__) && !(defined(__GLIBCXX__) && _GLIBCXX_RELEASE < 12)
+#if JSON_HAS_RANGE_VIEW_CONVERSION && !(defined(__GLIBCXX__) && _GLIBCXX_RELEASE < 12)
     SECTION("issue #4916 - constructing array from prvalue C++20 ranges view (owning_view)")
     {
         json const j(std::vector<int> {1, 2, 37, 42, 21} | std::views::filter([](int i)
@@ -560,7 +560,7 @@ TEST_CASE("regression tests 3")
     }
 #endif
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     SECTION("issue #4916 - constructing array from C++20 transform view (prvalue elements)")
     {
         std::vector<int> nums{1, 2, 3};

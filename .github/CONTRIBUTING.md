@@ -205,6 +205,9 @@ API of the 3.x.y version is broken. This includes:
 - Changing access specifiers.
 - Changing default arguments.
 
+What is and is not covered by this guarantee is described in the
+[roadmap](https://json.nlohmann.me/community/roadmap/#api-stability).
+
 Although these guidelines may seem restrictive, they are essential for maintaining the library’s utility.
 
 Breaking changes may be introduced when they are guarded with a feature macro such as

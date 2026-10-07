@@ -10,7 +10,9 @@
 This file implements a parser test suitable for fuzz testing. Given a byte
 array data, it performs the following steps:
 
+- j0 = from_bon8(data, allow_exceptions = false)
 - j1 = from_bon8(data)
+- assert(j0 is discarded if parsing j1 fails, and j0 == j1 otherwise)
 - vec = to_bon8(j1)
 - j2 = from_bon8(vec)
 - assert(to_bon8(j2) == vec)
@@ -40,6 +42,13 @@ drivers.
 
 using json = nlohmann::json;
 
+// compares dumps rather than values, because NaN != NaN; keep writes strings
+// byte for byte, so ill-formed UTF-8 that a binary reader accepts cannot throw
+static bool same_value(const json& lhs, const json& rhs)
+{
+    return lhs.dump(-1, ' ', false, json::error_handler_t::keep) == rhs.dump(-1, ' ', false, json::error_handler_t::keep);
+}
+
 namespace
 {
 // the serialization of the value read from @a input, or the error message
@@ -61,7 +70,7 @@ std::string read_bon8(InputType&& input)
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    // step 0: recover from all errors, reading from memory and from a stream
+    // recover from all errors, reading from memory and from a stream
     const bool recovered_without_errors = check_recovering_parse(data, size, json::input_format_t::bon8).errors == 0;
 
     // contiguous and stream input must be read alike
@@ -70,11 +79,39 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         assert(read_bon8(std::vector<uint8_t>(data, data + size)) == read_bon8(stream));
     }
 
+    std::vector<uint8_t> const vec1(data, data + size);
+
+    // step 0: parse input without exceptions; a parse error must then be
+    // reported as a discarded value, never thrown
+    json j_noexcept;
+    bool noexcept_threw = false;
+    try
+    {
+        j_noexcept = json::from_bon8(vec1, true, false);
+    }
+    catch (const json::parse_error&)
+    {
+        assert(false);
+    }
+    catch (const json::exception&)
+    {
+        // type and out-of-range errors are not parse errors and still throw
+        noexcept_threw = true;
+    }
+    // whether step 1 succeeded; if not, the catch blocks below check that
+    // step 0 failed, too
+    bool parsed = false;
+
     try
     {
         // step 1: parse input
-        std::vector<uint8_t> const vec1(data, data + size);
         json const j1 = json::from_bon8(vec1);
+        parsed = true;
+
+        // without exceptions, the same input must give the same value
+        assert(!noexcept_threw && !j_noexcept.is_discarded() && same_value(j_noexcept, j1));
+
+        // the recovering parser must not have reported an error either
         assert(recovered_without_errors);
 
         try
@@ -97,16 +134,19 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     catch (const json::parse_error&)
     {
         // parse errors are ok, because input may be random bytes
-        assert(!recovered_without_errors);
+        assert(parsed || noexcept_threw || j_noexcept.is_discarded());
+        assert(parsed || !recovered_without_errors);
     }
     catch (const json::type_error&)
     {
         // type errors can occur during parsing, too
+        assert(parsed || noexcept_threw || j_noexcept.is_discarded());
     }
     catch (const json::out_of_range&)
     {
         // out of range errors may happen if provided sizes are excessive
-        assert(!recovered_without_errors);
+        assert(parsed || noexcept_threw || j_noexcept.is_discarded());
+        assert(parsed || !recovered_without_errors);
     }
 
     // return 0 - non-zero return values are reserved for future use
