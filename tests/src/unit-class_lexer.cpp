@@ -900,18 +900,20 @@ TEST_CASE("Eisel-Lemire float conversion")
 
         const std::uint64_t max = (std::numeric_limits<std::uint64_t>::max)();
         const std::array<std::pair<std::uint64_t, std::uint64_t>, 10> edge_cases =
-        {{
-            {0, 0},
-            {0, 1},
-            {1, 1},
-            {1, max},
-            {0xFFFFFFFFu, 0x100000000u},
-            {0x100000000u, 0x100000000u},
-            {0x100000001u, 0x100000001u},
-            {max, max},
-            {max, 2},
-            {0xFFFFFFFF00000000u, 0x100000001u},
-        }};
+        {
+            {
+                {0, 0},
+                {0, 1},
+                {1, 1},
+                {1, max},
+                {0xFFFFFFFFu, 0x100000000u},
+                {0x100000000u, 0x100000000u},
+                {0x100000001u, 0x100000001u},
+                {max, max},
+                {max, 2},
+                {0xFFFFFFFF00000000u, 0x100000001u},
+            }
+        };
 
         for (const auto& test : edge_cases)
         {
