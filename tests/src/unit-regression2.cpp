@@ -888,6 +888,15 @@ TEST_CASE("regression tests 2")
         CHECK(j == k);
     }
 
+    SECTION("issue #4552 - UTF-8 invalid characters are not always ignored when dumping with error_handler_t::ignore")
+    {
+        json node;
+        node["test"] = "test\334\005";
+        CHECK(node.dump(-1, ' ', false, json::error_handler_t::ignore) == "{\"test\":\"test\\u0005\"}");
+        CHECK(node.dump(-1, ' ', false, json::error_handler_t::keep) == "{\"test\":\"test\334\\u0005\"}");
+        CHECK(node.dump(-1, ' ', true, json::error_handler_t::keep) == "{\"test\":\"test\334\\u0005\"}");
+    }
+
 #ifdef JSON_HAS_CPP_17
     SECTION("issue #5066 - MSVC converts json to std::variant<json> via the conversion operator")
     {
@@ -1523,6 +1532,13 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
         CHECK(nested.errors == 1);
         CHECK(nested.value == json({1}));
 
+        // a BJData ndarray whose element type has no name: the object that
+        // holds the ndarray was already begun
+        const auto ndarray = parse_binary_recovering({'[', '$', 0x01, '#', '[', '$', 'i', '#', 'i', 2, 2, 3}, json::input_format_t::bjdata);
+        CHECK(ndarray.errors == 1);
+        CHECK(ndarray.balanced);
+        CHECK(ndarray.value == json::object());
+
         // a skipped member that the input ends in
         const auto truncated = parse_binary_recovering({0xA2, 0x01, 0x82, 0x01}, json::input_format_t::cbor);
         CHECK(truncated.errors == 2);
@@ -1628,7 +1644,7 @@ TEST_CASE("regression test #5135 - destructor never allocates, even under memory
         failing_allocator_allocations = 0;
         failing_allocator_deallocations = 0;
         {
-            failing_json j = failing_json::array(
+            const failing_json j = failing_json::array(
             {
                 failing_json::array({1, 2}),
                 failing_json::object({{"key", failing_json::array({3})}})
@@ -1645,7 +1661,7 @@ TEST_CASE("regression test #5135 - destructor never allocates, even under memory
     {
         std::size_t allocations_before = 0;
         {
-            failing_json j = make_deep_nest<failing_json>(100000, false);
+            const auto j = make_deep_nest<failing_json>(100000, false);
             allocations_before = failing_allocator_allocations;
             fail_next_allocation = true;
         }
@@ -1659,7 +1675,7 @@ TEST_CASE("regression test #5135 - destructor never allocates, even under memory
     {
         std::size_t allocations_before = 0;
         {
-            failing_json j = make_deep_nest<failing_json>(100000, true);
+            const auto j = make_deep_nest<failing_json>(100000, true);
             allocations_before = failing_allocator_allocations;
             fail_next_allocation = true;
         }
@@ -1673,7 +1689,7 @@ TEST_CASE("regression test #5135 - destructor never allocates, even under memory
     {
         std::size_t allocations_before = 0;
         {
-            failing_ordered_json j = make_deep_nest<failing_ordered_json>(100000, true);
+            const auto j = make_deep_nest<failing_ordered_json>(100000, true);
             allocations_before = failing_allocator_allocations;
             fail_next_allocation = true;
         }
@@ -1731,7 +1747,7 @@ BasicJsonType make_single_chain(std::size_t depth)
 template<class BasicJsonType>
 void check_destroy_edge_case(const BasicJsonType& value)
 {
-    const BasicJsonType copy = value;
+    const BasicJsonType copy = value; // NOLINT(performance-unnecessary-copy-initialization): the copy is the point
     CHECK(copy == value);
 }
 } // namespace
@@ -1776,7 +1792,7 @@ TEST_CASE_TEMPLATE("regression test #5135 - destroy() edge cases", BasicJsonType
 
     SECTION("single-element chain, 1000 levels deep")
     {
-        BasicJsonType root = make_single_chain<BasicJsonType>(1000);
+        auto root = make_single_chain<BasicJsonType>(1000);
         check_destroy_edge_case(root);
     }
 
@@ -1813,7 +1829,7 @@ TEST_CASE_TEMPLATE("regression test #5135 - destroy() edge cases", BasicJsonType
 
     SECTION("destruction via assignment on a deep tree")
     {
-        BasicJsonType root = make_single_chain<BasicJsonType>(2000);
+        auto root = make_single_chain<BasicJsonType>(2000);
         // assigning a new value destroys the old one in place
         root = nullptr;
         CHECK(root.is_null());
