@@ -27,7 +27,7 @@ work items are tracked in the [GitHub milestones](https://github.com/nlohmann/js
 
 - **Break the public API of version 3.x.** See the
   [contribution guidelines](https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md#break-the-public-api)
-  for what counts as a breaking change.
+  for what counts as a breaking change, and what is not covered by this guarantee.
 - **Require a newer C++ standard than C++11.**
 - **Break JSON conformance** or enable non-standard extensions by default.
 - **Add dependencies** or require a build step. The library remains header-only, and the single header
