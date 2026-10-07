@@ -22402,6 +22402,8 @@ class binary_writer
     */
     JSON_HEDLEY_NO_RETURN static void throw_on_discarded(const BasicJsonType& j, const char* format_name)
     {
+        static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(format_name);
         JSON_THROW(type_error::create(321, concat("cannot serialize discarded value to ", format_name), &j));
     }
 
