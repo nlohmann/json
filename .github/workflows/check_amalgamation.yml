@@ -152,6 +152,13 @@ jobs:
           VERSION_MAJOR=$(grep -m1 'define NLOHMANN_JSON_VERSION_MAJOR' $ABI_MACROS | grep -o '[0-9]\+')
           VERSION_MINOR=$(grep -m1 'define NLOHMANN_JSON_VERSION_MINOR' $ABI_MACROS | grep -o '[0-9]\+')
           VERSION_PATCH=$(grep -m1 'define NLOHMANN_JSON_VERSION_PATCH' $ABI_MACROS | grep -o '[0-9]\+')
+          # The template is what this check verifies the committed natvis
+          # file against, so take it from this PR rather than from the
+          # develop checkout: generate_natvis.py loads the template from its
+          # own directory, and with develop's copy a PR that changes the
+          # template could never pass. Like the macro_builder step above,
+          # this only renders PR content in a job without credentials.
+          cp tools/generate_natvis/nlohmann_json.natvis.j2 $NATVIS_TOOL_DIR/
           python3 $NATVIS_TOOL_DIR/generate_natvis.py --version "$VERSION_MAJOR.$VERSION_MINOR.$VERSION_PATCH" $MAIN_DIR
 
       - name: Build patch and check for differences
