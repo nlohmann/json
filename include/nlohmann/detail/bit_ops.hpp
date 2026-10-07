@@ -9,6 +9,9 @@
 #pragma once
 
 #include <cstdint> // uint64_t
+#if !defined(__SIZEOF_INT128__) && defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    #include <intrin.h> // __umulh, _umul128
+#endif
 
 #include <nlohmann/detail/abi_macros.hpp>
 
@@ -52,6 +55,12 @@ inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexc
     __extension__ using uint128 = unsigned __int128;
     const uint128 r = static_cast<uint128>(a) * b;
     return {static_cast<std::uint64_t>(r), static_cast<std::uint64_t>(r >> 64u)};
+#elif defined(_MSC_VER) && defined(_M_X64)
+    std::uint64_t high = 0;
+    const std::uint64_t low = _umul128(a, b, &high);
+    return {low, high};
+#elif defined(_MSC_VER) && defined(_M_ARM64)
+    return {a * b, __umulh(a, b)};
 #else
     const std::uint64_t a_lo = a & 0xFFFFFFFFu;
     const std::uint64_t a_hi = a >> 32u;

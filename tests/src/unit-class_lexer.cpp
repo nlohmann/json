@@ -17,6 +17,7 @@ using nlohmann::json;
 #include <cstdint> // uint32_t, uint64_t
 #include <cstdlib> // strtod
 #include <cstring> // memcpy
+#include <limits> // numeric_limits
 #include <sstream> // stringstream
 #include <string> // string
 #include <utility> // pair
@@ -891,8 +892,38 @@ TEST_CASE("Eisel-Lemire float conversion")
 
     SECTION("128-bit products and leading zeros")
     {
+        const auto check_product = [](std::uint64_t a, std::uint64_t b)
+        {
+            const auto product = nlohmann::detail::full_multiplication(a, b);
+            CHECK(big_from(product.high, product.low) == big_mul(big_from(0, a), big_from(0, b)));
+        };
+
+        const std::uint64_t max = (std::numeric_limits<std::uint64_t>::max)();
+        const std::array<std::pair<std::uint64_t, std::uint64_t>, 10> edge_cases =
+        {{
+            {0, 0},
+            {0, 1},
+            {1, 1},
+            {1, max},
+            {0xFFFFFFFFu, 0x100000000u},
+            {0x100000000u, 0x100000000u},
+            {0x100000001u, 0x100000001u},
+            {max, max},
+            {max, 2},
+            {0xFFFFFFFF00000000u, 0x100000001u},
+        }};
+
+        for (const auto& test : edge_cases)
+        {
+            check_product(test.first, test.second);
+        }
+
+        check_product(0x100000001u, 0xFFFFFFFF00000000u);
+        check_product(max, 1);
+        check_product(2, max);
+
         // whichever implementation the compiler gets (with or without a
-        // 128-bit integer type or a builtin)
+        // 128-bit integer type or a builtin / intrinsic)
         std::uint64_t state = 42;
         for (int i = 0; i < 10000; ++i)
         {
@@ -901,8 +932,7 @@ TEST_CASE("Eisel-Lemire float conversion")
             state ^= state << 17u;
             const std::uint64_t a = state;
             const std::uint64_t b = (state * 0x9E3779B97F4A7C15u) >> (i % 64);
-            const auto product = nlohmann::detail::full_multiplication(a, b);
-            CHECK(big_from(product.high, product.low) == big_mul(big_from(0, a), big_from(0, b)));
+            check_product(a, b);
 
             const int k = i % 64;
             const std::uint64_t x = (std::uint64_t{1} << k) | (a & ((std::uint64_t{1} << k) - 1));
