@@ -59,7 +59,7 @@ void to_json(json& j, const diag_color& c)
     {
         return p.first == c;
     });
-    j = it->second;
+    j = ((it != std::end(m)) ? it : std::begin(m))->second; // like NLOHMANN_JSON_SERIALIZE_ENUM
 }
 } // namespace
 
