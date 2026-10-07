@@ -723,13 +723,7 @@ class json_sax_dom_callback_parser
             }
         }
 
-        JSON_ASSERT(!ref_stack.empty());
-        JSON_ASSERT(!keep_stack.empty());
-        JSON_ASSERT(!container_key_stack.empty());
-        ref_stack.pop_back();
-        keep_stack.pop_back();
-        const string_t object_key = std::move(container_key_stack.back());
-        container_key_stack.pop_back();
+        const string_t object_key = pop_container();
 
         if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_structured())
         {
@@ -811,13 +805,7 @@ class json_sax_dom_callback_parser
             }
         }
 
-        JSON_ASSERT(!ref_stack.empty());
-        JSON_ASSERT(!keep_stack.empty());
-        JSON_ASSERT(!container_key_stack.empty());
-        ref_stack.pop_back();
-        keep_stack.pop_back();
-        const string_t object_key = std::move(container_key_stack.back());
-        container_key_stack.pop_back();
+        const string_t object_key = pop_container();
 
         // remove discarded value
         if (!ref_stack.empty() && ref_stack.back())
@@ -902,6 +890,23 @@ class json_sax_dom_callback_parser
             return key_stack.back();
         }
         return string_t{};
+    }
+
+    /*!
+    @brief leave the object or array that end_object()/end_array() just closed
+    @return the key the container is stored under in its parent (see
+            container_key_stack)
+    */
+    string_t pop_container()
+    {
+        JSON_ASSERT(!ref_stack.empty());
+        JSON_ASSERT(!keep_stack.empty());
+        JSON_ASSERT(!container_key_stack.empty());
+        ref_stack.pop_back();
+        keep_stack.pop_back();
+        string_t object_key = std::move(container_key_stack.back());
+        container_key_stack.pop_back();
+        return object_key;
     }
 
     /*!

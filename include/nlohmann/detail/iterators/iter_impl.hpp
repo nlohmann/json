@@ -279,6 +279,12 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
         }
     }
 
+    /// @throw invalid_iterator.214 always
+    JSON_HEDLEY_NO_RETURN void throw_cannot_get_value() const
+    {
+        JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+    }
+
   public:
     /*!
     @brief return a reference to the value pointed to by the iterator
@@ -303,7 +309,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
             }
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
 
             case value_t::string:
             case value_t::boolean:
@@ -319,7 +325,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
             }
         }
     }
@@ -361,7 +367,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                     return m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
             }
         }
     }
@@ -710,7 +716,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                 return *std::next(m_it.array_iterator, n);
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
 
             case value_t::string:
             case value_t::boolean:
@@ -726,7 +732,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
             }
         }
     }

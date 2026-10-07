@@ -3320,7 +3320,7 @@ public:
         // at only works for objects
         if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
         {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", j.type_name()), &j));
+            detail::throw_cannot_use_with(304, "at()", j);
         }
 
         auto it = object_lookup(j, std::forward<KeyType>(key));
@@ -3345,7 +3345,7 @@ public:
         // at only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
         {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", j.type_name()), &j));
+            detail::throw_cannot_use_with(304, "at()", j);
         }
 
         if (JSON_HEDLEY_UNLIKELY(idx >= j.m_data.m_value.array->size()))
@@ -3487,7 +3487,7 @@ public:
             return m_data.m_value.array->operator[](idx);
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a numeric argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a numeric argument", *this);
     }
 
     /// @brief access specified array element
@@ -3501,7 +3501,7 @@ public:
             return m_data.m_value.array->operator[](idx);
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a numeric argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a numeric argument", *this);
     }
 
     /// @brief access specified object element
@@ -3521,7 +3521,7 @@ public:
             return set_parent(result.first->second);
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
     }
 
     /// @brief access specified object element
@@ -3536,7 +3536,7 @@ public:
             return it->second;
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
     }
 
     // these two functions resolve a (const) char * ambiguity affecting Clang and MSVC
@@ -3572,7 +3572,7 @@ public:
             return set_parent(result.first->second);
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
     }
 
     /// @brief access specified object element
@@ -3589,7 +3589,7 @@ public:
             return it->second;
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
     }
 
   private:
@@ -3613,7 +3613,7 @@ public:
         // value only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+            detail::throw_cannot_use_with(306, "value()", *this);
         }
 
         const auto it = find(std::forward<KeyType>(key));
@@ -3628,7 +3628,7 @@ public:
         // value only works for arrays and objects
         if (JSON_HEDLEY_UNLIKELY(!is_structured()))
         {
-            JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+            detail::throw_cannot_use_with(306, "value()", *this);
         }
 
         return ptr.get_checked_or_null(this);
@@ -3837,7 +3837,7 @@ public:
             case value_t::null:
             case value_t::discarded:
             default:
-                JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+                detail::throw_cannot_use_with(307, "erase()", *this);
         }
 
         return result;
@@ -3898,7 +3898,7 @@ public:
             case value_t::null:
             case value_t::discarded:
             default:
-                JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+                detail::throw_cannot_use_with(307, "erase()", *this);
         }
 
         return result;
@@ -3912,7 +3912,7 @@ public:
         // this erase only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+            detail::throw_cannot_use_with(307, "erase()", *this);
         }
 
         const auto erased = m_data.m_value.object->erase(std::forward<KeyType>(key));
@@ -3927,7 +3927,7 @@ public:
         // this erase only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+            detail::throw_cannot_use_with(307, "erase()", *this);
         }
 
         const auto it = object_lookup(*this, std::forward<KeyType>(key));
@@ -3976,7 +3976,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+            detail::throw_cannot_use_with(307, "erase()", *this);
         }
     }
 
@@ -4465,7 +4465,7 @@ public:
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, detail::concat("cannot use push_back() with ", type_name()), this));
+            detail::throw_cannot_use_with(308, "push_back()", *this);
         }
 
         // transform a null object into an array
@@ -4496,7 +4496,7 @@ public:
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, detail::concat("cannot use push_back() with ", type_name()), this));
+            detail::throw_cannot_use_with(308, "push_back()", *this);
         }
 
         // transform a null object into an array
@@ -4526,7 +4526,7 @@ public:
         // push_back only works for null objects or objects
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(308, detail::concat("cannot use push_back() with ", type_name()), this));
+            detail::throw_cannot_use_with(308, "push_back()", *this);
         }
 
         // transform a null object into an object
@@ -4580,7 +4580,7 @@ public:
         // emplace_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(311, detail::concat("cannot use emplace_back() with ", type_name()), this));
+            detail::throw_cannot_use_with(311, "emplace_back()", *this);
         }
 
         // transform a null object into an array
@@ -4603,7 +4603,7 @@ public:
         // emplace only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(311, detail::concat("cannot use emplace() with ", type_name()), this));
+            detail::throw_cannot_use_with(311, "emplace()", *this);
         }
 
         // transform a null object into an object
@@ -4662,7 +4662,7 @@ public:
             return insert_iterator(pos, val);
         }
 
-        JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+        detail::throw_cannot_use_with(309, "insert()", *this);
     }
 
     /// @brief inserts element into array
@@ -4684,7 +4684,7 @@ public:
             return insert_iterator(pos, std::move(tmp));
         }
 
-        JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+        detail::throw_cannot_use_with(309, "insert()", *this);
     }
 
     /// @brief inserts copies of element into array
@@ -4704,7 +4704,7 @@ public:
             return insert_iterator(pos, cnt, val);
         }
 
-        JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+        detail::throw_cannot_use_with(309, "insert()", *this);
     }
 
     /// @brief inserts range of elements into array
@@ -4714,7 +4714,7 @@ public:
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+            detail::throw_cannot_use_with(309, "insert()", *this);
         }
 
         // check if iterator pos fits to this JSON value
@@ -4751,7 +4751,7 @@ public:
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+            detail::throw_cannot_use_with(309, "insert()", *this);
         }
 
         // check if iterator pos fits to this JSON value
@@ -4779,7 +4779,7 @@ public:
         // insert only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+            detail::throw_cannot_use_with(309, "insert()", *this);
         }
 
         // check if range iterators belong to the same JSON object
@@ -4808,7 +4808,7 @@ public:
         // j, not the copy made below)
         if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
         {
-            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", j.type_name()), &j));
+            detail::throw_cannot_use_with(312, "update()", j);
         }
 
         // copy first: j may be *this or one of its descendants, and is
@@ -4832,7 +4832,7 @@ public:
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", first.m_object->type_name()), first.m_object));
+            detail::throw_cannot_use_with(312, "update()", *first.m_object);
         }
 
         // copy first: the range may belong to *this or one of its
@@ -4868,7 +4868,7 @@ public:
 
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", type_name()), this));
+            detail::throw_cannot_use_with(312, "update()", *this);
         }
     }
 
@@ -5031,7 +5031,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(array_t&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(array_t&)", *this);
         }
     }
 
@@ -5048,7 +5048,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(object_t&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(object_t&)", *this);
         }
     }
 
@@ -5064,7 +5064,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(string_t&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(string_t&)", *this);
         }
     }
 
@@ -5080,7 +5080,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(binary_t&)", *this);
         }
     }
 
@@ -5096,7 +5096,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t::container_type&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(binary_t::container_type&)", *this);
         }
     }
 

@@ -90,6 +90,19 @@ private:
         return self.end();
     }
 
+    /// @brief shared implementation of the const and non-const at() overloads
+    /// @throw std::out_of_range if @a key is not found
+    template<typename Self, typename KeyType>
+    static auto at_impl(Self& self, const KeyType& key) -> decltype((self.begin()->second))
+    {
+        const auto it = find_impl(self, key);
+        if (it == self.end())
+        {
+            JSON_THROW(std::out_of_range("key not found"));
+        }
+        return it->second;
+    }
+
     /// @brief remove the entry @a it points to, preserving order
     /// @note keys are not movable, so the tail is destroyed and re-constructed in place
     void erase_at(iterator it)
@@ -156,46 +169,26 @@ public:
 
     T& at(const key_type& key)
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     T & at(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     const T& at(const key_type& key) const
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const T & at(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     size_type erase(const key_type& key)

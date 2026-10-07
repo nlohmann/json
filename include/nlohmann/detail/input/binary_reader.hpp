@@ -2566,18 +2566,10 @@ class binary_reader
             default:
                 break;
         }
-        auto last_token = get_token_string();
-        std::string message;
-
-        if (input_format != input_format_t::bjdata)
-        {
-            message = "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token;
-        }
-        else
-        {
-            message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
-        }
-        return last_byte_error(113, message, "string");
+        const char* expected = input_format != input_format_t::bjdata
+                               ? "expected length type specification (U, i, I, l, L)"
+                               : "expected length type specification (U, i, u, I, m, l, M, L)";
+        return last_byte_error(113, concat(expected, "; last byte: 0x", get_token_string()), "string");
     }
 
     /*!
@@ -2840,18 +2832,10 @@ class binary_reader
             default:
                 break;
         }
-        auto last_token = get_token_string();
-        std::string message;
-
-        if (input_format != input_format_t::bjdata)
-        {
-            message = "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token;
-        }
-        else
-        {
-            message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
-        }
-        return last_byte_error(113, message, "size");
+        const char* expected = input_format != input_format_t::bjdata
+                               ? "expected length type specification (U, i, I, l, L) after '#'"
+                               : "expected length type specification (U, i, u, I, m, l, M, L) after '#'";
+        return last_byte_error(113, concat(expected, "; last byte: 0x", get_token_string()), "size");
     }
 
     /*!

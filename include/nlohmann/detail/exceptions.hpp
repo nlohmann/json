@@ -321,6 +321,22 @@ JSON_HEDLEY_NO_RETURN inline void throw_type_must_be(const char* expected, const
     JSON_THROW(type_error::create(302, concat("type must be ", expected, ", but is ", j.type_name()), &j));
 }
 
+/*!
+@brief throws because an operation is not supported for the type of @a j
+@param[in] id_        the id of the type_error exception (304..312)
+@param[in] operation  the operation, e.g. "erase()"
+@param[in] j          the value the operation was called on
+@throw type_error always
+*/
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN inline void throw_cannot_use_with(const int id_, const char* operation, const BasicJsonType& j)
+{
+    static_cast<void>(id_); // unused when JSON_NOEXCEPTION is defined
+    static_cast<void>(operation);
+    static_cast<void>(j);
+    JSON_THROW(type_error::create(id_, concat("cannot use ", operation, " with ", j.type_name()), &j));
+}
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 

@@ -5513,6 +5513,22 @@ JSON_HEDLEY_NO_RETURN inline void throw_type_must_be(const char* expected, const
     JSON_THROW(type_error::create(302, concat("type must be ", expected, ", but is ", j.type_name()), &j));
 }
 
+/*!
+@brief throws because an operation is not supported for the type of @a j
+@param[in] id_        the id of the type_error exception (304..312)
+@param[in] operation  the operation, e.g. "erase()"
+@param[in] j          the value the operation was called on
+@throw type_error always
+*/
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN inline void throw_cannot_use_with(const int id_, const char* operation, const BasicJsonType& j)
+{
+    static_cast<void>(id_); // unused when JSON_NOEXCEPTION is defined
+    static_cast<void>(operation);
+    static_cast<void>(j);
+    JSON_THROW(type_error::create(id_, concat("cannot use ", operation, " with ", j.type_name()), &j));
+}
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -13151,13 +13167,7 @@ class json_sax_dom_callback_parser
             }
         }
 
-        JSON_ASSERT(!ref_stack.empty());
-        JSON_ASSERT(!keep_stack.empty());
-        JSON_ASSERT(!container_key_stack.empty());
-        ref_stack.pop_back();
-        keep_stack.pop_back();
-        const string_t object_key = std::move(container_key_stack.back());
-        container_key_stack.pop_back();
+        const string_t object_key = pop_container();
 
         if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_structured())
         {
@@ -13239,13 +13249,7 @@ class json_sax_dom_callback_parser
             }
         }
 
-        JSON_ASSERT(!ref_stack.empty());
-        JSON_ASSERT(!keep_stack.empty());
-        JSON_ASSERT(!container_key_stack.empty());
-        ref_stack.pop_back();
-        keep_stack.pop_back();
-        const string_t object_key = std::move(container_key_stack.back());
-        container_key_stack.pop_back();
+        const string_t object_key = pop_container();
 
         // remove discarded value
         if (!ref_stack.empty() && ref_stack.back())
@@ -13330,6 +13334,23 @@ class json_sax_dom_callback_parser
             return key_stack.back();
         }
         return string_t{};
+    }
+
+    /*!
+    @brief leave the object or array that end_object()/end_array() just closed
+    @return the key the container is stored under in its parent (see
+            container_key_stack)
+    */
+    string_t pop_container()
+    {
+        JSON_ASSERT(!ref_stack.empty());
+        JSON_ASSERT(!keep_stack.empty());
+        JSON_ASSERT(!container_key_stack.empty());
+        ref_stack.pop_back();
+        keep_stack.pop_back();
+        string_t object_key = std::move(container_key_stack.back());
+        container_key_stack.pop_back();
+        return object_key;
     }
 
     /*!
@@ -16278,18 +16299,10 @@ class binary_reader
             default:
                 break;
         }
-        auto last_token = get_token_string();
-        std::string message;
-
-        if (input_format != input_format_t::bjdata)
-        {
-            message = "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token;
-        }
-        else
-        {
-            message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
-        }
-        return last_byte_error(113, message, "string");
+        const char* expected = input_format != input_format_t::bjdata
+                               ? "expected length type specification (U, i, I, l, L)"
+                               : "expected length type specification (U, i, u, I, m, l, M, L)";
+        return last_byte_error(113, concat(expected, "; last byte: 0x", get_token_string()), "string");
     }
 
     /*!
@@ -16552,18 +16565,10 @@ class binary_reader
             default:
                 break;
         }
-        auto last_token = get_token_string();
-        std::string message;
-
-        if (input_format != input_format_t::bjdata)
-        {
-            message = "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token;
-        }
-        else
-        {
-            message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
-        }
-        return last_byte_error(113, message, "size");
+        const char* expected = input_format != input_format_t::bjdata
+                               ? "expected length type specification (U, i, I, l, L) after '#'"
+                               : "expected length type specification (U, i, u, I, m, l, M, L) after '#'";
+        return last_byte_error(113, concat(expected, "; last byte: 0x", get_token_string()), "size");
     }
 
     /*!
@@ -18287,9 +18292,7 @@ class parser
                 // strict mode: next byte must be EOF
                 if (get_token() != token_type::end_of_input)
                 {
-                    return sax->parse_error(m_lexer.get_position(),
-                                            m_lexer.get_token_string(),
-                                            parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                    return syntax_error(*sax, exception_message(token_type::end_of_input, "value"));
                 }
             }
             else
@@ -18328,10 +18331,7 @@ class parser
             // in strict mode, input must be completely read
             if (get_token() != token_type::end_of_input)
             {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value"), nullptr));
+                syntax_error(sdp, exception_message(token_type::end_of_input, "value"));
             }
         }
         else
@@ -18381,9 +18381,7 @@ class parser
                         // parse key
                         if (JSON_HEDLEY_UNLIKELY(last_token != token_type::value_string))
                         {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr));
+                            return syntax_error(*sax, exception_message(token_type::value_string, "object key"));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                         {
@@ -18393,9 +18391,7 @@ class parser
                         // parse separator (:)
                         if (JSON_HEDLEY_UNLIKELY(!get_token_expecting(token_type::name_separator)))
                         {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr));
+                            return syntax_error(*sax, exception_message(token_type::name_separator, "object separator"));
                         }
 
                         // remember we are now inside an object
@@ -18506,23 +18502,16 @@ class parser
                     case token_type::parse_error:
                     {
                         // using "uninitialized" to avoid an "expected" message
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), nullptr));
+                        return syntax_error(*sax, exception_message(token_type::uninitialized, "value"));
                     }
                     case token_type::end_of_input:
                     {
                         if (JSON_HEDLEY_UNLIKELY(m_lexer.get_position().chars_read_total == 1))
                         {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+                            return syntax_error(*sax, "attempting to parse an empty input; check that your input string or stream contains the expected JSON");
                         }
 
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr));
+                        return syntax_error(*sax, exception_message(token_type::literal_or_value, "value"));
                     }
                     case token_type::uninitialized:
                     case token_type::end_array:
@@ -18532,9 +18521,7 @@ class parser
                     case token_type::literal_or_value:
                     default: // the last token was unexpected
                     {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr));
+                        return syntax_error(*sax, exception_message(token_type::literal_or_value, "value"));
                     }
                 }
             }
@@ -18585,9 +18572,7 @@ class parser
                     continue;
                 }
 
-                return sax->parse_error(m_lexer.get_position(),
-                                        m_lexer.get_token_string(),
-                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array, "array"), nullptr));
+                return syntax_error(*sax, exception_message(token_type::end_array, "array"));
             }
 
             // states.back() is false -> object
@@ -18604,9 +18589,7 @@ class parser
                     // parse key
                     if (JSON_HEDLEY_UNLIKELY(last_token != token_type::value_string))
                     {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr));
+                        return syntax_error(*sax, exception_message(token_type::value_string, "object key"));
                     }
 
                     if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
@@ -18617,9 +18600,7 @@ class parser
                     // parse separator (:)
                     if (JSON_HEDLEY_UNLIKELY(!get_token_expecting(token_type::name_separator)))
                     {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr));
+                        return syntax_error(*sax, exception_message(token_type::name_separator, "object separator"));
                     }
 
                     // parse values
@@ -18647,9 +18628,7 @@ class parser
                 continue;
             }
 
-            return sax->parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object, "object"), nullptr));
+            return syntax_error(*sax, exception_message(token_type::end_object, "object"));
         }
     }
 
@@ -18664,6 +18643,19 @@ class parser
     bool get_token_expecting(token_type expected_type)
     {
         return (last_token = m_lexer.scan_expecting(expected_type)) == expected_type;
+    }
+
+    /*!
+    @brief reports a syntax error at the current token (parse_error.101)
+    @param[in] sax      the SAX parser to report the error to
+    @param[in] message  the error message
+    @return the result of the SAX parser's parse_error()
+    */
+    template<typename SAX>
+    bool syntax_error(SAX& sax, const std::string& message)
+    {
+        return sax.parse_error(m_lexer.get_position(), m_lexer.get_token_string(),
+                               parse_error::create(101, m_lexer.get_position(), message, nullptr));
     }
 
     std::string exception_message(const token_type expected, const std::string& context)
@@ -19172,6 +19164,12 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
         }
     }
 
+    /// @throw invalid_iterator.214 always
+    JSON_HEDLEY_NO_RETURN void throw_cannot_get_value() const
+    {
+        JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+    }
+
   public:
     /*!
     @brief return a reference to the value pointed to by the iterator
@@ -19196,7 +19194,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
             }
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
 
             case value_t::string:
             case value_t::boolean:
@@ -19212,7 +19210,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
             }
         }
     }
@@ -19254,7 +19252,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                     return m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
             }
         }
     }
@@ -19603,7 +19601,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                 return *std::next(m_it.array_iterator, n);
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
 
             case value_t::string:
             case value_t::boolean:
@@ -19619,7 +19617,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
             }
         }
     }
@@ -26958,6 +26956,19 @@ private:
         return self.end();
     }
 
+    /// @brief shared implementation of the const and non-const at() overloads
+    /// @throw std::out_of_range if @a key is not found
+    template<typename Self, typename KeyType>
+    static auto at_impl(Self& self, const KeyType& key) -> decltype((self.begin()->second))
+    {
+        const auto it = find_impl(self, key);
+        if (it == self.end())
+        {
+            JSON_THROW(std::out_of_range("key not found"));
+        }
+        return it->second;
+    }
+
     /// @brief remove the entry @a it points to, preserving order
     /// @note keys are not movable, so the tail is destroyed and re-constructed in place
     void erase_at(iterator it)
@@ -27024,46 +27035,26 @@ public:
 
     T& at(const key_type& key)
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     T & at(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     const T& at(const key_type& key) const
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const T & at(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     size_type erase(const key_type& key)
@@ -30525,7 +30516,7 @@ public:
         // at only works for objects
         if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
         {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", j.type_name()), &j));
+            detail::throw_cannot_use_with(304, "at()", j);
         }
 
         auto it = object_lookup(j, std::forward<KeyType>(key));
@@ -30550,7 +30541,7 @@ public:
         // at only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
         {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", j.type_name()), &j));
+            detail::throw_cannot_use_with(304, "at()", j);
         }
 
         if (JSON_HEDLEY_UNLIKELY(idx >= j.m_data.m_value.array->size()))
@@ -30692,7 +30683,7 @@ public:
             return m_data.m_value.array->operator[](idx);
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a numeric argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a numeric argument", *this);
     }
 
     /// @brief access specified array element
@@ -30706,7 +30697,7 @@ public:
             return m_data.m_value.array->operator[](idx);
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a numeric argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a numeric argument", *this);
     }
 
     /// @brief access specified object element
@@ -30726,7 +30717,7 @@ public:
             return set_parent(result.first->second);
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
     }
 
     /// @brief access specified object element
@@ -30741,7 +30732,7 @@ public:
             return it->second;
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
     }
 
     // these two functions resolve a (const) char * ambiguity affecting Clang and MSVC
@@ -30777,7 +30768,7 @@ public:
             return set_parent(result.first->second);
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
     }
 
     /// @brief access specified object element
@@ -30794,7 +30785,7 @@ public:
             return it->second;
         }
 
-        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
+        detail::throw_cannot_use_with(305, "operator[] with a string argument", *this);
     }
 
   private:
@@ -30818,7 +30809,7 @@ public:
         // value only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+            detail::throw_cannot_use_with(306, "value()", *this);
         }
 
         const auto it = find(std::forward<KeyType>(key));
@@ -30833,7 +30824,7 @@ public:
         // value only works for arrays and objects
         if (JSON_HEDLEY_UNLIKELY(!is_structured()))
         {
-            JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+            detail::throw_cannot_use_with(306, "value()", *this);
         }
 
         return ptr.get_checked_or_null(this);
@@ -31042,7 +31033,7 @@ public:
             case value_t::null:
             case value_t::discarded:
             default:
-                JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+                detail::throw_cannot_use_with(307, "erase()", *this);
         }
 
         return result;
@@ -31103,7 +31094,7 @@ public:
             case value_t::null:
             case value_t::discarded:
             default:
-                JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+                detail::throw_cannot_use_with(307, "erase()", *this);
         }
 
         return result;
@@ -31117,7 +31108,7 @@ public:
         // this erase only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+            detail::throw_cannot_use_with(307, "erase()", *this);
         }
 
         const auto erased = m_data.m_value.object->erase(std::forward<KeyType>(key));
@@ -31132,7 +31123,7 @@ public:
         // this erase only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+            detail::throw_cannot_use_with(307, "erase()", *this);
         }
 
         const auto it = object_lookup(*this, std::forward<KeyType>(key));
@@ -31181,7 +31172,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+            detail::throw_cannot_use_with(307, "erase()", *this);
         }
     }
 
@@ -31670,7 +31661,7 @@ public:
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, detail::concat("cannot use push_back() with ", type_name()), this));
+            detail::throw_cannot_use_with(308, "push_back()", *this);
         }
 
         // transform a null object into an array
@@ -31701,7 +31692,7 @@ public:
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, detail::concat("cannot use push_back() with ", type_name()), this));
+            detail::throw_cannot_use_with(308, "push_back()", *this);
         }
 
         // transform a null object into an array
@@ -31731,7 +31722,7 @@ public:
         // push_back only works for null objects or objects
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(308, detail::concat("cannot use push_back() with ", type_name()), this));
+            detail::throw_cannot_use_with(308, "push_back()", *this);
         }
 
         // transform a null object into an object
@@ -31785,7 +31776,7 @@ public:
         // emplace_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(311, detail::concat("cannot use emplace_back() with ", type_name()), this));
+            detail::throw_cannot_use_with(311, "emplace_back()", *this);
         }
 
         // transform a null object into an array
@@ -31808,7 +31799,7 @@ public:
         // emplace only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(311, detail::concat("cannot use emplace() with ", type_name()), this));
+            detail::throw_cannot_use_with(311, "emplace()", *this);
         }
 
         // transform a null object into an object
@@ -31867,7 +31858,7 @@ public:
             return insert_iterator(pos, val);
         }
 
-        JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+        detail::throw_cannot_use_with(309, "insert()", *this);
     }
 
     /// @brief inserts element into array
@@ -31889,7 +31880,7 @@ public:
             return insert_iterator(pos, std::move(tmp));
         }
 
-        JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+        detail::throw_cannot_use_with(309, "insert()", *this);
     }
 
     /// @brief inserts copies of element into array
@@ -31909,7 +31900,7 @@ public:
             return insert_iterator(pos, cnt, val);
         }
 
-        JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+        detail::throw_cannot_use_with(309, "insert()", *this);
     }
 
     /// @brief inserts range of elements into array
@@ -31919,7 +31910,7 @@ public:
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+            detail::throw_cannot_use_with(309, "insert()", *this);
         }
 
         // check if iterator pos fits to this JSON value
@@ -31956,7 +31947,7 @@ public:
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+            detail::throw_cannot_use_with(309, "insert()", *this);
         }
 
         // check if iterator pos fits to this JSON value
@@ -31984,7 +31975,7 @@ public:
         // insert only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
+            detail::throw_cannot_use_with(309, "insert()", *this);
         }
 
         // check if range iterators belong to the same JSON object
@@ -32013,7 +32004,7 @@ public:
         // j, not the copy made below)
         if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
         {
-            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", j.type_name()), &j));
+            detail::throw_cannot_use_with(312, "update()", j);
         }
 
         // copy first: j may be *this or one of its descendants, and is
@@ -32037,7 +32028,7 @@ public:
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", first.m_object->type_name()), first.m_object));
+            detail::throw_cannot_use_with(312, "update()", *first.m_object);
         }
 
         // copy first: the range may belong to *this or one of its
@@ -32073,7 +32064,7 @@ public:
 
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", type_name()), this));
+            detail::throw_cannot_use_with(312, "update()", *this);
         }
     }
 
@@ -32236,7 +32227,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(array_t&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(array_t&)", *this);
         }
     }
 
@@ -32253,7 +32244,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(object_t&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(object_t&)", *this);
         }
     }
 
@@ -32269,7 +32260,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(string_t&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(string_t&)", *this);
         }
     }
 
@@ -32285,7 +32276,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(binary_t&)", *this);
         }
     }
 
@@ -32301,7 +32292,7 @@ public:
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t::container_type&) with ", type_name()), this));
+            detail::throw_cannot_use_with(310, "swap(binary_t::container_type&)", *this);
         }
     }
 
