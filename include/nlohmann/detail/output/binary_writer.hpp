@@ -1839,16 +1839,31 @@ class binary_writer
 
     /*!
     @brief validate (dry_run) or write one BJData ND-array element of dtype 'd' (single precision)
-    @return whether @a el's value fits a float without overflow; always true when @a dry_run is false
+    @return whether @a el's value survives narrowing to float and back without any change
+            (so the ND-array round-trips exactly), or is infinite or NaN; always true when
+            @a dry_run is false
     */
     bool write_bjdata_ndarray_float_element(const BasicJsonType& el, const bool dry_run)
     {
         const auto dval = el.template get<double>();
         if (dry_run)
         {
-            return !std::isfinite(dval) ||
-                   (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                    dval <= static_cast<double>((std::numeric_limits<float>::max)()));
+#ifdef __GNUC__
+            JSON_HEDLEY_DIAGNOSTIC_PUSH
+            JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+            // a value that would be rounded (rather than exactly represented) by the
+            // narrowing to float is treated like an out-of-range integer element; this
+            // is the same criterion write_compact_float() uses for CBOR/MessagePack
+            const bool in_range = std::isnan(dval) ||
+                                  (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                                   dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                                   static_cast<double>(static_cast<float>(dval)) == dval) ||
+                                  std::isinf(dval);
+#ifdef __GNUC__
+            JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+            return in_range;
         }
         write_number(static_cast<float>(dval), true);
         return true;
