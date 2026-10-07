@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
@@ -19,6 +27,7 @@ DOCTEST_GCC_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wrange-loop-construct")
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
 TEST_CASE("iterator_wrapper")
 {
     SECTION("object")
@@ -715,6 +724,7 @@ TEST_CASE("iterator_wrapper")
         }
     }
 }
+#endif
 
 TEST_CASE("items()")
 {

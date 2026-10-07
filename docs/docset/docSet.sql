@@ -131,6 +131,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_string', 'Meth
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_ubjson', 'Function', 'api/basic_json/to_ubjson/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::value', 'Method', 'api/basic_json/value/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::value_t', 'Enum', 'api/basic_json/value_t/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::with_t', 'Type', 'api/basic_json/with_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::~basic_json', 'Method', 'api/basic_json/~basic_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json', 'Class', 'api/json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer', 'Class', 'api/json_pointer/index.html');
@@ -219,6 +220,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('Supported Macros', 'Guide', '
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_ASSERT', 'Macro', 'api/macros/json_assert/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_BRACE_INIT_COPY_SEMANTICS', 'Macro', 'api/macros/json_brace_init_copy_semantics/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_CATCH_USER', 'Macro', 'api/macros/json_throw_user/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DELETE_DEPRECATED_FUNCTIONS', 'Macro', 'api/macros/json_delete_deprecated_functions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTICS', 'Macro', 'api/macros/json_diagnostics/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTIC_POSITIONS', 'Macro', 'api/macros/json_diagnostic_positions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DISABLE_ENUM_SERIALIZATION', 'Macro', 'api/macros/json_disable_enum_serialization/index.html');
@@ -249,6 +251,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('JSON_TRY_USER', 'Macro', 'api
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_GLOBAL_UDLS', 'Macro', 'api/macros/json_use_global_udls/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_IMPLICIT_CONVERSIONS', 'Macro', 'api/macros/json_use_implicit_conversions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON', 'Macro', 'api/macros/json_use_legacy_discarded_value_comparison/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS', 'Macro', 'api/macros/json_use_objects_for_enum_keyed_maps/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_SIMDUTF', 'Macro', 'api/macros/json_use_simdutf/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Macros', 'Macro', 'api/macros/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE', 'Macro', 'api/macros/nlohmann_define_derived_type/index.html');

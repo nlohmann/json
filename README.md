@@ -7,7 +7,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/nlohmann/json/badge.svg?branch=develop)](https://coveralls.io/github/nlohmann/json?branch=develop)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e0d1a9d5d6fd46fcb655c4cb930bb3e8)](https://app.codacy.com/gh/nlohmann/json/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/json.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:json)
+[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/json.svg)](https://issues.oss-fuzz.com/issues?q=project:json)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/1mp10JbaANo6FUc7)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://json.nlohmann.me)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/develop/LICENSE.MIT)
@@ -361,7 +361,7 @@ std::cout << j_string << " == " << serialized_string << std::endl;
 
 [`.dump()`](https://json.nlohmann.me/api/basic_json/dump/) returns the originally stored string value.
 
-Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace`, `json::error_handler_t::ignore`, or `json::error_handler_t::keep` are used as error handlers.
 
 #### To/from streams (e.g., files, string streams)
 
@@ -1202,15 +1202,18 @@ language bindings, format converters, and the like. See the curated [Ecosystem](
 
 Though it's 2026 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 14.2 (and possibly later)
-- Clang 3.4 - 21.0 (and possibly later)
-- Apple Clang 9.1 - 16.0 (and possibly later)
-- Intel C++ Compiler 17.0.2 (and possibly later)
-- Nvidia CUDA Compiler 11.0.221 (and possibly later)
-- Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
-- Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
-- Microsoft Visual C++ 2019 / Build Tools 16.3.1+1def00d3d (and possibly later)
-- Microsoft Visual C++ 2022 / Build Tools 19.30.30709.0 (and possibly later)
+- GCC 4.8 - 16.2 (and possibly later)
+- Clang 3.4 - 22.1 (and possibly later)
+- Apple Clang 15.0 - 21.0 (and possibly later)
+- Intel C++ Compiler Classic (icpc) 2021.10
+- Intel oneAPI DPC++/C++ Compiler (icpx) 2025.3 (and possibly later)
+- NVIDIA CUDA Compiler (nvcc) 11.8 - 12.6 (and possibly later)
+- NVIDIA HPC SDK C++ Compiler (nvc++) 25.5 (and possibly later)
+- Microsoft Visual C++ 2015 / MSVC 19.0 (and possibly later)
+- Microsoft Visual C++ 2017 / MSVC 19.16 (and possibly later)
+- Microsoft Visual C++ 2019 / MSVC 19.29 (and possibly later)
+- Microsoft Visual C++ 2022 / MSVC 19.44 (and possibly later)
+- Microsoft Visual C++ 2026 / MSVC 19.51 (and possibly later)
 
 I would be happy to learn about other compilers/versions.
 
@@ -1401,7 +1404,7 @@ The library is compliant to version 3.3 of the [**REUSE specification**](https:/
 
 - Every source file contains an SPDX copyright header.
 - The full text of all licenses used in the repository can be found in the `LICENSES` folder.
-- File `.reuse/dep5` contains an overview of all files' copyrights and licenses.
+- File `REUSE.toml` contains an overview of all files' copyrights and licenses.
 - Run `pipx run reuse lint` to verify the project's REUSE compliance and `pipx run reuse spdx` to generate a SPDX SBOM.
 
 ## Contact
@@ -1914,7 +1917,7 @@ The library supports **Unicode input** as follows:
 - [Unicode noncharacters](https://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
-- When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+- When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace`, `json::error_handler_t::ignore`, or `json::error_handler_t::keep` are used as error handlers.
 - To store wide strings (e.g., `std::wstring`), you need to convert them to a UTF-8 encoded `std::string` before, see [an example](https://json.nlohmann.me/home/faq/#wide-string-handling).
 
 ### Comments in JSON

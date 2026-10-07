@@ -81,9 +81,13 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_string_t/
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string())
     operator string_t() const
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return to_string();
     }
+#endif
 
 #ifndef JSON_NO_IO
     /// @brief write string representation of the JSON pointer to stream
@@ -1026,9 +1030,13 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
     JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer))
     bool operator==(const string_t& rhs) const
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return *this == json_pointer(rhs);
     }
+#endif
 
     /// @brief 3-way compares two JSON pointers
     template<typename RefStringTypeRhs>
@@ -1106,18 +1114,26 @@ template<typename RefStringTypeLhs,
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
 inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
                        const StringType& rhs)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
 {
     return lhs == json_pointer<RefStringTypeLhs>(rhs);
 }
+#endif
 
 template<typename RefStringTypeRhs,
          typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
 inline bool operator==(const StringType& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
 {
     return json_pointer<RefStringTypeRhs>(lhs) == rhs;
 }
+#endif
 
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
 inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
@@ -1131,18 +1147,26 @@ template<typename RefStringTypeLhs,
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
 inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
                        const StringType& rhs)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
 {
     return !(lhs == rhs);
 }
+#endif
 
 template<typename RefStringTypeRhs,
          typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
 inline bool operator!=(const StringType& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
 {
     return !(lhs == rhs);
 }
+#endif
 
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
 inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,

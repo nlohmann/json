@@ -55,6 +55,10 @@ This implementation does exactly follow this approach, as it uses double precisi
 smaller than `-1.79769313486232e+308` and values greater than `1.79769313486232e+308` will be stored as NaN internally
 and be serialized to `null`.
 
+During deserialization (from JSON text or any of the binary formats), a finite number that does not fit into
+`number_float_t` is rejected with [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406), for
+example a double-precision number in a binary format when `number_float_t` is `#!cpp float`.
+
 ### Storage
 
 Floating-point number values are stored directly inside a `basic_json` type.

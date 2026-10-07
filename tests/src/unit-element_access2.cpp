@@ -1551,6 +1551,10 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
         // count(0) used to compile and then crash instead of failing to compile
         using nlohmann::detail::is_detected;
 
+        // MSVC 2015 does not treat selecting a deleted function in decltype as
+        // a substitution failure, so it detects the deleted overloads as
+        // callable; calling them still fails to compile
+#if !(defined(_MSC_VER) && _MSC_VER < 1910)
         CHECK_FALSE(is_detected<can_call_find_with_0, Json&>::value);
         CHECK_FALSE(is_detected<can_call_find_with_0, const Json&>::value);
         CHECK_FALSE(is_detected<can_call_count_with_0, Json&>::value);
@@ -1562,6 +1566,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
 
         // another integral literal type must be rejected as well, not just int
         CHECK_FALSE(is_detected<can_call_contains_with_0L, Json&>::value);
+#endif
 
         // the valid overloads must remain callable
         CHECK(is_detected<can_call_find, Json&, const char*>::value);

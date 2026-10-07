@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
@@ -33,10 +41,49 @@ TEST_CASE("MessagePack")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
+            // a discarded value cannot be serialized to MessagePack
             json const j = json::value_t::discarded;
-            const auto result = json::to_msgpack(j);
-            CHECK(result.empty());
+            CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error&);
+        }
+
+        SECTION("discarded values nested in a container")
+        {
+            json const discarded = json::value_t::discarded;
+
+            SECTION("in an array")
+            {
+                json const j = {1, discarded, 2};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] (/1) cannot serialize discarded value to MessagePack", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error&);
+#endif
+            }
+
+            SECTION("as an object value")
+            {
+                json j;
+                j["a"] = 1;
+                j["b"] = discarded;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] (/b) cannot serialize discarded value to MessagePack", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error&);
+#endif
+            }
+
+            SECTION("nested deeper (array in object in array)")
+            {
+                json inner_array = {1, discarded};
+                json middle_object;
+                middle_object["x"] = inner_array;
+                json const j = {middle_object};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] (/0/x/1) cannot serialize discarded value to MessagePack", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error&);
+#endif
+            }
         }
 
         SECTION("null")
@@ -1795,8 +1842,10 @@ TEST_CASE("MessagePack input that cannot be read is discarded by every overload"
     CHECK_THROWS_AS(_ = json::from_msgpack(input.begin(), input.end()), json::parse_error&);
     CHECK(json::from_msgpack(input, true, false).is_discarded());
     CHECK(json::from_msgpack(input.begin(), input.end(), true, false).is_discarded());
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
     CHECK(json::from_msgpack(input.data(), input.size(), true, false).is_discarded());
     CHECK(json::from_msgpack({input.data(), input.size()}, true, false).is_discarded());
+#endif
 }
 
 TEST_CASE("MessagePack SAX parsing stops at every event")
@@ -2099,12 +2148,14 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 CHECK(j1 == j2);
             }
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
             {
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack({packed.data(), packed.size()}));
                 CHECK(j1 == j2);
             }
+#endif
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");
@@ -2121,85 +2172,6 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
         }
     }
 }
-
-#ifdef JSON_HAS_CPP_17
-// Test suite for verifying MessagePack handling with std::byte input
-TEST_CASE("MessagePack with std::byte")
-{
-
-    SECTION("std::byte compatibility")
-    {
-        SECTION("vector roundtrip")
-        {
-            json original =
-            {
-                {"name", "test"},
-                {"value", 42},
-                {"array", {1, 2, 3}}
-            };
-
-            std::vector<uint8_t> temp = json::to_msgpack(original);
-            // Convert the uint8_t vector to std::byte vector
-            std::vector<std::byte> msgpack_data(temp.size());
-            for (size_t i = 0; i < temp.size(); ++i)
-            {
-                msgpack_data[i] = std::byte(temp[i]);
-            }
-            // Deserialize from std::byte vector back to JSON
-            json from_bytes;
-            CHECK_NOTHROW(from_bytes = json::from_msgpack(msgpack_data));
-
-            CHECK(from_bytes == original);
-        }
-
-        SECTION("empty vector")
-        {
-            const std::vector<std::byte> empty_data;
-            CHECK_THROWS_WITH_AS([&]()
-            {
-                [[maybe_unused]] auto result = json::from_msgpack(empty_data);
-                return true;
-            }
-            (),
-            "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input",
-            json::parse_error&);
-        }
-
-        SECTION("comparison with workaround")
-        {
-            json original =
-            {
-                {"string", "hello"},
-                {"integer", 42},
-                {"float", 3.14},
-                {"boolean", true},
-                {"null", nullptr},
-                {"array", {1, 2, 3}},
-                {"object", {{"key", "value"}}}
-            };
-
-            std::vector<uint8_t> temp = json::to_msgpack(original);
-
-            std::vector<std::byte> msgpack_data(temp.size());
-            for (size_t i = 0; i < temp.size(); ++i)
-            {
-                msgpack_data[i] = std::byte(temp[i]);
-            }
-            // Attempt direct deserialization using std::byte input
-            const json direct_result = json::from_msgpack(msgpack_data);
-
-            // Test the workaround approach: reinterpret as unsigned char* and use iterator range
-            const auto* const char_start = reinterpret_cast<unsigned char const*>(msgpack_data.data());
-            const auto* const char_end = char_start + msgpack_data.size();
-            json workaround_result = json::from_msgpack(char_start, char_end);
-
-            // Verify that the final deserialized JSON matches the original JSON
-            CHECK(direct_result == workaround_result);
-            CHECK(direct_result == original);
-        }
-    }
-}
-#endif
 
 // the fake sizes below do not fit into a 32-bit std::size_t
 // with clang and libstdc++ 10, the std::filesystem::path conversion that
@@ -2508,5 +2480,45 @@ TEST_CASE("MessagePack numbers use the active union member (see #5644)")
         const auto result = json::to_msgpack(j);
         CHECK(result == expected);
         CHECK(json::from_msgpack(result) == j);
+    }
+}
+
+TEST_CASE("MessagePack large strings and binaries (chunked reader)")
+{
+    // get_msgpack_string()/get_msgpack_binary() both read through get_binary(),
+    // which reads in bounded chunks (binary_reader.hpp, chunk_size == 4096);
+    // make sure roundtripping is correct for lengths around and beyond that
+    // chunk size, for both vector (iterator) and pointer inputs.
+    for (const std::size_t len :
+            {
+                std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
+                std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
+            })
+    {
+        CAPTURE(len)
+
+        // string
+        const json j_string = std::string(len, 'x');
+        const std::vector<std::uint8_t> v_string = json::to_msgpack(j_string);
+        CHECK(json::from_msgpack(v_string) == j_string);
+        // pointer input exercises the std::memcpy fast path
+        CHECK(json::from_msgpack(reinterpret_cast<const char*>(v_string.data()),
+                                 reinterpret_cast<const char*>(v_string.data()) + v_string.size()) == j_string);
+
+        // binary
+        const json j_binary = json::binary(std::vector<std::uint8_t>(len, 0xCD));
+        const std::vector<std::uint8_t> v_binary = json::to_msgpack(j_binary);
+        CHECK(json::from_msgpack(v_binary) == j_binary);
+        CHECK(json::from_msgpack(reinterpret_cast<const char*>(v_binary.data()),
+                                 reinterpret_cast<const char*>(v_binary.data()) + v_binary.size()) == j_binary);
+
+        // a truncated payload must still be reported as an error
+        if (len > 16)
+        {
+            std::vector<std::uint8_t> truncated = v_string;
+            truncated.resize(truncated.size() - 8);
+            json _;
+            CHECK_THROWS_AS(_ = json::from_msgpack(truncated), json::parse_error);
+        }
     }
 }

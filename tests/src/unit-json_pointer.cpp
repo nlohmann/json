@@ -9,6 +9,14 @@
 #include "doctest_compatibility.h"
 
 #define JSON_TESTS_PRIVATE
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
@@ -630,7 +638,9 @@ TEST_CASE("JSON pointers")
             std::stringstream ss;
             ss << ptr;
             CHECK(ptr.to_string() == ptr_str);
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
             CHECK(std::string(ptr) == ptr_str);
+#endif
             CHECK(ss.str() == ptr_str);
         }
     }
@@ -810,8 +820,6 @@ TEST_CASE("JSON pointers")
 
     SECTION("equality comparison")
     {
-        const char* ptr_cpstring = "/foo/bar";
-        const char ptr_castring[] = "/foo/bar"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
         std::string ptr_string{"/foo/bar"};
         auto ptr1 = json::json_pointer(ptr_string);
         auto ptr2 = json::json_pointer(ptr_string);
@@ -820,6 +828,12 @@ TEST_CASE("JSON pointers")
         // JSON_HAS_CPP_20
 
         CHECK(ptr1 == ptr2);
+
+        CHECK_FALSE(ptr1 != ptr2);
+
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+        const char* ptr_cpstring = "/foo/bar";
+        const char ptr_castring[] = "/foo/bar"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
 
         CHECK(ptr1 == "/foo/bar");
         CHECK(ptr1 == ptr_cpstring);
@@ -830,8 +844,6 @@ TEST_CASE("JSON pointers")
         CHECK(ptr_cpstring == ptr1);
         CHECK(ptr_castring == ptr1);
         CHECK(ptr_string == ptr1);
-
-        CHECK_FALSE(ptr1 != ptr2);
 
         CHECK_FALSE(ptr1 != "/foo/bar");
         CHECK_FALSE(ptr1 != ptr_cpstring);
@@ -854,6 +866,7 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_WITH_AS("/~~" == ptr1,
                                  "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
         }
+#endif
     }
 
     SECTION("less-than comparison")
@@ -905,6 +918,7 @@ TEST_CASE("JSON pointers")
         json_ptr_j ptr_j{ptr_string};
         json_ptr_oj ptr_oj{ptr_string};
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
         CHECK(j.contains(ptr));
         CHECK(j.contains(ptr_j));
         CHECK(j.contains(ptr_oj));
@@ -917,6 +931,7 @@ TEST_CASE("JSON pointers")
 
         CHECK(j.value(ptr, "x") == j.value(ptr_j, "x"));
         CHECK(j.value(ptr, "x") == j.value(ptr_oj, "x"));
+#endif
 
         CHECK(ptr == ptr_j);
         CHECK(ptr == ptr_oj);

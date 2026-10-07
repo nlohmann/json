@@ -22,6 +22,14 @@
 // scoped enum, so get<std::byte>() (needed below to get<std::vector<std::byte>>()
 // from a plain JSON array, not just from an already-binary value) relies on
 // enum serialization being enabled
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #if defined(JSON_DISABLE_ENUM_SERIALIZATION) && (JSON_DISABLE_ENUM_SERIALIZATION == 1)
     #define SKIP_TESTS_FOR_ENUM_SERIALIZATION
 #endif
@@ -533,7 +541,7 @@ TEST_CASE("regression tests 3")
     }
 #endif
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     SECTION("issue #4916 - constructing array from C++20 ranges view does not work")
     {
         std::vector<int> nums{1, 2, 37, 42, 21};
@@ -548,7 +556,7 @@ TEST_CASE("regression tests 3")
 #endif
 
     // owning_view is not available in libstdc++ < 12
-#if JSON_HAS_RANGES && !defined(__MINGW32__) && !(defined(__GLIBCXX__) && _GLIBCXX_RELEASE < 12)
+#if JSON_HAS_RANGE_VIEW_CONVERSION && !(defined(__GLIBCXX__) && _GLIBCXX_RELEASE < 12)
     SECTION("issue #4916 - constructing array from prvalue C++20 ranges view (owning_view)")
     {
         json const j(std::vector<int> {1, 2, 37, 42, 21} | std::views::filter([](int i)
@@ -560,7 +568,7 @@ TEST_CASE("regression tests 3")
     }
 #endif
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     SECTION("issue #4916 - constructing array from C++20 transform view (prvalue elements)")
     {
         std::vector<int> nums{1, 2, 3};
@@ -862,6 +870,50 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
     }
 }
 
+TEST_CASE("issue #5676 - SAX parsing of CBOR tags")
+{
+    const json expected = json::binary({1, 2, 3}, 42);
+    const auto cbor = json::to_cbor(expected);
+
+    nlohmann::detail::json_sax_acceptor<json> acceptor;
+    CHECK_FALSE(json::sax_parse(cbor, &acceptor, json::input_format_t::cbor));
+    CHECK_FALSE(json::sax_parse(cbor, &acceptor, json::input_format_t::cbor,
+                                true, false, false, json::cbor_tag_handler_t::error));
+
+    CHECK(json::sax_parse(cbor, &acceptor, json::input_format_t::cbor,
+                          true, false, false, json::cbor_tag_handler_t::ignore));
+
+    json parsed;
+    nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> sax(parsed);
+    CHECK(json::sax_parse(cbor, &sax, json::input_format_t::cbor,
+                          true, false, false, json::cbor_tag_handler_t::store));
+    CHECK(parsed == expected);
+
+    json iterator_parsed;
+    nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> iterator_sax(iterator_parsed);
+    CHECK(json::sax_parse(cbor.begin(), cbor.end(), &iterator_sax, json::input_format_t::cbor,
+                          true, false, false, json::cbor_tag_handler_t::store));
+    CHECK(iterator_parsed == expected);
+
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+    json span_parsed;
+    nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> span_sax(span_parsed);
+    CHECK(json::sax_parse(nlohmann::detail::span_input_adapter(cbor.data(), cbor.size()), &span_sax,
+                          json::input_format_t::cbor, true, false, false, json::cbor_tag_handler_t::store));
+    CHECK(span_parsed == expected);
+#endif
+
+    const std::string text = "null";
+    CHECK(json::sax_parse(text, &acceptor, json::input_format_t::json,
+                          true, false, false, json::cbor_tag_handler_t::store));
+    CHECK(json::sax_parse(text.begin(), text.end(), &acceptor, json::input_format_t::json,
+                          true, false, false, json::cbor_tag_handler_t::store));
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+    CHECK(json::sax_parse(nlohmann::detail::span_input_adapter(text.data(), text.size()), &acceptor,
+                          json::input_format_t::json, true, false, false, json::cbor_tag_handler_t::store));
+#endif
+}
+
 TEST_CASE("issue #5402 - update(merge_objects=true) overwrites a primitive with an object")
 {
     json t = {{"k", 1}};
@@ -918,6 +970,14 @@ TEST_CASE("regression test #5476 - array type without reserve()")
         const std::vector<std::uint8_t> truncated = {0x9A, 0xFF, 0xFF, 0xFF, 0xFF};
         CHECK(json::from_cbor(truncated, true, false).is_discarded());
     }
+}
+
+TEST_CASE("issue #5317 - nested indefinite-length CBOR string chunks are rejected")
+{
+    json _;
+    CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0x7F, 0x7F, 0x61, 0x61, 0xFF, 0xFF})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: indefinite-length string is not allowed inside indefinite-length string; last byte: 0x7F", json::parse_error&);
+    CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0x5F, 0x5F, 0x41, 0x61, 0xFF, 0xFF})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR binary: indefinite-length binary array is not allowed inside indefinite-length binary array; last byte: 0x5F", json::parse_error&);
+    CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xA1, 0x7F, 0x7F, 0xFF, 0xFF, 0x01})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: indefinite-length string is not allowed inside indefinite-length string; last byte: 0x7F", json::parse_error&);
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
