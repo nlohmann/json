@@ -6,7 +6,9 @@ namespace std {
 }
 ```
 
-Return a hash value for a JSON object. The hash function tries to rely on `std::hash` where possible. Furthermore, the type of the JSON value is taken into account to have different hash values for `null`, `0`, `0U`, and `false`, etc.
+Return a hash value for a JSON object. The hash function tries to rely on `std::hash` where possible. Furthermore, the type of the JSON value is taken into account, so `null`, `false`, and numbers may hash differently from each other. Numbers that compare equal under [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md) always hash equally, regardless of whether they are stored as signed integer, unsigned integer, or floating-point number.
+
+Numbers are hashed by their value converted to `number_float_t`. Converting an integer to `number_float_t` therefore keeps its hash, but converting a floating-point number to an integer type is lossy and can change it: `0.5` converts to `0`, which need not have the same hash. Unequal numbers can also share a hash value, for example two large integers that convert to the same `number_float_t`.
 
 ## Examples
 
@@ -28,6 +30,7 @@ int main()
               << "hash(false) = " << std::hash<json> {}(json(false)) << '\n'
               << "hash(0) = " << std::hash<json> {}(json(0)) << '\n'
               << "hash(0U) = " << std::hash<json> {}(json(0U)) << '\n'
+              << "hash(0.0) = " << std::hash<json> {}(json(0.0)) << '\n'
               << "hash(\"\") = " << std::hash<json> {}(json("")) << '\n'
               << "hash({}) = " << std::hash<json> {}(json::object()) << '\n'
               << "hash([]) = " << std::hash<json> {}(json::array()) << '\n'
@@ -41,15 +44,16 @@ Output:
 ```
 hash(null) = 2654435769
 hash(false) = 2654436030
-hash(0) = 2654436095
-hash(0U) = 2654436156
-hash("") = 6142509191626859748
+hash(0) = 2654436221
+hash(0U) = 2654436221
+hash(0.0) = 2654436221
+hash("") = 11160318156688833227
 hash({}) = 2654435832
 hash([]) = 2654435899
-hash({"hello": "world"}) = 4469488738203676328
+hash({"hello": "world"}) = 3701319991624763853
 ```
 
-Note the output is platform-dependent.
+The hash values shown are examples only. They depend on the platform, the compiler, and the compiler version, and they can change between versions of this library. Do not persist them or rely on specific values.
 
 ## See also
 
@@ -59,3 +63,4 @@ Note the output is platform-dependent.
 
 - Added in version 1.0.0.
 - Extended for arbitrary basic_json types in version 3.10.5.
+- Numbers that compare equal hash equally since version 3.13.0 unreleased; before, `0`, `0U`, and `0.0` had different hash values.

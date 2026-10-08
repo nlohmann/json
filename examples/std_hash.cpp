@@ -11,6 +11,7 @@ int main()
               << "hash(false) = " << std::hash<json> {}(json(false)) << '\n'
               << "hash(0) = " << std::hash<json> {}(json(0)) << '\n'
               << "hash(0U) = " << std::hash<json> {}(json(0U)) << '\n'
+              << "hash(0.0) = " << std::hash<json> {}(json(0.0)) << '\n'
               << "hash(\"\") = " << std::hash<json> {}(json("")) << '\n'
               << "hash({}) = " << std::hash<json> {}(json::object()) << '\n'
               << "hash([]) = " << std::hash<json> {}(json::array()) << '\n'

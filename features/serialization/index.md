@@ -154,6 +154,7 @@ If a string contains invalid UTF-8 sequences (for example, because it holds data
 - `strict` (default) — throw a [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) exception.
 - `replace` — replace invalid bytes with the Unicode replacement character U+FFFD (`�`).
 - `ignore` — silently drop invalid bytes.
+- `keep` — copy invalid bytes to the output unchanged; the result is not valid UTF-8.
 
 Example: serialize invalid UTF-8 with different error handlers
 
