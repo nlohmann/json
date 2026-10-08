@@ -13,7 +13,7 @@
     #include <intrin0.h> // __umulh, _umul128
 #endif
 
-#include <nlohmann/detail/abi_macros.hpp>
+#include <nlohmann/detail/macro_scope.hpp> // JSON_HEDLEY_ALWAYS_INLINE, NLOHMANN_JSON_NAMESPACE_BEGIN
 
 // Portable bit-level helpers for the number and string scanners. They use
 // compiler builtins or platform-specific intrinsics where available and plain
