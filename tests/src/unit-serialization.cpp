@@ -367,8 +367,7 @@ TEST_CASE("dump for basic_json with long double number_float_t")
     // serializer::dump_float(x, std::false_type). That branch must use the
     // "%.*Lg" format specifier; using "%.*g" with a long double argument is
     // undefined behavior and corrupts the output.
-    using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string,
-          bool, std::int64_t, std::uint64_t, long double>;
+    using long_double_json = nlohmann::json::with_float_t<long double>;
 
     SECTION("round-trip dump/parse")
     {

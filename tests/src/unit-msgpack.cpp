@@ -2432,8 +2432,8 @@ TEST_CASE("MessagePack numbers use the active union member (see #5644)")
     // used to read the union member that was not the active one, writing
     // wrong bytes for some values; std::int64_t/std::uint64_t (the default
     // types, where both members have the same width) were not affected
-    using int32_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint64_t, double>;
-    using int16_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int16_t, std::uint64_t, double>;
+    using int32_json = nlohmann::json::with_integers_t<std::int32_t, std::uint64_t>;
+    using int16_json = nlohmann::json::with_integers_t<std::int16_t, std::uint64_t>;
 
     SECTION("number_integer_t = std::int32_t")
     {

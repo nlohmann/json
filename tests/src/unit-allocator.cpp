@@ -370,14 +370,7 @@ TEST_CASE("copy of a deeply nested value survives a failing allocation (#5640)")
 #if !(defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
     SECTION("std::map-backed object_t")
     {
-        using bad_alloc_json = nlohmann::basic_json<std::map,
-              std::vector,
-              std::string,
-              bool,
-              std::int64_t,
-              std::uint64_t,
-              double,
-              nth_alloc_fails_allocator>;
+        using bad_alloc_json = nlohmann::json::with_allocator_t<nth_alloc_fails_allocator>;
 
         check_deep_copy_survives_failing_allocation<bad_alloc_json>(false);
         check_deep_copy_survives_failing_allocation<bad_alloc_json>(true);
@@ -385,14 +378,7 @@ TEST_CASE("copy of a deeply nested value survives a failing allocation (#5640)")
 
     SECTION("ordered_map-backed object_t")
     {
-        using bad_alloc_ordered_json = nlohmann::basic_json<nlohmann::ordered_map,
-              std::vector,
-              std::string,
-              bool,
-              std::int64_t,
-              std::uint64_t,
-              double,
-              nth_alloc_fails_allocator>;
+        using bad_alloc_ordered_json = nlohmann::ordered_json::with_allocator_t<nth_alloc_fails_allocator>;
 
         check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(false);
         check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(true);
@@ -450,14 +436,7 @@ struct scratch_counting_allocator : std::allocator<T>
 
 TEST_CASE("deep copy uses the provided allocator")
 {
-    using counting_json = nlohmann::basic_json<std::map,
-          std::vector,
-          std::string,
-          bool,
-          std::int64_t,
-          std::uint64_t,
-          double,
-          scratch_counting_allocator>;
+    using counting_json = nlohmann::json::with_allocator_t<scratch_counting_allocator>;
 
     // deeper than the 128 levels the copy constructor descends into, so the
     // innermost objects are copied by the iterative deep copy
@@ -516,14 +495,7 @@ TEST_CASE("converting a deeply nested value from another specialization fails cl
     // the allocator in noexcept constructors, so a failing construction crashes
     // the program there instead of throwing std::bad_alloc. Nothing to check.
 #if !(defined(_MSC_VER) && _MSC_VER < 1910 && defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
-    using countdown_json = nlohmann::basic_json<std::map,
-          std::vector,
-          std::string,
-          bool,
-          std::int64_t,
-          std::uint64_t,
-          double,
-          countdown_allocator>;
+    using countdown_json = nlohmann::json::with_allocator_t<countdown_allocator>;
 
     // deeper than the 128 levels the converting constructor descends into, so
     // that failures land on both sides of the bound - or, built with
@@ -631,14 +603,7 @@ TEST_CASE("destructor performs no allocation, only deallocation")
     // Since that stack could itself throw bad_alloc from inside the
     // noexcept destructor (#5135), destroy() no longer allocates anything:
     // it only ever frees what is already there.
-    using counting_json = nlohmann::basic_json<std::map,
-          std::vector,
-          std::string,
-          bool,
-          std::int64_t,
-          std::uint64_t,
-          double,
-          counting_allocator>;
+    using counting_json = nlohmann::json::with_allocator_t<counting_allocator>;
 
     SECTION("array")
     {
@@ -683,14 +648,7 @@ TEST_CASE("destructor performs no allocation, only deallocation")
 TEST_CASE("a failed allocation leaves the value unchanged")
 {
     // create JSON type using the throwing allocator
-    using my_json = nlohmann::basic_json<std::map,
-          std::vector,
-          std::string,
-          bool,
-          std::int64_t,
-          std::uint64_t,
-          double,
-          my_allocator>;
+    using my_json = nlohmann::json::with_allocator_t<my_allocator>;
 
     // Each of these creates a string, array, object, or binary value. The
     // value must be created before the type is changed: otherwise, a failed
