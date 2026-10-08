@@ -426,7 +426,7 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
     {
         for (std::size_t depth = 120; depth <= 140; ++depth)
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
 
             const json array = nested_array(depth, json(7));
             CHECK(json::from_cbor(json::to_cbor(array)) == array);
@@ -464,7 +464,7 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
                     nlohmann::detail::recursion_depth_limit() + 1, nlohmann::detail::recursion_depth_limit() + 2
                 })
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
             const json array = nested_array(depth, json(0));
 
             std::vector<std::uint8_t> expected_cbor(depth, 0x81);
@@ -505,10 +505,21 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         const json discarded_leaf(json::value_t::discarded);
         const json deep_discarded = nested_array(depth, discarded_leaf);
 
-        CHECK_THROWS_WITH_AS(json::to_cbor(deep_discarded), "[json.exception.type_error.321] cannot serialize discarded value to CBOR", json::type_error);
-        CHECK_THROWS_WITH_AS(json::to_msgpack(deep_discarded), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error);
-        CHECK_THROWS_WITH_AS(json::to_ubjson(deep_discarded), "[json.exception.type_error.321] cannot serialize discarded value to UBJSON", json::type_error);
-        CHECK_THROWS_WITH_AS(json::to_bjdata(deep_discarded), "[json.exception.type_error.321] cannot serialize discarded value to BJData", json::type_error);
+        // with diagnostics, the message names the path to the discarded leaf
+        std::string prefix = "[json.exception.type_error.321] ";
+#if JSON_DIAGNOSTICS
+        prefix += "(";
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            prefix += "/0";
+        }
+        prefix += ") ";
+#endif
+
+        CHECK_THROWS_WITH_AS(json::to_cbor(deep_discarded), (prefix + "cannot serialize discarded value to CBOR").c_str(), json::type_error);
+        CHECK_THROWS_WITH_AS(json::to_msgpack(deep_discarded), (prefix + "cannot serialize discarded value to MessagePack").c_str(), json::type_error);
+        CHECK_THROWS_WITH_AS(json::to_ubjson(deep_discarded), (prefix + "cannot serialize discarded value to UBJSON").c_str(), json::type_error);
+        CHECK_THROWS_WITH_AS(json::to_bjdata(deep_discarded), (prefix + "cannot serialize discarded value to BJData").c_str(), json::type_error);
     }
 
     SECTION("does not overflow the C++ stack")
