@@ -353,9 +353,8 @@ The number types can be changed with template parameters.
 
     A `basic_json` type that uses `#!c long double` as floating-point type.
 
-    ```cpp hl_lines="2"
-    using json_ld = nlohmann::basic_json<std::map, std::vector, std::string, bool,
-                                         std::int64_t, std::uint64_t, long double>;
+    ```cpp hl_lines="1"
+    using json_ld = nlohmann::json::with_float_t<long double>;
     ```
 
     Note values should then be parsed with `json_ld::parse` rather than `json::parse` as the latter would parse

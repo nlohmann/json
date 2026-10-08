@@ -1,12 +1,11 @@
 #include <iostream>
 #include <type_traits>
-#include <vector>
 
 #include <nlohmann/json.hpp>
 
 #include "custom_object_type.hpp"
 
-using custom_json = nlohmann::basic_json<custom_object_type, std::vector>;
+using custom_json = nlohmann::json::with_object_t<custom_object_type>;
 
 int main()
 {
