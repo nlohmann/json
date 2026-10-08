@@ -26,6 +26,9 @@
 // used where the CPU has SSSE3 (all x86-64 CPUs since about 2011), else the
 // portable check. JSON_VIEW_USE_SSSE3 skips the CPU check (for code compiled
 // for SSSE3 anyway); JSON_VIEW_NO_SIMD selects the portable code.
+// NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE (set by the GCC module interface, where GCC
+// ignores the target attribute and then rejects the SSSE3 intrinsics) keeps the
+// check portable without disabling the SSE2 code.
 #if !defined(JSON_VIEW_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && NLOHMANN_VIEW_LITTLE_ENDIAN
     #include <arm_neon.h>
     #define NLOHMANN_VIEW_NEON 1
@@ -44,7 +47,7 @@
 #else
     #define NLOHMANN_VIEW_SSSE3 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #endif
-#if NLOHMANN_VIEW_SSE2 && !NLOHMANN_VIEW_SSSE3 && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
+#if NLOHMANN_VIEW_SSE2 && !NLOHMANN_VIEW_SSSE3 && !defined(NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE) && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
     // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3)
     #include <cpuid.h>
     #include <tmmintrin.h>

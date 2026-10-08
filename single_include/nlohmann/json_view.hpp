@@ -305,8 +305,8 @@ struct document_data
     std::size_t tape_cap = 0;
     node* inline_tape = nullptr; ///< node array allocated together with this header
     std::size_t inline_cap = 0;
-    std::string arena{}; ///< decoded strings that contained escapes // NOLINT(readability-redundant-member-init)
-    std::string owned{}; ///< owned copy of the input, if any // NOLINT(readability-redundant-member-init)
+    std::string arena; ///< decoded strings that contained escapes
+    std::string owned; ///< owned copy of the input, if any
 
     // hash indexes of large objects (see object_index.hpp)
     static constexpr std::uint32_t index_min_members = 128;
@@ -315,9 +315,9 @@ struct document_data
         std::size_t start;  ///< first slot in index_slots
         std::uint32_t mask; ///< slot count - 1 (a power of two minus one)
     };
-    std::vector<object_index> indexes{}; // NOLINT(readability-redundant-member-init)
-    std::vector<std::uint32_t> index_slots{}; // NOLINT(readability-redundant-member-init)
-    std::vector<std::uint32_t> large_objects{}; ///< positions of the objects to index (noted while parsing) // NOLINT(readability-redundant-member-init)
+    std::vector<object_index> indexes;
+    std::vector<std::uint32_t> index_slots;
+    std::vector<std::uint32_t> large_objects; ///< positions of the objects to index (noted while parsing)
     std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena, edit arena (indexed by flags & node_flags::storage)
     bool discarded = true;
 
@@ -557,6 +557,9 @@ NLOHMANN_JSON_NAMESPACE_END
 // used where the CPU has SSSE3 (all x86-64 CPUs since about 2011), else the
 // portable check. JSON_VIEW_USE_SSSE3 skips the CPU check (for code compiled
 // for SSSE3 anyway); JSON_VIEW_NO_SIMD selects the portable code.
+// NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE (set by the GCC module interface, where GCC
+// ignores the target attribute and then rejects the SSSE3 intrinsics) keeps the
+// check portable without disabling the SSE2 code.
 #if !defined(JSON_VIEW_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && NLOHMANN_VIEW_LITTLE_ENDIAN
     #include <arm_neon.h>
     #define NLOHMANN_VIEW_NEON 1
@@ -575,7 +578,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #else
     #define NLOHMANN_VIEW_SSSE3 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #endif
-#if NLOHMANN_VIEW_SSE2 && !NLOHMANN_VIEW_SSSE3 && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
+#if NLOHMANN_VIEW_SSE2 && !NLOHMANN_VIEW_SSSE3 && !defined(NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE) && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
     // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3)
     #include <cpuid.h>
     #include <tmmintrin.h>
@@ -933,7 +936,9 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
 #define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(plain[p[i]] != 0)) {} else { p += (i); goto stop; }
             NLOHMANN_VIEW_STEP(0) NLOHMANN_VIEW_STEP(1) NLOHMANN_VIEW_STEP(2) NLOHMANN_VIEW_STEP(3)
             NLOHMANN_VIEW_STEP(4) NLOHMANN_VIEW_STEP(5) NLOHMANN_VIEW_STEP(6) NLOHMANN_VIEW_STEP(7)
-            if (!Value || !NLOHMANN_VIEW_VECTOR)
+#if NLOHMANN_VIEW_VECTOR
+            if (!Value) // (a plain `!Value || !NLOHMANN_VIEW_VECTOR` is a constant condition for MSVC, C4127)
+#endif
             {
                 NLOHMANN_VIEW_STEP(8) NLOHMANN_VIEW_STEP(9) NLOHMANN_VIEW_STEP(10) NLOHMANN_VIEW_STEP(11)
                 NLOHMANN_VIEW_STEP(12) NLOHMANN_VIEW_STEP(13) NLOHMANN_VIEW_STEP(14) NLOHMANN_VIEW_STEP(15)
