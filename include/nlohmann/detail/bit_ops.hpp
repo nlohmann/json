@@ -10,7 +10,7 @@
 
 #include <cstdint> // uint64_t
 
-#include <nlohmann/detail/abi_macros.hpp>
+#include <nlohmann/detail/macro_scope.hpp> // JSON_HEDLEY_ALWAYS_INLINE, NLOHMANN_JSON_NAMESPACE_BEGIN
 
 // Portable bit-level helpers for the number and string scanners. They use
 // compiler builtins where available and plain C++ otherwise, so they need no
