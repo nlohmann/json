@@ -288,8 +288,7 @@ Example
 A `basic_json` type that uses `long double` as floating-point type.
 
 ```
-using json_ld = nlohmann::basic_json<std::map, std::vector, std::string, bool,
-                                     std::int64_t, std::uint64_t, long double>;
+using json_ld = nlohmann::json::with_float_t<long double>;
 ```
 
 Note values should then be parsed with `json_ld::parse` rather than `json::parse` as the latter would parse floating-point values to `double` before then converting them to `long double`.

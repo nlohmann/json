@@ -2,6 +2,8 @@
 
 Class [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) is configurable through eleven template parameters. The library never formally states what a type passed for one of these parameters has to provide -- the requirements are implied by the way the library uses the resulting [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md), [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md), [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md), etc. This page collects these requirements so they do not have to be discovered by trial and error. Each section lists the concrete types that are known to work for that parameter and the ones that do not, checked against Boost 1.83, Abseil 20250127.0, Folly, EASTL 3.21, `ankerl::unordered_dense`, `phmap`, `gtl`, `robin_hood`, `tsl::ordered_map`, and Qt 6.
 
+To change a single template parameter and keep the others, use the member alias templates [`with_*_t`](https://json.nlohmann.me/api/basic_json/with_t/index.md); for instance, `nlohmann::json::with_float_t<long double>` is `json` with `long double` as [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md).
+
 ## How to read this page
 
 Requirements are split into two groups:
@@ -94,7 +96,7 @@ struct unordered_map_object
     using base_t::base_t;
 };
 
-using unordered_json = nlohmann::basic_json<unordered_map_object>;
+using unordered_json = nlohmann::json::with_object_t<unordered_map_object>;
 ```
 
 Whether `std::unordered_map` can be instantiated at all depends on the standard library: `object_t` is formed while `basic_json` is still incomplete (see the warning above), and libstdc++ 9 needs the size of the mapped type to instantiate the hash map's node type, so the adapter does not compile there. Newer libstdc++ versions, and the hash maps listed below, do not have that problem.
@@ -119,7 +121,7 @@ struct flat_hash_object
     using base_t::base_t;
 };
 
-using flat_hash_json = nlohmann::basic_json<flat_hash_object>;
+using flat_hash_json = nlohmann::json::with_object_t<flat_hash_object>;
 ```
 
 `absl::node_hash_map` keeps references to the mapped values valid across insertions; `absl::flat_hash_map` does not, which makes it behave like [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) with respect to [iterator invalidation](https://json.nlohmann.me/api/basic_json/#iterator-invalidation). Both expose a `capacity()` member function, so [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) treats them conservatively and keeps the parent pointers correct either way.
@@ -292,13 +294,12 @@ Example: use the custom `ObjectType`
 ```
 #include <iostream>
 #include <type_traits>
-#include <vector>
 
 #include <nlohmann/json.hpp>
 
 #include "custom_object_type.hpp"
 
-using custom_json = nlohmann::basic_json<custom_object_type, std::vector>;
+using custom_json = nlohmann::json::with_object_t<custom_object_type>;
 
 int main()
 {
@@ -553,13 +554,12 @@ Example: use the custom `ArrayType`
 
 ```
 #include <iostream>
-#include <map>
 
 #include <nlohmann/json.hpp>
 
 #include "custom_array_type.hpp"
 
-using custom_json = nlohmann::basic_json<std::map, custom_array_type>;
+using custom_json = nlohmann::json::with_array_t<custom_array_type>;
 
 int main()
 {
@@ -828,14 +828,12 @@ Example: use the custom `StringType`
 
 ```
 #include <iostream>
-#include <map>
-#include <vector>
 
 #include <nlohmann/json.hpp>
 
 #include "custom_string_type.hpp"
 
-using custom_json = nlohmann::basic_json<std::map, std::vector, custom_string_type>;
+using custom_json = nlohmann::json::with_string_t<custom_string_type>;
 
 int main()
 {
@@ -1128,19 +1126,13 @@ class custom_binary_type
 Example: use the custom `BinaryType`
 
 ```
-#include <cstdint>
 #include <iostream>
-#include <map>
-#include <string>
-#include <vector>
 
 #include <nlohmann/json.hpp>
 
 #include "custom_binary_type.hpp"
 
-using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool,
-      std::int64_t, std::uint64_t, double, std::allocator,
-      nlohmann::adl_serializer, custom_binary_type>;
+using custom_json = nlohmann::json::with_binary_t<custom_binary_type>;
 
 int main()
 {

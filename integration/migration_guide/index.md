@@ -67,7 +67,7 @@ Define [`JSON_DELETE_DEPRECATED_FUNCTIONS`](https://json.nlohmann.me/api/macros/
 - Passing a `basic_json` specialization as template parameter `RefStringType` to [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) is deprecated since 3.11.0. The string type can now be directly provided. This also applies to passing such a JSON pointer to [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`contains`](https://json.nlohmann.me/api/basic_json/contains/index.md), [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), and [`value`](https://json.nlohmann.me/api/basic_json/value/index.md).
 
   ```
-  using my_json = nlohmann::basic_json<std::map, std::vector, my_string_type>;
+  using my_json = nlohmann::json::with_string_t<my_string_type>;
   nlohmann::json_pointer<my_json> ptr("/foo/bar/1");
   ```
 
