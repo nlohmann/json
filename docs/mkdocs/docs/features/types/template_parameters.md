@@ -8,6 +8,10 @@ these requirements so they do not have to be discovered by trial and error. Each
 that are known to work for that parameter and the ones that do not, checked against Boost 1.83, Abseil 20250127.0,
 Folly, EASTL 3.21, `ankerl::unordered_dense`, `phmap`, `gtl`, `robin_hood`, `tsl::ordered_map`, and Qt 6.
 
+To change a single template parameter and keep the others, use the member alias templates
+[`with_*_t`](../../api/basic_json/with_t.md); for instance, `nlohmann::json::with_float_t<long double>` is `json` with
+`#!cpp long double` as [`number_float_t`](../../api/basic_json/number_float_t.md).
+
 ## How to read this page
 
 Requirements are split into two groups:
@@ -143,7 +147,7 @@ struct unordered_map_object
     using base_t::base_t;
 };
 
-using unordered_json = nlohmann::basic_json<unordered_map_object>;
+using unordered_json = nlohmann::json::with_object_t<unordered_map_object>;
 ```
 
 Whether `#!cpp std::unordered_map` can be instantiated at all depends on the standard library: `object_t` is formed
@@ -176,7 +180,7 @@ struct flat_hash_object
     using base_t::base_t;
 };
 
-using flat_hash_json = nlohmann::basic_json<flat_hash_object>;
+using flat_hash_json = nlohmann::json::with_object_t<flat_hash_object>;
 ```
 
 `absl::node_hash_map` keeps references to the mapped values valid across insertions; `absl::flat_hash_map` does not,
