@@ -17,6 +17,12 @@ module;
 // 3. Or upgrade to a newer GCC version with better modules support.
 // See: https://github.com/nlohmann/json/issues/5103
 
+// GCC ignores the target attribute in modules ("'target' attribute currently
+// unsupported in modules") and then rejects the SSSE3 intrinsics of json_view.
+#if defined(__GNUC__) && !defined(__clang__)
+    #define NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE
+#endif
+
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_literals.hpp>
 #include <nlohmann/json_view.hpp>

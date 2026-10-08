@@ -85,7 +85,9 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
 #define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(plain[p[i]] != 0)) {} else { p += (i); goto stop; }
             NLOHMANN_VIEW_STEP(0) NLOHMANN_VIEW_STEP(1) NLOHMANN_VIEW_STEP(2) NLOHMANN_VIEW_STEP(3)
             NLOHMANN_VIEW_STEP(4) NLOHMANN_VIEW_STEP(5) NLOHMANN_VIEW_STEP(6) NLOHMANN_VIEW_STEP(7)
-            if (!Value || !NLOHMANN_VIEW_VECTOR)
+#if NLOHMANN_VIEW_VECTOR
+            if (!Value) // (a plain `!Value || !NLOHMANN_VIEW_VECTOR` is a constant condition for MSVC, C4127)
+#endif
             {
                 NLOHMANN_VIEW_STEP(8) NLOHMANN_VIEW_STEP(9) NLOHMANN_VIEW_STEP(10) NLOHMANN_VIEW_STEP(11)
                 NLOHMANN_VIEW_STEP(12) NLOHMANN_VIEW_STEP(13) NLOHMANN_VIEW_STEP(14) NLOHMANN_VIEW_STEP(15)
