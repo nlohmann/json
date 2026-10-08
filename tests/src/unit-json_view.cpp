@@ -1136,8 +1136,10 @@ TEST_CASE("json_view dump")
         CHECK(d.root().dump() == j.dump());
         CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
         CHECK(d.root().dump(4, ' ', true) == j.dump(4, ' ', true));
-        const ordered_json_document keys = ordered_json_document::parse(R"({"é\n": {"\"": [], "": {}}})");
-        CHECK(keys.root().dump(2, ' ', true) == ordered_json::parse(R"({"é\n": {"\"": [], "": {}}})").dump(2, ' ', true));
+        const std::string key_text = R"({"é\n": {"\"": [], "": {}}})";
+        const ordered_json_document keys = ordered_json_document::parse(key_text);
+        const ordered_json key_json = ordered_json::parse(key_text);
+        CHECK(keys.root().dump(2, ' ', true) == key_json.dump(2, ' ', true));
     }
 
     SECTION("numbers")
