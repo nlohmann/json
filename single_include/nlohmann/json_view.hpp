@@ -2737,7 +2737,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
 /// still covers its original subtree.
 inline node* find_parent(const document_data& d, const node* target)
 {
-    const std::less<const node*> lt;
+    const std::less<const node*> lt{};
     const node* lo = d.tape;
     const node* hi = d.tape + d.tape_size;
     const node* c = d.tape;
@@ -6015,11 +6015,19 @@ class basic_json_view
         return detail::view::view_side<BasicJsonType, basic_json_view>(v);
     }
 
+    /// the template argument as a runtime condition: testing it directly in
+    /// `Editable && ...` makes the condition constant, which MSVC reports as
+    /// C4127
+    static bool editable() noexcept
+    {
+        return Editable;
+    }
+
     /// the number of source bytes of this value (estimated for values with
     /// decoded strings)
     std::size_t source_extent() const noexcept
     {
-        if (Editable && m_doc->edits != nullptr)
+        if (editable() && m_doc->edits != nullptr)
         {
             // positions of moved and new values are not source offsets
             return m_node == m_doc->tape ? m_doc->size + m_doc->edits->text_used : 64;
