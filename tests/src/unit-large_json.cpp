@@ -506,14 +506,15 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         const json deep_discarded = nested_array(depth, discarded_leaf);
 
         // with diagnostics, the message names the path to the discarded leaf
-        std::string prefix = "[json.exception.type_error.321] ";
 #if JSON_DIAGNOSTICS
-        prefix += '(';
+        std::string path;
         for (std::size_t i = 0; i < depth; ++i)
         {
-            prefix += "/0";
+            path += "/0";
         }
-        prefix += ") ";
+        const std::string prefix = "[json.exception.type_error.321] (" + path + ") ";
+#else
+        const std::string prefix = "[json.exception.type_error.321] ";
 #endif
 
         CHECK_THROWS_WITH_AS(json::to_cbor(deep_discarded), (prefix + "cannot serialize discarded value to CBOR").c_str(), json::type_error);
