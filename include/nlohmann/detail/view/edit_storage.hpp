@@ -177,7 +177,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
 /// still covers its original subtree.
 inline node* find_parent(const document_data& d, const node* target)
 {
-    const std::less<const node*> lt;
+    const std::less<const node*> lt{};
     const node* lo = d.tape;
     const node* hi = d.tape + d.tape_size;
     const node* c = d.tape;
