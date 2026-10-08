@@ -64,18 +64,7 @@ using ordered_json = nlohmann::ordered_json;
     /////////////////////////////////////////////////////////////////////
     // for #4804
     /////////////////////////////////////////////////////////////////////
-    using json_4804 = nlohmann::basic_json<std::map,        // ObjectType
-    std::vector,     // ArrayType
-    std::string,     // StringType
-    bool,            // BooleanType
-    std::int64_t,    // NumberIntegerType
-    std::uint64_t,   // NumberUnsignedType
-    double,          // NumberFloatType
-    std::allocator,  // AllocatorType
-    nlohmann::adl_serializer,  // JSONSerializer
-    std::vector<std::byte>,    // BinaryType
-    void                       // CustomBaseClass
-    >;
+    using json_4804 = nlohmann::json::with_binary_t<std::vector<std::byte>>;
 #endif
 
 #ifdef JSON_HAS_CPP_20
@@ -107,7 +96,7 @@ DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 // for #1021
 /////////////////////////////////////////////////////////////////////
 
-using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+using float_json = nlohmann::json::with_float_t<float>;
 
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
 namespace
@@ -155,10 +144,8 @@ struct failing_allocator : std::allocator<T>
     };
 };
 
-using failing_json = nlohmann::basic_json<std::map, std::vector, std::string, bool,
-      std::int64_t, std::uint64_t, double, failing_allocator>;
-using failing_ordered_json = nlohmann::basic_json<nlohmann::ordered_map, std::vector, std::string, bool,
-      std::int64_t, std::uint64_t, double, failing_allocator>;
+using failing_json = nlohmann::json::with_allocator_t<failing_allocator>;
+using failing_ordered_json = nlohmann::ordered_json::with_allocator_t<failing_allocator>;
 
 // builds `depth` levels of nesting around a scalar, iteratively (never
 // recursing: each wrap only moves the previous, already-built value, which
