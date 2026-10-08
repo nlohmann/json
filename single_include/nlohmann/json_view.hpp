@@ -270,8 +270,8 @@ struct document_data
     std::size_t tape_cap = 0;
     node* inline_tape = nullptr; ///< node array allocated together with this header
     std::size_t inline_cap = 0;
-    std::string arena{}; ///< decoded strings that contained escapes // NOLINT(readability-redundant-member-init)
-    std::string owned{}; ///< owned copy of the input, if any // NOLINT(readability-redundant-member-init)
+    std::string arena; ///< decoded strings that contained escapes
+    std::string owned; ///< owned copy of the input, if any
     std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
     bool discarded = true;
 
