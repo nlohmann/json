@@ -1,11 +1,10 @@
 #include <iostream>
-#include <map>
 
 #include <nlohmann/json.hpp>
 
 #include "custom_array_type.hpp"
 
-using custom_json = nlohmann::basic_json<std::map, custom_array_type>;
+using custom_json = nlohmann::json::with_array_t<custom_array_type>;
 
 int main()
 {

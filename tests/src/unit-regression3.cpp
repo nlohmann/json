@@ -62,18 +62,7 @@ using ordered_json = nlohmann::ordered_json;
     /////////////////////////////////////////////////////////////////////
     // for #4804
     /////////////////////////////////////////////////////////////////////
-    using json_4804 = nlohmann::basic_json<std::map,        // ObjectType
-    std::vector,     // ArrayType
-    std::string,     // StringType
-    bool,            // BooleanType
-    std::int64_t,    // NumberIntegerType
-    std::uint64_t,   // NumberUnsignedType
-    double,          // NumberFloatType
-    std::allocator,  // AllocatorType
-    nlohmann::adl_serializer,  // JSONSerializer
-    std::vector<std::byte>,    // BinaryType
-    void                       // CustomBaseClass
-    >;
+    using json_4804 = nlohmann::json::with_binary_t<std::vector<std::byte>>;
 #endif
 
 #ifdef JSON_HAS_CPP_20
@@ -930,7 +919,7 @@ TEST_CASE("regression test #5476 - array type without reserve()")
 {
     // the capacity reserved for definite-length arrays must not require the
     // array type to have a reserve() member function
-    using deque_json = nlohmann::basic_json<std::map, std::deque>;
+    using deque_json = nlohmann::json::with_array_t<std::deque>;
 
     SECTION("std::deque")
     {
