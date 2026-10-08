@@ -172,7 +172,7 @@ TEST_CASE("locale-dependent test (LC_NUMERIC=de_DE)")
             // a floating-point type that is not a float or a double is written
             // with snprintf, whose locale-specific decimal point and thousands
             // separator are undone afterwards
-            using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+            using long_double_json = nlohmann::json::with_float_t<long double>;
             CHECK(long_double_json(12345.5L).dump() == "12345.5");
             CHECK(long_double_json(1.0L).dump() == "1.0");
             CHECK(long_double_json(-0.25L).dump() == "-0.25");
@@ -273,7 +273,7 @@ TEST_CASE("locale changes between lexer construction and number conversion (#519
     }
     text += "]";
 
-    using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+    using long_double_json = nlohmann::json::with_float_t<long double>;
 
     // reference values, parsed without a locale switch
     REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
@@ -449,7 +449,7 @@ TEST_CASE("locale changes during a single dump() (#5709 item 3)")
     // long double on 64-bit Arm, where it is IEEE-754 double) takes the
     // locale-independent to_chars() path instead, and this test is a no-op
     // there.
-    using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+    using long_double_json = nlohmann::json::with_float_t<long double>;
     using ld_limits = std::numeric_limits<long_double_json::number_float_t>;
     const bool is_ieee_single_or_double =
         (ld_limits::is_iec559 && ld_limits::digits == 24 && ld_limits::max_exponent == 128) ||

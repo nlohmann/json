@@ -22,7 +22,7 @@ namespace
 
 // std::deque has no capacity() member function, which the library only needs
 // to detect a reallocation for JSON_DIAGNOSTICS
-using deque_json = nlohmann::basic_json<std::map, std::deque>;
+using deque_json = nlohmann::json::with_array_t<std::deque>;
 
 // a std::vector whose at() is hidden: the library performs its own bounds
 // check and must not fall back to the container's checked accessor
@@ -39,7 +39,7 @@ class vector_without_at : public std::vector<T, Allocator>
     void at() = delete;
 };
 
-using no_at_json = nlohmann::basic_json<std::map, vector_without_at>;
+using no_at_json = nlohmann::json::with_array_t<vector_without_at>;
 
 } // namespace
 
