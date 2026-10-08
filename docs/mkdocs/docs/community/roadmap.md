@@ -39,11 +39,23 @@ Releases follow [semantic versioning](https://semver.org): a minor or patch rele
 that uses the public API, unless that code opts in to a change with a macro as described [below](#version-40). In
 particular, a 3.x release does not:
 
-- change the signature of a function: the types or order of its existing parameters, its return type, or the
-  const-ness of a member function. New parameters may be added if they have a default value;
-- remove or rename a function or class;
+- make breaking changes to the signature of a function: the types or order of its existing parameters, its return type,
+  its `noexcept` or `constexpr` specifier, or the const-ness of a member function. New parameters may be added if they
+  have a default value;
+- remove or rename a function or class, or change the template parameters of a public class template;
 - change which exceptions a function throws, or the [exception ids](../home/exceptions.md);
-- change access specifiers, or change or remove existing default arguments. New default arguments may be added.
+- change access specifiers, or change or remove existing default arguments. New default arguments may be added;
+- change the JSON type that a valid input parses to, or the text that `dump()` produces for a valid value;
+- accept input that was rejected before, or reject input that was accepted before;
+- change the order in which the keys of an object are iterated. The default type sorts keys, and
+  [`ordered_json`](../api/ordered_json.md) keeps insertion order;
+- change when iterators, pointers, or references are invalidated, or the state of a moved-from `basic_json`;
+- add or remove implicit conversions from `basic_json`;
+- change how `to_json` and `from_json` functions are found, or the behavior of
+  [`adl_serializer`](../api/adl_serializer/index.md);
+- add pure virtual functions to the [`json_sax`](../api/json_sax/index.md) interface;
+- remove, rename, renumber, or add enumerators of `value_t`;
+- remove or rename a documented macro, CMake option, CMake target, or header, or change what a documented macro does.
 
 Exceptions to these rules, for instance when fixing a bug requires changing the exception a function throws, are
 documented in the [release notes](../home/releases.md).
@@ -54,11 +66,12 @@ The following are **not** part of the public API and may change in any release, 
   apart.
 - The ABI, including `sizeof(basic_json)` and the memory layout of its values. The
   [versioned inline namespace](../features/namespace.md) turns mixing versions into a link error.
+- The hash values returned by `std::hash` for `basic_json`. Numbers that compare equal still hash equally.
 - Everything in namespace `nlohmann::detail`, and macros and type traits that are not documented in the
   [API reference](../api/basic_json/index.md).
 
-Changes that would break the public API are only added behind a macro whose default keeps the 3.x behavior, see
-[Version 4.0](#version-40).
+Breaking changes are only added behind a macro whose default keeps the 3.x behavior. See [Version 4.0](#version-40) and
+the [macro overview](../features/macros.md).
 
 ## Version 4.0
 
