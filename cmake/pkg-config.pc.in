@@ -4,4 +4,4 @@ includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
 Name: @PROJECT_NAME@
 Description: JSON for Modern C++
 Version: @PROJECT_VERSION@
-Cflags: -I${includedir}
+Cflags: -I${includedir}@NLOHMANN_JSON_PKGCONFIG_CFLAGS@

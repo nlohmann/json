@@ -438,7 +438,7 @@ TEST_CASE("json_view images: errors")
 
         // the NULs after the text and the decoded strings
         bad = image;
-        bad[text_at(image) + header_field(image, 16)] = 'x';
+        bad[text_at(image) + static_cast<std::size_t>(header_field(image, 16))] = 'x';
         CHECK(load_result(bad, image_check::none) == prefix + "sizes out of range");
         bad = image;
         bad.back() = 'x';
@@ -534,8 +534,8 @@ TEST_CASE("json_view images: check")
 
     SECTION("bounds")
     {
-        const std::size_t text_size = header_field(image, 16);
-        const std::size_t arena_size = header_field(image, 24);
+        const std::size_t text_size = static_cast<std::size_t>(header_field(image, 16));
+        const std::size_t arena_size = static_cast<std::size_t>(header_field(image, 24));
         rejected(corrupted(image, 1, [&](node & n)
         {
             n.off = static_cast<std::uint32_t>(text_size + 1);
@@ -624,7 +624,8 @@ TEST_CASE("json_view images: check")
             n.kind = 2; // {} as []: fine
         });
         CHECK(load_result(as_array, image_check::full).empty());
-        CHECK(json_document::load(as_array).root().dump() == R"({"s":"x\"y","i":-12,"u":7,"f":1.5e+300,"b":true,"n":null,"a":["t",[]]})");
+        const std::string expected_dump = R"({"s":"x\"y","i":-12,"u":7,"f":1.5e+300,"b":true,"n":null,"a":["t",[]]})";
+        CHECK(json_document::load(as_array).root().dump() == expected_dump);
     }
 
     SECTION("strings")
@@ -641,7 +642,7 @@ TEST_CASE("json_view images: check")
         // invalid UTF-8 in a decoded string
         b = image;
         const node s2 = node_at(image, 2);
-        b[t + header_field(image, 16) + 1 + s2.off] = 0xFF;
+        b[t + static_cast<std::size_t>(header_field(image, 16)) + 1 + s2.off] = 0xFF;
         rejected(b, false);
     }
 

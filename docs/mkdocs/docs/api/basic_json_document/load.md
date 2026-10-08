@@ -91,7 +91,7 @@ additionally linear in the combined length of the text and the decoded strings; 
 
 ## Notes
 
-**The `image_check` modes.**
+### `image_check` { #image_check }
 
 ```cpp
 using image_check = detail::view::image_check;
