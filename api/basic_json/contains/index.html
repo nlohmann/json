@@ -72,32 +72,18 @@
 <span class=w>              </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>j</span><span class=p>.</span><span class=n>contains</span><span class=p>(</span><span class=s>"/array/1"</span><span class=n>_json_pointer</span><span class=p>)</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=sc>'\n'</span>
 <span class=w>              </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>j</span><span class=p>.</span><span class=n>contains</span><span class=p>(</span><span class=s>"/array/-"</span><span class=n>_json_pointer</span><span class=p>)</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=sc>'\n'</span>
 <span class=w>              </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>j</span><span class=p>.</span><span class=n>contains</span><span class=p>(</span><span class=s>"/array/4"</span><span class=n>_json_pointer</span><span class=p>)</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=sc>'\n'</span>
-<span class=w>              </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>j</span><span class=p>.</span><span class=n>contains</span><span class=p>(</span><span class=s>"/baz"</span><span class=n>_json_pointer</span><span class=p>)</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>std</span><span class=o>::</span><span class=n>endl</span><span class=p>;</span>
-
-<span class=w>    </span><span class=k>try</span>
-<span class=w>    </span><span class=p>{</span>
-<span class=w>        </span><span class=c1>// try to use an array index with leading '0'</span>
-<span class=w>        </span><span class=n>j</span><span class=p>.</span><span class=n>contains</span><span class=p>(</span><span class=s>"/array/01"</span><span class=n>_json_pointer</span><span class=p>);</span>
-<span class=w>    </span><span class=p>}</span>
-<span class=w>    </span><span class=k>catch</span><span class=w> </span><span class=p>(</span><span class=k>const</span><span class=w> </span><span class=n>json</span><span class=o>::</span><span class=n>parse_error</span><span class=o>&amp;</span><span class=w> </span><span class=n>e</span><span class=p>)</span>
-<span class=w>    </span><span class=p>{</span>
-<span class=w>        </span><span class=n>std</span><span class=o>::</span><span class=n>cout</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>e</span><span class=p>.</span><span class=n>what</span><span class=p>()</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=sc>'\n'</span><span class=p>;</span>
-<span class=w>    </span><span class=p>}</span>
-
-<span class=w>    </span><span class=k>try</span>
-<span class=w>    </span><span class=p>{</span>
-<span class=w>        </span><span class=c1>// try to use an array index that is not a number</span>
-<span class=w>        </span><span class=n>j</span><span class=p>.</span><span class=n>contains</span><span class=p>(</span><span class=s>"/array/one"</span><span class=n>_json_pointer</span><span class=p>);</span>
-<span class=w>    </span><span class=p>}</span>
-<span class=w>    </span><span class=k>catch</span><span class=w> </span><span class=p>(</span><span class=k>const</span><span class=w> </span><span class=n>json</span><span class=o>::</span><span class=n>parse_error</span><span class=o>&amp;</span><span class=w> </span><span class=n>e</span><span class=p>)</span>
-<span class=w>    </span><span class=p>{</span>
-<span class=w>        </span><span class=n>std</span><span class=o>::</span><span class=n>cout</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>e</span><span class=p>.</span><span class=n>what</span><span class=p>()</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=sc>'\n'</span><span class=p>;</span>
-<span class=w>    </span><span class=p>}</span>
+<span class=w>              </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>j</span><span class=p>.</span><span class=n>contains</span><span class=p>(</span><span class=s>"/baz"</span><span class=n>_json_pointer</span><span class=p>)</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=sc>'\n'</span>
+<span class=w>              </span><span class=c1>// an array index with a leading '0' is not found</span>
+<span class=w>              </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>j</span><span class=p>.</span><span class=n>contains</span><span class=p>(</span><span class=s>"/array/01"</span><span class=n>_json_pointer</span><span class=p>)</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=sc>'\n'</span>
+<span class=w>              </span><span class=c1>// an array index that is not a number is not found</span>
+<span class=w>              </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>j</span><span class=p>.</span><span class=n>contains</span><span class=p>(</span><span class=s>"/array/one"</span><span class=n>_json_pointer</span><span class=p>)</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>std</span><span class=o>::</span><span class=n>endl</span><span class=p>;</span>
 <span class=p>}</span>
 </code></pre></div> <p>Output:</p> <div class=highlight><pre><span></span><code><span class=kc>true</span>
 <span class=kc>true</span>
 <span class=kc>true</span>
 <span class=kc>true</span>
+<span class=kc>false</span>
+<span class=kc>false</span>
 <span class=kc>false</span>
 <span class=kc>false</span>
 <span class=kc>false</span>

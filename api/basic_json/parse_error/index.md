@@ -72,7 +72,7 @@ int main()
     try
     {
         // parsing input with a syntax error
-        json::parse("[1,2,3,]");
+        json j = json::parse("[1,2,3,]");
     }
     catch (const json::parse_error& e)
     {

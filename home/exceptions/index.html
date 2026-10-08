@@ -88,7 +88,7 @@
 <span class=w>    </span><span class=k>try</span>
 <span class=w>    </span><span class=p>{</span>
 <span class=w>        </span><span class=c1>// parsing input with a syntax error</span>
-<span class=w>        </span><span class=n>json</span><span class=o>::</span><span class=n>parse</span><span class=p>(</span><span class=s>"[1,2,3,]"</span><span class=p>);</span>
+<span class=w>        </span><span class=n>json</span><span class=w> </span><span class=n>j</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>json</span><span class=o>::</span><span class=n>parse</span><span class=p>(</span><span class=s>"[1,2,3,]"</span><span class=p>);</span>
 <span class=w>    </span><span class=p>}</span>
 <span class=w>    </span><span class=k>catch</span><span class=w> </span><span class=p>(</span><span class=k>const</span><span class=w> </span><span class=n>json</span><span class=o>::</span><span class=n>parse_error</span><span class=o>&amp;</span><span class=w> </span><span class=n>e</span><span class=p>)</span>
 <span class=w>    </span><span class=p>{</span>
