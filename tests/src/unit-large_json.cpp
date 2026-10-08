@@ -508,7 +508,7 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         // with diagnostics, the message names the path to the discarded leaf
         std::string prefix = "[json.exception.type_error.321] ";
 #if JSON_DIAGNOSTICS
-        prefix += "(";
+        prefix += '(';
         for (std::size_t i = 0; i < depth; ++i)
         {
             prefix += "/0";
