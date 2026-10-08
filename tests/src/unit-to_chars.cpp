@@ -639,12 +639,22 @@ std::pair<std::string, int> digits_and_exponent(const std::string& s)
     return {digits, e};
 }
 
+/// the correctly rounded double of a decimal text
+/// (not std::strtod: the C runtimes of some platforms, e.g. MinGW's, round
+/// some 16 and 17 digit inputs wrongly)
+double parse_double(const std::string& text)
+{
+    const nlohmann::json j = nlohmann::json::parse(text, nullptr, false);
+    // (a discarded value: out of range, as strtod's HUGE_VAL)
+    return j.is_discarded() ? std::numeric_limits<double>::infinity() : j.get<double>();
+}
+
 /// whether the decimal digits * 10^e reads back as v
 bool reads_back(const std::string& digits, int e, double v)
 {
     const std::string text = digits + "e" + std::to_string(e);
     // (compared bit for bit: v is positive and finite, and -Wfloat-equal)
-    return reinterpret_bits<std::uint64_t>(std::strtod(text.c_str(), nullptr)) == reinterpret_bits<std::uint64_t>(v);
+    return reinterpret_bits<std::uint64_t>(parse_double(text)) == reinterpret_bits<std::uint64_t>(v);
 }
 
 /// Check the representation of a positive finite double: it reads back as
@@ -655,7 +665,7 @@ void check_shortest(double v)
     char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, v);
     const std::string text(buf.data(), end);
     CAPTURE(text)
-    CHECK(std::strtod(text.c_str(), nullptr) == v);
+    CHECK(parse_double(text) == v);
     // the layout is that of format_buffer() for the same digits
     std::array<char, 64> reference{};
     int len = 0;
@@ -691,7 +701,8 @@ void check_shortest(double v)
             CHECK(!reads_back(std::to_string(candidate), e, v));
         }
     }
-#if defined(JSON_HAS_CPP_17) && defined(__cpp_lib_to_chars)
+    // (icpc with libstdc++ 11 defines __cpp_lib_to_chars, but has no floating-point std::to_chars)
+#if defined(JSON_HAS_CPP_17) && defined(__cpp_lib_to_chars) && !defined(__INTEL_COMPILER)
     // the closest of the shortest representations, as std::to_chars finds it
     std::array<char, 64> std_text{};
     const auto r = std::to_chars(std_text.data(), std_text.data() + std_text.size(), v, std::chars_format::scientific);
