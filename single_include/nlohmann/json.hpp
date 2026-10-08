@@ -2536,6 +2536,17 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_NO_UNIQUE_ADDRESS
 #endif
 
+// Inlines small functions even in unoptimized builds, so that they are not
+// emitted. The parsers for parse(), accept(), and from_*() use it for the
+// functions that stand in for the code recovering from errors (see #3989).
+// MSVC is left to decide, as it warns (C4714) where it does not inline a
+// __forceinline function.
+#if defined(_MSC_VER) && !defined(__clang__)
+    #define JSON_INTERNAL_ALWAYS_INLINE
+#else
+    #define JSON_INTERNAL_ALWAYS_INLINE JSON_HEDLEY_ALWAYS_INLINE
+#endif
+
 // Clang targeting MinGW does not survive the thread_local storage the copy
 // constructor uses to bound its descent: every test that copies a value
 // segfaults with clang 11.0.1 and clang 18.1.8, while the same tests pass with
@@ -14777,7 +14788,7 @@ class binary_reader
 
     /// @copydoc skip_unsupported_bson_element
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type skip_unsupported_bson_element(const char_int_type /*element_type*/) const noexcept
     {
         return {};
@@ -18200,7 +18211,7 @@ class binary_reader
 
     /// @copydoc recover_high_precision_number
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type recover_high_precision_number(const std::vector<char>& /*number_vector*/, const std::size_t /*remaining*/ = 0) const noexcept
     {
         return {};
@@ -19310,7 +19321,7 @@ class binary_reader
     @return false, so that the caller stops reading
     */
     template<typename Exception>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     bool report_error(const std::size_t position, const std::string& last_token, const Exception& ex)
     {
         close_requested = sax->parse_error(position, last_token, ex);
@@ -19347,7 +19358,7 @@ class binary_reader
 
     /// @copydoc repair_requested
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type repair_requested() const noexcept
     {
         return {};
@@ -19372,7 +19383,7 @@ class binary_reader
 
     /// @copydoc value_failed
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type value_failed() const noexcept
     {
         return {};
@@ -19423,7 +19434,7 @@ class binary_reader
 
     /// @copydoc close_open_containers
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     void close_open_containers() const noexcept {}
 
     /*!
@@ -19459,7 +19470,7 @@ class binary_reader
 
     /// @copydoc resync
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type resync() const noexcept
     {
         return {};
@@ -20484,7 +20495,7 @@ class parser
     }
 
     /// the parser for parse() and accept() never recovers: stop parsing
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type continue_after(std::false_type /*step*/, bool& /*skip_to_state_evaluation*/) noexcept
     {
         return {};
@@ -20552,7 +20563,7 @@ class parser
 
     /// @copydoc overflow_error
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     std::false_type overflow_error(SAX* sax, const number_float_t /*value*/, std::false_type allow_recovery)
     {
         return report_error(sax, out_of_range::create(406, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr), allow_recovery);
@@ -20567,7 +20578,7 @@ class parser
     @return std::false_type, see report_error()
     */
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     std::false_type key_error(SAX* sax, std::false_type allow_recovery, const bool key_read)
     {
         return report_error(sax, parse_error::create(101, m_lexer.get_position(), key_read
@@ -20632,7 +20643,7 @@ class parser
             for recovering is not generated
     */
     template<typename SAX, typename Exception>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     std::false_type report_error(SAX* sax, const Exception& ex, std::false_type /*allow_recovery*/)
     {
         error_reported = true;
@@ -20689,32 +20700,32 @@ class parser
     // and unoptimized builds do not emit it either.
 
     /// @copydoc recover_token()
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     token_type recover_token(std::true_type /*allow_recovery*/)
     {
         return recover_token();
     }
 
     /// @copydoc recover_token()
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type recover_token(std::false_type /*allow_recovery*/) noexcept
     {
         return {};
     }
 
     /// return the token that was read last to the lexer (see lexer::unget_token())
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     void unget_token(std::true_type /*allow_recovery*/)
     {
         m_lexer.unget_token();
     }
 
     /// @copydoc unget_token(std::true_type)
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static void unget_token(std::false_type /*allow_recovery*/) noexcept {}
 
     /// @copydoc skip_to_value
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type skip_to_value(std::false_type /*allow_recovery*/) noexcept
     {
         return {};
@@ -20722,7 +20733,7 @@ class parser
 
     /// @copydoc recover_missing_value
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type recover_missing_value(SAX* /*sax*/, const std::vector<bool>& /*states*/, std::false_type /*allow_recovery*/) noexcept
     {
         return {};
@@ -20746,7 +20757,7 @@ class parser
 
     /// @copydoc close_containers
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type close_containers(SAX* /*sax*/, std::vector<bool>& /*states*/, std::false_type /*allow_recovery*/) noexcept
     {
         return {};
@@ -20971,7 +20982,7 @@ class parser
     /// the parser for parse() and accept() never recovers (and does not come
     /// here, as report_error() returned false)
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     std::false_type recover_member(SAX* /*sax*/, std::false_type /*allow_recovery*/) const noexcept
     {
         return {};
@@ -37575,6 +37586,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef NLOHMANN_CAN_CALL_STD_FUNC_IMPL
 #undef JSON_INLINE_VARIABLE
 #undef JSON_NO_UNIQUE_ADDRESS
+#undef JSON_INTERNAL_ALWAYS_INLINE
 #undef JSON_DISABLE_ENUM_SERIALIZATION
 #undef JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
 

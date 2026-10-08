@@ -700,7 +700,7 @@ class parser
     }
 
     /// the parser for parse() and accept() never recovers: stop parsing
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type continue_after(std::false_type /*step*/, bool& /*skip_to_state_evaluation*/) noexcept
     {
         return {};
@@ -768,7 +768,7 @@ class parser
 
     /// @copydoc overflow_error
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     std::false_type overflow_error(SAX* sax, const number_float_t /*value*/, std::false_type allow_recovery)
     {
         return report_error(sax, out_of_range::create(406, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr), allow_recovery);
@@ -783,7 +783,7 @@ class parser
     @return std::false_type, see report_error()
     */
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     std::false_type key_error(SAX* sax, std::false_type allow_recovery, const bool key_read)
     {
         return report_error(sax, parse_error::create(101, m_lexer.get_position(), key_read
@@ -848,7 +848,7 @@ class parser
             for recovering is not generated
     */
     template<typename SAX, typename Exception>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     std::false_type report_error(SAX* sax, const Exception& ex, std::false_type /*allow_recovery*/)
     {
         error_reported = true;
@@ -905,32 +905,32 @@ class parser
     // and unoptimized builds do not emit it either.
 
     /// @copydoc recover_token()
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     token_type recover_token(std::true_type /*allow_recovery*/)
     {
         return recover_token();
     }
 
     /// @copydoc recover_token()
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type recover_token(std::false_type /*allow_recovery*/) noexcept
     {
         return {};
     }
 
     /// return the token that was read last to the lexer (see lexer::unget_token())
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     void unget_token(std::true_type /*allow_recovery*/)
     {
         m_lexer.unget_token();
     }
 
     /// @copydoc unget_token(std::true_type)
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static void unget_token(std::false_type /*allow_recovery*/) noexcept {}
 
     /// @copydoc skip_to_value
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type skip_to_value(std::false_type /*allow_recovery*/) noexcept
     {
         return {};
@@ -938,7 +938,7 @@ class parser
 
     /// @copydoc recover_missing_value
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type recover_missing_value(SAX* /*sax*/, const std::vector<bool>& /*states*/, std::false_type /*allow_recovery*/) noexcept
     {
         return {};
@@ -962,7 +962,7 @@ class parser
 
     /// @copydoc close_containers
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     static std::false_type close_containers(SAX* /*sax*/, std::vector<bool>& /*states*/, std::false_type /*allow_recovery*/) noexcept
     {
         return {};
@@ -1187,7 +1187,7 @@ class parser
     /// the parser for parse() and accept() never recovers (and does not come
     /// here, as report_error() returned false)
     template<typename SAX>
-    JSON_HEDLEY_ALWAYS_INLINE
+    JSON_INTERNAL_ALWAYS_INLINE
     std::false_type recover_member(SAX* /*sax*/, std::false_type /*allow_recovery*/) const noexcept
     {
         return {};
