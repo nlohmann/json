@@ -39,7 +39,7 @@ using nlohmann::json;
 
 template<class K, class V, class dummy_compare, class A>
 using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
-using my_json = nlohmann::basic_json<my_workaround_fifo_map>;
+using my_json = nlohmann::json::with_object_t<my_workaround_fifo_map>;
 
 /////////////////////////////////////////////////////////////////////
 // for #977
@@ -86,8 +86,7 @@ struct foo_serializer < T, typename std::enable_if < !std::is_same<foo, T>::valu
 };
 } // namespace ns
 
-using foo_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t,
-      std::uint64_t, double, std::allocator, ns::foo_serializer, std::vector<std::uint8_t>>;
+using foo_json = nlohmann::json::with_json_serializer_t<ns::foo_serializer>;
 
 /////////////////////////////////////////////////////////////////////
 // for #805
@@ -254,7 +253,7 @@ TEST_CASE("regression tests 1")
     {
         // create JSON class with nonstandard integer number type
         using custom_json =
-            nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float>;
+            nlohmann::json::with_integers_t<std::int32_t, std::uint32_t>::with_float_t<float>;
         custom_json j;
         j["int_1"] = 1;
         CHECK(j["int_1"] == 1);
@@ -470,18 +469,17 @@ TEST_CASE("regression tests 1")
         // create JSON class with nonstandard float number type
 
         // float
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float> const j_float =
+        nlohmann::json::with_integers_t<std::int32_t, std::uint32_t>::with_float_t<float> const j_float =
             1.23e25f;
         CHECK(j_float.get<float>() == 1.23e25f);
 
         // double
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, double> const j_double =
+        nlohmann::json const j_double =
             1.23e35;
         CHECK(j_double.get<double>() == 1.23e35);
 
         // long double
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, long double>
-        const j_long_double = 1.23e45L;
+        nlohmann::json::with_float_t<long double> const j_long_double = 1.23e45L;
         CHECK(j_long_double.get<long double>() == 1.23e45L);
     }
 
