@@ -1,12 +1,10 @@
 #include <iostream>
-#include <map>
-#include <vector>
 
 #include <nlohmann/json.hpp>
 
 #include "custom_string_type.hpp"
 
-using custom_json = nlohmann::basic_json<std::map, std::vector, custom_string_type>;
+using custom_json = nlohmann::json::with_string_t<custom_string_type>;
 
 int main()
 {

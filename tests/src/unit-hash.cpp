@@ -157,13 +157,13 @@ TEST_CASE("hash<nlohmann::json>")
     // the ends of the integer ranges, which equal floats exactly
     const auto int_min = (std::numeric_limits<json::number_integer_t>::min)();
     const auto int_max = (std::numeric_limits<json::number_integer_t>::max)();
-    const auto two_63 = json::number_unsigned_t(1) << 63U;
+    const auto two_63 = static_cast<json::number_unsigned_t>(1) << 63U;
     CHECK(json(int_min) == json(-9223372036854775808.0));
     CHECK(std::hash<json> {}(json(int_min)) == std::hash<json> {}(json(-9223372036854775808.0)));
     CHECK(json(two_63) == json(9223372036854775808.0));
     CHECK(std::hash<json> {}(json(two_63)) == std::hash<json> {}(json(9223372036854775808.0)));
-    CHECK(json(json::number_unsigned_t(int_max)) == json(int_max));
-    CHECK(std::hash<json> {}(json(json::number_unsigned_t(int_max))) == std::hash<json> {}(json(int_max)));
+    CHECK(json(static_cast<json::number_unsigned_t>(int_max)) == json(int_max));
+    CHECK(std::hash<json> {}(json(static_cast<json::number_unsigned_t>(int_max))) == std::hash<json> {}(json(int_max)));
 }
 
 TEST_CASE("hash<nlohmann::ordered_json>")

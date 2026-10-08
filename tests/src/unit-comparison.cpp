@@ -824,7 +824,7 @@ struct unordered_object_t : std::map<Key, Value, directed_less<Key>, Allocator>
         return !(lhs == rhs);
     }
 };
-using unordered_json = nlohmann::basic_json<unordered_object_t>;
+using unordered_json = nlohmann::json::with_object_t<unordered_object_t>;
 
 // the entries "0" to "9", enumerated in ascending or in descending order
 unordered_json make_unordered_object(const bool descending)
@@ -875,7 +875,7 @@ struct key_case_less
 
 template<class Key, class Value, class /*Compare*/, class Allocator>
 using key_case_map = std::map<Key, Value, key_case_less, Allocator>;
-using key_case_json = nlohmann::basic_json<key_case_map>;
+using key_case_json = nlohmann::json::with_object_t<key_case_map>;
 
 // the innermost value of a chain of single-element arrays
 template<typename Json>
@@ -905,7 +905,7 @@ struct case_insensitive_less
 
 template<class Key, class Value, class /*Compare*/, class Allocator>
 using case_insensitive_map = std::map<Key, Value, case_insensitive_less, Allocator>;
-using ci_json = nlohmann::basic_json<case_insensitive_map>;
+using ci_json = nlohmann::json::with_object_t<case_insensitive_map>;
 } // namespace
 
 TEST_CASE("equality of objects whose entries have no fixed order")
