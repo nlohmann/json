@@ -8867,8 +8867,8 @@ NLOHMANN_JSON_NAMESPACE_END
     #include <intrin0.h> // __umulh, _umul128
 #endif
 
-// #include <nlohmann/detail/abi_macros.hpp>
-
+// #include <nlohmann/detail/macro_scope.hpp>
+// JSON_HEDLEY_ALWAYS_INLINE, NLOHMANN_JSON_NAMESPACE_BEGIN
 
 // Portable bit-level helpers for the number and string scanners. They use
 // compiler builtins or platform-specific intrinsics where available and plain
@@ -26670,7 +26670,7 @@ inline char* write_decimal(char* first, std::uint64_t digits, int exp) noexcept
     first[1] = '.';
     char* const end = first + (k == 1 ? 1 : k + 1);
     const int e = n - 1;
-    const auto ea = static_cast<unsigned>(e < 0 ? -e : e);
+    const auto ea = e < 0 ? 0u - static_cast<unsigned>(e) : static_cast<unsigned>(e); // (unsigned: no signed overflow to assume)
     const bool three = ea >= 100;
     end[0] = 'e';
     end[1] = e < 0 ? '-' : '+';
@@ -26710,7 +26710,7 @@ inline char* write_shortest(char* first, const zmij::shortest_decimal d) noexcep
     // NOLINTBEGIN(portability-simd-intrinsics)
     // the two halves in the 64-bit lanes, each as abcd * 2^32 + efgh, then as
     // bytes (as eight_digit_bytes(), one lane each)
-    const __m128i x = _mm_set_epi64x(static_cast<long long>(sig - (upper * 100000000u)), static_cast<long long>(upper));
+    const __m128i x = _mm_set_epi64x(static_cast<long long>(sig - (upper * 100000000u)), static_cast<long long>(upper)); // NOLINT(runtime/int)
     const __m128i abcd = _mm_srli_epi64(_mm_mul_epu32(x, _mm_set1_epi64x(109951163)), 40); // 2^40 / 10000 + 1
     const __m128i abcd_efgh = _mm_add_epi64(x, _mm_mul_epu32(abcd, _mm_set1_epi64x(4294957296))); // 2^32 - 10000
     // 32-bit lanes in the order of the text: abcd, efgh of both halves
@@ -26825,7 +26825,7 @@ inline char* write_shortest(char* first, const zmij::shortest_decimal d) noexcep
     first[1] = '.';
     char* const end = first + (len == 1 ? 1 : len + 1);
     const int e = n - 1;
-    const auto ea = static_cast<unsigned>(e < 0 ? -e : e);
+    const auto ea = e < 0 ? 0u - static_cast<unsigned>(e) : static_cast<unsigned>(e); // (unsigned: no signed overflow to assume)
     const bool three = ea >= 100;
     end[0] = 'e';
     end[1] = e < 0 ? '-' : '+';
@@ -26884,6 +26884,7 @@ JSON_HEDLEY_RETURNS_NON_NULL
 char* write_positive(char* first, const char* last, FloatType value)
 {
     JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
+    static_cast<void>(last); // (only used in the assertion)
 
     // Compute v = buffer * 10^decimal_exponent.
     // The decimal digits are stored in the buffer, which needs to be interpreted
@@ -26925,7 +26926,7 @@ inline char* write_positive(char* first, const char* last, double value)
     }
     std::array<char, 64> buf; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
     const auto len = static_cast<std::size_t>(write_shortest(buf.data(), d) - buf.data());
-    JSON_ASSERT(static_cast<std::size_t>(last - first) >= len);
+    JSON_ASSERT(last - first >= static_cast<std::ptrdiff_t>(len));
     std::memcpy(first, buf.data(), len);
     return first + len;
 }
