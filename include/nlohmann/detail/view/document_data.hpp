@@ -40,10 +40,10 @@ struct document_data
     std::size_t tape_cap = 0;
     node* inline_tape = nullptr; ///< node array allocated together with this header
     std::size_t inline_cap = 0;
-    std::string arena{}; ///< decoded strings that contained escapes // NOLINT(readability-redundant-member-init)
+    std::string arena; ///< decoded strings that contained escapes
     std::size_t arena_size = 0; ///< bytes of decoded strings at base[1] (the arena, or those of a loaded image)
-    std::string owned{}; ///< owned copy of the input, if any // NOLINT(readability-redundant-member-init)
-    std::vector<std::uint8_t> owned_image{}; ///< a loaded image the document owns (the text and the decoded strings point into it) // NOLINT(readability-redundant-member-init)
+    std::string owned; ///< owned copy of the input, if any
+    std::vector<std::uint8_t> owned_image; ///< a loaded image the document owns (the text and the decoded strings point into it)
 
     // hash indexes of large objects (see object_index.hpp)
     static constexpr std::uint32_t index_min_members = 128;
@@ -52,9 +52,9 @@ struct document_data
         std::size_t start;  ///< first slot in index_slots
         std::uint32_t mask; ///< slot count - 1 (a power of two minus one)
     };
-    std::vector<object_index> indexes{}; // NOLINT(readability-redundant-member-init)
-    std::vector<std::uint32_t> index_slots{}; // NOLINT(readability-redundant-member-init)
-    std::vector<std::uint32_t> large_objects{}; ///< positions of the objects to index (noted while parsing) // NOLINT(readability-redundant-member-init)
+    std::vector<object_index> indexes;
+    std::vector<std::uint32_t> index_slots;
+    std::vector<std::uint32_t> large_objects; ///< positions of the objects to index (noted while parsing)
     std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena, edit arena (indexed by flags & node_flags::storage)
     bool discarded = true;
 

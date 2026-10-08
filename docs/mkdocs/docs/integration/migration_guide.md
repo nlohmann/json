@@ -116,7 +116,7 @@ function to use instead.
     === "Deprecated"
   
           ```cpp
-          using my_json = nlohmann::basic_json<std::map, std::vector, my_string_type>;
+          using my_json = nlohmann::json::with_string_t<my_string_type>;
           nlohmann::json_pointer<my_json> ptr("/foo/bar/1");
           ```
   
