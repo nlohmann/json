@@ -16,6 +16,13 @@
 
 #include <nlohmann/json.hpp>
 
+// the loggers are defined in this header only, so their vtables are emitted in
+// every test that includes it
+#if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 namespace utils
 {
 /// a SAX event consumer that records every event it receives as a
@@ -172,3 +179,7 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
     }
 };
 } // namespace utils
+
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
