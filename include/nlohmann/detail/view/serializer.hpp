@@ -396,6 +396,14 @@ class view_serializer
         std::memcpy(to, from, n);
     }
 
+    /// a compile-time option as a runtime condition: testing the template
+    /// argument directly makes a condition like `Editable && c` constant when
+    /// the option is off, which MSVC reports as C4127
+    static NLOHMANN_VIEW_ALWAYS_INLINE bool enabled(bool option) noexcept
+    {
+        return option;
+    }
+
     template<bool SourceNumbers>
     void dump_compact(const node* root)
     {
@@ -472,6 +480,8 @@ class view_serializer
         {
             // write the value at n (read-only documents: and advance n)
             bool opened = false;
+            // false positive: n comes from nav::value(), which never returns null for a valid index
+            // @infer-ignore NULLPTR_DEREFERENCE
             switch (static_cast<value_t>(n->kind))
             {
                 case value_t::string:
@@ -492,14 +502,14 @@ class view_serializer
                 {
                     const std::uint32_t len = number_length(*n);
                     room(len);
-                    if (Editable && (n->flags & node_flags::storage) != 0)
+                    if (enabled(Editable) && (n->flags & node_flags::storage) != 0)
                     {
                         copy_long(w, m_doc.str(*n), len); // a canonical token written by an edit
                         w += len;
                         break;
                     }
                     const char* const token = src + n->off;
-                    if (!SourceNumbers && NLOHMANN_VIEW_UNLIKELY(len == 2 && token[0] == '-' && token[1] == '0'))
+                    if (!enabled(SourceNumbers) && NLOHMANN_VIEW_UNLIKELY(len == 2 && token[0] == '-' && token[1] == '0'))
                     {
                         *w++ = '0'; // parse() reads -0 as the integer 0
                     }
@@ -510,7 +520,7 @@ class view_serializer
                     break;
                 }
                 case value_t::number_float:
-                    if (SourceNumbers && (n->flags & node_flags::storage) != node_flags::edited)
+                    if (enabled(SourceNumbers) && (n->flags & node_flags::storage) != node_flags::edited)
                     {
                         room(n->len);
                         copy(src + n->off, n->len);
