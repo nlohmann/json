@@ -483,6 +483,7 @@ class binary_reader
 
     /// @copydoc skip_unsupported_bson_element
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_HEDLEY_ALWAYS_INLINE
     constexpr std::false_type skip_unsupported_bson_element(const char_int_type /*element_type*/) const noexcept
     {
         return {};
@@ -3905,6 +3906,7 @@ class binary_reader
 
     /// @copydoc recover_high_precision_number
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_HEDLEY_ALWAYS_INLINE
     constexpr std::false_type recover_high_precision_number(const std::vector<char>& /*number_vector*/, const std::size_t /*remaining*/ = 0) const noexcept
     {
         return {};
@@ -5014,6 +5016,7 @@ class binary_reader
     @return false, so that the caller stops reading
     */
     template<typename Exception>
+    JSON_HEDLEY_ALWAYS_INLINE
     bool report_error(const std::size_t position, const std::string& last_token, const Exception& ex)
     {
         close_requested = sax->parse_error(position, last_token, ex);
@@ -5050,6 +5053,7 @@ class binary_reader
 
     /// @copydoc repair_requested
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_HEDLEY_ALWAYS_INLINE
     constexpr std::false_type repair_requested() const noexcept
     {
         return {};
@@ -5074,6 +5078,7 @@ class binary_reader
 
     /// @copydoc value_failed
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_HEDLEY_ALWAYS_INLINE
     constexpr std::false_type value_failed() const noexcept
     {
         return {};
@@ -5124,6 +5129,7 @@ class binary_reader
 
     /// @copydoc close_open_containers
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_HEDLEY_ALWAYS_INLINE
     void close_open_containers() const noexcept {}
 
     /*!
@@ -5159,6 +5165,7 @@ class binary_reader
 
     /// @copydoc resync
     template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_HEDLEY_ALWAYS_INLINE
     constexpr std::false_type resync() const noexcept
     {
         return {};

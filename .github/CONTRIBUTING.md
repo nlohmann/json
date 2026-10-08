@@ -111,6 +111,8 @@ context which existing file needs to be extended, and only very few cases requir
 When fixing a bug, edit `unit-regression3.cpp` and add a section referencing the fixed issue.
 `unit-regression2.cpp` holds the older tests; the two files exist because a single one grew large enough for the
 MinGW linker to fail relocating it, so please keep adding to the smaller file rather than growing the larger one.
+Regression tests that call `sax_parse` go into `unit-sax_parse.cpp` instead: every call instantiates the parser and
+the binary reader that recover from errors, which grows a test file considerably.
 
 #### Exceptions
 
