@@ -237,7 +237,7 @@ namespace
 // the binary formats as function pointers for "Binary formats with narrow number types";
 // named functions rather than lambdas, because clang 3.5 cannot convert a lambda
 // to a function pointer in the braced initializer of the format table
-using narrow_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint32_t, float>;
+using narrow_json = nlohmann::json::with_integers_t<std::int32_t, std::uint32_t>::with_float_t<float>;
 using bytes = std::vector<std::uint8_t>;
 
 bytes encode_cbor(const json& j)

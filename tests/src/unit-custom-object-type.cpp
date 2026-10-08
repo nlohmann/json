@@ -179,7 +179,7 @@ class no_key_compare_map
     }
 };
 
-using no_key_compare_json = nlohmann::basic_json<no_key_compare_map>;
+using no_key_compare_json = nlohmann::json::with_object_t<no_key_compare_map>;
 
 // An ObjectType whose erase(iterator) returns void rather than the following
 // iterator, as for instance Abseil's hash maps do
@@ -196,7 +196,7 @@ struct void_erase_map : std::map<Key, T, Compare, Allocator>
     }
 };
 
-using void_erase_json = nlohmann::basic_json<void_erase_map>;
+using void_erase_json = nlohmann::json::with_object_t<void_erase_map>;
 
 // wraps an iterator, but only offers the LegacyForwardIterator operations,
 // like the iterators of std::unordered_map and other hash maps
@@ -388,7 +388,7 @@ class forward_only_map
     }
 };
 
-using forward_only_json = nlohmann::basic_json<forward_only_map>;
+using forward_only_json = nlohmann::json::with_object_t<forward_only_map>;
 
 } // namespace
 
