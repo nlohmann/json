@@ -25,9 +25,7 @@
 #include <vector>
 
 // a BinaryType whose value type is not an integer type at all
-using byte_binary_json = nlohmann::basic_json <
-                         std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
-                         double, std::allocator, nlohmann::adl_serializer, std::vector<std::byte>, void >;
+using byte_binary_json = nlohmann::json::with_binary_t<std::vector<std::byte>>;
 
 TEST_CASE("binary type whose value type is not std::uint8_t (C++17)")
 {
