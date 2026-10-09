@@ -1450,10 +1450,12 @@ TEST_CASE("json_view dump")
             }
         }
         many += ']';
-        CHECK(json_document::parse(many).root().dump() == json::parse(many).dump());
+        const json_document many_document = json_document::parse(many);
+        CHECK(many_document.root().dump() == json::parse(many).dump());
 
         using json_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
-        CHECK(nlohmann::basic_json_document<json_float>::parse("[0.1, 1.5e10, 3.4028235e38]").root().dump() == json_float::parse("[0.1, 1.5e10, 3.4028235e38]").dump());
+        const nlohmann::basic_json_document<json_float> float_document = nlohmann::basic_json_document<json_float>::parse("[0.1, 1.5e10, 3.4028235e38]");
+        CHECK(float_document.root().dump() == json_float::parse("[0.1, 1.5e10, 3.4028235e38]").dump());
     }
 
     SECTION("members in document order, all of them")
@@ -1466,7 +1468,8 @@ TEST_CASE("json_view dump")
     SECTION("deep nesting")
     {
         const std::string deep = std::string(100000, '[') + std::string(100000, ']');
-        CHECK(json_document::parse(deep).root().dump() == deep);
+        const json_document deep_document = json_document::parse(deep);
+        CHECK(deep_document.root().dump() == deep);
     }
 
     SECTION("the output buffer of a small value is small")
@@ -1562,7 +1565,9 @@ TEST_CASE("json_view comparison")
     {
         const auto same = [](const char* x, const char* y)
         {
-            return json_document::parse(x).root() == json_document::parse(y).root();
+            const json_document dx = json_document::parse(x);
+            const json_document dy = json_document::parse(y);
+            return dx.root() == dy.root();
         };
         CHECK(same("1", "1.0"));
         CHECK(same("[1, -1, 2.5]", "[1.0, -1.0, 25e-1]"));
@@ -1577,15 +1582,20 @@ TEST_CASE("json_view comparison")
         CHECK(same("\"\\u00e9\"", "\"\xc3\xa9\""));
         CHECK(!same("null", "false"));
         CHECK(!same("[]", "{}"));
-        CHECK(ordered_json_document::parse(R"({"a": 1, "b": 2, "a": 3})").root() == ordered_json_document::parse(R"({"a": 3, "b": 2})").root());
-        CHECK(ordered_json_document::parse(R"({"a": 1, "b": 2})").root() != ordered_json_document::parse(R"({"b": 2, "a": 1})").root());
+        const ordered_json_document dup = ordered_json_document::parse(R"({"a": 1, "b": 2, "a": 3})");
+        const ordered_json_document last = ordered_json_document::parse(R"({"a": 3, "b": 2})");
+        CHECK(dup.root() == last.root());
+        const ordered_json_document ab = ordered_json_document::parse(R"({"a": 1, "b": 2})");
+        const ordered_json_document ba = ordered_json_document::parse(R"({"b": 2, "a": 1})");
+        CHECK(ab.root() != ba.root());
 
         // discarded values compare as basic_json's do
         const json discarded(json::value_t::discarded);
         CHECK((json_view() == json_view()) == (discarded == discarded)); // NOLINT(readability-container-size-empty): operator== is tested
         CHECK((json_view() == discarded) == (discarded == discarded));
-        CHECK(!(json_view() == json_document::parse("null").root())); // NOLINT(readability-container-size-empty)
-        CHECK(!(json_document::parse("null").root() == discarded));
+        const json_document null_document = json_document::parse("null");
+        CHECK(!(json_view() == null_document.root())); // NOLINT(readability-container-size-empty)
+        CHECK(!(null_document.root() == discarded));
     }
 
     SECTION("deep nesting")
@@ -1596,6 +1606,7 @@ TEST_CASE("json_view comparison")
         CHECK(a.root() == b.root());
         CHECK(a.root() == json::parse(deep));
         const std::string other = std::string(100000, '[') + "1" + std::string(100000, ']');
-        CHECK(a.root() != json_document::parse(other).root());
+        const json_document c = json_document::parse(other);
+        CHECK(a.root() != c.root());
     }
 }
