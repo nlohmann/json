@@ -66,7 +66,7 @@ struct oversized_input
     using value_type = char;
     std::size_t claimed;
 
-    const char* data() const
+    const char* data() const // NOLINT(readability-convert-member-functions-to-static): container interface
     {
         return "[1]";
     }
@@ -363,10 +363,10 @@ TEST_CASE("json_view")
         CHECK(json_document::parse(std::vector<char>(text.begin(), text.end())).owns_source());
         // a const rvalue cannot be moved from, and is not borrowed (it may be a
         // temporary): it is copied, as is a const rvalue of any container
-        const std::string const_text = text;
+        const std::string const_text = text; // NOLINT(performance-unnecessary-copy-initialization)
         const json_document from_const_rvalue = json_document::parse(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
         CHECK(from_const_rvalue.owns_source());
-        CHECK(from_const_rvalue.source().data() != const_text.data());
+        CHECK(from_const_rvalue.source().data() != const_text.data()); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved): const, not moved from
         CHECK(from_const_rvalue.root().materialize() == expected);
         json_document read_const_rvalue;
         read_const_rvalue.read(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
@@ -744,7 +744,7 @@ TEST_CASE("json_view element access and iteration")
                 })
         {
             const std::string key(n, 'k');
-            const json_document dk = json_document::parse("{\"" + key + "\":1,\"" + key + "x\":2,\"" + key + "\":3,\"" + key + "\":4}");
+            const json_document dk = json_document::parse("{\"" + key + "\":1,\"" + key + "x\":2,\"" + key + "\":3,\"" + key + "\":4}"); // NOLINT(performance-inefficient-string-concatenation)
             CAPTURE(n)
             CHECK(dk.root()[key].materialize() == 1);
             CHECK(dk.root().at(key).materialize() == 1);
@@ -975,8 +975,8 @@ TEST_CASE("json_view element access and iteration")
             pairs += std::string(key) + "=" + value.materialize().dump() + ";";
         }
         CHECK(pairs == "a=1;b=[true,false];");
-        static_assert(std::tuple_size<json_view::item>::value == 2, "");
-        static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "");
+        static_assert(std::tuple_size<json_view::item>::value == 2, "tuple_size of an item is 2");
+        static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "the second element of an item is a view");
 #endif
     }
 }
@@ -1177,19 +1177,19 @@ TEST_CASE("json_view values")
             switch (i % 5) // NOLINT(hicpp-multiway-paths-covered)
             {
                 case 0:
-                    std::snprintf(buf.data(), buf.size(), "%.17g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.17g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 case 1:
-                    std::snprintf(buf.data(), buf.size(), "%.15g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.15g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 case 2:
-                    std::snprintf(buf.data(), buf.size(), "%.3e", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.3e", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 case 3:
-                    std::snprintf(buf.data(), buf.size(), "%.25g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.25g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 default:
-                    std::snprintf(buf.data(), buf.size(), "%.0f", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.0f", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
             }
             tokens.emplace_back(buf.data());
@@ -1232,7 +1232,7 @@ TEST_CASE("json_view values")
         const json j = json::parse(text);
 
         // user types with from_json, and other types, through basic_json
-        const record r = v.get<record>();
+        const auto r = v.get<record>();
         CHECK(r.name == "widget");
         CHECK(r.count == 3);
         CHECK((v["pair"].get<std::pair<int, std::string>>() == j["pair"].get<std::pair<int, std::string>>()));
@@ -1500,10 +1500,10 @@ TEST_CASE("json_view dump")
         {
             chars += "\xC3\xA9";
         }
-        const json_document d = json_document::parse("{\"a\":\"" + chars + R"(","k\n":1})");
+        const json_document d = json_document::parse(R"({"a":")" + chars + R"(","k\n":1})");
         const json expected = json::parse("\"" + chars + "\"");
         CHECK(d.root()["a"].dump(-1, ' ', true) == expected.dump(-1, ' ', true));
-        CHECK(d.root()["a"].dump(-1, ' ', true).size() == 2 + 5000 * 6);
+        CHECK(d.root()["a"].dump(-1, ' ', true).size() == 2 + (5000 * 6));
     }
 
     SECTION("streams and discarded views")
@@ -1595,7 +1595,7 @@ TEST_CASE("json_view comparison")
         // discarded values compare as basic_json's do
         const json discarded(json::value_t::discarded);
         CHECK((json_view() == json_view()) == (discarded == discarded)); // NOLINT(readability-container-size-empty): operator== is tested
-        CHECK((json_view() == discarded) == (discarded == discarded));
+        CHECK((json_view() == discarded) == (discarded == discarded)); // NOLINT(readability-container-size-empty)
         const json_document null_document = json_document::parse("null");
         CHECK(!(json_view() == null_document.root())); // NOLINT(readability-container-size-empty)
         CHECK(!(null_document.root() == discarded));
