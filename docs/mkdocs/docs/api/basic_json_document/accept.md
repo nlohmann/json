@@ -43,6 +43,11 @@ input's own copy (for inputs that are always read into a buffer) throws.
 
 Linear in the length of the input.
 
+## Notes
+
+An integer argument that is not a `#!cpp bool` where the flags are expected, such as `#!cpp accept(ptr, len)`, does not
+compile; see [`parse`](parse.md#notes).
+
 ## Examples
 
 ??? example
