@@ -1858,7 +1858,7 @@ TEST_CASE("json_view large objects")
             for (int object = 0; object < objects; ++object)
             {
                 text += object != 0 ? ",{" : "{";
-                for (int i = 0; i < members + object; ++i)
+                for (int i = 0, n = members + object; i < n; ++i)
                 {
                     text += (i != 0 ? ",\"" : "\"") + std::to_string(i) + "\":" + std::to_string(i);
                 }
@@ -1885,7 +1885,7 @@ TEST_CASE("json_view large objects")
         for (int object = 0; object < 5; ++object)
         {
             const json_view v = d.root()[static_cast<std::size_t>(object)];
-            for (int i = 0; i < 150 + object; ++i)
+            for (int i = 0, n = 150 + object; i < n; ++i)
             {
                 CHECK(v[std::to_string(i)].get<int>() == i);
             }
