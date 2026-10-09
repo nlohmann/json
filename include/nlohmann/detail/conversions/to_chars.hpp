@@ -4,6 +4,7 @@
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2009 Florian Loitsch <https://florian.loitsch.com/>
+// SPDX-FileCopyrightText: 2025 Victor Zverovich <https://github.com/vitaut/zmij>
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
