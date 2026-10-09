@@ -22,17 +22,19 @@ int main()
         std::cout << user["name"].materialize().dump();
 
         // operator[] on a missing object key gives a discarded view -- test
-        // it with a plain "if". The const overload of json::operator[]
+        // it with is_discarded(). The const overload of json::operator[]
         // would instead be undefined behavior (guarded by an assertion) for
         // a missing key
-        if (const auto email = user["email"])
+        const auto email = user["email"];
+        if (!email.is_discarded())
         {
             std::cout << " <" << email.materialize().dump() << ">";
         }
 
         // the same holds for an array index past the end: a discarded view,
         // not undefined behavior
-        if (const auto first_tag = user["tags"][0])
+        const auto first_tag = user["tags"][0];
+        if (!first_tag.is_discarded())
         {
             std::cout << " #" << first_tag.materialize().dump();
         }
