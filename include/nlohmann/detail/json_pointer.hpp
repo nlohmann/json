@@ -878,64 +878,127 @@ class json_pointer
     @param[in,out] result        the result object to insert values to
 
     @note Empty objects or arrays are flattened to `null`.
+
+    The value is walked with an explicit stack rather than the call stack, so
+    arbitrarily deeply nested values can be flattened.
+
+    @sa https://github.com/nlohmann/json/issues/5393
     */
     template<typename BasicJsonType>
     static void flatten(const string_t& reference_string,
                         const BasicJsonType& value,
                         BasicJsonType& result)
     {
-        switch (value.type())
+        using object_const_iterator = typename BasicJsonType::object_t::const_iterator;
+
+        // an array or object being walked: the container, the array index or
+        // object iterator of the next child, and the length of the path of the
+        // container itself
+        struct frame
         {
-            case detail::value_t::array:
-            {
-                if (value.m_data.m_value.array->empty())
-                {
-                    // flatten empty array as null
-                    result[reference_string] = nullptr;
-                }
-                else
-                {
-                    // iterate array and use index as a reference string
-                    for (std::size_t i = 0; i < value.m_data.m_value.array->size(); ++i)
-                    {
-                        flatten(detail::concat<string_t>(reference_string, '/', std::to_string(i)),
-                                value.m_data.m_value.array->operator[](i), result);
-                    }
-                }
-                break;
-            }
+            const BasicJsonType* container;
+            std::size_t index;
+            object_const_iterator member;
+            std::size_t path_length;
+        };
 
-            case detail::value_t::object:
-            {
-                if (value.m_data.m_value.object->empty())
-                {
-                    // flatten empty object as null
-                    result[reference_string] = nullptr;
-                }
-                else
-                {
-                    // iterate object and use keys as reference string
-                    for (const auto& element : *value.m_data.m_value.object)
-                    {
-                        flatten(detail::concat<string_t>(reference_string, '/', detail::escape(element.first)), element.second, result);
-                    }
-                }
-                break;
-            }
+        // The containers being flattened are kept on an explicit stack, and
+        // every child is flattened completely before the next one, so the
+        // entries come out in the same order as with a recursive walk. The
+        // path of the value being flattened is kept in one buffer that grows
+        // and shrinks with the stack, rather than in a new string per level.
+        std::vector<frame> stack;
+        string_t path = reference_string;
 
-            case detail::value_t::null:
-            case detail::value_t::string:
-            case detail::value_t::boolean:
-            case detail::value_t::number_integer:
-            case detail::value_t::number_unsigned:
-            case detail::value_t::number_float:
-            case detail::value_t::binary:
-            case detail::value_t::discarded:
-            default:
+        // flatten `v`, whose path is `path`: primitives and empty containers
+        // are added to the result right away; other containers get a frame
+        const auto enter = [&stack, &path, &result](const BasicJsonType & v)
+        {
+            switch (v.type())
             {
-                // add a primitive value with its reference string
-                result[reference_string] = value;
-                break;
+                case detail::value_t::array:
+                {
+                    if (v.m_data.m_value.array->empty())
+                    {
+                        // flatten empty array as null
+                        result[path] = nullptr;
+                    }
+                    else
+                    {
+                        stack.push_back({&v, 0, object_const_iterator(), path.size()});
+                    }
+                    return;
+                }
+
+                case detail::value_t::object:
+                {
+                    if (v.m_data.m_value.object->empty())
+                    {
+                        // flatten empty object as null
+                        result[path] = nullptr;
+                    }
+                    else
+                    {
+                        stack.push_back({&v, 0, v.m_data.m_value.object->begin(), path.size()});
+                    }
+                    return;
+                }
+
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
+                default:
+                {
+                    // add a primitive value with its reference string
+                    result[path] = v;
+                    return;
+                }
+            }
+        };
+
+        enter(value);
+        while (!stack.empty())
+        {
+            // the frame is changed through stack.back(): enter() may push a
+            // frame, which would invalidate a reference to it
+            const BasicJsonType* const container = stack.back().container;
+
+            // drop the path of the previous child
+            path.resize(stack.back().path_length);
+
+            if (container->is_array())
+            {
+                const auto& array = *container->m_data.m_value.array;
+                const std::size_t i = stack.back().index;
+                if (i == array.size())
+                {
+                    stack.pop_back();
+                    continue;
+                }
+
+                // iterate array and use index as a reference string
+                ++stack.back().index;
+                detail::concat_into(path, '/', detail::to_string<string_t>(i));
+                enter(array[i]);
+            }
+            else
+            {
+                const object_const_iterator it = stack.back().member;
+                if (it == container->m_data.m_value.object->end())
+                {
+                    stack.pop_back();
+                    continue;
+                }
+
+                // iterate object and use keys as reference string
+                ++stack.back().member;
+                detail::concat_into(path, '/', detail::escape(it->first));
+                enter(it->second);
             }
         }
     }
