@@ -7,16 +7,18 @@
 // SPDX-License-Identifier: MIT
 
 /****************************************************************************\
- * Zero-copy, read-only view of a parsed JSON text.                          *
+ * Zero-copy view of a parsed JSON text.                                     *
  *                                                                           *
  * json_document::parse() builds a flat index of the values of a JSON text   *
  * (16 bytes per value) instead of a tree of basic_json values. Strings and  *
  * numbers stay in the source text; only strings with escapes are decoded,   *
  * into one buffer. json_view is a handle to one value of the document, with *
  * the read-only part of the basic_json interface; materialize() turns a     *
- * subtree into the basic_json value that parse() would produce.             *
+ * subtree into the basic_json value that parse() would produce. An editable *
+ * document (json_editable_document) also has set(), push_back(), insert(),  *
+ * and erase(): edits never write to the source text, and views stay valid.  *
  *                                                                           *
- * The source text must outlive a document that borrows it (lvalue byte     *
+ * The source text must outlive a document that borrows it (lvalue byte      *
  * containers, C strings); rvalue strings, streams, and other inputs are     *
  * owned by the document.                                                    *
 \****************************************************************************/
@@ -24,6 +26,7 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
+#include <algorithm> // all_of
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
 #include <cstring> // memcpy, strlen
@@ -207,6 +210,7 @@ struct node_flags
     static constexpr std::uint8_t is_true = 4; ///< boolean value
     static constexpr std::uint8_t moved = 8;   ///< array/object: the elements live in a separate sequence (editable documents)
     static constexpr std::uint8_t is_new = 16; ///< written by an edit: no source position
+    static constexpr std::uint8_t linked = 32; ///< an entry of a moved sequence links to this value (editable documents): its extent in the parsed layout no longer matters
 };
 
 /// kind of an entry of an edited sequence that stands for a value stored
@@ -241,8 +245,10 @@ NLOHMANN_VIEW_ALWAYS_INLINE const node* link_target(const node& n) noexcept
     return t;
 }
 
-inline void make_link(node& n, const node* target) noexcept
+/// let the entry n stand for the value at target (and mark the value)
+inline void make_link(node& n, node* target) noexcept
 {
+    target->flags = static_cast<std::uint8_t>(target->flags | node_flags::linked);
     n = node{};
     n.kind = kind_link;
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, static_cast<const void*>(&target), sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -2456,6 +2462,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <string> // string, to_string
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_convertible, is_floating_point, is_same, is_signed
 #include <utility> // forward
+#include <vector> // vector
 
 // #include <nlohmann/json.hpp>
 // #include <nlohmann/detail/view/document_data.hpp>
@@ -2628,6 +2635,23 @@ inline node* alloc_nodes(document_data& d, std::size_t k)
     return r;
 }
 
+/// The capacity of the edit arena after it grows by n bytes (`used` of `cap`
+/// are taken): doubled, or what is needed plus some room, but never more than
+/// the 4 GiB - 1 bytes that the 32-bit offsets of nodes can address. An error
+/// if n more bytes do not fit even then.
+inline std::size_t text_capacity(std::size_t cap, std::size_t used, std::size_t n)
+{
+    constexpr std::size_t limit = 0xFFFFFFFFu;
+    if (NLOHMANN_VIEW_UNLIKELY(used > limit || n > limit - used))
+    {
+        throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document");
+    }
+    const std::size_t needed = used + n;
+    const std::size_t wanted = needed + (std::min)(limit - needed, std::size_t{256});
+    const std::size_t doubled = cap > limit / 2 ? limit : cap * 2;
+    return (std::max)(doubled, wanted);
+}
+
 /// copy n bytes into the edit arena and return their offset; a new buffer
 /// leaves the old one alive, so that string views into it remain valid
 inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
@@ -2635,11 +2659,7 @@ inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
     document_data::edit_state& e = edit_state_of(d);
     if (NLOHMANN_VIEW_UNLIKELY(e.text_cap - e.text_used < n))
     {
-        const std::size_t cap = (std::max)(e.text_cap * 2, e.text_used + n + 256);
-        if (cap > 0xFFFFFFFFu)
-        {
-            throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE (4 GiB)
-        }
+        const std::size_t cap = text_capacity(e.text_cap, e.text_used, n);
         std::unique_ptr<char[]> fresh(new char[cap]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         if (e.text_used != 0)
         {
@@ -2666,16 +2686,12 @@ inline std::size_t moved_capacity(const document_data& d, const node* n) noexcep
     return d.edits->moved_cap[n->off];
 }
 
-/// let container n take its elements from `seq` (header node first)
-inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
+/// Make room for one more moved container. This is the part of set_moved()
+/// that can throw: a caller that changes a node before it calls set_moved()
+/// calls this first, so that a failure leaves the node as it was.
+inline void reserve_moved(document_data& d)
 {
     document_data::edit_state& e = edit_state_of(d);
-    if ((n->flags & node_flags::moved) != 0)
-    {
-        e.moved[n->off] = seq;
-        e.moved_cap[n->off] = cap;
-        return;
-    }
     if (e.moved.size() >= 0xFFFFFFFFu)
     {
         throw_out_of_range(416, "more than 4294967295 edited arrays and objects are not supported by json_document"); // LCOV_EXCL_LINE
@@ -2686,6 +2702,20 @@ inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
         e.moved.reserve((2 * e.moved.size()) + 16);
         e.moved_cap.reserve((2 * e.moved.size()) + 16);
     }
+}
+
+/// let container n take its elements from `seq` (header node first); cannot
+/// throw if n is moved already or reserve_moved() was called
+inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
+{
+    document_data::edit_state& e = edit_state_of(d);
+    if ((n->flags & node_flags::moved) != 0)
+    {
+        e.moved[n->off] = seq;
+        e.moved_cap[n->off] = cap;
+        return;
+    }
+    reserve_moved(d);
     e.moved.push_back(seq);
     e.moved_cap.push_back(cap);
     n->off = static_cast<std::uint32_t>(e.moved.size() - 1);
@@ -2711,6 +2741,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         set_moved(d, n, nh, cap);
         return nh;
     }
+    reserve_moved(d); // (so that set_moved() below cannot throw: the links are marked before)
     const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
     const std::size_t used = 1 + (static_cast<std::size_t>(n->len) * (object ? 2 : 1));
     const std::size_t cap = used + extra;
@@ -2726,7 +2757,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         {
             *o++ = *c++; // the key
         }
-        make_link(*o, document_data::deref(c));
+        make_link(*o, const_cast<node*>(document_data::deref(c))); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to the document
         ++o;
         c = document_data::after(c);
     }
@@ -3427,9 +3458,10 @@ class editor
     /// turn a null into an empty array/object in place
     static void become_empty(node* n, value_t k) noexcept
     {
+        const std::uint8_t linked = n->flags & node_flags::linked;
         *n = node{};
         n->kind = static_cast<std::uint8_t>(k);
-        n->flags = node_flags::is_new;
+        n->flags = static_cast<std::uint8_t>(node_flags::is_new | linked);
         n->next = 1;
     }
 
@@ -3437,13 +3469,17 @@ class editor
     /// include slot (if known).
     void assign(node* slot, const encoded& e, node* parent, bool parent_known)
     {
+        // an entry of a moved sequence links to the slot: it can take any extent
+        const std::uint8_t linked = slot->flags & node_flags::linked;
         if (e.region == nullptr)
         {
-            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape)
+            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape && linked == 0)
             {
                 // The slot spans its old elements in the enclosing sequence, but
                 // a scalar is one node: the enclosing container first switches to
-                // links (then the extent of the slot no longer matters).
+                // links (then the extent of the slot no longer matters). Looking
+                // for the container is linear in the size of the document, so
+                // links (which are marked in the slot) avoid it.
                 node* const p = parent_known ? parent : find_parent(m_doc, slot);
                 if (p != nullptr && ((p->flags & node_flags::moved) == 0 || moved_capacity(m_doc, p) == 0))
                 {
@@ -3451,6 +3487,7 @@ class editor
                 }
             }
             *slot = e.scalar;
+            slot->flags = static_cast<std::uint8_t>(slot->flags | linked);
             return;
         }
         // an array/object: the slot keeps its extent (so that the enclosing
@@ -3459,11 +3496,21 @@ class editor
         const node* const r = e.region;
         const std::uint32_t extent = is_container(*slot) ? slot->next : 1;
         const bool was_moved = (slot->flags & node_flags::moved) != 0;
+        // Everything that can throw happens before the slot changes: a slot
+        // that is a container without the moved flag would show its old
+        // elements. reserve_moved() makes the set_moved() below, which sets
+        // the flag, safe; the entry of `regions` exists already (encode()
+        // added it), so that the assignment at the end does not allocate.
+        if (!was_moved)
+        {
+            reserve_moved(m_doc);
+        }
         slot->kind = r->kind;
         slot->extra = 0;
         slot->len = r->len;
         slot->next = extent;
-        slot->flags = was_moved ? static_cast<std::uint8_t>(node_flags::moved | node_flags::is_new) : std::uint8_t{0};
+        // (set_moved() adds the moved flag to a slot that does not have it yet)
+        slot->flags = static_cast<std::uint8_t>((was_moved ? node_flags::moved | node_flags::is_new : 0) | linked);
         set_moved(m_doc, slot, e.region, 0);
         edit_state_of(m_doc).regions[e.region] = slot;
     }
@@ -3680,6 +3727,8 @@ class editor
         switch (static_cast<value_t>(n.kind))
         {
             case value_t::string:
+                // (an editable document only holds valid UTF-8, whatever the check of the other document was)
+                check_utf8(from.str(n), n.len);
                 return string_node(from.str(n), n.len);
             case value_t::number_integer:
             case value_t::number_unsigned:
@@ -3743,100 +3792,197 @@ class editor
         }
     }
 
+    // The subtrees are walked with an explicit stack (as materialize() does):
+    // the nesting depth is limited by memory only, not by the call stack.
+
     /// number of nodes of a subtree (containers, keys, scalars)
     template<bool E>
     static std::size_t count_nodes(const document_data& d, const node* n)
     {
-        if (!is_container(*n))
+        using walk = navigation<E>;
+        struct frame
         {
-            return 1;
-        }
-        const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-        std::size_t r = 1;
-        for (const node* c = navigation<E>::first(d, n), *end = navigation<E>::end(d, n); c != end;)
+            const node* pos; ///< next element, or key of the next member
+            const node* end;
+            bool object;
+        };
+        std::vector<frame> open;
+        std::size_t r = 0;
+        for (;;)
         {
-            const node* const v = object ? c + 1 : c;
-            r += (object ? 1 : 0) + count_nodes<E>(d, navigation<E>::value(v));
-            c = document_data::after(v);
+            ++r;
+            if (is_container(*n))
+            {
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object)});
+            }
+            // the next value: close finished containers, then step over the key
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return r;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    open.pop_back();
+                    continue;
+                }
+                const node* v = f.pos;
+                if (f.object)
+                {
+                    ++r; // the key
+                    ++v;
+                }
+                f.pos = document_data::after(v);
+                n = walk::value(v);
+                break;
+            }
         }
-        return r;
     }
 
-    /// copy a subtree (of any document) as a contiguous sequence; returns its end
+    /// copy a subtree (of any document) as a contiguous sequence of
+    /// count_nodes() nodes
     template<bool E>
-    node* fill_nodes(const document_data& d, const node* n, node* out)
+    void fill_nodes(const document_data& d, const node* n, node* out)
     {
-        if (!is_container(*n))
+        using walk = navigation<E>;
+        struct frame
         {
-            *out = copy_scalar(d, *n);
-            return out + 1;
-        }
-        node* const self = out++;
-        *self = plain_node(static_cast<value_t>(n->kind));
-        self->len = n->len;
-        const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-        for (const node* c = navigation<E>::first(d, n), *end = navigation<E>::end(d, n); c != end;)
+            const node* pos; ///< next element, or key of the next member
+            const node* end;
+            bool object;
+            node* self;      ///< the container in the copy
+        };
+        std::vector<frame> open;
+        for (;;)
         {
-            if (object)
+            if (is_container(*n))
             {
-                *out++ = copy_scalar(d, *c);
-                ++c;
+                node* const self = out++;
+                *self = plain_node(static_cast<value_t>(n->kind));
+                self->len = n->len;
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object), self});
             }
-            out = fill_nodes<E>(d, navigation<E>::value(c), out);
-            c = document_data::after(c);
+            else
+            {
+                *out++ = copy_scalar(d, *n);
+            }
+            // the next value: close finished containers, then copy the key
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    f.self->next = static_cast<std::uint32_t>(out - f.self);
+                    open.pop_back();
+                    continue;
+                }
+                const node* v = f.pos;
+                if (f.object)
+                {
+                    *out++ = copy_scalar(d, *v);
+                    ++v;
+                }
+                f.pos = document_data::after(v);
+                n = walk::value(v);
+                break;
+            }
         }
-        self->next = static_cast<std::uint32_t>(out - self);
-        return out;
     }
 
     static std::size_t count_nodes(const BasicJsonType& j)
     {
-        std::size_t r = 1;
-        if (j.is_object())
+        using iterator = typename BasicJsonType::const_iterator;
+        struct frame
         {
-            for (const auto& member : j.items())
+            iterator pos;
+            iterator end;
+            bool object;
+        };
+        std::vector<frame> open;
+        const BasicJsonType* n = &j;
+        std::size_t r = 0;
+        for (;;)
+        {
+            ++r;
+            if (n->is_structured())
             {
-                r += 1 + count_nodes(member.value());
+                open.push_back(frame{n->cbegin(), n->cend(), n->is_object()});
+            }
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return r;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    open.pop_back();
+                    continue;
+                }
+                r += f.object ? 1 : 0; // the key
+                n = &*f.pos;
+                ++f.pos;
+                break;
             }
         }
-        else if (j.is_array())
-        {
-            for (const auto& e : j)
-            {
-                r += count_nodes(e);
-            }
-        }
-        return r;
     }
 
-    node* fill_nodes(const BasicJsonType& j, node* out)
+    void fill_nodes(const BasicJsonType& j, node* out)
     {
-        if (!j.is_structured())
+        using iterator = typename BasicJsonType::const_iterator;
+        struct frame
         {
-            *out = json_scalar(j);
-            return out + 1;
-        }
-        node* const self = out++;
-        *self = plain_node(j.type());
-        self->len = static_cast<std::uint32_t>(j.size());
-        if (j.is_object())
+            iterator pos;
+            iterator end;
+            bool object;
+            node* self; ///< the container in the copy
+        };
+        std::vector<frame> open;
+        const BasicJsonType* n = &j;
+        for (;;)
         {
-            for (const auto& member : j.items())
+            if (n->is_structured())
             {
-                check_utf8(member.key().data(), member.key().size());
-                *out++ = string_node(member.key().data(), member.key().size());
-                out = fill_nodes(member.value(), out);
+                node* const self = out++;
+                *self = plain_node(n->type());
+                self->len = static_cast<std::uint32_t>(n->size());
+                open.push_back(frame{n->cbegin(), n->cend(), n->is_object(), self});
+            }
+            else
+            {
+                *out++ = json_scalar(*n);
+            }
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    f.self->next = static_cast<std::uint32_t>(out - f.self);
+                    open.pop_back();
+                    continue;
+                }
+                if (f.object)
+                {
+                    const auto& key = f.pos.key();
+                    check_utf8(key.data(), key.size());
+                    *out++ = string_node(key.data(), key.size());
+                }
+                n = &*f.pos;
+                ++f.pos;
+                break;
             }
         }
-        else
-        {
-            for (const auto& e : j)
-            {
-                out = fill_nodes(e, out);
-            }
-        }
-        self->next = static_cast<std::uint32_t>(out - self);
-        return out;
     }
 
     document_data& m_doc;
@@ -6358,7 +6504,9 @@ class basic_json_document
 
     /// set the value at a JSON pointer: its parent must exist; an object
     /// member is set (added if missing), an array element assigned, and "-"
-    /// or the size of the array appends
+    /// or the size of the array appends. A null parent becomes what
+    /// basic_json's operator[](json_pointer) makes of it: an array for "-"
+    /// and for digits (padded with nulls up to the index), an object otherwise.
     template<typename V>
     view_type set(const json_pointer& ptr, V&& value)
     {
@@ -6368,6 +6516,31 @@ class basic_json_document
         }
         const view_type parent = root().at(ptr.parent_pointer());
         const auto& token = ptr.back();
+        if (parent.is_null())
+        {
+            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            {
+                return c >= '0' && c <= '9';
+            });
+            if (token == "-")
+            {
+                return push_back(parent, std::forward<V>(value));
+            }
+            if (digits)
+            {
+                // (an invalid index is an error before the parent changes)
+                const std::size_t idx = pointer_index(token);
+                if (idx >= 0xFFFFFFFFu)
+                {
+                    detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+                }
+                for (std::size_t i = 0; i < idx; ++i)
+                {
+                    push_back(parent, nullptr);
+                }
+                return push_back(parent, std::forward<V>(value));
+            }
+        }
         if (parent.is_array())
         {
             const std::size_t idx = token == "-" ? parent.size() : pointer_index(token);
