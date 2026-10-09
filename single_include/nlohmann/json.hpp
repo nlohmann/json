@@ -19928,8 +19928,8 @@ NLOHMANN_JSON_NAMESPACE_END
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO
 #include <limits> // max
+#include <map> // map
 #include <numeric> // accumulate
-#include <set> // set
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
@@ -20277,33 +20277,45 @@ class json_pointer
 
   private:
     /*!
-    @brief the reference token sequences that denote arrays
+    @brief the pointer prefixes of a flattened object, and which of them denote arrays
 
     @ref unflatten collects the pointer prefixes that have a reference token 0
     among their children; @ref get_and_create creates arrays exactly below
     those prefixes and objects everywhere else. Deciding this up front keeps
     the result independent of the order in which the flattened object is
     iterated, which is unspecified for some object types.
+
+    The prefixes form a tree and are numbered, so each of them is stored only
+    once (as a node) rather than as a copy of all of its reference tokens.
     */
-    using array_parents_t = std::set<std::vector<string_t>>;
+    struct prefix_tree
+    {
+        // children[id] maps a reference token to the number of the prefix
+        // extended by that token; number 0 is the empty prefix
+        std::vector<std::map<string_t, std::size_t>> children;
+        // is_array[id] is true iff some flattened key has the reference token
+        // 0 directly below the prefix with number id
+        std::vector<bool> is_array;
+    };
 
     /*!
     @brief create and return a reference to the pointed to value
 
-    Complexity: Linear in the number of reference tokens.
+    Complexity: Linear in the number of reference tokens (times the logarithm
+    of the number of siblings for the prefix lookup).
 
     @throw parse_error.106 if an array index begins with '0'
     @throw parse_error.109 if array index is not a number
     @throw type_error.313 if value cannot be unflattened
     */
     template<typename BasicJsonType>
-    BasicJsonType& get_and_create(BasicJsonType& j, const array_parents_t& array_parents) const
+    BasicJsonType& get_and_create(BasicJsonType& j, const prefix_tree& tree) const
     {
         auto* result = &j;
 
-        // the reference tokens that have been consumed so far; used to look up
-        // whether the value to be created below is an array or an object
-        std::vector<string_t> prefix;
+        // the number of the prefix consumed so far; used to look up whether
+        // the value to be created below is an array or an object
+        std::size_t id = 0;
 
         // in case no reference tokens exist, return a reference to the JSON value
         // j which will be overwritten by a primitive value
@@ -20313,7 +20325,7 @@ class json_pointer
             {
                 case detail::value_t::null:
                 {
-                    if (array_parents.find(prefix) != array_parents.end())
+                    if (tree.is_array[id])
                     {
                         // some reference token below this position is 0, so the
                         // value is an array
@@ -20358,7 +20370,9 @@ class json_pointer
                     JSON_THROW(detail::type_error::create(313, "invalid value to unflatten", &j));
             }
 
-            prefix.push_back(reference_token);
+            const auto it = tree.children[id].find(reference_token);
+            JSON_ASSERT(it != tree.children[id].end());
+            id = it->second;
         }
 
         return *result;
@@ -20948,19 +20962,31 @@ class json_pointer
 
         // collect the pointer prefixes that have a reference token 0 among
         // their children; the values below them are arrays, all others are
-        // objects (see array_parents_t)
-        array_parents_t array_parents;
+        // objects (see prefix_tree)
+        prefix_tree tree;
+        tree.children.emplace_back();
+        tree.is_array.push_back(false);
         for (const auto& element : *value.m_data.m_value.object)
         {
             json_pointer ptr(element.first);
-            std::vector<string_t> prefix;
+            std::size_t id = 0;
             for (auto& reference_token : ptr.reference_tokens)
             {
                 if (reference_token == "0")
                 {
-                    array_parents.insert(prefix);
+                    tree.is_array[id] = true;
                 }
-                prefix.push_back(std::move(reference_token));
+
+                // do not keep a reference into tree.children across the
+                // push_back below, as it may reallocate
+                const std::size_t next = tree.children.size();
+                const auto inserted = tree.children[id].emplace(std::move(reference_token), next);
+                id = inserted.first->second;
+                if (inserted.second)
+                {
+                    tree.children.emplace_back();
+                    tree.is_array.push_back(false);
+                }
             }
         }
 
@@ -20976,7 +21002,7 @@ class json_pointer
             // that if the JSON pointer is "" (i.e., points to the whole value),
             // function get_and_create returns a reference to the result itself.
             // An assignment will then create a primitive value.
-            json_pointer(element.first).get_and_create(result, array_parents) = element.second;
+            json_pointer(element.first).get_and_create(result, tree) = element.second;
         }
 
         return result;

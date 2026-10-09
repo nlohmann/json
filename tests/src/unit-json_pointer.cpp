@@ -969,19 +969,52 @@ TEST_CASE("flatten of structured values")
             CHECK(flat.begin().key() == path);
             CHECK(flat.begin().value() == 0);
 
-            // unflatten() is not iterative: it takes time and memory
-            // quadratic in the depth, so it is only roundtripped for a
-            // moderate depth
-            std::string small_text;
-            for (std::size_t i = 0; i < 500; ++i)
-            {
-                small_text += objects ? "{\"a\":" : "[";
-            }
-            small_text += "0";
-            small_text += std::string(500, objects ? '}' : ']');
-            const auto small_value = json::parse(small_text);
-            CHECK(small_value.flatten().unflatten() == small_value);
+            // unflatten() is linear in the depth, so the value roundtrips
+            CHECK(flat.unflatten() == value);
         }
+    }
+
+    SECTION("unflatten of a deeply nested pointer")
+    {
+        const std::size_t depth = 100000;
+        for (const bool objects :
+                {
+                    false, true
+                })
+        {
+            CAPTURE(objects)
+            std::string path;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                path += objects ? "/a" : "/0";
+            }
+
+            json flat = json::object();
+            flat[path] = 1;
+            const json value = flat.unflatten();
+
+            // walk down iteratively
+            std::size_t levels = 0;
+            const json* current = &value;
+            while (objects ? current->is_object() : current->is_array())
+            {
+                REQUIRE(current->size() == 1);
+                current = objects ? &current->at("a") : &current->at(0);
+                ++levels;
+            }
+            CHECK(levels == depth);
+            CHECK(*current == 1);
+        }
+    }
+
+    SECTION("unflatten does not depend on the iteration order")
+    {
+        // the "0" key comes after its sibling in iteration order
+        const nlohmann::ordered_json flat_array = nlohmann::ordered_json::parse(R"({"/a/1": 2, "/a/0": 1})");
+        CHECK(flat_array.unflatten() == nlohmann::ordered_json::parse(R"({"a": [1, 2]})"));
+
+        const nlohmann::ordered_json flat_object = nlohmann::ordered_json::parse(R"({"/b/1": 2})");
+        CHECK(flat_object.unflatten() == nlohmann::ordered_json::parse(R"({"b": {"1": 2}})"));
     }
 
     SECTION("objects and arrays interleaved")
