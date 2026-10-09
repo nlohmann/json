@@ -9,7 +9,7 @@
 #pragma once
 
 #include <string> // basic_string, char_traits, string
-#include <type_traits> // decay, integral_constant, is_array, is_lvalue_reference, is_pointer, is_same, remove_reference
+#include <type_traits> // decay, integral_constant, is_array, is_const, is_integral, is_lvalue_reference, is_pointer, is_same, remove_reference
 #include <utility> // forward
 
 #include <nlohmann/json.hpp>
@@ -28,12 +28,12 @@ namespace view
 /// how a document takes its input
 enum class input_kind
 {
-    move_string,  ///< rvalue std::string: owned without a copy
+    move_string,  ///< non-const rvalue std::string: owned without a copy
     c_string,     ///< const char* (NUL-terminated): borrowed
     char_array,   ///< char array (e.g. a string literal): borrowed
     borrow_range, ///< lvalue contiguous byte container, or std::string_view: borrowed
-    copy_range,   ///< rvalue contiguous byte container: copied
-    adapter,      ///< anything else parse() accepts (streams, wide strings, ...): read into a buffer
+    copy_range,   ///< rvalue contiguous byte container (a const rvalue std::string too): copied
+    adapter,      ///< streams, wide strings, and the rest of what the library's input adapter reads: read into a buffer
 };
 
 template<typename InputType>
@@ -52,7 +52,7 @@ struct classify_input
     static constexpr input_kind value =
         std::is_array<R>::value ? input_kind::char_array
         : std::is_pointer<D>::value ? input_kind::c_string
-        : (is_rvalue && std::is_same<D, std::string>::value) ? input_kind::move_string
+        : (is_rvalue && !std::is_const<R>::value && std::is_same<D, std::string>::value) ? input_kind::move_string
         : (is_bytes && (!is_rvalue || is_string_view)) ? input_kind::borrow_range
         : is_bytes ? input_kind::copy_range
         : input_kind::adapter;

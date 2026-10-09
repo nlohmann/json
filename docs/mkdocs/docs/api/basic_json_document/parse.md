@@ -19,24 +19,33 @@ static basic_json_document parse(IteratorType first, IteratorType last,
 1. Deserialize from a compatible input, borrowing or owning it depending on its value category and type (see Notes).
 2. Deserialize from a pair of input iterators.
 
-Both overloads accept exactly what [`BasicJsonType::parse()`](../basic_json/parse.md) accepts, with the same
+Both overloads accept the same JSON text as [`BasicJsonType::parse()`](../basic_json/parse.md), with the same
 `ignore_comments`/`ignore_trailing_commas` options, but build a [`basic_json_document`](index.md) (a flat index into
-the input) instead of a tree of `BasicJsonType` values.
+the input) instead of a tree of `BasicJsonType` values. The input must be byte-oriented (see the template parameters
+below): not every input type of `BasicJsonType::parse()` is supported.
 
 ## Template parameters
 
 `InputType`
-:   A compatible input, for instance:
+:   A byte-oriented input, one of:
 
-    - a `#!cpp std::string`, `#!cpp std::string_view`, or a C-style array of characters
-    - a pointer to a null-terminated string of single byte characters
+    - a `#!cpp std::string`, `#!cpp std::string_view`, or a C-style array of single-byte characters
+    - a pointer to a null-terminated string of single-byte characters (`#!cpp char`, `#!cpp signed char`,
+      `#!cpp unsigned char`, `#!cpp std::uint8_t`)
     - a container for which `#!cpp obj.data()` and `#!cpp obj.size()` give contiguous single-byte access, e.g.
       `#!cpp std::vector<char>` or `#!cpp std::vector<std::uint8_t>`
-    - an `#!cpp std::istream` object, or anything else [`BasicJsonType::parse()`](../basic_json/parse.md) accepts
+    - an `#!cpp std::istream` object
+    - a wide string object (`#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`), which is converted
+      to UTF-8
+
+    Other inputs are not supported: a `#!cpp FILE*`, and pointers to or arrays of wide characters (`#!cpp wchar_t`,
+    `#!cpp char16_t`, `#!cpp char32_t`) are rejected at compile time by a `#!cpp static_assert`. (Use
+    [`BasicJsonType::parse()`](../basic_json/parse.md) for these.)
 
 `IteratorType`
-:   a compatible iterator type, for instance a pair of pointers such as `ptr` and `ptr + len`, or a pair of
-    `#!cpp std::string::iterator`
+:   an input iterator type, for instance a pair of pointers such as `ptr` and `ptr + len`, or a pair of
+    `#!cpp std::string::iterator`; the iterators of single-byte characters are borrowed or read like the byte inputs
+    above, those of wide characters are converted to UTF-8
 
 ## Parameters
 
@@ -84,8 +93,8 @@ Linear in the length of the input.
 | `input`                                                                             | ownership                                                    |
 |--------------------------------------------------------------------------------------|--------------------------------------------------------------|
 | lvalue byte container (`std::string`, `std::vector<char>`, ...), `std::string_view`, C string, character array | **borrowed** -- `input` must outlive the document |
-| rvalue `#!cpp std::string`                                                            | **owned**, moved in without a copy                            |
-| rvalue byte container other than `#!cpp std::string`                                  | **owned**, copied                                             |
+| non-const rvalue `#!cpp std::string`                                                  | **owned**, moved in without a copy                            |
+| other rvalue byte container (including a `#!cpp const` rvalue `#!cpp std::string`)  | **owned**, copied                                             |
 | stream, wide string, or anything else read through the general input adapter          | **owned**, read into a buffer (a stream is read to its end)   |
 
 For overload (2), a pair of pointers to single-byte integers (e.g. `#!cpp const char*`, `#!cpp std::uint8_t*`) is
