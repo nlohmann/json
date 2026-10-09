@@ -1315,6 +1315,72 @@ TEST_CASE("json_view large objects")
         CHECK(v.materialize() == j);
     }
 
+    SECTION("colliding keys")
+    {
+        // the hash is not seeded, so keys that all land in one place must not
+        // make the table build quadratic: such an object gets no table and is
+        // searched linearly
+        constexpr std::size_t members = 300;
+        constexpr std::size_t slots = 1024; // the table size for 300 members: the next power of two >= 600
+        std::vector<std::string> colliding;
+        std::vector<std::string> spread;
+        for (std::uint64_t counter = 0; colliding.size() < members || spread.size() < members; ++counter)
+        {
+            std::string key(8, 'a');
+            for (std::uint64_t x = counter, i = 0; i < 8; ++i, x /= 26)
+            {
+                key[i] = static_cast<char>('a' + (x % 26));
+            }
+            const bool lands_in_slot_zero = (nlohmann::detail::view::key_hash(key.data(), key.size()) & (slots - 1)) == 0;
+            if (lands_in_slot_zero && colliding.size() < members)
+            {
+                colliding.push_back(key);
+            }
+            else if (!lands_in_slot_zero && spread.size() < members)
+            {
+                spread.push_back(key);
+            }
+        }
+
+        const auto make_text = [](const std::vector<std::string>& keys)
+        {
+            std::string text = "{";
+            for (std::size_t i = 0; i < keys.size(); ++i)
+            {
+                text += (i != 0 ? ",\"" : "\"") + keys[i] + "\":" + std::to_string(i % 10);
+            }
+            return text + "}";
+        };
+        const std::string colliding_text = make_text(colliding);
+        const std::string spread_text = make_text(spread);
+
+        json_document with_collisions = json_document::parse(colliding_text);
+        json_document without_collisions = json_document::parse(spread_text);
+        for (const auto* pair :
+                {
+                    &colliding, &spread
+                })
+        {
+            const json_view v = (pair == &colliding ? with_collisions : without_collisions).root();
+            for (std::size_t i = 0; i < members; ++i)
+            {
+                CAPTURE(i)
+                CHECK(v[(*pair)[i]].get<std::size_t>() == i % 10);
+                CHECK(v.at((*pair)[i]).get<std::size_t>() == i % 10);
+                CHECK(v.find((*pair)[i]).key() == (*pair)[i]);
+                CHECK(!v.contains((*pair)[i] + "x"));
+            }
+            CHECK(!v.contains("missing"));
+        }
+        CHECK(with_collisions.root() == json::parse(colliding_text));
+
+        // only the object with the spread keys got a table (both texts have the
+        // same length, so the tables are the only difference)
+        with_collisions.shrink_to_fit();
+        without_collisions.shrink_to_fit();
+        CHECK(without_collisions.memory_usage() >= with_collisions.memory_usage() + (slots * sizeof(std::uint32_t)));
+    }
+
     SECTION("nested, reused, and in arrays")
     {
         std::string inner = "{";
