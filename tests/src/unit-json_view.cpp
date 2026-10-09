@@ -1461,6 +1461,8 @@ TEST_CASE("json_view dump")
         const json_document d = json_document::parse(R"({"b": 1, "a": 2, "b": 3})");
         CHECK(d.root().dump() == R"({"b":1,"a":2,"b":3})");
         CHECK(d.root().dump(1) == "{\n \"b\": 1,\n \"a\": 2,\n \"b\": 3\n}");
+        // dump() writes all members, though the lookup finds the first
+        CHECK(d.root()["b"].dump() == "1");
     }
 
     SECTION("deep nesting")
@@ -1583,6 +1585,9 @@ TEST_CASE("json_view comparison")
         const ordered_json_document dup = ordered_json_document::parse(R"({"a": 1, "b": 2, "a": 3})");
         const ordered_json_document last = ordered_json_document::parse(R"({"a": 3, "b": 2})");
         CHECK(dup.root() == last.root());
+        // (== compares as parse() resolves duplicates, a lookup finds the first)
+        CHECK(dup.root()["a"].materialize() == 1);
+        CHECK(dup.root()["a"] != last.root()["a"]);
         const ordered_json_document ab = ordered_json_document::parse(R"({"a": 1, "b": 2})");
         const ordered_json_document ba = ordered_json_document::parse(R"({"b": 2, "a": 1})");
         CHECK(ab.root() != ba.root());

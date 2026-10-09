@@ -221,8 +221,8 @@ Both results are only valid as long as the view -- and, for a string with no esc
 [`dump()`](../api/basic_json_view/dump.md) serializes a view directly from the flat index, without ever building a
 `basic_json` value. An object's members are written in document order, not sorted by key, and *every* occurrence of a
 repeated key is written, not only the last one -- the same two ways [iteration](#what-is-different) already differs
-from a [`materialize()`](../api/basic_json_view/materialize.md)d value, see above. `#!cpp materialize().dump()` gives
-a different result in both respects for a `json_view`.
+from a [`materialize()`](../api/basic_json_view/materialize.md)d value, see [Duplicate keys](#duplicate-keys).
+`#!cpp materialize().dump()` gives a different result in both respects for a `json_view`.
 
 By default, numbers are written the way [`basic_json::dump()`](../api/basic_json/dump.md) would.
 [`number_format::source`](../api/basic_json_view/number_format.md) instead copies every number exactly as it was
