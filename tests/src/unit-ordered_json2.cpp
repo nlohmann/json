@@ -44,6 +44,8 @@ using nlohmann::ordered_json;
 // this type, which is presumably why the gap was never noticed.
 /////////////////////////////////////////////////////////////////////////////
 
+namespace unit_ordered_json2_detail
+{
 class alt_string;
 bool operator<(const char* op1, const alt_string& op2) noexcept; // NOLINT(misc-use-internal-linkage)
 void int_to_string(alt_string& target, std::size_t value); // NOLINT(misc-use-internal-linkage)
@@ -217,21 +219,24 @@ void int_to_string(alt_string& target, std::size_t value)
     target = std::to_string(value).c_str();
 }
 
-using alt_json = nlohmann::basic_json <
-                 std::map,
-                 std::vector,
-                 alt_string,
-                 bool,
-                 std::int64_t,
-                 std::uint64_t,
-                 double,
-                 std::allocator,
-                 nlohmann::adl_serializer >;
+using ordered_json2_alt_json = nlohmann::basic_json <
+                               std::map,
+                               std::vector,
+                               alt_string,
+                               bool,
+                               std::int64_t,
+                               std::uint64_t,
+                               double,
+                               std::allocator,
+                               nlohmann::adl_serializer >;
 
 bool operator<(const char* op1, const alt_string& op2) noexcept
 {
     return op1 < op2.str_impl;
 }
+} // namespace unit_ordered_json2_detail
+
+using unit_ordered_json2_detail::ordered_json2_alt_json;
 
 namespace
 {
@@ -262,11 +267,11 @@ ordered_json make_rich_ordered_json()
     return j;
 }
 
-alt_json make_rich_alt_json()
+ordered_json2_alt_json make_rich_alt_json()
 {
-    alt_json j;
+    ordered_json2_alt_json j;
     j["zebra"] = 1;
-    j["apple"] = alt_json::array({1, 2, 3});
+    j["apple"] = ordered_json2_alt_json::array({1, 2, 3});
     j["mango"]["z_nested"] = true;
     j["mango"]["a_nested"] = nullptr;
     j["banana"] = "some text";
@@ -339,47 +344,47 @@ TEST_CASE("ordered_json across binary formats")
 
 TEST_CASE("alt_json (custom string_t) across binary formats")
 {
-    const alt_json original = make_rich_alt_json();
+    const ordered_json2_alt_json original = make_rich_alt_json();
 
     SECTION("CBOR")
     {
-        const auto bytes = alt_json::to_cbor(original);
-        const auto restored = alt_json::from_cbor(bytes);
+        const auto bytes = ordered_json2_alt_json::to_cbor(original);
+        const auto restored = ordered_json2_alt_json::from_cbor(bytes);
         CHECK(restored == original);
     }
 
     SECTION("MessagePack")
     {
-        const auto bytes = alt_json::to_msgpack(original);
-        const auto restored = alt_json::from_msgpack(bytes);
+        const auto bytes = ordered_json2_alt_json::to_msgpack(original);
+        const auto restored = ordered_json2_alt_json::from_msgpack(bytes);
         CHECK(restored == original);
     }
 
     SECTION("UBJSON")
     {
-        const auto bytes = alt_json::to_ubjson(original);
-        const auto restored = alt_json::from_ubjson(bytes);
+        const auto bytes = ordered_json2_alt_json::to_ubjson(original);
+        const auto restored = ordered_json2_alt_json::from_ubjson(bytes);
         CHECK(restored == original);
     }
 
     SECTION("BON8")
     {
-        const auto bytes = alt_json::to_bon8(original);
-        const auto restored = alt_json::from_bon8(bytes);
+        const auto bytes = ordered_json2_alt_json::to_bon8(original);
+        const auto restored = ordered_json2_alt_json::from_bon8(bytes);
         CHECK(restored == original);
     }
 
     SECTION("BSON")
     {
-        const auto bytes = alt_json::to_bson(original);
-        const auto restored = alt_json::from_bson(bytes);
+        const auto bytes = ordered_json2_alt_json::to_bson(original);
+        const auto restored = ordered_json2_alt_json::from_bson(bytes);
         CHECK(restored == original);
     }
 
     SECTION("BJData")
     {
-        const auto bytes = alt_json::to_bjdata(original);
-        const auto restored = alt_json::from_bjdata(bytes);
+        const auto bytes = ordered_json2_alt_json::to_bjdata(original);
+        const auto restored = ordered_json2_alt_json::from_bjdata(bytes);
         CHECK(restored == original);
     }
 }

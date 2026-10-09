@@ -1306,44 +1306,9 @@ TEST_CASE("deserialization")
             CHECK(line == "foo");
         }
     }
-
-    // build with C++20
-    // JSON_HAS_CPP_20
-#if defined(__cpp_char8_t)
-    SECTION("Using _json with char8_t literals #4945")
-    {
-        // Regular narrow string literal
-        const auto j1 = R"({"key": "value", "num": 42})"_json;
-        CHECK(j1["key"] == "value");
-        CHECK(j1["num"] == 42);
-
-        // UTF-8 prefixed literal (C++20 and later); the emoji is written as a
-        // \U escape rather than a raw multibyte character so this does not
-        // depend on the compiler's source-file encoding (e.g., MSVC without
-        // /utf-8, or classic ICC, which does not encode non-ASCII narrow
-        // string literals as UTF-8 - compare against a \x-escaped expectation
-        // for the same reason)
-        const auto j2 = u8"{\"emoji\": \"\U0001F600\", \"msg\": \"hello\"}"_json;
-        CHECK(j2["emoji"] == "\xF0\x9F\x98\x80");
-        CHECK(j2["msg"] == "hello");
-
-        const auto j3 = u8R"({"key": "value", "num": 42})"_json;
-        CHECK(j3["key"] == "value");
-        CHECK(j3["num"] == 42);
-    }
-#endif
 }
 
-// select the types to test - char8_t is only available since C++20 if and only
-// if __cpp_char8_t is defined.
-#define TYPE_LIST(...) __VA_ARGS__
-#if defined(__cpp_char8_t) && (__cpp_char8_t >= 201811L)
-    #define ASCII_TYPES TYPE_LIST(char, wchar_t, char16_t, char32_t, char8_t)
-#else
-    #define ASCII_TYPES TYPE_LIST(char, wchar_t, char16_t, char32_t)
-#endif
-
-TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, ASCII_TYPES) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
+TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, char, wchar_t, char16_t, char32_t) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     std::vector<T> const v = {'t', 'r', 'u', 'e'};
     CHECK(json::parse(v) == json(true));

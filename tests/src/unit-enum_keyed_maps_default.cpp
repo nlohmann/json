@@ -27,6 +27,9 @@ using nlohmann::json;
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
+// the types live in a namespace, because the file may be compiled together with other test files
+namespace enum_keyed_maps_default
+{
 enum class cards {kreuz, pik, herz, karo};
 
 // NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
@@ -65,6 +68,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(strict_cards,
     {strict_cards::herz, "herz"},
     {strict_cards::karo, "karo"}
 })
+} // namespace enum_keyed_maps_default
 
 namespace
 {
@@ -82,6 +86,15 @@ struct enum_hash
 // see unit-enum_keyed_maps.cpp for JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS=1
 TEST_CASE("maps with enum keys")
 {
+    // block-scope using-declarations take precedence over same-named types of other files in the same translation unit
+    using enum_keyed_maps_default::cards;
+    using enum_keyed_maps_default::strict_cards;
+    using enum_keyed_maps_default::TaskState;
+    using enum_keyed_maps_default::TS_COMPLETED;
+    using enum_keyed_maps_default::TS_INVALID;
+    using enum_keyed_maps_default::TS_RUNNING;
+    using enum_keyed_maps_default::TS_STOPPED;
+
     using task_map = std::map<TaskState, std::string>;
     using task_umap = std::unordered_map<TaskState, std::string, enum_hash>;
     using task_gmap = std::map<TaskState, std::string, std::greater<TaskState>>;
