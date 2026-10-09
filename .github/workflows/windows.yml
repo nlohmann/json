@@ -166,6 +166,13 @@ jobs:
       # link, but the binaries clang 11.0.1 and clang 18.1.8 then produce crash
       # before doctest prints its first line - 39 of 102 tests on clang 18.
       # Keep the objects small by splitting the test files instead.
+      # Objects with more than 65535 sections fail to link with "relocation
+      # truncated to fit: IMAGE_REL_AMD64_REL32 against `.rdata'": the MinGW
+      # linker stores the section an associative COMDAT section belongs to in
+      # 16 bits (x_associated in binutils' include/coff/internal.h), so it
+      # discards the jump tables of inline functions together with the wrong
+      # function. Each basic_json specialization a test file instantiates adds
+      # many sections, so test a second one in a file of its own.
       - name: Run CMake
         run: cmake -S . -B build ^
              -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
