@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <algorithm> // find, find_if, max
+#include <algorithm> // find, find_if, max, min
 #include <array> // array
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // int64_t, uint8_t, uint16_t, uint32_t, uint64_t
@@ -195,8 +195,18 @@ class builder
         const std::uint64_t done = static_cast<std::uint64_t>(at - b) + 1;
         const std::uint64_t guess = static_cast<std::uint64_t>(n) * static_cast<std::uint64_t>(e - b + 1) / done;
         const std::uint64_t grown = guess + (guess / 4) + 64; // a variable: GCC calls a cast of the sum useless where std::uint64_t is std::size_t
+        // (n is below 2^32: the input is smaller than 4 GiB; the sum cannot wrap)
+        const std::uint64_t wanted = (std::max)(grown, static_cast<std::uint64_t>(n) + (n / 2) + 64);
+        const std::uint64_t limit = document_data::max_nodes();
         doc.tape_size = n;
-        doc.reserve((std::max)(static_cast<std::size_t>(grown), n + (n / 2) + 64));
+        // LCOV_EXCL_START (a node array that fills the address space)
+        if (NLOHMANN_VIEW_UNLIKELY(n >= limit))
+        {
+            document_data::throw_bad_alloc(); // no room for another node
+        }
+        // LCOV_EXCL_STOP
+        // (a count beyond the limit is cut: the index does not grow beyond what can be addressed)
+        doc.reserve(static_cast<std::size_t>((std::min)(wanted, limit)));
         return doc.tape;
     }
 
@@ -801,7 +811,10 @@ indent_done:
             n->flags = flags;
             n->extra = extra;
             n->off = static_cast<std::uint32_t>(off);
-            set_integer_bits(*n, second);
+            // len is the low half of the second word, next the high half
+            // (not a native word over both, which swaps them on big-endian)
+            n->len = static_cast<std::uint32_t>(second);
+            n->next = static_cast<std::uint32_t>(second >> 32);
 #endif
             return n;
         }

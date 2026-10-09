@@ -11,7 +11,8 @@
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstring> // memcpy
-#include <new> // operator new, placement new
+#include <limits> // numeric_limits
+#include <new> // bad_alloc, operator new, placement new
 #include <string> // string
 
 #include <nlohmann/json.hpp>
@@ -84,12 +85,29 @@ struct document_data
         tape_cap = inline_cap;
     }
 
-    /// make room for n nodes; keeps the first tape_size nodes
+    /// the largest node count whose size in bytes fits a std::size_t
+    static constexpr std::size_t max_nodes() noexcept
+    {
+        return (std::numeric_limits<std::size_t>::max)() / sizeof(node);
+    }
+
+    [[noreturn]] NLOHMANN_VIEW_NOINLINE static void throw_bad_alloc()
+    {
+        NLOHMANN_VIEW_THROW(std::bad_alloc());
+    }
+
+    /// make room for n nodes; keeps the first tape_size nodes (throws
+    /// std::bad_alloc for a count that does not fit the address space,
+    /// instead of wrapping around in n * sizeof(node))
     void reserve(std::size_t n)
     {
         if (n <= tape_cap)
         {
             return;
+        }
+        if (NLOHMANN_VIEW_UNLIKELY(n > max_nodes()))
+        {
+            throw_bad_alloc();
         }
         node* fresh = static_cast<node*>(::operator new (n * sizeof(node)));
         if (tape_size != 0)

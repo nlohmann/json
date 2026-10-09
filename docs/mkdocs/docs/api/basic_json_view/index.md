@@ -71,7 +71,6 @@ subtree on demand. [`operator[]`](operator%5B%5D.md), [`at`](at.md), [`contains`
 - [**is_primitive**](is_primitive.md) - return whether the type is primitive
 - [**is_structured**](is_structured.md) - return whether the type is structured
 - [**is_discarded**](is_discarded.md) - return whether the view is invalid
-- [**operator bool**](operator_bool.md) - return whether the view refers to a value
 
 ### Element access
 
