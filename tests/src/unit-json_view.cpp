@@ -593,7 +593,7 @@ void check_access(const ordered_json_view& v, const ordered_json& j)
             ++i;
         }
         CHECK(i == v.size());
-        CHECK(!v[v.size()]);
+        CHECK(v[v.size()].is_discarded());
         std::size_t index = 0;
         for (const auto& item : v.items())
         {
@@ -659,7 +659,7 @@ void check_access(const ordered_json_view& v, const ordered_json& j)
                 CHECK(v.back().materialize() == j.back());
             }
         }
-        CHECK(!v["not a key in the generated documents"]);
+        CHECK(v["not a key in the generated documents"].is_discarded());
         CHECK(v.find("not a key in the generated documents") == v.end());
     }
     else
@@ -803,8 +803,8 @@ TEST_CASE("json_view element access and iteration")
 
         // where basic_json has undefined behavior, the view answers safely
         const json_document d = json_document::parse(R"({"a":[]})");
-        CHECK(!d.root()["b"]);
-        CHECK(!d.root()["a"][0]);
+        CHECK(d.root()["b"].is_discarded());
+        CHECK(d.root()["a"][0].is_discarded());
         CHECK_THROWS_WITH_AS(d.root()["a"].front(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
         CHECK_THROWS_WITH_AS(d.root()["a"].back(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
         const json_view invalid{};
@@ -817,24 +817,24 @@ TEST_CASE("json_view element access and iteration")
         const json_document d = json_document::parse(R"({"a":{"b":[10,20]},"s":"str"})");
         const json_view v = d.root();
         // missing keys and indexes
-        CHECK(!v["x"]);
-        CHECK(!v["x"]["y"]);
-        CHECK(!v["x"]["y"]["z"]);
-        CHECK(!v["x"][0]);
-        CHECK(!v["x"][0u][1L]);
-        CHECK(!v["a"]["b"][2]);
-        CHECK(!v["a"]["b"][2]["c"]);
-        CHECK(!v["a"]["b"][2][json_view::json_pointer("/c")]);
-        CHECK(!v["x"][json_view::json_pointer("/a/b")]);
-        CHECK(!v["x"][json_view::json_pointer("")]);
+        CHECK(v["x"].is_discarded());
         CHECK(v["x"]["y"].is_discarded());
-        CHECK(!v["x"][std::string("y")]);
+        CHECK(v["x"]["y"]["z"].is_discarded());
+        CHECK(v["x"][0].is_discarded());
+        CHECK(v["x"][0u][1L].is_discarded());
+        CHECK(v["a"]["b"][2].is_discarded());
+        CHECK(v["a"]["b"][2]["c"].is_discarded());
+        CHECK(v["a"]["b"][2][json_view::json_pointer("/c")].is_discarded());
+        CHECK(v["x"][json_view::json_pointer("/a/b")].is_discarded());
+        CHECK(v["x"][json_view::json_pointer("")].is_discarded());
+        CHECK(v["x"]["y"].is_discarded());
+        CHECK(v["x"][std::string("y")].is_discarded());
         // a resolvable path still resolves
         CHECK(v["a"]["b"][1].materialize() == 20);
         CHECK(v[json_view::json_pointer("/a/b/1")].materialize() == 20);
         // the discarded view of an unresolved pointer is discarded too
-        CHECK(!v[json_view::json_pointer("/x/y")]["z"]);
-        CHECK(!v[json_view::json_pointer("/a/b/5")][0]);
+        CHECK(v[json_view::json_pointer("/x/y")]["z"].is_discarded());
+        CHECK(v[json_view::json_pointer("/a/b/5")][0].is_discarded());
 #if !defined(JSON_NOEXCEPTION)
         // type errors on values that are not discarded stay
         CHECK_THROWS_WITH_AS(v[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object", json::type_error&);
@@ -845,9 +845,9 @@ TEST_CASE("json_view element access and iteration")
         CHECK_THROWS_AS(v["s"][json_view::json_pointer("/x")], json::out_of_range&);
         // at() keeps throwing on a discarded view
         const json_view invalid{};
-        CHECK(!invalid["a"]);
-        CHECK(!invalid[0]);
-        CHECK(!invalid[json_view::json_pointer("/a")]);
+        CHECK(invalid["a"].is_discarded());
+        CHECK(invalid[0].is_discarded());
+        CHECK(invalid[json_view::json_pointer("/a")].is_discarded());
         CHECK_THROWS_WITH_AS(invalid.at("a"), "[json.exception.type_error.304] cannot use at() with discarded", json::type_error&);
         CHECK_THROWS_WITH_AS(invalid.at(0), "[json.exception.type_error.304] cannot use at() with discarded", json::type_error&);
         CHECK_THROWS_AS(v.at("x").at("y"), json::out_of_range&);
@@ -900,18 +900,18 @@ TEST_CASE("json_view element access and iteration")
         CHECK(j.at(std::uint32_t(0)) == 10); // as basic_json
 
         // out of range, including negative values (no wrap-around)
-        CHECK(!v[3]);
-        CHECK(!v[3u]);
-        CHECK(!v[3L]);
-        CHECK(!v[-1]);
-        CHECK(!v[-1L]);
-        CHECK(!v[-1LL]);
-        CHECK(!v[static_cast<short>(-1)]);
-        CHECK(!v[std::int64_t(-3)]);
-        CHECK(!v[(std::numeric_limits<std::int64_t>::min)()]);
-        CHECK(!v[(std::numeric_limits<std::uint64_t>::max)()]);
-        CHECK(!v[(std::numeric_limits<std::size_t>::max)()]);
-        CHECK(!v[std::numeric_limits<int>::max()]);
+        CHECK(v[3].is_discarded());
+        CHECK(v[3u].is_discarded());
+        CHECK(v[3L].is_discarded());
+        CHECK(v[-1].is_discarded());
+        CHECK(v[-1L].is_discarded());
+        CHECK(v[-1LL].is_discarded());
+        CHECK(v[static_cast<short>(-1)].is_discarded());
+        CHECK(v[std::int64_t(-3)].is_discarded());
+        CHECK(v[(std::numeric_limits<std::int64_t>::min)()].is_discarded());
+        CHECK(v[(std::numeric_limits<std::uint64_t>::max)()].is_discarded());
+        CHECK(v[(std::numeric_limits<std::size_t>::max)()].is_discarded());
+        CHECK(v[std::numeric_limits<int>::max()].is_discarded());
 #if !defined(JSON_NOEXCEPTION)
         CHECK_THROWS_WITH_AS(v.at(3), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
         CHECK_THROWS_WITH_AS(v.at(3u), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
@@ -1344,7 +1344,7 @@ TEST_CASE("json_view JSON pointers")
             else if (at_error.find("out_of_range.401") != std::string::npos || at_error.find("out_of_range.403") != std::string::npos) // NOLINT(abseil-string-find-str-contains)
             {
                 // undefined behavior for const basic_json::operator[]
-                CHECK(!v[p]);
+                CHECK(v[p].is_discarded());
             }
             else
             {

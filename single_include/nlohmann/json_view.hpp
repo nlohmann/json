@@ -3113,7 +3113,7 @@ class basic_json_view
             detail::view::throw_type_error(304, "cannot use at() with ", type_name());
         }
         const basic_json_view r = lookup(key);
-        if (NLOHMANN_VIEW_UNLIKELY(!r))
+        if (NLOHMANN_VIEW_UNLIKELY(r.is_discarded()))
         {
             detail::view::throw_out_of_range(403, detail::concat("key '", std::string(key.data(), key.size()), "' not found"));
         }
@@ -3171,7 +3171,7 @@ class basic_json_view
             detail::view::throw_type_error(306, "cannot use value() with ", type_name());
         }
         const basic_json_view r = lookup(key);
-        return r ? r.template get<T>() : default_value;
+        return r.is_discarded() ? default_value : r.template get<T>();
     }
 
     string_t value(string_view_t key, const char* default_value) const
@@ -3190,7 +3190,7 @@ class basic_json_view
             detail::view::throw_type_error(306, "cannot use value() with ", type_name());
         }
         const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
-        return r ? r.template get<T>() : default_value;
+        return r.is_discarded() ? default_value : r.template get<T>();
     }
 
     string_t value(const json_pointer& ptr, const char* default_value) const
@@ -3268,7 +3268,7 @@ class basic_json_view
     /// basic_json::contains())
     bool contains(const json_pointer& ptr) const
     {
-        return static_cast<bool>(detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains));
+        return !detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains).is_discarded();
     }
 
     /// 1 if this is an object with a member with this key, else 0 (duplicate
