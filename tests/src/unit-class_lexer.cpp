@@ -1794,9 +1794,9 @@ TEST_CASE("string scanning kernels")
     }
 
     // eight bytes as a little-endian word, at any alignment
-    const unsigned char bytes[16] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF};
-    CHECK(nlohmann::detail::read_eight_bytes(bytes) == 0x0807060504030201u);
-    CHECK(nlohmann::detail::read_eight_bytes(bytes + 1) == 0x0908070605040302u);
-    CHECK(nlohmann::detail::read_eight_bytes(bytes + 8) == 0xFF0F0E0D0C0B0A09u);
-    CHECK(nlohmann::detail::read_eight_bytes(reinterpret_cast<const char*>(bytes) + 3) == 0x0B0A090807060504u);
+    const std::array<unsigned char, 16> bytes = {{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF}};
+    CHECK(nlohmann::detail::read_eight_bytes(bytes.data()) == 0x0807060504030201u);
+    CHECK(nlohmann::detail::read_eight_bytes(bytes.data() + 1) == 0x0908070605040302u);
+    CHECK(nlohmann::detail::read_eight_bytes(bytes.data() + 8) == 0xFF0F0E0D0C0B0A09u);
+    CHECK(nlohmann::detail::read_eight_bytes(reinterpret_cast<const char*>(bytes.data()) + 3) == 0x0B0A090807060504u);
 }
