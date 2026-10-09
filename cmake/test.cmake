@@ -290,9 +290,12 @@ function(_json_test_add_unity_batch batch_name cxx_standard main private)
     if(private)
         string(APPEND batch_content "// at least one file of this batch needs access to private members of the library\n")
         string(APPEND batch_content "#define JSON_TESTS_PRIVATE\n")
+        # the files define the macro again; mark this definition as used, as
+        # -Wunused-macros reports an unused definition when it is redefined
+        string(APPEND batch_content "#ifdef JSON_TESTS_PRIVATE\n#endif\n")
     endif()
     foreach(file ${ARGN})
-        string(APPEND batch_content "#include \"${file}\"\n")
+        string(APPEND batch_content "#include \"${file}\" // NOLINT(bugprone-suspicious-include)\n")
     endforeach()
 
     # only touch the generated file if it changed to keep incremental builds incremental

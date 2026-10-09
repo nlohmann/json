@@ -44,10 +44,10 @@ TEST_CASE("JSON Node Metadata")
 {
     SECTION("type int")
     {
-        using json = json_with_metadata<int>;
-        json null;
-        auto obj   = json::object();
-        auto array = json::array();
+        using json_t = json_with_metadata<int>;
+        json_t null;
+        auto obj   = json_t::object();
+        auto array = json_t::array();
 
         null.metadata()  = 1;
         obj.metadata()   = 2;
@@ -61,8 +61,8 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("type vector<int>")
     {
-        using json = json_with_metadata<std::vector<int>>;
-        json value;
+        using json_t = json_with_metadata<std::vector<int>>;
+        json_t value;
         value.metadata().emplace_back(1);
         auto copy = value;
         value.metadata().emplace_back(2);
@@ -75,12 +75,12 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("copy ctor")
     {
-        using json = json_with_metadata<std::vector<int>>;
-        json value;
+        using json_t = json_with_metadata<std::vector<int>>;
+        json_t value;
         value.metadata().emplace_back(1);
         value.metadata().emplace_back(2);
 
-        json copy = value;
+        json_t copy = value;
 
         CHECK(copy.metadata().size()  == 2);
         CHECK(copy.metadata().at(0)   == 1);
@@ -95,12 +95,12 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("move ctor")
     {
-        using json = json_with_metadata<std::vector<int>>;
-        json value;
+        using json_t = json_with_metadata<std::vector<int>>;
+        json_t value;
         value.metadata().emplace_back(1);
         value.metadata().emplace_back(2);
 
-        const json moved = std::move(value);
+        const json_t moved = std::move(value);
 
         CHECK(moved.metadata().size()  == 2);
         CHECK(moved.metadata().at(0)   == 1);
@@ -108,12 +108,12 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("move assign")
     {
-        using json = json_with_metadata<std::vector<int>>;
-        json value;
+        using json_t = json_with_metadata<std::vector<int>>;
+        json_t value;
         value.metadata().emplace_back(1);
         value.metadata().emplace_back(2);
 
-        json moved;
+        json_t moved;
         moved = std::move(value);
 
         CHECK(moved.metadata().size()  == 2);
@@ -122,12 +122,12 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("copy assign")
     {
-        using json = json_with_metadata<std::vector<int>>;
-        json value;
+        using json_t = json_with_metadata<std::vector<int>>;
+        json_t value;
         value.metadata().emplace_back(1);
         value.metadata().emplace_back(2);
 
-        json copy;
+        json_t copy;
         copy = value;
 
         CHECK(copy.metadata().size()  == 2);
@@ -143,8 +143,8 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("type unique_ptr<int>")
     {
-        using json = json_with_metadata<std::unique_ptr<int>>;
-        json value;
+        using json_t = json_with_metadata<std::unique_ptr<int>>;
+        json_t value;
         value.metadata().reset(new int(42)); // NOLINT(cppcoreguidelines-owning-memory)
         auto moved = std::move(value);
 
@@ -153,12 +153,12 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("type vector<int> in json array")
     {
-        using json = json_with_metadata<std::vector<int>>;
-        json value;
+        using json_t = json_with_metadata<std::vector<int>>;
+        json_t value;
         value.metadata().emplace_back(1);
         value.metadata().emplace_back(2);
 
-        json const array(10, value);
+        json_t const array(10, value);
 
         CHECK(value.metadata().size() == 2);
         CHECK(value.metadata().at(0)  == 1);
@@ -173,10 +173,10 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("member swap")
     {
-        using json = json_with_metadata<int>;
-        json a = 1;
+        using json_t = json_with_metadata<int>;
+        json_t a = 1;
         a.metadata() = 100;
-        json b = 2;
+        json_t b = 2;
         b.metadata() = 200;
 
         a.swap(b);
@@ -188,10 +188,10 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("nonmember swap")
     {
-        using json = json_with_metadata<int>;
-        json a = 1;
+        using json_t = json_with_metadata<int>;
+        json_t a = 1;
         a.metadata() = 100;
-        json b = 2;
+        json_t b = 2;
         b.metadata() = 200;
 
         using std::swap;
@@ -204,10 +204,10 @@ TEST_CASE("JSON Node Metadata")
     }
     SECTION("std::swap")
     {
-        using json = json_with_metadata<int>;
-        json a = 1;
+        using json_t = json_with_metadata<int>;
+        json_t a = 1;
         a.metadata() = 100;
-        json b = 2;
+        json_t b = 2;
         b.metadata() = 200;
 
         std::swap(a, b);
@@ -221,15 +221,15 @@ TEST_CASE("JSON Node Metadata")
     {
         // std::sort mixes swap() with moves; each value's metadata must
         // travel with it, just as it does for copy, move, and assignment
-        using json = json_with_metadata<int>;
-        std::vector<json> values;
+        using json_t = json_with_metadata<int>;
+        std::vector<json_t> values;
         for (const int v :
                 {
                     5, 3, 9, 1, 7, 2, 8, 4, 6, 0, 15, 13, 19, 11, 17, 12, 18, 14, 16, 10,
                     25, 23, 29, 21, 27, 22, 28, 24, 26, 20, 35, 33
                 })
         {
-            json value = v;
+            json_t value = v;
             value.metadata() = v;
             values.push_back(value);
         }
@@ -267,19 +267,19 @@ template <class Ptr, class Fnc>
 void visitor_adaptor::do_visit(const Ptr& ptr, const Fnc& fnc) const
 {
     using value_t = nlohmann::detail::value_t;
-    const json_with_visitor_t& json = *static_cast<const json_with_visitor_t*>(this); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-    switch (json.type())
+    const json_with_visitor_t& self = *static_cast<const json_with_visitor_t*>(this); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    switch (self.type())
     {
         case value_t::object:
-            for (const auto& entry : json.items())
+            for (const auto& entry : self.items())
             {
                 entry.value().do_visit(ptr / entry.key(), fnc);
             }
             break;
         case value_t::array:
-            for (std::size_t i = 0; i < json.size(); ++i)
+            for (std::size_t i = 0; i < self.size(); ++i)
             {
-                json.at(i).do_visit(ptr / std::to_string(i), fnc);
+                self.at(i).do_visit(ptr / std::to_string(i), fnc);
             }
             break;
         case value_t::discarded:
@@ -292,22 +292,22 @@ void visitor_adaptor::do_visit(const Ptr& ptr, const Fnc& fnc) const
         case value_t::number_float:
         case value_t::binary:
         default:
-            fnc(ptr, json);
+            fnc(ptr, self);
     }
 }
 
 TEST_CASE("JSON Visit Node")
 {
-    json_with_visitor_t json;
-    json["null"];
-    json["int"]  = -1;
-    json["uint"] = 1U;
-    json["float"] = 1.0;
-    json["boolean"] = true;
-    json["string"] = "string";
-    json["array"].push_back(0);
-    json["array"].push_back(1);
-    json["array"].push_back(json);
+    json_with_visitor_t root;
+    root["null"];
+    root["int"]  = -1;
+    root["uint"] = 1U;
+    root["float"] = 1.0;
+    root["boolean"] = true;
+    root["string"] = "string";
+    root["array"].push_back(0);
+    root["array"].push_back(1);
+    root["array"].push_back(root);
 
     std::set<std::string> expected
     {
@@ -330,7 +330,7 @@ TEST_CASE("JSON Visit Node")
         "/array/2/array/1 - number_integer - 1"
     };
 
-    json.visit(
+    root.visit(
             [&](const json_with_visitor_t::json_pointer & p,
                 const json_with_visitor_t& j)
     {
@@ -374,7 +374,7 @@ TEST_CASE("JSON Visit Node")
                 break;
         }
         str << " - "  << j.dump();
-        CHECK(json.at(p) == j);
+        CHECK(root.at(p) == j);
         INFO(str.str());
         CHECK(expected.count(str.str()) == 1);
         expected.erase(str.str());
@@ -417,22 +417,22 @@ using json_with_hidden_base_members =
 
 TEST_CASE("JSON Node as_base_class")
 {
-    using json = json_with_hidden_base_members;
+    using json_t = json_with_hidden_base_members;
 
-    static_assert(std::is_same<decltype(std::declval<json&>().as_base_class()), json::json_base_class_t&>::value, "");
-    static_assert(std::is_same<decltype(std::declval<const json&>().as_base_class()), const json::json_base_class_t&>::value, "");
-    static_assert(noexcept(std::declval<json&>().as_base_class()), "");
-    static_assert(noexcept(std::declval<const json&>().as_base_class()), "");
+    static_assert(std::is_same<decltype(std::declval<json_t&>().as_base_class()), json_t::json_base_class_t&>::value, "");
+    static_assert(std::is_same<decltype(std::declval<const json_t&>().as_base_class()), const json_t::json_base_class_t&>::value, "");
+    static_assert(noexcept(std::declval<json_t&>().as_base_class()), "");
+    static_assert(noexcept(std::declval<const json_t&>().as_base_class()), "");
 
     SECTION("non-const")
     {
-        json j = {1, 2, 3};
+        json_t j = {1, 2, 3};
 
         CHECK(std::string(j.type_name()) == "array");
         CHECK(j.size() == 3);
         CHECK(std::string(j.as_base_class().type_name()) == "custom type_name");
         CHECK(j.as_base_class().size() == 42);
-        CHECK(&j.as_base_class() == &static_cast<json::json_base_class_t&>(j));
+        CHECK(&j.as_base_class() == &static_cast<json_t::json_base_class_t&>(j));
 
         j.as_base_class().m_size = 7;
         CHECK(j.as_base_class().size() == 7);
@@ -441,13 +441,13 @@ TEST_CASE("JSON Node as_base_class")
 
     SECTION("const")
     {
-        const json j = {1, 2, 3};
+        const json_t j = {1, 2, 3};
 
         CHECK(std::string(j.type_name()) == "array");
         CHECK(j.size() == 3);
         CHECK(std::string(j.as_base_class().type_name()) == "custom type_name");
         CHECK(j.as_base_class().size() == 42);
-        CHECK(&j.as_base_class() == &static_cast<const json::json_base_class_t&>(j));
+        CHECK(&j.as_base_class() == &static_cast<const json_t::json_base_class_t&>(j));
     }
 }
 

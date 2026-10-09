@@ -876,8 +876,6 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests) (C++17)", Json, 
 
 TEST_CASE("operator[] with user-defined std::string_view-convertible types")
 {
-    using json = nlohmann::json;
-
     class TestClass
     {
         std::string key_data_ = "foo";
@@ -897,7 +895,7 @@ TEST_CASE("operator[] with user-defined std::string_view-convertible types")
         }
     };
 
-    json j = {{"foo", "from_class"}, {"bar", "from_struct"}};
+    nlohmann::json j = {{"foo", "from_class"}, {"bar", "from_struct"}};
     const TestClass foo_obj;
     const TestStruct bar_obj;
 
@@ -959,12 +957,10 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
 
     SECTION("nlohmann::json")
     {
-        using json = nlohmann::json;
-
         SECTION("ViewKey")
         {
-            json j = {{"a", 1}};
-            const json& cj = j;
+            nlohmann::json j = {{"a", 1}};
+            const nlohmann::json& cj = j;
 
             CHECK(j[ViewKey{}] == 1);
             CHECK(cj[ViewKey{}] == 1);
@@ -981,8 +977,8 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
 
         SECTION("DualKey")
         {
-            json j = {{"a", 1}};
-            const json& cj = j;
+            nlohmann::json j = {{"a", 1}};
+            const nlohmann::json& cj = j;
 
             CHECK(j[DualKey{}] == 1);
             CHECK(cj[DualKey{}] == 1);
@@ -1000,12 +996,10 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
 
     SECTION("nlohmann::ordered_json")
     {
-        using ordered_json = nlohmann::ordered_json;
-
         SECTION("ViewKey")
         {
-            ordered_json j = {{"a", 1}};
-            const ordered_json& cj = j;
+            nlohmann::ordered_json j = {{"a", 1}};
+            const nlohmann::ordered_json& cj = j;
 
             CHECK(j[ViewKey{}] == 1);
             CHECK(cj[ViewKey{}] == 1);
@@ -1022,8 +1016,8 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
 
         SECTION("DualKey")
         {
-            ordered_json j = {{"a", 1}};
-            const ordered_json& cj = j;
+            nlohmann::ordered_json j = {{"a", 1}};
+            const nlohmann::ordered_json& cj = j;
 
             CHECK(j[DualKey{}] == 1);
             CHECK(cj[DualKey{}] == 1);
