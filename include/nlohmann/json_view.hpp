@@ -156,12 +156,6 @@ class basic_json_view
         return type() == value_t::discarded;
     }
 
-    /// false for discarded views
-    explicit operator bool() const noexcept
-    {
-        return m_node != nullptr;
-    }
-
     //////////////
     // capacity //
     //////////////

@@ -35,8 +35,8 @@ int main()
     // parse without exceptions, are both discarded
     nlohmann::json_view invalid;
     json_document failed = json_document::parse("not json", /* allow_exceptions */ false);
-    std::cout << static_cast<bool>(invalid) << ' ' << invalid.is_discarded() << '\n';
-    std::cout << static_cast<bool>(failed.root()) << ' ' << failed.root().is_discarded() << '\n';
+    std::cout << invalid.is_discarded() << '\n';
+    std::cout << failed.root().is_discarded() << '\n';
 
     // type() returns the same value_t enumeration as basic_json::type()
     std::cout << (d_object.root().type() == nlohmann::json::value_t::object) << '\n';
