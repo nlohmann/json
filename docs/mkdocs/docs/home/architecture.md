@@ -215,8 +215,8 @@ packet-beta
 - **Large objects** (128 members or more) get a hash index after parsing
   ([`detail/view/object_index.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/object_index.hpp)):
   an open-addressing table whose slots hold the distance from the object's node to a key's node, so that a lookup does
-  not compare every key. The object's `extra` holds the number of its table. Only 65,535 tables fit into `extra`;
-  objects beyond them are searched linearly.
+  not compare every key. Of duplicate keys the table leads to the last, as a linear search does. The object's `extra`
+  holds the number of its table. Only 65,535 tables fit into `extra`; objects beyond them are searched linearly.
 
 For example, `#!json {"a": [1, 2.5]}` becomes five nodes. Each node's elements follow it, and `next` leads from an
 array or object past its subtree:

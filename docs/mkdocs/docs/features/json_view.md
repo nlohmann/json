@@ -142,7 +142,8 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   [`contains`](../api/basic_json_view/contains.md), and [`count`](../api/basic_json_view/count.md) resolve to the
   *last* occurrence -- the one `basic_json::parse()` (and so
   [`materialize()`](../api/basic_json_view/materialize.md)) keeps for a repeated key -- which makes a lookup scan all
-  members instead of stopping at a match.
+  members instead of stopping at a match (objects with 128 members or more get a hash index that leads to the last
+  occurrence directly).
   See the [Notes on duplicate keys](../api/basic_json_view/operator%5B%5D.md#notes) of `operator[]`.
 - **No [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) path.** Exceptions thrown by `basic_json_view`'s own
   element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the

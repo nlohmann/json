@@ -114,8 +114,9 @@ document.
     the *last* member with that key. This is the member [`materialize()`](materialize.md) (and
     [`BasicJsonType::parse()`](../basic_json/parse.md)) keeps, so a lookup in the view and in the materialized value
     agree. [`begin()`](begin.md)/[`end()`](end.md) and [`items()`](items.md) iterate over *all* members, including
-    duplicates, in document order. A lookup scans all members for this: it cannot stop at the first match. See the
-    example below and [`size()`](size.md#notes).
+    duplicates, in document order. A lookup in an object without a hash index scans all members for this: it cannot
+    stop at the first match. The hash index of a larger object (128 members or more) leads to the last member of a key
+    as well. See the example below and [`size()`](size.md#notes).
 
 !!! info "JSON pointer resolution"
 
