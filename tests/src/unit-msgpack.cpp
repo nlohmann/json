@@ -32,8 +32,6 @@ using nlohmann::json;
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "custom_object_key_type.hpp"
-#include "sax_countdown.hpp"
-using utils::SaxCountdown;
 
 
 TEST_CASE("MessagePack")
@@ -1646,30 +1644,6 @@ TEST_CASE("MessagePack")
             }
         }
     }
-
-    SECTION("SAX aborts")
-    {
-        SECTION("start_array(len)")
-        {
-            std::vector<uint8_t> const v = {0x93, 0x01, 0x02, 0x03};
-            SaxCountdown scp(0);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
-        }
-
-        SECTION("start_object(len)")
-        {
-            std::vector<uint8_t> const v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
-            SaxCountdown scp(0);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
-        }
-
-        SECTION("key()")
-        {
-            std::vector<uint8_t> const v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
-            SaxCountdown scp(1);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
-        }
-    }
 }
 
 TEST_CASE("issue #5405 - array reserve for definite-length MessagePack arrays")
@@ -1740,21 +1714,6 @@ TEST_CASE("issue #5405 - array reserve for definite-length MessagePack arrays")
             CHECK(json::from_msgpack(packed) == j);
         }
     }
-
-    SECTION("a user-defined SAX consumer is unaffected by the internal DOM reserve optimization")
-    {
-        // the reserve() call is local to json_sax_dom_parser / json_sax_dom_callback_parser;
-        // a custom SAX consumer that does not touch a DOM array sees identical events
-        json j = json::array();
-        for (int i = 0; i < 100; ++i)
-        {
-            j.push_back(i);
-        }
-        const auto packed = json::to_msgpack(j);
-
-        SaxCountdown scp(1000000); // large enough to never trigger an abort
-        CHECK(json::sax_parse(packed, &scp, json::input_format_t::msgpack));
-    }
 }
 
 TEST_CASE("regression test - MessagePack ext type rejects a subtype that doesn't fit a single byte")
@@ -1791,15 +1750,6 @@ TEST_CASE("MessagePack nesting does not consume the call stack")
         const std::vector<uint8_t> input(300000, 0x91);
         CHECK_THROWS_WITH_AS(_ = json::from_msgpack(input), "[json.exception.parse_error.110] parse error at byte 300001: syntax error while parsing MessagePack value: unexpected end of input", json::parse_error&);
         CHECK(json::from_msgpack(input, true, false).is_discarded());
-    }
-
-    SECTION("a well-formed deep value is read through the SAX interface")
-    {
-        std::vector<uint8_t> input(300000, 0x91);
-        input.push_back(0x01); // innermost value
-
-        SaxCountdown accept_all(600001);
-        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::msgpack));
     }
 
     SECTION("a well-formed deep value is read into a value")
@@ -1847,31 +1797,6 @@ TEST_CASE("MessagePack input that cannot be read is discarded by every overload"
     CHECK(json::from_msgpack(input.data(), input.size(), true, false).is_discarded());
     CHECK(json::from_msgpack({input.data(), input.size()}, true, false).is_discarded());
 #endif
-}
-
-TEST_CASE("MessagePack SAX parsing stops at every event")
-{
-    // Containers are opened and closed by the loop that reads them; a SAX
-    // handler that rejects any event - including the end of a nested
-    // container - must stop the parse right there.
-    const auto count_events = [](const std::vector<std::uint8_t>& input)
-    {
-        int events = 0;
-        while (true)
-        {
-            SaxCountdown scp(events);
-            if (json::sax_parse(input, &scp, json::input_format_t::msgpack))
-            {
-                return events;
-            }
-            ++events;
-            REQUIRE(events < 1000);
-        }
-    };
-
-    // 20 events: every container kind closes inside another one
-    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
-    CHECK(count_events(json::to_msgpack(j)) == 20);
 }
 
 TEST_CASE("single MessagePack roundtrip")

@@ -9,9 +9,9 @@
 /////////////////////////////////////////////////////////////////////
 // Tests that call basic_json::sax_parse have a file of their own: every
 // sax_parse call instantiates the parser and binary reader that recover from
-// errors (see #3989), and in unit-regression2.cpp and unit-regression3.cpp
-// this made the objects too large for the MinGW linker to relocate (see
-// #5511).
+// errors (see #3989), and in unit-regression2.cpp, unit-regression3.cpp, and
+// unit-msgpack.cpp this made the objects too large for the MinGW linker to
+// relocate (see #5511).
 /////////////////////////////////////////////////////////////////////
 
 #include "doctest_compatibility.h"
@@ -35,6 +35,9 @@ using json = nlohmann::json;
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "sax_countdown.hpp"
+using utils::SaxCountdown;
 
 // a narrow number_float_t, so that a double read from binary input can
 // overflow it
@@ -685,6 +688,81 @@ TEST_CASE("issue #5676 - SAX parsing of CBOR tags")
     CHECK(json::sax_parse(nlohmann::detail::span_input_adapter(text.data(), text.size()), &acceptor,
                           json::input_format_t::json, true, false, false, json::cbor_tag_handler_t::store));
 #endif
+}
+
+
+TEST_CASE("MessagePack SAX aborts")
+{
+    SECTION("start_array(len)")
+    {
+        std::vector<uint8_t> const v = {0x93, 0x01, 0x02, 0x03};
+        SaxCountdown scp(0);
+        CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
+    }
+
+    SECTION("start_object(len)")
+    {
+        std::vector<uint8_t> const v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
+        SaxCountdown scp(0);
+        CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
+    }
+
+    SECTION("key()")
+    {
+        std::vector<uint8_t> const v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
+        SaxCountdown scp(1);
+        CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
+    }
+}
+
+TEST_CASE("issue #5405 - a user-defined SAX consumer is unaffected by the internal DOM reserve optimization")
+{
+    // the reserve() call is local to json_sax_dom_parser / json_sax_dom_callback_parser;
+    // a custom SAX consumer that does not touch a DOM array sees identical events
+    json j = json::array();
+    for (int i = 0; i < 100; ++i)
+    {
+        j.push_back(i);
+    }
+    const auto packed = json::to_msgpack(j);
+
+    SaxCountdown scp(1000000); // large enough to never trigger an abort
+    CHECK(json::sax_parse(packed, &scp, json::input_format_t::msgpack));
+}
+
+TEST_CASE("MessagePack nesting does not consume the call stack - SAX interface")
+{
+    // see the test case of the same name in unit-msgpack.cpp (#5104)
+    std::vector<uint8_t> input(300000, 0x91);
+    input.push_back(0x01); // innermost value
+
+    SaxCountdown accept_all(600001);
+    CHECK(json::sax_parse(input, &accept_all, json::input_format_t::msgpack));
+}
+
+TEST_CASE("MessagePack SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::msgpack))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_msgpack(j)) == 20);
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
