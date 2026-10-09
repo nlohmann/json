@@ -858,24 +858,24 @@ TEST_CASE("short decimals")
     // write_short_decimal() writes digits * 10^exp for the digits of a double
     // that need no conversion (at most 15, the first not 0): as to_chars()
     // writes the (positive) double that has these digits
-    const auto written = [](std::uint64_t digits, int exp)
+    const auto written = [](std::uint64_t digits, int exp) -> std::string
     {
         std::array<char, 64> buf{}; // (up to 41 bytes are written)
         char* const end = nlohmann::detail::dtoa_impl::write_short_decimal(buf.data(), digits, exp);
-        return std::string(buf.data(), end);
+        return {buf.data(), end};
     };
-    const auto written_counted = [](std::uint64_t digits, int count, int exp)
+    const auto written_counted = [](std::uint64_t digits, int count, int exp) -> std::string
     {
         std::array<char, 64> buf{};
         char* const end = nlohmann::detail::dtoa_impl::write_short_decimal(buf.data(), digits, count, exp);
-        return std::string(buf.data(), end);
+        return {buf.data(), end};
     };
-    const auto expected = [](std::uint64_t digits, int exp)
+    const auto expected = [](std::uint64_t digits, int exp) -> std::string
     {
         const double value = std::strtod((std::to_string(digits) + "e" + std::to_string(exp)).c_str(), nullptr);
         std::array<char, 64> buf{};
         char* const end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, value);
-        return std::string(buf.data(), end);
+        return {buf.data(), end};
     };
 
     SECTION("powers of ten")
