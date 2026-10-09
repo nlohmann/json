@@ -100,6 +100,12 @@ See [`owns_source`](owns_source.md) to check which happened after a call, and th
 **Numbers.** As for [`BasicJsonType::parse()`](../basic_json/parse.md), an integer literal too large for the 64-bit
 integer type becomes a floating-point value.
 
+**No lengths.** An integer argument that is not a `#!cpp bool` where the flags are expected -- for example
+`#!cpp parse(ptr, len)` -- does not compile (the overload is deleted). Such a call would convert `len` to
+`allow_exceptions` and read `ptr` as a null-terminated string, past the end of a buffer that has none. To parse a
+buffer of a given length, pass a pair of pointers: `#!cpp parse(ptr, ptr + len)`. The same holds for
+[`parse_copy`](parse_copy.md), [`accept`](accept.md), and [`read`](read.md).
+
 ## Examples
 
 ??? example "Example: (1) borrowed vs. owned input, and errors identical to `BasicJsonType::parse()`"

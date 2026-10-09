@@ -59,6 +59,13 @@ struct classify_input
     // NOLINTEND(readability-avoid-nested-conditional-operator)
 };
 
+/// an integer type other than bool: a length passed where a flag is expected
+template<typename T>
+struct is_integer_not_bool : std::is_integral<T> {};
+
+template<>
+struct is_integer_not_bool<bool> : std::false_type {};
+
 /// std::basic_string guarantees a NUL at data()[size()] (the parser's sentinel)
 template<typename T>
 struct is_std_string : std::false_type {};
