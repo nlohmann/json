@@ -25,7 +25,8 @@ int main()
     // a missing key or an out-of-range index along the path gives a
     // discarded view, exactly where const json::operator[] would be
     // undefined behavior for the same pointer
-    if (const auto missing = root[json_pointer("/region/servers/5/metrics/cpu")])
+    const auto missing = root[json_pointer("/region/servers/5/metrics/cpu")];
+    if (!missing.is_discarded())
     {
         std::cout << missing.materialize().dump() << '\n';
     }

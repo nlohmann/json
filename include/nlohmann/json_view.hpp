@@ -7,16 +7,18 @@
 // SPDX-License-Identifier: MIT
 
 /****************************************************************************\
- * Zero-copy, read-only view of a parsed JSON text.                          *
+ * Zero-copy view of a parsed JSON text.                                     *
  *                                                                           *
  * json_document::parse() builds a flat index of the values of a JSON text   *
  * (16 bytes per value) instead of a tree of basic_json values. Strings and  *
  * numbers stay in the source text; only strings with escapes are decoded,   *
  * into one buffer. json_view is a handle to one value of the document, with *
  * the read-only part of the basic_json interface; materialize() turns a     *
- * subtree into the basic_json value that parse() would produce.             *
+ * subtree into the basic_json value that parse() would produce. An editable *
+ * document (json_editable_document) also has set(), push_back(), insert(),  *
+ * and erase(): edits never write to the source text, and views stay valid.  *
  *                                                                           *
- * The source text must outlive a document that borrows it (lvalue byte     *
+ * The source text must outlive a document that borrows it (lvalue byte      *
  * containers, C strings); rvalue strings, streams, and other inputs are     *
  * owned by the document.                                                    *
 \****************************************************************************/
@@ -24,6 +26,7 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
+#include <algorithm> // all_of, min
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcpy, strlen
@@ -181,12 +184,6 @@ class basic_json_view
         return type() == value_t::discarded;
     }
 
-    /// false for discarded views
-    explicit operator bool() const noexcept
-    {
-        return m_node != nullptr;
-    }
-
     /// the name of the type, as basic_json::type_name()
     const char* type_name() const noexcept
     {
@@ -246,13 +243,18 @@ class basic_json_view
     // element access //
     ////////////////////
 
-    /// the value of the member with this key (the first one, should the key
-    /// occur more than once); a discarded view if there is none. Throws
-    /// type_error.305 if this is not an object.
+    /// the value of the member with this key (the last one, should the key
+    /// occur more than once); a discarded view if there is none, or if this
+    /// is a discarded view (so that v["a"]["b"] is safe). Throws type_error.305
+    /// if this is any other value but an object.
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view operator[](string_view_t key) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
+            if (is_discarded())
+            {
+                return basic_json_view();
+            }
             detail::view::throw_type_error(305, "cannot use operator[] with a string argument with ", type_name());
         }
         return lookup(key);
@@ -269,31 +271,43 @@ class basic_json_view
     }
 
     /// the element at this index; a discarded view if the index is out of
-    /// range. Throws type_error.305 if this is not an array.
+    /// range, or if this is a discarded view. Throws type_error.305 if this is
+    /// any other value but an array.
     basic_json_view operator[](size_type idx) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
         {
+            if (is_discarded())
+            {
+                return basic_json_view();
+            }
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
         return idx < m_node->len ? basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx))) : basic_json_view();
     }
 
-    /// (an int argument would be ambiguous between size_type and const char*)
-    basic_json_view operator[](int idx) const
+    /// any other integer type (int, unsigned, long, std::int64_t, ...; a
+    /// single overload for size_type alone would be ambiguous for all of them
+    /// and for const char*); negative values are out of range
+    template < typename IntegerType, typename std::enable_if < detail::view::is_index_type<IntegerType>::value, int >::type = 0 >
+    basic_json_view operator[](IntegerType idx) const
     {
-        return operator[](static_cast<size_type>(idx));
+        return operator[](detail::view::to_index<size_type>(idx));
     }
 
     /// the value a JSON pointer refers to; a discarded view if a key is
-    /// missing or an index is out of range. Other errors throw what const
-    /// basic_json::operator[] throws.
+    /// missing or an index is out of range, or if this is a discarded view.
+    /// Other errors throw what const basic_json::operator[] throws.
     basic_json_view operator[](const json_pointer& ptr) const
     {
+        if (NLOHMANN_VIEW_UNLIKELY(is_discarded()))
+        {
+            return basic_json_view();
+        }
         return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
     }
 
-    /// the value of the member with this key (the first one, should the key
+    /// the value of the member with this key (the last one, should the key
     /// occur more than once). Throws type_error.304 if this is not an object,
     /// and out_of_range.403 if there is no such member.
     basic_json_view at(string_view_t key) const
@@ -303,7 +317,7 @@ class basic_json_view
             detail::view::throw_type_error(304, "cannot use at() with ", type_name());
         }
         const basic_json_view r = lookup(key);
-        if (NLOHMANN_VIEW_UNLIKELY(!r))
+        if (NLOHMANN_VIEW_UNLIKELY(r.is_discarded()))
         {
             detail::view::throw_out_of_range(403, detail::concat("key '", std::string(key.data(), key.size()), "' not found"));
         }
@@ -335,9 +349,12 @@ class basic_json_view
         return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
     }
 
-    basic_json_view at(int idx) const
+    /// any other integer type, see operator[]; negative values are out of
+    /// range
+    template < typename IntegerType, typename std::enable_if < detail::view::is_index_type<IntegerType>::value, int >::type = 0 >
+    basic_json_view at(IntegerType idx) const
     {
-        return at(static_cast<size_type>(idx));
+        return at(detail::view::to_index<size_type>(idx));
     }
 
     /// the value a JSON pointer refers to; throws what basic_json::at()
@@ -348,7 +365,7 @@ class basic_json_view
     }
 
     /// the member with this key converted to T, or the default value if there
-    /// is no such member (the first one, should the key occur more than
+    /// is no such member (the last one, should the key occur more than
     /// once). Throws type_error.306 if this is not an object.
     template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
     T value(string_view_t key, const T& default_value) const
@@ -358,7 +375,7 @@ class basic_json_view
             detail::view::throw_type_error(306, "cannot use value() with ", type_name());
         }
         const basic_json_view r = lookup(key);
-        return r ? r.template get<T>() : default_value;
+        return r.is_discarded() ? default_value : r.template get<T>();
     }
 
     string_t value(string_view_t key, const char* default_value) const
@@ -377,7 +394,7 @@ class basic_json_view
             detail::view::throw_type_error(306, "cannot use value() with ", type_name());
         }
         const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
-        return r ? r.template get<T>() : default_value;
+        return r.is_discarded() ? default_value : r.template get<T>();
     }
 
     string_t value(const json_pointer& ptr, const char* default_value) const
@@ -413,7 +430,7 @@ class basic_json_view
     // lookup //
     ////////////
 
-    /// an iterator to the member with this key (the first one, should the
+    /// an iterator to the member with this key (the last one, should the
     /// key occur more than once), or end(); end() also for non-objects
     iterator find(string_view_t key) const
     {
@@ -455,7 +472,7 @@ class basic_json_view
     /// basic_json::contains())
     bool contains(const json_pointer& ptr) const
     {
-        return static_cast<bool>(detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains));
+        return !detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains).is_discarded();
     }
 
     /// 1 if this is an object with a member with this key, else 0 (duplicate
@@ -712,7 +729,7 @@ class basic_json_view
     }
 
     /// the number of source bytes of this value (estimated for values with
-    /// decoded strings)
+    /// decoded strings); the estimate sizes the output buffer of dump()
     std::size_t source_extent() const noexcept
     {
         if (editable() && m_doc->edits != nullptr)
@@ -720,20 +737,33 @@ class basic_json_view
             // positions of moved and new values are not source offsets
             return m_node == m_doc->tape ? m_doc->size + m_doc->edits->text_used : 64;
         }
-        const node* const next = document_data::after(m_node);
-        const bool in_source = (m_node->flags & detail::view::node_flags::storage) == 0;
-        if (!in_source)
+        const node* const end = m_doc->tape + m_doc->tape_size;
+        if ((m_node->flags & detail::view::node_flags::storage) != 0)
         {
             return m_node->len;
         }
-        if (next != m_doc->tape + m_doc->tape_size && (next->flags & detail::view::node_flags::storage) == 0 && next->off >= m_node->off)
+        // the value ends where the next node in the source begins; nodes
+        // with decoded strings (their offset is in the arena) are skipped,
+        // but only a few of them, to keep the walk short
+        const node* next = document_data::after(m_node);
+        for (int skipped = 0; next != end && skipped < 16; ++skipped, ++next)
         {
-            return next->off - m_node->off;
+            if ((next->flags & detail::view::node_flags::storage) == 0)
+            {
+                return next->off >= m_node->off ? next->off - m_node->off : 0;
+            }
         }
-        return m_doc->size - m_node->off;
+        if (next == end)
+        {
+            return m_doc->size - m_node->off;
+        }
+        // the end is unknown: assume a few bytes per node, the output buffer
+        // grows should the value be larger
+        const auto nodes = static_cast<std::size_t>(document_data::after(m_node) - m_node);
+        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + nodes * 16);
     }
 
-    /// the value of the first member with this key, or a discarded view
+    /// the value of the last member with this key, or a discarded view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
@@ -867,6 +897,13 @@ class basic_json_document
         return d;
     }
 
+    /// parse(ptr, len) does not compile: len would convert to allow_exceptions
+    /// and ptr be read as a C string (as for the overloads of parse_copy,
+    /// accept, and read below)
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     /// parse [first, last)
     template<typename IteratorType, typename std::enable_if<
                  std::is_base_of<std::input_iterator_tag, typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
@@ -894,6 +931,10 @@ class basic_json_document
         return d;
     }
 
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse_copy(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     /// check whether the input is valid JSON (the result of basic_json::accept)
     template<typename InputType>
     static bool accept(InputType&& input, const bool ignore_comments = false, const bool ignore_trailing_commas = false)
@@ -902,6 +943,10 @@ class basic_json_document
         d.read(std::forward<InputType>(input), false, ignore_comments, ignore_trailing_commas);
         return !d.is_discarded();
     }
+
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, bool>::type
+    accept(InputType&& input, IntegerType value, Flags&&... flags) = delete;
 
     /// parse into this document, reusing its memory
     template<typename InputType>
@@ -915,12 +960,17 @@ class basic_json_document
                   std::integral_constant<detail::view::input_kind, detail::view::classify_input<InputType>::value> {});
     }
 
+    template<typename InputType, typename IntegerType, typename... Flags>
+    // flawfinder: ignore (a member function, not POSIX read())
+    typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, void>::type
+    read(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     ////////////
     // access //
     ////////////
 
     /// the root value (discarded if parsing failed without exceptions)
-    view_type root() const noexcept
+    view_type root() const& noexcept
     {
         if (!m_data || m_data->discarded)
         {
@@ -928,6 +978,9 @@ class basic_json_document
         }
         return view_type(m_data.get(), m_data->tape);
     }
+
+    /// deleted: the view of a temporary document would dangle
+    view_type root() const&& = delete;
 
     bool is_discarded() const noexcept
     {
@@ -988,6 +1041,8 @@ class basic_json_document
         // (edits link to the nodes of the index, which then stays in place)
         const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap && d.edits == nullptr;
         const bool into_header = d.tape_size <= d.inline_cap;
+        std::vector<document_data::object_index> indexes(d.indexes.capacity() > d.indexes.size() ? d.indexes : std::vector<document_data::object_index>());
+        std::vector<std::uint32_t> index_slots(d.index_slots.capacity() > d.index_slots.size() ? d.index_slots : std::vector<std::uint32_t>());
         node* fresh = (shrink_tape && !into_header) ? static_cast<node*>(::operator new (d.tape_size * sizeof(node))) : d.inline_tape;
 
         if (shrink_tape)
@@ -1004,6 +1059,14 @@ class basic_json_document
             {
                 d.base[1] = d.arena.data();
             }
+        }
+        if (d.indexes.capacity() > d.indexes.size())
+        {
+            d.indexes.swap(indexes);
+        }
+        if (d.index_slots.capacity() > d.index_slots.size())
+        {
+            d.index_slots.swap(index_slots);
         }
     }
 
@@ -1095,7 +1158,9 @@ class basic_json_document
 
     /// set the value at a JSON pointer: its parent must exist; an object
     /// member is set (added if missing), an array element assigned, and "-"
-    /// or the size of the array appends
+    /// or the size of the array appends. A null parent becomes what
+    /// basic_json's operator[](json_pointer) makes of it: an array for "-"
+    /// and for digits (padded with nulls up to the index), an object otherwise.
     template<typename V>
     view_type set(const json_pointer& ptr, V&& value)
     {
@@ -1105,6 +1170,31 @@ class basic_json_document
         }
         const view_type parent = root().at(ptr.parent_pointer());
         const auto& token = ptr.back();
+        if (parent.is_null())
+        {
+            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            {
+                return c >= '0' && c <= '9';
+            });
+            if (token == "-")
+            {
+                return push_back(parent, std::forward<V>(value));
+            }
+            if (digits)
+            {
+                // (an invalid index is an error before the parent changes)
+                const std::size_t idx = pointer_index(token);
+                if (idx >= 0xFFFFFFFFu)
+                {
+                    detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+                }
+                for (std::size_t i = 0; i < idx; ++i)
+                {
+                    push_back(parent, nullptr);
+                }
+                return push_back(parent, std::forward<V>(value));
+            }
+        }
         if (parent.is_array())
         {
             const std::size_t idx = token == "-" ? parent.size() : pointer_index(token);
@@ -1252,9 +1342,9 @@ class basic_json_document
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
-        if (NLOHMANN_VIEW_UNLIKELY(size >= 0xFFFFFFF0u))
+        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size))
         {
-            failure.code = detail::view::error_code::input_too_large; // LCOV_EXCL_LINE (4 GiB)
+            failure.code = detail::view::error_code::input_too_large;
         }
         else
         {
@@ -1266,9 +1356,11 @@ class basic_json_document
             d.base[1] = d.arena.data();
             d.arena_size = d.arena.size();
             detail::view::build_object_indexes(d);
+            std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while parsing)
             d.discarded = false;
             return;
         }
+        std::vector<std::uint32_t>().swap(d.large_objects);
         if (allow_exceptions)
         {
             detail::view::throw_parse_failure<BasicJsonType>(failure, src, size, comments, trailing_commas);

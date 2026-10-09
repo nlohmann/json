@@ -23,7 +23,8 @@ has `set`; calling it on a read-only `basic_json_document` fails to compile (`#!
 
 1. Replaces the value `target` refers to with `value`.
 2. Sets the member `key` of the object `object` to `value`: assigns it if `object` already has a member with this
-   key -- the first one, should the key occur more than once, and the later duplicates are then dropped (see the
+   key -- the last one, should the key occur more than once (the member
+   [`operator[]`](../basic_json_view/operator%5B%5D.md) returns), and the other duplicates are then dropped (see the
    [Notes](#notes) below) -- or appends a new member at the end otherwise. A [null](../basic_json_view/is_null.md)
    `object` first becomes an empty object.
 3. Assigns `value` to the element at index `idx` of the array `array`, which must already exist (`#!cpp idx <
@@ -31,7 +32,10 @@ has `set`; calling it on a read-only `basic_json_document` fails to compile (`#!
 4. Sets the value the JSON pointer `ptr` refers to, relative to [`root()`](root.md), to `value`. The *parent* of the
    target must already exist: an object member is set as in 2. (added if it does not exist yet), an array element is
    assigned as in 3., and a last reference token of `#!cpp "-"`, or equal to the size of the array, appends `value`
-   instead, exactly as [`push_back`](push_back.md) would. An empty `ptr` sets [`root()`](root.md) itself, as in 1.
+   instead, exactly as [`push_back`](push_back.md) would. A [null](../basic_json_view/is_null.md) parent becomes what
+   [`basic_json::operator[]`](../basic_json/operator%5B%5D.md) with a JSON pointer makes of it: an array if the last
+   reference token is `#!cpp "-"` or consists of digits only (for an index beyond 0, the array is first filled with
+   null values up to that index), an object otherwise. An empty `ptr` sets [`root()`](root.md) itself, as in 1.
 
 In every overload, `value` is accepted three ways: a [`basic_json_view`](../basic_json_view/index.md) of *any*
 document -- read-only or editable, and it does not have to be `target`'s/`object`'s/`array`'s own document -- which
@@ -85,7 +89,8 @@ invalid argument, or `#!cpp std::bad_alloc`) leaves the document completely unch
 for the encoding that is not reclaimed. A failure of a later allocation -- while an edited array or object switches
 from its parsed layout to a growable block, see [Notes](#notes) -- can still leave a partial effect, such as a
 [null](../basic_json_view/is_null.md) `object`/`array` argument already turned into an empty object/array even
-though `value` itself was not linked in.
+though `value` itself was not linked in. Likewise, a failure of `value` in 4. leaves a null parent that is set with an
+index beyond 0 already filled with the null values before the index.
 
 ## Exceptions
 
@@ -111,8 +116,10 @@ though `value` itself was not linked in.
    [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) (a leading `#!cpp '0'`),
    [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) (not a number),
    [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) (too large for `size_type`), or
-   [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) (an empty token). Also throws what 1.
-   throws for `value`.
+   [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) (an empty token); the same errors are
+   thrown for a null parent and a token of digits (the parent is not changed then), and
+   [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if the index is 4294967295 or more.
+   Also throws what 1. throws for `value`.
 
 Every overload also throws [`type_error.319`](../../home/exceptions.md#jsonexceptiontype_error319) if `value` is (or
 contains) a binary value -- `BasicJsonType` can hold one, but a `json_document` cannot -- and
@@ -125,24 +132,28 @@ document") if `target`/`object`/`array` is a [discarded](../basic_json_view/is_d
 1. Linear in the size of `value` (encoding it into the document's storage): constant for a scalar, linear in the
    number of nested values for an array or object. If `target` is itself an array or object that spans more than one
    node in its parent's original, unedited layout, and `value` is a scalar, replacing it additionally costs time
-   linear in the number of elements of that parent, the *first* time -- see [Notes](#notes).
+   linear in the size of the document, the *first* time (the parent of `target` is looked up from
+   [`root()`](root.md), and then switches to links) -- see [Notes](#notes). Once the parent has links, `target` is
+   replaced in constant time: setting every element of a large array one after the other is linear overall. To avoid
+   the lookup altogether, use 3. (or 2. for an object), which know the parent.
 2. Linear in the number of members of `object`, to find an existing member with `key`, plus the complexity of 1. for
    `value`.
 3. Constant, plus the complexity of 1. for `value`.
 4. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at
    that level or the index into the array (as [`at`](../basic_json_view/at.md)), plus the complexity of 2. or 3. for
-   the last token.
+   the last token; for a null parent and an index, linear in the index.
 
 ## Notes
 
 !!! info "Duplicate keys"
 
-    If `object` already has more than one member with `key` (2.), the *first* one is assigned `value` and every
-    later member with the same key is removed -- so that a lookup, an iteration, and
-    [`materialize()`](../basic_json_view/materialize.md) of `object` afterward all agree on a single value for
-    `key`, the same way [`operator[]`](../basic_json_view/operator%5B%5D.md) already picks the first occurrence of a
-    duplicate key for reading. See the [Notes on duplicate keys](../basic_json_view/operator%5B%5D.md#notes) of
-    `operator[]`.
+    If `object` already has more than one member with `key` (2.), `value` is assigned to the *last* one -- the member
+    [`operator[]`](../basic_json_view/operator%5B%5D.md), [`at`](../basic_json_view/at.md), and
+    [`find`](../basic_json_view/find.md) return for reading, so that a view taken from `object["key"]` before the call
+    shows `value` afterward -- and every other member with the same key is removed. The key stays at the
+    position of its *first* occurrence, where [`materialize()`](../basic_json_view/materialize.md) puts it as well. A
+    lookup, an iteration, and `materialize()` of `object` afterward therefore all agree on a single member for `key`. See the
+    [Notes on duplicate keys](../basic_json_view/operator%5B%5D.md#notes) of `operator[]`.
 
 Setting a member (2.) or an element (3., through 4.) of an array or object whose elements have not been edited
 before switches it from its parsed layout to a growable block holding links to its elements; a later

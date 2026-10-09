@@ -4,6 +4,7 @@
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2009 Florian Loitsch <https://florian.loitsch.com/>
+// SPDX-FileCopyrightText: 2025 Victor Zverovich <https://github.com/vitaut/zmij>
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
@@ -940,88 +941,6 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
 }
 
 /*!
-@brief the shortest digits of a positive finite float (other than double): Grisu2
-*/
-template<typename FloatType>
-JSON_HEDLEY_NON_NULL(1)
-void shortest_digits(char* buf, int& len, int& decimal_exponent, FloatType value)
-{
-    grisu2(buf, len, decimal_exponent, value);
-}
-
-/*!
-@brief the shortest digits of a positive finite double: the conversion of
-Zmij (see zmij.hpp), which always finds the shortest digits that read back as
-the same value (Grisu2 does not for about one double in a thousand), and the
-closest of them if there are several
-
-v = buf * 10^decimal_exponent, as for grisu2()
-*/
-JSON_HEDLEY_NON_NULL(1)
-inline void shortest_digits(char* buf, int& len, int& decimal_exponent, double value)
-{
-    static_assert(std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::digits == 53,
-                  "internal error: the conversion of Zmij needs IEEE 754 binary64 doubles");
-    JSON_ASSERT(std::isfinite(value));
-    JSON_ASSERT(value > 0);
-
-    std::uint64_t bits = 0;
-    std::memcpy(&bits, &value, sizeof(bits));
-    zmij::decimal d = zmij::to_decimal(bits);
-    // without trailing zeros (up to 16): 8, 4, 2, 1 at a time
-    while (d.significand % 100000000 == 0)
-    {
-        d.significand /= 100000000;
-        d.exponent += 8;
-    }
-    if (d.significand % 10000 == 0)
-    {
-        d.significand /= 10000;
-        d.exponent += 4;
-    }
-    if (d.significand % 100 == 0)
-    {
-        d.significand /= 100;
-        d.exponent += 2;
-    }
-    if (d.significand % 10 == 0)
-    {
-        d.significand /= 10;
-        d.exponent += 1;
-    }
-    // at most 17 digits, written from the back two at a time
-    static constexpr const char* pairs =
-        "00010203040506070809101112131415161718192021222324252627282930313233343536373839"
-        "40414243444546474849505152535455565758596061626364656667686970717273747576777879"
-        "8081828384858687888990919293949596979899";
-    std::array<char, 20> digits{};
-    std::size_t n = digits.size();
-    while (d.significand >= 100)
-    {
-        const std::uint64_t two_digits = d.significand % 100; // a variable: GCC calls a cast of the remainder useless where std::uint64_t is std::size_t
-        const auto i = static_cast<std::size_t>(two_digits) * 2;
-        d.significand /= 100;
-        n -= 2;
-        digits[n] = pairs[i];
-        digits[n + 1] = pairs[i + 1];
-    }
-    if (d.significand >= 10)
-    {
-        const auto i = static_cast<std::size_t>(d.significand) * 2;
-        n -= 2;
-        digits[n] = pairs[i];
-        digits[n + 1] = pairs[i + 1];
-    }
-    else
-    {
-        digits[--n] = static_cast<char>('0' + d.significand);
-    }
-    len = static_cast<int>(digits.size() - n);
-    std::memcpy(buf, digits.data() + n, static_cast<std::size_t>(len));
-    decimal_exponent = d.exponent;
-}
-
-/*!
 @brief appends a decimal representation of e to buf
 @return a pointer to the element following the exponent.
 @pre -1000 < e < 1000
@@ -1423,53 +1342,30 @@ inline char* write_shortest(char* first, const zmij::shortest_decimal d) noexcep
     return end + (three ? 5 : 4);
 }
 
-/// the powers of ten up to 10^16
-inline const std::array<std::uint64_t, 17>& powers_of_ten_16() noexcept
-{
-    static const std::array<std::uint64_t, 17> powers =
-    {
-        {
-            1u, 10u, 100u, 1000u, 10000u, 100000u, 1000000u, 10000000u, 100000000u, 1000000000u, 10000000000u,
-            100000000000u, 1000000000000u, 10000000000000u, 100000000000000u, 1000000000000000u, 10000000000000000u
-        }
-    };
-    return powers;
-}
-
 /*!
-@brief digits * 10^exp, as write_decimal() writes it, for the digits of a
-double that need no conversion (count digits, at most 15, the first not 0;
-trailing zeros allowed): extended to 16 digits and written by write_shortest()
+@brief whether FloatType is an IEEE 754 binary64 type (a double, or a long double
+that has the same format, as with MSVC and on Apple's Arm CPUs)
 
-@return a pointer past the text; up to 41 bytes at @a first are written
-        (some beyond the returned end)
+These are the types the conversion of Zmij (see zmij.hpp) is used for; all
+others (binary32, or a format the library does not know) use Grisu2.
 */
-JSON_HEDLEY_NON_NULL(1)
-JSON_HEDLEY_RETURNS_NON_NULL
-inline char* write_short_decimal(char* first, std::uint64_t digits, int count, int exp) noexcept
+template<typename FloatType>
+constexpr bool has_binary64_format() noexcept
 {
-    JSON_ASSERT(digits >= powers_of_ten_16()[static_cast<std::size_t>(count - 1)] && count <= 15);
-    const int scale = 16 - count;
-    return write_shortest(first, zmij::shortest_decimal{digits * powers_of_ten_16()[static_cast<std::size_t>(scale)], exp - scale - 1, 0, false});
+    return std::numeric_limits<FloatType>::is_iec559
+           && std::numeric_limits<FloatType>::digits == 53
+           && std::numeric_limits<FloatType>::max_exponent == 1024
+           && sizeof(FloatType) == sizeof(std::uint64_t);
 }
 
-/// as write_short_decimal(), counting the digits (not 0, less than 10^15)
-JSON_HEDLEY_NON_NULL(1)
-JSON_HEDLEY_RETURNS_NON_NULL
-inline char* write_short_decimal(char* first, std::uint64_t digits, int exp) noexcept
-{
-    JSON_ASSERT(digits != 0 && digits < 1000000000000000u);
-    // floor(log10(2^bits)) + 1 digits, or one less
-    const int log2_bound = ((64 - count_leading_zeros(digits)) * 1233) >> 12;
-    const int count = log2_bound + (digits >= powers_of_ten_16()[static_cast<std::size_t>(log2_bound)] ? 1 : 0);
-    return write_short_decimal(first, digits, count, exp);
-}
+template<typename FloatType>
+struct is_binary64 : std::integral_constant<bool, has_binary64_format<FloatType>()> {};
 
-/// a positive finite float (other than double): Grisu2 and format_buffer()
+/// a positive finite float (other than binary64): Grisu2 and format_buffer()
 template<typename FloatType>
 JSON_HEDLEY_NON_NULL(1, 2)
 JSON_HEDLEY_RETURNS_NON_NULL
-char* write_positive(char* first, const char* last, FloatType value)
+char* write_positive_grisu2(char* first, const char* last, FloatType value)
 {
     JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
     static_cast<void>(last); // (only used in the assertion)
@@ -1480,7 +1376,7 @@ char* write_positive(char* first, const char* last, FloatType value)
     // len is the length of the buffer, i.e., the number of decimal digits.
     int len = 0;
     int decimal_exponent = 0;
-    shortest_digits(first, len, decimal_exponent, value);
+    grisu2(first, len, decimal_exponent, value);
 
     JSON_ASSERT(len <= std::numeric_limits<FloatType>::max_digits10);
 
@@ -1496,15 +1392,16 @@ char* write_positive(char* first, const char* last, FloatType value)
     return format_buffer(first, len, decimal_exponent, kMinExp, kMaxExp);
 }
 
-/// a positive finite double: the shortest digits (Zmij), laid out by
+/// a positive finite binary64 number: the shortest digits (Zmij), laid out by
 /// write_shortest() (through a local buffer if [first, last) is shorter than
 /// the 41 bytes it may write)
+template<typename FloatType>
 JSON_HEDLEY_NON_NULL(1, 2)
 JSON_HEDLEY_RETURNS_NON_NULL
-inline char* write_positive(char* first, const char* last, double value)
+char* write_positive_zmij(char* first, const char* last, FloatType value)
 {
-    static_assert(std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::digits == 53,
-                  "internal error: the conversion of Zmij needs IEEE 754 binary64 doubles");
+    static_assert(is_binary64<FloatType>::value,
+                  "internal error: the conversion of Zmij needs IEEE 754 binary64 numbers");
     std::uint64_t bits = 0;
     std::memcpy(&bits, &value, sizeof(bits));
     const zmij::shortest_decimal d = zmij::to_shortest(bits);
@@ -1517,6 +1414,34 @@ inline char* write_positive(char* first, const char* last, double value)
     JSON_ASSERT(last - first >= static_cast<std::ptrdiff_t>(len));
     std::memcpy(first, buf.data(), len);
     return first + len;
+}
+
+/// a positive finite binary64 number: Zmij (as a long double has the format of
+/// a double here, its bits are those of the double of the same value)
+template<typename FloatType>
+JSON_HEDLEY_NON_NULL(1, 2)
+JSON_HEDLEY_RETURNS_NON_NULL
+char* write_positive(char* first, const char* last, FloatType value, std::true_type /*is_binary64*/)
+{
+    return write_positive_zmij(first, last, value);
+}
+
+/// a positive finite float of any other format: Grisu2
+template<typename FloatType>
+JSON_HEDLEY_NON_NULL(1, 2)
+JSON_HEDLEY_RETURNS_NON_NULL
+char* write_positive(char* first, const char* last, FloatType value, std::false_type /*is_binary64*/)
+{
+    return write_positive_grisu2(first, last, value);
+}
+
+/// a positive finite float: Zmij for binary64 numbers, Grisu2 otherwise
+template<typename FloatType>
+JSON_HEDLEY_NON_NULL(1, 2)
+JSON_HEDLEY_RETURNS_NON_NULL
+char* write_positive(char* first, const char* last, FloatType value)
+{
+    return write_positive(first, last, value, is_binary64<FloatType> {});
 }
 
 }  // namespace dtoa_impl

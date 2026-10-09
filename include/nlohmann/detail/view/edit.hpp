@@ -17,6 +17,7 @@
 #include <string> // string, to_string
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_convertible, is_floating_point, is_same, is_signed
 #include <utility> // forward
+#include <vector> // vector
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
@@ -151,25 +152,23 @@ class editor
         {
             become_empty(o, value_t::object);
         }
-        // an existing member: assign it (and drop later duplicates, so that
-        // lookups, iteration, and materialize() agree)
+        // an existing member: assign the one that lookups find (the last
+        // one, should the key occur more than once), and drop the others, so
+        // that lookups, iteration, and materialize() agree. The key stays at
+        // the position of its first occurrence, as materialize() puts it.
         node* slot = nullptr;
-        bool duplicates = false;
+        std::size_t matches = 0;
         for (const node* k = nav::first(m_doc, o), *end = nav::end(m_doc, o); k != end; k = document_data::after(k + 1))
         {
             if (key_equals(*k, key))
             {
-                if (slot != nullptr)
-                {
-                    duplicates = true;
-                    break;
-                }
                 slot = const_cast<node*>(nav::value(k + 1)); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to this document
+                ++matches;
             }
         }
         if (slot != nullptr)
         {
-            if (duplicates)
+            if (matches > 1)
             {
                 erase_members(o, key, true);
             }
@@ -315,27 +314,38 @@ class editor
         return k.len == key.size() && (key.size() == 0 || std::memcmp(m_doc.str(k), key.data(), key.size()) == 0);
     }
 
-    /// remove the members with this key (all, or all but the first) from an object
-    std::size_t erase_members(node* o, string_view_t key, bool keep_first)
+    /// Remove the members with this key from an object: all of them, or all
+    /// but one. That one stays where the first occurrence is, but holds the
+    /// value of the last (the one that lookups find, which views may refer to).
+    std::size_t erase_members(node* o, string_view_t key, bool keep_one)
     {
         node* const h = block_of(m_doc, o, 0);
+        node last_value{}; // the entry of the value of the last member
+        node* const end = h + h->next;
+        if (keep_one)
+        {
+            for (node* r = h + 1; r != end; r += 2)
+            {
+                if (key_equals(*r, key))
+                {
+                    last_value = r[1];
+                }
+            }
+        }
         node* w = h + 1;
         std::size_t erased = 0;
         bool kept = false;
-        for (node* r = h + 1, *end = h + h->next; r != end; r += 2)
+        for (node* r = h + 1; r != end; r += 2)
         {
             const bool match = key_equals(*r, key);
-            if (match && (kept || !keep_first))
+            if (match && (kept || !keep_one))
             {
                 ++erased;
                 continue;
             }
+            w[0] = r[0];
+            w[1] = match ? last_value : r[1];
             kept = kept || match;
-            if (w != r)
-            {
-                w[0] = r[0];
-                w[1] = r[1];
-            }
             w += 2;
         }
         h->next = static_cast<std::uint32_t>(w - h);
@@ -347,9 +357,10 @@ class editor
     /// turn a null into an empty array/object in place
     static void become_empty(node* n, value_t k) noexcept
     {
+        const std::uint8_t linked = n->flags & node_flags::linked;
         *n = node{};
         n->kind = static_cast<std::uint8_t>(k);
-        n->flags = node_flags::is_new;
+        n->flags = static_cast<std::uint8_t>(node_flags::is_new | linked);
         n->next = 1;
     }
 
@@ -357,13 +368,17 @@ class editor
     /// include slot (if known).
     void assign(node* slot, const encoded& e, node* parent, bool parent_known)
     {
+        // an entry of a moved sequence links to the slot: it can take any extent
+        const std::uint8_t linked = slot->flags & node_flags::linked;
         if (e.region == nullptr)
         {
-            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape)
+            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape && linked == 0)
             {
                 // The slot spans its old elements in the enclosing sequence, but
                 // a scalar is one node: the enclosing container first switches to
-                // links (then the extent of the slot no longer matters).
+                // links (then the extent of the slot no longer matters). Looking
+                // for the container is linear in the size of the document, so
+                // links (which are marked in the slot) avoid it.
                 node* const p = parent_known ? parent : find_parent(m_doc, slot);
                 if (p != nullptr && ((p->flags & node_flags::moved) == 0 || moved_capacity(m_doc, p) == 0))
                 {
@@ -371,6 +386,7 @@ class editor
                 }
             }
             *slot = e.scalar;
+            slot->flags = static_cast<std::uint8_t>(slot->flags | linked);
             return;
         }
         // an array/object: the slot keeps its extent (so that the enclosing
@@ -379,11 +395,21 @@ class editor
         const node* const r = e.region;
         const std::uint32_t extent = is_container(*slot) ? slot->next : 1;
         const bool was_moved = (slot->flags & node_flags::moved) != 0;
+        // Everything that can throw happens before the slot changes: a slot
+        // that is a container without the moved flag would show its old
+        // elements. reserve_moved() makes the set_moved() below, which sets
+        // the flag, safe; the entry of `regions` exists already (encode()
+        // added it), so that the assignment at the end does not allocate.
+        if (!was_moved)
+        {
+            reserve_moved(m_doc);
+        }
         slot->kind = r->kind;
         slot->extra = 0;
         slot->len = r->len;
         slot->next = extent;
-        slot->flags = was_moved ? static_cast<std::uint8_t>(node_flags::moved | node_flags::is_new) : std::uint8_t{0};
+        // (set_moved() adds the moved flag to a slot that does not have it yet)
+        slot->flags = static_cast<std::uint8_t>((was_moved ? node_flags::moved | node_flags::is_new : 0) | linked);
         set_moved(m_doc, slot, e.region, 0);
         edit_state_of(m_doc).regions[e.region] = slot;
     }
@@ -600,6 +626,8 @@ class editor
         switch (static_cast<value_t>(n.kind))
         {
             case value_t::string:
+                // (an editable document only holds valid UTF-8, whatever the check of the other document was)
+                check_utf8(from.str(n), n.len);
                 return string_node(from.str(n), n.len);
             case value_t::number_integer:
             case value_t::number_unsigned:
@@ -663,100 +691,197 @@ class editor
         }
     }
 
+    // The subtrees are walked with an explicit stack (as materialize() does):
+    // the nesting depth is limited by memory only, not by the call stack.
+
     /// number of nodes of a subtree (containers, keys, scalars)
     template<bool E>
     static std::size_t count_nodes(const document_data& d, const node* n)
     {
-        if (!is_container(*n))
+        using walk = navigation<E>;
+        struct frame
         {
-            return 1;
-        }
-        const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-        std::size_t r = 1;
-        for (const node* c = navigation<E>::first(d, n), *end = navigation<E>::end(d, n); c != end;)
+            const node* pos; ///< next element, or key of the next member
+            const node* end;
+            bool object;
+        };
+        std::vector<frame> open;
+        std::size_t r = 0;
+        for (;;)
         {
-            const node* const v = object ? c + 1 : c;
-            r += (object ? 1 : 0) + count_nodes<E>(d, navigation<E>::value(v));
-            c = document_data::after(v);
+            ++r;
+            if (is_container(*n))
+            {
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object)});
+            }
+            // the next value: close finished containers, then step over the key
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return r;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    open.pop_back();
+                    continue;
+                }
+                const node* v = f.pos;
+                if (f.object)
+                {
+                    ++r; // the key
+                    ++v;
+                }
+                f.pos = document_data::after(v);
+                n = walk::value(v);
+                break;
+            }
         }
-        return r;
     }
 
-    /// copy a subtree (of any document) as a contiguous sequence; returns its end
+    /// copy a subtree (of any document) as a contiguous sequence of
+    /// count_nodes() nodes
     template<bool E>
-    node* fill_nodes(const document_data& d, const node* n, node* out)
+    void fill_nodes(const document_data& d, const node* n, node* out)
     {
-        if (!is_container(*n))
+        using walk = navigation<E>;
+        struct frame
         {
-            *out = copy_scalar(d, *n);
-            return out + 1;
-        }
-        node* const self = out++;
-        *self = plain_node(static_cast<value_t>(n->kind));
-        self->len = n->len;
-        const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-        for (const node* c = navigation<E>::first(d, n), *end = navigation<E>::end(d, n); c != end;)
+            const node* pos; ///< next element, or key of the next member
+            const node* end;
+            bool object;
+            node* self;      ///< the container in the copy
+        };
+        std::vector<frame> open;
+        for (;;)
         {
-            if (object)
+            if (is_container(*n))
             {
-                *out++ = copy_scalar(d, *c);
-                ++c;
+                node* const self = out++;
+                *self = plain_node(static_cast<value_t>(n->kind));
+                self->len = n->len;
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object), self});
             }
-            out = fill_nodes<E>(d, navigation<E>::value(c), out);
-            c = document_data::after(c);
+            else
+            {
+                *out++ = copy_scalar(d, *n);
+            }
+            // the next value: close finished containers, then copy the key
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    f.self->next = static_cast<std::uint32_t>(out - f.self);
+                    open.pop_back();
+                    continue;
+                }
+                const node* v = f.pos;
+                if (f.object)
+                {
+                    *out++ = copy_scalar(d, *v);
+                    ++v;
+                }
+                f.pos = document_data::after(v);
+                n = walk::value(v);
+                break;
+            }
         }
-        self->next = static_cast<std::uint32_t>(out - self);
-        return out;
     }
 
     static std::size_t count_nodes(const BasicJsonType& j)
     {
-        std::size_t r = 1;
-        if (j.is_object())
+        using iterator = typename BasicJsonType::const_iterator;
+        struct frame
         {
-            for (const auto& member : j.items())
+            iterator pos;
+            iterator end;
+            bool object;
+        };
+        std::vector<frame> open;
+        const BasicJsonType* n = &j;
+        std::size_t r = 0;
+        for (;;)
+        {
+            ++r;
+            if (n->is_structured())
             {
-                r += 1 + count_nodes(member.value());
+                open.push_back(frame{n->cbegin(), n->cend(), n->is_object()});
+            }
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return r;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    open.pop_back();
+                    continue;
+                }
+                r += f.object ? 1 : 0; // the key
+                n = &*f.pos;
+                ++f.pos;
+                break;
             }
         }
-        else if (j.is_array())
-        {
-            for (const auto& e : j)
-            {
-                r += count_nodes(e);
-            }
-        }
-        return r;
     }
 
-    node* fill_nodes(const BasicJsonType& j, node* out)
+    void fill_nodes(const BasicJsonType& j, node* out)
     {
-        if (!j.is_structured())
+        using iterator = typename BasicJsonType::const_iterator;
+        struct frame
         {
-            *out = json_scalar(j);
-            return out + 1;
-        }
-        node* const self = out++;
-        *self = plain_node(j.type());
-        self->len = static_cast<std::uint32_t>(j.size());
-        if (j.is_object())
+            iterator pos;
+            iterator end;
+            bool object;
+            node* self; ///< the container in the copy
+        };
+        std::vector<frame> open;
+        const BasicJsonType* n = &j;
+        for (;;)
         {
-            for (const auto& member : j.items())
+            if (n->is_structured())
             {
-                check_utf8(member.key().data(), member.key().size());
-                *out++ = string_node(member.key().data(), member.key().size());
-                out = fill_nodes(member.value(), out);
+                node* const self = out++;
+                *self = plain_node(n->type());
+                self->len = static_cast<std::uint32_t>(n->size());
+                open.push_back(frame{n->cbegin(), n->cend(), n->is_object(), self});
+            }
+            else
+            {
+                *out++ = json_scalar(*n);
+            }
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    f.self->next = static_cast<std::uint32_t>(out - f.self);
+                    open.pop_back();
+                    continue;
+                }
+                if (f.object)
+                {
+                    const auto& key = f.pos.key();
+                    check_utf8(key.data(), key.size());
+                    *out++ = string_node(key.data(), key.size());
+                }
+                n = &*f.pos;
+                ++f.pos;
+                break;
             }
         }
-        else
-        {
-            for (const auto& e : j)
-            {
-                out = fill_nodes(e, out);
-            }
-        }
-        self->next = static_cast<std::uint32_t>(out - self);
-        return out;
     }
 
     document_data& m_doc;
