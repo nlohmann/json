@@ -1484,7 +1484,8 @@ TEST_CASE("json_view dump")
                 many_tokens += (i != 0 ? "," : "") + token;
             }
             many_tokens += ']';
-            CHECK(json_document::parse(many_tokens).root().dump() == json::parse(many_tokens).dump());
+            const json_document many_doc = json_document::parse(many_tokens);
+            CHECK(many_doc.root().dump() == json::parse(many_tokens).dump());
         }
 
         // random doubles, written as parse() and dump() would
