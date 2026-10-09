@@ -65,7 +65,7 @@ struct oversized_input
     using value_type = char;
     std::size_t claimed;
 
-    const char* data() const
+    const char* data() const // NOLINT(readability-convert-member-functions-to-static): container interface
     {
         return "[1]";
     }
@@ -362,10 +362,10 @@ TEST_CASE("json_view")
         CHECK(json_document::parse(std::vector<char>(text.begin(), text.end())).owns_source());
         // a const rvalue cannot be moved from, and is not borrowed (it may be a
         // temporary): it is copied, as is a const rvalue of any container
-        const std::string const_text = text;
+        const std::string const_text = text; // NOLINT(performance-unnecessary-copy-initialization)
         const json_document from_const_rvalue = json_document::parse(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
         CHECK(from_const_rvalue.owns_source());
-        CHECK(from_const_rvalue.source().data() != const_text.data());
+        CHECK(from_const_rvalue.source().data() != const_text.data()); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved): const, not moved from
         CHECK(from_const_rvalue.root().materialize() == expected);
         json_document read_const_rvalue;
         read_const_rvalue.read(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
