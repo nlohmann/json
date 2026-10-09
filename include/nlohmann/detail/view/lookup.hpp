@@ -132,7 +132,7 @@ template<typename SizeType, typename IntegerType>
 SizeType to_index(IntegerType idx) noexcept
 {
     const IntegerType zero = 0;
-    const auto result = static_cast<SizeType>(idx);
+    const auto result = static_cast<SizeType>(idx); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): idx is an index, not a character
     return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
 }
 
