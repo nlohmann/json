@@ -56,7 +56,7 @@ const char* const check_failed = "[json.exception.parse_error.116] parse error: 
 
 std::string read_file(const std::string& name)
 {
-    std::ifstream f(std::string(TEST_DATA_DIRECTORY) + name, std::ios::binary);
+    const std::ifstream f(std::string(TEST_DATA_DIRECTORY) + name, std::ios::binary);
     std::stringstream ss;
     ss << f.rdbuf();
     return ss.str();
@@ -325,7 +325,7 @@ TEST_CASE("json_view images: round trips")
         // exceed the probe limit, so the object has none and is searched
         // linearly; 40 of 200 keys in one slot (512 slots): a table with a
         // long chain
-        const struct
+        const struct // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): an unnamed type
         {
             std::size_t slots;
             std::size_t colliding;
@@ -342,7 +342,7 @@ TEST_CASE("json_view images: round trips")
             text.pop_back();
             for (const std::string& key : duplicated)
             {
-                text += ",\"" + key + "\":\"last\"";
+                text += ",\"" + key + R"(":"last")";
             }
             text += "}";
             const json_document d = json_document::parse(text);
