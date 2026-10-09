@@ -1193,10 +1193,12 @@ TEST_CASE("json_view values")
             CAPTURE(token)
             const std::string text = "[" + token + "]";
             const double b = json::parse(text)[0].get<double>();
-            CHECK(bits(json_document::parse(text).root()[0].get<double>()) == bits(b));
+            const json_document dd = json_document::parse(text);
+            CHECK(bits(dd.root()[0].get<double>()) == bits(b));
             if (std::abs(b) < 1e38)
             {
-                CHECK(bits(nlohmann::basic_json_document<json_float>::parse(text).root()[0].get<float>()) == bits(json_float::parse(text)[0].get<float>()));
+                const nlohmann::basic_json_document<json_float> df = nlohmann::basic_json_document<json_float>::parse(text);
+                CHECK(bits(df.root()[0].get<float>()) == bits(json_float::parse(text)[0].get<float>()));
             }
         }
     }
@@ -1253,7 +1255,8 @@ TEST_CASE("json_view values")
         CHECK(count == 3);
 
         // a duplicate key: the last value, as parse()
-        CHECK((json_document::parse(R"({"a":1,"a":2})").root().get<std::map<std::string, int>>() == std::map<std::string, int> {{"a", 2}}));
+        const json_document dup = json_document::parse(R"({"a":1,"a":2})");
+        CHECK((dup.root().get<std::map<std::string, int>>() == std::map<std::string, int> {{"a", 2}}));
 
         const json_view invalid{};
         CHECK_THROWS_WITH_AS(invalid.get<int>(), "[json.exception.type_error.302] type must be number, but is discarded", json::type_error&);
