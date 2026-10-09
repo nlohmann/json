@@ -1617,10 +1617,10 @@ TEST_CASE("json_view dump")
         {
             chars += "\xC3\xA9";
         }
-        const json_document d = json_document::parse("{\"a\":\"" + chars + R"(","k\n":1})");
+        const json_document d = json_document::parse(R"({"a":")" + chars + R"(","k\n":1})");
         const json expected = json::parse("\"" + chars + "\"");
         CHECK(d.root()["a"].dump(-1, ' ', true) == expected.dump(-1, ' ', true));
-        CHECK(d.root()["a"].dump(-1, ' ', true).size() == 2 + 5000 * 6);
+        CHECK(d.root()["a"].dump(-1, ' ', true).size() == 2 + (5000 * 6));
     }
 
     SECTION("streams and discarded views")
@@ -1712,7 +1712,7 @@ TEST_CASE("json_view comparison")
         // discarded values compare as basic_json's do
         const json discarded(json::value_t::discarded);
         CHECK((json_view() == json_view()) == (discarded == discarded)); // NOLINT(readability-container-size-empty): operator== is tested
-        CHECK((json_view() == discarded) == (discarded == discarded));
+        CHECK((json_view() == discarded) == (discarded == discarded)); // NOLINT(readability-container-size-empty)
         const json_document null_document = json_document::parse("null");
         CHECK(!(json_view() == null_document.root())); // NOLINT(readability-container-size-empty)
         CHECK(!(null_document.root() == discarded));
