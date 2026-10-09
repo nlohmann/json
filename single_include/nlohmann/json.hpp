@@ -20292,10 +20292,47 @@ class json_pointer
     {
         // children[id] maps a reference token to the number of the prefix
         // extended by that token; number 0 is the empty prefix
-        std::vector<std::map<string_t, std::size_t>> children {}; // NOLINT(readability-redundant-member-init)
+        std::vector<std::map<string_t, std::size_t>> children;
         // is_array[id] is true iff some flattened key has the reference token
         // 0 directly below the prefix with number id
-        std::vector<bool> is_array {}; // NOLINT(readability-redundant-member-init)
+        std::vector<bool> is_array;
+
+        // start with the empty prefix only
+        prefix_tree()
+            : children(1)
+            , is_array(1, false)
+        {}
+
+        // return the number of the prefix with number id extended by
+        // reference_token, adding it if it is new
+        std::size_t add_child(std::size_t id, string_t&& reference_token)
+        {
+            if (reference_token == "0")
+            {
+                is_array[id] = true;
+            }
+
+            // read the number before the emplace_back below, which may
+            // reallocate children and invalidate the iterator
+            const std::size_t next = children.size();
+            const auto inserted = children[id].emplace(std::move(reference_token), next);
+            const std::size_t child = inserted.first->second;
+            if (inserted.second)
+            {
+                children.emplace_back();
+                is_array.push_back(false);
+            }
+            return child;
+        }
+
+        // return the number of the prefix with number id extended by
+        // reference_token, which must have been added before
+        std::size_t find_child(std::size_t id, const string_t& reference_token) const
+        {
+            const auto it = children[id].find(reference_token);
+            JSON_ASSERT(it != children[id].end());
+            return it->second;
+        }
     };
 
     /*!
@@ -20370,9 +20407,7 @@ class json_pointer
                     JSON_THROW(detail::type_error::create(313, "invalid value to unflatten", &j));
             }
 
-            const auto it = tree.children[id].find(reference_token);
-            JSON_ASSERT(it != tree.children[id].end());
-            id = it->second;
+            id = tree.find_child(id, reference_token);
         }
 
         return *result;
@@ -20964,29 +20999,13 @@ class json_pointer
         // their children; the values below them are arrays, all others are
         // objects (see prefix_tree)
         prefix_tree tree;
-        tree.children.emplace_back();
-        tree.is_array.push_back(false);
         for (const auto& element : *value.m_data.m_value.object)
         {
             json_pointer ptr(element.first);
             std::size_t id = 0;
             for (auto& reference_token : ptr.reference_tokens)
             {
-                if (reference_token == "0")
-                {
-                    tree.is_array[id] = true;
-                }
-
-                // do not keep a reference into tree.children across the
-                // push_back below, as it may reallocate
-                const std::size_t next = tree.children.size();
-                const auto inserted = tree.children[id].emplace(std::move(reference_token), next);
-                id = inserted.first->second;
-                if (inserted.second)
-                {
-                    tree.children.emplace_back();
-                    tree.is_array.push_back(false);
-                }
+                id = tree.add_child(id, std::move(reference_token));
             }
         }
 
