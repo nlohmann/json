@@ -49,6 +49,9 @@ whether or not the new parse succeeds; take fresh views from [`root()`](root.md)
 `input` is borrowed or owned by the same rules as [`parse()`](parse.md#notes); a document can borrow on one call and
 own on the next, since ownership is decided freshly each time.
 
+An integer argument that is not a `#!cpp bool` where the flags are expected, such as `#!cpp read(ptr, len)`, does not
+compile; see [`parse`](parse.md#notes).
+
 ## Examples
 
 ??? example
