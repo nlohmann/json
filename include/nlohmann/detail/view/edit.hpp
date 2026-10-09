@@ -17,6 +17,7 @@
 #include <string> // string, to_string
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_convertible, is_floating_point, is_same, is_signed
 #include <utility> // forward
+#include <vector> // vector
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
@@ -663,100 +664,197 @@ class editor
         }
     }
 
+    // The subtrees are walked with an explicit stack (as materialize() does):
+    // the nesting depth is limited by memory only, not by the call stack.
+
     /// number of nodes of a subtree (containers, keys, scalars)
     template<bool E>
     static std::size_t count_nodes(const document_data& d, const node* n)
     {
-        if (!is_container(*n))
+        using walk = navigation<E>;
+        struct frame
         {
-            return 1;
-        }
-        const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-        std::size_t r = 1;
-        for (const node* c = navigation<E>::first(d, n), *end = navigation<E>::end(d, n); c != end;)
+            const node* pos; ///< next element, or key of the next member
+            const node* end;
+            bool object;
+        };
+        std::vector<frame> open;
+        std::size_t r = 0;
+        for (;;)
         {
-            const node* const v = object ? c + 1 : c;
-            r += (object ? 1 : 0) + count_nodes<E>(d, navigation<E>::value(v));
-            c = document_data::after(v);
+            ++r;
+            if (is_container(*n))
+            {
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object)});
+            }
+            // the next value: close finished containers, then step over the key
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return r;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    open.pop_back();
+                    continue;
+                }
+                const node* v = f.pos;
+                if (f.object)
+                {
+                    ++r; // the key
+                    ++v;
+                }
+                f.pos = document_data::after(v);
+                n = walk::value(v);
+                break;
+            }
         }
-        return r;
     }
 
-    /// copy a subtree (of any document) as a contiguous sequence; returns its end
+    /// copy a subtree (of any document) as a contiguous sequence of
+    /// count_nodes() nodes
     template<bool E>
-    node* fill_nodes(const document_data& d, const node* n, node* out)
+    void fill_nodes(const document_data& d, const node* n, node* out)
     {
-        if (!is_container(*n))
+        using walk = navigation<E>;
+        struct frame
         {
-            *out = copy_scalar(d, *n);
-            return out + 1;
-        }
-        node* const self = out++;
-        *self = plain_node(static_cast<value_t>(n->kind));
-        self->len = n->len;
-        const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-        for (const node* c = navigation<E>::first(d, n), *end = navigation<E>::end(d, n); c != end;)
+            const node* pos; ///< next element, or key of the next member
+            const node* end;
+            bool object;
+            node* self;      ///< the container in the copy
+        };
+        std::vector<frame> open;
+        for (;;)
         {
-            if (object)
+            if (is_container(*n))
             {
-                *out++ = copy_scalar(d, *c);
-                ++c;
+                node* const self = out++;
+                *self = plain_node(static_cast<value_t>(n->kind));
+                self->len = n->len;
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object), self});
             }
-            out = fill_nodes<E>(d, navigation<E>::value(c), out);
-            c = document_data::after(c);
+            else
+            {
+                *out++ = copy_scalar(d, *n);
+            }
+            // the next value: close finished containers, then copy the key
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    f.self->next = static_cast<std::uint32_t>(out - f.self);
+                    open.pop_back();
+                    continue;
+                }
+                const node* v = f.pos;
+                if (f.object)
+                {
+                    *out++ = copy_scalar(d, *v);
+                    ++v;
+                }
+                f.pos = document_data::after(v);
+                n = walk::value(v);
+                break;
+            }
         }
-        self->next = static_cast<std::uint32_t>(out - self);
-        return out;
     }
 
     static std::size_t count_nodes(const BasicJsonType& j)
     {
-        std::size_t r = 1;
-        if (j.is_object())
+        using iterator = typename BasicJsonType::const_iterator;
+        struct frame
         {
-            for (const auto& member : j.items())
+            iterator pos;
+            iterator end;
+            bool object;
+        };
+        std::vector<frame> open;
+        const BasicJsonType* n = &j;
+        std::size_t r = 0;
+        for (;;)
+        {
+            ++r;
+            if (n->is_structured())
             {
-                r += 1 + count_nodes(member.value());
+                open.push_back(frame{n->cbegin(), n->cend(), n->is_object()});
+            }
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return r;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    open.pop_back();
+                    continue;
+                }
+                r += f.object ? 1 : 0; // the key
+                n = &*f.pos;
+                ++f.pos;
+                break;
             }
         }
-        else if (j.is_array())
-        {
-            for (const auto& e : j)
-            {
-                r += count_nodes(e);
-            }
-        }
-        return r;
     }
 
-    node* fill_nodes(const BasicJsonType& j, node* out)
+    void fill_nodes(const BasicJsonType& j, node* out)
     {
-        if (!j.is_structured())
+        using iterator = typename BasicJsonType::const_iterator;
+        struct frame
         {
-            *out = json_scalar(j);
-            return out + 1;
-        }
-        node* const self = out++;
-        *self = plain_node(j.type());
-        self->len = static_cast<std::uint32_t>(j.size());
-        if (j.is_object())
+            iterator pos;
+            iterator end;
+            bool object;
+            node* self; ///< the container in the copy
+        };
+        std::vector<frame> open;
+        const BasicJsonType* n = &j;
+        for (;;)
         {
-            for (const auto& member : j.items())
+            if (n->is_structured())
             {
-                check_utf8(member.key().data(), member.key().size());
-                *out++ = string_node(member.key().data(), member.key().size());
-                out = fill_nodes(member.value(), out);
+                node* const self = out++;
+                *self = plain_node(n->type());
+                self->len = static_cast<std::uint32_t>(n->size());
+                open.push_back(frame{n->cbegin(), n->cend(), n->is_object(), self});
+            }
+            else
+            {
+                *out++ = json_scalar(*n);
+            }
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    f.self->next = static_cast<std::uint32_t>(out - f.self);
+                    open.pop_back();
+                    continue;
+                }
+                if (f.object)
+                {
+                    const auto& key = f.pos.key();
+                    check_utf8(key.data(), key.size());
+                    *out++ = string_node(key.data(), key.size());
+                }
+                n = &*f.pos;
+                ++f.pos;
+                break;
             }
         }
-        else
-        {
-            for (const auto& e : j)
-            {
-                out = fill_nodes(e, out);
-            }
-        }
-        self->next = static_cast<std::uint32_t>(out - self);
-        return out;
     }
 
     document_data& m_doc;
