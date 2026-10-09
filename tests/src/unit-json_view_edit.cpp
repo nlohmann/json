@@ -670,4 +670,23 @@ TEST_CASE("json_view edits: strings of other documents are checked")
     // nothing of the failed edits is visible
     CHECK(d.root().dump() == R"([1,{"key":"abc","list":["abc"]}])");
 }
+
+TEST_CASE("json_view edits: the size of a text arena")
+{
+    using nlohmann::detail::view::text_capacity;
+    constexpr std::size_t limit = 0xFFFFFFFFu;
+    // grows by doubling, or to what is needed (plus some room)
+    CHECK(text_capacity(0, 0, 10) == 266);
+    CHECK(text_capacity(1000, 990, 20) == 2000);
+    CHECK(text_capacity(100, 100, 5000) == 5356);
+    // an arena beyond 2 GiB: doubling is clamped to 4 GiB - 1
+    CHECK(text_capacity(0x90000000u, 0x8FFFFFFFu, 2) == limit);
+    CHECK(text_capacity(limit, limit - 10, 10) == limit);
+    // exactly what fits is accepted, without room to spare
+    CHECK(text_capacity(100, 90, limit - 90) == limit);
+    CHECK(text_capacity(limit - 100, limit - 100, 100) == limit);
+    // what does not fit is an error
+    CHECK_THROWS_WITH_AS(text_capacity(100, 90, limit - 89), "[json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document", json::out_of_range&);
+    CHECK_THROWS_WITH_AS(text_capacity(limit, limit, 1), "[json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document", json::out_of_range&);
+}
 #endif
