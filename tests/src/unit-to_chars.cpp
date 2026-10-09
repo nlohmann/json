@@ -852,3 +852,85 @@ TEST_CASE("choice of the conversion")
         }
     }
 }
+
+TEST_CASE("short decimals")
+{
+    // write_short_decimal() writes digits * 10^exp for the digits of a double
+    // that need no conversion (at most 15, the first not 0): as to_chars()
+    // writes the (positive) double that has these digits
+    const auto written = [](std::uint64_t digits, int exp)
+    {
+        std::array<char, 64> buf{}; // (up to 41 bytes are written)
+        char* const end = nlohmann::detail::dtoa_impl::write_short_decimal(buf.data(), digits, exp);
+        return std::string(buf.data(), end);
+    };
+    const auto written_counted = [](std::uint64_t digits, int count, int exp)
+    {
+        std::array<char, 64> buf{};
+        char* const end = nlohmann::detail::dtoa_impl::write_short_decimal(buf.data(), digits, count, exp);
+        return std::string(buf.data(), end);
+    };
+    const auto expected = [](std::uint64_t digits, int exp)
+    {
+        const double value = std::strtod((std::to_string(digits) + "e" + std::to_string(exp)).c_str(), nullptr);
+        std::array<char, 64> buf{};
+        char* const end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, value);
+        return std::string(buf.data(), end);
+    };
+
+    SECTION("powers of ten")
+    {
+        const auto& powers = nlohmann::detail::dtoa_impl::powers_of_ten_16();
+        std::uint64_t power = 1;
+        for (const std::uint64_t p : powers)
+        {
+            CHECK(p == power);
+            power *= 10;
+        }
+    }
+
+    SECTION("examples")
+    {
+        CHECK(written(1, 0) == "1.0");
+        CHECK(written(15, -1) == "1.5");
+        CHECK(written(125, -2) == "1.25");
+        CHECK(written(1, 22) == "1e+22");
+        CHECK(written(123456789012345, -2) == "1234567890123.45");
+        CHECK(written(999999999999999, -15) == "0.999999999999999");
+        CHECK(written(5, -324) == "5e-324");
+        CHECK(written_counted(1, 1, 0) == "1.0");
+        CHECK(written_counted(125, 3, -2) == "1.25");
+        CHECK(written_counted(100, 3, -2) == "1.0");
+        CHECK(written_counted(999999999999999, 15, -15) == "0.999999999999999");
+    }
+
+    SECTION("random digits, exponents and trailing zeros")
+    {
+        std::mt19937_64 rng(1170); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
+        for (int i = 0; i < 100000; ++i)
+        {
+            // 1 to 15 digits, the first not 0, and up to 14 of them trailing zeros
+            std::uint64_t count = 1 + (rng() % 15u);
+            std::uint64_t power = 1;
+            for (std::uint64_t k = 1; k < count; ++k)
+            {
+                power *= 10;
+            }
+            std::uint64_t digits = power + (rng() % (9 * power));
+            const std::uint64_t zeros = (rng() % 3u == 0) ? (rng() % count) : 0;
+            for (std::uint64_t k = 0; k < zeros; ++k)
+            {
+                digits = (digits / 10) * 10;
+            }
+            // (a value between 1e-300 and 1e300)
+            const int exp = static_cast<int>(rng() % 560u) - 300 - static_cast<int>(count);
+
+            CAPTURE(digits)
+            CAPTURE(count)
+            CAPTURE(exp)
+            const std::string want = expected(digits, exp);
+            CHECK(written(digits, exp) == want);
+            CHECK(written_counted(digits, static_cast<int>(count), exp) == want);
+        }
+    }
+}
