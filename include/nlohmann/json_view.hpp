@@ -475,9 +475,9 @@ class basic_json_document
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
-        if (NLOHMANN_VIEW_UNLIKELY(size >= 0xFFFFFFF0u))
+        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size))
         {
-            failure.code = detail::view::error_code::input_too_large; // LCOV_EXCL_LINE (4 GiB)
+            failure.code = detail::view::error_code::input_too_large;
         }
         else
         {

@@ -210,7 +210,8 @@ packet-beta
 - **Navigation** needs no pointers: the elements of an array or object follow its node, and the node after a value's
   subtree is `next` nodes further for an array or object, and the next node otherwise (`document_data::after`). Views
   step from element to element this way and skip whole subtrees in constant time.
-- **Offsets** are 32 bits wide, so a document is limited to 4 GiB (`out_of_range.416`).
+- **Offsets** are 32 bits wide, so a document is limited to 4294967279 bytes, 4 GiB minus 16 bytes (a margin below
+  2^32 for positions one scanner step past the end of the text; `out_of_range.416`).
 
 For example, `#!json {"a": [1, 2.5]}` becomes five nodes. Each node's elements follow it, and `next` leads from an
 array or object past its subtree:
