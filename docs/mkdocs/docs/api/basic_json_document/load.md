@@ -85,9 +85,13 @@ Otherwise throws [`parse_error.116`](../../home/exceptions.md#jsonexceptionparse
 
 ## Complexity
 
-Linear in the number of nodes, which are always copied into the document. With `#!cpp check == image_check::full`,
-additionally linear in the combined length of the text and the decoded strings; `#!cpp image_check::bounds` and
-`#!cpp image_check::none` do not read them.
+Linear in the number of nodes, which are always copied into the document. `#!cpp image_check::none` does not read
+the text or the decoded strings. `#!cpp image_check::bounds` reads one byte of the text for each float token (its sign,
+to check the recorded digits against the token's length), and nothing else of the text or the decoded strings.
+
+With `#!cpp image_check::full`, linear in the size of the image (the nodes, the text, and the decoded strings), plus
+sorting the ranges of the strings and of the float tokens (at most one per node): the contents of each distinct range
+are checked once, however many nodes refer to it.
 
 ## Notes
 
@@ -108,7 +112,7 @@ How thoroughly `load()` validates `image` before trusting it.
 
 | value    | checks                                                                                                    | guarantees |
 |----------|--------------------------------------------------------------------------------------------------------------|------------|
-| `full`   | everything the parser itself guarantees: structure and bounds; that every string is valid UTF-8 (and, for a string still in the source text, that it contains no quote, backslash, or control character); and that every number token is well-formed and matches the value stored for it | reading and serializing a checked image is safe and always produces valid JSON, exactly as for a parsed document |
+| `full`   | everything the parser itself guarantees: structure and bounds; that every string is valid UTF-8 (and, for a string still in the source text, that it contains no quote, backslash, or control character); and that every number token is well-formed and matches the value stored for it; strings and float tokens may share a range only if the ranges are identical (as nodes that share a value do), and never overlap otherwise | reading and serializing a checked image is safe and always produces valid JSON, exactly as for a parsed document |
 | `bounds` | structure and bounds only -- that every offset and count in the node index stays inside the image            | reading and serializing stay memory-safe, but a crafted image can hold strings that are not valid UTF-8 or that serialize to invalid JSON ([`dump()`](../basic_json_view/dump.md) writes them unchanged or throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316)), and numbers whose values differ from their text |
 | `none`   | nothing                                                                                                       | images from a trusted source only -- reading a damaged image is undefined behavior |
 
@@ -136,6 +140,9 @@ so those stay safe on a damaged one. It does *not* guarantee that the image desc
 that a `full` check would have rejected can make [`dump()`](../basic_json_view/dump.md) write invalid UTF-8 or invalid
 JSON, or throw `type_error.316`, and a number can read back with a value that does not match how it is spelled.
 Reserve `bounds` for images you already trust to be well-formed, and use it only to skip the extra scan.
+An [editable document](../json_editable_document.md) does not take such a string over either:
+[`set`](set.md), [`push_back`](push_back.md) and [`insert`](insert.md) throw `type_error.316` when they copy it from
+a view of the loaded document, and leave the editable document unchanged.
 
 ## Examples
 

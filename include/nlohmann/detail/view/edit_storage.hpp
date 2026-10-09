@@ -63,6 +63,23 @@ inline node* alloc_nodes(document_data& d, std::size_t k)
     return r;
 }
 
+/// The capacity of the edit arena after it grows by n bytes (`used` of `cap`
+/// are taken): doubled, or what is needed plus some room, but never more than
+/// the 4 GiB - 1 bytes that the 32-bit offsets of nodes can address. An error
+/// if n more bytes do not fit even then.
+inline std::size_t text_capacity(std::size_t cap, std::size_t used, std::size_t n)
+{
+    constexpr std::size_t limit = 0xFFFFFFFFu;
+    if (NLOHMANN_VIEW_UNLIKELY(used > limit || n > limit - used))
+    {
+        throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document");
+    }
+    const std::size_t needed = used + n;
+    const std::size_t wanted = needed + (std::min)(limit - needed, std::size_t{256});
+    const std::size_t doubled = cap > limit / 2 ? limit : cap * 2;
+    return (std::max)(doubled, wanted);
+}
+
 /// copy n bytes into the edit arena and return their offset; a new buffer
 /// leaves the old one alive, so that string views into it remain valid
 inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
@@ -70,11 +87,7 @@ inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
     document_data::edit_state& e = edit_state_of(d);
     if (NLOHMANN_VIEW_UNLIKELY(e.text_cap - e.text_used < n))
     {
-        const std::size_t cap = (std::max)(e.text_cap * 2, e.text_used + n + 256);
-        if (cap > 0xFFFFFFFFu)
-        {
-            throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE (4 GiB)
-        }
+        const std::size_t cap = text_capacity(e.text_cap, e.text_used, n);
         std::unique_ptr<char[]> fresh(new char[cap]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         if (e.text_used != 0)
         {
@@ -101,16 +114,12 @@ inline std::size_t moved_capacity(const document_data& d, const node* n) noexcep
     return d.edits->moved_cap[n->off];
 }
 
-/// let container n take its elements from `seq` (header node first)
-inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
+/// Make room for one more moved container. This is the part of set_moved()
+/// that can throw: a caller that changes a node before it calls set_moved()
+/// calls this first, so that a failure leaves the node as it was.
+inline void reserve_moved(document_data& d)
 {
     document_data::edit_state& e = edit_state_of(d);
-    if ((n->flags & node_flags::moved) != 0)
-    {
-        e.moved[n->off] = seq;
-        e.moved_cap[n->off] = cap;
-        return;
-    }
     if (e.moved.size() >= 0xFFFFFFFFu)
     {
         throw_out_of_range(416, "more than 4294967295 edited arrays and objects are not supported by json_document"); // LCOV_EXCL_LINE
@@ -121,6 +130,20 @@ inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
         e.moved.reserve((2 * e.moved.size()) + 16);
         e.moved_cap.reserve((2 * e.moved.size()) + 16);
     }
+}
+
+/// let container n take its elements from `seq` (header node first); cannot
+/// throw if n is moved already or reserve_moved() was called
+inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
+{
+    document_data::edit_state& e = edit_state_of(d);
+    if ((n->flags & node_flags::moved) != 0)
+    {
+        e.moved[n->off] = seq;
+        e.moved_cap[n->off] = cap;
+        return;
+    }
+    reserve_moved(d);
     e.moved.push_back(seq);
     e.moved_cap.push_back(cap);
     n->off = static_cast<std::uint32_t>(e.moved.size() - 1);
@@ -146,6 +169,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         set_moved(d, n, nh, cap);
         return nh;
     }
+    reserve_moved(d); // (so that set_moved() below cannot throw: the links are marked before)
     const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
     const std::size_t used = 1 + (static_cast<std::size_t>(n->len) * (object ? 2 : 1));
     const std::size_t cap = used + extra;
@@ -161,7 +185,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         {
             *o++ = *c++; // the key
         }
-        make_link(*o, document_data::deref(c));
+        make_link(*o, const_cast<node*>(document_data::deref(c))); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to the document
         ++o;
         c = document_data::after(c);
     }

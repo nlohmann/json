@@ -7,16 +7,18 @@
 // SPDX-License-Identifier: MIT
 
 /****************************************************************************\
- * Zero-copy, read-only view of a parsed JSON text.                          *
+ * Zero-copy view of a parsed JSON text.                                     *
  *                                                                           *
  * json_document::parse() builds a flat index of the values of a JSON text   *
  * (16 bytes per value) instead of a tree of basic_json values. Strings and  *
  * numbers stay in the source text; only strings with escapes are decoded,   *
  * into one buffer. json_view is a handle to one value of the document, with *
  * the read-only part of the basic_json interface; materialize() turns a     *
- * subtree into the basic_json value that parse() would produce.             *
+ * subtree into the basic_json value that parse() would produce. An editable *
+ * document (json_editable_document) also has set(), push_back(), insert(),  *
+ * and erase(): edits never write to the source text, and views stay valid.  *
  *                                                                           *
- * The source text must outlive a document that borrows it (lvalue byte     *
+ * The source text must outlive a document that borrows it (lvalue byte      *
  * containers, C strings); rvalue strings, streams, and other inputs are     *
  * owned by the document.                                                    *
 \****************************************************************************/
@@ -24,6 +26,7 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
+#include <algorithm> // all_of, min
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcpy, strlen
@@ -59,7 +62,7 @@
 
 
 
-#include <algorithm> // find, find_if, max
+#include <algorithm> // find, find_if, max, min
 #include <array> // array
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // int64_t, uint8_t, uint16_t, uint32_t, uint64_t
@@ -85,9 +88,10 @@
 #include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcpy
 #include <functional> // less
+#include <limits> // numeric_limits
 #include <map> // map
 #include <memory> // unique_ptr
-#include <new> // operator new, placement new
+#include <new> // bad_alloc, operator new, placement new
 #include <string> // string
 #include <vector> // vector
 
@@ -198,6 +202,11 @@ static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::
               && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
               "the node format depends on the numbering of value_t");
 
+/// The largest input a document accepts, in bytes. Offsets and node counts are
+/// 32 bits wide; the limit keeps 16 bytes (the width of the scanner's steps)
+/// below 2^32, so that a position one step past the end of the text fits.
+static constexpr std::size_t max_input_size = 0xFFFFFFEFu;
+
 /// node flags
 struct node_flags
 {
@@ -207,6 +216,7 @@ struct node_flags
     static constexpr std::uint8_t is_true = 4; ///< boolean value
     static constexpr std::uint8_t moved = 8;   ///< array/object: the elements live in a separate sequence (editable documents)
     static constexpr std::uint8_t is_new = 16; ///< written by an edit: no source position
+    static constexpr std::uint8_t linked = 32; ///< an entry of a moved sequence links to this value (editable documents): its extent in the parsed layout no longer matters
 };
 
 /// kind of an entry of an edited sequence that stands for a value stored
@@ -221,7 +231,7 @@ struct node
 {
     std::uint8_t kind;   ///< value_t, or kind_link
     std::uint8_t flags;  ///< node_flags
-    std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the hash index; otherwise 0
+    std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the hash index (1-based, 0 = none); otherwise 0
     std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
     std::uint32_t len;   ///< string: decoded bytes; float: token bytes; array/object: element count
     std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence)
@@ -241,24 +251,36 @@ NLOHMANN_VIEW_ALWAYS_INLINE const node* link_target(const node& n) noexcept
     return t;
 }
 
-inline void make_link(node& n, const node* target) noexcept
+/// let the entry n stand for the value at target (and mark the value)
+inline void make_link(node& n, node* target) noexcept
 {
+    target->flags = static_cast<std::uint8_t>(target->flags | node_flags::linked);
     n = node{};
     n.kind = kind_link;
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, static_cast<const void*>(&target), sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
-/// the converted value of an integer node (stored in len/next)
+/// the converted value of an integer node: len is its low half, next its high
+/// half (on little-endian targets the two words are the value in memory)
 NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t integer_bits(const node& n) noexcept
 {
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
     std::uint64_t v = 0;
     std::memcpy(&v, reinterpret_cast<const unsigned char*>(&n) + 8, 8); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     return v;
+#else
+    return static_cast<std::uint64_t>(n.len) | (static_cast<std::uint64_t>(n.next) << 32);
+#endif
 }
 
 NLOHMANN_VIEW_ALWAYS_INLINE void set_integer_bits(node& n, std::uint64_t v) noexcept
 {
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, &v, 8); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+#else
+    n.len = static_cast<std::uint32_t>(v);
+    n.next = static_cast<std::uint32_t>(v >> 32);
+#endif
 }
 
 /// token length of a number node
@@ -388,12 +410,29 @@ struct document_data
         tape_cap = inline_cap;
     }
 
-    /// make room for n nodes; keeps the first tape_size nodes
+    /// the largest node count whose size in bytes fits a std::size_t
+    static constexpr std::size_t max_nodes() noexcept
+    {
+        return (std::numeric_limits<std::size_t>::max)() / sizeof(node);
+    }
+
+    [[noreturn]] NLOHMANN_VIEW_NOINLINE static void throw_bad_alloc()
+    {
+        NLOHMANN_VIEW_THROW(std::bad_alloc());
+    }
+
+    /// make room for n nodes; keeps the first tape_size nodes (throws
+    /// std::bad_alloc for a count that does not fit the address space,
+    /// instead of wrapping around in n * sizeof(node))
     void reserve(std::size_t n)
     {
         if (n <= tape_cap)
         {
             return;
+        }
+        if (NLOHMANN_VIEW_UNLIKELY(n > max_nodes()))
+        {
+            throw_bad_alloc();
         }
         node* fresh = static_cast<node*>(::operator new (n * sizeof(node)));
         if (tape_size != 0)
@@ -568,7 +607,8 @@ NLOHMANN_JSON_NAMESPACE_END
 #else
     #define NLOHMANN_VIEW_NEON 0
 #endif
-#if !defined(JSON_VIEW_NO_SIMD) && !NLOHMANN_VIEW_NEON && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
+// (x86 only: other targets can define __SSE2__ as well, e.g., WebAssembly with -msse2, but have no <cpuid.h>)
+#if !defined(JSON_VIEW_NO_SIMD) && !NLOHMANN_VIEW_NEON && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
     #include <emmintrin.h>
     #define NLOHMANN_VIEW_SSE2 1
 #else
@@ -1261,8 +1301,18 @@ class builder
         const std::uint64_t done = static_cast<std::uint64_t>(at - b) + 1;
         const std::uint64_t guess = static_cast<std::uint64_t>(n) * static_cast<std::uint64_t>(e - b + 1) / done;
         const std::uint64_t grown = guess + (guess / 4) + 64; // a variable: GCC calls a cast of the sum useless where std::uint64_t is std::size_t
+        // (n is below 2^32: the input is smaller than 4 GiB; the sum cannot wrap)
+        const std::uint64_t wanted = (std::max)(grown, static_cast<std::uint64_t>(n) + (n / 2) + 64);
+        const std::uint64_t limit = document_data::max_nodes();
         doc.tape_size = n;
-        doc.reserve((std::max)(static_cast<std::size_t>(grown), n + (n / 2) + 64));
+        // LCOV_EXCL_START (a node array that fills the address space)
+        if (NLOHMANN_VIEW_UNLIKELY(n >= limit))
+        {
+            document_data::throw_bad_alloc(); // no room for another node
+        }
+        // LCOV_EXCL_STOP
+        // (a count beyond the limit is cut: the index does not grow beyond what can be addressed)
+        doc.reserve(static_cast<std::size_t>((std::min)(wanted, limit)));
         return doc.tape;
     }
 
@@ -1875,7 +1925,10 @@ indent_done:
             n->flags = flags;
             n->extra = extra;
             n->off = static_cast<std::uint32_t>(off);
-            set_integer_bits(*n, second);
+            // len is the low half of the second word, next the high half
+            // (not a native word over both, which swaps them on big-endian)
+            n->len = static_cast<std::uint32_t>(second);
+            n->next = static_cast<std::uint32_t>(second >> 32);
 #endif
             return n;
         }
@@ -2458,6 +2511,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <string> // string, to_string
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_convertible, is_floating_point, is_same, is_signed
 #include <utility> // forward
+#include <vector> // vector
 
 // #include <nlohmann/json.hpp>
 // #include <nlohmann/detail/view/document_data.hpp>
@@ -2555,9 +2609,8 @@ template<typename BasicJsonType>
 {
     if (f.code == error_code::input_too_large)
     {
-        // LCOV_EXCL_START (4 GiB)
-        NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4 GiB or more is not supported by json_document", nullptr));
-        // LCOV_EXCL_STOP
+        // (the limit is detail::view::max_input_size: 4 GiB minus 16 bytes)
+        NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
     const BasicJsonType accepted = BasicJsonType::parse(src, src + size, nullptr, true, ignore_comments, ignore_trailing_commas);
     // LCOV_EXCL_START (only if parse() accepts what the view rejects: a bug)
@@ -2630,6 +2683,23 @@ inline node* alloc_nodes(document_data& d, std::size_t k)
     return r;
 }
 
+/// The capacity of the edit arena after it grows by n bytes (`used` of `cap`
+/// are taken): doubled, or what is needed plus some room, but never more than
+/// the 4 GiB - 1 bytes that the 32-bit offsets of nodes can address. An error
+/// if n more bytes do not fit even then.
+inline std::size_t text_capacity(std::size_t cap, std::size_t used, std::size_t n)
+{
+    constexpr std::size_t limit = 0xFFFFFFFFu;
+    if (NLOHMANN_VIEW_UNLIKELY(used > limit || n > limit - used))
+    {
+        throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document");
+    }
+    const std::size_t needed = used + n;
+    const std::size_t wanted = needed + (std::min)(limit - needed, std::size_t{256});
+    const std::size_t doubled = cap > limit / 2 ? limit : cap * 2;
+    return (std::max)(doubled, wanted);
+}
+
 /// copy n bytes into the edit arena and return their offset; a new buffer
 /// leaves the old one alive, so that string views into it remain valid
 inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
@@ -2637,11 +2707,7 @@ inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
     document_data::edit_state& e = edit_state_of(d);
     if (NLOHMANN_VIEW_UNLIKELY(e.text_cap - e.text_used < n))
     {
-        const std::size_t cap = (std::max)(e.text_cap * 2, e.text_used + n + 256);
-        if (cap > 0xFFFFFFFFu)
-        {
-            throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE (4 GiB)
-        }
+        const std::size_t cap = text_capacity(e.text_cap, e.text_used, n);
         std::unique_ptr<char[]> fresh(new char[cap]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         if (e.text_used != 0)
         {
@@ -2668,16 +2734,12 @@ inline std::size_t moved_capacity(const document_data& d, const node* n) noexcep
     return d.edits->moved_cap[n->off];
 }
 
-/// let container n take its elements from `seq` (header node first)
-inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
+/// Make room for one more moved container. This is the part of set_moved()
+/// that can throw: a caller that changes a node before it calls set_moved()
+/// calls this first, so that a failure leaves the node as it was.
+inline void reserve_moved(document_data& d)
 {
     document_data::edit_state& e = edit_state_of(d);
-    if ((n->flags & node_flags::moved) != 0)
-    {
-        e.moved[n->off] = seq;
-        e.moved_cap[n->off] = cap;
-        return;
-    }
     if (e.moved.size() >= 0xFFFFFFFFu)
     {
         throw_out_of_range(416, "more than 4294967295 edited arrays and objects are not supported by json_document"); // LCOV_EXCL_LINE
@@ -2688,6 +2750,20 @@ inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
         e.moved.reserve((2 * e.moved.size()) + 16);
         e.moved_cap.reserve((2 * e.moved.size()) + 16);
     }
+}
+
+/// let container n take its elements from `seq` (header node first); cannot
+/// throw if n is moved already or reserve_moved() was called
+inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
+{
+    document_data::edit_state& e = edit_state_of(d);
+    if ((n->flags & node_flags::moved) != 0)
+    {
+        e.moved[n->off] = seq;
+        e.moved_cap[n->off] = cap;
+        return;
+    }
+    reserve_moved(d);
     e.moved.push_back(seq);
     e.moved_cap.push_back(cap);
     n->off = static_cast<std::uint32_t>(e.moved.size() - 1);
@@ -2713,6 +2789,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         set_moved(d, n, nh, cap);
         return nh;
     }
+    reserve_moved(d); // (so that set_moved() below cannot throw: the links are marked before)
     const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
     const std::size_t used = 1 + (static_cast<std::size_t>(n->len) * (object ? 2 : 1));
     const std::size_t cap = used + extra;
@@ -2728,7 +2805,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         {
             *o++ = *c++; // the key
         }
-        make_link(*o, document_data::deref(c));
+        make_link(*o, const_cast<node*>(document_data::deref(c))); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to the document
         ++o;
         c = document_data::after(c);
     }
@@ -2824,6 +2901,8 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <cstdint> // uint16_t, uint32_t, uint64_t
 #include <cstring> // memcmp, memcpy
+#include <limits> // numeric_limits
+#include <type_traits> // integral_constant, is_integral, is_same
 
 // #include <nlohmann/json.hpp>
 // #include <nlohmann/detail/view/document_data.hpp>
@@ -2860,14 +2939,25 @@ NLOHMANN_JSON_NAMESPACE_END
 // large objects). An object with document_data::index_min_members members or
 // more gets an open-addressing table after parsing; its node stores the
 // number of the table (1-based) in `extra`. A slot holds the offset of a key
-// node from its object node (0: empty). Of duplicate keys, the first is kept,
-// as for the linear search.
+// node from its object node (0: empty). Of duplicate keys, the last is kept,
+// as for the linear search, and as basic_json::parse() does.
+//
+// The hash is not seeded, so keys chosen to collide could make the build
+// quadratic. A key therefore sits at most index_max_displacement slots away
+// from its home slot; if a key would sit further away, the table is dropped
+// and the object is searched linearly (like a small one). For the same
+// reason, a lookup visits at most index_max_displacement + 1 slots.
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 namespace view
 {
+
+/// the farthest a key may sit from its home slot (a table with at most half of
+/// its slots in use gives random keys a distance of about 50 for millions of
+/// members; and every member costs at most this many steps while building)
+constexpr std::size_t index_max_displacement = 64;
 
 /// hash of a key: its bytes, eight at a time, in a fixed byte order
 inline std::uint64_t key_hash(const char* s, std::size_t n) noexcept
@@ -2906,26 +2996,43 @@ inline void build_object_index(document_data& d, node* obj)
     d.index_slots.resize(start + cap, 0);
     std::uint32_t* const slots = d.index_slots.data() + start;
     const std::size_t mask = cap - 1;
+    bool degenerate = false;
     for (const node* k = document_data::first_child(obj), *end = document_data::child_end(obj); k != end; k = document_data::after(k + 1))
     {
         const char* const key = d.str(*k);
         const std::uint64_t hash = key_hash(key, k->len); // (a cast of the call would be useless where std::uint64_t is std::size_t)
         std::size_t i = static_cast<std::size_t>(hash) & mask;
         bool duplicate = false;
+        std::size_t distance = 0;
         while (slots[i] != 0)
         {
             const node* const other = obj + slots[i];
             if (other->len == k->len && (k->len == 0 || std::memcmp(d.str(*other), key, k->len) == 0))
             {
-                duplicate = true; // keep the first
+                duplicate = true; // keep the last: the key's slot now leads to this member
+                slots[i] = static_cast<std::uint32_t>(k - obj);
+                break;
+            }
+            if (++distance > index_max_displacement)
+            {
+                degenerate = true; // too many keys share a home region
                 break;
             }
             i = (i + 1) & mask;
+        }
+        if (degenerate)
+        {
+            break;
         }
         if (!duplicate)
         {
             slots[i] = static_cast<std::uint32_t>(k - obj);
         }
+    }
+    if (degenerate)
+    {
+        d.index_slots.resize(start); // no table: the object is searched linearly
+        return;
     }
     d.indexes.push_back(document_data::object_index{start, static_cast<std::uint32_t>(mask)});
     obj->extra = static_cast<std::uint16_t>(d.indexes.size());
@@ -2940,7 +3047,7 @@ inline void build_object_indexes(document_data& d)
     }
 }
 
-/// the key node of the first member with this key of an indexed object, or
+/// the key node of the last member with this key of an indexed object, or
 /// nullptr
 inline const node* find_indexed(const document_data& d, const node* obj, const char* key, std::size_t n) noexcept
 {
@@ -2948,7 +3055,7 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
     const std::uint32_t* const slots = d.index_slots.data() + ix.start;
     const std::uint64_t hash = key_hash(key, n); // (a cast of the call would be useless where std::uint64_t is std::size_t)
     std::size_t i = static_cast<std::size_t>(hash) & ix.mask;
-    for (;;)
+    for (std::size_t distance = 0; distance <= index_max_displacement; ++distance)
     {
         const std::uint32_t s = slots[i];
         if (s == 0)
@@ -2962,6 +3069,7 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
         }
         i = (i + 1) & ix.mask;
     }
+    return nullptr; // (no key sits further from its home slot)
 }
 
 }  // namespace view
@@ -3033,8 +3141,9 @@ class short_key
     std::uint64_t m_b = 0;
 };
 
-/// the key node of the first member of an object with the given key, or
-/// nullptr; most keys are rejected by their length, from the index alone
+/// the key node of the last member of an object with the given key, or
+/// nullptr (the last one, as materialize() and parse() keep it); most keys are
+/// rejected by their length, from the index alone
 template<bool Editable>
 const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
@@ -3045,6 +3154,7 @@ const node* find_member(const document_data& d, const node* object, const char* 
     }
     const node* const end = nav::end(d, object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    const node* last = nullptr;
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
     {
         const short_key probe(k, n);
@@ -3052,19 +3162,37 @@ const node* find_member(const document_data& d, const node* object, const char* 
         {
             if (m->len == n && probe.matches(reinterpret_cast<const unsigned char*>(d.str(*m)))) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             {
-                return m;
+                last = m;
             }
         }
-        return nullptr;
+        return last;
     }
     for (const node* m = nav::first(d, object); m != end; m = document_data::after(m + 1))
     {
         if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
         {
-            return m;
+            last = m;
         }
     }
-    return nullptr;
+    return last;
+}
+
+/// whether an integer type is accepted as an array index by the view's
+/// operator[] and at(): every integer type but bool and size_t, which has its
+/// own overload
+template<typename T>
+struct is_index_type : std::integral_constant < bool,
+    std::is_integral<T>::value && !std::is_same<T, bool>::value && !std::is_same<T, std::size_t>::value >
+{};
+
+/// an integer as an index: negative values, and values that do not fit a
+/// size_t, map to the largest size_t (out of range for every array)
+template<typename SizeType, typename IntegerType>
+SizeType to_index(IntegerType idx) noexcept
+{
+    const IntegerType zero = 0;
+    const auto result = static_cast<SizeType>(idx);
+    return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
 }
 
 /// the entry of the element of an array at an index below its size (a link
@@ -3233,25 +3361,23 @@ class editor
         {
             become_empty(o, value_t::object);
         }
-        // an existing member: assign it (and drop later duplicates, so that
-        // lookups, iteration, and materialize() agree)
+        // an existing member: assign the one that lookups find (the last
+        // one, should the key occur more than once), and drop the others, so
+        // that lookups, iteration, and materialize() agree. The key stays at
+        // the position of its first occurrence, as materialize() puts it.
         node* slot = nullptr;
-        bool duplicates = false;
+        std::size_t matches = 0;
         for (const node* k = nav::first(m_doc, o), *end = nav::end(m_doc, o); k != end; k = document_data::after(k + 1))
         {
             if (key_equals(*k, key))
             {
-                if (slot != nullptr)
-                {
-                    duplicates = true;
-                    break;
-                }
                 slot = const_cast<node*>(nav::value(k + 1)); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to this document
+                ++matches;
             }
         }
         if (slot != nullptr)
         {
-            if (duplicates)
+            if (matches > 1)
             {
                 erase_members(o, key, true);
             }
@@ -3397,27 +3523,38 @@ class editor
         return k.len == key.size() && (key.size() == 0 || std::memcmp(m_doc.str(k), key.data(), key.size()) == 0);
     }
 
-    /// remove the members with this key (all, or all but the first) from an object
-    std::size_t erase_members(node* o, string_view_t key, bool keep_first)
+    /// Remove the members with this key from an object: all of them, or all
+    /// but one. That one stays where the first occurrence is, but holds the
+    /// value of the last (the one that lookups find, which views may refer to).
+    std::size_t erase_members(node* o, string_view_t key, bool keep_one)
     {
         node* const h = block_of(m_doc, o, 0);
+        node last_value{}; // the entry of the value of the last member
+        node* const end = h + h->next;
+        if (keep_one)
+        {
+            for (node* r = h + 1; r != end; r += 2)
+            {
+                if (key_equals(*r, key))
+                {
+                    last_value = r[1];
+                }
+            }
+        }
         node* w = h + 1;
         std::size_t erased = 0;
         bool kept = false;
-        for (node* r = h + 1, *end = h + h->next; r != end; r += 2)
+        for (node* r = h + 1; r != end; r += 2)
         {
             const bool match = key_equals(*r, key);
-            if (match && (kept || !keep_first))
+            if (match && (kept || !keep_one))
             {
                 ++erased;
                 continue;
             }
+            w[0] = r[0];
+            w[1] = match ? last_value : r[1];
             kept = kept || match;
-            if (w != r)
-            {
-                w[0] = r[0];
-                w[1] = r[1];
-            }
             w += 2;
         }
         h->next = static_cast<std::uint32_t>(w - h);
@@ -3429,9 +3566,10 @@ class editor
     /// turn a null into an empty array/object in place
     static void become_empty(node* n, value_t k) noexcept
     {
+        const std::uint8_t linked = n->flags & node_flags::linked;
         *n = node{};
         n->kind = static_cast<std::uint8_t>(k);
-        n->flags = node_flags::is_new;
+        n->flags = static_cast<std::uint8_t>(node_flags::is_new | linked);
         n->next = 1;
     }
 
@@ -3439,13 +3577,17 @@ class editor
     /// include slot (if known).
     void assign(node* slot, const encoded& e, node* parent, bool parent_known)
     {
+        // an entry of a moved sequence links to the slot: it can take any extent
+        const std::uint8_t linked = slot->flags & node_flags::linked;
         if (e.region == nullptr)
         {
-            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape)
+            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape && linked == 0)
             {
                 // The slot spans its old elements in the enclosing sequence, but
                 // a scalar is one node: the enclosing container first switches to
-                // links (then the extent of the slot no longer matters).
+                // links (then the extent of the slot no longer matters). Looking
+                // for the container is linear in the size of the document, so
+                // links (which are marked in the slot) avoid it.
                 node* const p = parent_known ? parent : find_parent(m_doc, slot);
                 if (p != nullptr && ((p->flags & node_flags::moved) == 0 || moved_capacity(m_doc, p) == 0))
                 {
@@ -3453,6 +3595,7 @@ class editor
                 }
             }
             *slot = e.scalar;
+            slot->flags = static_cast<std::uint8_t>(slot->flags | linked);
             return;
         }
         // an array/object: the slot keeps its extent (so that the enclosing
@@ -3461,11 +3604,21 @@ class editor
         const node* const r = e.region;
         const std::uint32_t extent = is_container(*slot) ? slot->next : 1;
         const bool was_moved = (slot->flags & node_flags::moved) != 0;
+        // Everything that can throw happens before the slot changes: a slot
+        // that is a container without the moved flag would show its old
+        // elements. reserve_moved() makes the set_moved() below, which sets
+        // the flag, safe; the entry of `regions` exists already (encode()
+        // added it), so that the assignment at the end does not allocate.
+        if (!was_moved)
+        {
+            reserve_moved(m_doc);
+        }
         slot->kind = r->kind;
         slot->extra = 0;
         slot->len = r->len;
         slot->next = extent;
-        slot->flags = was_moved ? static_cast<std::uint8_t>(node_flags::moved | node_flags::is_new) : std::uint8_t{0};
+        // (set_moved() adds the moved flag to a slot that does not have it yet)
+        slot->flags = static_cast<std::uint8_t>((was_moved ? node_flags::moved | node_flags::is_new : 0) | linked);
         set_moved(m_doc, slot, e.region, 0);
         edit_state_of(m_doc).regions[e.region] = slot;
     }
@@ -3682,6 +3835,8 @@ class editor
         switch (static_cast<value_t>(n.kind))
         {
             case value_t::string:
+                // (an editable document only holds valid UTF-8, whatever the check of the other document was)
+                check_utf8(from.str(n), n.len);
                 return string_node(from.str(n), n.len);
             case value_t::number_integer:
             case value_t::number_unsigned:
@@ -3745,100 +3900,197 @@ class editor
         }
     }
 
+    // The subtrees are walked with an explicit stack (as materialize() does):
+    // the nesting depth is limited by memory only, not by the call stack.
+
     /// number of nodes of a subtree (containers, keys, scalars)
     template<bool E>
     static std::size_t count_nodes(const document_data& d, const node* n)
     {
-        if (!is_container(*n))
+        using walk = navigation<E>;
+        struct frame
         {
-            return 1;
-        }
-        const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-        std::size_t r = 1;
-        for (const node* c = navigation<E>::first(d, n), *end = navigation<E>::end(d, n); c != end;)
+            const node* pos; ///< next element, or key of the next member
+            const node* end;
+            bool object;
+        };
+        std::vector<frame> open;
+        std::size_t r = 0;
+        for (;;)
         {
-            const node* const v = object ? c + 1 : c;
-            r += (object ? 1 : 0) + count_nodes<E>(d, navigation<E>::value(v));
-            c = document_data::after(v);
+            ++r;
+            if (is_container(*n))
+            {
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object)});
+            }
+            // the next value: close finished containers, then step over the key
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return r;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    open.pop_back();
+                    continue;
+                }
+                const node* v = f.pos;
+                if (f.object)
+                {
+                    ++r; // the key
+                    ++v;
+                }
+                f.pos = document_data::after(v);
+                n = walk::value(v);
+                break;
+            }
         }
-        return r;
     }
 
-    /// copy a subtree (of any document) as a contiguous sequence; returns its end
+    /// copy a subtree (of any document) as a contiguous sequence of
+    /// count_nodes() nodes
     template<bool E>
-    node* fill_nodes(const document_data& d, const node* n, node* out)
+    void fill_nodes(const document_data& d, const node* n, node* out)
     {
-        if (!is_container(*n))
+        using walk = navigation<E>;
+        struct frame
         {
-            *out = copy_scalar(d, *n);
-            return out + 1;
-        }
-        node* const self = out++;
-        *self = plain_node(static_cast<value_t>(n->kind));
-        self->len = n->len;
-        const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-        for (const node* c = navigation<E>::first(d, n), *end = navigation<E>::end(d, n); c != end;)
+            const node* pos; ///< next element, or key of the next member
+            const node* end;
+            bool object;
+            node* self;      ///< the container in the copy
+        };
+        std::vector<frame> open;
+        for (;;)
         {
-            if (object)
+            if (is_container(*n))
             {
-                *out++ = copy_scalar(d, *c);
-                ++c;
+                node* const self = out++;
+                *self = plain_node(static_cast<value_t>(n->kind));
+                self->len = n->len;
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object), self});
             }
-            out = fill_nodes<E>(d, navigation<E>::value(c), out);
-            c = document_data::after(c);
+            else
+            {
+                *out++ = copy_scalar(d, *n);
+            }
+            // the next value: close finished containers, then copy the key
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    f.self->next = static_cast<std::uint32_t>(out - f.self);
+                    open.pop_back();
+                    continue;
+                }
+                const node* v = f.pos;
+                if (f.object)
+                {
+                    *out++ = copy_scalar(d, *v);
+                    ++v;
+                }
+                f.pos = document_data::after(v);
+                n = walk::value(v);
+                break;
+            }
         }
-        self->next = static_cast<std::uint32_t>(out - self);
-        return out;
     }
 
     static std::size_t count_nodes(const BasicJsonType& j)
     {
-        std::size_t r = 1;
-        if (j.is_object())
+        using iterator = typename BasicJsonType::const_iterator;
+        struct frame
         {
-            for (const auto& member : j.items())
+            iterator pos;
+            iterator end;
+            bool object;
+        };
+        std::vector<frame> open;
+        const BasicJsonType* n = &j;
+        std::size_t r = 0;
+        for (;;)
+        {
+            ++r;
+            if (n->is_structured())
             {
-                r += 1 + count_nodes(member.value());
+                open.push_back(frame{n->cbegin(), n->cend(), n->is_object()});
+            }
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return r;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    open.pop_back();
+                    continue;
+                }
+                r += f.object ? 1 : 0; // the key
+                n = &*f.pos;
+                ++f.pos;
+                break;
             }
         }
-        else if (j.is_array())
-        {
-            for (const auto& e : j)
-            {
-                r += count_nodes(e);
-            }
-        }
-        return r;
     }
 
-    node* fill_nodes(const BasicJsonType& j, node* out)
+    void fill_nodes(const BasicJsonType& j, node* out)
     {
-        if (!j.is_structured())
+        using iterator = typename BasicJsonType::const_iterator;
+        struct frame
         {
-            *out = json_scalar(j);
-            return out + 1;
-        }
-        node* const self = out++;
-        *self = plain_node(j.type());
-        self->len = static_cast<std::uint32_t>(j.size());
-        if (j.is_object())
+            iterator pos;
+            iterator end;
+            bool object;
+            node* self; ///< the container in the copy
+        };
+        std::vector<frame> open;
+        const BasicJsonType* n = &j;
+        for (;;)
         {
-            for (const auto& member : j.items())
+            if (n->is_structured())
             {
-                check_utf8(member.key().data(), member.key().size());
-                *out++ = string_node(member.key().data(), member.key().size());
-                out = fill_nodes(member.value(), out);
+                node* const self = out++;
+                *self = plain_node(n->type());
+                self->len = static_cast<std::uint32_t>(n->size());
+                open.push_back(frame{n->cbegin(), n->cend(), n->is_object(), self});
+            }
+            else
+            {
+                *out++ = json_scalar(*n);
+            }
+            for (;;)
+            {
+                if (open.empty())
+                {
+                    return;
+                }
+                frame& f = open.back();
+                if (f.pos == f.end)
+                {
+                    f.self->next = static_cast<std::uint32_t>(out - f.self);
+                    open.pop_back();
+                    continue;
+                }
+                if (f.object)
+                {
+                    const auto& key = f.pos.key();
+                    check_utf8(key.data(), key.size());
+                    *out++ = string_node(key.data(), key.size());
+                }
+                n = &*f.pos;
+                ++f.pos;
+                break;
             }
         }
-        else
-        {
-            for (const auto& e : j)
-            {
-                out = fill_nodes(e, out);
-            }
-        }
-        self->next = static_cast<std::uint32_t>(out - self);
-        return out;
     }
 
     document_data& m_doc;
@@ -3863,6 +4115,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <algorithm> // sort
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint8_t, uint16_t, uint32_t, uint64_t
@@ -4337,17 +4590,25 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     return image;
 }
 
-/// whether a number node matches its token the way the parser records it
-/// (after the bounds check)
-inline bool check_number(const node& n, const unsigned char* text)
+/// the parts of a number token that the checks need
+struct number_token
 {
-    const std::size_t len = number_length(n);
-    const unsigned char* const s = text + n.off;
+    const unsigned char* int_start;
+    std::size_t int_digits;
+    std::size_t frac_digits;
+    std::int64_t exponent;
+    bool negative;
+    bool is_float; ///< a fraction or an exponent
+};
+
+/// whether [s, s + len) is a JSON number (the grammar the parser accepts)
+inline bool scan_number_token(const unsigned char* s, std::size_t len, number_token& t)
+{
     const unsigned char* const e = s + len;
     const unsigned char* p = s;
-    const bool negative = *p == '-';
-    p += negative ? 1 : 0;
-    const unsigned char* const int_start = p;
+    t.negative = p != e && *p == '-';
+    p += t.negative ? 1 : 0;
+    t.int_start = p;
     if (p == e)
     {
         return false;
@@ -4367,9 +4628,9 @@ inline bool check_number(const node& n, const unsigned char* text)
     {
         return false;
     }
-    const auto int_digits = static_cast<std::size_t>(p - int_start);
-    std::size_t frac_digits = 0;
-    bool is_float = false;
+    t.int_digits = static_cast<std::size_t>(p - t.int_start);
+    t.frac_digits = 0;
+    t.is_float = false;
     if (p != e && *p == '.')
     {
         const unsigned char* const f0 = ++p;
@@ -4381,10 +4642,10 @@ inline bool check_number(const node& n, const unsigned char* text)
         {
             return false;
         }
-        frac_digits = static_cast<std::size_t>(p - f0);
-        is_float = true;
+        t.frac_digits = static_cast<std::size_t>(p - f0);
+        t.is_float = true;
     }
-    std::int64_t exponent = 0;
+    t.exponent = 0;
     if (p != e && (*p | 0x20u) == 'e')
     {
         ++p;
@@ -4396,56 +4657,171 @@ inline bool check_number(const node& n, const unsigned char* text)
         }
         while (p != e && is_digit(*p))
         {
-            exponent = exponent < 100000 ? (exponent * 10) + (*p - '0') : exponent;
+            t.exponent = t.exponent < 100000 ? (t.exponent * 10) + (*p - '0') : t.exponent;
             ++p;
         }
-        exponent = exp_negative ? -exponent : exponent;
-        is_float = true;
+        t.exponent = exp_negative ? -t.exponent : t.exponent;
+        t.is_float = true;
     }
-    if (p != e)
+    return p == e;
+}
+
+/// the digit layout the parser records for a float token (compaction
+/// writes "many" instead; the caller accepts both)
+inline std::uint16_t float_layout(const number_token& t)
+{
+    return static_cast<std::uint16_t>((t.int_digits < 255 ? t.int_digits : 255) | ((t.frac_digits < 255 ? t.frac_digits : 255) << 8u));
+}
+
+/// whether a float token (well-formed, per scan_number_token) is finite as
+/// double; parse() rejects floats that overflow, and as there, only a number
+/// whose magnitude could reach 1e308 needs the conversion
+inline bool float_token_finite(const unsigned char* s, std::size_t len, const number_token& t)
+{
+    if (static_cast<std::int64_t>(t.int_digits) + t.exponent > 300)
+    {
+        node n{};
+        n.kind = static_cast<std::uint8_t>(value_t::number_float);
+        n.len = static_cast<std::uint32_t>(len);
+        const auto v = float_value<double>(reinterpret_cast<const char*>(s), n); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        return v <= (std::numeric_limits<double>::max)() && v >= -(std::numeric_limits<double>::max)();
+    }
+    return true;
+}
+
+/// whether an integer node matches its token the way the parser records it
+/// (after the bounds check; the token has at most 256 characters)
+inline bool check_integer(const node& n, const unsigned char* text)
+{
+    const std::size_t len = number_length(n);
+    const unsigned char* const s = text + n.off;
+    number_token t{};
+    if (!scan_number_token(s, len, t))
     {
         return false;
     }
-    if (n.kind == static_cast<std::uint8_t>(value_t::number_float))
-    {
-        // the digit layout the parser records (or "many", as compaction
-        // writes it), and a finite value
-        const auto layout = static_cast<std::uint16_t>((int_digits < 255 ? int_digits : 255) | ((frac_digits < 255 ? frac_digits : 255) << 8u));
-        if (n.extra != layout && n.extra != 0xFFFFu)
-        {
-            return false;
-        }
-        // parse() rejects floats that overflow; as there, only a number whose
-        // magnitude could reach 1e308 needs the conversion
-        if (static_cast<std::int64_t>(int_digits) + exponent > 300)
-        {
-            const auto v = float_value<double>(reinterpret_cast<const char*>(s), n); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            return v <= (std::numeric_limits<double>::max)() && v >= -(std::numeric_limits<double>::max)();
-        }
-        return true;
-    }
-    // integers: the token's value is the stored one; number_integer nodes of
-    // edits can be non-negative (as basic_json keeps the type of a value)
+    // the token's value is the stored one; number_integer nodes of edits can
+    // be non-negative (as basic_json keeps the type of a value)
     const bool integer = n.kind == static_cast<std::uint8_t>(value_t::number_integer);
-    if (is_float || int_digits > 20 || (negative && !integer))
+    if (t.is_float || t.int_digits > 20 || (t.negative && !integer))
     {
         return false;
     }
     // (at most 19 digits cannot overflow; 20 digits are compared with 2^64 - 1)
-    if (int_digits == 20 && std::memcmp(int_start, "18446744073709551615", 20) > 0)
+    if (t.int_digits == 20 && std::memcmp(t.int_start, "18446744073709551615", 20) > 0)
     {
         return false;
     }
     std::uint64_t m = 0;
-    for (const unsigned char* d = int_start; d != int_start + int_digits; ++d)
+    for (const unsigned char* d = t.int_start; d != t.int_start + t.int_digits; ++d)
     {
         m = (m * 10) + static_cast<std::uint64_t>(*d - '0');
     }
-    if (integer && m > (negative ? std::uint64_t{1} << 63u : (std::uint64_t{1} << 63u) - 1))
+    if (integer && m > (t.negative ? std::uint64_t{1} << 63u : (std::uint64_t{1} << 63u) - 1))
     {
         return false;
     }
-    return integer_bits(n) == (negative ? 0 - m : m);
+    return integer_bits(n) == (t.negative ? 0 - m : m);
+}
+
+/// a byte range of the text or of the decoded strings
+struct byte_range
+{
+    std::uint32_t off;
+    std::uint32_t len;
+};
+
+/// a float token and the digit layout its node records
+struct float_range
+{
+    std::uint32_t off;
+    std::uint32_t len;
+    std::uint16_t extra;
+};
+
+/// Run check once for each distinct range of ranges (which are within bounds
+/// and not empty). Ranges that are not identical must not overlap: save()
+/// writes every string and token to a place of its own, and nodes that share
+/// a value (copies within a document) share the whole range. This bounds the
+/// work by the size of the text, however many nodes point to the same bytes.
+template<typename Check>
+bool check_distinct_ranges(std::vector<byte_range>& ranges, Check check)
+{
+    std::sort(ranges.begin(), ranges.end(), [](const byte_range & a, const byte_range & b)
+    {
+        return a.off != b.off ? a.off < b.off : a.len < b.len;
+    });
+    std::size_t end = 0;
+    for (std::size_t i = 0; i < ranges.size(); ++i)
+    {
+        const byte_range r = ranges[i];
+        if (i != 0 && r.off == ranges[i - 1].off && r.len == ranges[i - 1].len)
+        {
+            continue;
+        }
+        if (r.off < end || !check(r))
+        {
+            return false;
+        }
+        end = static_cast<std::size_t>(r.off) + r.len;
+    }
+    return true;
+}
+
+/// Check the float nodes: each token once (nodes of the same token must
+/// record layouts that match it), tokens must not overlap.
+inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned char* text)
+{
+    std::sort(ranges.begin(), ranges.end(), [](const float_range & a, const float_range & b)
+    {
+        return a.off != b.off ? a.off < b.off : (a.len != b.len ? a.len < b.len : a.extra < b.extra);
+    });
+    std::size_t end = 0;
+    std::size_t i = 0;
+    while (i < ranges.size())
+    {
+        const float_range r = ranges[i];
+        if (r.off < end)
+        {
+            return false;
+        }
+        number_token t{};
+        const unsigned char* const s = text + r.off;
+        if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+        {
+            return false;
+        }
+        // the digit layout the parser records (or "many", as compaction writes it)
+        const std::uint16_t layout = float_layout(t);
+        for (; i < ranges.size() && ranges[i].off == r.off && ranges[i].len == r.len; ++i)
+        {
+            if (ranges[i].extra != layout && ranges[i].extra != 0xFFFFu)
+            {
+                return false;
+            }
+        }
+        end = static_cast<std::size_t>(r.off) + r.len;
+    }
+    return true;
+}
+
+/// the content checks of check_image: source strings as the parser leaves
+/// them (no quotes, backslashes, or control characters), decoded strings
+/// (valid UTF-8), and float tokens
+inline bool check_contents(const unsigned char* text, const unsigned char* arena,
+                           std::vector<byte_range>& source_strings, std::vector<byte_range>& decoded_strings,
+                           std::vector<float_range>& floats)
+{
+    return check_distinct_ranges(source_strings, [text](const byte_range & r)
+    {
+        const unsigned char* const b = text + r.off;
+        return scan_string_run(b, b + r.len) == b + r.len;
+    })
+    && check_distinct_ranges(decoded_strings, [arena](const byte_range & r)
+    {
+        return valid_utf8_prefix(arena + r.off, r.len) == r.len;
+    })
+    && check_float_ranges(floats, text);
 }
 
 /// Check the nodes of a loaded image against its text and decoded strings:
@@ -4453,6 +4829,12 @@ inline bool check_number(const node& n, const unsigned char* text)
 /// objects; keys; bounds; string contents (source strings as the parser
 /// leaves them: no quotes, backslashes, or control characters; all strings
 /// valid UTF-8); and number tokens.
+///
+/// The structure and the bounds are checked node by node. The contents of
+/// strings and of float tokens are checked afterwards, once for each distinct
+/// range (see check_distinct_ranges), so that the full check is linear in the
+/// size of the image plus the sorting of the ranges, and not in the number of
+/// nodes times the size of the text.
 inline bool check_image(const node* nodes, std::size_t count, const unsigned char* text, std::size_t text_size,
                         const unsigned char* arena, std::size_t arena_size, bool full)
 {
@@ -4465,6 +4847,9 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         bool expect_key;
     };
     std::vector<frame> stack;
+    std::vector<byte_range> source_strings;
+    std::vector<byte_range> decoded_strings;
+    std::vector<float_range> floats;
     const auto check_string = [&](const node & n) -> bool
     {
         if ((n.flags & ~node_flags::escaped) != 0 || n.extra != 0)
@@ -4472,18 +4857,16 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             return false;
         }
         const bool decoded = (n.flags & node_flags::escaped) != 0;
-        const unsigned char* const base = decoded ? arena : text;
         const std::size_t limit = decoded ? arena_size : text_size;
         if (n.off > limit || n.len > limit - n.off)
         {
             return false;
         }
-        if (!full)
+        if (full && n.len != 0)
         {
-            return true;
+            (decoded ? decoded_strings : source_strings).push_back(byte_range{n.off, n.len});
         }
-        const unsigned char* const b = base + n.off;
-        return decoded ? valid_utf8_prefix(b, n.len) == n.len : scan_string_run(b, b + n.len) == b + n.len;
+        return true;
     };
     // bounds of a number token; the recorded digit layout must lie within it
     const auto number_in_bounds = [&](const node & n) -> bool
@@ -4525,7 +4908,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         }
         if (i == count)
         {
-            return stack.empty();
+            return stack.empty() && (!full || check_contents(text, arena, source_strings, decoded_strings, floats));
         }
         if (i != 0 && stack.empty())
         {
@@ -4567,9 +4950,22 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             case value_t::number_integer:
             case value_t::number_unsigned:
             case value_t::number_float:
-                if (n.flags != 0 || !number_in_bounds(n) || (full && !check_number(n, text)))
+                if (n.flags != 0 || !number_in_bounds(n))
                 {
                     return false;
+                }
+                if (full)
+                {
+                    // (the contents of float tokens are checked later; the token of an
+                    // integer has at most 256 characters)
+                    if (n.kind == static_cast<std::uint8_t>(value_t::number_float))
+                    {
+                        floats.push_back(float_range{n.off, n.len, n.extra});
+                    }
+                    else if (!check_integer(n, text))
+                    {
+                        return false;
+                    }
                 }
                 break;
             case value_t::array:
@@ -4679,6 +5075,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
         }
     }
     build_object_indexes(d);
+    std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while building)
     d.discarded = false;
 }
 
@@ -4698,7 +5095,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <string> // basic_string, char_traits, string
-#include <type_traits> // decay, integral_constant, is_array, is_lvalue_reference, is_pointer, is_same, remove_reference
+#include <type_traits> // decay, integral_constant, is_array, is_const, is_integral, is_lvalue_reference, is_pointer, is_same, remove_reference
 #include <utility> // forward
 
 // #include <nlohmann/json.hpp>
@@ -4718,12 +5115,12 @@ namespace view
 /// how a document takes its input
 enum class input_kind
 {
-    move_string,  ///< rvalue std::string: owned without a copy
+    move_string,  ///< non-const rvalue std::string: owned without a copy
     c_string,     ///< const char* (NUL-terminated): borrowed
     char_array,   ///< char array (e.g. a string literal): borrowed
     borrow_range, ///< lvalue contiguous byte container, or std::string_view: borrowed
-    copy_range,   ///< rvalue contiguous byte container: copied
-    adapter,      ///< anything else parse() accepts (streams, wide strings, ...): read into a buffer
+    copy_range,   ///< rvalue contiguous byte container (a const rvalue std::string too): copied
+    adapter,      ///< streams, wide strings, and the rest of what the library's input adapter reads: read into a buffer
 };
 
 template<typename InputType>
@@ -4742,12 +5139,19 @@ struct classify_input
     static constexpr input_kind value =
         std::is_array<R>::value ? input_kind::char_array
         : std::is_pointer<D>::value ? input_kind::c_string
-        : (is_rvalue && std::is_same<D, std::string>::value) ? input_kind::move_string
+        : (is_rvalue && !std::is_const<R>::value && std::is_same<D, std::string>::value) ? input_kind::move_string
         : (is_bytes && (!is_rvalue || is_string_view)) ? input_kind::borrow_range
         : is_bytes ? input_kind::copy_range
         : input_kind::adapter;
     // NOLINTEND(readability-avoid-nested-conditional-operator)
 };
+
+/// an integer type other than bool: a length passed where a flag is expected
+template<typename T>
+struct is_integer_not_bool : std::is_integral<T> {};
+
+template<>
+struct is_integer_not_bool<bool> : std::false_type {};
 
 /// std::basic_string guarantees a NUL at data()[size()] (the parser's sentinel)
 template<typename T>
@@ -5429,7 +5833,13 @@ class output_buffer
 
     void finish()
     {
-        m_out.resize(static_cast<std::size_t>(m_pos - m_out.data()));
+        const auto size = static_cast<std::size_t>(m_pos - m_out.data());
+        m_out.resize(size);
+        // do not keep a buffer that was sized for a much larger output
+        if (m_out.capacity() > 1024 && m_out.capacity() / 2 > size)
+        {
+            m_out.shrink_to_fit();
+        }
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE void reserve(std::size_t n)
@@ -6682,12 +7092,6 @@ class basic_json_view
         return type() == value_t::discarded;
     }
 
-    /// false for discarded views
-    explicit operator bool() const noexcept
-    {
-        return m_node != nullptr;
-    }
-
     /// the name of the type, as basic_json::type_name()
     const char* type_name() const noexcept
     {
@@ -6747,13 +7151,18 @@ class basic_json_view
     // element access //
     ////////////////////
 
-    /// the value of the member with this key (the first one, should the key
-    /// occur more than once); a discarded view if there is none. Throws
-    /// type_error.305 if this is not an object.
+    /// the value of the member with this key (the last one, should the key
+    /// occur more than once); a discarded view if there is none, or if this
+    /// is a discarded view (so that v["a"]["b"] is safe). Throws type_error.305
+    /// if this is any other value but an object.
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view operator[](string_view_t key) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
+            if (is_discarded())
+            {
+                return basic_json_view();
+            }
             detail::view::throw_type_error(305, "cannot use operator[] with a string argument with ", type_name());
         }
         return lookup(key);
@@ -6770,31 +7179,43 @@ class basic_json_view
     }
 
     /// the element at this index; a discarded view if the index is out of
-    /// range. Throws type_error.305 if this is not an array.
+    /// range, or if this is a discarded view. Throws type_error.305 if this is
+    /// any other value but an array.
     basic_json_view operator[](size_type idx) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
         {
+            if (is_discarded())
+            {
+                return basic_json_view();
+            }
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
         return idx < m_node->len ? basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx))) : basic_json_view();
     }
 
-    /// (an int argument would be ambiguous between size_type and const char*)
-    basic_json_view operator[](int idx) const
+    /// any other integer type (int, unsigned, long, std::int64_t, ...; a
+    /// single overload for size_type alone would be ambiguous for all of them
+    /// and for const char*); negative values are out of range
+    template < typename IntegerType, typename std::enable_if < detail::view::is_index_type<IntegerType>::value, int >::type = 0 >
+    basic_json_view operator[](IntegerType idx) const
     {
-        return operator[](static_cast<size_type>(idx));
+        return operator[](detail::view::to_index<size_type>(idx));
     }
 
     /// the value a JSON pointer refers to; a discarded view if a key is
-    /// missing or an index is out of range. Other errors throw what const
-    /// basic_json::operator[] throws.
+    /// missing or an index is out of range, or if this is a discarded view.
+    /// Other errors throw what const basic_json::operator[] throws.
     basic_json_view operator[](const json_pointer& ptr) const
     {
+        if (NLOHMANN_VIEW_UNLIKELY(is_discarded()))
+        {
+            return basic_json_view();
+        }
         return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
     }
 
-    /// the value of the member with this key (the first one, should the key
+    /// the value of the member with this key (the last one, should the key
     /// occur more than once). Throws type_error.304 if this is not an object,
     /// and out_of_range.403 if there is no such member.
     basic_json_view at(string_view_t key) const
@@ -6804,7 +7225,7 @@ class basic_json_view
             detail::view::throw_type_error(304, "cannot use at() with ", type_name());
         }
         const basic_json_view r = lookup(key);
-        if (NLOHMANN_VIEW_UNLIKELY(!r))
+        if (NLOHMANN_VIEW_UNLIKELY(r.is_discarded()))
         {
             detail::view::throw_out_of_range(403, detail::concat("key '", std::string(key.data(), key.size()), "' not found"));
         }
@@ -6836,9 +7257,12 @@ class basic_json_view
         return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
     }
 
-    basic_json_view at(int idx) const
+    /// any other integer type, see operator[]; negative values are out of
+    /// range
+    template < typename IntegerType, typename std::enable_if < detail::view::is_index_type<IntegerType>::value, int >::type = 0 >
+    basic_json_view at(IntegerType idx) const
     {
-        return at(static_cast<size_type>(idx));
+        return at(detail::view::to_index<size_type>(idx));
     }
 
     /// the value a JSON pointer refers to; throws what basic_json::at()
@@ -6849,7 +7273,7 @@ class basic_json_view
     }
 
     /// the member with this key converted to T, or the default value if there
-    /// is no such member (the first one, should the key occur more than
+    /// is no such member (the last one, should the key occur more than
     /// once). Throws type_error.306 if this is not an object.
     template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
     T value(string_view_t key, const T& default_value) const
@@ -6859,7 +7283,7 @@ class basic_json_view
             detail::view::throw_type_error(306, "cannot use value() with ", type_name());
         }
         const basic_json_view r = lookup(key);
-        return r ? r.template get<T>() : default_value;
+        return r.is_discarded() ? default_value : r.template get<T>();
     }
 
     string_t value(string_view_t key, const char* default_value) const
@@ -6878,7 +7302,7 @@ class basic_json_view
             detail::view::throw_type_error(306, "cannot use value() with ", type_name());
         }
         const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
-        return r ? r.template get<T>() : default_value;
+        return r.is_discarded() ? default_value : r.template get<T>();
     }
 
     string_t value(const json_pointer& ptr, const char* default_value) const
@@ -6914,7 +7338,7 @@ class basic_json_view
     // lookup //
     ////////////
 
-    /// an iterator to the member with this key (the first one, should the
+    /// an iterator to the member with this key (the last one, should the
     /// key occur more than once), or end(); end() also for non-objects
     iterator find(string_view_t key) const
     {
@@ -6956,7 +7380,7 @@ class basic_json_view
     /// basic_json::contains())
     bool contains(const json_pointer& ptr) const
     {
-        return static_cast<bool>(detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains));
+        return !detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains).is_discarded();
     }
 
     /// 1 if this is an object with a member with this key, else 0 (duplicate
@@ -7215,7 +7639,7 @@ class basic_json_view
     }
 
     /// the number of source bytes of this value (estimated for values with
-    /// decoded strings)
+    /// decoded strings); the estimate sizes the output buffer of dump()
     std::size_t source_extent() const noexcept
     {
         if (editable() && m_doc->edits != nullptr)
@@ -7223,20 +7647,33 @@ class basic_json_view
             // positions of moved and new values are not source offsets
             return m_node == m_doc->tape ? m_doc->size + m_doc->edits->text_used : 64;
         }
-        const node* const next = document_data::after(m_node);
-        const bool in_source = (m_node->flags & detail::view::node_flags::storage) == 0;
-        if (!in_source)
+        const node* const end = m_doc->tape + m_doc->tape_size;
+        if ((m_node->flags & detail::view::node_flags::storage) != 0)
         {
             return m_node->len;
         }
-        if (next != m_doc->tape + m_doc->tape_size && (next->flags & detail::view::node_flags::storage) == 0 && next->off >= m_node->off)
+        // the value ends where the next node in the source begins; nodes
+        // with decoded strings (their offset is in the arena) are skipped,
+        // but only a few of them, to keep the walk short
+        const node* next = document_data::after(m_node);
+        for (int skipped = 0; next != end && skipped < 16; ++skipped, ++next)
         {
-            return next->off - m_node->off;
+            if ((next->flags & detail::view::node_flags::storage) == 0)
+            {
+                return next->off >= m_node->off ? next->off - m_node->off : 0;
+            }
         }
-        return m_doc->size - m_node->off;
+        if (next == end)
+        {
+            return m_doc->size - m_node->off;
+        }
+        // the end is unknown: assume a few bytes per node, the output buffer
+        // grows should the value be larger
+        const auto nodes = static_cast<std::size_t>(document_data::after(m_node) - m_node);
+        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + nodes * 16);
     }
 
-    /// the value of the first member with this key, or a discarded view
+    /// the value of the last member with this key, or a discarded view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
@@ -7370,6 +7807,13 @@ class basic_json_document
         return d;
     }
 
+    /// parse(ptr, len) does not compile: len would convert to allow_exceptions
+    /// and ptr be read as a C string (as for the overloads of parse_copy,
+    /// accept, and read below)
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     /// parse [first, last)
     template<typename IteratorType, typename std::enable_if<
                  std::is_base_of<std::input_iterator_tag, typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
@@ -7397,6 +7841,10 @@ class basic_json_document
         return d;
     }
 
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse_copy(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     /// check whether the input is valid JSON (the result of basic_json::accept)
     template<typename InputType>
     static bool accept(InputType&& input, const bool ignore_comments = false, const bool ignore_trailing_commas = false)
@@ -7405,6 +7853,10 @@ class basic_json_document
         d.read(std::forward<InputType>(input), false, ignore_comments, ignore_trailing_commas);
         return !d.is_discarded();
     }
+
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, bool>::type
+    accept(InputType&& input, IntegerType value, Flags&&... flags) = delete;
 
     /// parse into this document, reusing its memory
     template<typename InputType>
@@ -7418,12 +7870,17 @@ class basic_json_document
                   std::integral_constant<detail::view::input_kind, detail::view::classify_input<InputType>::value> {});
     }
 
+    template<typename InputType, typename IntegerType, typename... Flags>
+    // flawfinder: ignore (a member function, not POSIX read())
+    typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, void>::type
+    read(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     ////////////
     // access //
     ////////////
 
     /// the root value (discarded if parsing failed without exceptions)
-    view_type root() const noexcept
+    view_type root() const& noexcept
     {
         if (!m_data || m_data->discarded)
         {
@@ -7431,6 +7888,9 @@ class basic_json_document
         }
         return view_type(m_data.get(), m_data->tape);
     }
+
+    /// deleted: the view of a temporary document would dangle
+    view_type root() const&& = delete;
 
     bool is_discarded() const noexcept
     {
@@ -7491,6 +7951,8 @@ class basic_json_document
         // (edits link to the nodes of the index, which then stays in place)
         const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap && d.edits == nullptr;
         const bool into_header = d.tape_size <= d.inline_cap;
+        std::vector<document_data::object_index> indexes(d.indexes.capacity() > d.indexes.size() ? d.indexes : std::vector<document_data::object_index>());
+        std::vector<std::uint32_t> index_slots(d.index_slots.capacity() > d.index_slots.size() ? d.index_slots : std::vector<std::uint32_t>());
         node* fresh = (shrink_tape && !into_header) ? static_cast<node*>(::operator new (d.tape_size * sizeof(node))) : d.inline_tape;
 
         if (shrink_tape)
@@ -7507,6 +7969,14 @@ class basic_json_document
             {
                 d.base[1] = d.arena.data();
             }
+        }
+        if (d.indexes.capacity() > d.indexes.size())
+        {
+            d.indexes.swap(indexes);
+        }
+        if (d.index_slots.capacity() > d.index_slots.size())
+        {
+            d.index_slots.swap(index_slots);
         }
     }
 
@@ -7598,7 +8068,9 @@ class basic_json_document
 
     /// set the value at a JSON pointer: its parent must exist; an object
     /// member is set (added if missing), an array element assigned, and "-"
-    /// or the size of the array appends
+    /// or the size of the array appends. A null parent becomes what
+    /// basic_json's operator[](json_pointer) makes of it: an array for "-"
+    /// and for digits (padded with nulls up to the index), an object otherwise.
     template<typename V>
     view_type set(const json_pointer& ptr, V&& value)
     {
@@ -7608,6 +8080,31 @@ class basic_json_document
         }
         const view_type parent = root().at(ptr.parent_pointer());
         const auto& token = ptr.back();
+        if (parent.is_null())
+        {
+            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            {
+                return c >= '0' && c <= '9';
+            });
+            if (token == "-")
+            {
+                return push_back(parent, std::forward<V>(value));
+            }
+            if (digits)
+            {
+                // (an invalid index is an error before the parent changes)
+                const std::size_t idx = pointer_index(token);
+                if (idx >= 0xFFFFFFFFu)
+                {
+                    detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+                }
+                for (std::size_t i = 0; i < idx; ++i)
+                {
+                    push_back(parent, nullptr);
+                }
+                return push_back(parent, std::forward<V>(value));
+            }
+        }
         if (parent.is_array())
         {
             const std::size_t idx = token == "-" ? parent.size() : pointer_index(token);
@@ -7755,9 +8252,9 @@ class basic_json_document
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
-        if (NLOHMANN_VIEW_UNLIKELY(size >= 0xFFFFFFF0u))
+        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size))
         {
-            failure.code = detail::view::error_code::input_too_large; // LCOV_EXCL_LINE (4 GiB)
+            failure.code = detail::view::error_code::input_too_large;
         }
         else
         {
@@ -7769,9 +8266,11 @@ class basic_json_document
             d.base[1] = d.arena.data();
             d.arena_size = d.arena.size();
             detail::view::build_object_indexes(d);
+            std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while parsing)
             d.discarded = false;
             return;
         }
+        std::vector<std::uint32_t>().swap(d.large_objects);
         if (allow_exceptions)
         {
             detail::view::throw_parse_failure<BasicJsonType>(failure, src, size, comments, trailing_commas);

@@ -29,6 +29,11 @@ static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::
               && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
               "the node format depends on the numbering of value_t");
 
+/// The largest input a document accepts, in bytes. Offsets and node counts are
+/// 32 bits wide; the limit keeps 16 bytes (the width of the scanner's steps)
+/// below 2^32, so that a position one step past the end of the text fits.
+static constexpr std::size_t max_input_size = 0xFFFFFFEFu;
+
 /// node flags
 struct node_flags
 {
@@ -38,6 +43,7 @@ struct node_flags
     static constexpr std::uint8_t is_true = 4; ///< boolean value
     static constexpr std::uint8_t moved = 8;   ///< array/object: the elements live in a separate sequence (editable documents)
     static constexpr std::uint8_t is_new = 16; ///< written by an edit: no source position
+    static constexpr std::uint8_t linked = 32; ///< an entry of a moved sequence links to this value (editable documents): its extent in the parsed layout no longer matters
 };
 
 /// kind of an entry of an edited sequence that stands for a value stored
@@ -52,7 +58,7 @@ struct node
 {
     std::uint8_t kind;   ///< value_t, or kind_link
     std::uint8_t flags;  ///< node_flags
-    std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the hash index; otherwise 0
+    std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the hash index (1-based, 0 = none); otherwise 0
     std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
     std::uint32_t len;   ///< string: decoded bytes; float: token bytes; array/object: element count
     std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence)
@@ -72,24 +78,36 @@ NLOHMANN_VIEW_ALWAYS_INLINE const node* link_target(const node& n) noexcept
     return t;
 }
 
-inline void make_link(node& n, const node* target) noexcept
+/// let the entry n stand for the value at target (and mark the value)
+inline void make_link(node& n, node* target) noexcept
 {
+    target->flags = static_cast<std::uint8_t>(target->flags | node_flags::linked);
     n = node{};
     n.kind = kind_link;
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, static_cast<const void*>(&target), sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
-/// the converted value of an integer node (stored in len/next)
+/// the converted value of an integer node: len is its low half, next its high
+/// half (on little-endian targets the two words are the value in memory)
 NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t integer_bits(const node& n) noexcept
 {
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
     std::uint64_t v = 0;
     std::memcpy(&v, reinterpret_cast<const unsigned char*>(&n) + 8, 8); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     return v;
+#else
+    return static_cast<std::uint64_t>(n.len) | (static_cast<std::uint64_t>(n.next) << 32);
+#endif
 }
 
 NLOHMANN_VIEW_ALWAYS_INLINE void set_integer_bits(node& n, std::uint64_t v) noexcept
 {
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, &v, 8); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+#else
+    n.len = static_cast<std::uint32_t>(v);
+    n.next = static_cast<std::uint32_t>(v >> 32);
+#endif
 }
 
 /// token length of a number node

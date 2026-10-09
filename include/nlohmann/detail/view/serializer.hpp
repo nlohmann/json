@@ -48,7 +48,13 @@ class output_buffer
 
     void finish()
     {
-        m_out.resize(static_cast<std::size_t>(m_pos - m_out.data()));
+        const auto size = static_cast<std::size_t>(m_pos - m_out.data());
+        m_out.resize(size);
+        // do not keep a buffer that was sized for a much larger output
+        if (m_out.capacity() > 1024 && m_out.capacity() / 2 > size)
+        {
+            m_out.shrink_to_fit();
+        }
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE void reserve(std::size_t n)

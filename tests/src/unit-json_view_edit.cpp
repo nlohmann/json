@@ -181,6 +181,104 @@ void compare(const ordered_json_editable_view& v, const ordered_json& j)
     }
 }
 
+// the text of j, in which some objects repeat a key of theirs: before their
+// members (the real member is then the last), or after (the repeat is)
+std::string text_with_duplicates(const ordered_json& j)
+{
+    if (j.is_object())
+    {
+        std::vector<std::string> keys;
+        for (const auto& kv : j.items())
+        {
+            keys.push_back(kv.key());
+        }
+        const auto repeated = [&keys]()
+        {
+            return ordered_json(keys[static_cast<std::size_t>(r(static_cast<int>(keys.size())))]).dump() + ":" + random_value(2).dump();
+        };
+        std::string text = "{";
+        if (!keys.empty() && r(4) == 0)
+        {
+            text += repeated() + ",";
+        }
+        bool first = true;
+        for (const auto& kv : j.items())
+        {
+            text += (first ? "" : ",") + ordered_json(kv.key()).dump() + ":" + text_with_duplicates(kv.value());
+            first = false;
+        }
+        for (int i = keys.empty() ? 0 : r(3); i > 0; --i)
+        {
+            text += "," + repeated();
+        }
+        return text + "}";
+    }
+    if (j.is_array())
+    {
+        std::string text = "[";
+        for (std::size_t i = 0; i < j.size(); ++i)
+        {
+            text += (i != 0 ? "," : "") + text_with_duplicates(j[i]);
+        }
+        return text + "]";
+    }
+    return j.dump();
+}
+
+// every lookup of the edited view finds what j holds, although the view may
+// have several members for a key (j has the last value, at the position of the
+// first member: what parse() and materialize() make of it)
+void check_lookups(const ordered_json_editable_view& v, const ordered_json& j)
+{
+    REQUIRE(v.type() == j.type());
+    if (j.is_object())
+    {
+        for (const auto& kv : j.items())
+        {
+            const std::string& key = kv.key();
+            const ptr_t ptr = ptr_t() / key;
+            CAPTURE(key)
+            const ordered_json_editable_view m = v[key];
+            REQUIRE(!m.is_discarded());
+            CHECK(m.materialize() == kv.value());
+            CHECK(v.at(key).materialize() == kv.value());
+            CHECK(v[ptr].materialize() == kv.value());
+            CHECK(v.at(ptr).materialize() == kv.value());
+            CHECK(v.contains(key));
+            CHECK(v.contains(ptr));
+            CHECK(v.count(key) == 1);
+            const auto it = v.find(key);
+            REQUIRE(it != v.end());
+            CHECK((*it).materialize() == kv.value());
+            CHECK(v.value(ptr, ordered_json(nullptr)) == kv.value());
+            if (kv.value().is_string())
+            {
+                CHECK(v.value(key, std::string("-")) == kv.value().get<std::string>());
+            }
+            check_lookups(m, kv.value());
+        }
+        CHECK(v["missing#key"].is_discarded());
+        CHECK(!v.contains("missing#key"));
+        CHECK(v.find("missing#key") == v.end());
+    }
+    else if (j.is_array())
+    {
+        for (std::size_t i = 0; i < j.size(); ++i)
+        {
+            check_lookups(v[i], j[i]);
+            check_lookups(v.at(i), j[i]);
+        }
+    }
+}
+
+// (for documents whose objects repeat keys: dump(), size(), and iteration
+// list all members, so only the lookups and materialize() are compared)
+void check_duplicates(const ordered_json_editable_document& d, const ordered_json& j)
+{
+    CHECK(d.root().materialize() == j);
+    check_lookups(d.root(), j);
+}
+
 void check_all(const ordered_json_editable_document& d, const ordered_json& j, bool deep)
 {
     const std::string text = d.root().dump();
@@ -204,14 +302,16 @@ TEST_CASE("json_view edits: differential")
     // random edits are applied to an ordered_json_editable_document and to the
     // ordered_json parse() produces; after every edit both must serialize,
     // materialize, and read back the same
-    for (int n = 0; n < 150; ++n)
+    for (int n = 0; n < 250; ++n)
     {
+        // the last 100 documents repeat keys in some of their objects
+        const bool duplicates = n >= 150;
         ordered_json j = random_value(0);
         if (r(4) == 0)
         {
             j = ordered_json::object({{"a", random_value(1)}, {"b", random_value(1)}});
         }
-        const std::string text = j.dump(r(2) == 0 ? -1 : 2);
+        const std::string text = duplicates ? text_with_duplicates(j) : j.dump(r(2) == 0 ? -1 : 2);
         CAPTURE(text)
         ordered_json_editable_document d = ordered_json_editable_document::parse(text);
         j = ordered_json::parse(text);
@@ -340,7 +440,14 @@ TEST_CASE("json_view edits: differential")
             }
             CAPTURE(p.to_string())
             CAPTURE(op)
-            check_all(d, j, e % 8 == 7 || e == edits - 1);
+            if (duplicates)
+            {
+                check_duplicates(d, j);
+            }
+            else
+            {
+                check_all(d, j, e % 8 == 7 || e == edits - 1);
+            }
         }
     }
 }
@@ -517,7 +624,7 @@ TEST_CASE("json_view edits: views and values")
     SECTION("duplicate keys")
     {
         json_editable_document d = json_editable_document::parse(R"({"a": 1, "b": 2, "a": 3})");
-        d.set(d.root(), "a", 4); // the first member is assigned, the others dropped
+        d.set(d.root(), "a", 4); // the last member is assigned (at the position of the first), the others dropped
         CHECK(d.root().dump() == R"({"a":4,"b":2})");
         d = json_editable_document::parse(R"({"a": 1, "b": 2, "a": 3})");
         CHECK(d.erase(d.root(), "a") == 2);
@@ -575,5 +682,395 @@ TEST_CASE("json_view edits: views and values")
         CHECK(d.root().dump() == "[true]");
         d.push_back(d.root(), false);
         CHECK(d.root().dump() == "[true,false]");
+    }
+}
+
+TEST_CASE("json_view edits: deeply nested values")
+{
+    // copying a value into a document must not recurse per nesting level
+    const std::size_t depth = 100000;
+    const std::string brackets = std::string(depth, '[') + std::string(depth, ']');
+    std::string braces;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        braces += "{\"a\":";
+    }
+    braces += '1';
+    braces += std::string(depth, '}');
+
+    SECTION("a view of a read-only document")
+    {
+        const json_document source = json_document::parse(brackets);
+        json_editable_document d = json_editable_document::parse("[]");
+        d.push_back(d.root(), source.root());
+        CHECK(d.root().dump() == "[" + brackets + "]");
+    }
+
+    SECTION("a view of an editable document")
+    {
+        const json_editable_document source = json_editable_document::parse(braces);
+        json_editable_document d = json_editable_document::parse("{}");
+        d.set(d.root(), "deep", source.root());
+        CHECK(d.root().dump() == "{\"deep\":" + braces + "}");
+    }
+
+    SECTION("a view of an edited document (values behind links)")
+    {
+        const json_document source = json_document::parse(brackets);
+        json_editable_document edited = json_editable_document::parse("[[]]");
+        edited.push_back(edited.root()[0], source.root());
+        edited.push_back(edited.root(), source.root());
+        json_editable_document d = json_editable_document::parse("null");
+        d.set(d.root(), edited.root());
+        CHECK(d.root().dump() == "[[" + brackets + "]," + brackets + "]");
+    }
+
+    SECTION("a basic_json value")
+    {
+        json deep = json::array();
+        json* inner = &deep;
+        for (std::size_t i = 1; i < depth; ++i)
+        {
+            inner->push_back(json::array());
+            inner = &inner->back();
+        }
+        json_editable_document d = json_editable_document::parse("[]");
+        d.push_back(d.root(), deep);
+        CHECK(d.root().dump() == "[" + brackets + "]");
+    }
+
+    SECTION("a basic_json value with objects")
+    {
+        json deep = 1;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            json outer = json::object();
+            outer["a"] = std::move(deep);
+            deep = std::move(outer);
+        }
+        json_editable_document d = json_editable_document::parse("{}");
+        d.set(d.root(), "deep", deep);
+        CHECK(d.root().dump() == "{\"deep\":" + braces + "}");
+    }
+}
+
+#if !defined(JSON_NOEXCEPTION)
+TEST_CASE("json_view edits: pointers below a null value")
+{
+    // a null value on the way becomes what basic_json makes of it: an array
+    // for "-" and for digits, an object otherwise
+    struct test_case
+    {
+        const char* document;
+        const char* pointer;
+    };
+    const std::array<test_case, 16> cases =
+    {
+        {
+            {R"({"a":null})", "/a/0"},
+            {R"({"a":null})", "/a/-"},
+            {R"({"a":null})", "/a/3"},
+            {R"({"a":null})", "/a/x"},
+            {R"({"a":null})", "/a/+1"},
+            {R"({"a":null})", "/a/01"},
+            {R"({"a":null})", "/a/"},
+            {R"({"a":{"b":null}})", "/a/b/1"},
+            {R"({"a":{"b":null}})", "/a/b/-"},
+            {R"({"a":[null]})", "/a/0/0"},
+            {R"({"a":[null,null]})", "/a/1/k"},
+            {R"([null])", "/0"},
+            {"null", "/0"},
+            {"null", "/-"},
+            {"null", "/k"},
+            {"null", ""},
+        }
+    };
+    for (const test_case& c : cases)
+    {
+        CAPTURE(c.document)
+        CAPTURE(c.pointer)
+        json expected = json::parse(c.document);
+        const std::string error = exception_of_call([&]
+        {
+            expected[json::json_pointer(c.pointer)] = 1;
+        });
+        json_editable_document d = json_editable_document::parse(c.document);
+        if (error.empty())
+        {
+            d.set(json::json_pointer(c.pointer), 1);
+            CHECK(d.root().dump() == expected.dump());
+            CHECK(d.root().materialize() == expected);
+        }
+        else
+        {
+            // the same error, and the document is not changed
+            CHECK(exception_of_call([&] { d.set(json::json_pointer(c.pointer), 1); }) == error);
+            CHECK(d.root().dump() == json::parse(c.document).dump());
+        }
+    }
+}
+
+TEST_CASE("json_view edits: strings of other documents are checked")
+{
+    // A document borrows the text it was parsed from, and sees later changes
+    // of the text: a way to get ill-formed UTF-8 into a view. Copying it into
+    // an editable document is an error, as for any other string.
+    std::string text = R"({"key":"abc","list":["abc"]})";
+    const json_document source = json_document::parse(text);
+    const auto message_of = [](const std::string & bad)
+    {
+        return exception_of_call([&]
+        {
+            const std::string dumped = json(bad).dump();
+            static_cast<void>(dumped);
+        });
+    };
+    json_editable_document d = json_editable_document::parse("[1]");
+    d.push_back(d.root(), source.root());
+    CHECK(d.root().dump() == R"([1,{"key":"abc","list":["abc"]}])");
+
+    text[text.find("abc") + 1] = '\xC3'; // "a\xC3c"
+    text[text.rfind("abc") + 1] = '\xC3';
+    const std::string bad_value = message_of(std::string("a\xC3" "c"));
+    CHECK(!bad_value.empty());
+    CHECK(exception_of_call([&] { d.push_back(d.root(), source.root()["key"]); }) == bad_value);
+    CHECK(exception_of_call([&] { d.set(d.root()[0], source.root()["list"][0]); }) == bad_value);
+    CHECK(exception_of_call([&] { d.set(d.root(), 0, source.root()["list"]); }) == bad_value);
+    CHECK(exception_of_call([&] { d.set(d.root(), 0, source.root()); }) == bad_value);
+
+    text[text.find("key") + 1] = '\xC3'; // a key is checked as well
+    const std::string bad_key = message_of(std::string("k\xC3" "y"));
+    CHECK(exception_of_call([&] { d.set(d.root(), 0, source.root()); }) == bad_key);
+    CHECK(exception_of_call([&] { d.push_back(d.root(), source.root()); }) == bad_key);
+
+    // nothing of the failed edits is visible
+    CHECK(d.root().dump() == R"([1,{"key":"abc","list":["abc"]}])");
+}
+
+TEST_CASE("json_view edits: the size of a text arena")
+{
+    using nlohmann::detail::view::text_capacity;
+    constexpr std::size_t limit = 0xFFFFFFFFu;
+    // grows by doubling, or to what is needed (plus some room)
+    CHECK(text_capacity(0, 0, 10) == 266);
+    CHECK(text_capacity(1000, 990, 20) == 2000);
+    CHECK(text_capacity(100, 100, 5000) == 5356);
+    // an arena beyond 2 GiB: doubling is clamped to 4 GiB - 1
+    CHECK(text_capacity(0x90000000u, 0x8FFFFFFFu, 2) == limit);
+    CHECK(text_capacity(limit, limit - 10, 10) == limit);
+    // exactly what fits is accepted, without room to spare
+    CHECK(text_capacity(100, 90, limit - 90) == limit);
+    CHECK(text_capacity(limit - 100, limit - 100, 100) == limit);
+    // what does not fit is an error
+    CHECK_THROWS_WITH_AS(text_capacity(100, 90, limit - 89), "[json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document", json::out_of_range&);
+    CHECK_THROWS_WITH_AS(text_capacity(limit, limit, 1), "[json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document", json::out_of_range&);
+}
+#endif
+
+TEST_CASE("json_view edits: replacing arrays and objects by scalars")
+{
+    // the first assignment switches the parent to links; the later ones do
+    // not need to look for the parent again
+    std::string text = "[";
+    json expected = json::array();
+    for (int i = 0; i < 300; ++i)
+    {
+        text += (i != 0 ? ",[" : "[") + std::to_string(i) + ",{\"k\":" + std::to_string(i) + "}]";
+        expected.push_back(json::array({i, json{{"k", i}}}));
+    }
+    text += ']';
+    json_editable_document d = json_editable_document::parse(text);
+    CHECK(d.root().dump() == expected.dump());
+    for (int i = 0; i < 300; i += 2)
+    {
+        d.set(d.root()[static_cast<std::size_t>(i)], i);
+        expected[static_cast<std::size_t>(i)] = i;
+    }
+    CHECK(d.root().dump() == expected.dump());
+    for (int i = 1; i < 300; i += 2) // (elements that are still in the parsed layout of their parent)
+    {
+        d.set(d.root()[static_cast<std::size_t>(i)][1], "x"); // replaces an object
+        expected[static_cast<std::size_t>(i)][1] = "x";
+    }
+    CHECK(d.root().dump() == expected.dump());
+
+    // new values, and values in new values
+    d.push_back(d.root(), json::parse(R"([[1,2],{"a":[3]}])"));
+    expected.push_back(json::parse(R"([[1,2],{"a":[3]}])"));
+    d.set(d.root()[300][0], 7);
+    expected[300][0] = 7;
+    d.insert(d.root(), 0, json::array({1, 2}));
+    expected.insert(expected.begin(), json::array({1, 2}));
+    d.set(d.root()[0], nullptr);
+    expected[0] = nullptr;
+    d.set(d.root()[301], 5);
+    expected[301] = 5;
+    CHECK(d.root().dump() == expected.dump());
+    CHECK(d.root().materialize() == expected);
+}
+
+namespace
+{
+// reads of "a" in an object that repeats it: the last member wins, however the
+// object is stored
+template<typename View>
+void check_last_wins(const View& o, int expected)
+{
+    CAPTURE(expected)
+    CHECK(o["a"].template get<int>() == expected);
+    CHECK(o.at("a").template get<int>() == expected);
+    CHECK(o.find("a")->template get<int>() == expected);
+    CHECK(o.value("a", -1) == expected);
+    CHECK(o[json::json_pointer("/a")].template get<int>() == expected);
+    CHECK(o.at(json::json_pointer("/a")).template get<int>() == expected);
+    CHECK(o.value(json::json_pointer("/a"), -1) == expected);
+    CHECK(o.contains("a"));
+    CHECK(o.contains(json::json_pointer("/a")));
+    CHECK(o.count("a") == 1);
+}
+} // namespace
+
+TEST_CASE("json_view edits: duplicate keys")
+{
+    SECTION("an object in its parsed layout, then moved by edits")
+    {
+        json_editable_document d = json_editable_document::parse(R"({"a": 1, "b": 2, "a": 3})");
+        check_last_wins(d.root(), 3);
+        CHECK(d.root().size() == 3);
+        CHECK(d.root().dump() == R"({"a":1,"b":2,"a":3})");
+
+        // an edit of a value does not move the object
+        d.set(d.root()["b"], 5);
+        check_last_wins(d.root(), 3);
+        d.set(d.root()["a"], 4); // the member that reads find
+        check_last_wins(d.root(), 4);
+        CHECK(d.root().dump() == R"({"a":1,"b":5,"a":4})");
+
+        // an appended member moves it
+        d.set(d.root(), "c", true);
+        check_last_wins(d.root(), 4);
+        CHECK(d.root().size() == 4);
+        CHECK(d.root().dump() == R"({"a":1,"b":5,"a":4,"c":true})");
+        d.set(d.root()["a"], 6);
+        check_last_wins(d.root(), 6);
+        CHECK(d.root().dump() == R"({"a":1,"b":5,"a":6,"c":true})");
+        d.set(json::json_pointer("/a"), 7);
+        check_last_wins(d.root(), 7);
+    }
+
+    SECTION("set assigns the member that reads find")
+    {
+        // the key keeps the position of its first occurrence (as in materialize()), the later members are dropped
+        ordered_json_editable_document d = ordered_json_editable_document::parse(R"({"a": 1, "b": 2, "a": 3, "c": 4, "a": 5})");
+        const ordered_json_editable_view held = d.root()["a"];
+        CHECK(held.get<int>() == 5);
+        const ordered_json_editable_view assigned = d.set(d.root(), "a", "x");
+        CHECK(held.get<std::string>() == "x");
+        CHECK(assigned.get<std::string>() == "x");
+        CHECK(d.root().dump() == R"({"a":"x","b":2,"c":4})");
+        CHECK(d.root().materialize() == ordered_json::parse(R"({"a": "x", "b": 2, "c": 4})"));
+        CHECK(d.root().size() == 3);
+
+        // as for the object that parse() makes of the text
+        ordered_json j = ordered_json::parse(R"({"a": 1, "b": 2, "a": 3, "c": 4, "a": 5})");
+        j["a"] = "x";
+        CHECK(d.root().materialize().dump() == j.dump());
+
+        // through a pointer, below a duplicate
+        d = ordered_json_editable_document::parse(R"({"a": {"x": 1}, "b": 2, "a": {"x": 3}})");
+        d.set(ptr_t("/a/x"), 4);
+        CHECK(d.root().dump() == R"({"a":{"x":1},"b":2,"a":{"x":4}})");
+        d.set(ptr_t("/a"), 0);
+        CHECK(d.root().dump() == R"({"a":0,"b":2})");
+    }
+
+    SECTION("erase removes every member")
+    {
+        json_editable_document d = json_editable_document::parse(R"({"a": 1, "b": 2, "a": 3})");
+        d.set(d.root(), "c", 4);
+        check_last_wins(d.root(), 3);
+        CHECK(d.erase(d.root(), "a") == 2);
+        CHECK(d.root().dump() == R"({"b":2,"c":4})");
+        CHECK(!d.root().contains("a"));
+        CHECK(d.root()["a"].is_discarded());
+        CHECK(d.erase(d.root(), "a") == 0);
+        d = json_editable_document::parse(R"({"a": 1, "b": 2, "a": 3})");
+        CHECK(d.erase(json::json_pointer("/a")) == 2);
+        CHECK(d.root().dump() == R"({"b":2})");
+    }
+
+    SECTION("a large object with an index")
+    {
+        std::string text = R"({"a":0,"k7":"first")";
+        for (int i = 0; i < 200; ++i)
+        {
+            text += ",\"k" + std::to_string(i) + "\":" + std::to_string(i);
+        }
+        text += R"(,"a":1,"k7":"last","a":2})";
+        json_editable_document d = json_editable_document::parse(text);
+        check_last_wins(d.root(), 2);
+        CHECK(d.root()["k7"].get_string() == "last");
+        CHECK(d.root()["k199"].get<int>() == 199);
+
+        // a value assigned in place: the index stays in use
+        d.set(d.root()["a"], 3);
+        check_last_wins(d.root(), 3);
+        d.set(d.root()["k7"], "changed");
+        CHECK(d.root()["k7"].get_string() == "changed");
+        CHECK(d.root()["k199"].get<int>() == 199);
+
+        // an appended member moves the members: the lookup scans them
+        d.set(d.root(), "new", 1);
+        check_last_wins(d.root(), 3);
+        CHECK(d.root()["k7"].get_string() == "changed");
+        CHECK(d.root()["k7"].get_string() == d.root().at("k7").get_string());
+        CHECK(d.root()["k199"].get<int>() == 199);
+        CHECK(d.root()["new"].get<int>() == 1);
+
+        // a value replaced by a container, in an object that was not moved
+        d = json_editable_document::parse(text);
+        d.set(d.root()["a"], json{{"x", 1}});
+        CHECK(d.root()["a"]["x"].get<int>() == 1);
+        CHECK(d.root()["k7"].get_string() == "last");
+        CHECK(d.erase(d.root(), "k7") == 3); // (the key occurs three times)
+        CHECK(d.root()["k7"].is_discarded());
+        CHECK(d.root()["a"]["x"].get<int>() == 1);
+    }
+
+    SECTION("objects in moved arrays and in new values")
+    {
+        json_editable_document d = json_editable_document::parse(R"([{"a": 1, "a": 2}, {"a": 3, "b": 0, "a": 4}])");
+        check_last_wins(d.root()[0], 2);
+        check_last_wins(d.root()[1], 4);
+        d.insert(d.root(), 0, json::parse(R"({"a": 0})"));
+        d.push_back(d.root(), json::parse(R"({"a": 5, "a": 6})")); // (a basic_json value has one member)
+        check_last_wins(d.root()[1], 2);
+        check_last_wins(d.root()[2], 4);
+        CHECK(d.root()[3]["a"].get<int>() == 6);
+        d.set(d.root()[1], "a", 8);
+        check_last_wins(d.root()[1], 8);
+        CHECK(d.root()[1].dump() == R"({"a":8})");
+        d.erase(d.root(), 0);
+        check_last_wins(d.root()[1], 4);
+        CHECK(d.root().dump() == R"([{"a":8},{"a":3,"b":0,"a":4},{"a":6}])");
+    }
+
+    SECTION("values of other documents")
+    {
+        const json_document source = json_document::parse(R"({"list": [{"a": 1, "a": 2}], "o": {"b": {"a": 3, "a": 4}, "a": 5, "a": 6}})");
+        json_editable_document d = json_editable_document::parse("{}");
+        d.set(d.root(), "copy", source.root()["list"]);
+        d.set(d.root(), "o", source.root()["o"]);
+        // (the copies keep the repeated members)
+        CHECK(d.root().dump() == R"({"copy":[{"a":1,"a":2}],"o":{"b":{"a":3,"a":4},"a":5,"a":6}})");
+        check_last_wins(d.root()["copy"][0], 2);
+        check_last_wins(d.root()["o"]["b"], 4);
+        check_last_wins(d.root()["o"], 6);
+        d.set(d.root()["o"]["b"], "c", 0);
+        check_last_wins(d.root()["o"]["b"], 4);
+        d.set(d.root()["o"], "d", 0);
+        check_last_wins(d.root()["o"], 6);
+        CHECK(d.root()["o"]["b"]["a"].get<int>() == 4);
+        CHECK(d.root()["o"]["d"].get<int>() == 0);
     }
 }

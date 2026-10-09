@@ -85,7 +85,6 @@ still refers to it -- including ones taken before the change -- reads the new va
 - [**is_primitive**](is_primitive.md) - return whether the type is primitive
 - [**is_structured**](is_structured.md) - return whether the type is structured
 - [**is_discarded**](is_discarded.md) - return whether the view is invalid
-- [**operator bool**](operator_bool.md) - return whether the view refers to a value
 
 ### Element access
 

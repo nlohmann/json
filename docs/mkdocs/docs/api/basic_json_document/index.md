@@ -48,6 +48,7 @@ bookkeeping edits need, and calling any of them on one fails to compile (`#!cpp 
 
 - **view_type** - the type of view returned by [`root()`](root.md) (`#!cpp basic_json_view<BasicJsonType, Editable>`)
 - **value_t** - the JSON type enumeration, see [`basic_json::value_t`](../basic_json/value_t.md)
+- **image_check** - how [`load()`](load.md) validates an image (`full`, `bounds`, `none`), see [`image_check`](load.md#image_check)
 
 ## Member functions
 

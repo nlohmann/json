@@ -18,6 +18,7 @@ using nlohmann::ordered_json_editable_document;
 using image_check = json_document::image_check;
 using nlohmann::detail::view::node;
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -59,6 +60,14 @@ std::string read_file(const std::string& name)
     std::stringstream ss;
     ss << f.rdbuf();
     return ss.str();
+}
+
+// the dump of a loaded image, through a named document (root() of a temporary
+// document does not compile, and its views would dangle)
+std::string loaded_dump(const std::vector<std::uint8_t>& image, image_check check = image_check::full)
+{
+    const json_document d = json_document::load(image, check);
+    return d.root().dump();
 }
 
 // the offsets of the parts of an image
@@ -191,7 +200,8 @@ TEST_CASE("json_view images: round trips")
             const json_document d = json_document::parse(text);
             check_round_trip(d);
             // what a loaded document reads is what parse() produces
-            CHECK(json_document::load(d.save()).root().materialize() == json::parse(text));
+            const json_document l = json_document::load(d.save());
+            CHECK(l.root().materialize() == json::parse(text));
         }
     }
 
@@ -231,7 +241,7 @@ TEST_CASE("json_view images: round trips")
             {
                 CHECK(l.root()["k" + std::to_string(i)] == d.root()["k" + std::to_string(i)]);
             }
-            CHECK(l.root()["k7"].get<int>() == 7); // the first of duplicate keys
+            CHECK(l.root()["k7"] == "a duplicate"); // the last of duplicate keys
             CHECK(l.root()["inner"]["m199"].get<int>() == -199);
             CHECK(!l.root().contains("k1000"));
             // the index is not part of the image
@@ -239,6 +249,155 @@ TEST_CASE("json_view images: round trips")
         }
         // the nodes of objects in the image do not carry the number of an index
         CHECK(node_at(image, 0).extra == 0);
+    }
+
+    SECTION("duplicate keys of a large object: lookups return the last member")
+    {
+        std::string text = "{";
+        for (int i = 0; i < 200; ++i)
+        {
+            text += (i != 0 ? ",\"k" : "\"k") + std::to_string(i) + "\":" + std::to_string(i);
+        }
+        // three members for k5 (the third is the last), and duplicates of k0 and k199
+        text += R"(,"k5":"two","k0":null,"k199":[],"k5":"three"})";
+        const json_document d = json_document::parse(text);
+        REQUIRE(d.root().size() == 204);
+        CHECK(d.root()["k5"] == "three");
+        const std::vector<std::uint8_t> image = d.save();
+        for (const image_check check :
+                {
+                    image_check::full, image_check::bounds, image_check::none
+                })
+        {
+            const json_document l = json_document::load(image, check);
+            CHECK(l.root().size() == 204);
+            CHECK(l.root()["k5"] == "three");
+            CHECK(l.root().at("k5") == "three");
+            CHECK(l.root().find("k5").value() == "three");
+            CHECK(l.root()["k0"].is_null());
+            CHECK(l.root()["k199"] == json::array());
+            CHECK(l.root()["k100"] == 100);
+            CHECK(l.root().materialize() == d.root().materialize());
+        }
+    }
+
+    SECTION("objects with colliding keys")
+    {
+        // the hash is not seeded: keys can be found that land in one slot of
+        // a table (see json_view: "colliding keys")
+        const auto keys_for = [](std::size_t slots, std::size_t colliding_count, std::size_t spread_count)
+        {
+            std::vector<std::string> colliding;
+            std::vector<std::string> spread;
+            for (std::uint64_t counter = 0; colliding.size() < colliding_count || spread.size() < spread_count; ++counter)
+            {
+                std::string key(8, 'a');
+                for (std::uint64_t x = counter, i = 0; i < 8; ++i, x /= 26)
+                {
+                    key[i] = static_cast<char>('a' + (x % 26));
+                }
+                const bool lands_in_slot_zero = (nlohmann::detail::view::key_hash(key.data(), key.size()) & (slots - 1)) == 0;
+                if (lands_in_slot_zero && colliding.size() < colliding_count)
+                {
+                    colliding.push_back(key);
+                }
+                else if (!lands_in_slot_zero && spread.size() < spread_count)
+                {
+                    spread.push_back(key);
+                }
+            }
+            colliding.insert(colliding.end(), spread.begin(), spread.end());
+            return colliding;
+        };
+        const auto make_text = [](const std::vector<std::string>& keys)
+        {
+            std::string text = "{";
+            for (std::size_t i = 0; i < keys.size(); ++i)
+            {
+                text += (i != 0 ? ",\"" : "\"") + keys[i] + "\":" + std::to_string(i);
+            }
+            return text + "}";
+        };
+
+        // 300 keys in one slot (the table is 1024 slots): the table would
+        // exceed the probe limit, so the object has none and is searched
+        // linearly; 40 of 200 keys in one slot (512 slots): a table with a
+        // long chain
+        const struct
+        {
+            std::size_t slots;
+            std::size_t colliding;
+            std::size_t spread;
+        } cases[] = {{1024, 300, 0}, {512, 40, 160}};
+        for (const auto& c : cases)
+        {
+            CAPTURE(c.slots)
+            std::vector<std::string> keys = keys_for(c.slots, c.colliding, c.spread);
+            const std::size_t members = keys.size();
+            // a duplicate of a colliding key, of the first and of a spread key
+            const std::vector<std::string> duplicated = {keys[c.colliding - 1], keys[0], keys[members - 1]};
+            std::string text = make_text(keys);
+            text.pop_back();
+            for (const std::string& key : duplicated)
+            {
+                text += ",\"" + key + "\":\"last\"";
+            }
+            text += "}";
+            const json_document d = json_document::parse(text);
+            const std::vector<std::uint8_t> image = d.save();
+            for (const image_check check :
+                    {
+                        image_check::full, image_check::bounds, image_check::none
+                    })
+            {
+                const json_document l = json_document::load(image, check);
+                REQUIRE(l.root().size() == members + duplicated.size());
+                for (std::size_t i = 0; i < members; ++i)
+                {
+                    CAPTURE(i)
+                    const bool duplicate = std::find(duplicated.begin(), duplicated.end(), keys[i]) != duplicated.end();
+                    if (duplicate)
+                    {
+                        CHECK(l.root()[keys[i]] == "last");
+                    }
+                    else
+                    {
+                        CHECK(l.root()[keys[i]] == i);
+                    }
+                    CHECK(l.root().at(keys[i]) == l.root()[keys[i]]);
+                    CHECK(l.root().find(keys[i]).key() == keys[i]);
+                    CHECK(!l.root().contains(keys[i] + "x"));
+                }
+                CHECK(!l.root().contains("missing"));
+                CHECK(l.root().materialize() == json::parse(text));
+            }
+        }
+    }
+
+    SECTION("loading releases the list of large objects")
+    {
+        std::string text = "[";
+        for (int object = 0; object < 400; ++object)
+        {
+            text += object != 0 ? ",{" : "{";
+            for (int i = 0; i < 128; ++i)
+            {
+                text += (i != 0 ? ",\"" : "\"") + std::to_string(i) + "\":" + std::to_string(i);
+            }
+            text += '}';
+        }
+        text += "]";
+        json_document parsed = json_document::parse(text);
+        const std::vector<std::uint8_t> image = parsed.save();
+        json_document loaded = json_document::load(image);
+        CHECK(loaded.root()[399]["127"] == 127);
+        // Parsing and loading build the same tables, and keep nothing else:
+        // not the positions of the objects to index (2 KiB here). The slack
+        // covers the nodes in the header of the document, which are sized
+        // differently.
+        parsed.shrink_to_fit();
+        loaded.shrink_to_fit();
+        CHECK(loaded.memory_usage() <= parsed.memory_usage() + 512);
     }
 }
 
@@ -304,6 +463,153 @@ TEST_CASE("json_view images: edited documents")
         CHECK(l.root()["obj"]["a"] == "changed");
         CHECK(l.root()["list"].size() == 4);
     }
+
+    SECTION("the targets of links do not reach the image")
+    {
+        // Edits that make an entry of a moved sequence link to a value mark the
+        // value as linked (node_flags::linked). An image has no links and no
+        // such flag: the full and the bounds check reject it.
+        const std::string nested = R"({"a": [1, 2, {"x": [3]}, "s", 1.5, true, null, [4, 5]], "b": {"c": 1, "d": [1, 2, 3], "e": {"f": "g"}}, "h": "str"})";
+        const auto check_image = [](const json_editable_document & d)
+        {
+            const std::vector<std::uint8_t> image = d.save();
+            for (std::size_t i = 0; i < node_count(image); ++i)
+            {
+                CAPTURE(i)
+                CHECK((node_at(image, i).flags & nlohmann::detail::view::node_flags::linked) == 0);
+                CHECK(node_at(image, i).kind != nlohmann::detail::view::kind_link);
+            }
+            for (const image_check check :
+                    {
+                        image_check::full, image_check::bounds
+                    })
+            {
+                CHECK(load_result(image, check).empty());
+            }
+            check_round_trip(d);
+            // a loaded document is edited and saved again
+            json_editable_document e = json_editable_document::load(image);
+            CHECK(e.root().dump() == d.root().dump());
+            e.set(e.root(), "after", 1);
+            CHECK(loaded_dump(e.save()) == e.root().dump());
+        };
+
+        SECTION("a container replaced by a scalar after an earlier edit")
+        {
+            json_editable_document d = json_editable_document::parse(nested);
+            d.set(d.root()["a"][0], 9);
+            d.set(d.root()["a"][2], 5);
+            check_image(d);
+            d.set(d.root()["a"][2], "now a string");
+            check_image(d);
+            d.set(d.root()["a"][7], 0.25);
+            check_image(d);
+            d.set(d.root()["b"]["e"], true);
+            d.set(d.root()["b"]["d"], 7);
+            check_image(d);
+        }
+
+        SECTION("insert and push_back into parsed arrays")
+        {
+            json_editable_document d = json_editable_document::parse(nested);
+            d.push_back(d.root()["a"], 6);
+            check_image(d);
+            d.insert(d.root()["a"], 0, "first");
+            check_image(d);
+            d.insert(d.root()["b"]["d"], 1, json::array({1, 2}));
+            d.push_back(d.root()["b"]["d"], json::object({{"k", nullptr}}));
+            check_image(d);
+            // links to values that are replaced afterwards
+            d.set(d.root()["a"][3], json::object());
+            d.set(d.root()["a"][4], false);
+            d.set(d.root()["a"][5], "replaced");
+            d.set(d.root()["a"][9], 1e300);
+            check_image(d);
+        }
+
+        SECTION("members set in parsed objects")
+        {
+            json_editable_document d = json_editable_document::parse(nested);
+            d.set(d.root(), "new", 1);
+            d.set(d.root()["b"], "c", "changed");
+            d.set(d.root()["b"], "e", json::array({1, {{"z", 2}}}));
+            d.set(d.root()["b"], "more", d.root()["a"]);
+            check_image(d);
+            d.set(d.root()["a"][2], 3); // a link target in a copied subtree
+            d.erase(d.root()["b"], "c");
+            d.set(d.root(), "h", json::object());
+            check_image(d);
+        }
+
+        SECTION("erase")
+        {
+            json_editable_document d = json_editable_document::parse(nested);
+            d.push_back(d.root()["a"], 6);
+            d.erase(d.root()["a"], 0);
+            d.erase(d.root()["a"], 1);
+            d.set(d.root()["a"][0], 1);
+            d.erase(d.root()["b"], "d");
+            check_image(d);
+        }
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("invalid UTF-8 of a loaded image is not copied into an editable document")
+    {
+        // loading with the bounds check (or none) does not look at the encoding
+        // of strings: dump() of such a view throws, and an editable document
+        // must not take the string over
+        const auto patched = [](const std::string & json_text)
+        {
+            std::vector<std::uint8_t> image = json_document::parse(json_text).save();
+            bool found = false;
+            for (std::size_t i = 0; i + 1 < image.size(); ++i)
+            {
+                if (image[i] == 'Q' && image[i + 1] == 'Z')
+                {
+                    image[i] = 0xC3;
+                    image[i + 1] = 0x28; // an invalid sequence
+                    found = true;
+                }
+            }
+            REQUIRE(found);
+            return image;
+        };
+
+        for (const image_check check :
+                {
+                    image_check::bounds, image_check::none
+                })
+        {
+            // as a value
+            {
+                const json_document loaded = json_document::load(patched(R"(["abQZ"])"), check);
+                json_editable_document e = json_editable_document::parse("[]");
+                CHECK_THROWS_WITH_AS(e.push_back(e.root(), loaded.root()[0]), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.insert(e.root(), 0, loaded.root()[0]), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.set(e.root(), loaded.root()[0]), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.push_back(e.root(), loaded.root()), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                // nothing changed
+                CHECK(e.root().dump() == "[]");
+                CHECK(e.root().size() == 0);
+                CHECK(loaded_dump(e.save()) == "[]");
+                // the valid part of the same document can be copied
+                e.push_back(e.root(), loaded.root().size());
+                CHECK(e.root().dump() == "[1]");
+            }
+            // as a key, and in a nested value
+            {
+                const json_document loaded = json_document::load(patched(R"([{"abQZ": 1}, [["x", "QZ"]]])"), check);
+                json_editable_document e = json_editable_document::parse(R"({"keep": [1]})");
+                CHECK_THROWS_WITH_AS(e.set(e.root(), "k", loaded.root()[0]), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.set(e.root(), "k", loaded.root()[1]), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.push_back(e.root()["keep"], loaded.root()[1]), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0x28", json::type_error&);
+                CHECK(e.root().dump() == R"({"keep":[1]})");
+                CHECK(loaded_dump(e.save()) == R"({"keep":[1]})");
+            }
+        }
+    }
+#endif
 
     SECTION("the root replaced")
     {
@@ -530,6 +836,15 @@ TEST_CASE("json_view images: check")
         {
             n.extra = 1; // a hash index
         }), true);
+        // the flag of the targets of links (editable documents) is not part of an image
+        for (std::size_t i = 0; i < node_count(image); ++i)
+        {
+            CAPTURE(i)
+            rejected(corrupted(image, i, [](node & n)
+            {
+                n.flags = static_cast<std::uint8_t>(n.flags | nlohmann::detail::view::node_flags::linked);
+            }), true);
+        }
     }
 
     SECTION("bounds")
@@ -625,7 +940,7 @@ TEST_CASE("json_view images: check")
         });
         CHECK(load_result(as_array, image_check::full).empty());
         const std::string expected_dump = R"({"s":"x\"y","i":-12,"u":7,"f":1.5e+300,"b":true,"n":null,"a":["t",[]]})";
-        CHECK(json_document::load(as_array).root().dump() == expected_dump);
+        CHECK(loaded_dump(as_array) == expected_dump);
     }
 
     SECTION("strings")
@@ -680,7 +995,8 @@ TEST_CASE("json_view images: check")
             n.extra = 0;
         });
         CHECK(load_result(positive, image_check::full).empty());
-        CHECK(json_document::load(positive).root()["u"].is_number_integer());
+        const json_document pos = json_document::load(positive);
+        CHECK(pos.root()["u"].is_number_integer());
         rejected(corrupted(image, 8, [](node & n)
         {
             n.kind = 6; // a float token as integer
@@ -735,6 +1051,111 @@ TEST_CASE("json_view images: check")
             CAPTURE(dumped)
             CHECK(json::parse(dumped)[0].is_number());
         }
+    }
+
+    SECTION("nodes that share a range")
+    {
+        // [big string, then n strings made to point to the big string]: every
+        // node shares the one range (the check reads it once)
+        const std::size_t n = 200;
+        std::string long_text = "[\"" + std::string(5000, 'a') + "\"";
+        for (std::size_t k = 0; k < n; ++k)
+        {
+            long_text += ",\"x\"";
+        }
+        long_text += "]";
+        const std::vector<std::uint8_t> img = json_document::parse(long_text).save();
+        const node big = node_at(img, 1);
+        std::vector<std::uint8_t> b = img;
+        for (std::size_t k = 0; k < n; ++k)
+        {
+            set_node(b, 2 + k, big);
+        }
+        CHECK(load_result(b, image_check::full).empty());
+        const json_document d = json_document::load(b);
+        CHECK(d.root().size() == n + 1);
+        CHECK(d.root()[n].get<std::string>() == std::string(5000, 'a'));
+        CHECK(d.root().dump() == loaded_dump(b, image_check::none));
+
+        // the same for decoded strings and float tokens, with a node that
+        // records another digit layout than its token
+        const std::vector<std::uint8_t> img2 = json_document::parse(R"(["a\"b", "a\"b", 1.25, 1.25, 1.25e3])").save();
+        CHECK(load_result(img2, image_check::full).empty());
+        std::vector<std::uint8_t> same = img2;
+        set_node(same, 2, node_at(img2, 1));
+        set_node(same, 4, node_at(img2, 3));
+        CHECK(load_result(same, image_check::full).empty());
+        CHECK(loaded_dump(same) == R"(["a\"b","a\"b",1.25,1.25,1250.0])");
+        std::vector<std::uint8_t> layout = same;
+        node f4 = node_at(layout, 4);
+        f4.extra = 0x0100u; // the layout of "1.", and not that of "1.25"
+        set_node(layout, 4, f4);
+        rejected(layout, false);
+        f4.extra = 0xFFFFu; // "many" digits: fine, as compaction writes it
+        set_node(layout, 4, f4);
+        CHECK(load_result(layout, image_check::full).empty());
+    }
+
+    SECTION("ranges that overlap")
+    {
+        // save() writes every string and every token to a place of its own
+        // (nodes that share a value share the whole range): ranges that
+        // overlap without being identical are a damaged image, though each
+        // range is a valid string or token
+        // nodes: 0 [  1 "abcdef"  2 "ghijkl"  3 1.2525  4 9.9  5 "a\"bcd" (decoded)  6 "e\"fgh" (decoded)
+        const std::vector<std::uint8_t> img = json_document::parse(R"(["abcdef", "ghijkl", 1.2525, 9.9, "a\"bcd", "e\"fgh"])").save();
+        REQUIRE(load_result(img, image_check::full).empty());
+        // node i with the range (off of node of + shift, length), and extra
+        const auto aliased = [&](std::size_t i, std::size_t of, std::uint32_t shift, std::uint32_t length, std::uint16_t extra)
+        {
+            std::vector<std::uint8_t> b = img;
+            node n = node_at(b, of);
+            n.off += shift;
+            n.len = length;
+            n.extra = extra;
+            set_node(b, i, n);
+            return b;
+        };
+        // source strings
+        rejected(aliased(2, 1, 0, 4, 0), false);  // "abcd": the start of another string
+        rejected(aliased(2, 1, 1, 4, 0), false);  // "bcde": inside
+        rejected(aliased(2, 1, 2, 4, 0), false);  // "cdef": the end
+        CHECK(load_result(aliased(2, 1, 0, 6, 0), image_check::full).empty()); // the whole range: identical
+        // decoded strings: inside, and partially overlapping (the arena holds a"bcde"fgh)
+        rejected(aliased(6, 5, 1, 3, 0), false);
+        rejected(aliased(6, 5, 3, 5, 0), false);
+        CHECK(load_result(aliased(6, 5, 0, 5, 0), image_check::full).empty());
+        // float tokens: "1.25" and "525" (an integer token as a float) inside "1.2525"
+        rejected(aliased(4, 3, 0, 4, 0x0201u), false);
+        rejected(aliased(4, 3, 3, 3, 0x0003u), false);
+        CHECK(load_result(aliased(4, 3, 0, 6, 0x0401u), image_check::full).empty());
+        // a string and a float token may use the same bytes (each is checked by its own kind)
+        std::vector<std::uint8_t> shared = img;
+        node as_string = node_at(img, 2);
+        as_string.off = node_at(img, 3).off;
+        as_string.len = 6;
+        set_node(shared, 2, as_string);
+        CHECK(load_result(shared, image_check::full).empty());
+        // empty strings inside others are not ranges
+        CHECK(load_result(aliased(2, 1, 2, 0, 0), image_check::full).empty());
+    }
+
+    SECTION("copies within an edited document")
+    {
+        // copies within a document share the value: identical ranges
+        json_editable_document d = json_editable_document::parse(R"({"s": "ab", "e": "x\"y", "f": 1.5, "g": 1.5e300, "a": [1.5, "ab"]})");
+        d.set(d.root(), "c1", d.root()["a"]);
+        d.set(d.root(), "c2", d.root()["a"]);
+        d.set(d.root(), "c3", d.root());
+        d.push_back(d.root()["a"], d.root()["e"]);
+        d.push_back(d.root()["a"], d.root()["g"]);
+        d.push_back(d.root()["a"], d.root()["g"]);
+        d.set(d.root()["s"], "changed");
+        d.set(d.root()["f"], 7.25);
+        const std::vector<std::uint8_t> saved = d.save();
+        CHECK(load_result(saved, image_check::full).empty());
+        CHECK(loaded_dump(saved) == d.root().dump());
+        check_round_trip(d);
     }
 
     SECTION("integer ranges")
