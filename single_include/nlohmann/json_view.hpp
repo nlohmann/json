@@ -24,19 +24,18 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
-#include <cstddef> // size_t
-#include <cstring> // memcpy, strlen
+#include <cstring> // memcpy, size_t, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <map> // map
 #include <memory> // unique_ptr
 #include <string> // string
-#include <tuple> // tuple_element, tuple_size
+#include <tuple> // tuple_element, tuple_size // IWYU pragma: keep
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_base_of, is_integral, is_same, remove_cv, remove_extent
 #include <unordered_map> // unordered_map
 #include <utility> // forward, move
 #include <vector> // vector
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp> // IWYU pragma: export
 
 // the view builds on internals of the library: both must be the same version
 #if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 12 || NLOHMANN_JSON_VERSION_PATCH != 0
@@ -115,7 +114,10 @@
 #elif defined(_MSC_VER)
     #define NLOHMANN_VIEW_LIKELY(x) (x)
     #define NLOHMANN_VIEW_UNLIKELY(x) (x)
-    #define NLOHMANN_VIEW_ALWAYS_INLINE __forceinline
+    // plain inline: __forceinline makes MSVC report C4714 (not inlined) for
+    // function templates it cannot inline, which is an error under /WX; the
+    // forced inlining is only a performance hint
+    #define NLOHMANN_VIEW_ALWAYS_INLINE inline
     #define NLOHMANN_VIEW_NOINLINE __declspec(noinline)
 #else
     #define NLOHMANN_VIEW_LIKELY(x) (x)
@@ -2869,9 +2871,6 @@ NLOHMANN_JSON_NAMESPACE_END
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-template<typename BasicJsonType>
-class basic_json_document;
-
 /*!
 @brief read-only handle to one value of a basic_json_document
 
@@ -3907,6 +3906,6 @@ class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert
 #undef NLOHMANN_VIEW_THROW
 #undef NLOHMANN_VIEW_LITTLE_ENDIAN
 #undef NLOHMANN_VIEW_REPEAT16
-
+// IWYU pragma: keep
 
 #endif  // INCLUDE_NLOHMANN_JSON_VIEW_HPP_
