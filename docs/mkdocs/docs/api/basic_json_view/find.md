@@ -6,7 +6,7 @@ iterator find(const char* key) const;
 iterator find(const string_t& key) const;
 ```
 
-Finds a member with key `key` -- the last one, should the key occur more than once (see
+Finds a member with key `key` -- the first one, should the key occur more than once (see
 [Notes on duplicate keys](operator[].md#notes)). If the value is not an object, or no member has this key,
 [`end()`](end.md) is returned.
 
@@ -26,12 +26,19 @@ No-throw guarantee: this function never throws exceptions.
 ## Complexity
 
 Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after another,
-in document order, scanning all of them, since the last match is wanted. Each comparison first checks the key's length
+in document order, stopping at the first match. Each comparison first checks the key's length
 -- already known from the index, without reading the key bytes -- before comparing its content.
 Objects with 128 or more members get a hash index while parsing, so that a lookup in them takes constant time on
 average.
 
 ## Notes
+
+!!! warning "Duplicate keys: the first member wins"
+
+    If the source text repeats a key, this resolves to the *first* member with it, not to the last one that
+    [`materialize()`](materialize.md) and `parse()` keep. See the [Notes on duplicate keys](operator[].md#notes) of
+    `operator[]` and [Duplicate keys](../../features/json_view.md#duplicate-keys) for the reasons and for how to get
+    the last value.
 
 Unlike [`BasicJsonType::find`](../basic_json/find.md), which always returns `#!cpp end()` for a non-object type, this
 also does so for a [discarded](is_discarded.md) view -- there is no separate "invalid" iterator to return.

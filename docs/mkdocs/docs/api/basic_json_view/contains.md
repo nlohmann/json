@@ -33,7 +33,7 @@ No-throw guarantee: this function never throws exceptions.
 ## Complexity
 
 1. Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after
-   another, in document order, scanning all of them, since the last match is wanted. Each comparison first checks the
+   another, in document order, stopping at the first match. Each comparison first checks the
    key's length -- already known from the index, without reading the key bytes -- before comparing its content.
    Objects with 128 or more members get a hash index while parsing, so that a lookup in them takes constant time
    on average.
@@ -42,6 +42,13 @@ No-throw guarantee: this function never throws exceptions.
    [`at`](at.md#complexity) with a JSON pointer.
 
 ## Notes
+
+!!! warning "Duplicate keys: the first member wins"
+
+    If the source text repeats a key, this resolves to the *first* member with it, not to the last one that
+    [`materialize()`](materialize.md) and `parse()` keep. See the [Notes on duplicate keys](operator[].md#notes) of
+    `operator[]` and [Duplicate keys](../../features/json_view.md#duplicate-keys) for the reasons and for how to get
+    the last value.
 
 Overload 1 always returns `#!cpp false` when the value is not an object -- including a [discarded](is_discarded.md)
 view.

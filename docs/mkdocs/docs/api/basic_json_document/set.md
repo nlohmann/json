@@ -23,8 +23,7 @@ has `set`; calling it on a read-only `basic_json_document` fails to compile (`#!
 
 1. Replaces the value `target` refers to with `value`.
 2. Sets the member `key` of the object `object` to `value`: assigns it if `object` already has a member with this
-   key -- the last one, should the key occur more than once (the member
-   [`operator[]`](../basic_json_view/operator%5B%5D.md) returns), and the other duplicates are then dropped (see the
+   key -- the first one, should the key occur more than once, and the later duplicates are then dropped (see the
    [Notes](#notes) below) -- or appends a new member at the end otherwise. A [null](../basic_json_view/is_null.md)
    `object` first becomes an empty object.
 3. Assigns `value` to the element at index `idx` of the array `array`, which must already exist (`#!cpp idx <
@@ -147,13 +146,12 @@ document") if `target`/`object`/`array` is a [discarded](../basic_json_view/is_d
 
 !!! info "Duplicate keys"
 
-    If `object` already has more than one member with `key` (2.), `value` is assigned to the *last* one -- the member
-    [`operator[]`](../basic_json_view/operator%5B%5D.md), [`at`](../basic_json_view/at.md), and
-    [`find`](../basic_json_view/find.md) return for reading, so that a view taken from `object["key"]` before the call
-    shows `value` afterward -- and every other member with the same key is removed. The key stays at the
-    position of its *first* occurrence, where [`materialize()`](../basic_json_view/materialize.md) puts it as well. A
-    lookup, an iteration, and `materialize()` of `object` afterward therefore all agree on a single member for `key`. See the
-    [Notes on duplicate keys](../basic_json_view/operator%5B%5D.md#notes) of `operator[]`.
+    If `object` already has more than one member with `key` (2.), the *first* one is assigned `value` and every
+    later member with the same key is removed -- so that a lookup, an iteration, and
+    [`materialize()`](../basic_json_view/materialize.md) of `object` afterward all agree on a single value for
+    `key`, the same way [`operator[]`](../basic_json_view/operator%5B%5D.md) already picks the first occurrence of a
+    duplicate key for reading. See the [Notes on duplicate keys](../basic_json_view/operator%5B%5D.md#notes) of
+    `operator[]`.
 
 Setting a member (2.) or an element (3., through 4.) of an array or object whose elements have not been edited
 before switches it from its parsed layout to a growable block holding links to its elements; a later

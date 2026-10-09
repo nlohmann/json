@@ -134,17 +134,8 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   `operator[]` on a discarded view returns a discarded view without throwing: `#!cpp v["a"]["b"][0]` can be tested
   once at the end. Type errors on values that exist (a key on an array, an index on an object) still throw, and
   [`at`](../api/basic_json_view/at.md) throws for every missing value.
-- **Duplicate keys are visible.** If an object in the source text repeats a key,
-  [`begin()`](../api/basic_json_view/begin.md)/[`end()`](../api/basic_json_view/end.md) and
-  [`items()`](../api/basic_json_view/items.md) visit *every* occurrence (and [`size()`](../api/basic_json_view/size.md)
-  counts all of them), while [`operator[]`](../api/basic_json_view/operator%5B%5D.md),
-  [`at`](../api/basic_json_view/at.md), [`find`](../api/basic_json_view/find.md),
-  [`contains`](../api/basic_json_view/contains.md), and [`count`](../api/basic_json_view/count.md) resolve to the
-  *last* occurrence -- the one `basic_json::parse()` (and so
-  [`materialize()`](../api/basic_json_view/materialize.md)) keeps for a repeated key -- which makes a lookup scan all
-  members instead of stopping at a match (objects with 128 members or more get a hash index that leads to the last
-  occurrence directly).
-  See the [Notes on duplicate keys](../api/basic_json_view/operator%5B%5D.md#notes) of `operator[]`.
+- **Duplicate keys: lookups find the first member, `parse()` keeps the last.** See [Duplicate keys](#duplicate-keys)
+  below.
 - **No [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) path.** Exceptions thrown by `basic_json_view`'s own
   element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the
   view has no `basic_json` value to point at, so the exception is created without one, regardless of how
@@ -155,6 +146,52 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   [`materialize()`](../api/basic_json_view/materialize.md) or [`parse()`](../api/basic_json/parse.md) would produce
   equal values for them, without ever building a tree to do it. For ordering, too,
   [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you can compare.
+
+## Duplicate keys
+
+!!! warning "A lookup in a view and in the parsed value can give different answers"
+
+    If an object in the source text repeats a key, [`operator[]`](../api/basic_json_view/operator%5B%5D.md),
+    [`at`](../api/basic_json_view/at.md), [`find`](../api/basic_json_view/find.md),
+    [`value`](../api/basic_json_view/value.md), [`contains`](../api/basic_json_view/contains.md),
+    [`count`](../api/basic_json_view/count.md), and JSON pointer resolution all return the **first** member with that
+    key. `basic_json::parse()` instead keeps the **last** value of a repeated key, so for `#!cpp {"a":1,"a":2}`,
+    `#!cpp view["a"]` is `#!cpp 1` while `#!cpp parse(text)["a"]` is `#!cpp 2`.
+
+[`begin()`](../api/basic_json_view/begin.md)/[`end()`](../api/basic_json_view/end.md) and
+[`items()`](../api/basic_json_view/items.md) visit *every* occurrence, in document order, and
+[`size()`](../api/basic_json_view/size.md) counts all of them, so `#!cpp view.size()` can be larger than
+`#!cpp view.materialize().size()`.
+
+**Why the first?** A lookup can stop as soon as it finds a match. Returning the last member would force every lookup
+to scan all members of the object, even when the key is found at the very first one: this made lookups in small
+objects 1.6 to 3.4 times slower. The hash index of objects with 128 members or more leads to the first member of a
+key as well. Other zero-copy parsers that index the source text, such as yyjson and simdjson, also return the first
+member. RFC 8259 only says that names within an object SHOULD be unique and that the behavior of a receiver that sees
+duplicates is unpredictable, so neither choice is wrong.
+
+**What stays the same as `parse()`?** [`materialize()`](../api/basic_json_view/materialize.md) and
+[`get<std::map<...>>()`](../api/basic_json_view/get.md) replay every member in order, so they keep the *last* value
+exactly like `#!cpp basic_json::parse()` (at the position of the first occurrence of the key, for an
+[`ordered_json`](../api/ordered_json.md)).
+
+**How do I get the value `parse()` would give?** Either call `#!cpp view.materialize()` and look the key up in the
+result, or iterate the members and keep the last match:
+
+```cpp
+// the last member with the key "a", as parse() would keep it
+json_view last;
+for (const auto item : view.items())
+{
+    if (item.key() == "a")
+    {
+        last = item.value();
+    }
+}
+```
+
+If you cannot trust the source text to have unique keys, check [`size()`](../api/basic_json_view/size.md) against the
+number of distinct keys, or reject duplicates when iterating.
 
 ## Getting values out without copying
 
@@ -185,8 +222,8 @@ Both results are only valid as long as the view -- and, for a string with no esc
 [`dump()`](../api/basic_json_view/dump.md) serializes a view directly from the flat index, without ever building a
 `basic_json` value. An object's members are written in document order, not sorted by key, and *every* occurrence of a
 repeated key is written, not only the last one -- the same two ways [iteration](#what-is-different) already differs
-from a [`materialize()`](../api/basic_json_view/materialize.md)d value, see above. `#!cpp materialize().dump()` gives
-a different result in both respects for a `json_view`.
+from a [`materialize()`](../api/basic_json_view/materialize.md)d value, see [Duplicate keys](#duplicate-keys).
+`#!cpp materialize().dump()` gives a different result in both respects for a `json_view`.
 
 By default, numbers are written the way [`basic_json::dump()`](../api/basic_json/dump.md) would.
 [`number_format::source`](../api/basic_json_view/number_format.md) instead copies every number exactly as it was
