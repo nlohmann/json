@@ -939,3 +939,81 @@ TEST_CASE("unescaping keeps a '~' that does not start an escape sequence")
     nlohmann::detail::unescape(s);
     CHECK(s == "~/~");
 }
+
+TEST_CASE("flatten of structured values")
+{
+    SECTION("values nested too deeply for the call stack (#5393)")
+    {
+        // flatten() used to recurse once per nesting level
+        const std::size_t depth = 100000;
+        for (const bool objects :
+                {
+                    false, true
+                })
+        {
+            CAPTURE(objects)
+            std::string text;
+            std::string path;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += objects ? "{\"a\":" : "[";
+                path += objects ? "/a" : "/0";
+            }
+            text += "0";
+            text += std::string(depth, objects ? '}' : ']');
+            const auto value = json::parse(text);
+
+            const auto flat = value.flatten();
+            REQUIRE(flat.size() == 1);
+            REQUIRE(flat.begin().key().size() == path.size());
+            CHECK(flat.begin().key() == path);
+            CHECK(flat.begin().value() == 0);
+
+            // unflatten() is not iterative: it takes time and memory
+            // quadratic in the depth, so it is only roundtripped for a
+            // moderate depth
+            std::string small_text;
+            for (std::size_t i = 0; i < 500; ++i)
+            {
+                small_text += objects ? "{\"a\":" : "[";
+            }
+            small_text += "0";
+            small_text += std::string(500, objects ? '}' : ']');
+            const auto small_value = json::parse(small_text);
+            CHECK(small_value.flatten().unflatten() == small_value);
+        }
+    }
+
+    SECTION("objects and arrays interleaved")
+    {
+        const json value =
+        {
+            {"a", {1, {{"b", json::array()}, {"c", json::object()}}, json::array({{{"x~/", {true, nullptr}}}})}},
+            {"a/b", {{"~", 1}}},
+            {"z", "s"}
+        };
+
+        const json expected =
+        {
+            {"/a/0", 1},
+            {"/a/1/b", nullptr},
+            {"/a/1/c", nullptr},
+            {"/a/2/0/x~0~1/0", true},
+            {"/a/2/0/x~0~1/1", nullptr},
+            {"/a~1b/~0", 1},
+            {"/z", "s"}
+        };
+
+        CHECK(value.flatten() == expected);
+    }
+
+    SECTION("order of the entries of an ordered_json")
+    {
+        const auto value = nlohmann::ordered_json::parse(
+                               R"({"z":"s","a/b":{"~":1,"k":[]},"a":[1,{"c":{},"b":[]},[{"x~/":[true,null],"w":2}]]})");
+
+        const auto flat = value.flatten();
+        CHECK(flat.dump() ==
+              R"({"/z":"s","/a~1b/~0":1,"/a~1b/k":null,"/a/0":1,"/a/1/c":null,"/a/1/b":null,"/a/2/0/x~0~1/0":true,"/a/2/0/x~0~1/1":null,"/a/2/0/w":2})");
+    }
+}
