@@ -10,6 +10,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -273,7 +274,7 @@ bool check_shallow(const J& value)
     return a->template get<int>() == 1
     && b->is_array() && b->size() == 3 && (*b)[0].template get<bool>() && (*b)[1].is_null()
     && (*b)[2].template get<std::string>() == "x"
-    && d != c->end() && d->template get<double>() == 2.5
+    && d != c->end() && std::abs(d->template get<double>() - 2.5) < 1e-9
     && value.find(key_t(std::string(23, 'x')))->template get<int>() == 2
     && value.find(key_t(std::string(36, 'y')))->template get<int>() == 3
     && value.find(key_t(std::string(300, 'z')))->template get<int>() == 4;
