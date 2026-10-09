@@ -31,7 +31,10 @@ has `set`; calling it on a read-only `basic_json_document` fails to compile (`#!
 4. Sets the value the JSON pointer `ptr` refers to, relative to [`root()`](root.md), to `value`. The *parent* of the
    target must already exist: an object member is set as in 2. (added if it does not exist yet), an array element is
    assigned as in 3., and a last reference token of `#!cpp "-"`, or equal to the size of the array, appends `value`
-   instead, exactly as [`push_back`](push_back.md) would. An empty `ptr` sets [`root()`](root.md) itself, as in 1.
+   instead, exactly as [`push_back`](push_back.md) would. A [null](../basic_json_view/is_null.md) parent becomes what
+   [`basic_json::operator[]`](../basic_json/operator%5B%5D.md) with a JSON pointer makes of it: an array if the last
+   reference token is `#!cpp "-"` or consists of digits only (for an index beyond 0, the array is first filled with
+   null values up to that index), an object otherwise. An empty `ptr` sets [`root()`](root.md) itself, as in 1.
 
 In every overload, `value` is accepted three ways: a [`basic_json_view`](../basic_json_view/index.md) of *any*
 document -- read-only or editable, and it does not have to be `target`'s/`object`'s/`array`'s own document -- which
@@ -85,7 +88,8 @@ invalid argument, or `#!cpp std::bad_alloc`) leaves the document completely unch
 for the encoding that is not reclaimed. A failure of a later allocation -- while an edited array or object switches
 from its parsed layout to a growable block, see [Notes](#notes) -- can still leave a partial effect, such as a
 [null](../basic_json_view/is_null.md) `object`/`array` argument already turned into an empty object/array even
-though `value` itself was not linked in.
+though `value` itself was not linked in. Likewise, a failure of `value` in 4. leaves a null parent that is set with an
+index beyond 0 already filled with the null values before the index.
 
 ## Exceptions
 
@@ -111,8 +115,10 @@ though `value` itself was not linked in.
    [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) (a leading `#!cpp '0'`),
    [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) (not a number),
    [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) (too large for `size_type`), or
-   [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) (an empty token). Also throws what 1.
-   throws for `value`.
+   [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) (an empty token); the same errors are
+   thrown for a null parent and a token of digits (the parent is not changed then), and
+   [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if the index is 4294967295 or more.
+   Also throws what 1. throws for `value`.
 
 Every overload also throws [`type_error.319`](../../home/exceptions.md#jsonexceptiontype_error319) if `value` is (or
 contains) a binary value -- `BasicJsonType` can hold one, but a `json_document` cannot -- and
@@ -131,7 +137,7 @@ document") if `target`/`object`/`array` is a [discarded](../basic_json_view/is_d
 3. Constant, plus the complexity of 1. for `value`.
 4. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at
    that level or the index into the array (as [`at`](../basic_json_view/at.md)), plus the complexity of 2. or 3. for
-   the last token.
+   the last token; for a null parent and an index, linear in the index.
 
 ## Notes
 

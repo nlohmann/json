@@ -634,6 +634,61 @@ TEST_CASE("json_view edits: deeply nested values")
 }
 
 #if !defined(JSON_NOEXCEPTION)
+TEST_CASE("json_view edits: pointers below a null value")
+{
+    // a null value on the way becomes what basic_json makes of it: an array
+    // for "-" and for digits, an object otherwise
+    struct test_case
+    {
+        const char* document;
+        const char* pointer;
+    };
+    const std::array<test_case, 16> cases =
+    {
+        {
+            {R"({"a":null})", "/a/0"},
+            {R"({"a":null})", "/a/-"},
+            {R"({"a":null})", "/a/3"},
+            {R"({"a":null})", "/a/x"},
+            {R"({"a":null})", "/a/+1"},
+            {R"({"a":null})", "/a/01"},
+            {R"({"a":null})", "/a/"},
+            {R"({"a":{"b":null}})", "/a/b/1"},
+            {R"({"a":{"b":null}})", "/a/b/-"},
+            {R"({"a":[null]})", "/a/0/0"},
+            {R"({"a":[null,null]})", "/a/1/k"},
+            {R"([null])", "/0"},
+            {"null", "/0"},
+            {"null", "/-"},
+            {"null", "/k"},
+            {"null", ""},
+        }
+    };
+    for (const test_case& c : cases)
+    {
+        CAPTURE(c.document)
+        CAPTURE(c.pointer)
+        json expected = json::parse(c.document);
+        const std::string error = exception_of_call([&]
+        {
+            expected[json::json_pointer(c.pointer)] = 1;
+        });
+        json_editable_document d = json_editable_document::parse(c.document);
+        if (error.empty())
+        {
+            d.set(json::json_pointer(c.pointer), 1);
+            CHECK(d.root().dump() == expected.dump());
+            CHECK(d.root().materialize() == expected);
+        }
+        else
+        {
+            // the same error, and the document is not changed
+            CHECK(exception_of_call([&] { d.set(json::json_pointer(c.pointer), 1); }) == error);
+            CHECK(d.root().dump() == json::parse(c.document).dump());
+        }
+    }
+}
+
 TEST_CASE("json_view edits: strings of other documents are checked")
 {
     // A document borrows the text it was parsed from, and sees later changes
