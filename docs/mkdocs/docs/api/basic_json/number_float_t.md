@@ -23,10 +23,10 @@ type to use.
 ## Template parameters
 
 `NumberFloatType`
-:   the type to store floating-point numbers. The parser converts `#!cpp float`, `#!cpp double`, and a
-    `#!cpp long double` that is IEEE 754 binary64 itself and other `#!cpp long double` formats with
-    `#!cpp std::from_chars` or `#!cpp std::strtold`, and serialization falls back to `#!cpp std::snprintf`, so the
-    type must be `#!cpp float`, `#!cpp double`, or `#!cpp long double`. The
+:   the type to store floating-point numbers. The type must be `#!cpp float`, `#!cpp double`, or
+    `#!cpp long double`. The parser converts `#!cpp float`, `#!cpp double`, and a `#!cpp long double` that is IEEE 754
+    binary64 itself. It converts other `#!cpp long double` formats with `#!cpp std::from_chars` where available, or
+    with `#!cpp std::strtold` otherwise. Serialization falls back to `#!cpp std::snprintf`. The
     [binary formats](../../features/binary_formats/index.md) additionally require `#!cpp float` or `#!cpp double`,
     because they have no encoding for `#!cpp long double`. See
     [Template Parameter Requirements](../../features/types/template_parameters.md#numberfloattype).
