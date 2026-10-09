@@ -28,7 +28,10 @@
 #elif defined(_MSC_VER)
     #define NLOHMANN_VIEW_LIKELY(x) (x)
     #define NLOHMANN_VIEW_UNLIKELY(x) (x)
-    #define NLOHMANN_VIEW_ALWAYS_INLINE __forceinline
+    // plain inline: __forceinline makes MSVC report C4714 (not inlined) for
+    // function templates it cannot inline, which is an error under /WX; the
+    // forced inlining is only a performance hint
+    #define NLOHMANN_VIEW_ALWAYS_INLINE inline
     #define NLOHMANN_VIEW_NOINLINE __declspec(noinline)
 #else
     #define NLOHMANN_VIEW_LIKELY(x) (x)
