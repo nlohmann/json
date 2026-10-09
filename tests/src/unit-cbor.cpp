@@ -3379,3 +3379,34 @@ TEST_CASE("CBOR supports custom object key types")
         {"a key longer than twenty-three characters", 2}
     });
 }
+
+TEST_CASE("CBOR supports custom object key types nested deeper than the recursion depth limit")
+{
+    // below detail::recursion_depth_limit(), keys are written by
+    // write_cbor_iterative instead of write_cbor
+    using custom_json = custom_object_key_test::json;
+    using custom_key = custom_object_key_test::key;
+
+    const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 10;
+
+    custom_json value = 1;
+    nlohmann::json expected = 1;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        // alternate short keys with ones long enough to need a length byte
+        const std::string name = (i % 2 == 0) ? "k" + std::to_string(i)
+                                 : "a key longer than thirty-one characters " + std::to_string(i);
+
+        custom_json::object_t object;
+        object.emplace(custom_key{name}, std::move(value));
+        value = custom_json(std::move(object));
+
+        nlohmann::json::object_t expected_object;
+        expected_object.emplace(name, std::move(expected));
+        expected = nlohmann::json(std::move(expected_object));
+    }
+
+    const auto encoded = custom_json::to_cbor(value);
+    CHECK(encoded == nlohmann::json::to_cbor(expected));
+    CHECK(nlohmann::json::from_cbor(encoded) == expected);
+}

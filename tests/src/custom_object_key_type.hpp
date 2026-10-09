@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <map>
 #include <memory>
 #include <string>
@@ -33,18 +32,6 @@ class key
     operator std::string() const
     {
         return m_value;
-    }
-
-    // UBJSON and BJData access object keys through size() and c_str()
-    // directly; CBOR and MessagePack themselves do not require them.
-    std::size_t size() const noexcept
-    {
-        return m_value.size();
-    }
-
-    const char* c_str() const noexcept
-    {
-        return m_value.c_str();
     }
 
     // Required by JSON_DIAGNOSTICS, which reads object keys through data()
