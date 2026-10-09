@@ -1517,7 +1517,42 @@ TEST_CASE("json_view dump")
     SECTION("deep nesting")
     {
         const std::string deep = std::string(100000, '[') + std::string(100000, ']');
-        CHECK(json_document::parse(deep).root().dump() == deep);
+        const json_document deep_document = json_document::parse(deep);
+        CHECK(deep_document.root().dump() == deep);
+    }
+
+    SECTION("the output buffer of a small value is small")
+    {
+        // an escaped key after the value: its node lies in the arena, so the
+        // source extent of the value cannot be read from the next node
+        const std::string big(100000, 'a');
+        const std::string text = R"({"small":1,"list":[1,2,3],"k\n":")" + big + R"("})";
+        const json_document d = json_document::parse(text);
+        const auto small = d.root()["small"].dump();
+        CHECK(small == "1");
+        CHECK(small.capacity() < 4096);
+        const auto list = d.root()["list"].dump();
+        CHECK(list == "[1,2,3]");
+        CHECK(list.capacity() < 4096);
+        CHECK(d.root()["list"].dump(2).capacity() < 4096);
+
+        // the whole document and the large value are unaffected
+        CHECK(d.root().dump() == ordered_json::parse(text).dump());
+        CHECK(d.root()["k\n"].dump() == "\"" + big + "\"");
+    }
+
+    SECTION("output that outgrows the estimate")
+    {
+        // ensure_ascii writes six bytes for each two-byte character
+        std::string chars;
+        for (int i = 0; i < 5000; ++i)
+        {
+            chars += "\xC3\xA9";
+        }
+        const json_document d = json_document::parse(R"({"a":")" + chars + R"(","k\n":1})");
+        const json expected = json::parse("\"" + chars + "\"");
+        CHECK(d.root()["a"].dump(-1, ' ', true) == expected.dump(-1, ' ', true));
+        CHECK(d.root()["a"].dump(-1, ' ', true).size() == 2 + (5000 * 6));
     }
 
     SECTION("streams and discarded views")
@@ -1600,9 +1635,10 @@ TEST_CASE("json_view comparison")
         // discarded values compare as basic_json's do
         const json discarded(json::value_t::discarded);
         CHECK((json_view() == json_view()) == (discarded == discarded)); // NOLINT(readability-container-size-empty): operator== is tested
-        CHECK((json_view() == discarded) == (discarded == discarded));
-        CHECK(!(json_view() == json_document::parse("null").root())); // NOLINT(readability-container-size-empty)
-        CHECK(!(json_document::parse("null").root() == discarded));
+        CHECK((json_view() == discarded) == (discarded == discarded)); // NOLINT(readability-container-size-empty)
+        const json_document null_document = json_document::parse("null");
+        CHECK(!(json_view() == null_document.root())); // NOLINT(readability-container-size-empty)
+        CHECK(!(null_document.root() == discarded));
     }
 
     SECTION("deep nesting")
@@ -1687,6 +1723,7 @@ TEST_CASE("json_view large objects")
                 ordered.push_back(keys[i]);
             }
             std::vector<member> result;
+            result.reserve(ordered.size());
             for (std::size_t i = 0; i < ordered.size(); ++i)
             {
                 result.push_back({ordered[i], i});
