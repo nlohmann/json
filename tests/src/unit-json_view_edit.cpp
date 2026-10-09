@@ -633,3 +633,41 @@ TEST_CASE("json_view edits: deeply nested values")
     }
 }
 
+#if !defined(JSON_NOEXCEPTION)
+TEST_CASE("json_view edits: strings of other documents are checked")
+{
+    // A document borrows the text it was parsed from, and sees later changes
+    // of the text: a way to get ill-formed UTF-8 into a view. Copying it into
+    // an editable document is an error, as for any other string.
+    std::string text = R"({"key":"abc","list":["abc"]})";
+    const json_document source = json_document::parse(text);
+    const auto message_of = [](const std::string & bad)
+    {
+        return exception_of_call([&]
+        {
+            const std::string dumped = json(bad).dump();
+            static_cast<void>(dumped);
+        });
+    };
+    json_editable_document d = json_editable_document::parse("[1]");
+    d.push_back(d.root(), source.root());
+    CHECK(d.root().dump() == R"([1,{"key":"abc","list":["abc"]}])");
+
+    text[text.find("abc") + 1] = '\xC3'; // "a\xC3c"
+    text[text.rfind("abc") + 1] = '\xC3';
+    const std::string bad_value = message_of(std::string("a\xC3" "c"));
+    CHECK(!bad_value.empty());
+    CHECK(exception_of_call([&] { d.push_back(d.root(), source.root()["key"]); }) == bad_value);
+    CHECK(exception_of_call([&] { d.set(d.root()[0], source.root()["list"][0]); }) == bad_value);
+    CHECK(exception_of_call([&] { d.set(d.root(), 0, source.root()["list"]); }) == bad_value);
+    CHECK(exception_of_call([&] { d.set(d.root(), 0, source.root()); }) == bad_value);
+
+    text[text.find("key") + 1] = '\xC3'; // a key is checked as well
+    const std::string bad_key = message_of(std::string("k\xC3" "y"));
+    CHECK(exception_of_call([&] { d.set(d.root(), 0, source.root()); }) == bad_key);
+    CHECK(exception_of_call([&] { d.push_back(d.root(), source.root()); }) == bad_key);
+
+    // nothing of the failed edits is visible
+    CHECK(d.root().dump() == R"([1,{"key":"abc","list":["abc"]}])");
+}
+#endif

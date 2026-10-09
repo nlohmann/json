@@ -611,6 +611,8 @@ class editor
         switch (static_cast<value_t>(n.kind))
         {
             case value_t::string:
+                // (an editable document only holds valid UTF-8, whatever the check of the other document was)
+                check_utf8(from.str(n), n.len);
                 return string_node(from.str(n), n.len);
             case value_t::number_integer:
             case value_t::number_unsigned:
