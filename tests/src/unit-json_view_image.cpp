@@ -61,6 +61,14 @@ std::string read_file(const std::string& name)
     return ss.str();
 }
 
+// the dump of a loaded image, through a named document (root() of a temporary
+// document does not compile, and its views would dangle)
+std::string loaded_dump(const std::vector<std::uint8_t>& image, image_check check = image_check::full)
+{
+    const json_document d = json_document::load(image, check);
+    return d.root().dump();
+}
+
 // the offsets of the parts of an image
 constexpr std::size_t header_size = 64;
 
@@ -191,7 +199,8 @@ TEST_CASE("json_view images: round trips")
             const json_document d = json_document::parse(text);
             check_round_trip(d);
             // what a loaded document reads is what parse() produces
-            CHECK(json_document::load(d.save()).root().materialize() == json::parse(text));
+            const json_document l = json_document::load(d.save());
+            CHECK(l.root().materialize() == json::parse(text));
         }
     }
 
@@ -231,7 +240,7 @@ TEST_CASE("json_view images: round trips")
             {
                 CHECK(l.root()["k" + std::to_string(i)] == d.root()["k" + std::to_string(i)]);
             }
-            CHECK(l.root()["k7"].get<int>() == 7); // the first of duplicate keys
+            CHECK(l.root()["k7"] == "a duplicate"); // the last of duplicate keys
             CHECK(l.root()["inner"]["m199"].get<int>() == -199);
             CHECK(!l.root().contains("k1000"));
             // the index is not part of the image
@@ -625,7 +634,7 @@ TEST_CASE("json_view images: check")
         });
         CHECK(load_result(as_array, image_check::full).empty());
         const std::string expected_dump = R"({"s":"x\"y","i":-12,"u":7,"f":1.5e+300,"b":true,"n":null,"a":["t",[]]})";
-        CHECK(json_document::load(as_array).root().dump() == expected_dump);
+        CHECK(loaded_dump(as_array) == expected_dump);
     }
 
     SECTION("strings")
@@ -680,7 +689,8 @@ TEST_CASE("json_view images: check")
             n.extra = 0;
         });
         CHECK(load_result(positive, image_check::full).empty());
-        CHECK(json_document::load(positive).root()["u"].is_number_integer());
+        const json_document pos = json_document::load(positive);
+        CHECK(pos.root()["u"].is_number_integer());
         rejected(corrupted(image, 8, [](node & n)
         {
             n.kind = 6; // a float token as integer
@@ -734,7 +744,7 @@ TEST_CASE("json_view images: check")
         const json_document d = json_document::load(b);
         CHECK(d.root().size() == n + 1);
         CHECK(d.root()[n].get<std::string>() == std::string(5000, 'a'));
-        CHECK(d.root().dump() == json_document::load(b, image_check::none).root().dump());
+        CHECK(d.root().dump() == loaded_dump(b, image_check::none));
 
         // the same for decoded strings and float tokens, with a node that
         // records another digit layout than its token
@@ -744,7 +754,7 @@ TEST_CASE("json_view images: check")
         set_node(same, 2, node_at(img2, 1));
         set_node(same, 4, node_at(img2, 3));
         CHECK(load_result(same, image_check::full).empty());
-        CHECK(json_document::load(same).root().dump() == R"(["a\"b","a\"b",1.25,1.25,1250.0])");
+        CHECK(loaded_dump(same) == R"(["a\"b","a\"b",1.25,1.25,1250.0])");
         std::vector<std::uint8_t> layout = same;
         node f4 = node_at(layout, 4);
         f4.extra = 0x0100u; // the layout of "1.", and not that of "1.25"
@@ -813,7 +823,7 @@ TEST_CASE("json_view images: check")
         d.set(d.root()["f"], 7.25);
         const std::vector<std::uint8_t> saved = d.save();
         CHECK(load_result(saved, image_check::full).empty());
-        CHECK(json_document::load(saved).root().dump() == d.root().dump());
+        CHECK(loaded_dump(saved) == d.root().dump());
         check_round_trip(d);
     }
 
