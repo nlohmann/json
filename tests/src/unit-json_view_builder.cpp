@@ -19,8 +19,10 @@ using nlohmann::json;
 
 #include <cstdint>
 #include <fstream>
+#include <limits>
 #include <map>
 #include <memory>
+#include <new>
 #include <random>
 #include <sstream>
 #include <string>
@@ -458,4 +460,32 @@ TEST_CASE("json_view node integer bits")
             CHECK(n.next == static_cast<std::uint32_t>(c.bits >> 32));
         }
     }
+}
+
+TEST_CASE("json_view node array size limit")
+{
+    // a node array larger than the address space is refused, not wrapped to a
+    // small allocation (the size computation overflows on 32-bit targets, and
+    // for absurd counts everywhere)
+    std::unique_ptr<document_data, document_data::deleter> d(document_data::create(0));
+    d->reserve(8);
+    REQUIRE(d->tape_cap >= 8);
+    d->tape_size = 2;
+    const std::size_t cap = d->tape_cap;
+    node* const tape = d->tape;
+
+#if !defined(JSON_NOEXCEPTION)
+    const std::size_t too_many = document_data::max_nodes() + 1;
+    CHECK_THROWS_AS(d->reserve(too_many), std::bad_alloc&);
+    CHECK_THROWS_AS(d->reserve((std::numeric_limits<std::size_t>::max)()), std::bad_alloc&);
+    // the array is unchanged
+    CHECK(d->tape == tape);
+    CHECK(d->tape_cap == cap);
+    CHECK(d->tape_size == 2);
+#endif
+
+    // the largest count that fits is not refused by the check (nothing is
+    // allocated for a count that is already there)
+    d->reserve(cap);
+    CHECK(d->tape == tape);
 }
