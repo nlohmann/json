@@ -84,9 +84,10 @@ class short_key
     std::uint64_t m_b = 0;
 };
 
-/// the key node of the last member of an object with the given key, or
-/// nullptr (the last one, as materialize() and parse() keep it); most keys are
-/// rejected by their length, from the index alone
+/// the key node of the first member of an object with the given key, or
+/// nullptr (the search stops at the first match; materialize() and parse()
+/// keep the last value of a duplicate key instead); most keys are rejected by
+/// their length, from the index alone
 template<bool Editable>
 const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
@@ -97,7 +98,6 @@ const node* find_member(const document_data& d, const node* object, const char* 
     }
     const node* const end = nav::end(d, object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    const node* last = nullptr;
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
     {
         const short_key probe(k, n);
@@ -105,19 +105,19 @@ const node* find_member(const document_data& d, const node* object, const char* 
         {
             if (m->len == n && probe.matches(reinterpret_cast<const unsigned char*>(d.str(*m)))) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             {
-                last = m;
+                return m;
             }
         }
-        return last;
+        return nullptr;
     }
     for (const node* m = nav::first(d, object); m != end; m = document_data::after(m + 1))
     {
         if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
         {
-            last = m;
+            return m;
         }
     }
-    return last;
+    return nullptr;
 }
 
 /// whether an integer type is accepted as an array index by the view's
