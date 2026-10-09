@@ -16,7 +16,7 @@
  * the read-only part of the basic_json interface; materialize() turns a     *
  * subtree into the basic_json value that parse() would produce.             *
  *                                                                           *
- * The source text must outlive a document that borrows it (lvalue byte     *
+ * The source text must outlive a document that borrows it (lvalue byte      *
  * containers, C strings); rvalue strings, streams, and other inputs are     *
  * owned by the document.                                                    *
 \****************************************************************************/
@@ -51,7 +51,7 @@
 
 
 
-#include <algorithm> // find, find_if, max
+#include <algorithm> // find, find_if, max, min
 #include <array> // array
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // int64_t, uint8_t, uint16_t, uint32_t, uint64_t
@@ -75,7 +75,8 @@
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstring> // memcpy
-#include <new> // operator new, placement new
+#include <limits> // numeric_limits
+#include <new> // bad_alloc, operator new, placement new
 #include <string> // string
 
 // #include <nlohmann/json.hpp>
@@ -185,6 +186,11 @@ static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::
               && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
               "the node format depends on the numbering of value_t");
 
+/// The largest input a document accepts, in bytes. Offsets and node counts are
+/// 32 bits wide; the limit keeps 16 bytes (the width of the scanner's steps)
+/// below 2^32, so that a position one step past the end of the text fits.
+static constexpr std::size_t max_input_size = 0xFFFFFFEFu;
+
 /// node flags
 struct node_flags
 {
@@ -213,17 +219,27 @@ NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
     return static_cast<unsigned>(n.kind) - 1u <= 1u;
 }
 
-/// the converted value of an integer node (stored in len/next)
+/// the converted value of an integer node: len is its low half, next its high
+/// half (on little-endian targets the two words are the value in memory)
 NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t integer_bits(const node& n) noexcept
 {
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
     std::uint64_t v = 0;
     std::memcpy(&v, reinterpret_cast<const unsigned char*>(&n) + 8, 8); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     return v;
+#else
+    return static_cast<std::uint64_t>(n.len) | (static_cast<std::uint64_t>(n.next) << 32);
+#endif
 }
 
 NLOHMANN_VIEW_ALWAYS_INLINE void set_integer_bits(node& n, std::uint64_t v) noexcept
 {
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, &v, 8); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+#else
+    n.len = static_cast<std::uint32_t>(v);
+    n.next = static_cast<std::uint32_t>(v >> 32);
+#endif
 }
 
 /// token length of a number node
@@ -319,12 +335,29 @@ struct document_data
         tape_cap = inline_cap;
     }
 
-    /// make room for n nodes; keeps the first tape_size nodes
+    /// the largest node count whose size in bytes fits a std::size_t
+    static constexpr std::size_t max_nodes() noexcept
+    {
+        return (std::numeric_limits<std::size_t>::max)() / sizeof(node);
+    }
+
+    [[noreturn]] NLOHMANN_VIEW_NOINLINE static void throw_bad_alloc()
+    {
+        NLOHMANN_VIEW_THROW(std::bad_alloc());
+    }
+
+    /// make room for n nodes; keeps the first tape_size nodes (throws
+    /// std::bad_alloc for a count that does not fit the address space,
+    /// instead of wrapping around in n * sizeof(node))
     void reserve(std::size_t n)
     {
         if (n <= tape_cap)
         {
             return;
+        }
+        if (NLOHMANN_VIEW_UNLIKELY(n > max_nodes()))
+        {
+            throw_bad_alloc();
         }
         node* fresh = static_cast<node*>(::operator new (n * sizeof(node)));
         if (tape_size != 0)
@@ -732,8 +765,18 @@ class builder
         const std::uint64_t done = static_cast<std::uint64_t>(at - b) + 1;
         const std::uint64_t guess = static_cast<std::uint64_t>(n) * static_cast<std::uint64_t>(e - b + 1) / done;
         const std::uint64_t grown = guess + (guess / 4) + 64; // a variable: GCC calls a cast of the sum useless where std::uint64_t is std::size_t
+        // (n is below 2^32: the input is smaller than 4 GiB; the sum cannot wrap)
+        const std::uint64_t wanted = (std::max)(grown, static_cast<std::uint64_t>(n) + (n / 2) + 64);
+        const std::uint64_t limit = document_data::max_nodes();
         doc.tape_size = n;
-        doc.reserve((std::max)(static_cast<std::size_t>(grown), n + (n / 2) + 64));
+        // LCOV_EXCL_START (a node array that fills the address space)
+        if (NLOHMANN_VIEW_UNLIKELY(n >= limit))
+        {
+            document_data::throw_bad_alloc(); // no room for another node
+        }
+        // LCOV_EXCL_STOP
+        // (a count beyond the limit is cut: the index does not grow beyond what can be addressed)
+        doc.reserve(static_cast<std::size_t>((std::min)(wanted, limit)));
         return doc.tape;
     }
 
@@ -1338,7 +1381,10 @@ indent_done:
             n->flags = flags;
             n->extra = extra;
             n->off = static_cast<std::uint32_t>(off);
-            set_integer_bits(*n, second);
+            // len is the low half of the second word, next the high half
+            // (not a native word over both, which swaps them on big-endian)
+            n->len = static_cast<std::uint32_t>(second);
+            n->next = static_cast<std::uint32_t>(second >> 32);
 #endif
             return n;
         }
@@ -1633,9 +1679,8 @@ template<typename BasicJsonType>
 {
     if (f.code == error_code::input_too_large)
     {
-        // LCOV_EXCL_START (4 GiB)
-        NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4 GiB or more is not supported by json_document", nullptr));
-        // LCOV_EXCL_STOP
+        // (the limit is detail::view::max_input_size: 4 GiB minus 16 bytes)
+        NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
     const BasicJsonType accepted = BasicJsonType::parse(src, src + size, nullptr, true, ignore_comments, ignore_trailing_commas);
     // LCOV_EXCL_START (only if parse() accepts what the view rejects: a bug)
@@ -1674,7 +1719,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <string> // basic_string, char_traits, string
-#include <type_traits> // decay, integral_constant, is_array, is_lvalue_reference, is_pointer, is_same, remove_reference
+#include <type_traits> // decay, integral_constant, is_array, is_const, is_integral, is_lvalue_reference, is_pointer, is_same, remove_reference
 #include <utility> // forward
 
 // #include <nlohmann/json.hpp>
@@ -1694,12 +1739,12 @@ namespace view
 /// how a document takes its input
 enum class input_kind
 {
-    move_string,  ///< rvalue std::string: owned without a copy
+    move_string,  ///< non-const rvalue std::string: owned without a copy
     c_string,     ///< const char* (NUL-terminated): borrowed
     char_array,   ///< char array (e.g. a string literal): borrowed
     borrow_range, ///< lvalue contiguous byte container, or std::string_view: borrowed
-    copy_range,   ///< rvalue contiguous byte container: copied
-    adapter,      ///< anything else parse() accepts (streams, wide strings, ...): read into a buffer
+    copy_range,   ///< rvalue contiguous byte container (a const rvalue std::string too): copied
+    adapter,      ///< streams, wide strings, and the rest of what the library's input adapter reads: read into a buffer
 };
 
 template<typename InputType>
@@ -1718,12 +1763,19 @@ struct classify_input
     static constexpr input_kind value =
         std::is_array<R>::value ? input_kind::char_array
         : std::is_pointer<D>::value ? input_kind::c_string
-        : (is_rvalue && std::is_same<D, std::string>::value) ? input_kind::move_string
+        : (is_rvalue && !std::is_const<R>::value && std::is_same<D, std::string>::value) ? input_kind::move_string
         : (is_bytes && (!is_rvalue || is_string_view)) ? input_kind::borrow_range
         : is_bytes ? input_kind::copy_range
         : input_kind::adapter;
     // NOLINTEND(readability-avoid-nested-conditional-operator)
 };
+
+/// an integer type other than bool: a length passed where a flag is expected
+template<typename T>
+struct is_integer_not_bool : std::is_integral<T> {};
+
+template<>
+struct is_integer_not_bool<bool> : std::false_type {};
 
 /// std::basic_string guarantees a NUL at data()[size()] (the parser's sentinel)
 template<typename T>
@@ -2188,12 +2240,6 @@ class basic_json_view
         return type() == value_t::discarded;
     }
 
-    /// false for discarded views
-    explicit operator bool() const noexcept
-    {
-        return m_node != nullptr;
-    }
-
     //////////////
     // capacity //
     //////////////
@@ -2323,6 +2369,13 @@ class basic_json_document
         return d;
     }
 
+    /// parse(ptr, len) does not compile: len would convert to allow_exceptions
+    /// and ptr be read as a C string (as for the overloads of parse_copy,
+    /// accept, and read below)
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     /// parse [first, last)
     template<typename IteratorType, typename std::enable_if<
                  std::is_base_of<std::input_iterator_tag, typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
@@ -2350,6 +2403,10 @@ class basic_json_document
         return d;
     }
 
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse_copy(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     /// check whether the input is valid JSON (the result of basic_json::accept)
     template<typename InputType>
     static bool accept(InputType&& input, const bool ignore_comments = false, const bool ignore_trailing_commas = false)
@@ -2358,6 +2415,10 @@ class basic_json_document
         d.read(std::forward<InputType>(input), false, ignore_comments, ignore_trailing_commas);
         return !d.is_discarded();
     }
+
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, bool>::type
+    accept(InputType&& input, IntegerType value, Flags&&... flags) = delete;
 
     /// parse into this document, reusing its memory
     template<typename InputType>
@@ -2371,12 +2432,17 @@ class basic_json_document
                   std::integral_constant<detail::view::input_kind, detail::view::classify_input<InputType>::value> {});
     }
 
+    template<typename InputType, typename IntegerType, typename... Flags>
+    // flawfinder: ignore (a member function, not POSIX read())
+    typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, void>::type
+    read(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     ////////////
     // access //
     ////////////
 
     /// the root value (discarded if parsing failed without exceptions)
-    view_type root() const noexcept
+    view_type root() const& noexcept
     {
         if (!m_data || m_data->discarded)
         {
@@ -2384,6 +2450,9 @@ class basic_json_document
         }
         return view_type(m_data.get(), m_data->tape);
     }
+
+    /// deleted: the view of a temporary document would dangle
+    view_type root() const&& = delete;
 
     bool is_discarded() const noexcept
     {
@@ -2490,9 +2559,9 @@ class basic_json_document
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
-        if (NLOHMANN_VIEW_UNLIKELY(size >= 0xFFFFFFF0u))
+        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size))
         {
-            failure.code = detail::view::error_code::input_too_large; // LCOV_EXCL_LINE (4 GiB)
+            failure.code = detail::view::error_code::input_too_large;
         }
         else
         {
