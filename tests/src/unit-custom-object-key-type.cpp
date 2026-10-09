@@ -156,11 +156,11 @@ struct object_for
     using type = std::map<K, Value, std::less<K>, pair_allocator<Key, Value, Compare, Allocator>>; // NOLINT(modernize-use-transparent-functors)
 };
 
-using json_full = nlohmann::basic_json<object_for<key_full>::type>;
-using json_no_eq = nlohmann::basic_json<object_for<key_no_eq>::type>;
-using json_explicit = nlohmann::basic_json<object_for<key_explicit>::type>;
-using json_to_json = nlohmann::basic_json<object_for<key_to_json>::type>;
-using json_c_str = nlohmann::basic_json<object_for<key_c_str>::type>;
+using json_full = nlohmann::json::with_object_t<object_for<key_full>::type>;
+using json_no_eq = nlohmann::json::with_object_t<object_for<key_no_eq>::type>;
+using json_explicit = nlohmann::json::with_object_t<object_for<key_explicit>::type>;
+using json_to_json = nlohmann::json::with_object_t<object_for<key_to_json>::type>;
+using json_c_str = nlohmann::json::with_object_t<object_for<key_c_str>::type>;
 
 // a key that is long enough to need a length byte in CBOR and MessagePack
 const char* long_key_name(std::size_t i, std::string& storage);
