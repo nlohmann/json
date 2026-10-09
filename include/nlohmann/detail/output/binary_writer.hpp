@@ -85,6 +85,12 @@ template<typename BasicJsonType, typename CharType, typename OutputSinkType = ou
 class binary_writer
 {
     using string_t = typename BasicJsonType::string_t;
+
+    /// an object key as string_t: a reference when object_t::key_type already is
+    /// string_t, otherwise a converted copy that outlives sanitize_utf8_for_write's result
+    using object_key_string_t = typename std::conditional <
+                                std::is_same<typename BasicJsonType::object_t::key_type, string_t>::value,
+                                const string_t&, string_t >::type;
     using binary_t = typename BasicJsonType::binary_t;
     using number_float_t = typename BasicJsonType::number_float_t;
 
@@ -819,8 +825,10 @@ class binary_writer
 
                 for (const auto& el : *j.m_data.m_value.object)
                 {
+                    // a converted key must outlive the reference returned by sanitize_utf8_for_write
+                    const object_key_string_t key_string = el.first;
                     string_t storage;
-                    const string_t& key = sanitize_utf8_for_write(el.first, j, storage);
+                    const string_t& key = sanitize_utf8_for_write(key_string, j, storage);
                     write_number_with_ubjson_prefix(key.size(), true, use_bjdata);
                     oa.write_characters(
                           reinterpret_cast<const CharType*>(key.data()),
@@ -1366,8 +1374,10 @@ class binary_writer
                     continue;
                 }
 
+                // a converted key must outlive the reference returned by sanitize_utf8_for_write
+                const object_key_string_t key_string = current.object_it->first;
                 string_t storage;
-                const string_t& key = sanitize_utf8_for_write(current.object_it->first, j, storage);
+                const string_t& key = sanitize_utf8_for_write(key_string, j, storage);
                 write_number_with_ubjson_prefix(key.size(), true, use_bjdata);
                 oa.write_characters(
                       reinterpret_cast<const CharType*>(key.data()),
@@ -2730,6 +2740,11 @@ class binary_writer
     itself in every case but a sanitized `replace`/`ignore` one, so @a
     storage must outlive the returned reference only then.
 
+    @a s must be an lvalue that outlives the returned reference. An object key
+    whose `key_type` is not @ref string_t must therefore first be converted
+    into a named string_t (see @ref object_key_string_t); the deleted overload
+    below enforces this at compile time.
+
     @param[in] s        the string (value or object key) to write
     @param[in] context  the value @a s belongs to (for diagnostics)
     @param[out] storage  backing storage for a sanitized copy
@@ -2758,6 +2773,10 @@ class binary_writer
                 return storage;
         }
     }
+
+    /// deleted: anything but a string_t would bind a temporary that dies before the returned reference is used
+    template < typename T, enable_if_t < !std::is_same<T, string_t>::value, int > = 0 >
+    const string_t& sanitize_utf8_for_write(const T& /*s*/, const BasicJsonType& /*context*/, string_t& /*storage*/) const = delete;
 
     /*!
     @brief write an integer in the shortest encoding

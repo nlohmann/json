@@ -12,7 +12,10 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <map>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace
@@ -54,6 +57,49 @@ std::string dump_and_parse(const std::string& raw, eh error_handler)
 {
     return json::parse(json(raw).dump(-1, ' ', false, error_handler)).get<std::string>();
 }
+
+// an object key type that is not string_t, but converts implicitly to it
+class converting_key
+{
+  public:
+    converting_key(const char* s) : m_value(s) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+    converting_key(std::string s) : m_value(std::move(s)) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+
+    // the conversion yields a temporary string_t
+    operator std::string() const // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+    {
+        return m_value;
+    }
+
+    // read by the exception messages when JSON_DIAGNOSTICS is enabled
+    const char* data() const noexcept
+    {
+        return m_value.data();
+    }
+
+    friend bool operator<(const converting_key& lhs, const converting_key& rhs)
+    {
+        return lhs.m_value < rhs.m_value;
+    }
+
+  private:
+    std::string m_value;
+};
+
+// ObjectType using converting_key; the Key template argument is ignored
+template<typename Key, typename Value, typename Compare, typename Allocator>
+class converting_key_object : public std::map<converting_key, Value, std::less<converting_key>, // NOLINT(modernize-use-transparent-functors)
+    typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<const converting_key, Value>>>
+{
+    using base_type = std::map<converting_key, Value, std::less<converting_key>, // NOLINT(modernize-use-transparent-functors)
+                               typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<const converting_key, Value>>>;
+
+                             public:
+                               using base_type::base_type;
+                               using base_type::operator=;
+};
+
+using converting_key_json = nlohmann::basic_json<converting_key_object>;
 
 } // namespace
 
@@ -368,5 +414,111 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
         bson_obj["k"] = jval;
         const auto bson_bytes = json::to_bson(bson_obj, eh::keep);
         CHECK(json::from_bson(bson_bytes)["k"].get<std::string>() == ill_formed_cases()[0].bytes);
+    }
+}
+
+// The UBJSON and BJData writers bind the (possibly sanitized) key to a const
+// string_t&. If key_type is not string_t but converts to it, the converted
+// temporary must outlive that reference; this was a use-after-scope found by
+// AddressSanitizer. Keys exceed the small string optimization on purpose.
+TEST_CASE("UBJSON and BJData writers with an object_t whose key_type is not string_t")
+{
+    const std::string long_prefix(70, 'k');
+
+    SECTION("well-formed keys, every error_handler")
+    {
+        const std::string key1 = long_prefix + "-first";
+        const std::string key2 = long_prefix + "-second";
+
+        converting_key_json::object_t o;
+        o.emplace(converting_key(key1), 1);
+        o.emplace(converting_key(key2), "value");
+        const converting_key_json v(std::move(o));
+
+        json expected;
+        expected[key1] = 1;
+        expected[key2] = "value";
+
+        const bool combos[3][2] = {{false, false}, {true, false}, {true, true}};
+        for (const auto h : all_handlers())
+        {
+            CAPTURE(static_cast<int>(h))
+            for (const auto& combo : combos)
+            {
+                const bool use_count = combo[0];
+                const bool use_type = combo[1];
+                CAPTURE(use_count)
+                CAPTURE(use_type)
+
+                CHECK(json::from_ubjson(converting_key_json::to_ubjson(v, use_count, use_type, h)) == expected);
+                CHECK(json::from_bjdata(converting_key_json::to_bjdata(v, use_count, use_type, json::bjdata_version_t::draft2, h)) == expected);
+                CHECK(json::from_bjdata(converting_key_json::to_bjdata(v, use_count, use_type, json::bjdata_version_t::draft3, h)) == expected);
+            }
+        }
+    }
+
+    SECTION("ill-formed keys")
+    {
+        for (const auto& c : ill_formed_cases())
+        {
+            CAPTURE(c.name)
+            const std::string key = long_prefix + c.bytes;
+
+            converting_key_json::object_t o;
+            o.emplace(converting_key(key), 1);
+            const converting_key_json v(std::move(o));
+
+            CHECK_THROWS_AS(converting_key_json::to_ubjson(v, false, false, eh::strict), converting_key_json::type_error&);
+            CHECK_THROWS_AS(converting_key_json::to_bjdata(v, false, false, json::bjdata_version_t::draft2, eh::strict), converting_key_json::type_error&);
+
+            for (const auto h :
+                    {
+                        eh::replace, eh::ignore
+                    })
+            {
+                CAPTURE(static_cast<int>(h))
+                const std::string expected = dump_and_parse(key, h);
+
+                CHECK(json::from_ubjson(converting_key_json::to_ubjson(v, false, false, h)).begin().key() == expected);
+                CHECK(json::from_bjdata(converting_key_json::to_bjdata(v, false, false, json::bjdata_version_t::draft2, h)).begin().key() == expected);
+            }
+
+            CHECK(json::from_ubjson(converting_key_json::to_ubjson(v, false, false, eh::keep)).begin().key() == key);
+            CHECK(json::from_bjdata(converting_key_json::to_bjdata(v, false, false, json::bjdata_version_t::draft2, eh::keep)).begin().key() == key);
+        }
+    }
+
+    SECTION("nested deeper than the recursion limit")
+    {
+        // wrap the previous value, innermost first
+        converting_key_json v = 42;
+        json expected = 42;
+        for (int i = 199; i >= 0; --i)
+        {
+            const std::string key = "level-" + std::to_string(i) + "-" + std::string(64, 'x');
+
+            converting_key_json::object_t o;
+            o.emplace(converting_key(key), std::move(v));
+            v = converting_key_json(std::move(o));
+
+            json e;
+            e[key] = std::move(expected);
+            expected = std::move(e);
+        }
+
+        for (const auto h : all_handlers())
+        {
+            CAPTURE(static_cast<int>(h))
+            for (const bool use_count :
+                    {
+                        false, true
+                    })
+            {
+                CAPTURE(use_count)
+
+                CHECK(json::from_ubjson(converting_key_json::to_ubjson(v, use_count, false, h)) == expected);
+                CHECK(json::from_bjdata(converting_key_json::to_bjdata(v, use_count, false, json::bjdata_version_t::draft2, h)) == expected);
+            }
+        }
     }
 }
