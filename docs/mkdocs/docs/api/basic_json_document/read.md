@@ -54,6 +54,9 @@ page at a time, and every page costs a page fault the first time it is written. 
 a 55 MB document into a reused document took about 40 % less time than parsing it into a fresh one. Programs that parse
 many documents of similar size should therefore keep one document and call `read()`.
 
+An integer argument that is not a `#!cpp bool` where the flags are expected, such as `#!cpp read(ptr, len)`, does not
+compile; see [`parse`](parse.md#notes).
+
 ## Examples
 
 ??? example

@@ -1067,7 +1067,7 @@ MessagePack's ext type and BSON's binary subtype are each stored in a single byt
 
 [`basic_json_document::parse()`](../api/basic_json_document/parse.md) and the other parsing functions of
 [`basic_json_document`](../api/basic_json_document/index.md) index a value's position in the source text in 32 bits,
-so they do not support an input of 4 GiB or more. The same 32-bit limit applies to an **editable** document's own
+so they do not support an input of 4294967280 bytes (4 GiB minus 16 bytes) or more. The same 32-bit limit applies to an **editable** document's own
 storage: [`set`](../api/basic_json_document/set.md) and [`push_back`](../api/basic_json_document/push_back.md) throw
 this exception once the strings and number tokens written by edits reach 4 GiB in total, or once more than
 4294967295 arrays/objects have had an element set or appended to them.
@@ -1075,7 +1075,7 @@ this exception once the strings and number tokens written by edits reach 4 GiB i
 !!! failure "Example messages"
 
     ```
-    [json.exception.out_of_range.416] input of 4 GiB or more is not supported by json_document
+    [json.exception.out_of_range.416] input of 4294967280 bytes or more is not supported by json_document
     ```
     ```
     [json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document

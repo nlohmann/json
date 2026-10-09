@@ -51,6 +51,9 @@ Linear in the length of the input.
 only differs in that the input is always copied rather than sometimes borrowed. Prefer [`parse()`](parse.md) when the
 input's lifetime already covers the document's, since it avoids the copy for borrowed inputs.
 
+An integer argument that is not a `#!cpp bool` where the flags are expected, such as `#!cpp parse_copy(ptr, len)`, does not
+compile; see [`parse`](parse.md#notes).
+
 ## Examples
 
 ??? example

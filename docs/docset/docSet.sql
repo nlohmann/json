@@ -184,7 +184,6 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::items', 'Met
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::materialize', 'Method', 'api/basic_json_view/materialize/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::number_format', 'Enum', 'api/basic_json_view/number_format/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::number_token', 'Method', 'api/basic_json_view/number_token/index.html');
-INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator bool', 'Method', 'api/basic_json_view/operator_bool/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator<<', 'Operator', 'api/basic_json_view/operator_ltlt/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator[]', 'Operator', 'api/basic_json_view/operator[]/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator==', 'Operator', 'api/basic_json_view/operator_eq/index.html');

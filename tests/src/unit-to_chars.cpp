@@ -15,6 +15,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -666,13 +667,24 @@ void check_shortest(double v)
     const std::string text(buf.data(), end);
     CAPTURE(text)
     CHECK(parse_double(text) == v);
-    // the layout is that of format_buffer() for the same digits
+    // the layout is that of format_buffer() for the digits of Zmij
+    const auto sd = nlohmann::detail::zmij::to_shortest(reinterpret_bits<std::uint64_t>(v));
+    const std::uint64_t significand = sd.has_digit ? (sd.integral * 10) + sd.digit : sd.integral;
+    int exponent = sd.has_digit ? sd.exponent : sd.exponent + 1;
+    std::string significand_digits = std::to_string(significand);
+    while (significand_digits.size() > 1 && significand_digits.back() == '0')
+    {
+        significand_digits.pop_back();
+        ++exponent;
+    }
     std::array<char, 64> reference{};
-    int len = 0;
-    int exponent = 0;
-    nlohmann::detail::dtoa_impl::shortest_digits(reference.data(), len, exponent, v);
-    const char* const reference_end = nlohmann::detail::dtoa_impl::format_buffer(reference.data(), len, exponent, -4, 15);
+    std::copy(significand_digits.begin(), significand_digits.end(), reference.begin());
+    const char* const reference_end = nlohmann::detail::dtoa_impl::format_buffer(reference.data(), static_cast<int>(significand_digits.size()), exponent, -4, 15);
     CHECK(text == std::string(reference.data(), static_cast<std::size_t>(reference_end - reference.data())));
+    // and write_positive() is what to_chars() calls
+    std::array<char, 64> positive{};
+    const char* const positive_end = nlohmann::detail::dtoa_impl::write_positive(positive.data(), positive.data() + positive.size(), v);
+    CHECK(text == std::string(positive.data(), static_cast<std::size_t>(positive_end - positive.data())));
     const auto de = digits_and_exponent(text);
     const std::string& digits = de.first;
     if (digits.size() > 1)
@@ -782,6 +794,61 @@ TEST_CASE("shortest digits of doubles")
             {
                 check_shortest(v);
             }
+        }
+    }
+}
+
+TEST_CASE("choice of the conversion")
+{
+    using nlohmann::detail::dtoa_impl::is_binary64;
+
+    SECTION("by the format of the type")
+    {
+        // Zmij needs binary64 numbers; everything else uses Grisu2
+        static_assert(!is_binary64<float>::value, "float is not binary64");
+        static_assert(is_binary64<double>::value == (std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::digits == 53),
+                      "double is binary64 where it is IEEE 754 with 53 digits");
+        static_assert(!is_binary64<int>::value, "integers are not binary64");
+        static_assert(is_binary64<long double>::value == (std::numeric_limits<long double>::is_iec559 && std::numeric_limits<long double>::digits == 53 && sizeof(long double) == 8),
+                      "long double is binary64 where it has the format of a double");
+        CHECK(!is_binary64<float>::value);
+        CHECK(is_binary64<double>::value);
+    }
+
+    SECTION("float: Grisu2, double: Zmij")
+    {
+        // 5.3165205877497296e+16 is one of the doubles for which Grisu2 does not find the shortest digits
+        constexpr double value = 5.3165205877497296e+16;
+        std::array<char, 64> buf{};
+        const char* const last = buf.data() + buf.size();
+
+        char* end = nlohmann::detail::dtoa_impl::write_positive(buf.data(), last, value);
+        CHECK(std::string(buf.data(), end) == "5.31652058774973e+16");
+        end = nlohmann::detail::dtoa_impl::write_positive_grisu2(buf.data(), last, value);
+        CHECK(std::string(buf.data(), end) == "5.3165205877497296e+16");
+
+        constexpr float f = 1.1754944e-38f;
+        end = nlohmann::detail::dtoa_impl::write_positive(buf.data(), last, f);
+        const std::string dispatched(buf.data(), end);
+        end = nlohmann::detail::dtoa_impl::write_positive_grisu2(buf.data(), last, f);
+        CHECK(dispatched == std::string(buf.data(), end));
+    }
+
+    SECTION("long double with the format of a double: Zmij")
+    {
+        // (on platforms where long double is wider, Grisu2 does not apply either: the snprintf fallback does)
+        if (std::numeric_limits<long double>::digits == 53 && std::numeric_limits<long double>::is_iec559)
+        {
+            using long_double_json = nlohmann::json::with_float_t<long double>;
+            for (const double d :
+                    {
+                        5.3165205877497296e+16, 1.0, 0.1, 123456.789, 2.2250738585072014e-308, 1.7976931348623157e+308, -5.3165205877497296e+16
+                    })
+            {
+                CAPTURE(d)
+                CHECK(long_double_json(static_cast<long double>(d)).dump() == nlohmann::json(d).dump());
+            }
+            CHECK(long_double_json(5.3165205877497296e+16L).dump() == "5.31652058774973e+16");
         }
     }
 }
