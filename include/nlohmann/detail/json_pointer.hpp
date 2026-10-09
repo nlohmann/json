@@ -374,10 +374,10 @@ class json_pointer
     {
         // children[id] maps a reference token to the number of the prefix
         // extended by that token; number 0 is the empty prefix
-        std::vector<std::map<string_t, std::size_t>> children;
+        std::vector<std::map<string_t, std::size_t>> children {}; // NOLINT(readability-redundant-member-init)
         // is_array[id] is true iff some flattened key has the reference token
         // 0 directly below the prefix with number id
-        std::vector<bool> is_array;
+        std::vector<bool> is_array {}; // NOLINT(readability-redundant-member-init)
     };
 
     /*!
