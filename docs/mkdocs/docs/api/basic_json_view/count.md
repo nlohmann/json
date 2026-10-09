@@ -24,10 +24,17 @@ No-throw guarantee: this function never throws exceptions.
 ## Complexity
 
 Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after another,
-in document order, scanning all of them, since the last match is wanted. Each comparison first checks the key's length
+in document order, stopping at the first match. Each comparison first checks the key's length
 -- already known from the index, without reading the key bytes -- before comparing its content.
 
 ## Notes
+
+!!! warning "Duplicate keys: the first member wins"
+
+    If the source text repeats a key, this resolves to the *first* member with it, not to the last one that
+    [`materialize()`](materialize.md) and `parse()` keep. See the [Notes on duplicate keys](operator[].md#notes) of
+    `operator[]` and [Duplicate keys](../../features/json_view.md#duplicate-keys) for the reasons and for how to get
+    the last value.
 
 This method always returns `#!cpp 0` when the value is not an object -- including a [discarded](is_discarded.md)
 view.
@@ -36,7 +43,7 @@ Unlike [`BasicJsonType::count()`](../basic_json/count.md), whose return value ca
 an `ObjectType` that allows multiple entries per key, `count()` here never does: it is exactly
 [`contains()`](contains.md) as `#!cpp 0`/`#!cpp 1`. This holds even if the source text has a duplicate key -- see the
 [Notes on duplicate keys](operator[].md#notes) of `operator[]` -- because a `#!cpp count() > 1` result would require
-counting every member with a matching key (the lookup functions resolve to the *last* one).
+counting every member with a matching key (the lookup functions resolve to the *first* one).
 
 ## Examples
 
