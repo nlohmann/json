@@ -34,12 +34,21 @@ import shutil
 import subprocess  # nosec B404
 import sys
 import tarfile
+import tempfile
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 
+# seconds without data after which a download fails
+DOWNLOAD_TIMEOUT = 60
+
 # pinned releases for --download; the hashes are those of the archives
+#
+# The yyjson and simdjson archives are the tag archives GitHub generates
+# (archive/refs/tags/...), whose bytes GitHub does not guarantee to be stable. A SHA-256
+# mismatch for one of them means that GitHub regenerated the archive: check the upstream
+# tag, then pin the new hash.
 PINNED = {
     'yyjson': {
         'version': '0.13.0',
@@ -146,6 +155,15 @@ def system_library(name):
     return None
 
 
+def sha256_file(path):
+    """SHA-256 of a file, read in chunks (the Boost archive is more than 100 MB)"""
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 def download_library(name, work):
     """a pinned release, downloaded and checked, or an error"""
     pin = PINNED[name]
@@ -155,19 +173,27 @@ def download_library(name, work):
         print(f'downloading {pin["url"]}', flush=True)
         # the URLs are the https constants in PINNED, and the SHA-256 is checked below
         # (into a .part file first, so that an interrupted download is not kept)
-        urllib.request.urlretrieve(pin['url'], archive + '.part')  # nosec B310
+        with urllib.request.urlopen(pin['url'], timeout=DOWNLOAD_TIMEOUT) as response:  # nosec B310
+            with open(archive + '.part', 'wb') as f:
+                shutil.copyfileobj(response, f)
         os.replace(archive + '.part', archive)
-    with open(archive, 'rb') as f:
-        digest = hashlib.sha256(f.read()).hexdigest()
+    digest = sha256_file(archive)
     if digest != pin['sha256']:
         os.remove(archive)  # downloaded again by the next run
         sys.exit(f'error: SHA-256 of {archive} is {digest}, expected {pin["sha256"]} (removed)')
     src = os.path.join(work, 'download', pin['dir'])
     if not os.path.isdir(src):
-        with tarfile.open(archive) as t:
-            # (the 'data' filter rejects links and paths outside the target where Python has it)
-            kwargs = {'filter': 'data'} if hasattr(tarfile, 'data_filter') else {}
-            t.extractall(os.path.join(work, 'download'), **kwargs)  # noqa: S202 (checked archive)  # nosec B202
+        # extracted into a temporary directory first, so that an interrupted extraction
+        # is not mistaken for a complete one
+        tmp = tempfile.mkdtemp(prefix=pin['dir'] + '.part-', dir=os.path.join(work, 'download'))
+        try:
+            with tarfile.open(archive) as t:
+                # (the 'data' filter rejects links and paths outside the target where Python has it)
+                kwargs = {'filter': 'data'} if hasattr(tarfile, 'data_filter') else {}
+                t.extractall(tmp, **kwargs)  # noqa: S202 (checked archive)  # nosec B202
+            os.rename(os.path.join(tmp, pin['dir']), src)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
     if name == 'yyjson':
         return Library(name, [os.path.join(src, 'src')], [os.path.join(src, 'src', 'yyjson.c')], [], pin['version'])
     if name == 'simdjson':
@@ -222,8 +248,9 @@ def main():
     args.corpus = [os.path.abspath(f) for f in args.corpus]
     args.build_dir = os.path.abspath(args.build_dir)
 
-    cxx = os.environ.get('CXX', 'c++')
-    cc = os.environ.get('CC', 'cc')
+    # (CXX and CC may contain arguments, e.g. 'ccache g++')
+    cxx = shlex.split(os.environ.get('CXX', 'c++'))
+    cc = shlex.split(os.environ.get('CC', 'cc'))
     os.makedirs(args.build_dir, exist_ok=True)
 
     libs = {}
@@ -250,15 +277,15 @@ def main():
     for lib in libs.values():
         for src in lib.sources:
             obj = os.path.join(args.build_dir, os.path.basename(src) + '.o')
-            compiler = cc if src.endswith('.c') else cxx
-            run([compiler] + (['-std=c++17'] if compiler == cxx else []) + ['-O3', '-DNDEBUG', '-c', src, '-o', obj]
+            is_c = src.endswith('.c')
+            run((cc if is_c else cxx) + ([] if is_c else ['-std=c++17']) + ['-O3', '-DNDEBUG', '-c', src, '-o', obj]
                 + ['-I' + d for d in lib.include])
             objects.append(obj)
 
     binaries = {}
     for bench in ['bench_view', 'bench_corpus', 'bench_edit']:
         exe = os.path.join(args.build_dir, bench)
-        run([cxx] + flags + include + [os.path.join(HERE, bench + '.cpp')] + objects + link + ['-o', exe])
+        run(cxx + flags + include + [os.path.join(HERE, bench + '.cpp')] + objects + link + ['-o', exe])
         binaries[bench] = exe
 
     # run: bench_view on its documents, bench_corpus on those and the given files
@@ -278,12 +305,14 @@ def main():
     host = re.sub(r'[^A-Za-z0-9-]+', '-', platform.node().split('.')[0]) or 'host'
     stem = os.path.join(HERE, 'results', f'{now:%Y-%m-%d}-{host}')
     os.makedirs(os.path.dirname(stem), exist_ok=True)
+    cxx_version = output(cxx + ['--version'])
+    compiler_version = cxx_version.splitlines()[0] if cxx_version else ' '.join(cxx)
     meta = [
         ('date', f'{now:%Y-%m-%d %H:%M}'),
         ('commit', git_commit()),
         ('CPU', cpu_model()),
         ('OS', f'{platform.system()} {platform.release()} ({platform.machine()})'),
-        ('compiler', output([cxx, '--version']).splitlines()[0] if output([cxx, '--version']) else cxx),
+        ('compiler', compiler_version),
         ('flags', ' '.join(flags)),
         ('yyjson', libs['yyjson'].version),
         ('simdjson', libs['simdjson'].version),
