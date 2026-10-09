@@ -211,7 +211,7 @@ struct node
 {
     std::uint8_t kind;   ///< value_t
     std::uint8_t flags;  ///< node_flags
-    std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; otherwise 0
+    std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the hash index (1-based, 0 = none); otherwise 0
     std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if node_flags::escaped
     std::uint32_t len;   ///< string: decoded bytes; float: token bytes; array/object: element count
     std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence)
@@ -448,7 +448,8 @@ NLOHMANN_JSON_NAMESPACE_END
 #else
     #define NLOHMANN_VIEW_NEON 0
 #endif
-#if !defined(JSON_VIEW_NO_SIMD) && !NLOHMANN_VIEW_NEON && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
+// (x86 only: other targets can define __SSE2__ as well, e.g., WebAssembly with -msse2, but have no <cpuid.h>)
+#if !defined(JSON_VIEW_NO_SIMD) && !NLOHMANN_VIEW_NEON && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
     #include <emmintrin.h>
     #define NLOHMANN_VIEW_SSE2 1
 #else
@@ -2825,12 +2826,23 @@ NLOHMANN_JSON_NAMESPACE_END
 // number of the table (1-based) in `extra`. A slot holds the offset of a key
 // node from its object node (0: empty). Of duplicate keys, the first is kept,
 // as for the linear search.
+//
+// The hash is not seeded, so keys chosen to collide could make the build
+// quadratic. A key therefore sits at most index_max_displacement slots away
+// from its home slot; if a key would sit further away, the table is dropped
+// and the object is searched linearly (like a small one). For the same
+// reason, a lookup visits at most index_max_displacement + 1 slots.
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 namespace view
 {
+
+/// the farthest a key may sit from its home slot (a table with at most half of
+/// its slots in use gives random keys a distance of about 50 for millions of
+/// members; and every member costs at most this many steps while building)
+constexpr std::size_t index_max_displacement = 64;
 
 /// hash of a key: its bytes, eight at a time, in a fixed byte order
 inline std::uint64_t key_hash(const char* s, std::size_t n) noexcept
@@ -2869,12 +2881,14 @@ inline void build_object_index(document_data& d, node* obj)
     d.index_slots.resize(start + cap, 0);
     std::uint32_t* const slots = d.index_slots.data() + start;
     const std::size_t mask = cap - 1;
+    bool degenerate = false;
     for (const node* k = document_data::first_child(obj), *end = document_data::child_end(obj); k != end; k = document_data::after(k + 1))
     {
         const char* const key = d.str(*k);
         const std::uint64_t hash = key_hash(key, k->len); // (a cast of the call would be useless where std::uint64_t is std::size_t)
         std::size_t i = static_cast<std::size_t>(hash) & mask;
         bool duplicate = false;
+        std::size_t distance = 0;
         while (slots[i] != 0)
         {
             const node* const other = obj + slots[i];
@@ -2883,12 +2897,26 @@ inline void build_object_index(document_data& d, node* obj)
                 duplicate = true; // keep the first
                 break;
             }
+            if (++distance > index_max_displacement)
+            {
+                degenerate = true; // too many keys share a home region
+                break;
+            }
             i = (i + 1) & mask;
+        }
+        if (degenerate)
+        {
+            break;
         }
         if (!duplicate)
         {
             slots[i] = static_cast<std::uint32_t>(k - obj);
         }
+    }
+    if (degenerate)
+    {
+        d.index_slots.resize(start); // no table: the object is searched linearly
+        return;
     }
     d.indexes.push_back(document_data::object_index{start, static_cast<std::uint32_t>(mask)});
     obj->extra = static_cast<std::uint16_t>(d.indexes.size());
@@ -2911,7 +2939,7 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
     const std::uint32_t* const slots = d.index_slots.data() + ix.start;
     const std::uint64_t hash = key_hash(key, n); // (a cast of the call would be useless where std::uint64_t is std::size_t)
     std::size_t i = static_cast<std::size_t>(hash) & ix.mask;
-    for (;;)
+    for (std::size_t distance = 0; distance <= index_max_displacement; ++distance)
     {
         const std::uint32_t s = slots[i];
         if (s == 0)
@@ -2925,6 +2953,7 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
         }
         i = (i + 1) & ix.mask;
     }
+    return nullptr; // (no key sits further from its home slot)
 }
 
 }  // namespace view
@@ -5085,6 +5114,8 @@ class basic_json_document
         std::string arena(shrink_arena ? d.arena : std::string());
         const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap;
         const bool into_header = d.tape_size <= d.inline_cap;
+        std::vector<document_data::object_index> indexes(d.indexes.capacity() > d.indexes.size() ? d.indexes : std::vector<document_data::object_index>());
+        std::vector<std::uint32_t> index_slots(d.index_slots.capacity() > d.index_slots.size() ? d.index_slots : std::vector<std::uint32_t>());
         node* fresh = (shrink_tape && !into_header) ? static_cast<node*>(::operator new (d.tape_size * sizeof(node))) : d.inline_tape;
 
         if (shrink_tape)
@@ -5098,6 +5129,14 @@ class basic_json_document
         {
             d.arena.swap(arena);
             d.base[1] = d.arena.data();
+        }
+        if (d.indexes.capacity() > d.indexes.size())
+        {
+            d.indexes.swap(indexes);
+        }
+        if (d.index_slots.capacity() > d.index_slots.size())
+        {
+            d.index_slots.swap(index_slots);
         }
     }
 
@@ -5153,9 +5192,11 @@ class basic_json_document
             d.base[0] = d.src;
             d.base[1] = d.arena.data();
             detail::view::build_object_indexes(d);
+            std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while parsing)
             d.discarded = false;
             return;
         }
+        std::vector<std::uint32_t>().swap(d.large_objects);
         if (allow_exceptions)
         {
             detail::view::throw_parse_failure<BasicJsonType>(failure, src, size, comments, trailing_commas);
