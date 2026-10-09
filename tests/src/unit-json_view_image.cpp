@@ -314,6 +314,95 @@ TEST_CASE("json_view images: edited documents")
         CHECK(l.root()["list"].size() == 4);
     }
 
+    SECTION("the targets of links do not reach the image")
+    {
+        // Edits that make an entry of a moved sequence link to a value mark the
+        // value as linked (node_flags::linked). An image has no links and no
+        // such flag: the full and the bounds check reject it.
+        const std::string nested = R"({"a": [1, 2, {"x": [3]}, "s", 1.5, true, null, [4, 5]], "b": {"c": 1, "d": [1, 2, 3], "e": {"f": "g"}}, "h": "str"})";
+        const auto check_image = [](const json_editable_document & d)
+        {
+            const std::vector<std::uint8_t> image = d.save();
+            for (std::size_t i = 0; i < node_count(image); ++i)
+            {
+                CAPTURE(i)
+                CHECK((node_at(image, i).flags & nlohmann::detail::view::node_flags::linked) == 0);
+                CHECK(node_at(image, i).kind != nlohmann::detail::view::kind_link);
+            }
+            for (const image_check check :
+                    {
+                        image_check::full, image_check::bounds
+                    })
+            {
+                CHECK(load_result(image, check).empty());
+            }
+            check_round_trip(d);
+            // a loaded document is edited and saved again
+            json_editable_document e = json_editable_document::load(image);
+            CHECK(e.root().dump() == d.root().dump());
+            e.set(e.root(), "after", 1);
+            CHECK(loaded_dump(e.save()) == e.root().dump());
+        };
+
+        SECTION("a container replaced by a scalar after an earlier edit")
+        {
+            json_editable_document d = json_editable_document::parse(nested);
+            d.set(d.root()["a"][0], 9);
+            d.set(d.root()["a"][2], 5);
+            check_image(d);
+            d.set(d.root()["a"][2], "now a string");
+            check_image(d);
+            d.set(d.root()["a"][7], 0.25);
+            check_image(d);
+            d.set(d.root()["b"]["e"], true);
+            d.set(d.root()["b"]["d"], 7);
+            check_image(d);
+        }
+
+        SECTION("insert and push_back into parsed arrays")
+        {
+            json_editable_document d = json_editable_document::parse(nested);
+            d.push_back(d.root()["a"], 6);
+            check_image(d);
+            d.insert(d.root()["a"], 0, "first");
+            check_image(d);
+            d.insert(d.root()["b"]["d"], 1, json::array({1, 2}));
+            d.push_back(d.root()["b"]["d"], json::object({{"k", nullptr}}));
+            check_image(d);
+            // links to values that are replaced afterwards
+            d.set(d.root()["a"][3], json::object());
+            d.set(d.root()["a"][4], false);
+            d.set(d.root()["a"][5], "replaced");
+            d.set(d.root()["a"][9], 1e300);
+            check_image(d);
+        }
+
+        SECTION("members set in parsed objects")
+        {
+            json_editable_document d = json_editable_document::parse(nested);
+            d.set(d.root(), "new", 1);
+            d.set(d.root()["b"], "c", "changed");
+            d.set(d.root()["b"], "e", json::array({1, {{"z", 2}}}));
+            d.set(d.root()["b"], "more", d.root()["a"]);
+            check_image(d);
+            d.set(d.root()["a"][2], 3); // a link target in a copied subtree
+            d.erase(d.root()["b"], "c");
+            d.set(d.root(), "h", json::object());
+            check_image(d);
+        }
+
+        SECTION("erase")
+        {
+            json_editable_document d = json_editable_document::parse(nested);
+            d.push_back(d.root()["a"], 6);
+            d.erase(d.root()["a"], 0);
+            d.erase(d.root()["a"], 1);
+            d.set(d.root()["a"][0], 1);
+            d.erase(d.root()["b"], "d");
+            check_image(d);
+        }
+    }
+
     SECTION("the root replaced")
     {
         json_editable_document d = json_editable_document::parse(text);
@@ -539,6 +628,15 @@ TEST_CASE("json_view images: check")
         {
             n.extra = 1; // a hash index
         }), true);
+        // the flag of the targets of links (editable documents) is not part of an image
+        for (std::size_t i = 0; i < node_count(image); ++i)
+        {
+            CAPTURE(i)
+            rejected(corrupted(image, i, [](node & n)
+            {
+                n.flags = static_cast<std::uint8_t>(n.flags | nlohmann::detail::view::node_flags::linked);
+            }), true);
+        }
     }
 
     SECTION("bounds")
