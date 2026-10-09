@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <algorithm> // sort
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint8_t, uint16_t, uint32_t, uint64_t
@@ -252,17 +253,25 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     return image;
 }
 
-/// whether a number node matches its token the way the parser records it
-/// (after the bounds check)
-inline bool check_number(const node& n, const unsigned char* text)
+/// the parts of a number token that the checks need
+struct number_token
 {
-    const std::size_t len = number_length(n);
-    const unsigned char* const s = text + n.off;
+    const unsigned char* int_start;
+    std::size_t int_digits;
+    std::size_t frac_digits;
+    std::int64_t exponent;
+    bool negative;
+    bool is_float; ///< a fraction or an exponent
+};
+
+/// whether [s, s + len) is a JSON number (the grammar the parser accepts)
+inline bool scan_number_token(const unsigned char* s, std::size_t len, number_token& t)
+{
     const unsigned char* const e = s + len;
     const unsigned char* p = s;
-    const bool negative = *p == '-';
-    p += negative ? 1 : 0;
-    const unsigned char* const int_start = p;
+    t.negative = p != e && *p == '-';
+    p += t.negative ? 1 : 0;
+    t.int_start = p;
     if (p == e)
     {
         return false;
@@ -282,9 +291,9 @@ inline bool check_number(const node& n, const unsigned char* text)
     {
         return false;
     }
-    const auto int_digits = static_cast<std::size_t>(p - int_start);
-    std::size_t frac_digits = 0;
-    bool is_float = false;
+    t.int_digits = static_cast<std::size_t>(p - t.int_start);
+    t.frac_digits = 0;
+    t.is_float = false;
     if (p != e && *p == '.')
     {
         const unsigned char* const f0 = ++p;
@@ -296,10 +305,10 @@ inline bool check_number(const node& n, const unsigned char* text)
         {
             return false;
         }
-        frac_digits = static_cast<std::size_t>(p - f0);
-        is_float = true;
+        t.frac_digits = static_cast<std::size_t>(p - f0);
+        t.is_float = true;
     }
-    std::int64_t exponent = 0;
+    t.exponent = 0;
     if (p != e && (*p | 0x20u) == 'e')
     {
         ++p;
@@ -311,56 +320,171 @@ inline bool check_number(const node& n, const unsigned char* text)
         }
         while (p != e && is_digit(*p))
         {
-            exponent = exponent < 100000 ? (exponent * 10) + (*p - '0') : exponent;
+            t.exponent = t.exponent < 100000 ? (t.exponent * 10) + (*p - '0') : t.exponent;
             ++p;
         }
-        exponent = exp_negative ? -exponent : exponent;
-        is_float = true;
+        t.exponent = exp_negative ? -t.exponent : t.exponent;
+        t.is_float = true;
     }
-    if (p != e)
+    return p == e;
+}
+
+/// the digit layout the parser records for a float token (compaction
+/// writes "many" instead; the caller accepts both)
+inline std::uint16_t float_layout(const number_token& t)
+{
+    return static_cast<std::uint16_t>((t.int_digits < 255 ? t.int_digits : 255) | ((t.frac_digits < 255 ? t.frac_digits : 255) << 8u));
+}
+
+/// whether a float token (well-formed, per scan_number_token) is finite as
+/// double; parse() rejects floats that overflow, and as there, only a number
+/// whose magnitude could reach 1e308 needs the conversion
+inline bool float_token_finite(const unsigned char* s, std::size_t len, const number_token& t)
+{
+    if (static_cast<std::int64_t>(t.int_digits) + t.exponent > 300)
+    {
+        node n{};
+        n.kind = static_cast<std::uint8_t>(value_t::number_float);
+        n.len = static_cast<std::uint32_t>(len);
+        const auto v = float_value<double>(reinterpret_cast<const char*>(s), n); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        return v <= (std::numeric_limits<double>::max)() && v >= -(std::numeric_limits<double>::max)();
+    }
+    return true;
+}
+
+/// whether an integer node matches its token the way the parser records it
+/// (after the bounds check; the token has at most 256 characters)
+inline bool check_integer(const node& n, const unsigned char* text)
+{
+    const std::size_t len = number_length(n);
+    const unsigned char* const s = text + n.off;
+    number_token t{};
+    if (!scan_number_token(s, len, t))
     {
         return false;
     }
-    if (n.kind == static_cast<std::uint8_t>(value_t::number_float))
-    {
-        // the digit layout the parser records (or "many", as compaction
-        // writes it), and a finite value
-        const auto layout = static_cast<std::uint16_t>((int_digits < 255 ? int_digits : 255) | ((frac_digits < 255 ? frac_digits : 255) << 8u));
-        if (n.extra != layout && n.extra != 0xFFFFu)
-        {
-            return false;
-        }
-        // parse() rejects floats that overflow; as there, only a number whose
-        // magnitude could reach 1e308 needs the conversion
-        if (static_cast<std::int64_t>(int_digits) + exponent > 300)
-        {
-            const auto v = float_value<double>(reinterpret_cast<const char*>(s), n); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            return v <= (std::numeric_limits<double>::max)() && v >= -(std::numeric_limits<double>::max)();
-        }
-        return true;
-    }
-    // integers: the token's value is the stored one; number_integer nodes of
-    // edits can be non-negative (as basic_json keeps the type of a value)
+    // the token's value is the stored one; number_integer nodes of edits can
+    // be non-negative (as basic_json keeps the type of a value)
     const bool integer = n.kind == static_cast<std::uint8_t>(value_t::number_integer);
-    if (is_float || int_digits > 20 || (negative && !integer))
+    if (t.is_float || t.int_digits > 20 || (t.negative && !integer))
     {
         return false;
     }
     // (at most 19 digits cannot overflow; 20 digits are compared with 2^64 - 1)
-    if (int_digits == 20 && std::memcmp(int_start, "18446744073709551615", 20) > 0)
+    if (t.int_digits == 20 && std::memcmp(t.int_start, "18446744073709551615", 20) > 0)
     {
         return false;
     }
     std::uint64_t m = 0;
-    for (const unsigned char* d = int_start; d != int_start + int_digits; ++d)
+    for (const unsigned char* d = t.int_start; d != t.int_start + t.int_digits; ++d)
     {
         m = (m * 10) + static_cast<std::uint64_t>(*d - '0');
     }
-    if (integer && m > (negative ? std::uint64_t{1} << 63u : (std::uint64_t{1} << 63u) - 1))
+    if (integer && m > (t.negative ? std::uint64_t{1} << 63u : (std::uint64_t{1} << 63u) - 1))
     {
         return false;
     }
-    return integer_bits(n) == (negative ? 0 - m : m);
+    return integer_bits(n) == (t.negative ? 0 - m : m);
+}
+
+/// a byte range of the text or of the decoded strings
+struct byte_range
+{
+    std::uint32_t off;
+    std::uint32_t len;
+};
+
+/// a float token and the digit layout its node records
+struct float_range
+{
+    std::uint32_t off;
+    std::uint32_t len;
+    std::uint16_t extra;
+};
+
+/// Run check once for each distinct range of ranges (which are within bounds
+/// and not empty). Ranges that are not identical must not overlap: save()
+/// writes every string and token to a place of its own, and nodes that share
+/// a value (copies within a document) share the whole range. This bounds the
+/// work by the size of the text, however many nodes point to the same bytes.
+template<typename Check>
+bool check_distinct_ranges(std::vector<byte_range>& ranges, Check check)
+{
+    std::sort(ranges.begin(), ranges.end(), [](const byte_range & a, const byte_range & b)
+    {
+        return a.off != b.off ? a.off < b.off : a.len < b.len;
+    });
+    std::size_t end = 0;
+    for (std::size_t i = 0; i < ranges.size(); ++i)
+    {
+        const byte_range r = ranges[i];
+        if (i != 0 && r.off == ranges[i - 1].off && r.len == ranges[i - 1].len)
+        {
+            continue;
+        }
+        if (r.off < end || !check(r))
+        {
+            return false;
+        }
+        end = static_cast<std::size_t>(r.off) + r.len;
+    }
+    return true;
+}
+
+/// Check the float nodes: each token once (nodes of the same token must
+/// record layouts that match it), tokens must not overlap.
+inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned char* text)
+{
+    std::sort(ranges.begin(), ranges.end(), [](const float_range & a, const float_range & b)
+    {
+        return a.off != b.off ? a.off < b.off : (a.len != b.len ? a.len < b.len : a.extra < b.extra);
+    });
+    std::size_t end = 0;
+    std::size_t i = 0;
+    while (i < ranges.size())
+    {
+        const float_range r = ranges[i];
+        if (r.off < end)
+        {
+            return false;
+        }
+        number_token t{};
+        const unsigned char* const s = text + r.off;
+        if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+        {
+            return false;
+        }
+        // the digit layout the parser records (or "many", as compaction writes it)
+        const std::uint16_t layout = float_layout(t);
+        for (; i < ranges.size() && ranges[i].off == r.off && ranges[i].len == r.len; ++i)
+        {
+            if (ranges[i].extra != layout && ranges[i].extra != 0xFFFFu)
+            {
+                return false;
+            }
+        }
+        end = static_cast<std::size_t>(r.off) + r.len;
+    }
+    return true;
+}
+
+/// the content checks of check_image: source strings as the parser leaves
+/// them (no quotes, backslashes, or control characters), decoded strings
+/// (valid UTF-8), and float tokens
+inline bool check_contents(const unsigned char* text, const unsigned char* arena,
+                           std::vector<byte_range>& source_strings, std::vector<byte_range>& decoded_strings,
+                           std::vector<float_range>& floats)
+{
+    return check_distinct_ranges(source_strings, [text](const byte_range & r)
+    {
+        const unsigned char* const b = text + r.off;
+        return scan_string_run(b, b + r.len) == b + r.len;
+    })
+    && check_distinct_ranges(decoded_strings, [arena](const byte_range & r)
+    {
+        return valid_utf8_prefix(arena + r.off, r.len) == r.len;
+    })
+    && check_float_ranges(floats, text);
 }
 
 /// Check the nodes of a loaded image against its text and decoded strings:
@@ -368,6 +492,12 @@ inline bool check_number(const node& n, const unsigned char* text)
 /// objects; keys; bounds; string contents (source strings as the parser
 /// leaves them: no quotes, backslashes, or control characters; all strings
 /// valid UTF-8); and number tokens.
+///
+/// The structure and the bounds are checked node by node. The contents of
+/// strings and of float tokens are checked afterwards, once for each distinct
+/// range (see check_distinct_ranges), so that the full check is linear in the
+/// size of the image plus the sorting of the ranges, and not in the number of
+/// nodes times the size of the text.
 inline bool check_image(const node* nodes, std::size_t count, const unsigned char* text, std::size_t text_size,
                         const unsigned char* arena, std::size_t arena_size, bool full)
 {
@@ -380,6 +510,9 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         bool expect_key;
     };
     std::vector<frame> stack;
+    std::vector<byte_range> source_strings;
+    std::vector<byte_range> decoded_strings;
+    std::vector<float_range> floats;
     const auto check_string = [&](const node & n) -> bool
     {
         if ((n.flags & ~node_flags::escaped) != 0 || n.extra != 0)
@@ -387,18 +520,16 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             return false;
         }
         const bool decoded = (n.flags & node_flags::escaped) != 0;
-        const unsigned char* const base = decoded ? arena : text;
         const std::size_t limit = decoded ? arena_size : text_size;
         if (n.off > limit || n.len > limit - n.off)
         {
             return false;
         }
-        if (!full)
+        if (full && n.len != 0)
         {
-            return true;
+            (decoded ? decoded_strings : source_strings).push_back(byte_range{n.off, n.len});
         }
-        const unsigned char* const b = base + n.off;
-        return decoded ? valid_utf8_prefix(b, n.len) == n.len : scan_string_run(b, b + n.len) == b + n.len;
+        return true;
     };
     // bounds of a number token; the recorded digit layout must lie within it
     const auto number_in_bounds = [&](const node & n) -> bool
@@ -440,7 +571,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         }
         if (i == count)
         {
-            return stack.empty();
+            return stack.empty() && (!full || check_contents(text, arena, source_strings, decoded_strings, floats));
         }
         if (i != 0 && stack.empty())
         {
@@ -482,9 +613,22 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             case value_t::number_integer:
             case value_t::number_unsigned:
             case value_t::number_float:
-                if (n.flags != 0 || !number_in_bounds(n) || (full && !check_number(n, text)))
+                if (n.flags != 0 || !number_in_bounds(n))
                 {
                     return false;
+                }
+                if (full)
+                {
+                    // (the contents of float tokens are checked later; the token of an
+                    // integer has at most 256 characters)
+                    if (n.kind == static_cast<std::uint8_t>(value_t::number_float))
+                    {
+                        floats.push_back(float_range{n.off, n.len, n.extra});
+                    }
+                    else if (!check_integer(n, text))
+                    {
+                        return false;
+                    }
                 }
                 break;
             case value_t::array:
@@ -594,6 +738,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
         }
     }
     build_object_indexes(d);
+    std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while building)
     d.discarded = false;
 }
 

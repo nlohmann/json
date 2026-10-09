@@ -15,6 +15,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -666,13 +667,24 @@ void check_shortest(double v)
     const std::string text(buf.data(), end);
     CAPTURE(text)
     CHECK(parse_double(text) == v);
-    // the layout is that of format_buffer() for the same digits
+    // the layout is that of format_buffer() for the digits of Zmij
+    const auto sd = nlohmann::detail::zmij::to_shortest(reinterpret_bits<std::uint64_t>(v));
+    const std::uint64_t significand = sd.has_digit ? (sd.integral * 10) + sd.digit : sd.integral;
+    int exponent = sd.has_digit ? sd.exponent : sd.exponent + 1;
+    std::string significand_digits = std::to_string(significand);
+    while (significand_digits.size() > 1 && significand_digits.back() == '0')
+    {
+        significand_digits.pop_back();
+        ++exponent;
+    }
     std::array<char, 64> reference{};
-    int len = 0;
-    int exponent = 0;
-    nlohmann::detail::dtoa_impl::shortest_digits(reference.data(), len, exponent, v);
-    const char* const reference_end = nlohmann::detail::dtoa_impl::format_buffer(reference.data(), len, exponent, -4, 15);
+    std::copy(significand_digits.begin(), significand_digits.end(), reference.begin());
+    const char* const reference_end = nlohmann::detail::dtoa_impl::format_buffer(reference.data(), static_cast<int>(significand_digits.size()), exponent, -4, 15);
     CHECK(text == std::string(reference.data(), static_cast<std::size_t>(reference_end - reference.data())));
+    // and write_positive() is what to_chars() calls
+    std::array<char, 64> positive{};
+    const char* const positive_end = nlohmann::detail::dtoa_impl::write_positive(positive.data(), positive.data() + positive.size(), v);
+    CHECK(text == std::string(positive.data(), static_cast<std::size_t>(positive_end - positive.data())));
     const auto de = digits_and_exponent(text);
     const std::string& digits = de.first;
     if (digits.size() > 1)
@@ -782,6 +794,143 @@ TEST_CASE("shortest digits of doubles")
             {
                 check_shortest(v);
             }
+        }
+    }
+}
+
+TEST_CASE("choice of the conversion")
+{
+    using nlohmann::detail::dtoa_impl::is_binary64;
+
+    SECTION("by the format of the type")
+    {
+        // Zmij needs binary64 numbers; everything else uses Grisu2
+        static_assert(!is_binary64<float>::value, "float is not binary64");
+        static_assert(is_binary64<double>::value == (std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::digits == 53),
+                      "double is binary64 where it is IEEE 754 with 53 digits");
+        static_assert(!is_binary64<int>::value, "integers are not binary64");
+        static_assert(is_binary64<long double>::value == (std::numeric_limits<long double>::is_iec559 && std::numeric_limits<long double>::digits == 53 && sizeof(long double) == 8),
+                      "long double is binary64 where it has the format of a double");
+        CHECK(!is_binary64<float>::value);
+        CHECK(is_binary64<double>::value);
+    }
+
+    SECTION("float: Grisu2, double: Zmij")
+    {
+        // 5.3165205877497296e+16 is one of the doubles for which Grisu2 does not find the shortest digits
+        constexpr double value = 5.3165205877497296e+16;
+        std::array<char, 64> buf{};
+        const char* const last = buf.data() + buf.size();
+
+        char* end = nlohmann::detail::dtoa_impl::write_positive(buf.data(), last, value);
+        CHECK(std::string(buf.data(), end) == "5.31652058774973e+16");
+        end = nlohmann::detail::dtoa_impl::write_positive_grisu2(buf.data(), last, value);
+        CHECK(std::string(buf.data(), end) == "5.3165205877497296e+16");
+
+        constexpr float f = 1.1754944e-38f;
+        end = nlohmann::detail::dtoa_impl::write_positive(buf.data(), last, f);
+        const std::string dispatched(buf.data(), end);
+        end = nlohmann::detail::dtoa_impl::write_positive_grisu2(buf.data(), last, f);
+        CHECK(dispatched == std::string(buf.data(), end));
+    }
+
+    SECTION("long double with the format of a double: Zmij")
+    {
+        // (on platforms where long double is wider, Grisu2 does not apply either: the snprintf fallback does)
+        if (std::numeric_limits<long double>::digits == 53 && std::numeric_limits<long double>::is_iec559)
+        {
+            using long_double_json = nlohmann::json::with_float_t<long double>;
+            for (const double d :
+                    {
+                        5.3165205877497296e+16, 1.0, 0.1, 123456.789, 2.2250738585072014e-308, 1.7976931348623157e+308, -5.3165205877497296e+16
+                    })
+            {
+                CAPTURE(d)
+                CHECK(long_double_json(static_cast<long double>(d)).dump() == nlohmann::json(d).dump());
+            }
+            CHECK(long_double_json(5.3165205877497296e+16L).dump() == "5.31652058774973e+16");
+        }
+    }
+}
+
+TEST_CASE("short decimals")
+{
+    // write_short_decimal() writes digits * 10^exp for the digits of a double
+    // that need no conversion (at most 15, the first not 0): as to_chars()
+    // writes the (positive) double that has these digits
+    const auto written = [](std::uint64_t digits, int exp)
+    {
+        std::array<char, 64> buf{}; // (up to 41 bytes are written)
+        char* const end = nlohmann::detail::dtoa_impl::write_short_decimal(buf.data(), digits, exp);
+        return std::string(buf.data(), end);
+    };
+    const auto written_counted = [](std::uint64_t digits, int count, int exp)
+    {
+        std::array<char, 64> buf{};
+        char* const end = nlohmann::detail::dtoa_impl::write_short_decimal(buf.data(), digits, count, exp);
+        return std::string(buf.data(), end);
+    };
+    const auto expected = [](std::uint64_t digits, int exp)
+    {
+        const double value = std::strtod((std::to_string(digits) + "e" + std::to_string(exp)).c_str(), nullptr);
+        std::array<char, 64> buf{};
+        char* const end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, value);
+        return std::string(buf.data(), end);
+    };
+
+    SECTION("powers of ten")
+    {
+        const auto& powers = nlohmann::detail::dtoa_impl::powers_of_ten_16();
+        std::uint64_t power = 1;
+        for (const std::uint64_t p : powers)
+        {
+            CHECK(p == power);
+            power *= 10;
+        }
+    }
+
+    SECTION("examples")
+    {
+        CHECK(written(1, 0) == "1.0");
+        CHECK(written(15, -1) == "1.5");
+        CHECK(written(125, -2) == "1.25");
+        CHECK(written(1, 22) == "1e+22");
+        CHECK(written(123456789012345, -2) == "1234567890123.45");
+        CHECK(written(999999999999999, -15) == "0.999999999999999");
+        CHECK(written(5, -324) == "5e-324");
+        CHECK(written_counted(1, 1, 0) == "1.0");
+        CHECK(written_counted(125, 3, -2) == "1.25");
+        CHECK(written_counted(100, 3, -2) == "1.0");
+        CHECK(written_counted(999999999999999, 15, -15) == "0.999999999999999");
+    }
+
+    SECTION("random digits, exponents and trailing zeros")
+    {
+        std::mt19937_64 rng(1170); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
+        for (int i = 0; i < 100000; ++i)
+        {
+            // 1 to 15 digits, the first not 0, and up to 14 of them trailing zeros
+            std::uint64_t count = 1 + (rng() % 15u);
+            std::uint64_t power = 1;
+            for (std::uint64_t k = 1; k < count; ++k)
+            {
+                power *= 10;
+            }
+            std::uint64_t digits = power + (rng() % (9 * power));
+            const std::uint64_t zeros = (rng() % 3u == 0) ? (rng() % count) : 0;
+            for (std::uint64_t k = 0; k < zeros; ++k)
+            {
+                digits = (digits / 10) * 10;
+            }
+            // (a value between 1e-300 and 1e300)
+            const int exp = static_cast<int>(rng() % 560u) - 300 - static_cast<int>(count);
+
+            CAPTURE(digits)
+            CAPTURE(count)
+            CAPTURE(exp)
+            const std::string want = expected(digits, exp);
+            CHECK(written(digits, exp) == want);
+            CHECK(written_counted(digits, static_cast<int>(count), exp) == want);
         }
     }
 }

@@ -81,6 +81,9 @@ Moving the document itself is fine and does **not** invalidate its views: the in
 that keeps its address across the move. Take a fresh view from [`root()`](../api/basic_json_document/root.md)
 whenever any of the other conditions above was not met.
 
+Because a view dies with its document, [`root()`](../api/basic_json_document/root.md) is not callable on a temporary
+document: `#!cpp auto v = json_document::parse(text).root();` does not compile. Give the document a name first.
+
 ??? example "Example: borrowed and owned documents, and when views become invalid"
 
     ```cpp
@@ -113,7 +116,7 @@ whenever any of the other conditions above was not met.
 
 - **Only 64-bit integers.** `basic_json_document<BasicJsonType>` requires `BasicJsonType::number_integer_t` and
   `number_unsigned_t` to both be 64 bits wide; this is a compile-time `#!cpp static_assert`.
-- **A 4 GiB input limit.** An input of 4 GiB or more throws
+- **A 4 GiB input limit.** An input of 4294967280 bytes (4 GiB minus 16 bytes) or more throws
   [`out_of_range.416`](../home/exceptions.md#jsonexceptionout_of_range416), a limit
   `#!cpp basic_json::parse()` does not have.
 - **A stream is always read to its end.** There is no partial/streaming read of an `#!cpp std::istream`.
@@ -126,14 +129,21 @@ whenever any of the other conditions above was not met.
   members in the order they appear in the source text. `basic_json`'s default `object_t` is a `std::map`, which
   sorts by key, so iterating a [`materialize()`](../api/basic_json_view/materialize.md)d value can print members in
   a different order than iterating the view they came from.
+- **Chained access is safe.** [`operator[]`](../api/basic_json_view/operator%5B%5D.md) with a missing key, an index
+  out of range, or an unresolvable JSON pointer returns a [discarded](../api/basic_json_view/is_discarded.md) view, and
+  `operator[]` on a discarded view returns a discarded view without throwing: `#!cpp v["a"]["b"][0]` can be tested
+  once at the end. Type errors on values that exist (a key on an array, an index on an object) still throw, and
+  [`at`](../api/basic_json_view/at.md) throws for every missing value.
 - **Duplicate keys are visible.** If an object in the source text repeats a key,
   [`begin()`](../api/basic_json_view/begin.md)/[`end()`](../api/basic_json_view/end.md) and
   [`items()`](../api/basic_json_view/items.md) visit *every* occurrence (and [`size()`](../api/basic_json_view/size.md)
   counts all of them), while [`operator[]`](../api/basic_json_view/operator%5B%5D.md),
   [`at`](../api/basic_json_view/at.md), [`find`](../api/basic_json_view/find.md),
   [`contains`](../api/basic_json_view/contains.md), and [`count`](../api/basic_json_view/count.md) resolve to the
-  *first* occurrence, since a lookup can stop as soon as it finds a match. `basic_json::parse()` (and so
-  [`materialize()`](../api/basic_json_view/materialize.md)) instead keeps only the *last* value for a repeated key.
+  *last* occurrence -- the one `basic_json::parse()` (and so
+  [`materialize()`](../api/basic_json_view/materialize.md)) keeps for a repeated key -- which makes a lookup scan all
+  members instead of stopping at a match (objects with 128 members or more get a hash index that leads to the last
+  occurrence directly).
   See the [Notes on duplicate keys](../api/basic_json_view/operator%5B%5D.md#notes) of `operator[]`.
 - **No [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) path.** Exceptions thrown by `basic_json_view`'s own
   element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the

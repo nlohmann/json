@@ -20,8 +20,10 @@ using nlohmann::json;
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <limits>
 #include <map>
 #include <memory>
+#include <new>
 #include <random>
 #include <sstream>
 #include <string>
@@ -505,4 +507,90 @@ TEST_CASE("json_view builder: strings across vector blocks")
             }
         }
     }
+}
+
+TEST_CASE("json_view node integer bits")
+{
+    using nlohmann::detail::view::integer_bits;
+    using nlohmann::detail::view::set_integer_bits;
+
+    // an integer lives in len (low half) and next (high half), on any byte
+    // order; a big-endian target must not store the native word over both
+    SECTION("set_integer_bits and integer_bits")
+    {
+        node n = {};
+        for (const std::uint64_t v :
+                {
+                    std::uint64_t{0}, std::uint64_t{1}, std::uint64_t{0xFFFFFFFFu}, std::uint64_t{0x100000000u},
+                    std::uint64_t{0x0000000200000003u}, std::uint64_t{0x0123456789ABCDEFu}, std::uint64_t{0xFFFFFFFFFFFFFFFEu}
+                })
+        {
+            CAPTURE(v)
+            n.kind = 0x5A;
+            n.flags = 0xA5;
+            n.extra = 0x1234;
+            n.off = 0x89ABCDEFu;
+            set_integer_bits(n, v);
+            CHECK(integer_bits(n) == v);
+            CHECK(n.len == static_cast<std::uint32_t>(v));
+            CHECK(n.next == static_cast<std::uint32_t>(v >> 32));
+            // the other fields are untouched
+            CHECK(n.kind == 0x5A);
+            CHECK(n.flags == 0xA5);
+            CHECK(n.extra == 0x1234);
+            CHECK(n.off == 0x89ABCDEFu);
+        }
+    }
+
+    SECTION("parsed integers")
+    {
+        struct integer_case
+        {
+            const char* text;
+            std::uint64_t bits;
+        };
+        for (const integer_case c :
+                {
+                    integer_case{"[8589934595]", 0x0000000200000003u}, integer_case{"[4294967296]", 0x100000000u}, integer_case{"[4294967295]", 0xFFFFFFFFu},
+                    integer_case{"[-2]", 0xFFFFFFFFFFFFFFFEu}, integer_case{"[-4294967297]", 0xFFFFFFFEFFFFFFFFu}, integer_case{"[18446744073709551615]", 0xFFFFFFFFFFFFFFFFu},
+                    integer_case{"[7]", 7u}
+                })
+        {
+            CAPTURE(c.text)
+            const built b = build(c.text, false, false, true);
+            REQUIRE(b.ok);
+            const node& n = b.data->tape[1];
+            CHECK(integer_bits(n) == c.bits);
+            CHECK(n.len == static_cast<std::uint32_t>(c.bits));
+            CHECK(n.next == static_cast<std::uint32_t>(c.bits >> 32));
+        }
+    }
+}
+
+TEST_CASE("json_view node array size limit")
+{
+    // a node array larger than the address space is refused, not wrapped to a
+    // small allocation (the size computation overflows on 32-bit targets, and
+    // for absurd counts everywhere)
+    std::unique_ptr<document_data, document_data::deleter> d(document_data::create(0));
+    d->reserve(8);
+    REQUIRE(d->tape_cap >= 8);
+    d->tape_size = 2;
+    const std::size_t cap = d->tape_cap;
+    node* const tape = d->tape;
+
+#if !defined(JSON_NOEXCEPTION)
+    const std::size_t too_many = document_data::max_nodes() + 1;
+    CHECK_THROWS_AS(d->reserve(too_many), std::bad_alloc&);
+    CHECK_THROWS_AS(d->reserve((std::numeric_limits<std::size_t>::max)()), std::bad_alloc&);
+    // the array is unchanged
+    CHECK(d->tape == tape);
+    CHECK(d->tape_cap == cap);
+    CHECK(d->tape_size == 2);
+#endif
+
+    // the largest count that fits is not refused by the check (nothing is
+    // allocated for a count that is already there)
+    d->reserve(cap);
+    CHECK(d->tape == tape);
 }
