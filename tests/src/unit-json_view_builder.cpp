@@ -302,7 +302,7 @@ TEST_CASE("json_view builder")
                 {
                     "1e39", "-1e39", "3.4028235e38", "-3.4028235e38", "3.4028236e38", "-3.4028236e38", "3.4028234663852886e38", "1e38",
                     "340282356779733661637539395458142568448", "340282356779733661637539395458142568447.99", "0.00034028236e42",
-                    "[1.5e38, 3.5e38]", "{\"a\": 1e-50, \"b\": 1e39}"
+                    "[1.5e38, 3.5e38]", R"({"a": 1e-50, "b": 1e39})"
                 })
         {
             CAPTURE(text)
@@ -419,7 +419,7 @@ TEST_CASE("json_view builder")
                 })
         {
             CAPTURE(name)
-            std::ifstream f(std::string(TEST_DATA_DIRECTORY) + name, std::ios::binary);
+            const std::ifstream f(std::string(TEST_DATA_DIRECTORY) + name, std::ios::binary);
             std::stringstream ss;
             ss << f.rdbuf();
             const std::string text = ss.str();

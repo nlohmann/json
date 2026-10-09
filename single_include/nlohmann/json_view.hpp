@@ -37,13 +37,13 @@
     #include <ostream> // ostream
 #endif
 #include <string> // string
-#include <tuple> // tuple_element, tuple_size
+#include <tuple> // tuple_element, tuple_size // IWYU pragma: keep
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_base_of, is_integral, is_same, remove_cv, remove_extent
 #include <unordered_map> // unordered_map
 #include <utility> // forward, move
 #include <vector> // vector
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp> // IWYU pragma: export
 
 // the view builds on internals of the library: both must be the same version
 #if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 12 || NLOHMANN_JSON_VERSION_PATCH != 0
@@ -127,7 +127,10 @@
 #elif defined(_MSC_VER)
     #define NLOHMANN_VIEW_LIKELY(x) (x)
     #define NLOHMANN_VIEW_UNLIKELY(x) (x)
-    #define NLOHMANN_VIEW_ALWAYS_INLINE __forceinline
+    // plain inline: __forceinline makes MSVC report C4714 (not inlined) for
+    // function templates it cannot inline, which is an error under /WX; the
+    // forced inlining is only a performance hint
+    #define NLOHMANN_VIEW_ALWAYS_INLINE inline
     #define NLOHMANN_VIEW_NOINLINE __declspec(noinline)
 #else
     #define NLOHMANN_VIEW_LIKELY(x) (x)
@@ -362,7 +365,7 @@ struct document_data
         std::size_t text_cap = 0;
         std::size_t bytes = 0; ///< memory held by edits
     };
-    std::unique_ptr<edit_state> edits{}; ///< created by the first edit // NOLINT(readability-redundant-member-init)
+    std::unique_ptr<edit_state> edits; ///< created by the first edit
 
     /// one allocation for the header and room for `nodes` nodes; large
     /// documents get a separate node array instead (so it can be trimmed)
@@ -388,7 +391,22 @@ struct document_data
         }
     };
 
-    document_data() = default;
+    /// user-provided so that the class-type members can be initialized in the
+    /// member initialization list (-Weffc++ asks for it, and old GCC rejects a
+    /// defaulted constructor whose exception specification differs from the
+    /// implicit one); they cannot take default member initializers, which old
+    /// Clang (3.4-3.6) rejects. The other members have default member
+    /// initializers. noexcept: create() constructs into raw memory and could not
+    /// release it if this threw (the std::string default constructors do not
+    /// allocate).
+    document_data() noexcept
+        : arena() // NOLINT(readability-redundant-member-init)
+        , owned() // NOLINT(readability-redundant-member-init)
+        , indexes() // NOLINT(readability-redundant-member-init)
+        , index_slots() // NOLINT(readability-redundant-member-init)
+        , large_objects() // NOLINT(readability-redundant-member-init)
+        , edits() // NOLINT(readability-redundant-member-init)
+    {}
     document_data(const document_data&) = delete;
     document_data(document_data&&) = delete;
     document_data& operator=(const document_data&) = delete;
@@ -3200,7 +3218,7 @@ template<typename SizeType, typename IntegerType>
 SizeType to_index(IntegerType idx) noexcept
 {
     const IntegerType zero = 0;
-    const auto result = static_cast<SizeType>(idx); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): idx is an index, not a character
+    const auto result = static_cast<SizeType>(idx); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): negative values are mapped below
     return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
 }
 
@@ -5648,9 +5666,6 @@ NLOHMANN_JSON_NAMESPACE_END
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-template<typename BasicJsonType, bool Editable>
-class basic_json_document;
-
 /*!
 @brief read-only handle to one value of a basic_json_document
 
@@ -7008,7 +7023,7 @@ using ordered_json_editable_view = basic_json_view<ordered_json, true>;
 NLOHMANN_JSON_NAMESPACE_END
 
 // tuple protocol for the items of basic_json_view::items() (structured bindings)
-namespace std // NOLINT(cert-dcl58-cpp)
+namespace std // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
 
 #if defined(__clang__)
@@ -7061,6 +7076,6 @@ class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert
 #undef NLOHMANN_VIEW_SSSE3_TARGET
 #undef NLOHMANN_VIEW_VECTOR
 #undef NLOHMANN_VIEW_VECTOR_UTF8
-
+// IWYU pragma: keep
 
 #endif  // INCLUDE_NLOHMANN_JSON_VIEW_HPP_

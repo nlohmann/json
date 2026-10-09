@@ -37,13 +37,13 @@
     #include <ostream> // ostream
 #endif
 #include <string> // string
-#include <tuple> // tuple_element, tuple_size
+#include <tuple> // tuple_element, tuple_size // IWYU pragma: keep
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_base_of, is_integral, is_same, remove_cv, remove_extent
 #include <unordered_map> // unordered_map
 #include <utility> // forward, move
 #include <vector> // vector
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp> // IWYU pragma: export
 
 // the view builds on internals of the library: both must be the same version
 #if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 12 || NLOHMANN_JSON_VERSION_PATCH != 0
@@ -69,9 +69,6 @@
 #include <nlohmann/detail/view/value.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-
-template<typename BasicJsonType, bool Editable>
-class basic_json_document;
 
 /*!
 @brief read-only handle to one value of a basic_json_document
@@ -1430,7 +1427,7 @@ using ordered_json_editable_view = basic_json_view<ordered_json, true>;
 NLOHMANN_JSON_NAMESPACE_END
 
 // tuple protocol for the items of basic_json_view::items() (structured bindings)
-namespace std // NOLINT(cert-dcl58-cpp)
+namespace std // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
 
 #if defined(__clang__)
@@ -1454,6 +1451,6 @@ class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert
 
 }  // namespace std
 
-#include <nlohmann/detail/view/macro_unscope.hpp>
+#include <nlohmann/detail/view/macro_unscope.hpp> // IWYU pragma: keep
 
 #endif  // INCLUDE_NLOHMANN_JSON_VIEW_HPP_
