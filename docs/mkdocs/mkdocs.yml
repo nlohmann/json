@@ -283,7 +283,6 @@ nav:
           - 'materialize': api/basic_json_view/materialize.md
           - 'number_format': api/basic_json_view/number_format.md
           - 'number_token': api/basic_json_view/number_token.md
-          - 'operator bool': api/basic_json_view/operator_bool.md
           - 'operator<<': api/basic_json_view/operator_ltlt.md
           - 'operator[]': api/basic_json_view/operator[].md
           - 'operator==': api/basic_json_view/operator_eq.md

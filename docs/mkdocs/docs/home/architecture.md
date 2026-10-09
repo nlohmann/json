@@ -210,7 +210,8 @@ packet-beta
 - **Navigation** needs no pointers: the elements of an array or object follow its node, and the node after a value's
   subtree is `next` nodes further for an array or object, and the next node otherwise (`document_data::after`). Views
   step from element to element this way and skip whole subtrees in constant time.
-- **Offsets** are 32 bits wide, so a document is limited to 4 GiB (`out_of_range.416`).
+- **Offsets** are 32 bits wide, so a document is limited to 4294967279 bytes, 4 GiB minus 16 bytes (a margin below
+  2^32 for positions one scanner step past the end of the text; `out_of_range.416`).
 - **Large objects** (128 members or more) get a hash index after parsing
   ([`detail/view/object_index.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/object_index.hpp)):
   an open-addressing table whose slots hold the distance from the object's node to a key's node, so that a lookup does

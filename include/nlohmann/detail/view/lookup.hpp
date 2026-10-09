@@ -11,6 +11,8 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint16_t, uint32_t, uint64_t
 #include <cstring> // memcmp, memcpy
+#include <limits> // numeric_limits
+#include <type_traits> // integral_constant, is_integral, is_same
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
@@ -82,8 +84,9 @@ class short_key
     std::uint64_t m_b = 0;
 };
 
-/// the key node of the first member of an object with the given key, or
-/// nullptr; most keys are rejected by their length, from the index alone
+/// the key node of the last member of an object with the given key, or
+/// nullptr (the last one, as materialize() and parse() keep it); most keys are
+/// rejected by their length, from the index alone
 inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
     if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0))
@@ -92,6 +95,7 @@ inline const node* find_member(const document_data& d, const node* object, const
     }
     const node* const end = document_data::child_end(object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    const node* last = nullptr;
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
     {
         const short_key probe(k, n);
@@ -99,19 +103,37 @@ inline const node* find_member(const document_data& d, const node* object, const
         {
             if (m->len == n && probe.matches(reinterpret_cast<const unsigned char*>(d.str(*m)))) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             {
-                return m;
+                last = m;
             }
         }
-        return nullptr;
+        return last;
     }
     for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
     {
         if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
         {
-            return m;
+            last = m;
         }
     }
-    return nullptr;
+    return last;
+}
+
+/// whether an integer type is accepted as an array index by the view's
+/// operator[] and at(): every integer type but bool and size_t, which has its
+/// own overload
+template<typename T>
+struct is_index_type : std::integral_constant < bool,
+    std::is_integral<T>::value && !std::is_same<T, bool>::value && !std::is_same<T, std::size_t>::value >
+{};
+
+/// an integer as an index: negative values, and values that do not fit a
+/// size_t, map to the largest size_t (out of range for every array)
+template<typename SizeType, typename IntegerType>
+SizeType to_index(IntegerType idx) noexcept
+{
+    const IntegerType zero = 0;
+    const auto result = static_cast<SizeType>(idx);
+    return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
 }
 
 /// the element of an array at an index below its size

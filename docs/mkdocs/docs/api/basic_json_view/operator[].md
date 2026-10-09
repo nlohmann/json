@@ -8,16 +8,19 @@ basic_json_view operator[](const string_t& key) const;
 
 // (2)
 basic_json_view operator[](size_type idx) const;
-basic_json_view operator[](int idx) const;
+template<typename IntegerType>
+basic_json_view operator[](IntegerType idx) const;
 
 // (3)
 basic_json_view operator[](const json_pointer& ptr) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see
+1. Returns the value of the object member with key `key` -- the last one, should the key occur more than once (see
    the [Notes](#notes) below) -- or a [discarded](is_discarded.md) view if there is no such member.
-2. Returns the array element at index `idx`, or a [discarded](is_discarded.md) view if `idx` is out of range. (The
-   `#!cpp int` overload only exists so that an integer literal is not ambiguous between this overload and 1.)
+2. Returns the array element at index `idx`, or a [discarded](is_discarded.md) view if `idx` is out of range. The
+   template accepts every integer type except `#!cpp bool` and `#!cpp std::size_t` (`#!cpp int`, `#!cpp unsigned`,
+   `#!cpp long`, `#!cpp std::int64_t`, ...) and forwards to the `size_type` overload, so that an integer argument is
+   not ambiguous between that overload and 1; a negative `idx` is out of range.
 3. Returns the value a JSON pointer `ptr` refers to, starting at this value, or a [discarded](is_discarded.md) view
    wherever resolving it further is not possible without inserting into or extending the document (see
    [Return value](#return-value) and [Exceptions](#exceptions) below).
@@ -35,10 +38,12 @@ basic_json_view operator[](const json_pointer& ptr) const;
 
 ## Return value
 
-1. the value of the first member with key `key`, or a discarded view if `#!cpp is_object()` is `#!cpp false` or no
-   member has this key
-2. the element at index `idx`, or a discarded view if `#!cpp is_array()` is `#!cpp false` or `#!cpp idx >= size()`
-3. the value `ptr` resolves to, starting at this value, or a discarded view for exactly the reference tokens where the
+1. the value of the last member with key `key`, or a discarded view if no member has this key (or if this view is
+   [discarded](is_discarded.md))
+2. the element at index `idx`, or a discarded view if `#!cpp idx >= size()` or `idx` is negative (or if this view is
+   [discarded](is_discarded.md))
+3. the value `ptr` resolves to, starting at this value, or a discarded view (also if this view is
+   [discarded](is_discarded.md)) for exactly the reference tokens where the
    **const** overload of [`BasicJsonType::operator[]`](../basic_json/operator%5B%5D.md) invokes undefined behavior for
    the same pointer and the same document: an object member that does not exist, or an array index that is out of
    range
@@ -49,10 +54,12 @@ Strong exception safety: if an exception is thrown, there are no changes to the 
 
 ## Exceptions
 
-1. Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the value is not an object --
+1. Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the value is not an object and
+   not [discarded](is_discarded.md) --
    the same exception, with the same message, that the **const** overload of
    [`BasicJsonType::operator[]`](../basic_json/operator%5B%5D.md) throws for a string argument on a non-object value.
-2. Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the value is not an array --
+2. Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the value is not an array and
+   not [discarded](is_discarded.md) --
    the same exception, with the same message, that the **const** overload of
    [`BasicJsonType::operator[]`](../basic_json/operator%5B%5D.md) throws for a numeric argument on a non-array value.
 3. Throws the same exceptions, with the same messages, that the **const** overload of
@@ -73,9 +80,9 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 ## Complexity
 
 1. Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after
-   another, in document order, stopping at the first match. Each comparison first checks the key's length --
-   already known from the index, without reading the key bytes -- before comparing its content, so a key of a
-   different length than `key` is rejected without touching the source text.
+   another, in document order, scanning all of them, since the last match is wanted. Each comparison first checks the
+   key's length -- already known from the index, without reading the key bytes -- before comparing its content, so a
+   key of a different length than `key` is rejected without touching the source text.
    Objects with 128 or more members get a hash index while parsing, so that a lookup in them takes constant time
    on average.
 2. Linear in `idx`: elements are skipped one at a time from the first one, since they are not a fixed size in the
@@ -86,20 +93,29 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 ## Notes
 
 Unlike `BasicJsonType::operator[]`, which is undefined behavior (guarded by a
-[runtime assertion](../../features/assertions.md)) for a missing key on a **const** value, this operator always
-returns a safe, testable result: a [discarded](is_discarded.md) view, which is `#!cpp false` in a boolean context.
+[runtime assertion](../../features/assertions.md)) for a missing key on a **const** value, this operator returns a
+safe, testable result for a missing key or an index out of range: a [discarded](is_discarded.md) view, which is
+tested with [`is_discarded`](is_discarded.md).
 There is also no non-const overload that inserts a missing key or extends an array -- a view never modifies the
 document.
+
+!!! info "Chained access"
+
+    `#!cpp operator[]` on a [discarded](is_discarded.md) view returns a discarded view and does not throw, so a chain
+    like `#!cpp v["a"]["b"][0]` is safe even if `"a"` or `"b"` is missing: the first missing step makes the whole
+    result discarded, which is tested once at the end. Type errors on values that are *not* discarded still throw: a
+    key on an array or a primitive, or an index on an object or a primitive, is `type_error.305` as for
+    `BasicJsonType`. [`at`](at.md) still throws for a discarded view, as it does for a missing key.
 
 !!! info "Duplicate keys"
 
     If the source text has an object with a duplicate key, `#!cpp operator[]` (and [`at`](at.md), [`find`](find.md),
-    [`contains`](contains.md), [`count`](count.md)) all resolve to the *first* member with that key, because a
-    lookup can stop as soon as it finds a match. This is different from
-    [`materialize()`](materialize.md) (and [`BasicJsonType::parse()`](../basic_json/parse.md)), which replay every
-    member in order and so end up keeping the *last* value for a repeated key -- there is no reason for them to stop
-    early. [`begin()`](begin.md)/[`end()`](end.md) and [`items()`](items.md) iterate over *all* members, including
-    duplicates, in document order. See the example below and [`size()`](size.md#notes).
+    [`contains`](contains.md), [`count`](count.md), [`value`](value.md), and JSON pointer resolution) all resolve to
+    the *last* member with that key. This is the member [`materialize()`](materialize.md) (and
+    [`BasicJsonType::parse()`](../basic_json/parse.md)) keeps, so a lookup in the view and in the materialized value
+    agree. [`begin()`](begin.md)/[`end()`](end.md) and [`items()`](items.md) iterate over *all* members, including
+    duplicates, in document order. A lookup scans all members for this: it cannot stop at the first match. See the
+    example below and [`size()`](size.md#notes).
 
 !!! info "JSON pointer resolution"
 

@@ -61,9 +61,8 @@ template<typename BasicJsonType>
 {
     if (f.code == error_code::input_too_large)
     {
-        // LCOV_EXCL_START (4 GiB)
-        NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4 GiB or more is not supported by json_document", nullptr));
-        // LCOV_EXCL_STOP
+        // (the limit is detail::view::max_input_size: 4 GiB minus 16 bytes)
+        NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
     const BasicJsonType accepted = BasicJsonType::parse(src, src + size, nullptr, true, ignore_comments, ignore_trailing_commas);
     // LCOV_EXCL_START (only if parse() accepts what the view rejects: a bug)
