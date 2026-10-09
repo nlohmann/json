@@ -5075,6 +5075,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
         }
     }
     build_object_indexes(d);
+    std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while building)
     d.discarded = false;
 }
 
