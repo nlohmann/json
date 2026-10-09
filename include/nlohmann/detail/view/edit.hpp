@@ -380,10 +380,20 @@ class editor
         const node* const r = e.region;
         const std::uint32_t extent = is_container(*slot) ? slot->next : 1;
         const bool was_moved = (slot->flags & node_flags::moved) != 0;
+        // Everything that can throw happens before the slot changes: a slot
+        // that is a container without the moved flag would show its old
+        // elements. reserve_moved() makes the set_moved() below, which sets
+        // the flag, safe; the entry of `regions` exists already (encode()
+        // added it), so that the assignment at the end does not allocate.
+        if (!was_moved)
+        {
+            reserve_moved(m_doc);
+        }
         slot->kind = r->kind;
         slot->extra = 0;
         slot->len = r->len;
         slot->next = extent;
+        // (set_moved() adds the moved flag to a slot that does not have it yet)
         slot->flags = was_moved ? static_cast<std::uint8_t>(node_flags::moved | node_flags::is_new) : std::uint8_t{0};
         set_moved(m_doc, slot, e.region, 0);
         edit_state_of(m_doc).regions[e.region] = slot;
