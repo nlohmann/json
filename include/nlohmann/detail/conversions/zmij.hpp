@@ -36,13 +36,6 @@ computed from the compressed tables of Zmij beyond it.
 namespace zmij
 {
 
-/// significand * 10^exponent
-struct decimal
-{
-    std::uint64_t significand;
-    int exponent;
-};
-
 /// the compressed powers of ten of Zmij
 inline const std::array<std::uint64_t, 28>& pow10_minor() noexcept
 {
@@ -219,18 +212,6 @@ JSON_HEDLEY_ALWAYS_INLINE shortest_decimal to_shortest(std::uint64_t bits) noexc
     integral += round_up ? 1u : 0u;
     // if the shorter candidate is outside the rounding interval: one digit more
     return shortest_decimal{integral, dec_exp, static_cast<unsigned char>(digit), !round_up && !round_down};
-}
-
-/// The shortest decimal in the rounding interval of a positive finite double
-/// given by its bits, as one number. The significand can end in zeros.
-inline decimal to_decimal(std::uint64_t bits) noexcept
-{
-    const shortest_decimal d = to_shortest(bits);
-    if (d.has_digit)
-    {
-        return decimal{(d.integral * 10) + d.digit, d.exponent};
-    }
-    return decimal{d.integral, d.exponent + 1};
 }
 
 }  // namespace zmij
