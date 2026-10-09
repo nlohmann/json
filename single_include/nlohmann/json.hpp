@@ -20814,8 +20814,12 @@ class json_pointer
         // container itself
         struct frame
         {
+            frame(const BasicJsonType* container_, object_const_iterator member_, const std::size_t path_length_) noexcept
+                : container(container_), member(std::move(member_)), path_length(path_length_)
+            {}
+
             const BasicJsonType* container;
-            std::size_t index;
+            std::size_t index = 0;
             object_const_iterator member;
             std::size_t path_length;
         };
@@ -20843,7 +20847,7 @@ class json_pointer
                     }
                     else
                     {
-                        stack.push_back({&v, 0, object_const_iterator(), path.size()});
+                        stack.emplace_back(&v, object_const_iterator(), path.size());
                     }
                     return;
                 }
@@ -20857,7 +20861,7 @@ class json_pointer
                     }
                     else
                     {
-                        stack.push_back({&v, 0, v.m_data.m_value.object->begin(), path.size()});
+                        stack.emplace_back(&v, v.m_data.m_value.object->begin(), path.size());
                     }
                     return;
                 }
