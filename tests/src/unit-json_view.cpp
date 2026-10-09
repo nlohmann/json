@@ -48,6 +48,25 @@ auto materialized_copy(Input&& input) -> decltype(std::declval<typename Document
     return d.root().materialize();
 }
 
+// a "byte container" that claims to hold `size` bytes, to reach the limit on
+// the size of the input without allocating gigabytes; nothing past the first
+// bytes is ever read, because the size is checked before the parse starts
+struct oversized_input
+{
+    using value_type = char;
+    std::size_t claimed;
+
+    const char* data() const
+    {
+        return "[1]";
+    }
+
+    std::size_t size() const
+    {
+        return claimed;
+    }
+};
+
 // detection of calls that must not compile
 template<typename... Args>
 using parse_call_t = decltype(json_document::parse(std::declval<Args>()...));
@@ -425,6 +444,22 @@ TEST_CASE("json_view")
         CHECK(d.root().size() == 1);
         const json_document moved = std::move(d);
         CHECK(moved.root().size() == 1);
+    }
+
+    SECTION("input size limit")
+    {
+        // 32-bit offsets: the limit is 4 GiB minus 16 bytes (a margin below 2^32),
+        // which is what the exception message and the documentation say
+        const std::size_t limit = nlohmann::detail::view::max_input_size;
+        CHECK(limit == std::size_t{4294967279u});
+
+        const oversized_input input{limit + 1};
+        CHECK(!json_document::accept(input));
+        CHECK(json_document::parse(input, false).is_discarded());
+#if !defined(JSON_NOEXCEPTION)
+        json_document d;
+        CHECK_THROWS_WITH_AS(d = json_document::parse(input), "[json.exception.out_of_range.416] input of 4294967280 bytes or more is not supported by json_document", json::out_of_range&);
+#endif
     }
 
     SECTION("document lifetime and reuse")

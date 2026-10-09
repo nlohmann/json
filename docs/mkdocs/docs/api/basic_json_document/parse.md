@@ -79,8 +79,8 @@ discarded; see [`is_discarded`](is_discarded.md).
 Throws the same exception [`BasicJsonType::parse()`](../basic_json/parse.md) throws for the same input and options --
 the same exception id, message, and position -- because on a failing input the library's own parser is run on the
 same bytes to produce the diagnostic. Additionally throws
-[`out_of_range.416`](../../home/exceptions.md#jsonexceptionout_of_range416) if the input is 4 GiB or larger, a size
-[`BasicJsonType::parse()`](../basic_json/parse.md) does not reject.
+[`out_of_range.416`](../../home/exceptions.md#jsonexceptionout_of_range416) if the input is 4294967280 bytes (4 GiB
+minus 16 bytes) or larger, a size [`BasicJsonType::parse()`](../basic_json/parse.md) does not reject.
 
 ## Complexity
 

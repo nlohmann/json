@@ -111,7 +111,7 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
 
 - **Only 64-bit integers.** `basic_json_document<BasicJsonType>` requires `BasicJsonType::number_integer_t` and
   `number_unsigned_t` to both be 64 bits wide; this is a compile-time `#!cpp static_assert`.
-- **A 4 GiB input limit.** An input of 4 GiB or more throws
+- **A 4 GiB input limit.** An input of 4294967280 bytes (4 GiB minus 16 bytes) or more throws
   [`out_of_range.416`](../home/exceptions.md#jsonexceptionout_of_range416), a limit
   `#!cpp basic_json::parse()` does not have.
 - **A stream is always read to its end.** There is no partial/streaming read of an `#!cpp std::istream`.

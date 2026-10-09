@@ -29,6 +29,11 @@ static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::
               && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
               "the node format depends on the numbering of value_t");
 
+/// The largest input a document accepts, in bytes. Offsets and node counts are
+/// 32 bits wide; the limit keeps 16 bytes (the width of the scanner's steps)
+/// below 2^32, so that a position one step past the end of the text fits.
+static constexpr std::size_t max_input_size = 0xFFFFFFEFu;
+
 /// node flags
 struct node_flags
 {
