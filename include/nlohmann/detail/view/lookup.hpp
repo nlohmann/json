@@ -137,6 +137,24 @@ std::size_t count_members(const document_data& d, const node* object, const char
     return result;
 }
 
+/// whether an integer type is accepted as an array index by the view's
+/// operator[] and at(): every integer type but bool and size_t, which has its
+/// own overload
+template<typename T>
+struct is_index_type : std::integral_constant < bool,
+    std::is_integral<T>::value && !std::is_same<T, bool>::value && !std::is_same<T, std::size_t>::value >
+{};
+
+/// an integer as an index: negative values, and values that do not fit a
+/// size_t, map to the largest size_t (out of range for every array)
+template<typename SizeType, typename IntegerType>
+SizeType to_index(IntegerType idx) noexcept
+{
+    const IntegerType zero = 0;
+    const auto result = static_cast<SizeType>(idx); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): negative values are mapped below
+    return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
+}
+
 /// the entry of the element of an array at an index below its size (a link
 /// in the moved sequences of editable documents)
 template<bool Editable>
