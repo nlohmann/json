@@ -553,6 +553,64 @@ TEST_CASE("json_view images: edited documents")
         }
     }
 
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("invalid UTF-8 of a loaded image is not copied into an editable document")
+    {
+        // loading with the bounds check (or none) does not look at the encoding
+        // of strings: dump() of such a view throws, and an editable document
+        // must not take the string over
+        const auto patched = [](const std::string & json_text)
+        {
+            std::vector<std::uint8_t> image = json_document::parse(json_text).save();
+            bool found = false;
+            for (std::size_t i = 0; i + 1 < image.size(); ++i)
+            {
+                if (image[i] == 'Q' && image[i + 1] == 'Z')
+                {
+                    image[i] = 0xC3;
+                    image[i + 1] = 0x28; // an invalid sequence
+                    found = true;
+                }
+            }
+            REQUIRE(found);
+            return image;
+        };
+
+        for (const image_check check :
+                {
+                    image_check::bounds, image_check::none
+                })
+        {
+            // as a value
+            {
+                const json_document loaded = json_document::load(patched(R"(["abQZ"])"), check);
+                json_editable_document e = json_editable_document::parse("[]");
+                CHECK_THROWS_WITH_AS(e.push_back(e.root(), loaded.root()[0]), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.insert(e.root(), 0, loaded.root()[0]), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.set(e.root(), loaded.root()[0]), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.push_back(e.root(), loaded.root()), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                // nothing changed
+                CHECK(e.root().dump() == "[]");
+                CHECK(e.root().size() == 0);
+                CHECK(loaded_dump(e.save()) == "[]");
+                // the valid part of the same document can be copied
+                e.push_back(e.root(), loaded.root().size());
+                CHECK(e.root().dump() == "[1]");
+            }
+            // as a key, and in a nested value
+            {
+                const json_document loaded = json_document::load(patched(R"([{"abQZ": 1}, [["x", "QZ"]]])"), check);
+                json_editable_document e = json_editable_document::parse(R"({"keep": [1]})");
+                CHECK_THROWS_WITH_AS(e.set(e.root(), "k", loaded.root()[0]), "[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.set(e.root(), "k", loaded.root()[1]), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0x28", json::type_error&);
+                CHECK_THROWS_WITH_AS(e.push_back(e.root()["keep"], loaded.root()[1]), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0x28", json::type_error&);
+                CHECK(e.root().dump() == R"({"keep":[1]})");
+                CHECK(loaded_dump(e.save()) == R"({"keep":[1]})");
+            }
+        }
+    }
+#endif
+
     SECTION("the root replaced")
     {
         json_editable_document d = json_editable_document::parse(text);
