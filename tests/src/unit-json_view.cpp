@@ -314,6 +314,19 @@ TEST_CASE("json_view")
         CHECK(from_rvalue.owns_source());
         CHECK(from_rvalue.root().materialize() == expected);
         CHECK(json_document::parse(std::vector<char>(text.begin(), text.end())).owns_source());
+        // a const rvalue cannot be moved from, and is not borrowed (it may be a
+        // temporary): it is copied, as is a const rvalue of any container
+        const std::string const_text = text;
+        const json_document from_const_rvalue = json_document::parse(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
+        CHECK(from_const_rvalue.owns_source());
+        CHECK(from_const_rvalue.source().data() != const_text.data());
+        CHECK(from_const_rvalue.root().materialize() == expected);
+        json_document read_const_rvalue;
+        read_const_rvalue.read(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
+        CHECK(read_const_rvalue.owns_source());
+        CHECK(read_const_rvalue.root().materialize() == expected);
+        const std::vector<char> const_chars(text.begin(), text.end());
+        CHECK(json_document::parse(std::move(const_chars)).owns_source()); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
         CHECK(json_document::parse_copy(text).owns_source());
         CHECK(json_document::parse_copy(text).root().materialize() == expected);
         std::istringstream stream(text);
