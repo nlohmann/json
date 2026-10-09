@@ -373,6 +373,32 @@ TEST_CASE("json_view images: round trips")
             }
         }
     }
+
+    SECTION("loading releases the list of large objects")
+    {
+        std::string text = "[";
+        for (int object = 0; object < 400; ++object)
+        {
+            text += object != 0 ? ",{" : "{";
+            for (int i = 0; i < 128; ++i)
+            {
+                text += (i != 0 ? ",\"" : "\"") + std::to_string(i) + "\":" + std::to_string(i);
+            }
+            text += '}';
+        }
+        text += "]";
+        json_document parsed = json_document::parse(text);
+        const std::vector<std::uint8_t> image = parsed.save();
+        json_document loaded = json_document::load(image);
+        CHECK(loaded.root()[399]["127"] == 127);
+        // Parsing and loading build the same tables, and keep nothing else:
+        // not the positions of the objects to index (2 KiB here). The slack
+        // covers the nodes in the header of the document, which are sized
+        // differently.
+        parsed.shrink_to_fit();
+        loaded.shrink_to_fit();
+        CHECK(loaded.memory_usage() <= parsed.memory_usage() + 512);
+    }
 }
 
 TEST_CASE("json_view images: edited documents")
