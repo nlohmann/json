@@ -16,7 +16,7 @@
  * the read-only part of the basic_json interface; materialize() turns a     *
  * subtree into the basic_json value that parse() would produce.             *
  *                                                                           *
- * The source text must outlive a document that borrows it (lvalue byte     *
+ * The source text must outlive a document that borrows it (lvalue byte      *
  * containers, C strings); rvalue strings, streams, and other inputs are     *
  * owned by the document.                                                    *
 \****************************************************************************/
