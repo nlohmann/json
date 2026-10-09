@@ -1635,31 +1635,26 @@ TEST_CASE("json_view large objects")
         for (std::size_t i = 0; i < members; ++i)
         {
             const std::string key = std::string(i % 23, 'k') + std::to_string(i) + (i % 7 == 0 ? "\n" : "");
+            CHECK(v[key].get<std::size_t>() == i);
             CHECK(v.contains(key));
             CHECK(v.find(key).key() == key);
-            CHECK(!v.contains(key + "x"));
-            if (key == "k1")
-            {
-                continue; // repeated below: the last member wins
-            }
-            CHECK(v[key].get<std::size_t>() == i);
             CHECK(v.at(key).get<std::size_t>() == i);
+            CHECK(!v.contains(key + "x"));
         }
         CHECK(v[""].get_string() == "empty key");
-        CHECK(v["k1"].get_string() == "a duplicate of an earlier key"); // the last of duplicate keys, as for small objects
-        CHECK(v.at("k1").get_string() == "a duplicate of an earlier key");
+        CHECK(v["k1"].get<int>() == 1); // the first of duplicate keys, as for small objects
         CHECK(!v.contains("missing"));
         CHECK_THROWS_WITH_AS(v.at("missing"), "[json.exception.out_of_range.403] key 'missing' not found", json::out_of_range&);
         CHECK(v == j);
         CHECK(v.materialize() == j);
     }
 
-    SECTION("duplicate keys: the last member wins, with and without a table")
+    SECTION("duplicate keys: the first member wins, with and without a table")
     {
         // an object of `total` members: the keys "k0".."k<n-1>" in order, then
         // three keys repeated twice more (one copy in the middle, one at the
         // end), and two keys repeated once; the value of a member is its
-        // position, so that the last member of a key can be told apart
+        // position, so that the first member of a key can be told apart
         struct member
         {
             std::string key;
@@ -1707,20 +1702,23 @@ TEST_CASE("json_view large objects")
             REQUIRE(members.size() >= total);
             REQUIRE(members.size() >= 100);
             std::string text = "{";
+            std::map<std::string, std::size_t> first;
             std::map<std::string, std::size_t> last;
             for (const member& m : members)
             {
                 text += (text.size() > 1 ? ",\"" : "\"") + m.key + "\":" + std::to_string(m.position);
+                first.insert({m.key, m.position});
                 last[m.key] = m.position;
             }
             text += '}';
-            REQUIRE(last.size() < members.size());
+            REQUIRE(first.size() < members.size());
 
             const json_document d = json_document::parse(text);
             const json_view v = d.root();
             const json j = json::parse(text);
             CHECK(v.size() == members.size()); // every occurrence is visited
-            for (const auto& entry : last)
+            const json m = v.materialize();
+            for (const auto& entry : first)
             {
                 CAPTURE(entry.first)
                 const std::size_t expected = entry.second;
@@ -1735,7 +1733,9 @@ TEST_CASE("json_view large objects")
                 CHECK(v.at(json::json_pointer(pointer)).get<std::size_t>() == expected);
                 CHECK(v.value(json::json_pointer(pointer), std::size_t{0}) == expected);
                 CHECK(v.contains(json::json_pointer(pointer)));
-                CHECK(j[entry.first].get<std::size_t>() == expected); // as materialize() and parse() keep it
+                // materialize() and parse() keep the last value instead
+                CHECK(j[entry.first].get<std::size_t>() == last.at(entry.first));
+                CHECK(m[entry.first].get<std::size_t>() == last.at(entry.first));
             }
             CHECK(!v.contains("k"));
             CHECK(v["missing"].is_discarded());

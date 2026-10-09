@@ -2879,8 +2879,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // large objects). An object with document_data::index_min_members members or
 // more gets an open-addressing table after parsing; its node stores the
 // number of the table (1-based) in `extra`. A slot holds the offset of a key
-// node from its object node (0: empty). Of duplicate keys, the last is kept,
-// as for the linear search, and as basic_json::parse() does.
+// node from its object node (0: empty). Of duplicate keys, the first is kept,
+// as for the linear search.
 //
 // The hash is not seeded, so keys chosen to collide could make the build
 // quadratic. A key therefore sits at most index_max_displacement slots away
@@ -2949,8 +2949,7 @@ inline void build_object_index(document_data& d, node* obj)
             const node* const other = obj + slots[i];
             if (other->len == k->len && (k->len == 0 || std::memcmp(d.str(*other), key, k->len) == 0))
             {
-                duplicate = true; // keep the last: the key's slot now leads to this member
-                slots[i] = static_cast<std::uint32_t>(k - obj);
+                duplicate = true; // keep the first
                 break;
             }
             if (++distance > index_max_displacement)
@@ -2987,7 +2986,7 @@ inline void build_object_indexes(document_data& d)
     }
 }
 
-/// the key node of the last member with this key of an indexed object, or
+/// the key node of the first member with this key of an indexed object, or
 /// nullptr
 inline const node* find_indexed(const document_data& d, const node* obj, const char* key, std::size_t n) noexcept
 {

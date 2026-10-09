@@ -116,6 +116,7 @@ document.
     member in order and so keep the *last* value for a repeated key, so `#!cpp v["a"]` and
     `#!cpp v.materialize()["a"]` can differ. To get the value `parse()` would give, use
     [`materialize()`](materialize.md) or iterate the members with [`items()`](items.md) and keep the last match.
+    The hash index of a larger object (128 members or more) leads to the first member of a key as well.
     [`begin()`](begin.md)/[`end()`](end.md) and [`items()`](items.md) iterate over *all* members, including
     duplicates, in document order. See [Duplicate keys](../../features/json_view.md#duplicate-keys) and
     [`size()`](size.md#notes).
