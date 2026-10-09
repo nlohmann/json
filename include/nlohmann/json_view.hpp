@@ -243,7 +243,7 @@ class basic_json_view
     // element access //
     ////////////////////
 
-    /// the value of the member with this key (the last one, should the key
+    /// the value of the member with this key (the first one, should the key
     /// occur more than once); a discarded view if there is none, or if this
     /// is a discarded view (so that v["a"]["b"] is safe). Throws type_error.305
     /// if this is any other value but an object.
@@ -307,7 +307,7 @@ class basic_json_view
         return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
     }
 
-    /// the value of the member with this key (the last one, should the key
+    /// the value of the member with this key (the first one, should the key
     /// occur more than once). Throws type_error.304 if this is not an object,
     /// and out_of_range.403 if there is no such member.
     basic_json_view at(string_view_t key) const
@@ -365,7 +365,7 @@ class basic_json_view
     }
 
     /// the member with this key converted to T, or the default value if there
-    /// is no such member (the last one, should the key occur more than
+    /// is no such member (the first one, should the key occur more than
     /// once). Throws type_error.306 if this is not an object.
     template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
     T value(string_view_t key, const T& default_value) const
@@ -430,7 +430,7 @@ class basic_json_view
     // lookup //
     ////////////
 
-    /// an iterator to the member with this key (the last one, should the
+    /// an iterator to the member with this key (the first one, should the
     /// key occur more than once), or end(); end() also for non-objects
     iterator find(string_view_t key) const
     {
@@ -763,7 +763,7 @@ class basic_json_view
         return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + nodes * 16);
     }
 
-    /// the value of the last member with this key, or a discarded view
+    /// the value of the first member with this key, or a discarded view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {

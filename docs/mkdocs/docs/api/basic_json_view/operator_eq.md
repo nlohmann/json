@@ -18,6 +18,8 @@ bool operator==(const BasicJsonType& lhs, const basic_json_view& rhs);
 Neither overload builds a `BasicJsonType` value for a view to do the comparison (see [Notes](#notes) below). Numbers
 compare by value across their types (`#!cpp 1 == 1.0`), and an object compares by its members, with duplicate keys
 resolved exactly as `parse()` resolves them -- the last value, at the position of the first occurrence of the key.
+This is not what [`operator[]`](operator[].md) and the other lookups return for a duplicate key: they find the *first*
+member (see [Duplicate keys](../../features/json_view.md#duplicate-keys)).
 
 ## Parameters
 

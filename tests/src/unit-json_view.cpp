@@ -577,7 +577,7 @@ std::string exception_of(F f)
 
 // compares a view with the ordered_json value materialize() gives for it:
 // types, sizes, elements and members (by index, key, and iteration), in
-// document order; duplicate keys are found as their last occurrence
+// document order; duplicate keys are found as their first occurrence
 void check_access(const ordered_json_view& v, const ordered_json& j)
 {
     REQUIRE(v.type() == j.type());
@@ -618,23 +618,13 @@ void check_access(const ordered_json_view& v, const ordered_json& j)
             const std::string key(it.key().data(), it.key().size());
             CHECK(v.contains(key));
             CHECK(v.count(key) == 1);
-            if (std::find(keys.begin(), keys.end(), key) == keys.end())
-            {
-                keys.push_back(key);
-            }
-            // lookups find the last member with the key, which is this one if
-            // there is no later one
-            auto next = it;
-            ++next;
-            bool is_last = true;
-            for (; next != v.end(); ++next)
-            {
-                is_last = is_last && next.key() != it.key();
-            }
-            if (!is_last)
+            // lookups find the first member with the key, which is this one if
+            // there is no earlier one
+            if (std::find(keys.begin(), keys.end(), key) != keys.end())
             {
                 continue;
             }
+            keys.push_back(key);
             CHECK(v.find(key) == it);
             CHECK(v[key].materialize() == it->materialize());
             CHECK(v.at(key).materialize() == it.value().materialize());
@@ -725,20 +715,28 @@ TEST_CASE("json_view element access and iteration")
 #endif
     }
 
-    SECTION("duplicate keys: lookups find the last member, iteration all")
+    SECTION("duplicate keys: lookups find the first member, iteration all")
     {
         const json_document d = json_document::parse(R"({"a":1,"b":2,"a":3})");
         const json_view v = d.root();
         CHECK(v.size() == 3);
-        CHECK(v["a"].materialize() == 3);
-        CHECK(v.at("a").materialize() == 3);
-        CHECK(v.find("a") == std::next(v.begin(), 2));
-        CHECK(v.find("a").value().materialize() == 3);
+        CHECK(v["a"].materialize() == 1);
+        CHECK(v.at("a").materialize() == 1);
+        CHECK(v.find("a") == v.begin());
+        CHECK(v.find("a").value().materialize() == 1);
         CHECK(v.find("b") == std::next(v.begin()));
         CHECK(v.count("a") == 1);
         CHECK(v.contains("a"));
-        CHECK(v.value("a", 0) == 3);
-        CHECK(v["a"].materialize() == v.materialize()["a"]); // as materialize()
+        CHECK(v.value("a", 0) == 1);
+        CHECK(v.materialize()["a"] == 3); // materialize() keeps the last value, unlike the lookups
+        // JSON pointers resolve to the first member at every level
+        const json_document dp = json_document::parse(R"({"a":{"b":1},"a":{"b":2,"b":3}})");
+        CHECK(dp.root()[json::json_pointer("/a/b")].materialize() == 1);
+        CHECK(dp.root().at(json::json_pointer("/a/b")).materialize() == 1);
+        CHECK(dp.root().value(json::json_pointer("/a/b"), 0) == 1);
+        CHECK(dp.root().materialize()[json::json_pointer("/a/b")] == 3);
+        // get<map> keeps the last value, as materialize()
+        CHECK((v.get<std::map<std::string, int>>() == std::map<std::string, int> {{"a", 3}, {"b", 2}}));
         // keys of every length class (the 16-byte short compare and memcmp)
         for (const std::size_t n :
                 {
@@ -748,10 +746,10 @@ TEST_CASE("json_view element access and iteration")
             const std::string key(n, 'k');
             const json_document dk = json_document::parse("{\"" + key + "\":1,\"" + key + "x\":2,\"" + key + "\":3,\"" + key + "\":4}");
             CAPTURE(n)
-            CHECK(dk.root()[key].materialize() == 4);
-            CHECK(dk.root().at(key).materialize() == 4);
-            CHECK(dk.root().find(key) == std::next(dk.root().begin(), 3));
-            CHECK(dk.root().value(key, 0) == 4);
+            CHECK(dk.root()[key].materialize() == 1);
+            CHECK(dk.root().at(key).materialize() == 1);
+            CHECK(dk.root().find(key) == dk.root().begin());
+            CHECK(dk.root().value(key, 0) == 1);
             CHECK(dk.root()[key + "x"].materialize() == 2);
         }
         std::string order;
@@ -1463,6 +1461,8 @@ TEST_CASE("json_view dump")
         const json_document d = json_document::parse(R"({"b": 1, "a": 2, "b": 3})");
         CHECK(d.root().dump() == R"({"b":1,"a":2,"b":3})");
         CHECK(d.root().dump(1) == "{\n \"b\": 1,\n \"a\": 2,\n \"b\": 3\n}");
+        // dump() writes all members, though the lookup finds the first
+        CHECK(d.root()["b"].dump() == "1");
     }
 
     SECTION("deep nesting")
@@ -1585,6 +1585,9 @@ TEST_CASE("json_view comparison")
         const ordered_json_document dup = ordered_json_document::parse(R"({"a": 1, "b": 2, "a": 3})");
         const ordered_json_document last = ordered_json_document::parse(R"({"a": 3, "b": 2})");
         CHECK(dup.root() == last.root());
+        // (== compares as parse() resolves duplicates, a lookup finds the first)
+        CHECK(dup.root()["a"].materialize() == 1);
+        CHECK(dup.root()["a"] != last.root()["a"]);
         const ordered_json_document ab = ordered_json_document::parse(R"({"a": 1, "b": 2})");
         const ordered_json_document ba = ordered_json_document::parse(R"({"b": 2, "a": 1})");
         CHECK(ab.root() != ba.root());
@@ -1632,31 +1635,26 @@ TEST_CASE("json_view large objects")
         for (std::size_t i = 0; i < members; ++i)
         {
             const std::string key = std::string(i % 23, 'k') + std::to_string(i) + (i % 7 == 0 ? "\n" : "");
+            CHECK(v[key].get<std::size_t>() == i);
             CHECK(v.contains(key));
             CHECK(v.find(key).key() == key);
-            CHECK(!v.contains(key + "x"));
-            if (key == "k1")
-            {
-                continue; // repeated below: the last member wins
-            }
-            CHECK(v[key].get<std::size_t>() == i);
             CHECK(v.at(key).get<std::size_t>() == i);
+            CHECK(!v.contains(key + "x"));
         }
         CHECK(v[""].get_string() == "empty key");
-        CHECK(v["k1"].get_string() == "a duplicate of an earlier key"); // the last of duplicate keys, as for small objects
-        CHECK(v.at("k1").get_string() == "a duplicate of an earlier key");
+        CHECK(v["k1"].get<int>() == 1); // the first of duplicate keys, as for small objects
         CHECK(!v.contains("missing"));
         CHECK_THROWS_WITH_AS(v.at("missing"), "[json.exception.out_of_range.403] key 'missing' not found", json::out_of_range&);
         CHECK(v == j);
         CHECK(v.materialize() == j);
     }
 
-    SECTION("duplicate keys: the last member wins, with and without a table")
+    SECTION("duplicate keys: the first member wins, with and without a table")
     {
         // an object of `total` members: the keys "k0".."k<n-1>" in order, then
         // three keys repeated twice more (one copy in the middle, one at the
         // end), and two keys repeated once; the value of a member is its
-        // position, so that the last member of a key can be told apart
+        // position, so that the first member of a key can be told apart
         struct member
         {
             std::string key;
@@ -1704,20 +1702,23 @@ TEST_CASE("json_view large objects")
             REQUIRE(members.size() >= total);
             REQUIRE(members.size() >= 100);
             std::string text = "{";
+            std::map<std::string, std::size_t> first;
             std::map<std::string, std::size_t> last;
             for (const member& m : members)
             {
                 text += (text.size() > 1 ? ",\"" : "\"") + m.key + "\":" + std::to_string(m.position);
+                first.insert({m.key, m.position});
                 last[m.key] = m.position;
             }
             text += '}';
-            REQUIRE(last.size() < members.size());
+            REQUIRE(first.size() < members.size());
 
             const json_document d = json_document::parse(text);
             const json_view v = d.root();
             const json j = json::parse(text);
             CHECK(v.size() == members.size()); // every occurrence is visited
-            for (const auto& entry : last)
+            const json m = v.materialize();
+            for (const auto& entry : first)
             {
                 CAPTURE(entry.first)
                 const std::size_t expected = entry.second;
@@ -1732,7 +1733,9 @@ TEST_CASE("json_view large objects")
                 CHECK(v.at(json::json_pointer(pointer)).get<std::size_t>() == expected);
                 CHECK(v.value(json::json_pointer(pointer), std::size_t{0}) == expected);
                 CHECK(v.contains(json::json_pointer(pointer)));
-                CHECK(j[entry.first].get<std::size_t>() == expected); // as materialize() and parse() keep it
+                // materialize() and parse() keep the last value instead
+                CHECK(j[entry.first].get<std::size_t>() == last.at(entry.first));
+                CHECK(m[entry.first].get<std::size_t>() == last.at(entry.first));
             }
             CHECK(!v.contains("k"));
             CHECK(v["missing"].is_discarded());
