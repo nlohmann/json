@@ -87,9 +87,9 @@ exception thrown while converting through `materialize()` (the last bullet) is d
 !!! info "Duplicate keys"
 
     `#!cpp std::map`/`#!cpp std::unordered_map` conversions keep the *last* value of a repeated key, like
-    [`materialize()`](materialize.md) and [`BasicJsonType::parse()`](../basic_json/parse.md) do. This is the opposite
-    of [`operator[]`](operator[].md)/[`at`](at.md)/[`find`](find.md)/[`contains`](contains.md), which resolve to the
-    *first* occurrence (see the [Notes on duplicate keys](operator[].md#notes)).
+    [`materialize()`](materialize.md) and [`BasicJsonType::parse()`](../basic_json/parse.md) do. This is the member
+    [`operator[]`](operator[].md)/[`at`](at.md)/[`find`](find.md)/[`contains`](contains.md) resolve to, too (see the
+    [Notes on duplicate keys](operator[].md#notes)).
 
 !!! info "No pointers, references, or implicit conversion"
 

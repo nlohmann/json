@@ -126,14 +126,20 @@ whenever any of the other conditions above was not met.
   members in the order they appear in the source text. `basic_json`'s default `object_t` is a `std::map`, which
   sorts by key, so iterating a [`materialize()`](../api/basic_json_view/materialize.md)d value can print members in
   a different order than iterating the view they came from.
+- **Chained access is safe.** [`operator[]`](../api/basic_json_view/operator%5B%5D.md) with a missing key, an index
+  out of range, or an unresolvable JSON pointer returns a [discarded](../api/basic_json_view/is_discarded.md) view, and
+  `operator[]` on a discarded view returns a discarded view without throwing: `#!cpp v["a"]["b"][0]` can be tested
+  once at the end. Type errors on values that exist (a key on an array, an index on an object) still throw, and
+  [`at`](../api/basic_json_view/at.md) throws for every missing value.
 - **Duplicate keys are visible.** If an object in the source text repeats a key,
   [`begin()`](../api/basic_json_view/begin.md)/[`end()`](../api/basic_json_view/end.md) and
   [`items()`](../api/basic_json_view/items.md) visit *every* occurrence (and [`size()`](../api/basic_json_view/size.md)
   counts all of them), while [`operator[]`](../api/basic_json_view/operator%5B%5D.md),
   [`at`](../api/basic_json_view/at.md), [`find`](../api/basic_json_view/find.md),
   [`contains`](../api/basic_json_view/contains.md), and [`count`](../api/basic_json_view/count.md) resolve to the
-  *first* occurrence, since a lookup can stop as soon as it finds a match. `basic_json::parse()` (and so
-  [`materialize()`](../api/basic_json_view/materialize.md)) instead keeps only the *last* value for a repeated key.
+  *last* occurrence -- the one `basic_json::parse()` (and so
+  [`materialize()`](../api/basic_json_view/materialize.md)) keeps for a repeated key -- which makes a lookup scan all
+  members instead of stopping at a match.
   See the [Notes on duplicate keys](../api/basic_json_view/operator%5B%5D.md#notes) of `operator[]`.
 - **No [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) path.** Exceptions thrown by `basic_json_view`'s own
   element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the

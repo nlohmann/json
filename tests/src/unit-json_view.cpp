@@ -23,6 +23,7 @@ using nlohmann::ordered_json_view;
 #include <cstdio>
 #include <cstring>
 #include <iterator>
+#include <limits>
 #include <list>
 #include <map>
 #include <random>
@@ -442,7 +443,7 @@ std::string exception_of(F f)
 
 // compares a view with the ordered_json value materialize() gives for it:
 // types, sizes, elements and members (by index, key, and iteration), in
-// document order; duplicate keys are found as their first occurrence
+// document order; duplicate keys are found as their last occurrence
 void check_access(const ordered_json_view& v, const ordered_json& j)
 {
     REQUIRE(v.type() == j.type());
@@ -483,11 +484,23 @@ void check_access(const ordered_json_view& v, const ordered_json& j)
             const std::string key(it.key().data(), it.key().size());
             CHECK(v.contains(key));
             CHECK(v.count(key) == 1);
-            if (std::find(keys.begin(), keys.end(), key) != keys.end())
+            if (std::find(keys.begin(), keys.end(), key) == keys.end())
             {
-                continue; // a duplicate: lookups find the first one
+                keys.push_back(key);
             }
-            keys.push_back(key);
+            // lookups find the last member with the key, which is this one if
+            // there is no later one
+            auto next = it;
+            ++next;
+            bool is_last = true;
+            for (; next != v.end(); ++next)
+            {
+                is_last = is_last && next.key() != it.key();
+            }
+            if (!is_last)
+            {
+                continue;
+            }
             CHECK(v.find(key) == it);
             CHECK(v[key].materialize() == it->materialize());
             CHECK(v.at(key).materialize() == it.value().materialize());
@@ -578,15 +591,35 @@ TEST_CASE("json_view element access and iteration")
 #endif
     }
 
-    SECTION("duplicate keys: lookups find the first member, iteration all")
+    SECTION("duplicate keys: lookups find the last member, iteration all")
     {
         const json_document d = json_document::parse(R"({"a":1,"b":2,"a":3})");
         const json_view v = d.root();
         CHECK(v.size() == 3);
-        CHECK(v["a"].materialize() == 1);
-        CHECK(v.at("a").materialize() == 1);
-        CHECK(v.find("a") == v.begin());
+        CHECK(v["a"].materialize() == 3);
+        CHECK(v.at("a").materialize() == 3);
+        CHECK(v.find("a") == std::next(v.begin(), 2));
+        CHECK(v.find("a").value().materialize() == 3);
+        CHECK(v.find("b") == std::next(v.begin()));
         CHECK(v.count("a") == 1);
+        CHECK(v.contains("a"));
+        CHECK(v.value("a", 0) == 3);
+        CHECK(v["a"].materialize() == v.materialize()["a"]); // as materialize()
+        // keys of every length class (the 16-byte short compare and memcmp)
+        for (const std::size_t n :
+                {
+                    0u, 1u, 3u, 7u, 8u, 15u, 16u, 17u, 40u
+                })
+        {
+            const std::string key(n, 'k');
+            const json_document dk = json_document::parse("{\"" + key + "\":1,\"" + key + "x\":2,\"" + key + "\":3,\"" + key + "\":4}");
+            CAPTURE(n)
+            CHECK(dk.root()[key].materialize() == 4);
+            CHECK(dk.root().at(key).materialize() == 4);
+            CHECK(dk.root().find(key) == std::next(dk.root().begin(), 3));
+            CHECK(dk.root().value(key, 0) == 4);
+            CHECK(dk.root()[key + "x"].materialize() == 2);
+        }
         std::string order;
         for (auto it = v.begin(); it != v.end(); ++it)
         {
@@ -644,7 +677,124 @@ TEST_CASE("json_view element access and iteration")
         const json_view invalid{};
         CHECK(invalid.begin() == invalid.end());
         CHECK(std::string(invalid.type_name()) == "discarded");
-        CHECK_THROWS_WITH_AS(invalid["a"], "[json.exception.type_error.305] cannot use operator[] with a string argument with discarded", json::type_error&);
+    }
+
+    SECTION("chained access is safe: operator[] of a discarded view is discarded")
+    {
+        const json_document d = json_document::parse(R"({"a":{"b":[10,20]},"s":"str"})");
+        const json_view v = d.root();
+        // missing keys and indexes
+        CHECK(!v["x"]);
+        CHECK(!v["x"]["y"]);
+        CHECK(!v["x"]["y"]["z"]);
+        CHECK(!v["x"][0]);
+        CHECK(!v["x"][0u][1L]);
+        CHECK(!v["a"]["b"][2]);
+        CHECK(!v["a"]["b"][2]["c"]);
+        CHECK(!v["a"]["b"][2][json_view::json_pointer("/c")]);
+        CHECK(!v["x"][json_view::json_pointer("/a/b")]);
+        CHECK(!v["x"][json_view::json_pointer("")]);
+        CHECK(v["x"]["y"].is_discarded());
+        CHECK(!v["x"][std::string("y")]);
+        // a resolvable path still resolves
+        CHECK(v["a"]["b"][1].materialize() == 20);
+        CHECK(v[json_view::json_pointer("/a/b/1")].materialize() == 20);
+        // the discarded view of an unresolved pointer is discarded too
+        CHECK(!v[json_view::json_pointer("/x/y")]["z"]);
+        CHECK(!v[json_view::json_pointer("/a/b/5")][0]);
+#if !defined(JSON_NOEXCEPTION)
+        // type errors on values that are not discarded stay
+        CHECK_THROWS_WITH_AS(v[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object", json::type_error&);
+        CHECK_THROWS_WITH_AS(v["a"]["b"]["c"], "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
+        CHECK_THROWS_WITH_AS(v["s"]["c"], "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
+        CHECK_THROWS_WITH_AS(v["s"][0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with string", json::type_error&);
+        CHECK_THROWS_AS(v["a"]["b"][0]["c"], json::type_error&);
+        CHECK_THROWS_AS(v["s"][json_view::json_pointer("/x")], json::out_of_range&);
+        // at() keeps throwing on a discarded view
+        const json_view invalid{};
+        CHECK(!invalid["a"]);
+        CHECK(!invalid[0]);
+        CHECK(!invalid[json_view::json_pointer("/a")]);
+        CHECK_THROWS_WITH_AS(invalid.at("a"), "[json.exception.type_error.304] cannot use at() with discarded", json::type_error&);
+        CHECK_THROWS_WITH_AS(invalid.at(0), "[json.exception.type_error.304] cannot use at() with discarded", json::type_error&);
+        CHECK_THROWS_AS(v.at("x").at("y"), json::out_of_range&);
+        CHECK_THROWS_AS(v["x"].at("y"), json::type_error&);
+        CHECK_THROWS_AS(v.at(json_view::json_pointer("/x/y")), json::out_of_range&);
+        CHECK_THROWS_AS(v["x"].at(json_view::json_pointer("/y")), json::out_of_range&);
+#endif
+    }
+
+    SECTION("integer types as array indexes")
+    {
+        const json_document d = json_document::parse("[10,20,30]");
+        const json_view v = d.root();
+        const json j = v.materialize();
+        // (compile-time: no overload is ambiguous)
+        CHECK(v[0].materialize() == 10);
+        CHECK(v[1].materialize() == 20);
+        CHECK(v[0u].materialize() == 10);
+        CHECK(v[1u].materialize() == 20);
+        CHECK(v[1L].materialize() == 20);
+        CHECK(v[2UL].materialize() == 30);
+        CHECK(v[1LL].materialize() == 20);
+        CHECK(v[2ULL].materialize() == 30);
+        CHECK(v[static_cast<short>(1)].materialize() == 20);
+        CHECK(v[static_cast<unsigned short>(2)].materialize() == 30);
+        CHECK(v[static_cast<signed char>(1)].materialize() == 20);
+        CHECK(v[static_cast<unsigned char>(2)].materialize() == 30);
+        CHECK(v[std::int8_t(1)].materialize() == 20);
+        CHECK(v[std::int16_t(2)].materialize() == 30);
+        CHECK(v[std::int32_t(1)].materialize() == 20);
+        CHECK(v[std::int64_t(2)].materialize() == 30);
+        CHECK(v[std::uint32_t(0)].materialize() == 10);
+        CHECK(v[std::uint64_t(1)].materialize() == 20);
+        CHECK(v[std::size_t(2)].materialize() == 30);
+        CHECK(v[std::ptrdiff_t(1)].materialize() == 20);
+        CHECK(j[0u] == 10); // as basic_json
+
+        CHECK(v.at(0).materialize() == 10);
+        CHECK(v.at(1u).materialize() == 20);
+        CHECK(v.at(1L).materialize() == 20);
+        CHECK(v.at(2LL).materialize() == 30);
+        CHECK(v.at(2ULL).materialize() == 30);
+        CHECK(v.at(static_cast<short>(1)).materialize() == 20);
+        CHECK(v.at(static_cast<unsigned short>(2)).materialize() == 30);
+        CHECK(v.at(std::int32_t(0)).materialize() == 10);
+        CHECK(v.at(std::uint32_t(0)).materialize() == 10);
+        CHECK(v.at(std::int64_t(0)).materialize() == 10);
+        CHECK(v.at(std::uint64_t(1)).materialize() == 20);
+        CHECK(v.at(std::size_t(2)).materialize() == 30);
+        CHECK(j.at(std::uint32_t(0)) == 10); // as basic_json
+
+        // out of range, including negative values (no wrap-around)
+        CHECK(!v[3]);
+        CHECK(!v[3u]);
+        CHECK(!v[3L]);
+        CHECK(!v[-1]);
+        CHECK(!v[-1L]);
+        CHECK(!v[-1LL]);
+        CHECK(!v[static_cast<short>(-1)]);
+        CHECK(!v[std::int64_t(-3)]);
+        CHECK(!v[(std::numeric_limits<std::int64_t>::min)()]);
+        CHECK(!v[(std::numeric_limits<std::uint64_t>::max)()]);
+        CHECK(!v[(std::numeric_limits<std::size_t>::max)()]);
+        CHECK(!v[std::numeric_limits<int>::max()]);
+#if !defined(JSON_NOEXCEPTION)
+        CHECK_THROWS_WITH_AS(v.at(3), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(v.at(3u), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(v.at(std::int64_t(3)), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
+        CHECK_THROWS_AS(v.at(-1), json::out_of_range&);
+        CHECK_THROWS_AS(v.at(-1L), json::out_of_range&);
+        CHECK_THROWS_AS(v.at(std::int64_t(-1)), json::out_of_range&);
+        CHECK_THROWS_AS(v.at((std::numeric_limits<std::int64_t>::min)()), json::out_of_range&);
+        CHECK_THROWS_AS(v.at((std::numeric_limits<std::uint64_t>::max)()), json::out_of_range&);
+        // not an array
+        const json_document o = json_document::parse("{}");
+        CHECK_THROWS_AS(o.root()[0u], json::type_error&);
+        CHECK_THROWS_AS(o.root()[1L], json::type_error&);
+        CHECK_THROWS_AS(o.root().at(std::uint32_t(0)), json::type_error&);
+        CHECK_THROWS_AS(o.root().at(std::int64_t(0)), json::type_error&);
+#endif
     }
 
     SECTION("iterators")

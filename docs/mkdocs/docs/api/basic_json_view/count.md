@@ -23,9 +23,9 @@ No-throw guarantee: this function never throws exceptions.
 
 ## Complexity
 
-Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after
-another, in document order, stopping at the first match. Each comparison first checks the key's length -- already
-known from the index, without reading the key bytes -- before comparing its content.
+Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after another,
+in document order, scanning all of them, since the last match is wanted. Each comparison first checks the key's length
+-- already known from the index, without reading the key bytes -- before comparing its content.
 
 ## Notes
 
@@ -36,7 +36,7 @@ Unlike [`BasicJsonType::count()`](../basic_json/count.md), whose return value ca
 an `ObjectType` that allows multiple entries per key, `count()` here never does: it is exactly
 [`contains()`](contains.md) as `#!cpp 0`/`#!cpp 1`. This holds even if the source text has a duplicate key -- see the
 [Notes on duplicate keys](operator[].md#notes) of `operator[]` -- because a `#!cpp count() > 1` result would require
-counting every member with a matching key, not just finding the first one.
+counting every member with a matching key (the lookup functions resolve to the *last* one).
 
 ## Examples
 
