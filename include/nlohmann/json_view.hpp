@@ -1015,6 +1015,8 @@ class basic_json_document
         std::vector<char> arena(shrink_arena ? d.arena : std::vector<char>());
         const bool shrink_nodes = d.nodes != d.inline_nodes && d.node_count != d.node_capacity;
         const bool into_header = d.node_count <= d.inline_capacity;
+        std::vector<document_data::object_index> indexes(d.indexes.capacity() > d.indexes.size() ? d.indexes : std::vector<document_data::object_index>());
+        std::vector<std::uint32_t> index_slots(d.index_slots.capacity() > d.index_slots.size() ? d.index_slots : std::vector<std::uint32_t>());
         node* fresh = (shrink_nodes && !into_header) ? static_cast<node*>(::operator new (d.node_count * sizeof(node))) : d.inline_nodes;
 
         if (shrink_nodes)
@@ -1031,6 +1033,14 @@ class basic_json_document
         {
             d.arena.swap(arena);
             d.base[1] = d.arena.data();
+        }
+        if (d.indexes.capacity() > d.indexes.size())
+        {
+            d.indexes.swap(indexes);
+        }
+        if (d.index_slots.capacity() > d.index_slots.size())
+        {
+            d.index_slots.swap(index_slots);
         }
     }
 
@@ -1110,9 +1120,11 @@ class basic_json_document
             d.base[0] = d.src;
             d.base[1] = d.arena.data();
             detail::view::build_object_indexes(d);
+            std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while parsing)
             d.discarded = false;
             return;
         }
+        std::vector<std::uint32_t>().swap(d.large_objects);
         if (allow_exceptions)
         {
             detail::view::throw_parse_failure<BasicJsonType>(failure, src, size, comments, trailing_commas);
