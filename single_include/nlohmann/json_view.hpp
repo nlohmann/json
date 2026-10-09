@@ -2046,6 +2046,8 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <cstdint> // uint16_t, uint32_t, uint64_t
 #include <cstring> // memcmp, memcpy
+#include <limits> // numeric_limits
+#include <type_traits> // integral_constant, is_integral, is_same
 
 // #include <nlohmann/json.hpp>
 // #include <nlohmann/detail/view/document_data.hpp>
@@ -2119,12 +2121,14 @@ class short_key
     std::uint64_t m_b = 0;
 };
 
-/// the key node of the first member of an object with the given key, or
-/// nullptr; most keys are rejected by their length, from the index alone
+/// the key node of the last member of an object with the given key, or
+/// nullptr (the last one, as materialize() and parse() keep it); most keys are
+/// rejected by their length, from the index alone
 inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
     const node* const end = document_data::child_end(object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    const node* last = nullptr;
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
     {
         const short_key probe(k, n);
@@ -2132,19 +2136,37 @@ inline const node* find_member(const document_data& d, const node* object, const
         {
             if (m->len == n && probe.matches(reinterpret_cast<const unsigned char*>(d.str(*m)))) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             {
-                return m;
+                last = m;
             }
         }
-        return nullptr;
+        return last;
     }
     for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
     {
         if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
         {
-            return m;
+            last = m;
         }
     }
-    return nullptr;
+    return last;
+}
+
+/// whether an integer type is accepted as an array index by the view's
+/// operator[] and at(): every integer type but bool and size_t, which has its
+/// own overload
+template<typename T>
+struct is_index_type : std::integral_constant < bool,
+    std::is_integral<T>::value && !std::is_same<T, bool>::value && !std::is_same<T, std::size_t>::value >
+{};
+
+/// an integer as an index: negative values, and values that do not fit a
+/// size_t, map to the largest size_t (out of range for every array)
+template<typename SizeType, typename IntegerType>
+SizeType to_index(IntegerType idx) noexcept
+{
+    const IntegerType zero = 0;
+    const auto result = static_cast<SizeType>(idx);
+    return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
 }
 
 /// the element of an array at an index below its size
@@ -2971,13 +2993,18 @@ class basic_json_view
     // element access //
     ////////////////////
 
-    /// the value of the member with this key (the first one, should the key
-    /// occur more than once); a discarded view if there is none. Throws
-    /// type_error.305 if this is not an object.
+    /// the value of the member with this key (the last one, should the key
+    /// occur more than once); a discarded view if there is none, or if this
+    /// is a discarded view (so that v["a"]["b"] is safe). Throws type_error.305
+    /// if this is any other value but an object.
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view operator[](string_view_t key) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
+            if (is_discarded())
+            {
+                return basic_json_view();
+            }
             detail::view::throw_type_error(305, "cannot use operator[] with a string argument with ", type_name());
         }
         return lookup(key);
@@ -2994,31 +3021,43 @@ class basic_json_view
     }
 
     /// the element at this index; a discarded view if the index is out of
-    /// range. Throws type_error.305 if this is not an array.
+    /// range, or if this is a discarded view. Throws type_error.305 if this is
+    /// any other value but an array.
     basic_json_view operator[](size_type idx) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
         {
+            if (is_discarded())
+            {
+                return basic_json_view();
+            }
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
         return idx < m_node->len ? basic_json_view(m_doc, detail::view::element_at(m_node, idx)) : basic_json_view();
     }
 
-    /// (an int argument would be ambiguous between size_type and const char*)
-    basic_json_view operator[](int idx) const
+    /// any other integer type (int, unsigned, long, std::int64_t, ...; a
+    /// single overload for size_type alone would be ambiguous for all of them
+    /// and for const char*); negative values are out of range
+    template < typename IntegerType, typename std::enable_if < detail::view::is_index_type<IntegerType>::value, int >::type = 0 >
+    basic_json_view operator[](IntegerType idx) const
     {
-        return operator[](static_cast<size_type>(idx));
+        return operator[](detail::view::to_index<size_type>(idx));
     }
 
     /// the value a JSON pointer refers to; a discarded view if a key is
-    /// missing or an index is out of range. Other errors throw what const
-    /// basic_json::operator[] throws.
+    /// missing or an index is out of range, or if this is a discarded view.
+    /// Other errors throw what const basic_json::operator[] throws.
     basic_json_view operator[](const json_pointer& ptr) const
     {
+        if (NLOHMANN_VIEW_UNLIKELY(is_discarded()))
+        {
+            return basic_json_view();
+        }
         return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
     }
 
-    /// the value of the member with this key (the first one, should the key
+    /// the value of the member with this key (the last one, should the key
     /// occur more than once). Throws type_error.304 if this is not an object,
     /// and out_of_range.403 if there is no such member.
     basic_json_view at(string_view_t key) const
@@ -3060,9 +3099,12 @@ class basic_json_view
         return basic_json_view(m_doc, detail::view::element_at(m_node, idx));
     }
 
-    basic_json_view at(int idx) const
+    /// any other integer type, see operator[]; negative values are out of
+    /// range
+    template < typename IntegerType, typename std::enable_if < detail::view::is_index_type<IntegerType>::value, int >::type = 0 >
+    basic_json_view at(IntegerType idx) const
     {
-        return at(static_cast<size_type>(idx));
+        return at(detail::view::to_index<size_type>(idx));
     }
 
     /// the value a JSON pointer refers to; throws what basic_json::at()
@@ -3073,7 +3115,7 @@ class basic_json_view
     }
 
     /// the member with this key converted to T, or the default value if there
-    /// is no such member (the first one, should the key occur more than
+    /// is no such member (the last one, should the key occur more than
     /// once). Throws type_error.306 if this is not an object.
     template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
     T value(string_view_t key, const T& default_value) const
@@ -3138,7 +3180,7 @@ class basic_json_view
     // lookup //
     ////////////
 
-    /// an iterator to the member with this key (the first one, should the
+    /// an iterator to the member with this key (the last one, should the
     /// key occur more than once), or end(); end() also for non-objects
     iterator find(string_view_t key) const
     {
@@ -3316,7 +3358,7 @@ class basic_json_view
         : m_doc(d), m_node(n)
     {}
 
-    /// the value of the first member with this key, or a discarded view
+    /// the value of the last member with this key, or a discarded view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
