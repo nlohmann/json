@@ -101,16 +101,12 @@ inline std::size_t moved_capacity(const document_data& d, const node* n) noexcep
     return d.edits->moved_cap[n->off];
 }
 
-/// let container n take its elements from `seq` (header node first)
-inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
+/// Make room for one more moved container. This is the part of set_moved()
+/// that can throw: a caller that changes a node before it calls set_moved()
+/// calls this first, so that a failure leaves the node as it was.
+inline void reserve_moved(document_data& d)
 {
     document_data::edit_state& e = edit_state_of(d);
-    if ((n->flags & node_flags::moved) != 0)
-    {
-        e.moved[n->off] = seq;
-        e.moved_cap[n->off] = cap;
-        return;
-    }
     if (e.moved.size() >= 0xFFFFFFFFu)
     {
         throw_out_of_range(416, "more than 4294967295 edited arrays and objects are not supported by json_document"); // LCOV_EXCL_LINE
@@ -121,6 +117,20 @@ inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
         e.moved.reserve((2 * e.moved.size()) + 16);
         e.moved_cap.reserve((2 * e.moved.size()) + 16);
     }
+}
+
+/// let container n take its elements from `seq` (header node first); cannot
+/// throw if n is moved already or reserve_moved() was called
+inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
+{
+    document_data::edit_state& e = edit_state_of(d);
+    if ((n->flags & node_flags::moved) != 0)
+    {
+        e.moved[n->off] = seq;
+        e.moved_cap[n->off] = cap;
+        return;
+    }
+    reserve_moved(d);
     e.moved.push_back(seq);
     e.moved_cap.push_back(cap);
     n->off = static_cast<std::uint32_t>(e.moved.size() - 1);
@@ -146,6 +156,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         set_moved(d, n, nh, cap);
         return nh;
     }
+    reserve_moved(d); // (so that set_moved() below cannot throw)
     const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
     const std::size_t used = 1 + (static_cast<std::size_t>(n->len) * (object ? 2 : 1));
     const std::size_t cap = used + extra;
