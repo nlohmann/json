@@ -759,7 +759,7 @@ class basic_json_view
         // the end is unknown: assume a few bytes per node, the output buffer
         // grows should the value be larger
         const auto nodes = static_cast<std::size_t>(document_data::after(m_node) - m_node);
-        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + nodes * 16);
+        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + (nodes * 16));
     }
 
     /// the value of the first member with this key, or a discarded view
@@ -1439,11 +1439,11 @@ namespace std // NOLINT(cert-dcl58-cpp)
     #pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
 template<typename View>
-class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
     : public std::integral_constant<std::size_t, 2> {};
 
 template<std::size_t N, typename View>
-class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
   public:
     using type = decltype(std::declval<::nlohmann::detail::view::view_item<View>>().template get<N>());
