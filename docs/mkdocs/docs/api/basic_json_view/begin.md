@@ -24,7 +24,7 @@ Constant.
 
 For an object, iteration visits **every** member, including all occurrences of a duplicate key -- unlike
 [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md), [`contains`](contains.md), and [`count`](count.md),
-which all resolve to the *last* member with a given key. See the
+which all resolve to the *first* member with a given key. See the
 [Notes on duplicate keys](operator[].md#notes) of `operator[]`.
 
 Because objects are iterated in document order rather than sorted by key, the order seen here can differ from what
