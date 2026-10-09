@@ -80,6 +80,14 @@ std::uint64_t header_field(const std::vector<std::uint8_t>& image, std::size_t o
     return v;
 }
 
+// a header field as a size; the cast is from a variable, which GCC's
+// -Wuseless-cast does not flag where std::uint64_t and std::size_t coincide
+std::size_t header_size_field(const std::vector<std::uint8_t>& image, std::size_t offset)
+{
+    const std::uint64_t v = header_field(image, offset);
+    return static_cast<std::size_t>(v);
+}
+
 void set_header_field(std::vector<std::uint8_t>& image, std::size_t offset, std::uint64_t v)
 {
     std::memcpy(image.data() + offset, &v, sizeof(v));
@@ -87,8 +95,7 @@ void set_header_field(std::vector<std::uint8_t>& image, std::size_t offset, std:
 
 std::size_t node_count(const std::vector<std::uint8_t>& image)
 {
-    const std::uint64_t count = header_field(image, 8);
-    return static_cast<std::size_t>(count);
+    return header_size_field(image, 8);
 }
 
 std::size_t text_at(const std::vector<std::uint8_t>& image)
@@ -739,7 +746,7 @@ TEST_CASE("json_view images: errors")
 
         // the NULs after the text and the decoded strings
         bad = image;
-        bad[text_at(image) + static_cast<std::size_t>(header_field(image, 16))] = 'x';
+        bad[text_at(image) + header_size_field(image, 16)] = 'x';
         CHECK(load_result(bad, image_check::none) == prefix + "sizes out of range");
         bad = image;
         bad.back() = 'x';
@@ -844,8 +851,8 @@ TEST_CASE("json_view images: check")
 
     SECTION("bounds")
     {
-        const std::size_t text_size = static_cast<std::size_t>(header_field(image, 16));
-        const std::size_t arena_size = static_cast<std::size_t>(header_field(image, 24));
+        const std::size_t text_size = header_size_field(image, 16);
+        const std::size_t arena_size = header_size_field(image, 24);
         rejected(corrupted(image, 1, [&](node & n)
         {
             n.off = static_cast<std::uint32_t>(text_size + 1);
@@ -952,7 +959,7 @@ TEST_CASE("json_view images: check")
         // invalid UTF-8 in a decoded string
         b = image;
         const node s2 = node_at(image, 2);
-        b[t + static_cast<std::size_t>(header_field(image, 16)) + 1 + s2.off] = 0xFF;
+        b[t + header_size_field(image, 16) + 1 + s2.off] = 0xFF;
         rejected(b, false);
     }
 
