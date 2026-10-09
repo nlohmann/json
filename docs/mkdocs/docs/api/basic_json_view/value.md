@@ -12,7 +12,7 @@ T value(const json_pointer& ptr, const T& default_value) const;
 string_t value(const json_pointer& ptr, const char* default_value) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see
+1. Returns the value of the object member with key `key` -- the last one, should the key occur more than once (see
    [Notes on duplicate keys](operator[].md#notes)) -- converted to `T`, or `default_value` if there is no such member.
 2. Returns the value a JSON pointer `ptr` refers to, starting at this value, converted to `T`, or `default_value` if
    `ptr` cannot be resolved.
@@ -39,7 +39,7 @@ equivalent) deduce `string_t`, not `const char*`, for their return type and for 
 
 ## Return value
 
-1. the first member with key `key`, converted to `T`, or `default_value`
+1. the last member with key `key`, converted to `T`, or `default_value`
 2. the value `ptr` resolves to, converted to `T`, or `default_value`
 
 ## Exception safety
@@ -68,8 +68,8 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 ## Complexity
 
 1. Linear in the number of members: as for [`operator[]`](operator[].md#complexity), members are compared one after
-   another, in document order, stopping at the first match. Plus the complexity of converting the found member to
-   `T` (see [`get`](get.md)).
+   another, in document order, scanning all of them, since the last match is wanted. Plus the complexity of converting
+   the found member to `T` (see [`get`](get.md)).
 2. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at
    that level or the index into the array -- as for the [`operator[]`](operator[].md#complexity) and
    [`at`](at.md#complexity) overloads that take a JSON pointer. Plus the complexity of converting the resolved value

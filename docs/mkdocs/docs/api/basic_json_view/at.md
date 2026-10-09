@@ -8,15 +8,18 @@ basic_json_view at(const string_t& key) const;
 
 // (2)
 basic_json_view at(size_type idx) const;
-basic_json_view at(int idx) const;
+template<typename IntegerType>
+basic_json_view at(IntegerType idx) const;
 
 // (3)
 basic_json_view at(const json_pointer& ptr) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see
+1. Returns the value of the object member with key `key` -- the last one, should the key occur more than once (see
    [Notes on duplicate keys](operator[].md#notes)).
-2. Returns the array element at index `idx`.
+2. Returns the array element at index `idx`. The template accepts every integer type except `#!cpp bool` and
+   `#!cpp std::size_t` and forwards to the `size_type` overload, as for [`operator[]`](operator[].md); a negative
+   `idx` is out of range.
 3. Returns the value a JSON pointer `ptr` refers to, starting at this value.
 
 ## Parameters
@@ -32,7 +35,7 @@ basic_json_view at(const json_pointer& ptr) const;
 
 ## Return value
 
-1. the value of the first member with key `key`
+1. the value of the last member with key `key`
 2. the element at index `idx`
 3. the value `ptr` resolves to, starting at this value
 
@@ -72,8 +75,8 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 ## Complexity
 
 1. Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after
-   another, in document order, stopping at the first match. Each comparison first checks the key's length --
-   already known from the index, without reading the key bytes -- before comparing its content.
+   another, in document order, scanning all of them, since the last match is wanted. Each comparison first checks the
+   key's length -- already known from the index, without reading the key bytes -- before comparing its content.
 2. Linear in `idx`: elements are skipped one at a time from the first one, since they are not a fixed size in the
    index (unlike `BasicJsonType`'s array, which is random-access).
 3. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at

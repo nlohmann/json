@@ -48,7 +48,7 @@ Constant.
 
 As for [`begin()`](begin.md)/[`end()`](end.md), `items()` visits **every** member of an object, including all
 occurrences of a duplicate key -- unlike [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md),
-[`contains`](contains.md), and [`count`](count.md), which resolve to the *first* member with a given key. See the
+[`contains`](contains.md), and [`count`](count.md), which resolve to the *last* member with a given key. See the
 [Notes on duplicate keys](operator[].md#notes) of `operator[]`.
 
 !!! danger "Lifetime issues"
@@ -63,8 +63,8 @@ occurrences of a duplicate key -- unlike [`operator[]`](operator[].md), [`at`](a
 
     The example below shows a settings object whose source text records every update to a key as a duplicate
     member, in the order they happened. `items()` walks all of them, so the update history is visible, while
-    [`operator[]`](operator[].md) only ever sees the *first* one and [`materialize()`](materialize.md) -- like
-    [`BasicJsonType::parse()`](../basic_json/parse.md) -- keeps only the *last*.
+    [`operator[]`](operator[].md) sees the *last* one, and so does [`materialize()`](materialize.md) -- like
+    [`BasicJsonType::parse()`](../basic_json/parse.md).
 
     ```cpp
     --8<-- "examples/basic_json_view__items.cpp"
