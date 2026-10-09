@@ -3081,9 +3081,10 @@ class short_key
     std::uint64_t m_b = 0;
 };
 
-/// the key node of the last member of an object with the given key, or
-/// nullptr (the last one, as materialize() and parse() keep it); most keys are
-/// rejected by their length, from the index alone
+/// the key node of the first member of an object with the given key, or
+/// nullptr (the search stops at the first match; materialize() and parse()
+/// keep the last value of a duplicate key instead); most keys are rejected by
+/// their length, from the index alone
 inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
     if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0))
@@ -3092,7 +3093,6 @@ inline const node* find_member(const document_data& d, const node* object, const
     }
     const node* const end = document_data::child_end(object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    const node* last = nullptr;
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
     {
         const short_key probe(k, n);
@@ -3100,19 +3100,19 @@ inline const node* find_member(const document_data& d, const node* object, const
         {
             if (m->len == n && probe.matches(reinterpret_cast<const unsigned char*>(d.str(*m)))) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             {
-                last = m;
+                return m;
             }
         }
-        return last;
+        return nullptr;
     }
     for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
     {
         if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
         {
-            last = m;
+            return m;
         }
     }
-    return last;
+    return nullptr;
 }
 
 /// whether an integer type is accepted as an array index by the view's
@@ -3698,11 +3698,6 @@ class output_buffer
     {
         const auto size = static_cast<std::size_t>(m_pos - m_out.data());
         m_out.resize(size);
-        // do not keep a buffer that was sized for a much larger output
-        if (m_out.capacity() > 1024 && m_out.capacity() / 2 > size)
-        {
-            m_out.shrink_to_fit();
-        }
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE void reserve(std::size_t n)
@@ -4480,7 +4475,7 @@ class basic_json_view
     // element access //
     ////////////////////
 
-    /// the value of the member with this key (the last one, should the key
+    /// the value of the member with this key (the first one, should the key
     /// occur more than once); a discarded view if there is none, or if this
     /// is a discarded view (so that v["a"]["b"] is safe). Throws type_error.305
     /// if this is any other value but an object.
@@ -4544,7 +4539,7 @@ class basic_json_view
         return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
     }
 
-    /// the value of the member with this key (the last one, should the key
+    /// the value of the member with this key (the first one, should the key
     /// occur more than once). Throws type_error.304 if this is not an object,
     /// and out_of_range.403 if there is no such member.
     basic_json_view at(string_view_t key) const
@@ -4602,7 +4597,7 @@ class basic_json_view
     }
 
     /// the member with this key converted to T, or the default value if there
-    /// is no such member (the last one, should the key occur more than
+    /// is no such member (the first one, should the key occur more than
     /// once). Throws type_error.306 if this is not an object.
     template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
     T value(string_view_t key, const T& default_value) const
@@ -4667,7 +4662,7 @@ class basic_json_view
     // lookup //
     ////////////
 
-    /// an iterator to the member with this key (the last one, should the
+    /// an iterator to the member with this key (the first one, should the
     /// key occur more than once), or end(); end() also for non-objects
     iterator find(string_view_t key) const
     {
@@ -4972,7 +4967,7 @@ class basic_json_view
         return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + nodes * 16);
     }
 
-    /// the value of the last member with this key, or a discarded view
+    /// the value of the first member with this key, or a discarded view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
