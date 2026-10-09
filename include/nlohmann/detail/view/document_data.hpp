@@ -78,7 +78,21 @@ struct document_data
         }
     };
 
-    document_data() = default;
+    /// user-provided so that the class-type members can be initialized in the
+    /// member initialization list (-Weffc++ asks for it, and old GCC rejects a
+    /// defaulted constructor whose exception specification differs from the
+    /// implicit one); they cannot take default member initializers, which old
+    /// Clang (3.4-3.6) rejects. The other members have default member
+    /// initializers. noexcept: create() constructs into raw memory and could not
+    /// release it if this threw (the std::string default constructors do not
+    /// allocate).
+    document_data() noexcept
+        : arena() // NOLINT(readability-redundant-member-init)
+        , owned() // NOLINT(readability-redundant-member-init)
+        , indexes() // NOLINT(readability-redundant-member-init)
+        , index_slots() // NOLINT(readability-redundant-member-init)
+        , large_objects() // NOLINT(readability-redundant-member-init)
+    {}
     document_data(const document_data&) = delete;
     document_data(document_data&&) = delete;
     document_data& operator=(const document_data&) = delete;

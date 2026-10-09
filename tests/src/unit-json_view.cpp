@@ -66,7 +66,7 @@ struct oversized_input
     using value_type = char;
     std::size_t claimed;
 
-    const char* data() const // NOLINT(readability-convert-member-functions-to-static): mimics a container
+    const char* data() const // NOLINT(readability-convert-member-functions-to-static): container interface
     {
         return "[1]";
     }
@@ -363,10 +363,10 @@ TEST_CASE("json_view")
         CHECK(json_document::parse(std::vector<char>(text.begin(), text.end())).owns_source());
         // a const rvalue cannot be moved from, and is not borrowed (it may be a
         // temporary): it is copied, as is a const rvalue of any container
-        const std::string const_text = text; // NOLINT(performance-unnecessary-copy-initialization): the copy is the const rvalue under test
+        const std::string const_text = text; // NOLINT(performance-unnecessary-copy-initialization)
         const json_document from_const_rvalue = json_document::parse(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
         CHECK(from_const_rvalue.owns_source());
-        CHECK(from_const_rvalue.source().data() != const_text.data());
+        CHECK(from_const_rvalue.source().data() != const_text.data()); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved): const, not moved from
         CHECK(from_const_rvalue.root().materialize() == expected);
         json_document read_const_rvalue;
         read_const_rvalue.read(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg,bugprone-use-after-move,hicpp-invalid-access-moved)
@@ -975,8 +975,8 @@ TEST_CASE("json_view element access and iteration")
             pairs += std::string(key) + "=" + value.materialize().dump() + ";";
         }
         CHECK(pairs == "a=1;b=[true,false];");
-        static_assert(std::tuple_size<json_view::item>::value == 2, "");
-        static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "");
+        static_assert(std::tuple_size<json_view::item>::value == 2, "tuple_size of an item is 2");
+        static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "the second element of an item is a view");
 #endif
     }
 }
@@ -1232,7 +1232,7 @@ TEST_CASE("json_view values")
         const json j = json::parse(text);
 
         // user types with from_json, and other types, through basic_json
-        const record r = v.get<record>();
+        const auto r = v.get<record>();
         CHECK(r.name == "widget");
         CHECK(r.count == 3);
         CHECK((v["pair"].get<std::pair<int, std::string>>() == j["pair"].get<std::pair<int, std::string>>()));

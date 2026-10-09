@@ -16,8 +16,8 @@
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO
 #include <limits> // max
+#include <map> // map
 #include <numeric> // accumulate
-#include <set> // set
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
@@ -366,33 +366,82 @@ class json_pointer
 
   private:
     /*!
-    @brief the reference token sequences that denote arrays
+    @brief the pointer prefixes of a flattened object, and which of them denote arrays
 
     @ref unflatten collects the pointer prefixes that have a reference token 0
     among their children; @ref get_and_create creates arrays exactly below
     those prefixes and objects everywhere else. Deciding this up front keeps
     the result independent of the order in which the flattened object is
     iterated, which is unspecified for some object types.
+
+    The prefixes form a tree and are numbered, so each of them is stored only
+    once (as a node) rather than as a copy of all of its reference tokens.
     */
-    using array_parents_t = std::set<std::vector<string_t>>;
+    struct prefix_tree
+    {
+        // children[id] maps a reference token to the number of the prefix
+        // extended by that token; number 0 is the empty prefix
+        std::vector<std::map<string_t, std::size_t>> children;
+        // is_array[id] is true iff some flattened key has the reference token
+        // 0 directly below the prefix with number id
+        std::vector<bool> is_array;
+
+        // start with the empty prefix only
+        prefix_tree()
+            : children(1)
+            , is_array(1, false)
+        {}
+
+        // return the number of the prefix with number id extended by
+        // reference_token, adding it if it is new
+        std::size_t add_child(std::size_t id, string_t&& reference_token)
+        {
+            if (reference_token == "0")
+            {
+                is_array[id] = true;
+            }
+
+            // read the number before the emplace_back below, which may
+            // reallocate children and invalidate the iterator
+            const std::size_t next = children.size();
+            const auto inserted = children[id].emplace(std::move(reference_token), next);
+            const std::size_t child = inserted.first->second;
+            if (inserted.second)
+            {
+                children.emplace_back();
+                is_array.push_back(false);
+            }
+            return child;
+        }
+
+        // return the number of the prefix with number id extended by
+        // reference_token, which must have been added before
+        std::size_t find_child(std::size_t id, const string_t& reference_token) const
+        {
+            const auto it = children[id].find(reference_token);
+            JSON_ASSERT(it != children[id].end());
+            return it->second;
+        }
+    };
 
     /*!
     @brief create and return a reference to the pointed to value
 
-    Complexity: Linear in the number of reference tokens.
+    Complexity: Linear in the number of reference tokens (times the logarithm
+    of the number of siblings for the prefix lookup).
 
     @throw parse_error.106 if an array index begins with '0'
     @throw parse_error.109 if array index is not a number
     @throw type_error.313 if value cannot be unflattened
     */
     template<typename BasicJsonType>
-    BasicJsonType& get_and_create(BasicJsonType& j, const array_parents_t& array_parents) const
+    BasicJsonType& get_and_create(BasicJsonType& j, const prefix_tree& tree) const
     {
         auto* result = &j;
 
-        // the reference tokens that have been consumed so far; used to look up
-        // whether the value to be created below is an array or an object
-        std::vector<string_t> prefix;
+        // the number of the prefix consumed so far; used to look up whether
+        // the value to be created below is an array or an object
+        std::size_t id = 0;
 
         // in case no reference tokens exist, return a reference to the JSON value
         // j which will be overwritten by a primitive value
@@ -402,7 +451,7 @@ class json_pointer
             {
                 case detail::value_t::null:
                 {
-                    if (array_parents.find(prefix) != array_parents.end())
+                    if (tree.is_array[id])
                     {
                         // some reference token below this position is 0, so the
                         // value is an array
@@ -447,7 +496,7 @@ class json_pointer
                     JSON_THROW(detail::type_error::create(313, "invalid value to unflatten", &j));
             }
 
-            prefix.push_back(reference_token);
+            id = tree.find_child(id, reference_token);
         }
 
         return *result;
@@ -885,64 +934,131 @@ class json_pointer
     @param[in,out] result        the result object to insert values to
 
     @note Empty objects or arrays are flattened to `null`.
+
+    The value is walked with an explicit stack rather than the call stack, so
+    arbitrarily deeply nested values can be flattened.
+
+    @sa https://github.com/nlohmann/json/issues/5393
     */
     template<typename BasicJsonType>
     static void flatten(const string_t& reference_string,
                         const BasicJsonType& value,
                         BasicJsonType& result)
     {
-        switch (value.type())
+        using object_const_iterator = typename BasicJsonType::object_t::const_iterator;
+
+        // an array or object being walked: the container, the array index or
+        // object iterator of the next child, and the length of the path of the
+        // container itself
+        struct frame
         {
-            case detail::value_t::array:
-            {
-                if (value.m_data.m_value.array->empty())
-                {
-                    // flatten empty array as null
-                    result[reference_string] = nullptr;
-                }
-                else
-                {
-                    // iterate array and use index as a reference string
-                    for (std::size_t i = 0; i < value.m_data.m_value.array->size(); ++i)
-                    {
-                        flatten(detail::concat<string_t>(reference_string, '/', std::to_string(i)),
-                                value.m_data.m_value.array->operator[](i), result);
-                    }
-                }
-                break;
-            }
+            frame(const BasicJsonType* container_, object_const_iterator member_, const std::size_t path_length_) noexcept
+                : container(container_), member(std::move(member_)), path_length(path_length_)
+            {}
 
-            case detail::value_t::object:
-            {
-                if (value.m_data.m_value.object->empty())
-                {
-                    // flatten empty object as null
-                    result[reference_string] = nullptr;
-                }
-                else
-                {
-                    // iterate object and use keys as reference string
-                    for (const auto& element : *value.m_data.m_value.object)
-                    {
-                        flatten(detail::concat<string_t>(reference_string, '/', detail::escape(element.first)), element.second, result);
-                    }
-                }
-                break;
-            }
+            const BasicJsonType* container;
+            std::size_t index = 0;
+            object_const_iterator member;
+            std::size_t path_length;
+        };
 
-            case detail::value_t::null:
-            case detail::value_t::string:
-            case detail::value_t::boolean:
-            case detail::value_t::number_integer:
-            case detail::value_t::number_unsigned:
-            case detail::value_t::number_float:
-            case detail::value_t::binary:
-            case detail::value_t::discarded:
-            default:
+        // The containers being flattened are kept on an explicit stack, and
+        // every child is flattened completely before the next one, so the
+        // entries come out in the same order as with a recursive walk. The
+        // path of the value being flattened is kept in one buffer that grows
+        // and shrinks with the stack, rather than in a new string per level.
+        std::vector<frame> stack;
+        string_t path = reference_string;
+
+        // flatten `v`, whose path is `path`: primitives and empty containers
+        // are added to the result right away; other containers get a frame
+        const auto enter = [&stack, &path, &result](const BasicJsonType & v)
+        {
+            switch (v.type())
             {
-                // add a primitive value with its reference string
-                result[reference_string] = value;
-                break;
+                case detail::value_t::array:
+                {
+                    if (v.m_data.m_value.array->empty())
+                    {
+                        // flatten empty array as null
+                        result[path] = nullptr;
+                    }
+                    else
+                    {
+                        stack.emplace_back(&v, object_const_iterator(), path.size());
+                    }
+                    return;
+                }
+
+                case detail::value_t::object:
+                {
+                    if (v.m_data.m_value.object->empty())
+                    {
+                        // flatten empty object as null
+                        result[path] = nullptr;
+                    }
+                    else
+                    {
+                        stack.emplace_back(&v, v.m_data.m_value.object->begin(), path.size());
+                    }
+                    return;
+                }
+
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
+                default:
+                {
+                    // add a primitive value with its reference string
+                    result[path] = v;
+                    return;
+                }
+            }
+        };
+
+        enter(value);
+        while (!stack.empty())
+        {
+            // the frame is changed through stack.back(): enter() may push a
+            // frame, which would invalidate a reference to it
+            const BasicJsonType* const container = stack.back().container;
+
+            // drop the path of the previous child
+            path.resize(stack.back().path_length);
+
+            if (container->is_array())
+            {
+                const auto& array = *container->m_data.m_value.array;
+                const std::size_t i = stack.back().index;
+                if (i == array.size())
+                {
+                    stack.pop_back();
+                    continue;
+                }
+
+                // iterate array and use index as a reference string
+                ++stack.back().index;
+                detail::concat_into(path, '/', detail::to_string<string_t>(i));
+                enter(array[i]);
+            }
+            else
+            {
+                const object_const_iterator it = stack.back().member;
+                if (it == container->m_data.m_value.object->end())
+                {
+                    stack.pop_back();
+                    continue;
+                }
+
+                // iterate object and use keys as reference string
+                ++stack.back().member;
+                detail::concat_into(path, '/', detail::escape(it->first));
+                enter(it->second);
             }
         }
     }
@@ -970,19 +1086,15 @@ class json_pointer
 
         // collect the pointer prefixes that have a reference token 0 among
         // their children; the values below them are arrays, all others are
-        // objects (see array_parents_t)
-        array_parents_t array_parents;
+        // objects (see prefix_tree)
+        prefix_tree tree;
         for (const auto& element : *value.m_data.m_value.object)
         {
             json_pointer ptr(element.first);
-            std::vector<string_t> prefix;
+            std::size_t id = 0;
             for (auto& reference_token : ptr.reference_tokens)
             {
-                if (reference_token == "0")
-                {
-                    array_parents.insert(prefix);
-                }
-                prefix.push_back(std::move(reference_token));
+                id = tree.add_child(id, std::move(reference_token));
             }
         }
 
@@ -998,7 +1110,7 @@ class json_pointer
             // that if the JSON pointer is "" (i.e., points to the whole value),
             // function get_and_create returns a reference to the result itself.
             // An assignment will then create a primitive value.
-            json_pointer(element.first).get_and_create(result, array_parents) = element.second;
+            json_pointer(element.first).get_and_create(result, tree) = element.second;
         }
 
         return result;

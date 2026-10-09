@@ -2201,10 +2201,7 @@ struct huge_array : std::vector<T, A>
     }
 };
 
-using huge_array_json = nlohmann::basic_json <
-                        std::map, huge_array, std::string, bool, std::int64_t, std::uint64_t,
-                        double, std::allocator, nlohmann::adl_serializer,
-                        std::vector<std::uint8_t>, void >;
+using huge_array_json = nlohmann::json::with_array_t<huge_array>;
 
 TEST_CASE("MessagePack Size above uint32 for array")
 {
@@ -2249,18 +2246,7 @@ template<typename K, typename V,
     }
 };
 
-using huge_object_json = nlohmann::basic_json <
-                         huge_map,
-                         std::vector,
-                         std::string,
-                         bool,
-                         std::int64_t,
-                         std::uint64_t,
-                         double,
-                         std::allocator,
-                         nlohmann::adl_serializer,
-                         std::vector<std::uint8_t>,
-                         void >;
+using huge_object_json = nlohmann::json::with_object_t<huge_map>;
 
 TEST_CASE("MessagePack Size above uint32 for object")
 {
@@ -2295,18 +2281,7 @@ struct huge_string : std::string
     }
 };
 
-using huge_string_json = nlohmann::basic_json <
-                         std::map,
-                         std::vector,
-                         huge_string,
-                         bool,
-                         std::int64_t,
-                         std::uint64_t,
-                         double,
-                         std::allocator,
-                         nlohmann::adl_serializer,
-                         std::vector<std::uint8_t>,
-                         void >;
+using huge_string_json = nlohmann::json::with_string_t<huge_string>;
 
 TEST_CASE("MessagePack Size above uint32 for string")
 {
@@ -2329,18 +2304,7 @@ struct huge_binary : std::vector<std::uint8_t>
     }
 };
 
-using huge_binary_json = nlohmann::basic_json <
-                         std::map,
-                         std::vector,
-                         std::string,
-                         bool,
-                         std::int64_t,
-                         std::uint64_t,
-                         double,
-                         std::allocator,
-                         nlohmann::adl_serializer,
-                         huge_binary,
-                         void >;
+using huge_binary_json = nlohmann::json::with_binary_t<huge_binary>;
 
 TEST_CASE("MessagePack Size above uint32 for binary")
 {
@@ -2390,14 +2354,10 @@ class beyond_uint32_string_t : public std::string
     }
 };
 
-using beyond_uint32_string_json = nlohmann::basic_json <
-                                  std::map, std::vector, beyond_uint32_string_t, bool, std::int64_t, std::uint64_t,
-                                  double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
+using beyond_uint32_string_json = nlohmann::json::with_string_t<beyond_uint32_string_t>;
 #endif
 
-using beyond_uint32_binary_json = nlohmann::basic_json <
-                                  std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
-                                  double, std::allocator, nlohmann::adl_serializer, beyond_uint32_binary_t, void >;
+using beyond_uint32_binary_json = nlohmann::json::with_binary_t<beyond_uint32_binary_t>;
 } // namespace
 
 TEST_CASE("MessagePack lengths beyond UINT32_MAX cannot be serialized")
