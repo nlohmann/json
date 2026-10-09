@@ -93,7 +93,7 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 Unlike `BasicJsonType::operator[]`, which is undefined behavior (guarded by a
 [runtime assertion](../../features/assertions.md)) for a missing key on a **const** value, this operator returns a
 safe, testable result for a missing key or an index out of range: a [discarded](is_discarded.md) view, which is
-`#!cpp false` in a boolean context.
+tested with [`is_discarded`](is_discarded.md).
 There is also no non-const overload that inserts a missing key or extends an array -- a view never modifies the
 document.
 
