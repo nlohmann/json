@@ -712,6 +712,111 @@ TEST_CASE("json_view images: check")
         }
     }
 
+    SECTION("nodes that share a range")
+    {
+        // [big string, then n strings made to point to the big string]: every
+        // node shares the one range (the check reads it once)
+        const std::size_t n = 200;
+        std::string long_text = "[\"" + std::string(5000, 'a') + "\"";
+        for (std::size_t k = 0; k < n; ++k)
+        {
+            long_text += ",\"x\"";
+        }
+        long_text += "]";
+        const std::vector<std::uint8_t> img = json_document::parse(long_text).save();
+        const node big = node_at(img, 1);
+        std::vector<std::uint8_t> b = img;
+        for (std::size_t k = 0; k < n; ++k)
+        {
+            set_node(b, 2 + k, big);
+        }
+        CHECK(load_result(b, image_check::full).empty());
+        const json_document d = json_document::load(b);
+        CHECK(d.root().size() == n + 1);
+        CHECK(d.root()[n].get<std::string>() == std::string(5000, 'a'));
+        CHECK(d.root().dump() == json_document::load(b, image_check::none).root().dump());
+
+        // the same for decoded strings and float tokens, with a node that
+        // records another digit layout than its token
+        const std::vector<std::uint8_t> img2 = json_document::parse(R"(["a\"b", "a\"b", 1.25, 1.25, 1.25e3])").save();
+        CHECK(load_result(img2, image_check::full).empty());
+        std::vector<std::uint8_t> same = img2;
+        set_node(same, 2, node_at(img2, 1));
+        set_node(same, 4, node_at(img2, 3));
+        CHECK(load_result(same, image_check::full).empty());
+        CHECK(json_document::load(same).root().dump() == R"(["a\"b","a\"b",1.25,1.25,1250.0])");
+        std::vector<std::uint8_t> layout = same;
+        node f4 = node_at(layout, 4);
+        f4.extra = 0x0100u; // the layout of "1.", and not that of "1.25"
+        set_node(layout, 4, f4);
+        rejected(layout, false);
+        f4.extra = 0xFFFFu; // "many" digits: fine, as compaction writes it
+        set_node(layout, 4, f4);
+        CHECK(load_result(layout, image_check::full).empty());
+    }
+
+    SECTION("ranges that overlap")
+    {
+        // save() writes every string and every token to a place of its own
+        // (nodes that share a value share the whole range): ranges that
+        // overlap without being identical are a damaged image, though each
+        // range is a valid string or token
+        // nodes: 0 [  1 "abcdef"  2 "ghijkl"  3 1.2525  4 9.9  5 "a\"bcd" (decoded)  6 "e\"fgh" (decoded)
+        const std::vector<std::uint8_t> img = json_document::parse(R"(["abcdef", "ghijkl", 1.2525, 9.9, "a\"bcd", "e\"fgh"])").save();
+        REQUIRE(load_result(img, image_check::full).empty());
+        // node i with the range (off of node of + shift, length), and extra
+        const auto aliased = [&](std::size_t i, std::size_t of, std::uint32_t shift, std::uint32_t length, std::uint16_t extra)
+        {
+            std::vector<std::uint8_t> b = img;
+            node n = node_at(b, of);
+            n.off += shift;
+            n.len = length;
+            n.extra = extra;
+            set_node(b, i, n);
+            return b;
+        };
+        // source strings
+        rejected(aliased(2, 1, 0, 4, 0), false);  // "abcd": the start of another string
+        rejected(aliased(2, 1, 1, 4, 0), false);  // "bcde": inside
+        rejected(aliased(2, 1, 2, 4, 0), false);  // "cdef": the end
+        CHECK(load_result(aliased(2, 1, 0, 6, 0), image_check::full).empty()); // the whole range: identical
+        // decoded strings: inside, and partially overlapping (the arena holds a"bcde"fgh)
+        rejected(aliased(6, 5, 1, 3, 0), false);
+        rejected(aliased(6, 5, 3, 5, 0), false);
+        CHECK(load_result(aliased(6, 5, 0, 5, 0), image_check::full).empty());
+        // float tokens: "1.25" and "525" (an integer token as a float) inside "1.2525"
+        rejected(aliased(4, 3, 0, 4, 0x0201u), false);
+        rejected(aliased(4, 3, 3, 3, 0x0003u), false);
+        CHECK(load_result(aliased(4, 3, 0, 6, 0x0401u), image_check::full).empty());
+        // a string and a float token may use the same bytes (each is checked by its own kind)
+        std::vector<std::uint8_t> shared = img;
+        node as_string = node_at(img, 2);
+        as_string.off = node_at(img, 3).off;
+        as_string.len = 6;
+        set_node(shared, 2, as_string);
+        CHECK(load_result(shared, image_check::full).empty());
+        // empty strings inside others are not ranges
+        CHECK(load_result(aliased(2, 1, 2, 0, 0), image_check::full).empty());
+    }
+
+    SECTION("copies within an edited document")
+    {
+        // copies within a document share the value: identical ranges
+        json_editable_document d = json_editable_document::parse(R"({"s": "ab", "e": "x\"y", "f": 1.5, "g": 1.5e300, "a": [1.5, "ab"]})");
+        d.set(d.root(), "c1", d.root()["a"]);
+        d.set(d.root(), "c2", d.root()["a"]);
+        d.set(d.root(), "c3", d.root());
+        d.push_back(d.root()["a"], d.root()["e"]);
+        d.push_back(d.root()["a"], d.root()["g"]);
+        d.push_back(d.root()["a"], d.root()["g"]);
+        d.set(d.root()["s"], "changed");
+        d.set(d.root()["f"], 7.25);
+        const std::vector<std::uint8_t> saved = d.save();
+        CHECK(load_result(saved, image_check::full).empty());
+        CHECK(json_document::load(saved).root().dump() == d.root().dump());
+        check_round_trip(d);
+    }
+
     SECTION("integer ranges")
     {
         // tokens of many digits, which the parser stores as floats
