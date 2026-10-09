@@ -801,7 +801,10 @@ indent_done:
             n->flags = flags;
             n->extra = extra;
             n->off = static_cast<std::uint32_t>(off);
-            set_integer_bits(*n, second);
+            // len is the low half of the second word, next the high half
+            // (not a native word over both, which swaps them on big-endian)
+            n->len = static_cast<std::uint32_t>(second);
+            n->next = static_cast<std::uint32_t>(second >> 32);
 #endif
             return n;
         }
