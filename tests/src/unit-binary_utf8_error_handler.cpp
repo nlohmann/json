@@ -58,7 +58,10 @@ std::string dump_and_parse(const std::string& raw, eh error_handler)
     return json::parse(json(raw).dump(-1, ' ', false, error_handler)).get<std::string>();
 }
 
-// an object key type that is not string_t, but converts implicitly to it
+// an object key type that is not string_t, but converts implicitly to it;
+// data() is only used when JSON_DIAGNOSTICS is enabled
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wunused-member-function")
 class converting_key
 {
   public:
@@ -85,6 +88,7 @@ class converting_key
   private:
     std::string m_value;
 };
+DOCTEST_CLANG_SUPPRESS_WARNING_POP
 
 // ObjectType using converting_key; the Key template argument is ignored
 template<typename Key, typename Value, typename Compare, typename Allocator>
