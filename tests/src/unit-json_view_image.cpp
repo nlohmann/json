@@ -241,7 +241,7 @@ TEST_CASE("json_view images: round trips")
             {
                 CHECK(l.root()["k" + std::to_string(i)] == d.root()["k" + std::to_string(i)]);
             }
-            CHECK(l.root()["k7"] == "a duplicate"); // the last of duplicate keys
+            CHECK(l.root()["k7"].get<int>() == 7); // the first of duplicate keys
             CHECK(l.root()["inner"]["m199"].get<int>() == -199);
             CHECK(!l.root().contains("k1000"));
             // the index is not part of the image
@@ -251,18 +251,18 @@ TEST_CASE("json_view images: round trips")
         CHECK(node_at(image, 0).extra == 0);
     }
 
-    SECTION("duplicate keys of a large object: lookups return the last member")
+    SECTION("duplicate keys of a large object: lookups return the first member")
     {
         std::string text = "{";
         for (int i = 0; i < 200; ++i)
         {
             text += (i != 0 ? ",\"k" : "\"k") + std::to_string(i) + "\":" + std::to_string(i);
         }
-        // three members for k5 (the third is the last), and duplicates of k0 and k199
+        // three members for k5 (the first is a number), and duplicates of k0 and k199
         text += R"(,"k5":"two","k0":null,"k199":[],"k5":"three"})";
         const json_document d = json_document::parse(text);
         REQUIRE(d.root().size() == 204);
-        CHECK(d.root()["k5"] == "three");
+        CHECK(d.root()["k5"] == 5);
         const std::vector<std::uint8_t> image = d.save();
         for (const image_check check :
                 {
@@ -271,13 +271,15 @@ TEST_CASE("json_view images: round trips")
         {
             const json_document l = json_document::load(image, check);
             CHECK(l.root().size() == 204);
-            CHECK(l.root()["k5"] == "three");
-            CHECK(l.root().at("k5") == "three");
-            CHECK(l.root().find("k5").value() == "three");
-            CHECK(l.root()["k0"].is_null());
-            CHECK(l.root()["k199"] == json::array());
+            CHECK(l.root()["k5"] == 5);
+            CHECK(l.root().at("k5") == 5);
+            CHECK(l.root().find("k5").value() == 5);
+            CHECK(l.root()["k0"] == 0);
+            CHECK(l.root()["k199"] == 199);
             CHECK(l.root()["k100"] == 100);
+            // materialize() keeps the semantics of parse(): the last value
             CHECK(l.root().materialize() == d.root().materialize());
+            CHECK(l.root().materialize()["k5"] == "three");
         }
     }
 
@@ -355,15 +357,8 @@ TEST_CASE("json_view images: round trips")
                 for (std::size_t i = 0; i < members; ++i)
                 {
                     CAPTURE(i)
-                    const bool duplicate = std::find(duplicated.begin(), duplicated.end(), keys[i]) != duplicated.end();
-                    if (duplicate)
-                    {
-                        CHECK(l.root()[keys[i]] == "last");
-                    }
-                    else
-                    {
-                        CHECK(l.root()[keys[i]] == i);
-                    }
+                    // lookups find the first member, also of the duplicated keys
+                    CHECK(l.root()[keys[i]] == i);
                     CHECK(l.root().at(keys[i]) == l.root()[keys[i]]);
                     CHECK(l.root().find(keys[i]).key() == keys[i]);
                     CHECK(!l.root().contains(keys[i] + "x"));
