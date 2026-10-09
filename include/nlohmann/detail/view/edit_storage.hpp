@@ -169,7 +169,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         set_moved(d, n, nh, cap);
         return nh;
     }
-    reserve_moved(d); // (so that set_moved() below cannot throw)
+    reserve_moved(d); // (so that set_moved() below cannot throw: the links are marked before)
     const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
     const std::size_t used = 1 + (static_cast<std::size_t>(n->len) * (object ? 2 : 1));
     const std::size_t cap = used + extra;
@@ -185,7 +185,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         {
             *o++ = *c++; // the key
         }
-        make_link(*o, document_data::deref(c));
+        make_link(*o, const_cast<node*>(document_data::deref(c))); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to the document
         ++o;
         c = document_data::after(c);
     }

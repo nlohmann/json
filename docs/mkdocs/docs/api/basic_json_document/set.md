@@ -131,7 +131,10 @@ document") if `target`/`object`/`array` is a [discarded](../basic_json_view/is_d
 1. Linear in the size of `value` (encoding it into the document's storage): constant for a scalar, linear in the
    number of nested values for an array or object. If `target` is itself an array or object that spans more than one
    node in its parent's original, unedited layout, and `value` is a scalar, replacing it additionally costs time
-   linear in the number of elements of that parent, the *first* time -- see [Notes](#notes).
+   linear in the size of the document, the *first* time (the parent of `target` is looked up from
+   [`root()`](root.md), and then switches to links) -- see [Notes](#notes). Once the parent has links, `target` is
+   replaced in constant time: setting every element of a large array one after the other is linear overall. To avoid
+   the lookup altogether, use 3. (or 2. for an object), which know the parent.
 2. Linear in the number of members of `object`, to find an existing member with `key`, plus the complexity of 1. for
    `value`.
 3. Constant, plus the complexity of 1. for `value`.

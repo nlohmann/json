@@ -38,6 +38,7 @@ struct node_flags
     static constexpr std::uint8_t is_true = 4; ///< boolean value
     static constexpr std::uint8_t moved = 8;   ///< array/object: the elements live in a separate sequence (editable documents)
     static constexpr std::uint8_t is_new = 16; ///< written by an edit: no source position
+    static constexpr std::uint8_t linked = 32; ///< an entry of a moved sequence links to this value (editable documents): its extent in the parsed layout no longer matters
 };
 
 /// kind of an entry of an edited sequence that stands for a value stored
@@ -72,8 +73,10 @@ NLOHMANN_VIEW_ALWAYS_INLINE const node* link_target(const node& n) noexcept
     return t;
 }
 
-inline void make_link(node& n, const node* target) noexcept
+/// let the entry n stand for the value at target (and mark the value)
+inline void make_link(node& n, node* target) noexcept
 {
+    target->flags = static_cast<std::uint8_t>(target->flags | node_flags::linked);
     n = node{};
     n.kind = kind_link;
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, static_cast<const void*>(&target), sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
