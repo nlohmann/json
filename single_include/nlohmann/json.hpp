@@ -23161,6 +23161,21 @@ class binary_writer
         }
     }
 
+    /*!
+    @brief Writes the head of a BSON element with key @a name whose value is
+           the object or array @a j: its type, key, and @a size
+
+    Called while the key is in scope: an object key is a key_type, which
+    may only convert to a temporary string_t, so it cannot be kept by
+    pointer until after the loop over the entries.
+    */
+    void write_bson_nested_head(const string_t& name, const BasicJsonType& j,
+                                const std::size_t size)
+    {
+        write_bson_entry_header(name, j.is_object() ? 0x03 : 0x04);
+        write_number<std::int32_t>(to_bson_length(size), true);
+    }
+
     /// @brief an object or array of the BSON document being sized or written
     struct bson_frame
     {
@@ -23335,8 +23350,7 @@ class binary_writer
                     ++current.member;
                     if (el.second.is_structured())
                     {
-                        write_bson_entry_header(el.first, el.second.is_object() ? 0x03 : 0x04);
-                        write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
+                        write_bson_nested_head(el.first, el.second, nested_sizes[next_size++]);
                         nested = &el.second;
                     }
                     else
@@ -23355,8 +23369,7 @@ class binary_writer
                     ++current.index;
                     if (el.is_structured())
                     {
-                        write_bson_entry_header(index_name, el.is_object() ? 0x03 : 0x04);
-                        write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
+                        write_bson_nested_head(index_name, el, nested_sizes[next_size++]);
                         nested = &el;
                     }
                     else
