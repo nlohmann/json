@@ -563,3 +563,73 @@ TEST_CASE("json_view edits: views and values")
         CHECK(d.root().dump() == "[true,false]");
     }
 }
+
+TEST_CASE("json_view edits: deeply nested values")
+{
+    // copying a value into a document must not recurse per nesting level
+    const std::size_t depth = 100000;
+    const std::string brackets = std::string(depth, '[') + std::string(depth, ']');
+    std::string braces;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        braces += "{\"a\":";
+    }
+    braces += '1';
+    braces += std::string(depth, '}');
+
+    SECTION("a view of a read-only document")
+    {
+        const json_document source = json_document::parse(brackets);
+        json_editable_document d = json_editable_document::parse("[]");
+        d.push_back(d.root(), source.root());
+        CHECK(d.root().dump() == "[" + brackets + "]");
+    }
+
+    SECTION("a view of an editable document")
+    {
+        const json_editable_document source = json_editable_document::parse(braces);
+        json_editable_document d = json_editable_document::parse("{}");
+        d.set(d.root(), "deep", source.root());
+        CHECK(d.root().dump() == "{\"deep\":" + braces + "}");
+    }
+
+    SECTION("a view of an edited document (values behind links)")
+    {
+        const json_document source = json_document::parse(brackets);
+        json_editable_document edited = json_editable_document::parse("[[]]");
+        edited.push_back(edited.root()[0], source.root());
+        edited.push_back(edited.root(), source.root());
+        json_editable_document d = json_editable_document::parse("null");
+        d.set(d.root(), edited.root());
+        CHECK(d.root().dump() == "[[" + brackets + "]," + brackets + "]");
+    }
+
+    SECTION("a basic_json value")
+    {
+        json deep = json::array();
+        json* inner = &deep;
+        for (std::size_t i = 1; i < depth; ++i)
+        {
+            inner->push_back(json::array());
+            inner = &inner->back();
+        }
+        json_editable_document d = json_editable_document::parse("[]");
+        d.push_back(d.root(), deep);
+        CHECK(d.root().dump() == "[" + brackets + "]");
+    }
+
+    SECTION("a basic_json value with objects")
+    {
+        json deep = 1;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            json outer = json::object();
+            outer["a"] = std::move(deep);
+            deep = std::move(outer);
+        }
+        json_editable_document d = json_editable_document::parse("{}");
+        d.set(d.root(), "deep", deep);
+        CHECK(d.root().dump() == "{\"deep\":" + braces + "}");
+    }
+}
+
