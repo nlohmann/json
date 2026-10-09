@@ -41,6 +41,8 @@ template<typename... Args>
 using accept_call_t = decltype(json_document::accept(std::declval<Args>()...));
 template<typename... Args>
 using read_call_t = decltype(std::declval<json_document&>().read(std::declval<Args>()...));
+template<typename View>
+using bool_conversion_t = decltype(static_cast<bool>(std::declval<View>()));
 
 #if !defined(JSON_NOEXCEPTION)
 // the exception parse() throws for a text, or "" if it accepts it
@@ -155,7 +157,6 @@ TEST_CASE("json_view")
             CHECK(v.is_primitive() == j.is_primitive());
             CHECK(v.is_structured() == j.is_structured());
             CHECK(!v.is_discarded());
-            CHECK(static_cast<bool>(v));
             CHECK(v.size() == j.size());
             CHECK(v.empty() == j.empty());
             CHECK(v.materialize() == j);
@@ -163,7 +164,6 @@ TEST_CASE("json_view")
 
         const json_view invalid{};
         CHECK(invalid.is_discarded());
-        CHECK(!static_cast<bool>(invalid));
         CHECK(invalid.type() == json::value_t::discarded);
         CHECK(invalid.size() == 0);
         CHECK(invalid.empty());
@@ -379,6 +379,10 @@ TEST_CASE("json_view")
 
         static_assert(is_detected<read_call_t, const char*, bool>::value, "read(ptr, bool) is valid");
         static_assert(!is_detected<read_call_t, const char*, std::size_t>::value, "read(ptr, len) must not compile");
+
+        // json_view has no conversion to bool: unlike basic_json's, it would
+        // mean "exists", not "is not null"; use is_discarded()
+        static_assert(!is_detected<bool_conversion_t, json_view>::value, "json_view must not convert to bool");
 
         // the valid calls still work
         const char* const text = "[1]";
