@@ -1,10 +1,15 @@
 # <small>nlohmann::basic_json_document::</small>root
 
 ```cpp
-view_type root() const noexcept;
+// (1)
+view_type root() const& noexcept;
+
+// (2)
+view_type root() const&& = delete;
 ```
 
-Returns a view of the root value of the document.
+1. Returns a view of the root value of the document.
+2. Deleted: the view of a temporary document would dangle.
 
 ## Return value
 
@@ -20,6 +25,16 @@ No-throw guarantee: this function never throws exceptions.
 Constant.
 
 ## Notes
+
+**Lifetime.** A view refers into the document, so the document must outlive it. `root()` can therefore only be called
+on a document that has a name (an lvalue); calling it on a temporary does not compile:
+
+```cpp
+auto v = json_document::parse(text).root();  // error: the document is destroyed at the end of the statement
+
+auto doc = json_document::parse(text);       // OK: keep the document alive
+auto v = doc.root();
+```
 
 `root()` is a cheap handle into the document's index, not a copy of anything; call it as often as needed. The
 returned view is valid under the same conditions as any other view of the document -- see

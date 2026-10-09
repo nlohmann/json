@@ -76,6 +76,9 @@ Moving the document itself is fine and does **not** invalidate its views: the in
 that keeps its address across the move. Take a fresh view from [`root()`](../api/basic_json_document/root.md)
 whenever any of the other conditions above was not met.
 
+Because a view dies with its document, [`root()`](../api/basic_json_document/root.md) is not callable on a temporary
+document: `#!cpp auto v = json_document::parse(text).root();` does not compile. Give the document a name first.
+
 ??? example "Example: borrowed and owned documents, and when views become invalid"
 
     ```cpp

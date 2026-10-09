@@ -32,6 +32,22 @@ using nlohmann::ordered_json_document;
 
 namespace
 {
+// the value of a text, through a named document: the views of a temporary
+// document would dangle (root() of an rvalue document does not compile)
+template<typename Document, typename... Args>
+auto materialized(Args&& ... args) -> decltype(std::declval<typename Document::view_type>().materialize())
+{
+    const Document d = Document::parse(std::forward<Args>(args)...);
+    return d.root().materialize();
+}
+
+template<typename Document, typename Input>
+auto materialized_copy(Input&& input) -> decltype(std::declval<typename Document::view_type>().materialize())
+{
+    const Document d = Document::parse_copy(std::forward<Input>(input));
+    return d.root().materialize();
+}
+
 // detection of calls that must not compile
 template<typename... Args>
 using parse_call_t = decltype(json_document::parse(std::declval<Args>()...));
@@ -41,6 +57,8 @@ template<typename... Args>
 using accept_call_t = decltype(json_document::accept(std::declval<Args>()...));
 template<typename... Args>
 using read_call_t = decltype(std::declval<json_document&>().read(std::declval<Args>()...));
+template<typename Document>
+using root_call_t = decltype(std::declval<Document>().root());
 template<typename View>
 using bool_conversion_t = decltype(static_cast<bool>(std::declval<View>()));
 
@@ -179,19 +197,19 @@ TEST_CASE("json_view")
             std::string text;
             g.value(text, 0);
             CAPTURE(text)
-            CHECK(json_document::parse(text).root().materialize() == json::parse(text));
+            CHECK(materialized<json_document>(text) == json::parse(text));
             // member order as ordered_json::parse keeps it
-            CHECK(ordered_json_document::parse(text).root().materialize().dump() == ordered_json::parse(text).dump());
+            CHECK(materialized<ordered_json_document>(text).dump() == ordered_json::parse(text).dump());
         }
         // duplicate keys: the last value, at the position of the first key
-        CHECK(json_document::parse(R"({"a":1,"b":2,"a":3})").root().materialize() == json::parse(R"({"a":1,"b":2,"a":3})"));
-        CHECK(ordered_json_document::parse(R"({"a":1,"b":2,"a":3})").root().materialize().dump() == R"({"a":3,"b":2})");
+        CHECK(materialized<json_document>(R"({"a":1,"b":2,"a":3})") == json::parse(R"({"a":1,"b":2,"a":3})"));
+        CHECK(materialized<ordered_json_document>(R"({"a":1,"b":2,"a":3})").dump() == R"({"a":3,"b":2})");
         // very deep nesting (iterative, as parse())
         const std::string deep = std::string(100000, '[') + std::string(100000, ']');
-        CHECK(json_document::parse(deep).root().materialize() == json::parse(deep));
+        CHECK(materialized<json_document>(deep) == json::parse(deep));
 #if JSON_DIAGNOSTICS
         // the parents are set, so errors name the path
-        const json m = json_document::parse(R"({"a":{"b":[1]}})").root().materialize();
+        const json m = materialized<json_document>(R"({"a":{"b":[1]}})");
         CHECK_THROWS_WITH_AS(m.at("a").at("b").at(0).at("x"), "[json.exception.type_error.304] (/a/b/0) cannot use at() with number", json::type_error&);
 #endif
     }
@@ -264,7 +282,7 @@ TEST_CASE("json_view")
             CHECK(json_document::accept(text));
             if (accepted)
             {
-                CHECK(float_document::parse(text).root().materialize() == json_float::parse(text));
+                CHECK(materialized<float_document>(text) == json_float::parse(text));
             }
         }
         float_document f;
@@ -278,7 +296,7 @@ TEST_CASE("json_view")
         CHECK(json_document::accept(with_nul) == json::accept(with_nul));
         const std::string nul_in_comment("[1, // c\0\n2]", 12);
         CHECK(json_document::accept(nul_in_comment, true) == json::accept(nul_in_comment, true));
-        CHECK(json_document::parse("\xEF\xBB\xBF[1]").root().materialize() == json::parse("\xEF\xBB\xBF[1]"));
+        CHECK(materialized<json_document>("\xEF\xBB\xBF[1]") == json::parse("\xEF\xBB\xBF[1]"));
 #if !defined(JSON_NOEXCEPTION)
         CHECK(view_exception("\xEF\xBB") == parse_exception("\xEF\xBB"));
 #endif
@@ -294,18 +312,18 @@ TEST_CASE("json_view")
         CHECK(!borrowed.owns_source());
         CHECK(borrowed.source().data() == text.data());
         CHECK(borrowed.root().materialize() == expected);
-        CHECK(json_document::parse(text.c_str()).root().materialize() == expected);
-        CHECK(json_document::parse(R"([1, "two", {"three": 3.5}])").root().materialize() == expected);
-        CHECK(json_document::parse(text.data(), text.data() + text.size()).root().materialize() == expected);
+        CHECK(materialized<json_document>(text.c_str()) == expected);
+        CHECK(materialized<json_document>(R"([1, "two", {"three": 3.5}])") == expected);
+        CHECK(materialized<json_document>(text.data(), text.data() + text.size()) == expected);
         const std::vector<char> chars(text.begin(), text.end());
         CHECK(!json_document::parse(chars).owns_source());
-        CHECK(json_document::parse(chars).root().materialize() == expected);
+        CHECK(materialized<json_document>(chars) == expected);
         const std::vector<std::uint8_t> bytes(text.begin(), text.end());
-        CHECK(json_document::parse(bytes).root().materialize() == expected);
+        CHECK(materialized<json_document>(bytes) == expected);
 #ifdef JSON_HAS_CPP_17
         const std::string_view sv = text;
         CHECK(!json_document::parse(sv).owns_source());
-        CHECK(json_document::parse(sv).root().materialize() == expected);
+        CHECK(materialized<json_document>(sv) == expected);
 #endif
 
         // owned
@@ -328,14 +346,14 @@ TEST_CASE("json_view")
         const std::vector<char> const_chars(text.begin(), text.end());
         CHECK(json_document::parse(std::move(const_chars)).owns_source()); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
         CHECK(json_document::parse_copy(text).owns_source());
-        CHECK(json_document::parse_copy(text).root().materialize() == expected);
+        CHECK(materialized_copy<json_document>(text) == expected);
         std::istringstream stream(text);
         const json_document from_stream = json_document::parse(stream);
         CHECK(from_stream.owns_source());
         CHECK(from_stream.root().materialize() == expected);
         const std::list<char> list(text.begin(), text.end());
         CHECK(json_document::parse(list.begin(), list.end()).owns_source());
-        CHECK(json_document::parse(list.begin(), list.end()).root().materialize() == expected);
+        CHECK(materialized<json_document>(list.begin(), list.end()) == expected);
 
         // iterator pairs: pointers are borrowed, and so are contiguous library
         // iterators where the input adapter detects them (C++20)
@@ -346,10 +364,10 @@ TEST_CASE("json_view")
         CHECK((from_iterators.source().data() == chars.data()) == contiguous);
         CHECK(from_iterators.root().materialize() == expected);
         const std::string padded = "x" + text + "x";
-        CHECK(json_document::parse(padded.begin() + 1, padded.end() - 1).root().materialize() == expected);
+        CHECK(materialized<json_document>(padded.begin() + 1, padded.end() - 1) == expected);
         CHECK(json_document::parse(chars.cbegin(), chars.cbegin(), false).is_discarded());
         const std::wstring wide = L"[\"\u00e4\u20ac\", 1]";
-        CHECK(json_document::parse(wide).root().materialize() == json::parse(wide));
+        CHECK(materialized<json_document>(wide) == json::parse(wide));
         CHECK(json_document::parse(static_cast<const char*>(nullptr), false).is_discarded());
         CHECK(json_document::parse("", false).is_discarded());
     }
@@ -386,8 +404,27 @@ TEST_CASE("json_view")
 
         // the valid calls still work
         const char* const text = "[1]";
-        CHECK(json_document::parse(text, true).root().is_array());
+        CHECK(materialized<json_document>(text, true) == json::parse(text));
         CHECK(json_document::accept(text, true, true));
+    }
+
+    SECTION("root of a temporary document does not compile")
+    {
+        using nlohmann::detail::is_detected;
+
+        // the view would dangle: auto v = json_document::parse(text).root();
+        static_assert(is_detected<root_call_t, json_document&>::value, "root() of an lvalue is valid");
+        static_assert(is_detected<root_call_t, const json_document&>::value, "root() of a const lvalue is valid");
+        static_assert(!is_detected<root_call_t, json_document>::value, "root() of an rvalue must not compile");
+        static_assert(!is_detected < root_call_t, json_document && >::value, "root() of an rvalue must not compile");
+        static_assert(!is_detected < root_call_t, const json_document && >::value, "root() of a const rvalue must not compile");
+        static_assert(!is_detected<root_call_t, ordered_json_document>::value, "root() of an rvalue must not compile");
+
+        // a named document is fine, also after a move
+        json_document d = json_document::parse("[1]");
+        CHECK(d.root().size() == 1);
+        const json_document moved = std::move(d);
+        CHECK(moved.root().size() == 1);
     }
 
     SECTION("document lifetime and reuse")
