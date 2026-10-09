@@ -18,6 +18,7 @@ using nlohmann::ordered_json_editable_document;
 using image_check = json_document::image_check;
 using nlohmann::detail::view::node;
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -248,6 +249,129 @@ TEST_CASE("json_view images: round trips")
         }
         // the nodes of objects in the image do not carry the number of an index
         CHECK(node_at(image, 0).extra == 0);
+    }
+
+    SECTION("duplicate keys of a large object: lookups return the last member")
+    {
+        std::string text = "{";
+        for (int i = 0; i < 200; ++i)
+        {
+            text += (i != 0 ? ",\"k" : "\"k") + std::to_string(i) + "\":" + std::to_string(i);
+        }
+        // three members for k5 (the third is the last), and duplicates of k0 and k199
+        text += R"(,"k5":"two","k0":null,"k199":[],"k5":"three"})";
+        const json_document d = json_document::parse(text);
+        REQUIRE(d.root().size() == 204);
+        CHECK(d.root()["k5"] == "three");
+        const std::vector<std::uint8_t> image = d.save();
+        for (const image_check check :
+                {
+                    image_check::full, image_check::bounds, image_check::none
+                })
+        {
+            const json_document l = json_document::load(image, check);
+            CHECK(l.root().size() == 204);
+            CHECK(l.root()["k5"] == "three");
+            CHECK(l.root().at("k5") == "three");
+            CHECK(l.root().find("k5").value() == "three");
+            CHECK(l.root()["k0"].is_null());
+            CHECK(l.root()["k199"] == json::array());
+            CHECK(l.root()["k100"] == 100);
+            CHECK(l.root().materialize() == d.root().materialize());
+        }
+    }
+
+    SECTION("objects with colliding keys")
+    {
+        // the hash is not seeded: keys can be found that land in one slot of
+        // a table (see json_view: "colliding keys")
+        const auto keys_for = [](std::size_t slots, std::size_t colliding_count, std::size_t spread_count)
+        {
+            std::vector<std::string> colliding;
+            std::vector<std::string> spread;
+            for (std::uint64_t counter = 0; colliding.size() < colliding_count || spread.size() < spread_count; ++counter)
+            {
+                std::string key(8, 'a');
+                for (std::uint64_t x = counter, i = 0; i < 8; ++i, x /= 26)
+                {
+                    key[i] = static_cast<char>('a' + (x % 26));
+                }
+                const bool lands_in_slot_zero = (nlohmann::detail::view::key_hash(key.data(), key.size()) & (slots - 1)) == 0;
+                if (lands_in_slot_zero && colliding.size() < colliding_count)
+                {
+                    colliding.push_back(key);
+                }
+                else if (!lands_in_slot_zero && spread.size() < spread_count)
+                {
+                    spread.push_back(key);
+                }
+            }
+            colliding.insert(colliding.end(), spread.begin(), spread.end());
+            return colliding;
+        };
+        const auto make_text = [](const std::vector<std::string>& keys)
+        {
+            std::string text = "{";
+            for (std::size_t i = 0; i < keys.size(); ++i)
+            {
+                text += (i != 0 ? ",\"" : "\"") + keys[i] + "\":" + std::to_string(i);
+            }
+            return text + "}";
+        };
+
+        // 300 keys in one slot (the table is 1024 slots): the table would
+        // exceed the probe limit, so the object has none and is searched
+        // linearly; 40 of 200 keys in one slot (512 slots): a table with a
+        // long chain
+        const struct
+        {
+            std::size_t slots;
+            std::size_t colliding;
+            std::size_t spread;
+        } cases[] = {{1024, 300, 0}, {512, 40, 160}};
+        for (const auto& c : cases)
+        {
+            CAPTURE(c.slots)
+            std::vector<std::string> keys = keys_for(c.slots, c.colliding, c.spread);
+            const std::size_t members = keys.size();
+            // a duplicate of a colliding key, of the first and of a spread key
+            const std::vector<std::string> duplicated = {keys[c.colliding - 1], keys[0], keys[members - 1]};
+            std::string text = make_text(keys);
+            text.pop_back();
+            for (const std::string& key : duplicated)
+            {
+                text += ",\"" + key + "\":\"last\"";
+            }
+            text += "}";
+            const json_document d = json_document::parse(text);
+            const std::vector<std::uint8_t> image = d.save();
+            for (const image_check check :
+                    {
+                        image_check::full, image_check::bounds, image_check::none
+                    })
+            {
+                const json_document l = json_document::load(image, check);
+                REQUIRE(l.root().size() == members + duplicated.size());
+                for (std::size_t i = 0; i < members; ++i)
+                {
+                    CAPTURE(i)
+                    const bool duplicate = std::find(duplicated.begin(), duplicated.end(), keys[i]) != duplicated.end();
+                    if (duplicate)
+                    {
+                        CHECK(l.root()[keys[i]] == "last");
+                    }
+                    else
+                    {
+                        CHECK(l.root()[keys[i]] == i);
+                    }
+                    CHECK(l.root().at(keys[i]) == l.root()[keys[i]]);
+                    CHECK(l.root().find(keys[i]).key() == keys[i]);
+                    CHECK(!l.root().contains(keys[i] + "x"));
+                }
+                CHECK(!l.root().contains("missing"));
+                CHECK(l.root().materialize() == json::parse(text));
+            }
+        }
     }
 }
 
