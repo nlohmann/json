@@ -18818,6 +18818,8 @@ class parser
     template<typename SAX>
     bool syntax_error(SAX& sax, const std::string& message)
     {
+        // MSVC 2015 reports C4100 (unreferenced parameter) when SAX::parse_error is static
+        static_cast<void>(sax);
         return sax.parse_error(m_lexer.get_position(), m_lexer.get_token_string(),
                                parse_error::create(exception_id::syntax_error, m_lexer.get_position(), message, nullptr));
     }
