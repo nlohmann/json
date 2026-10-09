@@ -1048,12 +1048,12 @@ MessagePack's ext type and BSON's binary subtype are each stored in a single byt
 
 [`basic_json_document::parse()`](../api/basic_json_document/parse.md) and the other parsing functions of
 [`basic_json_document`](../api/basic_json_document/index.md) index a value's position in the source text in 32 bits,
-so they do not support an input of 4 GiB or more.
+so they do not support an input of 4294967280 bytes (4 GiB minus 16 bytes) or more.
 
 !!! failure "Example message"
 
     ```
-    [json.exception.out_of_range.416] input of 4 GiB or more is not supported by json_document
+    [json.exception.out_of_range.416] input of 4294967280 bytes or more is not supported by json_document
     ```
 
 !!! note

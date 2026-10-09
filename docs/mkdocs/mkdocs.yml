@@ -281,7 +281,6 @@ nav:
           - 'items': api/basic_json_view/items.md
           - 'materialize': api/basic_json_view/materialize.md
           - 'number_token': api/basic_json_view/number_token.md
-          - 'operator bool': api/basic_json_view/operator_bool.md
           - 'operator[]': api/basic_json_view/operator[].md
           - 'size': api/basic_json_view/size.md
           - 'source_offset': api/basic_json_view/source_offset.md

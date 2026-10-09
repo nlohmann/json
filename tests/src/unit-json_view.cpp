@@ -19,6 +19,7 @@ using nlohmann::ordered_json_view;
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -29,6 +30,7 @@ using nlohmann::ordered_json_view;
 #include <random>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -39,6 +41,55 @@ using nlohmann::ordered_json_view;
 
 namespace
 {
+// the value of a text, through a named document: the views of a temporary
+// document would dangle (root() of an rvalue document does not compile)
+template<typename Document, typename... Args>
+auto materialized(Args&& ... args) -> decltype(std::declval<typename Document::view_type>().materialize())
+{
+    const Document d = Document::parse(std::forward<Args>(args)...);
+    return d.root().materialize();
+}
+
+template<typename Document, typename Input>
+auto materialized_copy(Input&& input) -> decltype(std::declval<typename Document::view_type>().materialize())
+{
+    const Document d = Document::parse_copy(std::forward<Input>(input));
+    return d.root().materialize();
+}
+
+// a "byte container" that claims to hold `size` bytes, to reach the limit on
+// the size of the input without allocating gigabytes; nothing past the first
+// bytes is ever read, because the size is checked before the parse starts
+struct oversized_input
+{
+    using value_type = char;
+    std::size_t claimed;
+
+    const char* data() const
+    {
+        return "[1]";
+    }
+
+    std::size_t size() const
+    {
+        return claimed;
+    }
+};
+
+// detection of calls that must not compile
+template<typename... Args>
+using parse_call_t = decltype(json_document::parse(std::declval<Args>()...));
+template<typename... Args>
+using parse_copy_call_t = decltype(json_document::parse_copy(std::declval<Args>()...));
+template<typename... Args>
+using accept_call_t = decltype(json_document::accept(std::declval<Args>()...));
+template<typename... Args>
+using read_call_t = decltype(std::declval<json_document&>().read(std::declval<Args>()...));
+template<typename Document>
+using root_call_t = decltype(std::declval<Document>().root());
+template<typename View>
+using bool_conversion_t = decltype(static_cast<bool>(std::declval<View>()));
+
 #if !defined(JSON_NOEXCEPTION)
 // the exception parse() throws for a text, or "" if it accepts it
 std::string parse_exception(const std::string& text, bool comments = false, bool trailing_commas = false)
@@ -152,7 +203,6 @@ TEST_CASE("json_view")
             CHECK(v.is_primitive() == j.is_primitive());
             CHECK(v.is_structured() == j.is_structured());
             CHECK(!v.is_discarded());
-            CHECK(static_cast<bool>(v));
             CHECK(v.size() == j.size());
             CHECK(v.empty() == j.empty());
             CHECK(v.materialize() == j);
@@ -160,7 +210,6 @@ TEST_CASE("json_view")
 
         const json_view invalid{};
         CHECK(invalid.is_discarded());
-        CHECK(!static_cast<bool>(invalid));
         CHECK(invalid.type() == json::value_t::discarded);
         CHECK(invalid.size() == 0);
         CHECK(invalid.empty());
@@ -176,19 +225,19 @@ TEST_CASE("json_view")
             std::string text;
             g.value(text, 0);
             CAPTURE(text)
-            CHECK(json_document::parse(text).root().materialize() == json::parse(text));
+            CHECK(materialized<json_document>(text) == json::parse(text));
             // member order as ordered_json::parse keeps it
-            CHECK(ordered_json_document::parse(text).root().materialize().dump() == ordered_json::parse(text).dump());
+            CHECK(materialized<ordered_json_document>(text).dump() == ordered_json::parse(text).dump());
         }
         // duplicate keys: the last value, at the position of the first key
-        CHECK(json_document::parse(R"({"a":1,"b":2,"a":3})").root().materialize() == json::parse(R"({"a":1,"b":2,"a":3})"));
-        CHECK(ordered_json_document::parse(R"({"a":1,"b":2,"a":3})").root().materialize().dump() == R"({"a":3,"b":2})");
+        CHECK(materialized<json_document>(R"({"a":1,"b":2,"a":3})") == json::parse(R"({"a":1,"b":2,"a":3})"));
+        CHECK(materialized<ordered_json_document>(R"({"a":1,"b":2,"a":3})").dump() == R"({"a":3,"b":2})");
         // very deep nesting (iterative, as parse())
         const std::string deep = std::string(100000, '[') + std::string(100000, ']');
-        CHECK(json_document::parse(deep).root().materialize() == json::parse(deep));
+        CHECK(materialized<json_document>(deep) == json::parse(deep));
 #if JSON_DIAGNOSTICS
         // the parents are set, so errors name the path
-        const json m = json_document::parse(R"({"a":{"b":[1]}})").root().materialize();
+        const json m = materialized<json_document>(R"({"a":{"b":[1]}})");
         CHECK_THROWS_WITH_AS(m.at("a").at("b").at(0).at("x"), "[json.exception.type_error.304] (/a/b/0) cannot use at() with number", json::type_error&);
 #endif
     }
@@ -261,7 +310,7 @@ TEST_CASE("json_view")
             CHECK(json_document::accept(text));
             if (accepted)
             {
-                CHECK(float_document::parse(text).root().materialize() == json_float::parse(text));
+                CHECK(materialized<float_document>(text) == json_float::parse(text));
             }
         }
         float_document f;
@@ -275,7 +324,7 @@ TEST_CASE("json_view")
         CHECK(json_document::accept(with_nul) == json::accept(with_nul));
         const std::string nul_in_comment("[1, // c\0\n2]", 12);
         CHECK(json_document::accept(nul_in_comment, true) == json::accept(nul_in_comment, true));
-        CHECK(json_document::parse("\xEF\xBB\xBF[1]").root().materialize() == json::parse("\xEF\xBB\xBF[1]"));
+        CHECK(materialized<json_document>("\xEF\xBB\xBF[1]") == json::parse("\xEF\xBB\xBF[1]"));
 #if !defined(JSON_NOEXCEPTION)
         CHECK(view_exception("\xEF\xBB") == parse_exception("\xEF\xBB"));
 #endif
@@ -291,18 +340,18 @@ TEST_CASE("json_view")
         CHECK(!borrowed.owns_source());
         CHECK(borrowed.source().data() == text.data());
         CHECK(borrowed.root().materialize() == expected);
-        CHECK(json_document::parse(text.c_str()).root().materialize() == expected);
-        CHECK(json_document::parse(R"([1, "two", {"three": 3.5}])").root().materialize() == expected);
-        CHECK(json_document::parse(text.data(), text.data() + text.size()).root().materialize() == expected);
+        CHECK(materialized<json_document>(text.c_str()) == expected);
+        CHECK(materialized<json_document>(R"([1, "two", {"three": 3.5}])") == expected);
+        CHECK(materialized<json_document>(text.data(), text.data() + text.size()) == expected);
         const std::vector<char> chars(text.begin(), text.end());
         CHECK(!json_document::parse(chars).owns_source());
-        CHECK(json_document::parse(chars).root().materialize() == expected);
+        CHECK(materialized<json_document>(chars) == expected);
         const std::vector<std::uint8_t> bytes(text.begin(), text.end());
-        CHECK(json_document::parse(bytes).root().materialize() == expected);
+        CHECK(materialized<json_document>(bytes) == expected);
 #ifdef JSON_HAS_CPP_17
         const std::string_view sv = text;
         CHECK(!json_document::parse(sv).owns_source());
-        CHECK(json_document::parse(sv).root().materialize() == expected);
+        CHECK(materialized<json_document>(sv) == expected);
 #endif
 
         // owned
@@ -311,15 +360,28 @@ TEST_CASE("json_view")
         CHECK(from_rvalue.owns_source());
         CHECK(from_rvalue.root().materialize() == expected);
         CHECK(json_document::parse(std::vector<char>(text.begin(), text.end())).owns_source());
+        // a const rvalue cannot be moved from, and is not borrowed (it may be a
+        // temporary): it is copied, as is a const rvalue of any container
+        const std::string const_text = text;
+        const json_document from_const_rvalue = json_document::parse(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
+        CHECK(from_const_rvalue.owns_source());
+        CHECK(from_const_rvalue.source().data() != const_text.data());
+        CHECK(from_const_rvalue.root().materialize() == expected);
+        json_document read_const_rvalue;
+        read_const_rvalue.read(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
+        CHECK(read_const_rvalue.owns_source());
+        CHECK(read_const_rvalue.root().materialize() == expected);
+        const std::vector<char> const_chars(text.begin(), text.end());
+        CHECK(json_document::parse(std::move(const_chars)).owns_source()); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
         CHECK(json_document::parse_copy(text).owns_source());
-        CHECK(json_document::parse_copy(text).root().materialize() == expected);
+        CHECK(materialized_copy<json_document>(text) == expected);
         std::istringstream stream(text);
         const json_document from_stream = json_document::parse(stream);
         CHECK(from_stream.owns_source());
         CHECK(from_stream.root().materialize() == expected);
         const std::list<char> list(text.begin(), text.end());
         CHECK(json_document::parse(list.begin(), list.end()).owns_source());
-        CHECK(json_document::parse(list.begin(), list.end()).root().materialize() == expected);
+        CHECK(materialized<json_document>(list.begin(), list.end()) == expected);
 
         // iterator pairs: pointers are borrowed, and so are contiguous library
         // iterators where the input adapter detects them (C++20)
@@ -330,12 +392,83 @@ TEST_CASE("json_view")
         CHECK((from_iterators.source().data() == chars.data()) == contiguous);
         CHECK(from_iterators.root().materialize() == expected);
         const std::string padded = "x" + text + "x";
-        CHECK(json_document::parse(padded.begin() + 1, padded.end() - 1).root().materialize() == expected);
+        CHECK(materialized<json_document>(padded.begin() + 1, padded.end() - 1) == expected);
         CHECK(json_document::parse(chars.cbegin(), chars.cbegin(), false).is_discarded());
         const std::wstring wide = L"[\"\u00e4\u20ac\", 1]";
-        CHECK(json_document::parse(wide).root().materialize() == json::parse(wide));
+        CHECK(materialized<json_document>(wide) == json::parse(wide));
         CHECK(json_document::parse(static_cast<const char*>(nullptr), false).is_discarded());
         CHECK(json_document::parse("", false).is_discarded());
+    }
+
+    SECTION("integer arguments do not compile")
+    {
+        using nlohmann::detail::is_detected;
+
+        // a length is not a flag: parse(ptr, len) would convert len to
+        // allow_exceptions and read ptr as a C string, which need not end
+        static_assert(is_detected<parse_call_t, const char*, bool>::value, "parse(ptr, bool) is valid");
+        static_assert(is_detected<parse_call_t, const char*, bool, bool, bool>::value, "parse(ptr, bool, bool, bool) is valid");
+        static_assert(is_detected<parse_call_t, const char*, const char*>::value, "parse(first, last) is valid");
+        static_assert(is_detected<parse_call_t, const char*, const char*, bool>::value, "parse(first, last, bool) is valid");
+        static_assert(!is_detected<parse_call_t, const char*, std::size_t>::value, "parse(ptr, len) must not compile");
+        static_assert(!is_detected<parse_call_t, const char*, int>::value, "parse(ptr, int) must not compile");
+        static_assert(!is_detected<parse_call_t, const char*, char>::value, "parse(ptr, char) must not compile");
+        static_assert(!is_detected<parse_call_t, const char*, std::size_t, bool>::value, "parse(ptr, len, bool) must not compile");
+        static_assert(!is_detected<parse_call_t, const std::string&, std::size_t>::value, "parse(string, len) must not compile");
+        static_assert(!is_detected<parse_call_t, const std::vector<char>&, std::size_t>::value, "parse(vector, len) must not compile");
+
+        static_assert(is_detected<parse_copy_call_t, const char*, bool>::value, "parse_copy(ptr, bool) is valid");
+        static_assert(!is_detected<parse_copy_call_t, const char*, std::size_t>::value, "parse_copy(ptr, len) must not compile");
+
+        static_assert(is_detected<accept_call_t, const char*, bool>::value, "accept(ptr, bool) is valid");
+        static_assert(!is_detected<accept_call_t, const char*, std::size_t>::value, "accept(ptr, len) must not compile");
+
+        static_assert(is_detected<read_call_t, const char*, bool>::value, "read(ptr, bool) is valid");
+        static_assert(!is_detected<read_call_t, const char*, std::size_t>::value, "read(ptr, len) must not compile");
+
+        // json_view has no conversion to bool: unlike basic_json's, it would
+        // mean "exists", not "is not null"; use is_discarded()
+        static_assert(!is_detected<bool_conversion_t, json_view>::value, "json_view must not convert to bool");
+
+        // the valid calls still work
+        const char* const text = "[1]";
+        CHECK(materialized<json_document>(text, true) == json::parse(text));
+        CHECK(json_document::accept(text, true, true));
+    }
+
+    SECTION("root of a temporary document does not compile")
+    {
+        using nlohmann::detail::is_detected;
+
+        // the view would dangle: auto v = json_document::parse(text).root();
+        static_assert(is_detected<root_call_t, json_document&>::value, "root() of an lvalue is valid");
+        static_assert(is_detected<root_call_t, const json_document&>::value, "root() of a const lvalue is valid");
+        static_assert(!is_detected<root_call_t, json_document>::value, "root() of an rvalue must not compile");
+        static_assert(!is_detected < root_call_t, json_document && >::value, "root() of an rvalue must not compile");
+        static_assert(!is_detected < root_call_t, const json_document && >::value, "root() of a const rvalue must not compile");
+        static_assert(!is_detected<root_call_t, ordered_json_document>::value, "root() of an rvalue must not compile");
+
+        // a named document is fine, also after a move
+        json_document d = json_document::parse("[1]");
+        CHECK(d.root().size() == 1);
+        const json_document moved = std::move(d);
+        CHECK(moved.root().size() == 1);
+    }
+
+    SECTION("input size limit")
+    {
+        // 32-bit offsets: the limit is 4 GiB minus 16 bytes (a margin below 2^32),
+        // which is what the exception message and the documentation say
+        const std::size_t limit = nlohmann::detail::view::max_input_size;
+        CHECK(limit == std::size_t{4294967279u});
+
+        const oversized_input input{limit + 1};
+        CHECK(!json_document::accept(input));
+        CHECK(json_document::parse(input, false).is_discarded());
+#if !defined(JSON_NOEXCEPTION)
+        json_document d;
+        CHECK_THROWS_WITH_AS(d = json_document::parse(input), "[json.exception.out_of_range.416] input of 4294967280 bytes or more is not supported by json_document", json::out_of_range&);
+#endif
     }
 
     SECTION("document lifetime and reuse")

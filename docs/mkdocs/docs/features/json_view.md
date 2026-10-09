@@ -81,6 +81,9 @@ Moving the document itself is fine and does **not** invalidate its views: the in
 that keeps its address across the move. Take a fresh view from [`root()`](../api/basic_json_document/root.md)
 whenever any of the other conditions above was not met.
 
+Because a view dies with its document, [`root()`](../api/basic_json_document/root.md) is not callable on a temporary
+document: `#!cpp auto v = json_document::parse(text).root();` does not compile. Give the document a name first.
+
 ??? example "Example: borrowed and owned documents, and when views become invalid"
 
     ```cpp
@@ -113,7 +116,7 @@ whenever any of the other conditions above was not met.
 
 - **Only 64-bit integers.** `basic_json_document<BasicJsonType>` requires `BasicJsonType::number_integer_t` and
   `number_unsigned_t` to both be 64 bits wide; this is a compile-time `#!cpp static_assert`.
-- **A 4 GiB input limit.** An input of 4 GiB or more throws
+- **A 4 GiB input limit.** An input of 4294967280 bytes (4 GiB minus 16 bytes) or more throws
   [`out_of_range.416`](../home/exceptions.md#jsonexceptionout_of_range416), a limit
   `#!cpp basic_json::parse()` does not have.
 - **A stream is always read to its end.** There is no partial/streaming read of an `#!cpp std::istream`.

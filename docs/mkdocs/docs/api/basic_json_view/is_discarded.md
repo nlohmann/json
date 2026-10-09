@@ -27,8 +27,9 @@ Constant.
 
 ## Notes
 
-`#!cpp v.is_discarded()` and `#!cpp !static_cast<bool>(v)` are equivalent; use whichever reads better at the call
-site.
+A `basic_json_view` is not convertible to `#!cpp bool`: such a conversion would mean "refers to a value", whereas
+`basic_json` converts to the `#!cpp bool` it holds, so the same code would silently behave differently. Test
+`#!cpp !v.is_discarded()` explicitly.
 
 ## Examples
 
@@ -50,7 +51,6 @@ site.
 ## See also
 
 - [operator[]](operator[].md) - access specified element; yields a discarded view where an element is missing
-- [operator bool](operator_bool.md) - return whether the view refers to a value
 - [(constructor)](basic_json_view.md) - the default constructor creates a discarded view
 - [is_discarded (basic_json_document)](../basic_json_document/is_discarded.md) - return whether the last parse failed
 - [`BasicJsonType::is_discarded`](../basic_json/is_discarded.md) - the corresponding function of `basic_json`

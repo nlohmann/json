@@ -16,7 +16,7 @@
  * the read-only part of the basic_json interface; materialize() turns a     *
  * subtree into the basic_json value that parse() would produce.             *
  *                                                                           *
- * The source text must outlive a document that borrows it (lvalue byte     *
+ * The source text must outlive a document that borrows it (lvalue byte      *
  * containers, C strings); rvalue strings, streams, and other inputs are     *
  * owned by the document.                                                    *
 \****************************************************************************/
@@ -167,12 +167,6 @@ class basic_json_view
     bool is_discarded() const noexcept
     {
         return type() == value_t::discarded;
-    }
-
-    /// false for discarded views
-    explicit operator bool() const noexcept
-    {
-        return m_node != nullptr;
     }
 
     /// the name of the type, as basic_json::type_name()
@@ -733,6 +727,13 @@ class basic_json_document
         return d;
     }
 
+    /// parse(ptr, len) does not compile: len would convert to allow_exceptions
+    /// and ptr be read as a C string (as for the overloads of parse_copy,
+    /// accept, and read below)
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     /// parse [first, last)
     template<typename IteratorType, typename std::enable_if<
                  std::is_base_of<std::input_iterator_tag, typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
@@ -760,6 +761,10 @@ class basic_json_document
         return d;
     }
 
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse_copy(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     /// check whether the input is valid JSON (the result of basic_json::accept)
     template<typename InputType>
     static bool accept(InputType&& input, const bool ignore_comments = false, const bool ignore_trailing_commas = false)
@@ -768,6 +773,10 @@ class basic_json_document
         d.read(std::forward<InputType>(input), false, ignore_comments, ignore_trailing_commas);
         return !d.is_discarded();
     }
+
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, bool>::type
+    accept(InputType&& input, IntegerType value, Flags&&... flags) = delete;
 
     /// parse into this document, reusing its memory
     template<typename InputType>
@@ -781,12 +790,17 @@ class basic_json_document
                   std::integral_constant<detail::view::input_kind, detail::view::classify_input<InputType>::value> {});
     }
 
+    template<typename InputType, typename IntegerType, typename... Flags>
+    // flawfinder: ignore (a member function, not POSIX read())
+    typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, void>::type
+    read(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
     ////////////
     // access //
     ////////////
 
     /// the root value (discarded if parsing failed without exceptions)
-    view_type root() const noexcept
+    view_type root() const& noexcept
     {
         if (!m_data || m_data->discarded)
         {
@@ -794,6 +808,9 @@ class basic_json_document
         }
         return view_type(m_data.get(), m_data->tape);
     }
+
+    /// deleted: the view of a temporary document would dangle
+    view_type root() const&& = delete;
 
     bool is_discarded() const noexcept
     {
@@ -900,9 +917,9 @@ class basic_json_document
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
-        if (NLOHMANN_VIEW_UNLIKELY(size >= 0xFFFFFFF0u))
+        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size))
         {
-            failure.code = detail::view::error_code::input_too_large; // LCOV_EXCL_LINE (4 GiB)
+            failure.code = detail::view::error_code::input_too_large;
         }
         else
         {
