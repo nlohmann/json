@@ -17,19 +17,7 @@
 <span class=w>    </span><span class=p>}</span>
 <span class=p>};</span>
 
-<span class=k>using</span><span class=w> </span><span class=n>json</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>nlohmann</span><span class=o>::</span><span class=n>basic_json</span><span class=w> </span><span class=o>&lt;</span>
-<span class=w>             </span><span class=n>std</span><span class=o>::</span><span class=n>map</span><span class=p>,</span>
-<span class=w>             </span><span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=p>,</span>
-<span class=w>             </span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=p>,</span>
-<span class=w>             </span><span class=kt>bool</span><span class=p>,</span>
-<span class=w>             </span><span class=n>std</span><span class=o>::</span><span class=kt>int64_t</span><span class=p>,</span>
-<span class=w>             </span><span class=n>std</span><span class=o>::</span><span class=kt>uint64_t</span><span class=p>,</span>
-<span class=w>             </span><span class=kt>double</span><span class=p>,</span>
-<span class=w>             </span><span class=n>std</span><span class=o>::</span><span class=n>allocator</span><span class=p>,</span>
-<span class=w>             </span><span class=n>nlohmann</span><span class=o>::</span><span class=n>adl_serializer</span><span class=p>,</span>
-<span class=w>             </span><span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=kt>uint8_t</span><span class=o>&gt;</span><span class=p>,</span>
-<span class=w>             </span><span class=n>base_class_with_hidden_members</span>
-<span class=w>             </span><span class=o>&gt;</span><span class=p>;</span>
+<span class=k>using</span><span class=w> </span><span class=n>json</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>nlohmann</span><span class=o>::</span><span class=n>json</span><span class=o>::</span><span class=n>with_base_class_t</span><span class=o>&lt;</span><span class=n>base_class_with_hidden_members</span><span class=o>&gt;</span><span class=p>;</span>
 
 <span class=kt>int</span><span class=w> </span><span class=nf>main</span><span class=p>()</span>
 <span class=p>{</span>

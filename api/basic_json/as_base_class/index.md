@@ -49,19 +49,7 @@ class base_class_with_hidden_members
     }
 };
 
-using json = nlohmann::basic_json <
-             std::map,
-             std::vector,
-             std::string,
-             bool,
-             std::int64_t,
-             std::uint64_t,
-             double,
-             std::allocator,
-             nlohmann::adl_serializer,
-             std::vector<std::uint8_t>,
-             base_class_with_hidden_members
-             >;
+using json = nlohmann::json::with_base_class_t<base_class_with_hidden_members>;
 
 int main()
 {
