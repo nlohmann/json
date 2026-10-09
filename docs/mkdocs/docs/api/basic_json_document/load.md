@@ -140,6 +140,9 @@ so those stay safe on a damaged one. It does *not* guarantee that the image desc
 that a `full` check would have rejected can make [`dump()`](../basic_json_view/dump.md) write invalid UTF-8 or invalid
 JSON, or throw `type_error.316`, and a number can read back with a value that does not match how it is spelled.
 Reserve `bounds` for images you already trust to be well-formed, and use it only to skip the extra scan.
+An [editable document](../json_editable_document.md) does not take such a string over either:
+[`set`](set.md), [`push_back`](push_back.md) and [`insert`](insert.md) throw `type_error.316` when they copy it from
+a view of the loaded document, and leave the editable document unchanged.
 
 ## Examples
 
