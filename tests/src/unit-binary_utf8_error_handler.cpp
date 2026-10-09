@@ -12,6 +12,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <array>
 #include <map>
 #include <memory>
 #include <string>
@@ -443,14 +444,14 @@ TEST_CASE("UBJSON and BJData writers with an object_t whose key_type is not stri
         expected[key1] = 1;
         expected[key2] = "value";
 
-        const bool combos[3][2] = {{false, false}, {true, false}, {true, true}};
+        const std::array<std::pair<bool, bool>, 3> combos = {{{false, false}, {true, false}, {true, true}}};
         for (const auto h : all_handlers())
         {
             CAPTURE(static_cast<int>(h))
             for (const auto& combo : combos)
             {
-                const bool use_count = combo[0];
-                const bool use_type = combo[1];
+                const bool use_count = combo.first;
+                const bool use_type = combo.second;
                 CAPTURE(use_count)
                 CAPTURE(use_type)
 

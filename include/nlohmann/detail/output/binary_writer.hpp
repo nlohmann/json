@@ -2776,7 +2776,7 @@ class binary_writer
 
     /// deleted: anything but a string_t would bind a temporary that dies before the returned reference is used
     template < typename T, enable_if_t < !std::is_same<T, string_t>::value, int > = 0 >
-    const string_t& sanitize_utf8_for_write(const T& /*s*/, const BasicJsonType& /*context*/, string_t& /*storage*/) const = delete;
+    const string_t& sanitize_utf8_for_write(const T& /*s*/, const BasicJsonType& /*context*/, string_t& /*storage*/) const = delete; // NOLINT(hicpp-use-equals-delete,modernize-use-equals-delete): a private helper's guard, not part of the interface
 
     /*!
     @brief write an integer in the shortest encoding
