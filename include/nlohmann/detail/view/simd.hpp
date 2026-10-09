@@ -98,7 +98,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned
             return p + (count_trailing_zeros(bits) >> 2u);
         }
 #else
-        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p)));
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
         const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
                                              _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
         const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
@@ -293,15 +293,15 @@ NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* sc
 #else
     // the same with SSSE3 (pshufb for the table lookups; nibbles from 16-bit
     // shifts, as there are no byte shifts)
-    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data())));
-    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data())));
-    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data())));
+    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data()))); // NOLINT(bugprone-casting-through-void)
     const __m128i nibble = _mm_set1_epi8(0x0F);
     const __m128i zero = _mm_setzero_si128();
     __m128i prev = zero;
     while (e - block >= 16)
     {
-        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block)));
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
         const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
                                              _mm_cmpeq_epi8(_mm_subs_epu8(in, _mm_set1_epi8(0x1F)), zero)); // in < 0x20
         const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
@@ -315,7 +315,7 @@ NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* sc
         const auto err_bits = ~static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(err, zero))) & 0xFFFFu;
         if (special_bits != 0)
         {
-            const unsigned k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
+            const auto k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
             if ((err_bits & ((2u << k) - 1u)) == 0)
             {
                 return block + k;
