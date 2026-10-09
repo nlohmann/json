@@ -24,6 +24,7 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
+#include <algorithm> // all_of
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
 #include <cstring> // memcpy, strlen
@@ -1040,7 +1041,9 @@ class basic_json_document
 
     /// set the value at a JSON pointer: its parent must exist; an object
     /// member is set (added if missing), an array element assigned, and "-"
-    /// or the size of the array appends
+    /// or the size of the array appends. A null parent becomes what
+    /// basic_json's operator[](json_pointer) makes of it: an array for "-"
+    /// and for digits (padded with nulls up to the index), an object otherwise.
     template<typename V>
     view_type set(const json_pointer& ptr, V&& value)
     {
@@ -1050,6 +1053,31 @@ class basic_json_document
         }
         const view_type parent = root().at(ptr.parent_pointer());
         const auto& token = ptr.back();
+        if (parent.is_null())
+        {
+            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            {
+                return c >= '0' && c <= '9';
+            });
+            if (token == "-")
+            {
+                return push_back(parent, std::forward<V>(value));
+            }
+            if (digits)
+            {
+                // (an invalid index is an error before the parent changes)
+                const std::size_t idx = pointer_index(token);
+                if (idx >= 0xFFFFFFFFu)
+                {
+                    detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+                }
+                for (std::size_t i = 0; i < idx; ++i)
+                {
+                    push_back(parent, nullptr);
+                }
+                return push_back(parent, std::forward<V>(value));
+            }
+        }
         if (parent.is_array())
         {
             const std::size_t idx = token == "-" ? parent.size() : pointer_index(token);
