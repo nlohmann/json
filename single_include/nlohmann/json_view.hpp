@@ -5737,16 +5737,6 @@ class view_serializer
     }
 
   private:
-    /*!
-    @brief the compact output without ensure_ascii (the default dump())
-
-    The same walk as dump(), with the write position in a local variable
-    (stores through char pointers would otherwise force a reload of the
-    buffer's members after each one), and with strings and number tokens of
-    the source copied by fixed-size moves of 32 bytes where the source has
-    that many bytes left, instead of a library call per token. The buffer
-    keeps 64 bytes of slack for the overshoot.
-    */
     /// a string that is not a plain string of the source (decoded, or written
     /// by an edit), without ensure_ascii: runs without characters to escape
     /// are copied
@@ -5785,6 +5775,16 @@ class view_serializer
         return option;
     }
 
+    /*!
+    @brief the compact output without ensure_ascii (the default dump())
+
+    The same walk as dump(), with the write position in a local variable
+    (stores through char pointers would otherwise force a reload of the
+    buffer's members after each one), and with strings and number tokens of
+    the source copied by fixed-size moves of 32 bytes where the source has
+    that many bytes left, instead of a library call per token. The buffer
+    keeps 64 bytes of slack for the overshoot.
+    */
     template<bool SourceNumbers>
     void dump_compact(const node* root)
     {
@@ -5906,7 +5906,7 @@ class view_serializer
                         room(n->len);
                         copy(src + n->off, n->len);
                     }
-                    else if (std::is_same<number_float_t, double>::value)
+                    else if (enabled(std::is_same<number_float_t, double>::value))
                     {
                         room(64);
                         w = write_double_at(w, *n);
@@ -6133,9 +6133,14 @@ class view_serializer
             {
                 *w = '-';
                 w += d.negative ? 1 : 0;
-                // (without leading zeros, all digits of the token count)
-                const unsigned char lead = first[d.negative ? 1 : 0];
-                return lead != '0' ? ::nlohmann::detail::dtoa_impl::write_short_decimal(w, d.w, static_cast<int>(int_digits + frac_digits), static_cast<int>(d.exponent))
+                // (without leading zeros, all digits of the token count; the
+                // check also keeps an image that was only checked for bounds,
+                // whose token may not be made of digits, from the counted
+                // overload)
+                const auto& powers = ::nlohmann::detail::dtoa_impl::powers_of_ten_16();
+                const unsigned count = int_digits + frac_digits;
+                return count - 1u < 15u && d.w >= powers[count - 1u] && d.w < powers[count]
+                       ? ::nlohmann::detail::dtoa_impl::write_short_decimal(w, d.w, static_cast<int>(count), static_cast<int>(d.exponent))
                        : ::nlohmann::detail::dtoa_impl::write_short_decimal(w, d.w, static_cast<int>(d.exponent));
             }
             return write_double_value_at(w, decimal_to_float<double>(d)); // (without reading the token again)
