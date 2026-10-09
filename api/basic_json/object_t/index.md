@@ -19,7 +19,7 @@ To store objects in C++, a type is defined by the template parameters described 
 
 `ObjectType` : the container to store objects. Its template parameters must have the same order and meaning as those of `std::map`; in particular, the third parameter is a comparator. `std::unordered_map`, whose third parameter is a hash function, therefore needs an adapter -- see [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#objecttype) for the full list of requirements, an adapter example, and the containers that are known to work.
 
-`StringType` : the type of the keys or names (e.g., `std::string`). The comparison function `std::less<StringType>` is used to order elements inside the container.
+`StringType` : the type of the keys or names (e.g., `std::string`). The comparison function `std::less<StringType>` is used to order elements inside the container. `object_t::key_type` must be implicitly convertible to `string_t` (required by the binary formats).
 
 `AllocatorType` : the allocator to use for objects (e.g., `std::allocator`)
 
