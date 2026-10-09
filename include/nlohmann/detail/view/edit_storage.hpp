@@ -63,6 +63,23 @@ inline node* alloc_nodes(document_data& d, std::size_t k)
     return r;
 }
 
+/// The capacity of the edit arena after it grows by n bytes (`used` of `cap`
+/// are taken): doubled, or what is needed plus some room, but never more than
+/// the 4 GiB - 1 bytes that the 32-bit offsets of nodes can address. An error
+/// if n more bytes do not fit even then.
+inline std::size_t text_capacity(std::size_t cap, std::size_t used, std::size_t n)
+{
+    constexpr std::size_t limit = 0xFFFFFFFFu;
+    if (NLOHMANN_VIEW_UNLIKELY(used > limit || n > limit - used))
+    {
+        throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document");
+    }
+    const std::size_t needed = used + n;
+    const std::size_t wanted = needed + (std::min)(limit - needed, std::size_t{256});
+    const std::size_t doubled = cap > limit / 2 ? limit : cap * 2;
+    return (std::max)(doubled, wanted);
+}
+
 /// copy n bytes into the edit arena and return their offset; a new buffer
 /// leaves the old one alive, so that string views into it remain valid
 inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
@@ -70,11 +87,7 @@ inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
     document_data::edit_state& e = edit_state_of(d);
     if (NLOHMANN_VIEW_UNLIKELY(e.text_cap - e.text_used < n))
     {
-        const std::size_t cap = (std::max)(e.text_cap * 2, e.text_used + n + 256);
-        if (cap > 0xFFFFFFFFu)
-        {
-            throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE (4 GiB)
-        }
+        const std::size_t cap = text_capacity(e.text_cap, e.text_used, n);
         std::unique_ptr<char[]> fresh(new char[cap]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         if (e.text_used != 0)
         {
