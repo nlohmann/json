@@ -242,6 +242,13 @@ struct document_data
 template<bool Editable>
 struct navigation
 {
+    /// whether the walk follows edits (the template argument as a runtime
+    /// condition: `Editable && ...` is a constant condition for MSVC, C4127)
+    static NLOHMANN_VIEW_ALWAYS_INLINE bool editable() noexcept
+    {
+        return false;
+    }
+
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& /*d*/, const node* n) noexcept
     {
         return n + 1;
@@ -261,6 +268,11 @@ struct navigation
 template<>
 struct navigation<true>
 {
+    static NLOHMANN_VIEW_ALWAYS_INLINE bool editable() noexcept
+    {
+        return true;
+    }
+
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& d, const node* n) noexcept
     {
         return d.first_child_edited(n);
