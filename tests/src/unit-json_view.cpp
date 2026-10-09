@@ -861,6 +861,8 @@ TEST_CASE("json_view element access and iteration")
         const json_document d = json_document::parse("[10,20,30]");
         const json_view v = d.root();
         const json j = v.materialize();
+        // (a variable: a cast of a constant to int32_t is a useless cast to GCC)
+        const std::int32_t int32_index = 1;
         // (compile-time: no overload is ambiguous)
         CHECK(v[0].materialize() == 10);
         CHECK(v[1].materialize() == 20);
@@ -876,7 +878,7 @@ TEST_CASE("json_view element access and iteration")
         CHECK(v[static_cast<unsigned char>(2)].materialize() == 30);
         CHECK(v[std::int8_t(1)].materialize() == 20);
         CHECK(v[std::int16_t(2)].materialize() == 30);
-        CHECK(v[std::int32_t(1)].materialize() == 20);
+        CHECK(v[int32_index].materialize() == 20);
         CHECK(v[std::int64_t(2)].materialize() == 30);
         CHECK(v[std::uint32_t(0)].materialize() == 10);
         CHECK(v[std::uint64_t(1)].materialize() == 20);
@@ -891,7 +893,7 @@ TEST_CASE("json_view element access and iteration")
         CHECK(v.at(2ULL).materialize() == 30);
         CHECK(v.at(static_cast<short>(1)).materialize() == 20);
         CHECK(v.at(static_cast<unsigned short>(2)).materialize() == 30);
-        CHECK(v.at(std::int32_t(0)).materialize() == 10);
+        CHECK(v.at(int32_index - 1).materialize() == 10);
         CHECK(v.at(std::uint32_t(0)).materialize() == 10);
         CHECK(v.at(std::int64_t(0)).materialize() == 10);
         CHECK(v.at(std::uint64_t(1)).materialize() == 20);
@@ -1819,7 +1821,7 @@ TEST_CASE("json_view large objects")
             for (int object = 0; object < objects; ++object)
             {
                 text += object != 0 ? ",{" : "{";
-                for (int i = 0; i < members + object; ++i)
+                for (int i = 0, n = members + object; i < n; ++i)
                 {
                     text += (i != 0 ? ",\"" : "\"") + std::to_string(i) + "\":" + std::to_string(i);
                 }
@@ -1846,7 +1848,7 @@ TEST_CASE("json_view large objects")
         for (int object = 0; object < 5; ++object)
         {
             const json_view v = d.root()[static_cast<std::size_t>(object)];
-            for (int i = 0; i < 150 + object; ++i)
+            for (int i = 0, n = 150 + object; i < n; ++i)
             {
                 CHECK(v[std::to_string(i)].get<int>() == i);
             }
