@@ -358,7 +358,7 @@ class basic_json_document
     ////////////
 
     /// the root value (discarded if parsing failed without exceptions)
-    view_type root() const noexcept
+    view_type root() const& noexcept
     {
         if (!m_data || m_data->discarded)
         {
@@ -366,6 +366,9 @@ class basic_json_document
         }
         return view_type(m_data.get(), m_data->tape);
     }
+
+    /// deleted: the view of a temporary document would dangle
+    view_type root() const&& = delete;
 
     bool is_discarded() const noexcept
     {
