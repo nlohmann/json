@@ -323,7 +323,7 @@ class editor
         node* w = h + 1;
         std::size_t erased = 0;
         bool kept = false;
-        for (node* r = h + 1, *end = h + h->next; r != end; r += 2)
+        for (const node* r = h + 1, *end = h + h->next; r != end; r += 2)
         {
             const bool match = key_equals(*r, key);
             if (match && (kept || !keep_first))
@@ -547,7 +547,7 @@ class editor
         const bool negative = k == value_t::number_integer && static_cast<std::int64_t>(bits) < 0;
         std::uint64_t magnitude = negative ? 0 - bits : bits;
         std::array<char, 24> buf{};
-        char* p = buf.data() + buf.size();
+        char* p = buf.data() + buf.size(); // NOLINT(misc-const-correctness): digits are written through p
         do
         {
             *--p = static_cast<char>('0' + (magnitude % 10));

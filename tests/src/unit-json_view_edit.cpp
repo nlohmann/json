@@ -266,7 +266,7 @@ void check_lookups(const ordered_json_editable_view& v)
     }
     else if (v.is_array())
     {
-        for (std::size_t i = 0; i < v.size(); ++i)
+        for (std::size_t i = 0; i < v.size(); ++i) // NOLINT(modernize-loop-convert): both v[i] and v.at(i) are tested
         {
             check_lookups(v[i]);
             check_lookups(v.at(i));
