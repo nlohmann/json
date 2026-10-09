@@ -111,12 +111,15 @@ document.
 
     If the source text has an object with a duplicate key, `#!cpp operator[]` (and [`at`](at.md), [`find`](find.md),
     [`contains`](contains.md), [`value`](value.md), and JSON pointer resolution) all resolve to
-    the *last* member with that key. This is the member [`materialize()`](materialize.md) (and
-    [`BasicJsonType::parse()`](../basic_json/parse.md)) keeps, so a lookup in the view and in the materialized value
-    agree. [`begin()`](begin.md)/[`end()`](end.md) and [`items()`](items.md) iterate over *all* members, including
-    duplicates, in document order. A lookup in an object without a hash index scans all members for this: it cannot
-    stop at the first match. The hash index of a larger object (128 members or more) leads to the last member of a key
-    as well. See the example below and [`size()`](size.md#notes).
+    the *first* member with that key, because a lookup can stop as soon as it finds a match. This is different from
+    [`materialize()`](materialize.md) (and [`BasicJsonType::parse()`](../basic_json/parse.md)), which replay every
+    member in order and so keep the *last* value for a repeated key, so `#!cpp v["a"]` and
+    `#!cpp v.materialize()["a"]` can differ. To get the value `parse()` would give, use
+    [`materialize()`](materialize.md) or iterate the members with [`items()`](items.md) and keep the last match.
+    The hash index of a larger object (128 members or more) leads to the first member of a key as well.
+    [`begin()`](begin.md)/[`end()`](end.md) and [`items()`](items.md) iterate over *all* members, including
+    duplicates, in document order. See [Duplicate keys](../../features/json_view.md#duplicate-keys) and
+    [`size()`](size.md#notes).
 
 !!! info "JSON pointer resolution"
 
