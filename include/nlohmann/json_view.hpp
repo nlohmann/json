@@ -7,16 +7,18 @@
 // SPDX-License-Identifier: MIT
 
 /****************************************************************************\
- * Zero-copy, read-only view of a parsed JSON text.                          *
+ * Zero-copy view of a parsed JSON text.                                     *
  *                                                                           *
  * json_document::parse() builds a flat index of the values of a JSON text   *
  * (16 bytes per value) instead of a tree of basic_json values. Strings and  *
  * numbers stay in the source text; only strings with escapes are decoded,   *
  * into one buffer. json_view is a handle to one value of the document, with *
  * the read-only part of the basic_json interface; materialize() turns a     *
- * subtree into the basic_json value that parse() would produce.             *
+ * subtree into the basic_json value that parse() would produce. An editable *
+ * document (json_editable_document) also has set(), push_back(), insert(),  *
+ * and erase(): edits never write to the source text, and views stay valid.  *
  *                                                                           *
- * The source text must outlive a document that borrows it (lvalue byte     *
+ * The source text must outlive a document that borrows it (lvalue byte      *
  * containers, C strings); rvalue strings, streams, and other inputs are     *
  * owned by the document.                                                    *
 \****************************************************************************/
