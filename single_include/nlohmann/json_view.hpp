@@ -24,6 +24,7 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
+#include <algorithm> // min
 #include <cstddef> // size_t
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
@@ -3031,7 +3032,13 @@ class output_buffer
 
     void finish()
     {
-        m_out.resize(static_cast<std::size_t>(m_pos - m_out.data()));
+        const auto size = static_cast<std::size_t>(m_pos - m_out.data());
+        m_out.resize(size);
+        // do not keep a buffer that was sized for a much larger output
+        if (m_out.capacity() > 1024 && m_out.capacity() / 2 > size)
+        {
+            m_out.shrink_to_fit();
+        }
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE void reserve(std::size_t n)
@@ -4258,20 +4265,33 @@ class basic_json_view
     }
 
     /// the number of source bytes of this value (estimated for values with
-    /// decoded strings)
+    /// decoded strings); the estimate sizes the output buffer of dump()
     std::size_t source_extent() const noexcept
     {
-        const node* const next = document_data::after(m_node);
-        const bool in_source = (m_node->flags & detail::view::node_flags::storage) == 0;
-        if (!in_source)
+        const node* const end = m_doc->tape + m_doc->tape_size;
+        if ((m_node->flags & detail::view::node_flags::storage) != 0)
         {
             return m_node->len;
         }
-        if (next != m_doc->tape + m_doc->tape_size && (next->flags & detail::view::node_flags::storage) == 0 && next->off >= m_node->off)
+        // the value ends where the next node in the source begins; nodes
+        // with decoded strings (their offset is in the arena) are skipped,
+        // but only a few of them, to keep the walk short
+        const node* next = document_data::after(m_node);
+        for (int skipped = 0; next != end && skipped < 16; ++skipped, ++next)
         {
-            return next->off - m_node->off;
+            if ((next->flags & detail::view::node_flags::storage) == 0)
+            {
+                return next->off >= m_node->off ? next->off - m_node->off : 0;
+            }
         }
-        return m_doc->size - m_node->off;
+        if (next == end)
+        {
+            return m_doc->size - m_node->off;
+        }
+        // the end is unknown: assume a few bytes per node, the output buffer
+        // grows should the value be larger
+        const auto nodes = static_cast<std::size_t>(document_data::after(m_node) - m_node);
+        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + nodes * 16);
     }
 
     /// the value of the first member with this key, or a discarded view
