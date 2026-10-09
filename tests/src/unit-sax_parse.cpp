@@ -30,6 +30,7 @@ using json = nlohmann::json;
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <initializer_list>
 #include <map>
 #include <string>
 #include <utility>
@@ -293,11 +294,11 @@ std::vector<std::uint8_t> bytes(const std::size_t count)
     return std::vector<std::uint8_t>(count, 0xAB);
 }
 
-template<typename... Parts>
-std::vector<std::uint8_t> concatenated(const std::vector<std::uint8_t>& first, const Parts& ... rest)
+/// the bytes of @a parts, one after the other
+std::vector<std::uint8_t> concatenated(std::initializer_list<std::vector<std::uint8_t>> parts)
 {
-    std::vector<std::uint8_t> result = first;
-    for (const auto& part : std::initializer_list<std::vector<std::uint8_t>> {rest...})
+    std::vector<std::uint8_t> result;
+    for (const auto& part : parts)
     {
         result.insert(result.end(), part.begin(), part.end());
     }
@@ -437,8 +438,8 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
                     bson_element(0x0B, "regex", {'a', '+', 0, 'i', 0}),           // regular expression
                     bson_element(0x0D, "code", bson_string("f()")),               // JavaScript code
                     bson_element(0x0E, "symbol", bson_string("s")),               // symbol
-                    bson_element(0x0C, "pointer", concatenated(bson_string("c"), bytes(12))), // DBPointer
-                    bson_element(0x0F, "scope", concatenated(bson_int32(15), bson_string("g"), bson_document({}))), // code with scope
+                    bson_element(0x0C, "pointer", concatenated({bson_string("c"), bytes(12)})), // DBPointer
+                    bson_element(0x0F, "scope", concatenated({bson_int32(15), bson_string("g"), bson_document({})})), // code with scope
                     bson_element(0x06, "undefined", {}),                          // undefined
                     bson_element(0xFF, "min", {}),                                // min key
                     bson_element(0x7F, "max", {}),                                // max key
@@ -463,7 +464,7 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
                 json::input_format_t::bson, bson_document(
                 {
                     bson_element(0x03, "inner", bson_document({bson_element(0x02, "s", bson_string("abc", -10)), bson_element(0x10, "b", bson_int32(2))})),
-                    bson_element(0x03, "bin", bson_document({bson_element(0x05, "b", concatenated(bson_int32(-1), bytes(1))), bson_element(0x10, "b", bson_int32(2))})),
+                    bson_element(0x03, "bin", bson_document({bson_element(0x05, "b", concatenated({bson_int32(-1), bytes(1)})), bson_element(0x10, "b", bson_int32(2))})),
                     bson_element(0x10, "after", bson_int32(3)),
                 }),
                 {{"inner", {{"s", nullptr}}}, {"bin", {{"b", nullptr}}}, {"after", 3}},

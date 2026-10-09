@@ -851,6 +851,7 @@ class parser
     JSON_INTERNAL_ALWAYS_INLINE
     std::false_type report_error(SAX* sax, const Exception& ex, std::false_type /*allow_recovery*/)
     {
+        static_cast<void>(sax); // MSVC 2015 does not count calling a static parse_error() as using it
         error_reported = true;
         static_cast<void>(sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string(), ex));
         return {};
@@ -863,6 +864,7 @@ class parser
     template<typename SAX, typename Exception>
     bool report_error(SAX* sax, const Exception& ex, std::true_type /*allow_recovery*/)
     {
+        static_cast<void>(sax); // MSVC 2015 does not count calling a static parse_error() as using it
         const std::size_t position = m_lexer.get_position().chars_read_total;
         if (error_reported && position == last_error_position && last_token == last_error_token)
         {
