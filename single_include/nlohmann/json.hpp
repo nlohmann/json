@@ -4171,6 +4171,10 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
 template<typename T>
 using detect_key_compare = typename T::key_compare;
 
+// detects whether two values of type T can be compared with operator==
+template<typename T>
+using detect_equal_comparable = decltype(static_cast<bool>(std::declval<const T&>() == std::declval<const T&>()));
+
 // obtains the actual object key comparator: object_t::key_compare if the
 // object type defines it, and default_object_comparator_t otherwise
 //
@@ -21812,12 +21816,6 @@ class binary_writer
 
             case value_t::object:
             {
-                static_assert(
-                    std::is_convertible <
-                    typename BasicJsonType::object_t::key_type,
-                    string_t >::value,
-                    "object_t::key_type must be implicitly convertible to string_t");
-
                 // step 1: write control byte and the object size
                 write_cbor_head(0xA0, j.m_data.m_value.object->size());
 
@@ -21825,7 +21823,7 @@ class binary_writer
                 {
                     // el.first is written directly (not via a temporary
                     // basic_json), with the object as diagnostics context
-                    write_cbor_string(el.first, j);
+                    write_cbor_key(el.first, j);
                     write_cbor(el.second, depth + 1);
                 }
                 break;
@@ -22090,12 +22088,6 @@ class binary_writer
 
             case value_t::object:
             {
-                static_assert(
-                    std::is_convertible <
-                    typename BasicJsonType::object_t::key_type,
-                    string_t >::value,
-                    "object_t::key_type must be implicitly convertible to string_t");
-
                 // step 1: write control byte and the object size
                 write_msgpack_object_prefix(j.m_data.m_value.object->size(), j);
 
@@ -22103,7 +22095,7 @@ class binary_writer
                 {
                     // as in write_cbor, el.first is written directly with the
                     // object as diagnostics context
-                    write_msgpack_string(el.first, j);
+                    write_msgpack_key(el.first, j);
                     write_msgpack(el.second, depth + 1);
                 }
                 break;
@@ -22489,7 +22481,7 @@ class binary_writer
 
                 // the key is written directly (not via a temporary basic_json),
                 // with the object as diagnostics context, as in write_cbor
-                write_cbor_string(current.object_it->first, *current.value);
+                write_cbor_key(current.object_it->first, *current.value);
                 const BasicJsonType* child = &(current.object_it->second);
                 ++stack.back().object_it;
                 write_cbor_value_or_push(*child, stack);
@@ -22566,7 +22558,7 @@ class binary_writer
 
                 // as in write_cbor_iterative, the key is written directly with
                 // the object as diagnostics context
-                write_msgpack_string(current.object_it->first, *current.value);
+                write_msgpack_key(current.object_it->first, *current.value);
                 const BasicJsonType* child = &(current.object_it->second);
                 ++stack.back().object_it;
                 write_msgpack_value_or_push(*child, stack);
@@ -23333,7 +23325,6 @@ class binary_writer
         {
             // write entries until the current object or array is done, or an
             // entry is an object or array itself
-            const string_t* nested_name = nullptr;
             const BasicJsonType* nested = nullptr;
             if (current.value->is_object())
             {
@@ -23344,7 +23335,8 @@ class binary_writer
                     ++current.member;
                     if (el.second.is_structured())
                     {
-                        nested_name = &el.first;
+                        write_bson_entry_header(el.first, el.second.is_object() ? 0x03 : 0x04);
+                        write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
                         nested = &el.second;
                     }
                     else
@@ -23363,7 +23355,8 @@ class binary_writer
                     ++current.index;
                     if (el.is_structured())
                     {
-                        nested_name = &index_name;
+                        write_bson_entry_header(index_name, el.is_object() ? 0x03 : 0x04);
+                        write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
                         nested = &el;
                     }
                     else
@@ -23375,8 +23368,6 @@ class binary_writer
 
             if (nested != nullptr)
             {
-                write_bson_entry_header(*nested_name, nested->is_object() ? 0x03 : 0x04);
-                write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
                 parents.push_back(std::move(current));
                 current = bson_frame(nested);
                 continue;
@@ -23442,6 +23433,43 @@ class binary_writer
             oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + 0x1B)));
             write_number(argument);
         }
+    }
+
+    /*!
+    @brief write an object key as a CBOR text string
+
+    A key convertible to string_t is written directly. Other key types (only
+    an explicit conversion, or only a to_json overload) go through a temporary
+    basic_json, as in version 3.12.0; the temporary is then the diagnostics
+    context for strict UTF-8 checks.
+    */
+    template<typename Key = typename BasicJsonType::object_t::key_type,
+             enable_if_t<std::is_convertible<Key, string_t>::value, int> = 0>
+    void write_cbor_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& context)
+    {
+        write_cbor_string(key, context);
+    }
+
+    template < typename Key = typename BasicJsonType::object_t::key_type,
+               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
+    void write_cbor_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
+    {
+        write_cbor(BasicJsonType(key));
+    }
+
+    /// @brief write an object key as a MessagePack str, as in @ref write_cbor_key
+    template<typename Key = typename BasicJsonType::object_t::key_type,
+             enable_if_t<std::is_convertible<Key, string_t>::value, int> = 0>
+    void write_msgpack_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& context)
+    {
+        write_msgpack_string(key, context);
+    }
+
+    template < typename Key = typename BasicJsonType::object_t::key_type,
+               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
+    void write_msgpack_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
+    {
+        write_msgpack(BasicJsonType(key));
     }
 
     /*!
@@ -29160,6 +29188,24 @@ public:
         return create<object_t>(first, last);
     }
 
+    /// @brief compare two object keys for equality, if the key type supports it
+    /// @note object_t only needs operator< for its keys (std::map), so operator==
+    ///       may not exist; the keys are then reported as different, which makes
+    ///       copy_object_level pair the values via object_t::find()
+    template<typename K = typename object_t::key_type,
+             detail::enable_if_t<detail::is_detected<detail::detect_equal_comparable, K>::value, int> = 0>
+    static bool copy_keys_equal(const K& a, const K& b)
+    {
+        return a == b;
+    }
+
+    template < typename K = typename object_t::key_type,
+               detail::enable_if_t < !detail::is_detected<detail::detect_equal_comparable, K>::value, int > = 0 >
+    static bool copy_keys_equal(const K& /*a*/, const K& /*b*/)
+    {
+        return false;
+    }
+
     /// @brief create the copy of the object @a src in @a dst
     /// @note structured values are appended to @a worklist instead
     static void copy_object_level(const basic_json& src, basic_json& dst,
@@ -29192,7 +29238,7 @@ public:
         auto src_it = src_object.cbegin();
         for (auto& element : *dst.m_data.m_value.object)
         {
-            if (JSON_HEDLEY_LIKELY(src_it != src_object.cend() && src_it->first == element.first))
+            if (JSON_HEDLEY_LIKELY(src_it != src_object.cend() && copy_keys_equal(src_it->first, element.first)))
             {
                 copy_shallow(src_it->second, element.second, worklist);
                 ++src_it;
@@ -31069,9 +31115,25 @@ public:
             // std::map or ordered_map) never moves from its argument, so key is still
             // valid here regardless of whether KeyType was deduced as an rvalue reference
             // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved)
-            JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(key), "' not found"), &j));
+            JSON_THROW(out_of_range::create(403, detail::concat("key '", key_for_message(key), "' not found"), &j));
         }
         return it->second;
+    }
+
+    /// @brief key as it is passed to detail::concat for an error message
+    /// @note string_t is used where it can be constructed from the key; other
+    ///       key types are passed through unchanged, as concat only needs
+    ///       data() and size() of them
+    template<typename KeyType, detail::enable_if_t<std::is_constructible<string_t, const KeyType&>::value, int> = 0>
+    static string_t key_for_message(const KeyType& key)
+    {
+        return string_t(key);
+    }
+
+    template < typename KeyType, detail::enable_if_t < !std::is_constructible<string_t, const KeyType&>::value, int > = 0 >
+    static const KeyType & key_for_message(const KeyType& key)
+    {
+        return key;
     }
 
     /// @brief checked array element access used by the at() overloads taking an index

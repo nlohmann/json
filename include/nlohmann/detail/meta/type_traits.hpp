@@ -172,6 +172,10 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
 template<typename T>
 using detect_key_compare = typename T::key_compare;
 
+// detects whether two values of type T can be compared with operator==
+template<typename T>
+using detect_equal_comparable = decltype(static_cast<bool>(std::declval<const T&>() == std::declval<const T&>()));
+
 // obtains the actual object key comparator: object_t::key_compare if the
 // object type defines it, and default_object_comparator_t otherwise
 //

@@ -307,12 +307,6 @@ class binary_writer
 
             case value_t::object:
             {
-                static_assert(
-                    std::is_convertible <
-                    typename BasicJsonType::object_t::key_type,
-                    string_t >::value,
-                    "object_t::key_type must be implicitly convertible to string_t");
-
                 // step 1: write control byte and the object size
                 write_cbor_head(0xA0, j.m_data.m_value.object->size());
 
@@ -320,7 +314,7 @@ class binary_writer
                 {
                     // el.first is written directly (not via a temporary
                     // basic_json), with the object as diagnostics context
-                    write_cbor_string(el.first, j);
+                    write_cbor_key(el.first, j);
                     write_cbor(el.second, depth + 1);
                 }
                 break;
@@ -585,12 +579,6 @@ class binary_writer
 
             case value_t::object:
             {
-                static_assert(
-                    std::is_convertible <
-                    typename BasicJsonType::object_t::key_type,
-                    string_t >::value,
-                    "object_t::key_type must be implicitly convertible to string_t");
-
                 // step 1: write control byte and the object size
                 write_msgpack_object_prefix(j.m_data.m_value.object->size(), j);
 
@@ -598,7 +586,7 @@ class binary_writer
                 {
                     // as in write_cbor, el.first is written directly with the
                     // object as diagnostics context
-                    write_msgpack_string(el.first, j);
+                    write_msgpack_key(el.first, j);
                     write_msgpack(el.second, depth + 1);
                 }
                 break;
@@ -984,7 +972,7 @@ class binary_writer
 
                 // the key is written directly (not via a temporary basic_json),
                 // with the object as diagnostics context, as in write_cbor
-                write_cbor_string(current.object_it->first, *current.value);
+                write_cbor_key(current.object_it->first, *current.value);
                 const BasicJsonType* child = &(current.object_it->second);
                 ++stack.back().object_it;
                 write_cbor_value_or_push(*child, stack);
@@ -1061,7 +1049,7 @@ class binary_writer
 
                 // as in write_cbor_iterative, the key is written directly with
                 // the object as diagnostics context
-                write_msgpack_string(current.object_it->first, *current.value);
+                write_msgpack_key(current.object_it->first, *current.value);
                 const BasicJsonType* child = &(current.object_it->second);
                 ++stack.back().object_it;
                 write_msgpack_value_or_push(*child, stack);
@@ -1828,7 +1816,6 @@ class binary_writer
         {
             // write entries until the current object or array is done, or an
             // entry is an object or array itself
-            const string_t* nested_name = nullptr;
             const BasicJsonType* nested = nullptr;
             if (current.value->is_object())
             {
@@ -1839,7 +1826,8 @@ class binary_writer
                     ++current.member;
                     if (el.second.is_structured())
                     {
-                        nested_name = &el.first;
+                        write_bson_entry_header(el.first, el.second.is_object() ? 0x03 : 0x04);
+                        write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
                         nested = &el.second;
                     }
                     else
@@ -1858,7 +1846,8 @@ class binary_writer
                     ++current.index;
                     if (el.is_structured())
                     {
-                        nested_name = &index_name;
+                        write_bson_entry_header(index_name, el.is_object() ? 0x03 : 0x04);
+                        write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
                         nested = &el;
                     }
                     else
@@ -1870,8 +1859,6 @@ class binary_writer
 
             if (nested != nullptr)
             {
-                write_bson_entry_header(*nested_name, nested->is_object() ? 0x03 : 0x04);
-                write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
                 parents.push_back(std::move(current));
                 current = bson_frame(nested);
                 continue;
@@ -1937,6 +1924,43 @@ class binary_writer
             oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + 0x1B)));
             write_number(argument);
         }
+    }
+
+    /*!
+    @brief write an object key as a CBOR text string
+
+    A key convertible to string_t is written directly. Other key types (only
+    an explicit conversion, or only a to_json overload) go through a temporary
+    basic_json, as in version 3.12.0; the temporary is then the diagnostics
+    context for strict UTF-8 checks.
+    */
+    template<typename Key = typename BasicJsonType::object_t::key_type,
+             enable_if_t<std::is_convertible<Key, string_t>::value, int> = 0>
+    void write_cbor_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& context)
+    {
+        write_cbor_string(key, context);
+    }
+
+    template < typename Key = typename BasicJsonType::object_t::key_type,
+               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
+    void write_cbor_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
+    {
+        write_cbor(BasicJsonType(key));
+    }
+
+    /// @brief write an object key as a MessagePack str, as in @ref write_cbor_key
+    template<typename Key = typename BasicJsonType::object_t::key_type,
+             enable_if_t<std::is_convertible<Key, string_t>::value, int> = 0>
+    void write_msgpack_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& context)
+    {
+        write_msgpack_string(key, context);
+    }
+
+    template < typename Key = typename BasicJsonType::object_t::key_type,
+               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
+    void write_msgpack_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
+    {
+        write_msgpack(BasicJsonType(key));
     }
 
     /*!
