@@ -401,3 +401,61 @@ TEST_CASE("json_view builder")
         }
     }
 }
+
+TEST_CASE("json_view node integer bits")
+{
+    using nlohmann::detail::view::integer_bits;
+    using nlohmann::detail::view::set_integer_bits;
+
+    // an integer lives in len (low half) and next (high half), on any byte
+    // order; a big-endian target must not store the native word over both
+    SECTION("set_integer_bits and integer_bits")
+    {
+        node n = {};
+        for (const std::uint64_t v :
+                {
+                    std::uint64_t{0}, std::uint64_t{1}, std::uint64_t{0xFFFFFFFFu}, std::uint64_t{0x100000000u},
+                    std::uint64_t{0x0000000200000003u}, std::uint64_t{0x0123456789ABCDEFu}, std::uint64_t{0xFFFFFFFFFFFFFFFEu}
+                })
+        {
+            CAPTURE(v)
+            n.kind = 0x5A;
+            n.flags = 0xA5;
+            n.extra = 0x1234;
+            n.off = 0x89ABCDEFu;
+            set_integer_bits(n, v);
+            CHECK(integer_bits(n) == v);
+            CHECK(n.len == static_cast<std::uint32_t>(v));
+            CHECK(n.next == static_cast<std::uint32_t>(v >> 32));
+            // the other fields are untouched
+            CHECK(n.kind == 0x5A);
+            CHECK(n.flags == 0xA5);
+            CHECK(n.extra == 0x1234);
+            CHECK(n.off == 0x89ABCDEFu);
+        }
+    }
+
+    SECTION("parsed integers")
+    {
+        struct integer_case
+        {
+            const char* text;
+            std::uint64_t bits;
+        };
+        for (const integer_case c :
+                {
+                    integer_case{"[8589934595]", 0x0000000200000003u}, integer_case{"[4294967296]", 0x100000000u}, integer_case{"[4294967295]", 0xFFFFFFFFu},
+                    integer_case{"[-2]", 0xFFFFFFFFFFFFFFFEu}, integer_case{"[-4294967297]", 0xFFFFFFFEFFFFFFFFu}, integer_case{"[18446744073709551615]", 0xFFFFFFFFFFFFFFFFu},
+                    integer_case{"[7]", 7u}
+                })
+        {
+            CAPTURE(c.text)
+            const built b = build(c.text, false, false, true);
+            REQUIRE(b.ok);
+            const node& n = b.data->tape[1];
+            CHECK(integer_bits(n) == c.bits);
+            CHECK(n.len == static_cast<std::uint32_t>(c.bits));
+            CHECK(n.next == static_cast<std::uint32_t>(c.bits >> 32));
+        }
+    }
+}
