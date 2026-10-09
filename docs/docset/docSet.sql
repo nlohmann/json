@@ -163,7 +163,6 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::is_primitive
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::is_string', 'Method', 'api/basic_json_view/is_string/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::is_structured', 'Method', 'api/basic_json_view/is_structured/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::materialize', 'Method', 'api/basic_json_view/materialize/index.html');
-INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator bool', 'Method', 'api/basic_json_view/operator_bool/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::size', 'Method', 'api/basic_json_view/size/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::source_offset', 'Method', 'api/basic_json_view/source_offset/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::type', 'Method', 'api/basic_json_view/type/index.html');
