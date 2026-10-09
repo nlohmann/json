@@ -15,7 +15,7 @@ basic_json_view operator[](IntegerType idx) const;
 basic_json_view operator[](const json_pointer& ptr) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the last one, should the key occur more than once (see
+1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see
    the [Notes](#notes) below) -- or a [discarded](is_discarded.md) view if there is no such member.
 2. Returns the array element at index `idx`, or a [discarded](is_discarded.md) view if `idx` is out of range. The
    template accepts every integer type except `#!cpp bool` and `#!cpp std::size_t` (`#!cpp int`, `#!cpp unsigned`,
@@ -38,7 +38,7 @@ basic_json_view operator[](const json_pointer& ptr) const;
 
 ## Return value
 
-1. the value of the last member with key `key`, or a discarded view if no member has this key (or if this view is
+1. the value of the first member with key `key`, or a discarded view if no member has this key (or if this view is
    [discarded](is_discarded.md))
 2. the element at index `idx`, or a discarded view if `#!cpp idx >= size()` or `idx` is negative (or if this view is
    [discarded](is_discarded.md))
@@ -80,7 +80,7 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 ## Complexity
 
 1. Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after
-   another, in document order, scanning all of them, since the last match is wanted. Each comparison first checks the
+   another, in document order, stopping at the first match. Each comparison first checks the
    key's length -- already known from the index, without reading the key bytes -- before comparing its content, so a
    key of a different length than `key` is rejected without touching the source text.
 2. Linear in `idx`: elements are skipped one at a time from the first one, since they are not a fixed size in the
@@ -105,15 +105,18 @@ document.
     key on an array or a primitive, or an index on an object or a primitive, is `type_error.305` as for
     `BasicJsonType`. [`at`](at.md) still throws for a discarded view, as it does for a missing key.
 
-!!! info "Duplicate keys"
+!!! warning "Duplicate keys: the first member wins"
 
     If the source text has an object with a duplicate key, `#!cpp operator[]` (and [`at`](at.md), [`find`](find.md),
     [`contains`](contains.md), [`count`](count.md), [`value`](value.md), and JSON pointer resolution) all resolve to
-    the *last* member with that key. This is the member [`materialize()`](materialize.md) (and
-    [`BasicJsonType::parse()`](../basic_json/parse.md)) keeps, so a lookup in the view and in the materialized value
-    agree. [`begin()`](begin.md)/[`end()`](end.md) and [`items()`](items.md) iterate over *all* members, including
-    duplicates, in document order. A lookup scans all members for this: it cannot stop at the first match. See the
-    example below and [`size()`](size.md#notes).
+    the *first* member with that key, because a lookup can stop as soon as it finds a match. This is different from
+    [`materialize()`](materialize.md) (and [`BasicJsonType::parse()`](../basic_json/parse.md)), which replay every
+    member in order and so keep the *last* value for a repeated key, so `#!cpp v["a"]` and
+    `#!cpp v.materialize()["a"]` can differ. To get the value `parse()` would give, use
+    [`materialize()`](materialize.md) or iterate the members with [`items()`](items.md) and keep the last match.
+    [`begin()`](begin.md)/[`end()`](end.md) and [`items()`](items.md) iterate over *all* members, including
+    duplicates, in document order. See [Duplicate keys](../../features/json_view.md#duplicate-keys) and
+    [`size()`](size.md#notes).
 
 !!! info "JSON pointer resolution"
 
