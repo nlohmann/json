@@ -670,7 +670,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned
             return p + (count_trailing_zeros(bits) >> 2u);
         }
 #else
-        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p)));
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
         const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
                                              _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
         const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
@@ -865,15 +865,15 @@ NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* sc
 #else
     // the same with SSSE3 (pshufb for the table lookups; nibbles from 16-bit
     // shifts, as there are no byte shifts)
-    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data())));
-    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data())));
-    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data())));
+    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data()))); // NOLINT(bugprone-casting-through-void)
     const __m128i nibble = _mm_set1_epi8(0x0F);
     const __m128i zero = _mm_setzero_si128();
     __m128i prev = zero;
     while (e - block >= 16)
     {
-        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block)));
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
         const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
                                              _mm_cmpeq_epi8(_mm_subs_epu8(in, _mm_set1_epi8(0x1F)), zero)); // in < 0x20
         const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
@@ -887,7 +887,7 @@ NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* sc
         const auto err_bits = ~static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(err, zero))) & 0xFFFFu;
         if (special_bits != 0)
         {
-            const unsigned k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
+            const auto k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
             if ((err_bits & ((2u << k) - 1u)) == 0)
             {
                 return block + k;
@@ -3190,7 +3190,7 @@ template<typename SizeType, typename IntegerType>
 SizeType to_index(IntegerType idx) noexcept
 {
     const IntegerType zero = 0;
-    const auto result = static_cast<SizeType>(idx);
+    const auto result = static_cast<SizeType>(idx); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): idx is an index, not a character
     return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
 }
 
@@ -3531,7 +3531,7 @@ class editor
         node* w = h + 1;
         std::size_t erased = 0;
         bool kept = false;
-        for (node* r = h + 1, *end = h + h->next; r != end; r += 2)
+        for (const node* r = h + 1, *end = h + h->next; r != end; r += 2)
         {
             const bool match = key_equals(*r, key);
             if (match && (kept || !keep_first))
@@ -3755,7 +3755,7 @@ class editor
         const bool negative = k == value_t::number_integer && static_cast<std::int64_t>(bits) < 0;
         std::uint64_t magnitude = negative ? 0 - bits : bits;
         std::array<char, 24> buf{};
-        char* p = buf.data() + buf.size();
+        char* p = buf.data() + buf.size(); // NOLINT(misc-const-correctness): digits are written through p
         do
         {
             *--p = static_cast<char>('0' + (magnitude % 10));
@@ -4764,7 +4764,15 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
 {
     std::sort(ranges.begin(), ranges.end(), [](const float_range & a, const float_range & b)
     {
-        return a.off != b.off ? a.off < b.off : (a.len != b.len ? a.len < b.len : a.extra < b.extra);
+        if (a.off != b.off)
+        {
+            return a.off < b.off;
+        }
+        if (a.len != b.len)
+        {
+            return a.len < b.len;
+        }
+        return a.extra < b.extra;
     });
     std::size_t end = 0;
     std::size_t i = 0;
@@ -7129,7 +7137,7 @@ class basic_json_view
         // the end is unknown: assume a few bytes per node, the output buffer
         // grows should the value be larger
         const auto nodes = static_cast<std::size_t>(document_data::after(m_node) - m_node);
-        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + nodes * 16);
+        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + (nodes * 16));
     }
 
     /// the value of the first member with this key, or a discarded view
@@ -7865,11 +7873,11 @@ namespace std // NOLINT(cert-dcl58-cpp)
     #pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
 template<typename View>
-class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
     : public std::integral_constant<std::size_t, 2> {};
 
 template<std::size_t N, typename View>
-class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
   public:
     using type = decltype(std::declval<::nlohmann::detail::view::view_item<View>>().template get<N>());
