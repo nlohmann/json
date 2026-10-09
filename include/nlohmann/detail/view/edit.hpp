@@ -152,23 +152,25 @@ class editor
         {
             become_empty(o, value_t::object);
         }
-        // an existing member: assign the one that lookups find (the last
-        // one, should the key occur more than once), and drop the others, so
-        // that lookups, iteration, and materialize() agree. The key stays at
-        // the position of its first occurrence, as materialize() puts it.
+        // an existing member: assign it (and drop later duplicates, so that
+        // lookups, iteration, and materialize() agree)
         node* slot = nullptr;
-        std::size_t matches = 0;
+        bool duplicates = false;
         for (const node* k = nav::first(m_doc, o), *end = nav::end(m_doc, o); k != end; k = document_data::after(k + 1))
         {
             if (key_equals(*k, key))
             {
+                if (slot != nullptr)
+                {
+                    duplicates = true;
+                    break;
+                }
                 slot = const_cast<node*>(nav::value(k + 1)); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to this document
-                ++matches;
             }
         }
         if (slot != nullptr)
         {
-            if (matches > 1)
+            if (duplicates)
             {
                 erase_members(o, key, true);
             }
@@ -314,38 +316,27 @@ class editor
         return k.len == key.size() && (key.size() == 0 || std::memcmp(m_doc.str(k), key.data(), key.size()) == 0);
     }
 
-    /// Remove the members with this key from an object: all of them, or all
-    /// but one. That one stays where the first occurrence is, but holds the
-    /// value of the last (the one that lookups find, which views may refer to).
-    std::size_t erase_members(node* o, string_view_t key, bool keep_one)
+    /// remove the members with this key (all, or all but the first) from an object
+    std::size_t erase_members(node* o, string_view_t key, bool keep_first)
     {
         node* const h = block_of(m_doc, o, 0);
-        node last_value{}; // the entry of the value of the last member
-        node* const end = h + h->next;
-        if (keep_one)
-        {
-            for (node* r = h + 1; r != end; r += 2)
-            {
-                if (key_equals(*r, key))
-                {
-                    last_value = r[1];
-                }
-            }
-        }
         node* w = h + 1;
         std::size_t erased = 0;
         bool kept = false;
-        for (node* r = h + 1; r != end; r += 2)
+        for (node* r = h + 1, *end = h + h->next; r != end; r += 2)
         {
             const bool match = key_equals(*r, key);
-            if (match && (kept || !keep_one))
+            if (match && (kept || !keep_first))
             {
                 ++erased;
                 continue;
             }
-            w[0] = r[0];
-            w[1] = match ? last_value : r[1];
             kept = kept || match;
+            if (w != r)
+            {
+                w[0] = r[0];
+                w[1] = r[1];
+            }
             w += 2;
         }
         h->next = static_cast<std::uint32_t>(w - h);

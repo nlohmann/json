@@ -86,8 +86,8 @@ view of a *different* document (overloads 1-2 only; overload 3 always starts fro
 
 !!! info "Duplicate keys"
 
-    Overload 1. removes *every* member with `key`, not just the last one that lookups find -- unlike [`set`](set.md),
-    which assigns that member and drops the rest. This is why it returns a count rather than a single view: there may be
+    Overload 1. removes *every* member with `key`, not just the first -- unlike [`set`](set.md), which assigns the
+    first occurrence and drops the rest. This is why it returns a count rather than a single view: there may be
     more than one member removed, or none.
 
 Like [`set`](set.md) and [`push_back`](push_back.md), `erase` never moves an element's *value*: a view still
