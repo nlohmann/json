@@ -57,17 +57,27 @@ NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
     return static_cast<unsigned>(n.kind) - 1u <= 1u;
 }
 
-/// the converted value of an integer node (stored in len/next)
+/// the converted value of an integer node: len is its low half, next its high
+/// half (on little-endian targets the two words are the value in memory)
 NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t integer_bits(const node& n) noexcept
 {
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
     std::uint64_t v = 0;
     std::memcpy(&v, reinterpret_cast<const unsigned char*>(&n) + 8, 8); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     return v;
+#else
+    return static_cast<std::uint64_t>(n.len) | (static_cast<std::uint64_t>(n.next) << 32);
+#endif
 }
 
 NLOHMANN_VIEW_ALWAYS_INLINE void set_integer_bits(node& n, std::uint64_t v) noexcept
 {
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, &v, 8); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+#else
+    n.len = static_cast<std::uint32_t>(v);
+    n.next = static_cast<std::uint32_t>(v >> 32);
+#endif
 }
 
 /// token length of a number node
