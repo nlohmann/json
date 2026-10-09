@@ -26,15 +26,11 @@ namespace
 
 // a BinaryType whose value type is signed: the elements must still be
 // processed as the numbers 0..255
-using char_binary_json = nlohmann::basic_json <
-                         std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
-                         double, std::allocator, nlohmann::adl_serializer, std::vector<char>, void >;
+using char_binary_json = nlohmann::json::with_binary_t<std::vector<char>>;
 
 #ifdef JSON_HAS_CPP_17
     // a BinaryType whose value type is not an integer type at all
-    using byte_binary_json = nlohmann::basic_json <
-    std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
-    double, std::allocator, nlohmann::adl_serializer, std::vector<std::byte>, void >;
+    using byte_binary_json = nlohmann::json::with_binary_t<std::vector<std::byte>>;
 #endif
 
 } // namespace
