@@ -348,9 +348,10 @@ class editor
     /// turn a null into an empty array/object in place
     static void become_empty(node* n, value_t k) noexcept
     {
+        const std::uint8_t linked = n->flags & node_flags::linked;
         *n = node{};
         n->kind = static_cast<std::uint8_t>(k);
-        n->flags = node_flags::is_new;
+        n->flags = static_cast<std::uint8_t>(node_flags::is_new | linked);
         n->next = 1;
     }
 
@@ -358,13 +359,17 @@ class editor
     /// include slot (if known).
     void assign(node* slot, const encoded& e, node* parent, bool parent_known)
     {
+        // an entry of a moved sequence links to the slot: it can take any extent
+        const std::uint8_t linked = slot->flags & node_flags::linked;
         if (e.region == nullptr)
         {
-            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape)
+            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape && linked == 0)
             {
                 // The slot spans its old elements in the enclosing sequence, but
                 // a scalar is one node: the enclosing container first switches to
-                // links (then the extent of the slot no longer matters).
+                // links (then the extent of the slot no longer matters). Looking
+                // for the container is linear in the size of the document, so
+                // links (which are marked in the slot) avoid it.
                 node* const p = parent_known ? parent : find_parent(m_doc, slot);
                 if (p != nullptr && ((p->flags & node_flags::moved) == 0 || moved_capacity(m_doc, p) == 0))
                 {
@@ -372,6 +377,7 @@ class editor
                 }
             }
             *slot = e.scalar;
+            slot->flags = static_cast<std::uint8_t>(slot->flags | linked);
             return;
         }
         // an array/object: the slot keeps its extent (so that the enclosing
@@ -394,7 +400,7 @@ class editor
         slot->len = r->len;
         slot->next = extent;
         // (set_moved() adds the moved flag to a slot that does not have it yet)
-        slot->flags = was_moved ? static_cast<std::uint8_t>(node_flags::moved | node_flags::is_new) : std::uint8_t{0};
+        slot->flags = static_cast<std::uint8_t>((was_moved ? node_flags::moved | node_flags::is_new : 0) | linked);
         set_moved(m_doc, slot, e.region, 0);
         edit_state_of(m_doc).regions[e.region] = slot;
     }

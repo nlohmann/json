@@ -745,3 +745,45 @@ TEST_CASE("json_view edits: the size of a text arena")
     CHECK_THROWS_WITH_AS(text_capacity(limit, limit, 1), "[json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document", json::out_of_range&);
 }
 #endif
+
+TEST_CASE("json_view edits: replacing arrays and objects by scalars")
+{
+    // the first assignment switches the parent to links; the later ones do
+    // not need to look for the parent again
+    std::string text = "[";
+    json expected = json::array();
+    for (int i = 0; i < 300; ++i)
+    {
+        text += (i != 0 ? ",[" : "[") + std::to_string(i) + ",{\"k\":" + std::to_string(i) + "}]";
+        expected.push_back(json::array({i, json{{"k", i}}}));
+    }
+    text += ']';
+    json_editable_document d = json_editable_document::parse(text);
+    CHECK(d.root().dump() == expected.dump());
+    for (int i = 0; i < 300; i += 2)
+    {
+        d.set(d.root()[static_cast<std::size_t>(i)], i);
+        expected[static_cast<std::size_t>(i)] = i;
+    }
+    CHECK(d.root().dump() == expected.dump());
+    for (int i = 1; i < 300; i += 2) // (elements that are still in the parsed layout of their parent)
+    {
+        d.set(d.root()[static_cast<std::size_t>(i)][1], "x"); // replaces an object
+        expected[static_cast<std::size_t>(i)][1] = "x";
+    }
+    CHECK(d.root().dump() == expected.dump());
+
+    // new values, and values in new values
+    d.push_back(d.root(), json::parse(R"([[1,2],{"a":[3]}])"));
+    expected.push_back(json::parse(R"([[1,2],{"a":[3]}])"));
+    d.set(d.root()[300][0], 7);
+    expected[300][0] = 7;
+    d.insert(d.root(), 0, json::array({1, 2}));
+    expected.insert(expected.begin(), json::array({1, 2}));
+    d.set(d.root()[0], nullptr);
+    expected[0] = nullptr;
+    d.set(d.root()[301], 5);
+    expected[301] = 5;
+    CHECK(d.root().dump() == expected.dump());
+    CHECK(d.root().materialize() == expected);
+}
