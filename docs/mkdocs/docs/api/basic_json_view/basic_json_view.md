@@ -4,8 +4,8 @@
 basic_json_view() noexcept = default;
 ```
 
-Creates an invalid (discarded) view: [`type()`](type.md) is `#!cpp value_t::discarded`,
-[`is_discarded()`](is_discarded.md) is `#!cpp true`, and `#!cpp explicit operator bool()` is `#!cpp false`.
+Creates an invalid (discarded) view: [`type()`](type.md) is `#!cpp value_t::discarded` and
+[`is_discarded()`](is_discarded.md) is `#!cpp true`.
 
 This is the only constructor a caller can use directly. Every other view is obtained from a
 [`basic_json_document`](../basic_json_document/index.md), via [`root()`](../basic_json_document/root.md) or (once
@@ -43,7 +43,6 @@ placeholder for "no value yet" and later be assigned a real view.
 ## See also
 
 - [is_discarded](is_discarded.md) - return whether the view is invalid
-- [operator bool](operator_bool.md) - return whether the view refers to a value
 - [root](../basic_json_document/root.md) - the view of a document's root value
 
 ## Version history
