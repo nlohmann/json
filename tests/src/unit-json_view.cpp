@@ -1381,6 +1381,48 @@ TEST_CASE("json_view large objects")
         CHECK(without_collisions.memory_usage() >= with_collisions.memory_usage() + (slots * sizeof(std::uint32_t)));
     }
 
+    SECTION("shrink_to_fit releases the tables' spare capacity")
+    {
+        const auto make_text = [](int objects, int members)
+        {
+            std::string text = "[";
+            for (int object = 0; object < objects; ++object)
+            {
+                text += object != 0 ? ",{" : "{";
+                for (int i = 0; i < members + object; ++i)
+                {
+                    text += (i != 0 ? ",\"" : "\"") + std::to_string(i) + "\":" + std::to_string(i);
+                }
+                text += '}';
+            }
+            return text + "]";
+        };
+        const std::string small_text = make_text(5, 150);
+        const std::string big_text = make_text(40, 400);
+
+        // reading a big text, and then a small one, leaves the spare capacity
+        // of the big one: shrink_to_fit() brings the document to the size of
+        // one parsed from the small text alone
+        json_document d = json_document::parse(big_text);
+        const std::size_t big = d.memory_usage();
+        d.read(small_text);
+        CHECK(d.memory_usage() >= big);
+        d.shrink_to_fit();
+        json_document fresh = json_document::parse(small_text);
+        fresh.shrink_to_fit();
+        CHECK(d.memory_usage() == fresh.memory_usage());
+        CHECK(d.memory_usage() < big / 2);
+        CHECK(d.root() == json::parse(small_text));
+        for (int object = 0; object < 5; ++object)
+        {
+            const json_view v = d.root()[static_cast<std::size_t>(object)];
+            for (int i = 0; i < 150 + object; ++i)
+            {
+                CHECK(v[std::to_string(i)].get<int>() == i);
+            }
+        }
+    }
+
     SECTION("nested, reused, and in arrays")
     {
         std::string inner = "{";
