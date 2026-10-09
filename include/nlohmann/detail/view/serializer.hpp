@@ -752,9 +752,14 @@ class view_serializer
             {
                 *w = '-';
                 w += d.negative ? 1 : 0;
-                // (without leading zeros, all digits of the token count)
-                const unsigned char lead = first[d.negative ? 1 : 0];
-                return lead != '0' ? ::nlohmann::detail::dtoa_impl::write_short_decimal(w, d.w, static_cast<int>(int_digits + frac_digits), static_cast<int>(d.exponent))
+                // (without leading zeros, all digits of the token count; the
+                // check also keeps an image that was only checked for bounds,
+                // whose token may not be made of digits, from the counted
+                // overload)
+                const auto& powers = ::nlohmann::detail::dtoa_impl::powers_of_ten_16();
+                const unsigned count = int_digits + frac_digits;
+                return count - 1u < 15u && d.w >= powers[count - 1u] && d.w < powers[count]
+                       ? ::nlohmann::detail::dtoa_impl::write_short_decimal(w, d.w, static_cast<int>(count), static_cast<int>(d.exponent))
                        : ::nlohmann::detail::dtoa_impl::write_short_decimal(w, d.w, static_cast<int>(d.exponent));
             }
             return write_double_value_at(w, decimal_to_float<double>(d)); // (without reading the token again)
