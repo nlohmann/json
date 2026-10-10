@@ -544,6 +544,8 @@ TEST_CASE("lexicographical comparison operators")
 
 namespace unit_comparison_detail
 {
+namespace
+{
 // orders keys ascending or descending, as chosen when a map is created
 template<class Key>
 class directed_less
@@ -595,7 +597,7 @@ struct unordered_object_t : std::map<Key, Value, directed_less<Key>, Allocator>
 using unordered_json = nlohmann::json::with_object_t<unordered_object_t>;
 
 // the entries "0" to "9", enumerated in ascending or in descending order
-inline unordered_json make_unordered_object(const bool descending)
+unordered_json make_unordered_object(const bool descending)
 {
     unordered_json j = unordered_json::object_t(directed_less<std::string>(descending));
     for (int i = 0; i < 10; ++i)
@@ -674,6 +676,7 @@ struct case_insensitive_less
 template<class Key, class Value, class /*Compare*/, class Allocator>
 using case_insensitive_map = std::map<Key, Value, case_insensitive_less, Allocator>;
 using ci_json = nlohmann::json::with_object_t<case_insensitive_map>;
+} // namespace
 } // namespace unit_comparison_detail
 
 // using-declarations rather than a using-directive, as this file may be

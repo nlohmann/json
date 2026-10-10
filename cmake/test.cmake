@@ -416,11 +416,9 @@ function(json_test_add_unity_tests)
     endforeach()
 
     # files that must not be merged into a batch: unit-32bit.cpp is only built
-    # for 32bit targets, unit-no-macro-leak.cpp checks that including the
-    # library defines no unprefixed macro, which any other file would disturb,
-    # and unit-noexcept.cpp suppresses GCC's -Wnoexcept around its include of
-    # the library, which has no effect once another file included it first
-    set(standalone_files unit-32bit.cpp unit-no-macro-leak.cpp unit-noexcept.cpp)
+    # for 32bit targets, and unit-no-macro-leak.cpp checks that including the
+    # library defines no unprefixed macro, which any other file would disturb
+    set(standalone_files unit-32bit.cpp unit-no-macro-leak.cpp)
 
     set(harmless_macros "^(DOCTEST_.*|SKIP_TESTS_FOR_.*|JSON_TEST_DEPRECATED_FUNCTIONS_DELETED|JSON_TEST_STRICT_NUL_HANDLING_ENABLED|JSON_TEST_STRINGIZE)$")
 
@@ -445,6 +443,17 @@ function(json_test_add_unity_tests)
                 set(batchable FALSE)
             endif()
         endforeach()
+
+        # files that suppress GCC's -Wnoexcept around their include of the
+        # library: the suppression has no effect once another file of the
+        # batch included the library first
+        if(batchable)
+            file(READ ${file} file_content)
+            string(FIND "${file_content}" "SUPPRESS_WARNING(\"-Wnoexcept\")" suppresses_noexcept)
+            if(NOT ${suppresses_noexcept} EQUAL -1)
+                set(batchable FALSE)
+            endif()
+        endif()
 
         set(pool plain)
         if(batchable)
