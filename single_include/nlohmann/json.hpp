@@ -24327,21 +24327,13 @@ class binary_writer
     */
     void write_bon8_value_or_push(const BasicJsonType& j, bool& string_open, std::vector<binary_container_frame>& stack)
     {
-        if (j.is_array())
+        if (j.is_array() || j.is_object())
         {
-            const auto N = j.m_data.m_value.array->size();
-            write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x80 + N : 0x85), string_open);
-            if (N != 0)
-            {
-                stack.emplace_back(&j);
-            }
-            return;
-        }
-
-        if (j.is_object())
-        {
-            const auto N = j.m_data.m_value.object->size();
-            write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x86 + N : 0x8B), string_open);
+            // arrays use the markers 0x80..0x85, objects 0x86..0x8B; the last
+            // one stands for more than four elements, closed later with 0xFE
+            const auto N = j.size();
+            const std::size_t base = j.is_array() ? 0x80 : 0x86;
+            write_bon8_marker(static_cast<std::uint8_t>(base + (N <= 4 ? N : 5)), string_open);
             if (N != 0)
             {
                 stack.emplace_back(&j);
@@ -24369,43 +24361,35 @@ class binary_writer
         while (!stack.empty())
         {
             const binary_container_frame current = stack.back();
+            const bool is_array = current.value->is_array();
+            const bool at_end = is_array
+                                ? current.array_it == current.value->m_data.m_value.array->cend()
+                                : current.object_it == current.value->m_data.m_value.object->cend();
 
-            if (current.value->is_array())
+            if (at_end)
             {
-                const auto& array = *current.value->m_data.m_value.array;
-                if (current.array_it == array.cend())
+                if (current.value->size() > 4)
                 {
-                    if (array.size() > 4)
-                    {
-                        write_bon8_marker(0xFE, string_open);
-                    }
-                    stack.pop_back();
-                    continue;
+                    write_bon8_marker(0xFE, string_open);
                 }
+                stack.pop_back();
+                continue;
+            }
 
-                // read the child before pushing: entering it can move every frame
-                const BasicJsonType* child = &(*current.array_it);
+            // read the child before pushing: entering it can move every frame
+            const BasicJsonType* child = nullptr;
+            if (is_array)
+            {
+                child = &(*current.array_it);
                 ++stack.back().array_it;
-                write_bon8_value_or_push(*child, string_open, stack);
             }
             else
             {
-                const auto& object = *current.value->m_data.m_value.object;
-                if (current.object_it == object.cend())
-                {
-                    if (object.size() > 4)
-                    {
-                        write_bon8_marker(0xFE, string_open);
-                    }
-                    stack.pop_back();
-                    continue;
-                }
-
                 write_bon8_string(current.object_it->first, string_open, *current.value);
-                const BasicJsonType* child = &(current.object_it->second);
+                child = &(current.object_it->second);
                 ++stack.back().object_it;
-                write_bon8_value_or_push(*child, string_open, stack);
             }
+            write_bon8_value_or_push(*child, string_open, stack);
         }
     }
 
