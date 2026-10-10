@@ -15,6 +15,7 @@
 #include <nlohmann/json_view.hpp>
 
 #include <algorithm> // any_of
+#include <functional> // function
 #include <random> // mt19937
 #include <string> // string
 
@@ -86,4 +87,20 @@ inline bool has_duplicate_keys(const nlohmann::ordered_json_view& v)
         return e.is_structured() && has_duplicate_keys(e);
     });
 }
+
+#if !defined(JSON_NOEXCEPTION)
+// the exception a call throws, or "" if it throws none
+inline std::string exception_of_call(const std::function<void()>& f)
+{
+    try
+    {
+        f();
+    }
+    catch (const nlohmann::json::exception& e)
+    {
+        return e.what();
+    }
+    return "";
+}
+#endif
 } // namespace json_view_test
