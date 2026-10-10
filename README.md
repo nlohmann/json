@@ -1187,6 +1187,14 @@ binary.set_subtype(0x10);
 auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 ```
 
+### Zero-copy views
+
+Header `<nlohmann/json_view.hpp>` adds `json_document`/`json_view`, a read-only, non-owning way to look at a parsed
+JSON text: parsing builds a flat index (16 bytes per value) instead of a tree, strings and numbers stay in the source
+text, and `materialize()` builds a `json` value for a subtree only when you actually need one. See
+[Zero-copy JSON views](https://json.nlohmann.me/features/json_view/) for the details, including which inputs are
+borrowed and which are copied.
+
 ## Customers
 
 The library is used in multiple projects, applications, operating systems, etc. The list below is not exhaustive, but the result of an internet search. If you know further customers of the library, please let me know, see [contact](#contact).
@@ -1398,6 +1406,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 - The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
 - The class contains parts of [Google Abseil](https://github.com/abseil/abseil-cpp) which is licensed under the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).
 - The class contains an adapted version of the Eisel-Lemire algorithm, its table of powers of five, and its digit comparison for long numbers from [fast_float](https://github.com/fastfloat/fast_float) by Daniel Lemire and contributors, which is available under the [MIT License](https://opensource.org/licenses/MIT) (used here), the Apache 2.0 License, and the Boost Software License. Copyright &copy; 2021 The fast_float authors
+- The view's parser (`<nlohmann/json_view.hpp>`) contains techniques and code adapted from [yyjson](https://github.com/ibireme/yyjson) by YaoYuan, which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above): table-driven decoding of `\u` escapes and fixed-offset unrolled checks.
 
 <img align="right" src="https://git.fsfe.org/reuse/reuse-ci/raw/branch/master/reuse-horizontal.png" alt="REUSE Software">
 

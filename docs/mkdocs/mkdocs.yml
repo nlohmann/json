@@ -102,6 +102,7 @@ nav:
           - features/types/index.md
           - features/types/number_handling.md
           - features/types/template_parameters.md
+      - features/json_view.md
   - Integration:
       - integration/index.md
       - integration/migration_guide.md
@@ -233,6 +234,41 @@ nav:
           - 'value': api/basic_json/value.md
           - 'value_t': api/basic_json/value_t.md
           - 'with_t': api/basic_json/with_t.md
+      - basic_json_document:
+          - 'Overview': api/basic_json_document/index.md
+          - '(Constructor)': api/basic_json_document/basic_json_document.md
+          - 'accept': api/basic_json_document/accept.md
+          - 'is_discarded': api/basic_json_document/is_discarded.md
+          - 'memory_usage': api/basic_json_document/memory_usage.md
+          - 'node_count': api/basic_json_document/node_count.md
+          - 'owns_source': api/basic_json_document/owns_source.md
+          - 'parse': api/basic_json_document/parse.md
+          - 'parse_copy': api/basic_json_document/parse_copy.md
+          - 'read': api/basic_json_document/read.md
+          - 'root': api/basic_json_document/root.md
+          - 'shrink_to_fit': api/basic_json_document/shrink_to_fit.md
+          - 'source': api/basic_json_document/source.md
+      - basic_json_view:
+          - 'Overview': api/basic_json_view/index.md
+          - '(Constructor)': api/basic_json_view/basic_json_view.md
+          - 'empty': api/basic_json_view/empty.md
+          - 'is_array': api/basic_json_view/is_array.md
+          - 'is_binary': api/basic_json_view/is_binary.md
+          - 'is_boolean': api/basic_json_view/is_boolean.md
+          - 'is_discarded': api/basic_json_view/is_discarded.md
+          - 'is_null': api/basic_json_view/is_null.md
+          - 'is_number': api/basic_json_view/is_number.md
+          - 'is_number_float': api/basic_json_view/is_number_float.md
+          - 'is_number_integer': api/basic_json_view/is_number_integer.md
+          - 'is_number_unsigned': api/basic_json_view/is_number_unsigned.md
+          - 'is_object': api/basic_json_view/is_object.md
+          - 'is_primitive': api/basic_json_view/is_primitive.md
+          - 'is_string': api/basic_json_view/is_string.md
+          - 'is_structured': api/basic_json_view/is_structured.md
+          - 'materialize': api/basic_json_view/materialize.md
+          - 'size': api/basic_json_view/size.md
+          - 'source_offset': api/basic_json_view/source_offset.md
+          - 'type': api/basic_json_view/type.md
       - byte_container_with_subtype:
           - 'Overview': api/byte_container_with_subtype/index.md
           - '(constructor)': api/byte_container_with_subtype/byte_container_with_subtype.md
@@ -247,6 +283,7 @@ nav:
           - 'from_json': api/adl_serializer/from_json.md
           - 'to_json': api/adl_serializer/to_json.md
       - 'json': api/json.md
+      - 'json_document': api/json_document.md
       - json_pointer:
           - 'Overview': api/json_pointer/index.md
           - '(Constructor)': api/json_pointer/json_pointer.md
@@ -281,11 +318,14 @@ nav:
           - 'start_array': api/json_sax/start_array.md
           - 'start_object': api/json_sax/start_object.md
           - 'string': api/json_sax/string.md
+      - 'json_view': api/json_view.md
       - 'operator<<(basic_json), operator<<(json_pointer)': api/operator_ltlt.md
       - 'operator>>(basic_json)': api/operator_gtgt.md
       - 'operator""_json': api/operator_literal_json.md
       - 'operator""_json_pointer': api/operator_literal_json_pointer.md
       - 'ordered_json': api/ordered_json.md
+      - 'ordered_json_document': api/ordered_json_document.md
+      - 'ordered_json_view': api/ordered_json_view.md
       - 'ordered_map': api/ordered_map.md
       - macros:
           - 'Overview': api/macros/index.md
@@ -473,6 +513,8 @@ plugins:
         API Documentation:
           - api/*.md
           - api/basic_json/*.md
+          - api/basic_json_document/*.md
+          - api/basic_json_view/*.md
           - api/adl_serializer/*.md
           - api/byte_container_with_subtype/*.md
           - api/json_pointer/*.md

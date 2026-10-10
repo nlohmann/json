@@ -40,6 +40,7 @@ Constant.
 - [is_number()](is_number.md) check if the value is a number
 - [is_number_unsigned()](is_number_unsigned.md) check if the value is an unsigned integer number
 - [is_number_float()](is_number_float.md) check if the value is a floating-point number
+- [basic_json_view::is_number_integer](../basic_json_view/is_number_integer.md) - the same check on a zero-copy view
 
 ## Version history
 
