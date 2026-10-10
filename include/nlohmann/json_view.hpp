@@ -26,8 +26,9 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
-#include <algorithm> // all_of
-#include <cstddef> // size_t
+#include <algorithm> // all_of, min
+#include <array> // array
+#include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstdint> // uint32_t
 #include <cstring> // memcpy, strlen
 #include <istream> // istream // IWYU pragma: keep
@@ -69,7 +70,6 @@
 #include <nlohmann/detail/view/compare.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
 #include <nlohmann/detail/view/edit.hpp>
-#include <nlohmann/detail/view/edit_storage.hpp>
 #include <nlohmann/detail/view/errors.hpp>
 #include <nlohmann/detail/view/input.hpp>
 #include <nlohmann/detail/view/iterator.hpp>
