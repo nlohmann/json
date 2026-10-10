@@ -82,9 +82,56 @@ TEST_CASE("BON8")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
+            // a discarded value cannot be serialized to BON8
             const json j = json::value_t::discarded;
-            CHECK(json::to_bon8(j).empty());
+            CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.type_error.321] cannot serialize discarded value to BON8", json::type_error&);
+        }
+
+        SECTION("discarded values nested in a container")
+        {
+            const json discarded = json::value_t::discarded;
+
+            SECTION("in a small array")
+            {
+                const json j = {1, discarded};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.type_error.321] (/1) cannot serialize discarded value to BON8", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.type_error.321] cannot serialize discarded value to BON8", json::type_error&);
+#endif
+            }
+
+            SECTION("as a small object value")
+            {
+                json j;
+                j["a"] = discarded;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.type_error.321] (/a) cannot serialize discarded value to BON8", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.type_error.321] cannot serialize discarded value to BON8", json::type_error&);
+#endif
+            }
+
+            SECTION("in a large array")
+            {
+                const json j = {1, 2, 3, 4, 5, discarded};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.type_error.321] (/5) cannot serialize discarded value to BON8", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.type_error.321] cannot serialize discarded value to BON8", json::type_error&);
+#endif
+            }
+
+            SECTION("as a large object value")
+            {
+                json j = {{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}, {"e", 5}};
+                j["f"] = discarded;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.type_error.321] (/f) cannot serialize discarded value to BON8", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.type_error.321] cannot serialize discarded value to BON8", json::type_error&);
+#endif
+            }
         }
 
         SECTION("null")
