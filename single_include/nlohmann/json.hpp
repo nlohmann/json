@@ -31277,7 +31277,7 @@ public:
     template < typename KeyType, detail::enable_if_t < !std::is_constructible<string_t, const KeyType&>::value, int > = 0 >
     static const KeyType & key_for_message(const KeyType& key)
     {
-        return key;
+        return key; // NOLINT(bugprone-return-const-ref-from-parameter): the result is only passed to concat() within the full-expression that holds key
     }
 
     /// @brief checked array element access used by the at() overloads taking an index
