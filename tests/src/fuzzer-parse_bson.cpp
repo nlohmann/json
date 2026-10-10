@@ -21,45 +21,16 @@ The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <cassert>
-#include <nlohmann/json.hpp>
-
-// the round-trip checks below are assertions; NDEBUG would compile them away
-#ifdef NDEBUG
-    #error "the fuzzer drivers must be built without NDEBUG"
-#endif
-
-using json = nlohmann::json;
-
-// compares dumps rather than values, because NaN != NaN; keep writes strings
-// byte for byte, so ill-formed UTF-8 that a binary reader accepts cannot throw
-static bool same_value(const json& lhs, const json& rhs)
-{
-    return lhs.dump(-1, ' ', false, json::error_handler_t::keep) == rhs.dump(-1, ' ', false, json::error_handler_t::keep);
-}
+#include "fuzzer_common.hpp"
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     std::vector<uint8_t> const vec1(data, data + size);
 
-    // step 0: parse input without exceptions; a parse error must then be
-    // reported as a discarded value, never thrown
-    json j_noexcept;
+    // step 0: parse input without exceptions
     bool noexcept_threw = false;
-    try
-    {
-        j_noexcept = json::from_bson(vec1, true, false);
-    }
-    catch (const json::parse_error&)
-    {
-        assert(false);
-    }
-    catch (const json::exception&)
-    {
-        // type and out-of-range errors are not parse errors and still throw
-        noexcept_threw = true;
-    }
+    json const j_noexcept = parse_without_exceptions([&] { return json::from_bson(vec1, true, false); }, noexcept_threw);
     // whether step 1 succeeded; if not, the catch blocks below check that
     // step 0 failed, too
     bool parsed = false;

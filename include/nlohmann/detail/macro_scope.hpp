@@ -312,7 +312,7 @@
             return ej_pair.first == e;                                                          \
         });                                                                                     \
         if (it != std::end(m)) j = it->second;                                                  \
-        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410,"enum value out of range for " #ENUM_TYPE, nullptr)); \
+        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(nlohmann::detail::exception_id::value_out_of_range,"enum value out of range for " #ENUM_TYPE, nullptr)); \
     }                                                                                           \
     template<typename BasicJsonType>                                                            \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
@@ -327,7 +327,7 @@
             return ej_pair.second == j;                                                         \
         });                                                                                     \
         if (it != std::end(m)) e = it->first;                                                   \
-        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", j.dump(-1, ' ', false, nlohmann::detail::error_handler_t::replace)), &j)); \
+        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(nlohmann::detail::exception_id::value_out_of_range, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", j.dump(-1, ' ', false, nlohmann::detail::error_handler_t::replace)), &j)); \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They

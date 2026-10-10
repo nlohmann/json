@@ -279,6 +279,12 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
         }
     }
 
+    /// @throw invalid_iterator.214 always
+    JSON_HEDLEY_NO_RETURN void throw_cannot_get_value() const
+    {
+        JSON_THROW(invalid_iterator::create(exception_id::iterator_value_unavailable, "cannot get value", m_object));
+    }
+
   public:
     /*!
     @brief return a reference to the value pointed to by the iterator
@@ -303,7 +309,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
             }
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
 
             case value_t::string:
             case value_t::boolean:
@@ -319,7 +325,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
             }
         }
     }
@@ -361,7 +367,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                     return m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
             }
         }
     }
@@ -478,7 +484,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers", m_object));
+            JSON_THROW(invalid_iterator::create(exception_id::iterators_compare_different_values, "cannot compare iterators of different containers", m_object));
         }
 
         // value-initialized forward iterators can be compared, and must compare equal to other value-initialized iterators of the same type #4493
@@ -527,7 +533,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers", m_object));
+            JSON_THROW(invalid_iterator::create(exception_id::iterators_compare_different_values, "cannot compare iterators of different containers", m_object));
         }
 
         // value-initialized forward iterators can be compared, and must compare equal to other value-initialized iterators of the same type #4493
@@ -540,7 +546,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
         switch (m_object->m_data.m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators", m_object));
+                JSON_THROW(invalid_iterator::create(exception_id::iterator_order_on_object, "cannot compare order of object iterators", m_object));
 
             case value_t::array:
                 return (m_it.array_iterator < other.m_it.array_iterator);
@@ -596,7 +602,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
         switch (m_object->m_data.m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", m_object));
+                JSON_THROW(invalid_iterator::create(exception_id::iterator_arithmetic_on_object, "cannot use offsets with object iterators", m_object));
 
             case value_t::array:
             {
@@ -675,7 +681,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
         switch (m_object->m_data.m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", m_object));
+                JSON_THROW(invalid_iterator::create(exception_id::iterator_arithmetic_on_object, "cannot use offsets with object iterators", m_object));
 
             case value_t::array:
                 return m_it.array_iterator - other.m_it.array_iterator;
@@ -704,13 +710,13 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
         switch (m_object->m_data.m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators", m_object));
+                JSON_THROW(invalid_iterator::create(exception_id::iterator_subscript_on_object, "cannot use operator[] for object iterators", m_object));
 
             case value_t::array:
                 return *std::next(m_it.array_iterator, n);
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
 
             case value_t::string:
             case value_t::boolean:
@@ -726,7 +732,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value", m_object));
+                throw_cannot_get_value();
             }
         }
     }
@@ -744,7 +750,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
             return m_it.object_iterator->first;
         }
 
-        JSON_THROW(invalid_iterator::create(207, "cannot use key() for non-object iterators", m_object));
+        JSON_THROW(invalid_iterator::create(exception_id::iterator_key_not_object, "cannot use key() for non-object iterators", m_object));
     }
 
     /*!

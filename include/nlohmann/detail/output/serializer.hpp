@@ -888,7 +888,7 @@ class serializer
                     {
                         case error_handler_t::strict:
                         {
-                            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", detail::hex_byte(byte)), nullptr));
+                            JSON_THROW(type_error::create(exception_id::invalid_utf8, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", detail::hex_byte(byte)), nullptr));
                         }
 
                         case error_handler_t::ignore:
@@ -1021,7 +1021,7 @@ class serializer
             {
                 case error_handler_t::strict:
                 {
-                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", detail::hex_byte(static_cast<std::uint8_t>(s[s.size() - 1]))), nullptr));
+                    JSON_THROW(type_error::create(exception_id::invalid_utf8, concat("incomplete UTF-8 string; last byte: 0x", detail::hex_byte(static_cast<std::uint8_t>(s[s.size() - 1]))), nullptr));
                 }
 
                 case error_handler_t::ignore:
