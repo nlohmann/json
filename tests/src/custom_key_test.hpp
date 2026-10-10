@@ -53,6 +53,12 @@ class key_base
     }
 
   protected:
+    const std::string& str() const noexcept
+    {
+        return m_value;
+    }
+
+  private:
     std::string m_value;
 };
 
@@ -65,12 +71,12 @@ class key_full : public key_base
 
     operator std::string() const
     {
-        return m_value;
+        return str();
     }
 
     friend bool operator==(const key_full& lhs, const key_full& rhs)
     {
-        return lhs.m_value == rhs.m_value;
+        return lhs.str() == rhs.str();
     }
 };
 
@@ -83,7 +89,7 @@ class key_no_eq : public key_base
 
     operator std::string() const
     {
-        return m_value;
+        return str();
     }
 };
 
@@ -96,7 +102,7 @@ class key_explicit : public key_base
 
     explicit operator std::string() const
     {
-        return m_value;
+        return str();
     }
 };
 
@@ -109,7 +115,7 @@ class key_to_json : public key_base
 
     const std::string& value() const
     {
-        return m_value;
+        return str();
     }
 };
 
@@ -128,17 +134,17 @@ class key_c_str : public key_base
 
     const std::string& value() const
     {
-        return m_value;
+        return str();
     }
 
     std::size_t size() const
     {
-        return m_value.size();
+        return str().size();
     }
 
     const char* c_str() const
     {
-        return m_value.c_str();
+        return str().c_str();
     }
 };
 
@@ -356,7 +362,7 @@ void test_parse()
     {
         text += "{\"k" + std::to_string(i) + "\":";
     }
-    text += "1";
+    text += '1';
     text.append(depth, '}');
     CHECK(custom_key_test::check_deep(J::parse(text), depth, false));
 }
