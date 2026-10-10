@@ -1031,6 +1031,31 @@ TEST_CASE("json_view images: check")
         }
     }
 
+    SECTION("float tokens with fewer digits than the layout records")
+    {
+        // The bytes of the token are not digits (they read as zeros or as
+        // other values), so the value has fewer (or more) digits than the
+        // layout says: dump() must still write a number.
+        for (const auto& source : std::vector<std::pair<std::string, std::string>>
+    {
+        {"123456789012345678.5", std::string("@") + std::string(16, '0') + "1.1"}, // 19 digits
+            {"1234.5", "@001.1"},                                                        // 5 digits
+            {"1234.5", "9??.??"}                                                         // more than 5 digits
+        })
+        {
+            CAPTURE(source.second)
+            const std::vector<std::uint8_t> img = json_document::parse("[" + source.first + "]").save();
+            const node n = node_at(img, 1);
+            REQUIRE(source.second.size() == n.len);
+            std::vector<std::uint8_t> b = img;
+            std::memcpy(b.data() + text_at(img) + n.off, source.second.data(), n.len);
+            const json_document d = json_document::load(b, image_check::bounds);
+            const std::string dumped = d.root().dump();
+            CAPTURE(dumped)
+            CHECK(json::parse(dumped)[0].is_number());
+        }
+    }
+
     SECTION("nodes that share a range")
     {
         // [big string, then n strings made to point to the big string]: every

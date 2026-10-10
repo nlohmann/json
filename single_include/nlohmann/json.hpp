@@ -26910,6 +26910,48 @@ inline char* write_shortest(char* first, const zmij::shortest_decimal d) noexcep
     return end + (three ? 5 : 4);
 }
 
+/// the powers of ten up to 10^16
+inline const std::array<std::uint64_t, 17>& powers_of_ten_16() noexcept
+{
+    static const std::array<std::uint64_t, 17> powers =
+    {
+        {
+            1u, 10u, 100u, 1000u, 10000u, 100000u, 1000000u, 10000000u, 100000000u, 1000000000u, 10000000000u,
+            100000000000u, 1000000000000u, 10000000000000u, 100000000000000u, 1000000000000000u, 10000000000000000u
+        }
+    };
+    return powers;
+}
+
+/*!
+@brief digits * 10^exp, as write_decimal() writes it, for the digits of a
+double that need no conversion (count digits, at most 15, the first not 0;
+trailing zeros allowed): extended to 16 digits and written by write_shortest()
+
+@return a pointer past the text; up to 41 bytes at @a first are written
+        (some beyond the returned end)
+*/
+JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_RETURNS_NON_NULL
+inline char* write_short_decimal(char* first, std::uint64_t digits, int count, int exp) noexcept
+{
+    JSON_ASSERT(digits >= powers_of_ten_16()[static_cast<std::size_t>(count - 1)] && count <= 15);
+    const int scale = 16 - count;
+    return write_shortest(first, zmij::shortest_decimal{digits * powers_of_ten_16()[static_cast<std::size_t>(scale)], exp - scale - 1, 0, false});
+}
+
+/// as write_short_decimal(), counting the digits (not 0, less than 10^15)
+JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_RETURNS_NON_NULL
+inline char* write_short_decimal(char* first, std::uint64_t digits, int exp) noexcept
+{
+    JSON_ASSERT(digits != 0 && digits < 1000000000000000u);
+    // floor(log10(2^bits)) + 1 digits, or one less
+    const int log2_bound = ((64 - count_leading_zeros(digits)) * 1233) >> 12;
+    const int count = log2_bound + (digits >= powers_of_ten_16()[static_cast<std::size_t>(log2_bound)] ? 1 : 0);
+    return write_short_decimal(first, digits, count, exp);
+}
+
 /*!
 @brief whether FloatType is an IEEE 754 binary64 type (a double, or a long double
 that has the same format, as with MSVC and on Apple's Arm CPUs)
