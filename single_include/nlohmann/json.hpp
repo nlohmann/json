@@ -31265,19 +31265,20 @@ public:
     }
 
     /// @brief key as it is passed to detail::concat for an error message
-    /// @note string_t is used where it can be constructed from the key; other
-    ///       key types are passed through unchanged, as concat only needs
-    ///       data() and size() of them
-    template<typename KeyType, detail::enable_if_t<std::is_constructible<string_t, const KeyType&>::value, int> = 0>
-    static string_t key_for_message(const KeyType& key)
-    {
-        return string_t(key);
-    }
-
-    template < typename KeyType, detail::enable_if_t < !std::is_constructible<string_t, const KeyType&>::value, int > = 0 >
+    /// @note keys with data() and size() (such as string_t itself or a string
+    ///       view) are passed through unchanged, so a miss does not copy them;
+    ///       other keys (such as string literals or key types that only convert
+    ///       to string_t) are converted to string_t
+    template < typename KeyType, detail::enable_if_t < detail::detect_string_can_append_data<string_t, KeyType>::value, int > = 0 >
     static const KeyType & key_for_message(const KeyType& key)
     {
         return key; // NOLINT(bugprone-return-const-ref-from-parameter): the result is only passed to concat() within the full-expression that holds key
+    }
+
+    template < typename KeyType, detail::enable_if_t < !detail::detect_string_can_append_data<string_t, KeyType>::value, int > = 0 >
+    static string_t key_for_message(const KeyType& key)
+    {
+        return string_t(key);
     }
 
     /// @brief checked array element access used by the at() overloads taking an index
