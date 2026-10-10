@@ -955,7 +955,7 @@ class binary_reader
             {
                 if (tag_handler == cbor_tag_handler_t::error)
                 {
-                    return invalid_byte("value");
+                    return unexpected_byte("invalid byte", "value");
                 }
 
                 // ignore and store: the tag value is already in the head, so
@@ -975,7 +975,7 @@ class binary_reader
                 {
                     case cbor_tag_handler_t::error:
                     {
-                        return invalid_byte("value");
+                        return unexpected_byte("invalid byte", "value");
                     }
 
                     case cbor_tag_handler_t::ignore:
@@ -1049,7 +1049,7 @@ class binary_reader
 
             default: // anything else (0xFF is handled inside the other types)
             {
-                return invalid_byte("value");
+                return unexpected_byte("invalid byte", "value");
             }
         }
     }
@@ -1984,7 +1984,7 @@ class binary_reader
 
             default: // anything else
             {
-                return invalid_byte("value");
+                return unexpected_byte("invalid byte", "value");
             }
         }
     }
@@ -2804,7 +2804,7 @@ class binary_reader
                         const char* type_name = bjd_type_name(ndarray_dtype);
                         if (JSON_HEDLEY_UNLIKELY(type_name == nullptr))
                         {
-                            return invalid_byte("type");
+                            return unexpected_byte("invalid byte", "type");
                         }
 
                         string_t type_key = "_ArrayType_";
@@ -3078,7 +3078,7 @@ class binary_reader
             default: // anything else
                 break;
         }
-        return invalid_byte("value");
+        return unexpected_byte("invalid byte", "value");
     }
 
     /*!
@@ -3545,7 +3545,7 @@ class binary_reader
         }
 
         // 0xFE: end of container where a value is expected
-        return invalid_byte("value");
+        return unexpected_byte("invalid byte", "value");
     }
 
     /*!
@@ -4250,16 +4250,6 @@ class binary_reader
     bool unexpected_byte(const char* detail, const std::string& context) const
     {
         return last_byte_error(exception_id::unexpected_byte, concat(detail, ": 0x", get_token_string()), context);
-    }
-
-    /*!
-    @brief reports the last read byte as invalid (parse_error.112)
-    @param[in] context  further context information
-    @return the result of the SAX parser's parse_error()
-    */
-    bool invalid_byte(const char* context) const
-    {
-        return unexpected_byte("invalid byte", context);
     }
 
     /*!
