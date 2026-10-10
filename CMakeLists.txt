@@ -30,7 +30,7 @@ endif ()
 option(NLOHMANN_JSON_BUILD_MODULES "Build C++ modules support" OFF)
 
 if(NLOHMANN_JSON_BUILD_MODULES)
-    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
+    if(NOT CMAKE_VERSION VERSION_LESS 3.28)
         message(STATUS "Building nlohmann.json C++ module")
         add_subdirectory(src/modules)
     else()
