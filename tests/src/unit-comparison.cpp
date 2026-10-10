@@ -544,8 +544,6 @@ TEST_CASE("lexicographical comparison operators")
 
 namespace unit_comparison_detail
 {
-namespace
-{
 // orders keys ascending or descending, as chosen when a map is created
 template<class Key>
 class directed_less
@@ -596,29 +594,6 @@ struct unordered_object_t : std::map<Key, Value, directed_less<Key>, Allocator>
 };
 using unordered_json = nlohmann::json::with_object_t<unordered_object_t>;
 
-// the entries "0" to "9", enumerated in ascending or in descending order
-unordered_json make_unordered_object(const bool descending)
-{
-    unordered_json j = unordered_json::object_t(directed_less<std::string>(descending));
-    for (int i = 0; i < 10; ++i)
-    {
-        j[std::to_string(i)] = i;
-    }
-    return j;
-}
-
-template<typename Json>
-Json nest(Json j, const std::size_t depth)
-{
-    for (std::size_t i = 0; i < depth; ++i)
-    {
-        Json outer = Json::object();
-        outer["x"] = std::move(j);
-        j = std::move(outer);
-    }
-    return j;
-}
-
 // a std::map comparator with state: case-insensitive, unless constructed
 // case-sensitive. Used to check that copying an object copies the original's
 // comparator rather than default-constructing a new one (see #5649).
@@ -647,18 +622,6 @@ template<class Key, class Value, class /*Compare*/, class Allocator>
 using key_case_map = std::map<Key, Value, key_case_less, Allocator>;
 using key_case_json = nlohmann::json::with_object_t<key_case_map>;
 
-// the innermost value of a chain of single-element arrays
-template<typename Json>
-const Json& innermost(const Json& j)
-{
-    const Json* p = &j;
-    while (p->is_array())
-    {
-        p = &(*p)[0];
-    }
-    return *p;
-}
-
 // orders keys case-insensitively, so "key" and "KEY" compare equivalent
 // (neither less than the other) although they are not equal
 struct case_insensitive_less
@@ -676,6 +639,46 @@ struct case_insensitive_less
 template<class Key, class Value, class /*Compare*/, class Allocator>
 using case_insensitive_map = std::map<Key, Value, case_insensitive_less, Allocator>;
 using ci_json = nlohmann::json::with_object_t<case_insensitive_map>;
+
+// the types above keep external linkage: a basic_json specialized with a type
+// of an anonymous namespace has internal linkage, which GCC reports in a file
+// #include-d into a batch (-Wsubobject-linkage); the functions need none
+namespace
+{
+// the entries "0" to "9", enumerated in ascending or in descending order
+unordered_json make_unordered_object(const bool descending)
+{
+    unordered_json j = unordered_json::object_t(directed_less<std::string>(descending));
+    for (int i = 0; i < 10; ++i)
+    {
+        j[std::to_string(i)] = i;
+    }
+    return j;
+}
+
+template<typename Json>
+Json nest(Json j, const std::size_t depth)
+{
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        Json outer = Json::object();
+        outer["x"] = std::move(j);
+        j = std::move(outer);
+    }
+    return j;
+}
+
+// the innermost value of a chain of single-element arrays
+template<typename Json>
+const Json& innermost(const Json& j)
+{
+    const Json* p = &j;
+    while (p->is_array())
+    {
+        p = &(*p)[0];
+    }
+    return *p;
+}
 } // namespace
 } // namespace unit_comparison_detail
 
