@@ -24,12 +24,16 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
+#include <algorithm> // min
 #include <array> // array
 #include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <map> // map
 #include <memory> // unique_ptr
+#ifndef JSON_NO_IO
+    #include <ostream> // ostream
+#endif
 #include <string> // string
 #include <tuple> // tuple_element, tuple_size // IWYU pragma: keep
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_base_of, is_integral, is_same, remove_cv, remove_extent
@@ -59,6 +63,7 @@
 #endif
 
 #include <nlohmann/detail/view/builder.hpp>
+#include <nlohmann/detail/view/compare.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
 #include <nlohmann/detail/view/errors.hpp>
 #include <nlohmann/detail/view/input.hpp>
@@ -68,6 +73,7 @@
 #include <nlohmann/detail/view/materialize.hpp>
 #include <nlohmann/detail/view/node.hpp>
 #include <nlohmann/detail/view/pointer.hpp>
+#include <nlohmann/detail/view/serializer.hpp>
 #include <nlohmann/detail/view/string_ref.hpp>
 #include <nlohmann/detail/view/value.hpp>
 
@@ -573,6 +579,96 @@ class basic_json_view
         return {m_doc->str(*m_node), detail::view::number_length(*m_node)};
     }
 
+    ///////////////////
+    // serialization //
+    ///////////////////
+
+    /// how dump() writes numbers
+    enum class number_format
+    {
+        /// as basic_json::dump(): integers canonically, floats with the
+        /// library's shortest round-trip digits ("1.5", "100.0", "1e+100")
+        shortest,
+        /// the number text of the source as it is ("1.50", "1E2", "-0", all
+        /// digits of a long integer)
+        source,
+    };
+
+    /// the text of this value; with number_format::shortest, the output of
+    /// ordered_json::parse(text).dump() with the same arguments (members in
+    /// document order, all of them should a key occur more than once)
+    string_t dump(const int indent = -1, const char indent_char = ' ', const bool ensure_ascii = false,
+                  const number_format numbers = number_format::shortest) const
+    {
+        string_t out;
+        if (m_node == nullptr)
+        {
+            out = "<discarded>"; // as basic_json::dump() of a discarded value
+            return out;
+        }
+        detail::view::dump_style style;
+        style.pretty = indent >= 0;
+        style.indent = indent >= 0 ? static_cast<std::size_t>(indent) : 0;
+        style.indent_char = indent_char;
+        style.ensure_ascii = ensure_ascii;
+        style.source_numbers = numbers == number_format::source;
+        // the compact text is about as long as the source text of the value
+        const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 64;
+        detail::view::view_serializer<BasicJsonType>(*m_doc, out, estimate, style).dump(m_node);
+        return out;
+    }
+
+#ifndef JSON_NO_IO
+    /// as operator<< of basic_json: a stream width > 0 is the indentation,
+    /// the fill character the indentation character
+    friend std::ostream& operator<<(std::ostream& o, const basic_json_view& v)
+    {
+        const bool pretty = o.width() > 0;
+        const auto indentation = pretty ? o.width() : 0;
+        o.width(0);
+        const string_t s = v.dump(pretty ? static_cast<int>(indentation) : -1, o.fill());
+        return o.write(s.data(), static_cast<std::streamsize>(s.size()));
+    }
+#endif
+
+    ////////////////
+    // comparison //
+    ////////////////
+
+    /// whether the values parse() would produce for two views are equal, as
+    /// by BasicJsonType's operator== (numbers by value, objects by their
+    /// members with duplicate keys resolved as parse() resolves them)
+    friend bool operator==(const basic_json_view& a, const basic_json_view& b)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), side(b));
+    }
+
+    friend bool operator!=(const basic_json_view& a, const basic_json_view& b)
+    {
+        return !(a == b);
+    }
+
+    /// whether the value parse() would produce for a view equals a value
+    friend bool operator==(const basic_json_view& a, const BasicJsonType& j)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), json_side_t(j));
+    }
+
+    friend bool operator==(const BasicJsonType& j, const basic_json_view& a)
+    {
+        return a == j;
+    }
+
+    friend bool operator!=(const basic_json_view& a, const BasicJsonType& j)
+    {
+        return !(a == j);
+    }
+
+    friend bool operator!=(const BasicJsonType& j, const basic_json_view& a)
+    {
+        return !(a == j);
+    }
+
     /////////////////
     // materialize //
     /////////////////
@@ -604,6 +700,43 @@ class basic_json_view
     basic_json_view(const document_data* d, const node* n) noexcept
         : m_doc(d), m_node(n)
     {}
+
+    using json_side_t = detail::view::json_side<BasicJsonType, string_view_t>;
+
+    static detail::view::view_side<BasicJsonType, basic_json_view> side(const basic_json_view& v) noexcept
+    {
+        return detail::view::view_side<BasicJsonType, basic_json_view>(v);
+    }
+
+    /// the number of source bytes of this value (estimated for values with
+    /// decoded strings); the estimate sizes the output buffer of dump()
+    std::size_t source_extent() const noexcept
+    {
+        const node* const end = m_doc->tape + m_doc->tape_size;
+        if ((m_node->flags & detail::view::node_flags::storage) != 0)
+        {
+            return m_node->len;
+        }
+        // the value ends where the next node in the source begins; nodes
+        // with decoded strings (their offset is in the arena) are skipped,
+        // but only a few of them, to keep the walk short
+        const node* next = document_data::after(m_node);
+        for (int skipped = 0; next != end && skipped < 16; ++skipped, ++next)
+        {
+            if ((next->flags & detail::view::node_flags::storage) == 0)
+            {
+                return next->off >= m_node->off ? next->off - m_node->off : 0;
+            }
+        }
+        if (next == end)
+        {
+            return m_doc->size - m_node->off;
+        }
+        // the end is unknown: assume a few bytes per node, the output buffer
+        // grows should the value be larger
+        const auto nodes = static_cast<std::size_t>(document_data::after(m_node) - m_node);
+        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + (nodes * 16));
+    }
 
     /// the value of the first member with this key, or a discarded view
     /// (object required)
@@ -1062,7 +1195,7 @@ using ordered_json_view = basic_json_view<ordered_json>;
 NLOHMANN_JSON_NAMESPACE_END
 
 // tuple protocol for the items of basic_json_view::items() (structured bindings)
-namespace std // NOLINT(cert-dcl58-cpp)
+namespace std // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
 
 #if defined(__clang__)
@@ -1071,11 +1204,11 @@ namespace std // NOLINT(cert-dcl58-cpp)
     #pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
 template<typename View>
-class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
     : public std::integral_constant<std::size_t, 2> {};
 
 template<std::size_t N, typename View>
-class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
   public:
     using type = decltype(std::declval<::nlohmann::detail::view::view_item<View>>().template get<N>());

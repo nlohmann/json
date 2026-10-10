@@ -86,6 +86,8 @@ Linear.
 ## See also
 
 - [dump](basic_json/dump.md) - serialize to a JSON-formatted string
+- [`basic_json_view::operator<<`](basic_json_view/operator_ltlt.md) - the corresponding operator for
+  `basic_json_view`
 - [Serialization](../features/serialization.md) - the serialization article
 
 ## Version history

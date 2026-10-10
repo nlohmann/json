@@ -16,6 +16,10 @@ using nlohmann::json_view;
 using nlohmann::ordered_json_document;
 using nlohmann::ordered_json_view;
 
+#include "json_view_test_helpers.hpp"
+using json_view_test::generator;
+using json_view_test::has_duplicate_keys;
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -23,6 +27,7 @@ using nlohmann::ordered_json_view;
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <iomanip>
 #include <iterator>
 #include <limits>
 #include <list>
@@ -120,60 +125,6 @@ std::string view_exception(const std::string& text, bool comments = false, bool 
     return "";
 }
 #endif
-
-// a small deterministic generator of documents
-struct generator
-{
-    std::mt19937 rng{5295}; // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
-
-    int r(int n)
-    {
-        return static_cast<int>(rng() % static_cast<unsigned>(n));
-    }
-
-    void str(std::string& o)
-    {
-        static const char* const pieces[] = {"a", "Z", " ", "\\n", "\\\"", "\\u00e9", "\\ud83d\\ude00", "\xc3\xa9", "\xe3\x81\x82", "long text beyond the first sixteen bytes"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        o += '"';
-        for (int n = r(5); n > 0; --n)
-        {
-            o += pieces[r(10)];
-        }
-        o += '"';
-    }
-
-    void value(std::string& o, int depth)
-    {
-        static const char* const scalars[] = {"0", "-1", "123456789012", "18446744073709551615", "18446744073709551616", "-9223372036854775809", // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-                                              "1.5", "-2.25e-3", "1E2", "0.1", "true", "false", "null"
-                                             };
-        const int k = depth > 5 ? 2 + r(4) : r(6);
-        if (k < 2)
-        {
-            const bool object = k == 0;
-            o += object ? '{' : '[';
-            for (int i = r(5); i > 0; --i)
-            {
-                if (object)
-                {
-                    str(o);
-                    o += r(2) == 0 ? ":" : " : ";
-                }
-                value(o, depth + 1);
-                o += i > 1 ? ", " : "";
-            }
-            o += object ? '}' : ']';
-        }
-        else if (k < 4)
-        {
-            str(o);
-        }
-        else
-        {
-            o += scalars[r(13)];
-        }
-    }
-};
 } // namespace
 
 TEST_CASE("json_view")
@@ -750,7 +701,7 @@ TEST_CASE("json_view element access and iteration")
                 })
         {
             const std::string key(n, 'k');
-            const json_document dk = json_document::parse("{\"" + key + "\":1,\"" + key + "x\":2,\"" + key + "\":3,\"" + key + "\":4}");
+            const json_document dk = json_document::parse("{\"" + key + "\":1,\"" + key + "x\":2,\"" + key + "\":3,\"" + key + "\":4}"); // NOLINT(performance-inefficient-string-concatenation)
             CAPTURE(n)
             CHECK(dk.root()[key].materialize() == 1);
             CHECK(dk.root().at(key).materialize() == 1);
@@ -983,8 +934,8 @@ TEST_CASE("json_view element access and iteration")
             pairs += std::string(key) + "=" + value.materialize().dump() + ";";
         }
         CHECK(pairs == "a=1;b=[true,false];");
-        static_assert(std::tuple_size<json_view::item>::value == 2, "");
-        static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "");
+        static_assert(std::tuple_size<json_view::item>::value == 2, "tuple_size of an item is 2");
+        static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "the second element of an item is a view");
 #endif
     }
 }
@@ -1024,18 +975,6 @@ std::uint32_t bits(float x)
     std::uint32_t r = 0;
     std::memcpy(&r, &x, sizeof(r));
     return r;
-}
-
-bool has_duplicate_keys(const ordered_json_view& v)
-{
-    if (v.is_object() && v.size() != v.materialize().size())
-    {
-        return true;
-    }
-    return std::any_of(v.begin(), v.end(), [](const ordered_json_view e)
-    {
-        return e.is_structured() && has_duplicate_keys(e);
-    });
 }
 
 // compares the conversions of a view with those of ordered_json
@@ -1162,7 +1101,15 @@ TEST_CASE("json_view values")
         std::mt19937_64 rng(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
         std::vector<std::string> tokens = {"0.1", "-0.0", "1e308", "1.7976931348623157e308", "2.2250738585072011e-308", "4.9e-324", "5e-324",
                                            "0.1000000000000000055511151231257827021181583404541015625", "123456789012345678901234567890",
-                                           "9007199254740993", "1.00000000000000011102230246251565404236316680908203125", "7.2057594037927933e16"
+                                           "9007199254740993", "1.00000000000000011102230246251565404236316680908203125", "7.2057594037927933e16",
+                                           // around the limits of the conversion from the digit layout: 19 and 20
+                                           // digits, and those of Clinger's fast path (2^53, 10^22)
+                                           "1234567890.123456789", "1234567890.1234567891", "0.0000000000000000001", "123456789012345678.9",
+                                           "9007199254740992.0", "9007199254740993.0", "9007199254740994.0", "1.5e22", "1.5e23", "15e-22", "15e-23",
+                                           "1e-400", "0.0e0", "-0.0e-5", "12E+3", "12e-0",
+                                           // and of float: 2^24 + 1 and 2^24 + 3 (ties), the subnormal and normal limits
+                                           "16777217", "16777219", "1.4e-45", "7.006492321624085e-46", "7.006492321624086e-46",
+                                           "1.17549435e-38", "0.30000001192092896", "3.4028234e37"
                                           };
         for (int i = 0; i < 20000; ++i)
         {
@@ -1177,19 +1124,19 @@ TEST_CASE("json_view values")
             switch (i % 5) // NOLINT(hicpp-multiway-paths-covered)
             {
                 case 0:
-                    std::snprintf(buf.data(), buf.size(), "%.17g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.17g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 case 1:
-                    std::snprintf(buf.data(), buf.size(), "%.15g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.15g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 case 2:
-                    std::snprintf(buf.data(), buf.size(), "%.3e", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.3e", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 case 3:
-                    std::snprintf(buf.data(), buf.size(), "%.25g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.25g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 default:
-                    std::snprintf(buf.data(), buf.size(), "%.0f", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.0f", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
             }
             tokens.emplace_back(buf.data());
@@ -1232,7 +1179,7 @@ TEST_CASE("json_view values")
         const json j = json::parse(text);
 
         // user types with from_json, and other types, through basic_json
-        const record r = v.get<record>();
+        const auto r = v.get<record>();
         CHECK(r.name == "widget");
         CHECK(r.count == 3);
         CHECK((v["pair"].get<std::pair<int, std::string>>() == j["pair"].get<std::pair<int, std::string>>()));
