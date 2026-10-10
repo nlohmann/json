@@ -302,7 +302,7 @@ TEST_CASE("json_view images: round trips")
             {
                 std::string key(8, 'a');
                 std::uint64_t x = counter;
-            for (std::size_t i = 0; i < 8; ++i, x /= 26)
+                for (std::size_t i = 0; i < 8; ++i, x /= 26)
                 {
                     key[i] = static_cast<char>('a' + (x % 26));
                 }
