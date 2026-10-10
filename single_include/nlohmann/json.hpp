@@ -8884,7 +8884,7 @@ inline int count_leading_zeros(std::uint64_t x) noexcept
 #if defined(__GNUC__) || defined(__clang__)
     return __builtin_clzll(x);
 #elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
-    unsigned long index = 0;
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
     _BitScanReverse64(&index, x);
     return 63 - static_cast<int>(index);
 #else
@@ -8907,7 +8907,7 @@ inline int count_trailing_zeros(std::uint64_t x) noexcept
 #if defined(__GNUC__) || defined(__clang__)
     return __builtin_ctzll(x);
 #elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
-    unsigned long index = 0;
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
     _BitScanForward64(&index, x);
     return static_cast<int>(index);
 #else
