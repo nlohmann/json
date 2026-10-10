@@ -417,7 +417,7 @@ TEST_CASE("json_view")
     {
         // 32-bit offsets: the limit is 4 GiB minus 16 bytes (a margin below 2^32),
         // which is what the exception message and the documentation say
-        const std::size_t limit = nlohmann::detail::view::max_input_size;
+        const std::size_t limit = nlohmann::detail::view::max_input_size();
         CHECK(limit == std::size_t{4294967279u});
 
         const oversized_input input{limit + 1};

@@ -337,14 +337,17 @@ def is_remote(url) -> bool:
 def download(url, docs) -> str:
     """Download url into assets/external and return the path relative to docs."""
     u = urllib.parse.urlparse(url if not url.startswith('//') else 'https:' + url)
+    if u.scheme.lower() not in ('http', 'https'):
+        raise ValueError(f'not an http(s) URL: {url}')
     req = urllib.request.Request(u.geturl(), headers={'User-Agent': USER_AGENT})
-    with urllib.request.urlopen(req, timeout=20) as r:
+    # (the scheme is checked above)
+    with urllib.request.urlopen(req, timeout=20) as r:  # nosec B310
         data = r.read()
         ctype = r.headers.get_content_type()
     path = urllib.parse.unquote(u.path).lstrip('/')
     ext = os.path.splitext(path)[1]
     if u.query or not ext or path.endswith('/'):
-        digest = hashlib.sha1(url.encode()).hexdigest()[:12]
+        digest = hashlib.sha1(url.encode(), usedforsecurity=False).hexdigest()[:12]
         path = os.path.join(os.path.dirname(path), digest + CONTENT_TYPE_EXT.get(ctype, ext or '.bin'))
     rel = os.path.normpath(os.path.join('assets', 'external', u.hostname, path))
     out = os.path.join(docs, rel)
@@ -385,7 +388,8 @@ def localize_images(docs) -> None:
 def load_mkdocs_yml() -> dict:
     """Load mkdocs.yml, ignoring tags like !ENV and !!python/name."""
     with open(MKDOCS_YML, encoding='utf-8') as f:
-        return yaml.load(f, Loader=Loader)
+        # (Loader is a yaml.SafeLoader)
+        return yaml.load(f, Loader=Loader)  # nosec B506
 
 
 def localize_site_urls(docs, site_url) -> None:
