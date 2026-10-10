@@ -9,8 +9,9 @@
 #pragma once
 
 #include <cstdint> // uint64_t
-#if !defined(__SIZEOF_INT128__) && defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
-    #include <intrin0.h> // __umulh, _umul128
+#include <cstring> // memcpy
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64)) && (!defined(__SIZEOF_INT128__) || (!defined(__GNUC__) && !defined(__clang__)))
+    #include <intrin0.h> // __umulh, _umul128, _BitScanForward64, _BitScanReverse64
 #endif
 
 #include <nlohmann/detail/abi_macros.hpp>
@@ -28,6 +29,10 @@ inline int count_leading_zeros(std::uint64_t x) noexcept
 {
 #if defined(__GNUC__) || defined(__clang__)
     return __builtin_clzll(x);
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
+    _BitScanReverse64(&index, x);
+    return 63 - static_cast<int>(index);
 #else
     int n = 0;
     for (int shift = 32; shift != 0; shift >>= 1)
@@ -36,6 +41,29 @@ inline int count_leading_zeros(std::uint64_t x) noexcept
         {
             n += shift;
             x <<= shift;
+        }
+    }
+    return n;
+#endif
+}
+
+/// number of trailing zero bits of x (x != 0)
+inline int count_trailing_zeros(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_ctzll(x);
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
+    _BitScanForward64(&index, x);
+    return static_cast<int>(index);
+#else
+    int n = 0;
+    for (int shift = 32; shift != 0; shift >>= 1)
+    {
+        if ((x << (64 - shift)) == 0)
+        {
+            n += shift;
+            x >>= shift;
         }
     }
     return n;
@@ -75,15 +103,26 @@ inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexc
 #endif
 }
 
-/// eight bytes as a little-endian word (compilers fold this into one load on
-/// little-endian targets)
-inline std::uint64_t read_eight_bytes(const char* p) noexcept
+/// eight bytes as a little-endian word (a single load on little-endian targets)
+inline std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 {
-    const auto* b = reinterpret_cast<const unsigned char*>(p); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+#if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    // the byte order already matches (all MSVC targets are little-endian)
+    std::uint64_t result = 0;
+    std::memcpy(&result, b, sizeof(result));
+    return result;
+#else
     return static_cast<std::uint64_t>(b[0]) | (static_cast<std::uint64_t>(b[1]) << 8u)
            | (static_cast<std::uint64_t>(b[2]) << 16u) | (static_cast<std::uint64_t>(b[3]) << 24u)
            | (static_cast<std::uint64_t>(b[4]) << 32u) | (static_cast<std::uint64_t>(b[5]) << 40u)
            | (static_cast<std::uint64_t>(b[6]) << 48u) | (static_cast<std::uint64_t>(b[7]) << 56u);
+#endif
+}
+
+/// eight bytes as a little-endian word
+inline std::uint64_t read_eight_bytes(const char* p) noexcept
+{
+    return read_eight_bytes(reinterpret_cast<const unsigned char*>(p)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
 }  // namespace detail
