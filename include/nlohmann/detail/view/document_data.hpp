@@ -78,7 +78,7 @@ struct document_data
         std::size_t text_cap = 0;
         std::size_t bytes = 0; ///< memory held by edits
     };
-    std::unique_ptr<edit_state> edits{}; ///< created by the first edit // NOLINT(readability-redundant-member-init)
+    std::unique_ptr<edit_state> edits; ///< created by the first edit
 
     /// one allocation for the header and room for `nodes` nodes; large
     /// documents get a separate node array instead (so it can be trimmed)
@@ -104,7 +104,23 @@ struct document_data
         }
     };
 
-    document_data() = default;
+    /// user-provided so that the class-type members can be initialized in the
+    /// member initialization list (-Weffc++ asks for it, and old GCC rejects a
+    /// defaulted constructor whose exception specification differs from the
+    /// implicit one); they cannot take default member initializers, which old
+    /// Clang (3.4-3.6) rejects. The other members have default member
+    /// initializers. noexcept: create() constructs into raw memory and could not
+    /// release it if this threw (the std::string default constructors do not
+    /// allocate).
+    document_data() noexcept
+        : arena() // NOLINT(readability-redundant-member-init)
+        , owned() // NOLINT(readability-redundant-member-init)
+        , owned_image() // NOLINT(readability-redundant-member-init)
+        , indexes() // NOLINT(readability-redundant-member-init)
+        , index_slots() // NOLINT(readability-redundant-member-init)
+        , large_objects() // NOLINT(readability-redundant-member-init)
+        , edits() // NOLINT(readability-redundant-member-init)
+    {}
     document_data(const document_data&) = delete;
     document_data(document_data&&) = delete;
     document_data& operator=(const document_data&) = delete;
@@ -219,6 +235,13 @@ struct document_data
 template<bool Editable>
 struct navigation
 {
+    /// whether the walk follows edits (the template argument as a runtime
+    /// condition: `Editable && ...` is a constant condition for MSVC, C4127)
+    static NLOHMANN_VIEW_ALWAYS_INLINE bool editable() noexcept
+    {
+        return false;
+    }
+
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& /*d*/, const node* n) noexcept
     {
         return n + 1;
@@ -238,6 +261,11 @@ struct navigation
 template<>
 struct navigation<true>
 {
+    static NLOHMANN_VIEW_ALWAYS_INLINE bool editable() noexcept
+    {
+        return true;
+    }
+
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& d, const node* n) noexcept
     {
         return d.first_child_edited(n);
