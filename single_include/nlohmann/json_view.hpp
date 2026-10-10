@@ -24,7 +24,8 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
-#include <cstddef> // size_t
+#include <array> // array
+#include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <memory> // unique_ptr
@@ -32,7 +33,21 @@
 #include <type_traits> // enable_if, integral_constant, is_base_of, is_integral, is_same, remove_cv, remove_extent
 #include <utility> // forward, move
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp> // IWYU pragma: export
+
+// json.hpp provides the library's types and macros used below (it includes
+// the headers that define them); json_view.hpp must not include them again,
+// because the amalgamated json_view.hpp only includes json.hpp
+// IWYU pragma: no_include <version>
+// IWYU pragma: no_include "nlohmann/detail/abi_config.hpp"
+// IWYU pragma: no_include "nlohmann/detail/abi_macros.hpp"
+// IWYU pragma: no_include "nlohmann/detail/input/input_adapters.hpp"
+// IWYU pragma: no_include "nlohmann/detail/json_pointer.hpp"
+// IWYU pragma: no_include "nlohmann/detail/meta/cpp_future.hpp"
+// IWYU pragma: no_include "nlohmann/detail/string_concat.hpp"
+// IWYU pragma: no_include "nlohmann/detail/value_t.hpp"
+// IWYU pragma: no_include "nlohmann/json.hpp"
+// IWYU pragma: no_include "nlohmann/json_fwd.hpp"
 
 // the view builds on internals of the library: both must be the same version
 #if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 12 || NLOHMANN_JSON_VERSION_PATCH != 0
@@ -189,7 +204,10 @@ static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::
 /// The largest input a document accepts, in bytes. Offsets and node counts are
 /// 32 bits wide; the limit keeps 16 bytes (the width of the scanner's steps)
 /// below 2^32, so that a position one step past the end of the text fits.
-static constexpr std::size_t max_input_size = 0xFFFFFFEFu;
+constexpr std::size_t max_input_size() noexcept
+{
+    return 0xFFFFFFEFu;
+}
 
 /// node flags
 struct node_flags
@@ -1690,7 +1708,7 @@ template<typename BasicJsonType>
 {
     if (f.code == error_code::input_too_large)
     {
-        // (the limit is detail::view::max_input_size: 4 GiB minus 16 bytes)
+        // (the limit is detail::view::max_input_size(): 4 GiB minus 16 bytes)
         NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
     const BasicJsonType accepted = BasicJsonType::parse(src, src + size, nullptr, true, ignore_comments, ignore_trailing_commas);
@@ -2145,9 +2163,6 @@ NLOHMANN_JSON_NAMESPACE_END
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-template<typename BasicJsonType>
-class basic_json_document;
-
 /*!
 @brief read-only handle to one value of a basic_json_document
 
@@ -2570,7 +2585,7 @@ class basic_json_document
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
-        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size))
+        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size()))
         {
             failure.code = detail::view::error_code::input_too_large;
         }
@@ -2724,6 +2739,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #undef NLOHMANN_VIEW_THROW
 #undef NLOHMANN_VIEW_LITTLE_ENDIAN
 #undef NLOHMANN_VIEW_REPEAT16
-
+// IWYU pragma: keep
 
 #endif  // INCLUDE_NLOHMANN_JSON_VIEW_HPP_

@@ -24,7 +24,8 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
-#include <cstddef> // size_t
+#include <array> // array
+#include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <memory> // unique_ptr
@@ -32,7 +33,21 @@
 #include <type_traits> // enable_if, integral_constant, is_base_of, is_integral, is_same, remove_cv, remove_extent
 #include <utility> // forward, move
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp> // IWYU pragma: export
+
+// json.hpp provides the library's types and macros used below (it includes
+// the headers that define them); json_view.hpp must not include them again,
+// because the amalgamated json_view.hpp only includes json.hpp
+// IWYU pragma: no_include <version>
+// IWYU pragma: no_include "nlohmann/detail/abi_config.hpp"
+// IWYU pragma: no_include "nlohmann/detail/abi_macros.hpp"
+// IWYU pragma: no_include "nlohmann/detail/input/input_adapters.hpp"
+// IWYU pragma: no_include "nlohmann/detail/json_pointer.hpp"
+// IWYU pragma: no_include "nlohmann/detail/meta/cpp_future.hpp"
+// IWYU pragma: no_include "nlohmann/detail/string_concat.hpp"
+// IWYU pragma: no_include "nlohmann/detail/value_t.hpp"
+// IWYU pragma: no_include "nlohmann/json.hpp"
+// IWYU pragma: no_include "nlohmann/json_fwd.hpp"
 
 // the view builds on internals of the library: both must be the same version
 #if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 12 || NLOHMANN_JSON_VERSION_PATCH != 0
@@ -49,9 +64,6 @@
 #include <nlohmann/detail/view/string_ref.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-
-template<typename BasicJsonType>
-class basic_json_document;
 
 /*!
 @brief read-only handle to one value of a basic_json_document
@@ -607,6 +619,6 @@ using ordered_json_view = basic_json_view<ordered_json>;
 
 NLOHMANN_JSON_NAMESPACE_END
 
-#include <nlohmann/detail/view/macro_unscope.hpp>
+#include <nlohmann/detail/view/macro_unscope.hpp> // IWYU pragma: keep
 
 #endif  // INCLUDE_NLOHMANN_JSON_VIEW_HPP_
