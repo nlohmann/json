@@ -10,7 +10,7 @@ The library parses, stores, and serializes JSON values in memory. It does not op
 files (it only reads from streams or `std::FILE*` handles that the caller has already opened), does not read environment
 variables, and does not implement cryptography or handle credentials.
 
-The primary threat is therefore **untrusted input**: JSON text or binary data (BJData, BSON, CBOR, MessagePack, UBJSON)
+The primary threat is therefore **untrusted input**: JSON text or binary data (BJData, BON8, BSON, CBOR, MessagePack, UBJSON)
 that an attacker controls, passed to [`parse`](../api/basic_json/parse.md), [`accept`](../api/basic_json/accept.md),
 [`sax_parse`](../api/basic_json/sax_parse.md), or one of the `from_*` functions such as
 [`from_cbor`](../api/basic_json/from_cbor.md). Such input may try to

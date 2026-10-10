@@ -186,3 +186,6 @@ See the examples below for the concrete generated code.
 1. Added in version 3.9.0.
 2. Added in version 3.11.0.
 3. Added in version 3.11.3.
+
+All three macros were changed to work with any `basic_json` specialization (not only `nlohmann::json`) in version 3.12.0,
+and to allow an empty member list in version 3.13.0.

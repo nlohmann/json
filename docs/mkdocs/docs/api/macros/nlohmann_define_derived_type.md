@@ -190,3 +190,5 @@ void to_json(BasicJsonType& j, const B& b) {
 4. Added in version 3.12.0.
 5. Added in version 3.12.0.
 6. Added in version 3.12.0.
+
+All six macros were changed to allow an empty member list in version 3.13.0.

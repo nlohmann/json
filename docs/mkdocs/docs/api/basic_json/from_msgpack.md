@@ -127,7 +127,8 @@ Linear in the size of the input.
 !!! warning "Deprecation"
 
     - Overload (2) replaces calls to `from_msgpack` with a pointer and a length as first two parameters, which has been
-      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      deprecated in version 3.8.0. In version 4.0.0, this overload
+      will be deleted (`= delete`) rather than removed. Please replace all calls like
       `#!cpp from_msgpack(ptr, len, ...);` with `#!cpp from_msgpack(ptr, ptr+len, ...);`.
     - Overload (2) replaces calls to `from_msgpack` with a pair of iterators as their first parameter, which has been
       deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like

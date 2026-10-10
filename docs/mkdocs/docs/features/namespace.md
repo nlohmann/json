@@ -101,3 +101,9 @@ follows:
 
 - Introduced inline namespace (`json_v3_11_0[_abi-tag]*`) in version 3.11.0.
 - Changed structure of inline namespace in version 3.11.2.
+- Added ABI tag `_dp` ([`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md)) in version 3.12.0.
+- Added ABI tags `_bics` ([`JSON_BRACE_INIT_COPY_SEMANTICS`](../api/macros/json_brace_init_copy_semantics.md)), `_psp`
+  ([`JSON_PRECISE_STREAM_POSITION`](../api/macros/json_precise_stream_position.md)), `_snul`
+  ([`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md)), `_sbu8`
+  ([`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md)), and `_ekmo`
+  ([`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md)) in version 3.13.0.
