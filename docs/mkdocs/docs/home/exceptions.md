@@ -810,7 +810,7 @@ does not list an enumerator and it is therefore converted like the first listed 
 A discarded value (one created by [`parse()`](../api/basic_json/parse.md) with a callback that returns `false` for the
 value, or by default-constructing a [`basic_json`](../api/basic_json/index.md) with
 [`value_t::discarded`](../api/basic_json/value_t.md)) was passed to a binary serialization function, either directly or
-nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, or BSON.
+nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, BSON, or BON8.
 
 !!! failure "Example message"
 

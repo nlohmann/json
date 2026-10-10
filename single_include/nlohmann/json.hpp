@@ -22426,6 +22426,8 @@ class binary_writer
 
     /*!
     @param[in] j  JSON value to serialize
+
+    @throw type_error.321 if @a j or a value nested in it is discarded
     */
     void write_bon8(const BasicJsonType& j)
     {
@@ -24187,6 +24189,8 @@ class binary_writer
     @param[in] j                JSON value to serialize
     @param[in,out] string_open  whether the output ends with a non-empty
                                 string that has not been terminated with 0xFF
+
+    @throw type_error.321 if @a j or a value nested in it is discarded
     */
     void write_bon8_value(const BasicJsonType& j, bool& string_open)
     {
@@ -24295,7 +24299,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                break;
+                throw_on_discarded(j, "BON8");
         }
     }
 
