@@ -3,7 +3,7 @@
 <small>Defined in header `<nlohmann/json_view.hpp>`</small>
 
 ```cpp
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable = false>
 class basic_json_document;
 ```
 
@@ -19,6 +19,11 @@ it (a copy, or an rvalue `#!cpp std::string` that was moved in); see [`owns_sour
 is move-only: copying a document would either duplicate a potentially large index and text, or leave two documents
 claiming to borrow the same buffer, so it is disabled.
 
+With `#!cpp Editable == true`, the document also offers [`set`](set.md), [`push_back`](push_back.md),
+[`insert`](insert.md), and [`erase`](erase.md) to change values in place, see [Edits](#edits) below. The source text
+itself is never written; a read-only document (`#!cpp Editable == false`, the default) does not carry any of the
+bookkeeping edits need, and calling any of them on one fails to compile (`#!cpp static_assert`).
+
 ## Template parameters
 
 `BasicJsonType`
@@ -26,14 +31,22 @@ claiming to borrow the same buffer, so it is disabled.
     [`ordered_json`](../ordered_json.md). Only 64-bit `number_integer_t`/`number_unsigned_t` types are supported; this
     is checked with a `static_assert`.
 
+`Editable`
+:   whether the document supports [`set`](set.md), [`push_back`](push_back.md), [`insert`](insert.md), and
+    [`erase`](erase.md) (optional, `#!cpp false` by default). See [Edits](#edits) below.
+
 ## Specializations
 
-- [**json_document**](../json_document.md) - documents of the default specialization [`json`](../json.md)
-- [**ordered_json_document**](../ordered_json_document.md) - documents of [`ordered_json`](../ordered_json.md)
+- [**json_document**](../json_document.md) - read-only documents of the default specialization [`json`](../json.md)
+- [**ordered_json_document**](../ordered_json_document.md) - read-only documents of
+  [`ordered_json`](../ordered_json.md)
+- [**json_editable_document**](../json_editable_document.md) - editable documents of [`json`](../json.md)
+- [**ordered_json_editable_document**](../ordered_json_editable_document.md) - editable documents of
+  [`ordered_json`](../ordered_json.md)
 
 ## Member types
 
-- **view_type** - the type of view returned by [`root()`](root.md) (`#!cpp basic_json_view<BasicJsonType>`)
+- **view_type** - the type of view returned by [`root()`](root.md) (`#!cpp basic_json_view<BasicJsonType, Editable>`)
 - **value_t** - the JSON type enumeration, see [`basic_json::value_t`](../basic_json/value_t.md)
 
 ## Member functions
@@ -50,6 +63,41 @@ claiming to borrow the same buffer, so it is disabled.
 - [**node_count**](node_count.md) - the number of index entries (values plus object keys)
 - [**memory_usage**](memory_usage.md) - the number of bytes held by the document
 - [**shrink_to_fit**](shrink_to_fit.md) - release unused index capacity
+- [**set**](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers
+  to (`#!cpp Editable` documents only)
+- [**push_back**](push_back.md) - append to an array (`#!cpp Editable` documents only)
+- [**insert**](insert.md) - insert an element into an array before a given position (`#!cpp Editable` documents only)
+- [**erase**](erase.md) - remove an object member, an array element, or the value a JSON pointer refers to
+  (`#!cpp Editable` documents only)
+
+## Edits
+
+An editable document (`#!cpp Editable == true`) can be changed after parsing, with [`set`](set.md),
+[`push_back`](push_back.md), [`insert`](insert.md), and [`erase`](erase.md);
+[`json_editable_document`](../json_editable_document.md) and
+[`ordered_json_editable_document`](../ordered_json_editable_document.md) are the corresponding specializations. A few
+points apply to every edit:
+
+- **The source text is never written**, and the parsed index never moves: every value keeps the node it was parsed
+  into, so [views](../basic_json_view/index.md) taken before an edit stay valid, including
+  [`root()`](root.md). New values (and the element sequences of an edited array/object) go to storage owned by the
+  document, allocated on demand.
+- **A view keeps referring to the same value.** After [`set`](set.md) replaces the value a view refers to, that view
+  sees the new value; a view of a value that a later edit replaces or drops keeps showing what it last held. An edit
+  of an array or object, however, **invalidates the iterators taken over it** (its members may now live in a
+  different sequence), and a string obtained with [`get_string()`](../basic_json_view/get_string.md) stays valid even
+  as further edits happen (earlier buffers of edited text are kept alive, not overwritten).
+- **Values are accepted three ways:** a [`basic_json_view`](../basic_json_view/index.md) of *any* document
+  (read-only or editable; it is copied, nothing is shared with the source document), a `BasicJsonType` value, or
+  anything `BasicJsonType` can be constructed from (numbers, strings, `#!cpp bool`, `#!cpp nullptr`, containers, ...).
+- [`dump()`](../basic_json_view/dump.md) writes an edited document with members in document order, new members at
+  the end, and, with [`number_format::source`](../basic_json_view/number_format.md), keeps the spelling of every
+  number that was not itself edited -- see [Editing a document](../../features/json_view.md#editing-a-document) for
+  why this matters.
+- [`read()`](read.md) discards all edits, [`shrink_to_fit()`](shrink_to_fit.md) does not move the node index once
+  there are edits, and [`memory_usage()`](memory_usage.md) includes the memory edits use.
+  [`source_offset()`](../basic_json_view/source_offset.md) of a value introduced by an edit is
+  `#!cpp static_cast<std::size_t>(-1)`, the same value it reports for a decoded string.
 
 ## Version history
 

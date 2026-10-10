@@ -41,9 +41,17 @@ constexpr std::size_t max_input_size() noexcept
 struct node_flags
 {
     static constexpr std::uint8_t escaped = 1; ///< string payload lives in the decode arena, not the source
+    static constexpr std::uint8_t edited = 2;  ///< string or number token lives in the edit arena (editable documents)
     static constexpr std::uint8_t storage = 3; ///< mask: where a string or number token lives (index into document_data::base)
     static constexpr std::uint8_t is_true = 4; ///< boolean value
+    static constexpr std::uint8_t moved = 8;   ///< array/object: the elements live in a separate sequence (editable documents)
+    static constexpr std::uint8_t is_new = 16; ///< written by an edit: no source position
+    static constexpr std::uint8_t linked = 32; ///< an entry of a moved sequence links to this value (editable documents): its extent in the parsed layout no longer matters
 };
+
+/// kind of an entry of an edited sequence that stands for a value stored
+/// elsewhere (the address of the value's node is kept in the len/next bytes)
+constexpr std::uint8_t kind_link = 10;
 
 /// One entry of the flat index, in document order. An object's members are
 /// stored as key node followed by the value's subtree. Integers keep their
@@ -51,10 +59,10 @@ struct node_flags
 /// always the next one, and the token length follows from `extra`).
 struct node
 {
-    std::uint8_t kind;   ///< value_t
+    std::uint8_t kind;   ///< value_t, or kind_link
     std::uint8_t flags;  ///< node_flags
     std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the hash index (1-based, 0 = none); otherwise 0
-    std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if node_flags::escaped
+    std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
     std::uint32_t len;   ///< string: decoded bytes; float: token bytes; array/object: element count
     std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence)
 };
@@ -63,6 +71,23 @@ static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 {
     return static_cast<unsigned>(n.kind) - 1u <= 1u;
+}
+
+/// the value a link node stands for
+NLOHMANN_VIEW_ALWAYS_INLINE const node* link_target(const node& n) noexcept
+{
+    const node* t = nullptr;
+    std::memcpy(static_cast<void*>(&t), reinterpret_cast<const unsigned char*>(&n) + 8, sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    return t;
+}
+
+/// let the entry n stand for the value at target (and mark the value)
+inline void make_link(node& n, node* target) noexcept
+{
+    target->flags = static_cast<std::uint8_t>(target->flags | node_flags::linked);
+    n = node{};
+    n.kind = kind_link;
+    std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, static_cast<const void*>(&target), sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
 /// the converted value of an integer node: len is its low half, next its high

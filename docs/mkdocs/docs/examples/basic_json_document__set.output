@@ -1,0 +1,25 @@
+{
+  "name": "cache",
+  "host": "db1",
+  "port": 6380,
+  "price": 19.90,
+  "replicas": [
+    "db4",
+    "db3"
+  ],
+  "timeout": 45,
+  "region": "us-east"
+}
+
+{
+  "host": "db1",
+  "name": "cache",
+  "port": 6380,
+  "price": 19.9,
+  "region": "us-east",
+  "replicas": [
+    "db4",
+    "db3"
+  ],
+  "timeout": 45
+}

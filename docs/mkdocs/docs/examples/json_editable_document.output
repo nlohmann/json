@@ -1,0 +1,4 @@
+{"name": "cache", "host": "db1", "port": 6379, "price": 19.90}
+
+{"name":"cache","host":"db2","port":6379,"price":19.90,"retries":3}
+{"host":"db2","name":"cache","port":6379,"price":19.9,"retries":3}
