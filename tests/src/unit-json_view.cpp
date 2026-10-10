@@ -225,7 +225,14 @@ TEST_CASE("json_view")
         CHECK(materialized<ordered_json_document>(R"({"a":1,"b":2,"a":3})").dump() == R"({"a":3,"b":2})");
         // very deep nesting (iterative, as parse())
         const std::string deep = std::string(100000, '[') + std::string(100000, ']');
-        CHECK(materialized<json_document>(deep) == json::parse(deep));
+        // (one check per step, so that a failure shows which step it is)
+        const json_document deep_document = json_document::parse(deep);
+        CHECK(deep_document.root().is_array());
+        const json deep_value = deep_document.root().materialize();
+        CHECK(deep_value.is_array());
+        const json deep_parsed = json::parse(deep);
+        CHECK(deep_parsed.is_array());
+        CHECK(deep_value == deep_parsed);
 #if JSON_DIAGNOSTICS
         // the parents are set, so errors name the path
         const json m = materialized<json_document>(R"({"a":{"b":[1]}})");
