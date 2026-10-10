@@ -821,7 +821,10 @@ indent_done:
 
         NLOHMANN_VIEW_ALWAYS_INLINE void open(value_t k)
         {
-            const auto idx = static_cast<std::uint32_t>(emit(k, 0, 0, static_cast<std::size_t>(p - b), 0) - base);
+            // (base is read after emit(), which moves the node array when it
+            // grows; in one expression the order of the two is unspecified)
+            const node* const n = emit(k, 0, 0, static_cast<std::size_t>(p - b), 0);
+            const auto idx = static_cast<std::uint32_t>(n - base);
             if (depth != 0)
             {
                 const frame f = {cur_idx, cur_count, cur_is_object};
