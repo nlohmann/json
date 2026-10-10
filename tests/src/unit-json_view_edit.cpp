@@ -690,7 +690,9 @@ TEST_CASE("json_view edits: views and values")
         d.set(d.root(), "text", source.root()["text"]);
         d.set(d.root(), "edited", edited.root()[0]);
         d.set(d.root(), "self", d.root()["copy"]);
-        CHECK(d.root().dump() == R"({"copy":[1,"two",{"three":3.5}],"text":"a\nb","edited":{"inner":[1,2]},"self":[1,"two",{"three":3.5}]})");
+        // (a raw string with a backslash must not be a macro argument: MSVC C2017)
+        const std::string expected = R"({"copy":[1,"two",{"three":3.5}],"text":"a\nb","edited":{"inner":[1,2]},"self":[1,"two",{"three":3.5}]})";
+        CHECK(d.root().dump() == expected);
         CHECK(d.root()["copy"] == source.root()["list"]);
         CHECK(source.root()["list"] == d.root()["self"]);
         CHECK(d.root() != source.root());
