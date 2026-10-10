@@ -1421,6 +1421,24 @@ public:
         return create<object_t>(first, last);
     }
 
+    /// @brief compare two object keys for equality, if the key type supports it
+    /// @note object_t only needs operator< for its keys (std::map), so operator==
+    ///       may not exist; the keys are then reported as different, which makes
+    ///       copy_object_level pair the values via object_t::find()
+    template<typename K = typename object_t::key_type,
+             detail::enable_if_t<detail::is_detected<detail::detect_equal_comparable, K>::value, int> = 0>
+    static bool copy_keys_equal(const K& a, const K& b)
+    {
+        return a == b;
+    }
+
+    template < typename K = typename object_t::key_type,
+               detail::enable_if_t < !detail::is_detected<detail::detect_equal_comparable, K>::value, int > = 0 >
+    static bool copy_keys_equal(const K& /*a*/, const K& /*b*/)
+    {
+        return false;
+    }
+
     /// @brief create the copy of the object @a src in @a dst
     /// @note structured values are appended to @a worklist instead
     static void copy_object_level(const basic_json& src, basic_json& dst,
@@ -1453,7 +1471,7 @@ public:
         auto src_it = src_object.cbegin();
         for (auto& element : *dst.m_data.m_value.object)
         {
-            if (JSON_HEDLEY_LIKELY(src_it != src_object.cend() && src_it->first == element.first))
+            if (JSON_HEDLEY_LIKELY(src_it != src_object.cend() && copy_keys_equal(src_it->first, element.first)))
             {
                 copy_shallow(src_it->second, element.second, worklist);
                 ++src_it;
@@ -3330,9 +3348,26 @@ public:
             // std::map or ordered_map) never moves from its argument, so key is still
             // valid here regardless of whether KeyType was deduced as an rvalue reference
             // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved)
-            JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(key), "' not found"), &j));
+            JSON_THROW(out_of_range::create(403, detail::concat("key '", key_for_message(key), "' not found"), &j));
         }
         return it->second;
+    }
+
+    /// @brief key as it is passed to detail::concat for an error message
+    /// @note keys with data() and size() (such as string_t itself or a string
+    ///       view) are passed through unchanged, so a miss does not copy them;
+    ///       other keys (such as string literals or key types that only convert
+    ///       to string_t) are converted to string_t
+    template < typename KeyType, detail::enable_if_t < detail::detect_string_can_append_data<string_t, KeyType>::value, int > = 0 >
+    static const KeyType & key_for_message(const KeyType& key)
+    {
+        return key; // NOLINT(bugprone-return-const-ref-from-parameter): the result is only passed to concat() within the full-expression that holds key
+    }
+
+    template < typename KeyType, detail::enable_if_t < !detail::detect_string_can_append_data<string_t, KeyType>::value, int > = 0 >
+    static string_t key_for_message(const KeyType& key)
+    {
+        return string_t(key);
     }
 
     /// @brief checked array element access used by the at() overloads taking an index
