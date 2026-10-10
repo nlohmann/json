@@ -211,7 +211,10 @@ static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::
 /// The largest input a document accepts, in bytes. Offsets and node counts are
 /// 32 bits wide; the limit keeps 16 bytes (the width of the scanner's steps)
 /// below 2^32, so that a position one step past the end of the text fits.
-static constexpr std::size_t max_input_size = 0xFFFFFFEFu;
+constexpr std::size_t max_input_size() noexcept
+{
+    return 0xFFFFFFEFu;
+}
 
 /// node flags
 struct node_flags
@@ -1718,7 +1721,7 @@ template<typename BasicJsonType>
 {
     if (f.code == error_code::input_too_large)
     {
-        // (the limit is detail::view::max_input_size: 4 GiB minus 16 bytes)
+        // (the limit is detail::view::max_input_size(): 4 GiB minus 16 bytes)
         NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
     const BasicJsonType accepted = BasicJsonType::parse(src, src + size, nullptr, true, ignore_comments, ignore_trailing_commas);
@@ -3754,7 +3757,7 @@ class basic_json_document
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
-        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size))
+        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size()))
         {
             failure.code = detail::view::error_code::input_too_large;
         }
