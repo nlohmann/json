@@ -108,9 +108,16 @@ The tests are located in [`tests/src/unit-*.cpp`](https://github.com/nlohmann/js
 are structured along the features of the library or the nature of the tests. Usually, it should be clear from the
 context which existing file needs to be extended, and only very few cases require creating new test files.
 
-When fixing a bug, edit `unit-regression3.cpp` and add a section referencing the fixed issue.
-`unit-regression2.cpp` holds the older tests; the two files exist because a single one grew large enough for the
-MinGW linker to fail relocating it, so please keep adding to the smaller file rather than growing the larger one.
+When fixing a bug, edit `unit-regression3.cpp` and add a section referencing the fixed issue. Tests that need C++17 or
+C++20 go into `unit-regression3-cpp17.cpp` or `unit-regression3-cpp20.cpp` instead, so the large file is not rebuilt
+for every C++ standard. `unit-regression2.cpp` holds the older tests; the two files exist because a single one grew
+large enough for the MinGW linker to fail relocating it, so please keep adding to the smaller file rather than growing
+the larger one.
+
+To keep compile times down, several test files are compiled together as one translation unit. This sets a few rules
+for test files, such as giving file-scope helpers file-specific names. See the README in the
+[`tests`](https://github.com/nlohmann/json/tree/develop/tests) folder for how the tests are built and what to keep in
+mind when adding them.
 
 #### Exceptions
 

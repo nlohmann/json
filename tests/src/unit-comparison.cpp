@@ -6,12 +6,11 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-// cmake/test.cmake selects the C++ standard versions with which to build a
-// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
-// When using macros that are only defined for particular versions of the standard
-// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
-// version macro in a comment close by, like this:
-// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+// cmake/test.cmake builds a unit test with C++ standards beyond C++11 only if the
+// source file mentions the corresponding version macro. To avoid rebuilding this
+// large file for every standard, tests that depend on the standard version (e.g.,
+// those using JSON_HAS_FILESYSTEM, JSON_HAS_RANGES, or JSON_HAS_THREE_WAY_COMPARISON)
+// go into a separate file unit-comparison-cpp<NN>.cpp. This file stays C++11-only.
 
 #include "doctest_compatibility.h"
 
@@ -27,37 +26,6 @@
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-
-#if JSON_HAS_THREE_WAY_COMPARISON
-// this can be replaced with the doctest stl extension header in version 2.5
-namespace doctest
-{
-template<> struct StringMaker<std::partial_ordering>
-{
-    static String convert(const std::partial_ordering& order)
-    {
-        if (order == std::partial_ordering::less)
-        {
-            return "std::partial_ordering::less";
-        }
-        if (order == std::partial_ordering::equivalent)
-        {
-            return "std::partial_ordering::equivalent";
-        }
-        if (order == std::partial_ordering::greater)
-        {
-            return "std::partial_ordering::greater";
-        }
-        if (order == std::partial_ordering::unordered)
-        {
-            return "std::partial_ordering::unordered";
-        }
-        return "{?}";
-    }
-};
-} // namespace doctest
-
-#endif
 
 namespace
 {
@@ -75,16 +43,6 @@ TEST_CASE("lexicographical comparison operators")
     constexpr auto f_ = false;
     constexpr auto _t = true;
     constexpr auto nan = std::numeric_limits<json::number_float_t>::quiet_NaN();
-#if JSON_HAS_THREE_WAY_COMPARISON
-    constexpr auto lt = std::partial_ordering::less;
-    constexpr auto gt = std::partial_ordering::greater;
-    constexpr auto eq = std::partial_ordering::equivalent;
-    constexpr auto un = std::partial_ordering::unordered;
-#endif
-
-#if JSON_HAS_THREE_WAY_COMPARISON
-    INFO("using 3-way comparison");
-#endif
 
 #if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
     INFO("using legacy comparison");
@@ -135,62 +93,13 @@ TEST_CASE("lexicographical comparison operators")
                     CAPTURE(i)
                     CAPTURE(j)
                     // check precomputed values
-#if JSON_HAS_THREE_WAY_COMPARISON
-                    // JSON_HAS_CPP_20 (do not remove; see note at top of file)
-                    CHECK((j_types[i] < j_types[j]) == expected_lt[i][j]);
-#else
+#if !JSON_HAS_THREE_WAY_COMPARISON
                     CHECK(operator<(j_types[i], j_types[j]) == expected_lt[i][j]);
 #endif
                     CHECK(f(j_types[i], j_types[j]) == expected_lt[i][j]);
                 }
             }
         }
-#if JSON_HAS_THREE_WAY_COMPARISON
-        // JSON_HAS_CPP_20 (do not remove; see note at top of file)
-        SECTION("comparison: 3-way")
-        {
-            std::vector<std::vector<std::partial_ordering>> expected =
-            {
-                //0   1   2   3   4   5   6   7   8   9
-                {eq, lt, lt, lt, lt, lt, lt, lt, lt, un}, //  0
-                {gt, eq, lt, lt, lt, lt, lt, lt, lt, un}, //  1
-                {gt, gt, eq, eq, eq, lt, lt, lt, lt, un}, //  2
-                {gt, gt, eq, eq, eq, lt, lt, lt, lt, un}, //  3
-                {gt, gt, eq, eq, eq, lt, lt, lt, lt, un}, //  4
-                {gt, gt, gt, gt, gt, eq, lt, lt, lt, un}, //  5
-                {gt, gt, gt, gt, gt, gt, eq, lt, lt, un}, //  6
-                {gt, gt, gt, gt, gt, gt, gt, eq, lt, un}, //  7
-                {gt, gt, gt, gt, gt, gt, gt, gt, eq, un}, //  8
-                {un, un, un, un, un, un, un, un, un, un}, //  9
-            };
-
-            // check expected partial_ordering against expected boolean
-            REQUIRE(expected.size() == expected_lt.size());
-            for (size_t i = 0; i < expected.size(); ++i)
-            {
-                REQUIRE(expected[i].size() == expected_lt[i].size());
-                for (size_t j = 0; j < expected[i].size(); ++j)
-                {
-                    CAPTURE(i)
-                    CAPTURE(j)
-                    CHECK(std::is_lt(expected[i][j]) == expected_lt[i][j]);
-                }
-            }
-
-            // check 3-way comparison against expected partial_ordering
-            REQUIRE(expected.size() == j_types.size());
-            for (size_t i = 0; i < j_types.size(); ++i)
-            {
-                REQUIRE(expected[i].size() == j_types.size());
-                for (size_t j = 0; j < j_types.size(); ++j)
-                {
-                    CAPTURE(i)
-                    CAPTURE(j)
-                    CHECK((j_types[i] <=> j_types[j]) == expected[i][j]); // *NOPAD*
-                }
-            }
-        }
-#endif
     }
 
     SECTION("values")
@@ -319,18 +228,6 @@ TEST_CASE("lexicographical comparison operators")
             CHECK_FALSE(above_int64_max <= max_int64);
             CHECK(above_int64_max > max_int64);
             CHECK(above_int64_max >= max_int64);
-
-#if JSON_HAS_THREE_WAY_COMPARISON
-            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
-            CHECK((negative_one <=> above_int64_max) == std::partial_ordering::less); // *NOPAD*
-            CHECK((above_int64_max <=> negative_one) == std::partial_ordering::greater); // *NOPAD*
-            CHECK((negative_one <=> max_uint64) == std::partial_ordering::less); // *NOPAD*
-            CHECK((max_uint64 <=> negative_one) == std::partial_ordering::greater); // *NOPAD*
-            CHECK((one <=> above_int64_max) == std::partial_ordering::less); // *NOPAD*
-            CHECK((above_int64_max <=> one) == std::partial_ordering::greater); // *NOPAD*
-            CHECK((max_int64 <=> above_int64_max) == std::partial_ordering::less); // *NOPAD*
-            CHECK((above_int64_max <=> max_int64) == std::partial_ordering::greater); // *NOPAD*
-#endif
         }
 
         SECTION("integer/float mixed comparison is exact")
@@ -381,16 +278,6 @@ TEST_CASE("lexicographical comparison operators")
             CHECK_FALSE(json(1) < json(nan));
             CHECK_FALSE(json(nan) < json(1));
             CHECK_FALSE(json(1u) == json(nan));
-
-#if JSON_HAS_THREE_WAY_COMPARISON
-            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
-            CHECK((max_int64 <=> two_63) == std::partial_ordering::less); // *NOPAD*
-            CHECK((two_63 <=> max_int64) == std::partial_ordering::greater); // *NOPAD*
-            CHECK((below_two_63 <=> max_int64) == std::partial_ordering::less); // *NOPAD*
-            CHECK((max_uint64 <=> two_64) == std::partial_ordering::less); // *NOPAD*
-            CHECK((json(1) <=> json(1.0)) == std::partial_ordering::equivalent); // *NOPAD*
-            CHECK((json(1) <=> json(nan)) == std::partial_ordering::unordered); // *NOPAD*
-#endif
         }
 
         SECTION("compares unordered")
@@ -617,72 +504,6 @@ TEST_CASE("lexicographical comparison operators")
                 }
             }
         }
-
-#if JSON_HAS_THREE_WAY_COMPARISON
-        // JSON_HAS_CPP_20 (do not remove; see note at top of file)
-        SECTION("comparison: 3-way")
-        {
-            std::vector<std::vector<std::partial_ordering>> expected =
-            {
-                //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
-                {eq, eq, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, un, un}, //  0
-                {eq, eq, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, un, un}, //  1
-                {gt, gt, eq, lt, lt, lt, lt, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un}, //  2
-                {gt, gt, gt, eq, gt, gt, gt, gt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un}, //  3
-                {gt, gt, gt, lt, eq, lt, gt, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un}, //  4
-                {gt, gt, gt, lt, gt, eq, gt, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un}, //  5
-                {gt, gt, gt, lt, lt, lt, eq, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un}, //  6
-                {gt, gt, gt, lt, gt, gt, gt, eq, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un}, //  7
-                {gt, gt, un, un, un, un, un, un, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un}, //  8
-                {gt, gt, un, un, un, un, un, un, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un}, //  9
-                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, eq, gt, gt, gt, gt, gt, gt, gt, lt, lt, un, un}, // 10
-                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, eq, gt, gt, gt, gt, gt, gt, lt, lt, un, un}, // 11
-                {gt, gt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, eq, gt, lt, lt, lt, lt, lt, lt, un, un}, // 12
-                {gt, gt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, eq, lt, lt, lt, lt, lt, lt, un, un}, // 13
-                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, eq, lt, gt, gt, lt, lt, un, un}, // 14
-                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, gt, eq, gt, gt, lt, lt, un, un}, // 15
-                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, lt, lt, eq, gt, lt, lt, un, un}, // 16
-                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, lt, lt, lt, eq, lt, lt, un, un}, // 17
-                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, eq, lt, un, un}, // 18
-                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, eq, un, un}, // 19
-                {un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un}, // 20
-                {un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un}, // 21
-            };
-
-            // check expected partial_ordering against expected booleans
-            REQUIRE(expected.size() == expected_eq.size());
-            REQUIRE(expected.size() == expected_lt.size());
-            for (size_t i = 0; i < expected.size(); ++i)
-            {
-                REQUIRE(expected[i].size() == expected_eq[i].size());
-                REQUIRE(expected[i].size() == expected_lt[i].size());
-                for (size_t j = 0; j < expected[i].size(); ++j)
-                {
-                    CAPTURE(i)
-                    CAPTURE(j)
-                    CHECK(std::is_eq(expected[i][j]) == expected_eq[i][j]);
-                    CHECK(std::is_lt(expected[i][j]) == expected_lt[i][j]);
-                    if (std::is_gt(expected[i][j]))
-                    {
-                        CHECK((!expected_eq[i][j] && !expected_lt[i][j]));
-                    }
-                }
-            }
-
-            // check that two values compare according to their expected ordering
-            REQUIRE(expected.size() == j_values.size());
-            for (size_t i = 0; i < j_values.size(); ++i)
-            {
-                REQUIRE(expected[i].size() == j_values.size());
-                for (size_t j = 0; j < j_values.size(); ++j)
-                {
-                    CAPTURE(i)
-                    CAPTURE(j)
-                    CHECK((j_values[i] <=> j_values[j]) == expected[i][j]); // *NOPAD*
-                }
-            }
-        }
-#endif
     }
 
 #if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
@@ -721,60 +542,7 @@ TEST_CASE("lexicographical comparison operators")
 #endif
 }
 
-#if JSON_HAS_THREE_WAY_COMPARISON
-// JSON_HAS_CPP_20 (do not remove; see note at top of file)
-
-TEST_CASE("regression #3868 - heterogeneous comparisons compile under C++20 (P2468R2)")
-{
-    // Issue #3868: operator!= was preventing compiler from synthesizing reversed
-    // operator== candidates under C++20's P2468R2 rewritten candidate rules.
-    // Verify that heterogeneous comparisons now work.
-
-    SECTION("string vs json")
-    {
-        std::string s = "string";
-        json j = "string";
-        CHECK(s == j);
-        CHECK(j == s);
-        CHECK_FALSE(s != j);
-        CHECK_FALSE(j != s);
-    }
-
-    SECTION("other heterogeneous types")
-    {
-        int i = 42;
-        json j = 42;
-        CHECK(i == j);
-        CHECK(j == i);
-        CHECK_FALSE(i != j);
-        CHECK_FALSE(j != i);
-    }
-}
-
-#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
-TEST_CASE("regression #5665 - scalar <= discarded and scalar >= discarded in C++20 legacy mode")
-{
-    // Issue #5665: with a scalar on the left-hand side, <= and >= only had the
-    // candidate rewritten from operator<=>, which does not emulate the legacy
-    // discarded-value behavior. Check that scalar-on-the-left now matches the
-    // other three operand orders.
-    const json discarded(json::value_t::discarded);
-    const json one = 1;
-
-    CHECK(discarded <= 1);
-    CHECK(discarded >= 1);
-    CHECK(one <= discarded);
-    CHECK(one >= discarded);
-    CHECK(1 <= discarded);
-    CHECK(1 >= discarded);
-    CHECK(1.5 <= discarded);
-    CHECK(1.5 >= discarded);
-}
-#endif
-
-#endif
-
-namespace
+namespace unit_comparison_detail
 {
 // orders keys ascending or descending, as chosen when a map is created
 template<class Key>
@@ -826,29 +594,6 @@ struct unordered_object_t : std::map<Key, Value, directed_less<Key>, Allocator>
 };
 using unordered_json = nlohmann::json::with_object_t<unordered_object_t>;
 
-// the entries "0" to "9", enumerated in ascending or in descending order
-unordered_json make_unordered_object(const bool descending)
-{
-    unordered_json j = unordered_json::object_t(directed_less<std::string>(descending));
-    for (int i = 0; i < 10; ++i)
-    {
-        j[std::to_string(i)] = i;
-    }
-    return j;
-}
-
-template<typename Json>
-Json nest(Json j, const std::size_t depth)
-{
-    for (std::size_t i = 0; i < depth; ++i)
-    {
-        Json outer = Json::object();
-        outer["x"] = std::move(j);
-        j = std::move(outer);
-    }
-    return j;
-}
-
 // a std::map comparator with state: case-insensitive, unless constructed
 // case-sensitive. Used to check that copying an object copies the original's
 // comparator rather than default-constructing a new one (see #5649).
@@ -877,18 +622,6 @@ template<class Key, class Value, class /*Compare*/, class Allocator>
 using key_case_map = std::map<Key, Value, key_case_less, Allocator>;
 using key_case_json = nlohmann::json::with_object_t<key_case_map>;
 
-// the innermost value of a chain of single-element arrays
-template<typename Json>
-const Json& innermost(const Json& j)
-{
-    const Json* p = &j;
-    while (p->is_array())
-    {
-        p = &(*p)[0];
-    }
-    return *p;
-}
-
 // orders keys case-insensitively, so "key" and "KEY" compare equivalent
 // (neither less than the other) although they are not equal
 struct case_insensitive_less
@@ -906,7 +639,58 @@ struct case_insensitive_less
 template<class Key, class Value, class /*Compare*/, class Allocator>
 using case_insensitive_map = std::map<Key, Value, case_insensitive_less, Allocator>;
 using ci_json = nlohmann::json::with_object_t<case_insensitive_map>;
+
+// the types above keep external linkage: a basic_json specialized with a type
+// of an anonymous namespace has internal linkage, which GCC reports in a file
+// #include-d into a batch (-Wsubobject-linkage); the functions need none
+namespace
+{
+// the entries "0" to "9", enumerated in ascending or in descending order
+unordered_json make_unordered_object(const bool descending)
+{
+    unordered_json j = unordered_json::object_t(directed_less<std::string>(descending));
+    for (int i = 0; i < 10; ++i)
+    {
+        j[std::to_string(i)] = i;
+    }
+    return j;
+}
+
+template<typename Json>
+Json nest(Json j, const std::size_t depth)
+{
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        Json outer = Json::object();
+        outer["x"] = std::move(j);
+        j = std::move(outer);
+    }
+    return j;
+}
+
+// the innermost value of a chain of single-element arrays
+template<typename Json>
+const Json& innermost(const Json& j)
+{
+    const Json* p = &j;
+    while (p->is_array())
+    {
+        p = &(*p)[0];
+    }
+    return *p;
+}
 } // namespace
+} // namespace unit_comparison_detail
+
+// using-declarations rather than a using-directive, as this file may be
+// #include-d into a batch with other test files (JSON_TestUnityBuild)
+using unit_comparison_detail::ci_json;
+using unit_comparison_detail::innermost;
+using unit_comparison_detail::key_case_json;
+using unit_comparison_detail::key_case_less;
+using unit_comparison_detail::make_unordered_object;
+using unit_comparison_detail::nest;
+using unit_comparison_detail::unordered_json;
 
 TEST_CASE("equality of objects whose entries have no fixed order")
 {
@@ -1049,12 +833,6 @@ TEST_CASE("containers are compared element by element")
             CHECK(a < b);
             CHECK(b > a);
             CHECK_FALSE(b < a);
-#if JSON_HAS_THREE_WAY_COMPARISON
-            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
-            CHECK((a <=> b) == std::partial_ordering::less); // *NOPAD*
-            CHECK((b <=> a) == std::partial_ordering::greater); // *NOPAD*
-            CHECK((a <=> a) == std::partial_ordering::equivalent); // *NOPAD*
-#endif
         }
 
         // a container that is a prefix of the other one
@@ -1072,11 +850,6 @@ TEST_CASE("containers are compared element by element")
             CHECK(smaller_object < larger_object);
             CHECK(larger_object > smaller_object);
             CHECK_FALSE(smaller_object == larger_object);
-#if JSON_HAS_THREE_WAY_COMPARISON
-            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
-            CHECK((shorter <=> longer) == std::partial_ordering::less); // *NOPAD*
-            CHECK((longer <=> shorter) == std::partial_ordering::greater); // *NOPAD*
-#endif
         }
 
         // elements that cannot be ordered
@@ -1087,13 +860,7 @@ TEST_CASE("containers are compared element by element")
 
             CHECK_FALSE(lhs == lhs);
             CHECK_FALSE(rhs < lhs);
-#if JSON_HAS_THREE_WAY_COMPARISON
-            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
-            // operator<=> stops there, as std::lexicographical_compare_three_way
-            // does, and operator< is derived from it
-            CHECK((lhs <=> rhs) == std::partial_ordering::unordered); // *NOPAD*
-            CHECK_FALSE(lhs < rhs);
-#else
+#if !JSON_HAS_THREE_WAY_COMPARISON
             // operator< skips a pair of elements that cannot be ordered, as
             // std::lexicographical_compare does, and the next pair decides
             CHECK(lhs < rhs);
@@ -1102,50 +869,3 @@ TEST_CASE("containers are compared element by element")
     }
 }
 
-#if JSON_HAS_THREE_WAY_COMPARISON
-// JSON_HAS_CPP_20 (do not remove; see note at top of file)
-TEST_CASE("operator<=> of binary values with a different subtype does not depend on nesting depth")
-{
-    // #5654: std::vector<std::uint8_t>::operator<=>, which the binary type's
-    // own operator<=> uses, ignores the subtype that operator== checks. So a
-    // pair of binary values with the same bytes but a different subtype is
-    // unequal, yet <=>-equivalent - the same inconsistency between == and <=>
-    // that a NaN has. Within the nesting bound, an array compares itself
-    // with std::vector's own operator<=>, which treats an equivalent pair as
-    // undecided and lets the next element decide, same as
-    // std::lexicographical_compare_three_way does. Past the bound,
-    // compare_iteratively<true>() takes over and must classify the pair the
-    // same way, or the result of operator<=> - and of <, which C++20 derives
-    // from it - depends on how deeply the values are nested.
-    const json a = json::array({json::binary({1}, 1), 1});
-    const json b = json::array({json::binary({1}, 2), 2});
-
-    // the root inconsistency: unequal, yet <=>-equivalent
-    CHECK_FALSE(a[0] == b[0]);
-    CHECK((a[0] <=> b[0]) == std::partial_ordering::equivalent); // *NOPAD*
-
-    const auto deep = [](const json & j, const std::size_t depth)
-    {
-        json result = j;
-        for (std::size_t i = 0; i < depth; ++i)
-        {
-            result = json::array({std::move(result)});
-        }
-        return result;
-    };
-
-    // 127 levels stay within nesting_depth_limit() (128); 128 and 200 do not,
-    // and must still agree with the levels that do
-    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
-    {
-        CAPTURE(depth)
-        const json x = deep(a, depth);
-        const json y = deep(b, depth);
-        CHECK((x <=> y) == std::partial_ordering::less); // *NOPAD*
-        CHECK((y <=> x) == std::partial_ordering::greater); // *NOPAD*
-        CHECK(x < y);
-        CHECK(y > x);
-        CHECK_FALSE(y < x);
-    }
-}
-#endif

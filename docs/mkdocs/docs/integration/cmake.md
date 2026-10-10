@@ -235,6 +235,17 @@ Build the unit tests against the [simdutf](https://github.com/simdutf/simdutf) U
 its version is set by the cache variable `JSON_SIMDUTF_VERSION`. This option is `OFF` by default. Depends on
 `JSON_BuildTests`.
 
+### `JSON_TestUnityBuild`
+
+Build the unit tests in batches of several test files per executable to speed up compilation: the files of a batch are
+compiled as one translation unit, so the template instantiations of the library are shared. Every test file still gets
+its own CTest test (e.g., `test-foo_cpp11`), which runs only the test cases of that file from the shared executable.
+This option is `ON` by default (and `OFF` with MinGW). Set it to `OFF` to get one executable per test file, e.g., when
+debugging a single file. The number of files per executable is set by the cache variable `JSON_TestUnityBatchSize`
+(default: `8`). Related test files (e.g., all binary formats) are grouped explicitly in `tests/CMakeLists.txt`; each
+group is compiled as one executable per C++ standard regardless of the batch size, and only the remaining files are
+batched by size. Depends on `JSON_BuildTests`.
+
 ### `JSON_Valgrind`
 
 Execute the test suite with [Valgrind](https://valgrind.org). This option is `OFF` by default. Depends on `JSON_BuildTests`.

@@ -46,7 +46,7 @@ void reference_merge_patch(json& target, const json& patch)
 
 // objects nested `depth` levels deep under the key "a", with members that
 // differ by `variant` on the way down
-std::string nested_objects(const std::size_t depth, const int variant)
+std::string nested_objects_merge_patch(const std::size_t depth, const int variant)
 {
     std::string text;
     for (std::size_t i = 0; i < depth; ++i)
@@ -309,9 +309,9 @@ TEST_CASE("JSON Merge Patch on deeply nested values")
             for (int variant = 0; variant < 3; ++variant)
             {
                 CAPTURE(variant)
-                const json patch = json::parse(nested_objects(depth, variant));
+                const json patch = json::parse(nested_objects_merge_patch(depth, variant));
 
-                json result = json::parse(nested_objects(depth, (variant + 1) % 3));
+                json result = json::parse(nested_objects_merge_patch(depth, (variant + 1) % 3));
                 json expected = result;
                 result.merge_patch(patch);
                 reference_merge_patch(expected, patch);
@@ -332,8 +332,8 @@ TEST_CASE("JSON Merge Patch on deeply nested values")
         // applying a patch used to recurse once per nesting level. The result
         // is only walked, never copied or compared, since those recurse too.
         const std::size_t depth = 100000;
-        json target = json::parse(nested_objects(depth, 0));
-        target.merge_patch(json::parse(nested_objects(depth, 1)));
+        json target = json::parse(nested_objects_merge_patch(depth, 0));
+        target.merge_patch(json::parse(nested_objects_merge_patch(depth, 1)));
 
         const json* p = &target;
         for (std::size_t i = 0; i < depth; ++i)
@@ -404,7 +404,7 @@ TEST_CASE("merge_patch() with an argument that aliases *this (#5641)")
                 })
         {
             CAPTURE(depth)
-            json j = json::parse(nested_objects(depth, 0));
+            json j = json::parse(nested_objects_merge_patch(depth, 0));
             const json expected = j;
             j.merge_patch(j);
             CHECK(j == expected);

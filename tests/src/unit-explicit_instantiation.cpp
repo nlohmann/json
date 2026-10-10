@@ -6,11 +6,11 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-// cmake/test.cmake selects the C++ standard versions with which to build a
-// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
-// The regression below only showed on C++17, so build this file for every
-// standard like the other regression tests:
-// JSON_HAS_CPP_17 JSON_HAS_CPP_20 (do not remove; see note at top of file)
+// cmake/test.cmake builds a unit test with C++ standards beyond C++11 only if the
+// source file mentions the corresponding version macro. The regression below only
+// showed on C++17, and the whole file is just this explicit instantiation, so it
+// cannot be split: build this file for every standard like the other regression tests:
+// JSON_HAS_CPP_17 JSON_HAS_CPP_20 (do not remove)
 
 #include "doctest_compatibility.h"
 
