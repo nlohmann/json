@@ -205,25 +205,34 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using serializer = ::nlohmann::detail::serializer<basic_json>;
 
   public:
+    /// @brief the type of the JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/value_t/
     using value_t = detail::value_t;
     /// JSON Pointer, see @ref nlohmann::json_pointer
     using json_pointer = ::nlohmann::json_pointer<StringType>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// how to treat decoding errors
+    /// @sa https://json.nlohmann.me/api/basic_json/error_handler_t/
     using error_handler_t = detail::error_handler_t;
     /// how to treat CBOR tags
+    /// @sa https://json.nlohmann.me/api/basic_json/cbor_tag_handler_t/
     using cbor_tag_handler_t = detail::cbor_tag_handler_t;
     /// how to encode BJData
+    /// @sa https://json.nlohmann.me/api/basic_json/bjdata_version_t/
     using bjdata_version_t = detail::bjdata_version_t;
     /// base class used to inject custom functionality into each instance of basic_json
     /// @sa https://json.nlohmann.me/api/basic_json/json_base_class_t/
     using json_base_class_t = ::nlohmann::detail::json_base_class<CustomBaseClass>;
     /// helper type for initializer lists of basic_json values
+    /// @sa https://json.nlohmann.me/api/basic_json/initializer_list_t/
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
+    /// @brief the type of the SAX interface used to parse and serialize the JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/input_format_t/
     using input_format_t = detail::input_format_t;
     /// SAX interface type, see @ref nlohmann::json_sax
+    /// @sa https://json.nlohmann.me/api/basic_json/json_sax_t/
     using json_sax_t = json_sax<basic_json>;
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -429,15 +438,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// the template arguments passed to class @ref basic_json.
     /// @{
 
+#if defined(JSON_HAS_CPP_14)
     /// @brief default object key comparator type
     /// The actual object key comparator type (@ref object_comparator_t) may be
     /// different.
     /// @sa https://json.nlohmann.me/api/basic_json/default_object_comparator_t/
-#if defined(JSON_HAS_CPP_14)
     // use of transparent comparator avoids unnecessary repeated construction of temporaries
     // in functions involving lookup by key with types other than object_t::key_type (aka. StringType)
     using default_object_comparator_t = std::less<>;
 #else
+    /// @brief default object key comparator type
+    /// The actual object key comparator type (@ref object_comparator_t) may be
+    /// different.
+    /// @sa https://json.nlohmann.me/api/basic_json/default_object_comparator_t/
     using default_object_comparator_t = std::less<StringType>;
 #endif
 
@@ -2505,6 +2518,7 @@ public:
     // other constructors and destructor //
     ///////////////////////////////////////
 
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     template<typename JsonRef,
              detail::enable_if_t<detail::conjunction<detail::is_json_ref<JsonRef>,
                                  std::is_same<typename JsonRef::value_type, basic_json>>::value, int> = 0 >
@@ -3090,6 +3104,8 @@ public:
     @throw what @ref json_serializer<ValueType> `from_json()` method throws if conversion is required
 
     @since version 2.1.0
+
+    @sa https://json.nlohmann.me/api/basic_json/get/
     */
     template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>>
 #if defined(JSON_HAS_CPP_14)
@@ -3133,6 +3149,8 @@ public:
     @sa see @ref get_ptr() for explicit pointer-member access
 
     @since version 1.0.0
+
+    @sa https://json.nlohmann.me/api/basic_json/get/
     */
     template<typename PointerType, typename std::enable_if<
                  std::is_pointer<PointerType>::value, int>::type = 0>
@@ -3159,6 +3177,7 @@ public:
 
     // specialization to allow calling get_to with a basic_json value
     // see https://github.com/nlohmann/json/issues/2175
+    /// @sa https://json.nlohmann.me/api/basic_json/get_to/
     template<typename ValueType,
              detail::enable_if_t <
                  detail::is_basic_json<ValueType>::value,
@@ -3169,6 +3188,7 @@ public:
         return v;
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/get_to/
     template <
         typename T, std::size_t N,
         typename Array = T (&)[N], // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
@@ -3233,6 +3253,7 @@ public:
 
     @since version 1.0.0
     */
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ValueType/
     template < typename ValueType, typename std::enable_if <
                    detail::conjunction <
                        detail::negation<std::is_pointer<ValueType>>,
@@ -3541,12 +3562,14 @@ public:
 
     // these two functions resolve a (const) char * ambiguity affecting Clang and MSVC
     // (they seemingly cannot be constrained to resolve the ambiguity)
+    /// @sa https://json.nlohmann.me/api/basic_json/operator[]/
     template<typename T>
     reference operator[](T* key)
     {
         return operator[](typename object_t::key_type(key));
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/operator[]/
     template<typename T>
     const_reference operator[](T* key) const
     {
@@ -3724,6 +3747,7 @@ public:
         return found != nullptr ? found->template get<ReturnType>() : std::forward<ValueType>(default_value);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
     template < class ValueType, class BasicJsonType, detail::enable_if_t <
                    detail::is_basic_json<BasicJsonType>::value
                    && detail::is_getable<basic_json_t, ValueType>::value
@@ -3738,6 +3762,7 @@ public:
     }
 #endif
 
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
     template < class ValueType, class BasicJsonType, class ReturnType = typename value_return_type<ValueType>::type,
                detail::enable_if_t <
                    detail::is_basic_json<BasicJsonType>::value
@@ -4105,6 +4130,7 @@ public:
         return ptr.contains(this);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/contains/
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
@@ -5621,6 +5647,7 @@ public:
         return result;
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/parse/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len))
     static basic_json parse(detail::span_input_adapter&& i,
@@ -5662,6 +5689,7 @@ public:
         return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/accept/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, accept(ptr, ptr + len))
     static bool accept(detail::span_input_adapter&& i,
@@ -6108,6 +6136,7 @@ public:
         return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::cbor, strict, allow_exceptions, error_handler, tag_handler);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
@@ -6123,6 +6152,7 @@ public:
     }
 #endif
 
+    /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
     static basic_json from_cbor(detail::span_input_adapter&& i,
@@ -6162,6 +6192,7 @@ public:
         return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::msgpack, strict, allow_exceptions, error_handler);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/from_msgpack/
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len))
@@ -6176,6 +6207,7 @@ public:
     }
 #endif
 
+    /// @sa https://json.nlohmann.me/api/basic_json/from_msgpack/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len))
     static basic_json from_msgpack(detail::span_input_adapter&& i,
@@ -6214,6 +6246,7 @@ public:
         return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::ubjson, strict, allow_exceptions, error_handler);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len))
@@ -6228,6 +6261,7 @@ public:
     }
 #endif
 
+    /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len))
     static basic_json from_ubjson(detail::span_input_adapter&& i,
@@ -6342,6 +6376,7 @@ public:
         return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::bson, strict, allow_exceptions, error_handler);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len))
@@ -6356,6 +6391,7 @@ public:
     }
 #endif
 
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len))
     static basic_json from_bson(detail::span_input_adapter&& i,
@@ -6384,6 +6420,7 @@ public:
         return ptr.get_unchecked(this);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr)
@@ -6402,6 +6439,7 @@ public:
         return ptr.get_unchecked(this);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
@@ -6420,6 +6458,7 @@ public:
         return ptr.get_checked(this);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr)
@@ -6438,6 +6477,7 @@ public:
         return ptr.get_checked(this);
     }
 
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const

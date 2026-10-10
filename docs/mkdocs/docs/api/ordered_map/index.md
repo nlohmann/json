@@ -6,7 +6,7 @@ template<class Key, class T, class IgnoredLess = std::less<Key>,
 struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>;
 ```
 
-A minimal map-like container that preserves insertion order for use within [`nlohmann::ordered_json`](ordered_json.md)
+A minimal map-like container that preserves insertion order for use within [`nlohmann::ordered_json`](../ordered_json.md)
 (`nlohmann::basic_json<ordered_map>`).
 
 ## Template parameters
@@ -30,19 +30,19 @@ case all iterators (including the `end()` iterator) and all references to the el
 
 When the storage grows, the keys are copied and the mapped values are moved to the new storage. A plain `std::vector`
 would copy the whole elements instead, because their `#!cpp const` keys make them not nothrow move constructible; for
-[`ordered_json`](ordered_json.md), this would be a deep copy of every nested value. The values are only copied if
+[`ordered_json`](../ordered_json.md), this would be a deep copy of every nested value. The values are only copied if
 `T` is not default constructible or not nothrow move assignable.
 
 ## Member types
 
 - **key_type** - key type (`Key`)
 - **mapped_type** - mapped type (`T`)
-- **Container** - base container type (`#!cpp std::vector<std::pair<const Key, T>, Allocator>`)
+- [**Container**](Container.md) - base container type (`#!cpp std::vector<std::pair<const Key, T>, Allocator>`)
 - **iterator**
 - **const_iterator**
 - **size_type**
 - **value_type**
-- **key_compare** - key comparison function
+- [**key_compare**](key_compare.md) - key comparison function
 ```cpp
 std::equal_to<Key>  // until C++14
 
@@ -51,15 +51,16 @@ std::equal_to<>     // since C++14
 
 ## Member functions
 
-- (constructor)
-- (destructor)
-- **emplace**
-- **operator\[\]**
-- **at**
-- **erase**
-- **count**
-- **find**
-- **insert**
+- [(constructor)](ordered_map.md)
+- [(destructor)](~ordered_map.md)
+- [**operator=**](operator=.md)
+- [**emplace**](emplace.md)
+- [**operator\[\]**](operator[].md)
+- [**at**](at.md)
+- [**erase**](erase.md)
+- [**count**](count.md)
+- [**find**](find.md)
+- [**insert**](insert.md)
 
 ## Exception safety
 
@@ -89,7 +90,7 @@ This differs from `#!cpp std::map`, where the same operations are O(log n).
 !!! warning "Quadratic cost of building large objects"
 
     Because every insertion scans all elements inserted so far, building an object of `n` distinct keys costs
-    **O(n²)** in total. This applies to filling an [`ordered_json`](ordered_json.md) object key by key as well as to
+    **O(n²)** in total. This applies to filling an [`ordered_json`](../ordered_json.md) object key by key as well as to
     parsing one, since the parser inserts each key as it is read.
 
     The cost is negligible for the object sizes typically found in configuration files or API payloads, but it grows
@@ -106,7 +107,7 @@ This differs from `#!cpp std::map`, where the same operations are O(log n).
     If key order matters for objects of that size, consider a container with a lookup index, such as
     [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map)
     ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)), as the object type -- see
-    [object order](../features/object_order.md).
+    [object order](../../features/object_order.md).
 
 ## Examples
 
@@ -126,10 +127,10 @@ This differs from `#!cpp std::map`, where the same operations are O(log n).
 
 ## See also
 
-- [ordered_json](ordered_json.md)
+- [ordered_json](../ordered_json.md)
 
 ## Version history
 
-- Added in version 3.9.0 to implement [`nlohmann::ordered_json`](ordered_json.md).
+- Added in version 3.9.0 to implement [`nlohmann::ordered_json`](../ordered_json.md).
 - Added **key_compare** member in version 3.11.0.
 - Changed in version 3.13.0: growing the storage moves the mapped values instead of copying them.

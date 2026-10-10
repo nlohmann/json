@@ -1,0 +1,2 @@
+compare("a", "a") = true
+compare("a", "b") = false

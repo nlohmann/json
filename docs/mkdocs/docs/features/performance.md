@@ -88,10 +88,10 @@ whether it is worth the loss of human readability at all -- depends on the actua
 The default [`json`](../api/json.md) type stores object keys in a `#!cpp std::map`, giving logarithmic-time lookup,
 insertion, and erasure, at the cost of sorting keys alphabetically rather than preserving insertion order (see
 [Object Order](object_order.md)). [`ordered_json`](../api/ordered_json.md) uses
-[`nlohmann::ordered_map`](../api/ordered_map.md) instead, a `#!cpp std::vector`-backed container with no lookup index:
+[`nlohmann::ordered_map`](../api/ordered_map/index.md) instead, a `#!cpp std::vector`-backed container with no lookup index:
 every key-based operation is a **linear scan**, so building an object of `n` distinct keys costs **O(n²)** in total --
 this applies equally to inserting keys one by one and to parsing an object, since the parser inserts each key as it is
-read. The [measurements on the `ordered_map` page](../api/ordered_map.md#complexity) show this is
+read. The [measurements on the `ordered_map` page](../api/ordered_map/index.md#complexity) show this is
 negligible at typical object sizes (2000 keys: 0.7 ms for `json` vs. 3.6 ms for `ordered_json`, a 5x factor) but grows
 steeply for large, machine-generated objects (16 000 keys: 3.3 ms vs. 181.6 ms, a 54x factor).
 
