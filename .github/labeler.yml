@@ -53,6 +53,7 @@ labels:
     - "tests/src/unit-json_view.*"
     - "tests/src/json_view_test_helpers\\.hpp"
     - "tests/src/fuzzer-(parse_json_view|json_view_image)\\.cpp"
+    - "tests/benchmarks/json_view/.*"
     - "tools/amalgamate/config_json_view\\.json"
     - "docs/mkdocs/docs/features/json_view\\.md"
     - "docs/mkdocs/docs/api/basic_json_(document|view)/.*"
