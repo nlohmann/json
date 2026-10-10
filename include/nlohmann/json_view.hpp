@@ -26,7 +26,9 @@
 #ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
-#include <cstddef> // size_t
+#include <algorithm> // all_of, min
+#include <array> // array
+#include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcpy, strlen
 #include <istream> // istream // IWYU pragma: keep
