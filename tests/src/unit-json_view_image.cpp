@@ -301,7 +301,8 @@ TEST_CASE("json_view images: round trips")
             for (std::uint64_t counter = 0; colliding.size() < colliding_count || spread.size() < spread_count; ++counter)
             {
                 std::string key(8, 'a');
-                for (std::uint64_t x = counter, i = 0; i < 8; ++i, x /= 26)
+                std::uint64_t x = counter;
+                for (std::size_t i = 0; i < 8; ++i, x /= 26)
                 {
                     key[i] = static_cast<char>('a' + (x % 26));
                 }
@@ -1087,7 +1088,9 @@ TEST_CASE("json_view images: check")
         set_node(same, 2, node_at(img2, 1));
         set_node(same, 4, node_at(img2, 3));
         CHECK(load_result(same, image_check::full).empty());
-        CHECK(loaded_dump(same) == R"(["a\"b","a\"b",1.25,1.25,1250.0])");
+        // (a raw string with a backslash must not be a macro argument: MSVC C2017)
+        const std::string expected_same = R"(["a\"b","a\"b",1.25,1.25,1250.0])";
+        CHECK(loaded_dump(same) == expected_same);
         std::vector<std::uint8_t> layout = same;
         node f4 = node_at(layout, 4);
         f4.extra = 0x0100u; // the layout of "1.", and not that of "1.25"

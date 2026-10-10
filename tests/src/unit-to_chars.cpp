@@ -837,6 +837,9 @@ TEST_CASE("choice of the conversion")
     SECTION("long double with the format of a double: Zmij")
     {
         // (on platforms where long double is wider, Grisu2 does not apply either: the snprintf fallback does)
+        // (constant on a given platform)
+        DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+        DOCTEST_MSVC_SUPPRESS_WARNING(4127)
         if (std::numeric_limits<long double>::digits == 53 && std::numeric_limits<long double>::is_iec559)
         {
             using long_double_json = nlohmann::json::with_float_t<long double>;
@@ -850,6 +853,7 @@ TEST_CASE("choice of the conversion")
             }
             CHECK(long_double_json(5.3165205877497296e+16L).dump() == "5.31652058774973e+16");
         }
+        DOCTEST_MSVC_SUPPRESS_WARNING_POP
     }
 }
 
