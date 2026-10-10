@@ -55,7 +55,7 @@ template<typename BasicJsonType>
 {
     if (f.code == error_code::input_too_large)
     {
-        // (the limit is detail::view::max_input_size: 4 GiB minus 16 bytes)
+        // (the limit is detail::view::max_input_size(): 4 GiB minus 16 bytes)
         NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
     const BasicJsonType accepted = BasicJsonType::parse(src, src + size, nullptr, true, ignore_comments, ignore_trailing_commas);
