@@ -1,0 +1,4 @@
+record 0 is original
+record 1 is a retry of 1
+false
+false

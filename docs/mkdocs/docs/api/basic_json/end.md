@@ -43,6 +43,7 @@ Constant.
 - [cend](cend.md) returns a const iterator to one past the last element
 - [rend](rend.md) returns a reverse iterator to one before the first element
 - [Iterators](../../features/iterators.md) - the article on iterators
+- [basic_json_view::end](../basic_json_view/end.md) - the same iteration on a zero-copy view
 
 ## Version history
 

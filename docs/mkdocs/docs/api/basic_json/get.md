@@ -183,6 +183,8 @@ overload (3).
 - [get_ref](get_ref.md) get a reference to the stored value
 - [operator ValueType](operator_ValueType.md) get a value via implicit conversion
 - [Converting values](../../features/conversions.md) - the type conversions article
+- [basic_json_view::get](../basic_json_view/get.md) - the same conversion on a zero-copy view (many types are
+  converted without ever building a `basic_json` value)
 
 ## Version history
 

@@ -233,6 +233,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 - documentation on [checked access](../../features/element_access/checked_access.md)
 - [`operator[]`](operator%5B%5D.md) for unchecked access by reference
 - [`value`](value.md) for access with default value
+- [basic_json_view::at](../basic_json_view/at.md) - the same access on a zero-copy view
 
 ## Version history
 

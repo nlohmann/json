@@ -3284,6 +3284,39 @@ enum class value_t : std::uint8_t
 };
 
 /*!
+@brief the name of a JSON type, as returned by basic_json::type_name()
+
+Used in exception messages; also by code that reports types without a
+basic_json value at hand (such as the zero-copy view).
+*/
+inline const char* value_type_name(const value_t t) noexcept
+{
+    switch (t)
+    {
+        case value_t::null:
+            return "null";
+        case value_t::object:
+            return "object";
+        case value_t::array:
+            return "array";
+        case value_t::string:
+            return "string";
+        case value_t::boolean:
+            return "boolean";
+        case value_t::binary:
+            return "binary";
+        case value_t::discarded:
+            return "discarded";
+        case value_t::number_integer:
+        case value_t::number_unsigned:
+        case value_t::number_float:
+            return "number";
+        default:
+            return "invalid";
+    }
+}
+
+/*!
 @brief comparison operator for JSON types
 
 Returns an ordering that is similar to Python:
@@ -20446,6 +20479,11 @@ NLOHMANN_JSON_NAMESPACE_END
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
+namespace detail
+{
+struct json_pointer_access;
+}  // namespace detail
+
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
 template<typename RefStringType>
@@ -20457,6 +20495,8 @@ class json_pointer
 
     template<typename>
     friend class json_pointer;
+
+    friend struct detail::json_pointer_access;
 
     template<typename T>
     struct string_t_helper
@@ -21698,6 +21738,20 @@ inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
     return lhs.reference_tokens < rhs.reference_tokens;
 }
 #endif
+
+namespace detail
+{
+/// the reference tokens of a json_pointer, for code that resolves pointers
+/// without a basic_json value (such as the zero-copy view)
+struct json_pointer_access
+{
+    template<typename RefStringType>
+    static const std::vector<typename json_pointer<RefStringType>::string_t>& reference_tokens(const json_pointer<RefStringType>& ptr) noexcept
+    {
+        return ptr.reference_tokens;
+    }
+};
+}  // namespace detail
 
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -34787,29 +34841,7 @@ public:
     JSON_HEDLEY_RETURNS_NON_NULL
     const char* type_name() const noexcept
     {
-        switch (m_data.m_type)
-        {
-            case value_t::null:
-                return "null";
-            case value_t::object:
-                return "object";
-            case value_t::array:
-                return "array";
-            case value_t::string:
-                return "string";
-            case value_t::boolean:
-                return "boolean";
-            case value_t::binary:
-                return "binary";
-            case value_t::discarded:
-                return "discarded";
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-                return "number";
-            default:
-                return "invalid";
-        }
+        return detail::value_type_name(m_data.m_type);
     }
 
   JSON_PRIVATE_UNLESS_TESTED:

@@ -216,6 +216,7 @@ changes to any JSON value.
 
 - see [`at`](at.md) for access by reference with range checking
 - see [`operator[]`](operator%5B%5D.md) for unchecked access by reference
+- [basic_json_view::value](../basic_json_view/value.md) - the same access on a zero-copy view
 
 ## Version history
 

@@ -22,10 +22,15 @@ actually needed (for a string, only if it contains escape sequences, into one sh
 [`basic_json_view`](../api/basic_json_view/index.md) is a small, trivially copyable handle (two pointers) into that
 index. It gives you the read-only, type-inspection part of the `basic_json` interface --
 [`type()`](../api/basic_json_view/type.md) and the `is_*()` predicates,
-[`size()`](../api/basic_json_view/size.md)/[`empty()`](../api/basic_json_view/empty.md) -- without ever allocating a
-`basic_json` value. When you do need an actual `basic_json` value for a subtree,
-[`materialize()`](../api/basic_json_view/materialize.md) builds exactly the one
-[`parse()`](../api/basic_json/parse.md) would have produced for it.
+[`size()`](../api/basic_json_view/size.md)/[`empty()`](../api/basic_json_view/empty.md) -- as well as element access
+([`operator[]`](../api/basic_json_view/operator%5B%5D.md), [`at`](../api/basic_json_view/at.md),
+[`front`](../api/basic_json_view/front.md)/[`back`](../api/basic_json_view/back.md)), lookup
+([`find`](../api/basic_json_view/find.md), [`contains`](../api/basic_json_view/contains.md),
+[`count`](../api/basic_json_view/count.md)), and iteration
+([`begin`](../api/basic_json_view/begin.md)/[`end`](../api/basic_json_view/end.md),
+[`items`](../api/basic_json_view/items.md)) -- without ever allocating a `basic_json` value. When you do need an
+actual `basic_json` value for a subtree, [`materialize()`](../api/basic_json_view/materialize.md) builds exactly the
+one [`parse()`](../api/basic_json/parse.md) would have produced for it.
 
 ## How to use it
 
@@ -119,9 +124,93 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) enabled,
   [`materialize()`](../api/basic_json_view/materialize.md) does not set them: there is no lexer run during the
   replay to record them.
-- **Element access, iteration, `get<T>()`, JSON Pointer, `dump()`, and comparison are not (yet) provided** by
-  `basic_json_view`. For now, [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you
-  can do those things with.
+- **Objects iterate in document order.** [`begin()`](../api/basic_json_view/begin.md)/
+  [`end()`](../api/basic_json_view/end.md) and [`items()`](../api/basic_json_view/items.md) visit an object's
+  members in the order they appear in the source text. `basic_json`'s default `object_t` is a `std::map`, which
+  sorts by key, so iterating a [`materialize()`](../api/basic_json_view/materialize.md)d value can print members in
+  a different order than iterating the view they came from.
+- **Chained access is safe.** [`operator[]`](../api/basic_json_view/operator%5B%5D.md) with a missing key, an index
+  out of range, or an unresolvable JSON pointer returns a [discarded](../api/basic_json_view/is_discarded.md) view, and
+  `operator[]` on a discarded view returns a discarded view without throwing: `#!cpp v["a"]["b"][0]` can be tested
+  once at the end. Type errors on values that exist (a key on an array, an index on an object) still throw, and
+  [`at`](../api/basic_json_view/at.md) throws for every missing value.
+- **Duplicate keys: lookups find the first member, `parse()` keeps the last.** See [Duplicate keys](#duplicate-keys)
+  below.
+- **No [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) path.** Exceptions thrown by `basic_json_view`'s own
+  element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the
+  view has no `basic_json` value to point at, so the exception is created without one, regardless of how
+  `BasicJsonType` was built.
+- **`dump()` and comparison are not (yet) provided** by `basic_json_view`. For now,
+  [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you can do those things with.
+
+## Duplicate keys
+
+!!! warning "A lookup in a view and in the parsed value can give different answers"
+
+    If an object in the source text repeats a key, [`operator[]`](../api/basic_json_view/operator%5B%5D.md),
+    [`at`](../api/basic_json_view/at.md), [`find`](../api/basic_json_view/find.md),
+    [`value`](../api/basic_json_view/value.md), [`contains`](../api/basic_json_view/contains.md),
+    [`count`](../api/basic_json_view/count.md), and JSON pointer resolution all return the **first** member with that
+    key. `basic_json::parse()` instead keeps the **last** value of a repeated key, so for `#!cpp {"a":1,"a":2}`,
+    `#!cpp view["a"]` is `#!cpp 1` while `#!cpp parse(text)["a"]` is `#!cpp 2`.
+
+[`begin()`](../api/basic_json_view/begin.md)/[`end()`](../api/basic_json_view/end.md) and
+[`items()`](../api/basic_json_view/items.md) visit *every* occurrence, in document order, and
+[`size()`](../api/basic_json_view/size.md) counts all of them, so `#!cpp view.size()` can be larger than
+`#!cpp view.materialize().size()`.
+
+**Why the first?** A lookup can stop as soon as it finds a match. Returning the last member would force every lookup
+to scan all members of the object, even when the key is found at the very first one: this made lookups in small
+objects 1.6 to 3.4 times slower. Other zero-copy parsers that index the source text, such as yyjson and simdjson, also
+return the first member. RFC 8259 only says that names within an object SHOULD be unique and that the behavior of a
+receiver that sees duplicates is unpredictable, so neither choice is wrong.
+
+**What stays the same as `parse()`?** [`materialize()`](../api/basic_json_view/materialize.md) and
+[`get<std::map<...>>()`](../api/basic_json_view/get.md) replay every member in order, so they keep the *last* value
+exactly like `#!cpp basic_json::parse()` (at the position of the first occurrence of the key, for an
+[`ordered_json`](../api/ordered_json.md)).
+
+**How do I get the value `parse()` would give?** Either call `#!cpp view.materialize()` and look the key up in the
+result, or iterate the members and keep the last match:
+
+```cpp
+// the last member with the key "a", as parse() would keep it
+json_view last;
+for (const auto item : view.items())
+{
+    if (item.key() == "a")
+    {
+        last = item.value();
+    }
+}
+```
+
+If you cannot trust the source text to have unique keys, check [`size()`](../api/basic_json_view/size.md) against the
+number of distinct keys, or reject duplicates when iterating.
+
+## Getting values out without copying
+
+[`get<T>()`](../api/basic_json_view/get.md) converts many `T` directly from the flat index, without ever building a
+`basic_json` value for the conversion: `#!cpp bool`, arithmetic types, `#!cpp std::nullptr_t`,
+`#!cpp std::string`/other `#!cpp std::basic_string`s (copied once), `basic_json`/`ordered_json` (via
+[`materialize()`](../api/basic_json_view/materialize.md)), `basic_json_view` itself, `#!cpp std::vector<U>`, and
+`#!cpp std::map`/`#!cpp std::unordered_map` with string-like keys. Every other type -- `#!cpp std::list`,
+`#!cpp std::pair`, `#!cpp std::array`, enumerations, user types with a `from_json()` -- goes through
+[`materialize()`](../api/basic_json_view/materialize.md)`.get<T>()` instead: the subtree is built into a real
+`basic_json` value first, exactly as [`parse()`](../api/basic_json/parse.md) would, and converted from there.
+
+Two conversions never copy at all:
+
+- [`get_string()`](../api/basic_json_view/get_string.md) (equivalently, `#!cpp get<string_view_t>()`) returns a
+  string as a `string_view_t` pointing into the document's [`source()`](../api/basic_json_document/source.md) text --
+  or, for a string that contains escape sequences, into the document's own buffer of decoded strings -- instead of
+  allocating a new `#!cpp std::string`.
+- [`number_token()`](../api/basic_json_view/number_token.md) returns a number exactly as it was written in the
+  source, e.g. `#!cpp "1.50"`, `#!cpp "1E2"`, or an integer with more digits than any number type holds, instead of
+  rounding it into a `#!cpp double`/`#!cpp int64_t` the way `#!cpp get<T>()` (and
+  [`basic_json::parse()`](../api/basic_json/parse.md)) would.
+
+Both results are only valid as long as the view -- and, for a string with no escapes, the borrowed source text -- is.
 
 ## Choosing between `json`, `ordered_json`, the SAX interface, and `json_view`
 

@@ -44,6 +44,8 @@ Constant.
 - [rbegin](rbegin.md) returns a reverse iterator to the last element
 - [items](items.md) returns an iteration proxy to access keys and values during range-based for loops
 - [Iterators](../../features/iterators.md) - the article on iterators
+- [basic_json_view::begin](../basic_json_view/begin.md) - the same iteration on a zero-copy view (in document order,
+  not sorted by key)
 
 ## Version history
 
