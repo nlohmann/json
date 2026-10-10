@@ -110,7 +110,7 @@ make build -C docs/mkdocs          # strict build: fails on broken links, anchor
 make check_mermaid -C docs/mkdocs  # checks the Mermaid diagrams (requires Node.js)
 ```
 
-A new API page also needs an entry in [`docs/docset/docSet.sql`](https://github.com/nlohmann/json/blob/develop/docs/docset/docSet.sql), the search index of the docset; `make build` reports missing entries.
+The search index of the docset is generated from [`mkdocs.yml`](https://github.com/nlohmann/json/blob/develop/docs/mkdocs/mkdocs.yml) and each page's title (H1) and declaration by [`docs/docset/generate_docset.py`](https://github.com/nlohmann/json/blob/develop/docs/docset/generate_docset.py); `make build` reports API pages that cannot be classified.
 
 ### Amalgamate the source code
 
