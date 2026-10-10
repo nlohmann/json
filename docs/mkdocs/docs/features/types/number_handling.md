@@ -134,9 +134,10 @@ That is, `-0` is stored as a signed integer, but the serialization does not repr
 ### Number serialization
 
 - Integer numbers are serialized as is; that is, no scientific notation is used.
-- Floating-point numbers are serialized as specified by the `#!c %g` printf modifier with 
-  [`std::numeric_limits<double>::max_digits10`](https://en.cppreference.com/w/cpp/types/numeric_limits/max_digits10)
-  significant digits. The rationale is to use the shortest representation while still allowing round-tripping.
+- Floating-point numbers are serialized with the fewest digits that read back as the same value (the closest such
+  digits if there are several), in the layout of the `#!c %g` printf modifier: `#!c 1.5`, `#!c 100.0`, `#!c 1e+100`.
+  Doubles are converted with the algorithm of [Żmij](https://github.com/vitaut/zmij), floats with Grisu2, which
+  can write more digits than necessary.
 
 !!! hint "Notes regarding precision of floating-point numbers"
 

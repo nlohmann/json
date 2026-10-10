@@ -14,7 +14,7 @@
     #include <intrin0.h> // __umulh, _umul128, _BitScanForward64, _BitScanReverse64
 #endif
 
-#include <nlohmann/detail/abi_macros.hpp>
+#include <nlohmann/detail/macro_scope.hpp> // JSON_HEDLEY_ALWAYS_INLINE, NLOHMANN_JSON_NAMESPACE_BEGIN
 
 // Portable bit-level helpers for the number and string scanners. They use
 // compiler builtins or platform-specific intrinsics where available and plain
@@ -103,8 +103,9 @@ inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexc
 #endif
 }
 
-/// eight bytes as a little-endian word (a single load on little-endian targets)
-inline std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
+/// eight bytes as a little-endian word (a single load on little-endian
+/// targets; always inlined, as GCC otherwise calls it in the number loops)
+JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 {
 #if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
     // the byte order already matches (all MSVC targets are little-endian)
@@ -120,7 +121,7 @@ inline std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 }
 
 /// eight bytes as a little-endian word
-inline std::uint64_t read_eight_bytes(const char* p) noexcept
+JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const char* p) noexcept
 {
     return read_eight_bytes(reinterpret_cast<const unsigned char*>(p)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
