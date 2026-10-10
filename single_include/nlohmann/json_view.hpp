@@ -6072,6 +6072,8 @@ class view_serializer
     using nav = navigation<Editable>;
     using string_t = typename BasicJsonType::string_t;
     using number_float_t = typename BasicJsonType::number_float_t;
+    /// doubles that are IEEE 754 binary64 are written from their bits (Zmij)
+    using fast_double = std::integral_constant < bool, std::is_same<number_float_t, double>::value && ::nlohmann::detail::dtoa_impl::is_binary64<double>::value >;
 
   public:
     view_serializer(const document_data& d, string_t& out, std::size_t estimate, const dump_style& style)
@@ -6341,7 +6343,7 @@ class view_serializer
                         room(n->len);
                         copy(src + n->off, n->len);
                     }
-                    else if (enabled(std::is_same<number_float_t, double>::value))
+                    else if (enabled(fast_double::value))
                     {
                         room(64);
                         w = write_double_at(w, *n);
@@ -6531,7 +6533,7 @@ class view_serializer
     /// a float node as dump() writes it
     void write_float_node(const node& n)
     {
-        write_float_node(n, std::is_same<number_float_t, double> {});
+        write_float_node(n, fast_double {});
     }
 
     void write_float_node(const node& n, std::false_type /*other*/)
