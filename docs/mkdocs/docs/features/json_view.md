@@ -165,9 +165,10 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
 
 **Why the first?** A lookup can stop as soon as it finds a match. Returning the last member would force every lookup
 to scan all members of the object, even when the key is found at the very first one: this made lookups in small
-objects 1.6 to 3.4 times slower. Other zero-copy parsers that index the source text, such as yyjson and simdjson, also
-return the first member. RFC 8259 only says that names within an object SHOULD be unique and that the behavior of a
-receiver that sees duplicates is unpredictable, so neither choice is wrong.
+objects 1.6 to 3.4 times slower. The hash index of objects with 128 members or more leads to the first member of a
+key as well. Other zero-copy parsers that index the source text, such as yyjson and simdjson, also return the first
+member. RFC 8259 only says that names within an object SHOULD be unique and that the behavior of a receiver that sees
+duplicates is unpredictable, so neither choice is wrong.
 
 **What stays the same as `parse()`?** [`materialize()`](../api/basic_json_view/materialize.md) and
 [`get<std::map<...>>()`](../api/basic_json_view/get.md) replay every member in order, so they keep the *last* value

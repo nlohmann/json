@@ -326,7 +326,7 @@ TEST_CASE("json_view")
         CHECK(from_const_rvalue.source().data() != const_text.data()); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved): const, not moved from
         CHECK(from_const_rvalue.root().materialize() == expected);
         json_document read_const_rvalue;
-        read_const_rvalue.read(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg)
+        read_const_rvalue.read(std::move(const_text)); // NOLINT(performance-move-const-arg,hicpp-move-const-arg,bugprone-use-after-move,hicpp-invalid-access-moved)
         CHECK(read_const_rvalue.owns_source());
         CHECK(read_const_rvalue.root().materialize() == expected);
         const std::vector<char> const_chars(text.begin(), text.end());

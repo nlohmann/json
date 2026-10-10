@@ -47,3 +47,6 @@ nlohmann_json.spdx
 
 # Bazel-related
 MODULE.bazel.lock
+
+# GCC module cache
+/gcm.cache/

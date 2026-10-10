@@ -27,6 +27,7 @@
 #include <algorithm> // min
 #include <array> // array
 #include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <map> // map
@@ -72,6 +73,7 @@
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/materialize.hpp>
 #include <nlohmann/detail/view/node.hpp>
+#include <nlohmann/detail/view/object_index.hpp>
 #include <nlohmann/detail/view/pointer.hpp>
 #include <nlohmann/detail/view/serializer.hpp>
 #include <nlohmann/detail/view/string_ref.hpp>
@@ -989,7 +991,9 @@ class basic_json_document
         }
         return sizeof(document_data) + (m_data->inline_cap * sizeof(detail::view::node))
                + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
-               + m_data->arena.capacity() + m_data->owned.capacity();
+               + m_data->arena.capacity() + m_data->owned.capacity()
+               + (m_data->indexes.capacity() * sizeof(document_data::object_index)) + (m_data->index_slots.capacity() * sizeof(std::uint32_t))
+               + (m_data->large_objects.capacity() * sizeof(std::uint32_t));
     }
 
     /// release unused capacity of the index and the decoded strings; like
@@ -1010,6 +1014,8 @@ class basic_json_document
         std::string arena(shrink_arena ? d.arena : std::string());
         const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap;
         const bool into_header = d.tape_size <= d.inline_cap;
+        std::vector<document_data::object_index> indexes(d.indexes.capacity() > d.indexes.size() ? d.indexes : std::vector<document_data::object_index>());
+        std::vector<std::uint32_t> index_slots(d.index_slots.capacity() > d.index_slots.size() ? d.index_slots : std::vector<std::uint32_t>());
         node* fresh = (shrink_tape && !into_header) ? static_cast<node*>(::operator new (d.tape_size * sizeof(node))) : d.inline_tape;
 
         if (shrink_tape)
@@ -1023,6 +1029,14 @@ class basic_json_document
         {
             d.arena.swap(arena);
             d.base[1] = d.arena.data();
+        }
+        if (d.indexes.capacity() > d.indexes.size())
+        {
+            d.indexes.swap(indexes);
+        }
+        if (d.index_slots.capacity() > d.index_slots.size())
+        {
+            d.index_slots.swap(index_slots);
         }
     }
 
@@ -1059,6 +1073,9 @@ class basic_json_document
         d.size = size;
         d.tape_size = 0;
         d.arena.clear();
+        d.indexes.clear();
+        d.index_slots.clear();
+        d.large_objects.clear();
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
@@ -1074,9 +1091,12 @@ class basic_json_document
         {
             d.base[0] = d.src;
             d.base[1] = d.arena.data();
+            detail::view::build_object_indexes(d);
+            std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while parsing)
             d.discarded = false;
             return;
         }
+        std::vector<std::uint32_t>().swap(d.large_objects);
         if (allow_exceptions)
         {
             detail::view::throw_parse_failure<BasicJsonType>(failure, src, size, comments, trailing_commas);
