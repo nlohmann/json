@@ -108,8 +108,8 @@ void encode_utf8(std::uint32_t cp, const Out& out)
 ///////////////////
 
 // UTF-8 decoder states used by decode() below
-static constexpr std::uint8_t UTF8_ACCEPT = 0;
-static constexpr std::uint8_t UTF8_REJECT = 1;
+JSON_INLINE_VARIABLE constexpr std::uint8_t UTF8_ACCEPT = 0;
+JSON_INLINE_VARIABLE constexpr std::uint8_t UTF8_REJECT = 1;
 
 /*!
 @brief process a byte of a UTF-8 sequence

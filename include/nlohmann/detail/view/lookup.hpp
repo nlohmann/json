@@ -92,7 +92,7 @@ template<bool Editable>
 const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
     using nav = navigation<Editable>;
-    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0) && (!Editable || (object->flags & node_flags::moved) == 0))
+    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0) && (!nav::editable() || (object->flags & node_flags::moved) == 0))
     {
         return find_indexed(d, object, key, n); // a large object (whose members have not been edited)
     }
@@ -134,7 +134,7 @@ template<typename SizeType, typename IntegerType>
 SizeType to_index(IntegerType idx) noexcept
 {
     const IntegerType zero = 0;
-    const auto result = static_cast<SizeType>(idx); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): idx is an index, not a character
+    const auto result = static_cast<SizeType>(idx); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): negative values are mapped below
     return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
 }
 
@@ -143,8 +143,9 @@ SizeType to_index(IntegerType idx) noexcept
 template<bool Editable>
 const node* element_at(const document_data& d, const node* array, std::size_t idx) noexcept
 {
-    const node* e = navigation<Editable>::first(d, array);
-    if (Editable && (array->flags & node_flags::moved) != 0 && d.edits->moved_cap[array->off] != 0)
+    using nav = navigation<Editable>;
+    const node* e = nav::first(d, array);
+    if (nav::editable() && (array->flags & node_flags::moved) != 0 && d.edits->moved_cap[array->off] != 0)
     {
         return e + idx; // a growable block: one link per element
     }
