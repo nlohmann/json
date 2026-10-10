@@ -7893,8 +7893,8 @@ class basic_json_document
     }
 
     template<typename InputType, typename IntegerType, typename... Flags>
-    // flawfinder: ignore (a member function, not POSIX read())
     typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, void>::type
+    // flawfinder: ignore (a member function, not POSIX read())
     read(InputType&& input, IntegerType value, Flags&&... flags) = delete;
 
     ////////////
