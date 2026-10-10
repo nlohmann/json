@@ -1759,7 +1759,8 @@ TEST_CASE("json_view large objects")
         for (std::uint64_t counter = 0; colliding.size() < members || spread.size() < members; ++counter)
         {
             std::string key(8, 'a');
-            for (std::uint64_t x = counter, i = 0; i < 8; ++i, x /= 26)
+            std::uint64_t x = counter;
+            for (std::size_t i = 0; i < 8; ++i, x /= 26)
             {
                 key[i] = static_cast<char>('a' + (x % 26));
             }
