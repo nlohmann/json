@@ -437,7 +437,15 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
 {
     std::sort(ranges.begin(), ranges.end(), [](const float_range & a, const float_range & b)
     {
-        return a.off != b.off ? a.off < b.off : (a.len != b.len ? a.len < b.len : a.extra < b.extra);
+        if (a.off != b.off)
+        {
+            return a.off < b.off;
+        }
+        if (a.len != b.len)
+        {
+            return a.len < b.len;
+        }
+        return a.extra < b.extra;
     });
     std::size_t end = 0;
     std::size_t i = 0;

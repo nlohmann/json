@@ -37,13 +37,13 @@
     #include <ostream> // ostream
 #endif
 #include <string> // string
-#include <tuple> // tuple_element, tuple_size
+#include <tuple> // tuple_element, tuple_size // IWYU pragma: keep
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_base_of, is_integral, is_same, remove_cv, remove_extent
 #include <unordered_map> // unordered_map
 #include <utility> // forward, move
 #include <vector> // vector
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp> // IWYU pragma: export
 
 // the view builds on internals of the library: both must be the same version
 #if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 12 || NLOHMANN_JSON_VERSION_PATCH != 0
@@ -127,7 +127,10 @@
 #elif defined(_MSC_VER)
     #define NLOHMANN_VIEW_LIKELY(x) (x)
     #define NLOHMANN_VIEW_UNLIKELY(x) (x)
-    #define NLOHMANN_VIEW_ALWAYS_INLINE __forceinline
+    // plain inline: __forceinline makes MSVC report C4714 (not inlined) for
+    // function templates it cannot inline, which is an error under /WX; the
+    // forced inlining is only a performance hint
+    #define NLOHMANN_VIEW_ALWAYS_INLINE inline
     #define NLOHMANN_VIEW_NOINLINE __declspec(noinline)
 #else
     #define NLOHMANN_VIEW_LIKELY(x) (x)
@@ -364,7 +367,7 @@ struct document_data
         std::size_t text_cap = 0;
         std::size_t bytes = 0; ///< memory held by edits
     };
-    std::unique_ptr<edit_state> edits{}; ///< created by the first edit // NOLINT(readability-redundant-member-init)
+    std::unique_ptr<edit_state> edits; ///< created by the first edit
 
     /// one allocation for the header and room for `nodes` nodes; large
     /// documents get a separate node array instead (so it can be trimmed)
@@ -390,7 +393,23 @@ struct document_data
         }
     };
 
-    document_data() = default;
+    /// user-provided so that the class-type members can be initialized in the
+    /// member initialization list (-Weffc++ asks for it, and old GCC rejects a
+    /// defaulted constructor whose exception specification differs from the
+    /// implicit one); they cannot take default member initializers, which old
+    /// Clang (3.4-3.6) rejects. The other members have default member
+    /// initializers. noexcept: create() constructs into raw memory and could not
+    /// release it if this threw (the std::string default constructors do not
+    /// allocate).
+    document_data() noexcept
+        : arena() // NOLINT(readability-redundant-member-init)
+        , owned() // NOLINT(readability-redundant-member-init)
+        , owned_image() // NOLINT(readability-redundant-member-init)
+        , indexes() // NOLINT(readability-redundant-member-init)
+        , index_slots() // NOLINT(readability-redundant-member-init)
+        , large_objects() // NOLINT(readability-redundant-member-init)
+        , edits() // NOLINT(readability-redundant-member-init)
+    {}
     document_data(const document_data&) = delete;
     document_data(document_data&&) = delete;
     document_data& operator=(const document_data&) = delete;
@@ -505,6 +524,13 @@ struct document_data
 template<bool Editable>
 struct navigation
 {
+    /// whether the walk follows edits (the template argument as a runtime
+    /// condition: `Editable && ...` is a constant condition for MSVC, C4127)
+    static NLOHMANN_VIEW_ALWAYS_INLINE bool editable() noexcept
+    {
+        return false;
+    }
+
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& /*d*/, const node* n) noexcept
     {
         return n + 1;
@@ -524,6 +550,11 @@ struct navigation
 template<>
 struct navigation<true>
 {
+    static NLOHMANN_VIEW_ALWAYS_INLINE bool editable() noexcept
+    {
+        return true;
+    }
+
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& d, const node* n) noexcept
     {
         return d.first_child_edited(n);
@@ -670,7 +701,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned
             return p + (count_trailing_zeros(bits) >> 2u);
         }
 #else
-        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p)));
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
         const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
                                              _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
         const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
@@ -865,15 +896,15 @@ NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* sc
 #else
     // the same with SSSE3 (pshufb for the table lookups; nibbles from 16-bit
     // shifts, as there are no byte shifts)
-    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data())));
-    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data())));
-    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data())));
+    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data()))); // NOLINT(bugprone-casting-through-void)
     const __m128i nibble = _mm_set1_epi8(0x0F);
     const __m128i zero = _mm_setzero_si128();
     __m128i prev = zero;
     while (e - block >= 16)
     {
-        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block)));
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
         const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
                                              _mm_cmpeq_epi8(_mm_subs_epu8(in, _mm_set1_epi8(0x1F)), zero)); // in < 0x20
         const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
@@ -887,7 +918,7 @@ NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* sc
         const auto err_bits = ~static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(err, zero))) & 0xFFFFu;
         if (special_bits != 0)
         {
-            const unsigned k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
+            const auto k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
             if ((err_bits & ((2u << k) - 1u)) == 0)
             {
                 return block + k;
@@ -3148,7 +3179,7 @@ template<bool Editable>
 const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
     using nav = navigation<Editable>;
-    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0) && (!Editable || (object->flags & node_flags::moved) == 0))
+    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0) && (!nav::editable() || (object->flags & node_flags::moved) == 0))
     {
         return find_indexed(d, object, key, n); // a large object (whose members have not been edited)
     }
@@ -3190,7 +3221,7 @@ template<typename SizeType, typename IntegerType>
 SizeType to_index(IntegerType idx) noexcept
 {
     const IntegerType zero = 0;
-    const auto result = static_cast<SizeType>(idx);
+    const auto result = static_cast<SizeType>(idx); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): negative values are mapped below
     return (idx < zero || static_cast<IntegerType>(result) != idx) ? (std::numeric_limits<SizeType>::max)() : result;
 }
 
@@ -3199,8 +3230,9 @@ SizeType to_index(IntegerType idx) noexcept
 template<bool Editable>
 const node* element_at(const document_data& d, const node* array, std::size_t idx) noexcept
 {
-    const node* e = navigation<Editable>::first(d, array);
-    if (Editable && (array->flags & node_flags::moved) != 0 && d.edits->moved_cap[array->off] != 0)
+    using nav = navigation<Editable>;
+    const node* e = nav::first(d, array);
+    if (nav::editable() && (array->flags & node_flags::moved) != 0 && d.edits->moved_cap[array->off] != 0)
     {
         return e + idx; // a growable block: one link per element
     }
@@ -3531,7 +3563,7 @@ class editor
         node* w = h + 1;
         std::size_t erased = 0;
         bool kept = false;
-        for (node* r = h + 1, *end = h + h->next; r != end; r += 2)
+        for (const node* r = h + 1, *end = h + h->next; r != end; r += 2)
         {
             const bool match = key_equals(*r, key);
             if (match && (kept || !keep_first))
@@ -3755,7 +3787,7 @@ class editor
         const bool negative = k == value_t::number_integer && static_cast<std::int64_t>(bits) < 0;
         std::uint64_t magnitude = negative ? 0 - bits : bits;
         std::array<char, 24> buf{};
-        char* p = buf.data() + buf.size();
+        char* p = buf.data() + buf.size(); // NOLINT(misc-const-correctness): digits are written through p
         do
         {
             *--p = static_cast<char>('0' + (magnitude % 10));
@@ -4764,7 +4796,15 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
 {
     std::sort(ranges.begin(), ranges.end(), [](const float_range & a, const float_range & b)
     {
-        return a.off != b.off ? a.off < b.off : (a.len != b.len ? a.len < b.len : a.extra < b.extra);
+        if (a.off != b.off)
+        {
+            return a.off < b.off;
+        }
+        if (a.len != b.len)
+        {
+            return a.len < b.len;
+        }
+        return a.extra < b.extra;
     });
     std::size_t end = 0;
     std::size_t i = 0;
@@ -6964,9 +7004,6 @@ NLOHMANN_JSON_NAMESPACE_END
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-template<typename BasicJsonType, bool Editable>
-class basic_json_document;
-
 /*!
 @brief read-only handle to one value of a basic_json_document
 
@@ -7655,7 +7692,7 @@ class basic_json_view
         // the end is unknown: assume a few bytes per node, the output buffer
         // grows should the value be larger
         const auto nodes = static_cast<std::size_t>(document_data::after(m_node) - m_node);
-        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + nodes * 16);
+        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + (nodes * 16));
     }
 
     /// the value of the first member with this key, or a discarded view
@@ -8382,7 +8419,7 @@ using ordered_json_editable_view = basic_json_view<ordered_json, true>;
 NLOHMANN_JSON_NAMESPACE_END
 
 // tuple protocol for the items of basic_json_view::items() (structured bindings)
-namespace std // NOLINT(cert-dcl58-cpp)
+namespace std // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
 
 #if defined(__clang__)
@@ -8391,11 +8428,11 @@ namespace std // NOLINT(cert-dcl58-cpp)
     #pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
 template<typename View>
-class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
     : public std::integral_constant<std::size_t, 2> {};
 
 template<std::size_t N, typename View>
-class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
   public:
     using type = decltype(std::declval<::nlohmann::detail::view::view_item<View>>().template get<N>());
@@ -8435,6 +8472,6 @@ class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert
 #undef NLOHMANN_VIEW_SSSE3_TARGET
 #undef NLOHMANN_VIEW_VECTOR
 #undef NLOHMANN_VIEW_VECTOR_UTF8
-
+// IWYU pragma: keep
 
 #endif  // INCLUDE_NLOHMANN_JSON_VIEW_HPP_
