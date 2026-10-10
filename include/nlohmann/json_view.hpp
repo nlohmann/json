@@ -27,7 +27,8 @@
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
 #include <algorithm> // all_of, min
-#include <cstddef> // size_t
+#include <array> // array
+#include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
@@ -45,6 +46,20 @@
 
 #include <nlohmann/json.hpp> // IWYU pragma: export
 
+// json.hpp provides the library's types and macros used below (it includes
+// the headers that define them); json_view.hpp must not include them again,
+// because the amalgamated json_view.hpp only includes json.hpp
+// IWYU pragma: no_include <version>
+// IWYU pragma: no_include "nlohmann/detail/abi_config.hpp"
+// IWYU pragma: no_include "nlohmann/detail/abi_macros.hpp"
+// IWYU pragma: no_include "nlohmann/detail/input/input_adapters.hpp"
+// IWYU pragma: no_include "nlohmann/detail/json_pointer.hpp"
+// IWYU pragma: no_include "nlohmann/detail/meta/cpp_future.hpp"
+// IWYU pragma: no_include "nlohmann/detail/string_concat.hpp"
+// IWYU pragma: no_include "nlohmann/detail/value_t.hpp"
+// IWYU pragma: no_include "nlohmann/json.hpp"
+// IWYU pragma: no_include "nlohmann/json_fwd.hpp"
+
 // the view builds on internals of the library: both must be the same version
 #if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 12 || NLOHMANN_JSON_VERSION_PATCH != 0
     #error "json_view.hpp requires json.hpp of the same version (3.12.0)"
@@ -54,7 +69,6 @@
 #include <nlohmann/detail/view/compare.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
 #include <nlohmann/detail/view/edit.hpp>
-#include <nlohmann/detail/view/edit_storage.hpp>
 #include <nlohmann/detail/view/errors.hpp>
 #include <nlohmann/detail/view/image.hpp>
 #include <nlohmann/detail/view/input.hpp>
@@ -1341,7 +1355,7 @@ class basic_json_document
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
-        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size))
+        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size()))
         {
             failure.code = detail::view::error_code::input_too_large;
         }
