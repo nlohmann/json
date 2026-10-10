@@ -58,6 +58,23 @@ assert(jPi.get<TaskState>() == TS_INVALID );
     --8<-- "examples/nlohmann_json_serialize_enum.output"
     ```
 
+## Maps with enum keys
+
+By default, maps with enum keys, such as `std::map<TaskState, std::string>`, are stored as arrays of `[key, value]`
+pairs, because JSON object keys must be strings. Define
+[`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md) before including the
+library to store them as objects, with the keys converted by the enum's `to_json()` function:
+
+```cpp
+std::map<TaskState, std::string> m = {{TS_STOPPED, "aa"}, {TS_COMPLETED, "bb"}};
+
+json j = m;
+// default:                                   [["stopped","aa"],["completed","bb"]]
+// with JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS: {"completed":"bb","stopped":"aa"}
+```
+
+Either form can be read back, with or without the macro.
+
 ## Notes
 
 Just as in [Arbitrary Type Conversions](arbitrary_types.md) above,

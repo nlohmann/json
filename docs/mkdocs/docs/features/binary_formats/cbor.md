@@ -131,6 +131,7 @@ The library maps CBOR types to JSON value types as follows:
 | Byte string            | binary          | 0x59       |
 | Byte string            | binary          | 0x5A       |
 | Byte string            | binary          | 0x5B       |
+| Byte string            | binary          | 0x5F       |
 | UTF-8 string           | string          | 0x60..0x77 |
 | UTF-8 string           | string          | 0x78       |
 | UTF-8 string           | string          | 0x79       |
@@ -156,6 +157,9 @@ The library maps CBOR types to JSON value types as follows:
 | Single-Precision Float | number_float    | 0xFA       |
 | Double-Precision Float | number_float    | 0xFB       |
 
+Indefinite-length UTF-8 strings (0x7F) and byte strings (0x5F) are supported. Each chunk must be a definite-length
+string of the same major type, as required by [RFC 8949, Section 3.2.3](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.2.3).
+
 !!! warning "Incomplete mapping"
 
     The mapping is **incomplete** in the sense that not all CBOR types can be converted to a JSON value. The following CBOR types are not supported and will yield parse errors:
@@ -168,9 +172,9 @@ The library maps CBOR types to JSON value types as follows:
 !!! warning "Negative integer overflow"
 
     CBOR negative integers (major type 1) are decoded as `-1 - n`. If the encoded magnitude `n` is too large for the
-    result to fit into `number_integer_t` (`std::int64_t` by default), parsing fails with a
-    [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) exception rather than overflowing
-    silently.
+    result to fit into `number_integer_t` (`std::int64_t` by default), the result is stored as `number_float_t`, like
+    a too small integer in JSON text. For example, `-18446744073709551616` (`0x3B` followed by eight `0xFF` bytes) is
+    stored as `-1.8446744073709552e+19`.
 
 !!! warning "Object keys"
 

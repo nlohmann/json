@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
@@ -38,9 +46,7 @@ class huge_binary_t : public std::vector<std::uint8_t>
     }
 };
 
-using huge_binary_json = nlohmann::basic_json <
-                         std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
-                         double, std::allocator, nlohmann::adl_serializer, huge_binary_t, void >;
+using huge_binary_json = nlohmann::json::with_binary_t<huge_binary_t>;
 
 // a string type that can be made to report a size beyond INT32_MAX without
 // allocating that much memory, so BSON length overflow can be tested for
@@ -88,9 +94,7 @@ class huge_string_t : public std::string
     bool pretend_huge = false;
 };
 
-using huge_string_json = nlohmann::basic_json <
-                         std::map, std::vector, huge_string_t, bool, std::int64_t, std::uint64_t,
-                         double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
+using huge_string_json = nlohmann::json::with_string_t<huge_string_t>;
 } // namespace
 
 TEST_CASE("BSON")
@@ -140,6 +144,54 @@ TEST_CASE("BSON")
         {
             json const j = std::vector<int> {1, 2, 3, 4, 5, 6, 7};
             CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is array", json::type_error&);
+        }
+
+        SECTION("discarded")
+        {
+            json const j = json::value_t::discarded;
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is discarded", json::type_error&);
+        }
+    }
+
+    SECTION("discarded values nested in a container cannot be serialized to BSON")
+    {
+        json const discarded = json::value_t::discarded;
+
+        SECTION("as an object value")
+        {
+            json j;
+            j["a"] = 1;
+            j["b"] = discarded;
+#if JSON_DIAGNOSTICS
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] (/b) cannot serialize discarded value to BSON", json::type_error&);
+#else
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] cannot serialize discarded value to BSON", json::type_error&);
+#endif
+        }
+
+        SECTION("in an array that is an object value")
+        {
+            json j;
+            j["a"] = json::array({1, discarded, 2});
+#if JSON_DIAGNOSTICS
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] (/a/1) cannot serialize discarded value to BSON", json::type_error&);
+#else
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] cannot serialize discarded value to BSON", json::type_error&);
+#endif
+        }
+
+        SECTION("nested deeper (array in object in object)")
+        {
+            json inner_array = {1, discarded};
+            json middle_object;
+            middle_object["x"] = inner_array;
+            json j;
+            j["outer"] = middle_object;
+#if JSON_DIAGNOSTICS
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] (/outer/x/1) cannot serialize discarded value to BSON", json::type_error&);
+#else
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] cannot serialize discarded value to BSON", json::type_error&);
+#endif
         }
     }
 
@@ -1261,8 +1313,10 @@ TEST_CASE("BSON input that cannot be read is discarded by every overload")
     CHECK_THROWS_AS(_ = json::from_bson(input.begin(), input.end()), json::parse_error&);
     CHECK(json::from_bson(input, true, false).is_discarded());
     CHECK(json::from_bson(input.begin(), input.end(), true, false).is_discarded());
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
     CHECK(json::from_bson(input.data(), input.size(), true, false).is_discarded());
     CHECK(json::from_bson({input.data(), input.size()}, true, false).is_discarded());
+#endif
 }
 
 TEST_CASE("BSON SAX parsing stops at every event")
@@ -1740,6 +1794,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 CHECK(j1 == j2);
             }
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
             {
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 // parse JSON file
@@ -1754,6 +1809,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 // compare parsed JSON values
                 CHECK(j1 == j2);
             }
+#endif
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");
@@ -1931,5 +1987,49 @@ TEST_CASE("Invalid document size handling")
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 13: syntax error while parsing BSON string: BSON string is not null-terminated", json::parse_error&);
         CHECK(json::from_bson(v, true, false).is_discarded());
+    }
+}
+
+TEST_CASE("BSON large strings and binaries (chunked reader)")
+{
+    // get_bson_string()/get_bson_binary() both read through get_string()/
+    // get_binary(), which read in bounded chunks (binary_reader.hpp,
+    // chunk_size == 4096); make sure roundtripping is correct for lengths
+    // around and beyond that chunk size, for both vector (iterator) and
+    // pointer inputs. BSON only accepts an object at the top level, so the
+    // string/binary value is wrapped in one.
+    for (const std::size_t len :
+            {
+                std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
+                std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
+            })
+    {
+        CAPTURE(len)
+
+        // string
+        const json j_string = {{"k", std::string(len, 'x')}};
+        const std::vector<std::uint8_t> v_string = json::to_bson(j_string);
+        CHECK(json::from_bson(v_string) == j_string);
+        // pointer input exercises the std::memcpy fast path
+        CHECK(json::from_bson(reinterpret_cast<const char*>(v_string.data()),
+                              reinterpret_cast<const char*>(v_string.data()) + v_string.size()) == j_string);
+
+        // binary (BSON binary values always carry a subtype, so give one
+        // explicitly; otherwise from_bson() would round-trip to subtype 0
+        // rather than back to the original "no subtype" value)
+        const json j_binary = {{"k", json::binary(std::vector<std::uint8_t>(len, 0xCD), std::uint8_t{0})}};
+        const std::vector<std::uint8_t> v_binary = json::to_bson(j_binary);
+        CHECK(json::from_bson(v_binary) == j_binary);
+        CHECK(json::from_bson(reinterpret_cast<const char*>(v_binary.data()),
+                              reinterpret_cast<const char*>(v_binary.data()) + v_binary.size()) == j_binary);
+
+        // a truncated payload must still be reported as an error
+        if (len > 16)
+        {
+            std::vector<std::uint8_t> truncated = v_string;
+            truncated.resize(truncated.size() - 8);
+            json _;
+            CHECK_THROWS_AS(_ = json::from_bson(truncated), json::parse_error);
+        }
     }
 }

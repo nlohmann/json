@@ -285,6 +285,9 @@ public:
 
         for (auto it = first; std::next(it, elements_affected) != Container::end(); ++it)
         {
+            // false positive: Infer's model of std::string keeps the buffer of a
+            // moved-from string, so it assumes a buffer is destroyed twice
+            // @infer-ignore USE_AFTER_DELETE
             it->~value_type(); // destroy but keep allocation
             new (&*it) value_type{std::move(*std::next(it, elements_affected))}; // "move" next element to it
         }

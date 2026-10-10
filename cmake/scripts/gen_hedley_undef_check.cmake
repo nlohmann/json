@@ -64,7 +64,7 @@ if(MODE STREQUAL "undef")
     # recipe is self-contained and its output is byte-stable across reruns.
     # The embedded SPDX tags below are part of the *generated* file's
     # content, not a REUSE header for this .cmake script itself (which is
-    # already covered by the blanket "Files: *" rule in .reuse/dep5) -- keep
+    # already covered by the blanket path = "**" rule in REUSE.toml) -- keep
     # them wrapped in REUSE-IgnoreStart/End so `reuse lint` does not try to
     # parse "MIT\n")" as this file's own SPDX-License-Identifier value.
     # REUSE-IgnoreStart

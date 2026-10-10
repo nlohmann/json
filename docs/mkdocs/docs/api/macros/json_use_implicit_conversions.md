@@ -44,7 +44,7 @@ By default, implicit conversions are enabled.
 
 ## Examples
 
-??? example "Example: implicit conversion"
+??? example "Example: implicit and explicit conversions"
 
     This is an example for an implicit conversion:
 
@@ -67,7 +67,7 @@ By default, implicit conversions are enabled.
     `JSON_USE_IMPLICIT_CONVERSIONS` is defined to `0`:
 
     ```cpp
-    using wjson = nlohmann::basic_json<std::map, std::vector, std::wstring>;
+    using wjson = nlohmann::json::with_string_t<std::wstring>;
 
     void load(const nlohmann::json& j);
 

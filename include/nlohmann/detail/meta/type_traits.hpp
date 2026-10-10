@@ -438,6 +438,30 @@ template<typename BasicJsonType, typename CompatibleObjectType>
 struct is_compatible_object_type
     : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
 
+template<typename T>
+using insert_result_t = decltype(std::declval<T&>().insert(std::declval<const value_type_t<T>&>()));
+
+template<typename T>
+using insert_result_second_t = decltype(std::declval<T&>().insert(std::declval<const value_type_t<T>&>()).second);
+
+// a map-like type (std::map, std::unordered_map, ...) whose keys are enums; see
+// JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+template<typename T, typename = void>
+struct is_enum_keyed_map : std::false_type {};
+
+template<typename T>
+struct is_enum_keyed_map <
+    T, enable_if_t < is_detected<mapped_type_t, T>::value&&
+    is_detected<key_type_t, T>::value >>
+{
+    // maps with non-unique keys (std::multimap, std::unordered_multimap, ...)
+    // are excluded, because an object cannot hold duplicate keys; they are
+    // detected by insert() returning an iterator instead of a pair<iterator, bool>
+    // NOLINTNEXTLINE(modernize-type-traits) we use C++11
+    static constexpr bool value = std::is_enum<typename T::key_type>::value &&
+                                  !(is_detected<insert_result_t, T>::value && !is_detected<insert_result_second_t, T>::value);
+};
+
 template<typename BasicJsonType, typename ConstructibleObjectType,
          typename = void>
 struct is_constructible_object_type_impl : std::false_type {};
@@ -880,6 +904,21 @@ template<typename T, typename U, enable_if_t<std::is_same<T, U>::value, int> = 0
 T conditional_static_cast(U value)
 {
     return value;
+}
+
+// like conditional_static_cast, but converts to bool by comparing with zero,
+// because MSVC 2015 warns about any conversion to bool (C4800), even with an
+// explicit cast; used for enums whose underlying type is bool
+template < typename T, typename U, enable_if_t < !std::is_same<T, bool>::value, int > = 0 >
+T bool_aware_static_cast(U value)
+{
+    return conditional_static_cast<T>(value);
+}
+
+template<typename T, typename U, enable_if_t<std::is_same<T, bool>::value, int> = 0>
+bool bool_aware_static_cast(U value)
+{
+    return value != U();
 }
 
 template<typename... Types>

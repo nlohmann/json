@@ -48,8 +48,9 @@ With the default values for `NumberUnsignedType` (`std::uint64_t`), the default 
 
 When the default type is used, the maximal integer number that can be stored is `18446744073709551615` (UINT64_MAX) and
 the minimal integer number that can be stored is `0`. Integer numbers that are out of range will yield over/underflow
-when used in a constructor. During deserialization, too large or small integer numbers will automatically be stored
-as [`number_integer_t`](number_integer_t.md) or [`number_float_t`](number_float_t.md).
+when used in a constructor. During deserialization (from JSON text or any of the binary formats), too large or small
+integer numbers will automatically be stored as [`number_integer_t`](number_integer_t.md) or
+[`number_float_t`](number_float_t.md).
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 > Note that when such software is used, numbers that are integers and are in the range [-2<sup>53</sup>+1, 2<sup>53</sup>-1] are

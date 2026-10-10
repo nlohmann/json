@@ -172,7 +172,7 @@
       "name": "accept",
       "pretty_signature": "nlohmann::basic_json::accept",
       "scope": "nlohmann::basic_json",
-      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, accept(ptr, ptr + len)) static bool accept(detail::span_input_adapter&& i, const bool ignore_comments = false, const bool ignore_trailing_commas = false)",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, accept(ptr, ptr + len)) static bool accept(detail::span_input_adapter&& i, const bool ignore_comments = false, const bool ignore_trailing_commas = false) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -316,7 +316,7 @@
       "name": "at",
       "pretty_signature": "nlohmann::basic_json::at",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const",
+      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -325,7 +325,7 @@
       "name": "at",
       "pretty_signature": "nlohmann::basic_json::at",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr)",
+      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -640,7 +640,7 @@
       "name": "contains",
       "pretty_signature": "nlohmann::basic_json::contains",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) bool contains(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr) const",
+      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) bool contains(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr) const #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -923,6 +923,15 @@
       "tier": "callable"
     },
     {
+      "identity_name": "from_bjdata",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_bjdata",
+      "pretty_signature": "nlohmann::basic_json::from_bjdata",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.13.0, from_bjdata(ptr, ptr + len)) static basic_json from_bjdata(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
+      "tier": "callable"
+    },
+    {
       "identity_name": "from_bon8",
       "kind": "FUNCTION_TEMPLATE",
       "name": "from_bon8",
@@ -941,12 +950,21 @@
       "tier": "callable"
     },
     {
+      "identity_name": "from_bon8",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_bon8",
+      "pretty_signature": "nlohmann::basic_json::from_bon8",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.13.0, from_bon8(ptr, ptr + len)) static basic_json from_bon8(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
+      "tier": "callable"
+    },
+    {
       "identity_name": "from_bson",
       "kind": "CXX_METHOD",
       "name": "from_bson",
       "pretty_signature": "nlohmann::basic_json::from_bson",
       "scope": "nlohmann::basic_json",
-      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len)) static basic_json from_bson(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len)) static basic_json from_bson(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -973,7 +991,7 @@
       "name": "from_bson",
       "pretty_signature": "nlohmann::basic_json::from_bson",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len)) static basic_json from_bson(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len)) static basic_json from_bson(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -982,7 +1000,7 @@
       "name": "from_cbor",
       "pretty_signature": "nlohmann::basic_json::from_cbor",
       "scope": "nlohmann::basic_json",
-      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len)) static basic_json from_cbor(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len)) static basic_json from_cbor(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1009,7 +1027,7 @@
       "name": "from_cbor",
       "pretty_signature": "nlohmann::basic_json::from_cbor",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len)) static basic_json from_cbor(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len)) static basic_json from_cbor(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1018,7 +1036,7 @@
       "name": "from_msgpack",
       "pretty_signature": "nlohmann::basic_json::from_msgpack",
       "scope": "nlohmann::basic_json",
-      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len)) static basic_json from_msgpack(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len)) static basic_json from_msgpack(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1045,7 +1063,7 @@
       "name": "from_msgpack",
       "pretty_signature": "nlohmann::basic_json::from_msgpack",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len)) static basic_json from_msgpack(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len)) static basic_json from_msgpack(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1054,7 +1072,7 @@
       "name": "from_ubjson",
       "pretty_signature": "nlohmann::basic_json::from_ubjson",
       "scope": "nlohmann::basic_json",
-      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len)) static basic_json from_ubjson(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len)) static basic_json from_ubjson(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1081,7 +1099,7 @@
       "name": "from_ubjson",
       "pretty_signature": "nlohmann::basic_json::from_ubjson",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len)) static basic_json from_ubjson(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len)) static basic_json from_ubjson(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1450,7 +1468,7 @@
       "name": "iterator_wrapper",
       "pretty_signature": "nlohmann::basic_json::iterator_wrapper",
       "scope": "nlohmann::basic_json",
-      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items()) static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept",
+      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items()) static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1459,7 +1477,7 @@
       "name": "iterator_wrapper",
       "pretty_signature": "nlohmann::basic_json::iterator_wrapper",
       "scope": "nlohmann::basic_json",
-      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items()) static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept",
+      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items()) static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1711,7 +1729,7 @@
       "name": "operator[]",
       "pretty_signature": "nlohmann::basic_json::operator[]",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const",
+      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1720,7 +1738,7 @@
       "name": "operator[]",
       "pretty_signature": "nlohmann::basic_json::operator[]",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr)",
+      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1765,7 +1783,7 @@
       "name": "parse",
       "pretty_signature": "nlohmann::basic_json::parse",
       "scope": "nlohmann::basic_json",
-      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len)) static basic_json parse(detail::span_input_adapter&& i, parser_callback_t cb = nullptr, const bool allow_exceptions = true, const bool ignore_comments = false, const bool ignore_trailing_commas = false)",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len)) static basic_json parse(detail::span_input_adapter&& i, parser_callback_t cb = nullptr, const bool allow_exceptions = true, const bool ignore_comments = false, const bool ignore_trailing_commas = false) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1936,7 +1954,7 @@
       "name": "sax_parse",
       "pretty_signature": "nlohmann::basic_json::sax_parse",
       "scope": "nlohmann::basic_json",
-      "signature": "template <typename InputType, typename SAX> JSON_HEDLEY_NON_NULL(2) static bool sax_parse(InputType&& i, SAX* sax, input_format_t format = input_format_t::json, const bool strict = true, const bool ignore_comments = false, const bool ignore_trailing_commas = false)",
+      "signature": "template <typename InputType, typename SAX> JSON_HEDLEY_NON_NULL(2) static bool sax_parse(InputType&& i, SAX* sax, input_format_t format = input_format_t::json, const bool strict = true, const bool ignore_comments = false, const bool ignore_trailing_commas = false, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
       "tier": "callable"
     },
     {
@@ -1945,7 +1963,7 @@
       "name": "sax_parse",
       "pretty_signature": "nlohmann::basic_json::sax_parse",
       "scope": "nlohmann::basic_json",
-      "signature": "template <typename SAX> JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...)) JSON_HEDLEY_NON_NULL(2) static bool sax_parse(detail::span_input_adapter&& i, SAX* sax, input_format_t format = input_format_t::json, const bool strict = true, const bool ignore_comments = false, const bool ignore_trailing_commas = false)",
+      "signature": "template <typename SAX> JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...)) JSON_HEDLEY_NON_NULL(2) static bool sax_parse(detail::span_input_adapter&& i, SAX* sax, input_format_t format = input_format_t::json, const bool strict = true, const bool ignore_comments = false, const bool ignore_trailing_commas = false, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error) #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -1954,7 +1972,7 @@
       "name": "sax_parse",
       "pretty_signature": "nlohmann::basic_json::sax_parse",
       "scope": "nlohmann::basic_json",
-      "signature": "template<class IteratorType, class SAX, class SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_NON_NULL(3) static bool sax_parse(IteratorType first, SentinelType last, SAX* sax, input_format_t format = input_format_t::json, const bool strict = true, const bool ignore_comments = false, const bool ignore_trailing_commas = false)",
+      "signature": "template<class IteratorType, class SAX, class SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_NON_NULL(3) static bool sax_parse(IteratorType first, SentinelType last, SAX* sax, input_format_t format = input_format_t::json, const bool strict = true, const bool ignore_comments = false, const bool ignore_trailing_commas = false, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
       "tier": "callable"
     },
     {
@@ -2260,7 +2278,7 @@
       "name": "value",
       "pretty_signature": "nlohmann::basic_json::value",
       "scope": "nlohmann::basic_json",
-      "signature": "template < class ValueType, class BasicJsonType, class ReturnType = typename value_return_type<ValueType>::type, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value && detail::is_getable<basic_json_t, ReturnType>::value && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 > JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) ReturnType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, ValueType && default_value) const",
+      "signature": "template < class ValueType, class BasicJsonType, class ReturnType = typename value_return_type<ValueType>::type, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value && detail::is_getable<basic_json_t, ReturnType>::value && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 > JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) ReturnType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, ValueType && default_value) const #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -2269,7 +2287,7 @@
       "name": "value",
       "pretty_signature": "nlohmann::basic_json::value",
       "scope": "nlohmann::basic_json",
-      "signature": "template < class ValueType, class BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value && detail::is_getable<basic_json_t, ValueType>::value && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 > JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const",
+      "signature": "template < class ValueType, class BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value && detail::is_getable<basic_json_t, ValueType>::value && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 > JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {
@@ -2518,10 +2536,10 @@
     {
       "identity_name": "operator string_t",
       "kind": "CONVERSION_FUNCTION",
-      "name": "operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
-      "pretty_signature": "nlohmann::json_pointer::operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
+      "name": "operator typename string_t_helper<type-parameter-0-0>::type",
+      "pretty_signature": "nlohmann::json_pointer::operator typename string_t_helper<type-parameter-0-0>::type",
       "scope": "nlohmann::json_pointer",
-      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string()) operator string_t() const",
+      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string()) operator string_t() const #if JSON_DELETE_DEPRECATED_FUNCTIONS = delete;",
       "tier": "callable"
     },
     {

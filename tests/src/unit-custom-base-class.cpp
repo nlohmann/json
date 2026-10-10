@@ -38,20 +38,7 @@ class json_metadata
 };
 
 template<class T>
-using json_with_metadata =
-    nlohmann::basic_json <
-    std::map,
-    std::vector,
-    std::string,
-    bool,
-    std::int64_t,
-    std::uint64_t,
-    double,
-    std::allocator,
-    nlohmann::adl_serializer,
-    std::vector<std::uint8_t>,
-    json_metadata<T>
-    >;
+using json_with_metadata = nlohmann::json::with_base_class_t<json_metadata<T>>;
 
 TEST_CASE("JSON Node Metadata")
 {
@@ -268,19 +255,7 @@ class visitor_adaptor
     void do_visit(const Ptr& ptr, const Fnc& fnc) const;
 };
 
-using json_with_visitor_t = nlohmann::basic_json <
-                            std::map,
-                            std::vector,
-                            std::string,
-                            bool,
-                            std::int64_t,
-                            std::uint64_t,
-                            double,
-                            std::allocator,
-                            nlohmann::adl_serializer,
-                            std::vector<std::uint8_t>,
-                            visitor_adaptor
-                            >;
+using json_with_visitor_t = nlohmann::json::with_base_class_t<visitor_adaptor>;
 
 template <class Fnc>
 void visitor_adaptor::visit(const Fnc& fnc) const
@@ -425,20 +400,7 @@ class base_class_with_hidden_members
     std::size_t m_size = 42;
 };
 
-using json_with_hidden_base_members =
-    nlohmann::basic_json <
-    std::map,
-    std::vector,
-    std::string,
-    bool,
-    std::int64_t,
-    std::uint64_t,
-    double,
-    std::allocator,
-    nlohmann::adl_serializer,
-    std::vector<std::uint8_t>,
-    base_class_with_hidden_members
-    >;
+using json_with_hidden_base_members = nlohmann::json::with_base_class_t<base_class_with_hidden_members>;
 
 TEST_CASE("JSON Node as_base_class")
 {
@@ -484,19 +446,7 @@ struct const_member_base
     const int id = 7; // NOLINT(misc-non-private-member-variables-in-classes)
 };
 
-using json_with_const_base = nlohmann::basic_json <
-                             std::map,
-                             std::vector,
-                             std::string,
-                             bool,
-                             std::int64_t,
-                             std::uint64_t,
-                             double,
-                             std::allocator,
-                             nlohmann::adl_serializer,
-                             std::vector<std::uint8_t>,
-                             const_member_base
-                             >;
+using json_with_const_base = nlohmann::json::with_base_class_t<const_member_base>;
 
 // build an array nested @a depth levels deep, with the innermost value 1;
 // every level is constructed (never assigned), since const_member_base does

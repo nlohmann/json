@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
@@ -1012,6 +1020,36 @@ TEST_CASE("BON8 roundtrips" * doctest::skip())
             }
         }
     }
+}
+
+TEST_CASE("issue #5648 - from_bon8(ptr, len) must read len bytes, not treat ptr as a C string")
+{
+    // to_bon8() encodes the integer 40 as the two bytes 0xC2 0x00 (a BON8
+    // lead byte followed by a continuation byte of 0x00), so the packed data
+    // below contains a 0x00 byte before its end.
+    const json j = {{"a", 40}, {"b", "x"}};
+    const std::vector<std::uint8_t> packed = json::to_bon8(j);
+    bool contains_nul = false;
+    for (const auto byte : packed)
+    {
+        contains_nul |= (byte == 0x00);
+    }
+    REQUIRE(contains_nul);
+
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+    // before the fix, from_bon8 had no (ptr, len) overload, so this call
+    // bound to from_bon8(InputType&&, bool strict) instead: ptr was read as
+    // a NUL-terminated C string (stopping at the embedded 0x00 byte), and
+    // len was silently converted to the strict flag. The deprecated
+    // overload added for this issue forwards to from_bon8(ptr, ptr + len,
+    // ...) instead, like from_cbor's deprecated (ptr, len) overload does.
+    json result;
+    CHECK_NOTHROW(result = json::from_bon8(packed.data(), packed.size()));
+    CHECK(result == j);
+
+    // len must not collapse into the strict flag either
+    CHECK(json::from_bon8(packed.data(), packed.size(), false) == j);
+#endif
 }
 
 #ifdef JSON_HAS_CPP_17

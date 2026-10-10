@@ -250,6 +250,20 @@ add_custom_target(ci_test_strict_nul_handling
 )
 
 ###############################################################################
+# Delete the deprecated functions.
+###############################################################################
+
+add_custom_target(ci_test_delete_deprecated_functions
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_DeleteDeprecatedFunctions=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_delete_deprecated_functions
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_delete_deprecated_functions
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_delete_deprecated_functions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with the deprecated functions deleted"
+)
+
+###############################################################################
 # Disable global UDLs.
 ###############################################################################
 
@@ -362,7 +376,7 @@ add_custom_target(ci_test_coverage
 # Sanitizers.
 ###############################################################################
 
-set(CLANG_CXX_FLAGS_SANITIZER "-g -O1 -fsanitize=address -fsanitize=undefined -fsanitize=integer -fsanitize=nullability -fno-omit-frame-pointer -fno-sanitize-recover=all -fno-sanitize=unsigned-integer-overflow -fno-sanitize=unsigned-shift-base")
+set(CLANG_CXX_FLAGS_SANITIZER "-g -O1 -fsanitize=address -fsanitize=undefined -fsanitize=integer -fsanitize=nullability -fno-omit-frame-pointer -fno-sanitize-recover=all -fno-sanitize=unsigned-integer-overflow -fno-sanitize=unsigned-shift-base -fsanitize-ignorelist=${PROJECT_SOURCE_DIR}/cmake/clang_sanitizer_ignorelist.txt")
 
 add_custom_target(ci_test_clang_sanitizer
     COMMAND CXX=${CLANG_TOOL} CXXFLAGS=${CLANG_CXX_FLAGS_SANITIZER} ${CMAKE_COMMAND}
@@ -442,13 +456,14 @@ add_custom_target(ci_test_single_header
 # Valgrind.
 ###############################################################################
 
+# The Unicode test (~17M assertions) is too slow under Valgrind.
 add_custom_target(ci_test_valgrind
     COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON -DJSON_Valgrind=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_valgrind
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_valgrind
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_valgrind && ${CMAKE_CTEST_COMMAND} -L valgrind --parallel ${N} --output-on-failure
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_valgrind && ${CMAKE_CTEST_COMMAND} -L valgrind --exclude-regex "test-unicode" --parallel ${N} --output-on-failure
     COMMENT "Compile and test with Valgrind"
 )
 
@@ -705,7 +720,7 @@ ci_get_cmake(4.0.0  CMAKE_4_0_0_BINARY)
 # the tests require CMake 3.13 or later, so they are excluded for CMake 3.5.0
 set(JSON_CMAKE_FLAGS_3_5_0 JSON_Diagnostics JSON_Diagnostic_Positions JSON_GlobalUDLs JSON_ImplicitConversions JSON_DisableEnumSerialization
     JSON_LegacyDiscardedValueComparison JSON_Install JSON_MultipleHeaders JSON_SystemInclude JSON_Valgrind
-    JSON_StrictNulHandling JSON_StrictBinaryUTF8)
+    JSON_StrictNulHandling JSON_StrictBinaryUTF8 JSON_DeleteDeprecatedFunctions)
 set(JSON_CMAKE_FLAGS_3_31_6 JSON_BuildTests ${JSON_CMAKE_FLAGS_3_5_0})
 set(JSON_CMAKE_FLAGS_4_0_0 JSON_BuildTests ${JSON_CMAKE_FLAGS_3_5_0})
 
@@ -773,7 +788,7 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 g++-11 cla
                 -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
                 ${ADDITIONAL_FLAGS}
             COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
-            COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+            COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
             COMMENT "Compile and test with ${COMPILER}"
         )
     endif()
@@ -787,7 +802,7 @@ add_custom_target(ci_test_compiler_default
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_default
         ${ADDITIONAL_FLAGS}
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_default --parallel ${N}
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_default && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" -LE git_required --output-on-failure
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_default && ${CMAKE_CTEST_COMMAND} --parallel ${N} -LE git_required --output-on-failure
     COMMENT "Compile and test with default C++ compiler"
 )
 
@@ -825,7 +840,7 @@ add_custom_target(ci_icpc
         -DJSON_BuildTests=ON -DJSON_FastTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_icpc
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_icpc
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_icpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_icpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
     COMMENT "Compile and test with ICPC"
 )
 
@@ -836,7 +851,7 @@ add_custom_target(ci_icpx
         -DJSON_BuildTests=ON -DJSON_FastTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_icpx
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_icpx
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_icpx && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_icpx && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
     COMMENT "Compile and test with ICPX (Intel oneAPI DPC++/C++)"
 )
 
@@ -872,7 +887,7 @@ add_custom_target(ci_nvhpc
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_nvhpc
     # the pipes are escaped so the surrounding shell passes them to ctest verbatim
     # instead of treating them as shell pipe operators
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_nvhpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode\\|test-comparison_cpp20\\|test-comparison_legacy_cpp20\\|test-constructor1_cpp11\\|test-deserialization_cpp20" --output-on-failure
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_nvhpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-comparison_cpp20\\|test-comparison_legacy_cpp20\\|test-constructor1_cpp11\\|test-deserialization_cpp20" --output-on-failure
     COMMENT "Compile and test with NVIDIA HPC SDK (nvc++)"
 )
 
