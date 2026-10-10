@@ -47,6 +47,10 @@ dumps is stable under exactly the same values that break operator==.
 The unit tests run the same checks on a fixed corpus (see the "BJData round-trip
 invariants" test case), so keep both in sync.
 
+Furthermore, it reads data with a SAX parser that recovers from every error
+and checks that the events are balanced, that reading ends, and that it
+reports an error exactly when from_bjdata() fails (see #3989).
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
@@ -58,6 +62,8 @@ drivers.
 #ifdef NDEBUG
     #error "the fuzzer drivers must be built without NDEBUG"
 #endif
+
+#include "fuzzer-recovering_checker.hpp"
 
 using json = nlohmann::json;
 
@@ -78,6 +84,9 @@ static bool is_value_stable(const json& lhs, const json& rhs)
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    // recover from all errors, reading from memory and from a stream
+    const bool recovered_without_errors = check_recovering_parse(data, size, json::input_format_t::bjdata).errors == 0;
+
     std::vector<uint8_t> const vec1(data, data + size);
 
     // step 0: parse input without exceptions; a parse error must then be
@@ -109,6 +118,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 
         // without exceptions, the same input must give the same value
         assert(!noexcept_threw && !j_noexcept.is_discarded() && same_value(j_noexcept, j1));
+
+        // the recovering parser must not have reported an error either
+        assert(recovered_without_errors);
 
         try
         {
@@ -143,6 +155,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // parse errors are ok, because input may be random bytes
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
+        assert(parsed || !recovered_without_errors);
     }
     catch (const json::type_error&)
     {
@@ -153,6 +166,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // out of range errors may happen if provided sizes are excessive
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
+        assert(parsed || !recovered_without_errors);
     }
 
     // return 0 - non-zero return values are reserved for future use

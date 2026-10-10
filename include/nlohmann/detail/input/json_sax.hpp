@@ -132,7 +132,9 @@ struct json_sax
     @param[in] position    the position in the input where the error occurs
     @param[in] last_token  the last read token
     @param[in] ex          an exception object describing the error
-    @return whether parsing should proceed (must return false)
+    @return whether to recover from the error: false stops parsing; true
+            repairs the error and continues, or, if that is not possible,
+            stops after completing the value read so far
     */
     virtual bool parse_error(std::size_t position,
                              const std::string& last_token,
@@ -269,9 +271,12 @@ a pointer to the respective array or object for each recursion depth.
 After successful parsing, the value that is passed by reference to the
 constructor contains the parsed value.
 
-@tparam BasicJsonType  the JSON type
+@tparam BasicJsonType     the JSON type
+@tparam InputAdapterType  the input adapter of the lexer that can be passed to
+                          the constructor to record diagnostic positions; it
+                          does not matter if no lexer is passed
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type>
 class json_sax_dom_parser
 {
   public:
@@ -518,7 +523,7 @@ class json_sax_dom_parser
     lexer_t* m_lexer_ref = nullptr;
 };
 
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type>
 class json_sax_dom_callback_parser
 {
   public:

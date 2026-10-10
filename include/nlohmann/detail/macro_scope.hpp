@@ -199,6 +199,17 @@
     #define JSON_NO_UNIQUE_ADDRESS
 #endif
 
+// Inlines small functions even in unoptimized builds, so that they are not
+// emitted. The parsers for parse(), accept(), and from_*() use it for the
+// functions that stand in for the code recovering from errors (see #3989).
+// MSVC is left to decide, as it warns (C4714) where it does not inline a
+// __forceinline function.
+#if defined(_MSC_VER) && !defined(__clang__)
+    #define JSON_INTERNAL_ALWAYS_INLINE
+#else
+    #define JSON_INTERNAL_ALWAYS_INLINE JSON_HEDLEY_ALWAYS_INLINE
+#endif
+
 // Clang targeting MinGW does not survive the thread_local storage the copy
 // constructor uses to bound its descent: every test that copies a value
 // segfaults with clang 11.0.1 and clang 18.1.8, while the same tests pass with

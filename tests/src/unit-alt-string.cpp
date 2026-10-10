@@ -415,6 +415,46 @@ TEST_CASE("alternative string type")
         CHECK(j2.dump() == R"({"/foo/0":"bar","/foo/1":"baz"})");
     }
 
+    SECTION("error recovery")
+    {
+        // a SAX parser that recovers from every error (see #3989)
+        struct recovering_parser : nlohmann::detail::json_sax_dom_parser<alt_json>
+        {
+            explicit recovering_parser(alt_json& j)
+                : nlohmann::detail::json_sax_dom_parser<alt_json>(j, false)
+            {}
+
+            // sax_parse() calls the SAX parser's own parse_error(), so hiding
+            // the one of the base class is what recovering takes
+            // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method)
+            bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const nlohmann::detail::exception& /*unused*/)
+            {
+                ++errors;
+                return true;
+            }
+
+            std::size_t errors = 0;
+        };
+
+        alt_json j;
+        recovering_parser sax(j);
+        // not inside CHECK(): MSVC reads the escape in a stringized raw string
+        const std::string input = R"([1., "a\qb", tru, {"k" 2}])";
+        CHECK(!alt_json::sax_parse(input, &sax));
+        CHECK(sax.errors == 4);
+        CHECK(j.dump() == R"([1,"aqb",null,{"k":2}])");
+
+        // a UBJSON high-precision number, a CBOR key that is not a string
+        alt_json u;
+        recovering_parser ubjson_sax(u);
+        CHECK(!alt_json::sax_parse(std::vector<std::uint8_t> {'[', 'H', 'i', 2, '1', '.', ']'}, &ubjson_sax, alt_json::input_format_t::ubjson));
+        CHECK(u.dump() == "[1]");
+        alt_json c;
+        recovering_parser cbor_sax(c);
+        CHECK(!alt_json::sax_parse(std::vector<std::uint8_t> {0xA2, 0x01, 0x02, 0x61, 'a', 0x03}, &cbor_sax, alt_json::input_format_t::cbor));
+        CHECK(c.dump() == R"({"a":3})");
+    }
+
     SECTION("conversion between basic_json specializations (#2649)")
     {
         // explicit conversions are always possible

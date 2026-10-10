@@ -21,6 +21,10 @@ It also checks that reading the data from a stream, which reads strings byte by
 byte, gives the same value or error as reading it from contiguous memory, which
 copies strings in bulk.
 
+Furthermore, it reads data with a SAX parser that recovers from every error
+and checks that the events are balanced, that reading ends, and that it
+reports an error exactly when from_bon8() fails (see #3989).
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
@@ -33,6 +37,8 @@ drivers.
 #ifdef NDEBUG
     #error "the fuzzer drivers must be built without NDEBUG"
 #endif
+
+#include "fuzzer-recovering_checker.hpp"
 
 using json = nlohmann::json;
 
@@ -64,6 +70,9 @@ std::string read_bon8(InputType&& input)
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    // recover from all errors, reading from memory and from a stream
+    const bool recovered_without_errors = check_recovering_parse(data, size, json::input_format_t::bon8).errors == 0;
+
     // contiguous and stream input must be read alike
     {
         std::istringstream stream(std::string(reinterpret_cast<const char*>(data), size));
@@ -102,6 +111,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         // without exceptions, the same input must give the same value
         assert(!noexcept_threw && !j_noexcept.is_discarded() && same_value(j_noexcept, j1));
 
+        // the recovering parser must not have reported an error either
+        assert(recovered_without_errors);
+
         try
         {
             // step 2: round trip
@@ -123,6 +135,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // parse errors are ok, because input may be random bytes
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
+        assert(parsed || !recovered_without_errors);
     }
     catch (const json::type_error&)
     {
@@ -133,6 +146,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // out of range errors may happen if provided sizes are excessive
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
+        assert(parsed || !recovered_without_errors);
     }
 
     // return 0 - non-zero return values are reserved for future use

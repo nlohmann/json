@@ -80,14 +80,36 @@ this library can always be read back.
 */
 JSON_INLINE_VARIABLE constexpr std::size_t max_valueless_container_size = 1 << 20;
 
+/*!
+@param[in] byte  a byte
+@return whether @a byte begins a well-formed CBOR data item (RFC 8949,
+        Section 3): its additional information is not reserved, and the
+        indefinite length is only used for strings, arrays, and maps
+*/
+inline bool is_cbor_item_head(const unsigned int byte) noexcept
+{
+    const unsigned int major_type = byte >> 5u;
+    const unsigned int additional_information = byte & 0x1Fu;
+    if (additional_information < 28)
+    {
+        return true;
+    }
+    return additional_information == 31 && major_type >= 2 && major_type <= 5;
+}
+
 ///////////////////
 // binary reader //
 ///////////////////
 
 /*!
 @brief deserialization of BJData, BON8, BSON, CBOR, MessagePack, and UBJSON values
+
+@tparam AllowRecovery  whether the SAX parser may ask to recover from errors by
+        returning true from parse_error() (see #3989). The functions that read
+        into a JSON value use false, because their SAX parsers never do, and
+        then the code that recovers is not compiled.
 */
-template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_parser<BasicJsonType, InputAdapterType>>
+template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_parser<BasicJsonType, InputAdapterType>, bool AllowRecovery = false>
 class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -137,7 +159,8 @@ class binary_reader
     @param[in] strict  whether to expect the input to be consumed completed
     @param[in] tag_handler  how to treat CBOR tags
 
-    @return whether parsing was successful
+    @return whether parsing was successful: the input was read without errors,
+            and no SAX event returned false
     */
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse(json_sax_t* sax_,
@@ -147,6 +170,11 @@ class binary_reader
         sax = sax_;
         container_stack.clear();
         bon8_pushback_size = 0;
+        close_requested = false;
+        error_repaired = false;
+        key_pending = false;
+        skip_requested = false;
+        ndarray_open = 0;
         bool result = false;
 
         switch (input_format)
@@ -196,12 +224,17 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(current != char_traits<char_type>::eof()))
             {
-                return sax->parse_error(chars_read, get_token_string(), parse_error::create(110, chars_read,
-                                        exception_message(concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
+                return report_error(chars_read, get_token_string(), parse_error::create(110, chars_read,
+                                    exception_message(concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
             }
         }
 
-        return result;
+        if (!result)
+        {
+            close_open_containers();
+        }
+
+        return result && !error_repaired;
     }
 
   private:
@@ -311,18 +344,149 @@ class binary_reader
     plus the terminator); the equality also rejects those impossible sizes,
     since at least 5 bytes are always consumed.
 
+    When recovering from errors, a document whose size does not match is
+    accepted: its terminator was found, so everything in it has been read.
+
     @param[in] document_start  value of chars_read before the size prefix
     @param[in] document_size   the declared document size
-    @return whether the declared size matches the number of bytes read
+    @return whether the declared size matches the number of bytes read, or
+            the mismatch is repaired
     */
     bool check_bson_document_size(const std::size_t document_start, const std::int32_t document_size)
     {
         if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                    exception_message(concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr));
+            static_cast<void>(report_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                           exception_message(concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr)));
+            return repair_requested();
         }
         return true;
+    }
+
+    /*!
+    @brief whether the rest of the innermost BSON document can be skipped
+
+    A BSON document declares its size, so the reader can continue after it
+    even if an element in it cannot be read. This requires a size that ends
+    the document after the current position.
+    */
+    bool can_skip_to_bson_document_end() const noexcept
+    {
+        const container_frame& top = container_stack.back();
+        return top.declared_size >= 5 && top.start_position + static_cast<std::size_t>(top.declared_size) - 1 >= chars_read;
+    }
+
+    /*!
+    @brief skip the rest of a BSON document after an element that could not be
+           read
+
+    Called by @ref resync. Passes null for the element and skips to the
+    document's terminator, which the reading loop reads next. The elements
+    after the one that could not be read are lost.
+
+    @pre @ref can_skip_to_bson_document_end
+    @return whether reading continues
+    */
+    bool skip_to_bson_document_end()
+    {
+        const container_frame& top = container_stack.back();
+        const std::size_t terminator = top.start_position + static_cast<std::size_t>(top.declared_size) - 1;
+        return skip_bytes(terminator - chars_read, "document") && sax->null();
+    }
+
+    /*!
+    @brief skip a BSON element of a type the library does not read
+
+    Called after its error was reported. The BSON specification defines the
+    size of the value of every element type, so when recovering, the value is
+    skipped and null passed instead. A type the specification does not define,
+    or a string length that cannot be right, loses the end of the element; the
+    rest of the document is then skipped (see @ref resync).
+
+    @param[in] element_type  the element's type
+    @return whether the value was skipped and null passed instead
+    */
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    bool skip_unsupported_bson_element(const char_int_type element_type)
+    {
+        // the number of bytes to skip, or -1 if the value is read differently
+        std::int64_t size = -1;
+        switch (element_type)
+        {
+            case 0x06: // undefined (deprecated)
+            case 0x7F: // max key
+            case 0xFF: // min key
+                size = 0;
+                break;
+
+            case 0x07: // ObjectId
+                size = 12;
+                break;
+
+            case 0x09: // UTC datetime
+                size = 8;
+                break;
+
+            case 0x13: // 128-bit decimal floating point
+                size = 16;
+                break;
+
+            case 0x0B: // regular expression: two C strings
+            case 0x0C: // DBPointer (deprecated): string and 12 bytes
+            case 0x0D: // JavaScript code: string
+            case 0x0E: // symbol (deprecated): string
+            case 0x0F: // JavaScript code with scope: size of it all, string, document
+                break;
+
+            default: // a type the specification does not define
+                skip_requested = true;
+                return false;
+        }
+
+        if (!repair_requested())
+        {
+            return false;
+        }
+
+        if (element_type == 0x0B)
+        {
+            string_t ignored;
+            return get_bson_cstr(ignored) && get_bson_cstr(ignored) && sax->null();
+        }
+
+        if (size < 0)
+        {
+            std::int32_t len{};
+            if (!get_number<std::int32_t, true>(len))
+            {
+                return false;
+            }
+            // the size of code with scope counts the size itself
+            size = (element_type == 0x0F) ? static_cast<std::int64_t>(len) - 4 : len;
+            if (element_type == 0x0C)
+            {
+                size += 12;
+            }
+            if (JSON_HEDLEY_UNLIKELY(size < 0 || (element_type != 0x0F && len < 1)))
+            {
+                // the end of the element is lost after all: undo the repair,
+                // so that resync() skips the rest of the document or reading
+                // stops
+                close_requested = true;
+                skip_requested = true;
+                return false;
+            }
+        }
+
+        return skip_bytes(static_cast<std::uint64_t>(size), "value") && sax->null();
+    }
+
+    /// @copydoc skip_unsupported_bson_element
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_INTERNAL_ALWAYS_INLINE
+    constexpr std::false_type skip_unsupported_bson_element(const char_int_type /*element_type*/) const noexcept
+    {
+        return {};
     }
 
     /*!
@@ -421,7 +585,10 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_internal(element_type, element_type_parse_position)))
             {
-                return false;
+                if (!resync())
+                {
+                    return value_failed();
+                }
             }
         }
     }
@@ -512,9 +679,11 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 1))
         {
+            // the end of the element is lost (see resync)
+            skip_requested = true;
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
         }
 
         if (JSON_HEDLEY_UNLIKELY(!get_string(len - static_cast<NumberType>(1), result)))
@@ -525,9 +694,12 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(get() != 0x00))
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message("BSON string is not null-terminated",
-                                            "string"), nullptr));
+            static_cast<void>(report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                           exception_message("BSON string is not null-terminated",
+                                                   "string"), nullptr)));
+            // when recovering, a byte in place of the terminator is dropped;
+            // the end of the input is not
+            return current != char_traits<char_type>::eof() && repair_requested();
         }
 
         return check_string_utf8(result, "string");
@@ -547,9 +719,11 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
+            // the end of the element is lost (see resync)
+            skip_requested = true;
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(concat("byte array length cannot be negative, is ", std::to_string(len)), "binary"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(concat("byte array length cannot be negative, is ", std::to_string(len)), "binary"), nullptr));
         }
 
         // All BSON binary values have a subtype
@@ -642,8 +816,9 @@ class binary_reader
                 std::array<char, 3> cr{{}};
                 static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                 const std::string cr_str{cr.data()};
-                return sax->parse_error(element_type_parse_position, cr_str,
-                                        parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
+                static_cast<void>(report_error(element_type_parse_position, cr_str,
+                                               parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr)));
+                return skip_unsupported_bson_element(element_type);
             }
         }
     }
@@ -968,8 +1143,14 @@ class binary_reader
                 if (tag_handler == cbor_tag_handler_t::error)
                 {
                     auto last_token = get_token_string();
-                    return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                            exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
+                    static_cast<void>(report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                                   exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr)));
+                    if (!repair_requested())
+                    {
+                        return false;
+                    }
+                    // when recovering, the tag is ignored, as RFC 8949,
+                    // Section 6.1 suggests for converting to JSON
                 }
 
                 // ignore and store: the tag value is already in the head, so
@@ -990,8 +1171,15 @@ class binary_reader
                     case cbor_tag_handler_t::error:
                     {
                         auto last_token = get_token_string();
-                        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                                exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
+                        static_cast<void>(report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                                       exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr)));
+                        if (!repair_requested())
+                        {
+                            return false;
+                        }
+                        // when recovering, the tag is ignored, as RFC 8949,
+                        // Section 6.1 suggests for converting to JSON
+                        return parse_cbor_value(false, cbor_tag_handler_t::ignore, tag_pending, item_read);
                     }
 
                     case cbor_tag_handler_t::ignore:
@@ -1066,8 +1254,19 @@ class binary_reader
             default: // anything else (0xFF is handled inside the other types)
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
+                // the simple values other than false, true, and null (0xE0..0xF3,
+                // 0xF7 for undefined, and 0xF8 followed by a byte) are complete
+                const bool simple_value = (current >= 0xE0 && current <= 0xF3) || current == 0xF7 || current == 0xF8;
+                static_cast<void>(report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                               exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr)));
+                if (!simple_value || !repair_requested())
+                {
+                    return false;
+                }
+                // when recovering, a simple value becomes null, as RFC 8949,
+                // Section 6.1 suggests for converting to JSON
+                std::uint8_t ignored{};
+                return (current != 0xF8 || get_number(ignored)) && sax->null();
             }
         }
     }
@@ -1076,14 +1275,14 @@ class binary_reader
     @brief reports a nested indefinite-length CBOR string or byte array
     @param[in] type_name  name of the rejected string type
     @param[in] context  parsing context for the error message
-    @return whether the SAX consumer accepts the parse error
+    @return false, so that the caller stops reading
     */
     bool cbor_indefinite_string_error(const char* type_name, const char* context)
     {
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                exception_message(concat("indefinite-length ", type_name,
-                                        " is not allowed inside indefinite-length ", type_name, "; last byte: 0x", last_token), context), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                            exception_message(concat("indefinite-length ", type_name,
+                                              " is not allowed inside indefinite-length ", type_name, "; last byte: 0x", last_token), context), nullptr));
     }
 
     /*!
@@ -1161,8 +1360,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(concat("expected length specification (0x60-0x7B)", inside_indefinite ? "" : " or indefinite string type (0x7F)", "; last byte: 0x", last_token), "string"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(concat("expected length specification (0x60-0x7B)", inside_indefinite ? "" : " or indefinite string type (0x7F)", "; last byte: 0x", last_token), "string"), nullptr));
             }
         }
     }
@@ -1229,7 +1428,8 @@ class binary_reader
     RFC 8949 allows any data item as a map key, but only strings have a
     counterpart in JSON. A key of any other type is rejected with a message
     naming that type, rather than the one @ref get_cbor_string gives for a
-    malformed string.
+    malformed string. When recovering, a key that is a complete item is
+    skipped with its value (see @ref skip_member).
 
     @param[out] result  created key
 
@@ -1292,9 +1492,12 @@ class binary_reader
                 break;
         }
 
+        // a key that begins an item is skipped with its value when recovering
+        // (see resync); a break stop code or a reserved byte begins none
+        skip_requested = is_cbor_item_head(static_cast<unsigned int>(current));
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                exception_message(concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                            exception_message(concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr));
     }
 
     /*!
@@ -1376,8 +1579,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(concat("expected length specification (0x40-0x5B)", inside_indefinite ? "" : " or indefinite binary array type (0x5F)", "; last byte: 0x", last_token), "binary"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(concat("expected length specification (0x40-0x5B)", inside_indefinite ? "" : " or indefinite binary array type (0x5F)", "; last byte: 0x", last_token), "binary"), nullptr));
             }
         }
     }
@@ -1523,8 +1726,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::size_t>(len) || len == detail::unknown_size()))
         {
-            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                    exception_message(concat("excessive ", context, " size"), "size"), nullptr));
+            return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                exception_message(concat("excessive ", context, " size"), "size"), nullptr));
         }
         result = conditional_static_cast<std::size_t>(len);
         return true;
@@ -1603,7 +1806,15 @@ class binary_reader
                 if (top.is_object)
                 {
                     key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_object_key(key) || !sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_object_key(key)))
+                    {
+                        if (!resync())
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(!sax->key(key)))
                     {
                         return false;
                     }
@@ -1618,7 +1829,7 @@ class binary_reader
             {
                 if (JSON_HEDLEY_UNLIKELY(!parse_cbor_value(fetch, tag_handler, tag_pending, item_read)))
                 {
-                    return false;
+                    return value_failed();
                 }
                 fetch = !item_read;
             }
@@ -1630,6 +1841,120 @@ class binary_reader
             {
                 return true;
             }
+        }
+    }
+
+    /*!
+    @brief skip the head of a CBOR data item, and its content unless it holds
+           other items (see @ref skip_items)
+
+    @param[in] first  whether the item's first byte has been read
+    @param[in] break_allowed  whether the item may be a break stop code, which
+                              ends an indefinite-length item
+    @param[out] children  the number of items nested in the item, or npos if
+                          they end at a break stop code
+    @param[out] is_break  whether the item was a break stop code
+
+    @return whether the item was read
+    */
+    bool skip_cbor_item_head(const bool first, const bool break_allowed, std::size_t& children, bool& is_break)
+    {
+        if (!first)
+        {
+            get();
+        }
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("value")))
+        {
+            return false;
+        }
+
+        if (current == 0xFF && break_allowed)
+        {
+            is_break = true;
+            return true;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(!is_cbor_item_head(static_cast<unsigned int>(current))))
+        {
+            auto last_token = get_token_string();
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
+        }
+
+        const auto major_type = static_cast<unsigned int>(current) >> 5u;
+        std::uint64_t argument = static_cast<unsigned int>(current) & 0x1Fu;
+        switch (argument)
+        {
+            case 24:
+            {
+                std::uint8_t number{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(number)))
+                {
+                    return false;
+                }
+                argument = number;
+                break;
+            }
+
+            case 25:
+            {
+                std::uint16_t number{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(number)))
+                {
+                    return false;
+                }
+                argument = number;
+                break;
+            }
+
+            case 26:
+            {
+                std::uint32_t number{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(number)))
+                {
+                    return false;
+                }
+                argument = number;
+                break;
+            }
+
+            case 27:
+            {
+                if (JSON_HEDLEY_UNLIKELY(!get_number(argument)))
+                {
+                    return false;
+                }
+                break;
+            }
+
+            case 31: // indefinite length: chunks or elements until a break
+                children = npos;
+                return true;
+
+            default:
+                break;
+        }
+
+        switch (major_type)
+        {
+            case 2: // byte string
+            case 3: // text string
+                return skip_bytes(argument, major_type == 2 ? "binary" : "string");
+
+            case 4: // array
+                children = item_count(argument, false);
+                return true;
+
+            case 5: // map
+                children = item_count(argument, true);
+                return true;
+
+            case 6: // tag: the tagged item follows
+                children = 1;
+                return true;
+
+            default: // integers, simple values, and floats end with their argument
+                return true;
         }
     }
 
@@ -2012,8 +2337,8 @@ class binary_reader
             default: // anything else
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
             }
         }
     }
@@ -2095,8 +2420,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", last_token), "string"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", last_token), "string"), nullptr));
             }
         }
     }
@@ -2107,7 +2432,8 @@ class binary_reader
     The MessagePack specification allows any type as a map key, but only
     strings have a counterpart in JSON. A key of any other type is rejected
     with a message naming that type, rather than the one @ref
-    get_msgpack_string gives for a malformed string.
+    get_msgpack_string gives for a malformed string. When recovering, the key
+    is skipped with its value (see @ref skip_member).
 
     @param[out] result  created key
 
@@ -2188,9 +2514,11 @@ class binary_reader
                 break;
         }
 
+        // the key is skipped with its value when recovering (see resync)
+        skip_requested = true;
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                exception_message(concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                            exception_message(concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr));
     }
 
     /*!
@@ -2354,7 +2682,15 @@ class binary_reader
                 {
                     get();
                     key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_msgpack_object_key(key) || !sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_msgpack_object_key(key)))
+                    {
+                        if (!resync())
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(!sax->key(key)))
                     {
                         return false;
                     }
@@ -2363,7 +2699,7 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_value()))
             {
-                return false;
+                return value_failed();
             }
 
             // a value that opened a container left it on the stack; one that
@@ -2371,6 +2707,147 @@ class binary_reader
             if (container_stack.empty())
             {
                 return true;
+            }
+        }
+    }
+
+    /*!
+    @brief skip the head of a MessagePack item, and its content unless it
+           holds other items (see @ref skip_items)
+
+    @param[in] first  whether the item's first byte has been read
+    @param[out] children  the number of items nested in the item
+
+    @return whether the item was read
+    */
+    bool skip_msgpack_item_head(const bool first, std::size_t& children)
+    {
+        if (!first)
+        {
+            get();
+        }
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("value")))
+        {
+            return false;
+        }
+
+        // positive and negative fixint
+        if (current <= 0x7F || current >= 0xE0)
+        {
+            return true;
+        }
+
+        // fixmap, fixarray, and fixstr
+        if (current <= 0x8F)
+        {
+            children = item_count(static_cast<unsigned int>(current) & 0x0Fu, true);
+            return true;
+        }
+        if (current <= 0x9F)
+        {
+            children = static_cast<unsigned int>(current) & 0x0Fu;
+            return true;
+        }
+        if (current <= 0xBF)
+        {
+            return skip_bytes(static_cast<unsigned int>(current) & 0x1Fu, "string");
+        }
+
+        const auto head = current;
+        const char* context = (head >= 0xD9) ? "string" : "binary";
+        switch (head)
+        {
+            case 0xC0: // nil
+            case 0xC2: // false
+            case 0xC3: // true
+                return true;
+
+            case 0xC4: // bin 8
+            case 0xC7: // ext 8
+            case 0xD9: // str 8
+            {
+                std::uint8_t len{};
+                return get_number(len) && skip_bytes(len + (head == 0xC7 ? 1u : 0u), context);
+            }
+
+            case 0xC5: // bin 16
+            case 0xC8: // ext 16
+            case 0xDA: // str 16
+            {
+                std::uint16_t len{};
+                return get_number(len) && skip_bytes(len + (head == 0xC8 ? 1u : 0u), context);
+            }
+
+            case 0xC6: // bin 32
+            case 0xC9: // ext 32
+            case 0xDB: // str 32
+            {
+                std::uint32_t len{};
+                return get_number(len) && skip_bytes(static_cast<std::uint64_t>(len) + (head == 0xC9 ? 1u : 0u), context);
+            }
+
+            case 0xCC: // uint 8
+            case 0xD0: // int 8
+                return skip_bytes(1, "number");
+
+            case 0xCD: // uint 16
+            case 0xD1: // int 16
+                return skip_bytes(2, "number");
+
+            case 0xCA: // float 32
+            case 0xCE: // uint 32
+            case 0xD2: // int 32
+                return skip_bytes(4, "number");
+
+            case 0xCB: // float 64
+            case 0xCF: // uint 64
+            case 0xD3: // int 64
+                return skip_bytes(8, "number");
+
+            case 0xD4: // fixext 1
+                return skip_bytes(2, "binary");
+
+            case 0xD5: // fixext 2
+                return skip_bytes(3, "binary");
+
+            case 0xD6: // fixext 4
+                return skip_bytes(5, "binary");
+
+            case 0xD7: // fixext 8
+                return skip_bytes(9, "binary");
+
+            case 0xD8: // fixext 16
+                return skip_bytes(17, "binary");
+
+            case 0xDC: // array 16
+            case 0xDE: // map 16
+            {
+                std::uint16_t len{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(len)))
+                {
+                    return false;
+                }
+                children = item_count(len, head == 0xDE);
+                return true;
+            }
+
+            case 0xDD: // array 32
+            case 0xDF: // map 32
+            {
+                std::uint32_t len{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(len)))
+                {
+                    return false;
+                }
+                children = item_count(len, head == 0xDF);
+                return true;
+            }
+
+            default: // 0xC1, which is never used
+            {
+                auto last_token = get_token_string();
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(concat("invalid byte: 0x", last_token), "value"), nullptr));
             }
         }
     }
@@ -2397,7 +2874,7 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(prefix)))
             {
-                return false;
+                return value_failed();
             }
 
             // the value begun here is complete once it is not inside anything
@@ -2499,8 +2976,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                    exception_message("string length must not be negative", "string"), nullptr));
+            return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                exception_message("string length must not be negative", "string"), nullptr));
         }
         return true;
     }
@@ -2611,7 +3088,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(message, "string"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(message, "string"), nullptr));
     }
 
     /*!
@@ -2696,13 +3173,13 @@ class binary_reader
         }
         if (JSON_HEDLEY_UNLIKELY(number < 0))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                    exception_message("count in an optimized container must be positive", "size"), nullptr));
+            return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                exception_message("count in an optimized container must be positive", "size"), nullptr));
         }
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::size_t>(number)))
         {
-            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                    exception_message("integer value overflow", "size"), nullptr));
+            return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                exception_message("integer value overflow", "size"), nullptr));
         }
         result = static_cast<std::size_t>(number); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
         return true;
@@ -2799,8 +3276,8 @@ class binary_reader
                 }
                 if (!value_in_range_of<std::size_t>(number))
                 {
-                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                            exception_message("integer value overflow", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                        exception_message("integer value overflow", "size"), nullptr));
                 }
                 result = detail::conditional_static_cast<std::size_t>(number);
                 return true;
@@ -2814,7 +3291,7 @@ class binary_reader
                 }
                 if (is_ndarray) // ndarray dimensional vector can only contain integers and cannot embed another array
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message("ndarray dimensional vector is not allowed", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message("ndarray dimensional vector is not allowed", "size"), nullptr));
                 }
                 std::vector<size_t> dim;
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
@@ -2841,6 +3318,8 @@ class binary_reader
                     {
                         return false;
                     }
+                    // the object is open from here on (see close_open_containers)
+                    ndarray_open = 1;
 
                     // the element type precedes the dimension vector (see get_ubjson_size_type)
                     // and is passed down as ndarray_dtype; emit it here so the annotation keys
@@ -2851,8 +3330,8 @@ class binary_reader
                         if (JSON_HEDLEY_UNLIKELY(type_name == nullptr))
                         {
                             auto last_token = get_token_string();
-                            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                                    exception_message("invalid byte: 0x" + last_token, "type"), nullptr));
+                            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                                exception_message("invalid byte: 0x" + last_token, "type"), nullptr));
                         }
 
                         string_t type_key = "_ArrayType_";
@@ -2868,6 +3347,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    ndarray_open = 2;
                     result = 1;
                     for (auto i : dim)
                     {
@@ -2880,7 +3360,7 @@ class binary_reader
                         // or SIZE_MAX.
                         if (JSON_HEDLEY_UNLIKELY(result > (std::numeric_limits<std::size_t>::max)() / i))
                         {
-                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message("excessive ndarray size caused overflow", "size"), nullptr));
+                            return report_error(chars_read, get_token_string(), out_of_range::create(408, exception_message("excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         result *= i;
                         // the pre-check above already rules out result becoming 0
@@ -2889,7 +3369,7 @@ class binary_reader
                         // unknown-size container (see get_ubjson_size_type())
                         if (result == npos)
                         {
-                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message("excessive ndarray size caused overflow", "size"), nullptr));
+                            return report_error(chars_read, get_token_string(), out_of_range::create(408, exception_message("excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!emit_unsigned(i)))
                         {
@@ -2897,6 +3377,7 @@ class binary_reader
                         }
                     }
                     is_ndarray = true;
+                    ndarray_open = 1;
                     return sax->end_array();
                 }
                 result = 0;
@@ -2917,7 +3398,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(message, "size"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(message, "size"), nullptr));
     }
 
     /*!
@@ -2951,8 +3432,8 @@ class binary_reader
                     && JSON_HEDLEY_UNLIKELY(is_bjd_excluded_optimized_type(result.second)))
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(concat("marker 0x", last_token, " is not a permitted optimized array type"), "type"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(concat("marker 0x", last_token, " is not a permitted optimized array type"), "type"), nullptr));
             }
 
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("type")))
@@ -2968,8 +3449,8 @@ class binary_reader
                     return false;
                 }
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
             }
 
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray, 0, result.second);
@@ -2988,8 +3469,8 @@ class binary_reader
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
             {
-                return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                        exception_message("ndarray requires both type and size", "size"), nullptr));
+                return report_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                    exception_message("ndarray requires both type and size", "size"), nullptr));
             }
             return is_error;
         }
@@ -3122,8 +3603,16 @@ class binary_reader
                 if (JSON_HEDLEY_UNLIKELY(current > 127))
                 {
                     auto last_token = get_token_string();
-                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                            exception_message(concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
+                    static_cast<void>(report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                                   exception_message(concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr)));
+                    if (!repair_requested())
+                    {
+                        return false;
+                    }
+                    // when recovering, the character becomes U+FFFD, as with
+                    // error_handler_t::replace
+                    string_t replacement = sanitize_utf8(string_t(1, static_cast<typename string_t::value_type>(current)), error_handler_t::replace);
+                    return sax->string(replacement);
                 }
                 string_t s(1, static_cast<typename string_t::value_type>(current));
                 return sax->string(s);
@@ -3145,7 +3634,7 @@ class binary_reader
                 break;
         }
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message("invalid byte: 0x" + last_token, "value"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message("invalid byte: 0x" + last_token, "value"), nullptr));
     }
 
     /*!
@@ -3180,6 +3669,7 @@ class binary_reader
             {
                 return false;
             }
+            ndarray_open = 2;
 
             for (std::size_t i = 0; i < size_and_type.first; ++i)
             {
@@ -3189,6 +3679,7 @@ class binary_reader
                 }
             }
 
+            ndarray_open = 0;
             return (sax->end_array() && sax->end_object());
         }
 
@@ -3208,8 +3699,8 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY((size_and_type.second == 'Z' || size_and_type.second == 'T' || size_and_type.second == 'F')
                                      && size_and_type.first > max_valueless_container_size))
             {
-                return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                        exception_message("excessive array size", "size"), nullptr));
+                return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                    exception_message("excessive array size", "size"), nullptr));
             }
 
             if (JSON_HEDLEY_UNLIKELY(!enter_array(size_and_type.first, size_and_type.second)))
@@ -3245,8 +3736,8 @@ class binary_reader
         if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message("BJData object does not support ND-array size in optimized format", "object"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message("BJData object does not support ND-array size in optimized format", "object"), nullptr));
         }
 
         if (size_and_type.first != npos)
@@ -3283,8 +3774,11 @@ class binary_reader
             // the lexer would stop at a NUL and accept the digits before it
             if (JSON_HEDLEY_UNLIKELY(current == '\0'))
             {
-                return sax->parse_error(chars_read, "00", parse_error::create(115, chars_read,
-                                        exception_message("invalid number text; last byte: 0x00", "high-precision number"), nullptr));
+                static_cast<void>(report_error(chars_read, "00", parse_error::create(115, chars_read,
+                                               exception_message("invalid number text; last byte: 0x00", "high-precision number"), nullptr)));
+                // when recovering, the number ends at the NUL, as it would in
+                // JSON text, and the rest of its bytes are skipped
+                return recover_high_precision_number(number_vector, size - i - 1);
             }
             number_vector.push_back(static_cast<char>(current));
         }
@@ -3300,8 +3794,9 @@ class binary_reader
 
         if (JSON_HEDLEY_UNLIKELY(result_remainder != token_type::end_of_input))
         {
-            return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                    exception_message(concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
+            static_cast<void>(report_error(chars_read, number_string, parse_error::create(115, chars_read,
+                                           exception_message(concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr)));
+            return recover_high_precision_number(number_vector);
         }
 
         switch (result_number)
@@ -3315,10 +3810,16 @@ class binary_reader
                 const auto parsed_float = number_lexer.get_number_float();
                 if (JSON_HEDLEY_UNLIKELY(!std::isfinite(parsed_float)))
                 {
-                    return sax->parse_error(
-                               chars_read,
-                               number_string,
-                               out_of_range::create(406, concat("number overflow parsing '", number_string, '\''), nullptr));
+                    // when recovering, the number is passed as infinity with
+                    // its text, as it is in JSON text
+                    static_cast<void>(report_error(
+                                          chars_read,
+                                          number_string,
+                                          out_of_range::create(406, concat("number overflow parsing '", number_string, '\''), nullptr)));
+                    if (!repair_requested())
+                    {
+                        return false;
+                    }
                 }
                 // number_string is a std::string, while the SAX interface takes a
                 // string_t; convert explicitly, as the two are only implicitly
@@ -3340,9 +3841,75 @@ class binary_reader
             case token_type::end_of_input:
             case token_type::literal_or_value:
             default:
-                return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                        exception_message(concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
+                static_cast<void>(report_error(chars_read, number_string, parse_error::create(115, chars_read,
+                                               exception_message(concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr)));
+                return recover_high_precision_number(number_vector);
         }
+    }
+
+    /*!
+    @brief pass what can be read of an invalid high-precision number
+
+    Called after the number's error was reported. If the SAX parser asked to
+    recover, keeps the longest beginning of the text that is a number, like the
+    parser for JSON text, or passes null if there is none.
+
+    @param[in] number_vector  the number's text
+    @param[in] remaining      the number of bytes of the number that are not
+                              read yet; they are skipped
+    @return whether the SAX parser asked to recover and accepted the value
+    */
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    bool recover_high_precision_number(const std::vector<char>& number_vector, const std::size_t remaining = 0)
+    {
+        if (!repair_requested() || !skip_bytes(remaining, "number"))
+        {
+            return false;
+        }
+
+        using ia_type = decltype(detail::input_adapter(number_vector));
+        auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(number_vector), false);
+        using token_type = typename detail::lexer_base<BasicJsonType>::token_type;
+
+        auto token = number_lexer.scan();
+        if (token == token_type::parse_error)
+        {
+            token = number_lexer.recover_token();
+        }
+
+        switch (token)
+        {
+            case token_type::value_integer:
+                return sax->number_integer(number_lexer.get_number_integer());
+            case token_type::value_unsigned:
+                return sax->number_unsigned(number_lexer.get_number_unsigned());
+            case token_type::value_float:
+                return sax->number_float(number_lexer.get_number_float(), number_lexer.get_string());
+            case token_type::uninitialized:
+            case token_type::literal_true:
+            case token_type::literal_false:
+            case token_type::literal_null:
+            case token_type::value_string:
+            case token_type::begin_array:
+            case token_type::begin_object:
+            case token_type::end_array:
+            case token_type::end_object:
+            case token_type::name_separator:
+            case token_type::value_separator:
+            case token_type::parse_error:
+            case token_type::end_of_input:
+            case token_type::literal_or_value:
+            default:
+                return sax->null();
+        }
+    }
+
+    /// @copydoc recover_high_precision_number
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_INTERNAL_ALWAYS_INLINE
+    constexpr std::false_type recover_high_precision_number(const std::vector<char>& /*number_vector*/, const std::size_t /*remaining*/ = 0) const noexcept
+    {
+        return {};
     }
 
     //////////
@@ -3409,8 +3976,8 @@ class binary_reader
     bool bon8_error(const std::string& detail, const char* context)
     {
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                exception_message(concat(detail, ": 0x", last_token), context), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                            exception_message(concat(detail, ": 0x", last_token), context), nullptr));
     }
 
     /*!
@@ -3477,7 +4044,15 @@ class binary_reader
                 if (top.is_object)
                 {
                     key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_key(key) || !sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_key(key)))
+                    {
+                        if (!resync())
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(!sax->key(key)))
                     {
                         return false;
                     }
@@ -3486,7 +4061,7 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(!parse_bon8_value()))
             {
-                return false;
+                return value_failed();
             }
 
             // a value that opened a container left it on the stack; one that
@@ -3755,7 +4330,122 @@ class binary_reader
             current = byte;
         }
 
+        // an end-of-container marker is no value; any other byte begins one,
+        // and the member is skipped when recovering (see skip_member)
+        skip_requested = byte != 0xFE;
         return bon8_error("expected a string; last byte", "key");
+    }
+
+    /*!
+    @brief skip a BON8 value, except the elements of a container (see @ref
+           skip_items)
+
+    @param[in] first  whether the value's first byte has been read
+    @param[in] end_allowed  whether the byte may be an end-of-container marker
+    @param[out] children  the number of values nested in the value, or npos if
+                          they end at an end-of-container marker
+    @param[out] is_end  whether the byte was an end-of-container marker
+
+    @return whether the value was read
+    */
+    bool skip_bon8_item_head(const bool first, const bool end_allowed, std::size_t& children, bool& is_end)
+    {
+        const auto byte = first ? current : get_bon8();
+
+        if (byte == char_traits<char_type>::eof())
+        {
+            return unexpect_eof("value");
+        }
+
+        if (byte == 0xFE && end_allowed)
+        {
+            is_end = true;
+            return true;
+        }
+
+        // string: ASCII character
+        if (byte <= 0x7F)
+        {
+            string_t ignored;
+            unget_bon8(byte);
+            return get_bon8_string(ignored);
+        }
+
+        // arrays and objects
+        if (byte <= 0x84)
+        {
+            children = static_cast<std::size_t>(byte - 0x80);
+            return true;
+        }
+        if (byte == 0x85 || byte == 0x8B)
+        {
+            children = npos;
+            return true;
+        }
+        if (byte <= 0x8A)
+        {
+            children = item_count(static_cast<std::uint64_t>(byte - 0x86), true);
+            return true;
+        }
+
+        switch (byte)
+        {
+            case 0x8C: // int32
+            case 0x8E: // binary32
+                return skip_bon8_bytes(4);
+
+            case 0x8D: // int64
+            case 0x8F: // binary64
+                return skip_bon8_bytes(8);
+
+            case 0xFE: // end of container where a value is expected
+                return bon8_error("invalid byte", "value");
+
+            default:
+                break;
+        }
+
+        // integers 0..39 and -1..-10, and the values 0xF8..0xFD and 0xFF
+        if (byte <= 0xC1 || byte >= 0xF8)
+        {
+            return true;
+        }
+
+        // 0xC2..0xF7: a UTF-8 lead byte begins a string if a continuation
+        // byte follows and an integer of 2..4 bytes otherwise
+        const auto second = get_bon8();
+        if (is_bon8_continuation(second))
+        {
+            string_t ignored;
+            unget_bon8(second);
+            unget_bon8(byte);
+            return get_bon8_string(ignored);
+        }
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("number")))
+        {
+            return false;
+        }
+        if (byte <= 0xDF)
+        {
+            return skip_bon8_bytes(0);
+        }
+        return skip_bon8_bytes((byte <= 0xEF) ? 1 : 2);
+    }
+
+    /*!
+    @param[in] len  the number of bytes to skip
+    @return whether the input had that many bytes
+    */
+    bool skip_bon8_bytes(int len)
+    {
+        for (; len != 0; --len)
+        {
+            if (JSON_HEDLEY_UNLIKELY(get_bon8() == char_traits<char_type>::eof()))
+            {
+                return unexpect_eof("number");
+            }
+        }
+        return true;
     }
 
     /*!
@@ -3937,8 +4627,7 @@ class binary_reader
         {
             // in case of failure, advance position by 1 to report the failing location
             ++chars_read;
-            sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, exception_message("unexpected end of input", context), nullptr));
-            return false;
+            return report_error(chars_read, "<end of file>", parse_error::create(110, chars_read, exception_message("unexpected end of input", context), nullptr));
         }
         return true;
     }
@@ -4090,8 +4779,13 @@ class binary_reader
         const auto result = static_cast<number_float_t>(number);
         if (JSON_HEDLEY_UNLIKELY(std::isfinite(number) && !std::isfinite(result)))
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    out_of_range::create(406, exception_message("number overflow", "value"), nullptr));
+            static_cast<void>(report_error(chars_read, get_token_string(),
+                                           out_of_range::create(406, exception_message("number overflow", "value"), nullptr)));
+            // when recovering, the number becomes infinity, as in JSON text
+            if (!repair_requested())
+            {
+                return false;
+            }
         }
         return sax->number_float(result, "");
     }
@@ -4212,8 +4906,16 @@ class binary_reader
         if (error_handler == error_handler_t::strict)
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                    exception_message("invalid string: ill-formed UTF-8 byte", context), nullptr));
+            static_cast<void>(report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                           exception_message("invalid string: ill-formed UTF-8 byte", context), nullptr)));
+            // when recovering, the string is repaired as with
+            // error_handler_t::replace
+            if (!repair_requested())
+            {
+                return false;
+            }
+            result = sanitize_utf8(result, error_handler_t::replace);
+            return true;
         }
 
         result = sanitize_utf8(result, error_handler);
@@ -4300,16 +5002,308 @@ class binary_reader
     }
 
     /*!
+    @brief report an error to the SAX parser and remember its answer
+
+    After most errors, it is unknown where the item that was being read ends:
+    the input ended, a byte is not a valid type marker, or a size cannot be
+    right. The binary formats have no delimiters to find the next item by, so
+    reading stops, whatever the SAX parser's parse_error() returns. If it asks
+    to recover, the value read so far is completed before @ref sax_parse
+    returns (see @ref close_open_containers and #3989). Where the end of the
+    item is known, the caller can repair the item instead (see @ref
+    repair_requested and @ref resync).
+
+    @return false, so that the caller stops reading
+    */
+    template<typename Exception>
+    JSON_INTERNAL_ALWAYS_INLINE
+    bool report_error(const std::size_t position, const std::string& last_token, const Exception& ex)
+    {
+        close_requested = sax->parse_error(position, last_token, ex);
+        return false;
+    }
+
+    // The functions below have a second variant for readers that do not
+    // recover. It only returns, so that the code that recovers is not even
+    // referenced there, and unoptimized builds do not emit it either.
+
+    /*!
+    @brief whether to repair an item whose error was just reported
+
+    Some items are complete, but cannot be passed on as they are: a CBOR tag or
+    simple value, a string that is not valid UTF-8, or a BSON element of a type
+    the library does not read. If the SAX parser asked to recover from the
+    error, the caller replaces the item and reads on after it (RFC 8949,
+    Section 5.3).
+
+    @return whether the caller repairs the item and reads on
+    */
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    bool repair_requested() noexcept
+    {
+        if (!close_requested)
+        {
+            return false;
+        }
+        // reading goes on, but sax_parse() returns false
+        close_requested = false;
+        error_repaired = true;
+        return true;
+    }
+
+    /// @copydoc repair_requested
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_INTERNAL_ALWAYS_INLINE
+    constexpr std::false_type repair_requested() const noexcept
+    {
+        return {};
+    }
+
+    /*!
+    @brief stop after the value of an array element or object member could not
+           be read
+
+    A value that could not be read has passed no event, except the object that
+    a BJData ndarray begins with, so the key of an object member still waits
+    for its value; @ref close_open_containers passes null for it.
+
+    @return false, so that the caller stops reading
+    */
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    bool value_failed() noexcept
+    {
+        key_pending = !container_stack.empty() && container_stack.back().is_object && ndarray_open == 0;
+        return false;
+    }
+
+    /// @copydoc value_failed
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_INTERNAL_ALWAYS_INLINE
+    constexpr std::false_type value_failed() const noexcept
+    {
+        return {};
+    }
+
+    /*!
+    @brief complete the value read before an error
+
+    Does nothing unless the SAX parser's parse_error() asked to recover from the
+    error that stopped reading. Otherwise passes null for a key that waits for
+    its value and closes the arrays and objects that are still open, innermost
+    first, until an event returns false.
+    */
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    void close_open_containers()
+    {
+        if (!close_requested)
+        {
+            return;
+        }
+
+        if (key_pending && !sax->null())
+        {
+            return;
+        }
+
+        // the object of a BJData ndarray and the array inside it are not on
+        // the stack, as their elements are always read in one go
+        if (ndarray_open == 2 && !sax->end_array())
+        {
+            return;
+        }
+        if (ndarray_open != 0 && !sax->end_object())
+        {
+            return;
+        }
+
+        while (!container_stack.empty())
+        {
+            const bool is_object = container_stack.back().is_object;
+            container_stack.pop_back();
+            if (is_object ? !sax->end_object() : !sax->end_array())
+            {
+                return;
+            }
+        }
+    }
+
+    /// @copydoc close_open_containers
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_INTERNAL_ALWAYS_INLINE
+    void close_open_containers() const noexcept {}
+
+    /*!
+    @brief skip an item whose error was just reported, if its end can be found
+
+    Called after reading an object key or a BSON element failed. The error
+    sites set @ref skip_requested for an item that can be skipped:
+    - an object key that is a complete item, but not a string: the key, whose
+      first byte has been read, and the value after it are skipped, like the
+      parser for JSON text skips a member without a key;
+    - a BSON element whose end is lost: it gets null, and the rest of its
+      document is skipped (see @ref skip_to_bson_document_end).
+
+    @return whether the SAX parser asked to recover, the item was skipped, and
+            reading continues
+    */
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    bool resync()
+    {
+        if (!skip_requested)
+        {
+            return false;
+        }
+        skip_requested = false;
+
+        if (input_format == input_format_t::bson)
+        {
+            // without a usable document size, reading stops
+            return can_skip_to_bson_document_end() && repair_requested() && skip_to_bson_document_end();
+        }
+        return repair_requested() && skip_items(2);
+    }
+
+    /// @copydoc resync
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    JSON_INTERNAL_ALWAYS_INLINE
+    constexpr std::false_type resync() const noexcept
+    {
+        return {};
+    }
+
+    /*!
+    @brief skip complete items without passing them to the SAX parser
+
+    Reads the items with their nested items, keeping one count of items left to
+    skip per nesting level, so that deeply nested items cost heap rather than
+    native stack.
+
+    @param[in] count  the number of items to skip; the first byte of the first
+                      one has been read
+
+    @return whether the items were skipped
+    */
+    bool skip_items(const std::size_t count)
+    {
+        // items left to skip on each level, or npos for a level that ends at
+        // a marker
+        std::vector<std::size_t> levels(1, count);
+        bool first = true;
+
+        while (!levels.empty())
+        {
+            if (levels.back() == 0)
+            {
+                levels.pop_back();
+                continue;
+            }
+
+            // the number of items nested in the item, or npos if they end at
+            // a marker
+            std::size_t children = 0;
+            bool end_marker = false;
+            const bool marker_allowed = levels.back() == npos;
+            switch (input_format)
+            {
+                case input_format_t::cbor:
+                    if (!skip_cbor_item_head(first, marker_allowed, children, end_marker))
+                    {
+                        return false;
+                    }
+                    break;
+
+                case input_format_t::msgpack:
+                    if (!skip_msgpack_item_head(first, children))
+                    {
+                        return false;
+                    }
+                    break;
+
+                case input_format_t::bon8:
+                    if (!skip_bon8_item_head(first, marker_allowed, children, end_marker))
+                    {
+                        return false;
+                    }
+                    break;
+
+                // the other formats have no object keys that are skipped
+                case input_format_t::json:   // LCOV_EXCL_LINE
+                case input_format_t::bson:   // LCOV_EXCL_LINE
+                case input_format_t::ubjson: // LCOV_EXCL_LINE
+                case input_format_t::bjdata: // LCOV_EXCL_LINE
+                default:                     // LCOV_EXCL_LINE
+                    JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+                    return false;       // LCOV_EXCL_LINE
+            }
+            first = false;
+
+            if (end_marker)
+            {
+                levels.pop_back();
+                continue;
+            }
+
+            if (levels.back() != npos)
+            {
+                --levels.back();
+            }
+            if (children != 0)
+            {
+                levels.push_back(children);
+            }
+        }
+
+        return true;
+    }
+
+    /*!
+    @brief the number of items a container of @a len elements holds
+
+    @param[in] len    the declared number of elements
+    @param[in] pairs  whether the container is an object, whose elements are
+                      pairs of items
+    @return the number of items, capped below npos, which marks a container
+            that ends at a marker; the input ends before a capped count is
+            reached
+    */
+    static std::size_t item_count(const std::uint64_t len, const bool pairs) noexcept
+    {
+        const std::uint64_t max_len = conditional_static_cast<std::uint64_t>(npos - 1) / (pairs ? 2u : 1u);
+        const std::uint64_t capped = (len < max_len) ? len : max_len;
+        return conditional_static_cast<std::size_t>(pairs ? 2 * capped : capped);
+    }
+
+    /*!
+    @brief skip bytes of an item that is not passed on
+
+    @param[in] len      the number of bytes to skip
+    @param[in] context  further context information (for diagnostics)
+    @return whether the input had that many bytes
+    */
+    bool skip_bytes(std::uint64_t len, const char* context)
+    {
+        for (; len != 0; --len)
+        {
+            get();
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(context)))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*!
     @param[in] context  further context information (for diagnostics)
     @return whether the last read character is not EOF
     */
     JSON_HEDLEY_NON_NULL(2)
-    bool unexpect_eof(const char* context) const
+    bool unexpect_eof(const char* context)
     {
         if (JSON_HEDLEY_UNLIKELY(current == char_traits<char_type>::eof()))
         {
-            return sax->parse_error(chars_read, "<end of file>",
-                                    parse_error::create(110, chars_read, exception_message("unexpected end of input", context), nullptr));
+            return report_error(chars_read, "<end of file>",
+                                parse_error::create(110, chars_read, exception_message("unexpected end of input", context), nullptr));
         }
         return true;
     }
@@ -4400,6 +5394,20 @@ class binary_reader
     /// BON8: number of bytes in @ref bon8_pushback
     std::size_t bon8_pushback_size = 0;
 
+    /// whether the SAX parser asked to recover from the error that stopped
+    /// reading, so that @ref close_open_containers completes the value
+    bool close_requested = false;
+    /// whether an error was repaired, so that @ref sax_parse returns false
+    bool error_repaired = false;
+    /// whether an object key waits for the value that could not be read
+    bool key_pending = false;
+    /// whether the item that could not be read is skipped: an object member
+    /// whose key is not a string, or the rest of a BSON document
+    bool skip_requested = false;
+    /// BJData: the containers of an ndarray's annotated array format that are
+    /// open: none, its object, or its object and an array inside it
+    std::uint8_t ndarray_open = 0;
+
   JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief whether @a marker is excluded from BJData's optimized ND-array types
@@ -4458,8 +5466,8 @@ class binary_reader
 };
 
 #ifndef JSON_HAS_CPP_17
-    template<typename BasicJsonType, typename InputAdapterType, typename SAX>
-    constexpr std::size_t binary_reader<BasicJsonType, InputAdapterType, SAX>::npos;
+    template<typename BasicJsonType, typename InputAdapterType, typename SAX, bool AllowRecovery>
+    constexpr std::size_t binary_reader<BasicJsonType, InputAdapterType, SAX, AllowRecovery>::npos;
 #endif
 
 }  // namespace detail
