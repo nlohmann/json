@@ -14,7 +14,7 @@ This file describes the source for supporting files; that is, files that are not
 The [GitHub Actions](https://docs.github.com/en/actions) workflows that build, test, and analyze the library. Each file in this folder defines one workflow:
 
 - `ubuntu.yml`, `macos.yml`, `windows.yml` — build and run the test suite on Linux, macOS, and Windows.
-- `check_amalgamation.yml` — verify that the single-header amalgamation in `single_include` is up to date on pull requests.
+- `check_amalgamation.yml` — verify on pull requests and pushes to `develop` that the generated files (the single-header amalgamation in `single_include`, `BUILD.bazel`, and `nlohmann_json.natvis`) are up to date.
 - `comment_check_amalgamation.yml` — comment on a pull request when the amalgamation check failed.
 - `cifuzz.yml` — run short fuzzing sessions via [OSS-Fuzz CIFuzz](https://google.github.io/oss-fuzz/getting-started/continuous-integration/) on pull requests.
 - `codeql-analysis.yml` — run [CodeQL](https://codeql.github.com) code scanning.
@@ -24,7 +24,9 @@ The [GitHub Actions](https://docs.github.com/en/actions) workflows that build, t
 - `dependency-review.yml` — scan dependency changes in pull requests for known vulnerabilities.
 - `labeler.yml` — the "Pull Request Labeler" workflow (see `.github/labeler.yml`).
 - `stale.yml` — comment on and close stale issues and pull requests.
-- `publish_documentation.yml` — build and publish the documentation on every merge to the `develop` branch.
+- `publish_documentation.yml` — build and publish the documentation on pushes to the `develop` branch that touch the documentation sources (or the files it embeds).
+- `check_docs_links.yml` — check the links of the documentation weekly, as external links can break without any change in this repository.
+- `cancel_closed_pr_runs.yml` — cancel unfinished workflow runs of a pull request once it is closed or merged.
 
 Further documentation:
 
@@ -266,8 +268,9 @@ meson setup builddir
 ninja -C builddir
 ```
 
-`meson_options.txt` defines the options, which mirror the CMake options that change the library's target (for example,
-`-DDiagnostics=true`). Meson requires this file next to `meson.build`, so it is also part of `include.zip`. `make check_build_options`
+`meson_options.txt` defines the options, which mirror the names of the CMake options that change the library's target (for example,
+`-DDiagnostics=true`); their defaults may differ (for example, `MultipleHeaders` defaults to `false` in Meson, while
+`JSON_MultipleHeaders` is `ON` in CMake). Meson requires this file next to `meson.build`, so it is also part of `include.zip`. `make check_build_options`
 ([`tools/check_build_options`](tools/check_build_options/README.md)) checks in CI that both files and the pkg-config files
 stay in sync with the CMake options.
 

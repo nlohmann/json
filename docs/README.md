@@ -7,12 +7,12 @@ This URL provides the most recent documentation and also applies to previous ver
 functions is not removed; instead, it is marked as deprecated.
 
 If you want to view the documentation for a specific tag or commit hash, you can generate it locally as follows (example
-using tag `v3.10.2`):
+using tag `v3.12.0`):
 
 ```shell
 git clone https://github.com/nlohmann/json.git
 cd json
-git checkout v3.10.2
+git checkout v3.12.0
 make install_venv serve -C docs/mkdocs
 ```
 
