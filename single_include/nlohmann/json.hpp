@@ -20173,7 +20173,7 @@ class json_pointer
     {
         ok,                ///< @a s is a valid, representable array index
         leading_zero,      ///< @a s begins with '0' but has more than one character
-        not_a_number,      ///< @a s does not begin with a digit
+        not_a_number,      ///< @a s is neither empty nor "-" and does not begin with a digit
         unresolved,        ///< @a s could not be converted to an integer
         exceeds_size_type  ///< @a s converts to an integer that exceeds size_type
     };
@@ -20200,8 +20200,10 @@ class json_pointer
             return array_index_status::leading_zero;
         }
 
-        // error condition (cf. RFC 6901, Sect. 4)
-        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && !(s[0] >= '1' && s[0] <= '9')))
+        // error condition (cf. RFC 6901, Sect. 4); this also covers single-
+        // character tokens, so "/x" and "/xy" fail alike; "-" and the empty
+        // token are left to the conversion below and are reported as unresolved
+        if (JSON_HEDLEY_UNLIKELY(!s.empty() && s != "-" && !(s[0] >= '0' && s[0] <= '9')))
         {
             return array_index_status::not_a_number;
         }
@@ -27779,6 +27781,14 @@ public:
         // [ a, b, c, d, e, f, g, h, i, j ]
         //               ^        ^
         //             first    last
+
+        // Note on conformance: before C++20, [basic.life]/8 did not allow an
+        // object of a type with a const member (like value_type's const Key)
+        // to transparently replace the destroyed one, so strictly, accessing
+        // it through the vector's existing pointers would have required
+        // std::launder (which does not exist before C++17). C++20 dropped that
+        // condition (P1971R0, NB comment US 041). Compilers have always treated
+        // this pattern as intended, so it is kept deliberately.
 
         // Since we cannot move const Keys, we re-construct them in place.
         // We start at first and re-construct (viz. copy) the elements from

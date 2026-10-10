@@ -36,8 +36,9 @@ The function can throw the following exceptions:
 - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in a key is not a
   number; example: `"array index 'one' is not a number"`
 - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if a level becomes an array
-  (because one of its keys is `0`) and another key at that level cannot be an array index; example:
-  `"unresolved reference token 'x'"`
+  (because one of its keys is `0`) and another key at that level begins with a digit but is not a valid array index
+  (such as `1a`), or is `-`; example:
+  `"unresolved reference token '-'"`
 
 ## Complexity
 
