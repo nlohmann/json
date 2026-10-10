@@ -28,7 +28,9 @@ using nlohmann::json;
 #endif
 
 #ifdef JSON_HAS_CPP_20
-#include <compare>
+#if JSON_HAS_THREE_WAY_COMPARISON
+    #include <compare>
+#endif
 #include <string>
 #include <type_traits>
 

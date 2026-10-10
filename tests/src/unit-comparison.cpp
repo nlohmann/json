@@ -595,7 +595,7 @@ struct unordered_object_t : std::map<Key, Value, directed_less<Key>, Allocator>
 using unordered_json = nlohmann::json::with_object_t<unordered_object_t>;
 
 // the entries "0" to "9", enumerated in ascending or in descending order
-unordered_json make_unordered_object(const bool descending)
+inline unordered_json make_unordered_object(const bool descending)
 {
     unordered_json j = unordered_json::object_t(directed_less<std::string>(descending));
     for (int i = 0; i < 10; ++i)
@@ -676,7 +676,15 @@ using case_insensitive_map = std::map<Key, Value, case_insensitive_less, Allocat
 using ci_json = nlohmann::json::with_object_t<case_insensitive_map>;
 } // namespace unit_comparison_detail
 
-using namespace unit_comparison_detail; // NOLINT(google-build-using-namespace)
+// using-declarations rather than a using-directive, as this file may be
+// #include-d into a batch with other test files (JSON_TestUnityBuild)
+using unit_comparison_detail::ci_json;
+using unit_comparison_detail::innermost;
+using unit_comparison_detail::key_case_json;
+using unit_comparison_detail::key_case_less;
+using unit_comparison_detail::make_unordered_object;
+using unit_comparison_detail::nest;
+using unit_comparison_detail::unordered_json;
 
 TEST_CASE("equality of objects whose entries have no fixed order")
 {
