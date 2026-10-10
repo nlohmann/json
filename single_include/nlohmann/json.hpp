@@ -22495,9 +22495,9 @@ class binary_writer
         }
     }
 
-    /// @brief a CBOR or MessagePack array or object whose elements
-    ///        @ref write_cbor_iterative or @ref write_msgpack_iterative is
-    ///        still writing
+    /// @brief a CBOR, MessagePack, or BON8 array or object whose elements
+    ///        @ref write_cbor_iterative, @ref write_msgpack_iterative, or
+    ///        @ref write_bon8_iterative is still writing
     struct binary_container_frame
     {
         explicit binary_container_frame(const BasicJsonType* value_) noexcept
@@ -24187,9 +24187,26 @@ class binary_writer
     @param[in] j                JSON value to serialize
     @param[in,out] string_open  whether the output ends with a non-empty
                                 string that has not been terminated with 0xFF
+    @param[in] depth            nesting level of @a j, counted from the
+                                top-level value passed to @ref basic_json::to_bon8
+    @throw type_error.316 if a string value or an object key is not valid
+           UTF-8
+    @throw out_of_range.407 if an unsigned integer does not fit int64
+
+    Values nested deeper than @ref recursion_depth_limit are written by
+    @ref write_bon8_iterative without the call stack.
+
+    @sa @ref write_cbor
+    @sa https://github.com/nlohmann/json/issues/5392
     */
-    void write_bon8_value(const BasicJsonType& j, bool& string_open)
+    void write_bon8_value(const BasicJsonType& j, bool& string_open, const std::size_t depth = 0)
     {
+        if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()) && (j.is_array() || j.is_object()))
+        {
+            write_bon8_iterative(j, string_open);
+            return;
+        }
+
         switch (j.type())
         {
             case value_t::null:
@@ -24243,7 +24260,7 @@ class binary_writer
 
                 for (const auto& el : *j.m_data.m_value.array)
                 {
-                    write_bon8_value(el, string_open);
+                    write_bon8_value(el, string_open, depth + 1);
                 }
 
                 if (N > 4)
@@ -24262,7 +24279,7 @@ class binary_writer
                 for (const auto& el : *j.m_data.m_value.object)
                 {
                     write_bon8_string(el.first, string_open, j);
-                    write_bon8_value(el.second, string_open);
+                    write_bon8_value(el.second, string_open, depth + 1);
                 }
 
                 if (N > 4)
@@ -24296,6 +24313,99 @@ class binary_writer
             case value_t::discarded:
             default:
                 break;
+        }
+    }
+
+    /*!
+    @brief write @a j with @ref write_bon8_value, or write its marker and push
+           a frame for @ref write_bon8_iterative to continue with its elements
+
+    A scalar, and an empty array or object, are written out in full and not
+    pushed.
+
+    @sa @ref write_cbor_value_or_push
+    */
+    void write_bon8_value_or_push(const BasicJsonType& j, bool& string_open, std::vector<binary_container_frame>& stack)
+    {
+        if (j.is_array())
+        {
+            const auto N = j.m_data.m_value.array->size();
+            write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x80 + N : 0x85), string_open);
+            if (N != 0)
+            {
+                stack.emplace_back(&j);
+            }
+            return;
+        }
+
+        if (j.is_object())
+        {
+            const auto N = j.m_data.m_value.object->size();
+            write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x86 + N : 0x8B), string_open);
+            if (N != 0)
+            {
+                stack.emplace_back(&j);
+            }
+            return;
+        }
+
+        write_bon8_value(j, string_open);
+    }
+
+    /*!
+    @brief write out @a root and everything below it without the call stack
+
+    A container with more than four elements is closed with 0xFE once its
+    last element is written, as in @ref write_bon8_value.
+
+    @sa @ref write_cbor_iterative
+    */
+    void write_bon8_iterative(const BasicJsonType& root, bool& string_open)
+    {
+        // only a container with elements is ever pushed; see write_bon8_value_or_push
+        std::vector<binary_container_frame> stack;
+        write_bon8_value_or_push(root, string_open, stack);
+
+        while (!stack.empty())
+        {
+            const binary_container_frame current = stack.back();
+
+            if (current.value->is_array())
+            {
+                const auto& array = *current.value->m_data.m_value.array;
+                if (current.array_it == array.cend())
+                {
+                    if (array.size() > 4)
+                    {
+                        write_bon8_marker(0xFE, string_open);
+                    }
+                    stack.pop_back();
+                    continue;
+                }
+
+                // read the child before pushing: entering it can move every frame
+                const BasicJsonType* child = &(*current.array_it);
+                ++stack.back().array_it;
+                write_bon8_value_or_push(*child, string_open, stack);
+            }
+            else
+            {
+                const auto& object = *current.value->m_data.m_value.object;
+                if (current.object_it == object.cend())
+                {
+                    if (object.size() > 4)
+                    {
+                        write_bon8_marker(0xFE, string_open);
+                    }
+                    stack.pop_back();
+                    continue;
+                }
+
+                write_bon8_string(current.object_it->first, string_open, *current.value);
+                const BasicJsonType* child = &(current.object_it->second);
+                ++stack.back().object_it;
+                write_bon8_value_or_push(*child, string_open, stack);
+            }
         }
     }
 
