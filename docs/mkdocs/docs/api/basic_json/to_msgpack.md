@@ -46,6 +46,9 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
+- Throws [`out_of_range.407`](../../home/exceptions.md#jsonexceptionout_of_range407) if `j` contains an integer
+  outside [-2^63, 2^64-1], which is only possible with a number type wider than 64 bits; example:
+  `"integer number 18446744073709551616 cannot be represented by MessagePack as it does not fit [-2^63, 2^64-1]"`
 - Throws [`out_of_range.412`](../../home/exceptions.md#jsonexceptionout_of_range412) if the length of a string, binary
   value, array, or object exceeds 4294967295, the maximum MessagePack can store; example:
   `"MessagePack length 4294967296 exceeds maximum of 4294967295"`
@@ -112,3 +115,5 @@ Linear in the size of the JSON value `j`.
   `number_unsigned_t`.
 - Throws `type_error.321` for a discarded value since version 3.13.0; previously, a discarded value nested in an
   array or object was silently skipped, producing invalid MessagePack.
+- Throws `out_of_range.407` for integers that do not fit 64 bits since version 3.13.0; previously, integers of a
+  number type wider than 64 bits were silently truncated.
