@@ -25,7 +25,8 @@
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
 #include <algorithm> // min
-#include <cstddef> // size_t
+#include <array> // array
+#include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstring> // memcpy, strlen
 #include <istream> // istream
 #include <iterator> // distance, input_iterator_tag, iterator_traits
