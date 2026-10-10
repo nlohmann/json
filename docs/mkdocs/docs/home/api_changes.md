@@ -122,7 +122,7 @@ currently backfilled into `tools/api_checker/history/`).
       }
     ```
 
-### [`nlohmann::operator<<`](../api/basic_json/operator_gtgt.md)
+### [`nlohmann::operator<<`](../api/operator_ltlt.md)
 
 *Adds a new overload.*
 
@@ -212,7 +212,7 @@ currently backfilled into `tools/api_checker/history/`).
     template<typename IteratorType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bjdata(IteratorType first, IteratorType last, const bool strict = true, const bool allow_exceptions = true)
     ```
 
-### [`nlohmann::basic_json::json_pointer`](../api/json_pointer.md)
+### [`nlohmann::basic_json::json_pointer`](../api/json_pointer/index.md)
 
 *Changes the declaration; see the signature diff for details.*
 
@@ -315,7 +315,7 @@ currently backfilled into `tools/api_checker/history/`).
     operator std::string() const
     ```
 
-### [`nlohmann::json_pointer::operator string_t`](../api/json_pointer/operator_string.md)
+### [`nlohmann::json_pointer::operator string_t`](../api/json_pointer/operator_string_t.md)
 
 *New addition to the public API.*
 
@@ -992,7 +992,7 @@ currently backfilled into `tools/api_checker/history/`).
       default: return false; } } else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float) { return static_cast<number_float_t>(lhs.m_value.number_integer) < rh
     ```
 
-### [`nlohmann::operator<<`](../api/basic_json/operator_gtgt.md)
+### [`nlohmann::operator<<`](../api/operator_ltlt.md)
 
 *Adds a new `operator>>(std::istream&, basic_json&)` parameter.*
 
@@ -1003,7 +1003,7 @@ currently backfilled into `tools/api_checker/history/`).
       friend std::istream& operator<<(basic_json& j, std::istream& i) { return operator>>(i, j);
     ```
 
-### [`nlohmann::operator>>`](../api/basic_json/operator_ltlt.md)
+### [`nlohmann::operator>>`](../api/operator_gtgt.md)
 
 *Adds a new `operator<<(std::ostream&, const basic_json&)` parameter.*
 
