@@ -20,7 +20,10 @@ The macro does not affect:
 - The binary readers ([`from_cbor`](../basic_json/from_cbor.md), [`from_msgpack`](../basic_json/from_msgpack.md),
   [`from_ubjson`](../basic_json/from_ubjson.md), [`from_bjdata`](../basic_json/from_bjdata.md),
   [`from_bson`](../basic_json/from_bson.md)): none of these formats requires a decoder to reject ill-formed UTF-8, so
-  they always return the bytes unchanged.
+  by default they return the bytes unchanged (`error_handler_t::keep`), independent of this macro. Pass an
+  `error_handler` argument explicitly to validate or sanitize the strings they read.
+- [`from_bon8`](../basic_json/from_bon8.md): BON8 always validates, because the UTF-8 lead bytes mark where a string
+  ends.
 
 ## Default definition
 

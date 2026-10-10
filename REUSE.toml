@@ -10,10 +10,10 @@ SPDX-FileCopyrightText = "2013-2026 Niels Lohmann <https://nlohmann.me>"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
-path = "include/nlohmann/thirdparty/hedley.hpp"
+path = "include/nlohmann/thirdparty/hedley/hedley.hpp"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2016-2021 Evan Nemerson <evan@nemerson.com>"
-SPDX-License-Identifier = "CC0"
+SPDX-License-Identifier = "CC0-1.0"
 
 [[annotations]]
 path = "include/nlohmann/detail/meta/cpp_future.hpp"
@@ -50,3 +50,9 @@ path = "tools/gdb_pretty_printer/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2020 Hannes Domani <https://github.com/ssbssa>"
 SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "docs/docset/icon*.png"
+precedence = "override"
+SPDX-FileCopyrightText = "JSON logo (public domain), https://commons.wikimedia.org/wiki/File:JSON_vector_logo.svg"
+SPDX-License-Identifier = "CC0-1.0"

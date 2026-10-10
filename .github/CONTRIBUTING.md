@@ -98,7 +98,7 @@ $ ctest --test-dir build -j 10
 The test suite should report:
 
 ```
-100% tests passed, 0 tests failed out of 98
+100% tests passed, 0 tests failed out of <number of tests>
 ```
 
 #### Add tests
@@ -157,8 +157,9 @@ and each page's title (H1) and declaration by
 ### Amalgamate the source code
 
 The single-header files
-[`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) and
-[`single_include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_fwd.hpp)
+[`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp),
+[`single_include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_fwd.hpp), and
+[`single_include/nlohmann/json_literals.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_literals.hpp)
 are **generated** from the source files in the
 [`include/nlohmann` directory](https://github.com/nlohmann/json/tree/develop/include/nlohmann). **Do not** edit the
 files directly; instead, modify the include/nlohmann sources and regenerate the files by executing:
@@ -181,7 +182,7 @@ The amalgamation check in CI fails if any of these generated files is out of dat
 
 ## Recommended documentation
 
-- The library’s [README file](https://github.com/nlohmann/json/blob/master/README.md) is an excellent starting point to
+- The library’s [README file](https://github.com/nlohmann/json/blob/develop/README.md) is an excellent starting point to
   understand its functionality.
 - The [documentation page](https://json.nlohmann.me) is the reference documentation of the library.
 - [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259) is the reference for the JavaScript Object Notation (JSON)
@@ -220,9 +221,9 @@ feature macros then allows users to test their code against the library in the n
 ### Break C++11 language conformance
 
 This library is designed to work with C++11 and later. This means that any
-[supported C++11 compiler](https://github.com/nlohmann/json/blob/master/README.md#supported-compilers) should compile
+[supported C++11 compiler](https://github.com/nlohmann/json/blob/develop/README.md#supported-compilers) should compile
 the library without problems. Some compilers like GCC 4.7 (and earlier), Clang 3.3 (and earlier), or Microsoft Visual
-Studio 13.0 and earlier are known not to work due to missing or incomplete C++11 support.
+C++ 2013 and earlier are known not to work due to missing or incomplete C++11 support.
 
 Please do not add features that do not work with the mentioned supported compilers. Please guard features from C++14 and
 later against the respective [`JSON_HAS_CPP_14`](https://json.nlohmann.me/api/macros/json_has_cpp_11/) macros.
@@ -238,12 +239,11 @@ extension.
 The following areas really need contribution and are always welcomed:
 
 - Extending the **continuous integration** toward more exotic compilers such as Android NDK, Intel's Compiler, or the
-  bleeding-edge versions Clang.
-- Improving the efficiency of the **JSON parser**. The current parser is implemented as a naive recursive descent parser
-  with hand-coded string handling. More sophisticated approaches like LALR parsers would be really appreciated. That
-  said, parser generators like Bison or ANTLR do not play nice with single-header files -- I really would like to keep
-  the parser inside the `json.hpp` header, and I am not aware of approaches similar to [`re2c`](http://re2c.org) for
-  parsing.
+  bleeding-edge versions of Clang.
+- Improving the efficiency of the **JSON parser**. The current parser is a hand-written iterative parser that keeps an
+  explicit stack instead of recursing, with hand-coded string handling. Speeding up the lexer or the value construction
+  would be appreciated. Parser generators like Bison or ANTLR do not play nice with single-header files -- I really
+  would like to keep the parser inside the `json.hpp` header.
 - Extending and updating existing **benchmarks** to include (the most recent version of) this library. Though efficiency
   is not everything, speed and memory consumption are very important characteristics for C++ developers, so having
   proper comparisons would be interesting.
