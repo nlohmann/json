@@ -247,6 +247,14 @@ public:
         //               ^        ^
         //             first    last
 
+        // Note on conformance: before C++20, [basic.life]/8 did not allow an
+        // object of a type with a const member (like value_type's const Key)
+        // to transparently replace the destroyed one, so strictly, accessing
+        // it through the vector's existing pointers would have required
+        // std::launder (which does not exist before C++17). C++20 dropped that
+        // condition (P1971R0, NB comment US 041). Compilers have always treated
+        // this pattern as intended, so it is kept deliberately.
+
         // Since we cannot move const Keys, we re-construct them in place.
         // We start at first and re-construct (viz. copy) the elements from
         // the back of the vector. Example for the first iteration:

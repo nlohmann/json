@@ -421,6 +421,27 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_WITH_AS(json({{"/list/0", 1}, {"/list/1", 2}, {"/list/three", 3}}).unflatten(),
             "[json.exception.parse_error.109] parse error: array index 'three' is not a number", json::parse_error&);
 
+            // a single-character token that is not a digit is reported like a
+            // longer one (parse_error.109), not as unresolved (out_of_range.404)
+            CHECK_THROWS_WITH_AS(j["/x"_json_pointer] = 1,
+                                 "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j_const["/x"_json_pointer] == 1,
+                                 "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j.at("/x"_json_pointer) = 1,
+                                 "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j_const.at("/x"_json_pointer) == 1,
+                                 "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j.at("/+"_json_pointer),
+                                 "[json.exception.parse_error.109] parse error: array index '+' is not a number", json::parse_error&);
+            CHECK(!j.contains("/x"_json_pointer));
+            CHECK(!j_const.contains("/x"_json_pointer));
+            CHECK_THROWS_WITH_AS(json({{"/list/0", 1}, {"/list/x", 2}}).unflatten(),
+            "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+
+            // "-" is a valid reference token, so it is still reported as unresolved
+            CHECK_THROWS_WITH_AS(json({{"/list/0", 1}, {"/list/-", 2}}).unflatten(),
+            "[json.exception.out_of_range.404] unresolved reference token '-'", json::out_of_range&);
+
             // assign to "-"
             j["/-"_json_pointer] = 99;
             CHECK(j == json({1, 13, 3, 33, nullptr, 55, 99}));

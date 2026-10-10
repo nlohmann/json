@@ -535,6 +535,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     // Test malformed index (non-numeric) throws parse_error
                     CHECK_THROWS_WITH_AS(j_array.value("/foo"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'foo' is not a number", typename Json::parse_error&);
                     CHECK_THROWS_WITH_AS(j_array_const.value("/foo"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'foo' is not a number", typename Json::parse_error&);
+                    CHECK_THROWS_WITH_AS(j_array.value("/x"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'x' is not a number", typename Json::parse_error&);
+                    CHECK_THROWS_WITH_AS(j_array_const.value("/x"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'x' is not a number", typename Json::parse_error&);
 
                     // Test leading-zero index throws parse_error
                     CHECK_THROWS_WITH_AS(j_array.value("/01"_json_pointer, 1), "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", typename Json::parse_error&);
