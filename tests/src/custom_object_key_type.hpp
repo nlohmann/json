@@ -71,5 +71,5 @@ class object
     using base_type::base_type;
 };
 
-using json = nlohmann::basic_json<object>;
+using json = nlohmann::json::with_object_t<object>;
 } // namespace custom_object_key_test
