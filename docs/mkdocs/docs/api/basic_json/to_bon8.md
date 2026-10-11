@@ -37,8 +37,9 @@ With (2), the bytes written before the exception remain in the output adapter.
 
 ## Exceptions
 
-- Throws [out_of_range.407](../../home/exceptions.md#jsonexceptionout_of_range407) if `j` contains an unsigned integer
-  above 9223372036854775807, which BON8 cannot represent
+- Throws [out_of_range.407](../../home/exceptions.md#jsonexceptionout_of_range407) if `j` contains an integer outside
+  the range of int64 (an unsigned integer above 9223372036854775807, or, with a number type wider than 64 bits, any
+  integer beyond int64), which BON8 cannot represent
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if `j` contains a string that is not
   valid UTF-8
 

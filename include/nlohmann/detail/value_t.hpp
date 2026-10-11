@@ -14,7 +14,6 @@
 #include <cstdint> // uint8_t
 #include <limits> // numeric_limits
 #include <string> // string
-#include <type_traits> // is_signed
 
 #include <nlohmann/detail/macro_scope.hpp>
 #if JSON_HAS_THREE_WAY_COMPARISON
@@ -147,13 +146,16 @@ FloatType compare_integer_with_float(const IntegerType i, const FloatType f) noe
 
     // values of IntegerType lie in [-bound, bound) when signed and in
     // [0, bound) when unsigned; digits excludes the sign bit, so bound is a
-    // power of two that the float represents exactly
-    const FloatType bound = std::ldexp(static_cast<FloatType>(1), std::numeric_limits<IntegerType>::digits);
+    // power of two that the float represents exactly; the signedness comes
+    // from numeric_limits as well, because std::is_signed is false for class
+    // types such as 128-bit or multiprecision integers
+    using limits = std::numeric_limits<IntegerType>;
+    const FloatType bound = std::ldexp(static_cast<FloatType>(1), limits::digits);
     if (f >= bound)
     {
         return ordered(-1);
     }
-    if (std::is_signed<IntegerType>::value ? (f < -bound) : (f < static_cast<FloatType>(0)))
+    if (limits::is_signed ? (f < -bound) : (f < static_cast<FloatType>(0)))
     {
         return ordered(1);
     }

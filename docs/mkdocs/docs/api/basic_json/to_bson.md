@@ -47,6 +47,10 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [`type_error.317`](../../home/exceptions.md#jsonexceptiontype_error317) if the top-level type of the JSON value
   is not an object; example: `"to serialize to BSON, top-level type must be object, but is string"`
+- Throws [`out_of_range.407`](../../home/exceptions.md#jsonexceptionout_of_range407) if `j` contains a signed integer
+  outside the range of int64 or an unsigned integer outside the range of uint64, which is only possible with a number
+  type wider than 64 bits; example:
+  `"integer number 9223372036854775808 cannot be represented by BSON as it does not fit int64"`
 - Throws [`out_of_range.409`](../../home/exceptions.md#jsonexceptionout_of_range409) if a key in the JSON object contains
   a null byte (code point U+0000); example: `"BSON key cannot contain code point U+0000 (at byte 2)"`
 - Throws [`out_of_range.412`](../../home/exceptions.md#jsonexceptionout_of_range412) if the length of a document, array,
@@ -119,3 +123,5 @@ pass before anything is written.
   that is not valid UTF-8 unchanged, as before; `strict` (the default if
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled) throws `type_error.316` before anything
   is written.
+- Throws `out_of_range.407` for integers that do not fit 64 bits since version 3.13.0; previously, integers of a
+  number type wider than 64 bits were silently truncated.
