@@ -15,6 +15,103 @@ using nlohmann::ordered_json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <string>
+#include <vector>
+
+namespace
+{
+// merge_diff() recursing once per nesting level, without the bound on its
+// descent; only usable on values nested a few hundred levels deep
+template<typename BasicJsonType>
+BasicJsonType reference_merge_diff(const BasicJsonType& source, const BasicJsonType& target)
+{
+    if (!source.is_object() || !target.is_object())
+    {
+        return target;
+    }
+
+    BasicJsonType result = BasicJsonType::object();
+    for (auto it = source.begin(); it != source.end(); ++it)
+    {
+        const auto itf = target.find(it.key());
+        if (itf == target.end())
+        {
+            result[it.key()] = nullptr;
+        }
+        else if (it.value().is_object() && itf.value().is_object())
+        {
+            auto diff = reference_merge_diff(it.value(), itf.value());
+            if (!diff.empty())
+            {
+                result[it.key()] = std::move(diff);
+            }
+        }
+        else if (it.value() != itf.value())
+        {
+            result[it.key()] = itf.value();
+        }
+    }
+    for (auto it = target.begin(); it != target.end(); ++it)
+    {
+        if (source.find(it.key()) == source.end())
+        {
+            result[it.key()] = it.value();
+        }
+    }
+    return result;
+}
+
+// objects nested `depth` levels deep under the key "a", with members before
+// and after it that differ by `variant` on the way down, so that diffing two
+// variants removes, adds and replaces members on many levels, and diffs nested
+// objects that are equal, that differ, or that are not objects in one of the
+// variants; only variant 2 has members that are null
+template<typename BasicJsonType>
+BasicJsonType nested_objects(const std::size_t depth, const int variant)
+{
+    BasicJsonType value = BasicJsonType::object({{"v", variant}});
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        BasicJsonType object = BasicJsonType::object();
+        if ((i + static_cast<std::size_t>(variant)) % 3 == 0)
+        {
+            object["s" + std::to_string(variant)] = i;
+        }
+        object["c"] = i % 4 == 0 ? variant : 0;
+        if (i % 5 == 0)
+        {
+            if (variant == 0)
+            {
+                object["o"] = BasicJsonType::object({{"p", i}});
+            }
+            else if (variant == 1)
+            {
+                object["o"] = BasicJsonType::array({i});
+            }
+            else
+            {
+                object["o"] = nullptr;
+            }
+        }
+        if (variant == 2 && i % 4 == 2)
+        {
+            object["n"] = nullptr;
+        }
+        object["a"] = std::move(value);
+        if (i % 6 == 0)
+        {
+            object["d"] = BasicJsonType::object({{"e", variant == 1 ? 1 : 0}});
+        }
+        if (variant == 1 && i % 7 == 0)
+        {
+            object["z"] = "z";
+        }
+        value = std::move(object);
+    }
+    return value;
+}
+} // namespace
+
 TEST_CASE("JSON Merge Patch")
 {
     SECTION("examples from RFC 7396")
@@ -821,5 +918,103 @@ TEST_CASE("JSON Merge Patch")
             CHECK(original != result);
             CHECK(original.dump() == R"({"b":1,"a":0})");
         }
+    }
+}
+
+TEST_CASE("JSON Merge Patch diff of deeply nested values")
+{
+    SECTION("the patch is the same past the descent bound")
+    {
+        // depths on either side of the nesting depth up to which merge_diff()
+        // recurses (detail::recursion_depth_limit(), 128); not every depth up
+        // to 300, to keep the test fast under Valgrind
+        std::vector<std::size_t> depths;
+        for (std::size_t depth = 0; depth <= 16; ++depth)
+        {
+            depths.push_back(depth);
+        }
+        for (std::size_t depth = 120; depth <= 136; ++depth)
+        {
+            depths.push_back(depth);
+        }
+        depths.push_back(300);
+
+        for (const auto depth : depths)
+        {
+            CAPTURE(depth)
+            for (int from = 0; from < 3; ++from)
+            {
+                for (int to = 0; to < 3; ++to)
+                {
+                    CAPTURE(from)
+                    CAPTURE(to)
+                    const auto source = nested_objects<json>(depth, from);
+                    const auto target = nested_objects<json>(depth, to);
+                    const auto patch = json::merge_diff(source, target);
+                    CHECK(patch == reference_merge_diff(source, target));
+                    CHECK(patch.empty() == (from == to));
+
+                    // a merge patch cannot set a member to null, so it only
+                    // reproduces a target without null members
+                    if (to != 2)
+                    {
+                        json patched = source;
+                        patched.merge_patch(patch);
+                        CHECK(patched == target);
+                    }
+
+                    // the members of the patch also come in the same order
+                    const auto ordered_source = nested_objects<ordered_json>(depth, from);
+                    const auto ordered_target = nested_objects<ordered_json>(depth, to);
+                    CHECK(ordered_json::merge_diff(ordered_source, ordered_target).dump() == reference_merge_diff(ordered_source, ordered_target).dump());
+                }
+            }
+        }
+    }
+
+    SECTION("a difference only in the innermost value is a patch nested as deeply")
+    {
+        for (std::size_t depth = 0; depth <= 300; ++depth)
+        {
+            CAPTURE(depth)
+            json source = {{"v", 1}};
+            json target = {{"v", 2}};
+            json expected = {{"v", 2}};
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                source = json{{"a", std::move(source)}, {"b", i}};
+                target = json{{"a", std::move(target)}, {"b", i}};
+                expected = json{{"a", std::move(expected)}};
+            }
+            CHECK(json::merge_diff(source, target) == expected);
+        }
+    }
+
+    SECTION("values nested too deeply for the call stack")
+    {
+        // recursing once per nesting level would exhaust the call stack here.
+        // The patch is walked rather than compared as a whole, to keep the
+        // test fast.
+        const std::size_t depth = 100000;
+        std::string opening;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            opening += R"({"a":)";
+        }
+        const std::string closing(depth, '}');
+        const auto source = json::parse(opening + R"({"v":1,"w":0})" + closing);
+
+        const auto patch = json::merge_diff(source, json::parse(opening + R"({"v":2,"w":0})" + closing));
+        std::size_t members = 0;
+        const json* p = &patch;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            members += p->size();
+            p = &p->at("a");
+        }
+        CHECK(members == depth);
+        CHECK(*p == json({{"v", 2}}));
+
+        CHECK(json::merge_diff(source, json::parse(opening + R"({"v":1,"w":0})" + closing)).empty());
     }
 }
