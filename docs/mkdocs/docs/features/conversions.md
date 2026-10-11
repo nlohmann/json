@@ -217,7 +217,8 @@ json j = numbers;   // [1,2,3]
     ```
 
     This requires [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md) to be enabled and is unavailable on MinGW due
-    to incomplete C++20 ranges support there.
+    to incomplete C++20 ranges support there; see
+    [`JSON_HAS_RANGE_VIEW_CONVERSION`](../api/macros/json_has_range_view_conversion.md).
 
 ## Your own types
 

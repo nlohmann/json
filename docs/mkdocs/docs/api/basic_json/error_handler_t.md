@@ -37,8 +37,8 @@ ignore
 :   ignore invalid UTF-8 sequences; all valid bytes are copied to the output unchanged, and invalid bytes are dropped
 
 keep
-:   keep invalid UTF-8 sequences unchanged; only meaningful for the binary formats mentioned above, since [`dump`]
-    (dump.md) itself must produce text, and `keep` there writes the ill-formed bytes to the output as is, so the
+:   keep invalid UTF-8 sequences unchanged; only meaningful for the binary formats mentioned above, since
+    [`dump`](dump.md) itself must produce text, and `keep` there writes the ill-formed bytes to the output as is, so the
     result is then not valid UTF-8 (but still equals the input bytes exactly, including around any well-formed
     characters, which are still escaped as usual)
 

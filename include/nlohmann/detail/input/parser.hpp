@@ -189,7 +189,7 @@ class parser
                 if (last_token != token_type::end_of_input && get_token() != token_type::end_of_input)
                 {
                     // the value is complete, so there is nothing to recover
-                    static_cast<void>(report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr),
+                    static_cast<void>(report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr),
                                                    std::integral_constant<bool, AllowRecovery> {}));
                     return false;
                 }
@@ -229,10 +229,7 @@ class parser
             // in strict mode, input must be completely read
             if (get_token() != token_type::end_of_input)
             {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value"), nullptr));
+                syntax_error(sdp, exception_message(token_type::end_of_input, "value"));
             }
         }
         else
@@ -424,7 +421,7 @@ class parser
                     case token_type::parse_error:
                     {
                         // using "uninitialized" to avoid an "expected" message
-                        if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), nullptr), allow_recovery))
+                        if (!report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), nullptr), allow_recovery))
                         {
                             return false;
                         }
@@ -457,12 +454,12 @@ class parser
                         if (JSON_HEDLEY_UNLIKELY(m_lexer.get_position().chars_read_total == 1))
                         {
                             // there is nothing to recover
-                            static_cast<void>(report_error(sax, parse_error::create(101, m_lexer.get_position(),
+                            static_cast<void>(report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(),
                                                            "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr), allow_recovery));
                             return false;
                         }
 
-                        if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr), allow_recovery))
+                        if (!report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr), allow_recovery))
                         {
                             return false;
                         }
@@ -490,7 +487,7 @@ class parser
                     case token_type::literal_or_value:
                     default: // the last token was unexpected
                     {
-                        if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr), allow_recovery))
+                        if (!report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr), allow_recovery))
                         {
                             return false;
                         }
@@ -569,7 +566,7 @@ class parser
                     continue;
                 }
 
-                if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array, "array"), nullptr), allow_recovery))
+                if (!report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(), exception_message(token_type::end_array, "array"), nullptr), allow_recovery))
                 {
                     return false;
                 }
@@ -655,7 +652,7 @@ class parser
                 continue;
             }
 
-            if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object, "object"), nullptr), allow_recovery))
+            if (!report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(), exception_message(token_type::end_object, "object"), nullptr), allow_recovery))
             {
                 return false;
             }
@@ -759,7 +756,7 @@ class parser
     template<typename SAX>
     bool overflow_error(SAX* sax, const number_float_t value, std::true_type allow_recovery)
     {
-        if (!report_error(sax, out_of_range::create(406, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr), allow_recovery))
+        if (!report_error(sax, out_of_range::create(exception_id::number_overflow, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr), allow_recovery))
         {
             return false;
         }
@@ -771,7 +768,7 @@ class parser
     JSON_INTERNAL_ALWAYS_INLINE
     std::false_type overflow_error(SAX* sax, const number_float_t /*value*/, std::false_type allow_recovery)
     {
-        return report_error(sax, out_of_range::create(406, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr), allow_recovery);
+        return report_error(sax, out_of_range::create(exception_id::number_overflow, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr), allow_recovery);
     }
 
     /*!
@@ -786,7 +783,7 @@ class parser
     JSON_INTERNAL_ALWAYS_INLINE
     std::false_type key_error(SAX* sax, std::false_type allow_recovery, const bool key_read)
     {
-        return report_error(sax, parse_error::create(101, m_lexer.get_position(), key_read
+        return report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(), key_read
                             ? exception_message(token_type::name_separator, "object separator")
                             : exception_message(token_type::value_string, "object key"), nullptr), allow_recovery);
     }
@@ -803,14 +800,14 @@ class parser
     {
         if (!key_read)
         {
-            if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr), allow_recovery))
+            if (!report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr), allow_recovery))
             {
                 return next_step::stop;
             }
             return recover_key(sax);
         }
 
-        if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr), allow_recovery))
+        if (!report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr), allow_recovery))
         {
             return next_step::stop;
         }
@@ -1206,6 +1203,21 @@ class parser
     bool get_token_expecting(token_type expected_type)
     {
         return (last_token = m_lexer.scan_expecting(expected_type)) == expected_type;
+    }
+
+    /*!
+    @brief reports a syntax error at the current token (parse_error.101)
+    @param[in] sax      the SAX parser to report the error to
+    @param[in] message  the error message
+    @return the result of the SAX parser's parse_error()
+    */
+    template<typename SAX>
+    bool syntax_error(SAX& sax, const std::string& message)
+    {
+        // MSVC 2015 reports C4100 (unreferenced parameter) when SAX::parse_error is static
+        static_cast<void>(sax);
+        return sax.parse_error(m_lexer.get_position(), m_lexer.get_token_string(),
+                               parse_error::create(exception_id::syntax_error, m_lexer.get_position(), message, nullptr));
     }
 
     std::string exception_message(const token_type expected, const std::string& context)

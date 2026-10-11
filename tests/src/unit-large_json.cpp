@@ -400,26 +400,31 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         CHECK(json::from_ubjson(json::to_ubjson(deep_array, true, false)) == deep_array);
         CHECK(json::from_ubjson(json::to_ubjson(deep_array, true, true)) == deep_array);
         CHECK(json::from_bjdata(json::to_bjdata(deep_array)) == deep_array);
+        CHECK(json::from_bon8(json::to_bon8(deep_array)) == deep_array);
 
         CHECK(json::from_cbor(json::to_cbor(deep_object)) == deep_object);
         CHECK(json::from_msgpack(json::to_msgpack(deep_object)) == deep_object);
         CHECK(json::from_ubjson(json::to_ubjson(deep_object)) == deep_object);
         CHECK(json::from_ubjson(json::to_ubjson(deep_object, true, true)) == deep_object);
         CHECK(json::from_bjdata(json::to_bjdata(deep_object)) == deep_object);
+        CHECK(json::from_bon8(json::to_bon8(deep_object)) == deep_object);
 
         CHECK(json::from_cbor(json::to_cbor(empty_array)) == empty_array);
         CHECK(json::from_msgpack(json::to_msgpack(empty_array)) == empty_array);
         CHECK(json::from_ubjson(json::to_ubjson(empty_array)) == empty_array);
         CHECK(json::from_ubjson(json::to_ubjson(empty_array, true, true)) == empty_array);
+        CHECK(json::from_bon8(json::to_bon8(empty_array)) == empty_array);
 
         CHECK(json::from_cbor(json::to_cbor(empty_object)) == empty_object);
         CHECK(json::from_msgpack(json::to_msgpack(empty_object)) == empty_object);
         CHECK(json::from_ubjson(json::to_ubjson(empty_object)) == empty_object);
+        CHECK(json::from_bon8(json::to_bon8(empty_object)) == empty_object);
 
         CHECK(json::from_cbor(json::to_cbor(mixed)) == mixed);
         CHECK(json::from_msgpack(json::to_msgpack(mixed)) == mixed);
         CHECK(json::from_ubjson(json::to_ubjson(mixed)) == mixed);
         CHECK(json::from_bjdata(json::to_bjdata(mixed)) == mixed);
+        CHECK(json::from_bon8(json::to_bon8(mixed)) == mixed);
     }
 
     SECTION("the two ways of writing a value meet at the bound")
@@ -432,11 +437,13 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
             CHECK(json::from_cbor(json::to_cbor(array)) == array);
             CHECK(json::from_msgpack(json::to_msgpack(array)) == array);
             CHECK(json::from_ubjson(json::to_ubjson(array, true, true)) == array);
+            CHECK(json::from_bon8(json::to_bon8(array)) == array);
 
             const json object = nested_object(depth, json(7));
             CHECK(json::from_cbor(json::to_cbor(object)) == object);
             CHECK(json::from_msgpack(json::to_msgpack(object)) == object);
             CHECK(json::from_bjdata(json::to_bjdata(object)) == object);
+            CHECK(json::from_bon8(json::to_bon8(object)) == object);
         }
     }
 
@@ -481,6 +488,10 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
             expected_ubjson.append(depth, ']');
             const auto packed_ubjson = json::to_ubjson(array);
             CHECK(std::string(packed_ubjson.begin(), packed_ubjson.end()) == expected_ubjson);
+
+            std::vector<std::uint8_t> expected_bon8(depth, 0x81);
+            expected_bon8.push_back(0x90);
+            CHECK(json::to_bon8(array) == expected_bon8);
         }
     }
 
@@ -493,6 +504,7 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         CHECK(json::from_msgpack(json::to_msgpack(object)) == object);
         CHECK(json::from_ubjson(json::to_ubjson(object, true, true)) == object);
         CHECK(json::from_bjdata(json::to_bjdata(object)) == object);
+        CHECK(json::from_bon8(json::to_bon8(object)) == object);
 
         const json ndarray = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2, 3}}, {"_ArrayData_", {1, 2, 3, 4, 5, 6}}});
         const json deep_ndarray = nested_array(depth, ndarray);
@@ -523,6 +535,27 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         CHECK_THROWS_WITH_AS(json::to_bjdata(deep_discarded), (prefix + "cannot serialize discarded value to BJData").c_str(), json::type_error);
     }
 
+    SECTION("BON8 past the recursion bound: discarded values and errors")
+    {
+        const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 50;
+
+        // BON8 writes nothing for a discarded value, deep or not
+        const json deep_discarded = nested_array(depth, json(json::value_t::discarded));
+        CHECK(json::to_bon8(deep_discarded) == std::vector<std::uint8_t>(depth, 0x81));
+
+        // errors are thrown from below the bound as from above it
+        const json deep_invalid_string = nested_array(depth, json(std::string("\x80")));
+        CHECK_THROWS_AS(json::to_bon8(deep_invalid_string), json::type_error);
+
+        json deep_invalid_key = json::object();
+        deep_invalid_key[std::string("\x80")] = 1;
+        deep_invalid_key = nested_object(depth, deep_invalid_key);
+        CHECK_THROWS_AS(json::to_bon8(deep_invalid_key), json::type_error);
+
+        const json deep_too_large = nested_array(depth, json(9223372036854775808u));
+        CHECK_THROWS_AS(json::to_bon8(deep_too_large), json::out_of_range);
+    }
+
     SECTION("does not overflow the C++ stack")
     {
         const std::size_t depth = 100000;
@@ -543,6 +576,27 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
 
         CHECK_NOTHROW(packed = json::to_bjdata(j));
         CHECK(json::from_bjdata(packed) == j);
+
+        CHECK_NOTHROW(packed = json::to_bon8(j));
+        CHECK(json::from_bon8(packed) == j);
+    }
+
+    SECTION("BON8 containers with more than four elements past the recursion bound")
+    {
+        // such containers are closed with 0xFE, which the iterative writer
+        // must emit when it leaves them; strings next to each other must
+        // still be separated with 0xFF
+        const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 50;
+        json wide_array = json::array({1, "a", "b", json::array(), 5});
+        json wide_object = json({{"k1", "v"}, {"k2", 2}, {"k3", ""}, {"k4", json::object()}, {"k5", nullptr}});
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            wide_array = json::array({"s", wide_array, "t", wide_object, true});
+            wide_object = json({{"a", wide_object}, {"b", "x"}, {"c", "y"}, {"d", wide_array.size()}, {"e", "z"}});
+        }
+
+        CHECK(json::from_bon8(json::to_bon8(wide_array)) == wide_array);
+        CHECK(json::from_bon8(json::to_bon8(wide_object)) == wide_object);
     }
 
     SECTION("regression test for https://issues.oss-fuzz.com/issues/566583014")
@@ -560,6 +614,15 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         v_msgpack.push_back(0xc0);
         const json j_msgpack = json::from_msgpack(v_msgpack);
         CHECK(json::to_msgpack(j_msgpack) == v_msgpack);
+    }
+
+    SECTION("regression test for https://issues.oss-fuzz.com/issues/572238015")
+    {
+        // the BON8 analogue: 200000 nested one-element arrays down to null
+        std::vector<std::uint8_t> v(200000, 0x81);
+        v.push_back(0xFA);
+        const json j = json::from_bon8(v);
+        CHECK(json::to_bon8(j) == v);
     }
 }
 

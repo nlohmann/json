@@ -17,6 +17,7 @@ build: style_check
 
 style_check:
 	@cd docs ; ../venv/bin/python3 ../scripts/check_structure.py
+	@venv/bin/python3 ../docset/generate_docset.py list > /dev/null
 
 # check that all Mermaid diagrams parse (needs Node.js)
 # This target is used in the CI (ci_test_documentation_mermaid).

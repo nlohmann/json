@@ -288,36 +288,6 @@ def check_header_links() -> None:
                                f'link to "{match.group(0)}" does not point to a documentation page')
 
 
-def check_docset() -> None:
-    """Every API page and every macro has an entry in the docset index; no entry points to a missing page."""
-    entry_re = re.compile(r"VALUES \('((?:[^']|'')*)', '(\w+)', '([^']*)'\);")
-    names_by_path = {}
-    with open("../../docset/docSet.sql", encoding="utf-8") as sql:
-        for name, _, path in entry_re.findall(sql.read()):
-            names_by_path.setdefault(path, set()).add(name.replace("''", "'"))
-
-    def to_path(page):
-        if os.path.basename(page) == "index.md":
-            return page[:-len("index.md")] + "index.html"
-        return page[:-len(".md")] + "/index.html"
-
-    pages = sorted(glob.glob("**/*.md", recursive=True))
-    for path in sorted(set(names_by_path) - {to_path(p) for p in pages}):
-        report("docset/stale_entry", "../../docset/docSet.sql", f'entry "{path}" has no documentation page')
-    for page in (p for p in pages if p.startswith("api/")):
-        names = names_by_path.get(to_path(page))
-        if not names:
-            report("docset/missing_entry", page, "page has no entry in docs/docset/docSet.sql")
-        elif page.startswith("api/macros/") and os.path.basename(page) != "index.md":
-            with open(page, encoding="utf-8") as content:
-                text = content.read()
-            match = re.search(r"^# (.+)$", text, re.MULTILINE) or re.search(r"<h1>(.*?)</h1>", text, re.DOTALL)
-            title = re.sub(r"<[^>]+>|\s+", " ", match.group(1))
-            for macro in filter(None, (x.strip() for x in re.split(r"[,/]", title))):
-                if macro not in names:
-                    report("docset/missing_macro", page, f'macro "{macro}" has no entry in docs/docset/docSet.sql')
-
-
 if __name__ == "__main__":
     print(120 * "-")
     check_structure()
@@ -327,7 +297,6 @@ if __name__ == "__main__":
     check_heading_levels()
     check_image_alt_text()
     check_header_links()
-    check_docset()
     print(120 * "-")
 
     if warnings > 0:

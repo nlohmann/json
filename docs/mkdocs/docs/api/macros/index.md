@@ -27,6 +27,7 @@ header. See also the [macro overview page](../../features/macros.md).
 
 - [**JSON_HAS_CPP_11**<br>**JSON_HAS_CPP_14**<br>**JSON_HAS_CPP_17**<br>**JSON_HAS_CPP_20**](json_has_cpp_11.md) - set supported C++ standard
 - [**JSON_HAS_FILESYSTEM**<br>**JSON_HAS_EXPERIMENTAL_FILESYSTEM**](json_has_filesystem.md) - control `std::filesystem` support
+- [**JSON_HAS_RANGE_VIEW_CONVERSION**](json_has_range_view_conversion.md) - control construction from `std::ranges` views
 - [**JSON_HAS_RANGES**](json_has_ranges.md) - control `std::ranges` support
 - [**JSON_HAS_STATIC_RTTI**](json_has_static_rtti.md) - control RTTI (run time type information) support
 - [**JSON_HAS_STD_FORMAT**](json_has_std_format.md) - control `std::format`/`std::formatter` support
