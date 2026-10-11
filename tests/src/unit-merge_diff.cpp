@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -112,7 +112,7 @@ BasicJsonType nested_objects(const std::size_t depth, const int variant)
 }
 } // namespace
 
-TEST_CASE("JSON Merge Patch")
+TEST_CASE("JSON Merge Patch diff")
 {
     SECTION("examples from RFC 7396")
     {

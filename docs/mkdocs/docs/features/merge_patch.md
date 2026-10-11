@@ -9,6 +9,9 @@ syntax that closely mimics the document being modified. Unlike [JSON Patch](json
 express every kind of change (e.g., it cannot reorder array elements or remove a specific array element), but it is
 easier to read and write for object-shaped documents.
 
+The function [`merge_diff`](../api/basic_json/merge_diff.md) creates a merge patch that changes one JSON value into
+another.
+
 !!! tip "Not a general deep merge"
 
     A merge patch is not a general deep merge: a `#!json null` value in the patch deletes the key from the target.
@@ -35,4 +38,5 @@ easier to read and write for object-shaped documents.
 - [JSON Patch and Diff](json_patch.md) - a more expressive alternative that describes a sequence of operations
 - [JSON Pointer](json_pointer.md) - the addressing scheme used by JSON Patch
 - Function [`merge_patch`](../api/basic_json/merge_patch.md)
+- Function [`merge_diff`](../api/basic_json/merge_diff.md)
 - Function [`update`](../api/basic_json/update.md) - merge objects, optionally recursively
