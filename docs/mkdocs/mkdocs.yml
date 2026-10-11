@@ -299,6 +299,7 @@ nav:
           - 'JSON_DISABLE_TUPLE_REFERENCE_CONVERSION': api/macros/json_disable_tuple_reference_conversion.md
           - 'JSON_HAS_CPP_11, JSON_HAS_CPP_14, JSON_HAS_CPP_17, JSON_HAS_CPP_20, JSON_HAS_CPP_23, JSON_HAS_CPP_26': api/macros/json_has_cpp_11.md
           - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM, JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
+          - 'JSON_HAS_RANGE_VIEW_CONVERSION': api/macros/json_has_range_view_conversion.md
           - 'JSON_HAS_RANGES': api/macros/json_has_ranges.md
           - 'JSON_HAS_STATIC_RTTI': api/macros/json_has_static_rtti.md
           - 'JSON_HAS_STD_FORMAT': api/macros/json_has_std_format.md

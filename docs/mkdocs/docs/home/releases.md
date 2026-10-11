@@ -26,7 +26,7 @@ Fixes bugs found in 3.11.3 and adds several features. All changes are backward-c
   [BJData](../features/binary_formats/bjdata.md) draft 3 and unsigned 64-bit integers for
   [BSON](../features/binary_formats/bson.md).
 - Adds multidimensional C-array conversion and UTF-8 encoded `std::filesystem::path` conversions, and
-  lowers the minimum [CMake](../integration/cmake.md) version to allow CMake 4.0.
+  raises the minimum [CMake](../integration/cmake.md) version to 3.5 and supports CMake 4.0.
 
 [Full release notes](https://github.com/nlohmann/json/releases/tag/v3.12.0).
 

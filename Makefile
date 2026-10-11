@@ -1,4 +1,4 @@
-.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel natvis macro_builder_check check_build_options
+.PHONY: all amalgamate check-amalgamation check_build_options pretty install_astyle clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel natvis macro_builder_check run_benchmarks pvs_studio serve_header reuse spdx
 
 ##########################################################################
 # configuration
@@ -41,12 +41,18 @@ all:
 	@echo "BUILD.bazel - regenerate the Bazel BUILD file from the include/nlohmann sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check-amalgamation - check whether sources have been amalgamated and BUILD.bazel is up to date"
+	@echo "check_build_options - check that the Meson build and the pkg-config files offer the options of the CMake target"
 	@echo "clean - remove built files"
-	@echo "fuzzing - see tests/fuzzing.md for how to build and run the fuzzers"
+	@echo "(fuzzers) - see tests/fuzzing.md, or run 'make -C tests fuzzers' to build the AFL fuzzers"
 	@echo "macro_builder_check - check that macro_scope.hpp matches tools/macro_builder's output"
 	@echo "natvis - regenerate nlohmann_json.natvis from the current ABI tags and version"
 	@echo "pretty - beautify code with Artistic Style"
+	@echo "pvs_studio - run the PVS-Studio static analyzer and open the report"
+	@echo "release - create the release files (include.zip, json.tar.xz, single headers, signatures, hashes)"
+	@echo "reuse - annotate the source files with REUSE license headers and lint them"
 	@echo "run_benchmarks - build and run benchmarks"
+	@echo "serve_header - serve the single header, re-amalgamated on demand (see tools/serve_header)"
+	@echo "spdx - generate the SPDX software bill of materials nlohmann_json.spdx"
 	@echo "update_hedley - download Hedley and regenerate hedley.hpp / hedley_undef.hpp"
 	@echo "update_hedley_undef - rebuild hedley_undef.hpp from the JSON_HEDLEY_* #define names in hedley.hpp"
 
@@ -108,13 +114,18 @@ $(AMALGAMATED_FWD_FILE): $(SRCS)
 $(AMALGAMATED_LITERALS_FILE): include/nlohmann/json_literals.hpp
 	cp include/nlohmann/json_literals.hpp $(AMALGAMATED_LITERALS_FILE)
 
+NATVIS_VENV=tools/generate_natvis/venv
+
 # regenerate nlohmann_json.natvis from the ABI tags and version in include/nlohmann/detail/abi_macros.hpp
+# (the dependencies are installed into a virtual environment first)
 natvis:
-	python3 tools/generate_natvis/generate_natvis.py .
+	@test -d $(NATVIS_VENV) || python3 -mvenv $(NATVIS_VENV)
+	@$(NATVIS_VENV)/bin/python3 -c 'import jinja2' 2>/dev/null || $(NATVIS_VENV)/bin/pip3 install --quiet -r tools/generate_natvis/requirements.txt
+	$(NATVIS_VENV)/bin/python3 tools/generate_natvis/generate_natvis.py .
 
 # regenerate the two tools/macro_builder blocks of $(MACRO_SCOPE_HPP) (see its README.md) and diff against the
 # checked-in header; phony, because it never writes $(MACRO_SCOPE_HPP) itself
-macro_builder_check:
+macro_builder_check: install_astyle
 	@set -e; \
 	TMPDIR=$$(mktemp -d ./macro_builder_check.XXXXXX); \
 	trap 'rm -rf "$$TMPDIR"' EXIT; \
@@ -131,27 +142,27 @@ macro_builder_check:
 check_build_options:
 	python3 tools/check_build_options/check_build_options.py .
 
-# check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
+# check if the single headers have been amalgamated from the nlohmann sources and if BUILD.bazel and
+# nlohmann_json.natvis are up to date; all checks are run, and the checked-in files are always restored
 check-amalgamation:
-	@mv $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~
-	@mv $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_FWD_FILE)~
-	@mv $(AMALGAMATED_LITERALS_FILE) $(AMALGAMATED_LITERALS_FILE)~
-	@$(MAKE) amalgamate
-	@diff $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE) ; false)
-	@diff $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_FWD_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE) ; false)
-	@diff $(AMALGAMATED_LITERALS_FILE) $(AMALGAMATED_LITERALS_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_LITERALS_FILE)~ $(AMALGAMATED_LITERALS_FILE) ; false)
-	@mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE)
-	@mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE)
-	@mv $(AMALGAMATED_LITERALS_FILE)~ $(AMALGAMATED_LITERALS_FILE)
-	@mv BUILD.bazel BUILD.bazel~
-	@$(MAKE) BUILD.bazel
-	@diff BUILD.bazel BUILD.bazel~ || (echo "===================================================================\n  BUILD.bazel is out of date! Please run 'make BUILD.bazel'.\n===================================================================" ; mv BUILD.bazel~ BUILD.bazel ; false)
-	@mv BUILD.bazel~ BUILD.bazel
-	@mv nlohmann_json.natvis nlohmann_json.natvis~
-	@$(MAKE) natvis
-	@diff nlohmann_json.natvis nlohmann_json.natvis~ || (echo "===================================================================\n  nlohmann_json.natvis is out of date! Please run 'make natvis'.\n===================================================================" ; mv nlohmann_json.natvis~ nlohmann_json.natvis ; false)
-	@mv nlohmann_json.natvis~ nlohmann_json.natvis
-	@$(MAKE) macro_builder_check
+	@status=0; \
+	banner() { printf '===================================================================\n  %s\n===================================================================\n' "$$1"; }; \
+	for FILE in $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) BUILD.bazel nlohmann_json.natvis; do \
+	    mv "$$FILE" "$$FILE~" || exit 1; \
+	done; \
+	$(MAKE) amalgamate || status=1; \
+	$(MAKE) BUILD.bazel || status=1; \
+	$(MAKE) natvis || status=1; \
+	for FILE in $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE); do \
+	    diff "$$FILE" "$$FILE~" || { banner "$$FILE is out of date! Amalgamation required! Please read the contribution guidelines in file .github/CONTRIBUTING.md."; status=1; }; \
+	done; \
+	diff BUILD.bazel BUILD.bazel~ || { banner "BUILD.bazel is out of date! Please run 'make BUILD.bazel'."; status=1; }; \
+	diff nlohmann_json.natvis nlohmann_json.natvis~ || { banner "nlohmann_json.natvis is out of date! Please run 'make natvis'."; status=1; }; \
+	for FILE in $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) BUILD.bazel nlohmann_json.natvis; do \
+	    mv "$$FILE~" "$$FILE"; \
+	done; \
+	$(MAKE) macro_builder_check || status=1; \
+	exit $$status
 
 # generate the Bazel BUILD file; phony, because a removed header would not trigger a rebuild
 BUILD.bazel:
@@ -212,8 +223,8 @@ release: include.zip json.tar.xz
 
 # clean up
 clean:
-	rm -fr fuzz fuzz-testing *.dSYM tests/*.dSYM
-	rm -fr cmake-build-benchmarks fuzz-testing cmake-build-pvs-studio release_files
+	rm -fr *.dSYM tests/*.dSYM tests/parse_*_fuzzer
+	rm -fr cmake-build-benchmarks cmake-build-pvs-studio release_files
 	$(MAKE) clean -Cdocs
 
 
