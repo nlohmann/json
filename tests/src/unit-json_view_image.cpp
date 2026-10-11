@@ -450,7 +450,7 @@ TEST_CASE("json_view images: edited documents")
         // prefix
         const ordered_json_document l = ordered_json_document::load(image);
         REQUIRE(l.source().size() > text.size());
-        CHECK(std::string(l.source().data(), text.size()) == text);
+        CHECK(std::string(l.source().data(), text.size()) == text); // NOLINT(bugprone-suspicious-stringview-data-usage): the size is given and checked above
     }
 
     SECTION("a loaded document can be edited and saved again")
