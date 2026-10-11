@@ -539,9 +539,9 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
     {
         const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 50;
 
-        // BON8 writes nothing for a discarded value, deep or not
+        // BON8 rejects a discarded value (type_error.321), deep or not
         const json deep_discarded = nested_array(depth, json(json::value_t::discarded));
-        CHECK(json::to_bon8(deep_discarded) == std::vector<std::uint8_t>(depth, 0x81));
+        CHECK_THROWS_AS(json::to_bon8(deep_discarded), json::type_error);
 
         // errors are thrown from below the bound as from above it
         const json deep_invalid_string = nested_array(depth, json(std::string("\x80")));
