@@ -119,6 +119,14 @@ changes to any JSON value.
 
 ## Notes
 
+!!! warning "`null` members are not missing"
+
+    The default value is used only if the key (or JSON Pointer) does not exist. A member that exists but is
+    `#!json null` is converted like any other value, so `#!cpp j.value("k", 0)` throws a
+    [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `"k"` is `#!json null`. See
+    [Access with default value](../../features/element_access/default_value.md)
+    for alternatives.
+
 !!! warning "Return type"
 
     The value function is a template, and the return type of the function is determined by the type of the provided

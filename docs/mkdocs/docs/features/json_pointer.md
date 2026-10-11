@@ -77,6 +77,10 @@ auto val2 = j.at(json::json_pointer("/nested/three/1"));    // false
 auto val3 = j.value(json::json_pointer("/nested/four"), 0); // 0
 ```
 
+To read a value with a fallback, use [`value`](../api/basic_json/value.md) with a JSON Pointer; to test for existence,
+use [`contains`](../api/basic_json/contains.md). Neither needs intermediate checks, see
+[Nested values](element_access/default_value.md#nested-values).
+
 !!! note "Creating intermediate levels that don't exist"
 
     See the [`operator[]` notes](../api/basic_json/operator%5B%5D.md#return-value) for how array vs. object is
@@ -126,6 +130,8 @@ auto j_original = j_flat.unflatten();
 ## See also
 
 - Class [`json_pointer`](../api/json_pointer/index.md)
+- Functions [`value`](../api/basic_json/value.md), [`contains`](../api/basic_json/contains.md), and
+  [`at`](../api/basic_json/at.md) accept JSON Pointers; see [Nested values](element_access/default_value.md#nested-values)
 - Function [`flatten`](../api/basic_json/flatten.md)
 - Function [`unflatten`](../api/basic_json/unflatten.md)
 - [JSON Patch](json_patch.md) - paths inside a patch are JSON Pointers
