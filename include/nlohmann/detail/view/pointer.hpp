@@ -51,7 +51,9 @@ index_status array_index(const StringType& s, std::size_t& idx) noexcept
     {
         return index_status::leading_zero;
     }
-    if (s.size() > 1 && !(s[0] >= '1' && s[0] <= '9'))
+    // as basic_json: also a single character, but "-" and the empty token are
+    // left to the conversion below and reported as unresolved
+    if (!s.empty() && !(s.size() == 1 && s[0] == '-') && !(s[0] >= '0' && s[0] <= '9'))
     {
         return index_status::not_number;
     }
