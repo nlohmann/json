@@ -220,7 +220,8 @@ int main(int argc, char** argv)
     {
         if (std::strcmp(argv[i], "--rounds") == 0 && i + 1 < argc)
         {
-            rounds = std::atoi(argv[++i]);
+            // (clamped: 0 rounds by size, at most a million)
+            rounds = static_cast<int>((std::min)((std::max)(std::strtol(argv[++i], nullptr, 10), 0L), 1000000L));
         }
         else
         {
@@ -228,6 +229,11 @@ int main(int argc, char** argv)
         }
     }
     std::FILE* csv = std::fopen("bench_corpus.csv", "w");
+    if (csv == nullptr)
+    {
+        std::perror("bench_corpus.csv");
+        return 1;
+    }
     std::fprintf(csv, "file,bytes,workload,engine,ns\n");
     json_document reused;
     simdjson::dom::parser sj;
