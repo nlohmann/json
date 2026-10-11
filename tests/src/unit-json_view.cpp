@@ -858,7 +858,7 @@ TEST_CASE("json_view element access and iteration")
                 })
         {
             const std::string key(n, 'k');
-            const json_document dk = json_document::parse("{\"" + key + "\":1,\"" + key + "x\":2,\"" + key + "\":3,\"" + key + "\":4}");
+            const json_document dk = json_document::parse("{\"" + key + "\":1,\"" + key + "x\":2,\"" + key + "\":3,\"" + key + "\":4}"); // NOLINT(performance-inefficient-string-concatenation)
             CAPTURE(n)
             CHECK(dk.root()[key].materialize() == 1);
             CHECK(dk.root().at(key).materialize() == 1);
@@ -1091,8 +1091,8 @@ TEST_CASE("json_view element access and iteration")
             pairs += std::string(key) + "=" + value.materialize().dump() + ";";
         }
         CHECK(pairs == "a=1;b=[true,false];");
-        static_assert(std::tuple_size<json_view::item>::value == 2, "");
-        static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "");
+        static_assert(std::tuple_size<json_view::item>::value == 2, "tuple_size of an item is 2");
+        static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "the second element of an item is a view");
 #endif
     }
 }
@@ -1285,19 +1285,19 @@ TEST_CASE("json_view values")
             switch (i % 5) // NOLINT(hicpp-multiway-paths-covered)
             {
                 case 0:
-                    std::snprintf(buf.data(), buf.size(), "%.17g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.17g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 case 1:
-                    std::snprintf(buf.data(), buf.size(), "%.15g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.15g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 case 2:
-                    std::snprintf(buf.data(), buf.size(), "%.3e", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.3e", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 case 3:
-                    std::snprintf(buf.data(), buf.size(), "%.25g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.25g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
                 default:
-                    std::snprintf(buf.data(), buf.size(), "%.0f", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    static_cast<void>(std::snprintf(buf.data(), buf.size(), "%.0f", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     break;
             }
             tokens.emplace_back(buf.data());
@@ -1340,7 +1340,7 @@ TEST_CASE("json_view values")
         const json j = json::parse(text);
 
         // user types with from_json, and other types, through basic_json
-        const record r = v.get<record>();
+        const auto r = v.get<record>();
         CHECK(r.name == "widget");
         CHECK(r.count == 3);
         CHECK((v["pair"].get<std::pair<int, std::string>>() == j["pair"].get<std::pair<int, std::string>>()));
