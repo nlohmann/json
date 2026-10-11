@@ -110,3 +110,6 @@ function throws an exception.
   location has a non-object/non-array parent in version 3.13.0.
 - Added [`out_of_range.414`](../../home/exceptions.md#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper
   prefix of its "path" location instead of silently producing a corrupted result in version 3.13.0.
+- Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) instead of
+  [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) for a one-character array index that is
+  not a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.

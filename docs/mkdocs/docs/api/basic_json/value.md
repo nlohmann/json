@@ -227,4 +227,6 @@ changes to any JSON value.
    [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md), and other lookup functions.
 3. Added in version 2.0.2. Extended to work with arrays in version 3.13.0, including fixing an issue where resolving
    `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or
-   `default_value`, as documented).
+   `default_value`, as documented). Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109)
+   instead of returning `default_value` for a one-character array index that is not a digit (e.g., `/x`) in version
+   3.13.0, as it already did for longer ones.

@@ -278,7 +278,9 @@ In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 
 ### json.exception.parse_error.109
 
-A JSON Pointer array index must be a number.
+A JSON Pointer array index must be a number. This exception is thrown for an array index that does not begin with a
+digit, except for `-` and the empty reference token, which throw [`out_of_range.404`](#jsonexceptionout_of_range404)
+where they cannot be resolved.
 
 !!! failure "Example messages"
 
@@ -288,6 +290,11 @@ A JSON Pointer array index must be a number.
     ```
     [json.exception.parse_error.109] parse error: array index '+1' is not a number
     ```
+
+!!! note
+
+    Before version 3.13.0, a one-character array index that is not a digit (e.g., `x`) threw
+    [`out_of_range.404`](#jsonexceptionout_of_range404) instead.
 
 ### json.exception.parse_error.110
 
@@ -871,7 +878,8 @@ The provided key was not found in the JSON object.
 
 ### json.exception.out_of_range.404
 
-A reference token in a JSON Pointer could not be resolved.
+A reference token in a JSON Pointer could not be resolved, for instance an array index that begins with a digit but
+contains other characters (e.g., `1a`), or `-` where it cannot be used.
 
 !!! failure "Example message"
 
