@@ -62,5 +62,5 @@ same name. Hidden members remain accessible via [`as_base_class`](as_base_class.
 
 ## Version history
 
-- Added in version 3.12.0.
+- Added in version 3.11.3.
 - Made a public member type in version 3.13.0; it was private before, so it could not be named outside the class.

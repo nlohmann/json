@@ -15,6 +15,7 @@ on:
       - .github/SECURITY.md
       - cmake/clang_flags.cmake
       - cmake/gcc_flags.cmake
+      - include/nlohmann/detail/abi_macros.hpp
       - tests/fmt_formatter/project/main.cpp
       - tools/astyle/.astylerc
   workflow_dispatch:

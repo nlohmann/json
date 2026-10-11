@@ -104,7 +104,7 @@ See [documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) for
 ## Parse errors
 
 The library throws this exception when a parse error occurs. Parse errors
-can occur during the deserialization of JSON text, CBOR, MessagePack, as well
+can occur during the deserialization of JSON text or of one of the binary formats (BJData, BON8, BSON, CBOR, MessagePack, UBJSON), as well
 as when using JSON Patch.
 
 Exceptions have ids 1xx.
@@ -190,7 +190,7 @@ This error indicates a syntax error while deserializing a JSON text. The error m
 !!! tip
 
     - Make sure the input is correctly read. Try to write the input to standard output to check if, for instance, the input file was successfully opened.
-    - Paste the input to a JSON validator like <http://jsonlint.com> or a tool like [jq](https://stedolan.github.io/jq/).
+    - Paste the input to a JSON validator like <https://jsonlint.com> or a tool like [jq](https://jqlang.github.io/jq/).
 
 ### json.exception.parse_error.102
 

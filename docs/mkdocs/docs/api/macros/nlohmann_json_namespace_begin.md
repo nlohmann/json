@@ -14,7 +14,7 @@ These macros can be used to open and close the `nlohmann` namespace. See
 ## Default definition
 
 The default definitions open and close the `nlohmann` namespace. The precise definition of
-[`NLOHMANN_JSON_NAMESPACE_BEGIN`] varies as described [here](../../features/namespace.md#structure).
+`NLOHMANN_JSON_NAMESPACE_BEGIN` varies as described [here](../../features/namespace.md#structure).
 
 1. Default definition of `NLOHMANN_JSON_NAMESPACE_BEGIN`:
 
