@@ -22552,7 +22552,7 @@ class binary_writer
         static_cast<void>(number); // unused when JSON_NOEXCEPTION is defined
         static_cast<void>(format_name);
         static_cast<void>(range);
-        JSON_THROW(out_of_range::create(407, concat("integer number ", std::string(number.begin(), number.end()), " cannot be represented by ", format_name, " as it does not fit ", range), &j));
+        JSON_THROW(out_of_range::create(407, concat("integer number ", number, " cannot be represented by ", format_name, " as it does not fit ", range), &j));
     }
 
     void write_msgpack_array_prefix(const std::size_t N, const BasicJsonType& j)

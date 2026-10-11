@@ -909,7 +909,7 @@ double-precision number when `number_float_t` is `#!cpp float`.
 An integer number cannot be represented by the binary format it is serialized to:
 
 - [BON8](../features/binary_formats/bon8.md) only stores integers that fit into int64.
-- [CBOR](../features/binary_formats/cbor.md), [MessagePack](../features/binary_formats/msgpack.md), and
+- [CBOR](../features/binary_formats/cbor.md), [MessagePack](../features/binary_formats/messagepack.md), and
   [BSON](../features/binary_formats/bson.md) store integers in at most 64 bits. With the default number types, every
   integer fits, but a [`number_integer_t`](../api/basic_json/number_integer_t.md) or
   [`number_unsigned_t`](../api/basic_json/number_unsigned_t.md) wider than 64 bits (e.g., `__int128`) can hold values
