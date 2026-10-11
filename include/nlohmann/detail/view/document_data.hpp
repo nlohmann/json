@@ -12,7 +12,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
 #include <cstring> // memcmp, memcpy
-#include <functional> // less
+#include <limits> // numeric_limits
 #include <map> // map
 #include <memory> // unique_ptr
 #include <new> // bad_alloc, operator new, placement new
@@ -67,7 +67,7 @@ struct document_data
         std::vector<node*> moved{};                    ///< element sequences of moved arrays/objects (header node first) // NOLINT(readability-redundant-member-init)
         std::vector<std::size_t> moved_cap{};          ///< capacity in nodes of a growable block; 0: a fixed sequence (a new value) // NOLINT(readability-redundant-member-init)
         std::vector<std::unique_ptr<node[]>> chunks{}; ///< storage of new values and blocks; never moved // NOLINT(readability-redundant-member-init,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        std::map<const node*, node*, std::less<const node*>> regions{}; ///< new arrays/objects: root -> container that uses it as its element sequence (nullptr: linked from a block) // NOLINT(readability-redundant-member-init)
+        std::map<const node*, node*> regions{}; ///< new arrays/objects: root -> container that uses it as its element sequence (nullptr: linked from a block) // NOLINT(readability-redundant-member-init)
         node* chunk_cur = nullptr;
         node* chunk_end = nullptr;
         std::size_t chunk_next = 64;

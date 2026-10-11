@@ -39,7 +39,7 @@ inline document_data::edit_state& edit_state_of(document_data& d)
 {
     if (!d.edits)
     {
-        d.edits.reset(new document_data::edit_state()); // NOLINT(cppcoreguidelines-owning-memory): owned by the unique_ptr
+        d.edits.reset(new document_data::edit_state()); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique): owned by the unique_ptr; std::make_unique is C++14
     }
     return *d.edits;
 }
