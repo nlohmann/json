@@ -608,7 +608,8 @@ int main(int argc, char** argv)
         return 1;
     }
     const std::string T = std::string(argv[1]) + "/";
-    const int rounds = argc > 2 ? std::atoi(argv[2]) : 30;
+    // (clamped to 1 to a million)
+    const int rounds = argc > 2 ? static_cast<int>((std::min)((std::max)(std::strtol(argv[2], nullptr, 10), 1L), 1000000L)) : 30;
     const std::string only = argc > 3 ? argv[3] : "";
     struct doc
     {
@@ -645,6 +646,11 @@ int main(int argc, char** argv)
     }
 
     std::FILE* csv = std::fopen("bench_view.csv", "w");
+    if (csv == nullptr)
+    {
+        std::perror("bench_view.csv");
+        return 1;
+    }
     std::fprintf(csv, "doc,bytes,workload,engine,ns\n");
     json_document reused;
     simdjson::dom::parser sj;
