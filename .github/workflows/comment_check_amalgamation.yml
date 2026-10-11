@@ -96,7 +96,7 @@ jobs:
               issue_number: issue_number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '## 🔴 Amalgamation check failed! 🔴\nThe source code has not been amalgamated and/or formatted correctly, or `BUILD.bazel` is out of date.'
+              body: '## 🔴 Amalgamation check failed! 🔴\nThe source code has not been amalgamated and/or formatted correctly, or `BUILD.bazel`, `nlohmann_json.natvis`, or the macro_builder tables in `macro_scope.hpp` are out of date. `make amalgamate BUILD.bazel natvis` fixes all but the tables (see `tools/macro_builder/README.md`).'
                     + (hasPatch ? '\n\n📎 A ready-to-apply patch is attached to the [failed workflow run](' + runUrl + ') as the `amalgamation-patch` artifact.'
                                   + ' Download it, then apply it locally from the repository root with:'
                                   + '\n\n```shell\ngit apply amalgamation.patch\n```\n\n'

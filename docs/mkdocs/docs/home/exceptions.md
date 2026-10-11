@@ -104,7 +104,7 @@ See [documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) for
 ## Parse errors
 
 The library throws this exception when a parse error occurs. Parse errors
-can occur during the deserialization of JSON text, CBOR, MessagePack, as well
+can occur during the deserialization of JSON text or of one of the binary formats (BJData, BON8, BSON, CBOR, MessagePack, UBJSON), as well
 as when using JSON Patch.
 
 Exceptions have ids 1xx.
@@ -190,7 +190,7 @@ This error indicates a syntax error while deserializing a JSON text. The error m
 !!! tip
 
     - Make sure the input is correctly read. Try to write the input to standard output to check if, for instance, the input file was successfully opened.
-    - Paste the input to a JSON validator like <http://jsonlint.com> or a tool like [jq](https://stedolan.github.io/jq/).
+    - Paste the input to a JSON validator like <https://jsonlint.com> or a tool like [jq](https://jqlang.github.io/jq/).
 
 ### json.exception.parse_error.102
 
@@ -278,7 +278,9 @@ In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 
 ### json.exception.parse_error.109
 
-A JSON Pointer array index must be a number.
+A JSON Pointer array index must be a number. This exception is thrown for an array index that does not begin with a
+digit, except for `-` and the empty reference token, which throw [`out_of_range.404`](#jsonexceptionout_of_range404)
+where they cannot be resolved.
 
 !!! failure "Example messages"
 
@@ -288,6 +290,11 @@ A JSON Pointer array index must be a number.
     ```
     [json.exception.parse_error.109] parse error: array index '+1' is not a number
     ```
+
+!!! note
+
+    Before version 3.13.0, a one-character array index that is not a digit (e.g., `x`) threw
+    [`out_of_range.404`](#jsonexceptionout_of_range404) instead.
 
 ### json.exception.parse_error.110
 
@@ -810,7 +817,7 @@ does not list an enumerator and it is therefore converted like the first listed 
 A discarded value (one created by [`parse()`](../api/basic_json/parse.md) with a callback that returns `false` for the
 value, or by default-constructing a [`basic_json`](../api/basic_json/index.md) with
 [`value_t::discarded`](../api/basic_json/value_t.md)) was passed to a binary serialization function, either directly or
-nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, or BSON.
+nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, BSON, or BON8.
 
 !!! failure "Example message"
 
@@ -871,7 +878,8 @@ The provided key was not found in the JSON object.
 
 ### json.exception.out_of_range.404
 
-A reference token in a JSON Pointer could not be resolved.
+A reference token in a JSON Pointer could not be resolved, for instance an array index that begins with a digit but
+contains other characters (e.g., `1a`), or `-` where it cannot be used.
 
 !!! failure "Example message"
 

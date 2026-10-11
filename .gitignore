@@ -27,7 +27,6 @@
 /docs/docset/JSON_for_Modern_C++.tgz
 /docs/docset/docSet.dsidx
 /docs/mkdocs/.cache/
-/docs/mkdocs/docs/__pycache__/
 /docs/mkdocs/hooks/__pycache__/
 /docs/mkdocs/scripts/mermaid/node_modules/
 /docs/mkdocs/site/
@@ -47,3 +46,17 @@ nlohmann_json.spdx
 
 # Bazel-related
 MODULE.bazel.lock
+
+# backups left by `make check-amalgamation` or the ci_test_amalgamation target if they are interrupted
+/BUILD.bazel~
+/nlohmann_json.natvis~
+/single_include/nlohmann/*.hpp~
+/venv_astyle/
+
+# release outputs of `make release`
+/include.zip
+/include.zip.asc
+/json.tar.xz
+/json.tar.xz.asc
+/release_files/
+/single_include/nlohmann/*.asc

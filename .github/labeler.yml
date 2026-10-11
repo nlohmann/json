@@ -21,6 +21,17 @@ labels:
   files:
     - "cmake/.*"
 
+# other build systems
+- label: "CMake"
+  files:
+    - "(meson\\.build|meson_options\\.txt|BUILD\\.bazel|MODULE\\.bazel|Package\\.swift)"
+
+- label: "documentation"
+  files:
+    - ".github/ISSUE_TEMPLATE/.*"
+    - ".github/config\\.yml"
+    - ".github/(CONTRIBUTING|SECURITY|CODE_OF_CONDUCT|PULL_REQUEST_TEMPLATE)\\.md"
+
 - label: "CI"
   files:
     - ".github/workflows/.*"

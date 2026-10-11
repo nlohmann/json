@@ -41,6 +41,8 @@ With (2), the bytes written before the exception remain in the output adapter.
   above 9223372036854775807, which BON8 cannot represent
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if `j` contains a string that is not
   valid UTF-8
+- Throws [type_error.321](../../home/exceptions.md#jsonexceptiontype_error321) if `j` or a value nested in it is
+  discarded; example: `"cannot serialize discarded value to BON8"`
 
 ## Complexity
 

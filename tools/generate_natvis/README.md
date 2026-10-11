@@ -15,7 +15,8 @@ file or the library version is bumped — otherwise the committed
 make natvis
 ```
 
-or, equivalently:
+`make natvis` sets up a virtual environment `tools/generate_natvis/venv` with the dependencies from
+`requirements.txt` (Jinja2) and runs the script with it. Alternatively, install the requirements yourself and run:
 
 ```shell
 ./generate_natvis.py [--version X.Y.Z] [repository_root/]

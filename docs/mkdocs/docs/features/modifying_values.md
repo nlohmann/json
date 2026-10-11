@@ -35,8 +35,12 @@ the insertion happened — useful for "add if absent" semantics.
 
 ## Merging objects
 
-To merge one object into another, [`update`](../api/basic_json/update.md) copies all members from another object,
-overwriting existing keys (similar to Python's `dict.update`). This is the idiomatic way to combine two objects.
+To merge one object into another, [`update`](../api/basic_json/update.md) copies all members from another object
+(similar to Python's `dict.update`). This is the idiomatic way to combine two objects. It has two modes:
+
+- By default, the merge is shallow: existing keys are overwritten, even if both values are objects.
+- With `merge_objects = #!cpp true`, keys whose values are objects in both JSON values are merged recursively.
+  Everything else is overwritten. In particular, arrays are replaced, not concatenated.
 
 ??? example
 
@@ -50,9 +54,22 @@ overwriting existing keys (similar to Python's `dict.update`). This is the idiom
     --8<-- "examples/update.output"
     ```
 
-For a recursive merge that follows [RFC 7386](https://tools.ietf.org/html/rfc7386), see
-[JSON Merge Patch](merge_patch.md). To apply a sequence of well-defined edit operations, see
-[JSON Patch](json_patch.md).
+A common use of the recursive mode is combining defaults with user settings. Nested defaults that the user did not set
+are kept:
+
+```cpp
+json defaults = {{"log", {{"level", "info"}, {"file", "app.log"}}}, {"retries", 3}};
+json user_settings = {{"log", {{"level", "debug"}}}};
+
+json config = defaults;
+config.update(user_settings, true);
+// {"log":{"file":"app.log","level":"debug"},"retries":3}
+```
+
+[JSON Merge Patch](merge_patch.md) ([RFC 7386](https://tools.ietf.org/html/rfc7386)) also merges objects recursively,
+but it is a different tool: a `#!json null` in the patch means "remove this key". It is meant for applying merge patch
+documents (e.g., received via HTTP PATCH). To merge configuration-like objects, use `#!cpp update(..., true)`. To apply
+a sequence of well-defined edit operations, see [JSON Patch](json_patch.md).
 
 ## Removing elements
 
@@ -72,6 +89,7 @@ a.erase(1);             // [1,3,4]  (erase by index)
 
 - [`push_back`](../api/basic_json/push_back.md) / [`emplace_back`](../api/basic_json/emplace_back.md) - append to an array
 - [`emplace`](../api/basic_json/emplace.md) - insert into an object if the key is absent
-- [`update`](../api/basic_json/update.md) - merge objects
+- [`update`](../api/basic_json/update.md) - merge objects (shallow, or recursive with `merge_objects`)
+- [`merge_patch`](../api/basic_json/merge_patch.md) - apply an RFC 7386 merge patch
 - [`erase`](../api/basic_json/erase.md) / [`clear`](../api/basic_json/clear.md) - remove elements
 - [JSON Patch and Diff](json_patch.md) and [JSON Merge Patch](merge_patch.md) - structured modifications
