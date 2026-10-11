@@ -133,13 +133,15 @@ TEST_CASE("JSON Merge Patch diff")
                 }
             })"_json;
 
-            auto patch = json::merge_diff(document, expected);
-            CHECK(patch == R"({
+            json const expected_patch = R"({
                 "a": "z",
                 "c": {
                     "f": null
                 }
-            })"_json);
+            })"_json;
+
+            auto patch = json::merge_diff(document, expected);
+            CHECK(patch == expected_patch);
 
             document.merge_patch(patch);
             CHECK(document == expected);
@@ -172,8 +174,7 @@ TEST_CASE("JSON Merge Patch diff")
                 "phoneNumber": "+01-123-456-7890"
             })"_json;
 
-            auto patch = json::merge_diff(document, expected);
-            CHECK(patch == R"({
+            json const expected_patch = R"({
                 "title": "Hello!",
                 "phoneNumber": "+01-123-456-7890",
                 "author": {
@@ -182,7 +183,10 @@ TEST_CASE("JSON Merge Patch diff")
                 "tags": [
                     "example"
                 ]
-            })"_json);
+            })"_json;
+
+            auto patch = json::merge_diff(document, expected);
+            CHECK(patch == expected_patch);
 
             document.merge_patch(patch);
             CHECK(document == expected);
