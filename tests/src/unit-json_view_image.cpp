@@ -487,7 +487,12 @@ TEST_CASE("json_view images: edited documents")
                         image_check::full, image_check::bounds
                     })
             {
+#if !defined(JSON_NOEXCEPTION)
                 CHECK(load_result(image, check).empty());
+#else
+                const json_document loaded = json_document::load(image, check);
+                CHECK(loaded.root().dump() == d.root().dump());
+#endif
             }
             check_round_trip(d);
             // a loaded document is edited and saved again
