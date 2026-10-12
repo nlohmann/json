@@ -182,6 +182,7 @@ nav:
           - 'json_serializer': api/basic_json/json_serializer.md
           - 'max_size': api/basic_json/max_size.md
           - 'meta': api/basic_json/meta.md
+          - 'merge_diff': api/basic_json/merge_diff.md
           - 'merge_patch': api/basic_json/merge_patch.md
           - 'number_float_t': api/basic_json/number_float_t.md
           - 'number_integer_t': api/basic_json/number_integer_t.md

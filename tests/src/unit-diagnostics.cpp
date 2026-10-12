@@ -567,9 +567,9 @@ TEST_CASE("Regression tests for extended diagnostics")
     }
 }
 
-TEST_CASE("Better diagnostics past the descent bound of update() and merge_patch()")
+TEST_CASE("Better diagnostics past the descent bound of update(), merge_patch() and merge_diff()")
 {
-    // Both merge objects nested more than detail::recursion_depth_limit()
+    // All three handle objects nested more than detail::recursion_depth_limit()
     // (128) levels deep without recursing; the values they add or replace
     // there must still know their parents.
     // The values are built rather than parsed, so that the expected messages
@@ -613,6 +613,21 @@ TEST_CASE("Better diagnostics past the descent bound of update() and merge_patch
             p = &p->at("a");
         }
         CHECK_THROWS_WITH_AS(p->at("x").at(0), expected_x.c_str(), json::type_error);
+        CHECK_THROWS_WITH_AS(p->at("y").at(0), expected_y.c_str(), json::type_error);
+    }
+
+    SECTION("merge_diff()")
+    {
+        // target and patch differ only in their innermost members, so the
+        // diff of the two is nested as deeply: {"a": ... {"x": null, "y": 2}}
+        const json diff = json::merge_diff(target, patch); // NOLINT(readability-suspicious-call-argument)
+
+        const json* p = &diff;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            p = &p->at("a");
+        }
+        CHECK(p->at("x").is_null());
         CHECK_THROWS_WITH_AS(p->at("y").at(0), expected_y.c_str(), json::type_error);
     }
 }

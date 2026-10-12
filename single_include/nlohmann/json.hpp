@@ -35570,6 +35570,176 @@ public:
     }
 
   public:
+    /// @brief creates a diff as a JSON Merge Patch
+    /// @sa https://json.nlohmann.me/api/basic_json/merge_diff/
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json merge_diff(const basic_json& source, const basic_json& target)
+    {
+        // unless both are objects, the patch is the target itself
+        if (!source.is_object() || !target.is_object())
+        {
+            return target;
+        }
+
+        return merge_diff_recursively(source, target, 0);
+    }
+
+  private:
+    /// @brief two objects @ref merge_diff_iteratively is diffing
+    struct merge_diff_frame
+    {
+        merge_diff_frame(const basic_json* source_, const basic_json* target_)
+            : source(source_), target(target_), member(source_->cbegin()), patch(value_t::object)
+        {}
+
+        // declared for GCC's -Weffc++, as in diff_frame
+        merge_diff_frame(const merge_diff_frame&) = default;
+        merge_diff_frame(merge_diff_frame&&) = default;
+        merge_diff_frame& operator=(const merge_diff_frame&) = default;
+        merge_diff_frame& operator=(merge_diff_frame&&) = default;
+        ~merge_diff_frame() = default;
+
+        /// the objects being diffed
+        const basic_json* source;
+        const basic_json* target;
+        /// the member of source being diffed; advanced once it is done
+        const_iterator member;
+        /// the patch for the members of source diffed so far
+        basic_json patch;
+    };
+
+    /// @brief add the members of object @a target that @a source does not
+    ///        have to the merge patch @a result
+    static void merge_diff_added_members(basic_json& result, const basic_json& source, const basic_json& target)
+    {
+        for (auto it = target.begin(); it != target.end(); ++it)
+        {
+            auto itf = source.find(it.key());
+            if (itf == source.end())
+            {
+                result[it.key()] = it.value();
+            }
+        }
+    }
+
+    /*!
+    @brief @ref merge_diff of two objects at nesting level @a depth
+
+    Diffing two nested objects calls this function again, once per nesting
+    level, so values nested deeply enough would exhaust the call stack and
+    terminate the process. The descent is bounded here: once @ref
+    detail::recursion_depth_limit levels have been entered, @ref
+    merge_diff_iteratively diffs what is left without the call stack.
+    */
+    static basic_json merge_diff_recursively(const basic_json& source, const basic_json& target, const std::size_t depth)
+    {
+        JSON_ASSERT(source.is_object() && target.is_object());
+
+        if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+        {
+            return merge_diff_iteratively(source, target);
+        }
+
+        basic_json result(value_t::object);
+
+        for (auto it = source.begin(); it != source.end(); ++it)
+        {
+            auto itf = target.find(it.key());
+            if (itf != target.end())
+            {
+                if (it.value().is_object() && itf.value().is_object())
+                {
+                    auto diff = merge_diff_recursively(it.value(), itf.value(), depth + 1);
+                    if (!diff.empty())
+                    {
+                        result[it.key()] = std::move(diff);
+                    }
+                }
+                else if (it.value() != itf.value())
+                {
+                    result[it.key()] = itf.value();
+                }
+            }
+            else
+            {
+                result[it.key()] = value_t::null;
+            }
+        }
+
+        merge_diff_added_members(result, source, target);
+        return result;
+    }
+
+    /*!
+    @brief @ref merge_diff of two objects without the call stack
+
+    Produces the same patch as @ref merge_diff_recursively, keeping the objects
+    being diffed on an explicit stack instead of descending into them. Two
+    nested objects are still diffed completely before the next member, so the
+    patch has its members in the same order as in the recursive version. Only
+    reached for objects nested more deeply than @ref
+    detail::recursion_depth_limit.
+    */
+    static basic_json merge_diff_iteratively(const basic_json& source, const basic_json& target)
+    {
+        // the patch of source and target, set once their frame is popped
+        basic_json result;
+        std::vector<merge_diff_frame> stack;
+        stack.emplace_back(&source, &target);
+        while (!stack.empty())
+        {
+            // the frame's members are copied out and it is changed through
+            // stack.back(): pushing a frame for nested objects or popping
+            // this one would invalidate a reference to it
+            const basic_json* const s = stack.back().source;
+            const basic_json* const t = stack.back().target;
+            const const_iterator it = stack.back().member;
+
+            if (it != s->cend())
+            {
+                const const_iterator itf = t->find(it.key());
+                if (itf != t->cend())
+                {
+                    if (it.value().is_object() && itf.value().is_object())
+                    {
+                        // member is advanced once their patch is under its key
+                        stack.emplace_back(&it.value(), &itf.value());
+                        continue;
+                    }
+                    if (it.value() != itf.value())
+                    {
+                        stack.back().patch[it.key()] = itf.value();
+                    }
+                }
+                else
+                {
+                    stack.back().patch[it.key()] = value_t::null;
+                }
+                ++stack.back().member;
+                continue;
+            }
+
+            merge_diff_added_members(stack.back().patch, *s, *t);
+
+            // these objects are done: continue with the ones they are in
+            basic_json patch = std::move(stack.back().patch);
+            stack.pop_back();
+            if (stack.empty())
+            {
+                result = std::move(patch);
+            }
+            else
+            {
+                if (!patch.empty())
+                {
+                    stack.back().patch[stack.back().member.key()] = std::move(patch);
+                }
+                ++stack.back().member;
+            }
+        }
+        return result;
+    }
+
     /// @}
 };
 
