@@ -2271,7 +2271,7 @@ TEST_CASE("MessagePack Size above uint32 for object")
 }
 
 #ifdef JSON_TEST_BEYOND_UINT32_STRING
-struct huge_string : std::string
+struct msgpack_huge_string : std::string
 {
     using std::string::string;
 
@@ -2281,20 +2281,20 @@ struct huge_string : std::string
     }
 };
 
-using huge_string_json = nlohmann::json::with_string_t<huge_string>;
+using msgpack_huge_string_json = nlohmann::json::with_string_t<msgpack_huge_string>;
 
 TEST_CASE("MessagePack Size above uint32 for string")
 {
-    const huge_string_json j = "hello";
+    const msgpack_huge_string_json j = "hello";
 
     CHECK_THROWS_WITH_AS(
-        huge_string_json::to_msgpack(j),
+        msgpack_huge_string_json::to_msgpack(j),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 }
 #endif
 
-struct huge_binary : std::vector<std::uint8_t>
+struct msgpack_huge_binary : std::vector<std::uint8_t>
 {
     using std::vector<std::uint8_t>::vector;
 
@@ -2304,18 +2304,18 @@ struct huge_binary : std::vector<std::uint8_t>
     }
 };
 
-using huge_binary_json = nlohmann::json::with_binary_t<huge_binary>;
+using msgpack_huge_binary_json = nlohmann::json::with_binary_t<msgpack_huge_binary>;
 
 TEST_CASE("MessagePack Size above uint32 for binary")
 {
 
-    huge_binary_json j = huge_binary_json::binary(huge_binary{});
+    msgpack_huge_binary_json j = msgpack_huge_binary_json::binary(msgpack_huge_binary{});
 
     j.get_binary().push_back(0x01);
     j.get_binary().push_back(0x02);
 
     CHECK_THROWS_WITH_AS(
-        huge_binary_json::to_msgpack(j),
+        msgpack_huge_binary_json::to_msgpack(j),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 }

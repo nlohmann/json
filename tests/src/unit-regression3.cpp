@@ -6,12 +6,11 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-// cmake/test.cmake selects the C++ standard versions with which to build a
-// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
-// When using macros that are only defined for particular versions of the standard
-// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
-// version macro in a comment close by, like this:
-// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+// cmake/test.cmake builds a unit test with C++ standards beyond C++11 only if the
+// source file mentions the corresponding version macro. To avoid rebuilding this
+// large file for every standard, tests that depend on the standard version (e.g.,
+// those using JSON_HAS_FILESYSTEM, JSON_HAS_RANGES, or JSON_HAS_THREE_WAY_COMPARISON)
+// go into a separate file unit-regression3-cpp<NN>.cpp. This file stays C++11-only.
 
 #include "doctest_compatibility.h"
 
@@ -48,37 +47,7 @@ using ordered_json = nlohmann::ordered_json;
 #include <type_traits>
 #include <utility>
 
-#ifdef JSON_HAS_CPP_17
-    #include <any>
-    #include <variant>
-#endif
-
-#ifdef JSON_HAS_CPP_17
-    #if __has_include(<optional>)
-        #include <optional>
-    #elif __has_include(<experimental/optional>)
-    #endif
-
-    /////////////////////////////////////////////////////////////////////
-    // for #4804
-    /////////////////////////////////////////////////////////////////////
-    using json_4804 = nlohmann::json::with_binary_t<std::vector<std::byte>>;
-#endif
-
-#ifdef JSON_HAS_CPP_20
-    #if __has_include(<span>)
-        #include <span>
-    #endif
-#endif
-
 // the explicit instantiation for #4825 is in unit-explicit_instantiation.cpp
-
-/////////////////////////////////////////////////////////////////////
-// for #4440
-/////////////////////////////////////////////////////////////////////
-#if JSON_HAS_RANGES == 1
-    #include <ranges>
-#endif
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
@@ -195,22 +164,6 @@ inline void from_json(const json& j, for_3171_base& tb) // NOLINT(misc-use-inter
 }
 
 /////////////////////////////////////////////////////////////////////
-// for #3312
-/////////////////////////////////////////////////////////////////////
-
-#ifdef JSON_HAS_CPP_20
-struct for_3312
-{
-    std::string name;
-};
-
-inline void from_json(const json& j, for_3312& obj) // NOLINT(misc-use-internal-linkage)
-{
-    j.at("name").get_to(obj.name);
-}
-#endif
-
-/////////////////////////////////////////////////////////////////////
 // for #3204
 /////////////////////////////////////////////////////////////////////
 
@@ -273,37 +226,8 @@ struct Example_3810
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla) // NOLINT(misc-use-internal-linkage)
 
-/////////////////////////////////////////////////////////////////////
-// for #4740
-/////////////////////////////////////////////////////////////////////
-
-#ifdef JSON_HAS_CPP_17
-struct Example_4740
-{
-    std::optional<std::string> host = std::nullopt;
-    std::optional<int> port = std::nullopt;
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_4740, host, port)
-};
-#endif
-
 TEST_CASE("regression tests 3")
 {
-#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
-    // JSON_HAS_CPP_17 (do not remove; see note at top of file)
-    SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
-    {
-        nlohmann::detail::std_fs::path text_path("/tmp/text.txt");
-        const json j(text_path);
-
-        const auto j_path = j.get<nlohmann::detail::std_fs::path>();
-        CHECK(j_path == text_path);
-
-#if DOCTEST_CLANG || DOCTEST_GCC >= DOCTEST_COMPILER(8, 4, 0)
-        // only known to work on Clang and GCC >=8.4
-        CHECK_THROWS_WITH_AS(nlohmann::detail::std_fs::path(json(1)), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
-#endif
-    }
-#endif
 
     SECTION("issue #3077 - explicit constructor with default does not compile")
     {
@@ -354,31 +278,6 @@ TEST_CASE("regression tests 3")
         CHECK(td.str == "value");
     }
 
-#ifdef JSON_HAS_CPP_20
-    SECTION("issue #3312 - Parse to custom class from unordered_json breaks on G++11.2.0 with C++20")
-    {
-        // see test for #3171
-        const ordered_json j = {{"name", "class"}};
-        for_3312 obj{};
-
-        j.get_to(obj);
-
-        CHECK(obj.name == "class");
-    }
-#endif
-
-#if defined(JSON_HAS_CPP_17) && JSON_USE_IMPLICIT_CONVERSIONS
-    SECTION("issue #3428 - Error occurred when converting nlohmann::json to std::any")
-    {
-        const json j;
-        const std::any a1 = j;
-        std::any&& a2 = j;
-
-        CHECK(a1.type() == typeid(j));
-        CHECK(a2.type() == typeid(j));
-    }
-#endif
-
     SECTION("issue #3204 - ambiguous regression")
     {
         const for_3204_bar bar_from_foo([](for_3204_foo) noexcept {}); // NOLINT(performance-unnecessary-value-param)
@@ -421,28 +320,6 @@ TEST_CASE("regression tests 3")
         CHECK(oj["test"].dump() == expected);
     }
 
-#ifdef JSON_HAS_CPP_17
-    SECTION("issue #4740 - build issue with std::optional")
-    {
-        const auto t1 = Example_4740();
-        const auto j1 = nlohmann::json(t1);
-        CHECK(j1.dump() == "{\"host\":null,\"port\":null}");
-        const auto t2 = j1.get<Example_4740>();
-        CHECK(!t2.host.has_value());
-        CHECK(!t2.port.has_value());
-
-        // improve coverage
-        auto t3 = Example_4740();
-        t3.port = 80;
-        t3.host = "example.com";
-        const auto j2 = nlohmann::json(t3);
-        CHECK(j2.dump() == "{\"host\":\"example.com\",\"port\":80}");
-        const auto t4 = j2.get<Example_4740>();
-        CHECK(t4.host.has_value());
-        CHECK(t4.port.has_value());
-    }
-#endif
-
 #if !defined(_MSVC_LANG)
     // MSVC returns garbage on invalid enum values, so this test is excluded
     // there.
@@ -457,119 +334,7 @@ TEST_CASE("regression tests 3")
     }
 #endif
 
-#ifdef JSON_HAS_CPP_17
-    SECTION("issue #4804: from_cbor incompatible with std::vector<std::byte> as binary_t")
-    {
-        const std::vector<std::uint8_t> data = {0x80};
-        const auto decoded = json_4804::from_cbor(data);
-        CHECK((decoded == json_4804::array()));
-    }
-
-#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
-    SECTION("discussion #4209 - custom BinaryType direct assignment and round-tripping")
-    {
-        // Test that assigning a custom BinaryType directly creates a binary value, not an array
-        const std::vector<std::byte> original{std::byte{1}, std::byte{2}, std::byte{3}};
-        const json_4804 j = original;
-        CHECK(j.is_binary());
-        CHECK(!j.is_array());
-
-        // Test round-tripping: extracting the binary value back as the custom container type
-        const auto extracted = j.get<std::vector<std::byte>>();
-        CHECK(extracted == original);
-
-        // Test that the default json alias behavior is unchanged: std::vector<uint8_t> -> array
-        const json default_json = std::vector<std::uint8_t> {1, 2, 3};
-        CHECK(default_json.is_array());
-        CHECK(!default_json.is_binary());
-    }
-
-    SECTION("discussion #4209 - custom BinaryType extraction from parsed array")
-    {
-        // Test that extracting a custom BinaryType from a parsed JSON array still works
-        // (not just from a binary-typed node)
-        const auto j = json_4804::parse("[1,2,3]");
-        CHECK(j.is_array());
-        CHECK(!j.is_binary());
-
-        // Extracting as custom BinaryType should work from arrays
-        const auto extracted = j.get<std::vector<std::byte>>();
-        CHECK(extracted.size() == 3);
-        CHECK(extracted[0] == std::byte{1});
-        CHECK(extracted[1] == std::byte{2});
-        CHECK(extracted[2] == std::byte{3});
-    }
-#endif
-
-    SECTION("issue #5046 - implicit conversion of return json to std::optional no longer implicit")
-    {
-        const json jval{};
-        auto GetValue = [](const json & valRoot) -> std::optional<json>
-        {
-            if (valRoot.contains("default"))
-            {
-                return valRoot.at("default");
-            }
-            return std::nullopt;
-        };
-        auto result = GetValue(jval);
-        CHECK(!result.has_value());
-    }
-#endif
-
-#if JSON_HAS_RANGES == 1
-    SECTION("issue #4440 - assert when using std::views::filter and GCC 10")
-    {
-        auto noOpFilter = std::views::filter([](auto&&) noexcept
-        {
-            return true;
-        });
-        json j = {1, 2, 3};
-        auto filtered = j | noOpFilter;
-        CHECK(*filtered.begin() == 1);
-    }
-#endif
-
-#if JSON_HAS_RANGE_VIEW_CONVERSION
-    SECTION("issue #4916 - constructing array from C++20 ranges view does not work")
-    {
-        std::vector<int> nums{1, 2, 37, 42, 21};
-        auto filteredNums = nums | std::views::filter([](int i)
-        {
-            return i > 10;
-        });
-        json const j(filteredNums);
-        CHECK(j.type() == json::value_t::array);
-        CHECK(j == json({37, 42, 21}));
-    }
-#endif
-
     // owning_view is not available in libstdc++ < 12
-#if JSON_HAS_RANGE_VIEW_CONVERSION && !(defined(__GLIBCXX__) && _GLIBCXX_RELEASE < 12)
-    SECTION("issue #4916 - constructing array from prvalue C++20 ranges view (owning_view)")
-    {
-        json const j(std::vector<int> {1, 2, 37, 42, 21} | std::views::filter([](int i)
-        {
-            return i > 10;
-        }));
-        CHECK(j.type() == json::value_t::array);
-        CHECK(j == json({37, 42, 21}));
-    }
-#endif
-
-#if JSON_HAS_RANGE_VIEW_CONVERSION
-    SECTION("issue #4916 - constructing array from C++20 transform view (prvalue elements)")
-    {
-        std::vector<int> nums{1, 2, 3};
-        auto t = nums | std::views::transform([](int i) noexcept
-        {
-            return i * 2;
-        });
-        json const j(t);
-        CHECK(j.type() == json::value_t::array);
-        CHECK(j == json({2, 4, 6}));
-    }
-#endif
 }
 
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
@@ -913,7 +678,6 @@ TEST_CASE("issue #5402 - update(merge_objects=true) overwrites a primitive with 
     mixed.update(json{{"keep", {{"b", 2}}}, {"replace", {{"x", 2}}}}, true);
     CHECK(mixed == json({{"keep", {{"a", 1}, {"b", 2}}}, {"replace", {{"x", 2}}}}));
 }
-
 
 TEST_CASE("regression test #5476 - array type without reserve()")
 {

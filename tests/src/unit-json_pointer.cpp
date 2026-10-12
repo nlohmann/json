@@ -773,14 +773,13 @@ TEST_CASE("JSON pointers")
         CHECK(ptr.to_string() == "/object/~1");
     }
 
+#if !JSON_HAS_THREE_WAY_COMPARISON // with three-way comparison, see unit-json_pointer-cpp20.cpp
     SECTION("equality comparison")
     {
         std::string ptr_string{"/foo/bar"};
         auto ptr1 = json::json_pointer(ptr_string);
         auto ptr2 = json::json_pointer(ptr_string);
 
-        // build with C++20 to test rewritten candidates
-        // JSON_HAS_CPP_20
 
         CHECK(ptr1 == ptr2);
 
@@ -823,6 +822,7 @@ TEST_CASE("JSON pointers")
         }
 #endif
     }
+#endif
 
     SECTION("less-than comparison")
     {
@@ -832,12 +832,6 @@ TEST_CASE("JSON pointers")
         CHECK(ptr1 < ptr2);
         CHECK_FALSE(ptr2 < ptr1);
 
-        // build with C++20
-        // JSON_HAS_CPP_20
-#if JSON_HAS_THREE_WAY_COMPARISON
-        CHECK((ptr1 <=> ptr2) == std::strong_ordering::less); // *NOPAD*
-        CHECK(ptr2 > ptr1);
-#endif
     }
 
     SECTION("usable as map key")
@@ -893,10 +887,9 @@ TEST_CASE("JSON pointers")
         CHECK_FALSE(ptr != ptr_j);
         CHECK_FALSE(ptr != ptr_oj);
 
+#if !JSON_HAS_THREE_WAY_COMPARISON // with three-way comparison, see unit-json_pointer-cpp20.cpp
         SECTION("equality comparison")
         {
-            // build with C++20 to test rewritten candidates
-            // JSON_HAS_CPP_20
 
             CHECK(ptr == ptr_j);
             CHECK(ptr == ptr_oj);
@@ -912,6 +905,7 @@ TEST_CASE("JSON pointers")
             CHECK_FALSE(ptr_oj != ptr_j);
             CHECK_FALSE(ptr_oj != ptr);
         }
+#endif
     }
 
     SECTION("value(json_pointer, default) with ordered_json #5664")
@@ -933,19 +927,6 @@ TEST_CASE("JSON pointers")
         CHECK(j.value(ptr_missing, 42) == 42);
     }
 
-    // build with C++20
-    // JSON_HAS_CPP_20
-#if defined(__cpp_char8_t)
-    SECTION("Using _json_pointer with char8_t literals #4945")
-    {
-        const json j = R"({"a": {"b": {"c": 123}}})"_json;
-        const auto p1 = "/a/b/c"_json_pointer;
-        CHECK(j[p1] == 123);
-
-        const auto p2 = u8"/a/b/c"_json_pointer;
-        CHECK(j[p2] == 123);
-    }
-#endif
 }
 
 TEST_CASE("unescaping keeps a '~' that does not start an escape sequence")

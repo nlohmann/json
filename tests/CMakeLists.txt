@@ -2,12 +2,14 @@ cmake_minimum_required(VERSION 3.13...4.0)
 
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
+option(JSON_TestUnityBuild "Build the unit tests in batches of several files per executable to speed up compilation." ON)
 option(JSON_TestSimdutf "Build the unit tests against the simdutf UTF-8 validation backend." OFF)
 
 set(JSON_SIMDUTF_VERSION 9.1.0 CACHE STRING "The simdutf version used by JSON_TestSimdutf.")
 
 set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
+set(JSON_TestUnityBatchSize 8 CACHE STRING "The number of unit test files compiled into one executable with JSON_TestUnityBuild.")
 set(JSON_TestShard     "" CACHE STRING "Build only a part of the unit tests, given as <index>/<count> (e.g. 0/2), to split them across CI jobs with a time limit.")
 
 # using an env var, since this will also affect targets executing cmake (such as "ci_test_compiler_default")
@@ -19,6 +21,11 @@ if (NOT "" STREQUAL "$ENV{JSON_FORCED_GLOBAL_LINK_OPTIONS}")
 endif()
 
 include(test)
+
+# MinGW's GNU ld hits section and relocation limits with the large merged translation units
+if(MINGW)
+    set(JSON_TestUnityBuild OFF)
+endif()
 
 #############################################################################
 # override standard support
@@ -322,9 +329,28 @@ if(NOT "${JSON_TestShard}" STREQUAL "")
     message(STATUS "Test shard ${JSON_TestShard}: ${shard_file_count} of ${test_file_count} unit test files")
 endif()
 
-foreach(file ${files})
-    json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
-endforeach()
+# Explicit groups of test files (file names without "unit-" and ".cpp") for
+# JSON_TestUnityBuild: all files of a group are compiled into one translation
+# unit per C++ standard, so that related tests share their template
+# instantiations (all binary formats instantiate the same readers and
+# writers). Only add a group where this was measured to pay off: grouping
+# files that share little just creates one slow translation unit. Files in no
+# group are batched alphabetically by JSON_TestUnityBatchSize.
+set(json_test_unity_groups binary)
+set(json_test_unity_group_binary binary_formats binary_utf8_error_handler binary_writer_sinks bjdata bon8 bon8-cpp17 bson byte_container_with_subtype cbor msgpack msgpack-cpp17 ubjson)
+
+if(JSON_TestUnityBuild)
+    message(STATUS "Building the unit tests in batches of ${JSON_TestUnityBatchSize} files (JSON_TestUnityBuild)")
+    json_test_add_unity_tests(FILES ${files} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+        BATCH_SIZE ${JSON_TestUnityBatchSize}
+        GROUPS ${json_test_unity_groups}
+        VARIANT_FILES src/unit-comparison.cpp src/unit-comparison-cpp20.cpp src/unit-class_parser.cpp src/unit-diagnostic-positions.cpp
+    )
+else()
+    foreach(file ${files})
+        json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
+    endforeach()
+endif()
 
 # tests/src/unit-no-macro-leak.cpp #include-s the generated leak-check file,
 # so its test targets must be built after generate_hedley_undef_checks.
@@ -348,6 +374,13 @@ json_test_set_test_options(test-comparison_legacy
 )
 json_test_add_test_for(src/unit-comparison.cpp
     NAME test-comparison_legacy
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+json_test_set_test_options(test-comparison_legacy-cpp20
+    COMPILE_DEFINITIONS JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1
+)
+json_test_add_test_for(src/unit-comparison-cpp20.cpp
+    NAME test-comparison_legacy-cpp20
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
 

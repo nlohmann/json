@@ -6,22 +6,16 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-// cmake/test.cmake selects the C++ standard versions with which to build a
-// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
-// When using macros that are only defined for particular versions of the standard
-// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
-// version macro in a comment close by, like this:
-// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+// cmake/test.cmake builds a unit test with C++ standards beyond C++11 only if the
+// source file mentions the corresponding version macro. To avoid rebuilding this
+// large file for every standard, tests that depend on the standard version (e.g.,
+// those using JSON_HAS_FILESYSTEM, JSON_HAS_RANGES, or JSON_HAS_THREE_WAY_COMPARISON)
+// go into a separate file unit-iterators2-cpp<NN>.cpp. This file stays C++11-only.
 
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-
-#if JSON_HAS_RANGES
-    #include <algorithm>
-    #include <ranges>
-#endif
 
 TEST_CASE("iterators 2")
 {
@@ -872,94 +866,4 @@ TEST_CASE("iterators 2")
             }
         }
     }
-
-#if JSON_HAS_RANGES
-    // JSON_HAS_CPP_20 (do not remove; see note at top of file)
-    SECTION("ranges")
-    {
-        SECTION("concepts")
-        {
-            using nlohmann::detail::iteration_proxy_value;
-            CHECK(std::bidirectional_iterator<json::iterator>);
-            CHECK(std::input_iterator<iteration_proxy_value<json::iterator>>);
-
-            CHECK(std::is_same<json::iterator, std::ranges::iterator_t<json>>::value);
-            CHECK(std::ranges::bidirectional_range<json>);
-
-            using nlohmann::detail::iteration_proxy;
-            using items_type = decltype(std::declval<json&>().items());
-            CHECK(std::is_same<items_type, iteration_proxy<json::iterator>>::value);
-            CHECK(std::is_same<iteration_proxy_value<json::iterator>, std::ranges::iterator_t<items_type>>::value);
-            CHECK(std::ranges::input_range<items_type>);
-        }
-
-        SECTION("algorithms")
-        {
-            SECTION("copy")
-            {
-                json j{"foo", "bar"};
-                auto j_copied = json::array();
-
-                std::ranges::copy(j, std::back_inserter(j_copied));
-
-                CHECK(j == j_copied);
-            }
-
-            SECTION("find_if")
-            {
-                json j{1, 3, 2, 4};
-                auto j_even = json::array();
-
-#if JSON_USE_IMPLICIT_CONVERSIONS
-                auto it = std::ranges::find_if(j, [](int v) noexcept
-                {
-                    return (v % 2) == 0;
-                });
-#else
-                auto it = std::ranges::find_if(j, [](const json & j) noexcept
-                {
-                    int v;
-                    j.get_to(v);
-                    return (v % 2) == 0;
-                });
-#endif
-
-                CHECK(*it == 2);
-            }
-        }
-
-        SECTION("views")
-        {
-            SECTION("reverse")
-            {
-                json j{1, 2, 3, 4, 5};
-                json j_expected{5, 4, 3, 2, 1};
-
-                auto reversed = j | std::views::reverse;
-                CHECK(reversed == j_expected);
-            }
-
-            SECTION("transform")
-            {
-                json j
-                {
-                    { "a_key", "a_value"},
-                    { "b_key", "b_value"},
-                    { "c_key", "c_value"},
-                };
-                json j_expected{"a_key", "b_key", "c_key"};
-
-                // NOLINTNEXTLINE(fuchsia-trailing-return)
-                auto transformed = j.items() | std::views::transform([](const auto & item) -> std::string_view
-                {
-                    return item.key();
-                });
-                auto j_transformed = json::array();
-                std::ranges::copy(transformed, std::back_inserter(j_transformed));
-
-                CHECK(j_transformed == j_expected);
-            }
-        }
-    }
-#endif
 }

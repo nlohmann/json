@@ -13,9 +13,6 @@
 using nlohmann::json;
 
 #include <valarray>
-#if JSON_HAS_RANGES
-    #include <ranges>
-#endif
 
 namespace
 {
@@ -684,12 +681,6 @@ TEST_CASE("a failed allocation leaves the value unchanged")
         CHECK_THROWS_AS(j["key"], std::bad_alloc&);
         CHECK(j.is_null());
 
-#ifdef JSON_HAS_CPP_17
-        next_construct_fails = true;
-        CHECK_THROWS_AS(j[std::string_view("key")], std::bad_alloc&);
-        CHECK(j.is_null());
-#endif
-
         next_construct_fails = true;
         CHECK_THROWS_AS(j.push_back(my_json(1)), std::bad_alloc&);
         CHECK(j.is_null());
@@ -786,16 +777,6 @@ TEST_CASE("a failed allocation leaves the value unchanged")
         next_construct_fails = true;
         CHECK_THROWS_AS(nlohmann::to_json(j, std::valarray<int> {1, 2}), std::bad_alloc&);
         CHECK(j == "old");
-
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
-        const std::vector<int> numbers = {1, 2};
-        next_construct_fails = true;
-        CHECK_THROWS_AS(nlohmann::to_json(j, numbers | std::views::filter([](int /*unused*/)
-        {
-            return true;
-        })), std::bad_alloc&);
-        CHECK(j == "old");
-#endif
 
         next_construct_fails = false;
         nlohmann::to_json(j, std::vector<int> {1, 2});
