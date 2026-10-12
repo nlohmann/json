@@ -403,3 +403,5 @@ int main()
 1. Added in version 3.9.0.
 1. Added in version 3.11.0.
 1. Added in version 3.11.3.
+
+All three macros were changed to work with any `basic_json` specialization (not only `nlohmann::json`) in version 3.12.0, and to allow an empty member list in version 3.13.0 unreleased.

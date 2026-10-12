@@ -29,13 +29,30 @@ Constant.
     The example shows the usage of `back`.
      
     ```cpp
-    --8<-- "examples/json_pointer__back.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // different JSON Pointers
+        json::json_pointer ptr1("/foo");
+        json::json_pointer ptr2("/foo/0");
+    
+        // call empty()
+        std::cout << "last reference token of \"" << ptr1 << "\" is \"" << ptr1.back() << "\"\n"
+                  << "last reference token of \"" << ptr2 << "\" is \"" << ptr2.back() << "\"" << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/json_pointer__back.output"
+    last reference token of "/foo" is "foo"
+    last reference token of "/foo/0" is "0"
+    
     ```
 
 ## See also

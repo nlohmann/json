@@ -60,13 +60,52 @@ with `allow_exceptions` set to `#!cpp false`: a parse error then yields a discar
     The following code exemplifies `is_discarded()` for all JSON types.
     
     ```cpp
-    --8<-- "examples/is_discarded.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json j_null;
+        json j_boolean = true;
+        json j_number_integer = 17;
+        json j_number_unsigned_integer = 12345678987654321u;
+        json j_number_float = 23.42;
+        json j_object = {{"one", 1}, {"two", 2}};
+        json j_array = {1, 2, 4, 8, 16};
+        json j_string = "Hello, world";
+        json j_binary = json::binary({1, 2, 3});
+    
+        // call is_discarded()
+        std::cout << std::boolalpha;
+        std::cout << j_null.is_discarded() << '\n';
+        std::cout << j_boolean.is_discarded() << '\n';
+        std::cout << j_number_integer.is_discarded() << '\n';
+        std::cout << j_number_unsigned_integer.is_discarded() << '\n';
+        std::cout << j_number_float.is_discarded() << '\n';
+        std::cout << j_object.is_discarded() << '\n';
+        std::cout << j_array.is_discarded() << '\n';
+        std::cout << j_string.is_discarded() << '\n';
+        std::cout << j_binary.is_discarded() << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/is_discarded.output"
+    false
+    false
+    false
+    false
+    false
+    false
+    false
+    false
+    false
+    
     ```
 
 ??? example "Example: discarded values from parsing"
@@ -76,13 +115,38 @@ with `allow_exceptions` set to `#!cpp false`: a parse error then yields a discar
     by `#!json null` and therefore does *not* remain discarded).
 
     ```cpp
-    --8<-- "examples/is_discarded__parse.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // parsing invalid JSON without exceptions yields a discarded value
+        json j_invalid = json::parse("[1,2,3", nullptr, false);
+    
+        // a callback that discards the top-level value does not leave it
+        // "discarded" -- it is replaced by null instead
+        json j_discarded_by_callback = json::parse("[1,2,3]", [](int /*depth*/, json::parse_event_t event, json& /*parsed*/)
+        {
+            return event != json::parse_event_t::array_start;
+        });
+    
+        std::cout << std::boolalpha;
+        std::cout << "j_invalid.is_discarded()               = " << j_invalid.is_discarded() << '\n';
+        std::cout << "j_discarded_by_callback                = " << j_discarded_by_callback << '\n';
+        std::cout << "j_discarded_by_callback.is_discarded() = " << j_discarded_by_callback.is_discarded() << '\n';
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/is_discarded__parse.output"
+    j_invalid.is_discarded()               = true
+    j_discarded_by_callback                = null
+    j_discarded_by_callback.is_discarded() = false
+    
     ```
 
 ## Version history

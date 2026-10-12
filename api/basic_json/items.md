@@ -86,13 +86,43 @@ When iterating over an array, `key()` will return the index of the element as st
     The following code shows an example for `items()`.
     
     ```cpp
-    --8<-- "examples/items.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json j_object = {{"one", 1}, {"two", 2}};
+        json j_array = {1, 2, 4, 8, 16};
+    
+        // example for an object
+        for (auto& x : j_object.items())
+        {
+            std::cout << "key: " << x.key() << ", value: " << x.value() << '\n';
+        }
+    
+        // example for an array
+        for (auto& x : j_array.items())
+        {
+            std::cout << "key: " << x.key() << ", value: " << x.value() << '\n';
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/items.output"
+    key: one, value: 1
+    key: two, value: 2
+    key: 0, value: 1
+    key: 1, value: 2
+    key: 2, value: 4
+    key: 3, value: 8
+    key: 4, value: 16
+    
     ```
 
 ## See also

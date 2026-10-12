@@ -128,13 +128,31 @@ Linear.
     depends on whether [`nlohmann::json`](../json.md) or [`nlohmann::ordered_json`](../ordered_json.md) is used:
 
      ```cpp
-     --8<-- "examples/operator__equal__specializations.cpp"
+     #include <iostream>
+     #include <iomanip>
+     #include <nlohmann/json.hpp>
+     
+     using json = nlohmann::json;
+     
+     int main()
+     {
+         nlohmann::json uj1 = {{"version", 1}, {"type", "integer"}};
+         nlohmann::json uj2 = {{"type", "integer"}, {"version", 1}};
+     
+         nlohmann::ordered_json oj1 = {{"version", 1}, {"type", "integer"}};
+         nlohmann::ordered_json oj2 = {{"type", "integer"}, {"version", 1}};
+     
+         std::cout << std::boolalpha << (uj1 == uj2) << '\n' << (oj1 == oj2) << std::endl;
+     }
+     
      ```
      
      Output:
      
      ```json
-     --8<-- "examples/operator__equal__specializations.output"
+     true
+     false
+     
      ```
 
 ## Examples
@@ -144,13 +162,41 @@ Linear.
     The example demonstrates comparing several JSON types.
         
     ```cpp
-    --8<-- "examples/operator__equal.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create several JSON values
+        json array_1 = {1, 2, 3};
+        json array_2 = {1, 2, 4};
+        json object_1 = {{"A", "a"}, {"B", "b"}};
+        json object_2 = {{"B", "b"}, {"A", "a"}};
+        json number_1 = 17;
+        json number_2 = 17.000000000000001L;
+        json string_1 = "foo";
+        json string_2 = "bar";
+    
+        // output values and comparisons
+        std::cout << std::boolalpha;
+        std::cout << array_1 << " == " << array_2 << " " << (array_1 == array_2) << '\n';
+        std::cout << object_1 << " == " << object_2 << " " << (object_1 == object_2) << '\n';
+        std::cout << number_1 << " == " << number_2 << " " << (number_1 == number_2) << '\n';
+        std::cout << string_1 << " == " << string_2 << " " << (string_1 == string_2) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator__equal.output"
+    [1,2,3] == [1,2,4] false
+    {"A":"a","B":"b"} == {"A":"a","B":"b"} true
+    17 == 17.0 true
+    "foo" == "bar" false
+    
     ```
 
 ??? example "Example: (2) compare JSON values with `#!cpp nullptr`"
@@ -158,13 +204,40 @@ Linear.
     The example demonstrates comparing several JSON types against the null pointer (JSON `#!json null`).
         
     ```cpp
-    --8<-- "examples/operator__equal__nullptr_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create several JSON values
+        json array = {1, 2, 3};
+        json object = {{"A", "a"}, {"B", "b"}};
+        json number = 17;
+        json string = "foo";
+        json null;
+    
+        // output values and comparisons
+        std::cout << std::boolalpha;
+        std::cout << array << " == nullptr " << (array == nullptr) << '\n';
+        std::cout << object << " == nullptr " << (object == nullptr) << '\n';
+        std::cout << number << " == nullptr " << (number == nullptr) << '\n';
+        std::cout << string << " == nullptr " << (string == nullptr) << '\n';
+        std::cout << null << " == nullptr " << (null == nullptr) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator__equal__nullptr_t.output"
+    [1,2,3] == nullptr false
+    {"A":"a","B":"b"} == nullptr false
+    17 == nullptr false
+    "foo" == nullptr false
+    null == nullptr true
+    
     ```
 
 ## See also

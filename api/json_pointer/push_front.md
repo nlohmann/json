@@ -29,13 +29,38 @@ Linear in the number of reference tokens in the `json_pointer`.
     The example shows the result of `push_front` for different JSON Pointers.
      
     ```cpp
-    --8<-- "examples/json_pointer__push_front.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create empty JSON Pointer
+        json::json_pointer ptr;
+        std::cout << "\"" << ptr << "\"\n";
+    
+        // call push_front()
+        ptr.push_front("foo");
+        std::cout << "\"" << ptr << "\"\n";
+    
+        ptr.push_front("0");
+        std::cout << "\"" << ptr << "\"\n";
+    
+        ptr.push_front("bar");
+        std::cout << "\"" << ptr << "\"\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/json_pointer__push_front.output"
+    ""
+    "/foo"
+    "/0/foo"
+    "/bar/0/foo"
+    
     ```
 
 ## See also

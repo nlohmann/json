@@ -56,13 +56,35 @@ classDiagram
     The following code shows how a `out_of_range` exception can be caught.
     
     ```cpp
-    --8<-- "examples/out_of_range.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        try
+        {
+            // calling at() for an invalid index
+            json j = {1, 2, 3, 4};
+            j.at(4) = 10;
+        }
+        catch (const json::out_of_range& e)
+        {
+            // output exception information
+            std::cout << "message: " << e.what() << '\n'
+                      << "exception id: " << e.id << std::endl;
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/out_of_range.output"
+    message: [json.exception.out_of_range.401] array index 4 is out of range
+    exception id: 401
+    
     ```
 
 ## See also

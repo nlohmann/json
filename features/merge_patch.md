@@ -9,18 +9,80 @@ syntax that closely mimics the document being modified. Unlike [JSON Patch](json
 express every kind of change (e.g., it cannot reorder array elements or remove a specific array element), but it is
 easier to read and write for object-shaped documents.
 
+The function [`merge_diff`](../api/basic_json/merge_diff.md) creates a merge patch that changes one JSON value into
+another.
+
+!!! tip "Not a general deep merge"
+
+    A merge patch is not a general deep merge: a `#!json null` value in the patch deletes the key from the target.
+    To merge two objects recursively (e.g., defaults and user settings), use
+    [`update`](../api/basic_json/update.md) with `merge_objects` set to `#!cpp true`; see
+    [Merging objects](modifying_values.md#merging-objects).
+
 ??? example
 
     The following code shows how a JSON Merge Patch is applied to a JSON document.
 
     ```cpp
-    --8<-- "examples/merge_patch.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    #include <iomanip> // for std::setw
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // the original document
+        json document = R"({
+                    "title": "Goodbye!",
+                    "author": {
+                        "givenName": "John",
+                        "familyName": "Doe"
+                    },
+                    "tags": [
+                        "example",
+                        "sample"
+                    ],
+                    "content": "This will be unchanged"
+                })"_json;
+    
+        // the patch
+        json patch = R"({
+                    "title": "Hello!",
+                    "phoneNumber": "+01-123-456-7890",
+                    "author": {
+                        "familyName": null
+                    },
+                    "tags": [
+                        "example"
+                    ]
+                })"_json;
+    
+        // apply the patch
+        document.merge_patch(patch);
+    
+        // output original and patched document
+        std::cout << std::setw(4) << document << std::endl;
+    }
+    
     ```
     
     Output:
 
     ```json
-    --8<-- "examples/merge_patch.output"
+    {
+        "author": {
+            "givenName": "John"
+        },
+        "content": "This will be unchanged",
+        "phoneNumber": "+01-123-456-7890",
+        "tags": [
+            "example"
+        ],
+        "title": "Hello!"
+    }
+    
     ```
 
 ## See also
@@ -28,3 +90,5 @@ easier to read and write for object-shaped documents.
 - [JSON Patch and Diff](json_patch.md) - a more expressive alternative that describes a sequence of operations
 - [JSON Pointer](json_pointer.md) - the addressing scheme used by JSON Patch
 - Function [`merge_patch`](../api/basic_json/merge_patch.md)
+- Function [`merge_diff`](../api/basic_json/merge_diff.md)
+- Function [`update`](../api/basic_json/update.md) - merge objects, optionally recursively

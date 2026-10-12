@@ -96,13 +96,36 @@ serialized as 0x81 0x65 0xFF, but `[1,2,3,4,"e"]` as 0x85 0x91 0x92 0x93 0x94 0x
 ??? example "Example: serialize a JSON value to BON8"
 
     ```cpp
-    --8<-- "examples/to_bon8.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        json j = R"({"compact": true, "format": "BON8", "schema": 0})"_json;
+    
+        // serialize it to BON8
+        std::vector<std::uint8_t> v = json::to_bon8(j);
+    
+        // print the vector content
+        for (auto& byte : v)
+        {
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        }
+        std::cout << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```c
-    --8<-- "examples/to_bon8.output"
+    0x89 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xf9 0x66 0x6f 0x72 0x6d 0x61 0x74 0xff 0x42 0x4f 0x4e 0x38 0xff 0x73 0x63 0x68 0x65 0x6d 0x61 0x90 
+    
     ```
 
 ## Deserialization
@@ -150,11 +173,37 @@ Non-negative integers are read as number_unsigned, negative integers as number_i
 ??? example "Example: deserialize a JSON value from BON8"
 
     ```cpp
-    --8<-- "examples/from_bon8.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create byte vector
+        std::vector<std::uint8_t> v = {0x89, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74,
+                                       0xf9, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0xff,
+                                       0x42, 0x4f, 0x4e, 0x38, 0xff, 0x73, 0x63, 0x68,
+                                       0x65, 0x6d, 0x61, 0x90
+                                      };
+    
+        // deserialize it with BON8
+        json j = json::from_bon8(v);
+    
+        // print the deserialized JSON value
+        std::cout << std::setw(2) << j << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/from_bon8.output"
+    {
+      "compact": true,
+      "format": "BON8",
+      "schema": 0
+    }
+    
     ```

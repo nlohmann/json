@@ -85,13 +85,39 @@ Linear in the size of the input.
     The example shows the deserialization of a byte vector in BON8 format to a JSON value.
      
     ```cpp
-    --8<-- "examples/from_bon8.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create byte vector
+        std::vector<std::uint8_t> v = {0x89, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74,
+                                       0xf9, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0xff,
+                                       0x42, 0x4f, 0x4e, 0x38, 0xff, 0x73, 0x63, 0x68,
+                                       0x65, 0x6d, 0x61, 0x90
+                                      };
+    
+        // deserialize it with BON8
+        json j = json::from_bon8(v);
+    
+        // print the deserialized JSON value
+        std::cout << std::setw(2) << j << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/from_bon8.output"
+    {
+      "compact": true,
+      "format": "BON8",
+      "schema": 0
+    }
+    
     ```
 
 ## See also
@@ -110,7 +136,8 @@ Linear in the size of the input.
 !!! warning "Deprecation"
 
     - Overload (2) replaces calls to `from_bon8` with a pointer and a length as first two parameters, which has been
-      deprecated in version 3.13.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      deprecated in version 3.13.0. In version 4.0.0, this overload
+      will be deleted (`= delete`) rather than removed. Please replace all calls like
       `#!cpp from_bon8(ptr, len, ...);` with `#!cpp from_bon8(ptr, ptr+len, ...);`.
 
     You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated

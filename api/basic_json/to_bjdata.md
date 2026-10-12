@@ -82,13 +82,81 @@ Linear in the size of the JSON value `j`.
     The example shows the serialization of a JSON value to a byte vector in BJData format.
      
     ```cpp
-    --8<-- "examples/to_bjdata.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    // function to print BJData's diagnostic format
+    void print_byte(uint8_t byte)
+    {
+        if (32 < byte and byte < 128)
+        {
+            std::cout << (char)byte;
+        }
+        else
+        {
+            std::cout << (int)byte;
+        }
+    }
+    
+    int main()
+    {
+        // create a JSON value
+        json j = R"({"compact": true, "schema": false})"_json;
+    
+        // serialize it to BJData
+        std::vector<std::uint8_t> v = json::to_bjdata(j);
+    
+        // print the vector content
+        for (auto& byte : v)
+        {
+            print_byte(byte);
+        }
+        std::cout << std::endl;
+    
+        // create an array of numbers
+        json array = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+        // serialize it to BJData using default representation
+        std::vector<std::uint8_t> v_array = json::to_bjdata(array);
+        // serialize it to BJData using size optimization
+        std::vector<std::uint8_t> v_array_size = json::to_bjdata(array, true);
+        // serialize it to BJData using type optimization
+        std::vector<std::uint8_t> v_array_size_and_type = json::to_bjdata(array, true, true);
+    
+        // print the vector contents
+        for (auto& byte : v_array)
+        {
+            print_byte(byte);
+        }
+        std::cout << std::endl;
+    
+        for (auto& byte : v_array_size)
+        {
+            print_byte(byte);
+        }
+        std::cout << std::endl;
+    
+        for (auto& byte : v_array_size_and_type)
+        {
+            print_byte(byte);
+        }
+        std::cout << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/to_bjdata.output"
+    {i7compactTi6schemaF}
+    [i1i2i3i4i5i6i7i8]
+    [#i8i1i2i3i4i5i6i7i8
+    [$i#i812345678
+    
     ```
 
 ??? example "Example: other_error.502 exception"
@@ -97,13 +165,34 @@ Linear in the size of the JSON value `j`.
     exception, because type-optimized containers can only be read back with a preceding size.
 
     ```cpp
-    --8<-- "examples/to_bjdata__exception.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a non-empty JSON array
+        json j = {1, 2, 3};
+    
+        // exception other_error.502
+        try
+        {
+            json::to_bjdata(j, false, true);
+        }
+        catch (const json::other_error& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/to_bjdata__exception.output"
+    [json.exception.other_error.502] use_type requires use_size = true
+    
     ```
 
 ## See also

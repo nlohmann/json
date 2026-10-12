@@ -84,25 +84,96 @@ Some important things:
 ??? example "Example: serialize a `person` to JSON with `to_json`"
 
     ```cpp
-    --8<-- "examples/to_json.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    namespace ns
+    {
+    // a simple struct to model a person
+    struct person
+    {
+        std::string name;
+        std::string address;
+        int age;
+    };
+    } // namespace ns
+    
+    namespace ns
+    {
+    void to_json(json& j, const person& p)
+    {
+        j = json{ {"name", p.name}, {"address", p.address}, {"age", p.age} };
+    }
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        json j = p;
+    
+        std::cout << j << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/to_json.output"
+    {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
+    
     ```
 
 ??? example "Example: deserialize a `person` from JSON with `from_json`"
 
     ```cpp
-    --8<-- "examples/from_json__default_constructible.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    namespace ns
+    {
+    // a simple struct to model a person
+    struct person
+    {
+        std::string name;
+        std::string address;
+        int age;
+    };
+    } // namespace ns
+    
+    namespace ns
+    {
+    void from_json(const json& j, person& p)
+    {
+        j.at("name").get_to(p.name);
+        j.at("address").get_to(p.address);
+        j.at("age").get_to(p.age);
+    }
+    } // namespace ns
+    
+    int main()
+    {
+        json j;
+        j["name"] = "Ned Flanders";
+        j["address"] = "744 Evergreen Terrace";
+        j["age"] = 60;
+    
+        auto p = j.get<ns::person>();
+    
+        std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```
-    --8<-- "examples/from_json__default_constructible.output"
+    Ned Flanders (60) lives in 744 Evergreen Terrace
+    
     ```
 
 ## Simplify your life with macros
@@ -347,6 +418,13 @@ struct adl_serializer<boost::optional<T>> {
 NLOHMANN_JSON_NAMESPACE_END
 ```
 
+!!! tip "`std::optional` needs no serializer"
+
+    Since version 3.12.0, `std::optional<T>` is supported out of the box when compiling with C++17
+    (`std::nullopt` is converted to and from `null`). Do not write an `adl_serializer` for it; this pattern is only
+    needed for types such as `boost::optional` or for custom semantics. See [Conversions](conversions.md) and
+    [Omitting a field when serializing `std::optional`](conversions.md#omitting-a-field-when-serializing-stdoptional).
+
 !!! note "ABI compatibility"
 
     Use [`NLOHMANN_JSON_NAMESPACE_BEGIN`](../api/macros/nlohmann_json_namespace_begin.md) and `NLOHMANN_JSON_NAMESPACE_END`
@@ -361,13 +439,67 @@ of writing into a reference:
 ??? example "Example: `get()` for a non-default-constructible type"
 
     ```cpp
-    --8<-- "examples/from_json__non_default_constructible.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    namespace ns
+    {
+    // a simple struct to model a person (not default constructible)
+    struct person
+    {
+        person(std::string n, std::string a, int aa)
+            : name(std::move(n)), address(std::move(a)), age(aa)
+        {}
+    
+        std::string name;
+        std::string address;
+        int age;
+    };
+    } // namespace ns
+    
+    namespace nlohmann
+    {
+    template <>
+    struct adl_serializer<ns::person>
+    {
+        static ns::person from_json(const json& j)
+        {
+            return {j.at("name"), j.at("address"), j.at("age")};
+        }
+    
+        // Here's the catch! You must provide a to_json method! Otherwise, you
+        // will not be able to convert person to json, since you fully
+        // specialized adl_serializer on that type
+        static void to_json(json& j, ns::person p)
+        {
+            j["name"] = p.name;
+            j["address"] = p.address;
+            j["age"] = p.age;
+        }
+    };
+    } // namespace nlohmann
+    
+    int main()
+    {
+        json j;
+        j["name"] = "Ned Flanders";
+        j["address"] = "744 Evergreen Terrace";
+        j["age"] = 60;
+    
+        auto p = j.get<ns::person>();
+    
+        std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```
-    --8<-- "examples/from_json__non_default_constructible.output"
+    Ned Flanders (60) lives in 744 Evergreen Terrace
+    
     ```
 
 The same technique also works if your type is not copyable, as long as it is

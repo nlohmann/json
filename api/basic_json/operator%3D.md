@@ -34,13 +34,33 @@ Linear.
     `b`. Finally, the copy of `a` (which is the null value after the swap) is destroyed.
      
     ```cpp
-    --8<-- "examples/basic_json__copyassignment.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json a = 23;
+        json b = 42;
+    
+        // copy-assign a to b
+        b = a;
+    
+        // serialize the JSON arrays
+        std::cout << a << '\n';
+        std::cout << b << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__copyassignment.output"
+    23
+    23
+    
     ```
 
 ## See also

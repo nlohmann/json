@@ -55,13 +55,36 @@ classDiagram
     The following code shows how a `invalid_iterator` exception can be caught.
     
     ```cpp
-    --8<-- "examples/invalid_iterator.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        try
+        {
+            // calling iterator::key() on non-object iterator
+            json j = "string";
+            json::iterator it = j.begin();
+            auto k = it.key();
+        }
+        catch (const json::invalid_iterator& e)
+        {
+            // output exception information
+            std::cout << "message: " << e.what() << '\n'
+                      << "exception id: " << e.id << std::endl;
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/invalid_iterator.output"
+    message: [json.exception.invalid_iterator.207] cannot use key() for non-object iterators
+    exception id: 207
+    
     ```
 
 ## See also

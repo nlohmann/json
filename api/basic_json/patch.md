@@ -72,13 +72,57 @@ is thrown. In any case, the original value is not changed: the patch is applied 
     The following code shows how a JSON patch is applied to a value.
      
     ```cpp
-    --8<-- "examples/patch.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // the original document
+        json doc = R"(
+            {
+              "baz": "qux",
+              "foo": "bar"
+            }
+        )"_json;
+    
+        // the patch
+        json patch = R"(
+            [
+              { "op": "replace", "path": "/baz", "value": "boo" },
+              { "op": "add", "path": "/hello", "value": ["world"] },
+              { "op": "remove", "path": "/foo"}
+            ]
+        )"_json;
+    
+        // apply the patch
+        json patched_doc = doc.patch(patch);
+    
+        // output original and patched document
+        std::cout << std::setw(4) << doc << "\n\n"
+                  << std::setw(4) << patched_doc << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/patch.output"
+    {
+        "baz": "qux",
+        "foo": "bar"
+    }
+    
+    {
+        "baz": "boo",
+        "hello": [
+            "world"
+        ]
+    }
+    
     ```
 
 ??? example "Example: out_of_range.414 exception"
@@ -87,13 +131,55 @@ is thrown. In any case, the original value is not changed: the patch is applied 
     rejected, and how the original document is left unchanged because the patch is applied to a copy.
 
     ```cpp
-    --8<-- "examples/patch__exception.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // the original document
+        json doc = R"(
+            {
+              "a": { "b": 1 }
+            }
+        )"_json;
+    
+        // a patch that tries to move "/a" into one of its own children
+        json patch = R"(
+            [
+              { "op": "move", "from": "/a", "path": "/a/b" }
+            ]
+        )"_json;
+    
+        // exception out_of_range.414
+        try
+        {
+            json patched_doc = doc.patch(patch);
+        }
+        catch (const json::out_of_range& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    
+        // the original document is unchanged
+        std::cout << std::setw(4) << doc << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/patch__exception.output"
+    [json.exception.out_of_range.414] cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/b'
+    {
+        "a": {
+            "b": 1
+        }
+    }
+    
     ```
 
 ## See also
@@ -112,3 +198,6 @@ is thrown. In any case, the original value is not changed: the patch is applied 
   location has a non-object/non-array parent in version 3.13.0.
 - Added [`out_of_range.414`](../../home/exceptions.md#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper
   prefix of its "path" location instead of silently producing a corrupted result in version 3.13.0.
+- Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) instead of
+  [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) for a one-character array index that is
+  not a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.

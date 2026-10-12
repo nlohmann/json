@@ -28,13 +28,30 @@ Constant.
     The following code shows an example for `rbegin()`.
     
     ```cpp
-    --8<-- "examples/rbegin.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create an array value
+        json array = {1, 2, 3, 4, 5};
+    
+        // get an iterator to the reverse-beginning
+        json::reverse_iterator it = array.rbegin();
+    
+        // serialize the element that the iterator points to
+        std::cout << *it << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/rbegin.output"
+    5
+    
     ```
 
 ## See also

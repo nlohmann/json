@@ -56,13 +56,35 @@ classDiagram
     The following code shows how a `type_error` exception can be caught.
     
     ```cpp
-    --8<-- "examples/type_error.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        try
+        {
+            // calling push_back() on a string value
+            json j = "string";
+            j.push_back("another string");
+        }
+        catch (const json::type_error& e)
+        {
+            // output exception information
+            std::cout << "message: " << e.what() << '\n'
+                      << "exception id: " << e.id << std::endl;
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/type_error.output"
+    message: [json.exception.type_error.308] cannot use push_back() with string
+    exception id: 308
+    
     ```
 
 ## See also

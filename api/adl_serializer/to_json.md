@@ -25,13 +25,46 @@ This function is usually called by the constructors of the [basic_json](../basic
     by the `adl_serializer` when the constructor `basic_json(ns::person)` is called.
         
     ```cpp
-    --8<-- "examples/to_json.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    namespace ns
+    {
+    // a simple struct to model a person
+    struct person
+    {
+        std::string name;
+        std::string address;
+        int age;
+    };
+    } // namespace ns
+    
+    namespace ns
+    {
+    void to_json(json& j, const person& p)
+    {
+        j = json{ {"name", p.name}, {"address", p.address}, {"age", p.age} };
+    }
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        json j = p;
+    
+        std::cout << j << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/to_json.output"
+    {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
+    
     ```
 
 ## See also

@@ -82,13 +82,30 @@ convenient way to write a JSON value inline:
 ??? example
 
     ```cpp
-    --8<-- "examples/operator_literal_json.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        json j = R"( {"hello": "world", "answer": 42} )"_json;
+    
+        std::cout << std::setw(2) << j << '\n';
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/operator_literal_json.output"
+    {
+      "answer": 42,
+      "hello": "world"
+    }
+    
     ```
 
 Note this **parses** the string, so `#!cpp "42"_json` is the number `#!cpp 42`, whereas `#!cpp json("42")` is the JSON

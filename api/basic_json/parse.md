@@ -119,13 +119,63 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the `parse()` function reading from an array.
 
     ```cpp
-    --8<-- "examples/parse__array__parser_callback_t.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a JSON text
+        char text[] = R"(
+        {
+            "Image": {
+                "Width":  800,
+                "Height": 600,
+                "Title":  "View from 15th Floor",
+                "Thumbnail": {
+                    "Url":    "http://www.example.com/image/481989943",
+                    "Height": 125,
+                    "Width":  100
+                },
+                "Animated" : false,
+                "IDs": [116, 943, 234, 38793]
+            }
+        }
+        )";
+    
+        // parse and serialize JSON
+        json j_complete = json::parse(text);
+        std::cout << std::setw(4) << j_complete << "\n\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/parse__array__parser_callback_t.output"
+    {
+        "Image": {
+            "Animated": false,
+            "Height": 600,
+            "IDs": [
+                116,
+                943,
+                234,
+                38793
+            ],
+            "Thumbnail": {
+                "Height": 125,
+                "Url": "http://www.example.com/image/481989943",
+                "Width": 100
+            },
+            "Title": "View from 15th Floor",
+            "Width": 800
+        }
+    }
+    
+    
     ```
 
 ??? example "Example: (1) parse from a string"
@@ -133,13 +183,95 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the `parse()` function with and without callback function.
 
     ```cpp
-    --8<-- "examples/parse__string__parser_callback_t.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a JSON text
+        auto text = R"(
+        {
+            "Image": {
+                "Width":  800,
+                "Height": 600,
+                "Title":  "View from 15th Floor",
+                "Thumbnail": {
+                    "Url":    "http://www.example.com/image/481989943",
+                    "Height": 125,
+                    "Width":  100
+                },
+                "Animated" : false,
+                "IDs": [116, 943, 234, 38793]
+            }
+        }
+        )";
+    
+        // parse and serialize JSON
+        json j_complete = json::parse(text);
+        std::cout << std::setw(4) << j_complete << "\n\n";
+    
+        // define parser callback
+        json::parser_callback_t cb = [](int depth, json::parse_event_t event, json & parsed)
+        {
+            // skip object elements with key "Thumbnail"
+            if (event == json::parse_event_t::key and parsed == json("Thumbnail"))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        };
+    
+        // parse (with callback) and serialize JSON
+        json j_filtered = json::parse(text, cb);
+        std::cout << std::setw(4) << j_filtered << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/parse__string__parser_callback_t.output"
+    {
+        "Image": {
+            "Animated": false,
+            "Height": 600,
+            "IDs": [
+                116,
+                943,
+                234,
+                38793
+            ],
+            "Thumbnail": {
+                "Height": 125,
+                "Url": "http://www.example.com/image/481989943",
+                "Width": 100
+            },
+            "Title": "View from 15th Floor",
+            "Width": 800
+        }
+    }
+    
+    {
+        "Image": {
+            "Animated": false,
+            "Height": 600,
+            "IDs": [
+                116,
+                943,
+                234,
+                38793
+            ],
+            "Title": "View from 15th Floor",
+            "Width": 800
+        }
+    }
+    
     ```
 
 ??? example "Example: (1) parse from an input stream"
@@ -147,13 +279,103 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the `parse()` function with and without callback function.
 
     ```cpp
-    --8<-- "examples/parse__istream__parser_callback_t.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <sstream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a JSON text
+        auto text = R"(
+        {
+            "Image": {
+                "Width":  800,
+                "Height": 600,
+                "Title":  "View from 15th Floor",
+                "Thumbnail": {
+                    "Url":    "http://www.example.com/image/481989943",
+                    "Height": 125,
+                    "Width":  100
+                },
+                "Animated" : false,
+                "IDs": [116, 943, 234, 38793]
+            }
+        }
+        )";
+    
+        // fill a stream with JSON text
+        std::stringstream ss;
+        ss << text;
+    
+        // parse and serialize JSON
+        json j_complete = json::parse(ss);
+        std::cout << std::setw(4) << j_complete << "\n\n";
+    
+        // define parser callback
+        json::parser_callback_t cb = [](int depth, json::parse_event_t event, json & parsed)
+        {
+            // skip object elements with key "Thumbnail"
+            if (event == json::parse_event_t::key and parsed == json("Thumbnail"))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        };
+    
+        // fill a stream with JSON text
+        ss.clear();
+        ss << text;
+    
+        // parse (with callback) and serialize JSON
+        json j_filtered = json::parse(ss, cb);
+        std::cout << std::setw(4) << j_filtered << '\n';
+    }
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/parse__istream__parser_callback_t.output"
+    {
+        "Image": {
+            "Animated": false,
+            "Height": 600,
+            "IDs": [
+                116,
+                943,
+                234,
+                38793
+            ],
+            "Thumbnail": {
+                "Height": 125,
+                "Url": "http://www.example.com/image/481989943",
+                "Width": 100
+            },
+            "Title": "View from 15th Floor",
+            "Width": 800
+        }
+    }
+    
+    {
+        "Image": {
+            "Animated": false,
+            "Height": 600,
+            "IDs": [
+                116,
+                943,
+                234,
+                38793
+            ],
+            "Title": "View from 15th Floor",
+            "Width": 800
+        }
+    }
+    
     ```
 
 ??? example "Example: (1) parse from a contiguous container"
@@ -161,13 +383,34 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the `parse()` function reading from a contiguous container.
 
     ```cpp
-    --8<-- "examples/parse__contiguouscontainer__parser_callback_t.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a JSON text given as std::vector
+        std::vector<std::uint8_t> text = {'[', '1', ',', '2', ',', '3', ']', '\0'};
+    
+        // parse and serialize JSON
+        json j_complete = json::parse(text);
+        std::cout << std::setw(4) << j_complete << "\n\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/parse__contiguouscontainer__parser_callback_t.output"
+    [
+        1,
+        2,
+        3
+    ]
+    
+    
     ```
 
 ??? example "Example: (2) parse from a non-null-terminated string"
@@ -175,13 +418,34 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the `parse()` function reading from a string that is not null-terminated.
 
     ```cpp
-    --8<-- "examples/parse__pointers.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a JSON text given as string that is not null-terminated
+        const char* ptr = "[1,2,3]another value";
+    
+        // parse and serialize JSON
+        json j_complete = json::parse(ptr, ptr + 7);
+        std::cout << std::setw(4) << j_complete << "\n\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/parse__pointers.output"
+    [
+        1,
+        2,
+        3
+    ]
+    
+    
     ```
 
 ??? example "Example: (2) parse from an iterator pair"
@@ -189,13 +453,34 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the `parse()` function reading from an iterator pair.
 
     ```cpp
-    --8<-- "examples/parse__iterator_pair.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a JSON text given an input with other values
+        std::vector<std::uint8_t> input = {'[', '1', ',', '2', ',', '3', ']', 'o', 't', 'h', 'e', 'r'};
+    
+        // parse and serialize JSON
+        json j_complete = json::parse(input.begin(), input.begin() + 7);
+        std::cout << std::setw(4) << j_complete << "\n\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/parse__iterator_pair.output"
+    [
+        1,
+        2,
+        3
+    ]
+    
+    
     ```
 
 ??? example "Example: effect of `allow_exceptions` parameter"
@@ -203,13 +488,51 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the effect of the `allow_exceptions` parameter in the `parse()` function.
 
     ```cpp
-    --8<-- "examples/parse__allow_exceptions.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // an invalid JSON text
+        std::string text = R"(
+        {
+            "key": "value without closing quotes
+        }
+        )";
+    
+        // parse with exceptions
+        try
+        {
+            json j = json::parse(text);
+        }
+        catch (const json::parse_error& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    
+        // parse without exceptions
+        json j = json::parse(text, nullptr, false);
+    
+        if (j.is_discarded())
+        {
+            std::cout << "the input is invalid JSON" << std::endl;
+        }
+        else
+        {
+            std::cout << "the input is valid JSON: " << j << std::endl;
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/parse__allow_exceptions.output"
+    [json.exception.parse_error.101] parse error at line 4, column 0: syntax error while parsing value - invalid string: control character U+000A (LF) must be escaped to \u000A or \n; last read: '"value without closing quotes<U+000A>'
+    the input is invalid JSON
+    
     ```
 
 ??? example "Example: effect of `ignore_comments` parameter"
@@ -217,13 +540,56 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the effect of the `ignore_comments` parameter in the `parse()` function.
 
     ```cpp
-    --8<-- "examples/comments.cpp"
+    
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::string s = R"(
+        {
+            // update in 2006: removed Pluto
+            "planets": ["Mercury", "Venus", "Earth", "Mars",
+                        "Jupiter", "Uranus", "Neptune" /*, "Pluto" */]
+        }
+        )";
+    
+        try
+        {
+            json j = json::parse(s);
+        }
+        catch (json::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    
+        json j = json::parse(s,
+                             /* callback */ nullptr,
+                             /* allow exceptions */ true,
+                             /* ignore_comments */ true);
+        std::cout << j.dump(2) << '\n';
+    }
+    
     ```
 
     Output:
 
     ```
-    --8<-- "examples/comments.output"
+    [json.exception.parse_error.101] parse error at line 3, column 9: syntax error while parsing object key - invalid literal; last read: '<U+000A>    {<U+000A>        /'; expected string literal
+    {
+      "planets": [
+        "Mercury",
+        "Venus",
+        "Earth",
+        "Mars",
+        "Jupiter",
+        "Uranus",
+        "Neptune"
+      ]
+    }
+    
     ```
 
 ??? example "Example: effect of `ignore_trailing_commas` parameter"
@@ -231,13 +597,62 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the effect of the `ignore_trailing_commas` parameter in the `parse()` function.
 
     ```cpp
-    --8<-- "examples/trailing_commas.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::string s = R"(
+        {
+            "planets": [
+                "Mercury",
+                "Venus",
+                "Earth",
+                "Mars",
+                "Jupiter",
+                "Uranus",
+                "Neptune",
+            ]
+        }
+        )";
+    
+        try
+        {
+            json j = json::parse(s);
+        }
+        catch (json::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    
+        json j = json::parse(s,
+                             /* callback */ nullptr,
+                             /* allow exceptions */ true,
+                             /* ignore_comments */ false,
+                             /* ignore_trailing_commas */ true);
+        std::cout << j.dump(2) << '\n';
+    }
+    
     ```
 
     Output:
 
     ```
-    --8<-- "examples/trailing_commas.output"
+    [json.exception.parse_error.101] parse error at line 11, column 9: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal
+    {
+      "planets": [
+        "Mercury",
+        "Venus",
+        "Earth",
+        "Mars",
+        "Jupiter",
+        "Uranus",
+        "Neptune"
+      ]
+    }
+    
     ```
 
 ## See also

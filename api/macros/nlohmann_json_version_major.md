@@ -21,13 +21,26 @@ The macros are defined according to the current library version.
     `NLOHMANN_JSON_VERSION_PATCH` are defined by the library.
 
     ```cpp
-    --8<-- "examples/nlohmann_json_version.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::cout << "JSON for Modern C++ version "
+                  << NLOHMANN_JSON_VERSION_MAJOR << "."
+                  << NLOHMANN_JSON_VERSION_MINOR << "."
+                  << NLOHMANN_JSON_VERSION_PATCH << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/nlohmann_json_version.output"
+    JSON for Modern C++ version 3.12.0
+    
     ```
 
 ## See also

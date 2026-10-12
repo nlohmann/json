@@ -262,6 +262,7 @@ Access to the JSON value
 ### JSON Merge Patch functions
 
 - [**merge_patch**](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - applies a JSON Merge Patch
+- [**merge_diff**](https://json.nlohmann.me/api/basic_json/merge_diff/index.md) (*static*) - creates a diff as a JSON Merge Patch
 
 ## Static functions
 

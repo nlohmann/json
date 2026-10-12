@@ -44,13 +44,75 @@ Currently, only `remove`, `add`, and `replace` operations are generated.
     The following code shows how a JSON patch is created as a diff for two JSON values.
      
     ```cpp
-    --8<-- "examples/diff.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // the source document
+        json source = R"(
+            {
+                "baz": "qux",
+                "foo": "bar"
+            }
+        )"_json;
+    
+        // the target document
+        json target = R"(
+            {
+                "baz": "boo",
+                "hello": [
+                    "world"
+                ]
+            }
+        )"_json;
+    
+        // create the patch
+        json patch = json::diff(source, target);
+    
+        // roundtrip
+        json patched_source = source.patch(patch);
+    
+        // output patch and roundtrip result
+        std::cout << std::setw(4) << patch << "\n\n"
+                  << std::setw(4) << patched_source << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/diff.output"
+    [
+        {
+            "op": "replace",
+            "path": "/baz",
+            "value": "boo"
+        },
+        {
+            "op": "remove",
+            "path": "/foo"
+        },
+        {
+            "op": "add",
+            "path": "/hello",
+            "value": [
+                "world"
+            ]
+        }
+    ]
+    
+    {
+        "baz": "boo",
+        "hello": [
+            "world"
+        ]
+    }
+    
     ```
 
 ## See also
@@ -59,6 +121,7 @@ Currently, only `remove`, `add`, and `replace` operations are generated.
 - [patch](patch.md) applies a JSON Patch
 - [patch_inplace](patch_inplace.md) applies a JSON Patch in place
 - [merge_patch](merge_patch.md) applies a JSON Merge Patch
+- [merge_diff](merge_diff.md) creates a diff as a JSON Merge Patch
 
 ## Version history
 

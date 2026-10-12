@@ -154,13 +154,55 @@ void to_json(BasicJsonType& j, const B& b) {
     Consider the following complete example:
 
     ```cpp hl_lines="28"
-    --8<-- "examples/nlohmann_define_derived_type_intrusive_macro.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using nlohmann::json;
+    
+    class A
+    {
+      private:
+        double Aa = 0.0;
+        double Ab = 0.0;
+    
+      public:
+        A() = default;
+        A(double a, double b) : Aa(a), Ab(b) {}
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(A, Aa, Ab)
+    };
+    
+    class B : public A
+    {
+      private:
+        int Ba = 0;
+        int Bb = 0;
+    
+      public:
+        B() = default;
+        B(int a, int b, double aa, double ab) : A(aa, ab), Ba(a), Bb(b) {}
+        NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(B, A, Ba, Bb)
+    };
+    
+    int main()
+    {
+        B example(23, 42, 3.142, 1.777);
+        json example_json = example;
+    
+        std::cout << std::setw(4) << example_json << std::endl;
+    }
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/nlohmann_define_derived_type_intrusive_macro.output"
+    {
+        "Aa": 3.142,
+        "Ab": 1.777,
+        "Ba": 23,
+        "Bb": 42
+    }
+    
     ```
 
     Notes:
@@ -190,3 +232,5 @@ void to_json(BasicJsonType& j, const B& b) {
 4. Added in version 3.12.0.
 5. Added in version 3.12.0.
 6. Added in version 3.12.0.
+
+All six macros were changed to allow an empty member list in version 3.13.0.

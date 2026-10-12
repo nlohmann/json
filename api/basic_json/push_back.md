@@ -79,13 +79,42 @@ throws.
     was silently converted to a JSON array.
     
     ```cpp
-    --8<-- "examples/push_back.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json array = {1, 2, 3, 4, 5};
+        json null;
+    
+        // print values
+        std::cout << array << '\n';
+        std::cout << null << '\n';
+    
+        // add values
+        array.push_back(6);
+        array += 7;
+        null += "first";
+        null += "second";
+    
+        // print values
+        std::cout << array << '\n';
+        std::cout << null << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/push_back.output"
+    [1,2,3,4,5]
+    null
+    [1,2,3,4,5,6,7]
+    ["first","second"]
+    
     ```
 
 ??? example "Example: (2) add element to object"
@@ -94,13 +123,42 @@ throws.
     was silently converted to a JSON object.
 
     ```cpp
-    --8<-- "examples/push_back__object_t__value.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json object = {{"one", 1}, {"two", 2}};
+        json null;
+    
+        // print values
+        std::cout << object << '\n';
+        std::cout << null << '\n';
+    
+        // add values
+        object.push_back(json::object_t::value_type("three", 3));
+        object += json::object_t::value_type("four", 4);
+        null += json::object_t::value_type("A", "a");
+        null += json::object_t::value_type("B", "b");
+    
+        // print values
+        std::cout << object << '\n';
+        std::cout << null << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/push_back__object_t__value.output"
+    {"one":1,"two":2}
+    null
+    {"four":4,"one":1,"three":3,"two":2}
+    {"A":"a","B":"b"}
+    
     ```
 
 ??? example "Example: (3) add to object from initializer list"
@@ -108,13 +166,44 @@ throws.
     The example shows how initializer lists are treated as objects when possible.
 
     ```cpp
-    --8<-- "examples/push_back__initializer_list.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json object = {{"one", 1}, {"two", 2}};
+        json null;
+    
+        // print values
+        std::cout << object << '\n';
+        std::cout << null << '\n';
+    
+        // add values:
+        object.push_back({"three", 3});  // object is extended
+        object += {"four", 4};           // object is extended
+        null.push_back({"five", 5});     // null is converted to array
+    
+        // print values
+        std::cout << object << '\n';
+        std::cout << null << '\n';
+    
+        // would throw:
+        //object.push_back({1, 2, 3});
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/push_back__initializer_list.output"
+    {"one":1,"two":2}
+    null
+    {"four":4,"one":1,"three":3,"two":2}
+    [["five",5]]
+    
     ```
 
 ## See also

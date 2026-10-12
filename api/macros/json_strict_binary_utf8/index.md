@@ -10,7 +10,8 @@ The macro does not affect:
 
 - [`to_msgpack`](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md): the MessagePack specification allows a `str` value to contain bytes that are not valid UTF-8, so its `error_handler` always defaults to `keep`.
 - [`to_bon8`](https://json.nlohmann.me/api/basic_json/to_bon8/index.md): BON8 always checks, because the UTF-8 lead bytes mark where a string ends.
-- The binary readers ([`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md), [`from_bjdata`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md), [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md)): none of these formats requires a decoder to reject ill-formed UTF-8, so they always return the bytes unchanged.
+- The binary readers ([`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md), [`from_bjdata`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md), [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md)): none of these formats requires a decoder to reject ill-formed UTF-8, so by default they return the bytes unchanged (`error_handler_t::keep`), independent of this macro. Pass an `error_handler` argument explicitly to validate or sanitize the strings they read.
+- [`from_bon8`](https://json.nlohmann.me/api/basic_json/from_bon8/index.md): BON8 always validates, because the UTF-8 lead bytes mark where a string ends.
 
 ## Default definition
 

@@ -21,13 +21,26 @@ The actual comparator used depends on [`object_t`](object_t.md) and can be obtai
     The example below demonstrates the default comparator.
 
     ```cpp
-    --8<-- "examples/default_object_comparator_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::cout << std::boolalpha
+                  << "one < two : " << json::default_object_comparator_t{}("one", "two") << "\n"
+                  << "three < four : " << json::default_object_comparator_t{}("three", "four") << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/default_object_comparator_t.output"
+    one < two : true
+    three < four : false
+    
     ```
 
 ## See also

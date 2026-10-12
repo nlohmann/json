@@ -119,6 +119,14 @@ changes to any JSON value.
 
 ## Notes
 
+!!! warning "`null` members are not missing"
+
+    The default value is used only if the key (or JSON Pointer) does not exist. A member that exists but is
+    `#!json null` is converted like any other value, so `#!cpp j.value("k", 0)` throws a
+    [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `"k"` is `#!json null`. See
+    [Access with default value](../../features/element_access/default_value.md)
+    for alternatives.
+
 !!! warning "Return type"
 
     The value function is a template, and the return type of the function is determined by the type of the provided
@@ -132,13 +140,31 @@ changes to any JSON value.
     value is not used as the return value.
 
     ```cpp
-    --8<-- "examples/value__return_type.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        json j = json::parse(R"({"uint64": 18446744073709551615})");
+    
+        std::cout << "operator[]:                " << j["uint64"] << '\n'
+                  << "default value (int):       " << j.value("uint64", 0) << '\n'
+                  << "default value (uint64_t):  " << j.value("uint64", std::uint64_t(0)) << '\n'
+                  << "explicit return value type: " << j.value<std::uint64_t>("uint64", 0) << '\n';
+    }
+    
     ```
 
     Output:
     
     ```json
-    --8<-- "examples/value__return_type.output"
+    operator[]:                18446744073709551615
+    default value (int):       -1
+    default value (uint64_t):  18446744073709551615
+    explicit return value type: 18446744073709551615
+    
     ```
 
 !!! warning "Deprecation"
@@ -160,13 +186,44 @@ changes to any JSON value.
     The example below shows how object elements can be queried with a default value.
     
     ```cpp
-    --8<-- "examples/value__object_t_key_type.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object with different entry types
+        json j =
+        {
+            {"integer", 1},
+            {"floating", 42.23},
+            {"string", "hello world"},
+            {"boolean", true},
+            {"object", {{"key1", 1}, {"key2", 2}}},
+            {"array", {1, 2, 3}}
+        };
+    
+        // access existing values
+        int v_integer = j.value("integer", 0);
+        double v_floating = j.value("floating", 47.11);
+    
+        // access nonexisting values and rely on default value
+        std::string v_string = j.value("nonexisting", "oops");
+        bool v_boolean = j.value("nonexisting", false);
+    
+        // output values
+        std::cout << std::boolalpha << v_integer << " " << v_floating
+                  << " " << v_string << " " << v_boolean << "\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/value__object_t_key_type.output"
+    1 42.23 oops false
+    
     ```
 
 ??? example "Example: (2) access specified object element using string_view with default value"
@@ -174,13 +231,46 @@ changes to any JSON value.
     The example below shows how object elements can be queried with a default value.
     
     ```cpp
-    --8<-- "examples/value__keytype.c++17.cpp"
+    #include <iostream>
+    #include <string_view>
+    #include <nlohmann/json.hpp>
+    
+    using namespace std::string_view_literals;
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object with different entry types
+        json j =
+        {
+            {"integer", 1},
+            {"floating", 42.23},
+            {"string", "hello world"},
+            {"boolean", true},
+            {"object", {{"key1", 1}, {"key2", 2}}},
+            {"array", {1, 2, 3}}
+        };
+    
+        // access existing values
+        int v_integer = j.value("integer"sv, 0);
+        double v_floating = j.value("floating"sv, 47.11);
+    
+        // access nonexisting values and rely on default value
+        std::string v_string = j.value("nonexisting"sv, "oops");
+        bool v_boolean = j.value("nonexisting"sv, false);
+    
+        // output values
+        std::cout << std::boolalpha << v_integer << " " << v_floating
+                  << " " << v_string << " " << v_boolean << "\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/value__keytype.c++17.output"
+    1 42.23 oops false
+    
     ```
 
 ??? example "Example: (3) access specified object element via JSON Pointer with default value"
@@ -188,13 +278,45 @@ changes to any JSON value.
     The example below shows how object elements can be queried with a default value.
     
     ```cpp
-    --8<-- "examples/value__json_ptr.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON object with different entry types
+        json j =
+        {
+            {"integer", 1},
+            {"floating", 42.23},
+            {"string", "hello world"},
+            {"boolean", true},
+            {"object", {{"key1", 1}, {"key2", 2}}},
+            {"array", {1, 2, 3}}
+        };
+    
+        // access existing values
+        int v_integer = j.value("/integer"_json_pointer, 0);
+        double v_floating = j.value("/floating"_json_pointer, 47.11);
+    
+        // access nonexisting values and rely on default value
+        std::string v_string = j.value("/nonexisting"_json_pointer, "oops");
+        bool v_boolean = j.value("/nonexisting"_json_pointer, false);
+    
+        // output values
+        std::cout << std::boolalpha << v_integer << " " << v_floating
+                  << " " << v_string << " " << v_boolean << "\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/value__json_ptr.output"
+    1 42.23 oops false
+    
     ```
 
 ??? example "Example: (1) type_error.302 and type_error.306 exceptions"
@@ -203,13 +325,48 @@ changes to any JSON value.
     of the stored value, and `type_error.306` when `value()` is called on a JSON value that is not an object.
 
     ```cpp
-    --8<-- "examples/value__exception.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object with a string value
+        json j = {{"name", "the good"}};
+    
+        // exception type_error.302
+        try
+        {
+            int v = j.value("name", 0);
+            std::cout << v << '\n';
+        }
+        catch (const json::type_error& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    
+        // exception type_error.306
+        try
+        {
+            json str = "I am a string";
+            auto v = str.value("name", 0);
+            std::cout << v << '\n';
+        }
+        catch (const json::type_error& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/value__exception.output"
+    [json.exception.type_error.302] type must be number, but is string
+    [json.exception.type_error.306] cannot use value() with string
+    
     ```
 
 ## See also
@@ -227,4 +384,6 @@ changes to any JSON value.
    [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md), and other lookup functions.
 3. Added in version 2.0.2. Extended to work with arrays in version 3.13.0, including fixing an issue where resolving
    `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or
-   `default_value`, as documented).
+   `default_value`, as documented). Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109)
+   instead of returning `default_value` for a one-character array index that is not a digit (e.g., `/x`) in version
+   3.13.0, as it already did for longer ones.

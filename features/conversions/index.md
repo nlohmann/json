@@ -233,7 +233,7 @@ auto filtered = nums | std::views::filter([](int i) { return i > 10; });
 json j(filtered);   // [37,42,21]
 ```
 
-This requires [`JSON_HAS_RANGES`](https://json.nlohmann.me/api/macros/json_has_ranges/index.md) to be enabled and is unavailable on MinGW due to incomplete C++20 ranges support there.
+This requires [`JSON_HAS_RANGES`](https://json.nlohmann.me/api/macros/json_has_ranges/index.md) to be enabled and is unavailable on MinGW due to incomplete C++20 ranges support there; see [`JSON_HAS_RANGE_VIEW_CONVERSION`](https://json.nlohmann.me/api/macros/json_has_range_view_conversion/index.md).
 
 ## Your own types
 

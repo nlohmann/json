@@ -68,13 +68,36 @@ Linear in the size of the JSON value `j`.
     The example shows the serialization of a JSON value to a byte vector in MessagePack format.
      
     ```cpp
-    --8<-- "examples/to_msgpack.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        json j = R"({"compact": true, "schema": 0})"_json;
+    
+        // serialize it to MessagePack
+        std::vector<std::uint8_t> v = json::to_msgpack(j);
+    
+        // print the vector content
+        for (auto& byte : v)
+        {
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        }
+        std::cout << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/to_msgpack.output"
+    0x82 0xa7 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xc3 0xa6 0x73 0x63 0x68 0x65 0x6d 0x61 0x00 
+    
     ```
 
 ??? example "Example: out_of_range.415 exception"
@@ -83,13 +106,34 @@ Linear in the size of the JSON value `j`.
     MessagePack ext type stores the subtype in a single byte.
 
     ```cpp
-    --8<-- "examples/to_msgpack__exception.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON value with a binary subtype that exceeds 255
+        json j = json::binary({1, 2, 3}, 300);
+    
+        // exception out_of_range.415
+        try
+        {
+            json::to_msgpack(j);
+        }
+        catch (const json::out_of_range& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/to_msgpack__exception.output"
+    [json.exception.out_of_range.415] subtype 300 is too large for the MessagePack ext type (max 255)
+    
     ```
 
 ## See also

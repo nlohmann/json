@@ -67,13 +67,57 @@ Linear.
     The example demonstrates comparing several JSON values.
     
     ```cpp
-    --8<-- "examples/operator_spaceship__const_reference.c++20.cpp"
+    #include <compare>
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    const char* to_string(const std::partial_ordering& po)
+    {
+        if (std::is_lt(po))
+        {
+            return "less";
+        }
+        else if (std::is_gt(po))
+        {
+            return "greater";
+        }
+        else if (std::is_eq(po))
+        {
+            return "equivalent";
+        }
+        return "unordered";
+    }
+    
+    int main()
+    {
+        // create several JSON values
+        json array_1 = {1, 2, 3};
+        json array_2 = {1, 2, 4};
+        json object_1 = {{"A", "a"}, {"B", "b"}};
+        json object_2 = {{"B", "b"}, {"A", "a"}};
+        json number = 17;
+        json string = "foo";
+        json discarded = json(json::value_t::discarded);
+    
+        // output values and comparisons
+        std::cout << array_1 << " <=> " << array_2 << " := " << to_string(array_1 <=> array_2) << '\n'; // *NOPAD*
+        std::cout << object_1 << " <=> " << object_2 << " := " << to_string(object_1 <=> object_2) << '\n'; // *NOPAD*
+        std::cout << string << " <=> " << number << " := " << to_string(string <=> number) << '\n'; // *NOPAD*
+        std::cout << string << " <=> " << discarded << " := " << to_string(string <=> discarded) << '\n'; // *NOPAD*
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_spaceship__const_reference.c++20.output"
+    [1,2,3] <=> [1,2,4] := less
+    {"A":"a","B":"b"} <=> {"A":"a","B":"b"} := equivalent
+    "foo" <=> 17 := greater
+    "foo" <=> <discarded> := unordered
+    
     ```
 
 ??? example "Example: (2) comparing JSON values and scalars"
@@ -81,13 +125,57 @@ Linear.
     The example demonstrates comparing several JSON values and scalars.
     
     ```cpp
-    --8<-- "examples/operator_spaceship__scalartype.c++20.cpp"
+    #include <compare>
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    const char* to_string(const std::partial_ordering& po)
+    {
+        if (std::is_lt(po))
+        {
+            return "less";
+        }
+        else if (std::is_gt(po))
+        {
+            return "greater";
+        }
+        else if (std::is_eq(po))
+        {
+            return "equivalent";
+        }
+        return "unordered";
+    }
+    
+    int main()
+    {
+        using float_limits = std::numeric_limits<json::number_float_t>;
+        constexpr auto nan = float_limits::quiet_NaN();
+    
+        // create several JSON values
+        json boolean = false;
+        json number = 17;
+        json string = "17";
+    
+        // output values and comparisons
+        std::cout << std::boolalpha << std::fixed;
+        std::cout << boolean << " <=> " << true << " := " << to_string(boolean <=> true) << '\n'; // *NOPAD*
+        std::cout << number << " <=> " << 17.0 << " := " << to_string(number <=> 17.0) << '\n'; // *NOPAD*
+        std::cout << number << " <=> " << nan << " := " << to_string(number <=> nan) << '\n'; // *NOPAD*
+        std::cout << string << " <=> " << 17 << " := " << to_string(string <=> 17) << '\n'; // *NOPAD*
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_spaceship__scalartype.c++20.output"
+    false <=> true := less
+    17 <=> 17.000000 := equivalent
+    17 <=> nan := unordered
+    "17" <=> 17 := greater
+    
     ```
 
 ## See also

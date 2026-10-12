@@ -35,13 +35,34 @@ operator string_t() const
     The example shows how JSON Pointers can be implicitly converted to strings.
      
     ```cpp
-    --8<-- "examples/json_pointer__operator_string_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // different JSON Pointers
+        json::json_pointer ptr1("/foo/0");
+        json::json_pointer ptr2("/a~1b");
+    
+        // implicit conversion to string
+        std::string s;
+        s += ptr1;
+        s += "\n";
+        s += ptr2;
+    
+        std::cout << s << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/json_pointer__operator_string_t.output"
+    /foo/0
+    /a~1b
+    
     ```
 
 ## See also

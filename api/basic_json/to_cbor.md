@@ -63,13 +63,36 @@ Linear in the size of the JSON value `j`.
     The example shows the serialization of a JSON value to a byte vector in CBOR format.
      
     ```cpp
-    --8<-- "examples/to_cbor.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        json j = R"({"compact": true, "schema": 0})"_json;
+    
+        // serialize it to CBOR
+        std::vector<std::uint8_t> v = json::to_cbor(j);
+    
+        // print the vector content
+        for (auto& byte : v)
+        {
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        }
+        std::cout << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/to_cbor.output"
+    0xa2 0x67 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xf5 0x66 0x73 0x63 0x68 0x65 0x6d 0x61 0x00 
+    
     ```
 
 ## See also

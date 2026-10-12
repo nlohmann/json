@@ -4,6 +4,12 @@ The library supports JSON Merge Patch ([RFC 7386](https://tools.ietf.org/html/rf
 
 Instead of using [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) to specify values to be manipulated, it describes the changes using a syntax that closely mimics the document being modified. Unlike [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md), a JSON Merge Patch cannot express every kind of change (e.g., it cannot reorder array elements or remove a specific array element), but it is easier to read and write for object-shaped documents.
 
+The function [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md) creates a merge patch that changes one JSON value into another.
+
+Not a general deep merge
+
+A merge patch is not a general deep merge: a `null` value in the patch deletes the key from the target. To merge two objects recursively (e.g., defaults and user settings), use [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) with `merge_objects` set to `true`; see [Merging objects](https://json.nlohmann.me/features/modifying_values/#merging-objects).
+
 Example
 
 The following code shows how a JSON Merge Patch is applied to a JSON document.
@@ -73,3 +79,5 @@ Output:
 - [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md) - a more expressive alternative that describes a sequence of operations
 - [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - the addressing scheme used by JSON Patch
 - Function [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md)
+- Function [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md)
+- Function [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) - merge objects, optionally recursively

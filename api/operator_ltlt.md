@@ -60,13 +60,56 @@ Linear.
     The example below shows the serialization with different parameters to `width` to adjust the indentation level.
     
     ```cpp
-    --8<-- "examples/operator_ltlt__basic_json.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json j_object = {{"one", 1}, {"two", 2}};
+        json j_array = {1, 2, 4, 8, 16};
+    
+        // serialize without indentation
+        std::cout << j_object << "\n\n";
+        std::cout << j_array << "\n\n";
+    
+        // serialize with indentation
+        std::cout << std::setw(4) << j_object << "\n\n";
+        std::cout << std::setw(2) << j_array << "\n\n";
+        std::cout << std::setw(1) << std::setfill('\t') << j_object << "\n\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_ltlt__basic_json.output"
+    {"one":1,"two":2}
+    
+    [1,2,4,8,16]
+    
+    {
+        "one": 1,
+        "two": 2
+    }
+    
+    [
+      1,
+      2,
+      4,
+      8,
+      16
+    ]
+    
+    {
+    	"one": 1,
+    	"two": 2
+    }
+    
+    
     ```
 
 ??? example "Example: (2) write JSON pointer to stream"
@@ -74,13 +117,27 @@ Linear.
     The example below shows how to write a JSON pointer to a stream.
     
     ```cpp
-    --8<-- "examples/operator_ltlt__json_pointer.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON pointer
+        json::json_pointer ptr("/foo/bar/baz");
+    
+        // write string representation to stream
+        std::cout << ptr << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_ltlt__json_pointer.output"
+    /foo/bar/baz
+    
     ```
 
 ## See also

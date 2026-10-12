@@ -134,7 +134,7 @@ Output:
 
 Deprecation
 
-- Overload (2) replaces calls to `from_ubjson` with a pointer and a length as first two parameters, which has been deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like `from_ubjson(ptr, len, ...);` with `from_ubjson(ptr, ptr+len, ...);`.
+- Overload (2) replaces calls to `from_ubjson` with a pointer and a length as first two parameters, which has been deprecated in version 3.8.0. In version 4.0.0 unreleased, this overload will be deleted (`= delete`) rather than removed. Please replace all calls like `from_ubjson(ptr, len, ...);` with `from_ubjson(ptr, ptr+len, ...);`.
 - Overload (2) replaces calls to `from_ubjson` with a pair of iterators as their first parameter, which has been deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like `from_ubjson({ptr, ptr+len}, ...);` with `from_ubjson(ptr, ptr+len, ...);`.
 
 You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated function.

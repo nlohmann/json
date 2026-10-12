@@ -55,13 +55,48 @@ Linear in the number of reference tokens.
     The example demonstrates 3-way comparing JSON pointers.
 
     ```cpp
-    --8<-- "examples/json_pointer__operator_spaceship.c++20.cpp"
+    #include <compare>
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    const char* to_string(const std::strong_ordering& so)
+    {
+        if (std::is_lt(so))
+        {
+            return "less";
+        }
+        else if (std::is_gt(so))
+        {
+            return "greater";
+        }
+        return "equal";
+    }
+    
+    int main()
+    {
+        // different JSON pointers
+        json::json_pointer ptr1("/a/b");
+        json::json_pointer ptr2("/a/c");
+        json::json_pointer ptr3("/a/b/c");
+        json::json_pointer ptr4("/a/b");
+    
+        // 3-way compare JSON pointers
+        std::cout << "\"" << ptr1 << "\" <=> \"" << ptr2 << "\": " << to_string(ptr1 <=> ptr2) << '\n' // *NOPAD*
+                  << "\"" << ptr1 << "\" <=> \"" << ptr3 << "\": " << to_string(ptr1 <=> ptr3) << '\n' // *NOPAD*
+                  << "\"" << ptr1 << "\" <=> \"" << ptr4 << "\": " << to_string(ptr1 <=> ptr4) << std::endl; // *NOPAD*
+    }
+    
     ```
 
     Output:
 
     ```
-    --8<-- "examples/json_pointer__operator_spaceship.c++20.output"
+    "/a/b" <=> "/a/c": less
+    "/a/b" <=> "/a/b/c": less
+    "/a/b" <=> "/a/b": equal
+    
     ```
 
 ## See also

@@ -25,13 +25,38 @@ Constant.
     The example shows the usage of `pop_back`.
      
     ```cpp
-    --8<-- "examples/json_pointer__pop_back.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create empty JSON Pointer
+        json::json_pointer ptr("/foo/bar/baz");
+        std::cout << "\"" << ptr << "\"\n";
+    
+        // call pop_back()
+        ptr.pop_back();
+        std::cout << "\"" << ptr << "\"\n";
+    
+        ptr.pop_back();
+        std::cout << "\"" << ptr << "\"\n";
+    
+        ptr.pop_back();
+        std::cout << "\"" << ptr << "\"\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/json_pointer__pop_back.output"
+    "/foo/bar/baz"
+    "/foo/bar"
+    "/foo"
+    ""
+    
     ```
 
 ## See also

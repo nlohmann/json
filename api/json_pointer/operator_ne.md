@@ -82,13 +82,36 @@ tokens.
     The example demonstrates comparing JSON pointers.
         
     ```cpp
-    --8<-- "examples/json_pointer__operator__notequal.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // different JSON pointers
+        json::json_pointer ptr0;
+        json::json_pointer ptr1("");
+        json::json_pointer ptr2("/foo");
+    
+        // compare JSON pointers
+        std::cout << std::boolalpha
+                  << "\"" << ptr0 << "\" != \"" << ptr0 << "\": " << (ptr0 != ptr0) << '\n'
+                  << "\"" << ptr0 << "\" != \"" << ptr1 << "\": " << (ptr0 != ptr1) << '\n'
+                  << "\"" << ptr1 << "\" != \"" << ptr2 << "\": " << (ptr1 != ptr2) << '\n'
+                  << "\"" << ptr2 << "\" != \"" << ptr2 << "\": " << (ptr2 != ptr2) << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```
-    --8<-- "examples/json_pointer__operator__notequal.output"
+    "" != "": false
+    "" != "": false
+    "" != "/foo": true
+    "/foo" != "/foo": false
+    
     ```
 
 ??? example "Example: (2) Comparing JSON pointers and strings"
@@ -96,13 +119,49 @@ tokens.
     The example demonstrates comparing JSON pointers and strings, and when doing so may raise an exception.
         
     ```cpp
-    --8<-- "examples/json_pointer__operator__notequal_stringtype.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // different JSON pointers
+        json::json_pointer ptr0;
+        json::json_pointer ptr1("");
+        json::json_pointer ptr2("/foo");
+    
+        // different strings
+        std::string str0("");
+        std::string str1("/foo");
+        std::string str2("bar");
+    
+        // compare JSON pointers and strings
+        std::cout << std::boolalpha
+                  << "\"" << ptr0 << "\" != \"" << str0 << "\": " << (ptr0 != str0) << '\n'
+                  << "\"" << str0 << "\" != \"" << ptr1 << "\": " << (str0 != ptr1) << '\n'
+                  << "\"" << ptr2 << "\" != \"" << str1 << "\": " << (ptr2 != str1) << std::endl;
+    
+        try
+        {
+            std::cout << "\"" << str2 << "\" != \"" << ptr2 << "\": " << (str2 != ptr2) << std::endl;
+        }
+        catch (const json::parse_error& ex)
+        {
+            std::cout << ex.what() << std::endl;
+        }
+    }
+    
     ```
     
     Output:
     
     ```
-    --8<-- "examples/json_pointer__operator__notequal_stringtype.output"
+    "" != "": false
+    "" != "": false
+    "/foo" != "/foo": false
+    "bar" != "/foo": [json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'bar'
+    
     ```
 
 ## See also

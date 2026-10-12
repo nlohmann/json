@@ -50,13 +50,56 @@ For further information please refer to the corresponding macros without `WITH_N
     Consider the following complete example:
 
     ```cpp hl_lines="16"
-    --8<-- "examples/nlohmann_define_type_non_intrusive_with_names_macro.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    namespace ns
+    {
+    struct person
+    {
+        std::string name;
+        std::string address;
+        int age;
+    };
+    
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(person, "json_name", name, "json_address", address, "json_age", age)
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        // serialization: person -> json
+        json j = p;
+        std::cout << "serialization: " << j << std::endl;
+    
+        // deserialization: json -> person
+        json j2 = R"({"json_address": "742 Evergreen Terrace", "json_age": 40, "json_name": "Homer Simpson"})"_json;
+        auto p2 = j2.template get<ns::person>();
+    
+        // incomplete deserialization:
+        json j3 = R"({"json_address": "742 Evergreen Terrace", "json_name": "Maggie Simpson"})"_json;
+        try
+        {
+            auto p3 = j3.template get<ns::person>();
+        }
+        catch (const json::exception& e)
+        {
+            std::cout << "deserialization failed: " << e.what() << std::endl;
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/nlohmann_define_type_non_intrusive_with_names_macro.output"
+    serialization: {"json_address":"744 Evergreen Terrace","json_age":60,"json_name":"Ned Flanders"}
+    deserialization failed: [json.exception.out_of_range.403] key 'json_age' not found
+    
     ```
 
     Notes:
@@ -70,7 +113,62 @@ For further information please refer to the corresponding macros without `WITH_N
     The macro is equivalent to:
 
     ```cpp hl_lines="16 17 18 19 20 21 22 23 24 25 26 27 28"
-    --8<-- "examples/nlohmann_define_type_non_intrusive_with_names_explicit.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    namespace ns
+    {
+    struct person
+    {
+        std::string name;
+        std::string address;
+        int age;
+    };
+    
+    template <typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
+    void to_json(BasicJsonType& nlohmann_json_j, const person& nlohmann_json_t)
+    {
+        nlohmann_json_j["json_name"] = nlohmann_json_t.name;
+        nlohmann_json_j["json_address"] = nlohmann_json_t.address;
+        nlohmann_json_j["json_age"] = nlohmann_json_t.age;
+    }
+    
+    template <typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
+    void from_json(const BasicJsonType& nlohmann_json_j, person& nlohmann_json_t)
+    {
+        nlohmann_json_j.at("json_name").get_to(nlohmann_json_t.name);
+        nlohmann_json_j.at("json_address").get_to(nlohmann_json_t.address);
+        nlohmann_json_j.at("json_age").get_to(nlohmann_json_t.age);
+    }
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        // serialization: person -> json
+        json j = p;
+        std::cout << "serialization: " << j << std::endl;
+    
+        // deserialization: json -> person
+        json j2 = R"({"json_address": "742 Evergreen Terrace", "json_age": 40, "json_name": "Homer Simpson"})"_json;
+        auto p2 = j2.template get<ns::person>();
+    
+        // incomplete deserialization:
+        json j3 = R"({"json_address": "742 Evergreen Terrace", "json_name": "Maggie Simpson"})"_json;
+        try
+        {
+            auto p3 = j3.template get<ns::person>();
+        }
+        catch (const json::exception& e)
+        {
+            std::cout << "deserialization failed: " << e.what() << std::endl;
+        }
+    }
+    
     ```
 
 ## See also

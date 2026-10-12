@@ -37,8 +37,8 @@ ignore
 :   ignore invalid UTF-8 sequences; all valid bytes are copied to the output unchanged, and invalid bytes are dropped
 
 keep
-:   keep invalid UTF-8 sequences unchanged; only meaningful for the binary formats mentioned above, since [`dump`]
-    (dump.md) itself must produce text, and `keep` there writes the ill-formed bytes to the output as is, so the
+:   keep invalid UTF-8 sequences unchanged; only meaningful for the binary formats mentioned above, since
+    [`dump`](dump.md) itself must produce text, and `keep` there writes the ill-formed bytes to the output as is, so the
     result is then not valid UTF-8 (but still equals the input bytes exactly, including around any well-formed
     characters, which are still escaped as usual)
 
@@ -50,13 +50,42 @@ keep
     [`dump`](dump.md) when reading serializing an invalid UTF-8 sequence.
 
     ```cpp
-    --8<-- "examples/error_handler_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON value with invalid UTF-8 byte sequence
+        json j_invalid = "ä\xA9ü";
+        try
+        {
+            std::cout << j_invalid.dump() << std::endl;
+        }
+        catch (const json::type_error& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    
+        std::cout << "string with replaced invalid characters: "
+                  << j_invalid.dump(-1, ' ', false, json::error_handler_t::replace)
+                  << "\nstring with ignored invalid characters: "
+                  << j_invalid.dump(-1, ' ', false, json::error_handler_t::ignore)
+                  << "\nstring with the invalid byte kept as is (" << j_invalid.dump(-1, ' ', false, json::error_handler_t::keep).size()
+                  << " bytes, not valid UTF-8 itself)\n";
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/error_handler_t.output"
+    [json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9
+    string with replaced invalid characters: "ä�ü"
+    string with ignored invalid characters: "äü"
+    string with the invalid byte kept as is (7 bytes, not valid UTF-8 itself)
+    
     ```
 
 ## See also

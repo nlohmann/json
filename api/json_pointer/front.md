@@ -29,13 +29,30 @@ Constant.
     The example shows the usage of `front`.
      
     ```cpp
-    --8<-- "examples/json_pointer__front.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // different JSON Pointers
+        json::json_pointer ptr1("/foo");
+        json::json_pointer ptr2("/foo/0");
+    
+        // call empty()
+        std::cout << "first reference token of \"" << ptr1 << "\" is \"" << ptr1.front() << "\"\n"
+                  << "first reference token of \"" << ptr2 << "\" is \"" << ptr2.front() << "\"" << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/json_pointer__front.output"
+    first reference token of "/foo" is "foo"
+    first reference token of "/foo/0" is "foo"
+    
     ```
 
 ## See also

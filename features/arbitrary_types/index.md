@@ -391,6 +391,10 @@ struct adl_serializer<boost::optional<T>> {
 NLOHMANN_JSON_NAMESPACE_END
 ```
 
+`std::optional` needs no serializer
+
+Since version 3.12.0, `std::optional<T>` is supported out of the box when compiling with C++17 (`std::nullopt` is converted to and from `null`). Do not write an `adl_serializer` for it; this pattern is only needed for types such as `boost::optional` or for custom semantics. See [Conversions](https://json.nlohmann.me/features/conversions/index.md) and [Omitting a field when serializing `std::optional`](https://json.nlohmann.me/features/conversions/#omitting-a-field-when-serializing-stdoptional).
+
 ABI compatibility
 
 Use [`NLOHMANN_JSON_NAMESPACE_BEGIN`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace_begin/index.md) and `NLOHMANN_JSON_NAMESPACE_END` instead of `namespace nlohmann { }` in code which may be linked with different versions of this library.

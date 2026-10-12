@@ -88,13 +88,63 @@ See the examples below for the concrete generated code.
     Consider the following complete example:
 
     ```cpp hl_lines="22"
-    --8<-- "examples/nlohmann_define_type_intrusive_macro.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    namespace ns
+    {
+    class person
+    {
+      private:
+        std::string name = "John Doe";
+        std::string address = "123 Fake St";
+        int age = -1;
+    
+      public:
+        person() = default;
+        person(std::string name_, std::string address_, int age_)
+            : name(std::move(name_)), address(std::move(address_)), age(age_)
+        {}
+    
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(person, name, address, age)
+    };
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        // serialization: person -> json
+        json j = p;
+        std::cout << "serialization: " << j << std::endl;
+    
+        // deserialization: json -> person
+        json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
+        auto p2 = j2.get<ns::person>();
+    
+        // incomplete deserialization:
+        json j3 = R"({"address": "742 Evergreen Terrace", "name": "Maggie Simpson"})"_json;
+        try
+        {
+            auto p3 = j3.get<ns::person>();
+        }
+        catch (const json::exception& e)
+        {
+            std::cout << "deserialization failed: " << e.what() << std::endl;
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/nlohmann_define_type_intrusive_macro.output"
+    serialization: {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
+    deserialization failed: [json.exception.out_of_range.403] key 'age' not found
+    
     ```
 
     Notes:
@@ -109,7 +159,69 @@ See the examples below for the concrete generated code.
     The macro is equivalent to:
 
     ```cpp hl_lines="22 23 24 25 26 27 28 29 30 31 32 33 34 35 36"
-    --8<-- "examples/nlohmann_define_type_intrusive_explicit.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    namespace ns
+    {
+    class person
+    {
+      private:
+        std::string name = "John Doe";
+        std::string address = "123 Fake St";
+        int age = -1;
+    
+      public:
+        person() = default;
+        person(std::string name_, std::string address_, int age_)
+            : name(std::move(name_)), address(std::move(address_)), age(age_)
+        {}
+    
+        template<typename BasicJsonType>
+        friend void to_json(BasicJsonType& nlohmann_json_j, const person& nlohmann_json_t)
+        {
+            nlohmann_json_j["name"] = nlohmann_json_t.name;
+            nlohmann_json_j["address"] = nlohmann_json_t.address;
+            nlohmann_json_j["age"] = nlohmann_json_t.age;
+        }
+    
+        template<typename BasicJsonType>
+        friend void from_json(const BasicJsonType& nlohmann_json_j, person& nlohmann_json_t)
+        {
+            nlohmann_json_t.name = nlohmann_json_j.at("name");
+            nlohmann_json_t.address = nlohmann_json_j.at("address");
+            nlohmann_json_t.age = nlohmann_json_j.at("age");
+        }
+    };
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        // serialization: person -> json
+        json j = p;
+        std::cout << "serialization: " << j << std::endl;
+    
+        // deserialization: json -> person
+        json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
+        auto p2 = j2.get<ns::person>();
+    
+        // incomplete deserialization:
+        json j3 = R"({"address": "742 Evergreen Terrace", "name": "Maggie Simpson"})"_json;
+        try
+        {
+            auto p3 = j3.get<ns::person>();
+        }
+        catch (const json::exception& e)
+        {
+            std::cout << "deserialization failed: " << e.what() << std::endl;
+        }
+    }
+    
     ```
 
 ??? example "Example: (2) NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT"
@@ -117,13 +229,57 @@ See the examples below for the concrete generated code.
     Consider the following complete example:
 
     ```cpp hl_lines="22"
-    --8<-- "examples/nlohmann_define_type_intrusive_with_default_macro.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    namespace ns
+    {
+    class person
+    {
+      private:
+        std::string name = "John Doe";
+        std::string address = "123 Fake St";
+        int age = -1;
+    
+      public:
+        person() = default;
+        person(std::string name_, std::string address_, int age_)
+            : name(std::move(name_)), address(std::move(address_)), age(age_)
+        {}
+    
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(person, name, address, age)
+    };
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        // serialization: person -> json
+        json j = p;
+        std::cout << "serialization: " << j << std::endl;
+    
+        // deserialization: json -> person
+        json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
+        auto p2 = j2.get<ns::person>();
+    
+        // incomplete deserialization:
+        json j3 = R"({"address": "742 Evergreen Terrace", "name": "Maggie Simpson"})"_json;
+        auto p3 = j3.get<ns::person>();
+        std::cout << "roundtrip: " << json(p3) << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/nlohmann_define_type_intrusive_with_default_macro.output"
+    serialization: {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
+    roundtrip: {"address":"742 Evergreen Terrace","age":-1,"name":"Maggie Simpson"}
+    
     ```
 
     Notes:
@@ -137,7 +293,64 @@ See the examples below for the concrete generated code.
     The macro is equivalent to:
 
     ```cpp hl_lines="22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37"
-    --8<-- "examples/nlohmann_define_type_intrusive_with_default_explicit.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    namespace ns
+    {
+    class person
+    {
+      private:
+        std::string name = "John Doe";
+        std::string address = "123 Fake St";
+        int age = -1;
+    
+      public:
+        person() = default;
+        person(std::string name_, std::string address_, int age_)
+            : name(std::move(name_)), address(std::move(address_)), age(age_)
+        {}
+    
+        template<typename BasicJsonType>
+        friend void to_json(BasicJsonType& nlohmann_json_j, const person& nlohmann_json_t)
+        {
+            nlohmann_json_j["name"] = nlohmann_json_t.name;
+            nlohmann_json_j["address"] = nlohmann_json_t.address;
+            nlohmann_json_j["age"] = nlohmann_json_t.age;
+        }
+    
+        template<typename BasicJsonType>
+        friend void from_json(const BasicJsonType& nlohmann_json_j, person& nlohmann_json_t)
+        {
+            person nlohmann_json_default_obj;
+            nlohmann_json_t.name = nlohmann_json_j.value("name", nlohmann_json_default_obj.name);
+            nlohmann_json_t.address = nlohmann_json_j.value("address", nlohmann_json_default_obj.address);
+            nlohmann_json_t.age = nlohmann_json_j.value("age", nlohmann_json_default_obj.age);
+        }
+    };
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        // serialization: person -> json
+        json j = p;
+        std::cout << "serialization: " << j << std::endl;
+    
+        // deserialization: json -> person
+        json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
+        auto p2 = j2.get<ns::person>();
+    
+        // incomplete deserialization:
+        json j3 = R"({"address": "742 Evergreen Terrace", "name": "Maggie Simpson"})"_json;
+        auto p3 = j3.get<ns::person>();
+        std::cout << "roundtrip: " << json(p3) << std::endl;
+    }
+    
     ```
 
     Note how a default-initialized `person` object is used in the `from_json` to fill missing values.
@@ -146,13 +359,47 @@ See the examples below for the concrete generated code.
     Consider the following complete example:
 
     ```cpp hl_lines="22"
-    --8<-- "examples/nlohmann_define_type_intrusive_only_serialize_macro.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    namespace ns
+    {
+    class person
+    {
+      private:
+        std::string name = "John Doe";
+        std::string address = "123 Fake St";
+        int age = -1;
+    
+      public:
+        // No default constructor
+        person(std::string name_, std::string address_, int age_)
+            : name(std::move(name_)), address(std::move(address_)), age(age_)
+        {}
+    
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(person, name, address, age)
+    };
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        // serialization: person -> json
+        json j = p;
+        std::cout << "serialization: " << j << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/nlohmann_define_type_intrusive_only_serialize_macro.output"
+    serialization: {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
+    
     ```
 
     Notes:
@@ -166,7 +413,46 @@ See the examples below for the concrete generated code.
     The macro is equivalent to:
 
     ```cpp hl_lines="22 22 23 24 25 26 27 28"
-    --8<-- "examples/nlohmann_define_type_intrusive_only_serialize_explicit.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    namespace ns
+    {
+    class person
+    {
+      private:
+        std::string name = "John Doe";
+        std::string address = "123 Fake St";
+        int age = -1;
+    
+      public:
+        // No default constructor
+        person(std::string name_, std::string address_, int age_)
+            : name(std::move(name_)), address(std::move(address_)), age(age_)
+        {}
+    
+        template<typename BasicJsonType>
+        friend void to_json(BasicJsonType& nlohmann_json_j, const person& nlohmann_json_t)
+        {
+            nlohmann_json_j["name"] = nlohmann_json_t.name;
+            nlohmann_json_j["address"] = nlohmann_json_t.address;
+            nlohmann_json_j["age"] = nlohmann_json_t.age;
+        }
+    };
+    } // namespace ns
+    
+    int main()
+    {
+        ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+    
+        // serialization: person -> json
+        json j = p;
+        std::cout << "serialization: " << j << std::endl;
+    }
+    
     ```
 
 ## See also
@@ -186,3 +472,6 @@ See the examples below for the concrete generated code.
 1. Added in version 3.9.0.
 2. Added in version 3.11.0.
 3. Added in version 3.11.3.
+
+All three macros were changed to work with any `basic_json` specialization (not only `nlohmann::json`) in version 3.12.0,
+and to allow an empty member list in version 3.13.0.

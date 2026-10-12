@@ -69,13 +69,61 @@ function throws an exception.
     The following code shows how a JSON patch is applied to a value.
      
     ```cpp
-    --8<-- "examples/patch_inplace.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // the original document
+        json doc = R"(
+            {
+              "baz": "qux",
+              "foo": "bar"
+            }
+        )"_json;
+    
+        // the patch
+        json patch = R"(
+            [
+              { "op": "replace", "path": "/baz", "value": "boo" },
+              { "op": "add", "path": "/hello", "value": ["world"] },
+              { "op": "remove", "path": "/foo"}
+            ]
+        )"_json;
+    
+        // output original document
+        std::cout << "Before\n" << std::setw(4) << doc << std::endl;
+    
+        // apply the patch
+        doc.patch_inplace(patch);
+    
+        // output patched document
+        std::cout << "\nAfter\n" << std::setw(4) << doc << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/patch_inplace.output"
+    Before
+    {
+        "baz": "qux",
+        "foo": "bar"
+    }
+    
+    After
+    {
+        "baz": "boo",
+        "hello": [
+            "world"
+        ]
+    }
+    
     ```
 
 ??? example "Example: out_of_range.403 exception with a partially applied patch"
@@ -85,13 +133,56 @@ function throws an exception.
     the exception is caught, unlike [`patch`](patch.md).
 
     ```cpp
-    --8<-- "examples/patch_inplace__exception.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // the original document
+        json doc = R"(
+            {
+              "a": 1,
+              "b": 2
+            }
+        )"_json;
+    
+        // a patch whose second operation fails
+        json patch = R"(
+            [
+              { "op": "replace", "path": "/a", "value": 99 },
+              { "op": "remove", "path": "/nonexistent" }
+            ]
+        )"_json;
+    
+        // exception out_of_range.403
+        try
+        {
+            doc.patch_inplace(patch);
+        }
+        catch (const json::out_of_range& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    
+        // the first operation has already been applied to doc
+        std::cout << std::setw(4) << doc << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/patch_inplace__exception.output"
+    [json.exception.out_of_range.403] key 'nonexistent' not found
+    {
+        "a": 99,
+        "b": 2
+    }
+    
     ```
 
 ## See also
@@ -110,3 +201,6 @@ function throws an exception.
   location has a non-object/non-array parent in version 3.13.0.
 - Added [`out_of_range.414`](../../home/exceptions.md#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper
   prefix of its "path" location instead of silently producing a corrupted result in version 3.13.0.
+- Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) instead of
+  [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) for a one-character array index that is
+  not a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.

@@ -42,13 +42,32 @@ If you do want to preserve the **insertion order**, you can use the type [`nlohm
 ??? example "Example: `ordered_json` preserves insertion order"
 
     ```cpp
-    --8<-- "examples/ordered_json.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using ordered_json = nlohmann::ordered_json;
+    
+    int main()
+    {
+        ordered_json j;
+        j["one"] = 1;
+        j["two"] = 2;
+        j["three"] = 3;
+    
+        std::cout << j.dump(2) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/ordered_json.output"
+    {
+      "one": 1,
+      "two": 2,
+      "three": 3
+    }
+    
     ```
 
 Alternatively, [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) also preserves the insertion order and, unlike [`ordered_map`](../api/ordered_map.md), keeps a lookup index, so it does not have the quadratic cost described below. It is used through a small adapter ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).

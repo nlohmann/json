@@ -74,13 +74,36 @@ pass before anything is written.
     The example shows the serialization of a JSON value to a byte vector in BSON format.
      
     ```cpp
-    --8<-- "examples/to_bson.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        json j = R"({"compact": true, "schema": 0})"_json;
+    
+        // serialize it to BSON
+        std::vector<std::uint8_t> v = json::to_bson(j);
+    
+        // print the vector content
+        for (auto& byte : v)
+        {
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        }
+        std::cout << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/to_bson.output"
+    0x1b 0x00 0x00 0x00 0x08 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0x00 0x01 0x10 0x73 0x63 0x68 0x65 0x6d 0x61 0x00 0x00 0x00 0x00 0x00 0x00 
+    
     ```
 
 ??? example "Example: out_of_range.409 exception"
@@ -89,13 +112,37 @@ pass before anything is written.
     BSON keys are null-terminated C strings and cannot contain U+0000 themselves.
 
     ```cpp
-    --8<-- "examples/to_bson__exception.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object whose key contains a null byte (U+0000)
+        std::string key = "ab";
+        key.push_back('\0');
+        key.push_back('c');
+        json j = {{key, 1}};
+    
+        // exception out_of_range.409
+        try
+        {
+            json::to_bson(j);
+        }
+        catch (const json::out_of_range& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/to_bson__exception.output"
+    [json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)
+    
     ```
 
 ## See also

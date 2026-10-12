@@ -12,7 +12,7 @@ violations will result in a failed build.
 
 Note: C++20 modules support may hit compiler-specific issues not covered by the general compiler matrix below. See [Modules](../features/modules.md#known-issues) for known issues and workarounds.
 
-Note: Some modern features (like C++20 ranges or filesystem support) may be disabled on specific broken or incomplete toolchains even when standard feature-test macros indicate support. See [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md) and [`JSON_HAS_FILESYSTEM`](../api/macros/json_has_filesystem.md) for details on known exclusions.
+Note: Some modern features (like C++20 ranges or filesystem support) may be disabled on specific broken or incomplete toolchains even when standard feature-test macros indicate support. See [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md), [`JSON_HAS_RANGE_VIEW_CONVERSION`](../api/macros/json_has_range_view_conversion.md), and [`JSON_HAS_FILESYSTEM`](../api/macros/json_has_filesystem.md) for details on known exclusions.
 
 - [x] The library is compiled with 50+ different C++ compilers with different operating systems and platforms,
   including the oldest versions known to compile the library.
@@ -107,12 +107,38 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The library is compiled with all C++ language revisions (C++11, C++14, C++17, C++20, C++23, and C++26) to detect
   and fix language deprecations early.
 - [x] The library is checked for compiler warnings:
-  - On Clang, `-Weverything` is used with 8 exceptions.
+  - On Clang, `-Weverything` is used with 7 exceptions.
 
     ??? abstract "Clang warnings"
 
         ```cmake
-        --8<-- "../../../cmake/clang_flags.cmake"
+        # Ignored Clang warnings:
+        # -Wno-c++98-compat               The library targets C++11.
+        # -Wno-c++98-compat-pedantic      The library targets C++11.
+        # -Wno-deprecated-declarations    The library contains annotations for deprecated functions.
+        # -Wno-padded                     We do not care about padding warnings.
+        # -Wno-covered-switch-default     All switches list all cases and a default case.
+        # -Wno-c2y-extensions             Clang 22.1 diagnoses __COUNTER__ as a C2y extension, also in
+        #                                 C++ mode. The library does not use __COUNTER__; the warnings
+        #                                 all come from vendored Doctest (SECTION/TEST_CASE macros).
+        # -Wno-unsafe-buffer-usage        Pervasive: the library's own low-level numeric/buffer code
+        #                                 (to_chars, serializer, lexer, binary reader/writer, input
+        #                                 adapters, json_pointer) plus vendored Doctest itself (~208
+        #                                 distinct sites measured 2026-07-08 on clang trunk) all use
+        #                                 raw pointer arithmetic / libc string calls by necessity.
+        
+        set(CLANG_CXXFLAGS
+            -Werror
+            -Weverything
+            -Wno-c++98-compat
+            -Wno-c++98-compat-pedantic
+            -Wno-deprecated-declarations
+            -Wno-padded
+            -Wno-covered-switch-default
+            -Wno-c2y-extensions
+            -Wno-unsafe-buffer-usage
+        )
+        
         ```
 
   - On GCC, 300+ warnings are enabled with 8 exceptions.
@@ -120,7 +146,380 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
     ??? abstract "GCC warnings"
 
         ```cmake
-        --8<-- "../../../cmake/gcc_flags.cmake"
+        # Warning flags determined for GCC 16.2.0 with https://github.com/nlohmann/gcc_flags:
+        # Ignored GCC warnings:
+        # -Wno-abi-tag           We do not care about ABI tags.
+        # -Wno-aggregate-return  The library uses aggregate returns.
+        # -Wno-long-long         The library uses the long long type to interface with system functions.
+        # -Wno-namespaces        The library uses namespaces.
+        # -Wno-nrvo              Doctest triggers this warning.
+        # -Wno-padded            We do not care about padding warnings.
+        # -Wno-system-headers    We do not care about warnings in system headers.
+        # -Wno-templates         The library uses templates.
+        
+        set(GCC_CXXFLAGS
+            -pedantic
+            -Werror
+            --all-warnings
+            --extra-warnings
+            -W
+            -WNSObject-attribute
+            -Wabbreviated-auto-in-template-arg
+            -Wabi
+            -Wno-abi-tag
+            -Waddress
+            -Waddress-of-packed-member
+            -Wno-aggregate-return
+            -Waggressive-loop-optimizations
+            -Waligned-new=all
+            -Wall
+            -Walloc-size
+            -Walloc-zero
+            -Walloca
+            -Wanalyzer-allocation-size
+            -Wanalyzer-deref-before-check
+            -Wanalyzer-double-fclose
+            -Wanalyzer-double-free
+            -Wanalyzer-exposure-through-output-file
+            -Wanalyzer-exposure-through-uninit-copy
+            -Wanalyzer-fd-access-mode-mismatch
+            -Wanalyzer-fd-double-close
+            -Wanalyzer-fd-leak
+            -Wanalyzer-fd-phase-mismatch
+            -Wanalyzer-fd-type-mismatch
+            -Wanalyzer-fd-use-after-close
+            -Wanalyzer-fd-use-without-check
+            -Wanalyzer-file-leak
+            -Wanalyzer-free-of-non-heap
+            -Wanalyzer-imprecise-fp-arithmetic
+            -Wanalyzer-infinite-loop
+            -Wanalyzer-infinite-recursion
+            -Wanalyzer-jump-through-null
+            -Wanalyzer-malloc-leak
+            -Wanalyzer-mismatching-deallocation
+            -Wanalyzer-null-argument
+            -Wanalyzer-null-dereference
+            -Wanalyzer-out-of-bounds
+            -Wanalyzer-overlapping-buffers
+            -Wanalyzer-possible-null-argument
+            -Wanalyzer-possible-null-dereference
+            -Wanalyzer-putenv-of-auto-var
+            -Wanalyzer-shift-count-negative
+            -Wanalyzer-shift-count-overflow
+            -Wanalyzer-stale-setjmp-buffer
+            -Wanalyzer-symbol-too-complex
+            -Wanalyzer-tainted-allocation-size
+            -Wanalyzer-tainted-array-index
+            -Wanalyzer-tainted-assertion
+            -Wanalyzer-tainted-divisor
+            -Wanalyzer-tainted-offset
+            -Wanalyzer-tainted-size
+            -Wanalyzer-throw-of-unexpected-type
+            -Wanalyzer-too-complex
+            -Wanalyzer-undefined-behavior-ptrdiff
+            -Wanalyzer-undefined-behavior-strtok
+            -Wanalyzer-unsafe-call-within-signal-handler
+            -Wanalyzer-use-after-free
+            -Wanalyzer-use-of-pointer-in-stale-stack-frame
+            -Wanalyzer-use-of-uninitialized-value
+            -Wanalyzer-va-arg-type-mismatch
+            -Wanalyzer-va-list-exhausted
+            -Wanalyzer-va-list-leak
+            -Wanalyzer-va-list-use-after-va-end
+            -Wanalyzer-write-to-const
+            -Wanalyzer-write-to-string-literal
+            -Warith-conversion
+            -Warray-bounds=2
+            -Warray-compare
+            -Warray-parameter
+            -Warray-parameter=2
+            -Wattribute-alias=2
+            -Wattribute-warning
+            -Wattributes
+            -Wauto-profile
+            -Wbidi-chars=any
+            -Wbool-compare
+            -Wbool-operation
+            -Wbuiltin-declaration-mismatch
+            -Wbuiltin-macro-redefined
+            -Wc++0x-compat
+            -Wc++11-compat
+            -Wc++11-extensions
+            -Wc++14-compat
+            -Wc++14-extensions
+            -Wc++17-compat
+            -Wc++17-extensions
+            -Wc++1z-compat
+            -Wc++20-compat
+            -Wc++20-extensions
+            -Wc++23-extensions
+            -Wc++26-compat
+            -Wc++26-extensions
+            -Wc++2a-compat
+            -Wcalloc-transposed-args
+            -Wcannot-profile
+            -Wcast-align
+            -Wcast-align=strict
+            -Wcast-function-type
+            -Wcast-qual
+            -Wcast-user-defined
+            -Wcatch-value=3
+            -Wchanges-meaning
+            -Wchar-subscripts
+            -Wclass-conversion
+            -Wclass-memaccess
+            -Wclobbered
+            -Wcomma-subscript
+            -Wcomment
+            -Wcomments
+            -Wcomplain-wrong-lang
+            -Wconditionally-supported
+            -Wconversion
+            -Wconversion-null
+            -Wcoverage-invalid-line-number
+            -Wcoverage-mismatch
+            -Wcoverage-too-many-conditions
+            -Wcoverage-too-many-paths
+            -Wcpp
+            -Wctad-maybe-unsupported
+            -Wctor-dtor-privacy
+            -Wdangling-else
+            -Wdangling-pointer=2
+            -Wdangling-reference
+            -Wdate-time
+            -Wdefaulted-function-deleted
+            -Wdelete-incomplete
+            -Wdelete-non-virtual-dtor
+            -Wdeprecated
+            -Wdeprecated-copy
+            -Wdeprecated-copy-dtor
+            -Wdeprecated-declarations
+            -Wdeprecated-enum-enum-conversion
+            -Wdeprecated-enum-float-conversion
+            -Wdeprecated-literal-operator
+            -Wdeprecated-openmp
+            -Wdeprecated-variadic-comma-omission
+            -Wdisabled-optimization
+            -Wdiv-by-zero
+            -Wdouble-promotion
+            -Wduplicated-branches
+            -Wduplicated-cond
+            -Weffc++
+            -Welaborated-enum-base
+            -Wempty-body
+            -Wendif-labels
+            -Wenum-compare
+            -Wenum-conversion
+            -Wexceptions
+            -Wexpansion-to-defined
+            -Wexpose-global-module-tu-local
+            -Wexternal-tu-local
+            -Wextra
+            -Wextra-semi
+            -Wflex-array-member-not-at-end
+            -Wfloat-conversion
+            -Wfloat-equal
+            -Wformat-diag
+            -Wformat-overflow=2
+            -Wformat-signedness
+            -Wformat-truncation=2
+            -Wformat=2
+            -Wframe-address
+            -Wfree-nonheap-object
+            -Wglobal-module
+            -Whardened
+            -Wheader-guard
+            -Whsa
+            -Wif-not-aligned
+            -Wignored-attributes
+            -Wignored-qualifiers
+            -Wimplicit-fallthrough=5
+            -Winaccessible-base
+            -Winfinite-recursion
+            -Winherited-variadic-ctor
+            -Winit-list-lifetime
+            -Winit-self
+            -Winline
+            -Wint-in-bool-context
+            -Wint-to-pointer-cast
+            -Winterference-size
+            -Winvalid-constexpr
+            -Winvalid-imported-macros
+            -Winvalid-memory-model
+            -Winvalid-offsetof
+            -Winvalid-pch
+            -Winvalid-utf8
+            -Wkeyword-macro
+            -Wleading-whitespace=spaces
+            -Wliteral-suffix
+            -Wlogical-not-parentheses
+            -Wlogical-op
+            -Wno-long-long
+            -Wlto-type-mismatch
+            -Wmain
+            -Wmaybe-musttail-local-addr
+            -Wmaybe-uninitialized
+            -Wmemset-elt-size
+            -Wmemset-transposed-args
+            -Wmisleading-indentation
+            -Wmismatched-dealloc
+            -Wmismatched-new-delete
+            -Wmismatched-tags
+            -Wmissing-attributes
+            -Wmissing-braces
+            -Wmissing-declarations
+            -Wmissing-field-initializers
+            -Wmissing-include-dirs
+            -Wmissing-profile
+            -Wmissing-requires
+            -Wmissing-template-keyword
+            -Wmultichar
+            -Wmultiple-inheritance
+            -Wmultistatement-macros
+            -Wmusttail-local-addr
+            -Wno-namespaces
+            -Wnarrowing
+            -Wnoexcept
+            -Wnoexcept-type
+            -Wnon-c-typedef-for-linkage
+            -Wnon-template-friend
+            -Wnon-virtual-dtor
+            -Wnonnull
+            -Wnonnull-compare
+            -Wnormalized=nfkc
+            -Wno-nrvo
+            -Wnull-dereference
+            -Wodr
+            -Wold-style-cast
+            -Wopenacc-parallelism
+            -Wopenmp
+            -Wopenmp-simd
+            -Woverflow
+            -Woverlength-strings
+            -Woverloaded-virtual=2
+            -Wpacked
+            -Wpacked-bitfield-compat
+            -Wpacked-not-aligned
+            -Wno-padded
+            -Wparentheses
+            -Wpedantic
+            -Wpessimizing-move
+            -Wplacement-new=2
+            -Wpmf-conversions
+            -Wpointer-arith
+            -Wpointer-compare
+            -Wpragma-once-outside-header
+            -Wpragmas
+            -Wprio-ctor-dtor
+            -Wpsabi
+            -Wrange-loop-construct
+            -Wredundant-decls
+            -Wredundant-move
+            -Wredundant-tags
+            -Wregister
+            -Wreorder
+            -Wrestrict
+            -Wreturn-local-addr
+            -Wreturn-type
+            -Wscalar-storage-order
+            -Wself-move
+            -Wsequence-point
+            -Wsfinae-incomplete
+            -Wsfinae-incomplete=2
+            -Wshadow=compatible-local
+            -Wshadow=global
+            -Wshadow=local
+            -Wshift-count-negative
+            -Wshift-count-overflow
+            -Wshift-negative-value
+            -Wshift-overflow=2
+            -Wsign-compare
+            -Wsign-conversion
+            -Wsign-promo
+            -Wsized-deallocation
+            -Wsizeof-array-argument
+            -Wsizeof-array-div
+            -Wsizeof-pointer-div
+            -Wsizeof-pointer-memaccess
+            -Wstack-protector
+            -Wstrict-aliasing
+            -Wstrict-aliasing=3
+            -Wstrict-null-sentinel
+            -Wstrict-overflow
+            -Wstrict-overflow=5
+            -Wstring-compare
+            -Wstringop-overflow
+            -Wstringop-overflow=4
+            -Wstringop-overread
+            -Wstringop-truncation
+            -Wsubobject-linkage
+            -Wsuggest-attribute=cold
+            -Wsuggest-attribute=const
+            -Wsuggest-attribute=format
+            -Wsuggest-attribute=malloc
+            -Wsuggest-attribute=noreturn
+            -Wsuggest-attribute=pure
+            -Wsuggest-attribute=returns_nonnull
+            -Wsuggest-final-methods
+            -Wsuggest-final-types
+            -Wsuggest-override
+            -Wswitch
+            -Wswitch-bool
+            -Wswitch-default
+            -Wswitch-enum
+            -Wswitch-outside-range
+            -Wswitch-unreachable
+            -Wsync-nand
+            -Wsynth
+            -Wno-system-headers
+            -Wtautological-compare
+            -Wtemplate-body
+            -Wtemplate-id-cdtor
+            -Wtemplate-names-tu-local
+            -Wno-templates
+            -Wterminate
+            -Wtrailing-whitespace
+            -Wtrampolines
+            -Wtrigraphs
+            -Wtrivial-auto-var-init
+            -Wtsan
+            -Wtype-limits
+            -Wundef
+            -Wunicode
+            -Wuninitialized
+            -Wunknown-pragmas
+            -Wunreachable-code
+            -Wunsafe-loop-optimizations
+            -Wunused
+            -Wunused-but-set-parameter=3
+            -Wunused-but-set-variable=3
+            -Wunused-const-variable=2
+            -Wunused-function
+            -Wunused-label
+            -Wunused-local-typedefs
+            -Wunused-macros
+            -Wunused-parameter
+            -Wunused-result
+            -Wunused-value
+            -Wunused-variable
+            -Wuse-after-free=3
+            -Wuseless-cast
+            -Wvarargs
+            -Wvariadic-macros
+            -Wvector-operation-performance
+            -Wvexing-parse
+            -Wvirtual-inheritance
+            -Wvirtual-move-assign
+            -Wvla
+            -Wvla-parameter
+            -Wvolatile
+            -Wvolatile-register-var
+            -Wwrite-strings
+            -Wxor-used-as-pow
+            -Wzero-as-null-pointer-constant
+            -Wzero-length-bounds
+        )
+        
         ```
 
 ## C++ standard library compliance
@@ -181,7 +580,92 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
     ??? abstract "Clang-Tidy configuration (.clang-tidy)"
 
         ```ini
-        --8<-- "../../../.clang-tidy"
+        # portability-avoid-pragma-once: kept disabled on purpose. #pragma once is accepted
+        # by every supported compiler, and tools/amalgamate/amalgamate.py strips it from
+        # single_include, so there is nothing left to fix here.
+        
+        Checks: '*,
+        
+                 -altera-id-dependent-backward-branch,
+                 -altera-struct-pack-align,
+                 -altera-unroll-loops,
+                 -android-cloexec-fopen,
+                 -boost-use-ranges,
+                 -bugprone-easily-swappable-parameters,
+                 -cert-err58-cpp,
+                 -clang-analyzer-webkit.NoUncountedMemberChecker,
+                 -concurrency-mt-unsafe,
+                 -cppcoreguidelines-avoid-const-or-ref-data-members,
+                 -cppcoreguidelines-avoid-do-while,
+                 -cppcoreguidelines-avoid-goto,
+                 -cppcoreguidelines-avoid-magic-numbers,
+                 -cppcoreguidelines-avoid-non-const-global-variables,
+                 -cppcoreguidelines-macro-usage,
+                 -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
+                 -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+                 -cppcoreguidelines-pro-bounds-constant-array-index,
+                 -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+                 -cppcoreguidelines-pro-type-reinterpret-cast,
+                 -cppcoreguidelines-pro-type-union-access,
+                 -cppcoreguidelines-rvalue-reference-param-not-moved,
+                 -cppcoreguidelines-virtual-class-destructor,
+                 -fuchsia-default-arguments-calls,
+                 -fuchsia-default-arguments-declarations,
+                 -fuchsia-overloaded-operator,
+                 -google-explicit-constructor,
+                 -google-readability-function-size,
+                 -google-runtime-float,
+                 -google-runtime-int,
+                 -hicpp-avoid-goto,
+                 -hicpp-explicit-conversions,
+                 -hicpp-function-size,
+                 -hicpp-no-array-decay,
+                 -hicpp-no-assembler,
+                 -hicpp-signed-bitwise,
+                 -hicpp-uppercase-literal-suffix,
+                 -llvm-header-guard,
+                 -llvm-include-order,
+                 -llvm-prefer-static-over-anonymous-namespace,
+                 -llvm-use-ranges,
+                 -llvmlibc-*,
+                 -misc-use-anonymous-namespace,
+                 -misc-confusable-identifiers,
+                 -misc-include-cleaner,
+                 -misc-no-recursion,
+                 -misc-non-private-member-variables-in-classes,
+                 -modernize-concat-nested-namespaces,
+                 -modernize-type-traits,
+                 -modernize-use-constraints,
+                 -modernize-use-designated-initializers,
+                 -modernize-use-nodiscard,
+                 -modernize-use-ranges,
+                 -modernize-use-std-numbers,
+                 -modernize-use-trailing-return-type,
+                 -performance-enum-size,
+                 -portability-avoid-pragma-once,
+                 -readability-function-cognitive-complexity,
+                 -readability-function-size,
+                 -readability-identifier-length,
+                 -readability-magic-numbers,
+                 -readability-redundant-access-specifiers,
+                 -readability-redundant-parentheses,
+                 -readability-redundant-typename,
+                 -readability-simplify-boolean-expr,
+                 -readability-uppercase-literal-suffix,
+                 -readability-use-concise-preprocessor-directives'
+        
+        CheckOptions:
+          - key: hicpp-special-member-functions.AllowSoleDefaultDtor
+            value: 1
+          # clang-tidy 22.1 extended this check to classes and enums; the test files
+          # define many such helper types at namespace scope, which is harmless
+          - key: misc-use-internal-linkage.AnalyzeTypes
+            value: false
+        
+        WarningsAsErrors: '*'
+        
+        HeaderFilterRegex: '.*hpp$'
+        
         ```
 
 - [x] The code is checked with the latest [Cppcheck](https://cppcheck.sourceforge.io) with all warnings enabled.
@@ -233,7 +717,87 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
     ??? abstract "Astyle configuration (tools/astyle/.astylerc)"
       
         ```ini
-        --8<-- "../../../tools/astyle/.astylerc"
+        # Configuration for Artistic Style
+        # see https://astyle.sourceforge.net/astyle.html
+        
+        #######################
+        # Brace Style Options #
+        #######################
+        
+        # use Allman style for braces
+        --style=allman
+        
+        ###############
+        # Tab Options #
+        ###############
+        
+        # indent using 4 spaces
+        --indent=spaces=4
+        
+        #######################
+        # Indentation Options #
+        #######################
+        
+        # indent access modifiers one half indent
+        --indent-modifiers
+        
+        # indent switch cases to the switch block
+        --indent-switches
+        
+        # indent preprocessor blocks
+        --indent-preproc-block
+        
+        # indent preprocessor defines
+        --indent-preproc-define
+        
+        # indent C++ comments
+        --indent-col1-comments
+        
+        ###################
+        # Padding Options #
+        ###################
+        
+        # insert space padding around operators
+        --pad-oper
+        
+        # insert space between if/for/while... and the following parentheses
+        --pad-header
+        
+        # attach the pointer to the variable type (left)
+        --align-pointer=type
+        
+        # attach the reference to the variable type (left)
+        --align-reference=type
+        
+        ######################
+        # Formatting Options #
+        ######################
+        
+        # add braces to unbraced one line conditional statements
+        --add-braces
+        
+        # convert tabs to spaces
+        --convert-tabs
+        
+        # closes whitespace between the ending angle brackets of template definitions
+        --close-templates
+        
+        #################
+        # Other Options #
+        #################
+        
+        # do not create backup files
+        --suffix=none
+        
+        # preserve the original file date
+        --preserve-date
+        
+        # display only the files that have been formatted
+        --formatted
+        
+        # for the linux (LF) line end style
+        --lineend=linux
+        
         ```
 
 - [x] The code style is checked with [cpplint](https://github.com/cpplint/cpplint) with 61 enabled rules.

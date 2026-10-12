@@ -73,6 +73,8 @@ auto val2 = j.at(json::json_pointer("/nested/three/1"));    // false
 auto val3 = j.value(json::json_pointer("/nested/four"), 0); // 0
 ```
 
+To read a value with a fallback, use [`value`](https://json.nlohmann.me/api/basic_json/value/index.md) with a JSON Pointer; to test for existence, use [`contains`](https://json.nlohmann.me/api/basic_json/contains/index.md). Neither needs intermediate checks, see [Nested values](https://json.nlohmann.me/features/element_access/default_value/#nested-values).
+
 Creating intermediate levels that don't exist
 
 See the [`operator[]` notes](https://json.nlohmann.me/api/basic_json/operator%5B%5D/#return-value) for how array vs. object is decided when a pointer creates intermediate levels that don't exist yet.
@@ -119,6 +121,7 @@ auto j_original = j_flat.unflatten();
 ## See also
 
 - Class [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md)
+- Functions [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), [`contains`](https://json.nlohmann.me/api/basic_json/contains/index.md), and [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) accept JSON Pointers; see [Nested values](https://json.nlohmann.me/features/element_access/default_value/#nested-values)
 - Function [`flatten`](https://json.nlohmann.me/api/basic_json/flatten/index.md)
 - Function [`unflatten`](https://json.nlohmann.me/api/basic_json/unflatten/index.md)
 - [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md) - paths inside a patch are JSON Pointers

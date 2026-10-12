@@ -25,13 +25,34 @@ Linear in the length of the JSON pointer.
     The example shows the result of `parent_pointer` for different JSON Pointers.
      
     ```cpp
-    --8<-- "examples/json_pointer__parent_pointer.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // different JSON Pointers
+        json::json_pointer ptr1("");
+        json::json_pointer ptr2("/foo");
+        json::json_pointer ptr3("/foo/0");
+    
+        // call parent_pointer()
+        std::cout << std::boolalpha
+                  << "parent of \"" << ptr1 << "\" is \"" << ptr1.parent_pointer() << "\"\n"
+                  << "parent of \"" << ptr2 << "\" is \"" << ptr2.parent_pointer() << "\"\n"
+                  << "parent of \"" << ptr3 << "\" is \"" << ptr3.parent_pointer() << "\"" << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/json_pointer__parent_pointer.output"
+    parent of "" is ""
+    parent of "/foo" is ""
+    parent of "/foo/0" is "/foo"
+    
     ```
 
 ## See also

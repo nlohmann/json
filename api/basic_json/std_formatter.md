@@ -36,13 +36,51 @@ provides `<format>`, controlled by the [`JSON_HAS_STD_FORMAT`](../macros/json_ha
     The example shows how to format JSON values with `std::format`.
 
     ```cpp
-    --8<-- "examples/std_formatter.c++20.cpp"
+    #include <format>
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        json j = {{"one", 1}, {"two", 2}};
+    
+        // compact formatting, like dump()
+        std::cout << std::format("{}", j) << "\n\n";
+    
+        // pretty-printed formatting, like dump(4)
+        std::cout << std::format("{:#}", j) << "\n\n";
+    
+        // a width sets the indent, like dump(2)
+        std::cout << std::format("{:2}", j) << "\n\n";
+    
+        // fill-and-align sets the indent character, like dump(4, '.')
+        std::cout << std::format("{:.>#}", j) << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/std_formatter.c++20.output"
+    {"one":1,"two":2}
+    
+    {
+        "one": 1,
+        "two": 2
+    }
+    
+    {
+      "one": 1,
+      "two": 2
+    }
+    
+    {
+    ...."one": 1,
+    ...."two": 2
+    }
+    
     ```
 
 ## See also

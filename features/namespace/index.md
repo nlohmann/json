@@ -77,3 +77,5 @@ Overriding the namespace and mixing ABI-incompatible versions will result in cra
 
 - Introduced inline namespace (`json_v3_11_0[_abi-tag]*`) in version 3.11.0.
 - Changed structure of inline namespace in version 3.11.2.
+- Added ABI tag `_dp` ([`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md)) in version 3.12.0.
+- Added ABI tags `_bics` ([`JSON_BRACE_INIT_COPY_SEMANTICS`](https://json.nlohmann.me/api/macros/json_brace_init_copy_semantics/index.md)), `_psp` ([`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md)), `_snul` ([`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md)), `_sbu8` ([`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md)), and `_ekmo` ([`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md)) in version 3.13.0 unreleased.

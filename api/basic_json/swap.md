@@ -109,13 +109,33 @@ Constant.
     The example below shows how JSON values can be swapped with `swap()`.
     
     ```cpp
-    --8<-- "examples/swap__reference.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create two JSON values
+        json j1 = {1, 2, 3, 4, 5};
+        json j2 = {{"pi", 3.141592653589793}, {"e", 2.718281828459045}};
+    
+        // swap the values
+        j1.swap(j2);
+    
+        // output the values
+        std::cout << "j1 = " << j1 << '\n';
+        std::cout << "j2 = " << j2 << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/swap__reference.output"
+    j1 = {"e":2.718281828459045,"pi":3.141592653589793}
+    j2 = [1,2,3,4,5]
+    
     ```
 
 ??? example "Example: (3) swap array"
@@ -123,13 +143,35 @@ Constant.
     The example below shows how arrays can be swapped with `swap()`.
     
     ```cpp
-    --8<-- "examples/swap__array_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON value
+        json value = {{"array", {1, 2, 3, 4}}};
+    
+        // create an array_t
+        json::array_t array = {"Snap", "Crackle", "Pop"};
+    
+        // swap the array stored in the JSON value
+        value["array"].swap(array);
+    
+        // output the values
+        std::cout << "value = " << value << '\n';
+        std::cout << "array = " << array << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/swap__array_t.output"
+    value = {"array":["Snap","Crackle","Pop"]}
+    array = [1,2,3,4]
+    
     ```
 
 ??? example "Example: (4) swap object"
@@ -137,13 +179,35 @@ Constant.
     The example below shows how objects can be swapped with `swap()`.
     
     ```cpp
-    --8<-- "examples/swap__object_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON value
+        json value = { {"translation", {{"one", "eins"}, {"two", "zwei"}}} };
+    
+        // create an object_t
+        json::object_t object = {{"cow", "Kuh"}, {"dog", "Hund"}};
+    
+        // swap the object stored in the JSON value
+        value["translation"].swap(object);
+    
+        // output the values
+        std::cout << "value = " << value << '\n';
+        std::cout << "object = " << object << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/swap__object_t.output"
+    value = {"translation":{"cow":"Kuh","dog":"Hund"}}
+    object = {"one":"eins","two":"zwei"}
+    
     ```
 
 ??? example "Example: (5) swap string"
@@ -151,13 +215,35 @@ Constant.
     The example below shows how strings can be swapped with `swap()`.
     
     ```cpp
-    --8<-- "examples/swap__string_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON value
+        json value = { "the good", "the bad", "the ugly" };
+    
+        // create string_t
+        json::string_t string = "the fast";
+    
+        // swap the object stored in the JSON value
+        value[1].swap(string);
+    
+        // output the values
+        std::cout << "value = " << value << '\n';
+        std::cout << "string = " << string << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/swap__string_t.output"
+    value = ["the good","the fast","the ugly"]
+    string = the bad
+    
     ```
 
 ??? example "Example: (6) swap binary"
@@ -165,13 +251,35 @@ Constant.
     The example below shows how binary values can be swapped with `swap()`.
     
     ```cpp
-    --8<-- "examples/swap__binary_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a binary value
+        json value = json::binary({1, 2, 3});
+    
+        // create a binary_t
+        json::binary_t binary = {{4, 5, 6}};
+    
+        // swap the object stored in the JSON value
+        value.swap(binary);
+    
+        // output the values
+        std::cout << "value = " << value << '\n';
+        std::cout << "binary = " << json(binary) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/swap__binary_t.output"
+    value = {"bytes":[4,5,6],"subtype":null}
+    binary = {"bytes":[1,2,3],"subtype":null}
+    
     ```
 
 ## See also

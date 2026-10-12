@@ -30,7 +30,7 @@ flowchart LR
 ```
 
 - **JSON text** is read by an [input adapter](#input-adapters), tokenized by the lexer, and turned into SAX events by the parser.
-- **Binary formats** (BJData, BSON, CBOR, MessagePack, UBJSON) are read by an input adapter and turned into the same SAX events by the `binary_reader`.
+- **Binary formats** (BJData, BON8, BSON, CBOR, MessagePack, UBJSON) are read by an input adapter and turned into the same SAX events by the `binary_reader`.
 - A [SAX consumer](#sax-interface) receives the events. The one used by [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) builds a `basic_json` value tree.
 - The `serializer` (JSON text) or the `binary_writer` (binary formats) writes a value tree to an [output adapter](#output-adapters).
 

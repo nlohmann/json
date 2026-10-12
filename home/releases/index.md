@@ -14,7 +14,7 @@ Fixes bugs found in 3.11.3 and adds several features. All changes are backward-c
 - Makes the [conversion macros](https://json.nlohmann.me/features/arbitrary_types/#simplify-your-life-with-macros) templated (so they also work with [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md)) and adds [`NLOHMANN_DEFINE_DERIVED_TYPE`](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md) for derived classes.
 - Adds `std::optional` support (C++17) and lets [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md), [`diff`](https://json.nlohmann.me/api/basic_json/diff/index.md), and [`flatten`](https://json.nlohmann.me/api/basic_json/flatten/index.md) work with arbitrary string types.
 - Extends the [binary formats](https://json.nlohmann.me/features/binary_formats/index.md): [BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md) draft 3 and unsigned 64-bit integers for [BSON](https://json.nlohmann.me/features/binary_formats/bson/index.md).
-- Adds multidimensional C-array conversion and UTF-8 encoded `std::filesystem::path` conversions, and lowers the minimum [CMake](https://json.nlohmann.me/integration/cmake/index.md) version to allow CMake 4.0.
+- Adds multidimensional C-array conversion and UTF-8 encoded `std::filesystem::path` conversions, and raises the minimum [CMake](https://json.nlohmann.me/integration/cmake/index.md) version to 3.5 and supports CMake 4.0.
 
 [Full release notes](https://github.com/nlohmann/json/releases/tag/v3.12.0).
 

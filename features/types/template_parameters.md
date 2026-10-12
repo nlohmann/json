@@ -215,19 +215,199 @@ The library does not sort or de-duplicate keys itself; the behavior described in
     a custom `ObjectType`.
 
     ```cpp
-    --8<-- "examples/custom_object_type.hpp"
+    #pragma once
+    
+    #include <map>
+    #include <utility>
+    
+    // A minimal, self-contained ObjectType built around a private std::map.
+    // key_compare is deliberately not exposed: when an ObjectType has no
+    // key_compare member, the library falls back to its own default comparator.
+    // See https://json.nlohmann.me/features/types/template_parameters/#objecttype
+    template<class Key, class T, class Compare, class Allocator>
+    class custom_object_type
+    {
+        using map_t = std::map<Key, T, Compare, Allocator>;
+        map_t data_;
+    
+      public:
+        using key_type = typename map_t::key_type;
+        using mapped_type = typename map_t::mapped_type;
+        using value_type = typename map_t::value_type;
+        using size_type = typename map_t::size_type;
+        using iterator = typename map_t::iterator;
+        using const_iterator = typename map_t::const_iterator;
+    
+        custom_object_type() = default;
+        custom_object_type(const custom_object_type&) = default;
+        custom_object_type(custom_object_type&&) = default;
+        custom_object_type& operator=(const custom_object_type&) = default;
+        custom_object_type& operator=(custom_object_type&&) = default;
+    
+        template<class InputIt>
+        custom_object_type(InputIt first, InputIt last) : data_(first, last) {}
+    
+        iterator begin()
+        {
+            return data_.begin();
+        }
+        iterator end()
+        {
+            return data_.end();
+        }
+        const_iterator begin() const
+        {
+            return data_.begin();
+        }
+        const_iterator end() const
+        {
+            return data_.end();
+        }
+        const_iterator cbegin() const
+        {
+            return data_.cbegin();
+        }
+        const_iterator cend() const
+        {
+            return data_.cend();
+        }
+    
+        bool empty() const
+        {
+            return data_.empty();
+        }
+        size_type size() const
+        {
+            return data_.size();
+        }
+        size_type max_size() const
+        {
+            return data_.max_size();
+        }
+        void clear()
+        {
+            data_.clear();
+        }
+    
+        iterator find(const key_type& key)
+        {
+            return data_.find(key);
+        }
+        const_iterator find(const key_type& key) const
+        {
+            return data_.find(key);
+        }
+        size_type count(const key_type& key) const
+        {
+            return data_.count(key);
+        }
+    
+        std::pair<iterator, bool> emplace(const key_type& key, const mapped_type& value)
+        {
+            return data_.emplace(key, value);
+        }
+    
+        std::pair<iterator, bool> insert(const value_type& value)
+        {
+            return data_.insert(value);
+        }
+    
+        template<class InputIt>
+        void insert(InputIt first, InputIt last)
+        {
+            data_.insert(first, last);
+        }
+    
+        mapped_type& operator[](const key_type& key)
+        {
+            return data_[key];
+        }
+    
+        mapped_type& at(const key_type& key)
+        {
+            return data_.at(key);
+        }
+        const mapped_type& at(const key_type& key) const
+        {
+            return data_.at(key);
+        }
+    
+        iterator erase(iterator pos)
+        {
+            return data_.erase(pos);
+        }
+        iterator erase(iterator first, iterator last)
+        {
+            return data_.erase(first, last);
+        }
+        size_type erase(const key_type& key)
+        {
+            return data_.erase(key);
+        }
+    
+        void swap(custom_object_type& other)
+        {
+            data_.swap(other.data_);
+        }
+    
+        friend bool operator==(const custom_object_type& lhs, const custom_object_type& rhs)
+        {
+            return lhs.data_ == rhs.data_;
+        }
+        friend bool operator<(const custom_object_type& lhs, const custom_object_type& rhs)
+        {
+            return lhs.data_ < rhs.data_;
+        }
+    };
+    
     ```
 
 ??? example "Example: use the custom `ObjectType`"
 
     ```cpp
-    --8<-- "examples/custom_object_type.cpp"
+    #include <iostream>
+    #include <type_traits>
+    
+    #include <nlohmann/json.hpp>
+    
+    #include "custom_object_type.hpp"
+    
+    using custom_json = nlohmann::json::with_object_t<custom_object_type>;
+    
+    int main()
+    {
+        custom_json j;
+        j["pi"] = 3.141;
+        j["happy"] = true;
+        j["list"] = {1, 2, 3};
+    
+        std::cout << j.dump(2) << std::endl;
+        std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+    
+        // custom_object_type has no key_compare member, so object_comparator_t
+        // falls back to its default
+        std::cout << std::boolalpha
+                  << std::is_same<custom_json::object_comparator_t, custom_json::default_object_comparator_t>::value
+                  << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/custom_object_type.output"
+    {
+      "happy": true,
+      "list": [
+        1,
+        2,
+        3
+      ],
+      "pi": 3.141
+    }
+    true
+    true
+    
     ```
 
 ### Compatible containers
@@ -308,19 +488,191 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
     requirement above -- a good starting point for a custom `ArrayType`.
 
     ```cpp
-    --8<-- "examples/custom_array_type.hpp"
+    #pragma once
+    
+    #include <memory>
+    #include <utility>
+    #include <vector>
+    
+    // A minimal, self-contained ArrayType built around a private std::vector.
+    // See https://json.nlohmann.me/features/types/template_parameters/#arraytype
+    template<class T, class Allocator = std::allocator<T>>
+    class custom_array_type
+    {
+        using vector_t = std::vector<T, Allocator>;
+        vector_t data_;
+    
+      public:
+        using value_type = typename vector_t::value_type;
+        using size_type = typename vector_t::size_type;
+        using iterator = typename vector_t::iterator;
+        using const_iterator = typename vector_t::const_iterator;
+    
+        custom_array_type() = default;
+        custom_array_type(const custom_array_type&) = default;
+        custom_array_type(custom_array_type&&) = default;
+        custom_array_type& operator=(const custom_array_type&) = default;
+        custom_array_type& operator=(custom_array_type&&) = default;
+    
+        template<class InputIt>
+        custom_array_type(InputIt first, InputIt last) : data_(first, last) {}
+    
+        custom_array_type(size_type count, const T& value) : data_(count, value) {}
+    
+        iterator begin()
+        {
+            return data_.begin();
+        }
+        iterator end()
+        {
+            return data_.end();
+        }
+        const_iterator begin() const
+        {
+            return data_.begin();
+        }
+        const_iterator end() const
+        {
+            return data_.end();
+        }
+        const_iterator cbegin() const
+        {
+            return data_.cbegin();
+        }
+        const_iterator cend() const
+        {
+            return data_.cend();
+        }
+    
+        bool empty() const
+        {
+            return data_.empty();
+        }
+        size_type size() const
+        {
+            return data_.size();
+        }
+        size_type max_size() const
+        {
+            return data_.max_size();
+        }
+        void clear()
+        {
+            data_.clear();
+        }
+        void resize(size_type n)
+        {
+            data_.resize(n);
+        }
+    
+        T& operator[](size_type pos)
+        {
+            return data_[pos];
+        }
+        const T& operator[](size_type pos) const
+        {
+            return data_[pos];
+        }
+    
+        T& back()
+        {
+            return data_.back();
+        }
+        const T& back() const
+        {
+            return data_.back();
+        }
+    
+        void push_back(const T& value)
+        {
+            data_.push_back(value);
+        }
+        void push_back(T&& value)
+        {
+            data_.push_back(std::move(value));
+        }
+    
+        template<class... Args>
+        void emplace_back(Args&& ... args)
+        {
+            data_.emplace_back(std::forward<Args>(args)...);
+        }
+    
+        void pop_back()
+        {
+            data_.pop_back();
+        }
+    
+        iterator insert(const_iterator pos, const T& value)
+        {
+            return data_.insert(pos, value);
+        }
+        iterator insert(const_iterator pos, size_type count, const T& value)
+        {
+            return data_.insert(pos, count, value);
+        }
+        template<class InputIt>
+        iterator insert(const_iterator pos, InputIt first, InputIt last)
+        {
+            return data_.insert(pos, first, last);
+        }
+    
+        iterator erase(const_iterator pos)
+        {
+            return data_.erase(pos);
+        }
+        iterator erase(const_iterator first, const_iterator last)
+        {
+            return data_.erase(first, last);
+        }
+    
+        void swap(custom_array_type& other)
+        {
+            data_.swap(other.data_);
+        }
+    
+        friend bool operator==(const custom_array_type& lhs, const custom_array_type& rhs)
+        {
+            return lhs.data_ == rhs.data_;
+        }
+        friend bool operator<(const custom_array_type& lhs, const custom_array_type& rhs)
+        {
+            return lhs.data_ < rhs.data_;
+        }
+    };
+    
     ```
 
 ??? example "Example: use the custom `ArrayType`"
 
     ```cpp
-    --8<-- "examples/custom_array_type.cpp"
+    #include <iostream>
+    
+    #include <nlohmann/json.hpp>
+    
+    #include "custom_array_type.hpp"
+    
+    using custom_json = nlohmann::json::with_array_t<custom_array_type>;
+    
+    int main()
+    {
+        custom_json j = custom_json::array();
+        j.push_back(1);
+        j.push_back(2);
+        j.push_back(3);
+    
+        std::cout << j.dump() << std::endl;
+        std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/custom_array_type.output"
+    [1,2,3]
+    true
+    
     ```
 
 ### Compatible containers
@@ -451,19 +803,193 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
     of the API.
 
     ```cpp
-    --8<-- "examples/custom_string_type.hpp"
+    #pragma once
+    
+    #include <cstddef>
+    #include <ostream>
+    #include <string>
+    
+    // A minimal, self-contained StringType built around a private std::string.
+    // Wraps rather than inherits, so it exposes exactly what the library needs
+    // and nothing more of std::string's interface.
+    //
+    // Covers the "Always required" members, the extras needed for the binary
+    // formats, JSON Pointer / flatten / unflatten, and the int_to_string overload
+    // needed for diff and items. Extending it further (e.g. for
+    // std::hash<basic_json> or to_bson) is a matter of adding the extra members
+    // listed in the "Required for other functionality" table.
+    //
+    // See https://json.nlohmann.me/features/types/template_parameters/#stringtype
+    class custom_string_type
+    {
+        std::string data_;
+    
+      public:
+        using value_type = char;
+        using size_type = std::string::size_type;
+        using iterator = std::string::iterator;
+        using const_iterator = std::string::const_iterator;
+    
+        static constexpr size_type npos = std::string::npos;
+    
+        custom_string_type() = default;
+        custom_string_type(const custom_string_type&) = default;
+        custom_string_type(custom_string_type&&) = default;
+        custom_string_type& operator=(const custom_string_type&) = default;
+        custom_string_type& operator=(custom_string_type&&) = default;
+    
+        // not explicit: the library relies on being able to hand it a string literal
+        custom_string_type(const char* s) : data_(s) {}
+        custom_string_type(const char* s, size_type count) : data_(s, count) {}
+        custom_string_type(size_type count, char ch) : data_(count, ch) {}
+    
+        size_type size() const
+        {
+            return data_.size();
+        }
+        bool empty() const
+        {
+            return data_.empty();
+        }
+        void clear()
+        {
+            data_.clear();
+        }
+        void resize(size_type n)
+        {
+            data_.resize(n);
+        }
+        void resize(size_type n, char c)
+        {
+            data_.resize(n, c);
+        }
+        void reserve(size_type n)
+        {
+            data_.reserve(n);
+        }
+    
+        // must stay null-terminated -- the parser hands this to std::strtoull &
+        // friends; std::string::data() has guaranteed that since C++11
+        const char* data() const
+        {
+            return data_.data();
+        }
+    
+        void push_back(char c)
+        {
+            data_.push_back(c);
+        }
+    
+        char& operator[](size_type pos)
+        {
+            return data_[pos];
+        }
+        char operator[](size_type pos) const
+        {
+            return data_[pos];
+        }
+    
+        custom_string_type& append(const char* s, size_type count)
+        {
+            data_.append(s, count);
+            return *this;
+        }
+        custom_string_type& append(const custom_string_type& other)
+        {
+            data_.append(other.data_);
+            return *this;
+        }
+        custom_string_type& operator+=(char c)
+        {
+            data_.push_back(c);
+            return *this;
+        }
+    
+        size_type find_first_of(char c, size_type pos = 0) const
+        {
+            return data_.find_first_of(c, pos);
+        }
+    
+        iterator begin()
+        {
+            return data_.begin();
+        }
+        iterator end()
+        {
+            return data_.end();
+        }
+        const_iterator begin() const
+        {
+            return data_.begin();
+        }
+        const_iterator end() const
+        {
+            return data_.end();
+        }
+    
+        // found by ADL; converts array indices to keys in diff and items
+        friend void int_to_string(custom_string_type& target, std::size_t value)
+        {
+            target.data_ = std::to_string(value);
+        }
+    
+        friend bool operator==(const custom_string_type& lhs, const custom_string_type& rhs)
+        {
+            return lhs.data_ == rhs.data_;
+        }
+        friend bool operator<(const custom_string_type& lhs, const custom_string_type& rhs)
+        {
+            return lhs.data_ < rhs.data_;
+        }
+    
+        // not required by the library itself, but dump() returns a custom_string_type
+        // and this makes `std::cout << j.dump()` work as expected
+        friend std::ostream& operator<<(std::ostream& os, const custom_string_type& s)
+        {
+            return os << s.data_;
+        }
+    };
+    
     ```
 
 ??? example "Example: use the custom `StringType`"
 
     ```cpp
-    --8<-- "examples/custom_string_type.cpp"
+    #include <iostream>
+    
+    #include <nlohmann/json.hpp>
+    
+    #include "custom_string_type.hpp"
+    
+    using custom_json = nlohmann::json::with_string_t<custom_string_type>;
+    
+    int main()
+    {
+        custom_json j;
+        j["pi"] = 3.141;
+        j["happy"] = true;
+        j["list"] = {1, 2, 3};
+    
+        std::cout << j.dump(2) << std::endl;
+        std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/custom_string_type.output"
+    {
+      "happy": true,
+      "list": [
+        1,
+        2,
+        3
+      ],
+      "pi": 3.141
+    }
+    true
+    
     ```
 
 ## `BooleanType`
@@ -673,19 +1199,148 @@ such a container to a `basic_json` value.
     every requirement above -- a good starting point for a custom `BinaryType`.
 
     ```cpp
-    --8<-- "examples/custom_binary_type.hpp"
+    #pragma once
+    
+    #include <cstdint>
+    #include <initializer_list>
+    #include <vector>
+    
+    // A minimal, self-contained BinaryType built around a private std::vector.
+    // See https://json.nlohmann.me/features/types/template_parameters/#binarytype
+    class custom_binary_type
+    {
+        using vector_t = std::vector<std::uint8_t>;
+        vector_t data_;
+    
+      public:
+        using value_type = vector_t::value_type;
+        using size_type = vector_t::size_type;
+        using iterator = vector_t::iterator;
+        using const_iterator = vector_t::const_iterator;
+    
+        custom_binary_type() = default;
+        custom_binary_type(const custom_binary_type&) = default;
+        custom_binary_type(custom_binary_type&&) = default;
+        custom_binary_type& operator=(const custom_binary_type&) = default;
+        custom_binary_type& operator=(custom_binary_type&&) = default;
+    
+        template<class InputIt>
+        custom_binary_type(InputIt first, InputIt last) : data_(first, last) {}
+    
+        // so basic_json::binary({0x01, 0x02}) can build one directly
+        custom_binary_type(std::initializer_list<std::uint8_t> init) : data_(init) {}
+    
+        size_type size() const
+        {
+            return data_.size();
+        }
+        bool empty() const
+        {
+            return data_.empty();
+        }
+        void clear()
+        {
+            data_.clear();
+        }
+        void resize(size_type n)
+        {
+            data_.resize(n);
+        }
+    
+        // read-only is enough: the writers only ever read from a binary value
+        const std::uint8_t* data() const
+        {
+            return data_.data();
+        }
+    
+        std::uint8_t& operator[](size_type pos)
+        {
+            return data_[pos];
+        }
+        std::uint8_t operator[](size_type pos) const
+        {
+            return data_[pos];
+        }
+    
+        std::uint8_t& back()
+        {
+            return data_.back();
+        }
+        std::uint8_t back() const
+        {
+            return data_.back();
+        }
+    
+        iterator begin()
+        {
+            return data_.begin();
+        }
+        iterator end()
+        {
+            return data_.end();
+        }
+        const_iterator begin() const
+        {
+            return data_.begin();
+        }
+        const_iterator end() const
+        {
+            return data_.end();
+        }
+        const_iterator cbegin() const
+        {
+            return data_.cbegin();
+        }
+        const_iterator cend() const
+        {
+            return data_.cend();
+        }
+    
+        template<class InputIt>
+        iterator insert(const_iterator pos, InputIt first, InputIt last)
+        {
+            return data_.insert(pos, first, last);
+        }
+    
+        friend bool operator==(const custom_binary_type& lhs, const custom_binary_type& rhs)
+        {
+            return lhs.data_ == rhs.data_;
+        }
+        friend bool operator<(const custom_binary_type& lhs, const custom_binary_type& rhs)
+        {
+            return lhs.data_ < rhs.data_;
+        }
+    };
+    
     ```
 
 ??? example "Example: use the custom `BinaryType`"
 
     ```cpp
-    --8<-- "examples/custom_binary_type.cpp"
+    #include <iostream>
+    
+    #include <nlohmann/json.hpp>
+    
+    #include "custom_binary_type.hpp"
+    
+    using custom_json = nlohmann::json::with_binary_t<custom_binary_type>;
+    
+    int main()
+    {
+        const auto j = custom_json::binary({0x01, 0x02, 0x03});
+    
+        std::cout << j.dump() << std::endl;
+        std::cout << std::boolalpha << (custom_json::from_cbor(custom_json::to_cbor(j)) == j) << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/custom_binary_type.output"
+    {"bytes":[1,2,3],"subtype":null}
+    true
+    
     ```
 
 ### Compatible containers

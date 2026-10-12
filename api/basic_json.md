@@ -285,6 +285,7 @@ Access to the JSON value
 ### JSON Merge Patch functions
 
 - [**merge_patch**](merge_patch.md) - applies a JSON Merge Patch
+- [**merge_diff**](merge_diff.md) (_static_) - creates a diff as a JSON Merge Patch
 
 ## Static functions
 
@@ -330,13 +331,79 @@ Access to the JSON value
     The example shows how the library is used.
     
     ```cpp
-    --8<-- "examples/README.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        json j =
+        {
+            {"pi", 3.141},
+            {"happy", true},
+            {"name", "Niels"},
+            {"nothing", nullptr},
+            {
+                "answer", {
+                    {"everything", 42}
+                }
+            },
+            {"list", {1, 0, 2}},
+            {
+                "object", {
+                    {"currency", "USD"},
+                    {"value", 42.99}
+                }
+            }
+        };
+    
+        // add new values
+        j["new"]["key"]["value"] = {"another", "list"};
+    
+        // count elements
+        auto s = j.size();
+        j["size"] = s;
+    
+        // pretty print with indent of 4 spaces
+        std::cout << std::setw(4) << j << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/README.output"
+    {
+        "answer": {
+            "everything": 42
+        },
+        "happy": true,
+        "list": [
+            1,
+            0,
+            2
+        ],
+        "name": "Niels",
+        "new": {
+            "key": {
+                "value": [
+                    "another",
+                    "list"
+                ]
+            }
+        },
+        "nothing": null,
+        "object": {
+            "currency": "USD",
+            "value": 42.99
+        },
+        "pi": 3.141,
+        "size": 8
+    }
+    
     ```
 
 ## See also

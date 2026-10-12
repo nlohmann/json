@@ -31,13 +31,116 @@ By default, `dump` produces the most compact representation without any superflu
 ??? example "Example: pretty-print JSON values with `dump()`"
 
     ```cpp
-    --8<-- "examples/dump.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json j_object = {{"one", 1}, {"two", 2}};
+        json j_array = {1, 2, 4, 8, 16};
+        json j_string = "Hellö 😀!";
+    
+        // call dump()
+        std::cout << "objects:" << '\n'
+                  << j_object.dump() << "\n\n"
+                  << j_object.dump(-1) << "\n\n"
+                  << j_object.dump(0) << "\n\n"
+                  << j_object.dump(4) << "\n\n"
+                  << j_object.dump(1, '\t') << "\n\n";
+    
+        std::cout << "arrays:" << '\n'
+                  << j_array.dump() << "\n\n"
+                  << j_array.dump(-1) << "\n\n"
+                  << j_array.dump(0) << "\n\n"
+                  << j_array.dump(4) << "\n\n"
+                  << j_array.dump(1, '\t') << "\n\n";
+    
+        std::cout << "strings:" << '\n'
+                  << j_string.dump() << '\n'
+                  << j_string.dump(-1, ' ', true) << '\n';
+    
+        // create JSON value with invalid UTF-8 byte sequence
+        json j_invalid = "ä\xA9ü";
+        try
+        {
+            std::cout << j_invalid.dump() << std::endl;
+        }
+        catch (const json::type_error& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    
+        std::cout << "string with replaced invalid characters: "
+                  << j_invalid.dump(-1, ' ', false, json::error_handler_t::replace)
+                  << "\nstring with ignored invalid characters: "
+                  << j_invalid.dump(-1, ' ', false, json::error_handler_t::ignore)
+                  << '\n';
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/dump.output"
+    objects:
+    {"one":1,"two":2}
+    
+    {"one":1,"two":2}
+    
+    {
+    "one": 1,
+    "two": 2
+    }
+    
+    {
+        "one": 1,
+        "two": 2
+    }
+    
+    {
+    	"one": 1,
+    	"two": 2
+    }
+    
+    arrays:
+    [1,2,4,8,16]
+    
+    [1,2,4,8,16]
+    
+    [
+    1,
+    2,
+    4,
+    8,
+    16
+    ]
+    
+    [
+        1,
+        2,
+        4,
+        8,
+        16
+    ]
+    
+    [
+    	1,
+    	2,
+    	4,
+    	8,
+    	16
+    ]
+    
+    strings:
+    "Hellö 😀!"
+    "Hell\u00f6 \ud83d\ude00!"
+    [json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9
+    string with replaced invalid characters: "ä�ü"
+    string with ignored invalid characters: "äü"
+    
     ```
 
 The indentation character can be changed with the second argument (e.g., a tab `#!cpp '\t'`). An `indent` of `0` inserts
@@ -69,13 +172,42 @@ serialization fails by default. The fourth argument of `dump` selects an
 ??? example "Example: serialize invalid UTF-8 with different error handlers"
 
     ```cpp
-    --8<-- "examples/error_handler_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON value with invalid UTF-8 byte sequence
+        json j_invalid = "ä\xA9ü";
+        try
+        {
+            std::cout << j_invalid.dump() << std::endl;
+        }
+        catch (const json::type_error& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    
+        std::cout << "string with replaced invalid characters: "
+                  << j_invalid.dump(-1, ' ', false, json::error_handler_t::replace)
+                  << "\nstring with ignored invalid characters: "
+                  << j_invalid.dump(-1, ' ', false, json::error_handler_t::ignore)
+                  << "\nstring with the invalid byte kept as is (" << j_invalid.dump(-1, ' ', false, json::error_handler_t::keep).size()
+                  << " bytes, not valid UTF-8 itself)\n";
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/error_handler_t.output"
+    [json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9
+    string with replaced invalid characters: "ä�ü"
+    string with ignored invalid characters: "äü"
+    string with the invalid byte kept as is (7 bytes, not valid UTF-8 itself)
+    
     ```
 
 !!! tip "Avoiding invalid UTF-8"

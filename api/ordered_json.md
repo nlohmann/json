@@ -26,13 +26,32 @@ parsing an object of `n` keys costs O(n²) rather than O(n log n). See
     The example below demonstrates how `ordered_json` preserves the insertion order of object keys.
 
     ```cpp
-    --8<-- "examples/ordered_json.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using ordered_json = nlohmann::ordered_json;
+    
+    int main()
+    {
+        ordered_json j;
+        j["one"] = 1;
+        j["two"] = 2;
+        j["three"] = 3;
+    
+        std::cout << j.dump(2) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/ordered_json.output"
+    {
+      "one": 1,
+      "two": 2,
+      "three": 3
+    }
+    
     ```
 
 ## See also

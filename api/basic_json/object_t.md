@@ -26,8 +26,7 @@ To store objects in C++, a type is defined by the template parameters described 
 
 `StringType`
 :   the type of the keys or names (e.g., `std::string`). The comparison function `std::less<StringType>` is used to
-    order elements inside the container. `object_t::key_type` must be implicitly convertible to `string_t` (required by the
-    binary formats).
+    order elements inside the container.
 
 `AllocatorType`
 :   the allocator to use for objects (e.g., `std::allocator`)
@@ -115,13 +114,24 @@ the object is silently converted as an array of key-value pairs, which is incorr
     The following code shows that `object_t` is by default, a typedef to `#!cpp std::map<json::string_t, json>`.
      
     ```cpp
-    --8<-- "examples/object_t.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::cout << std::boolalpha << std::is_same<std::map<json::string_t, json>, json::object_t>::value << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/object_t.output"
+    true
+    
     ```
 
 ## See also

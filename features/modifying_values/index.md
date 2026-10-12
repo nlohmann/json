@@ -30,7 +30,10 @@ j["name"] = "John";     // {"name":"John"}  (replaced)
 
 ## Merging objects
 
-To merge one object into another, [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) copies all members from another object, overwriting existing keys (similar to Python's `dict.update`). This is the idiomatic way to combine two objects.
+To merge one object into another, [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) copies all members from another object (similar to Python's `dict.update`). This is the idiomatic way to combine two objects. It has two modes:
+
+- By default, the merge is shallow: existing keys are overwritten, even if both values are objects.
+- With `merge_objects = #!cpp true`, keys whose values are objects in both JSON values are merged recursively. Everything else is overwritten. In particular, arrays are replaced, not concatenated.
 
 Example
 
@@ -83,7 +86,18 @@ Output:
 }
 ```
 
-For a recursive merge that follows [RFC 7386](https://tools.ietf.org/html/rfc7386), see [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md). To apply a sequence of well-defined edit operations, see [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md).
+A common use of the recursive mode is combining defaults with user settings. Nested defaults that the user did not set are kept:
+
+```
+json defaults = {{"log", {{"level", "info"}, {"file", "app.log"}}}, {"retries", 3}};
+json user_settings = {{"log", {{"level", "debug"}}}};
+
+json config = defaults;
+config.update(user_settings, true);
+// {"log":{"file":"app.log","level":"debug"},"retries":3}
+```
+
+[JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) ([RFC 7386](https://tools.ietf.org/html/rfc7386)) also merges objects recursively, but it is a different tool: a `null` in the patch means "remove this key". It is meant for applying merge patch documents (e.g., received via HTTP PATCH). To merge configuration-like objects, use `update(..., true)`. To apply a sequence of well-defined edit operations, see [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md).
 
 ## Removing elements
 
@@ -101,6 +115,7 @@ a.erase(1);             // [1,3,4]  (erase by index)
 
 - [`push_back`](https://json.nlohmann.me/api/basic_json/push_back/index.md) / [`emplace_back`](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) - append to an array
 - [`emplace`](https://json.nlohmann.me/api/basic_json/emplace/index.md) - insert into an object if the key is absent
-- [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) - merge objects
+- [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) - merge objects (shallow, or recursive with `merge_objects`)
+- [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - apply an RFC 7386 merge patch
 - [`erase`](https://json.nlohmann.me/api/basic_json/erase/index.md) / [`clear`](https://json.nlohmann.me/api/basic_json/clear/index.md) - remove elements
 - [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md) and [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) - structured modifications

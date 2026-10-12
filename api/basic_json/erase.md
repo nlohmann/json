@@ -137,13 +137,50 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows the effect of `erase()` for different JSON types using an iterator.
     
     ```cpp
-    --8<-- "examples/erase__IteratorType.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json j_boolean = true;
+        json j_number_integer = 17;
+        json j_number_float = 23.42;
+        json j_object = {{"one", 1}, {"two", 2}};
+        json j_array = {1, 2, 4, 8, 16};
+        json j_string = "Hello, world";
+    
+        // call erase()
+        j_boolean.erase(j_boolean.begin());
+        j_number_integer.erase(j_number_integer.begin());
+        j_number_float.erase(j_number_float.begin());
+        j_object.erase(j_object.find("two"));
+        j_array.erase(j_array.begin() + 2);
+        j_string.erase(j_string.begin());
+    
+        // print values
+        std::cout << j_boolean << '\n';
+        std::cout << j_number_integer << '\n';
+        std::cout << j_number_float << '\n';
+        std::cout << j_object << '\n';
+        std::cout << j_array << '\n';
+        std::cout << j_string << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/erase__IteratorType.output"
+    null
+    null
+    null
+    {"one":1}
+    [1,2,8,16]
+    null
+    
     ```
 
 ??? example "Example: (2) remove elements given an iterator range"
@@ -151,13 +188,50 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows the effect of `erase()` for different JSON types using an iterator range.
     
     ```cpp
-    --8<-- "examples/erase__IteratorType_IteratorType.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json j_boolean = true;
+        json j_number_integer = 17;
+        json j_number_float = 23.42;
+        json j_object = {{"one", 1}, {"two", 2}};
+        json j_array = {1, 2, 4, 8, 16};
+        json j_string = "Hello, world";
+    
+        // call erase()
+        j_boolean.erase(j_boolean.begin(), j_boolean.end());
+        j_number_integer.erase(j_number_integer.begin(), j_number_integer.end());
+        j_number_float.erase(j_number_float.begin(), j_number_float.end());
+        j_object.erase(j_object.find("two"), j_object.end());
+        j_array.erase(j_array.begin() + 1, j_array.begin() + 3);
+        j_string.erase(j_string.begin(), j_string.end());
+    
+        // print values
+        std::cout << j_boolean << '\n';
+        std::cout << j_number_integer << '\n';
+        std::cout << j_number_float << '\n';
+        std::cout << j_object << '\n';
+        std::cout << j_array << '\n';
+        std::cout << j_string << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/erase__IteratorType_IteratorType.output"
+    null
+    null
+    null
+    {"one":1}
+    [1,8,16]
+    null
+    
     ```
 
 ??? example "Example: (3) remove element from a JSON object given a key"
@@ -165,13 +239,33 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows the effect of `erase()` for different JSON types using an object key.
     
     ```cpp
-    --8<-- "examples/erase__object_t_key_type.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        json j_object = {{"one", 1}, {"two", 2}};
+    
+        // call erase()
+        auto count_one = j_object.erase("one");
+        auto count_three = j_object.erase("three");
+    
+        // print values
+        std::cout << j_object << '\n';
+        std::cout << count_one << " " << count_three << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/erase__object_t_key_type.output"
+    {"two":2}
+    1 0
+    
     ```
 
 ??? example "Example: (4) remove element from a JSON object given a key using string_view"
@@ -179,13 +273,35 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows the effect of `erase()` for different JSON types using an object key.
     
     ```cpp
-    --8<-- "examples/erase__keytype.c++17.cpp"
+    #include <iostream>
+    #include <string_view>
+    #include <nlohmann/json.hpp>
+    
+    using namespace std::string_view_literals;
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        json j_object = {{"one", 1}, {"two", 2}};
+    
+        // call erase()
+        auto count_one = j_object.erase("one"sv);
+        auto count_three = j_object.erase("three"sv);
+    
+        // print values
+        std::cout << j_object << '\n';
+        std::cout << count_one << " " << count_three << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/erase__keytype.c++17.output"
+    {"two":2}
+    1 0
+    
     ```
 
 ??? example "Example: (5) remove element from a JSON array given an index"
@@ -193,13 +309,30 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows the effect of `erase()` using an array index.
     
     ```cpp
-    --8<-- "examples/erase__size_type.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON array
+        json j_array = {0, 1, 2, 3, 4, 5};
+    
+        // call erase()
+        j_array.erase(2);
+    
+        // print values
+        std::cout << j_array << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/erase__size_type.output"
+    [0,1,3,4,5]
+    
     ```
 
 ## See also

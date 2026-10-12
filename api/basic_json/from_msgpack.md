@@ -96,13 +96,37 @@ Linear in the size of the input.
     The example shows the deserialization of a byte vector in MessagePack format to a JSON value.
      
     ```cpp
-    --8<-- "examples/from_msgpack.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create byte vector
+        std::vector<std::uint8_t> v = {0x82, 0xa7, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63,
+                                       0x74, 0xc3, 0xa6, 0x73, 0x63, 0x68, 0x65, 0x6d,
+                                       0x61, 0x00
+                                      };
+    
+        // deserialize it with MessagePack
+        json j = json::from_msgpack(v);
+    
+        // print the deserialized JSON value
+        std::cout << std::setw(2) << j << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/from_msgpack.output"
+    {
+      "compact": true,
+      "schema": 0
+    }
+    
     ```
 
 ## See also
@@ -127,7 +151,8 @@ Linear in the size of the input.
 !!! warning "Deprecation"
 
     - Overload (2) replaces calls to `from_msgpack` with a pointer and a length as first two parameters, which has been
-      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      deprecated in version 3.8.0. In version 4.0.0, this overload
+      will be deleted (`= delete`) rather than removed. Please replace all calls like
       `#!cpp from_msgpack(ptr, len, ...);` with `#!cpp from_msgpack(ptr, ptr+len, ...);`.
     - Overload (2) replaces calls to `from_msgpack` with a pair of iterators as their first parameter, which has been
       deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like

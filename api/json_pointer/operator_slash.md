@@ -53,13 +53,35 @@ a new JSON pointer is built from a copy of `lhs`.
     The example shows the usage of `operator/`.
      
     ```cpp
-    --8<-- "examples/json_pointer__operator_add_binary.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON pointer
+        json::json_pointer ptr("/foo");
+    
+        // append a JSON Pointer
+        std::cout << "\"" << ptr / json::json_pointer("/bar/baz") << "\"\n";
+    
+        // append a string
+        std::cout << "\"" << ptr / "fob" << "\"\n";
+    
+        // append an array index
+        std::cout << "\"" << ptr / 42 << "\"" << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/json_pointer__operator_add_binary.output"
+    "/foo/bar/baz"
+    "/foo/fob"
+    "/foo/42"
+    
     ```
 
 ## See also

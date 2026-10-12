@@ -40,13 +40,34 @@ void swap(nlohmann::basic_json& j1, nlohmann::basic_json& j2)
     The following code shows how two values are swapped with `std::swap`.
      
     ```cpp
-    --8<-- "examples/std_swap.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json j1 = {{"one", 1}, {"two", 2}};
+        json j2 = {1, 2, 4, 8, 16};
+    
+        std::cout << "j1 = " << j1 << " | j2 = " << j2 << '\n';
+    
+        // swap values
+        std::swap(j1, j2);
+    
+        std::cout << "j1 = " << j1 << " | j2 = " << j2 << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/std_swap.output"
+    j1 = {"one":1,"two":2} | j2 = [1,2,4,8,16]
+    j1 = [1,2,4,8,16] | j2 = {"one":1,"two":2}
+    
     ```
 
 ## See also

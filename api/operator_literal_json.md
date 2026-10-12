@@ -50,13 +50,30 @@ Linear.
     The following code shows how to create JSON values from string literals.
      
     ```cpp
-    --8<-- "examples/operator_literal_json.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        json j = R"( {"hello": "world", "answer": 42} )"_json;
+    
+        std::cout << std::setw(2) << j << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_literal_json.output"
+    {
+      "answer": 42,
+      "hello": "world"
+    }
+    
     ```
 
 ## See also

@@ -49,13 +49,28 @@ Linear.
     The following code shows how to create JSON Pointers from string literals.
      
     ```cpp
-    --8<-- "examples/operator_literal_json_pointer.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        json j = R"( {"hello": "world", "answer": 42} )"_json;
+        auto val = j["/hello"_json_pointer];
+    
+        std::cout << std::setw(2) << val << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_literal_json_pointer.output"
+    "world"
+    
     ```
 
 ## See also

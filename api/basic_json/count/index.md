@@ -7,10 +7,15 @@ size_type count(const typename object_t::key_type& key) const;
 // (2)
 template<typename KeyType>
 size_type count(KeyType&& key) const;
+
+// (3)
+template<typename T>
+size_type count(T) const = delete;
 ```
 
 1. Returns the number of elements with key `key`. If `ObjectType` is the default `std::map` type, the return value will always be `0` (`key` was not found) or `1` (`key` was found).
 1. See 1. This overload is only available if `KeyType` is comparable with `typename object_t::key_type` and `typename object_comparator_t::is_transparent` denotes a type.
+1. Deleted: this overload is only available if `T` is an integral type and is declared as deleted, so that a call with an integer `key` (for example, `j.count(0)`) fails to compile. Otherwise, the integer literal `0` would convert to a null `const char*` and, from there, to the key type, causing undefined behavior at runtime.
 
 ## Template parameters
 

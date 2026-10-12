@@ -41,6 +41,8 @@ With (2), the bytes written before the exception remain in the output adapter.
   above 9223372036854775807, which BON8 cannot represent
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if `j` contains a string that is not
   valid UTF-8
+- Throws [type_error.321](../../home/exceptions.md#jsonexceptiontype_error321) if `j` or a value nested in it is
+  discarded; example: `"cannot serialize discarded value to BON8"`
 
 ## Complexity
 
@@ -53,13 +55,36 @@ Linear in the size of the JSON value `j`.
     The example shows the serialization of a JSON value to a byte vector in BON8 format.
      
     ```cpp
-    --8<-- "examples/to_bon8.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        json j = R"({"compact": true, "format": "BON8", "schema": 0})"_json;
+    
+        // serialize it to BON8
+        std::vector<std::uint8_t> v = json::to_bon8(j);
+    
+        // print the vector content
+        for (auto& byte : v)
+        {
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        }
+        std::cout << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/to_bon8.output"
+    0x89 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xf9 0x66 0x6f 0x72 0x6d 0x61 0x74 0xff 0x42 0x4f 0x4e 0x38 0xff 0x73 0x63 0x68 0x65 0x6d 0x61 0x90 
+    
     ```
 
 ??? example "Example: type_error.316 exception"
@@ -68,13 +93,36 @@ Linear in the size of the JSON value `j`.
     as UTF-8.
 
     ```cpp
-    --8<-- "examples/to_bon8__exception.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON string that is not valid UTF-8
+        std::string invalid_utf8;
+        invalid_utf8.push_back(static_cast<char>(0xFF));
+        json j = invalid_utf8;
+    
+        // exception type_error.316
+        try
+        {
+            json::to_bon8(j);
+        }
+        catch (const json::type_error& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/to_bon8__exception.output"
+    [json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF
+    
     ```
 
 ## See also

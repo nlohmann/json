@@ -22,13 +22,40 @@
 Throughout this page, we will describe how to compile the example file `example.cpp` below.
 
 ```cpp
---8<-- "integration/example.cpp"
+#include <nlohmann/json.hpp>
+#include <iostream>
+#include <iomanip>
+
+using json = nlohmann::json;
+
+int main()
+{
+    std::cout << std::setw(4) << json::meta() << std::endl;
+}
+
 ```
 
 When executed, this program should create output similar to
 
 ```json
---8<-- "examples/meta.output"
+{
+    "compiler": {
+        "c++": "201103",
+        "family": "gcc",
+        "version": "12.4.0"
+    },
+    "copyright": "(C) 2013-2026 Niels Lohmann",
+    "name": "JSON for Modern C++",
+    "platform": "apple",
+    "url": "https://github.com/nlohmann/json",
+    "version": {
+        "major": 3,
+        "minor": 12,
+        "patch": 0,
+        "string": "3.12.0"
+    }
+}
+
 ```
 
 Many of the package managers below install a CMake package configuration that exposes the same
@@ -61,7 +88,17 @@ The header can be used directly in your code or via CMake.
     1. Create the following file:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/homebrew/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Install the package:
@@ -81,11 +118,28 @@ The header can be used directly in your code or via CMake.
     1. Create the following files:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/homebrew/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
         ```cmake title="CMakeLists.txt"
-        --8<-- "integration/homebrew/CMakeLists.txt"
+        cmake_minimum_required(VERSION 3.15)
+        project(json_example)
+        
+        find_package(nlohmann_json CONFIG REQUIRED)
+        
+        add_executable(json_example example.cpp)
+        target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
+        
         ```
 
     2. Install the package:
@@ -149,11 +203,33 @@ The resulting compile definitions are part of the Meson dependency, the pkg-conf
     1. Create the following files:
 
         ```ini title="meson.build"
-        --8<-- "integration/meson/meson.build"
+        project('json_example', 'cpp',
+          version: '1.0',
+          default_options: ['cpp_std=c++11']
+        )
+        
+        dependency_json = dependency('nlohmann_json', required: true)
+        
+        executable('json_example',
+          sources: ['example.cpp'],
+          dependencies: [dependency_json],
+          install: true
+        )
+        
         ```
 
         ```cpp title="example.cpp"
-        --8<-- "integration/meson/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Use the Meson WrapDB to fetch the nlohmann/json wrap:
@@ -188,15 +264,31 @@ repository can be referenced within a `MODULE.bazel` by rules such as `archive_o
     1. Create the following files:
 
         ```ini title="BUILD"
-        --8<-- "integration/bazel/BUILD"
+        cc_binary(
+            name = "main",
+            srcs = ["example.cpp"],
+            deps = ["@nlohmann_json//:json"],
+        )
+        
         ```
 
         ```ini title="MODULE.bazel"
-        --8<-- "integration/bazel/MODULE.bazel"
+        bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.2")
+        
         ```
 
         ```cpp title="example.cpp"
-        --8<-- "integration/bazel/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Build and run:
@@ -228,15 +320,38 @@ requires, where `x.y.z` is the release version you want to use.
     1. Create the following files:
 
         ```ini title="Conanfile.txt"
-        --8<-- "integration/conan/Conanfile.txt"
+        [requires]
+        nlohmann_json/3.12.0
+        
+        [generators]
+        CMakeToolchain
+        CMakeDeps
+        
         ```
 
         ```cmake title="CMakeLists.txt"
-        --8<-- "integration/conan/CMakeLists.txt"
+        cmake_minimum_required(VERSION 3.15)
+        project(json_example)
+        
+        find_package(nlohmann_json REQUIRED)
+        
+        add_executable(json_example example.cpp)
+        target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
+        
         ```
 
         ```cpp title="example.cpp"
-        --8<-- "integration/conan/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Call Conan:
@@ -280,11 +395,28 @@ Please see the [Spack project](https://github.com/spack/spack) for any issues re
     1. Create the following files:
 
         ```cmake title="CMakeLists.txt"
-        --8<-- "integration/spack/CMakeLists.txt"
+        cmake_minimum_required(VERSION 3.15)
+        project(json_example)
+        
+        find_package(nlohmann_json REQUIRED)
+        
+        add_executable(json_example example.cpp)
+        target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
+        
         ```
 
         ```cpp title="example.cpp"
-        --8<-- "integration/spack/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Install the library:
@@ -332,11 +464,36 @@ Please see the Hunter project for any issues regarding the packaging.
     1. Create the following files:
 
         ```cmake title="CMakeLists.txt"
-        --8<-- "integration/hunter/CMakeLists.txt"
+        cmake_minimum_required(VERSION 3.15)
+        
+        include("cmake/HunterGate.cmake")
+        HunterGate(
+            URL "https://github.com/cpp-pm/hunter/archive/v0.26.12.tar.gz"
+            SHA1 "6498c5d0dec25d7fffb2b0574ebaf265179b894d"
+        )
+        
+        project(json_example)
+        
+        hunter_add_package(nlohmann_json)
+        find_package(nlohmann_json CONFIG REQUIRED)
+        
+        add_executable(json_example example.cpp)
+        target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
+        
         ```
 
         ```cpp title="example.cpp"
-        --8<-- "integration/hunter/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Download required files
@@ -379,11 +536,28 @@ and follow the then displayed descriptions. Please see the vcpkg project for any
     1. Create the following files:
 
         ```cmake title="CMakeLists.txt"
-        --8<-- "integration/vcpkg/CMakeLists.txt"
+        cmake_minimum_required(VERSION 3.15)
+        project(json_example)
+        
+        find_package(nlohmann_json CONFIG REQUIRED)
+        
+        add_executable(json_example example.cpp)
+        target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
+        
         ```
     
         ```cpp title="example.cpp"
-        --8<-- "integration/vcpkg/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Install package:
@@ -424,11 +598,28 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
     1. Create the following files:
 
         ```cmake title="CMakeLists.txt"
-        --8<-- "integration/cget/CMakeLists.txt"
+        cmake_minimum_required(VERSION 3.15)
+        project(json_example)
+        
+        find_package(nlohmann_json REQUIRED)
+        
+        add_executable(json_example example.cpp)
+        target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
+        
         ```
     
         ```cpp title="example.cpp"
-        --8<-- "integration/cget/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Initialize cget
@@ -487,11 +678,38 @@ The library's own [`Package.swift`](https://github.com/nlohmann/json/blob/develo
        Manager's directory layout convention):
 
         ```swift title="Package.swift"
-        --8<-- "integration/swift/Package.swift"
+        // swift-tools-version: 5.9
+        import PackageDescription
+        
+        let package = Package(
+            name: "json_example",
+            dependencies: [
+                .package(url: "https://github.com/nlohmann/json", from: "3.12.0")
+            ],
+            targets: [
+                .executableTarget(
+                    name: "json_example",
+                    dependencies: [
+                        .product(name: "json", package: "json")
+                    ]
+                )
+            ]
+        )
+        
         ```
 
         ```cpp title="Sources/json_example/example.cpp"
-        --8<-- "integration/swift/example.cpp"
+        #include <json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Build and run:
@@ -579,7 +797,17 @@ conda install -c conda-forge nlohmann_json
     1. Create the following file:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/conda/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Create and activate an environment `json`:
@@ -620,7 +848,17 @@ package; type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x
     1. Create the following file:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/msys2/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Install the package (from an MSYS2 MinGW 64-bit shell):
@@ -660,7 +898,17 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
     1. Create the following file:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/macports/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
     2. Install the package:
@@ -680,11 +928,28 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
     1. Create the following files:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/macports/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
         ```cmake title="CMakeLists.txt"
-        --8<-- "integration/macports/CMakeLists.txt"
+        cmake_minimum_required(VERSION 3.15)
+        project(json_example)
+        
+        find_package(nlohmann_json CONFIG REQUIRED)
+        
+        add_executable(json_example example.cpp)
+        target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
+        
         ```
 
     2. Install the package:
@@ -781,31 +1046,96 @@ To use this package in an existing [`build2`](https://build2.org) project, the g
         - `example/repositories.manifest`: Enable acquiring packages from https://cppget.org by uncommenting the related lines:
 
             ```make title="project's `repositories.manifest`"
-            --8<-- "integration/build2/repositories.manifest"
+            : 1
+            summary: example project repository
+            
+            :
+            role: prerequisite
+            location: https://pkg.cppget.org/1/stable
+            #trust: ...
+            
+            #:
+            #role: prerequisite
+            #location: https://git.build2.org/hello/libhello.git
+            
             ```
 
         - `example/manifest`: Add the latest version of the `nlohmann-json` package as dependency to the project:
 
             ```make title="project's `manifest`"
-            --8<-- "integration/build2/manifest"
+            name: example
+            version: 0.1.0-a.0.z
+            language: c++
+            summary: example C++ executable
+            license: other: proprietary ; Not free/open source.
+            description-file: README.md
+            url: https://example.org/example
+            email: your@emailprovider.com
+            #build-error-email: your@emailprovider.com
+            depends: * build2 >= 0.16.0
+            depends: * bpkg >= 0.16.0
+            #depends: libhello ^1.0.0
+            
+            depends: nlohmann-json
+            
             ```
 
         - `example/example/buildfile`: import the library's target to be used as requirement for building the executable target `exe{example}`:
 
             ```make title="project's `buildfile`"
-            --8<-- "integration/build2/buildfile"
+            libs =
+            import libs = nlohmann-json%lib{json}
+            
+            exe{example}: {hxx ixx txx cxx}{**} $libs testscript
+            
+            cxx.poptions =+ "-I$out_root" "-I$src_root"
+            
             ```
 
         - `example/example/example.cxx`: `bdep new` generates a "hello world" by default, replace it by this:
 
             ```cpp title="example.cxx"
-            --8<-- "integration/build2/example.cpp"
+            #include <nlohmann/json.hpp>
+            #include <iostream>
+            #include <iomanip>
+            
+            using json = nlohmann::json;
+            
+            int main()
+            {
+                std::cout << std::setw(4) << json::meta() << std::endl;
+            }
+            
             ```
 
         - `example/example/testscript`: (optional) if you want to be able to test that executable's output is correct using `b test`:
 
             ```cpp title="`testscript` checking the output of the program"
-            --8<-- "integration/build2/testscript"
+            
+            : json basics
+            :
+            $* >>~/EOO/
+            {
+                "compiler": {
+            /        "c\+\+": "\d+",/
+            /        "family": "[\w\d]+",/
+            /        "version": \d+/
+                },
+            /    "copyright": "\(C\) 2013-\d+ Niels Lohmann",/
+                "name": "JSON for Modern C++",
+            /    "platform": "[\w\d]+",/
+                "url": "https://github.com/nlohmann/json",
+                "version": {
+                    "major": 3,
+            /        "minor": \d+,/
+            /        "patch": \d+,/
+            /        "string": "3\.\d+\.\d+"/
+                }
+            }
+            EOO
+            
+            
+            
             ```
 
 
@@ -848,11 +1178,30 @@ CPMAddPackage("gh:nlohmann/json@3.12.0")
     1. Create the following files:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/cpm/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
         ```cmake title="CMakeLists.txt"
-        --8<-- "integration/cpm/CMakeLists.txt"
+        cmake_minimum_required(VERSION 3.15)
+        project(json_example)
+        
+        include(${CMAKE_SOURCE_DIR}/cmake/CPM.cmake)
+        
+        CPMAddPackage("gh:nlohmann/json@3.12.0")
+        
+        add_executable(json_example example.cpp)
+        target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
+        
         ```
 
     2. Download CPM.cmake
@@ -885,11 +1234,29 @@ CPMAddPackage("gh:nlohmann/json@3.12.0")
     1. Create the following files:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/xmake/example.cpp"
+        #include <nlohmann/json.hpp>
+        #include <iostream>
+        #include <iomanip>
+        
+        using json = nlohmann::json;
+        
+        int main()
+        {
+            std::cout << std::setw(4) << json::meta() << std::endl;
+        }
+        
         ```
 
         ```lua title="xmake.lua"
-        --8<-- "integration/xmake/xmake.lua"
+        add_requires("nlohmann_json")
+        
+        add_rules("mode.debug", "mode.release")
+        target("xm")
+            set_kind("binary")
+            add_files("example.cpp")
+            add_packages("nlohmann_json")
+            set_languages("cxx11")
+        
         ```
 
     2. Build

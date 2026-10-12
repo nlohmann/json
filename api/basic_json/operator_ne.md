@@ -68,13 +68,41 @@ Linear.
     The example demonstrates comparing several JSON types.
         
     ```cpp
-    --8<-- "examples/operator__notequal.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create several JSON values
+        json array_1 = {1, 2, 3};
+        json array_2 = {1, 2, 4};
+        json object_1 = {{"A", "a"}, {"B", "b"}};
+        json object_2 = {{"B", "b"}, {"A", "a"}};
+        json number_1 = 17;
+        json number_2 = 17.000000000000001L;
+        json string_1 = "foo";
+        json string_2 = "bar";
+    
+        // output values and comparisons
+        std::cout << std::boolalpha;
+        std::cout << array_1 << " != " << array_2 << " " << (array_1 != array_2) << '\n';
+        std::cout << object_1 << " != " << object_2 << " " << (object_1 != object_2) << '\n';
+        std::cout << number_1 << " != " << number_2 << " " << (number_1 != number_2) << '\n';
+        std::cout << string_1 << " != " << string_2 << " " << (string_1 != string_2) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator__notequal.output"
+    [1,2,3] != [1,2,4] true
+    {"A":"a","B":"b"} != {"A":"a","B":"b"} false
+    17 != 17.0 false
+    "foo" != "bar" true
+    
     ```
 
 ??? example "Example: (2) compare JSON values with `#!cpp nullptr`"
@@ -82,13 +110,40 @@ Linear.
     The example demonstrates comparing several JSON types against the null pointer (JSON `#!json null`).
         
     ```cpp
-    --8<-- "examples/operator__notequal__nullptr_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create several JSON values
+        json array = {1, 2, 3};
+        json object = {{"A", "a"}, {"B", "b"}};
+        json number = 17;
+        json string = "foo";
+        json null;
+    
+        // output values and comparisons
+        std::cout << std::boolalpha;
+        std::cout << array << " != nullptr " << (array != nullptr) << '\n';
+        std::cout << object << " != nullptr " << (object != nullptr) << '\n';
+        std::cout << number << " != nullptr " << (number != nullptr) << '\n';
+        std::cout << string << " != nullptr " << (string != nullptr) << '\n';
+        std::cout << null << " != nullptr " << (null != nullptr) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator__notequal__nullptr_t.output"
+    [1,2,3] != nullptr true
+    {"A":"a","B":"b"} != nullptr true
+    17 != nullptr true
+    "foo" != nullptr true
+    null != nullptr false
+    
     ```
 
 ## See also

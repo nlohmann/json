@@ -207,3 +207,5 @@ Notes:
 1. Added in version 3.12.0.
 1. Added in version 3.12.0.
 1. Added in version 3.12.0.
+
+All six macros were changed to allow an empty member list in version 3.13.0 unreleased.

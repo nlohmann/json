@@ -118,13 +118,32 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows how `insert()` is used.
     
     ```cpp
-    --8<-- "examples/insert.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON array
+        json v = {1, 2, 3, 4};
+    
+        // insert number 10 before number 3
+        auto new_pos = v.insert(v.begin() + 2, 10);
+    
+        // output new array and result of insert call
+        std::cout << *new_pos << '\n';
+        std::cout << v << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/insert.output"
+    10
+    [1,2,10,3,4]
+    
     ```
 
 ??? example "Example: (2) insert copies of element into array"
@@ -132,13 +151,32 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows how `insert()` is used.
     
     ```cpp
-    --8<-- "examples/insert__count.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON array
+        json v = {1, 2, 3, 4};
+    
+        // insert number 7 copies of number 7 before number 3
+        auto new_pos = v.insert(v.begin() + 2, 7, 7);
+    
+        // output new array and result of insert call
+        std::cout << *new_pos << '\n';
+        std::cout << v << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/insert__count.output"
+    7
+    [1,2,7,7,7,7,7,7,7,3,4]
+    
     ```
 
 ??? example "Example: (3) insert a range of elements into an array"
@@ -146,13 +184,35 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows how `insert()` is used.
     
     ```cpp
-    --8<-- "examples/insert__range.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON array
+        json v = {1, 2, 3, 4};
+    
+        // create a JSON array to copy values from
+        json v2 = {"one", "two", "three", "four"};
+    
+        // insert range from v2 before the end of array v
+        auto new_pos = v.insert(v.end(), v2.begin(), v2.end());
+    
+        // output new array and result of insert call
+        std::cout << *new_pos << '\n';
+        std::cout << v << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/insert__range.output"
+    "one"
+    [1,2,3,4,"one","two","three","four"]
+    
     ```
 
 ??? example "Example: (4) insert elements from an initializer list into an array"
@@ -160,13 +220,32 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows how `insert()` is used.
     
     ```cpp
-    --8<-- "examples/insert__ilist.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON array
+        json v = {1, 2, 3, 4};
+    
+        // insert range from v2 before the end of array v
+        auto new_pos = v.insert(v.end(), {7, 8, 9});
+    
+        // output new array and result of insert call
+        std::cout << *new_pos << '\n';
+        std::cout << v << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/insert__ilist.output"
+    7
+    [1,2,3,4,7,8,9]
+    
     ```
 
 ??? example "Example: (5) insert a range of elements into an object"
@@ -174,13 +253,37 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows how `insert()` is used.
     
     ```cpp
-    --8<-- "examples/insert__range_object.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create two JSON objects
+        json j1 = {{"one", "eins"}, {"two", "zwei"}};
+        json j2 = {{"eleven", "elf"}, {"seventeen", "siebzehn"}};
+    
+        // output objects
+        std::cout << j1 << '\n';
+        std::cout << j2 << '\n';
+    
+        // insert range from j2 to j1
+        j1.insert(j2.begin(), j2.end());
+    
+        // output result of insert call
+        std::cout << j1 << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/insert__range_object.output"
+    {"one":"eins","two":"zwei"}
+    {"eleven":"elf","seventeen":"siebzehn"}
+    {"eleven":"elf","one":"eins","seventeen":"siebzehn","two":"zwei"}
+    
     ```
 
 ## See also

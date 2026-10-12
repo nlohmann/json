@@ -53,13 +53,75 @@ inline void from_json(const BasicJsonType& j, type& e);
     C++11 enum classes:
 
     ```cpp hl_lines="16 17 18 19 20 21 22 29 30 31 32 33"
-    --8<-- "examples/nlohmann_json_serialize_enum.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    namespace ns
+    {
+    enum TaskState
+    {
+        TS_STOPPED,
+        TS_RUNNING,
+        TS_COMPLETED,
+        TS_INVALID = -1
+    };
+    
+    NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
+    {
+        { TS_INVALID, nullptr },
+        { TS_STOPPED, "stopped" },
+        { TS_RUNNING, "running" },
+        { TS_COMPLETED, "completed" }
+    })
+    
+    enum class Color
+    {
+        red, green, blue, unknown
+    };
+    
+    NLOHMANN_JSON_SERIALIZE_ENUM(Color,
+    {
+        { Color::unknown, "unknown" }, { Color::red, "red" },
+        { Color::green, "green" }, { Color::blue, "blue" }
+    })
+    } // namespace ns
+    
+    int main()
+    {
+        // serialization
+        json j_stopped = ns::TS_STOPPED;
+        json j_red = ns::Color::red;
+        std::cout << "ns::TS_STOPPED -> " << j_stopped
+                  << ", ns::Color::red -> " << j_red << std::endl;
+    
+        // deserialization
+        json j_running = "running";
+        json j_blue = "blue";
+        auto running = j_running.get<ns::TaskState>();
+        auto blue = j_blue.get<ns::Color>();
+        std::cout << j_running << " -> " << running
+                  << ", " << j_blue << " -> " << static_cast<int>(blue) << std::endl;
+    
+        // deserializing undefined JSON value to enum
+        // (where the first map entry above is the default)
+        json j_pi = 3.14;
+        auto invalid = j_pi.get<ns::TaskState>();
+        auto unknown = j_pi.get<ns::Color>();
+        std::cout << j_pi << " -> " << invalid << ", "
+                  << j_pi << " -> " << static_cast<int>(unknown) << std::endl;
+    }
+    
     ```
 
     Output:
     
     ```json
-    --8<-- "examples/nlohmann_json_serialize_enum.output"
+    ns::TS_STOPPED -> "stopped", ns::Color::red -> "red"
+    "running" -> 1, "blue" -> 2
+    3.14 -> -1, 3.14 -> 3
+    
     ```
 
 ??? example "Example: Multiple conversions for one enumerator"
@@ -69,13 +131,49 @@ inline void from_json(const BasicJsonType& j, type& e);
     alternative *deserialization* from `"rot"` to `Color::red`.
 
     ```cpp hl_lines="17"
-    --8<-- "examples/nlohmann_json_serialize_enum_2.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    namespace ns
+    {
+    enum class Color
+    {
+        red, green, blue, unknown
+    };
+    
+    NLOHMANN_JSON_SERIALIZE_ENUM(Color,
+    {
+        { Color::unknown, "unknown" }, { Color::red, "red" },
+        { Color::green, "green" }, { Color::blue, "blue" },
+        { Color::red, "rot" } // a second conversion for Color::red
+    })
+    }
+    
+    int main()
+    {
+        // serialization
+        json j_red = ns::Color::red;
+        std::cout << static_cast<int>(ns::Color::red) << " -> " << j_red << std::endl;
+    
+        // deserialization
+        json j_rot = "rot";
+        auto rot = j_rot.get<ns::Color>();
+        auto red = j_red.get<ns::Color>();
+        std::cout << j_rot << " -> " << static_cast<int>(rot) << std::endl;
+        std::cout << j_red << " -> " << static_cast<int>(red) << std::endl;
+    }
+    
     ```
 
     Output:
     
     ```json
-    --8<-- "examples/nlohmann_json_serialize_enum_2.output"
+    0 -> "red"
+    "rot" -> 0
+    "red" -> 0
+    
     ```
 
 ## See also

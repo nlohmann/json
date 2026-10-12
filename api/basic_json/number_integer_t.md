@@ -69,13 +69,24 @@ Integer number values are stored directly inside a `basic_json` type.
     The following code shows that `number_integer_t` is by default, a typedef to `#!cpp std::int64_t`.
      
     ```cpp
-    --8<-- "examples/number_integer_t.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::cout << std::boolalpha << std::is_same<std::int64_t, json::number_integer_t>::value << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/number_integer_t.output"
+    true
+    
     ```
 
 ## See also

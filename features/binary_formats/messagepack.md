@@ -82,13 +82,36 @@ specification:
 ??? example "Example: serialize a JSON value to MessagePack"
 
     ```cpp
-    --8<-- "examples/to_msgpack.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        json j = R"({"compact": true, "schema": 0})"_json;
+    
+        // serialize it to MessagePack
+        std::vector<std::uint8_t> v = json::to_msgpack(j);
+    
+        // print the vector content
+        for (auto& byte : v)
+        {
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        }
+        std::cout << std::endl;
+    }
+    
     ```
     
     Output:
 
     ```c
-    --8<-- "examples/to_msgpack.output"
+    0x82 0xa7 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xc3 0xa6 0x73 0x63 0x68 0x65 0x6d 0x61 0x00 
+    
     ```
 
 ## Deserialization
@@ -174,11 +197,35 @@ The library maps MessagePack types to JSON value types as follows:
 ??? example "Example: deserialize a JSON value from MessagePack"
 
     ```cpp
-    --8<-- "examples/from_msgpack.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create byte vector
+        std::vector<std::uint8_t> v = {0x82, 0xa7, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63,
+                                       0x74, 0xc3, 0xa6, 0x73, 0x63, 0x68, 0x65, 0x6d,
+                                       0x61, 0x00
+                                      };
+    
+        // deserialize it with MessagePack
+        json j = json::from_msgpack(v);
+    
+        // print the deserialized JSON value
+        std::cout << std::setw(2) << j << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/from_msgpack.output"
+    {
+      "compact": true,
+      "schema": 0
+    }
+    
     ```

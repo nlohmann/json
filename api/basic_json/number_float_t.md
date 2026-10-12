@@ -70,13 +70,24 @@ Floating-point number values are stored directly inside a `basic_json` type.
     The following code shows that `number_float_t` is by default, a typedef to `#!cpp double`.
      
     ```cpp
-    --8<-- "examples/number_float_t.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::cout << std::boolalpha << std::is_same<double, json::number_float_t>::value << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/number_float_t.output"
+    true
+    
     ```
 
 ## See also

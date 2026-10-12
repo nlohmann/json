@@ -6,7 +6,7 @@ This page argues why the library meets its security requirements. It describes t
 
 The library parses, stores, and serializes JSON values in memory. It does not open network connections, does not open files (it only reads from streams or `std::FILE*` handles that the caller has already opened), does not read environment variables, and does not implement cryptography or handle credentials.
 
-The primary threat is therefore **untrusted input**: JSON text or binary data (BJData, BSON, CBOR, MessagePack, UBJSON) that an attacker controls, passed to [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md), [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md), or one of the `from_*` functions such as [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md). Such input may try to
+The primary threat is therefore **untrusted input**: JSON text or binary data (BJData, BON8, BSON, CBOR, MessagePack, UBJSON) that an attacker controls, passed to [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md), [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md), or one of the `from_*` functions such as [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md). Such input may try to
 
 - make the library read or write out of bounds (malformed lengths, truncated input, invalid UTF-8),
 - trigger undefined behavior (integer overflow in sizes or numbers, invalid casts),

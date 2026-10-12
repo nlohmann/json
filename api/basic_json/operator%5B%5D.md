@@ -162,13 +162,41 @@ Strong exception safety: if an exception occurs, the original value stays intact
     `#!json null` values.
         
     ```cpp
-    --8<-- "examples/operator_array__size_type.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON array
+        json array = {1, 2, 3, 4, 5};
+    
+        // output element at index 3 (fourth element)
+        std::cout << array[3] << '\n';
+    
+        // change last element to 6
+        array[array.size() - 1] = 6;
+    
+        // output changed array
+        std::cout << array << '\n';
+    
+        // write beyond array limit
+        array[10] = 11;
+    
+        // output changed array
+        std::cout << array << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__size_type.output"
+    4
+    [1,2,3,4,6]
+    [1,2,3,4,6,null,null,null,null,null,11]
+    
     ```
 
 ??? example "Example: (1) access specified array element (const)"
@@ -176,13 +204,27 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example below shows how array elements can be read using the `[]` operator.
 
     ```cpp
-    --8<-- "examples/operator_array__size_type_const.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON array
+        const json array = {"first", "2nd", "third", "fourth"};
+    
+        // output element at index 2 (third element)
+        std::cout << array.at(2) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__size_type_const.output"
+    "third"
+    
     ```
 
 ??? example "Example: (2) access specified object element"
@@ -190,13 +232,64 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example below shows how object elements can be read and written using the `[]` operator.
     
     ```cpp
-    --8<-- "examples/operator_array__object_t_key_type.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        json object =
+        {
+            {"one", 1}, {"two", 2}, {"three", 2.9}
+        };
+    
+        // output element with key "two"
+        std::cout << object["two"] << "\n\n";
+    
+        // change element with key "three"
+        object["three"] = 3;
+    
+        // output changed array
+        std::cout << std::setw(4) << object << "\n\n";
+    
+        // mention nonexisting key
+        object["four"];
+    
+        // write to nonexisting key
+        object["five"]["really"]["nested"] = true;
+    
+        // output changed object
+        std::cout << std::setw(4) << object << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__object_t_key_type.output"
+    2
+    
+    {
+        "one": 1,
+        "three": 3,
+        "two": 2
+    }
+    
+    {
+        "five": {
+            "really": {
+                "nested": true
+            }
+        },
+        "four": null,
+        "one": 1,
+        "three": 3,
+        "two": 2
+    }
+    
     ```
 
 ??? example "Example: (2) access specified object element (const)"
@@ -204,13 +297,30 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example below shows how object elements can be read using the `[]` operator.
     
     ```cpp
-    --8<-- "examples/operator_array__object_t_key_type_const.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        const json object =
+        {
+            {"one", 1}, {"two", 2}, {"three", 2.9}
+        };
+    
+        // output element with key "two"
+        std::cout << object["two"] << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__object_t_key_type_const.output"
+    2
+    
     ```
 
 ??? example "Example: (3) access specified object element using string_view"
@@ -218,13 +328,66 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example below shows how object elements can be read using the `[]` operator.
     
     ```cpp
-    --8<-- "examples/operator_array__keytype.c++17.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <string_view>
+    #include <nlohmann/json.hpp>
+    
+    using namespace std::string_view_literals;
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        json object =
+        {
+            {"one", 1}, {"two", 2}, {"three", 2.9}
+        };
+    
+        // output element with key "two"
+        std::cout << object["two"sv] << "\n\n";
+    
+        // change element with key "three"
+        object["three"sv] = 3;
+    
+        // output changed array
+        std::cout << std::setw(4) << object << "\n\n";
+    
+        // mention nonexisting key
+        object["four"sv];
+    
+        // write to nonexisting key
+        object["five"sv]["really"sv]["nested"sv] = true;
+    
+        // output changed object
+        std::cout << std::setw(4) << object << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__keytype.c++17.output"
+    2
+    
+    {
+        "one": 1,
+        "three": 3,
+        "two": 2
+    }
+    
+    {
+        "five": {
+            "really": {
+                "nested": true
+            }
+        },
+        "four": null,
+        "one": 1,
+        "three": 3,
+        "two": 2
+    }
+    
     ```
 
 ??? example "Example: (3) access specified object element using string_view (const)"
@@ -232,13 +395,32 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example below shows how object elements can be read using the `[]` operator.
     
     ```cpp
-    --8<-- "examples/operator_array__keytype_const.c++17.cpp"
+    #include <iostream>
+    #include <string_view>
+    #include <nlohmann/json.hpp>
+    
+    using namespace std::string_view_literals;
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        const json object =
+        {
+            {"one", 1}, {"two", 2}, {"three", 2.9}
+        };
+    
+        // output element with key "two"
+        std::cout << object["two"sv] << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__keytype_const.c++17.output"
+    2
+    
     ```
 
 ??? example "Example: (4) access specified element via JSON Pointer"
@@ -246,13 +428,70 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example below shows how values can be read and written using JSON Pointers.
     
     ```cpp
-    --8<-- "examples/operator_array__json_pointer.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        json j =
+        {
+            {"number", 1}, {"string", "foo"}, {"array", {1, 2}}
+        };
+    
+        // read-only access
+    
+        // output element with JSON pointer "/number"
+        std::cout << j["/number"_json_pointer] << '\n';
+        // output element with JSON pointer "/string"
+        std::cout << j["/string"_json_pointer] << '\n';
+        // output element with JSON pointer "/array"
+        std::cout << j["/array"_json_pointer] << '\n';
+        // output element with JSON pointer "/array/1"
+        std::cout << j["/array/1"_json_pointer] << '\n';
+    
+        // writing access
+    
+        // change the string
+        j["/string"_json_pointer] = "bar";
+        // output the changed string
+        std::cout << j["string"] << '\n';
+    
+        // "change" a nonexisting object entry
+        j["/boolean"_json_pointer] = true;
+        // output the changed object
+        std::cout << j << '\n';
+    
+        // change an array element
+        j["/array/1"_json_pointer] = 21;
+        // "change" an array element with nonexisting index
+        j["/array/4"_json_pointer] = 44;
+        // output the changed array
+        std::cout << j["array"] << '\n';
+    
+        // "change" the array element past the end
+        j["/array/-"_json_pointer] = 55;
+        // output the changed array
+        std::cout << j["array"] << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__json_pointer.output"
+    1
+    "foo"
+    [1,2]
+    2
+    "bar"
+    {"array":[1,2],"boolean":true,"number":1,"string":"bar"}
+    [1,21,null,null,44]
+    [1,21,null,null,44,55]
+    
     ```
 
 ??? example "Example: (4) access specified element via JSON Pointer (const)"
@@ -260,13 +499,42 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example below shows how values can be read using JSON Pointers.
     
     ```cpp
-    --8<-- "examples/operator_array__json_pointer_const.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        const json j =
+        {
+            {"number", 1}, {"string", "foo"}, {"array", {1, 2}}
+        };
+    
+        // read-only access
+    
+        // output element with JSON pointer "/number"
+        std::cout << j["/number"_json_pointer] << '\n';
+        // output element with JSON pointer "/string"
+        std::cout << j["/string"_json_pointer] << '\n';
+        // output element with JSON pointer "/array"
+        std::cout << j["/array"_json_pointer] << '\n';
+        // output element with JSON pointer "/array/1"
+        std::cout << j["/array/1"_json_pointer] << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__json_pointer_const.output"
+    1
+    "foo"
+    [1,2]
+    2
+    
     ```
 
 ## See also
@@ -286,4 +554,6 @@ Strong exception safety: if an exception occurs, the original value stays intact
 3. Added in version 3.11.0. Fixed in version 3.13.0 to consistently accept `std::string_view`-convertible keys, as
    already supported by [`at`](at.md), [`value`](value.md), [`find`](find.md), and other lookup functions.
 4. Added in version 2.0.0. A missing array index in the const version is guarded by a runtime assertion since
-   version 3.13.0.
+   version 3.13.0. Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) instead of
+[`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) for a one-character array index that is not
+a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.

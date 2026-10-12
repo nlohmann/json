@@ -7,12 +7,19 @@ size_type count(const typename object_t::key_type& key) const;
 // (2)
 template<typename KeyType>
 size_type count(KeyType&& key) const;
+
+// (3)
+template<typename T>
+size_type count(T) const = delete;
 ```
 
 1. Returns the number of elements with key `key`. If `ObjectType` is the default `std::map` type, the return value will
    always be `0` (`key` was not found) or `1` (`key` was found).
 2. See 1. This overload is only available if `KeyType` is comparable with `#!cpp typename object_t::key_type` and
    `#!cpp typename object_comparator_t::is_transparent` denotes a type.
+3. Deleted: this overload is only available if `T` is an integral type and is declared as deleted, so that a call with
+   an integer `key` (for example, `#!cpp j.count(0)`) fails to compile. Otherwise, the integer literal `0` would convert to
+   a null `#!cpp const char*` and, from there, to the key type, causing undefined behavior at runtime.
 
 ## Template parameters
 
@@ -53,13 +60,33 @@ Logarithmic in the size of the JSON object.
     The example shows how `count()` is used.
     
     ```cpp
-    --8<-- "examples/count__object_t_key_type.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        json j_object = {{"one", 1}, {"two", 2}};
+    
+        // call count()
+        auto count_two = j_object.count("two");
+        auto count_three = j_object.count("three");
+    
+        // print values
+        std::cout << "number of elements with key \"two\": " << count_two << '\n';
+        std::cout << "number of elements with key \"three\": " << count_three << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/count__object_t_key_type.output"
+    number of elements with key "two": 1
+    number of elements with key "three": 0
+    
     ```
 
 ??? example "Example: (2) count number of elements using string_view"
@@ -67,13 +94,35 @@ Logarithmic in the size of the JSON object.
     The example shows how `count()` is used.
     
     ```cpp
-    --8<-- "examples/count__keytype.c++17.cpp"
+    #include <iostream>
+    #include <string_view>
+    #include <nlohmann/json.hpp>
+    
+    using namespace std::string_view_literals;
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        json j_object = {{"one", 1}, {"two", 2}};
+    
+        // call count()
+        auto count_two = j_object.count("two"sv);
+        auto count_three = j_object.count("three"sv);
+    
+        // print values
+        std::cout << "number of elements with key \"two\": " << count_two << '\n';
+        std::cout << "number of elements with key \"three\": " << count_three << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/count__keytype.c++17.output"
+    number of elements with key "two": 1
+    number of elements with key "three": 0
+    
     ```
 
 ## See also

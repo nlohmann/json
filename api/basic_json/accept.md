@@ -101,13 +101,40 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     The example below demonstrates the `accept()` function reading from a string.
 
     ```cpp
-    --8<-- "examples/accept__string.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a valid JSON text
+        auto valid_text = R"(
+        {
+            "numbers": [1, 2, 3]
+        }
+        )";
+    
+        // an invalid JSON text
+        auto invalid_text = R"(
+        {
+            "strings": ["extra", "comma", ]
+        }
+        )";
+    
+        std::cout << std::boolalpha
+                  << json::accept(valid_text) << ' '
+                  << json::accept(invalid_text) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/accept__string.output"
+    true false
+    
     ```
 
 ??? example "Example: (2) reading from an iterator pair"
@@ -116,13 +143,29 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     exactly the JSON text; the second one also covers the trailing bytes and is therefore rejected.
 
     ```cpp
-    --8<-- "examples/accept__iterator_pair.cpp"
+    #include <iostream>
+    #include <vector>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a buffer containing a JSON text followed by more data
+        std::vector<std::uint8_t> input = {'[', '1', ',', '2', ',', '3', ']', 'o', 't', 'h', 'e', 'r'};
+    
+        std::cout << std::boolalpha
+                  << json::accept(input.begin(), input.begin() + 7) << ' '
+                  << json::accept(input.begin(), input.end()) << '\n';
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/accept__iterator_pair.output"
+    true false
+    
     ```
 
 ## See also

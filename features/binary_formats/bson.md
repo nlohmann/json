@@ -51,13 +51,36 @@ The library uses the following mapping from JSON values types to BSON types:
 ??? example "Example: serialize a JSON value to BSON"
 
     ```cpp
-    --8<-- "examples/to_bson.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        json j = R"({"compact": true, "schema": 0})"_json;
+    
+        // serialize it to BSON
+        std::vector<std::uint8_t> v = json::to_bson(j);
+    
+        // print the vector content
+        for (auto& byte : v)
+        {
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        }
+        std::cout << std::endl;
+    }
+    
     ```
     
     Output:
 
     ```c
-    --8<-- "examples/to_bson.output"
+    0x1b 0x00 0x00 0x00 0x08 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0x00 0x01 0x10 0x73 0x63 0x68 0x65 0x6d 0x61 0x00 0x00 0x00 0x00 0x00 0x00 
+    
     ```
 
 
@@ -128,11 +151,36 @@ The library maps BSON record types to JSON value types as follows:
 ??? example "Example: deserialize a JSON value from BSON"
 
     ```cpp
-    --8<-- "examples/from_bson.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create byte vector
+        std::vector<std::uint8_t> v = {0x1b, 0x00, 0x00, 0x00, 0x08, 0x63, 0x6f, 0x6d,
+                                       0x70, 0x61, 0x63, 0x74, 0x00, 0x01, 0x10, 0x73,
+                                       0x63, 0x68, 0x65, 0x6d, 0x61, 0x00, 0x00, 0x00,
+                                       0x00, 0x00, 0x00
+                                      };
+    
+        // deserialize it with BSON
+        json j = json::from_bson(v);
+    
+        // print the deserialized JSON value
+        std::cout << std::setw(2) << j << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/from_bson.output"
+    {
+      "compact": true,
+      "schema": 0
+    }
+    
     ```

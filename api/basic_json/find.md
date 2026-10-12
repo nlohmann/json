@@ -10,12 +10,21 @@ template<typename KeyType>
 iterator find(KeyType&& key);
 template<typename KeyType>
 const_iterator find(KeyType&& key) const;
+
+// (3)
+template<typename T>
+iterator find(T) = delete;
+template<typename T>
+const_iterator find(T) const = delete;
 ```
 
 1. Finds an element in a JSON object with a key equivalent to `key`. If the element is not found or the
    JSON value is not an object, `end()` is returned.
 2. See 1. This overload is only available if `KeyType` is comparable with `#!cpp typename object_t::key_type` and
    `#!cpp typename object_comparator_t::is_transparent` denotes a type.
+3. Deleted: this overload is only available if `T` is an integral type and is declared as deleted, so that a call with
+   an integer `key` (for example, `#!cpp j.find(0)`) fails to compile. Otherwise, the integer literal `0` would convert to
+   a null `#!cpp const char*` and, from there, to the key type, causing undefined behavior at runtime.
 
 ## Template parameters
 
@@ -57,13 +66,36 @@ Logarithmic in the size of the JSON object.
     The example shows how `find()` is used.
     
     ```cpp
-    --8<-- "examples/find__object_t_key_type.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        json j_object = {{"one", 1}, {"two", 2}};
+    
+        // call find
+        auto it_two = j_object.find("two");
+        auto it_three = j_object.find("three");
+    
+        // print values
+        std::cout << std::boolalpha;
+        std::cout << "\"two\" was found: " << (it_two != j_object.end()) << '\n';
+        std::cout << "value at key \"two\": " << *it_two << '\n';
+        std::cout << "\"three\" was found: " << (it_three != j_object.end()) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/find__object_t_key_type.output"
+    "two" was found: true
+    value at key "two": 2
+    "three" was found: false
+    
     ```
 
 ??? example "Example: (2) find object element by key using string_view"
@@ -71,13 +103,38 @@ Logarithmic in the size of the JSON object.
     The example shows how `find()` is used.
     
     ```cpp
-    --8<-- "examples/find__keytype.c++17.cpp"
+    #include <iostream>
+    #include <string_view>
+    #include <nlohmann/json.hpp>
+    
+    using namespace std::string_view_literals;
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON object
+        json j_object = {{"one", 1}, {"two", 2}};
+    
+        // call find
+        auto it_two = j_object.find("two"sv);
+        auto it_three = j_object.find("three"sv);
+    
+        // print values
+        std::cout << std::boolalpha;
+        std::cout << "\"two\" was found: " << (it_two != j_object.end()) << '\n';
+        std::cout << "value at key \"two\": " << *it_two << '\n';
+        std::cout << "\"three\" was found: " << (it_three != j_object.end()) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/find__keytype.c++17.output"
+    "two" was found: true
+    value at key "two": 2
+    "three" was found: false
+    
     ```
 
 ## See also

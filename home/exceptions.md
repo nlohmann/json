@@ -70,13 +70,34 @@ Exceptions in the library are thrown in the local context of the JSON value they
 ??? example "Example: standard diagnostic message"
 
     ```cpp
-    --8<-- "examples/diagnostics_standard.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        json j;
+        j["address"]["street"] = "Fake Street";
+        j["address"]["housenumber"] = "12";
+    
+        try
+        {
+            int housenumber = j["address"]["housenumber"];
+        }
+        catch (const json::exception& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/diagnostics_standard.output"
+    [json.exception.type_error.302] type must be number, but is string
+    
     ```
 
     This exception can be hard to debug if storing the value `#!c "12"` and accessing it is further apart.
@@ -88,13 +109,36 @@ As this global context comes at the price of storing one additional pointer per 
 ??? example "Example: extended diagnostic message with `JSON_DIAGNOSTICS`"
 
     ```cpp
-    --8<-- "examples/diagnostics_extended.cpp"
+    #include <iostream>
+    
+    # define JSON_DIAGNOSTICS 1
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        json j;
+        j["address"]["street"] = "Fake Street";
+        j["address"]["housenumber"] = "12";
+    
+        try
+        {
+            int housenumber = j["address"]["housenumber"];
+        }
+        catch (const json::exception& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/diagnostics_extended.output"
+    [json.exception.type_error.302] (/address/housenumber) type must be number, but is string
+    
     ```
 
     Now the exception message contains a JSON Pointer `/address/housenumber` that indicates which value has the wrong type.
@@ -104,7 +148,7 @@ See [documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) for
 ## Parse errors
 
 The library throws this exception when a parse error occurs. Parse errors
-can occur during the deserialization of JSON text, CBOR, MessagePack, as well
+can occur during the deserialization of JSON text or of one of the binary formats (BJData, BON8, BSON, CBOR, MessagePack, UBJSON), as well
 as when using JSON Patch.
 
 Exceptions have ids 1xx.
@@ -123,13 +167,36 @@ Exceptions have ids 1xx.
     The following code shows how a `parse_error` exception can be caught.
 
     ```cpp
-    --8<-- "examples/parse_error.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        try
+        {
+            // parsing input with a syntax error
+            json j = json::parse("[1,2,3,]");
+        }
+        catch (const json::parse_error& e)
+        {
+            // output exception information
+            std::cout << "message: " << e.what() << '\n'
+                      << "exception id: " << e.id << '\n'
+                      << "byte position of error: " << e.byte << std::endl;
+        }
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/parse_error.output"
+    message: [json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal
+    exception id: 101
+    byte position of error: 8
+    
     ```
 
 
@@ -190,7 +257,7 @@ This error indicates a syntax error while deserializing a JSON text. The error m
 !!! tip
 
     - Make sure the input is correctly read. Try to write the input to standard output to check if, for instance, the input file was successfully opened.
-    - Paste the input to a JSON validator like <http://jsonlint.com> or a tool like [jq](https://stedolan.github.io/jq/).
+    - Paste the input to a JSON validator like <https://jsonlint.com> or a tool like [jq](https://jqlang.github.io/jq/).
 
 ### json.exception.parse_error.102
 
@@ -278,7 +345,9 @@ In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 
 ### json.exception.parse_error.109
 
-A JSON Pointer array index must be a number.
+A JSON Pointer array index must be a number. This exception is thrown for an array index that does not begin with a
+digit, except for `-` and the empty reference token, which throw [`out_of_range.404`](#jsonexceptionout_of_range404)
+where they cannot be resolved.
 
 !!! failure "Example messages"
 
@@ -288,6 +357,11 @@ A JSON Pointer array index must be a number.
     ```
     [json.exception.parse_error.109] parse error: array index '+1' is not a number
     ```
+
+!!! note
+
+    Before version 3.13.0, a one-character array index that is not a digit (e.g., `x`) threw
+    [`out_of_range.404`](#jsonexceptionout_of_range404) instead.
 
 ### json.exception.parse_error.110
 
@@ -400,13 +474,36 @@ Exceptions have ids 2xx.
     The following code shows how an `invalid_iterator` exception can be caught.
 
     ```cpp
-    --8<-- "examples/invalid_iterator.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        try
+        {
+            // calling iterator::key() on non-object iterator
+            json j = "string";
+            json::iterator it = j.begin();
+            auto k = it.key();
+        }
+        catch (const json::invalid_iterator& e)
+        {
+            // output exception information
+            std::cout << "message: " << e.what() << '\n'
+                      << "exception id: " << e.id << std::endl;
+        }
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/invalid_iterator.output"
+    message: [json.exception.invalid_iterator.207] cannot use key() for non-object iterators
+    exception id: 207
+    
     ```
 
 ### json.exception.invalid_iterator.201
@@ -564,13 +661,35 @@ Exceptions have ids 3xx.
     The following code shows how a `type_error` exception can be caught.
 
     ```cpp
-    --8<-- "examples/type_error.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        try
+        {
+            // calling push_back() on a string value
+            json j = "string";
+            j.push_back("another string");
+        }
+        catch (const json::type_error& e)
+        {
+            // output exception information
+            std::cout << "message: " << e.what() << '\n'
+                      << "exception id: " << e.id << std::endl;
+        }
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/type_error.output"
+    message: [json.exception.type_error.308] cannot use push_back() with string
+    exception id: 308
+    
     ```
 
 ### json.exception.type_error.301
@@ -810,7 +929,7 @@ does not list an enumerator and it is therefore converted like the first listed 
 A discarded value (one created by [`parse()`](../api/basic_json/parse.md) with a callback that returns `false` for the
 value, or by default-constructing a [`basic_json`](../api/basic_json/index.md) with
 [`value_t::discarded`](../api/basic_json/value_t.md)) was passed to a binary serialization function, either directly or
-nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, or BSON.
+nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, BSON, or BON8.
 
 !!! failure "Example message"
 
@@ -830,13 +949,35 @@ Exceptions have ids 4xx.
     The following code shows how an `out_of_range` exception can be caught.
 
     ```cpp
-    --8<-- "examples/out_of_range.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        try
+        {
+            // calling at() for an invalid index
+            json j = {1, 2, 3, 4};
+            j.at(4) = 10;
+        }
+        catch (const json::out_of_range& e)
+        {
+            // output exception information
+            std::cout << "message: " << e.what() << '\n'
+                      << "exception id: " << e.id << std::endl;
+        }
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/out_of_range.output"
+    message: [json.exception.out_of_range.401] array index 4 is out of range
+    exception id: 401
+    
     ```
 
 ### json.exception.out_of_range.401
@@ -871,7 +1012,8 @@ The provided key was not found in the JSON object.
 
 ### json.exception.out_of_range.404
 
-A reference token in a JSON Pointer could not be resolved.
+A reference token in a JSON Pointer could not be resolved, for instance an array index that begins with a digit but
+contains other characters (e.g., `1a`), or `-` where it cannot be used.
 
 !!! failure "Example message"
 
@@ -1056,13 +1198,45 @@ Exceptions have ids 5xx.
     The following code shows how an `other_error` exception can be caught.
 
     ```cpp
-    --8<-- "examples/other_error.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        try
+        {
+            // executing a failing JSON Patch operation
+            json value = R"({
+                "best_biscuit": {
+                    "name": "Oreo"
+                }
+            })"_json;
+            json patch = R"([{
+                "op": "test",
+                "path": "/best_biscuit/name",
+                "value": "Choco Leibniz"
+            }])"_json;
+            value.patch(patch);
+        }
+        catch (const json::other_error& e)
+        {
+            // output exception information
+            std::cout << "message: " << e.what() << '\n'
+                      << "exception id: " << e.id << std::endl;
+        }
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/other_error.output"
+    message: [json.exception.other_error.501] unsuccessful: {"op":"test","path":"/best_biscuit/name","value":"Choco Leibniz"}
+    exception id: 501
+    
     ```
 
 ### json.exception.other_error.501

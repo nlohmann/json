@@ -23,13 +23,42 @@ large integers that convert to the same `number_float_t`.
     The example shows how to calculate hash values for different JSON values.
      
     ```cpp
-    --8<-- "examples/std_hash.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        std::cout << "hash(null) = " << std::hash<json> {}(json(nullptr)) << '\n'
+                  << "hash(false) = " << std::hash<json> {}(json(false)) << '\n'
+                  << "hash(0) = " << std::hash<json> {}(json(0)) << '\n'
+                  << "hash(0U) = " << std::hash<json> {}(json(0U)) << '\n'
+                  << "hash(0.0) = " << std::hash<json> {}(json(0.0)) << '\n'
+                  << "hash(\"\") = " << std::hash<json> {}(json("")) << '\n'
+                  << "hash({}) = " << std::hash<json> {}(json::object()) << '\n'
+                  << "hash([]) = " << std::hash<json> {}(json::array()) << '\n'
+                  << "hash({\"hello\": \"world\"}) = " << std::hash<json> {}("{\"hello\": \"world\"}"_json)
+                  << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/std_hash.output"
+    hash(null) = 2654435769
+    hash(false) = 2654436030
+    hash(0) = 2654436221
+    hash(0U) = 2654436221
+    hash(0.0) = 2654436221
+    hash("") = 11160318156688833227
+    hash({}) = 2654435832
+    hash([]) = 2654435899
+    hash({"hello": "world"}) = 3701319991624763853
+    
     ```
 
     The hash values shown are examples only. They depend on the platform, the compiler, and the compiler version, and

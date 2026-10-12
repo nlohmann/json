@@ -29,6 +29,7 @@ Some aspects of the library can be configured by defining preprocessor macros **
   **JSON_HAS_CPP_20**](https://json.nlohmann.me/api/macros/json_has_cpp_11/index.md) - set supported C++ standard
 - [**JSON_HAS_FILESYSTEM**\
   **JSON_HAS_EXPERIMENTAL_FILESYSTEM**](https://json.nlohmann.me/api/macros/json_has_filesystem/index.md) - control `std::filesystem` support
+- [**JSON_HAS_RANGE_VIEW_CONVERSION**](https://json.nlohmann.me/api/macros/json_has_range_view_conversion/index.md) - control construction from `std::ranges` views
 - [**JSON_HAS_RANGES**](https://json.nlohmann.me/api/macros/json_has_ranges/index.md) - control `std::ranges` support
 - [**JSON_HAS_STATIC_RTTI**](https://json.nlohmann.me/api/macros/json_has_static_rtti/index.md) - control RTTI (run time type information) support
 - [**JSON_HAS_STD_FORMAT**](https://json.nlohmann.me/api/macros/json_has_std_format/index.md) - control `std::format`/`std::formatter` support

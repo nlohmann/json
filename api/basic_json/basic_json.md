@@ -336,13 +336,45 @@ basic_json(basic_json&& other) noexcept;
     The following code shows the constructor for different `value_t` values.
      
     ```cpp
-    --8<-- "examples/basic_json__value_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create the different JSON values with default values
+        json j_null(json::value_t::null);
+        json j_boolean(json::value_t::boolean);
+        json j_number_integer(json::value_t::number_integer);
+        json j_number_float(json::value_t::number_float);
+        json j_object(json::value_t::object);
+        json j_array(json::value_t::array);
+        json j_string(json::value_t::string);
+    
+        // serialize the JSON values
+        std::cout << j_null << '\n';
+        std::cout << j_boolean << '\n';
+        std::cout << j_number_integer << '\n';
+        std::cout << j_number_float << '\n';
+        std::cout << j_object << '\n';
+        std::cout << j_array << '\n';
+        std::cout << j_string << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__value_t.output"
+    null
+    false
+    0
+    0.0
+    {}
+    []
+    ""
+    
     ```
 
 ??? example "Example: (2) create a `#!json null` object"
@@ -350,13 +382,31 @@ basic_json(basic_json&& other) noexcept;
     The following code shows the constructor with and without a null pointer parameter.
      
     ```cpp
-    --8<-- "examples/basic_json__nullptr_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // implicitly create a JSON null value
+        json j1;
+    
+        // explicitly create a JSON null value
+        json j2(nullptr);
+    
+        // serialize the JSON null value
+        std::cout << j1 << '\n' << j2 << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__nullptr_t.output"
+    null
+    null
+    
     ```
 
 ??? example "Example: (3) create a JSON value from compatible types"
@@ -364,13 +414,266 @@ basic_json(basic_json&& other) noexcept;
     The following code shows the constructor with several compatible types.
      
     ```cpp
-    --8<-- "examples/basic_json__CompatibleType.cpp"
+    #include <iostream>
+    #include <deque>
+    #include <list>
+    #include <forward_list>
+    #include <set>
+    #include <unordered_map>
+    #include <unordered_set>
+    #include <valarray>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // ============
+        // object types
+        // ============
+    
+        // create an object from an object_t value
+        json::object_t object_value = { {"one", 1}, {"two", 2} };
+        json j_object_t(object_value);
+    
+        // create an object from std::map
+        std::map<std::string, int> c_map
+        {
+            {"one", 1}, {"two", 2}, {"three", 3}
+        };
+        json j_map(c_map);
+    
+        // create an object from std::unordered_map
+        std::unordered_map<const char*, double> c_umap
+        {
+            {"one", 1.2}, {"two", 2.3}, {"three", 3.4}
+        };
+        json j_umap(c_umap);
+    
+        // create an object from std::multimap
+        std::multimap<std::string, bool> c_mmap
+        {
+            {"one", true}, {"two", true}, {"three", false}, {"three", true}
+        };
+        json j_mmap(c_mmap); // only one entry for key "three" is used
+    
+        // create an object from std::unordered_multimap
+        std::unordered_multimap<std::string, bool> c_ummap
+        {
+            {"one", true}, {"two", true}, {"three", false}, {"three", false}
+        };
+        json j_ummap(c_ummap); // only one entry for key "three" is used
+    
+        // serialize the JSON objects
+        std::cout << j_object_t << '\n';
+        std::cout << j_map << '\n';
+        std::cout << j_umap << '\n';
+        std::cout << j_mmap << '\n';
+        std::cout << j_ummap << "\n\n";
+    
+        // ===========
+        // array types
+        // ===========
+    
+        // create an array from an array_t value
+        json::array_t array_value = {"one", "two", 3, 4.5, false};
+        json j_array_t(array_value);
+    
+        // create an array from std::vector
+        std::vector<int> c_vector {1, 2, 3, 4};
+        json j_vec(c_vector);
+    
+        // create an array from std::valarray
+        std::valarray<short> c_valarray {10, 9, 8, 7};
+        json j_valarray(c_valarray);
+    
+        // create an array from std::deque
+        std::deque<double> c_deque {1.2, 2.3, 3.4, 5.6};
+        json j_deque(c_deque);
+    
+        // create an array from std::list
+        std::list<bool> c_list {true, true, false, true};
+        json j_list(c_list);
+    
+        // create an array from std::forward_list
+        std::forward_list<std::int64_t> c_flist {12345678909876, 23456789098765, 34567890987654, 45678909876543};
+        json j_flist(c_flist);
+    
+        // create an array from std::array
+        std::array<unsigned long, 4> c_array {{1, 2, 3, 4}};
+        json j_array(c_array);
+    
+        // create an array from std::set
+        std::set<std::string> c_set {"one", "two", "three", "four", "one"};
+        json j_set(c_set); // only one entry for "one" is used
+    
+        // create an array from std::unordered_set
+        std::unordered_set<std::string> c_uset {"one", "one"};
+        json j_uset(c_uset); // only one entry for "one" is used
+    
+        // create an array from std::multiset
+        std::multiset<std::string> c_mset {"one", "two", "one", "four"};
+        json j_mset(c_mset); // both entries for "one" are used
+    
+        // create an array from std::unordered_multiset
+        std::unordered_multiset<std::string> c_umset {"one", "one"};
+        json j_umset(c_umset); // both entries for "one" are used
+    
+        // serialize the JSON arrays
+        std::cout << j_array_t << '\n';
+        std::cout << j_vec << '\n';
+        std::cout << j_valarray << '\n';
+        std::cout << j_deque << '\n';
+        std::cout << j_list << '\n';
+        std::cout << j_flist << '\n';
+        std::cout << j_array << '\n';
+        std::cout << j_set << '\n';
+        std::cout << j_uset << '\n';
+        std::cout << j_mset << '\n';
+        std::cout << j_umset << "\n\n";
+    
+        // ============
+        // string types
+        // ============
+    
+        // create string from a string_t value
+        json::string_t string_value = "The quick brown fox jumps over the lazy dog.";
+        json j_string_t(string_value);
+    
+        // create a JSON string directly from a string literal
+        json j_string_literal("The quick brown fox jumps over the lazy dog.");
+    
+        // create string from std::string
+        std::string s_stdstring = "The quick brown fox jumps over the lazy dog.";
+        json j_stdstring(s_stdstring);
+    
+        // serialize the JSON strings
+        std::cout << j_string_t << '\n';
+        std::cout << j_string_literal << '\n';
+        std::cout << j_stdstring << "\n\n";
+    
+        // ============
+        // number types
+        // ============
+    
+        // create a JSON number from number_integer_t
+        json::number_integer_t value_integer_t = -42;
+        json j_integer_t(value_integer_t);
+    
+        // create a JSON number from number_unsigned_t
+        json::number_integer_t value_unsigned_t = 17;
+        json j_unsigned_t(value_unsigned_t);
+    
+        // create a JSON number from an anonymous enum
+        enum { enum_value = 17 };
+        json j_enum(enum_value);
+    
+        // create values of different integer types
+        short n_short = 42;
+        int n_int = -23;
+        long n_long = 1024;
+        int_least32_t n_int_least32_t = -17;
+        uint8_t n_uint8_t = 8;
+    
+        // create (integer) JSON numbers
+        json j_short(n_short);
+        json j_int(n_int);
+        json j_long(n_long);
+        json j_int_least32_t(n_int_least32_t);
+        json j_uint8_t(n_uint8_t);
+    
+        // create values of different floating-point types
+        json::number_float_t v_ok = 3.141592653589793;
+        json::number_float_t v_nan = NAN;
+        json::number_float_t v_infinity = INFINITY;
+    
+        // create values of different floating-point types
+        float n_float = 42.23;
+        float n_float_nan = 1.0f / 0.0f;
+        double n_double = 23.42;
+    
+        // create (floating point) JSON numbers
+        json j_ok(v_ok);
+        json j_nan(v_nan);
+        json j_infinity(v_infinity);
+        json j_float(n_float);
+        json j_float_nan(n_float_nan);
+        json j_double(n_double);
+    
+        // serialize the JSON numbers
+        std::cout << j_integer_t << '\n';
+        std::cout << j_unsigned_t << '\n';
+        std::cout << j_enum << '\n';
+        std::cout << j_short << '\n';
+        std::cout << j_int << '\n';
+        std::cout << j_long << '\n';
+        std::cout << j_int_least32_t << '\n';
+        std::cout << j_uint8_t << '\n';
+        std::cout << j_ok << '\n';
+        std::cout << j_nan << '\n';
+        std::cout << j_infinity << '\n';
+        std::cout << j_float << '\n';
+        std::cout << j_float_nan << '\n';
+        std::cout << j_double << "\n\n";
+    
+        // =============
+        // boolean types
+        // =============
+    
+        // create boolean values
+        json j_truth = true;
+        json j_falsity = false;
+    
+        // serialize the JSON booleans
+        std::cout << j_truth << '\n';
+        std::cout << j_falsity << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__CompatibleType.output"
+    {"one":1,"two":2}
+    {"one":1,"three":3,"two":2}
+    {"one":1.2,"three":3.4,"two":2.3}
+    {"one":true,"three":false,"two":true}
+    {"one":true,"three":false,"two":true}
+    
+    ["one","two",3,4.5,false]
+    [1,2,3,4]
+    [10,9,8,7]
+    [1.2,2.3,3.4,5.6]
+    [true,true,false,true]
+    [12345678909876,23456789098765,34567890987654,45678909876543]
+    [1,2,3,4]
+    ["four","one","three","two"]
+    ["one"]
+    ["four","one","one","two"]
+    ["one","one"]
+    
+    "The quick brown fox jumps over the lazy dog."
+    "The quick brown fox jumps over the lazy dog."
+    "The quick brown fox jumps over the lazy dog."
+    
+    -42
+    17
+    17
+    42
+    -23
+    1024
+    -17
+    8
+    3.141592653589793
+    null
+    null
+    42.22999954223633
+    null
+    23.42
+    
+    true
+    false
+    
     ```
 
     Note the output is platform-dependent.
@@ -382,13 +685,38 @@ basic_json(basic_json&& other) noexcept;
     converting to `json`, whose `object_t` sorts by key.
 
     ```cpp
-    --8<-- "examples/basic_json__BasicJsonType.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using ordered_json = nlohmann::ordered_json;
+    
+    int main()
+    {
+        // create an ordered_json value; insertion order is preserved
+        ordered_json oj = {{"c", 3}, {"a", 1}, {"b", 2}};
+    
+        // convert to json -- overload (4) is used; keys end up sorted
+        json j(oj);
+    
+        // convert back to ordered_json -- the original insertion order is lost,
+        // because it was already given up when converting to json
+        ordered_json oj2(j);
+    
+        std::cout << oj << '\n';
+        std::cout << j << '\n';
+        std::cout << oj2 << '\n';
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/basic_json__BasicJsonType.output"
+    {"c":3,"a":1,"b":2}
+    {"a":1,"b":2,"c":3}
+    {"a":1,"b":2,"c":3}
+    
     ```
 
 ??? example "Example: (5) create a container (array or object) from an initializer list"
@@ -396,13 +724,39 @@ basic_json(basic_json&& other) noexcept;
     The example below shows how JSON values are created from initializer lists.
      
     ```cpp
-    --8<-- "examples/basic_json__list_init_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json j_empty_init_list = json({});
+        json j_object = { {"one", 1}, {"two", 2} };
+        json j_array = {1, 2, 3, 4};
+        json j_nested_object = { {"one", {1}}, {"two", {1, 2}} };
+        json j_nested_array = { {{1}, "one"}, {{1, 2}, "two"} };
+    
+        // serialize the JSON value
+        std::cout << j_empty_init_list << '\n';
+        std::cout << j_object << '\n';
+        std::cout << j_array << '\n';
+        std::cout << j_nested_object << '\n';
+        std::cout << j_nested_array << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__list_init_t.output"
+    {}
+    {"one":1,"two":2}
+    [1,2,3,4]
+    {"one":[1],"two":[1,2]}
+    [[[1],"one"],[[1,2],"two"]]
+    
     ```
 
 ??? example "Example: (6) construct an array with count copies of a given value"
@@ -410,13 +764,34 @@ basic_json(basic_json&& other) noexcept;
     The following code shows examples for creating arrays with several copies of a given value.
      
     ```cpp
-    --8<-- "examples/basic_json__size_type_basic_json.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create an array by creating copies of a JSON value
+        json value = "Hello";
+        json array_0 = json(0, value);
+        json array_1 = json(1, value);
+        json array_5 = json(5, value);
+    
+        // serialize the JSON arrays
+        std::cout << array_0 << '\n';
+        std::cout << array_1 << '\n';
+        std::cout << array_5 << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__size_type_basic_json.output"
+    []
+    ["Hello"]
+    ["Hello","Hello","Hello","Hello","Hello"]
+    
     ```
 
 ??? example "Example: (7) construct a JSON container given an iterator range"
@@ -424,13 +799,49 @@ basic_json(basic_json&& other) noexcept;
     The example below shows several ways to create JSON values by specifying a subrange with iterators.
      
     ```cpp
-    --8<-- "examples/basic_json__InputIt_InputIt.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON values
+        json j_array = {"alpha", "bravo", "charly", "delta", "easy"};
+        json j_number = 42;
+        json j_object = {{"one", "eins"}, {"two", "zwei"}};
+    
+        // create copies using iterators
+        json j_array_range(j_array.begin() + 1, j_array.end() - 2);
+        json j_number_range(j_number.begin(), j_number.end());
+        json j_object_range(j_object.begin(), j_object.find("two"));
+    
+        // serialize the values
+        std::cout << j_array_range << '\n';
+        std::cout << j_number_range << '\n';
+        std::cout << j_object_range << '\n';
+    
+        // example for an exception
+        try
+        {
+            json j_invalid(j_number.begin() + 1, j_number.end());
+        }
+        catch (const json::invalid_iterator& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__InputIt_InputIt.output"
+    ["bravo","charly"]
+    42
+    {"one":"eins"}
+    [json.exception.invalid_iterator.204] iterators out of range
+    
     ```
 
 ??? example "Example: (8) copy constructor"
@@ -438,13 +849,32 @@ basic_json(basic_json&& other) noexcept;
     The following code shows an example for the copy constructor.
      
     ```cpp
-    --8<-- "examples/basic_json__basic_json.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON array
+        json j1 = {"one", "two", 3, 4.5, false};
+    
+        // create a copy
+        json j2(j1);
+    
+        // serialize the JSON array
+        std::cout << j1 << " = " << j2 << '\n';
+        std::cout << std::boolalpha << (j1 == j2) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__basic_json.output"
+    ["one","two",3,4.5,false] = ["one","two",3,4.5,false]
+    true
+    
     ```
 
 ??? example "Example: (9) move constructor"
@@ -452,13 +882,32 @@ basic_json(basic_json&& other) noexcept;
     The code below shows the move constructor explicitly called via `std::move`.
      
     ```cpp
-    --8<-- "examples/basic_json__moveconstructor.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON value
+        json a = 23;
+    
+        // move contents of a to b
+        json b(std::move(a));
+    
+        // serialize the JSON arrays
+        std::cout << a << '\n';
+        std::cout << b << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__moveconstructor.output"
+    null
+    23
+    
     ```
 
 ## See also

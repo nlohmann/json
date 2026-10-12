@@ -66,13 +66,95 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
     and without callback function.
 
     ```cpp
-    --8<-- "examples/parse__string__parser_callback_t.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a JSON text
+        auto text = R"(
+        {
+            "Image": {
+                "Width":  800,
+                "Height": 600,
+                "Title":  "View from 15th Floor",
+                "Thumbnail": {
+                    "Url":    "http://www.example.com/image/481989943",
+                    "Height": 125,
+                    "Width":  100
+                },
+                "Animated" : false,
+                "IDs": [116, 943, 234, 38793]
+            }
+        }
+        )";
+    
+        // parse and serialize JSON
+        json j_complete = json::parse(text);
+        std::cout << std::setw(4) << j_complete << "\n\n";
+    
+        // define parser callback
+        json::parser_callback_t cb = [](int depth, json::parse_event_t event, json & parsed)
+        {
+            // skip object elements with key "Thumbnail"
+            if (event == json::parse_event_t::key and parsed == json("Thumbnail"))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        };
+    
+        // parse (with callback) and serialize JSON
+        json j_filtered = json::parse(text, cb);
+        std::cout << std::setw(4) << j_filtered << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/parse__string__parser_callback_t.output"
+    {
+        "Image": {
+            "Animated": false,
+            "Height": 600,
+            "IDs": [
+                116,
+                943,
+                234,
+                38793
+            ],
+            "Thumbnail": {
+                "Height": 125,
+                "Url": "http://www.example.com/image/481989943",
+                "Width": 100
+            },
+            "Title": "View from 15th Floor",
+            "Width": 800
+        }
+    }
+    
+    {
+        "Image": {
+            "Animated": false,
+            "Height": 600,
+            "IDs": [
+                116,
+                943,
+                234,
+                38793
+            ],
+            "Title": "View from 15th Floor",
+            "Width": 800
+        }
+    }
+    
     ```
 
 ??? example "Example: how discarded values are removed"
@@ -81,13 +163,65 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
     ways, but in each case the parse result contains neither the value nor its key.
 
     ```cpp
-    --8<-- "examples/parser_callback_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // a JSON text with an array and a number inside an object
+        auto text = R"({"IDs": [116, 943], "Width": 800})";
+    
+        // discard the array when the parser reads its opening bracket
+        json j_array_start = json::parse(text, [](int /*depth*/, json::parse_event_t event, json& /*parsed*/)
+        {
+            return event != json::parse_event_t::array_start;
+        });
+    
+        // discard the same array when the parser reads its closing bracket
+        json j_array_end = json::parse(text, [](int /*depth*/, json::parse_event_t event, json& /*parsed*/)
+        {
+            return event != json::parse_event_t::array_end;
+        });
+    
+        // discard the number, but keep its key
+        json j_value = json::parse(text, [](int /*depth*/, json::parse_event_t event, json & parsed)
+        {
+            return !(event == json::parse_event_t::value && parsed == json(800));
+        });
+    
+        // discard the key of the number
+        json j_key = json::parse(text, [](int /*depth*/, json::parse_event_t event, json & parsed)
+        {
+            return !(event == json::parse_event_t::key && parsed == json("Width"));
+        });
+    
+        // discard the top-level object
+        json j_root = json::parse(text, [](int /*depth*/, json::parse_event_t event, json& /*parsed*/)
+        {
+            return event != json::parse_event_t::object_end;
+        });
+    
+        // in every case, the discarded value is removed together with its key
+        std::cout << j_array_start << '\n'
+                  << j_array_end << '\n'
+                  << j_value << '\n'
+                  << j_key << '\n'
+                  << j_root << '\n';
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/parser_callback_t.output"
+    {"Width":800}
+    {"Width":800}
+    {"IDs":[116,943]}
+    {"IDs":[116,943]}
+    null
+    
     ```
 
 ## See also

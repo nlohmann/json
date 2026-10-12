@@ -35,13 +35,41 @@ Constant.
     The following code shows an example output of the `meta()` function.
     
     ```cpp
-    --8<-- "examples/meta.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // call meta()
+        std::cout << std::setw(4) << json::meta() << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/meta.output"
+    {
+        "compiler": {
+            "c++": "201103",
+            "family": "gcc",
+            "version": "12.4.0"
+        },
+        "copyright": "(C) 2013-2026 Niels Lohmann",
+        "name": "JSON for Modern C++",
+        "platform": "apple",
+        "url": "https://github.com/nlohmann/json",
+        "version": {
+            "major": 3,
+            "minor": 12,
+            "patch": 0,
+            "string": "3.12.0"
+        }
+    }
+    
     ```
 
     Note the output is platform-dependent.

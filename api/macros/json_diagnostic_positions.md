@@ -70,13 +70,114 @@ When the macro is not defined, the library will define it to its default value.
 ??? example "Example: retrieving positions"
 
     ```cpp
-    --8<-- "examples/diagnostic_positions.cpp"
+    #include <iostream>
+    
+    #define JSON_DIAGNOSTIC_POSITIONS 1
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::string json_string = R"(
+        {
+            "address": {
+                "street": "Fake Street",
+                "housenumber": 1
+            }
+        }
+        )";
+        json j = json::parse(json_string);
+    
+        std::cout << "Root diagnostic positions: \n";
+        std::cout << "\tstart_pos: " << j.start_pos() << '\n';
+        std::cout << "\tend_pos:" << j.end_pos() << "\n";
+        std::cout << "Original string: \n";
+        std::cout << "{\n        \"address\": {\n            \"street\": \"Fake Street\",\n            \"housenumber\": 1\n        }\n    }" << "\n";
+        std::cout << "Parsed string: \n";
+        std::cout << json_string.substr(j.start_pos(), j.end_pos() - j.start_pos()) << "\n\n";
+    
+        std::cout << "address diagnostic positions: \n";
+        std::cout << "\tstart_pos:" << j["address"].start_pos() << '\n';
+        std::cout << "\tend_pos:" << j["address"].end_pos() << "\n\n";
+        std::cout << "Original string: \n";
+        std::cout << "{            \"street\": \"Fake Street\",\n            \"housenumber\": 1\n        }" << "\n";
+        std::cout << "Parsed string: \n";
+        std::cout << json_string.substr(j["address"].start_pos(), j["address"].end_pos() - j["address"].start_pos()) << "\n\n";
+    
+        std::cout << "street diagnostic positions: \n";
+        std::cout << "\tstart_pos:" << j["address"]["street"].start_pos() << '\n';
+        std::cout << "\tend_pos:" << j["address"]["street"].end_pos() << "\n\n";
+        std::cout << "Original string: \n";
+        std::cout << "\"Fake Street\"" << "\n";
+        std::cout << "Parsed string: \n";
+        std::cout << json_string.substr(j["address"]["street"].start_pos(), j["address"]["street"].end_pos() - j["address"]["street"].start_pos()) << "\n\n";
+    
+        std::cout << "housenumber diagnostic positions: \n";
+        std::cout << "\tstart_pos:" << j["address"]["housenumber"].start_pos() << '\n';
+        std::cout << "\tend_pos:" << j["address"]["housenumber"].end_pos() << "\n\n";
+        std::cout << "Original string: \n";
+        std::cout << "1" << "\n";
+        std::cout << "Parsed string: \n";
+        std::cout << json_string.substr(j["address"]["housenumber"].start_pos(), j["address"]["housenumber"].end_pos() - j["address"]["housenumber"].start_pos()) << "\n\n";
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/diagnostic_positions.output"
+    Root diagnostic positions: 
+    	start_pos: 5
+    	end_pos:109
+    Original string: 
+    {
+            "address": {
+                "street": "Fake Street",
+                "housenumber": 1
+            }
+        }
+    Parsed string: 
+    {
+            "address": {
+                "street": "Fake Street",
+                "housenumber": 1
+            }
+        }
+    
+    address diagnostic positions: 
+    	start_pos:26
+    	end_pos:103
+    
+    Original string: 
+    {            "street": "Fake Street",
+                "housenumber": 1
+            }
+    Parsed string: 
+    {
+                "street": "Fake Street",
+                "housenumber": 1
+            }
+    
+    street diagnostic positions: 
+    	start_pos:50
+    	end_pos:63
+    
+    Original string: 
+    "Fake Street"
+    Parsed string: 
+    "Fake Street"
+    
+    housenumber diagnostic positions: 
+    	start_pos:92
+    	end_pos:93
+    
+    Original string: 
+    1
+    Parsed string: 
+    1
+    
+    
     ```
 
     The output shows the start/end positions of all the objects and fields in the JSON string.
@@ -84,13 +185,44 @@ When the macro is not defined, the library will define it to its default value.
 ??? example "Example: using only diagnostic positions in exceptions"
 
     ```cpp
-    --8<-- "examples/diagnostic_positions_exception.cpp"
+    #include <iostream>
+    
+    #define JSON_DIAGNOSTIC_POSITIONS 1
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    /* Demonstration of type error exception with diagnostic positions support enabled */
+    int main()
+    {
+        //Invalid json string - housenumber type must be int instead of string
+        const std::string json_invalid_string = R"(
+        {
+            "address": {
+                "street": "Fake Street",
+                "housenumber": "1"
+            }
+        }
+        )";
+        json j = json::parse(json_invalid_string);
+        try
+        {
+            int housenumber = j["address"]["housenumber"];
+            std::cout << housenumber;
+        }
+        catch (const json::exception& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/diagnostic_positions_exception.output"
+    [json.exception.type_error.302] (bytes 92-95) type must be number, but is string
+    
     ```
 
         The output shows the exception with start/end positions only.
@@ -98,13 +230,45 @@ When the macro is not defined, the library will define it to its default value.
 ??? example "Example: using extended diagnostics with positions enabled in exceptions"
 
     ```cpp
-    --8<-- "examples/diagnostics_extended_positions.cpp"
+    #include <iostream>
+    
+    #define JSON_DIAGNOSTICS 1
+    #define JSON_DIAGNOSTIC_POSITIONS 1
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    /* Demonstration of type error exception with diagnostic positions support enabled */
+    int main()
+    {
+        //Invalid json string - housenumber type must be int instead of string
+        const std::string json_invalid_string = R"(
+        {
+            "address": {
+                "street": "Fake Street",
+                "housenumber": "1"
+            }
+        }
+        )";
+        json j = json::parse(json_invalid_string);
+        try
+        {
+            int housenumber = j["address"]["housenumber"];
+            std::cout << housenumber;
+        }
+        catch (const json::exception& e)
+        {
+            std::cout << e.what() << '\n';
+        }
+    }
+    
     ```
     
     Output:
 
     ```
-    --8<-- "examples/diagnostics_extended_positions.output"
+    [json.exception.type_error.302] (/address/housenumber) (bytes 92-95) type must be number, but is string
+    
     ```
     
         The output shows the exception with diagnostic path info and start/end positions.

@@ -10,6 +10,10 @@ bool contains(KeyType&& key) const;
 
 // (3)
 bool contains(const json_pointer& ptr) const;
+
+// (4)
+template<typename T>
+bool contains(T) const = delete;
 ```
 
 1. Check whether an element exists in a JSON object with a key equivalent to `key`. If the element is not found or the 
@@ -17,6 +21,9 @@ bool contains(const json_pointer& ptr) const;
 2. See 1. This overload is only available if `KeyType` is comparable with `#!cpp typename object_t::key_type` and
    `#!cpp typename object_comparator_t::is_transparent` denotes a type.
 3. Check whether the given JSON pointer `ptr` can be resolved in the current JSON value.
+4. Deleted: this overload is only available if `T` is an integral type and is declared as deleted, so that a call with
+   an integer `key` (for example, `#!cpp j.contains(0)`) fails to compile. Otherwise, the integer literal `0` would convert to
+   a null `#!cpp const char*` and, from there, to the key type, causing undefined behavior at runtime.
 
 ## Template parameters
 
@@ -39,6 +46,7 @@ bool contains(const json_pointer& ptr) const;
    is not an object, `#!cpp false` is returned.
 2. See 1.
 3. `#!cpp true` if the JSON pointer can be resolved to a stored value, `#!cpp false` otherwise.
+4. Deleted; a call with an integral argument does not compile.
 
 ## Exception safety
 
@@ -49,6 +57,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. The function does not throw exceptions.
 2. The function does not throw exceptions.
 3. The function does not throw exceptions.
+4. Deleted; a call with an integral argument does not compile.
 
 ## Complexity
 
@@ -86,13 +95,34 @@ Logarithmic in the size of the JSON object.
     The example shows how `contains()` is used.
     
     ```cpp
-    --8<-- "examples/contains__object_t_key_type.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create some JSON values
+        json j_object = R"( {"key": "value"} )"_json;
+        json j_array = R"( [1, 2, 3] )"_json;
+    
+        // call contains
+        std::cout << std::boolalpha <<
+                  "j_object contains 'key': " << j_object.contains("key") << '\n' <<
+                  "j_object contains 'another': " << j_object.contains("another") << '\n' <<
+                  "j_array contains 'key': " << j_array.contains("key") << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/contains__object_t_key_type.output"
+    j_object contains 'key': true
+    j_object contains 'another': false
+    j_array contains 'key': false
+    
     ```
 
 ??? example "Example: (2) check with key using string_view"
@@ -100,13 +130,36 @@ Logarithmic in the size of the JSON object.
     The example shows how `contains()` is used.
     
     ```cpp
-    --8<-- "examples/contains__keytype.c++17.cpp"
+    #include <iostream>
+    #include <string_view>
+    #include <nlohmann/json.hpp>
+    
+    using namespace std::string_view_literals;
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create some JSON values
+        json j_object = R"( {"key": "value"} )"_json;
+        json j_array = R"( [1, 2, 3] )"_json;
+    
+        // call contains
+        std::cout << std::boolalpha <<
+                  "j_object contains 'key': " << j_object.contains("key"sv) << '\n' <<
+                  "j_object contains 'another': " << j_object.contains("another"sv) << '\n' <<
+                  "j_array contains 'key': " << j_array.contains("key"sv) << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/contains__keytype.c++17.output"
+    j_object contains 'key': true
+    j_object contains 'another': false
+    j_array contains 'key': false
+    
     ```
 
 ??? example "Example: (3) check with JSON pointer"
@@ -114,13 +167,49 @@ Logarithmic in the size of the JSON object.
     The example shows how `contains()` is used.
     
     ```cpp
-    --8<-- "examples/contains__json_pointer.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create a JSON value
+        json j =
+        {
+            {"number", 1}, {"string", "foo"}, {"array", {1, 2}}
+        };
+    
+        std::cout << std::boolalpha
+                  << j.contains("/number"_json_pointer) << '\n'
+                  << j.contains("/string"_json_pointer) << '\n'
+                  << j.contains("/array"_json_pointer) << '\n'
+                  << j.contains("/array/1"_json_pointer) << '\n'
+                  << j.contains("/array/-"_json_pointer) << '\n'
+                  << j.contains("/array/4"_json_pointer) << '\n'
+                  << j.contains("/baz"_json_pointer) << '\n'
+                  // an array index with a leading '0' is not found
+                  << j.contains("/array/01"_json_pointer) << '\n'
+                  // an array index that is not a number is not found
+                  << j.contains("/array/one"_json_pointer) << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/contains__json_pointer.output"
+    true
+    true
+    true
+    true
+    false
+    false
+    false
+    false
+    false
+    
     ```
 
 ## See also

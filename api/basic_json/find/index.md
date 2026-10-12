@@ -10,10 +10,17 @@ template<typename KeyType>
 iterator find(KeyType&& key);
 template<typename KeyType>
 const_iterator find(KeyType&& key) const;
+
+// (3)
+template<typename T>
+iterator find(T) = delete;
+template<typename T>
+const_iterator find(T) const = delete;
 ```
 
 1. Finds an element in a JSON object with a key equivalent to `key`. If the element is not found or the JSON value is not an object, `end()` is returned.
 1. See 1. This overload is only available if `KeyType` is comparable with `typename object_t::key_type` and `typename object_comparator_t::is_transparent` denotes a type.
+1. Deleted: this overload is only available if `T` is an integral type and is declared as deleted, so that a call with an integer `key` (for example, `j.find(0)`) fails to compile. Otherwise, the integer literal `0` would convert to a null `const char*` and, from there, to the key type, causing undefined behavior at runtime.
 
 ## Template parameters
 

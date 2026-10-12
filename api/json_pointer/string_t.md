@@ -14,13 +14,28 @@ See [`basic_json::string_t`](../basic_json/string_t.md) for more information.
     The example shows the type `string_t` and its relation to `basic_json::string_t`.
      
     ```cpp
-    --8<-- "examples/json_pointer__string_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        json::json_pointer::string_t s = "This is a string.";
+    
+        std::cout << s << std::endl;
+    
+        std::cout << std::boolalpha << std::is_same<json::json_pointer::string_t, json::string_t>::value << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/json_pointer__string_t.output"
+    This is a string.
+    true
+    
     ```
 
 ## See also

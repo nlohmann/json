@@ -64,13 +64,36 @@ or the end of file. This also holds true when reading a byte vector for binary f
     The following code shows how a `parse_error` exception can be caught.
     
     ```cpp
-    --8<-- "examples/parse_error.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        try
+        {
+            // parsing input with a syntax error
+            json j = json::parse("[1,2,3,]");
+        }
+        catch (const json::parse_error& e)
+        {
+            // output exception information
+            std::cout << "message: " << e.what() << '\n'
+                      << "exception id: " << e.id << '\n'
+                      << "byte position of error: " << e.byte << std::endl;
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/parse_error.output"
+    message: [json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal
+    exception id: 101
+    byte position of error: 8
+    
     ```
 
 ## See also

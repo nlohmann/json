@@ -16,13 +16,26 @@ and [`default_object_comparator_t`](default_object_comparator_t.md) otherwise.
     The example below demonstrates the used object comparator.
 
     ```cpp
-    --8<-- "examples/object_comparator_t.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::cout << std::boolalpha
+                  << "json::object_comparator_t(\"one\", \"two\") = " << json::object_comparator_t{}("one", "two") << "\n"
+                  << "json::object_comparator_t(\"three\", \"four\") = " << json::object_comparator_t{}("three", "four") << std::endl;
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/object_comparator_t.output"
+    json::object_comparator_t("one", "two") = true
+    json::object_comparator_t("three", "four") = false
+    
     ```
 
 ## See also

@@ -27,13 +27,30 @@ Constant.
     The following code shows an example for `cbegin()`.
     
     ```cpp
-    --8<-- "examples/cbegin.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create an array value
+        const json array = {1, 2, 3, 4, 5};
+    
+        // get an iterator to the first element
+        json::const_iterator it = array.cbegin();
+    
+        // serialize the element that the iterator points to
+        std::cout << *it << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/cbegin.output"
+    1
+    
     ```
 
 ## See also

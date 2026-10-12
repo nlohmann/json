@@ -10,11 +10,16 @@ bool contains(KeyType&& key) const;
 
 // (3)
 bool contains(const json_pointer& ptr) const;
+
+// (4)
+template<typename T>
+bool contains(T) const = delete;
 ```
 
 1. Check whether an element exists in a JSON object with a key equivalent to `key`. If the element is not found or the JSON value is not an object, `false` is returned.
 1. See 1. This overload is only available if `KeyType` is comparable with `typename object_t::key_type` and `typename object_comparator_t::is_transparent` denotes a type.
 1. Check whether the given JSON pointer `ptr` can be resolved in the current JSON value.
+1. Deleted: this overload is only available if `T` is an integral type and is declared as deleted, so that a call with an integer `key` (for example, `j.contains(0)`) fails to compile. Otherwise, the integer literal `0` would convert to a null `const char*` and, from there, to the key type, causing undefined behavior at runtime.
 
 ## Template parameters
 
@@ -31,6 +36,7 @@ bool contains(const json_pointer& ptr) const;
 1. `true` if an element with specified `key` exists. If no such element with such a key is found or the JSON value is not an object, `false` is returned.
 1. See 1.
 1. `true` if the JSON pointer can be resolved to a stored value, `false` otherwise.
+1. Deleted; a call with an integral argument does not compile.
 
 ## Exception safety
 
@@ -41,6 +47,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. The function does not throw exceptions.
 1. The function does not throw exceptions.
 1. The function does not throw exceptions.
+1. Deleted; a call with an integral argument does not compile.
 
 ## Complexity
 

@@ -72,13 +72,54 @@ contained in `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[
     The example shows how `update()` is used.
     
     ```cpp
-    --8<-- "examples/update.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create two JSON objects
+        json o1 = R"( {"color": "red", "price": 17.99, "names": {"de": "Flugzeug"}} )"_json;
+        json o2 = R"( {"color": "blue", "speed": 100, "names": {"en": "plane"}} )"_json;
+        json o3 = o1;
+    
+        // add all keys from o2 to o1 (updating "color", replacing "names")
+        o1.update(o2);
+    
+        // add all keys from o2 to o1 (updating "color", merging "names")
+        o3.update(o2, true);
+    
+        // output updated object o1 and o3
+        std::cout << std::setw(2) << o1 << '\n';
+        std::cout << std::setw(2) << o3 << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/update.output"
+    {
+      "color": "blue",
+      "names": {
+        "en": "plane"
+      },
+      "price": 17.99,
+      "speed": 100
+    }
+    {
+      "color": "blue",
+      "names": {
+        "de": "Flugzeug",
+        "en": "plane"
+      },
+      "price": 17.99,
+      "speed": 100
+    }
+    
     ```
 
 ??? example "Example: (2) update with an iterator range"
@@ -86,13 +127,54 @@ contained in `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[
     The example shows how `update()` is used.
     
     ```cpp
-    --8<-- "examples/update__range.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        // create two JSON objects
+        json o1 = R"( {"color": "red", "price": 17.99, "names": {"de": "Flugzeug"}} )"_json;
+        json o2 = R"( {"color": "blue", "speed": 100, "names": {"en": "plane"}} )"_json;
+        json o3 = o1;
+    
+        // add all keys from o2 to o1 (updating "color", replacing "names")
+        o1.update(o2.begin(), o2.end());
+    
+        // add all keys from o2 to o1 (updating "color", merging "names")
+        o3.update(o2.begin(), o2.end(), true);
+    
+        // output updated object o1 and o3
+        std::cout << std::setw(2) << o1 << '\n';
+        std::cout << std::setw(2) << o3 << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/update__range.output"
+    {
+      "color": "blue",
+      "names": {
+        "en": "plane"
+      },
+      "price": 17.99,
+      "speed": 100
+    }
+    {
+      "color": "blue",
+      "names": {
+        "de": "Flugzeug",
+        "en": "plane"
+      },
+      "price": 17.99,
+      "speed": 100
+    }
+    
     ```
 
 ??? example "Example: (1) merge user settings into default settings"

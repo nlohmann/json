@@ -73,11 +73,56 @@ The return value indicates whether the parsing should continue, so the function 
     see [Do not use the `detail` namespace](../../integration/migration_guide.md#do-not-use-the-detail-namespace).
 
     ```cpp
-    --8<-- "examples/sax_no_exception.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    // a DOM parser that reports parse errors instead of throwing
+    class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>
+    {
+      public:
+        explicit sax_no_exception(json& j)
+            : nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>(j, false)
+        {}
+    
+        bool parse_error(std::size_t position,
+                         const std::string& last_token,
+                         const json::exception& ex)
+        {
+            std::cout << "parse error at input byte " << position << "\n"
+                      << ex.what() << "\n"
+                      << "last read: \"" << last_token << "\""
+                      << std::endl;
+            return false;
+        }
+    };
+    
+    int main()
+    {
+        std::string myinput = "[1,2,3,]";
+    
+        json result;
+        sax_no_exception sax(result);
+    
+        bool parse_result = json::sax_parse(myinput, &sax);
+        if (!parse_result)
+        {
+            std::cout << "parsing unsuccessful!" << std::endl;
+        }
+    
+        std::cout << "parsed value: " << result << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```
-    --8<-- "examples/sax_no_exception.output"
+    parse error at input byte 8
+    [json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal
+    last read: "3,]"
+    parsing unsuccessful!
+    parsed value: [1,2,3]
+    
     ```

@@ -58,6 +58,36 @@ When compiling with C++17, the library provides conversions from and to `std::fi
 
 See [full documentation of `JSON_HAS_FILESYSTEM` and `JSON_HAS_EXPERIMENTAL_FILESYSTEM`](https://json.nlohmann.me/api/macros/json_has_filesystem/index.md).
 
+## `JSON_HAS_RANGES`
+
+The library uses `std::ranges` (and concepts) where available, for example, to parse from C++20 ranges and to construct JSON arrays from range views. The library detects whether the standard library supports ranges and disables the support on toolchains with an incomplete implementation. To override the built-in check, define `JSON_HAS_RANGES` to `1` or `0`.
+
+See [full documentation of `JSON_HAS_RANGES`](https://json.nlohmann.me/api/macros/json_has_ranges/index.md).
+
+## `JSON_HAS_RANGE_VIEW_CONVERSION`
+
+When `JSON_HAS_RANGES` is enabled (and the compiler is not MinGW), a JSON array can be constructed directly from a C++20 range view such as `std::views::filter(...)`. To override the built-in check, define `JSON_HAS_RANGE_VIEW_CONVERSION` to `1` or `0`.
+
+See [full documentation of `JSON_HAS_RANGE_VIEW_CONVERSION`](https://json.nlohmann.me/api/macros/json_has_range_view_conversion/index.md).
+
+## `JSON_HAS_STATIC_RTTI`
+
+The library detects whether the compiler supports run time type information (RTTI), which it needs, for instance, to exclude `std::any` from the candidate types of the implicit conversion on C++17. To override the built-in check, define `JSON_HAS_STATIC_RTTI` to `1` or `0`.
+
+See [full documentation of `JSON_HAS_STATIC_RTTI`](https://json.nlohmann.me/api/macros/json_has_static_rtti/index.md).
+
+## `JSON_HAS_STD_FORMAT`
+
+When compiling with C++20 and a standard library that provides `<format>`, the library provides a `std::formatter` specialization for JSON values. To override the built-in check, define `JSON_HAS_STD_FORMAT` to `1` or `0`.
+
+See [full documentation of `JSON_HAS_STD_FORMAT`](https://json.nlohmann.me/api/macros/json_has_std_format/index.md).
+
+## `JSON_HAS_THREE_WAY_COMPARISON`
+
+When the compiler and standard library support 3-way comparison (the spaceship operator `<=>`), the library provides it for JSON values. To override the built-in check, define `JSON_HAS_THREE_WAY_COMPARISON` to `1` or `0`.
+
+See [full documentation of `JSON_HAS_THREE_WAY_COMPARISON`](https://json.nlohmann.me/api/macros/json_has_three_way_comparison/index.md).
+
 ## `JSON_NOEXCEPTION`
 
 Exceptions can be switched off by defining the symbol `JSON_NOEXCEPTION`.

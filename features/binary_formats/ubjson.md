@@ -94,13 +94,81 @@ The library uses the following mapping from JSON values types to UBJSON types ac
 ??? example "Example: serialize JSON values to UBJSON, with and without size/type optimization"
 
     ```cpp
-    --8<-- "examples/to_ubjson.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    // function to print UBJSON's diagnostic format
+    void print_byte(uint8_t byte)
+    {
+        if (32 < byte and byte < 128)
+        {
+            std::cout << (char)byte;
+        }
+        else
+        {
+            std::cout << (int)byte;
+        }
+    }
+    
+    int main()
+    {
+        // create a JSON value
+        json j = R"({"compact": true, "schema": false})"_json;
+    
+        // serialize it to UBJSON
+        std::vector<std::uint8_t> v = json::to_ubjson(j);
+    
+        // print the vector content
+        for (auto& byte : v)
+        {
+            print_byte(byte);
+        }
+        std::cout << std::endl;
+    
+        // create an array of numbers
+        json array = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+        // serialize it to UBJSON using default representation
+        std::vector<std::uint8_t> v_array = json::to_ubjson(array);
+        // serialize it to UBJSON using size optimization
+        std::vector<std::uint8_t> v_array_size = json::to_ubjson(array, true);
+        // serialize it to UBJSON using type optimization
+        std::vector<std::uint8_t> v_array_size_and_type = json::to_ubjson(array, true, true);
+    
+        // print the vector contents
+        for (auto& byte : v_array)
+        {
+            print_byte(byte);
+        }
+        std::cout << std::endl;
+    
+        for (auto& byte : v_array_size)
+        {
+            print_byte(byte);
+        }
+        std::cout << std::endl;
+    
+        for (auto& byte : v_array_size_and_type)
+        {
+            print_byte(byte);
+        }
+        std::cout << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```c
-    --8<-- "examples/to_ubjson.output"
+    {i7compactTi6schemaF}
+    [i1i2i3i4i5i6i7i8]
+    [#i8i1i2i3i4i5i6i7i8
+    [$i#i812345678
+    
     ```
 
 ## Deserialization
@@ -145,11 +213,35 @@ The library maps UBJSON types to JSON value types as follows:
 ??? example "Example: deserialize a JSON value from UBJSON"
 
     ```cpp
-    --8<-- "examples/from_ubjson.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create byte vector
+        std::vector<std::uint8_t> v = {0x7B, 0x69, 0x07, 0x63, 0x6F, 0x6D, 0x70, 0x61,
+                                       0x63, 0x74, 0x54, 0x69, 0x06, 0x73, 0x63, 0x68,
+                                       0x65, 0x6D, 0x61, 0x69, 0x00, 0x7D
+                                      };
+    
+        // deserialize it with UBJSON
+        json j = json::from_ubjson(v);
+    
+        // print the deserialized JSON value
+        std::cout << std::setw(2) << j << std::endl;
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/from_ubjson.output"
+    {
+      "compact": true,
+      "schema": 0
+    }
+    
     ```

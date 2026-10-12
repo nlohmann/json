@@ -138,13 +138,74 @@ overload (3).
     associative containers such as `std::map<std::string, json>`.
         
     ```cpp
-    --8<-- "examples/get__ValueType_const.cpp"
+    #include <iostream>
+    #include <map>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON value with different types
+        json json_types =
+        {
+            {"boolean", true},
+            {
+                "number", {
+                    {"integer", 42},
+                    {"floating-point", 17.23}
+                }
+            },
+            {"string", "Hello, world!"},
+            {"array", {1, 2, 3, 4, 5}},
+            {"null", nullptr}
+        };
+    
+        // use explicit conversions
+        auto v1 = json_types["boolean"].get<bool>();
+        auto v2 = json_types["number"]["integer"].get<int>();
+        auto v3 = json_types["number"]["integer"].get<short>();
+        auto v4 = json_types["number"]["floating-point"].get<float>();
+        auto v5 = json_types["number"]["floating-point"].get<int>();
+        auto v6 = json_types["string"].get<std::string>();
+        auto v7 = json_types["array"].get<std::vector<short>>();
+        auto v8 = json_types.get<std::map<std::string, json>>();
+    
+        // print the conversion results
+        std::cout << v1 << '\n';
+        std::cout << v2 << ' ' << v3 << '\n';
+        std::cout << v4 << ' ' << v5 << '\n';
+        std::cout << v6 << '\n';
+    
+        for (auto i : v7)
+        {
+            std::cout << i << ' ';
+        }
+        std::cout << "\n\n";
+    
+        for (auto i : v8)
+        {
+            std::cout << i.first << ": " << i.second << '\n';
+        }
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/get__ValueType_const.output"
+    1
+    42 42
+    17.23 17
+    Hello, world!
+    1 2 3 4 5 
+    
+    array: [1,2,3,4,5]
+    boolean: true
+    null: null
+    number: {"floating-point":17.23,"integer":42}
+    string: "Hello, world!"
+    
     ```
 
 ??? example "Example: (2) explicit conversion to another `basic_json` specialization"
@@ -152,13 +213,32 @@ overload (3).
     The example below shows how a `json` value is converted to an `ordered_json` value using `get<BasicJsonType>()`.
 
     ```cpp
-    --8<-- "examples/get__BasicJsonType.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using ordered_json = nlohmann::ordered_json;
+    
+    int main()
+    {
+        // create a JSON value
+        json j = {{"one", 1}, {"two", 2}, {"three", 3}};
+    
+        // convert to a different basic_json specialization
+        ordered_json oj = j.get<ordered_json>();
+    
+        std::cout << j << '\n';
+        std::cout << oj << '\n';
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/get__BasicJsonType.output"
+    {"one":1,"three":3,"two":2}
+    {"one":1,"three":3,"two":2}
+    
     ```
 
 ??? example "Example: (3) explicit pointer access to the stored value"
@@ -167,13 +247,36 @@ overload (3).
     conversions are made and a `#cpp nullptr` is returned if the value and the requested pointer type does not match.
         
     ```cpp
-    --8<-- "examples/get__PointerType.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON number
+        json value = 17;
+    
+        // explicitly getting pointers
+        auto p1 = value.get<const json::number_integer_t*>();
+        auto p2 = value.get<json::number_integer_t*>();
+        auto p3 = value.get<json::number_integer_t* const>();
+        auto p4 = value.get<const json::number_integer_t* const>();
+        auto p5 = value.get<json::number_float_t*>();
+    
+        // print the pointees
+        std::cout << *p1 << ' ' << *p2 << ' ' << *p3 << ' ' << *p4 << '\n';
+        std::cout << std::boolalpha << (p5 == nullptr) << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/get__PointerType.output"
+    17 17 17 17
+    true
+    
     ```
 
 ## See also

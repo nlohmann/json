@@ -105,13 +105,52 @@ being read.
     The example below shows how a JSON value is constructed by reading a serialization from a stream.
         
     ```cpp
-    --8<-- "examples/operator_deserialize.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <sstream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create stream with serialized JSON
+        std::stringstream ss;
+        ss << R"({
+            "number": 23,
+            "string": "Hello, world!",
+            "array": [1, 2, 3, 4, 5],
+            "boolean": false,
+            "null": null
+        })";
+    
+        // create JSON value and read the serialization from the stream
+        json j;
+        ss >> j;
+    
+        // serialize JSON
+        std::cout << std::setw(2) << j << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_deserialize.output"
+    {
+      "array": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "boolean": false,
+      "null": null,
+      "number": 23,
+      "string": "Hello, world!"
+    }
+    
     ```
 
 ## See also

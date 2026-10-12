@@ -29,11 +29,60 @@ For more information, see [JSON With Commas and Comments (JWCC)](https://nigelta
     When calling `parse` without additional argument, a parse error exception is thrown. If `ignore_trailing_commas` is set to `#!cpp true`, the trailing commas are ignored during parsing:
 
     ```cpp
-    --8<-- "examples/trailing_commas.cpp"
+    #include <iostream>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        std::string s = R"(
+        {
+            "planets": [
+                "Mercury",
+                "Venus",
+                "Earth",
+                "Mars",
+                "Jupiter",
+                "Uranus",
+                "Neptune",
+            ]
+        }
+        )";
+    
+        try
+        {
+            json j = json::parse(s);
+        }
+        catch (json::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    
+        json j = json::parse(s,
+                             /* callback */ nullptr,
+                             /* allow exceptions */ true,
+                             /* ignore_comments */ false,
+                             /* ignore_trailing_commas */ true);
+        std::cout << j.dump(2) << '\n';
+    }
+    
     ```
 
     Output:
     
     ```
-    --8<-- "examples/trailing_commas.output"
+    [json.exception.parse_error.101] parse error at line 11, column 9: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal
+    {
+      "planets": [
+        "Mercury",
+        "Venus",
+        "Earth",
+        "Mars",
+        "Jupiter",
+        "Uranus",
+        "Neptune"
+      ]
+    }
+    
     ```

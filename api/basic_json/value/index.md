@@ -98,6 +98,10 @@ Strong guarantee: if an exception is thrown, there are no changes to any JSON va
 
 ## Notes
 
+`null` members are not missing
+
+The default value is used only if the key (or JSON Pointer) does not exist. A member that exists but is `null` is converted like any other value, so `j.value("k", 0)` throws a [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302) if `"k"` is `null`. See [Access with default value](https://json.nlohmann.me/features/element_access/default_value/index.md) for alternatives.
+
 Return type
 
 The value function is a template, and the return type of the function is determined by the type of the provided default value unless otherwise specified. This can have unexpected effects. In the example below, we store a 64-bit unsigned integer. We get exactly that value when using [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md). However, when we call `value` and provide `0` as default value, then `-1` is returned. This occurs, because `0` has type `int` which overflows when handling the value `18446744073709551615`.
@@ -328,4 +332,4 @@ Output:
 
 1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0. Deleted overload for integral key types added in version 3.13.0 unreleased to reject such calls at compile time instead of causing undefined behavior at runtime.
 1. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2. Fixed in version 3.13.0 unreleased to consistently accept `std::string_view`-convertible keys, as already supported by [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`find`](https://json.nlohmann.me/api/basic_json/find/index.md), and other lookup functions.
-1. Added in version 2.0.2. Extended to work with arrays in version 3.13.0 unreleased, including fixing an issue where resolving `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or `default_value`, as documented).
+1. Added in version 2.0.2. Extended to work with arrays in version 3.13.0 unreleased, including fixing an issue where resolving `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or `default_value`, as documented). Throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) instead of returning `default_value` for a one-character array index that is not a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.

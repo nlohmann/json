@@ -32,13 +32,57 @@ Empty objects and arrays are flattened to `#!json null` and will not be reconstr
     The following code shows how a JSON object is flattened to an object whose keys consist of JSON pointers.
     
     ```cpp
-    --8<-- "examples/flatten.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create JSON value
+        json j =
+        {
+            {"pi", 3.141},
+            {"happy", true},
+            {"name", "Niels"},
+            {"nothing", nullptr},
+            {
+                "answer", {
+                    {"everything", 42}
+                }
+            },
+            {"list", {1, 0, 2}},
+            {
+                "object", {
+                    {"currency", "USD"},
+                    {"value", 42.99}
+                }
+            }
+        };
+    
+        // call flatten()
+        std::cout << std::setw(4) << j.flatten() << '\n';
+    }
+    
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/flatten.output"
+    {
+        "/answer/everything": 42,
+        "/happy": true,
+        "/list/0": 1,
+        "/list/1": 0,
+        "/list/2": 2,
+        "/name": "Niels",
+        "/nothing": null,
+        "/object/currency": "USD",
+        "/object/value": 42.99,
+        "/pi": 3.141
+    }
+    
     ```
 
 ??? example "Example: empty objects and arrays are flattened to `#!json null`"
@@ -47,13 +91,47 @@ Empty objects and arrays are flattened to `#!json null` and will not be reconstr
     `unflatten()` restores them as `#!json null` rather than as empty containers.
 
     ```cpp
-    --8<-- "examples/flatten__empty.cpp"
+    #include <iostream>
+    #include <iomanip>
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+        // create a JSON value with an empty object and an empty array
+        json j =
+        {
+            {"empty_object", json::object()},
+            {"empty_array", json::array()},
+            {"name", "Niels"}
+        };
+    
+        // call flatten()
+        json flattened = j.flatten();
+        std::cout << std::setw(4) << flattened << "\n\n";
+    
+        // the empty containers cannot be restored by unflatten()
+        std::cout << std::setw(4) << flattened.unflatten() << '\n';
+    }
+    
     ```
 
     Output:
 
     ```json
-    --8<-- "examples/flatten__empty.output"
+    {
+        "/empty_array": null,
+        "/empty_object": null,
+        "/name": "Niels"
+    }
+    
+    {
+        "empty_array": null,
+        "empty_object": null,
+        "name": "Niels"
+    }
+    
     ```
 
 ## See also
