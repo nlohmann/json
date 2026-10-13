@@ -11,12 +11,10 @@ template<typename ScalarType>
 bool operator==(ScalarType lhs, const const_reference rhs) noexcept(/* see below */); // (2)
 
 // since C++20
-class basic_json {
-    bool operator==(const_reference rhs) const noexcept;              // (1)
+bool operator==(const_reference rhs) const noexcept;             // (1)
 
-    template<typename ScalarType>
-    bool operator==(ScalarType rhs) const noexcept(/* see below */); // (2)
-};
+template<typename ScalarType>
+bool operator==(ScalarType rhs) const noexcept(/* see below */); // (2)
 ```
 
 1. Compares two JSON values for equality according to the following rules:
