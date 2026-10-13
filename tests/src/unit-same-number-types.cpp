@@ -157,7 +157,10 @@ TEST_CASE_TEMPLATE("same type for number_integer_t and number_unsigned_t", Json,
     {
         const Json source = Json::parse(R"({"a": [1, 2, 3], "b": 4})");
         const Json target = Json::parse(R"({"a": [1, 5], "c": 6})");
+        // GCC 5 crashes with an internal compiler error when instantiating patch_inplace for this type
+#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 6
         CHECK(source.patch(Json::diff(source, target)) == target);
+#endif
         CHECK(source.flatten().unflatten() == source);
     }
 
