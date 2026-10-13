@@ -11072,9 +11072,9 @@ class lexer : public lexer_base<BasicJsonType>
 
     /// contiguous input: try to decode the 4 hex digits following `\\u`
     /// directly from the input buffer via hex_codepoint(), instead of 4 calls
-    /// to get(). On success, advances the adapter and the position counters
-    /// exactly as those 4 get() calls would (a hex digit is never '\n', so
-    /// only the flat counters move) and leaves @a current holding the last of
+    /// to get(). On success, advances the adapter exactly as those 4 get()
+    /// calls would (bulk_scan implies lazy_position, so there are no position
+    /// counters to advance) and leaves @a current holding the last of
     /// the 4 digits, just as the last such get() would; the codepoint is
     /// written to @a out. Makes no state change and returns false - for a
     /// pending unget, fewer than 4 remaining bytes, or any of the 4 bytes not
@@ -11094,9 +11094,6 @@ class lexer : public lexer_base<BasicJsonType>
             return false;
         }
         ia.bulk_skip(4);
-        // a hex digit is never a newline, so only the flat counters advance
-        position.chars_read_total += 4;
-        position.chars_read_current_line += 4;
         current = char_traits<char_type>::to_int_type(raw[3]);
         out = codepoint;
         return true;
