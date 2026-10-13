@@ -42,6 +42,11 @@
 // each of these, not only the forward declarations from json_fwd.hpp, so IWYU's suggestion to
 // drop them (nothing in this file otherwise names the type) would break every downstream
 // translation unit that relies on basic_json<>'s defaults actually being usable.
+// export: client code names what these headers declare (nlohmann::json and ordered_json from
+// json_fwd.hpp, adl_serializer for specializations, json_ref behind brace initialization, the
+// NLOHMANN_DEFINE_* and NLOHMANN_JSON_NAMESPACE_* macros, and the literals at the end of this file), and include analyzers must
+// attribute it to this header, not tell clients to include the internal ones (issue #5812).
+// tests/iwyu_consumer checks this.
 // #include <nlohmann/adl_serializer.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -7533,7 +7538,7 @@ struct adl_serializer
 };
 
 NLOHMANN_JSON_NAMESPACE_END
-// IWYU pragma: keep
+// IWYU pragma: export
 // #include <nlohmann/byte_container_with_subtype.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -7641,7 +7646,7 @@ class byte_container_with_subtype : public BinaryType
 NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/abi_macros.hpp>
-
+// IWYU pragma: export
 // #include <nlohmann/detail/conversions/from_json.hpp>
 // IWYU pragma: keep
 // #include <nlohmann/detail/conversions/to_json.hpp>
@@ -21410,9 +21415,9 @@ class json_ref
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
-
+// IWYU pragma: export
 // #include <nlohmann/detail/macro_scope.hpp>
-
+// IWYU pragma: export
 // #include <nlohmann/detail/meta/detected.hpp>
 
 // #include <nlohmann/detail/string_concat.hpp>
@@ -36209,7 +36214,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #undef NLOHMANN_JSON_LITERAL_OPERATOR
 
 #endif  // INCLUDE_NLOHMANN_JSON_LITERALS_HPP_
-
+// IWYU pragma: export
 #endif
 
 #endif  // INCLUDE_NLOHMANN_JSON_HPP_

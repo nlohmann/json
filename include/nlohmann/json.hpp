@@ -42,9 +42,14 @@
 // each of these, not only the forward declarations from json_fwd.hpp, so IWYU's suggestion to
 // drop them (nothing in this file otherwise names the type) would break every downstream
 // translation unit that relies on basic_json<>'s defaults actually being usable.
-#include <nlohmann/adl_serializer.hpp> // IWYU pragma: keep
+// export: client code names what these headers declare (nlohmann::json and ordered_json from
+// json_fwd.hpp, adl_serializer for specializations, json_ref behind brace initialization, the
+// NLOHMANN_DEFINE_* and NLOHMANN_JSON_NAMESPACE_* macros, and the literals at the end of this file), and include analyzers must
+// attribute it to this header, not tell clients to include the internal ones (issue #5812).
+// tests/iwyu_consumer checks this.
+#include <nlohmann/adl_serializer.hpp> // IWYU pragma: export
 #include <nlohmann/byte_container_with_subtype.hpp>
-#include <nlohmann/detail/abi_macros.hpp>
+#include <nlohmann/detail/abi_macros.hpp> // IWYU pragma: export
 #include <nlohmann/detail/conversions/from_json.hpp> // IWYU pragma: keep
 #include <nlohmann/detail/conversions/to_json.hpp> // IWYU pragma: keep
 #include <nlohmann/detail/exceptions.hpp>
@@ -61,8 +66,8 @@
 #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 #include <nlohmann/detail/json_custom_base_class.hpp>
 #include <nlohmann/detail/json_pointer.hpp>
-#include <nlohmann/detail/json_ref.hpp>
-#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/json_ref.hpp> // IWYU pragma: export
+#include <nlohmann/detail/macro_scope.hpp> // IWYU pragma: export
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
@@ -7795,7 +7800,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 // where needed.
 #ifndef JSON_NO_AUTOMATIC_UDLS
     // NOLINTNEXTLINE(misc-header-include-cycle): json_literals.hpp includes this header
-    #include <nlohmann/json_literals.hpp>
+    #include <nlohmann/json_literals.hpp> // IWYU pragma: export
 #endif
 
 #endif  // INCLUDE_NLOHMANN_JSON_HPP_
