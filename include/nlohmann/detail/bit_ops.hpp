@@ -42,6 +42,25 @@ inline int count_leading_zeros(std::uint64_t x) noexcept
 #endif
 }
 
+/// number of trailing zero bits of x (x != 0)
+inline int count_trailing_zeros(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_ctzll(x);
+#else
+    int n = 0;
+    for (int shift = 32; shift != 0; shift >>= 1)
+    {
+        if ((x << (64 - shift)) == 0)
+        {
+            n += shift;
+            x >>= shift;
+        }
+    }
+    return n;
+#endif
+}
+
 /// the 128-bit product of two 64-bit numbers
 struct uint128_parts
 {

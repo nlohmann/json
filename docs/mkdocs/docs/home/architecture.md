@@ -189,7 +189,7 @@ random-access input of single-byte characters:
   `count_consumed_lines()`, the lexer also derives the read position from the adapter and counts lines only when an
   error needs them, instead of counting characters and lines on every read.
 - `supports_bulk_scan`, `bulk_data()`, `bulk_remaining()`, and `bulk_skip()` let the lexer scan strings directly in
-  contiguous memory, several bytes at a time.
+  contiguous memory, several bytes at a time, and skip the spaces that indent a line in 8-byte steps.
 
 The function `input_adapter` picks the right adapter for the argument passed to `parse`, `accept`, `sax_parse`, or the
 `from_*` functions:

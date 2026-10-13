@@ -1314,3 +1314,76 @@ TEST_CASE("parse error positions are the same for contiguous and stream input")
         CHECK(stream_sax.error == expected);
     }
 }
+
+#if !defined(JSON_NOEXCEPTION)
+TEST_CASE("indentation runs of every length around the 8-byte skip")
+{
+    // contiguous input skips the spaces after a newline 8 bytes at a time (see
+    // lexer::skip_indentation), stream input reads them one by one; results,
+    // byte offsets, and messages must be the same for runs that end anywhere
+    // relative to a word boundary, including at the end of the input
+    const auto parse_result = [](const std::string & input, bool contiguous)
+    {
+        try
+        {
+            if (contiguous)
+            {
+                return json::parse(input.data(), input.data() + input.size(), nullptr, true, true).dump();
+            }
+            std::istringstream is(input);
+            return json::parse(is, nullptr, true, true).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            return std::to_string(e.byte).append(" ").append(e.what());
+        }
+    };
+
+    // replace every '~' in a pattern by an indentation run
+    const auto indented = [](const std::string & pattern, const std::string & indent)
+    {
+        std::string result;
+        for (const char c : pattern)
+        {
+            if (c == '~')
+            {
+                result += indent;
+            }
+            else
+            {
+                result += c;
+            }
+        }
+        return result;
+    };
+
+    const std::vector<std::string> patterns =
+    {
+        "[\n~1,\n~2\n]",
+        "[\n~1,\n~x]",
+        "[\n~1,\n~",
+        "1\n~",
+        "[\n~\t1,\n~\r\n~2]",
+        "[\n~/* c */ 1]",
+        "[\n~1\n~2]",
+    };
+
+    for (std::size_t n = 0; n <= 33; ++n)
+    {
+        const std::string indent(n, ' ');
+        for (const auto& pattern : patterns)
+        {
+            const std::string input = indented(pattern, indent);
+            CAPTURE(n)
+            CAPTURE(input)
+            const std::string expected = parse_result(input, false);
+            CHECK(parse_result(input, true) == expected);
+            CHECK(json::accept(input.data(), input.data() + input.size(), true) == json::accept(input, true));
+        }
+    }
+
+    // and against fixed expectations, in case both paths broke the same way
+    CHECK(parse_result(indented("[\n~x]", std::string(16, ' ')), true) == "19 [json.exception.parse_error.101] parse error at line 2, column 17: syntax error while parsing value - invalid literal; last read: '[<U+000A>                x'");
+    CHECK(parse_result(indented("[\n~1]", std::string(17, ' ')), true) == "[1]");
+}
+#endif

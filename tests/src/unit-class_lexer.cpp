@@ -938,6 +938,10 @@ TEST_CASE("Eisel-Lemire float conversion")
             const int k = i % 64;
             const std::uint64_t x = (std::uint64_t{1} << k) | (a & ((std::uint64_t{1} << k) - 1));
             CHECK(nlohmann::detail::count_leading_zeros(x) == 63 - k);
+
+            // the mirror image: bit k set, arbitrary bits above it
+            const std::uint64_t y = (std::uint64_t{1} << k) | (k == 63 ? 0 : (a << (k + 1)));
+            CHECK(nlohmann::detail::count_trailing_zeros(y) == k);
         }
     }
 

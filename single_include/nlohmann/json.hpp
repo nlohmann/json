@@ -8925,30 +8925,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
-
-// #include <nlohmann/detail/input/number_parse.hpp>
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.12.0
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2021 The fast_float authors <https://github.com/fastfloat/fast_float>
-// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-
-
-#include <array> // array
-#include <cfloat> // FLT_EVAL_METHOD
-#include <clocale> // localeconv
-#include <cstddef> // size_t
-#include <cstdint> // int64_t, uint64_t
-#include <cstdlib> // strtof, strtod, strtold
-#include <cstring> // memcpy
-#include <limits> // numeric_limits
-#include <string> // string
-
 // #include <nlohmann/detail/bit_ops.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -8989,6 +8965,25 @@ inline int count_leading_zeros(std::uint64_t x) noexcept
         {
             n += shift;
             x <<= shift;
+        }
+    }
+    return n;
+#endif
+}
+
+/// number of trailing zero bits of x (x != 0)
+inline int count_trailing_zeros(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_ctzll(x);
+#else
+    int n = 0;
+    for (int shift = 32; shift != 0; shift >>= 1)
+    {
+        if ((x << (64 - shift)) == 0)
+        {
+            n += shift;
+            x >>= shift;
         }
     }
     return n;
@@ -9041,6 +9036,32 @@ inline std::uint64_t read_eight_bytes(const char* p) noexcept
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+// #include <nlohmann/detail/input/input_adapters.hpp>
+
+// #include <nlohmann/detail/input/number_parse.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2021 The fast_float authors <https://github.com/fastfloat/fast_float>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <array> // array
+#include <cfloat> // FLT_EVAL_METHOD
+#include <clocale> // localeconv
+#include <cstddef> // size_t
+#include <cstdint> // int64_t, uint64_t
+#include <cstdlib> // strtof, strtod, strtold
+#include <cstring> // memcpy
+#include <limits> // numeric_limits
+#include <string> // string
+
+// #include <nlohmann/detail/bit_ops.hpp>
 
 // #include <nlohmann/detail/input/pow5_table.hpp>
 //     __ _____ _____ _____
@@ -12500,10 +12521,52 @@ scan_number_done:
         // into one that reloads the pointer from memory every character
         do
         {
+            if (current == '\n')
+            {
+                skip_indentation(std::integral_constant<bool, bulk_scan> {});
+            }
             get_ignoring_pending_unget();
         }
         while (current_is_whitespace());
     }
+
+    /*!
+    @brief contiguous input: skip the space indentation that follows a newline
+           8 bytes at a time
+
+    Pretty-printed JSON indents every line with a run of spaces, which the loop
+    in skip_whitespace() would otherwise read one character at a time. The
+    spaces are skipped 8 bytes at a time; the last 7 bytes of the input and any
+    other whitespace are left to that loop. Skipping bypasses get(), which is
+    fine because bulk_scan implies lazy_position: the position is derived from
+    the adapter, not counted per character.
+    */
+    void skip_indentation(std::true_type /*bulk*/)
+    {
+        JSON_ASSERT(!next_unget);
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining < 8)
+        {
+            return;
+        }
+        const char* const data = reinterpret_cast<const char*>(ia.bulk_data());
+        std::size_t pos = 0;
+        for (; pos + 8 <= remaining; pos += 8)
+        {
+            // little-endian, so the first byte is the lowest
+            const std::uint64_t non_space = read_eight_bytes(data + pos) ^ 0x2020202020202020ull;
+            if (non_space != 0)
+            {
+                // skip the spaces before the first other byte of this word
+                pos += static_cast<std::size_t>(count_trailing_zeros(non_space)) / 8;
+                break;
+            }
+        }
+        ia.bulk_skip(pos);
+    }
+
+    /// streaming input: no bulk fast path
+    void skip_indentation(std::false_type /*bulk*/) const noexcept {}
 
     token_type scan()
     {
