@@ -185,7 +185,9 @@ The lexer detects two optional extensions at compile time. Only `iterator_input_
 random-access input of single-byte characters:
 
 - `supports_seek`, `get_consumed_count()`, and `copy_consumed_range()` let the lexer reconstruct already consumed input
-  for error messages instead of copying every character it reads.
+  for error messages instead of copying every character it reads. With `get_read_count()` and
+  `count_consumed_lines()`, the lexer also derives the read position from the adapter and counts lines only when an
+  error needs them, instead of counting characters and lines on every read.
 - `supports_bulk_scan`, `bulk_data()`, `bulk_remaining()`, and `bulk_skip()` let the lexer scan strings directly in
   contiguous memory, several bytes at a time.
 

@@ -217,7 +217,7 @@ struct diagnostic_positions
         {
             // Lexer has read the first character of the container, so
             // subtract 1 from the position to get the correct start position.
-            v.start_position = lexer->get_position() - 1;
+            v.start_position = lexer->get_chars_read_total() - 1;
         }
     }
 
@@ -231,7 +231,7 @@ struct diagnostic_positions
         if (lexer)
         {
             // Lexer's position is past the closing brace or bracket, so set that as the end position.
-            v.end_position = lexer->get_position();
+            v.end_position = lexer->get_chars_read_total();
         }
     }
 
@@ -247,7 +247,7 @@ struct diagnostic_positions
             // Lexer has read past the current field value, so set the end position to the current position.
             // The start position will be set below based on the length of the string representation
             // of the value.
-            v.end_position = lexer->get_position();
+            v.end_position = lexer->get_chars_read_total();
 
             switch (v.type())
             {

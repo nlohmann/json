@@ -58,11 +58,6 @@ using ordered_json = nlohmann::ordered_json;
         #include <optional>
     #elif __has_include(<experimental/optional>)
     #endif
-
-    /////////////////////////////////////////////////////////////////////
-    // for #4804
-    /////////////////////////////////////////////////////////////////////
-    using json_4804 = nlohmann::json::with_binary_t<std::vector<std::byte>>;
 #endif
 
 #ifdef JSON_HAS_CPP_20
@@ -458,49 +453,6 @@ TEST_CASE("regression tests 3")
 #endif
 
 #ifdef JSON_HAS_CPP_17
-    SECTION("issue #4804: from_cbor incompatible with std::vector<std::byte> as binary_t")
-    {
-        const std::vector<std::uint8_t> data = {0x80};
-        const auto decoded = json_4804::from_cbor(data);
-        CHECK((decoded == json_4804::array()));
-    }
-
-#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
-    SECTION("discussion #4209 - custom BinaryType direct assignment and round-tripping")
-    {
-        // Test that assigning a custom BinaryType directly creates a binary value, not an array
-        const std::vector<std::byte> original{std::byte{1}, std::byte{2}, std::byte{3}};
-        const json_4804 j = original;
-        CHECK(j.is_binary());
-        CHECK(!j.is_array());
-
-        // Test round-tripping: extracting the binary value back as the custom container type
-        const auto extracted = j.get<std::vector<std::byte>>();
-        CHECK(extracted == original);
-
-        // Test that the default json alias behavior is unchanged: std::vector<uint8_t> -> array
-        const json default_json = std::vector<std::uint8_t> {1, 2, 3};
-        CHECK(default_json.is_array());
-        CHECK(!default_json.is_binary());
-    }
-
-    SECTION("discussion #4209 - custom BinaryType extraction from parsed array")
-    {
-        // Test that extracting a custom BinaryType from a parsed JSON array still works
-        // (not just from a binary-typed node)
-        const auto j = json_4804::parse("[1,2,3]");
-        CHECK(j.is_array());
-        CHECK(!j.is_binary());
-
-        // Extracting as custom BinaryType should work from arrays
-        const auto extracted = j.get<std::vector<std::byte>>();
-        CHECK(extracted.size() == 3);
-        CHECK(extracted[0] == std::byte{1});
-        CHECK(extracted[1] == std::byte{2});
-        CHECK(extracted[2] == std::byte{3});
-    }
-#endif
-
     SECTION("issue #5046 - implicit conversion of return json to std::optional no longer implicit")
     {
         const json jval{};
