@@ -7963,12 +7963,12 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // min
+#include <algorithm> // count, find, min
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
 #include <cstring> // strlen
-#include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
+#include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next, reverse_iterator
 #include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
@@ -8257,6 +8257,7 @@ class iterator_input_adapter
             return result;
         }
 
+        ++eof_reads;
         return char_traits<char_type>::eof();
     }
 
@@ -8264,6 +8265,26 @@ class iterator_input_adapter
     std::size_t get_consumed_count() const
     {
         return static_cast<std::size_t>(std::distance(begin, current));
+    }
+
+    // number of get_character() calls so far, including those that returned
+    // EOF; the lexer derives its position from it (see lexer::lazy_position)
+    std::size_t get_read_count() const
+    {
+        return get_consumed_count() + eof_reads;
+    }
+
+    // number of newlines in the consumed range [0, last_index); @a line_start
+    // is set to the index after the last of them (0 if there is none); only
+    // valid when supports_seek
+    std::size_t count_consumed_lines(std::size_t last_index, std::size_t& line_start) const
+    {
+        const auto to = std::next(begin, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(last_index));
+        const auto newline = char_traits<char_type>::to_char_type('\n');
+        using reverse_it = std::reverse_iterator<IteratorType>;
+        const auto last_newline = std::find(reverse_it(to), reverse_it(begin), newline);
+        line_start = static_cast<std::size_t>(std::distance(begin, last_newline.base()));
+        return static_cast<std::size_t>(std::count(begin, last_newline.base(), newline));
     }
 
     // append the already-consumed characters in the half-open range
@@ -8382,6 +8403,8 @@ class iterator_input_adapter
     IteratorType begin;
     IteratorType current;
     SentinelType end;
+    /// number of get_character() calls that returned EOF
+    std::size_t eof_reads = 0;
 
     template<typename BaseInputAdapter, size_t T>
     friend struct wide_string_input_helper;
@@ -10584,6 +10607,15 @@ class lexer : public lexer_base<BasicJsonType>
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
 
+    /// whether the read position is derived from the input adapter on demand
+    /// instead of being counted on every scanned character. Seekable adapters
+    /// know how much input they consumed and can revisit it, so
+    /// chars_read_total is the adapter's read count (minus a pending unget),
+    /// and line and column are recomputed from the consumed input only when
+    /// get_position() is called (errors). Counting per character kept two
+    /// increments and a newline check in the hot path of every get().
+    static constexpr bool lazy_position = lazy_token_string;
+
     /// whether a simulated unget can be passed on to the input adapter, which
     /// then leaves the character in the input; see
     /// input_adapter_supports_lookahead
@@ -10593,7 +10625,9 @@ class lexer : public lexer_base<BasicJsonType>
     /// whether string scanning may bulk-consume runs of ordinary characters
     /// directly from a contiguous input buffer (SWAR fast path). This requires
     /// the token to be reconstructible lazily (lazy_token_string), so bypassing
-    /// the per-character capture in get() cannot lose error diagnostics.
+    /// the per-character capture in get() cannot lose error diagnostics. It
+    /// also implies lazy_position, so the bulk paths need not advance the
+    /// position counters.
     static constexpr bool bulk_scan =
         lazy_token_string
         && input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
@@ -10729,10 +10763,6 @@ class lexer : public lexer_base<BasicJsonType>
         }
         token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
         ia.bulk_skip(pos);
-        // the run contains no newline (all bytes < 0x20 are treated as special),
-        // so only the flat character counters advance
-        position.chars_read_total += pos;
-        position.chars_read_current_line += pos;
     }
 
     /// streaming input: no bulk fast path
@@ -11965,8 +11995,6 @@ scan_number_done:
             if (JSON_HEDLEY_LIKELY(integer_result != token_type::uninitialized))
             {
                 ia.bulk_skip(len - 1);
-                position.chars_read_total += (len - 1);
-                position.chars_read_current_line += (len - 1);
                 return integer_result;
             }
             // The value does not fit an integer, so this token converts as a
@@ -11983,8 +12011,6 @@ scan_number_done:
         decimal_point_position = dot_index;
 
         ia.bulk_skip(len - 1);
-        position.chars_read_total += (len - 1);
-        position.chars_read_current_line += (len - 1);
 
         return convert_number(number_type, mantissa_end);
     }
@@ -12035,7 +12061,7 @@ scan_number_done:
 
 #if JSON_DIAGNOSTIC_POSITIONS
         // the first character of the token has already been read, hence the -1
-        token_start_position = position.chars_read_total - 1;
+        token_start_position = get_chars_read_total() - 1;
 #endif
 
         note_token_start(std::integral_constant<bool, lazy_token_string> {});
@@ -12089,6 +12115,15 @@ scan_number_done:
     /// handled afterwards, in track_after_read(), once `current` is known)
     void advance_position() noexcept
     {
+        advance_position_impl(std::integral_constant<bool, lazy_position> {});
+    }
+
+    /// seekable adapter: the position is derived from the adapter on demand
+    void advance_position_impl(std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: count the character
+    void advance_position_impl(std::false_type /*lazy*/) noexcept
+    {
         ++position.chars_read_total;
         ++position.chars_read_current_line;
     }
@@ -12101,7 +12136,16 @@ scan_number_done:
         // seekable adapters reconstruct the token lazily on error (see
         // get_token_string), so the eager per-character copy is skipped
         capture_char(std::integral_constant<bool, lazy_token_string> {});
+        track_newline(std::integral_constant<bool, lazy_position> {});
+        return current;
+    }
 
+    /// seekable adapter: lines are counted on demand in get_position()
+    void track_newline(std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: start a new line after reading a newline
+    void track_newline(std::false_type /*lazy*/) noexcept
+    {
         if (current == '\n')
         {
             ++position.lines_read;
@@ -12110,8 +12154,6 @@ scan_number_done:
             chars_read_before_newline = position.chars_read_current_line;
             position.chars_read_current_line = 0;
         }
-
-        return current;
     }
 
     /*!
@@ -12155,12 +12197,22 @@ scan_number_done:
     We implement unget by setting variable next_unget to true. The input is not
     changed - we just simulate ungetting by modifying chars_read_total,
     chars_read_current_line, and token_string. The next call to get() will
-    behave as if the unget character is read again.
+    behave as if the unget character is read again. With lazy_position, the
+    pending next_unget is all get_chars_read_total() needs.
     */
     void unget()
     {
         next_unget = true;
+        unget_position(std::integral_constant<bool, lazy_position> {});
+        uncapture_char(std::integral_constant<bool, lazy_token_string> {});
+    }
 
+    /// seekable adapter: get_chars_read_total() accounts for next_unget
+    void unget_position(std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: step the counters back over the ungotten character
+    void unget_position(std::false_type /*lazy*/) noexcept
+    {
         --position.chars_read_total;
 
         // in case we "unget" a newline, we have to also decrement the lines_read
@@ -12183,8 +12235,6 @@ scan_number_done:
         {
             --position.chars_read_current_line;
         }
-
-        uncapture_char(std::integral_constant<bool, lazy_token_string> {});
     }
 
     /// adapter without lookahead: nothing to do (see release_lookahead)
@@ -12255,10 +12305,21 @@ scan_number_done:
     // diagnostics
     /////////////////////
 
-    /// return position of last read token
-    constexpr position_t get_position() const noexcept
+    /*!
+    @brief return the number of characters read so far
+
+    Unlike get_position(), this is O(1) for all adapters, so it may be called
+    for every value (JSON_DIAGNOSTIC_POSITIONS).
+    */
+    std::size_t get_chars_read_total() const noexcept
     {
-        return position;
+        return get_chars_read_total_impl(std::integral_constant<bool, lazy_position> {});
+    }
+
+    /// return position of last read token
+    position_t get_position() const
+    {
+        return get_position_impl(std::integral_constant<bool, lazy_position> {});
     }
 
     /*!
@@ -12295,6 +12356,43 @@ scan_number_done:
     }
 #endif
 
+  private:
+    /// seekable adapter: every get() either read from the adapter (including
+    /// reads at EOF, which get() counts as characters as well) or replayed an
+    /// ungotten character, so the count is the adapter's read count minus a
+    /// still pending unget
+    std::size_t get_chars_read_total_impl(std::true_type /*lazy*/) const noexcept
+    {
+        return ia.get_read_count() - (next_unget ? 1u : 0u);
+    }
+
+    /// streaming adapter: the counter is maintained by get() and unget()
+    std::size_t get_chars_read_total_impl(std::false_type /*lazy*/) const noexcept
+    {
+        return position.chars_read_total;
+    }
+
+    /// seekable adapter: count the lines in the consumed input; O(input read
+    /// so far), but only called on errors
+    position_t get_position_impl(std::true_type /*lazy*/) const
+    {
+        position_t result;
+        result.chars_read_total = get_chars_read_total();
+        // reads at EOF count as characters but are not part of the input
+        const std::size_t consumed = (std::min)(result.chars_read_total, ia.get_consumed_count());
+        std::size_t line_start = 0;
+        result.lines_read = ia.count_consumed_lines(consumed, line_start);
+        result.chars_read_current_line = result.chars_read_total - line_start;
+        return result;
+    }
+
+    /// streaming adapter: the position is maintained by get() and unget()
+    position_t get_position_impl(std::false_type /*lazy*/) const noexcept
+    {
+        return position;
+    }
+
+  public:
     /// seekable adapter: rebuild the last read token from the input on demand
     const std::vector<char_type>& collect_token_chars(std::vector<char_type>& out, std::true_type /*lazy*/) const
     {
@@ -12410,7 +12508,7 @@ scan_number_done:
     token_type scan()
     {
         // initially, skip the BOM
-        if (position.chars_read_total == 0 && !skip_bom())
+        if (get_chars_read_total() == 0 && !skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
             return token_type::parse_error;
@@ -12437,7 +12535,7 @@ scan_number_done:
     token_type scan_expecting(token_type expected_type)
     {
         JSON_ASSERT(expected_type == token_type::name_separator || expected_type == token_type::value_separator);
-        JSON_ASSERT(position.chars_read_total > 0);
+        JSON_ASSERT(get_chars_read_total() > 0);
         const char_int_type expected_char = static_cast<unsigned char>((expected_type == token_type::name_separator) ? ':' : ',');
         skip_whitespace();
         if (JSON_HEDLEY_LIKELY(current == expected_char))
@@ -12791,7 +12889,7 @@ struct diagnostic_positions
         {
             // Lexer has read the first character of the container, so
             // subtract 1 from the position to get the correct start position.
-            v.start_position = lexer->get_position() - 1;
+            v.start_position = lexer->get_chars_read_total() - 1;
         }
     }
 
@@ -12805,7 +12903,7 @@ struct diagnostic_positions
         if (lexer)
         {
             // Lexer's position is past the closing brace or bracket, so set that as the end position.
-            v.end_position = lexer->get_position();
+            v.end_position = lexer->get_chars_read_total();
         }
     }
 
@@ -12821,7 +12919,7 @@ struct diagnostic_positions
             // Lexer has read past the current field value, so set the end position to the current position.
             // The start position will be set below based on the length of the string representation
             // of the value.
-            v.end_position = lexer->get_position();
+            v.end_position = lexer->get_chars_read_total();
 
             switch (v.type())
             {
@@ -18664,7 +18762,7 @@ class parser
                     }
                     case token_type::end_of_input:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(m_lexer.get_position().chars_read_total == 1))
+                        if (JSON_HEDLEY_UNLIKELY(m_lexer.get_chars_read_total() == 1))
                         {
                             return syntax_error(*sax, "attempting to parse an empty input; check that your input string or stream contains the expected JSON");
                         }
@@ -18814,8 +18912,10 @@ class parser
     {
         // MSVC 2015 reports C4100 (unreferenced parameter) when SAX::parse_error is static
         static_cast<void>(sax);
-        return sax.parse_error(m_lexer.get_position(), m_lexer.get_token_string(),
-                               parse_error::create(exception_id::syntax_error, m_lexer.get_position(), message, nullptr));
+        // computing the position is O(input read so far) for seekable input
+        const position_t position = m_lexer.get_position();
+        return sax.parse_error(position, m_lexer.get_token_string(),
+                               parse_error::create(exception_id::syntax_error, position, message, nullptr));
     }
 
     std::string exception_message(const token_type expected, const std::string& context)

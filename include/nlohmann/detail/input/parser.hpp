@@ -370,7 +370,7 @@ class parser
                     }
                     case token_type::end_of_input:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(m_lexer.get_position().chars_read_total == 1))
+                        if (JSON_HEDLEY_UNLIKELY(m_lexer.get_chars_read_total() == 1))
                         {
                             return syntax_error(*sax, "attempting to parse an empty input; check that your input string or stream contains the expected JSON");
                         }
@@ -520,8 +520,10 @@ class parser
     {
         // MSVC 2015 reports C4100 (unreferenced parameter) when SAX::parse_error is static
         static_cast<void>(sax);
-        return sax.parse_error(m_lexer.get_position(), m_lexer.get_token_string(),
-                               parse_error::create(exception_id::syntax_error, m_lexer.get_position(), message, nullptr));
+        // computing the position is O(input read so far) for seekable input
+        const position_t position = m_lexer.get_position();
+        return sax.parse_error(position, m_lexer.get_token_string(),
+                               parse_error::create(exception_id::syntax_error, position, message, nullptr));
     }
 
     std::string exception_message(const token_type expected, const std::string& context)

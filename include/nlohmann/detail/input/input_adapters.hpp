@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include <algorithm> // min
+#include <algorithm> // count, find, min
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
 #include <cstring> // strlen
-#include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
+#include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next, reverse_iterator
 #include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
@@ -297,6 +297,7 @@ class iterator_input_adapter
             return result;
         }
 
+        ++eof_reads;
         return char_traits<char_type>::eof();
     }
 
@@ -304,6 +305,26 @@ class iterator_input_adapter
     std::size_t get_consumed_count() const
     {
         return static_cast<std::size_t>(std::distance(begin, current));
+    }
+
+    // number of get_character() calls so far, including those that returned
+    // EOF; the lexer derives its position from it (see lexer::lazy_position)
+    std::size_t get_read_count() const
+    {
+        return get_consumed_count() + eof_reads;
+    }
+
+    // number of newlines in the consumed range [0, last_index); @a line_start
+    // is set to the index after the last of them (0 if there is none); only
+    // valid when supports_seek
+    std::size_t count_consumed_lines(std::size_t last_index, std::size_t& line_start) const
+    {
+        const auto to = std::next(begin, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(last_index));
+        const auto newline = char_traits<char_type>::to_char_type('\n');
+        using reverse_it = std::reverse_iterator<IteratorType>;
+        const auto last_newline = std::find(reverse_it(to), reverse_it(begin), newline);
+        line_start = static_cast<std::size_t>(std::distance(begin, last_newline.base()));
+        return static_cast<std::size_t>(std::count(begin, last_newline.base(), newline));
     }
 
     // append the already-consumed characters in the half-open range
@@ -422,6 +443,8 @@ class iterator_input_adapter
     IteratorType begin;
     IteratorType current;
     SentinelType end;
+    /// number of get_character() calls that returned EOF
+    std::size_t eof_reads = 0;
 
     template<typename BaseInputAdapter, size_t T>
     friend struct wide_string_input_helper;
