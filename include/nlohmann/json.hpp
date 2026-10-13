@@ -74,7 +74,7 @@
 #include <nlohmann/detail/output/serializer.hpp>
 #include <nlohmann/detail/recursion_depth_limit.hpp>
 #include <nlohmann/detail/value_t.hpp>
-#include <nlohmann/json_fwd.hpp>
+#include <nlohmann/json_fwd.hpp> // IWYU pragma: export
 #include <nlohmann/ordered_map.hpp> // IWYU pragma: keep
 #include <nlohmann/thirdparty/hedley/hedley.hpp>
 
