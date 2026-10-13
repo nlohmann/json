@@ -4687,6 +4687,22 @@ struct is_compatible_integer_type
     : is_compatible_integer_type_impl<RealIntegerType,
       CompatibleNumberIntegerType> {};
 
+// whether to_json() stores an integer of type CompatibleNumberIntegerType as
+// number_integer
+template<typename BasicJsonType, typename CompatibleNumberIntegerType, typename = void>
+struct is_compatible_number_integer_type
+    : is_compatible_integer_type<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType> {};
+
+// if number_unsigned_t is the same type as number_integer_t, unsigned integers
+// are stored as number_integer as well (#2573)
+template<typename BasicJsonType, typename CompatibleNumberIntegerType>
+struct is_compatible_number_integer_type < BasicJsonType, CompatibleNumberIntegerType,
+           enable_if_t < std::is_same<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>::value&&
+           std::is_integral<CompatibleNumberIntegerType>::value&&
+           std::is_unsigned<CompatibleNumberIntegerType>::value&&
+           !std::is_same<bool, CompatibleNumberIntegerType>::value >>
+           : std::is_constructible<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType> {};
+
 template<typename BasicJsonType, typename CompatibleType, typename = void>
 struct is_compatible_type_impl: std::false_type {};
 
@@ -5023,6 +5039,20 @@ constexpr bool value_in_range_of(T val)
 
 template<bool Value>
 using bool_constant = std::integral_constant<bool, Value>;
+
+// Stands in for number_unsigned_t in overload sets if it is the same type as
+// number_integer_t, so that the unsigned overloads do not collide with the
+// integer ones. Never constructed. Such a basic_json stores every integer as
+// number_integer (#2573).
+struct same_as_number_integer_type {};
+
+// number_unsigned_t of BasicJsonType, or same_as_number_integer_type if it is
+// the same type as number_integer_t
+template<typename BasicJsonType>
+using number_unsigned_overload_t = typename std::conditional <
+                                   std::is_same<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>::value,
+                                   same_as_number_integer_type,
+                                   typename BasicJsonType::number_unsigned_t >::type;
 
 ///////////////////////////////////////////////////////////////////////////////
 // is_c_string
@@ -5846,7 +5876,7 @@ inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_flo
 }
 
 template<typename BasicJsonType>
-inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_unsigned_t& val)
+inline void from_json(const BasicJsonType& j, number_unsigned_overload_t<BasicJsonType>& val)
 {
     get_arithmetic_value(j, val);
 }
@@ -7250,14 +7280,14 @@ inline void to_json(BasicJsonType& j, FloatType val) noexcept
 }
 
 template<typename BasicJsonType, typename CompatibleNumberUnsignedType,
-         enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t, CompatibleNumberUnsignedType>::value, int> = 0>
+         enable_if_t<is_compatible_integer_type<number_unsigned_overload_t<BasicJsonType>, CompatibleNumberUnsignedType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
 {
     external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename BasicJsonType::number_unsigned_t>(val));
 }
 
 template<typename BasicJsonType, typename CompatibleNumberIntegerType,
-         enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType>::value, int> = 0>
+         enable_if_t<is_compatible_number_integer_type<BasicJsonType, CompatibleNumberIntegerType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
 {
     external_constructor<value_t::number_integer>::construct(j, static_cast<typename BasicJsonType::number_integer_t>(val));
@@ -9065,6 +9095,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
+#include <type_traits> // is_signed, true_type, false_type
 
 // #include <nlohmann/detail/bit_ops.hpp>
 
@@ -9466,6 +9497,20 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
+// whether an integer of a signed type is negative; the overload for other types
+// avoids comparing an unsigned value with zero
+template<typename NumberType>
+constexpr bool is_negative_integer(NumberType x, std::true_type /*is_signed*/) noexcept
+{
+    return x < 0;
+}
+
+template<typename NumberType>
+constexpr bool is_negative_integer(NumberType /*unused*/, std::false_type /*is_signed*/) noexcept
+{
+    return false;
+}
+
 /*!
 @brief fast integer parser for an already-validated unsigned integer
 
@@ -9499,8 +9544,10 @@ bool parse_integer_unsigned(const char* first, const char* last, NumberUnsignedT
         x = (x * 10u) + digit;
     }
     value = static_cast<NumberUnsignedType>(x);
-    // reject values that do not round-trip into a narrower NumberUnsignedType
-    return static_cast<std::uint64_t>(value) == x;
+    // reject values that do not round-trip into a narrower NumberUnsignedType,
+    // and values that wrap around to negative numbers if it is a signed type
+    // (number_unsigned_t may be the same type as number_integer_t, #2573)
+    return static_cast<std::uint64_t>(value) == x && !is_negative_integer(value, std::is_signed<NumberUnsignedType>());
 }
 
 /*!
@@ -22122,7 +22169,7 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                write_cbor_head(0x00, j.m_data.m_value.number_unsigned);
+                write_cbor_head(0x00, conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
                 break;
             }
 
@@ -23502,7 +23549,7 @@ class binary_writer
                 return calc_bson_integer_size(j.m_data.m_value.number_integer);
 
             case value_t::number_unsigned:
-                return calc_bson_unsigned_size(j.m_data.m_value.number_unsigned);
+                return calc_bson_unsigned_size(conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
 
             case value_t::string:
                 return calc_bson_string_size(*j.m_data.m_value.string, j);
@@ -23544,7 +23591,7 @@ class binary_writer
                 return write_bson_integer(name, j.m_data.m_value.number_integer);
 
             case value_t::number_unsigned:
-                return write_bson_unsigned(name, j.m_data.m_value.number_unsigned);
+                return write_bson_unsigned(name, conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
 
             case value_t::string:
                 return write_bson_string(name, *j.m_data.m_value.string);
@@ -26364,6 +26411,12 @@ class serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    /// type of the absolute value of an integer: number_unsigned_t, or its
+    /// unsigned counterpart if it is signed (it may be number_integer_t, #2573)
+    using number_magnitude_t = typename std::conditional <
+                               std::is_integral<number_unsigned_t>::value && std::is_signed<number_unsigned_t>::value,
+                               std::make_unsigned<number_unsigned_t>,
+                               std::enable_if<true, number_unsigned_t >>::type::type;
     using binary_char_t = typename BasicJsonType::binary_t::value_type;
 
   public:
@@ -27542,7 +27595,7 @@ class serializer
     @param[in] x  unsigned integer number to count its digits
     @return    number of decimal digits
     */
-    unsigned int count_digits(number_unsigned_t x) noexcept
+    unsigned int count_digits(number_magnitude_t x) noexcept
     {
         unsigned int n_digits = 1;
         for (;;)
@@ -27720,7 +27773,7 @@ class serializer
         // use a pointer to fill the buffer
         auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto)
 
-        number_unsigned_t abs_value;
+        number_magnitude_t abs_value;
 
         unsigned int n_chars{};
 
@@ -27734,7 +27787,7 @@ class serializer
         }
         else
         {
-            abs_value = static_cast<number_unsigned_t>(x);
+            abs_value = static_cast<number_magnitude_t>(x);
             n_chars = count_digits(abs_value);
         }
 
@@ -27878,17 +27931,6 @@ class serializer
     }
 
     /*
-     * Overload to make the compiler happy while it is instantiating
-     * dump_integer for number_unsigned_t.
-     * Must never be called.
-     */
-    number_unsigned_t remove_sign(number_unsigned_t x)
-    {
-        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-        return x; // LCOV_EXCL_LINE
-    }
-
-    /*
      * Helper function for dump_integer
      *
      * This function takes a negative signed integer and returns its absolute
@@ -27897,10 +27939,10 @@ class serializer
      * absolute values of INT_MIN and INT_MAX are usually not the same. See
      * #1708 for details.
      */
-    number_unsigned_t remove_sign(number_integer_t x) noexcept
+    number_magnitude_t remove_sign(number_integer_t x) noexcept
     {
         JSON_ASSERT(x < 0);
-        return static_cast<number_unsigned_t>(-(x + 1)) + 1;
+        return static_cast<number_magnitude_t>(-(x + 1)) + 1;
     }
 
   private:
@@ -28784,7 +28826,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                   "NumberUnsignedType must be at least as wide as NumberIntegerType, "
                   "because it has to hold the absolute value of every NumberIntegerType value");
 
+    // NumberUnsignedType may be the same type as NumberIntegerType (#2573), but
+    // a repeated NumberFloatType would give overloads that collide, so it gets
+    // a readable diagnostic instead.
+    static_assert(!std::is_same<NumberFloatType, NumberIntegerType>::value && !std::is_same<NumberFloatType, NumberUnsignedType>::value,
+                  "NumberFloatType must be a different type than NumberIntegerType and NumberUnsignedType");
+
   private:
+
+    /// the kind a value of kind @a t is stored as: if number_unsigned_t is the
+    /// same type as number_integer_t, every integer is stored as number_integer
+    /// (#2573); every other kind is stored as itself
+    static constexpr value_t stored_kind(const value_t t) noexcept
+    {
+        return (std::is_same<number_integer_t, number_unsigned_t>::value && t == value_t::number_unsigned) ? value_t::number_integer : t;
+    }
 
     /// helper for exception-safe object creation
     template<typename T, typename... Args>
@@ -28859,8 +28915,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         json_value(boolean_t v) noexcept : boolean(v) {}
         /// constructor for numbers (integer)
         json_value(number_integer_t v) noexcept : number_integer(v) {}
-        /// constructor for numbers (unsigned)
-        json_value(number_unsigned_t v) noexcept : number_unsigned(v) {}
+        /// constructor for numbers (unsigned); takes a placeholder if number_unsigned_t is number_integer_t
+        json_value(detail::number_unsigned_overload_t<basic_json> v) noexcept : number_unsigned(v) {}
         /// constructor for numbers (floating-point)
         json_value(number_float_t v) noexcept : number_float(v) {}
         /// constructor for empty values of a given type
@@ -30465,7 +30521,7 @@ public:
     /// @brief create an empty value with a given type
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(const value_t v)
-        : m_data(v)
+        : m_data(stored_kind(v))
     {
         assert_invariant();
     }
@@ -30546,7 +30602,7 @@ public:
         {
             convert_leaf(val);
         }
-        JSON_ASSERT(m_data.m_type == val.type());
+        JSON_ASSERT(m_data.m_type == stored_kind(val.type()));
 
         set_parents();
         assert_invariant();
@@ -31131,14 +31187,16 @@ public:
         return m_data.m_type == value_t::number_integer ? &m_data.m_value.number_integer : nullptr;
     }
 
-    /// get a pointer to the value (unsigned number)
-    number_unsigned_t* get_impl_ptr(number_unsigned_t* /*unused*/) noexcept
+    /// get a pointer to the value (unsigned number); takes a placeholder if
+    /// number_unsigned_t is number_integer_t (the integer overload handles it then)
+    number_unsigned_t* get_impl_ptr(detail::number_unsigned_overload_t<basic_json>* /*unused*/) noexcept
     {
         return is_number_unsigned() ? &m_data.m_value.number_unsigned : nullptr;
     }
 
-    /// get a pointer to the value (unsigned number)
-    constexpr const number_unsigned_t* get_impl_ptr(const number_unsigned_t* /*unused*/) const noexcept
+    /// get a pointer to the value (unsigned number); takes a placeholder if
+    /// number_unsigned_t is number_integer_t (the integer overload handles it then)
+    constexpr const number_unsigned_t* get_impl_ptr(const detail::number_unsigned_overload_t<basic_json>* /*unused*/) const noexcept
     {
         return is_number_unsigned() ? &m_data.m_value.number_unsigned : nullptr;
     }

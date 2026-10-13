@@ -150,7 +150,7 @@ inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_flo
 }
 
 template<typename BasicJsonType>
-inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_unsigned_t& val)
+inline void from_json(const BasicJsonType& j, number_unsigned_overload_t<BasicJsonType>& val)
 {
     get_arithmetic_value(j, val);
 }

@@ -40,19 +40,19 @@ Requirements are split into two groups:
 
 ## Overview
 
-| Template parameter                                                | Default                           | Notable substitutes                                                   |
-|-------------------------------------------------------------------|-----------------------------------|-----------------------------------------------------------------------|
-| [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map.md), Abseil hash maps |
-| [`ArrayType`](#arraytype)                                         | `std::vector`                     | `#!cpp std::deque`                                                    |
-| [`StringType`](#stringtype)                                       | `std::string`                     | `std::string`-like types over `char`                                  |
-| [`BooleanType`](#booleantype)                                     | `bool`                            | none worth using                                                      |
-| [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype)  | `std::int64_t`                    | any signed integer type                                               |
-| [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) | `std::uint64_t`                   | any unsigned integer type at least as wide as `NumberIntegerType`     |
-| [`NumberFloatType`](#numberfloattype)                             | `double`                          | `float` (`long double`: no binary formats)                            |
-| [`AllocatorType`](#allocatortype)                                 | `std::allocator`                  | stateless allocators                                                  |
-| [`JSONSerializer`](#jsonserializer)                               | `adl_serializer`                  | serializers with the same interface                                   |
-| [`BinaryType`](#binarytype)                                       | `#!cpp std::vector<std::uint8_t>` | `#!cpp std::vector<char>`                                             |
-| [`CustomBaseClass`](#custombaseclass)                             | `void`                            | any default-constructible class                                       |
+| Template parameter                                                | Default                           | Notable substitutes                                                                              |
+|-------------------------------------------------------------------|-----------------------------------|--------------------------------------------------------------------------------------------------|
+| [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map.md), Abseil hash maps                            |
+| [`ArrayType`](#arraytype)                                         | `std::vector`                     | `#!cpp std::deque`                                                                               |
+| [`StringType`](#stringtype)                                       | `std::string`                     | `std::string`-like types over `char`                                                             |
+| [`BooleanType`](#booleantype)                                     | `bool`                            | none worth using                                                                                 |
+| [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype)  | `std::int64_t`                    | any signed integer type                                                                          |
+| [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) | `std::uint64_t`                   | any unsigned integer type at least as wide as `NumberIntegerType`, or `NumberIntegerType` itself |
+| [`NumberFloatType`](#numberfloattype)                             | `double`                          | `float` (`long double`: no binary formats)                                                       |
+| [`AllocatorType`](#allocatortype)                                 | `std::allocator`                  | stateless allocators                                                                             |
+| [`JSONSerializer`](#jsonserializer)                               | `adl_serializer`                  | serializers with the same interface                                                              |
+| [`BinaryType`](#binarytype)                                       | `#!cpp std::vector<std::uint8_t>` | `#!cpp std::vector<char>`                                                                        |
+| [`CustomBaseClass`](#custombaseclass)                             | `void`                            | any default-constructible class                                                                  |
 
 !!! warning "Third-party containers and incomplete types"
 
@@ -499,13 +499,14 @@ Both types are stored **directly** inside `basic_json`'s union.
 ### Always required
 
 - `#!cpp std::is_integral` must be satisfied: `NumberIntegerType` must be a **signed** integer type,
-  `NumberUnsignedType` an **unsigned** integer type. Class types are not supported -- among others, the constructors
-  taking integer values are constrained on `#!cpp std::is_integral`.
+  `NumberUnsignedType` an **unsigned** integer type or the same type as `NumberIntegerType` (see
+  [below](#same-type-for-both)). Class types are not supported -- among others, the constructors taking integer values
+  are constrained on `#!cpp std::is_integral`.
 - Trivially default-constructible, trivially copyable, and trivially destructible (union member).
 - `#!cpp std::numeric_limits` must be specialized for both types.
-- `NumberUnsignedType` must be able to represent the absolute value of every `NumberIntegerType` value; serialization
-  of negative numbers converts the value to `NumberUnsignedType`. A `#!cpp static_assert` requires it to be at least as
-  wide as `NumberIntegerType`, which is what that amounts to for the standard integer types.
+- An unsigned `NumberUnsignedType` must be able to represent the absolute value of every `NumberIntegerType` value;
+  serialization of negative numbers converts the value to `NumberUnsignedType`. A `#!cpp static_assert` requires it to
+  be at least as wide as `NumberIntegerType`, which is what that amounts to for the standard integer types.
 - Both types must fit into the internal 64-character number buffer used by
   [`dump`](../../api/basic_json/dump.md), which is the case for all standard integer types.
 - [`std::hash<basic_json>`](../../api/basic_json/std_hash.md) additionally requires `#!cpp std::hash` specializations.
@@ -517,6 +518,23 @@ is stored as [`number_float_t`](../../api/basic_json/number_float_t.md) instead.
 therefore silently changes parse results rather than raising an error. See
 [Number Handling](number_handling.md) for details.
 
+#### Same type for both
+
+`NumberUnsignedType` may be the same type as `NumberIntegerType`, e.g.
+`#!cpp basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::int64_t, double>`, for code that only
+wants to handle one integer type. Such a `basic_json` stores every integer as
+[`number_integer_t`](../../api/basic_json/number_integer_t.md):
+
+- [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md) is always `#!cpp false`, and
+  [`type()`](../../api/basic_json/type.md) never returns `value_t::number_unsigned`. Constructing a value from
+  `value_t::number_unsigned` gives a `value_t::number_integer` value.
+- Values of unsigned C++ types (e.g., `#!cpp 5u`) are converted to `NumberIntegerType`, so values above its maximum
+  wrap around, as values outside the range of a narrower `NumberIntegerType` already do.
+- The parsers store a non-negative integer above the maximum of `NumberIntegerType` (e.g., `18446744073709551615` for
+  `#!cpp std::int64_t`) as [`number_float_t`](../../api/basic_json/number_float_t.md), like any other integer that does
+  not fit.
+- Converting from a `basic_json` with distinct types turns its unsigned values into `number_integer_t` values.
+
 ### Compatible types
 
 | Type pair                                                                                    | Support                                                                                                                                                                                          |
@@ -525,6 +543,7 @@ therefore silently changes parse results rather than raising an error. See
 | `#!cpp std::int32_t` / `#!cpp std::uint32_t`, `#!cpp long long` / `#!cpp unsigned long long` | full; narrower types change which literals the parser can represent                                                                                                                              |
 | any other pair of standard signed/unsigned integer types                                     | full                                                                                                                                                                                             |
 | class types, enumerations                                                                    | not usable; `#!cpp std::is_integral` must hold                                                                                                                                                   |
+| the same signed integer type for both, e.g. `#!cpp std::int64_t` / `#!cpp std::int64_t`      | full; every integer is stored as `number_integer_t`, see [above](#same-type-for-both)                                                                                                            |
 | `#!cpp bool`, or a type already used for another member of the union                         | not usable; `#!cpp std::is_integral<bool>` is in fact `#!cpp true`, but the `get_impl_ptr` overloads for `boolean_t`, `number_integer_t`, `number_unsigned_t` and `number_float_t` would collide |
 
 ## `NumberFloatType`

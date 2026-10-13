@@ -303,14 +303,14 @@ inline void to_json(BasicJsonType& j, FloatType val) noexcept
 }
 
 template<typename BasicJsonType, typename CompatibleNumberUnsignedType,
-         enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t, CompatibleNumberUnsignedType>::value, int> = 0>
+         enable_if_t<is_compatible_integer_type<number_unsigned_overload_t<BasicJsonType>, CompatibleNumberUnsignedType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
 {
     external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename BasicJsonType::number_unsigned_t>(val));
 }
 
 template<typename BasicJsonType, typename CompatibleNumberIntegerType,
-         enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType>::value, int> = 0>
+         enable_if_t<is_compatible_number_integer_type<BasicJsonType, CompatibleNumberIntegerType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
 {
     external_constructor<value_t::number_integer>::construct(j, static_cast<typename BasicJsonType::number_integer_t>(val));

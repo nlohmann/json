@@ -49,6 +49,12 @@ class serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    /// type of the absolute value of an integer: number_unsigned_t, or its
+    /// unsigned counterpart if it is signed (it may be number_integer_t, #2573)
+    using number_magnitude_t = typename std::conditional <
+                               std::is_integral<number_unsigned_t>::value && std::is_signed<number_unsigned_t>::value,
+                               std::make_unsigned<number_unsigned_t>,
+                               std::enable_if<true, number_unsigned_t >>::type::type;
     using binary_char_t = typename BasicJsonType::binary_t::value_type;
 
   public:
@@ -1227,7 +1233,7 @@ class serializer
     @param[in] x  unsigned integer number to count its digits
     @return    number of decimal digits
     */
-    unsigned int count_digits(number_unsigned_t x) noexcept
+    unsigned int count_digits(number_magnitude_t x) noexcept
     {
         unsigned int n_digits = 1;
         for (;;)
@@ -1405,7 +1411,7 @@ class serializer
         // use a pointer to fill the buffer
         auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto)
 
-        number_unsigned_t abs_value;
+        number_magnitude_t abs_value;
 
         unsigned int n_chars{};
 
@@ -1419,7 +1425,7 @@ class serializer
         }
         else
         {
-            abs_value = static_cast<number_unsigned_t>(x);
+            abs_value = static_cast<number_magnitude_t>(x);
             n_chars = count_digits(abs_value);
         }
 
@@ -1563,17 +1569,6 @@ class serializer
     }
 
     /*
-     * Overload to make the compiler happy while it is instantiating
-     * dump_integer for number_unsigned_t.
-     * Must never be called.
-     */
-    number_unsigned_t remove_sign(number_unsigned_t x)
-    {
-        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-        return x; // LCOV_EXCL_LINE
-    }
-
-    /*
      * Helper function for dump_integer
      *
      * This function takes a negative signed integer and returns its absolute
@@ -1582,10 +1577,10 @@ class serializer
      * absolute values of INT_MIN and INT_MAX are usually not the same. See
      * #1708 for details.
      */
-    number_unsigned_t remove_sign(number_integer_t x) noexcept
+    number_magnitude_t remove_sign(number_integer_t x) noexcept
     {
         JSON_ASSERT(x < 0);
-        return static_cast<number_unsigned_t>(-(x + 1)) + 1;
+        return static_cast<number_magnitude_t>(-(x + 1)) + 1;
     }
 
   private:
