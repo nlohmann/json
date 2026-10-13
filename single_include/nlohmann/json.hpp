@@ -10432,8 +10432,8 @@ void convert_float_locale_aware(StringType& token, std::size_t decimal_point_pos
         {
             std::string buffer(token.data(), token.size());
             buffer.replace(decimal_point_position, 1, decimal_point);
-            strtof_by_type(value, buffer.c_str(), &endptr);
-            complete = endptr == buffer.c_str() + buffer.size();
+            strtof_by_type(value, buffer.data(), &endptr);
+            complete = endptr == buffer.data() + buffer.size();
         }
 
         if (JSON_HEDLEY_LIKELY(complete))
