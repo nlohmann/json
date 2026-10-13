@@ -239,9 +239,9 @@ class lexer : public lexer_base<BasicJsonType>
     /// calls would (bulk_scan implies lazy_position, so there are no position
     /// counters to advance) and leaves @a current holding the last of
     /// the 4 digits, just as the last such get() would; the codepoint is
-    /// written to @a out. Makes no state change and returns false - for a
+    /// written to @a out. Makes no state change and returns false for a
     /// pending unget, fewer than 4 remaining bytes, or any of the 4 bytes not
-    /// being a hex digit - so the caller falls back unchanged to the
+    /// being a hex digit, so the caller falls back unchanged to the
     /// per-character loop, which then reports the same diagnostic (stopping
     /// at the first invalid digit) as before this optimization.
     bool get_codepoint_bulk(std::true_type /*bulk*/, int& out)

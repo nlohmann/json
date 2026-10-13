@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <algorithm> // any_of
 #include <array> // array
 #include <cfloat> // FLT_EVAL_METHOD
 #include <clocale> // localeconv
@@ -260,14 +261,10 @@ inline std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
 /// whether [first, last) contains a digit other than '0'
 inline bool has_nonzero_digit(const char* first, const char* last) noexcept
 {
-    for (; first != last; ++first)
+    return std::any_of(first, last, [](char c) noexcept
     {
-        if (*first != '0')
-        {
-            return true;
-        }
-    }
-    return false;
+        return c != '0';
+    });
 }
 
 /// the value of the validated exponent digits [+-]?[0-9]+ in [first, last),

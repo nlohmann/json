@@ -9076,6 +9076,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <algorithm> // any_of
 #include <array> // array
 #include <cfloat> // FLT_EVAL_METHOD
 #include <clocale> // localeconv
@@ -9706,14 +9707,10 @@ inline std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
 /// whether [first, last) contains a digit other than '0'
 inline bool has_nonzero_digit(const char* first, const char* last) noexcept
 {
-    for (; first != last; ++first)
+    return std::any_of(first, last, [](char c) noexcept
     {
-        if (*first != '0')
-        {
-            return true;
-        }
-    }
-    return false;
+        return c != '0';
+    });
 }
 
 /// the value of the validated exponent digits [+-]?[0-9]+ in [first, last),
@@ -11076,9 +11073,9 @@ class lexer : public lexer_base<BasicJsonType>
     /// calls would (bulk_scan implies lazy_position, so there are no position
     /// counters to advance) and leaves @a current holding the last of
     /// the 4 digits, just as the last such get() would; the codepoint is
-    /// written to @a out. Makes no state change and returns false - for a
+    /// written to @a out. Makes no state change and returns false for a
     /// pending unget, fewer than 4 remaining bytes, or any of the 4 bytes not
-    /// being a hex digit - so the caller falls back unchanged to the
+    /// being a hex digit, so the caller falls back unchanged to the
     /// per-character loop, which then reports the same diagnostic (stopping
     /// at the first invalid digit) as before this optimization.
     bool get_codepoint_bulk(std::true_type /*bulk*/, int& out)
