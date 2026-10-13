@@ -521,8 +521,8 @@ therefore silently changes parse results rather than raising an error. See
 #### Same type for both
 
 `NumberUnsignedType` may be the same type as `NumberIntegerType`, e.g.
-`#!cpp basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::int64_t, double>`, for code that only
-wants to handle one integer type. Such a `basic_json` stores every integer as
+`#!cpp nlohmann::json::with_integers_t<std::int64_t, std::int64_t>` (see
+[`with_integers_t`](../../api/basic_json/with_t.md)), for code that only wants to handle one integer type. Such a `basic_json` stores every integer as
 [`number_integer_t`](../../api/basic_json/number_integer_t.md):
 
 - [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md) is always `#!cpp false`, and

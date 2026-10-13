@@ -13,7 +13,6 @@
 #include <cstdint>
 #include <functional>
 #include <limits>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -24,7 +23,7 @@ namespace
 {
 
 template<typename IntegerType>
-using same_types_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, IntegerType, IntegerType, double>;
+using same_types_json = nlohmann::json::with_integers_t<IntegerType, IntegerType>;
 
 using json64 = same_types_json<std::int64_t>;
 using json32 = same_types_json<std::int32_t>;
