@@ -1252,6 +1252,22 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T, c
     CHECK(l.events.size() == 1);
 }
 
+namespace
+{
+// records the position and message of a parse error; reporting the error via
+// SAX does not throw, so the test also runs with JSON_NOEXCEPTION
+struct SaxErrorRecorder : public SaxEventLogger
+{
+    bool parse_error(std::size_t position, const std::string& /*last_token*/, const json::exception& ex) override
+    {
+        error = std::to_string(position) + " " + ex.what();
+        return false;
+    }
+
+    std::string error {}; // NOLINT(readability-redundant-member-init)
+};
+} // namespace
+
 TEST_CASE("parse error positions are the same for contiguous and stream input")
 {
     // contiguous input derives the position from the input on error, stream
@@ -1283,39 +1299,18 @@ TEST_CASE("parse error positions are the same for contiguous and stream input")
     {
         CAPTURE(c.input)
         const std::string expected = std::to_string(c.byte) + " " + c.message;
-        std::string string_result;
-        std::string pointer_result;
-        std::string stream_result;
-        try
-        {
-            const json j = json::parse(c.input, nullptr, true, true);
-            static_cast<void>(j);
-        }
-        catch (const json::parse_error& e)
-        {
-            string_result = std::to_string(e.byte) + " " + e.what();
-        }
-        try
-        {
-            const json j = json::parse(c.input.data(), c.input.data() + c.input.size(), nullptr, true, true);
-            static_cast<void>(j);
-        }
-        catch (const json::parse_error& e)
-        {
-            pointer_result = std::to_string(e.byte) + " " + e.what();
-        }
-        try
-        {
-            std::istringstream is(c.input);
-            const json j = json::parse(is, nullptr, true, true);
-            static_cast<void>(j);
-        }
-        catch (const json::parse_error& e)
-        {
-            stream_result = std::to_string(e.byte) + " " + e.what();
-        }
-        CHECK(string_result == expected);
-        CHECK(pointer_result == expected);
-        CHECK(stream_result == expected);
+
+        SaxErrorRecorder string_sax;
+        CHECK_FALSE(json::sax_parse(c.input, &string_sax, json::input_format_t::json, true, true));
+        CHECK(string_sax.error == expected);
+
+        SaxErrorRecorder pointer_sax;
+        CHECK_FALSE(json::sax_parse(c.input.data(), c.input.data() + c.input.size(), &pointer_sax, json::input_format_t::json, true, true));
+        CHECK(pointer_sax.error == expected);
+
+        std::istringstream is(c.input);
+        SaxErrorRecorder stream_sax;
+        CHECK_FALSE(json::sax_parse(is, &stream_sax, json::input_format_t::json, true, true));
+        CHECK(stream_sax.error == expected);
     }
 }
