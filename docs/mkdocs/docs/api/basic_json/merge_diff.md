@@ -11,7 +11,7 @@ added members with their new values, and removed members with the value `#!json 
 member by member; any other value that differs, including an array, is replaced as a whole.
 
 For two JSON values `source` and `target`, where `target` contains no object member whose value is `#!json null`, the
-following code always yields `#!cpp true`:
+following code always yields `#!cpp true` (for [`ordered_json`](../ordered_json.md), see the notes below):
 ```cpp
 basic_json patched = source;
 patched.merge_patch(merge_diff(source, target));

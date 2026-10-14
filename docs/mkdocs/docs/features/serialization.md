@@ -52,7 +52,7 @@ with `\uXXXX` sequences, so that the output contains only ASCII characters:
 ```cpp
 json j = "苹果";
 j.dump();               // "苹果"
-j.dump(-1, ' ', true);  // "苹果"
+j.dump(-1, ' ', true);  // "\u82f9\u679c"
 ```
 
 ## Handling invalid UTF-8

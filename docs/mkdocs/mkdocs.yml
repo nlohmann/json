@@ -453,8 +453,12 @@ plugins:
       # package badges (the fetch fails, then reading the missing cache entry
       # raises FileNotFoundError). Readers' browsers are served normally, so
       # leave these badges as external references instead of self-hosting them.
+      # The same goes for img.shields.io, whose version badges time out from
+      # time to time (strict mode turns the failed download into an error) and
+      # would go stale between builds if they were self-hosted anyway.
       assets_exclude:
         - repology.org/*
+        - img.shields.io/*
   - llmstxt:
       markdown_description: >
         JSON for Modern C++ is a C++11 header-only library implementing a JSON

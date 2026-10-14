@@ -281,7 +281,7 @@ As this range is a subrange of the exactly supported range [`INT64_MIN`, `INT64_
 
 > This specification allows implementations to set limits on the range and precision of numbers accepted. Since software that implements IEEE 754-2008 binary64 (double precision) numbers is generally available and widely used, good interoperability can be achieved by implementations that expect no more precision or range than these provide, in the sense that implementations will approximate JSON numbers within the expected precision.
 
-This implementation does exactly follow this approach, as it uses double precision floating-point numbers. Note values smaller than `#!c -1.79769313486232e+308` and values greater than `#!c 1.79769313486232e+308` will be stored as NaN internally and be serialized to `#!json null`.
+This implementation does exactly follow this approach, as it uses double precision floating-point numbers. Note that numbers smaller than `#!c -1.79769313486232e+308` or greater than `#!c 1.79769313486232e+308` are rejected during parsing with [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406). Non-finite values (NaN and infinity) can only be stored by assigning them directly and are serialized to `#!json null`.
 
 ### Storage
 
