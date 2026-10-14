@@ -30,9 +30,9 @@ Requirements are split into two groups:
     diagnosed with dedicated error messages, and violating most of them results in a compiler error somewhere inside
     the library. Four violations are not caught at compile time at all:
 
-    - A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and can silently misparse
-      floating-point numbers, because the lexer may hand the buffer to `#!cpp std::strtod`, which reads up to the
-      terminating null character.
+    - A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and silently misparses numbers
+      stored as a `#!cpp long double` that is not IEEE 754 binary64 (e.g., the 80-bit x87 format), because the lexer
+      hands the buffer to `#!cpp std::strtold`.
     - A stateful [`AllocatorType`](#allocatortype) compiles and silently ignores its state: allocation, deallocation,
       and [`get_allocator()`](../../api/basic_json/get_allocator.md) each use a different default-constructed instance.
     - The two [cross-specialization conversions](#cross-specialization-conversions) below. These abort on an assertion
@@ -353,16 +353,21 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 ### Always required
 
 - A member type `value_type` that is one byte wide and `char`-compatible. The library stores and processes UTF-8
-  encoded `char` data and passes `data()` to functions that take a `#!cpp const char*`, such as `#!cpp std::strtod`.
+  encoded `char` data and passes `data()` to functions that take a `#!cpp const char*`, such as `#!cpp std::strtold`
+  (only used to parse a `#!cpp long double` that is not IEEE 754 binary64, see
+  [`NumberFloatType`](#numberfloattype)).
   `#!cpp std::wstring`, `#!cpp std::u16string`, and `#!cpp std::u32string` are **not** valid choices; see the FAQ on
   [wide string handling](../../home/faq.md#wide-string-handling).
 - Constructors: default, copy, move, from `#!cpp const char*` (which must not be `#!cpp explicit`), from
   `#!cpp (const char*, size_type)`, and from `#!cpp (size_type, char)`; and copy or move assignment.
 - Member functions `size()`, `clear()`, `resize(n, c)`, `data()`, `push_back(char)`, and `operator[]`
   (const and non-const, returning references). `c_str()` and `back()` are **not** required.
-- `data()` must return a pointer to a contiguous, **null-terminated** buffer -- the parser may hand it to
-  `#!cpp std::strtod`, which reads up to the null character. A type whose `data()` is not null-terminated does not
-  fail to compile; it can silently misparse floating-point numbers.
+- `data()` must return a pointer to a contiguous, **null-terminated** buffer. `#!cpp float`, `#!cpp double`, and a
+  `#!cpp long double` that is IEEE 754 binary64 are converted by the library itself and do not depend on this. For any
+  other `NumberFloatType` (a `#!cpp long double` of another format), the parser falls back to `#!cpp std::strtold` when
+  `#!cpp std::from_chars` is not available or declines the token, and `std::strtold` reads up to the null character. A type whose `data()`
+  is not null-terminated does not fail to compile; with such a `NumberFloatType` it can silently misparse
+  floating-point numbers.
 - `append(const char*, size_type)`, used by [`dump`](../../api/basic_json/dump.md), and `append(const StringType&)`,
   used by the CBOR reader for indefinite-length strings. The library's internal string concatenation additionally has
   to append a `#!cpp char` and a `#!cpp const char*`; for each it selects between `append(arg)`, `#!cpp operator+=`,
@@ -541,9 +546,10 @@ therefore silently changes parse results rather than raising an error. See
 
 `NumberFloatType` must be one of `#!cpp float`, `#!cpp double`, or `#!cpp long double`:
 
-- The [parser](../parsing/index.md) converts number literals with `#!cpp std::from_chars` or, as a fallback, with
-  `#!cpp std::strtof`, `#!cpp std::strtod`, or `#!cpp std::strtold`; the library provides overloads for exactly these
-  three types.
+- The [parser](../parsing/index.md) converts number literals to `#!cpp float`, `#!cpp double`, and a
+  `#!cpp long double` that is IEEE 754 binary64 itself; other `#!cpp long double` formats are converted with
+  `#!cpp std::from_chars` where available, or with `#!cpp std::strtold`. The library provides overloads for exactly
+  these three types.
 - [`dump`](../../api/basic_json/dump.md) falls back to `#!cpp std::snprintf` with the `%g` and `%Lg` conversion
   specifiers, for which the library likewise provides only `#!cpp double` and `#!cpp long double` overloads
   (`#!cpp float` is promoted to `#!cpp double`).
