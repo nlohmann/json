@@ -51,9 +51,10 @@ With the default values for `NumberFloatType` (`double`), the default value for 
 > interoperability can be achieved by implementations that expect no more precision or range than these provide, in the
 > sense that implementations will approximate JSON numbers within the expected precision.
 
-This implementation does exactly follow this approach, as it uses double precision floating-point numbers. Note values
-smaller than `-1.79769313486232e+308` and values greater than `1.79769313486232e+308` will be stored as NaN internally
-and be serialized to `null`.
+This implementation does exactly follow this approach, as it uses double precision floating-point numbers. Note that
+numbers smaller than `-1.79769313486232e+308` or greater than `1.79769313486232e+308` are rejected during parsing with
+[`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406). Non-finite values (NaN and infinity) can
+only be stored by assigning them directly and are serialized to `null`.
 
 During deserialization (from JSON text or any of the binary formats), a finite number that does not fit into
 `number_float_t` is rejected with [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406), for
