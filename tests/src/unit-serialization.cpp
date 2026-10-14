@@ -923,66 +923,68 @@ TEST_CASE("serialization boundary values for the string buffer")
     // mid-string once fewer than 13 bytes remain (`string_buffer.size() - bytes
     // < 13`), 13 being one more than the most a single code point can ever
     // write at once (a surrogate pair: two back-to-back "\uXXXX" escapes, 12
-    // bytes). Every write into string_buffer that this check protects happens
-    // in steps of 2 (a simple "\\x" escape) or 6 (one "\uXXXX" unit), so
-    // `bytes` only ever takes even values at the point the check runs - the
-    // tightest values actually reachable are therefore 498 (512 - 498 == 14,
-    // one simple escape away from the threshold) and 500 (512 - 500 == 12,
-    // where the flush fires immediately and resets bytes to 0).
+    // bytes). Characters below 0x60 (control characters, '"' and '\\') are
+    // escaped straight into the write buffer and never reach string_buffer, so
+    // under ensure_ascii it fills in steps of 6 (one "\uXXXX" unit for a
+    // character below U+10000) or 12 (a surrogate pair). With 2-byte characters
+    // such as U+00E4, `bytes` takes multiples of 6 at the point the check runs;
+    // the tightest values reachable are therefore 498 (512 - 498 == 14, after
+    // 83 characters) and 504 (512 - 504 == 8, after 84 characters, where the
+    // flush fires immediately and resets bytes to 0).
 
-    SECTION("a run of 2-byte escapes lands bytes on, and one step past, the flush threshold")
+    SECTION("a run of 6-byte escapes lands bytes on, and one step past, the flush threshold")
     {
         for (const int count :
                 {
-                    249, 250, 251
+                    83, 84, 85
                 })
         {
             CAPTURE(count)
-            const json j = std::string(static_cast<std::size_t>(count), '\n');
+            std::string umlauts;
             std::string expected = "\"";
             for (int i = 0; i < count; ++i)
             {
-                expected += "\\n";
+                umlauts += "\xC3\xA4";
+                expected += "\\u00e4";
             }
             expected += '"';
-            CHECK(j.dump() == expected);
+            CHECK(json(umlauts).dump(-1, ' ', true) == expected);
         }
     }
 
-    SECTION("an ASCII prefix leaves the tightest reachable margin before a 12-byte surrogate pair")
+    SECTION("a prefix leaves the tightest reachable margin before a 12-byte surrogate pair")
     {
         // U+1F600 (the "\xF0\x9F\x98\x80" UTF-8 bytes) is dumped under
         // ensure_ascii as the 12-byte surrogate pair "\ud83d\ude00"; that
         // write happens in a single step with no intermediate flush check, so
         // it is the write most exposed by an off-by-one in the "< 13" guard.
-        // A prefix of 249 newlines leaves exactly 14 bytes of headroom
+        // A prefix of 83 U+00E4 characters leaves exactly 14 bytes of headroom
         // (512 - 498), the smallest margin the guard ever actually allows
-        // into a new code point; 250 newlines instead trigger the guard's own
+        // into a new code point; 84 characters instead trigger the guard's own
         // flush first, so the emoji starts from a freshly emptied (512-byte)
-        // buffer, and 251 repeats that with one more escape already past the
+        // buffer, and 85 repeats that with one more escape already past the
         // reset. Together they cover the margin the guard allows landing on,
         // one step before, and one step after - all must still produce the
         // identical, correct escapes.
         for (const int prefix_count :
                 {
-                    249, 250, 251
+                    83, 84, 85
                 })
         {
             CAPTURE(prefix_count)
-            const std::string prefix(static_cast<std::size_t>(prefix_count), '\n');
-            const std::string emoji = "\xF0\x9F\x98\x80";
-            const json j = prefix + emoji;
-
+            std::string prefix;
             std::string expected_prefix;
             for (int i = 0; i < prefix_count; ++i)
             {
-                expected_prefix += "\\n";
+                prefix += "\xC3\xA4";
+                expected_prefix += "\\u00e4";
             }
+            const std::string emoji = "\xF0\x9F\x98\x80";
+            const json j = prefix + emoji;
 
-            // newline escaping does not depend on ensure_ascii: only the
-            // emoji differs (raw UTF-8 bytes vs. a \u-escaped surrogate pair)
+            // without ensure_ascii, the whole string is copied unchanged
             std::string expected_raw = "\"";
-            expected_raw += expected_prefix;
+            expected_raw += prefix;
             expected_raw += emoji;
             expected_raw += '"';
             std::string expected_ascii = "\"";
@@ -1025,5 +1027,134 @@ TEST_CASE("serialization boundary values for the string buffer")
                 CHECK(j.dump(-1, ' ', true) == '"' + prefix + "\\u00e9" + '"');
             }
         }
+    }
+}
+
+namespace
+{
+// reference escaper for ASCII strings, written independently of the table in
+// serializer::ascii_escapes()
+std::string reference_escape_ascii(const std::string& s, const bool ensure_ascii)
+{
+    std::string result = "\"";
+    for (const char c : s)
+    {
+        const auto byte = static_cast<unsigned char>(c);
+        switch (byte)
+        {
+            case '\b':
+                result += "\\b";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\f':
+                result += "\\f";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            case '"':
+                result += "\\\"";
+                break;
+            case '\\':
+                result += "\\\\";
+                break;
+            default:
+                if (byte < 0x20 || (ensure_ascii && byte == 0x7F))
+                {
+                    // byte < 0x80, so the first two hex digits are 0
+                    const char* const hex = "0123456789abcdef";
+                    result += "\\u00";
+                    result += hex[byte >> 4U];
+                    result += hex[byte & 0x0FU];
+                }
+                else
+                {
+                    result += c;
+                }
+                break;
+        }
+    }
+    result += '"';
+    return result;
+}
+} // namespace
+
+TEST_CASE("characters below 0x60 are escaped from a table straight into the write buffer")
+{
+    SECTION("every ASCII character at every position")
+    {
+        // lengths up to 17 cover the 8-byte strides of the bulk scanner on
+        // both sides of the character, so the scanner stops at it from every
+        // offset
+        for (std::size_t length = 1; length <= 17; ++length)
+        {
+            for (std::size_t pos = 0; pos < length; ++pos)
+            {
+                for (unsigned int c = 0; c < 0x80; ++c)
+                {
+                    std::string s(length, 'a');
+                    s[pos] = static_cast<char>(c);
+                    CAPTURE(length)
+                    CAPTURE(pos)
+                    CAPTURE(c)
+                    const json j = s;
+                    CHECK(j.dump(-1, ' ', false) == reference_escape_ascii(s, false));
+                    CHECK(j.dump(-1, ' ', true) == reference_escape_ascii(s, true));
+                }
+            }
+        }
+    }
+
+    SECTION("runs of escaped characters")
+    {
+        std::string s;
+        for (unsigned int c = 0; c < 0x20; ++c)
+        {
+            s += static_cast<char>(c);
+        }
+        s += R"("\"\)";
+        CHECK(json(s).dump() == reference_escape_ascii(s, false));
+        CHECK(json(s).dump(-1, ' ', true) == reference_escape_ascii(s, true));
+    }
+
+    SECTION("escapes straddle the end of the write buffer")
+    {
+        // the 8-byte store of a table entry needs room for all 8 bytes, even
+        // when the escape itself is shorter; a prefix of k plain characters
+        // shifts the 6-byte escapes across every offset of the 1024-byte
+        // write buffer
+        for (std::size_t k = 0; k < 8; ++k)
+        {
+            CAPTURE(k)
+            const std::string s = std::string(k, 'a') + std::string(400, '\x01');
+            CHECK(json(s).dump() == reference_escape_ascii(s, false));
+            CHECK(json::array({s, s}).dump() == "[" + reference_escape_ascii(s, false) + "," + reference_escape_ascii(s, false) + "]");
+        }
+    }
+
+    SECTION("pending \\u escapes of non-ASCII characters are written first")
+    {
+        // under ensure_ascii, U+00E4 is \u-escaped into the string buffer;
+        // a following escape from the table must not overtake it
+        const json j = "\xC3\xA4\n\xC3\xA4\"\xF0\x9F\x98\x80\\";
+        CHECK(j.dump(-1, ' ', true) == R"("\u00e4\n\u00e4\"\ud83d\ude00\\")");
+        CHECK(j.dump(-1, ' ', false) == "\"\xC3\xA4\\n\xC3\xA4\\\"\xF0\x9F\x98\x80\\\\\"");
+    }
+
+    SECTION("escapes after invalid UTF-8 for every error handler")
+    {
+        const json j = "a\xFF\n\xC3\"";
+        CHECK_THROWS_WITH_AS(utils::ignore_return_value(j.dump()), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0xFF", json::type_error&);
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == R"("a\n\"")");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::ignore) == R"("a\n\"")");
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"a\xEF\xBF\xBD\\n\xEF\xBF\xBD\\\"\"");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == R"("a\ufffd\n\ufffd\"")");
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::keep) == "\"a\xFF\\n\xC3\\\"\"");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::keep) == "\"a\xFF\\n\xC3\\\"\"");
     }
 }
