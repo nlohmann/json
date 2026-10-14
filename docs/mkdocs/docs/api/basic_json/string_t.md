@@ -32,7 +32,7 @@ JSON class into byte-sized characters during deserialization.
 
 ### Default type
 
-With the default values for `StringType` (`std::string`), the default value for `string_t` is `#!cpp std::string`.
+With the default values for `StringType` (`std::string`), the default type for `string_t` is `#!cpp std::string`.
 
 ### Encoding
 
