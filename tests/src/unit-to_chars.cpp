@@ -15,6 +15,24 @@
 #include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
 
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <iomanip>
+#include <limits>
+#include <locale>
+#include <random>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+#if defined(JSON_HAS_CPP_17)
+    #include <charconv>
+#endif
+
 namespace
 {
 float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significand)
@@ -450,7 +468,7 @@ TEST_CASE("formatting")
         check_double(  1.2345e+18,   "1.2345e+18"             ); //  1.2345e+18                1.2345e+18                1.2345e18
         check_double(  1.2345e+19,   "1.2345e+19"             ); //  1.2345e+19                1.2345e+19                1.2345e19
         check_double(  1.2345e+20,   "1.2345e+20"             ); //  1.2345e+20                1.2345e+20                1.2345e20
-        check_double(  1.2345e+21,   "1.2344999999999999e+21" ); //  1.2345e+21                1.2344999999999999e+21    1.2345e21
+        check_double(  1.2345e+21,   "1.2345e+21"             ); //  1.2345e+21                1.2344999999999999e+21    1.2345e21
         check_double(  1.2345e+22,   "1.2345e+22"             ); //  1.2345e+22                1.2345e+22                1.2345e22
     }
 
@@ -512,5 +530,329 @@ TEST_CASE("formatting")
         check_integer(10000000000000000LL, "10000000000000000");
         check_integer(100000000000000000LL, "100000000000000000");
         check_integer(1000000000000000000LL, "1000000000000000000");
+    }
+}
+
+namespace
+{
+// a small unsigned big integer (32-bit limbs, least significant first), to
+// recompute the powers of ten of the shortest double conversion
+using big = std::vector<std::uint32_t>;
+
+void big_mul_small(big& x, std::uint32_t m)
+{
+    std::uint64_t carry = 0;
+    for (auto& limb : x)
+    {
+        const std::uint64_t v = (static_cast<std::uint64_t>(limb) * m) + carry;
+        limb = static_cast<std::uint32_t>(v);
+        carry = v >> 32u;
+    }
+    if (carry != 0)
+    {
+        x.push_back(static_cast<std::uint32_t>(carry));
+    }
+}
+
+void big_div_small(big& x, std::uint32_t d)
+{
+    std::uint64_t rest = 0;
+    for (std::size_t i = x.size(); i-- > 0;)
+    {
+        const std::uint64_t v = (rest << 32u) | x[i];
+        x[i] = static_cast<std::uint32_t>(v / d);
+        rest = v % d;
+    }
+    while (!x.empty() && x.back() == 0)
+    {
+        x.pop_back();
+    }
+}
+
+std::size_t big_bit_length(const big& x)
+{
+    std::size_t n = 32 * x.size();
+    for (std::uint32_t top = x.back(); (top & 0x80000000u) == 0; top <<= 1u)
+    {
+        --n;
+    }
+    return n;
+}
+
+bool big_bit(const big& x, std::size_t i)
+{
+    return ((x[i / 32] >> (i % 32)) & 1u) != 0;
+}
+
+/// the 128 most significant bits of x (floor), shifted left if x has fewer bits
+std::pair<std::uint64_t, std::uint64_t> big_top128(const big& x)
+{
+    const std::size_t n = big_bit_length(x);
+    std::uint64_t high = 0;
+    std::uint64_t low = 0;
+    for (std::size_t k = 0; k < 128; ++k)
+    {
+        const bool bit = k < n && big_bit(x, n - 1 - k);
+        if (k < 64)
+        {
+            high = (high << 1u) | (bit ? 1u : 0u);
+        }
+        else
+        {
+            low = (low << 1u) | (bit ? 1u : 0u);
+        }
+    }
+    return {high, low};
+}
+
+/// the digits (without trailing zeros) and the decimal exponent of a
+/// representation "[-]d[.ddd][e[+-]x]"
+std::pair<std::string, int> digits_and_exponent(const std::string& s)
+{
+    std::string digits;
+    int point = -1;
+    int exponent = 0;
+    for (std::size_t i = 0; i < s.size(); ++i)
+    {
+        const char c = s[i];
+        if (c >= '0' && c <= '9')
+        {
+            digits += c;
+        }
+        else if (c == '.')
+        {
+            point = static_cast<int>(digits.size());
+        }
+        else if (c == 'e' || c == 'E')
+        {
+            exponent = std::stoi(s.substr(i + 1));
+            break;
+        }
+    }
+    int e = exponent + (point < 0 ? static_cast<int>(digits.size()) : point) - static_cast<int>(digits.size());
+    const std::size_t first = digits.find_first_not_of('0');
+    digits = first == std::string::npos ? "0" : digits.substr(first);
+    while (digits.size() > 1 && digits.back() == '0')
+    {
+        digits.pop_back();
+        ++e;
+    }
+    return {digits, e};
+}
+
+/// the correctly rounded double of a decimal text
+/// (not std::strtod: the C runtimes of some platforms, e.g. MinGW's, round
+/// some 16 and 17 digit inputs wrongly)
+double parse_double(const std::string& text)
+{
+    const nlohmann::json j = nlohmann::json::parse(text, nullptr, false);
+    // (a discarded value: out of range, as strtod's HUGE_VAL)
+    return j.is_discarded() ? std::numeric_limits<double>::infinity() : j.get<double>();
+}
+
+/// whether the decimal digits * 10^e reads back as v
+bool reads_back(const std::string& digits, int e, double v)
+{
+    const std::string text = digits + "e" + std::to_string(e);
+    // (compared bit for bit: v is positive and finite, and -Wfloat-equal)
+    return reinterpret_bits<std::uint64_t>(parse_double(text)) == reinterpret_bits<std::uint64_t>(v);
+}
+
+/// Check the representation of a positive finite double: it reads back as
+/// the same value, and no representation with fewer digits does.
+void check_shortest(double v)
+{
+    std::array<char, 33> buf{};
+    char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, v);
+    const std::string text(buf.data(), end);
+    CAPTURE(text)
+    CHECK(parse_double(text) == v);
+    // the layout is that of format_buffer() for the digits of Zmij
+    const auto sd = nlohmann::detail::zmij::to_shortest(reinterpret_bits<std::uint64_t>(v));
+    const std::uint64_t significand = sd.has_digit ? (sd.integral * 10) + sd.digit : sd.integral;
+    int exponent = sd.has_digit ? sd.exponent : sd.exponent + 1;
+    std::string significand_digits = std::to_string(significand);
+    while (significand_digits.size() > 1 && significand_digits.back() == '0')
+    {
+        significand_digits.pop_back();
+        ++exponent;
+    }
+    std::array<char, 64> reference{};
+    std::copy(significand_digits.begin(), significand_digits.end(), reference.begin());
+    const char* const reference_end = nlohmann::detail::dtoa_impl::format_buffer(reference.data(), static_cast<int>(significand_digits.size()), exponent, -4, 15);
+    CHECK(text == std::string(reference.data(), static_cast<std::size_t>(reference_end - reference.data())));
+    // and write_positive() is what to_chars() calls
+    std::array<char, 64> positive{};
+    const char* const positive_end = nlohmann::detail::dtoa_impl::write_positive(positive.data(), positive.data() + positive.size(), v);
+    CHECK(text == std::string(positive.data(), static_cast<std::size_t>(positive_end - positive.data())));
+    const auto de = digits_and_exponent(text);
+    const std::string& digits = de.first;
+    if (digits.size() > 1)
+    {
+        // the decimals of one digit fewer next to the value
+        // (a stream rather than snprintf("%.*e"), whose output GCC cannot bound)
+        std::ostringstream shorter;
+        shorter.imbue(std::locale::classic());
+        shorter << std::scientific << std::setprecision(static_cast<int>(digits.size()) - 2) << v;
+        const auto near = digits_and_exponent(shorter.str());
+        // as an integer with digits.size() - 1 digits
+        std::string m = near.first;
+        int e = near.second;
+        while (m.size() < digits.size() - 1)
+        {
+            m += '0';
+            --e;
+        }
+        const std::uint64_t mid = std::stoull(m);
+        for (const std::uint64_t candidate :
+                {
+                    mid - 1, mid, mid + 1
+                })
+        {
+            CAPTURE(candidate)
+            CHECK(!reads_back(std::to_string(candidate), e, v));
+        }
+    }
+    // (icpc with libstdc++ 11 defines __cpp_lib_to_chars, but has no floating-point std::to_chars)
+#if defined(JSON_HAS_CPP_17) && defined(__cpp_lib_to_chars) && !defined(__INTEL_COMPILER)
+    // the closest of the shortest representations, as std::to_chars finds it
+    std::array<char, 64> std_text{};
+    const auto r = std::to_chars(std_text.data(), std_text.data() + std_text.size(), v, std::chars_format::scientific);
+    CHECK(digits_and_exponent(std::string(std_text.data(), r.ptr)) == de);
+#endif
+}
+} // namespace
+
+TEST_CASE("shortest digits of doubles")
+{
+    SECTION("powers of ten")
+    {
+        // the 128-bit significands of 10^k, rounded down, recomputed
+        for (int k = -342; k <= 341; ++k)
+        {
+            CAPTURE(k)
+            big x{1};
+            if (k >= 0)
+            {
+                for (int i = 0; i < k; ++i)
+                {
+                    big_mul_small(x, 10);
+                }
+            }
+            else
+            {
+                // floor(2^b / 10^-k) for a b that leaves more than 128 bits
+                const int b = 128 + 64 + (4 * -k);
+                x.assign(static_cast<std::size_t>(b / 32) + 1, 0);
+                x.back() = 1u << (b % 32);
+                for (int i = 0; i < -k; ++i)
+                {
+                    big_div_small(x, 10);
+                }
+            }
+            const auto expected = big_top128(x);
+            const auto actual = nlohmann::detail::zmij::pow10(k);
+            CHECK(actual.high == expected.first);
+            CHECK(actual.low == expected.second);
+        }
+    }
+
+    SECTION("boundary values")
+    {
+        for (const double v :
+                {
+                    std::numeric_limits<double>::min(), std::numeric_limits<double>::max(), std::numeric_limits<double>::denorm_min(),
+                    std::nextafter(std::numeric_limits<double>::min(), 0.0), 1.0, 2.0, 0.1, 0.3, 1e21, 1e22, 1e23, 5e-324, 9007199254740993.0,
+                    1.2345e+21, 2.2250738585072014e-308, 1.7976931348623157e308, 4.9406564584124654e-324, 123456789012345680.0
+                })
+        {
+            check_shortest(v);
+        }
+        // all powers of two (their rounding interval is narrower below)
+        for (int e = -1074; e <= 1023; ++e)
+        {
+            check_shortest(std::ldexp(1.0, e));
+        }
+        // powers of ten and their neighbors
+        for (int e = -323; e <= 308; ++e)
+        {
+            const double p = std::strtod(("1e" + std::to_string(e)).c_str(), nullptr);
+            check_shortest(p);
+            check_shortest(std::nextafter(p, 0.0));
+            check_shortest(std::nextafter(p, std::numeric_limits<double>::infinity()));
+        }
+    }
+
+    SECTION("random doubles")
+    {
+        std::mt19937_64 rng(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+        for (int i = 0; i < 100000; ++i)
+        {
+            const std::uint64_t bits = rng() & 0x7FFFFFFFFFFFFFFFu;
+            const auto v = reinterpret_bits<double>(bits);
+            if (std::isfinite(v) && bits != 0)
+            {
+                check_shortest(v);
+            }
+        }
+    }
+}
+
+TEST_CASE("choice of the conversion")
+{
+    using nlohmann::detail::dtoa_impl::is_binary64;
+
+    SECTION("by the format of the type")
+    {
+        // Zmij needs binary64 numbers; everything else uses Grisu2
+        static_assert(!is_binary64<float>::value, "float is not binary64");
+        static_assert(is_binary64<double>::value == (std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::digits == 53),
+                      "double is binary64 where it is IEEE 754 with 53 digits");
+        static_assert(!is_binary64<int>::value, "integers are not binary64");
+        static_assert(is_binary64<long double>::value == (std::numeric_limits<long double>::is_iec559 && std::numeric_limits<long double>::digits == 53 && sizeof(long double) == 8),
+                      "long double is binary64 where it has the format of a double");
+        CHECK(!is_binary64<float>::value);
+        CHECK(is_binary64<double>::value);
+    }
+
+    SECTION("float: Grisu2, double: Zmij")
+    {
+        // 5.3165205877497296e+16 is one of the doubles for which Grisu2 does not find the shortest digits
+        constexpr double value = 5.3165205877497296e+16;
+        std::array<char, 64> buf{};
+        const char* const last = buf.data() + buf.size();
+
+        char* end = nlohmann::detail::dtoa_impl::write_positive(buf.data(), last, value);
+        CHECK(std::string(buf.data(), end) == "5.31652058774973e+16");
+        end = nlohmann::detail::dtoa_impl::write_positive_grisu2(buf.data(), last, value);
+        CHECK(std::string(buf.data(), end) == "5.3165205877497296e+16");
+
+        constexpr float f = 1.1754944e-38f;
+        end = nlohmann::detail::dtoa_impl::write_positive(buf.data(), last, f);
+        const std::string dispatched(buf.data(), end);
+        end = nlohmann::detail::dtoa_impl::write_positive_grisu2(buf.data(), last, f);
+        CHECK(dispatched == std::string(buf.data(), end));
+    }
+
+    SECTION("long double with the format of a double: Zmij")
+    {
+        // (on platforms where long double is wider, Grisu2 does not apply either: the snprintf fallback does)
+        // (constant on a given platform)
+        DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+        DOCTEST_MSVC_SUPPRESS_WARNING(4127)
+        if (std::numeric_limits<long double>::digits == 53 && std::numeric_limits<long double>::is_iec559)
+        {
+            using long_double_json = nlohmann::json::with_float_t<long double>;
+            for (const double d :
+                    {
+                        5.3165205877497296e+16, 1.0, 0.1, 123456.789, 2.2250738585072014e-308, 1.7976931348623157e+308, -5.3165205877497296e+16
+                    })
+            {
+                CAPTURE(d)
+                CHECK(long_double_json(static_cast<long double>(d)).dump() == nlohmann::json(d).dump());
+            }
+            CHECK(long_double_json(5.3165205877497296e+16L).dump() == "5.31652058774973e+16");
+        }
+        DOCTEST_MSVC_SUPPRESS_WARNING_POP
     }
 }
