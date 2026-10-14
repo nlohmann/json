@@ -1142,7 +1142,7 @@ TEST_CASE("characters below 0x60 are escaped from a table straight into the writ
         // under ensure_ascii, U+00E4 is \u-escaped into the string buffer;
         // a following escape from the table must not overtake it
         const json j = "\xC3\xA4\n\xC3\xA4\"\xF0\x9F\x98\x80\\";
-        CHECK(j.dump(-1, ' ', true) == R"("\u00e4\n\u00e4\"\ud83d\ude00\\")");
+        CHECK(j.dump(-1, ' ', true) == "\"\\u00e4\\n\\u00e4\\\"\\ud83d\\ude00\\\\\"");
         CHECK(j.dump(-1, ' ', false) == "\"\xC3\xA4\\n\xC3\xA4\\\"\xF0\x9F\x98\x80\\\\\"");
     }
 
@@ -1150,10 +1150,10 @@ TEST_CASE("characters below 0x60 are escaped from a table straight into the writ
     {
         const json j = "a\xFF\n\xC3\"";
         CHECK_THROWS_WITH_AS(utils::ignore_return_value(j.dump()), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0xFF", json::type_error&);
-        CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == R"("a\n\"")");
-        CHECK(j.dump(-1, ' ', true, json::error_handler_t::ignore) == R"("a\n\"")");
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"a\\n\\\"\"");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::ignore) == "\"a\\n\\\"\"");
         CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"a\xEF\xBF\xBD\\n\xEF\xBF\xBD\\\"\"");
-        CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == R"("a\ufffd\n\ufffd\"")");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"a\\ufffd\\n\\ufffd\\\"\"");
         CHECK(j.dump(-1, ' ', false, json::error_handler_t::keep) == "\"a\xFF\\n\xC3\\\"\"");
         CHECK(j.dump(-1, ' ', true, json::error_handler_t::keep) == "\"a\xFF\\n\xC3\\\"\"");
     }
