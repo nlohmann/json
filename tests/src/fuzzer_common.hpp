@@ -84,12 +84,12 @@ inline std::string outcome_value(bool b)
 }
 
 template<typename Read, typename... Args>
-read_outcome read_with(const Read& read, Args&& ... args)
+read_outcome read_with(const Read& parse, Args&& ... args)
 {
     read_outcome result;
     try
     {
-        result.value = outcome_value(read(std::forward<Args>(args)...));
+        result.value = outcome_value(parse(std::forward<Args>(args)...));
     }
     catch (const json::parse_error& e)
     {
@@ -110,23 +110,23 @@ read_outcome read_with(const Read& read, Args&& ... args)
 // checks that all give the same value, or the same exception with the same
 // id, message, and byte position.
 //
-// @a read is called with either an iterator range or a single input (stream
+// @a parse is called with either an iterator range or a single input (stream
 // or FILE*) and returns the parsed value (or the result of accept()).
 template<typename Read>
-void check_input_adapters(const std::uint8_t* data, std::size_t size, const Read& read)
+void check_input_adapters(const std::uint8_t* data, std::size_t size, const Read& parse)
 {
-    const read_outcome expected = read_with(read, data, data + size);
+    const read_outcome expected = read_with(parse, data, data + size);
 
     // stream adapter
     {
         std::istringstream stream(std::string(reinterpret_cast<const char*>(data), size));
-        assert(read_with(read, stream) == expected);
+        assert(read_with(parse, stream) == expected);
     }
 
     // iterator adapter on a non-contiguous range
     {
         const std::list<std::uint8_t> list(data, data + size);
-        assert(read_with(read, list.begin(), list.end()) == expected);
+        assert(read_with(parse, list.begin(), list.end()) == expected);
     }
 
 #if defined(__unix__) || defined(__APPLE__)
@@ -136,7 +136,7 @@ void check_input_adapters(const std::uint8_t* data, std::size_t size, const Read
         std::FILE* file = buffer.empty() ? nullptr : fmemopen(buffer.data(), buffer.size(), "rb");
         if (file != nullptr)
         {
-            const read_outcome actual = read_with(read, file);
+            const read_outcome actual = read_with(parse, file);
             std::fclose(file);
             assert(actual == expected);
         }
