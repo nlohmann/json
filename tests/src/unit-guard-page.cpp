@@ -283,16 +283,16 @@ JSON_TEST_GUARD_PAGE_READER(read_bjdata, from_bjdata)
 // reads every prefix of @a bytes at both ends of the guarded page and from a
 // std::string, which must give the same outcome
 template<typename Reader>
-void check_binary(guarded_buffer& guard, const std::vector<std::uint8_t>& bytes, Reader read)
+void check_binary(guarded_buffer& guard, const std::vector<std::uint8_t>& bytes, Reader parse)
 {
     for (const auto& input : all_prefixes({std::string(bytes.begin(), bytes.end())}))
     {
         CAPTURE(input)
-        const std::string expected = outcome([&] { return read(input); });
+        const std::string expected = outcome([&] { return parse(input); });
         for (int placement = 0; placement < 2; ++placement)
         {
             const std::uint8_t* const first = placement == 0 ? guard.at_end(input) : guard.at_start(input);
-            CHECK(outcome([&] { return read(first, first + input.size()); }) == expected);
+            CHECK(outcome([&] { return parse(first, first + input.size()); }) == expected);
         }
     }
 }
