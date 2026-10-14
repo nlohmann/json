@@ -18,7 +18,8 @@ When enabled, comparisons involving at least one discarded JSON value yield resu
 | `>=`         | `#!cpp true`  |
 | `>`          | `#!cpp false` |
 
-Otherwise, comparisons involving at least one discarded JSON value always yield `#!cpp false`.
+Otherwise, comparisons involving at least one discarded JSON value yield `#!cpp false`, except for `!=`, which is the
+negation of `==` and yields `#!cpp true`.
 
 ## Default definition
 

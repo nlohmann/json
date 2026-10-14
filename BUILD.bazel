@@ -25,6 +25,7 @@ cc_library(
         "include/nlohmann/detail/conversions/from_json.hpp",
         "include/nlohmann/detail/conversions/to_chars.hpp",
         "include/nlohmann/detail/conversions/to_json.hpp",
+        "include/nlohmann/detail/conversions/zmij.hpp",
         "include/nlohmann/detail/exceptions.hpp",
         "include/nlohmann/detail/hash.hpp",
         "include/nlohmann/detail/input/binary_reader.hpp",
