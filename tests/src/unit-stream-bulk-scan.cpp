@@ -371,7 +371,7 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
     {
         const json j = {{"string", std::string(300, 'x')}, {"array", {1, 2, 3}}, {"number", 1.5}};
         const std::vector<std::uint8_t> cbor = json::to_cbor(j);
-        const std::string bytes(cbor.begin(), cbor.end());
+        const std::string bytes(reinterpret_cast<const char*>(cbor.data()), cbor.size());
         for (const std::size_t chunk_size : chunk_sizes())
         {
             CAPTURE(chunk_size)

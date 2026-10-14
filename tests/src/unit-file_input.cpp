@@ -226,7 +226,7 @@ TEST_CASE("parsing from a FILE*")
     {
         const json j = {{"string", std::string(300, 'x')}, {"array", {1, 2, 3}}, {"number", 1.5}};
         const std::vector<std::uint8_t> cbor = json::to_cbor(j);
-        const file_ptr f = open_with(name, std::string(cbor.begin(), cbor.end()));
+        const file_ptr f = open_with(name, std::string(reinterpret_cast<const char*>(cbor.data()), cbor.size()));
         REQUIRE(f != nullptr);
         CHECK(json::from_cbor(f.get()) == j);
         check_unlocked(f.get());
