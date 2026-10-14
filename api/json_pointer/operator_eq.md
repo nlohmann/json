@@ -18,13 +18,11 @@ bool operator==(
     const json_pointer<RefStringTypeRhs>& rhs);                     // (2)
 
 // since C++20
-class json_pointer {
-    template<typename RefStringTypeRhs>
-    bool operator==(
-        const json_pointer<RefStringTypeRhs>& rhs) const noexcept;  // (1)
+template<typename RefStringTypeRhs>
+bool operator==(
+    const json_pointer<RefStringTypeRhs>& rhs) const noexcept;      // (1)
 
-    bool operator==(const string_t& rhs) const;                     // (2)
-};
+bool operator==(const string_t& rhs) const;                         // (2)
 ```
 
 1. Compares two JSON pointers for equality by comparing their reference tokens.

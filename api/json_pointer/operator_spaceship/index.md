@@ -2,10 +2,8 @@
 
 ```
 // since C++20
-class json_pointer {
-    template<typename RefStringTypeRhs>
-    std::strong_ordering operator<=>(const json_pointer<RefStringTypeRhs>& rhs) const noexcept; // *NOPAD*
-};
+template<typename RefStringTypeRhs>
+std::strong_ordering operator<=>(const json_pointer<RefStringTypeRhs>& rhs) const noexcept; // *NOPAD*
 ```
 
 3-way compares two JSON pointers by lexicographically comparing their sequences of reference tokens: corresponding reference tokens are compared with `string_t`'s own `operator<=>`, and the first pair of tokens that differs determines the result. If all corresponding reference tokens compare equal, the JSON pointer with fewer reference tokens is ordered first.

@@ -2,12 +2,10 @@
 
 ```cpp
 // since C++20
-class basic_json {
-    std::partial_ordering operator<=>(const_reference rhs) const noexcept;  // (1)
+std::partial_ordering operator<=>(const_reference rhs) const noexcept;                   // (1)
 
-    template<typename ScalarType>
-    std::partial_ordering operator<=>(const ScalarType rhs) const noexcept(/* see below */); // (2)
-};
+template<typename ScalarType>
+std::partial_ordering operator<=>(const ScalarType rhs) const noexcept(/* see below */); // (2)
 ```
 
 1. 3-way compares two JSON values producing a result of type `std::partial_ordering` according to the following rules:
