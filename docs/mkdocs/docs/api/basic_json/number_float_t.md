@@ -35,7 +35,7 @@ type to use.
 
 ### Default type
 
-With the default values for `NumberFloatType` (`double`), the default value for `number_float_t` is `#!cpp double`.
+With the default values for `NumberFloatType` (`double`), the default type for `number_float_t` is `#!cpp double`.
 
 ### Default behavior
 
@@ -52,8 +52,9 @@ With the default values for `NumberFloatType` (`double`), the default value for 
 > interoperability can be achieved by implementations that expect no more precision or range than these provide, in the
 > sense that implementations will approximate JSON numbers within the expected precision.
 
-This implementation does exactly follow this approach, as it uses double precision floating-point numbers. Note that
-numbers smaller than `-1.79769313486232e+308` or greater than `1.79769313486232e+308` are rejected during parsing with
+This implementation does exactly follow this approach, as it uses double precision floating-point numbers by default.
+Note that with the default `double`, numbers smaller than `-1.79769313486232e+308` or greater than
+`1.79769313486232e+308` are rejected during parsing with
 [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406). Non-finite values (NaN and infinity) can
 only be stored by assigning them directly and are serialized to `null`.
 
