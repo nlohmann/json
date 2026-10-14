@@ -1042,13 +1042,20 @@ using bool_constant = std::integral_constant<bool, Value>;
 // number_integer (#2573).
 struct same_as_number_integer_type {};
 
+// NumberUnsignedType, or same_as_number_integer_type if it is the same type as
+// NumberIntegerType; basic_json uses this one, as it cannot name its own member
+// types through an incomplete basic_json (MSVC reports a recursive alias, and
+// old GCC versions crash)
+template<typename NumberIntegerType, typename NumberUnsignedType>
+using number_unsigned_overload_type = typename std::conditional <
+                                      std::is_same<NumberIntegerType, NumberUnsignedType>::value,
+                                      same_as_number_integer_type,
+                                      NumberUnsignedType >::type;
+
 // number_unsigned_t of BasicJsonType, or same_as_number_integer_type if it is
 // the same type as number_integer_t
 template<typename BasicJsonType>
-using number_unsigned_overload_t = typename std::conditional <
-                                   std::is_same<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>::value,
-                                   same_as_number_integer_type,
-                                   typename BasicJsonType::number_unsigned_t >::type;
+using number_unsigned_overload_t = number_unsigned_overload_type<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>;
 
 ///////////////////////////////////////////////////////////////////////////////
 // is_c_string

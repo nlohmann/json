@@ -590,7 +590,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// constructor for numbers (integer)
         json_value(number_integer_t v) noexcept : number_integer(v) {}
         /// constructor for numbers (unsigned); takes a placeholder if number_unsigned_t is number_integer_t
-        json_value(detail::number_unsigned_overload_t<basic_json> v) noexcept : number_unsigned(v) {}
+        json_value(detail::number_unsigned_overload_type<NumberIntegerType, NumberUnsignedType> v) noexcept : number_unsigned(v) {}
         /// constructor for numbers (floating-point)
         json_value(number_float_t v) noexcept : number_float(v) {}
         /// constructor for empty values of a given type
@@ -2863,14 +2863,14 @@ public:
 
     /// get a pointer to the value (unsigned number); takes a placeholder if
     /// number_unsigned_t is number_integer_t (the integer overload handles it then)
-    number_unsigned_t* get_impl_ptr(detail::number_unsigned_overload_t<basic_json>* /*unused*/) noexcept
+    number_unsigned_t* get_impl_ptr(detail::number_unsigned_overload_type<NumberIntegerType, NumberUnsignedType>* /*unused*/) noexcept
     {
         return is_number_unsigned() ? &m_data.m_value.number_unsigned : nullptr;
     }
 
     /// get a pointer to the value (unsigned number); takes a placeholder if
     /// number_unsigned_t is number_integer_t (the integer overload handles it then)
-    constexpr const number_unsigned_t* get_impl_ptr(const detail::number_unsigned_overload_t<basic_json>* /*unused*/) const noexcept
+    constexpr const number_unsigned_t* get_impl_ptr(const detail::number_unsigned_overload_type<NumberIntegerType, NumberUnsignedType>* /*unused*/) const noexcept
     {
         return is_number_unsigned() ? &m_data.m_value.number_unsigned : nullptr;
     }

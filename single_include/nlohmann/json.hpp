@@ -5046,13 +5046,20 @@ using bool_constant = std::integral_constant<bool, Value>;
 // number_integer (#2573).
 struct same_as_number_integer_type {};
 
+// NumberUnsignedType, or same_as_number_integer_type if it is the same type as
+// NumberIntegerType; basic_json uses this one, as it cannot name its own member
+// types through an incomplete basic_json (MSVC reports a recursive alias, and
+// old GCC versions crash)
+template<typename NumberIntegerType, typename NumberUnsignedType>
+using number_unsigned_overload_type = typename std::conditional <
+                                      std::is_same<NumberIntegerType, NumberUnsignedType>::value,
+                                      same_as_number_integer_type,
+                                      NumberUnsignedType >::type;
+
 // number_unsigned_t of BasicJsonType, or same_as_number_integer_type if it is
 // the same type as number_integer_t
 template<typename BasicJsonType>
-using number_unsigned_overload_t = typename std::conditional <
-                                   std::is_same<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>::value,
-                                   same_as_number_integer_type,
-                                   typename BasicJsonType::number_unsigned_t >::type;
+using number_unsigned_overload_t = number_unsigned_overload_type<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>;
 
 ///////////////////////////////////////////////////////////////////////////////
 // is_c_string
@@ -5806,7 +5813,11 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
     {
         case value_t::number_unsigned:
         {
-            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>());
+            // never null: a basic_json whose number_unsigned_t is number_integer_t
+            // stores no number_unsigned values (#2573)
+            const auto* ptr = j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>();
+            JSON_ASSERT(ptr != nullptr);
+            val = static_cast<ArithmeticType>(*ptr);
             break;
         }
         case value_t::number_integer:
@@ -6132,7 +6143,11 @@ inline void from_json(const BasicJsonType& j, ArithmeticType& val)
     {
         case value_t::number_unsigned:
         {
-            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>());
+            // never null: a basic_json whose number_unsigned_t is number_integer_t
+            // stores no number_unsigned values (#2573)
+            const auto* ptr = j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>();
+            JSON_ASSERT(ptr != nullptr);
+            val = static_cast<ArithmeticType>(*ptr);
             break;
         }
         case value_t::number_integer:
@@ -28916,7 +28931,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// constructor for numbers (integer)
         json_value(number_integer_t v) noexcept : number_integer(v) {}
         /// constructor for numbers (unsigned); takes a placeholder if number_unsigned_t is number_integer_t
-        json_value(detail::number_unsigned_overload_t<basic_json> v) noexcept : number_unsigned(v) {}
+        json_value(detail::number_unsigned_overload_type<NumberIntegerType, NumberUnsignedType> v) noexcept : number_unsigned(v) {}
         /// constructor for numbers (floating-point)
         json_value(number_float_t v) noexcept : number_float(v) {}
         /// constructor for empty values of a given type
@@ -31189,14 +31204,14 @@ public:
 
     /// get a pointer to the value (unsigned number); takes a placeholder if
     /// number_unsigned_t is number_integer_t (the integer overload handles it then)
-    number_unsigned_t* get_impl_ptr(detail::number_unsigned_overload_t<basic_json>* /*unused*/) noexcept
+    number_unsigned_t* get_impl_ptr(detail::number_unsigned_overload_type<NumberIntegerType, NumberUnsignedType>* /*unused*/) noexcept
     {
         return is_number_unsigned() ? &m_data.m_value.number_unsigned : nullptr;
     }
 
     /// get a pointer to the value (unsigned number); takes a placeholder if
     /// number_unsigned_t is number_integer_t (the integer overload handles it then)
-    constexpr const number_unsigned_t* get_impl_ptr(const detail::number_unsigned_overload_t<basic_json>* /*unused*/) const noexcept
+    constexpr const number_unsigned_t* get_impl_ptr(const detail::number_unsigned_overload_type<NumberIntegerType, NumberUnsignedType>* /*unused*/) const noexcept
     {
         return is_number_unsigned() ? &m_data.m_value.number_unsigned : nullptr;
     }
