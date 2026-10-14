@@ -166,6 +166,43 @@ constexpr bool input_adapter_supports_bulk_scan(std::false_type /*detected*/)
     return false;
 }
 
+// Detect whether an input adapter keeps the current token itself and can
+// hand it out on demand (see input_stream_adapter::supports_token_tracking),
+// so the lexer need not copy every scanned character into token_string.
+template<typename InputAdapterType>
+using detect_supports_token_tracking = decltype(InputAdapterType::supports_token_tracking);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_token_tracking(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_token_tracking;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_token_tracking(std::false_type /*detected*/)
+{
+    return false;
+}
+
+// Detect whether the contiguous block of a bulk-scan adapter is only a window
+// into the input (see input_stream_adapter::bulk_window): its end is not the
+// end of the input, so a token that touches it must be finished character by
+// character.
+template<typename InputAdapterType>
+using detect_bulk_window = decltype(InputAdapterType::bulk_window);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_bulk_window(std::true_type /*detected*/)
+{
+    return InputAdapterType::bulk_window;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_bulk_window(std::false_type /*detected*/)
+{
+    return false;
+}
+
 /*!
 @brief lexical analysis
 
@@ -184,8 +221,19 @@ class lexer : public lexer_base<BasicJsonType>
     /// whether the last read token can be reconstructed from the input adapter
     /// on demand (in error paths) instead of being copied on every scanned
     /// character; see input_adapter_supports_seek
-    static constexpr bool lazy_token_string =
+    static constexpr bool seekable =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
+
+    /// whether the adapter keeps the token itself (mark_token_start() /
+    /// copy_token()); see input_adapter_supports_token_tracking
+    static constexpr bool adapter_token =
+        !seekable && input_adapter_supports_token_tracking<InputAdapterType>(is_detected<detect_supports_token_tracking, InputAdapterType> {});
+
+    /// whether the last read token is obtained from the input adapter on
+    /// demand (in error paths) instead of being copied on every scanned
+    /// character: seekable adapters reconstruct it from the consumed input,
+    /// token-tracking adapters keep it themselves
+    static constexpr bool lazy_token_string = seekable || adapter_token;
 
     /// whether the read position is derived from the input adapter on demand
     /// instead of being counted on every scanned character. Seekable adapters
@@ -194,7 +242,7 @@ class lexer : public lexer_base<BasicJsonType>
     /// and line and column are recomputed from the consumed input only when
     /// get_position() is called (errors). Counting per character kept two
     /// increments and a newline check in the hot path of every get().
-    static constexpr bool lazy_position = lazy_token_string;
+    static constexpr bool lazy_position = seekable;
 
     /// whether a simulated unget can be passed on to the input adapter, which
     /// then leaves the character in the input; see
@@ -203,14 +251,17 @@ class lexer : public lexer_base<BasicJsonType>
         input_adapter_supports_lookahead<InputAdapterType>(is_detected<detect_supports_lookahead, InputAdapterType> {});
 
     /// whether string scanning may bulk-consume runs of ordinary characters
-    /// directly from a contiguous input buffer (SWAR fast path). This requires
-    /// the token to be reconstructible lazily (lazy_token_string), so bypassing
-    /// the per-character capture in get() cannot lose error diagnostics. It
-    /// also implies lazy_position, so the bulk paths need not advance the
-    /// position counters.
+    /// directly from a contiguous input buffer (SWAR fast path). Without
+    /// lazy_token_string / lazy_position, the bulk paths copy the consumed
+    /// characters into token_string and advance the position counters
+    /// themselves (see bulk_consume).
     static constexpr bool bulk_scan =
-        lazy_token_string
-        && input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
+        input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
+
+    /// whether the contiguous block is only a window into the input, so that
+    /// its end does not end a token; see input_adapter_bulk_window
+    static constexpr bool bulk_window =
+        input_adapter_bulk_window<InputAdapterType>(is_detected<detect_bulk_window, InputAdapterType> {});
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -219,7 +270,11 @@ class lexer : public lexer_base<BasicJsonType>
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
         , discard_number_values(discard_number_values_)
-    {}
+    {
+        // the token string of an error before the first token is everything
+        // read so far
+        begin_token(std::integral_constant<bool, adapter_token> {});
+    }
 
     // deleted because of pointer members
     lexer(const lexer&) = delete;
@@ -342,7 +397,36 @@ class lexer : public lexer_base<BasicJsonType>
             return;
         }
         token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
-        ia.bulk_skip(pos);
+        bulk_consume(reinterpret_cast<const char*>(data), pos);
+    }
+
+    /// consume @a n characters at @a data (the adapter's bulk_data()) and do
+    /// the bookkeeping get() would have done for them; the characters are
+    /// never newlines
+    void bulk_consume(const char* data, std::size_t n)
+    {
+        bulk_track_position(n, std::integral_constant<bool, lazy_position> {});
+        bulk_track_token(data, n, std::integral_constant<bool, lazy_token_string> {});
+        ia.bulk_skip(n);
+    }
+
+    /// seekable adapter: the position is derived from the adapter
+    void bulk_track_position(std::size_t /*n*/, std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: count the characters
+    void bulk_track_position(std::size_t n, std::false_type /*lazy*/) noexcept
+    {
+        position.chars_read_total += n;
+        position.chars_read_current_line += n;
+    }
+
+    /// the token is obtained from the adapter
+    void bulk_track_token(const char* /*data*/, std::size_t /*n*/, std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: capture the characters
+    void bulk_track_token(const char* data, std::size_t n, std::false_type /*lazy*/)
+    {
+        token_string.insert(token_string.end(), data, data + n);
     }
 
     /// streaming input: no bulk fast path
@@ -1557,6 +1641,10 @@ scan_number_done:
             }
         }
         const std::size_t len = i;
+        if (number_may_continue(len == avail, std::integral_constant<bool, bulk_window> {}))
+        {
+            return token_type::uninitialized;
+        }
 
         // reset() records where this token starts (for diagnostics), so it has
         // to run before the input position advances below
@@ -1574,7 +1662,8 @@ scan_number_done:
             const token_type integer_result = convert_integer(number_type, data, data + len);
             if (JSON_HEDLEY_LIKELY(integer_result != token_type::uninitialized))
             {
-                ia.bulk_skip(len - 1);
+                bulk_consume(data + 1, len - 1);
+                read_number_terminator(std::integral_constant<bool, bulk_window> {});
                 return integer_result;
             }
             // The value does not fit an integer, so this token converts as a
@@ -1590,10 +1679,36 @@ scan_number_done:
         token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
         decimal_point_position = dot_index;
 
-        ia.bulk_skip(len - 1);
+        bulk_consume(data + 1, len - 1);
+        read_number_terminator(std::integral_constant<bool, bulk_window> {});
 
         return convert_number(number_type, mantissa_end);
     }
+
+    /// window adapter: a number that reaches the end of the window may continue
+    /// after it, so scan_number() has to read it character by character
+    static constexpr bool number_may_continue(bool at_end, std::true_type /*window*/) noexcept
+    {
+        return at_end;
+    }
+
+    /// the end of the block is the end of the input, which ends the number
+    static constexpr bool number_may_continue(bool /*at_end*/, std::false_type /*window*/) noexcept
+    {
+        return false;
+    }
+
+    /// window adapter: read the character after a bulk-scanned number and unget
+    /// it, as scan_number() does. The adapter is a stream that is handed back to
+    /// the user, who must find the same input consumed either way.
+    void read_number_terminator(std::true_type /*window*/)
+    {
+        get();
+        unget();
+    }
+
+    /// the input is not handed back, so the terminator can stay unread
+    void read_number_terminator(std::false_type /*window*/) const noexcept {}
 
     /// contiguous input: try the number fast path, else the byte-path scanner
     token_type scan_number_dispatch(std::true_type /*bulk*/)
@@ -1650,9 +1765,28 @@ scan_number_done:
     /// seekable adapter: remember where the current token starts so it can be
     /// reconstructed from the input on error; current has already been
     /// consumed, hence the -1
-    void note_token_start(std::true_type /*lazy*/) noexcept
+    void note_token_start(std::true_type /*lazy*/)
+    {
+        note_token_start_lazy(std::integral_constant<bool, adapter_token> {});
+    }
+
+    void note_token_start_lazy(std::false_type /*adapter_token*/) noexcept
     {
         token_string_start = ia.get_consumed_count() - 1;
+    }
+
+    /// token-tracking adapter: start tracking the token at the first character
+    void begin_token(std::true_type /*adapter_token*/) noexcept
+    {
+        ia.begin_token();
+    }
+
+    void begin_token(std::false_type /*adapter_token*/) const noexcept {}
+
+    /// token-tracking adapter: the token starts with the current character
+    void note_token_start_lazy(std::true_type /*adapter_token*/)
+    {
+        ia.mark_token_start(current);
     }
 
     /// streaming adapter: start copying the token eagerly, beginning with the
@@ -1976,6 +2110,20 @@ scan_number_done:
     /// seekable adapter: rebuild the last read token from the input on demand
     const std::vector<char_type>& collect_token_chars(std::vector<char_type>& out, std::true_type /*lazy*/) const
     {
+        return collect_token_chars_lazy(out, std::integral_constant<bool, adapter_token> {});
+    }
+
+    /// token-tracking adapter: the adapter hands out everything read since
+    /// mark_token_start(), except a pending unget (see below)
+    const std::vector<char_type>& collect_token_chars_lazy(std::vector<char_type>& out, std::true_type /*adapter_token*/) const
+    {
+        const bool pending_real_unget = next_unget && current != char_traits<char_type>::eof();
+        ia.copy_token(out, pending_real_unget);
+        return out;
+    }
+
+    const std::vector<char_type>& collect_token_chars_lazy(std::vector<char_type>& out, std::false_type /*adapter_token*/) const
+    {
         // a pending unget of a real (non-EOF) character means that character
         // was consumed from the input but is not part of the token; EOF is
         // never consumed, so it must not be subtracted (mirrors unget())
@@ -2096,9 +2244,8 @@ scan_number_done:
     Pretty-printed JSON indents every line with a run of spaces, which the loop
     in skip_whitespace() would otherwise read one character at a time. The
     spaces are skipped 8 bytes at a time; the last 7 bytes of the input and any
-    other whitespace are left to that loop. Skipping bypasses get(), which is
-    fine because bulk_scan implies lazy_position: the position is derived from
-    the adapter, not counted per character.
+    other whitespace are left to that loop. Skipping bypasses get();
+    bulk_consume() does its bookkeeping.
     */
     void skip_indentation(std::true_type /*bulk*/)
     {
@@ -2121,7 +2268,7 @@ scan_number_done:
                 break;
             }
         }
-        ia.bulk_skip(pos);
+        bulk_consume(data, pos);
     }
 
     /// streaming input: no bulk fast path
