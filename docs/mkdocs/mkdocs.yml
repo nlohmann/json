@@ -299,6 +299,7 @@ nav:
           - 'JSON_DISABLE_ENUM_SERIALIZATION': api/macros/json_disable_enum_serialization.md
           - 'JSON_DISABLE_STREAM_BULK_SCAN': api/macros/json_disable_stream_bulk_scan.md
           - 'JSON_DISABLE_TUPLE_REFERENCE_CONVERSION': api/macros/json_disable_tuple_reference_conversion.md
+          - 'JSON_DISABLE_UNLOCKED_FILE_IO': api/macros/json_disable_unlocked_file_io.md
           - 'JSON_HAS_CPP_11, JSON_HAS_CPP_14, JSON_HAS_CPP_17, JSON_HAS_CPP_20, JSON_HAS_CPP_23, JSON_HAS_CPP_26': api/macros/json_has_cpp_11.md
           - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM, JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
           - 'JSON_HAS_RANGE_VIEW_CONVERSION': api/macros/json_has_range_view_conversion.md

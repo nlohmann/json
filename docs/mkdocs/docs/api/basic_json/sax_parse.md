@@ -116,6 +116,10 @@ consumer `sax` has a super-linear complexity.
 
 A UTF-8 byte order mark is silently ignored.
 
+When reading from a `#!c FILE*`, the file is locked while it is parsed. The lock is recursive, so the SAX handler may
+use the same file with stdio functions, but it must not wait for another thread that uses the same `FILE` object; see
+[`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md).
+
 ## Examples
 
 ??? example
@@ -139,6 +143,8 @@ A UTF-8 byte order mark is silently ignored.
 - [accept](accept.md) - check if the input is valid JSON
 - [`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md) - read a `std::istream` one character
   at a time
+- [`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md) - read a `FILE*` with the locking stdio
+  functions
 
 ## Version history
 
@@ -152,6 +158,8 @@ A UTF-8 byte order mark is silently ignored.
   after the parsed value when `strict` is `#!cpp false`.
 - Parsing from an `std::istream` scans the characters in its stream buffer in bulk in version 3.13.0
   ([`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md)).
+- Parsing from a `FILE*` locks the file once instead of once per character in version 3.13.0
+  ([`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md)).
 
 !!! warning "Deprecation"
 

@@ -79,7 +79,8 @@ The default value is `0`: streams are scanned in bulk.
 !!! note "Other inputs"
 
     Strings, string views, vectors, arrays, and pointer or iterator ranges over contiguous memory are scanned in bulk
-    anyway. Reading from a `#!cpp FILE*` is not affected by this macro.
+    anyway. Reading from a `#!cpp FILE*` is not affected by this macro; see
+    [`JSON_DISABLE_UNLOCKED_FILE_IO`](json_disable_unlocked_file_io.md) for that input.
 
 ## Examples
 
@@ -135,6 +136,8 @@ The default value is `0`: streams are scanned in bulk.
 - [**sax_parse**](../basic_json/sax_parse.md) - generate SAX events
 - [**JSON_PRECISE_STREAM_POSITION**](json_precise_stream_position.md) - leave an input stream positioned right after a
   parsed number
+- [**JSON_DISABLE_UNLOCKED_FILE_IO**](json_disable_unlocked_file_io.md) - read a `FILE*` with the locking stdio
+  functions
 - [Parsing: input sources and performance](../../features/parsing/index.md#input-sources-and-performance)
 
 ## Version history

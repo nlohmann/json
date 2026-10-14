@@ -149,6 +149,14 @@ is planned to become the default in version 4.0.0.
 
 See [full documentation of `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md).
 
+## `JSON_DISABLE_UNLOCKED_FILE_IO`
+
+When defined to `1`, parsing from a `#!cpp FILE*` reads every character with `std::fgetc`, which locks the file each
+time, instead of locking the file once and reading it with the unlocked stdio functions. Results are the same either
+way. The default value is `0`.
+
+See [full documentation of `JSON_DISABLE_UNLOCKED_FILE_IO`](../api/macros/json_disable_unlocked_file_io.md).
+
 ## `JSON_NO_AUTOMATIC_UDLS`
 
 When defined, `<nlohmann/json.hpp>` does not include `<nlohmann/json_literals.hpp>` with the user-defined string literals

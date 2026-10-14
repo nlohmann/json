@@ -3242,6 +3242,10 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_DISABLE_STREAM_BULK_SCAN 0
 #endif
 
+#ifndef JSON_DISABLE_UNLOCKED_FILE_IO
+    #define JSON_DISABLE_UNLOCKED_FILE_IO 0
+#endif
+
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
@@ -8001,6 +8005,23 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/string_utils.hpp>
 
 
+#ifndef JSON_NO_IO
+    // Which unlocked stdio functions file_input_adapter uses (see
+    // JSON_DISABLE_UNLOCKED_FILE_IO): 1 = POSIX flockfile/getc_unlocked,
+    // 2 = Microsoft CRT _lock_file/_fgetc_nolock, 0 = none (std::fgetc, which
+    // locks the file for every character). Only C libraries known to declare
+    // the functions are listed; the macros are tested after <cstdio>, which
+    // defines __GLIBC__.
+    #if JSON_DISABLE_UNLOCKED_FILE_IO
+        #define JSON_UNLOCKED_FILE_IO 0
+    #elif defined(_MSC_VER)
+        #define JSON_UNLOCKED_FILE_IO 2
+    #elif defined(__GLIBC__) || defined(__APPLE__) || defined(__ANDROID__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+        #define JSON_UNLOCKED_FILE_IO 1
+    #else
+        #define JSON_UNLOCKED_FILE_IO 0
+    #endif
+#endif  // JSON_NO_IO
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -8028,18 +8049,38 @@ class file_input_adapter
         : m_file(f)
     {
         JSON_ASSERT(m_file != nullptr);
+        lock();
     }
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;
-    file_input_adapter(file_input_adapter&&) noexcept = default;
+    file_input_adapter(file_input_adapter&& rhs) noexcept
+        : m_file(rhs.m_file)
+    {
+        // the lock is owned by the thread, not the adapter: hand it over
+        rhs.m_file = nullptr;
+    }
     file_input_adapter& operator=(const file_input_adapter&) = delete;
     file_input_adapter& operator=(file_input_adapter&&) = delete;
-    ~file_input_adapter() = default;
+    ~file_input_adapter()
+    {
+        if (m_file != nullptr)
+        {
+            unlock();
+        }
+    }
 
     std::char_traits<char>::int_type get_character() noexcept
     {
+        // the file is locked for the lifetime of the adapter, so the
+        // per-character lock of std::fgetc can be skipped
+#if JSON_UNLOCKED_FILE_IO == 1
+        return getc_unlocked(m_file);
+#elif JSON_UNLOCKED_FILE_IO == 2
+        return _fgetc_nolock(m_file);
+#else
         return std::fgetc(m_file);
+#endif
     }
 
     // returns the number of characters successfully read
@@ -8050,6 +8091,27 @@ class file_input_adapter
     }
 
   private:
+    // Lock the file once for the whole parse instead of once per character.
+    // The lock is recursive, so fread() and the user's own stdio calls on the
+    // same thread keep working.
+    void lock() noexcept
+    {
+#if JSON_UNLOCKED_FILE_IO == 1
+        flockfile(m_file);
+#elif JSON_UNLOCKED_FILE_IO == 2
+        _lock_file(m_file);
+#endif
+    }
+
+    void unlock() noexcept
+    {
+#if JSON_UNLOCKED_FILE_IO == 1
+        funlockfile(m_file);
+#elif JSON_UNLOCKED_FILE_IO == 2
+        _unlock_file(m_file);
+#endif
+    }
+
     /// the file pointer to read from
     std::FILE* m_file;
 };
@@ -36476,6 +36538,8 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_DISABLE_ENUM_SERIALIZATION
 #undef JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
 #undef JSON_DISABLE_STREAM_BULK_SCAN
+#undef JSON_DISABLE_UNLOCKED_FILE_IO
+#undef JSON_UNLOCKED_FILE_IO
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
