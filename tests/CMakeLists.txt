@@ -369,6 +369,24 @@ json_test_add_test_for(src/unit-diagnostic-positions.cpp
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
 
+# test reading from a std::istream again without scanning the get area in bulk
+json_test_set_test_options(test-stream-bulk-scan_disabled
+    COMPILE_DEFINITIONS JSON_DISABLE_STREAM_BULK_SCAN=1
+)
+json_test_add_test_for(src/unit-stream-bulk-scan.cpp
+    NAME test-stream-bulk-scan_disabled
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test reading from a std::istream again with JSON_PRECISE_STREAM_POSITION
+json_test_set_test_options(test-stream-bulk-scan_precise
+    COMPILE_DEFINITIONS JSON_PRECISE_STREAM_POSITION=1
+)
+json_test_add_test_for(src/unit-stream-bulk-scan.cpp
+    NAME test-stream-bulk-scan_precise
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
 endif()
 
 # *DO NOT* use json_test_set_test_options() below this line

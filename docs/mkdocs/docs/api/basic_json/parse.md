@@ -112,6 +112,14 @@ By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input
 outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-bytes-in-the-input) for details and the
 [`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) macro to opt into rejecting it instead.
 
+!!! tip "Performance"
+
+    Contiguous inputs (strings, string views, vectors, arrays, pointer ranges) are the fastest to parse. A
+    `#!cpp std::istream` comes close: the parser scans the characters its stream buffer holds in bulk, without reading
+    ahead, so the stream is left exactly where it would be after reading one character at a time. See
+    [input sources and performance](../../features/parsing/index.md#input-sources-and-performance) and
+    [`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md).
+
 ## Examples
 
 ??? example "Example: (1) parse from a character array"
@@ -247,6 +255,8 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 - [operator>>](../operator_gtgt.md) - deserialize from stream
 - [`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
   instead of treating it as end of input
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md) - read a `std::istream` one character
+  at a time
 
 ## Version history
 
@@ -261,6 +271,9 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
   it as end of input; planned to become the default in version 4.0.0.
 - Extended empty-input detection to also cover an `std::istream` without a stream buffer, and fixed a crash
   (`std::terminate`) when parsing from an `std::istream` with `eofbit` in its exception mask, in version 3.13.0.
+- Parsing from an `std::istream` scans the characters in its stream buffer in bulk in version 3.13.0
+  ([`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md) restores reading one character at a
+  time).
 
 !!! warning "Deprecation"
 
