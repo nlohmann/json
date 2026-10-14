@@ -692,11 +692,11 @@ struct is_compatible_number_integer_type
 // if number_unsigned_t is the same type as number_integer_t, unsigned integers
 // are stored as number_integer as well (#2573)
 template<typename BasicJsonType, typename CompatibleNumberIntegerType>
-struct is_compatible_number_integer_type < BasicJsonType, CompatibleNumberIntegerType,
-           enable_if_t < std::is_same<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>::value&&
-           std::is_integral<CompatibleNumberIntegerType>::value&&
-           std::is_unsigned<CompatibleNumberIntegerType>::value&&
-           !std::is_same<bool, CompatibleNumberIntegerType>::value >>
+struct is_compatible_number_integer_type<BasicJsonType, CompatibleNumberIntegerType,
+           enable_if_t<conjunction<std::is_same<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>,
+           std::is_integral<CompatibleNumberIntegerType>,
+           std::is_unsigned<CompatibleNumberIntegerType>,
+           negation<std::is_same<bool, CompatibleNumberIntegerType>>>::value>>
            : std::is_constructible<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType> {};
 
 template<typename BasicJsonType, typename CompatibleType, typename = void>
@@ -1047,10 +1047,8 @@ struct same_as_number_integer_type {};
 // types through an incomplete basic_json (MSVC reports a recursive alias, and
 // old GCC versions crash)
 template<typename NumberIntegerType, typename NumberUnsignedType>
-using number_unsigned_overload_type = typename std::conditional <
-                                      std::is_same<NumberIntegerType, NumberUnsignedType>::value,
-                                      same_as_number_integer_type,
-                                      NumberUnsignedType >::type;
+using number_unsigned_overload_type = typename std::conditional<std::is_same<NumberIntegerType, NumberUnsignedType>::value,
+      same_as_number_integer_type, NumberUnsignedType>::type;
 
 // number_unsigned_t of BasicJsonType, or same_as_number_integer_type if it is
 // the same type as number_integer_t
