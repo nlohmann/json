@@ -19,8 +19,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <utility>
 #include <vector>
@@ -86,7 +86,7 @@ class guarded_buffer
     {
         REQUIRE(input.size() <= page);
         unsigned char* const first = base + (2 * page) - input.size();
-        std::copy(input.begin(), input.end(), first);
+        std::memcpy(first, input.data(), input.size());
         return first;
     }
 
@@ -95,7 +95,7 @@ class guarded_buffer
     {
         REQUIRE(input.size() <= page);
         unsigned char* const first = base + page;
-        std::copy(input.begin(), input.end(), first);
+        std::memcpy(first, input.data(), input.size());
         return first;
     }
 
@@ -115,18 +115,24 @@ class guarded_buffer
     unsigned char* base = nullptr;
 };
 
-// the serialization of the result of @a f, or the exception message
+// the serialization of the result of @a f, or the exception message; @a f
+// takes the allow_exceptions flag, which is false without exceptions, where
+// an error yields a discarded value instead
 template<typename F>
 std::string outcome(F f)
 {
+#if defined(JSON_NOEXCEPTION)
+    return "value: " + f(false).dump(-1, ' ', false, json::error_handler_t::keep);
+#else
     try
     {
-        return "value: " + f().dump(-1, ' ', false, json::error_handler_t::keep);
+        return "value: " + f(true).dump(-1, ' ', false, json::error_handler_t::keep);
     }
     catch (const json::exception& e)
     {
         return std::string("error: ") + e.what();
     }
+#endif
 }
 
 // a SAX handler that only counts events, so sax_parse runs without a DOM
@@ -263,14 +269,15 @@ json binary_document()
 }
 
 // readers for check_binary(), callable with a container or an iterator range
-#define JSON_TEST_GUARD_PAGE_READER(name, from)              \
-    struct name                                              \
-    {                                                        \
-        template<typename... Args>                           \
-        json operator()(Args&& ... args) const               \
-        {                                                    \
-            return json::from(std::forward<Args>(args)...);  \
-        }                                                    \
+// followed by the allow_exceptions flag
+#define JSON_TEST_GUARD_PAGE_READER(name, from)                                     \
+    struct name                                                                     \
+    {                                                                               \
+        template<typename... Args>                                                  \
+        json operator()(bool allow_exceptions, Args&& ... args) const               \
+        {                                                                           \
+            return json::from(std::forward<Args>(args)..., true, allow_exceptions); \
+        }                                                                           \
     };
 JSON_TEST_GUARD_PAGE_READER(read_bson, from_bson)
 JSON_TEST_GUARD_PAGE_READER(read_bon8, from_bon8)
@@ -288,11 +295,17 @@ void check_binary(guarded_buffer& guard, const std::vector<std::uint8_t>& bytes,
     for (const auto& input : all_prefixes({std::string(bytes.begin(), bytes.end())}))
     {
         CAPTURE(input)
-        const std::string expected = outcome([&] { return parse(input); });
+        const std::string expected = outcome([&](bool allow)
+        {
+            return parse(allow, input);
+        });
         for (int placement = 0; placement < 2; ++placement)
         {
             const std::uint8_t* const first = placement == 0 ? guard.at_end(input) : guard.at_start(input);
-            CHECK(outcome([&] { return parse(first, first + input.size()); }) == expected);
+            CHECK(outcome([&](bool allow)
+            {
+                return parse(allow, first, first + input.size());
+            }) == expected);
         }
     }
 }
@@ -382,8 +395,14 @@ TEST_CASE("guard page")
         for (const auto& input : json_seeds())
         {
             CAPTURE(input)
-            const std::string expected = outcome([&] { return json::parse(input); });
-            const std::string expected_comments = outcome([&] { return json::parse(input, nullptr, true, true); });
+            const std::string expected = outcome([&](bool allow)
+            {
+                return json::parse(input, nullptr, allow);
+            });
+            const std::string expected_comments = outcome([&](bool allow)
+            {
+                return json::parse(input, nullptr, allow, true);
+            });
             const bool expected_accept = json::accept(input);
             counting_sax expected_sax;
             const bool expected_sax_result = json::sax_parse(input, &expected_sax);
@@ -393,8 +412,14 @@ TEST_CASE("guard page")
                 const std::uint8_t* const first = placement == 0 ? guard.at_end(input) : guard.at_start(input);
                 const std::uint8_t* const last = first + input.size();
 
-                CHECK(outcome([&] { return json::parse(first, last); }) == expected);
-                CHECK(outcome([&] { return json::parse(first, last, nullptr, true, true); }) == expected_comments);
+                CHECK(outcome([&](bool allow)
+                {
+                    return json::parse(first, last, nullptr, allow);
+                }) == expected);
+                CHECK(outcome([&](bool allow)
+                {
+                    return json::parse(first, last, nullptr, allow, true);
+                }) == expected_comments);
                 CHECK(json::accept(first, last) == expected_accept);
 
                 counting_sax sax;
