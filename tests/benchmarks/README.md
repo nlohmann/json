@@ -27,7 +27,7 @@ The input files are those of [nativejson-benchmark](https://github.com/miloyip/n
 - Network access on the first configure: CMake downloads Google Benchmark and the
   [test data](https://github.com/nlohmann/json_test_data) into the build directory. To reuse a download of the test
   data, pass `-DJSON_TestDataDirectory=<build directory>/test_files`.
-- Google Benchmark is fetched as a fixed release (currently 1.10.0) with a checksum, so that every build uses the same
+- Google Benchmark is fetched as a fixed release with a checksum, so that every build uses the same
   code and a download cannot change under you. It is updated like any other dependency when a new release comes out:
   change `JSON_GOOGLE_BENCHMARK_VERSION` and the archive's `URL_HASH` in `CMakeLists.txt` together. Results are kept
   comparable by building both sides of a comparison with the same version, not by keeping that version forever (see
