@@ -19,7 +19,7 @@
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
-#include <type_traits> // conditional, integral_constant, true_type, false_type
+#include <type_traits> // conditional, integral_constant, is_signed, true_type, false_type
 #include <utility> // move
 
 #include <nlohmann/detail/bit_ops.hpp>
@@ -49,6 +49,20 @@
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
+// whether an integer of a signed type is negative; the overload for other types
+// avoids comparing an unsigned value with zero
+template<typename NumberType>
+constexpr bool is_negative_integer(NumberType x, std::true_type /*is_signed*/) noexcept
+{
+    return x < 0;
+}
+
+template<typename NumberType>
+constexpr bool is_negative_integer(NumberType /*unused*/, std::false_type /*is_signed*/) noexcept
+{
+    return false;
+}
 
 /*!
 @brief fast integer parser for an already-validated unsigned integer
@@ -83,8 +97,10 @@ bool parse_integer_unsigned(const char* first, const char* last, NumberUnsignedT
         x = (x * 10u) + digit;
     }
     value = static_cast<NumberUnsignedType>(x);
-    // reject values that do not round-trip into a narrower NumberUnsignedType
-    return static_cast<std::uint64_t>(value) == x;
+    // reject values that do not round-trip into a narrower NumberUnsignedType,
+    // and values that wrap around to negative numbers if it is a signed type
+    // (number_unsigned_t may be the same type as number_integer_t, #2573)
+    return static_cast<std::uint64_t>(value) == x && !is_negative_integer(value, std::is_signed<NumberUnsignedType>());
 }
 
 /*!
@@ -704,7 +720,7 @@ inline void float_from_bits(std::uint64_t bits, float& value) noexcept
 {
     static_assert(sizeof(float) == sizeof(std::uint32_t), "float must have 32 bits");
     const auto bits32 = static_cast<std::uint32_t>(bits);
-    std::memcpy(&value, &bits32, sizeof(value));
+    std::memcpy(&value, &bits32, sizeof(bits32));
 }
 
 /// the powers of ten that are exact in binary64 (up to 10^22)

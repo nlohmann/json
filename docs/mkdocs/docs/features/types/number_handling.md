@@ -345,8 +345,11 @@ The number types can be changed with template parameters.
       in case of overflow.
     - The type for unsigned integers must be convertible from `#!c unsigned long long`.  The type for floating-point
       numbers is used in case of overflow.
-    - The types for signed and unsigned integers must be distinct, see
-      [#2573](https://github.com/nlohmann/json/issues/2573).
+    - The type for unsigned integers can also be the same signed type as the type for signed integers (e.g.,
+      `#!c std::int64_t` for both). Then every integer is stored as a signed integer, and
+      [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md) is always `#!c false`, see
+      [Template Parameter Requirements](template_parameters.md#same-type-for-both).
+    - The type for floating-point numbers must be distinct from the integer types.
     - Only `#!c double`, `#!c float`, and `#!c long double` are supported for floating-point numbers.
 
 !!! example

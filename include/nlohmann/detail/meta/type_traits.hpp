@@ -9,9 +9,11 @@
 #pragma once
 
 #include <limits> // numeric_limits
+#include <map> // map, multimap
 #include <string> // char_traits
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
+#include <unordered_map> // unordered_map, unordered_multimap
 #include <utility> // declval
 #include <vector> // vector
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
@@ -683,6 +685,22 @@ struct is_compatible_integer_type
     : is_compatible_integer_type_impl<RealIntegerType,
       CompatibleNumberIntegerType> {};
 
+// whether to_json() stores an integer of type CompatibleNumberIntegerType as
+// number_integer
+template<typename BasicJsonType, typename CompatibleNumberIntegerType, typename = void>
+struct is_compatible_number_integer_type
+    : is_compatible_integer_type<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType> {};
+
+// if number_unsigned_t is the same type as number_integer_t, unsigned integers
+// are stored as number_integer as well (#2573)
+template<typename BasicJsonType, typename CompatibleNumberIntegerType>
+struct is_compatible_number_integer_type<BasicJsonType, CompatibleNumberIntegerType,
+           enable_if_t<conjunction<std::is_same<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>,
+           std::is_integral<CompatibleNumberIntegerType>,
+           std::is_unsigned<CompatibleNumberIntegerType>,
+           negation<std::is_same<bool, CompatibleNumberIntegerType>>>::value>>
+           : std::is_constructible<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType> {};
+
 template<typename BasicJsonType, typename CompatibleType, typename = void>
 struct is_compatible_type_impl: std::false_type {};
 
@@ -897,6 +915,31 @@ struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, 
 template <typename T>
 struct is_ordered_map : has_capacity<T> {};
 
+// whether T is a specialization of nlohmann::ordered_map, which only ever
+// appends members, so they can only move when its capacity changes
+template<typename T>
+struct is_nlohmann_ordered_map : std::false_type {};
+
+template<class Key, class T, class IgnoredLess, class Allocator>
+struct is_nlohmann_ordered_map<ordered_map<Key, T, IgnoredLess, Allocator>> : std::true_type {};
+
+// whether adding or erasing elements never moves the other elements of the
+// container T; only node-based standard containers are known to guarantee this
+template<typename T>
+struct has_stable_elements : std::false_type {};
+
+template<class Key, class T, class Compare, class Allocator>
+struct has_stable_elements<std::map<Key, T, Compare, Allocator>> : std::true_type {};
+
+template<class Key, class T, class Compare, class Allocator>
+struct has_stable_elements<std::multimap<Key, T, Compare, Allocator>> : std::true_type {};
+
+template<class Key, class T, class Hash, class KeyEqual, class Allocator>
+struct has_stable_elements<std::unordered_map<Key, T, Hash, KeyEqual, Allocator>> : std::true_type {};
+
+template<class Key, class T, class Hash, class KeyEqual, class Allocator>
+struct has_stable_elements<std::unordered_multimap<Key, T, Hash, KeyEqual, Allocator>> : std::true_type {};
+
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
 T conditional_static_cast(U value)
@@ -1019,6 +1062,25 @@ constexpr bool value_in_range_of(T val)
 
 template<bool Value>
 using bool_constant = std::integral_constant<bool, Value>;
+
+// Stands in for number_unsigned_t in overload sets if it is the same type as
+// number_integer_t, so that the unsigned overloads do not collide with the
+// integer ones. Never constructed. Such a basic_json stores every integer as
+// number_integer (#2573).
+struct same_as_number_integer_type {};
+
+// NumberUnsignedType, or same_as_number_integer_type if it is the same type as
+// NumberIntegerType; basic_json uses this one, as it cannot name its own member
+// types through an incomplete basic_json (MSVC reports a recursive alias, and
+// old GCC versions crash)
+template<typename NumberIntegerType, typename NumberUnsignedType>
+using number_unsigned_overload_type = typename std::conditional<std::is_same<NumberIntegerType, NumberUnsignedType>::value,
+      same_as_number_integer_type, NumberUnsignedType>::type;
+
+// number_unsigned_t of BasicJsonType, or same_as_number_integer_type if it is
+// the same type as number_integer_t
+template<typename BasicJsonType>
+using number_unsigned_overload_t = number_unsigned_overload_type<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>;
 
 ///////////////////////////////////////////////////////////////////////////////
 // is_c_string
