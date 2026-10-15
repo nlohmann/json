@@ -11,6 +11,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <string>
+
 // The exceptions in hot core functions are constructed out of line. These tests pin the
 // exact what() texts of the sites that moved, so the refactoring cannot change them.
 
@@ -90,5 +92,44 @@ TEST_CASE("exception messages of out-of-line throw sites")
         CHECK_MSG(obj.insert(obj2.begin(), arr.end()), "[json.exception.invalid_iterator.210] iterators do not fit");
         CHECK_MSG(obj.insert(arr.begin(), arr.end()), "[json.exception.invalid_iterator.202] iterators first and last must point to objects");
         CHECK_MSG(obj.update(arr.begin(), arr2.end()), "[json.exception.invalid_iterator.210] iterators do not fit");
+    }
+
+    SECTION("patch")
+    {
+        const auto patch_msg = [](const char* doc, const char* patch)
+        {
+            try
+            {
+                json d = json::parse(doc);
+                d.patch(json::parse(patch));
+            }
+            catch (const json::exception& e)
+            {
+                // with JSON_DIAGNOSTICS, what() names the offending value like "(/0) "; drop it
+                std::string msg = e.what();
+                const auto pos = msg.find(" (/");
+                if (pos != std::string::npos)
+                {
+                    msg.erase(pos + 1, msg.find(") ", pos) - pos + 1);
+                }
+                return msg;
+            }
+            return std::string();
+        };
+
+        CHECK(patch_msg("{}", "{}") == "[json.exception.parse_error.104] parse error: JSON patch must be an array of objects");
+        CHECK(patch_msg("{}", "[1]") == "[json.exception.parse_error.104] parse error: JSON patch must be an array of objects");
+        CHECK(patch_msg("{}", "[{}]") == "[json.exception.parse_error.105] parse error: operation must have member 'op'");
+        CHECK(patch_msg("{}", "[{\"op\":1}]") == "[json.exception.parse_error.105] parse error: operation must have string member 'op'");
+        CHECK(patch_msg("{}", "[{\"op\":\"add\"}]") == "[json.exception.parse_error.105] parse error: operation 'add' must have member 'path'");
+        CHECK(patch_msg("{}", "[{\"op\":\"add\",\"path\":1}]") == "[json.exception.parse_error.105] parse error: operation 'add' must have string member 'path'");
+        CHECK(patch_msg("{}", "[{\"op\":\"foo\",\"path\":\"\"}]") == "[json.exception.parse_error.105] parse error: operation value 'foo' is invalid");
+        CHECK(patch_msg("{\"a\":1}", "[{\"op\":\"remove\",\"path\":\"/b\"}]") == "[json.exception.out_of_range.403] key 'b' not found");
+        CHECK(patch_msg("[1]", "[{\"op\":\"add\",\"path\":\"/5\",\"value\":0}]") == "[json.exception.out_of_range.401] array index 5 is out of range");
+        CHECK(patch_msg("{\"a\":1}", "[{\"op\":\"add\",\"path\":\"/a/b\",\"value\":0}]") == "[json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type number, but must be an object or array");
+        CHECK(patch_msg("{\"a\":1}", "[{\"op\":\"remove\",\"path\":\"/a/b\"}]") == "[json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array");
+        CHECK(patch_msg("{\"a\":{}}", "[{\"op\":\"move\",\"from\":\"/a\",\"path\":\"/a/b\"}]") == "[json.exception.out_of_range.414] cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/b'");
+        CHECK(patch_msg("{\"a\":1}", "[{\"op\":\"test\",\"path\":\"/a\",\"value\":2}]") == "[json.exception.other_error.501] unsuccessful: {\"op\":\"test\",\"path\":\"/a\",\"value\":2}");
+        CHECK(patch_msg("{\"a\":1}", "[{\"op\":\"move\",\"path\":\"/a\"}]") == "[json.exception.parse_error.105] parse error: operation 'move' must have member 'from'");
     }
 }
