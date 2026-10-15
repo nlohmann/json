@@ -428,7 +428,7 @@ void templated_json_throw(ExceptionType exception)
 @throw type_error.302 always
 */
 template<typename BasicJsonType>
-JSON_HEDLEY_NO_RETURN inline void throw_type_must_be(const char* expected, const BasicJsonType& j)
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_type_must_be(const char* expected, const BasicJsonType& j)
 {
     static_cast<void>(expected); // unused when JSON_NOEXCEPTION is defined
     static_cast<void>(j);
@@ -443,12 +443,24 @@ JSON_HEDLEY_NO_RETURN inline void throw_type_must_be(const char* expected, const
 @throw type_error always
 */
 template<typename BasicJsonType>
-JSON_HEDLEY_NO_RETURN inline void throw_cannot_use_with(const exception_id id_, const char* operation, const BasicJsonType& j)
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_cannot_use_with(const exception_id id_, const char* operation, const BasicJsonType& j)
 {
     static_cast<void>(id_); // unused when JSON_NOEXCEPTION is defined
     static_cast<void>(operation);
     static_cast<void>(j);
     JSON_THROW(type_error::create(id_, concat("cannot use ", operation, " with ", j.type_name()), &j));
+}
+
+/*!
+@brief throws ExceptionType with a fixed message; kept out of line so that callers do not carry the exception construction
+*/
+template<typename ExceptionType, typename BasicJsonContext>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_literal(const exception_id id_, const char* what_arg, BasicJsonContext context)
+{
+    static_cast<void>(id_); // unused when JSON_NOEXCEPTION is defined
+    static_cast<void>(what_arg);
+    static_cast<void>(context);
+    JSON_THROW(ExceptionType::create(id_, what_arg, context));
 }
 
 }  // namespace detail
