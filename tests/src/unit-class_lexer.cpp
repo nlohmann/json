@@ -716,6 +716,73 @@ TEST_CASE("lexer string fast path")
         CAPTURE(mismatches)
         CHECK(mismatches.empty());
     }
+
+    SECTION("special bytes at every offset of the vector blocks")
+    {
+        // With SSE2 or NEON, runs are scanned 16 bytes at a time (after one
+        // SWAR word, or four with NEON), and runs of non-ASCII text are
+        // checked 16 bytes at a time as well. Place every kind of byte that
+        // ends a run at each offset across several blocks, after ASCII and
+        // after CJK text, so sequences also straddle the block boundaries.
+        // The reference is a std::list, which has no contiguous storage and
+        // is therefore read one character at a time.
+        const auto byte_path = [](const std::string & doc) -> std::string
+        {
+            const std::list<char> chars(doc.begin(), doc.end());
+            JSON_TRY
+            {
+                return json::parse(chars.begin(), chars.end()).dump();
+            }
+            JSON_CATCH (const json::exception & e)
+            {
+                return e.what();
+            }
+        };
+        const std::vector<std::string> specials =
+        {
+            "\"", "\\", "\\u00e9", bytes({0x01}), bytes({0x1F}), bytes({0x7F}),
+            bytes({0xC3, 0xA9}), bytes({0xE4, 0xB8, 0xAD}), bytes({0xF0, 0x9F, 0x98, 0x80}),
+            bytes({0xFF}), bytes({0xC3}), bytes({0xE4, 0xB8}), bytes({0xED, 0xA0, 0x80}), bytes({0xC0, 0x80})
+        };
+        const std::string cjk = bytes({0xE4, 0xB8, 0xAD}); // U+4E2D
+
+        std::vector<std::string> mismatches;
+        for (std::size_t offset = 0; offset <= 80; ++offset)
+        {
+            std::string text;
+            while (text.size() < offset)
+            {
+                text += cjk;
+            }
+            for (const auto& prefix :
+                    {
+                        std::string(offset, 'a'), text
+                    })
+            {
+                for (const auto& special : specials)
+                {
+                    // the closing quote right behind, or in a later block
+                    for (const int tail :
+                            {
+                                0, 1, 3, 20
+                            })
+                    {
+                        std::string doc = "[\"";
+                        doc += prefix;
+                        doc += special;
+                        doc.append(static_cast<std::size_t>(tail), 'b');
+                        doc += "\"]";
+                        if (outcome(doc, false) != byte_path(doc))
+                        {
+                            mismatches.push_back(doc);
+                        }
+                    }
+                }
+            }
+        }
+        CAPTURE(mismatches)
+        CHECK(mismatches.empty());
+    }
 #endif
 
     // json::accept() never throws, so the ranges stay covered without exceptions

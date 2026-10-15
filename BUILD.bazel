@@ -36,6 +36,7 @@ cc_library(
         "include/nlohmann/detail/input/parser.hpp",
         "include/nlohmann/detail/input/position_t.hpp",
         "include/nlohmann/detail/input/pow5_table.hpp",
+        "include/nlohmann/detail/input/simd_scan.hpp",
         "include/nlohmann/detail/input/string_scan.hpp",
         "include/nlohmann/detail/iterators/internal_iterator.hpp",
         "include/nlohmann/detail/iterators/iter_impl.hpp",

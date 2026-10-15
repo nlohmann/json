@@ -373,6 +373,25 @@ json_test_add_test_for(src/unit-diagnostic-positions.cpp
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
 
+# the lexer again with the portable string scanning instead of SSE2/NEON, and on
+# x86-64 with SSSE3 compiled in (no check of the CPU)
+json_test_set_test_options(test-class_lexer_no_simd
+    COMPILE_DEFINITIONS JSON_NO_SIMD
+)
+json_test_add_test_for(src/unit-class_lexer.cpp
+    NAME test-class_lexer_no_simd
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$" AND NOT MSVC)
+    json_test_set_test_options(test-class_lexer_ssse3
+        COMPILE_OPTIONS -mssse3
+    )
+    json_test_add_test_for(src/unit-class_lexer.cpp
+        NAME test-class_lexer_ssse3
+        MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+    )
+endif()
+
 # test reading from a std::istream again without scanning the get area in bulk
 json_test_set_test_options(test-stream-bulk-scan_disabled
     COMPILE_DEFINITIONS JSON_DISABLE_STREAM_BULK_SCAN=1
