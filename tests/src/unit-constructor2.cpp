@@ -323,3 +323,57 @@ TEST_CASE("copy constructor and destructor across value types")
         CHECK(w.size() == 9);
     }
 }
+
+TEST_CASE_TEMPLATE("destructor of nested containers", Json, nlohmann::json, nlohmann::ordered_json)
+{
+    SECTION("empty containers")
+    {
+        {
+            Json j = Json::array();
+        }
+        {
+            Json j = Json::object();
+        }
+        {
+            Json j = Json::array({Json::array(), Json::object(), Json::array({Json::array()})});
+        }
+    }
+
+    SECTION("leaves mixed with nested containers")
+    {
+        Json j = Json::object();
+        j["leaf"] = 1;
+        j["str"] = "text";
+        j["empty_a"] = Json::array();
+        j["empty_o"] = Json::object();
+        j["arr"] = Json::array({1, "a", Json::array({1, 2}), Json::object({{"k", Json::array({Json::object()})}}), nullptr});
+        j["obj"] = Json::object({{"x", Json::object({{"y", Json::array({1, Json::object({{"z", 1}})})}})}, {"w", 2}});
+        Json copy = j;
+        CHECK(copy == j);
+        j = Json::array({std::move(copy), j, 3, Json::array()});
+    }
+
+    SECTION("deep nesting")
+    {
+        for (int kind = 0; kind < 3; ++kind)
+        {
+            Json j = 1;
+            for (int i = 0; i < 5000; ++i)
+            {
+                switch (kind)
+                {
+                    case 0:
+                        j = Json::array({std::move(j)});
+                        break;
+                    case 1:
+                        j = Json::object({{"k", std::move(j)}});
+                        break;
+                    default:
+                        // siblings next to the nested child
+                        j = (i % 2 == 0) ? Json::array({1, Json::array(), std::move(j)}) : Json::object({{"a", 1}, {"b", Json::object()}, {"c", std::move(j)}});
+                        break;
+                }
+            }
+        }
+    }
+}

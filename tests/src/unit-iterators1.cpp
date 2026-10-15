@@ -10,6 +10,8 @@
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
+#include <string>
+#include <vector>
 using nlohmann::json;
 
 TEST_CASE("iterators 1")
@@ -1626,5 +1628,110 @@ TEST_CASE("iterators 1")
             it = j.begin();
             CHECK(it == j.cbegin());
         }
+    }
+}
+
+TEST_CASE_TEMPLATE("reverse iteration and member access", Json, nlohmann::json, nlohmann::ordered_json)
+{
+    SECTION("array: -- and rbegin/rend")
+    {
+        Json j = {1, 2, 3, 4};
+
+        auto it = j.end();
+        std::vector<int> seen;
+        while (it != j.begin())
+        {
+            --it;
+            seen.push_back(it->template get<int>());
+        }
+        CHECK(seen == std::vector<int> {4, 3, 2, 1});
+
+        auto it2 = j.end();
+        auto old = it2--;
+        CHECK(old == j.end());
+        CHECK(*it2 == 4);
+
+        seen.clear();
+        for (auto r = j.rbegin(); r != j.rend(); ++r)
+        {
+            seen.push_back(r->template get<int>());
+        }
+        CHECK(seen == std::vector<int> {4, 3, 2, 1});
+
+        seen.clear();
+        for (auto r = j.crbegin(); r != j.crend(); ++r)
+        {
+            seen.push_back(*r);
+        }
+        CHECK(seen == std::vector<int> {4, 3, 2, 1});
+    }
+
+    SECTION("object: -- and rbegin/rend")
+    {
+        Json j = {{"a", 1}, {"b", 2}, {"c", 3}};
+        // order of keys depends on the object type; use the forward order as reference
+        std::vector<std::string> fwd;
+        for (auto it = j.begin(); it != j.end(); ++it)
+        {
+            fwd.push_back(it.key());
+        }
+        std::vector<std::string> rev(fwd.rbegin(), fwd.rend());
+
+        std::vector<std::string> seen;
+        auto it = j.end();
+        while (it != j.begin())
+        {
+            --it;
+            seen.push_back(it.key());
+        }
+        CHECK(seen == rev);
+
+        auto it2 = j.end();
+        auto old = it2--;
+        CHECK(old == j.end());
+        CHECK(it2.key() == rev.front());
+
+        seen.clear();
+        for (auto r = j.rbegin(); r != j.rend(); ++r)
+        {
+            seen.push_back(r.key());
+        }
+        CHECK(seen == rev);
+    }
+
+    SECTION("object: operator-> reads and writes the mapped value")
+    {
+        Json j = {{"a", 1}, {"s", "str"}};
+        auto it = j.find("s");
+        REQUIRE(it != j.end());
+        CHECK(it->is_string());
+        CHECK(it->size() == 1);
+        *it = Json::array({1, 2});
+        CHECK(it->is_array());
+        it->push_back(3);
+        CHECK(j["s"].size() == 3);
+
+        const Json& cj = j;
+        auto cit = cj.find("a");
+        REQUIRE(cit != cj.end());
+        CHECK(cit->is_number_integer());
+        CHECK(cit->template get<int>() == 1);
+    }
+
+    SECTION("primitives: -- and ->")
+    {
+        Json j = 42;
+        auto it = j.end();
+        --it;
+        CHECK(it == j.begin());
+        CHECK(it->template get<int>() == 42);
+    }
+
+    SECTION("comparing iterators of different containers throws")
+    {
+        Json a = {1, 2};
+        Json b = {1, 2};
+        CHECK_THROWS_WITH_AS(a.begin() == b.begin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers", nlohmann::json::invalid_iterator);
+        CHECK_THROWS_WITH_AS(a.begin() < b.begin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers", nlohmann::json::invalid_iterator);
     }
 }
