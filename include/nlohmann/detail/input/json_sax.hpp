@@ -188,11 +188,18 @@ Shared by json_sax_dom_parser and json_sax_dom_callback_parser.
 @return whether parsing should continue (false after reporting out_of_range.408)
 */
 template<typename SAX, typename BasicJsonType>
+JSON_HEDLEY_NEVER_INLINE
+bool container_too_large_error(SAX& sax, std::size_t len, const char* kind, BasicJsonType* ref)
+{
+    return sax.parse_error(0, "", out_of_range::create(exception_id::container_too_large, concat("excessive ", kind, " size: ", std::to_string(len)), ref));
+}
+
+template<typename SAX, typename BasicJsonType>
 bool check_container_size(SAX& sax, std::size_t len, const char* kind, BasicJsonType* ref)
 {
     if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref->max_size()))
     {
-        return sax.parse_error(0, "", out_of_range::create(exception_id::container_too_large, concat("excessive ", kind, " size: ", std::to_string(len)), ref));
+        return container_too_large_error(sax, len, kind, ref);
     }
     return true;
 }
