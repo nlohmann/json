@@ -261,14 +261,14 @@ class json_pointer
 
   private:
     /// @throw out_of_range.405 always
-    JSON_HEDLEY_NEVER_INLINE JSON_HEDLEY_NO_RETURN static void throw_no_parent()
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE static void throw_no_parent()
     {
         JSON_THROW(detail::out_of_range::create(detail::exception_id::patch_on_root, "JSON pointer has no parent", nullptr));
     }
 
     /// @throw out_of_range.404 always
     template<typename BasicJsonContext>
-    JSON_HEDLEY_NEVER_INLINE JSON_HEDLEY_NO_RETURN static void throw_unresolved(const string_t& reference_token, BasicJsonContext context)
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE static void throw_unresolved(const string_t& reference_token, BasicJsonContext context)
     {
         static_cast<void>(reference_token); // unused when JSON_NOEXCEPTION is defined
         static_cast<void>(context);
