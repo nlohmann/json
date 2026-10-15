@@ -244,8 +244,9 @@ class parser
     bool sax_parse_internal(SAX* sax)
     {
         // stack to remember the hierarchy of structured values we are parsing
-        // true = array; false = object
-        std::vector<bool> states;
+        // true = array; false = object (bytes, not std::vector<bool>, whose
+        // push_back() is a call with GCC)
+        std::vector<std::uint8_t> states;
         // value to avoid a goto (see comment where set to true)
         bool skip_to_state_evaluation = false;
 
@@ -290,7 +291,7 @@ class parser
                         }
 
                         // remember we are now inside an object
-                        states.push_back(false);
+                        states.push_back(0);
 
                         // parse values
                         get_token();
@@ -315,7 +316,7 @@ class parser
                         }
 
                         // remember we are now inside an array
-                        states.push_back(true);
+                        states.push_back(1);
 
                         // parse values (no need to call get_token)
                         continue;
@@ -432,7 +433,7 @@ class parser
                 return true;
             }
 
-            if (states.back())  // array
+            if (states.back() != 0)  // array
             {
                 // comma -> next value
                 // or end of array (ignore_trailing_commas = true)

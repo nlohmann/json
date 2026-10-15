@@ -13,6 +13,7 @@
 using nlohmann::json;
 
 #include <array> // array
+#include <cctype> // toupper
 #include <cstdint> // uint32_t, uint64_t
 #include <cstdio> // snprintf
 #include <cmath> // isfinite
@@ -597,6 +598,63 @@ TEST_CASE("lexer number fast path")
               "syntax error while parsing value - unexpected number literal; expected end of input");
     }
 #endif
+}
+
+TEST_CASE("lexer literal fast path")
+{
+    // For contiguous input, the rest of a literal is compared at once, and a
+    // mismatch is left to the byte path, which reports the error at the
+    // character that differs. Every truncation and every wrong character of
+    // each literal, at the end of the input or followed by more text, must
+    // give the byte path's result (a std::list is read one character at a
+    // time).
+    const auto outcome = [](const std::string & doc, bool byte_path) -> std::string
+    {
+        JSON_TRY
+        {
+            const std::list<char> chars(doc.begin(), doc.end());
+            return (byte_path ? json::parse(chars.begin(), chars.end()) : json::parse(doc)).dump();
+        }
+        JSON_CATCH (const json::exception & e)
+        {
+            return e.what();
+        }
+    };
+
+    std::vector<std::string> mismatches;
+    for (const std::string literal :
+            {"true", "false", "null"
+            })
+    {
+        std::vector<std::string> variants;
+        for (std::size_t length = 1; length <= literal.size(); ++length)
+        {
+            variants.push_back(literal.substr(0, length));
+        }
+        for (std::size_t i = 1; i < literal.size(); ++i)
+        {
+            std::string changed = literal;
+            changed[i] = 'X';
+            variants.push_back(changed);
+            changed[i] = static_cast<char>(std::toupper(static_cast<unsigned char>(literal[i])));
+            variants.push_back(changed);
+        }
+        for (const auto& variant : variants)
+        {
+            for (const std::string& doc :
+                    {
+                        variant, "[" + variant + "]", "[" + variant, variant + " ", variant + "1", "{\"k\":" + variant + "}"
+                    })
+            {
+                if (outcome(doc, false) != outcome(doc, true))
+                {
+                    mismatches.push_back(doc);
+                }
+            }
+        }
+    }
+    CAPTURE(mismatches)
+    CHECK(mismatches.empty());
 }
 
 TEST_CASE("lexer string fast path")
