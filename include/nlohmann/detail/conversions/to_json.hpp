@@ -408,29 +408,29 @@ struct is_enum_keyed_map_type : std::false_type {};
 
 // rvalue (non-const) container: the generic to_json takes its elements by move
 template<typename T>
-using is_movable_container_rvalue = conjunction <
-                                    negation<std::is_lvalue_reference<T>>,
-                                    negation<std::is_const<T>>,
-                                    negation<has_dedicated_to_json<T>>,
-                                    negation<is_basic_json<T>>,
-                                    negation<is_range_view_type<T>>,
-                                    negation<is_enum_keyed_map_type<T>>,
-                                    negation<std::is_same<T, std::vector<bool>>> >;
+using is_movable_container_rvalue = negation<disjunction<
+                                    std::is_lvalue_reference<T>,
+                                    std::is_const<T>,
+                                    has_dedicated_to_json<T>,
+                                    is_basic_json<T>,
+                                    is_range_view_type<T>,
+                                    is_enum_keyed_map_type<T>,
+                                    std::is_same<T, std::vector<bool>>>>;
 
 // rvalue array-like containers
 template<typename BasicJsonType, typename T>
-using is_rvalue_array_to_json = conjunction <
-                                is_movable_container_rvalue<T>,
-                                negation<std::is_same<T, typename BasicJsonType::array_t>>,
-                                negation<std::is_same<T, typename BasicJsonType::binary_t>>,
-                                is_compatible_array_type<BasicJsonType, T>,
-                                negation<is_compatible_object_type<BasicJsonType, T>>,
-                                negation<is_compatible_string_type<BasicJsonType, T>>,
-                                negation<is_compatible_binary_type<BasicJsonType, T>> >;
+using is_rvalue_array_to_json = conjunction<is_movable_container_rvalue<T>,
+      is_compatible_array_type<BasicJsonType, T>,
+      negation<disjunction<
+      std::is_same<T, typename BasicJsonType::array_t>,
+      std::is_same<T, typename BasicJsonType::binary_t>,
+      is_compatible_object_type<BasicJsonType, T>,
+      is_compatible_string_type<BasicJsonType, T>,
+      is_compatible_binary_type<BasicJsonType, T>>>>;
 
 // rvalue containers: their elements are moved instead of copied
-template < typename BasicJsonType, typename CompatibleArrayType,
-           enable_if_t < is_rvalue_array_to_json<BasicJsonType, CompatibleArrayType>::value, int > = 0 >
+template<typename BasicJsonType, typename CompatibleArrayType,
+         enable_if_t<is_rvalue_array_to_json<BasicJsonType, CompatibleArrayType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleArrayType && arr)
 {
     external_constructor<value_t::array>::construct_moving(j, arr);
@@ -511,13 +511,12 @@ inline void to_json(BasicJsonType& j, const EnumKeyedMap& map)
 
 // rvalue object-like containers
 template<typename BasicJsonType, typename T>
-using is_rvalue_object_to_json = conjunction <
-                                 is_movable_container_rvalue<T>,
-                                 negation<std::is_same<T, typename BasicJsonType::object_t>>,
-                                 is_compatible_object_type<BasicJsonType, T> >;
+using is_rvalue_object_to_json = conjunction<is_movable_container_rvalue<T>,
+      negation<std::is_same<T, typename BasicJsonType::object_t>>,
+      is_compatible_object_type<BasicJsonType, T>>;
 
-template < typename BasicJsonType, typename CompatibleObjectType,
-           enable_if_t < is_rvalue_object_to_json<BasicJsonType, CompatibleObjectType>::value, int > = 0 >
+template<typename BasicJsonType, typename CompatibleObjectType,
+         enable_if_t<is_rvalue_object_to_json<BasicJsonType, CompatibleObjectType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleObjectType && obj)
 {
     external_constructor<value_t::object>::construct_moving(j, obj);
