@@ -5518,16 +5518,6 @@ public:
 #endif
     }
 
-    JSON_HEDLEY_NEVER_INLINE
-    static bool less_general(const_reference lhs, const_reference rhs) noexcept
-    {
-        // default_result is used if we cannot compare values. In that case,
-        // we compare types. Note we have to call the operator explicitly,
-        // because MSVC has problems otherwise.
-        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
-                                 compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
-    }
-
 #if JSON_HAS_THREE_WAY_COMPARISON
     JSON_HEDLEY_NEVER_INLINE
     static std::partial_ordering three_way_general(const_reference lhs, const_reference rhs) noexcept // *NOPAD*
@@ -5539,6 +5529,16 @@ public:
                                 std::partial_ordering::unordered,
                                 lhs_type <=> rhs_type, // *NOPAD*
                                 to_partial_ordering(compare_iteratively<true>(lhs, rhs, false)), true)
+    }
+#else
+    JSON_HEDLEY_NEVER_INLINE
+    static bool less_general(const_reference lhs, const_reference rhs) noexcept
+    {
+        // default_result is used if we cannot compare values. In that case,
+        // we compare types. Note we have to call the operator explicitly,
+        // because MSVC has problems otherwise.
+        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
+                                 compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
     }
 #endif
 
