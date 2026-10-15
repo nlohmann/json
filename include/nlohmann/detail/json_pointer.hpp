@@ -17,7 +17,6 @@
 #endif  // JSON_NO_IO
 #include <limits> // max
 #include <map> // map
-#include <numeric> // accumulate
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
@@ -70,12 +69,21 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/to_string/
     string_t to_string() const
     {
-        return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
-                               string_t{},
-                               [](const string_t& a, const string_t& b)
+        // one buffer: every token adds its escaped form (at least its length) and a slash
+        std::size_t length = 0;
+        for (const auto& reference_token : reference_tokens)
         {
-            return detail::concat<string_t>(a, '/', detail::escape(b));
-        });
+            length += reference_token.size() + 1;
+        }
+
+        string_t result;
+        result.reserve(length);
+        for (const auto& reference_token : reference_tokens)
+        {
+            result.append("/", 1);
+            detail::escape_into(result, reference_token);
+        }
+        return result;
     }
 
     /// @brief return a string representation of the JSON pointer
@@ -130,21 +138,29 @@ class json_pointer
     friend json_pointer operator/(const json_pointer& lhs,
                                   const json_pointer& rhs)
     {
-        return json_pointer(lhs) /= rhs;
+        json_pointer result;
+        result.reference_tokens.reserve(lhs.reference_tokens.size() + rhs.reference_tokens.size());
+        result.reference_tokens.insert(result.reference_tokens.end(), lhs.reference_tokens.begin(), lhs.reference_tokens.end());
+        result.reference_tokens.insert(result.reference_tokens.end(), rhs.reference_tokens.begin(), rhs.reference_tokens.end());
+        return result;
     }
 
     /// @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
     friend json_pointer operator/(const json_pointer& lhs, string_t token) // NOLINT(performance-unnecessary-value-param)
     {
-        return json_pointer(lhs) /= std::move(token);
+        json_pointer result;
+        result.reference_tokens.reserve(lhs.reference_tokens.size() + 1);
+        result.reference_tokens.insert(result.reference_tokens.end(), lhs.reference_tokens.begin(), lhs.reference_tokens.end());
+        result.reference_tokens.push_back(std::move(token));
+        return result;
     }
 
     /// @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
     friend json_pointer operator/(const json_pointer& lhs, std::size_t array_idx)
     {
-        return json_pointer(lhs) /= array_idx;
+        return lhs / detail::to_string<string_t>(array_idx);
     }
 
     /// @brief returns the parent of this JSON pointer
@@ -156,8 +172,8 @@ class json_pointer
             return *this;
         }
 
-        json_pointer res = *this;
-        res.pop_back();
+        json_pointer res;
+        res.reference_tokens = std::vector<string_t>(reference_tokens.begin(), reference_tokens.end() - 1);
         return res;
     }
 
@@ -246,14 +262,14 @@ class json_pointer
 
   private:
     /// @throw out_of_range.405 always
-    JSON_HEDLEY_NO_RETURN static void throw_no_parent()
+    JSON_HEDLEY_NEVER_INLINE JSON_HEDLEY_NO_RETURN static void throw_no_parent()
     {
         JSON_THROW(detail::out_of_range::create(detail::exception_id::patch_on_root, "JSON pointer has no parent", nullptr));
     }
 
     /// @throw out_of_range.404 always
     template<typename BasicJsonContext>
-    JSON_HEDLEY_NO_RETURN static void throw_unresolved(const string_t& reference_token, BasicJsonContext context)
+    JSON_HEDLEY_NEVER_INLINE JSON_HEDLEY_NO_RETURN static void throw_unresolved(const string_t& reference_token, BasicJsonContext context)
     {
         static_cast<void>(reference_token); // unused when JSON_NOEXCEPTION is defined
         static_cast<void>(context);
@@ -304,6 +320,28 @@ class json_pointer
         if (JSON_HEDLEY_UNLIKELY(!s.empty() && s != "-" && !(s[0] >= '0' && s[0] <= '9')))
         {
             return array_index_status::not_a_number;
+        }
+
+        // fast path: up to 18 decimal digits cannot overflow unsigned long long or
+        // size_type (9 digits for a 32-bit size_type), so strtoull and errno are not needed
+        constexpr std::size_t max_fast_digits = sizeof(size_type) >= 8 ? 18 : 9;
+        if (!s.empty() && s.size() <= max_fast_digits)
+        {
+            size_type acc = 0;
+            for (std::size_t i = 0; i < s.size(); ++i)
+            {
+                const char c = s[i];
+                if (JSON_HEDLEY_UNLIKELY(c < '0' || c > '9'))
+                {
+                    break; // not a plain number: let strtoull decide
+                }
+                acc = static_cast<size_type>(acc * 10 + static_cast<size_type>(c - '0'));
+                if (JSON_HEDLEY_UNLIKELY(i == s.size() - 1))
+                {
+                    idx = acc;
+                    return array_index_status::ok;
+                }
+            }
         }
 
         const char* p = s.data();
@@ -362,6 +400,83 @@ class json_pointer
         return idx;
     }
 
+    /*!
+    @brief compare with a JSON pointer string without splitting it into tokens
+
+    @throw parse_error.107  if the string is not empty or begins with '/'
+    @throw parse_error.108  if character '~' is not followed by '0' or '1'
+    */
+    bool equals_string(const string_t& reference_string) const
+    {
+        if (reference_string.empty())
+        {
+            return reference_tokens.empty();
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(reference_string[0] != '/'))
+        {
+            JSON_THROW(detail::parse_error::create(detail::exception_id::pointer_missing_slash, 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", reference_string, "'"), nullptr));
+        }
+
+        // the whole string is validated, whether or not it matches
+        const std::size_t size = reference_string.size();
+        for (std::size_t pos = reference_string.find_first_of('~');
+                pos != string_t::npos;
+                pos = reference_string.find_first_of('~', pos + 1))
+        {
+            if (JSON_HEDLEY_UNLIKELY(pos == size - 1 || (reference_string[pos + 1] != '0' && reference_string[pos + 1] != '1')))
+            {
+                JSON_THROW(detail::parse_error::create(detail::exception_id::pointer_invalid_escape, 0, "escape character '~' must be followed with '0' or '1'", nullptr));
+            }
+        }
+
+        // compare token by token, unescaping the string on the fly
+        std::size_t pos = 0; // the slash in front of the next token
+        for (const auto& reference_token : reference_tokens)
+        {
+            if (pos >= size)
+            {
+                return false;
+            }
+
+            std::size_t i = pos + 1;
+            std::size_t j = 0;
+            const std::size_t token_size = reference_token.size();
+            while (i < size && reference_string[i] != '/')
+            {
+                char c = reference_string[i++];
+                if (c == '~')
+                {
+                    c = (reference_string[i++] == '0') ? '~' : '/';
+                }
+                if (j == token_size || reference_token[j] != c)
+                {
+                    return false;
+                }
+                ++j;
+            }
+            if (j != token_size)
+            {
+                return false;
+            }
+            pos = i;
+        }
+        return pos == size;
+    }
+
+    /// @brief object member access with a key that is only copied if it is inserted
+    template<typename BasicJsonType>
+    static BasicJsonType& object_member(BasicJsonType& object, const string_t& key)
+    {
+        auto& members = *object.m_data.m_value.object;
+        const auto it = members.find(key);
+        if (it != members.end())
+        {
+            return it->second;
+        }
+        return object.operator[](key);
+    }
+
   JSON_PRIVATE_UNLESS_TESTED:
     json_pointer top() const
     {
@@ -405,23 +520,26 @@ class json_pointer
 
         // return the number of the prefix with number id extended by
         // reference_token, adding it if it is new
-        std::size_t add_child(std::size_t id, string_t&& reference_token)
+        std::size_t add_child(std::size_t id, const string_t& reference_token)
         {
             if (reference_token == "0")
             {
                 is_array[id] = true;
             }
 
+            // shared prefixes are found without copying the token
+            const auto found = children[id].find(reference_token);
+            if (found != children[id].end())
+            {
+                return found->second;
+            }
+
             // read the number before the emplace_back below, which may
             // reallocate children and invalidate the iterator
-            const std::size_t next = children.size();
-            const auto inserted = children[id].emplace(std::move(reference_token), next);
-            const std::size_t child = inserted.first->second;
-            if (inserted.second)
-            {
-                children.emplace_back();
-                is_array.push_back(false);
-            }
+            const std::size_t child = children.size();
+            children[id].emplace(reference_token, child);
+            children.emplace_back();
+            is_array.push_back(false);
             return child;
         }
 
@@ -479,7 +597,7 @@ class json_pointer
                 case detail::value_t::object:
                 {
                     // create an entry in the object
-                    result = &result->operator[](reference_token);
+                    result = &object_member(*result, reference_token);
                     break;
                 }
 
@@ -559,7 +677,7 @@ class json_pointer
                 case detail::value_t::object:
                 {
                     // use unchecked object access
-                    ptr = &ptr->operator[](reference_token);
+                    ptr = &object_member(*ptr, reference_token);
                     break;
                 }
 
@@ -609,8 +727,13 @@ class json_pointer
             {
                 case detail::value_t::object:
                 {
-                    // note: at performs range check
-                    ptr = &ptr->at(reference_token);
+                    const auto it = ptr->m_data.m_value.object->find(reference_token);
+                    if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
+                    {
+                        // at() throws out_of_range.403 with the usual message
+                        ptr->at(reference_token);
+                    }
+                    ptr = &it->second;
                     break;
                 }
 
@@ -631,7 +754,7 @@ class json_pointer
                         JSON_THROW(detail::out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat(
                                 "array index ", std::to_string(idx), " is out of range"), ptr));
                     }
-                    ptr = &ptr->operator[](idx);
+                    ptr = &(*ptr->m_data.m_value.array)[idx];
                     break;
                 }
 
@@ -679,7 +802,9 @@ class json_pointer
                 {
                     // use unchecked object access; the const operator[]
                     // asserts that the key exists
-                    ptr = &ptr->operator[](reference_token);
+                    const auto it = ptr->m_data.m_value.object->find(reference_token);
+                    JSON_ASSERT(it != ptr->m_data.m_value.object->end());
+                    ptr = &it->second;
                     break;
                 }
 
@@ -693,7 +818,9 @@ class json_pointer
 
                     // use unchecked array access; the const operator[]
                     // asserts that the index exists
-                    ptr = &ptr->operator[](array_index<BasicJsonType>(reference_token));
+                    const auto idx = array_index<BasicJsonType>(reference_token);
+                    JSON_ASSERT(idx < ptr->m_data.m_value.array->size());
+                    ptr = &(*ptr->m_data.m_value.array)[idx];
                     break;
                 }
 
@@ -734,12 +861,12 @@ class json_pointer
             {
                 case detail::value_t::object:
                 {
-                    const auto it = ptr->find(reference_token);
-                    if (JSON_HEDLEY_UNLIKELY(it == ptr->end()))
+                    const auto it = ptr->m_data.m_value.object->find(reference_token);
+                    if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
                     {
                         return nullptr;
                     }
-                    ptr = &*it;
+                    ptr = &it->second;
                     break;
                 }
 
@@ -776,7 +903,7 @@ class json_pointer
                     {
                         return nullptr;
                     }
-                    ptr = &ptr->operator[](idx);
+                    ptr = &(*ptr->m_data.m_value.array)[idx];
                     break;
                 }
 
@@ -809,13 +936,14 @@ class json_pointer
             {
                 case detail::value_t::object:
                 {
-                    if (!ptr->contains(reference_token))
+                    const auto it = ptr->m_data.m_value.object->find(reference_token);
+                    if (it == ptr->m_data.m_value.object->end())
                     {
                         // we did not find the key in the object
                         return false;
                     }
 
-                    ptr = &ptr->operator[](reference_token);
+                    ptr = &it->second;
                     break;
                 }
 
@@ -837,13 +965,13 @@ class json_pointer
                         return false;
                     }
 
-                    if (idx >= ptr->size())
+                    if (idx >= ptr->m_data.m_value.array->size())
                     {
                         // index out of range
                         return false;
                     }
 
-                    ptr = &ptr->operator[](idx);
+                    ptr = &(*ptr->m_data.m_value.array)[idx];
                     break;
                 }
 
@@ -893,6 +1021,15 @@ class json_pointer
             JSON_THROW(detail::parse_error::create(detail::exception_id::pointer_missing_slash, 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", reference_string, "'"), nullptr));
         }
 
+        // every slash starts a reference token
+        const std::size_t size = reference_string.size();
+        std::size_t token_count = 0;
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            token_count += (reference_string[i] == '/') ? 1 : 0;
+        }
+        result.reserve(token_count);
+
         // extract the reference tokens:
         // - slash: position of the last read slash (or end of string)
         // - start: position after the previous slash
@@ -914,25 +1051,29 @@ class json_pointer
             const auto count = (slash == string_t::npos ? reference_string.size() : slash) - start;
             auto reference_token = string_t(reference_string.data() + start, count);
 
-            // check reference tokens are properly escaped
-            for (std::size_t pos = reference_token.find_first_of('~');
-                    pos != string_t::npos;
-                    pos = reference_token.find_first_of('~', pos + 1))
+            // check reference tokens are properly escaped; a token without
+            // a '~' (the common case) needs neither check nor unescaping
+            std::size_t pos = reference_token.find_first_of('~');
+            if (pos != string_t::npos)
             {
-                JSON_ASSERT(reference_token[pos] == '~');
-
-                // ~ must be followed by 0 or 1
-                if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 ||
-                                         (reference_token[pos + 1] != '0' &&
-                                          reference_token[pos + 1] != '1')))
+                for (; pos != string_t::npos; pos = reference_token.find_first_of('~', pos + 1))
                 {
-                    JSON_THROW(detail::parse_error::create(detail::exception_id::pointer_invalid_escape, 0, "escape character '~' must be followed with '0' or '1'", nullptr));
+                    JSON_ASSERT(reference_token[pos] == '~');
+
+                    // ~ must be followed by 0 or 1
+                    if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 ||
+                                             (reference_token[pos + 1] != '0' &&
+                                              reference_token[pos + 1] != '1')))
+                    {
+                        JSON_THROW(detail::parse_error::create(detail::exception_id::pointer_invalid_escape, 0, "escape character '~' must be followed with '0' or '1'", nullptr));
+                    }
                 }
+
+                detail::unescape(reference_token);
             }
 
             // finally, store the reference token
-            detail::unescape(reference_token);
-            result.push_back(reference_token);
+            result.push_back(std::move(reference_token));
         }
 
         return result;
@@ -1120,18 +1261,22 @@ class json_pointer
         // collect the pointer prefixes that have a reference token 0 among
         // their children; the values below them are arrays, all others are
         // objects (see prefix_tree)
+        // (each key is parsed once and the pointer kept for the second pass)
         prefix_tree tree;
+        std::vector<json_pointer> pointers;
+        pointers.reserve(value.m_data.m_value.object->size());
         for (const auto& element : *value.m_data.m_value.object)
         {
-            json_pointer ptr(element.first);
+            pointers.emplace_back(element.first);
             std::size_t id = 0;
-            for (auto& reference_token : ptr.reference_tokens)
+            for (const auto& reference_token : pointers.back().reference_tokens)
             {
-                id = tree.add_child(id, std::move(reference_token));
+                id = tree.add_child(id, reference_token);
             }
         }
 
         // iterate the JSON object values
+        std::size_t index = 0;
         for (const auto& element : *value.m_data.m_value.object)
         {
             if (JSON_HEDLEY_UNLIKELY(!element.second.is_primitive()))
@@ -1143,7 +1288,7 @@ class json_pointer
             // that if the JSON pointer is "" (i.e., points to the whole value),
             // function get_and_create returns a reference to the result itself.
             // An assignment will then create a primitive value.
-            json_pointer(element.first).get_and_create(result, tree) = element.second;
+            pointers[index++].get_and_create(result, tree) = element.second;
         }
 
         return result;
@@ -1182,7 +1327,7 @@ class json_pointer
         = delete;
 #else
     {
-        return *this == json_pointer(rhs);
+        return equals_string(rhs);
     }
 #endif
 
@@ -1266,7 +1411,7 @@ inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
     = delete;
 #else
 {
-    return lhs == json_pointer<RefStringTypeLhs>(rhs);
+    return lhs.equals_string(rhs);
 }
 #endif
 
@@ -1279,7 +1424,7 @@ inline bool operator==(const StringType& lhs,
     = delete;
 #else
 {
-    return json_pointer<RefStringTypeRhs>(lhs) == rhs;
+    return rhs.equals_string(lhs);
 }
 #endif
 
