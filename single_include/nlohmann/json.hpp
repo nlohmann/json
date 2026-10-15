@@ -30833,51 +30833,64 @@ public:
         return next;
     }
 
-    /// @brief the capacity of the stored array, or unknown_size()
+    /// @brief the capacity of the stored array or object, or unknown_size()
     /// Only JSON_DIAGNOSTICS uses the value, to detect a reallocation that
-    /// would invalidate the parent pointers. Array types that do not have a
-    /// capacity() member function report unknown_size(), which is treated as
-    /// "the elements may have moved".
+    /// would invalidate the parent pointers. Containers that do not have a
+    /// capacity() member function report unknown_size() if their elements may
+    /// move (arrays, ordered_map) and 0 if they never do (std::map).
 #if JSON_DIAGNOSTICS
-    template < typename A = array_t, detail::enable_if_t < detail::has_capacity<A>::value, int > = 0 >
-    std::size_t array_capacity() const noexcept
+    template < typename C, detail::enable_if_t < detail::has_capacity<C>::value, int > = 0 >
+    static std::size_t capacity_of(const C& container) noexcept
     {
-        return m_data.m_value.array->capacity();
+        return container.capacity();
     }
 
-    template < typename A = array_t, detail::enable_if_t < !detail::has_capacity<A>::value, int > = 0 >
-    std::size_t array_capacity() const noexcept
+    template < typename C, detail::enable_if_t < !detail::has_capacity<C>::value, int > = 0 >
+    static std::size_t capacity_of(const C& /*container*/) noexcept
     {
-        return detail::unknown_size();
+        return std::is_same<C, array_t>::value || detail::is_ordered_map<C>::value ? detail::unknown_size() : 0;
+    }
+
+    std::size_t container_capacity() const noexcept
+    {
+        return is_array() ? capacity_of(*m_data.m_value.array) : capacity_of(*m_data.m_value.object);
     }
 #else
-    static constexpr std::size_t array_capacity() noexcept
+    static constexpr std::size_t container_capacity() noexcept
     {
         return detail::unknown_size();
     }
 #endif
 
-    /// @brief set the parent of a value that has just been added to an array
-    /// @param j the added value
-    /// @param old_capacity the value @ref array_capacity() returned before the
+    /// @brief set the parent of a value that has just been added to an array or object
+    /// @param j the added (or looked-up) value
+    /// @param old_capacity the value @ref container_capacity() returned before the
     ///        insertion
-    reference set_parent_after_array_insert(reference j, std::size_t old_capacity)
+    reference set_parent_after_insert(reference j, std::size_t old_capacity)
     {
 #if JSON_DIAGNOSTICS
         // see https://github.com/nlohmann/json/issues/2838
-        JSON_ASSERT(type() == value_t::array);
         if (JSON_HEDLEY_UNLIKELY(old_capacity == detail::unknown_size()
-                                 || array_capacity() != old_capacity))
+                                 || container_capacity() != old_capacity))
         {
-            // the capacity has changed, or the array type does not let us tell:
-            // the elements may have moved, so update all parents
+            // the capacity has changed, or the container type does not let us
+            // tell: the elements may have moved, so update all parents
             set_parents();
             return j;
         }
 #else
         static_cast<void>(old_capacity);
 #endif
-        return set_parent(j);
+        return set_parent_at(j);
+    }
+
+    /// @brief set the parent of an element accessed via at(); never moves elements
+    reference set_parent_at(reference j) noexcept
+    {
+#if JSON_DIAGNOSTICS
+        j.m_parent = this;
+#endif
+        return j;
     }
 
     reference set_parent(reference j)
@@ -32311,7 +32324,6 @@ public:
             copy_leaf_value(other, *this);
         }
 
-        set_parents();
         assert_invariant();
     }
 
@@ -33199,7 +33211,7 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     reference at(size_type idx)
     {
-        return set_parent(array_at(*this, idx));
+        return set_parent_at(array_at(*this, idx));
     }
 
     /// @brief access specified array element with bounds checking
@@ -33213,7 +33225,7 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     reference at(const typename object_t::key_type& key)
     {
-        return set_parent(object_at(*this, key));
+        return set_parent_at(object_at(*this, key));
     }
 
     /// @brief access specified object element with bounds checking
@@ -33222,7 +33234,7 @@ public:
                  detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     reference at(KeyType && key)
     {
-        return set_parent(object_at(*this, std::forward<KeyType>(key)));
+        return set_parent_at(object_at(*this, std::forward<KeyType>(key)));
     }
 
     /// @brief access specified object element with bounds checking
@@ -33267,13 +33279,13 @@ public:
 #if JSON_DIAGNOSTICS
                 // remember array size & capacity before resizing
                 const auto old_size = m_data.m_value.array->size();
-                const auto old_capacity = array_capacity();
+                const auto old_capacity = container_capacity();
 #endif
                 m_data.m_value.array->resize(idx + 1);
 
 #if JSON_DIAGNOSTICS
                 if (JSON_HEDLEY_UNLIKELY(old_capacity == detail::unknown_size()
-                                         || array_capacity() != old_capacity))
+                                         || container_capacity() != old_capacity))
                 {
                     // capacity has changed: update all parents
                     set_parents();
@@ -33320,8 +33332,9 @@ public:
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
+            const auto old_capacity = container_capacity();
             auto result = m_data.m_value.object->emplace(std::move(key), nullptr);
-            return set_parent(result.first->second);
+            return set_parent_after_insert(result.first->second, old_capacity);
         }
 
         throw_subscript_wrong_type("string");
@@ -33371,8 +33384,9 @@ public:
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
+            const auto old_capacity = container_capacity();
             auto result = m_data.m_value.object->emplace(lookup_key(std::forward<KeyType>(key)), nullptr);
-            return set_parent(result.first->second);
+            return set_parent_after_insert(result.first->second, old_capacity);
         }
 
         throw_subscript_wrong_type("string");
@@ -34278,9 +34292,9 @@ public:
         }
 
         // add the element to the array (move semantics)
-        const auto old_capacity = array_capacity();
+        const auto old_capacity = container_capacity();
         m_data.m_value.array->push_back(std::move(val));
-        set_parent_after_array_insert(m_data.m_value.array->back(), old_capacity);
+        set_parent_after_insert(m_data.m_value.array->back(), old_capacity);
         // if val is moved from, basic_json move constructor marks it null, so we do not call the destructor
     }
 
@@ -34309,9 +34323,9 @@ public:
         }
 
         // add the element to the array
-        const auto old_capacity = array_capacity();
+        const auto old_capacity = container_capacity();
         m_data.m_value.array->push_back(val);
-        set_parent_after_array_insert(m_data.m_value.array->back(), old_capacity);
+        set_parent_after_insert(m_data.m_value.array->back(), old_capacity);
     }
 
     /// @brief add an object to an array
@@ -34339,8 +34353,9 @@ public:
         }
 
         // add the element to the object
+        const auto old_capacity = container_capacity();
         auto res = m_data.m_value.object->insert(val);
-        set_parent(res.first->second);
+        set_parent_after_insert(res.first->second, old_capacity);
     }
 
     /// @brief add an object to an object
@@ -34393,9 +34408,9 @@ public:
         }
 
         // add the element to the array (perfect forwarding)
-        const auto old_capacity = array_capacity();
+        const auto old_capacity = container_capacity();
         m_data.m_value.array->emplace_back(std::forward<Args>(args)...);
-        return set_parent_after_array_insert(m_data.m_value.array->back(), old_capacity);
+        return set_parent_after_insert(m_data.m_value.array->back(), old_capacity);
     }
 
     /// @brief add an object to an object if key does not exist
@@ -34416,8 +34431,9 @@ public:
         }
 
         // add the element to the array (perfect forwarding)
+        const auto old_capacity = container_capacity();
         auto res = m_data.m_value.object->emplace(std::forward<Args>(args)...);
-        set_parent(res.first->second);
+        set_parent_after_insert(res.first->second, old_capacity);
 
         // create a result iterator and set iterator to the result of emplace
         auto it = begin();
@@ -34716,9 +34732,9 @@ public:
                     continue;
                 }
             }
-            // set_parent() also repairs the other members, which ordered_json
-            // relocates when adding a key makes its vector grow
-            set_parent(m_data.m_value.object->operator[](it.key()) = std::move(it.value()));
+            // operator[] repairs the other members if ordered_json relocates
+            // them; assigning through it keeps this O(1) per key
+            operator[](it.key()) = std::move(it.value());
         }
     }
 
@@ -34768,9 +34784,8 @@ public:
                     continue;
                 }
             }
-            // set_parent() also repairs the other members, which ordered_json
-            // relocates when adding a key makes its vector grow
-            target->set_parent(target->m_data.m_value.object->operator[](first.key()) = std::move(first.value()));
+            // operator[] repairs the other members if ordered_json relocates them
+            target->operator[](first.key()) = std::move(first.value());
             ++first;
         }
     }
