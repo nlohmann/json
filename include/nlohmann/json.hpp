@@ -585,26 +585,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             switch (t)
             {
                 case value_t::object:
-                {
-                    object = create<object_t>();
-                    break;
-                }
-
                 case value_t::array:
-                {
-                    array = create<array_t>();
-                    break;
-                }
-
                 case value_t::string:
-                {
-                    string = create<string_t>("");
-                    break;
-                }
-
                 case value_t::binary:
                 {
-                    binary = create<binary_t>();
+                    // allocating: kept out of line, so the scalar cases below inline
+                    init_owned(t);
                     break;
                 }
 
@@ -648,6 +634,34 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                     break;
                 }
+            }
+        }
+
+        JSON_HEDLEY_NEVER_INLINE
+        void init_owned(value_t t)
+        {
+            switch (t)
+            {
+                case value_t::object:
+                    object = create<object_t>();
+                    break;
+                case value_t::array:
+                    array = create<array_t>();
+                    break;
+                case value_t::string:
+                    string = create<string_t>("");
+                    break;
+                case value_t::binary:
+                    binary = create<binary_t>();
+                    break;
+                case value_t::null:
+                case value_t::boolean:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                case value_t::discarded:
+                default:
+                    break;
             }
         }
 
@@ -911,7 +925,18 @@ public:
             }
         }
 
+        // only strings, binaries, arrays and objects own memory; keep the
+        // check for them inline so destroying a scalar is a compare and a
+        // branch, and leave the actual work to an out-of-line function
         void destroy(value_t t)
+        {
+            if (JSON_HEDLEY_UNLIKELY(t == value_t::string || t == value_t::binary || t == value_t::object || t == value_t::array))
+            {
+                destroy_owned(t);
+            }
+        }
+
+        JSON_HEDLEY_NEVER_INLINE void destroy_owned(value_t t)
         {
             switch (t)
             {
@@ -2559,15 +2584,15 @@ public:
         // check of passed value is valid
         other.assert_invariant();
 
-        if (m_data.m_type == value_t::object || m_data.m_type == value_t::array)
+        if (JSON_HEDLEY_LIKELY(m_data.m_type != value_t::object && m_data.m_type != value_t::array
+                               && m_data.m_type != value_t::string && m_data.m_type != value_t::binary))
         {
-            // copying the container directly would call this constructor again
-            // for every element, once per nesting level
-            copy_structured(other);
+            // null, boolean, numbers, discarded: plain copy of the union
+            m_data.m_value = other.m_data.m_value;
         }
         else
         {
-            copy_leaf_value(other, *this);
+            copy_owning(other);
         }
 
         assert_invariant();
@@ -2798,6 +2823,22 @@ public:
     //////////////////
     // value access //
     //////////////////
+
+    /// out-of-line part of the copy constructor for owning types
+    JSON_HEDLEY_NEVER_INLINE
+    void copy_owning(const basic_json& other)
+    {
+        if (m_data.m_type == value_t::object || m_data.m_type == value_t::array)
+        {
+            // copying the container directly would call this constructor again
+            // for every element, once per nesting level
+            copy_structured(other);
+        }
+        else
+        {
+            copy_leaf_value(other, *this);
+        }
+    }
 
     /// get a pointer to the value (object)
     object_t* get_impl_ptr(object_t* /*unused*/) noexcept
@@ -5173,6 +5214,20 @@ public:
     /// @name lexicographical comparison operators
     /// @{
 
+    // the same-type cases for non-owning scalars, shared by JSON_IMPLEMENT_OPERATOR
+    // and JSON_IMPLEMENT_SCALAR_FAST
+#define JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                     \
+  case value_t::null:                                                                                  \
+        return (null_result);                                                                            \
+  case value_t::boolean:                                                                               \
+        return (lhs.m_data.m_value.boolean) op (rhs.m_data.m_value.boolean);                             \
+  case value_t::number_integer:                                                                        \
+        return (lhs.m_data.m_value.number_integer) op (rhs.m_data.m_value.number_integer);               \
+  case value_t::number_unsigned:                                                                       \
+        return (lhs.m_data.m_value.number_unsigned) op (rhs.m_data.m_value.number_unsigned);             \
+  case value_t::number_float:                                                                          \
+        return (lhs.m_data.m_value.number_float) op (rhs.m_data.m_value.number_float);
+
     // note parentheses around operands are necessary; see
     // https://github.com/nlohmann/json/issues/1530
     // Mixed signed/unsigned integer comparisons check whether the signed value
@@ -5209,23 +5264,10 @@ public:
                 return (*lhs.m_data.m_value.object) op (*rhs.m_data.m_value.object);                                   \
             }                                                                                            \
             \
-            case value_t::null:                                                                          \
-                return (null_result);                                                                    \
-                \
+            JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                 \
+            \
             case value_t::string:                                                                        \
                 return (*lhs.m_data.m_value.string) op (*rhs.m_data.m_value.string);                                   \
-                \
-            case value_t::boolean:                                                                       \
-                return (lhs.m_data.m_value.boolean) op (rhs.m_data.m_value.boolean);                                   \
-                \
-            case value_t::number_integer:                                                                \
-                return (lhs.m_data.m_value.number_integer) op (rhs.m_data.m_value.number_integer);                     \
-                \
-            case value_t::number_unsigned:                                                               \
-                return (lhs.m_data.m_value.number_unsigned) op (rhs.m_data.m_value.number_unsigned);                   \
-                \
-            case value_t::number_float:                                                                  \
-                return (lhs.m_data.m_value.number_float) op (rhs.m_data.m_value.number_float);                         \
                 \
             case value_t::binary:                                                                        \
                 return (*lhs.m_data.m_value.binary) op (*rhs.m_data.m_value.binary);                                   \
@@ -5270,6 +5312,24 @@ public:
     \
     return (default_result);
 
+    // inline fast path for two values of the same non-owning scalar type; anything
+    // else falls through to the out-of-line general comparison
+#define JSON_IMPLEMENT_SCALAR_FAST(op, null_result)                                                      \
+    if (lhs.m_data.m_type == rhs.m_data.m_type)                                                          \
+    {                                                                                                    \
+        switch (lhs.m_data.m_type)                                                                       \
+        {                                                                                                \
+                JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                 \
+            case value_t::object:                                                                       \
+            case value_t::array:                                                                        \
+            case value_t::string:                                                                       \
+            case value_t::binary:                                                                       \
+            case value_t::discarded:                                                                    \
+            default:                                                                                     \
+                break;                                                                                   \
+        }                                                                                                \
+    }
+
   JSON_PRIVATE_UNLESS_TESTED:
     // returns true if:
     // - any operand is NaN and the other operand is of number type
@@ -5297,6 +5357,46 @@ public:
         return compares_unordered(*this, rhs, inverse);
     }
 
+    // out-of-line general comparisons; the operators below handle same-type
+    // scalars inline and fall through to these
+    JSON_HEDLEY_NEVER_INLINE
+    static bool equal_general(const_reference lhs, const_reference rhs) noexcept
+    {
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
+                                 compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+    }
+
+    JSON_HEDLEY_NEVER_INLINE
+    static bool less_general(const_reference lhs, const_reference rhs) noexcept
+    {
+        // default_result is used if we cannot compare values. In that case,
+        // we compare types. Note we have to call the operator explicitly,
+        // because MSVC has problems otherwise.
+        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
+                                 compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
+    }
+
+#if JSON_HAS_THREE_WAY_COMPARISON
+    JSON_HEDLEY_NEVER_INLINE
+    static std::partial_ordering three_way_general(const_reference lhs, const_reference rhs) noexcept // *NOPAD*
+    {
+        // default_result is used if we cannot compare values. In that case,
+        // we compare types.
+        JSON_IMPLEMENT_OPERATOR(<=>, // *NOPAD*
+                                std::partial_ordering::equivalent,
+                                std::partial_ordering::unordered,
+                                lhs_type <=> rhs_type, // *NOPAD*
+                                to_partial_ordering(compare_iteratively<true>(lhs, rhs, false)), true)
+    }
+#endif
+
   public:
 #if JSON_HAS_THREE_WAY_COMPARISON
     /// @brief comparison: equal
@@ -5308,11 +5408,11 @@ public:
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         const_reference lhs = *this;
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
-                                 compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
+        JSON_IMPLEMENT_SCALAR_FAST( ==, true)
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
+        return equal_general(lhs, rhs);
     }
 
     /// @brief comparison: equal
@@ -5329,13 +5429,8 @@ public:
     std::partial_ordering operator<=>(const_reference rhs) const noexcept // *NOPAD*
     {
         const_reference lhs = *this;
-        // default_result is used if we cannot compare values. In that case,
-        // we compare types.
-        JSON_IMPLEMENT_OPERATOR(<=>, // *NOPAD*
-                                std::partial_ordering::equivalent,
-                                std::partial_ordering::unordered,
-                                lhs_type <=> rhs_type, // *NOPAD*
-                                to_partial_ordering(compare_iteratively<true>(lhs, rhs, false)), true)
+        JSON_IMPLEMENT_SCALAR_FAST(<=>, std::partial_ordering::equivalent) // *NOPAD*
+        return three_way_general(lhs, rhs);
     }
 
     /// @brief comparison: 3-way
@@ -5423,11 +5518,11 @@ public:
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
-                                 compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
+        JSON_IMPLEMENT_SCALAR_FAST( ==, true)
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
+        return equal_general(lhs, rhs);
     }
 
     // The friend comparisons with a scalar name the JSON type via decltype of
@@ -5482,11 +5577,8 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
     friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
-        // default_result is used if we cannot compare values. In that case,
-        // we compare types. Note we have to call the operator explicitly,
-        // because MSVC has problems otherwise.
-        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
-                                 compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
+        JSON_IMPLEMENT_SCALAR_FAST( <, false)
+        return less_general(lhs, rhs);
     }
 
     /// @brief comparison: less than
@@ -5597,6 +5689,8 @@ public:
 #endif
 
 #undef JSON_IMPLEMENT_OPERATOR
+#undef JSON_IMPLEMENT_SCALAR_FAST
+#undef JSON_IMPLEMENT_SCALAR_CASES
 
     /// @}
 
