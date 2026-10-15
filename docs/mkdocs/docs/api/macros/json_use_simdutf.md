@@ -6,8 +6,9 @@
 
 When defined, the parser validates the UTF-8 content of JSON strings that come from a **contiguous byte input**
 (`std::string`, `std::vector<char>`/`<std::uint8_t>`, string literals, `const char*` ranges, …) using the
-[simdutf](https://github.com/simdutf/simdutf) library instead of the built-in scalar validator. On text with many
-non-ASCII characters (e.g. CJK or emoji) this can validate several times faster.
+[simdutf](https://github.com/simdutf/simdutf) library instead of the built-in validator (which uses SSSE3 or NEON where
+available, see [`JSON_NO_SIMD`](json_no_simd.md)). On text with many non-ASCII characters (e.g. CJK or emoji) this can
+validate faster, depending on the CPU.
 
 This is an **opt-in external dependency**. The library itself remains header-only and its behavior is unchanged: the
 same input is accepted or rejected either way, and every parse error is reported at the same position with the same
