@@ -92,13 +92,19 @@ private:
 
     /// @brief shared implementation of the const and non-const at() overloads
     /// @throw std::out_of_range if @a key is not found
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_key_not_found()
+    {
+        JSON_THROW(std::out_of_range("key not found"));
+    }
+
     template<typename Self, typename KeyType>
     static auto at_impl(Self& self, const KeyType& key) -> decltype((self.begin()->second))
     {
         const auto it = find_impl(self, key);
         if (it == self.end())
         {
-            JSON_THROW(std::out_of_range("key not found"));
+            throw_key_not_found();
         }
         return it->second;
     }
