@@ -24,6 +24,8 @@ using nlohmann::json;
 #endif
 
 #include <map>
+#include <string>
+#include <vector>
 #include <sstream>
 
 TEST_CASE("JSON pointers")
@@ -1069,5 +1071,55 @@ TEST_CASE("flatten of structured values")
         const auto flat = value.flatten();
         CHECK(flat.dump() ==
               R"({"/z":"s","/a~1b/~0":1,"/a~1b/k":null,"/a/0":1,"/a/1/c":null,"/a/1/b":null,"/a/2/0/x~0~1/0":true,"/a/2/0/x~0~1/1":null,"/a/2/0/w":2})");
+    }
+}
+
+TEST_CASE("flatten of ordered_json")
+{
+    using nlohmann::ordered_json;
+
+    SECTION("keeps the document order of the leaves")
+    {
+        const ordered_json j = ordered_json::parse(R"({
+            "z": 1, "a": {"y": [true, null, {}], "b": "x", "": []},
+            "m~n": 2.5, "o/p": {"k": {}}, "0": [[1], [2, 3]]
+        })");
+
+        const ordered_json flat = j.flatten();
+        std::vector<std::string> keys;
+        for (const auto& el : flat.items())
+        {
+            keys.push_back(el.key());
+        }
+        const std::vector<std::string> expected =
+        {
+            "/z", "/a/y/0", "/a/y/1", "/a/y/2", "/a/b", "/a/", "/m~0n", "/o~1p/k", "/0/0/0", "/0/1/0", "/0/1/1"
+        };
+        CHECK(keys == expected);
+        CHECK(flat.size() == expected.size());
+        CHECK(flat["/m~0n"] == 2.5);
+        CHECK(flat["/a/y/2"].is_null());
+    }
+
+    SECTION("round-trips and agrees with json")
+    {
+        ordered_json j;
+        for (int i = 0; i < 200; ++i)
+        {
+            j["k" + std::to_string(i)] = {{"v", i}, {"l", {i, i + 1, "s"}}};
+        }
+        const ordered_json flat = j.flatten();
+        CHECK(flat.size() == 800);
+        CHECK(flat.unflatten() == j);
+
+        // same entries as for a sorted object
+        const nlohmann::json plain = nlohmann::json::parse(j.dump());
+        CHECK(nlohmann::json::parse(flat.dump()) == plain.flatten());
+    }
+
+    SECTION("primitive and empty root")
+    {
+        CHECK(ordered_json(1).flatten() == ordered_json({{"", 1}}));
+        CHECK(ordered_json::array().flatten() == ordered_json({{"", nullptr}}));
     }
 }
