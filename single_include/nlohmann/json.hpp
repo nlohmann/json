@@ -20644,6 +20644,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
 // #include <nlohmann/detail/string_concat.hpp>
 
 // #include <nlohmann/detail/string_escape.hpp>
@@ -21567,14 +21569,14 @@ class json_pointer
     // (ordered_map) skip the lookup, which is linear and would make flatten
     // quadratic; all other object types use operator[].
     template<typename ObjectType, typename ValueType>
-    static auto add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, int /*unused*/)
+    static auto add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<1> /*unused*/)
     -> decltype(obj.emplace_new_key(key, std::forward<ValueType>(v)), void())
     {
         obj.emplace_new_key(key, std::forward<ValueType>(v));
     }
 
     template<typename ObjectType, typename ValueType>
-    static void add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, ...)
+    static void add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<0> /*unused*/)
     {
         obj[key] = std::forward<ValueType>(v);
     }
@@ -21633,7 +21635,7 @@ class json_pointer
                     if (v.m_data.m_value.array->empty())
                     {
                         // flatten empty array as null
-                        add_flattened(object, path, nullptr, 0);
+                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
                     }
                     else
                     {
@@ -21647,7 +21649,7 @@ class json_pointer
                     if (v.m_data.m_value.object->empty())
                     {
                         // flatten empty object as null
-                        add_flattened(object, path, nullptr, 0);
+                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
                     }
                     else
                     {
@@ -21667,7 +21669,7 @@ class json_pointer
                 default:
                 {
                     // add a primitive value with its reference string
-                    add_flattened(object, path, v, 0);
+                    add_flattened(object, path, v, detail::priority_tag<1> {});
                     return;
                 }
             }
