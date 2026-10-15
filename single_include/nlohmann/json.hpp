@@ -3452,18 +3452,7 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
-/*!
- * @brief string escaping as described in RFC 6901 (Sect. 4)
- * @param[in] s string to escape
- * @return    escaped string
- *
- * Note the order of escaping "~" to "~0" and "/" to "~1" is important.
- *
- * The string is rebuilt in a single pass, appending whole runs between the
- * characters that need escaping, while repeated replace() calls would move
- * the tail of the string once per escaped character. @ref escape_into appends
- * the escaped string to an existing one.
- */
+/// append @a s to @a out, escaped like @ref escape does
 template<typename StringType>
 inline void escape_into(StringType& out, const StringType& s)
 {
@@ -3482,6 +3471,18 @@ inline void escape_into(StringType& out, const StringType& s)
     out.append(s.data() + run, size - run);
 }
 
+/*!
+ * @brief string escaping as described in RFC 6901 (Sect. 4)
+ * @param[in] s string to escape
+ * @return    escaped string
+ *
+ * Note the order of escaping "~" to "~0" and "/" to "~1" is important.
+ *
+ * The string is rebuilt in a single pass, appending whole runs between the
+ * characters that need escaping, while repeated replace() calls would move
+ * the tail of the string once per escaped character. @ref escape_into appends
+ * the escaped string to an existing one.
+ */
 template<typename StringType>
 inline StringType escape(const StringType& s)
 {
@@ -19066,7 +19067,7 @@ class binary_reader
     }
 
     JSON_HEDLEY_NEVER_INLINE
-    bool bson_unsupported_type_error(const std::size_t position, const char element_type) const
+    bool bson_unsupported_type_error(const std::size_t position, const char_int_type element_type) const
     {
         const std::string cr_str = hex_byte(static_cast<std::uint8_t>(element_type));
         return sax->parse_error(position, cr_str,
@@ -22019,7 +22020,7 @@ class json_pointer
         std::size_t token_count = 0;
         for (std::size_t i = 0; i < size; ++i)
         {
-            token_count += (reference_string[i] == '/') ? 1 : 0;
+            token_count += static_cast<std::size_t>(reference_string[i] == '/');
         }
         result.reserve(token_count);
 
@@ -33091,14 +33092,14 @@ public:
         JSON_THROW(std::length_error(detail::concat("array index ", std::to_string(idx), " exceeds size_type")));
     }
 
-    /// @throw out_of_range.401
+    /// @throw out_of_range.401 always, as @a idx is out of range of @a j
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_out_of_range(size_type idx, const basic_json& j)
     {
         JSON_THROW(out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat("array index ", std::to_string(idx), " is out of range"), &j));
     }
 
-    /// @throw out_of_range.403
+    /// @throw out_of_range.403 always, as @a key is not found in @a j
     template<typename KeyType>
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_key_not_found(const KeyType& key, const basic_json& j)

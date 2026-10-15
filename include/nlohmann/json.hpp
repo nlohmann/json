@@ -3058,14 +3058,14 @@ public:
         JSON_THROW(std::length_error(detail::concat("array index ", std::to_string(idx), " exceeds size_type")));
     }
 
-    /// @throw out_of_range.401
+    /// @throw out_of_range.401 always, as @a idx is out of range of @a j
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_out_of_range(size_type idx, const basic_json& j)
     {
         JSON_THROW(out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat("array index ", std::to_string(idx), " is out of range"), &j));
     }
 
-    /// @throw out_of_range.403
+    /// @throw out_of_range.403 always, as @a key is not found in @a j
     template<typename KeyType>
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_key_not_found(const KeyType& key, const basic_json& j)
