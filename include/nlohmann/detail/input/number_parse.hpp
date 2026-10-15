@@ -259,13 +259,53 @@ JSON_HEDLEY_ALWAYS_INLINE std::uint32_t parse_eight_digits(std::uint64_t v) noex
     return static_cast<std::uint32_t>(((v & 0x0000FFFF0000FFFFu) * 42949672960001u) >> 32u);
 }
 
-/// whether [first, last) contains a digit other than '0'
-inline bool has_nonzero_digit(const char* first, const char* last) noexcept
+/// whether the eight bytes in @a v (see read_eight_bytes()) are all ASCII
+/// digits (after fast_float)
+JSON_HEDLEY_ALWAYS_INLINE bool is_eight_digits(std::uint64_t v) noexcept
 {
-    return std::any_of(first, last, [](char c) noexcept
+    return ((v & 0xF0F0F0F0F0F0F0F0u) | (((v + 0x0606060606060606u) & 0xF0F0F0F0F0F0F0F0u) >> 4u)) == 0x3333333333333333u;
+}
+
+/*!
+@brief skip the ASCII digits starting at data[i] and accumulate their value
+
+Eight digits are taken at a time while at least eight bytes remain. @a w wraps
+around after 19 digits; the caller only uses it for shorter digit runs.
+
+@return the index of the first byte at or after @a i that is not a digit
+*/
+JSON_HEDLEY_ALWAYS_INLINE std::size_t accumulate_digits(const char* data, std::size_t i, std::size_t avail, std::uint64_t& w) noexcept
+{
+    while (avail - i >= 8)
     {
-        return c != '0';
-    });
+        const std::uint64_t v = read_eight_bytes(data + i);
+        if (!is_eight_digits(v))
+        {
+            break;
+        }
+        w = (w * 100000000u) + parse_eight_digits(v);
+        i += 8;
+    }
+    while (i < avail && data[i] >= '0' && data[i] <= '9')
+    {
+        w = (w * 10u) + static_cast<std::uint64_t>(data[i] - '0');
+        ++i;
+    }
+    return i;
+}
+
+/// whether [first, last) contains a digit other than '0'; a plain loop, as
+/// GCC calls std::any_of out of line even for the usual empty range
+JSON_HEDLEY_ALWAYS_INLINE bool has_nonzero_digit(const char* first, const char* last) noexcept
+{
+    for (; first != last; ++first)
+    {
+        if (*first != '0')
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 /// the value of the validated exponent digits [+-]?[0-9]+ in [first, last),
@@ -311,7 +351,7 @@ truncated is set.
                                    std::string::npos if there is none
 @param[in] mantissa_end            index of the 'e'/'E', or the token length
 */
-inline float_significand parse_float_significand(const char* first, const char* last,
+JSON_HEDLEY_ALWAYS_INLINE float_significand parse_float_significand(const char* first, const char* last,
         std::size_t decimal_point_position, std::size_t mantissa_end) noexcept
 {
     float_significand s;

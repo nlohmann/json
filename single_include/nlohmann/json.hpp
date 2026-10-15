@@ -9996,13 +9996,53 @@ JSON_HEDLEY_ALWAYS_INLINE std::uint32_t parse_eight_digits(std::uint64_t v) noex
     return static_cast<std::uint32_t>(((v & 0x0000FFFF0000FFFFu) * 42949672960001u) >> 32u);
 }
 
-/// whether [first, last) contains a digit other than '0'
-inline bool has_nonzero_digit(const char* first, const char* last) noexcept
+/// whether the eight bytes in @a v (see read_eight_bytes()) are all ASCII
+/// digits (after fast_float)
+JSON_HEDLEY_ALWAYS_INLINE bool is_eight_digits(std::uint64_t v) noexcept
 {
-    return std::any_of(first, last, [](char c) noexcept
+    return ((v & 0xF0F0F0F0F0F0F0F0u) | (((v + 0x0606060606060606u) & 0xF0F0F0F0F0F0F0F0u) >> 4u)) == 0x3333333333333333u;
+}
+
+/*!
+@brief skip the ASCII digits starting at data[i] and accumulate their value
+
+Eight digits are taken at a time while at least eight bytes remain. @a w wraps
+around after 19 digits; the caller only uses it for shorter digit runs.
+
+@return the index of the first byte at or after @a i that is not a digit
+*/
+JSON_HEDLEY_ALWAYS_INLINE std::size_t accumulate_digits(const char* data, std::size_t i, std::size_t avail, std::uint64_t& w) noexcept
+{
+    while (avail - i >= 8)
     {
-        return c != '0';
-    });
+        const std::uint64_t v = read_eight_bytes(data + i);
+        if (!is_eight_digits(v))
+        {
+            break;
+        }
+        w = (w * 100000000u) + parse_eight_digits(v);
+        i += 8;
+    }
+    while (i < avail && data[i] >= '0' && data[i] <= '9')
+    {
+        w = (w * 10u) + static_cast<std::uint64_t>(data[i] - '0');
+        ++i;
+    }
+    return i;
+}
+
+/// whether [first, last) contains a digit other than '0'; a plain loop, as
+/// GCC calls std::any_of out of line even for the usual empty range
+JSON_HEDLEY_ALWAYS_INLINE bool has_nonzero_digit(const char* first, const char* last) noexcept
+{
+    for (; first != last; ++first)
+    {
+        if (*first != '0')
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 /// the value of the validated exponent digits [+-]?[0-9]+ in [first, last),
@@ -10048,7 +10088,7 @@ truncated is set.
                                    std::string::npos if there is none
 @param[in] mantissa_end            index of the 'e'/'E', or the token length
 */
-inline float_significand parse_float_significand(const char* first, const char* last,
+JSON_HEDLEY_ALWAYS_INLINE float_significand parse_float_significand(const char* first, const char* last,
         std::size_t decimal_point_position, std::size_t mantissa_end) noexcept
 {
     float_significand s;
@@ -12751,9 +12791,12 @@ scan_number_done:
         const std::size_t avail = rem + 1;
 
         // validate + classify the number extent (mirrors scan_number()'s grammar)
+        // and accumulate the mantissa digits on the way, so that tokens with up
+        // to 19 digits need no second pass for their value
         std::size_t i = 0;
         std::size_t dot_index = std::string::npos;
         token_type number_type = token_type::value_unsigned;
+        std::uint64_t w = 0;
         if (data[0] == '-')
         {
             number_type = token_type::value_integer;
@@ -12763,22 +12806,21 @@ scan_number_done:
                 return token_type::uninitialized;
             }
         }
+        const std::size_t integer_begin = i;
         if (data[i] == '0')
         {
             ++i;
         }
         else if (data[i] >= '1' && data[i] <= '9')
         {
-            ++i;
-            while (i < avail && data[i] >= '0' && data[i] <= '9')
-            {
-                ++i;
-            }
+            i = accumulate_digits(data, i, avail, w);
         }
         else
         {
             return token_type::uninitialized;
         }
+        std::size_t digit_count = i - integer_begin;
+        std::size_t fraction_digits = 0;
         if (i < avail && data[i] == '.')
         {
             number_type = token_type::value_float;
@@ -12788,29 +12830,39 @@ scan_number_done:
             {
                 return token_type::uninitialized;
             }
-            while (i < avail && data[i] >= '0' && data[i] <= '9')
-            {
-                ++i;
-            }
+            const std::size_t fraction_begin = i;
+            i = accumulate_digits(data, i, avail, w);
+            fraction_digits = i - fraction_begin;
+            digit_count += fraction_digits;
         }
         // the mantissa ends here, whether or not an exponent part follows
         const std::size_t mantissa_end = i;
+        std::int64_t exponent = 0;
         if (i < avail && (data[i] == 'e' || data[i] == 'E'))
         {
             number_type = token_type::value_float;
             ++i;
+            bool negative_exponent = false;
             if (i < avail && (data[i] == '+' || data[i] == '-'))
             {
+                negative_exponent = data[i] == '-';
                 ++i;
             }
             if (i >= avail || !(data[i] >= '0' && data[i] <= '9'))
             {
                 return token_type::uninitialized;
             }
+            // saturated far beyond every range, see parse_float_exponent()
+            constexpr std::int64_t saturation = 100000000000000000; // 10^17
             while (i < avail && data[i] >= '0' && data[i] <= '9')
             {
+                if (exponent < saturation)
+                {
+                    exponent = (exponent * 10) + (data[i] - '0');
+                }
                 ++i;
             }
+            exponent = negative_exponent ? -exponent : exponent;
         }
         const std::size_t len = i;
         if (number_may_continue(len == avail, std::integral_constant<bool, bulk_window> {}))
@@ -12831,7 +12883,10 @@ scan_number_done:
 #if !JSON_DIAGNOSTIC_POSITIONS
         if (number_type != token_type::value_float)
         {
-            const token_type integer_result = convert_integer(number_type, data, data + len);
+            // up to 18 digits always fit into std::uint64_t and std::int64_t
+            const token_type integer_result = (digit_count <= 18)
+                                              ? store_integer(number_type, w)
+                                              : convert_integer(number_type, data, data + len);
             if (JSON_HEDLEY_LIKELY(integer_result != token_type::uninitialized))
             {
                 bulk_consume(data + 1, len - 1);
@@ -12853,6 +12908,20 @@ scan_number_done:
 
         bulk_consume(data + 1, len - 1);
         read_number_terminator(std::integral_constant<bool, bulk_window> {});
+
+        // a float whose digits all fit into w converts from the accumulated
+        // value; longer ones (and other float formats) take the general path
+        if (number_type == token_type::value_float && digit_count <= 19)
+        {
+            float_significand s;
+            s.w = w;
+            s.exponent = exponent - static_cast<std::int64_t>(fraction_digits);
+            s.negative = data[0] == '-';
+            if (convert_accumulated_float(s, std::integral_constant<bool, has_native_float_format<number_float_t>::value> {}))
+            {
+                return token_type::value_float;
+            }
+        }
 
         return convert_number(number_type, mantissa_end);
     }
@@ -12881,6 +12950,35 @@ scan_number_done:
 
     /// the input is not handed back, so the terminator can stay unread
     void read_number_terminator(std::false_type /*window*/) const noexcept {}
+
+    /// binary32/binary64: the value of a float token from its accumulated
+    /// significand (see scan_number_bulk_contiguous())
+    bool convert_accumulated_float(const float_significand& s, std::true_type /*native*/) noexcept
+    {
+        value_float = decimal_to_float<number_float_t>(s);
+        return true;
+    }
+
+    /// other formats (e.g. x87 long double): not instantiated for them, as
+    /// decimal_to_float() only supports binary32/binary64
+    static bool convert_accumulated_float(const float_significand& /*s*/, std::false_type /*native*/) noexcept
+    {
+        return false;
+    }
+
+    /// the value of an integer token with at most 18 digits, accumulated in @a w
+    token_type store_integer(token_type number_type, std::uint64_t w) noexcept
+    {
+        if (number_type == token_type::value_unsigned)
+        {
+            value_unsigned = static_cast<number_unsigned_t>(w);
+            // reject values that do not round-trip into a narrower type
+            return (static_cast<std::uint64_t>(value_unsigned) == w) ? token_type::value_unsigned : token_type::uninitialized;
+        }
+        const std::int64_t x = -static_cast<std::int64_t>(w);
+        value_integer = static_cast<number_integer_t>(x);
+        return (static_cast<std::int64_t>(value_integer) == x) ? token_type::value_integer : token_type::uninitialized;
+    }
 
     /// contiguous input: try the number fast path, else the byte-path scanner
     token_type scan_number_dispatch(std::true_type /*bulk*/)
