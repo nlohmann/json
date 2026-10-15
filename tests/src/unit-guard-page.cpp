@@ -309,6 +309,23 @@ void check_binary(guarded_buffer& guard, const std::vector<std::uint8_t>& bytes,
         }
     }
 }
+
+// parse_float_native() at both ends of the guarded page, compared bit for bit
+// with converting the same token from a std::string
+template<typename FloatType>
+void check_float_native(guarded_buffer& guard, const std::string& token)
+{
+    const std::size_t decimal_point = token.find('.');
+    const std::size_t exponent = token.find_first_of("eE");
+    const std::size_t mantissa_end = exponent == std::string::npos ? token.size() : exponent;
+    const FloatType expected = nlohmann::detail::parse_float_native<FloatType>(token.data(), token.data() + token.size(), decimal_point, mantissa_end);
+    for (int placement = 0; placement < 2; ++placement)
+    {
+        const char* const first = reinterpret_cast<const char*>(placement == 0 ? guard.at_end(token) : guard.at_start(token));
+        const FloatType value = nlohmann::detail::parse_float_native<FloatType>(first, first + token.size(), decimal_point, mantissa_end);
+        CHECK(std::memcmp(&value, &expected, sizeof(value)) == 0);
+    }
+}
 } // namespace
 
 TEST_CASE("guard page")
@@ -371,22 +388,32 @@ TEST_CASE("guard page")
         }
     }
 
-    SECTION("Eisel-Lemire")
+    SECTION("float conversion")
     {
-        const std::vector<std::string> numbers = all_prefixes(
+        // the lexer converts floats from its token buffer, so the JSON section
+        // below never places a float token at the page boundary; this calls the
+        // conversion directly: the 8-digit loops of parse_float_significand()
+        // and digit_comparison() read up to the end of the token
+        const std::vector<std::string> tokens = all_prefixes(
         {
             "1234567812345678123456781234567812345678",
             "-1.2345678901234567890123456789e-123",
             "0.00000000000000000000000000000000000001",
             "98765432.10987654",
+            "123456789012345678901234567890e-30",
+            // halfway between 1 and the next double, then just above it
+            "1.00000000000000011102230246251565404236316680908203125",
+            "1.000000000000000111022302462515654042363166809082031250000000001",
         });
-        for (const auto& number : numbers)
+        for (const auto& token : tokens)
         {
-            double out = 0;
-            const char* const end = reinterpret_cast<const char*>(guard.at_end(number));
-            static_cast<void>(nlohmann::detail::parse_float_eisel_lemire(end, end + number.size(), out));
-            const char* const start = reinterpret_cast<const char*>(guard.at_start(number));
-            static_cast<void>(nlohmann::detail::parse_float_eisel_lemire(start, start + number.size(), out));
+            // only complete number tokens: the conversion expects validated input
+            if (!token.empty() && json::accept(token))
+            {
+                CAPTURE(token)
+                check_float_native<double>(guard, token);
+                check_float_native<float>(guard, token);
+            }
         }
     }
 
