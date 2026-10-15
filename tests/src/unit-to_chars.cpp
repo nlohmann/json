@@ -21,11 +21,8 @@ using nlohmann::detail::dtoa_impl::reinterpret_bits;
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <iomanip>
 #include <limits>
-#include <locale>
 #include <random>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -689,20 +686,13 @@ void check_shortest(double v)
     const std::string& digits = de.first;
     if (digits.size() > 1)
     {
-        // the decimals of one digit fewer next to the value
-        // (a stream rather than snprintf("%.*e"), whose output GCC cannot bound)
-        std::ostringstream shorter;
-        shorter.imbue(std::locale::classic());
-        shorter << std::scientific << std::setprecision(static_cast<int>(digits.size()) - 2) << v;
-        const auto near = digits_and_exponent(shorter.str());
-        // as an integer with digits.size() - 1 digits
-        std::string m = near.first;
-        int e = near.second;
-        while (m.size() < digits.size() - 1)
-        {
-            m += '0';
-            --e;
-        }
+        // the decimals of one digit fewer next to the value: v lies within
+        // half a unit of the last digit of text, so the closest ones are the
+        // truncated digits and their successor
+        // (not a stream with std::setprecision(digits.size() - 2): the
+        // standard library of MSVC 2017 ignores a precision of 0)
+        const std::string m = digits.substr(0, digits.size() - 1);
+        const int e = de.second + 1;
         const std::uint64_t mid = std::stoull(m);
         for (const std::uint64_t candidate :
                 {

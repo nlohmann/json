@@ -117,6 +117,34 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 }
 #endif
 
+/*!
+@brief whether a value of the given type owns heap memory
+
+Strings, binaries, objects, and arrays are stored as pointers to allocated
+values; all other types are stored directly in the union. Every enumerator is
+listed so that -Wswitch-enum flags this function when a new type is added.
+*/
+inline bool owns_memory(const value_t t) noexcept
+{
+    switch (t)
+    {
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::binary:
+            return true;
+
+        case value_t::null:
+        case value_t::boolean:
+        case value_t::number_integer:
+        case value_t::number_unsigned:
+        case value_t::number_float:
+        case value_t::discarded:
+        default:
+            return false;
+    }
+}
+
 
 /*!
 @brief compare an integer with a floating point number without precision loss

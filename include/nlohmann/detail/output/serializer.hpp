@@ -49,6 +49,12 @@ class serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    /// type of the absolute value of an integer: number_unsigned_t, or its
+    /// unsigned counterpart if it is signed (it may be number_integer_t, #2573)
+    using number_magnitude_t = typename std::conditional <
+                               std::is_integral<number_unsigned_t>::value && std::is_signed<number_unsigned_t>::value,
+                               std::make_unsigned<number_unsigned_t>,
+                               std::enable_if<true, number_unsigned_t >>::type::type;
     using binary_char_t = typename BasicJsonType::binary_t::value_type;
 
   public:
@@ -772,6 +778,33 @@ class serializer
                         break;
                     }
                 }
+
+                // A byte below 0x60 is a complete code point and needs no
+                // UTF-8 decoding. The scanner stops only at a control
+                // character, a quote, or a backslash in that range, so look up
+                // its escape sequence and write all 8 bytes of the table entry
+                // straight into the write buffer; only the length stored in the
+                // last byte of the entry is kept.
+                if (data[i] < 0x60)
+                {
+                    // emit any bytes still pending in string_buffer first to
+                    // preserve output order
+                    if (bytes != 0)
+                    {
+                        put_buffer(string_buffer, bytes);
+                        bytes = 0;
+                    }
+                    const auto& escape = ascii_escapes()[data[i]];
+                    if (JSON_HEDLEY_UNLIKELY(write_buffer.size() - write_buffer_pos < escape.size()))
+                    {
+                        flush();
+                    }
+                    std::memcpy(write_buffer.data() + write_buffer_pos, escape.data(), escape.size());
+                    write_buffer_pos += static_cast<std::size_t>(escape[7]);
+                    bytes_after_last_accept = 0;
+                    undumped_chars = 0;
+                    continue;
+                }
             }
 
             const auto byte = static_cast<std::uint8_t>(s[i]);
@@ -780,91 +813,38 @@ class serializer
             {
                 case UTF8_ACCEPT:  // decode found a new code point
                 {
-                    switch (codepoint)
+                    // the code point is at least 0x60 (smaller ones are handled
+                    // above) and is not printable ASCII (which the scanner
+                    // copies): it is DEL (0x7F) under EnsureAscii or a non-ASCII
+                    // character
+                    if (EnsureAscii)
                     {
-                        case 0x08: // backspace
+                        JSON_ASSERT(codepoint >= 0x7F);
+                        if (error_handler == error_handler_t::keep)
                         {
-                            string_buffer[bytes++] = '\\';
-                            string_buffer[bytes++] = 'b';
-                            break;
+                            // this character was buffered as raw bytes below
+                            // in case it turned out to be part of an
+                            // ill-formed sequence (which is kept as is); now
+                            // that it decoded to a well-formed code point,
+                            // undo that and \u-escape it like any other
+                            // character instead
+                            bytes = bytes_after_last_accept;
                         }
-
-                        case 0x09: // horizontal tab
+                        if (codepoint <= 0xFFFF)
                         {
-                            string_buffer[bytes++] = '\\';
-                            string_buffer[bytes++] = 't';
-                            break;
+                            write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
                         }
-
-                        case 0x0A: // newline
+                        else
                         {
-                            string_buffer[bytes++] = '\\';
-                            string_buffer[bytes++] = 'n';
-                            break;
+                            write_u_escape(bytes, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)));
+                            write_u_escape(bytes, static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
                         }
-
-                        case 0x0C: // formfeed
-                        {
-                            string_buffer[bytes++] = '\\';
-                            string_buffer[bytes++] = 'f';
-                            break;
-                        }
-
-                        case 0x0D: // carriage return
-                        {
-                            string_buffer[bytes++] = '\\';
-                            string_buffer[bytes++] = 'r';
-                            break;
-                        }
-
-                        case 0x22: // quotation mark
-                        {
-                            string_buffer[bytes++] = '\\';
-                            string_buffer[bytes++] = '"';
-                            break;
-                        }
-
-                        case 0x5C: // reverse solidus
-                        {
-                            string_buffer[bytes++] = '\\';
-                            string_buffer[bytes++] = '\\';
-                            break;
-                        }
-
-                        default:
-                        {
-                            // escape control characters (0x00..0x1F) or, if
-                            // EnsureAscii parameter is used, non-ASCII characters
-                            if ((codepoint <= 0x1F) || (EnsureAscii && (codepoint >= 0x7F)))
-                            {
-                                if (EnsureAscii && error_handler == error_handler_t::keep)
-                                {
-                                    // this character was buffered as raw bytes
-                                    // below in case it turned out to be part of
-                                    // an ill-formed sequence (which is kept as
-                                    // is); now that it decoded to a well-formed
-                                    // code point, undo that and \u-escape it
-                                    // like any other character instead
-                                    bytes = bytes_after_last_accept;
-                                }
-                                if (codepoint <= 0xFFFF)
-                                {
-                                    write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
-                                }
-                                else
-                                {
-                                    write_u_escape(bytes, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)));
-                                    write_u_escape(bytes, static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
-                                }
-                            }
-                            else
-                            {
-                                // copy byte to buffer (all previous bytes
-                                // been copied have in default case above)
-                                string_buffer[bytes++] = s[i];
-                            }
-                            break;
-                        }
+                    }
+                    else
+                    {
+                        // copy byte to buffer (all previous bytes of the
+                        // sequence have been copied in the default case below)
+                        string_buffer[bytes++] = s[i];
                     }
 
                     // write buffer and reset index; there must be 13 bytes
@@ -1227,7 +1207,7 @@ class serializer
     @param[in] x  unsigned integer number to count its digits
     @return    number of decimal digits
     */
-    unsigned int count_digits(number_unsigned_t x) noexcept
+    unsigned int count_digits(number_magnitude_t x) noexcept
     {
         unsigned int n_digits = 1;
         for (;;)
@@ -1251,6 +1231,121 @@ class serializer
             x = x / 10000u;
             n_digits += 4;
         }
+    }
+
+    /*!
+    @brief the JSON form of each character below 0x60
+
+    Entry c holds the escape sequence of character c - the short form for
+    \\b, \\t, \\n, \\f, \\r, \\" and \\\\, \\u00xx for the other control characters -
+    or c itself if it needs no escaping, padded with zeros to 7 bytes. The last
+    byte is the length of the sequence. The 8 bytes of an entry are copied at
+    once, so writing an escape needs neither a branch nor a byte-wise loop.
+    */
+    static const std::array<std::array<char, 8>, 0x60>& ascii_escapes() noexcept
+    {
+        static const std::array<std::array<char, 8>, 0x60> escapes =
+        {
+            {
+                {{'\\', 'u', '0', '0', '0', '0', 0, 6}}, // 0x00
+                {{'\\', 'u', '0', '0', '0', '1', 0, 6}}, // 0x01
+                {{'\\', 'u', '0', '0', '0', '2', 0, 6}}, // 0x02
+                {{'\\', 'u', '0', '0', '0', '3', 0, 6}}, // 0x03
+                {{'\\', 'u', '0', '0', '0', '4', 0, 6}}, // 0x04
+                {{'\\', 'u', '0', '0', '0', '5', 0, 6}}, // 0x05
+                {{'\\', 'u', '0', '0', '0', '6', 0, 6}}, // 0x06
+                {{'\\', 'u', '0', '0', '0', '7', 0, 6}}, // 0x07
+                {{'\\', 'b', 0, 0, 0, 0, 0, 2}}, // 0x08
+                {{'\\', 't', 0, 0, 0, 0, 0, 2}}, // 0x09
+                {{'\\', 'n', 0, 0, 0, 0, 0, 2}}, // 0x0A
+                {{'\\', 'u', '0', '0', '0', 'b', 0, 6}}, // 0x0B
+                {{'\\', 'f', 0, 0, 0, 0, 0, 2}}, // 0x0C
+                {{'\\', 'r', 0, 0, 0, 0, 0, 2}}, // 0x0D
+                {{'\\', 'u', '0', '0', '0', 'e', 0, 6}}, // 0x0E
+                {{'\\', 'u', '0', '0', '0', 'f', 0, 6}}, // 0x0F
+                {{'\\', 'u', '0', '0', '1', '0', 0, 6}}, // 0x10
+                {{'\\', 'u', '0', '0', '1', '1', 0, 6}}, // 0x11
+                {{'\\', 'u', '0', '0', '1', '2', 0, 6}}, // 0x12
+                {{'\\', 'u', '0', '0', '1', '3', 0, 6}}, // 0x13
+                {{'\\', 'u', '0', '0', '1', '4', 0, 6}}, // 0x14
+                {{'\\', 'u', '0', '0', '1', '5', 0, 6}}, // 0x15
+                {{'\\', 'u', '0', '0', '1', '6', 0, 6}}, // 0x16
+                {{'\\', 'u', '0', '0', '1', '7', 0, 6}}, // 0x17
+                {{'\\', 'u', '0', '0', '1', '8', 0, 6}}, // 0x18
+                {{'\\', 'u', '0', '0', '1', '9', 0, 6}}, // 0x19
+                {{'\\', 'u', '0', '0', '1', 'a', 0, 6}}, // 0x1A
+                {{'\\', 'u', '0', '0', '1', 'b', 0, 6}}, // 0x1B
+                {{'\\', 'u', '0', '0', '1', 'c', 0, 6}}, // 0x1C
+                {{'\\', 'u', '0', '0', '1', 'd', 0, 6}}, // 0x1D
+                {{'\\', 'u', '0', '0', '1', 'e', 0, 6}}, // 0x1E
+                {{'\\', 'u', '0', '0', '1', 'f', 0, 6}}, // 0x1F
+                {{' ', 0, 0, 0, 0, 0, 0, 1}}, // 0x20
+                {{'!', 0, 0, 0, 0, 0, 0, 1}}, // 0x21
+                {{'\\', '"', 0, 0, 0, 0, 0, 2}}, // 0x22
+                {{'#', 0, 0, 0, 0, 0, 0, 1}}, // 0x23
+                {{'$', 0, 0, 0, 0, 0, 0, 1}}, // 0x24
+                {{'%', 0, 0, 0, 0, 0, 0, 1}}, // 0x25
+                {{'&', 0, 0, 0, 0, 0, 0, 1}}, // 0x26
+                {{'\'', 0, 0, 0, 0, 0, 0, 1}}, // 0x27
+                {{'(', 0, 0, 0, 0, 0, 0, 1}}, // 0x28
+                {{')', 0, 0, 0, 0, 0, 0, 1}}, // 0x29
+                {{'*', 0, 0, 0, 0, 0, 0, 1}}, // 0x2A
+                {{'+', 0, 0, 0, 0, 0, 0, 1}}, // 0x2B
+                {{',', 0, 0, 0, 0, 0, 0, 1}}, // 0x2C
+                {{'-', 0, 0, 0, 0, 0, 0, 1}}, // 0x2D
+                {{'.', 0, 0, 0, 0, 0, 0, 1}}, // 0x2E
+                {{'/', 0, 0, 0, 0, 0, 0, 1}}, // 0x2F
+                {{'0', 0, 0, 0, 0, 0, 0, 1}}, // 0x30
+                {{'1', 0, 0, 0, 0, 0, 0, 1}}, // 0x31
+                {{'2', 0, 0, 0, 0, 0, 0, 1}}, // 0x32
+                {{'3', 0, 0, 0, 0, 0, 0, 1}}, // 0x33
+                {{'4', 0, 0, 0, 0, 0, 0, 1}}, // 0x34
+                {{'5', 0, 0, 0, 0, 0, 0, 1}}, // 0x35
+                {{'6', 0, 0, 0, 0, 0, 0, 1}}, // 0x36
+                {{'7', 0, 0, 0, 0, 0, 0, 1}}, // 0x37
+                {{'8', 0, 0, 0, 0, 0, 0, 1}}, // 0x38
+                {{'9', 0, 0, 0, 0, 0, 0, 1}}, // 0x39
+                {{':', 0, 0, 0, 0, 0, 0, 1}}, // 0x3A
+                {{';', 0, 0, 0, 0, 0, 0, 1}}, // 0x3B
+                {{'<', 0, 0, 0, 0, 0, 0, 1}}, // 0x3C
+                {{'=', 0, 0, 0, 0, 0, 0, 1}}, // 0x3D
+                {{'>', 0, 0, 0, 0, 0, 0, 1}}, // 0x3E
+                {{'?', 0, 0, 0, 0, 0, 0, 1}}, // 0x3F
+                {{'@', 0, 0, 0, 0, 0, 0, 1}}, // 0x40
+                {{'A', 0, 0, 0, 0, 0, 0, 1}}, // 0x41
+                {{'B', 0, 0, 0, 0, 0, 0, 1}}, // 0x42
+                {{'C', 0, 0, 0, 0, 0, 0, 1}}, // 0x43
+                {{'D', 0, 0, 0, 0, 0, 0, 1}}, // 0x44
+                {{'E', 0, 0, 0, 0, 0, 0, 1}}, // 0x45
+                {{'F', 0, 0, 0, 0, 0, 0, 1}}, // 0x46
+                {{'G', 0, 0, 0, 0, 0, 0, 1}}, // 0x47
+                {{'H', 0, 0, 0, 0, 0, 0, 1}}, // 0x48
+                {{'I', 0, 0, 0, 0, 0, 0, 1}}, // 0x49
+                {{'J', 0, 0, 0, 0, 0, 0, 1}}, // 0x4A
+                {{'K', 0, 0, 0, 0, 0, 0, 1}}, // 0x4B
+                {{'L', 0, 0, 0, 0, 0, 0, 1}}, // 0x4C
+                {{'M', 0, 0, 0, 0, 0, 0, 1}}, // 0x4D
+                {{'N', 0, 0, 0, 0, 0, 0, 1}}, // 0x4E
+                {{'O', 0, 0, 0, 0, 0, 0, 1}}, // 0x4F
+                {{'P', 0, 0, 0, 0, 0, 0, 1}}, // 0x50
+                {{'Q', 0, 0, 0, 0, 0, 0, 1}}, // 0x51
+                {{'R', 0, 0, 0, 0, 0, 0, 1}}, // 0x52
+                {{'S', 0, 0, 0, 0, 0, 0, 1}}, // 0x53
+                {{'T', 0, 0, 0, 0, 0, 0, 1}}, // 0x54
+                {{'U', 0, 0, 0, 0, 0, 0, 1}}, // 0x55
+                {{'V', 0, 0, 0, 0, 0, 0, 1}}, // 0x56
+                {{'W', 0, 0, 0, 0, 0, 0, 1}}, // 0x57
+                {{'X', 0, 0, 0, 0, 0, 0, 1}}, // 0x58
+                {{'Y', 0, 0, 0, 0, 0, 0, 1}}, // 0x59
+                {{'Z', 0, 0, 0, 0, 0, 0, 1}}, // 0x5A
+                {{'[', 0, 0, 0, 0, 0, 0, 1}}, // 0x5B
+                {{'\\', '\\', 0, 0, 0, 0, 0, 2}}, // 0x5C
+                {{']', 0, 0, 0, 0, 0, 0, 1}}, // 0x5D
+                {{'^', 0, 0, 0, 0, 0, 0, 1}}, // 0x5E
+                {{'_', 0, 0, 0, 0, 0, 0, 1}}, // 0x5F
+            }
+        };
+        return escapes;
     }
 
     /*!
@@ -1410,7 +1505,7 @@ class serializer
         }
         auto* buffer_ptr = write_buffer.data() + write_buffer_pos;
 
-        number_unsigned_t abs_value;
+        number_magnitude_t abs_value;
 
         // one byte for the minus sign
         unsigned int n_chars = 0;
@@ -1423,7 +1518,7 @@ class serializer
         }
         else
         {
-            abs_value = static_cast<number_unsigned_t>(x);
+            abs_value = static_cast<number_magnitude_t>(x);
         }
 
         // up to 16 digits: eight at a time (as the digits of floats), written
@@ -1592,17 +1687,6 @@ class serializer
     }
 
     /*
-     * Overload to make the compiler happy while it is instantiating
-     * dump_integer for number_unsigned_t.
-     * Must never be called.
-     */
-    number_unsigned_t remove_sign(number_unsigned_t x)
-    {
-        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-        return x; // LCOV_EXCL_LINE
-    }
-
-    /*
      * Helper function for dump_integer
      *
      * This function takes a negative signed integer and returns its absolute
@@ -1611,10 +1695,10 @@ class serializer
      * absolute values of INT_MIN and INT_MAX are usually not the same. See
      * #1708 for details.
      */
-    number_unsigned_t remove_sign(number_integer_t x) noexcept
+    number_magnitude_t remove_sign(number_integer_t x) noexcept
     {
         JSON_ASSERT(x < 0);
-        return static_cast<number_unsigned_t>(-(x + 1)) + 1;
+        return static_cast<number_magnitude_t>(-(x + 1)) + 1;
     }
 
   private:
