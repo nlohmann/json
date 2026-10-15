@@ -8,6 +8,9 @@
 
 #include "doctest_compatibility.h"
 
+#include <string>
+#include <vector>
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
@@ -182,5 +185,141 @@ TEST_CASE("other constructors and destructor")
             auto* j = new json("Hello world"); // NOLINT(cppcoreguidelines-owning-memory)
             delete j; // NOLINT(cppcoreguidelines-owning-memory)
         }
+    }
+}
+
+TEST_CASE("copy constructor and destructor across value types")
+{
+    SECTION("copy of a scalar is independent of the source")
+    {
+        const json src_null = nullptr;
+        const json src_bool = true;
+        const json src_int = -7;
+        const json src_uint = 7u;
+        const json src_float = 2.5;
+
+        json c_null(src_null);
+        json c_bool(src_bool);
+        json c_int(src_int);
+        json c_uint(src_uint);
+        json c_float(src_float);
+
+        CHECK(c_null.is_null());
+        CHECK(c_bool == true);
+        CHECK(c_int == -7);
+        CHECK(c_uint == 7u);
+        CHECK(c_float == 2.5);
+
+        c_int = 8;
+        c_float = 3.5;
+        CHECK(src_int == -7);
+        CHECK(src_float == 2.5);
+    }
+
+    SECTION("copy of an owning value, then mutate the copy")
+    {
+        const json src_string = "hello";
+        const json src_array = {1, 2, 3};
+        const json src_object = {{"a", 1}, {"b", {{"c", 2}}}};
+        const json src_binary = json::binary({1, 2, 3});
+
+        json c_string(src_string);
+        json c_array(src_array);
+        json c_object(src_object);
+        json c_binary(src_binary);
+
+        CHECK(c_string == src_string);
+        CHECK(c_array == src_array);
+        CHECK(c_object == src_object);
+        CHECK(c_binary == src_binary);
+
+        c_string.get_ref<json::string_t&>() += " world";
+        c_array.push_back(4);
+        c_object["b"]["c"] = 3;
+        c_object["d"] = 4;
+        c_binary.get_binary().push_back(4);
+
+        CHECK(src_string == "hello");
+        CHECK(src_array.size() == 3);
+        CHECK(src_object["b"]["c"] == 2);
+        CHECK_FALSE(src_object.contains("d"));
+        CHECK(src_binary.get_binary().size() == 3);
+
+        CHECK(c_string == "hello world");
+        CHECK(c_array.size() == 4);
+        CHECK(c_object["b"]["c"] == 3);
+        CHECK(c_binary.get_binary().size() == 4);
+    }
+
+    SECTION("copy keeps parent pointers valid (JSON_DIAGNOSTICS)")
+    {
+        const json src = {{"a", {1, 2}}, {"b", "x"}};
+        json c(src);
+        c["a"].push_back(3);
+        CHECK(c["a"].size() == 3);
+        CHECK(src["a"].size() == 2);
+    }
+
+    SECTION("vector of mixed types: build, copy, and destroy")
+    {
+        {
+            std::vector<json> v;
+            for (int i = 0; i < 70; ++i)
+            {
+                switch (i % 9)
+                {
+                    case 0:
+                        v.emplace_back(nullptr);
+                        break;
+                    case 1:
+                        v.emplace_back(i % 2 == 0);
+                        break;
+                    case 2:
+                        v.emplace_back(-i);
+                        break;
+                    case 3:
+                        v.emplace_back(static_cast<json::number_unsigned_t>(i));
+                        break;
+                    case 4:
+                        v.emplace_back(i * 0.5);
+                        break;
+                    case 5:
+                        v.emplace_back(std::string(static_cast<std::size_t>(i), 'x'));
+                        break;
+                    case 6:
+                        v.emplace_back(json::array({i, "s", nullptr}));
+                        break;
+                    case 7:
+                        v.emplace_back(json::object({{"k", i}}));
+                        break;
+                    default:
+                        v.emplace_back(json::binary({1, 2, 3}));
+                        break;
+                }
+            }
+            REQUIRE(v.size() == 70);
+
+            std::vector<json> copy(v);
+            CHECK(copy == v);
+
+            // mutating the copy leaves the original alone
+            copy[5] = "changed";
+            copy[6].push_back(1);
+            CHECK(copy != v);
+            CHECK(v[5] == std::string(5, 'x'));
+            CHECK(v[6].size() == 3);
+
+            v.erase(v.begin(), v.begin() + 10);
+            CHECK(v.size() == 60);
+        }
+
+        // destroying the discarded and default-constructed values
+        std::vector<json> w(4);
+        w.emplace_back(json::value_t::discarded);
+        w.emplace_back(json::value_t::object);
+        w.emplace_back(json::value_t::array);
+        w.emplace_back(json::value_t::string);
+        w.emplace_back(json::value_t::binary);
+        CHECK(w.size() == 9);
     }
 }
