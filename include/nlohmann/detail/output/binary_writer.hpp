@@ -221,7 +221,7 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                write_cbor_head(0x00, j.m_data.m_value.number_unsigned);
+                write_cbor_head(0x00, conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
                 break;
             }
 
@@ -1601,7 +1601,7 @@ class binary_writer
                 return calc_bson_integer_size(j.m_data.m_value.number_integer);
 
             case value_t::number_unsigned:
-                return calc_bson_unsigned_size(j.m_data.m_value.number_unsigned);
+                return calc_bson_unsigned_size(conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
 
             case value_t::string:
                 return calc_bson_string_size(*j.m_data.m_value.string, j);
@@ -1643,7 +1643,7 @@ class binary_writer
                 return write_bson_integer(name, j.m_data.m_value.number_integer);
 
             case value_t::number_unsigned:
-                return write_bson_unsigned(name, j.m_data.m_value.number_unsigned);
+                return write_bson_unsigned(name, conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
 
             case value_t::string:
                 return write_bson_string(name, *j.m_data.m_value.string);

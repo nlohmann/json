@@ -116,7 +116,7 @@ There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/t
 - **Constructors**: [basic_json](https://json.nlohmann.me/api/basic_json/basic_json), [array](https://json.nlohmann.me/api/basic_json/array), [binary](https://json.nlohmann.me/api/basic_json/binary), [object](https://json.nlohmann.me/api/basic_json/object)
 - **Object inspection**: [type](https://json.nlohmann.me/api/basic_json/type), [operator value_t](https://json.nlohmann.me/api/basic_json/operator_value_t), [type_name](https://json.nlohmann.me/api/basic_json/type_name), [is_primitive](https://json.nlohmann.me/api/basic_json/is_primitive), [is_structured](https://json.nlohmann.me/api/basic_json/is_structured), [is_null](https://json.nlohmann.me/api/basic_json/is_null), [is_boolean](https://json.nlohmann.me/api/basic_json/is_boolean), [is_number](https://json.nlohmann.me/api/basic_json/is_number), [is_number_integer](https://json.nlohmann.me/api/basic_json/is_number_integer), [is_number_unsigned](https://json.nlohmann.me/api/basic_json/is_number_unsigned), [is_number_float](https://json.nlohmann.me/api/basic_json/is_number_float), [is_object](https://json.nlohmann.me/api/basic_json/is_object), [is_array](https://json.nlohmann.me/api/basic_json/is_array), [is_string](https://json.nlohmann.me/api/basic_json/is_string), [is_binary](https://json.nlohmann.me/api/basic_json/is_binary), [is_discarded](https://json.nlohmann.me/api/basic_json/is_discarded)
 - **Value access**: [get](https://json.nlohmann.me/api/basic_json/get), [get_to](https://json.nlohmann.me/api/basic_json/get_to), [get_ptr](https://json.nlohmann.me/api/basic_json/get_ptr), [get_ref](https://json.nlohmann.me/api/basic_json/get_ref), [operator ValueType](https://json.nlohmann.me/api/basic_json/operator_ValueType), [get_binary](https://json.nlohmann.me/api/basic_json/get_binary)
-- **Element access**: [at](https://json.nlohmann.me/api/basic_json/at), [operator[]](https://json.nlohmann.me/api/basic_json/operator[]), [value](https://json.nlohmann.me/api/basic_json/value), [front](https://json.nlohmann.me/api/basic_json/front), [back](https://json.nlohmann.me/api/basic_json/back)
+- **Element access**: [at](https://json.nlohmann.me/api/basic_json/at), [operator[]](https://json.nlohmann.me/api/basic_json/operator%5B%5D/), [value](https://json.nlohmann.me/api/basic_json/value), [front](https://json.nlohmann.me/api/basic_json/front), [back](https://json.nlohmann.me/api/basic_json/back)
 - **Lookup**: [find](https://json.nlohmann.me/api/basic_json/find), [count](https://json.nlohmann.me/api/basic_json/count), [contains](https://json.nlohmann.me/api/basic_json/contains)
 - **Iterators**: [begin](https://json.nlohmann.me/api/basic_json/begin), [cbegin](https://json.nlohmann.me/api/basic_json/cbegin), [end](https://json.nlohmann.me/api/basic_json/end), [cend](https://json.nlohmann.me/api/basic_json/cend), [rbegin](https://json.nlohmann.me/api/basic_json/rbegin), [rend](https://json.nlohmann.me/api/basic_json/rend), [crbegin](https://json.nlohmann.me/api/basic_json/crbegin), [crend](https://json.nlohmann.me/api/basic_json/crend), [items](https://json.nlohmann.me/api/basic_json/items)
 - **Capacity**: [empty](https://json.nlohmann.me/api/basic_json/empty), [size](https://json.nlohmann.me/api/basic_json/size), [max_size](https://json.nlohmann.me/api/basic_json/max_size)
@@ -125,7 +125,7 @@ There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/t
 - **Serialization / Dumping**: [dump](https://json.nlohmann.me/api/basic_json/dump)
 - **Deserialization / Parsing**: [parse](https://json.nlohmann.me/api/basic_json/parse), [accept](https://json.nlohmann.me/api/basic_json/accept), [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse)
 - **JSON Pointer functions**: [flatten](https://json.nlohmann.me/api/basic_json/flatten), [unflatten](https://json.nlohmann.me/api/basic_json/unflatten)
-- **JSON Patch functions**: [patch](https://json.nlohmann.me/api/basic_json/patch), [patch_inplace](https://json.nlohmann.me/api/basic_json/patch_inplace), [diff](https://json.nlohmann.me/api/basic_json/diff), [merge_patch](https://json.nlohmann.me/api/basic_json/merge_patch)
+- **JSON Patch functions**: [patch](https://json.nlohmann.me/api/basic_json/patch), [patch_inplace](https://json.nlohmann.me/api/basic_json/patch_inplace), [diff](https://json.nlohmann.me/api/basic_json/diff), [merge_patch](https://json.nlohmann.me/api/basic_json/merge_patch), [merge_diff](https://json.nlohmann.me/api/basic_json/merge_diff)
 - **Static functions**: [meta](https://json.nlohmann.me/api/basic_json/meta), [get_allocator](https://json.nlohmann.me/api/basic_json/get_allocator)
 - **Binary formats**: [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata), [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8), [from_bson](https://json.nlohmann.me/api/basic_json/from_bson), [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor), [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack), [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson), [to_bjdata](https://json.nlohmann.me/api/basic_json/to_bjdata), [to_bon8](https://json.nlohmann.me/api/basic_json/to_bon8), [to_bson](https://json.nlohmann.me/api/basic_json/to_bson), [to_cbor](https://json.nlohmann.me/api/basic_json/to_cbor), [to_msgpack](https://json.nlohmann.me/api/basic_json/to_msgpack), [to_ubjson](https://json.nlohmann.me/api/basic_json/to_ubjson)
 - **Non-member functions**: [operator<<](https://json.nlohmann.me/api/operator_ltlt/), [operator>>](https://json.nlohmann.me/api/operator_gtgt/), [to_string](https://json.nlohmann.me/api/basic_json/to_string)
@@ -360,7 +360,7 @@ std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.get<std::
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
 
-[`.dump()`](https://json.nlohmann.me/api/basic_json/dump/) returns the originally stored string value.
+[`.dump()`](https://json.nlohmann.me/api/basic_json/dump/) returns the serialized JSON text, so a string value is enclosed in quotes and special characters are escaped. Use [`get<std::string>()`](https://json.nlohmann.me/api/basic_json/get/) to retrieve the originally stored string value.
 
 Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace`, `json::error_handler_t::ignore`, or `json::error_handler_t::keep` are used as error handlers.
 
@@ -687,15 +687,15 @@ json j_result = j_original.patch(j_patch);
 // calculate a JSON patch from two JSON values
 json::diff(j_result, j_original);
 // [
-//   { "op":" replace", "path": "/baz", "value": ["one", "two", "three"] },
-//   { "op": "remove","path": "/hello" },
+//   { "op": "replace", "path": "/baz", "value": ["one", "two", "three"] },
+//   { "op": "remove", "path": "/hello" },
 //   { "op": "add", "path": "/foo", "value": "bar" }
 // ]
 ```
 
 ### JSON Merge Patch
 
-The library supports **JSON Merge Patch** ([RFC 7386](https://tools.ietf.org/html/rfc7386)) as a patch format. Instead of using JSON Pointer (see above) to specify values to be manipulated, it describes the changes using a syntax that closely mimics the document being modified.
+The library supports **JSON Merge Patch** ([RFC 7396](https://tools.ietf.org/html/rfc7396)) as a patch format. Instead of using JSON Pointer (see above) to specify values to be manipulated, it describes the changes using a syntax that closely mimics the document being modified.
 
 ```cpp
 // a JSON value
@@ -721,6 +721,20 @@ j_document.merge_patch(j_patch);
 //  "a": "z",
 //  "c": {
 //    "d": "e"
+//  }
+// }
+```
+
+Conversely, [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/) creates a merge patch from two JSON values:
+
+```cpp
+// create a merge patch that turns j_original into j_document
+json j_original = R"({"a": "b", "c": {"d": "e", "f": "g"}})"_json;
+json::merge_diff(j_original, j_document);
+// {
+//  "a": "z",
+//  "c": {
+//    "f": null
 //  }
 // }
 ```
@@ -1266,13 +1280,9 @@ The package configuration file, `nlohmann_jsonConfig.cmake`, can be used either 
 To embed the library directly into an existing CMake project, place the entire source tree in a subdirectory and call `add_subdirectory()` in your `CMakeLists.txt` file:
 
 ```cmake
-# Typically you don't care so much for a third party library's tests to be
-# run from your own project's code.
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-
 # If you only include this third party in PRIVATE source files, you do not
 # need to install it when your main project gets installed.
-# set(JSON_Install OFF CACHE INTERNAL "")
+set(JSON_Install OFF CACHE INTERNAL "")
 
 # Don't use include(nlohmann_json/CMakeLists.txt) since that carries with it
 # unintended consequences that will break the build.  It's generally
@@ -1287,8 +1297,8 @@ target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 
 ##### Embedded (FetchContent)
 
-Since CMake v3.11,
-[FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can
+Since CMake v3.14,
+[FetchContent](https://cmake.org/cmake/help/v3.14/module/FetchContent.html) can
 be used to automatically download a release as a dependency at configure time.
 
 Example:
@@ -1353,7 +1363,9 @@ Use your favorite [**package manager**](https://json.nlohmann.me/integration/pac
 - <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/swift.svg" height="20">&nbsp;[**Swift Package Manager**](https://json.nlohmann.me/integration/package_managers/#swift-package-manager) `nlohmann/json`
 - <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/nuget.svg" height="20">&nbsp;[**Nuget**](https://json.nlohmann.me/integration/package_managers/#nuget) `nlohmann.json`
 - <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/conda.svg" height="20">&nbsp;[**Conda**](https://json.nlohmann.me/integration/package_managers/#conda) `nlohmann_json`
+- [**MSYS2**](https://json.nlohmann.me/integration/package_managers/#msys2) `mingw-w64-nlohmann-json`
 - <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/macports.svg" height="20">&nbsp;[**MacPorts**](https://json.nlohmann.me/integration/package_managers/#macports) `nlohmann-json`
+- [**build2**](https://json.nlohmann.me/integration/package_managers/#build2) `nlohmann-json`
 - <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/CPM.png" height="20">&nbsp;[**cpm.cmake**](https://json.nlohmann.me/integration/package_managers/#cpmcmake) `gh:nlohmann/json`
 - <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/xmake.svg" height="20">&nbsp;[**xmake**](https://json.nlohmann.me/integration/package_managers/#xmake) `nlohmann_json`
 
@@ -1385,9 +1397,10 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 - The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](https://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
 - The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](https://florian.loitsch.com/)
+- The class contains a port of the shortest double-to-decimal conversion of [Żmij](https://github.com/vitaut/zmij) by Victor Zverovich, including the conversion of the digits to text by Xiang JunBo and the SIMD instruction sequence of Dougall Johnson, which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2025 [Victor Zverovich](https://github.com/vitaut)
 - The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
 - The class contains parts of [Google Abseil](https://github.com/abseil/abseil-cpp) which is licensed under the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).
-- The class contains an adapted version of the Eisel-Lemire algorithm and its table of powers of five from [fast_float](https://github.com/fastfloat/fast_float) by Daniel Lemire and contributors, which is available under the [MIT License](https://opensource.org/licenses/MIT) (used here), the Apache 2.0 License, and the Boost Software License. Copyright &copy; 2021 The fast_float authors
+- The class contains an adapted version of the Eisel-Lemire algorithm, its table of powers of five, and its digit comparison for long numbers from [fast_float](https://github.com/fastfloat/fast_float) by Daniel Lemire and contributors, which is available under the [MIT License](https://opensource.org/licenses/MIT) (used here), the Apache 2.0 License, and the Boost Software License. Copyright &copy; 2021 The fast_float authors
 
 <img align="right" src="https://git.fsfe.org/reuse/reuse-ci/raw/branch/master/reuse-horizontal.png" alt="REUSE Software">
 

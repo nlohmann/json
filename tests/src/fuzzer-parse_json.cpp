@@ -17,6 +17,12 @@ array data, it performs the following steps:
 - j2 = parse(s1)
 - s2 = serialize(j2)
 - assert(s1 == s2)
+- for ignore_comments = false and true: assert(parse(data) and accept(data)
+  give the same result for a stream, a non-contiguous iterator range, and a
+  FILE* as for the pointer range)
+
+The pointer range takes the bulk fast paths, the other input adapters read byte
+by byte; see check_input_adapters().
 
 Furthermore, it parses data with a SAX parser that recovers from every error
 and checks that the events are balanced, that parsing ends, and that valid
@@ -28,6 +34,32 @@ drivers.
 
 #include "fuzzer_common.hpp"
 #include "fuzzer-recovering_checker.hpp"
+
+namespace
+{
+// json::parse and json::accept for check_input_adapters()
+struct parse_json
+{
+    bool ignore_comments;
+
+    template<typename... Args>
+    json operator()(Args&& ... args) const
+    {
+        return json::parse(std::forward<Args>(args)..., nullptr, true, ignore_comments);
+    }
+};
+
+struct accept_json
+{
+    bool ignore_comments;
+
+    template<typename... Args>
+    bool operator()(Args&& ... args) const
+    {
+        return json::accept(std::forward<Args>(args)..., ignore_comments);
+    }
+};
+} // namespace
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -86,6 +118,16 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // out of range errors may happen if provided sizes are excessive
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
+    }
+
+    // step 3: the other input adapters must read the data alike
+    for (const bool ignore_comments :
+            {
+                false, true
+            })
+    {
+        check_input_adapters(data, size, parse_json{ignore_comments});
+        check_input_adapters(data, size, accept_json{ignore_comments});
     }
 
     // return 0 - non-zero return values are reserved for future use

@@ -17,38 +17,33 @@ array data, it performs the following steps:
 - j2 = from_bon8(vec)
 - assert(to_bon8(j2) == vec)
 
-It also checks that reading the data from a stream, which reads strings byte by
-byte, gives the same value or error as reading it from contiguous memory, which
-copies strings in bulk.
-
 Furthermore, it reads data with a SAX parser that recovers from every error
 and checks that the events are balanced, that reading ends, and that it
 reports an error exactly when from_bon8() fails (see #3989).
+
+Finally, it reads the data from a stream, a non-contiguous iterator range, and
+a FILE*, which read byte by byte, and checks that each gives the same value or
+error (id, message, byte position) as the pointer range, which takes the bulk
+fast paths (see check_input_adapters()).
 
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <sstream>
 #include "fuzzer_common.hpp"
 #include "fuzzer-recovering_checker.hpp"
 
 namespace
 {
-// the serialization of the value read from @a input, or the error message
-template<typename InputType>
-std::string read_bon8(InputType&& input)
+// json::from_bon8 for check_input_adapters()
+struct read_bon8
 {
-    try
+    template<typename... Args>
+    json operator()(Args&& ... args) const
     {
-        const auto vec = json::to_bon8(json::from_bon8(std::forward<InputType>(input)));
-        return {vec.begin(), vec.end()};
+        return json::from_bon8(std::forward<Args>(args)...);
     }
-    catch (const json::exception& e)
-    {
-        return e.what();
-    }
-}
+};
 } // namespace
 
 // see http://llvm.org/docs/LibFuzzer.html
@@ -56,12 +51,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     // recover from all errors, reading from memory and from a stream
     const bool recovered_without_errors = check_recovering_parse(data, size, json::input_format_t::bon8).errors == 0;
-
-    // contiguous and stream input must be read alike
-    {
-        std::istringstream stream(std::string(reinterpret_cast<const char*>(data), size));
-        assert(read_bon8(std::vector<uint8_t>(data, data + size)) == read_bon8(stream));
-    }
 
     std::vector<uint8_t> const vec1(data, data + size);
 
@@ -118,6 +107,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
         assert(parsed || !recovered_without_errors);
     }
+
+    // step 3: the other input adapters must read the data alike
+    check_input_adapters(data, size, read_bon8());
 
     // return 0 - non-zero return values are reserved for future use
     return 0;

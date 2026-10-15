@@ -13,9 +13,11 @@
 #endif
 
 #define JSON_DIAGNOSTICS 1
+#define JSON_TESTS_PRIVATE
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+using nlohmann::ordered_json;
 
 #include <map>
 #include <unordered_map>
@@ -567,9 +569,9 @@ TEST_CASE("Regression tests for extended diagnostics")
     }
 }
 
-TEST_CASE("Better diagnostics past the descent bound of update() and merge_patch()")
+TEST_CASE("Better diagnostics past the descent bound of update(), merge_patch() and merge_diff()")
 {
-    // Both merge objects nested more than detail::recursion_depth_limit()
+    // All three handle objects nested more than detail::recursion_depth_limit()
     // (128) levels deep without recursing; the values they add or replace
     // there must still know their parents.
     // The values are built rather than parsed, so that the expected messages
@@ -615,4 +617,254 @@ TEST_CASE("Better diagnostics past the descent bound of update() and merge_patch
         CHECK_THROWS_WITH_AS(p->at("x").at(0), expected_x.c_str(), json::type_error);
         CHECK_THROWS_WITH_AS(p->at("y").at(0), expected_y.c_str(), json::type_error);
     }
+
+    SECTION("merge_diff()")
+    {
+        // target and patch differ only in their innermost members, so the
+        // diff of the two is nested as deeply: {"a": ... {"x": null, "y": 2}}
+        const json diff = json::merge_diff(target, patch); // NOLINT(readability-suspicious-call-argument)
+
+        const json* p = &diff;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            p = &p->at("a");
+        }
+        CHECK(p->at("x").is_null());
+        CHECK_THROWS_WITH_AS(p->at("y").at(0), expected_y.c_str(), json::type_error);
+    }
+}
+
+namespace
+{
+// check that every child's parent pointer points to the containing value
+template<typename BasicJsonType>
+bool parents_consistent(const BasicJsonType& j)
+{
+    bool ok = true;
+    if (j.is_array() || j.is_object())
+    {
+        for (const auto& child : j)
+        {
+            ok = ok && child.m_parent == &j && parents_consistent(child);
+        }
+    }
+    return ok;
+}
+} // namespace
+
+TEST_CASE_TEMPLATE("Parent pointers stay consistent", J, json, ordered_json)
+{
+    SECTION("parse, copy, move, assign, swap")
+    {
+        J j = J::parse(R"({"a":[1,{"b":[2,3]},[4]],"c":{"d":{"e":[]}}})");
+        CHECK(parents_consistent(j));
+
+        J copy(j);
+        CHECK(parents_consistent(copy));
+
+        J moved(std::move(copy));
+        CHECK(parents_consistent(moved));
+
+        J assigned;
+        assigned = j;
+        CHECK(parents_consistent(assigned));
+
+        J other = {1, 2, {{"k", J::array({1, 2})}}};
+        other.swap(assigned);
+        CHECK(parents_consistent(other));
+        CHECK(parents_consistent(assigned));
+    }
+
+    SECTION("push_back growth")
+    {
+        J arr = J::array();
+        for (int i = 0; i < 500; ++i)
+        {
+            arr.push_back(J::array({i}));
+        }
+        CHECK(parents_consistent(arr));
+
+        J obj = J::object();
+        for (int i = 0; i < 500; ++i)
+        {
+            obj.push_back({std::to_string(i), J::array({i})});
+        }
+        CHECK(parents_consistent(obj));
+    }
+
+    SECTION("emplace_back and emplace growth")
+    {
+        J arr = J::array();
+        J obj = J::object();
+        for (int i = 0; i < 500; ++i)
+        {
+            arr.emplace_back(J::array({i}));
+            obj.emplace(std::to_string(i), J::array({i}));
+        }
+        CHECK(parents_consistent(arr));
+        CHECK(parents_consistent(obj));
+    }
+
+    SECTION("operator[] growth and at()")
+    {
+        J obj = J::object();
+        for (int i = 0; i < 500; ++i)
+        {
+            obj[std::to_string(i)] = J::array({i});
+            CHECK(obj[std::to_string(i / 2)].m_parent == &obj);
+        }
+        CHECK(parents_consistent(obj));
+
+        J arr = J::array();
+        for (int i = 0; i < 500; ++i)
+        {
+            arr[static_cast<size_t>(i)] = J::object({{"x", i}});
+        }
+        for (size_t i = 0; i < 500; ++i)
+        {
+            CHECK(arr.at(i).m_parent == &arr);
+        }
+        CHECK(obj.at("3").m_parent == &obj);
+        CHECK(parents_consistent(arr));
+        CHECK(parents_consistent(obj));
+    }
+}
+
+TEST_CASE_TEMPLATE("update() and merge_patch() keep parent pointers and diagnostic paths", J, json, ordered_json)
+{
+    // enough keys to make the vector behind ordered_json reallocate several times
+    const auto make_object = [](int first, int last)
+    {
+        J o = J::object();
+        for (int i = first; i < last; ++i)
+        {
+            o[std::to_string(i)] = J::object({{"x", J::array({i})}});
+        }
+        return o;
+    };
+
+    // const access, so operator[] cannot repair the parent pointers
+    const auto check_path = [](const J & j, const std::string & key)
+    {
+        const std::string expected = "[json.exception.type_error.304] (/" + key + "/x) cannot use at() with array";
+        CHECK_THROWS_WITH_AS(j[key]["x"].at("y"), expected.c_str(), json::type_error);
+    };
+
+    SECTION("update(const_reference)")
+    {
+        J j = make_object(0, 200);
+        j.update(make_object(100, 400));
+        CHECK(j.size() == 400);
+        CHECK(parents_consistent(j));
+        check_path(j, "0");
+        check_path(j, "150");
+        check_path(j, "399");
+    }
+
+    SECTION("update(const_reference, merge_objects)")
+    {
+        J j = make_object(0, 200);
+        j["50"]["y"] = 1;
+        J other = make_object(100, 400);
+        other["50"] = J::object({{"z", J::array({1})}});
+        j.update(other, true);
+        CHECK(j.size() == 400);
+        CHECK(j["50"].size() == 3);
+        CHECK(parents_consistent(j));
+        check_path(j, "0");
+        check_path(j, "399");
+    }
+
+    SECTION("update(first, last)")
+    {
+        J j = make_object(0, 200);
+        J other = make_object(100, 400);
+        j.update(other.begin(), other.end());
+        CHECK(j.size() == 400);
+        CHECK(parents_consistent(j));
+        check_path(j, "0");
+        check_path(j, "399");
+
+        J k = make_object(0, 200);
+        k.update(other.begin(), other.end(), true);
+        CHECK(k.size() == 400);
+        CHECK(parents_consistent(k));
+        check_path(k, "399");
+    }
+
+    SECTION("merge_patch()")
+    {
+        J j = make_object(0, 200);
+        J patch = make_object(100, 400);
+        patch["0"] = nullptr;
+        j.merge_patch(patch);
+        CHECK(j.size() == 399);
+        CHECK_FALSE(j.contains("0"));
+        CHECK(parents_consistent(j));
+        check_path(j, "1");
+        check_path(j, "399");
+    }
+}
+
+namespace
+{
+// an object type that, like a sorted flat map, moves its members when a key is
+// added even if its capacity does not change; it has a capacity() member, but
+// is neither node-based nor nlohmann::ordered_map, so the library must not
+// trust its capacity to tell whether the members moved
+template<class Key, class T, class IgnoredLess = std::less<Key>,
+         class Allocator = std::allocator<std::pair<const Key, T>>>
+             struct relocating_map : nlohmann::ordered_map<Key, T, IgnoredLess, Allocator>
+{
+    using base_type = nlohmann::ordered_map<Key, T, IgnoredLess, Allocator>;
+    using typename base_type::iterator;
+    using typename base_type::Container;
+    using base_type::base_type;
+
+    template<typename... Args>
+    std::pair<iterator, bool> emplace(Args&& ... args)
+    {
+        auto result = base_type::emplace(std::forward<Args>(args)...);
+        const auto index = result.first - this->begin();
+        if (result.second)
+        {
+            // move every member to a new buffer of the same capacity
+            Container relocated;
+            relocated.reserve(this->capacity());
+            for (auto& member : *this)
+            {
+                relocated.emplace_back(member.first, std::move(member.second));
+            }
+            this->Container::swap(relocated);
+        }
+        return {this->begin() + index, result.second};
+    }
+};
+
+using relocating_json = nlohmann::basic_json<relocating_map>;
+} // namespace
+
+TEST_CASE("Parent pointers stay consistent for object types not known to keep their members in place")
+{
+    relocating_json obj = relocating_json::object();
+    for (int i = 0; i < 100; ++i)
+    {
+        obj[std::to_string(i)] = relocating_json::array({i});
+        obj.emplace(std::to_string(i + 1000), relocating_json::array({i}));
+    }
+    CHECK(parents_consistent(obj));
+
+    obj.erase("0");
+    CHECK(parents_consistent(obj));
+
+    relocating_json other = relocating_json::object();
+    for (int i = 0; i < 100; ++i)
+    {
+        other[std::to_string(i + 2000)] = relocating_json::array({i});
+    }
+    obj.update(other);
+    CHECK(parents_consistent(obj));
+
+    obj["1"].push_back(42);
+    CHECK_THROWS_WITH_AS(obj["1"].at(5), "[json.exception.out_of_range.401] (/1) array index 5 is out of range", relocating_json::out_of_range&);
 }

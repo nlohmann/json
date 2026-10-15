@@ -17,6 +17,7 @@
 #include <utility> // move
 #include <vector> // vector
 
+#include <nlohmann/detail/bit_ops.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/number_parse.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
@@ -186,6 +187,15 @@ class lexer : public lexer_base<BasicJsonType>
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
 
+    /// whether the read position is derived from the input adapter on demand
+    /// instead of being counted on every scanned character. Seekable adapters
+    /// know how much input they consumed and can revisit it, so
+    /// chars_read_total is the adapter's read count (minus a pending unget),
+    /// and line and column are recomputed from the consumed input only when
+    /// get_position() is called (errors). Counting per character kept two
+    /// increments and a newline check in the hot path of every get().
+    static constexpr bool lazy_position = lazy_token_string;
+
     /// whether a simulated unget can be passed on to the input adapter, which
     /// then leaves the character in the input; see
     /// input_adapter_supports_lookahead
@@ -195,7 +205,9 @@ class lexer : public lexer_base<BasicJsonType>
     /// whether string scanning may bulk-consume runs of ordinary characters
     /// directly from a contiguous input buffer (SWAR fast path). This requires
     /// the token to be reconstructible lazily (lazy_token_string), so bypassing
-    /// the per-character capture in get() cannot lose error diagnostics.
+    /// the per-character capture in get() cannot lose error diagnostics. It
+    /// also implies lazy_position, so the bulk paths need not advance the
+    /// position counters.
     static constexpr bool bulk_scan =
         lazy_token_string
         && input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
@@ -221,6 +233,41 @@ class lexer : public lexer_base<BasicJsonType>
     // scan functions
     /////////////////////
 
+    /// contiguous input: try to decode the 4 hex digits following `\\u`
+    /// directly from the input buffer via hex_codepoint(), instead of 4 calls
+    /// to get(). On success, advances the adapter exactly as those 4 get()
+    /// calls would (bulk_scan implies lazy_position, so there are no position
+    /// counters to advance) and leaves @a current holding the last of
+    /// the 4 digits, just as the last such get() would; the codepoint is
+    /// written to @a out. Makes no state change and returns false for a
+    /// pending unget, fewer than 4 remaining bytes, or any of the 4 bytes not
+    /// being a hex digit, so the caller falls back unchanged to the
+    /// per-character loop, which then reports the same diagnostic (stopping
+    /// at the first invalid digit) as before this optimization.
+    bool get_codepoint_bulk(std::true_type /*bulk*/, int& out)
+    {
+        if (next_unget || ia.bulk_remaining() < 4)
+        {
+            return false;
+        }
+        const char_type* const raw = ia.bulk_data();
+        const int codepoint = hex_codepoint(reinterpret_cast<const unsigned char*>(raw));
+        if (codepoint < 0)
+        {
+            return false;
+        }
+        ia.bulk_skip(4);
+        current = char_traits<char_type>::to_int_type(raw[3]);
+        out = codepoint;
+        return true;
+    }
+
+    /// streaming input: no bulk fast path
+    bool get_codepoint_bulk(std::false_type /*bulk*/, int& /*out*/) const noexcept
+    {
+        return false;
+    }
+
     /*!
     @brief get codepoint from 4 hex characters following `\\u`
 
@@ -240,6 +287,14 @@ class lexer : public lexer_base<BasicJsonType>
     {
         // this function only makes sense after reading `\u`
         JSON_ASSERT(current == 'u');
+
+        // contiguous input: decode all 4 hex digits directly from the buffer
+        int fast_codepoint = 0;
+        if (get_codepoint_bulk(std::integral_constant<bool, bulk_scan> {}, fast_codepoint))
+        {
+            return fast_codepoint;
+        }
+
         int codepoint = 0;
 
         const auto factors = { 12u, 8u, 4u, 0u };
@@ -331,10 +386,6 @@ class lexer : public lexer_base<BasicJsonType>
         }
         token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
         ia.bulk_skip(pos);
-        // the run contains no newline (all bytes < 0x20 are treated as special),
-        // so only the flat character counters advance
-        position.chars_read_total += pos;
-        position.chars_read_current_line += pos;
     }
 
     /// streaming input: no bulk fast path
@@ -1058,9 +1109,11 @@ class lexer : public lexer_base<BasicJsonType>
             token_type::parse_error otherwise
 
     @note The scanner is independent of the current locale: token_buffer
-          always holds `.`. Only the std::strtod fallback of convert_number()
-          depends on the locale, and it looks up the decimal point right
-          before converting (see detail::convert_float_locale_aware()).
+          always holds `.`. The conversion of float and double does not use
+          the locale either. Only the std::strtold fallback of
+          convert_number() for long double formats other than binary64
+          depends on it, and it looks up the decimal point right before
+          converting (see detail::convert_float_locale_aware()).
     */
     token_type scan_number()  // lgtm [cpp/use-of-goto] `goto` is used in this function to implement the number-parsing state machine described above. By design, any finite input will eventually reach the "done" state or return token_type::parse_error. In each intermediate state, 1 byte of the input is appended to the token_buffer vector, and only the already initialized variables token_buffer, number_type, and error_message are manipulated.
     {
@@ -1073,7 +1126,7 @@ class lexer : public lexer_base<BasicJsonType>
 
         // offset just past the last mantissa byte in token_buffer (i.e. the
         // index of 'e'/'E', or the whole token when there is no exponent).
-        // convert_number() uses it to count significant digits; npos means
+        // convert_number() uses it to split the token; npos means
         // "not seen an exponent yet" and is resolved at scan_number_done
         std::size_t mantissa_end = std::string::npos;
 
@@ -1403,8 +1456,8 @@ scan_number_done:
     @param[in] mantissa_end  offset just past the last mantissa byte in
                              token_buffer (the index of 'e'/'E', or
                              token_buffer.size() when there is no exponent);
-                             used to skip Clinger's fast path when it cannot
-                             possibly succeed - see detail::mantissa_fits_clinger()
+                             with decimal_point_position, it locates the parts
+                             of a float token without scanning it again
     */
     token_type convert_number(token_type number_type, std::size_t mantissa_end)
     {
@@ -1458,10 +1511,11 @@ scan_number_done:
         }
 
         // this code is reached if we parse a floating-point number or if an
-        // integer conversion above overflowed. Prefer std::from_chars
-        // (Eisel-Lemire, locale-independent, correctly rounded) when available;
-        // otherwise the exact Clinger fast path (double only); otherwise the
-        // locale-aware strtof/strtod/strtold.
+        // integer conversion above overflowed. float and double (and long
+        // double where it is binary64) are converted by the library itself,
+        // correctly rounded and independent of the locale; other long double
+        // formats use std::from_chars when available, otherwise the
+        // locale-aware strtold.
         if (convert_float_fast(num_begin, num_end, decimal_point_position, mantissa_end, value_float))
         {
             return token_type::value_float;
@@ -1581,8 +1635,6 @@ scan_number_done:
             if (JSON_HEDLEY_LIKELY(integer_result != token_type::uninitialized))
             {
                 ia.bulk_skip(len - 1);
-                position.chars_read_total += (len - 1);
-                position.chars_read_current_line += (len - 1);
                 return integer_result;
             }
             // The value does not fit an integer, so this token converts as a
@@ -1599,8 +1651,6 @@ scan_number_done:
         decimal_point_position = dot_index;
 
         ia.bulk_skip(len - 1);
-        position.chars_read_total += (len - 1);
-        position.chars_read_current_line += (len - 1);
 
         return convert_number(number_type, mantissa_end);
     }
@@ -1651,7 +1701,7 @@ scan_number_done:
 
 #if JSON_DIAGNOSTIC_POSITIONS
         // the first character of the token has already been read, hence the -1
-        token_start_position = position.chars_read_total - 1;
+        token_start_position = get_chars_read_total() - 1;
 #endif
 
         note_token_start(std::integral_constant<bool, lazy_token_string> {});
@@ -1705,6 +1755,15 @@ scan_number_done:
     /// handled afterwards, in track_after_read(), once `current` is known)
     void advance_position() noexcept
     {
+        advance_position_impl(std::integral_constant<bool, lazy_position> {});
+    }
+
+    /// seekable adapter: the position is derived from the adapter on demand
+    void advance_position_impl(std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: count the character
+    void advance_position_impl(std::false_type /*lazy*/) noexcept
+    {
         ++position.chars_read_total;
         ++position.chars_read_current_line;
     }
@@ -1717,7 +1776,16 @@ scan_number_done:
         // seekable adapters reconstruct the token lazily on error (see
         // get_token_string), so the eager per-character copy is skipped
         capture_char(std::integral_constant<bool, lazy_token_string> {});
+        track_newline(std::integral_constant<bool, lazy_position> {});
+        return current;
+    }
 
+    /// seekable adapter: lines are counted on demand in get_position()
+    void track_newline(std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: start a new line after reading a newline
+    void track_newline(std::false_type /*lazy*/) noexcept
+    {
         if (current == '\n')
         {
             ++position.lines_read;
@@ -1726,8 +1794,6 @@ scan_number_done:
             chars_read_before_newline = position.chars_read_current_line;
             position.chars_read_current_line = 0;
         }
-
-        return current;
     }
 
     /*!
@@ -1771,12 +1837,22 @@ scan_number_done:
     We implement unget by setting variable next_unget to true. The input is not
     changed - we just simulate ungetting by modifying chars_read_total,
     chars_read_current_line, and token_string. The next call to get() will
-    behave as if the unget character is read again.
+    behave as if the unget character is read again. With lazy_position, the
+    pending next_unget is all get_chars_read_total() needs.
     */
     void unget()
     {
         next_unget = true;
+        unget_position(std::integral_constant<bool, lazy_position> {});
+        uncapture_char(std::integral_constant<bool, lazy_token_string> {});
+    }
 
+    /// seekable adapter: get_chars_read_total() accounts for next_unget
+    void unget_position(std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: step the counters back over the ungotten character
+    void unget_position(std::false_type /*lazy*/) noexcept
+    {
         --position.chars_read_total;
 
         // in case we "unget" a newline, we have to also decrement the lines_read
@@ -1799,8 +1875,6 @@ scan_number_done:
         {
             --position.chars_read_current_line;
         }
-
-        uncapture_char(std::integral_constant<bool, lazy_token_string> {});
     }
 
     /// adapter without lookahead: nothing to do (see release_lookahead)
@@ -1871,10 +1945,21 @@ scan_number_done:
     // diagnostics
     /////////////////////
 
-    /// return position of last read token
-    constexpr position_t get_position() const noexcept
+    /*!
+    @brief return the number of characters read so far
+
+    Unlike get_position(), this is O(1) for all adapters, so it may be called
+    for every value (JSON_DIAGNOSTIC_POSITIONS).
+    */
+    std::size_t get_chars_read_total() const noexcept
     {
-        return position;
+        return get_chars_read_total_impl(std::integral_constant<bool, lazy_position> {});
+    }
+
+    /// return position of last read token
+    position_t get_position() const
+    {
+        return get_position_impl(std::integral_constant<bool, lazy_position> {});
     }
 
     /*!
@@ -1911,6 +1996,43 @@ scan_number_done:
     }
 #endif
 
+  private:
+    /// seekable adapter: every get() either read from the adapter (including
+    /// reads at EOF, which get() counts as characters as well) or replayed an
+    /// ungotten character, so the count is the adapter's read count minus a
+    /// still pending unget
+    std::size_t get_chars_read_total_impl(std::true_type /*lazy*/) const noexcept
+    {
+        return ia.get_read_count() - (next_unget ? 1u : 0u);
+    }
+
+    /// streaming adapter: the counter is maintained by get() and unget()
+    std::size_t get_chars_read_total_impl(std::false_type /*lazy*/) const noexcept
+    {
+        return position.chars_read_total;
+    }
+
+    /// seekable adapter: count the lines in the consumed input; O(input read
+    /// so far), but only called on errors
+    position_t get_position_impl(std::true_type /*lazy*/) const
+    {
+        position_t result;
+        result.chars_read_total = get_chars_read_total();
+        // reads at EOF count as characters but are not part of the input
+        const std::size_t consumed = (std::min)(result.chars_read_total, ia.get_consumed_count());
+        std::size_t line_start = 0;
+        result.lines_read = ia.count_consumed_lines(consumed, line_start);
+        result.chars_read_current_line = result.chars_read_total - line_start;
+        return result;
+    }
+
+    /// streaming adapter: the position is maintained by get() and unget()
+    position_t get_position_impl(std::false_type /*lazy*/) const noexcept
+    {
+        return position;
+    }
+
+  public:
     /// seekable adapter: rebuild the last read token from the input on demand
     const std::vector<char_type>& collect_token_chars(std::vector<char_type>& out, std::true_type /*lazy*/) const
     {
@@ -2018,15 +2140,57 @@ scan_number_done:
         // into one that reloads the pointer from memory every character
         do
         {
+            if (current == '\n')
+            {
+                skip_indentation(std::integral_constant<bool, bulk_scan> {});
+            }
             get_ignoring_pending_unget();
         }
         while (current_is_whitespace());
     }
 
+    /*!
+    @brief contiguous input: skip the space indentation that follows a newline
+           8 bytes at a time
+
+    Pretty-printed JSON indents every line with a run of spaces, which the loop
+    in skip_whitespace() would otherwise read one character at a time. The
+    spaces are skipped 8 bytes at a time; the last 7 bytes of the input and any
+    other whitespace are left to that loop. Skipping bypasses get(), which is
+    fine because bulk_scan implies lazy_position: the position is derived from
+    the adapter, not counted per character.
+    */
+    void skip_indentation(std::true_type /*bulk*/)
+    {
+        JSON_ASSERT(!next_unget);
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining < 8)
+        {
+            return;
+        }
+        const char* const data = reinterpret_cast<const char*>(ia.bulk_data());
+        std::size_t pos = 0;
+        for (; pos + 8 <= remaining; pos += 8)
+        {
+            // little-endian, so the first byte is the lowest
+            const std::uint64_t non_space = read_eight_bytes(data + pos) ^ 0x2020202020202020ull;
+            if (non_space != 0)
+            {
+                // skip the spaces before the first other byte of this word
+                pos += static_cast<std::size_t>(count_trailing_zeros(non_space)) / 8;
+                break;
+            }
+        }
+        ia.bulk_skip(pos);
+    }
+
+    /// streaming input: no bulk fast path
+    void skip_indentation(std::false_type /*bulk*/) const noexcept {}
+
     token_type scan()
     {
         // initially, skip the BOM
-        if (position.chars_read_total == 0 && !skip_bom())
+        if (get_chars_read_total() == 0 && !skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
             return token_type::parse_error;
@@ -2053,7 +2217,7 @@ scan_number_done:
     token_type scan_expecting(token_type expected_type)
     {
         JSON_ASSERT(expected_type == token_type::name_separator || expected_type == token_type::value_separator);
-        JSON_ASSERT(position.chars_read_total > 0);
+        JSON_ASSERT(get_chars_read_total() > 0);
         const char_int_type expected_char = static_cast<unsigned char>((expected_type == token_type::name_separator) ? ':' : ',');
         skip_whitespace();
         if (JSON_HEDLEY_LIKELY(current == expected_char))

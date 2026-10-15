@@ -21,12 +21,30 @@ Furthermore, it reads data with a SAX parser that recovers from every error
 and checks that the events are balanced, that reading ends, and that it
 reports an error exactly when from_msgpack() fails (see #3989).
 
+Finally, it reads the data from a stream, a non-contiguous iterator range, and
+a FILE*, which read byte by byte, and checks that each gives the same value or
+error (id, message, byte position) as the pointer range, which takes the bulk
+fast paths (see check_input_adapters()).
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
 #include "fuzzer_common.hpp"
 #include "fuzzer-recovering_checker.hpp"
+
+namespace
+{
+// json::from_msgpack for check_input_adapters()
+struct read_msgpack
+{
+    template<typename... Args>
+    json operator()(Args&& ... args) const
+    {
+        return json::from_msgpack(std::forward<Args>(args)...);
+    }
+};
+} // namespace
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -89,6 +107,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
         assert(parsed || !recovered_without_errors);
     }
+
+    // step 3: the other input adapters must read the data alike
+    check_input_adapters(data, size, read_msgpack());
 
     // return 0 - non-zero return values are reserved for future use
     return 0;

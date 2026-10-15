@@ -82,12 +82,13 @@ flowchart TD
 
     - Numbers with a decimal digit or scientific notation are always stored as `#!c double`.
     - The number types can be changed, see [Template number types](#template-number-types). 
-    - Integers are converted by the library's own digit parser. Floating-point numbers are converted with
-      [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) if the library is compiled with C++17
-      and the standard library supports it, then with an exact fast path for `#!c double` values with few significant
-      digits, and otherwise with the locale-aware
-      [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof) (`std::strtof`/`std::strtold` for the
-      other floating-point types). Before version 3.13.0, the conversion was realized by
+    - The library converts integers and floating-point numbers itself, independent of the locale. Floating-point
+      numbers are correctly rounded (to nearest, ties to even). Only a `#!c long double` that is not IEEE 754 binary64
+      (e.g., the 80-bit x87 format) is converted with `#!cpp std::from_chars` where available, or else with
+      [`std::strtold`](https://en.cppreference.com/w/cpp/string/byte/strtof). For that call, the library temporarily
+      replaces the `.` with the decimal point of the current locale (which may be longer than one byte, e.g., in
+      `fa_IR.UTF-8`), so the result does not depend on the locale either. Changing the locale in another thread during
+      parsing is undefined behavior of the C library, though. Before version 3.13.0, the conversion was realized by
       [`std::strtoull`](https://en.cppreference.com/w/cpp/string/byte/strtoul),
       [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and `std::strtod`, respectively.
 
@@ -100,10 +101,10 @@ flowchart TD
 ### Number limits
 
 - Any 64-bit signed or unsigned integer can be stored without loss of precision.
-- Numbers exceeding the limits of `#!c double` (i.e., numbers that after conversion via
-[`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof) are not satisfying
+- Numbers exceeding the limits of `#!c double` (i.e., numbers whose rounded value is not satisfying
 [`std::isfinite`](https://en.cppreference.com/w/cpp/numeric/math/isfinite) such as `#!c 1E400`) will throw exception
-[`json.exception.out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406) during parsing.
+[`json.exception.out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406) during parsing. Numbers too
+small for `#!c double` (such as `#!c 1E-400`) become zero, with the sign of the number.
 - Floating-point numbers are rounded to the next number representable as `double`. For instance
 `#!c 3.141592653589793238462643383279` is stored as [`0x400921fb54442d18`](https://float.exposed/0x400921fb54442d18).
 This is the same behavior as the code `#!c double x = 3.141592653589793238462643383279;`.
@@ -133,9 +134,10 @@ That is, `-0` is stored as a signed integer, but the serialization does not repr
 ### Number serialization
 
 - Integer numbers are serialized as is; that is, no scientific notation is used.
-- Floating-point numbers are serialized as specified by the `#!c %g` printf modifier with 
-  [`std::numeric_limits<double>::max_digits10`](https://en.cppreference.com/w/cpp/types/numeric_limits/max_digits10)
-  significant digits. The rationale is to use the shortest representation while still allowing round-tripping.
+- Floating-point numbers are serialized with the fewest digits that read back as the same value (the closest such
+  digits if there are several), in the layout of the `#!c %g` printf modifier: `#!c 1.5`, `#!c 100.0`, `#!c 1e+100`.
+  Doubles are converted with the algorithm of [Żmij](https://github.com/vitaut/zmij), floats with Grisu2, which
+  can write more digits than necessary.
 
 !!! hint "Notes regarding precision of floating-point numbers"
 
@@ -343,8 +345,11 @@ The number types can be changed with template parameters.
       in case of overflow.
     - The type for unsigned integers must be convertible from `#!c unsigned long long`.  The type for floating-point
       numbers is used in case of overflow.
-    - The types for signed and unsigned integers must be distinct, see
-      [#2573](https://github.com/nlohmann/json/issues/2573).
+    - The type for unsigned integers can also be the same signed type as the type for signed integers (e.g.,
+      `#!c std::int64_t` for both). Then every integer is stored as a signed integer, and
+      [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md) is always `#!c false`, see
+      [Template Parameter Requirements](template_parameters.md#same-type-for-both).
+    - The type for floating-point numbers must be distinct from the integer types.
     - Only `#!c double`, `#!c float`, and `#!c long double` are supported for floating-point numbers.
 
 !!! example

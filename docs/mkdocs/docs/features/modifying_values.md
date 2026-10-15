@@ -66,7 +66,7 @@ config.update(user_settings, true);
 // {"log":{"file":"app.log","level":"debug"},"retries":3}
 ```
 
-[JSON Merge Patch](merge_patch.md) ([RFC 7386](https://tools.ietf.org/html/rfc7386)) also merges objects recursively,
+[JSON Merge Patch](merge_patch.md) ([RFC 7396](https://tools.ietf.org/html/rfc7396)) also merges objects recursively,
 but it is a different tool: a `#!json null` in the patch means "remove this key". It is meant for applying merge patch
 documents (e.g., received via HTTP PATCH). To merge configuration-like objects, use `#!cpp update(..., true)`. To apply
 a sequence of well-defined edit operations, see [JSON Patch](json_patch.md).
@@ -90,6 +90,6 @@ a.erase(1);             // [1,3,4]  (erase by index)
 - [`push_back`](../api/basic_json/push_back.md) / [`emplace_back`](../api/basic_json/emplace_back.md) - append to an array
 - [`emplace`](../api/basic_json/emplace.md) - insert into an object if the key is absent
 - [`update`](../api/basic_json/update.md) - merge objects (shallow, or recursive with `merge_objects`)
-- [`merge_patch`](../api/basic_json/merge_patch.md) - apply an RFC 7386 merge patch
+- [`merge_patch`](../api/basic_json/merge_patch.md) - apply an RFC 7396 merge patch
 - [`erase`](../api/basic_json/erase.md) / [`clear`](../api/basic_json/clear.md) - remove elements
 - [JSON Patch and Diff](json_patch.md) and [JSON Merge Patch](merge_patch.md) - structured modifications

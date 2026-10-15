@@ -8,10 +8,12 @@
 
 #pragma once
 
+#include <array> // array
 #include <cstddef> // size_t
-#include <cstdint> // uint64_t
+#include <cstdint> // uint64_t, uint8_t
 #include <cstring> // memcpy
 
+#include <nlohmann/detail/bit_ops.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 // Optional SIMD backend for bulk UTF-8 validation. This is an opt-in external
@@ -69,18 +71,12 @@ inline std::size_t find_string_special(const unsigned char* data, std::size_t n)
     std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
     {
-        std::uint64_t word = 0;
-        std::memcpy(&word, data + i, sizeof(word));
-        if (swar_string_special(word) != 0)
+        const std::uint64_t special = swar_string_special(read_eight_bytes(data + i));
+        if (special != 0)
         {
-            // a special byte is in this word; locate it (endian-agnostic)
-            for (std::size_t j = 0; j < 8; ++j)
-            {
-                if (is_string_special(data[i + j]))
-                {
-                    return i + j;
-                }
-            }
+            // the lowest flagged byte is the first special one: the borrows of
+            // the subtractions can only flag bytes above a true hit
+            return i + (static_cast<std::size_t>(count_trailing_zeros(special)) / 8);
         }
     }
     for (; i < n; ++i)
@@ -114,8 +110,7 @@ inline std::size_t find_ascii_copyable_run(const unsigned char* data, std::size_
     std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
     {
-        std::uint64_t v = 0;
-        std::memcpy(&v, data + i, sizeof(v));
+        const std::uint64_t v = read_eight_bytes(data + i);
         const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'  (0x22)
         const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\' (0x5C)
         const std::uint64_t d = v ^ 0x7F7F7F7F7F7F7F7Full; // DEL  (0x7F)
@@ -126,7 +121,9 @@ inline std::size_t find_ascii_copyable_run(const unsigned char* data, std::size_
                                    | (v & high);               // >= 0x80
         if (stop != 0)
         {
-            break;
+            // the lowest flagged byte is the first one to stop at (see
+            // find_string_special())
+            return i + (static_cast<std::size_t>(count_trailing_zeros(stop)) / 8);
         }
     }
     for (; i < n; ++i)
@@ -253,12 +250,18 @@ inline std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t
         {
             break; // end of buffer, or a quote/escape/control byte
         }
-        const std::size_t seq = validate_one_utf8(data + pos, n - pos);
-        if (seq == 0)
+        // a run of multi-byte sequences (e.g. CJK text) is validated sequence
+        // by sequence without searching for the next special byte in between
+        do
         {
-            break; // ill-formed or truncated: let the byte path diagnose it
+            const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+            if (seq == 0)
+            {
+                return pos; // ill-formed or truncated: let the byte path diagnose it
+            }
+            pos += seq;
         }
-        pos += seq;
+        while (pos < n && data[pos] >= 0x80u);
     }
     return pos;
 }
@@ -273,8 +276,7 @@ inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t 
     std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
     {
-        std::uint64_t v = 0;
-        std::memcpy(&v, data + i, sizeof(v));
+        const std::uint64_t v = read_eight_bytes(data + i);
         const std::uint64_t q = v ^ 0x2222222222222222ull;
         const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull;
         const std::uint64_t hit = ((q - ones) & ~q & high)
@@ -282,14 +284,8 @@ inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t 
                                   | ((v - 0x2020202020202020ull) & ~v & high);
         if (hit != 0)
         {
-            for (std::size_t j = 0; j < 8; ++j)
-            {
-                const unsigned char c = data[i + j];
-                if (c == '\"' || c == '\\' || c < 0x20u)
-                {
-                    return i + j;
-                }
-            }
+            // the lowest flagged byte is the first delimiter (see find_string_special())
+            return i + (static_cast<std::size_t>(count_trailing_zeros(hit)) / 8);
         }
     }
     for (; i < n; ++i)
@@ -318,6 +314,51 @@ inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noe
     }
 #endif
     return scalar_string_bulk_run(data, n);
+}
+
+// Decode the 4 hex digits at [data, data+4) - the digits following a `\u`
+// escape - into a codepoint 0x0000..0xFFFF via one table lookup per byte
+// (after yyjson's read_hex_u16), or return -1 if any of the 4 bytes is not a
+// hex digit ('0'..'9', 'A'..'F', 'a'..'f'). The caller must already have
+// checked that 4 bytes are available; used by lexer::get_codepoint()'s
+// contiguous fast path. On -1 it falls back to the byte-at-a-time loop, which
+// stops at the first invalid digit, so the reported error and position are
+// unaffected by this fast path.
+inline int hex_codepoint(const unsigned char* data) noexcept
+{
+    static const std::array<std::uint8_t, 256> hex_digit_table = // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+    {
+        {
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 00..0F
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 10..1F
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 20..2F
+            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 30..3F ('0'..'9')
+            0xFF, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 40..4F ('A'..'F')
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 50..5F
+            0xFF, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 60..6F ('a'..'f')
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 70..7F
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 80..8F
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // 90..9F
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // A0..AF
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // B0..BF
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // C0..CF
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // D0..DF
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // E0..EF
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF  // F0..FF
+        }
+    };
+
+    const std::uint8_t d0 = hex_digit_table[data[0]];
+    const std::uint8_t d1 = hex_digit_table[data[1]];
+    const std::uint8_t d2 = hex_digit_table[data[2]];
+    const std::uint8_t d3 = hex_digit_table[data[3]];
+    // every valid digit is <= 0xF; the combined OR only exceeds it if at
+    // least one of the four bytes was not a hex digit (looked up as 0xFF)
+    if ((d0 | d1 | d2 | d3) > 0x0F)
+    {
+        return -1;
+    }
+    return (d0 << 12) | (d1 << 8) | (d2 << 4) | d3;
 }
 
 }  // namespace detail

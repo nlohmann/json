@@ -485,6 +485,13 @@ add_custom_target(ci_clang_analyze
 # Check code with Cppcheck.
 ###############################################################################
 
+# default_defines.hpp expands the Hedley macros to the compiler's feature-test operators, which Cppcheck does not know.
+# Since Cppcheck 2.20, it rejects their invocations in #if conditions instead of evaluating them as 0.
+file(WRITE ${CMAKE_BINARY_DIR}/cppcheck_feature_tests.hpp "")
+foreach(OPERATOR __has_attribute __has_builtin __has_cpp_attribute __has_declspec_attribute __has_extension __has_feature __has_include __has_warning)
+    file(APPEND ${CMAKE_BINARY_DIR}/cppcheck_feature_tests.hpp "#define ${OPERATOR}(x) 0\n")
+endforeach()
+
 add_custom_target(ci_cppcheck
     COMMAND mkdir -p cppcheck
     COMMAND clang -dM -E -x c++ -std=c++11 ${CMAKE_SOURCE_DIR}/include/nlohmann/thirdparty/hedley/hedley.hpp > default_defines.hpp 2> /dev/null
@@ -493,7 +500,7 @@ add_custom_target(ci_cppcheck
     COMMAND venv_cppcheck/bin/cppcheck --enable=warning --check-level=exhaustive --inline-suppr --inconclusive --force
             --std=c++11 ${PROJECT_SOURCE_DIR}/include/nlohmann/json.hpp -I ${CMAKE_SOURCE_DIR}/include
             --error-exitcode=1 --relative-paths=${PROJECT_SOURCE_DIR} -j ${N} --include=default_defines.hpp
-            --cppcheck-build-dir=cppcheck
+            --include=${CMAKE_BINARY_DIR}/cppcheck_feature_tests.hpp --cppcheck-build-dir=cppcheck
             -UJSON_CATCH_USER -UJSON_TRY_USER -UJSON_ASSERT -UJSON_INTERNAL_CATCH -UJSON_THROW
             -DJSON_HAS_CPP_11 -UJSON_HAS_CPP_14 -UJSON_HAS_CPP_17 -UJSON_HAS_CPP_20 -UJSON_HAS_THREE_WAY_COMPARISON
     COMMENT "Check code with Cppcheck"
@@ -610,9 +617,8 @@ foreach(SRC_FILE ${SRC_FILES})
     add_executable(single_${RELATIVE_SRC_FILE} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp)
     target_include_directories(single_${RELATIVE_SRC_FILE} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_features(single_${RELATIVE_SRC_FILE} PRIVATE cxx_std_11)
-    if(RELATIVE_SRC_FILE STREQUAL "json" OR RELATIVE_SRC_FILE STREQUAL "json_literals")
-        # see below: report the diagnostics of json.hpp and json_literals.hpp without --error, so they
-        # do not fail the build
+    if(RELATIVE_SRC_FILE STREQUAL "json")
+        # see below: report the diagnostics of json.hpp without --error, so they do not fail the build
         set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_TOOL} -Xiwyu --max_line_length=300)
     else()
         set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path_and_options}")
@@ -626,18 +632,31 @@ foreach(SRC_FILE ${SRC_FILES})
     # reporting its diagnostics (informational, via CXX_INCLUDE_WHAT_YOU_USE above) but exclude it
     # from the hard gate below so a fresh IWYU/compiler combination does not fail this target on a
     # nondeterministic suggestion for a header that already re-exports everything on purpose.
-    # json_literals.hpp and json.hpp include each other on purpose (json.hpp includes it at its end
-    # unless JSON_NO_AUTOMATIC_UDLS is defined), and IWYU, not following the cycle, suggests replacing
-    # json.hpp with json_fwd.hpp although the literals need the complete basic_json; exclude it, too.
-    if(NOT RELATIVE_SRC_FILE STREQUAL "json" AND NOT RELATIVE_SRC_FILE STREQUAL "json_literals")
+    if(NOT RELATIVE_SRC_FILE STREQUAL "json")
         list(APPEND single_binaries_tus src_single/${RELATIVE_SRC_FILE}.cpp)
     endif()
+endforeach()
+
+# The checks above look at each header on its own. Client code that includes only <nlohmann/json.hpp>
+# must not be told by include analyzers to include another nlohmann header for what it uses
+# (issue #5812): json.hpp marks those includes "IWYU pragma: export", and both IWYU and clang-tidy's
+# misc-include-cleaner (disabled in .clang-tidy for the library itself) check these clients.
+file(GLOB CONSUMER_FILES ${PROJECT_SOURCE_DIR}/tests/iwyu_consumer/*.cpp)
+foreach(CONSUMER_FILE ${CONSUMER_FILES})
+    get_filename_component(CONSUMER_NAME "${CONSUMER_FILE}" NAME_WE)
+    add_executable(iwyu_consumer_${CONSUMER_NAME} EXCLUDE_FROM_ALL ${CONSUMER_FILE})
+    target_include_directories(iwyu_consumer_${CONSUMER_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    target_compile_features(iwyu_consumer_${CONSUMER_NAME} PRIVATE cxx_std_11)
+    list(APPEND single_binaries iwyu_consumer_${CONSUMER_NAME})
+    list(APPEND single_binaries_tus ${CONSUMER_FILE})
 endforeach()
 
 if(IWYU_TOOL_PY)
     add_custom_target(ci_single_binaries
         DEPENDS ${single_binaries}
         COMMAND ${IWYU_TOOL_PY} -p ${PROJECT_BINARY_DIR} ${single_binaries_tus} -- ${iwyu_options}
+        COMMAND ${CLANG_TIDY_TOOL} -p ${PROJECT_BINARY_DIR} --checks=-*,misc-include-cleaner --warnings-as-errors=* ${CONSUMER_FILES}
+        VERBATIM
         COMMENT "Check if headers are self-contained"
     )
 else()

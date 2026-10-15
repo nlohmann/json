@@ -190,11 +190,18 @@ Shared by json_sax_dom_parser and json_sax_dom_callback_parser.
 @return whether parsing should continue (false after reporting out_of_range.408)
 */
 template<typename SAX, typename BasicJsonType>
+JSON_HEDLEY_NEVER_INLINE
+bool container_too_large_error(SAX& sax, std::size_t len, const char* kind, BasicJsonType* ref)
+{
+    return sax.parse_error(0, "", out_of_range::create(exception_id::container_too_large, concat("excessive ", kind, " size: ", std::to_string(len)), ref));
+}
+
+template<typename SAX, typename BasicJsonType>
 bool check_container_size(SAX& sax, std::size_t len, const char* kind, BasicJsonType* ref)
 {
     if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref->max_size()))
     {
-        return sax.parse_error(0, "", out_of_range::create(exception_id::container_too_large, concat("excessive ", kind, " size: ", std::to_string(len)), ref));
+        return container_too_large_error(sax, len, kind, ref);
     }
     return true;
 }
@@ -219,7 +226,7 @@ struct diagnostic_positions
         {
             // Lexer has read the first character of the container, so
             // subtract 1 from the position to get the correct start position.
-            v.start_position = lexer->get_position() - 1;
+            v.start_position = lexer->get_chars_read_total() - 1;
         }
     }
 
@@ -233,7 +240,7 @@ struct diagnostic_positions
         if (lexer)
         {
             // Lexer's position is past the closing brace or bracket, so set that as the end position.
-            v.end_position = lexer->get_position();
+            v.end_position = lexer->get_chars_read_total();
         }
     }
 
@@ -249,7 +256,7 @@ struct diagnostic_positions
             // Lexer has read past the current field value, so set the end position to the current position.
             // The start position will be set below based on the length of the string representation
             // of the value.
-            v.end_position = lexer->get_position();
+            v.end_position = lexer->get_chars_read_total();
 
             switch (v.type())
             {
@@ -679,16 +686,19 @@ class json_sax_dom_callback_parser
         if (keep && ref_stack.back())
         {
             auto& obj = *ref_stack.back()->m_data.m_value.object;
-            const auto it = obj.find(val);
-            if (it != obj.end())
+            // a single lookup: insert the placeholder, or find the existing member
+            const auto inserted = obj.emplace(val, discarded);
+            const auto it = inserted.first;
+            if (!inserted.second)
             {
                 // this is a duplicate key (legal in JSON); remember its
                 // current value so it can be restored later if the new
                 // value is rejected by the callback, instead of being
                 // erased together with the discarded placeholder
                 duplicate_key_stash.emplace_back(&(it->second), it->second);
+                it->second = discarded;
             }
-            object_element = &(obj[val] = discarded);
+            object_element = &(it->second);
         }
 
         return true;
