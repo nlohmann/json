@@ -943,30 +943,30 @@ public:
             free_container(v);
         }
 
-            // Destroy the tree below top without recursing per nesting level and
-            // without any heap allocation: a heap-allocated flattening
-            // stack (the previous implementation) can itself throw
-            // bad_alloc, which would escape this noexcept destructor and
-            // terminate the program (#5135).
-            //
-            // Instead, walk down a chain of children (always the one
-            // walk_child() picks), reversing links as we go: cur is the
-            // container currently being emptied, and prev is its parent
-            // (value_t::null when there is none). Each parent's
-            // walk_child() slot doubles as storage for that parent's own
-            // parent link while we are below it, so no extra memory is
-            // needed; the parent is not modified meanwhile, so
-            // walk_child() finds that same slot again on the way up. We
-            // only ever remove a child once it is a scalar or an empty
-            // array/object, which neither allocates nor recurses more
-            // than one level deep.
-            //
-            // This json_value is not itself a basic_json, so the
-            // top-level container is first moved into a local stand-in
-            // ("cur"); a default-constructed basic_json has a null
-            // pointer in its m_value (see data::m_value's initializer),
-            // so swapping it with *this leaves this union's own pointer
-            // null, and it is never looked at or freed a second time.
+        // Destroy the tree below top without recursing per nesting level and
+        // without any heap allocation: a heap-allocated flattening
+        // stack (the previous implementation) can itself throw
+        // bad_alloc, which would escape this noexcept destructor and
+        // terminate the program (#5135).
+        //
+        // Instead, walk down a chain of children (always the one
+        // walk_child() picks), reversing links as we go: cur is the
+        // container currently being emptied, and prev is its parent
+        // (value_t::null when there is none). Each parent's
+        // walk_child() slot doubles as storage for that parent's own
+        // parent link while we are below it, so no extra memory is
+        // needed; the parent is not modified meanwhile, so
+        // walk_child() finds that same slot again on the way up. We
+        // only ever remove a child once it is a scalar or an empty
+        // array/object, which neither allocates nor recurses more
+        // than one level deep.
+        //
+        // This json_value is not itself a basic_json, so the
+        // top-level container is first moved into a local stand-in
+        // ("cur"); a default-constructed basic_json has a null
+        // pointer in its m_value (see data::m_value's initializer),
+        // so swapping it with *this leaves this union's own pointer
+        // null, and it is never looked at or freed a second time.
         static void destroy_walk(basic_json& top) noexcept
         {
             basic_json cur;
@@ -3058,14 +3058,14 @@ public:
         JSON_THROW(std::length_error(detail::concat("array index ", std::to_string(idx), " exceeds size_type")));
     }
 
-    /// @throw out_of_range.401
+    /// @throw out_of_range.401 always, as @a idx is out of range of @a j
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_out_of_range(size_type idx, const basic_json& j)
     {
         JSON_THROW(out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat("array index ", std::to_string(idx), " is out of range"), &j));
     }
 
-    /// @throw out_of_range.403
+    /// @throw out_of_range.403 always, as @a key is not found in @a j
     template<typename KeyType>
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_key_not_found(const KeyType& key, const basic_json& j)
@@ -5518,16 +5518,6 @@ public:
 #endif
     }
 
-    JSON_HEDLEY_NEVER_INLINE
-    static bool less_general(const_reference lhs, const_reference rhs) noexcept
-    {
-        // default_result is used if we cannot compare values. In that case,
-        // we compare types. Note we have to call the operator explicitly,
-        // because MSVC has problems otherwise.
-        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
-                                 compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
-    }
-
 #if JSON_HAS_THREE_WAY_COMPARISON
     JSON_HEDLEY_NEVER_INLINE
     static std::partial_ordering three_way_general(const_reference lhs, const_reference rhs) noexcept // *NOPAD*
@@ -5539,6 +5529,16 @@ public:
                                 std::partial_ordering::unordered,
                                 lhs_type <=> rhs_type, // *NOPAD*
                                 to_partial_ordering(compare_iteratively<true>(lhs, rhs, false)), true)
+    }
+#else
+    JSON_HEDLEY_NEVER_INLINE
+    static bool less_general(const_reference lhs, const_reference rhs) noexcept
+    {
+        // default_result is used if we cannot compare values. In that case,
+        // we compare types. Note we have to call the operator explicitly,
+        // because MSVC has problems otherwise.
+        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
+                                 compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
     }
 #endif
 

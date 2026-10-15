@@ -17,18 +17,7 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
-/*!
- * @brief string escaping as described in RFC 6901 (Sect. 4)
- * @param[in] s string to escape
- * @return    escaped string
- *
- * Note the order of escaping "~" to "~0" and "/" to "~1" is important.
- *
- * The string is rebuilt in a single pass, appending whole runs between the
- * characters that need escaping, while repeated replace() calls would move
- * the tail of the string once per escaped character. @ref escape_into appends
- * the escaped string to an existing one.
- */
+/// append @a s to @a out, escaped like @ref escape does
 template<typename StringType>
 inline void escape_into(StringType& out, const StringType& s)
 {
@@ -47,6 +36,18 @@ inline void escape_into(StringType& out, const StringType& s)
     out.append(s.data() + run, size - run);
 }
 
+/*!
+ * @brief string escaping as described in RFC 6901 (Sect. 4)
+ * @param[in] s string to escape
+ * @return    escaped string
+ *
+ * Note the order of escaping "~" to "~0" and "/" to "~1" is important.
+ *
+ * The string is rebuilt in a single pass, appending whole runs between the
+ * characters that need escaping, while repeated replace() calls would move
+ * the tail of the string once per escaped character. @ref escape_into appends
+ * the escaped string to an existing one.
+ */
 template<typename StringType>
 inline StringType escape(const StringType& s)
 {
