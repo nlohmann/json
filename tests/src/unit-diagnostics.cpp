@@ -733,7 +733,7 @@ TEST_CASE_TEMPLATE("Parent pointers stay consistent", J, json, ordered_json)
 TEST_CASE_TEMPLATE("update() and merge_patch() keep parent pointers and diagnostic paths", J, json, ordered_json)
 {
     // enough keys to make the vector behind ordered_json reallocate several times
-    const auto make_object = [](int first, int last)
+    const auto make_object = [](int first, int last) -> J
     {
         J o = J::object();
         for (int i = first; i < last; ++i)
