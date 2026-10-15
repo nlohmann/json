@@ -397,9 +397,13 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
     ConstructibleObjectType ret;
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
     from_json_object_reserve(ret, inner_object->size(), priority_tag<1> {});
+    using value_type = typename ConstructibleObjectType::value_type;
     for (const auto& p : *inner_object)
     {
-        ret.emplace(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
+        // the keys of the source are sorted for the usual object types, so
+        // hinting the end makes every insertion constant-time (for containers
+        // that order their keys the same way)
+        ret.insert(ret.end(), value_type(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>()));
     }
     obj = std::move(ret);
 }
