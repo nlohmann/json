@@ -5263,7 +5263,7 @@ class binary_reader
     }
 
     JSON_HEDLEY_NEVER_INLINE
-    bool bson_unsupported_type_error(const std::size_t position, const char element_type)
+    bool bson_unsupported_type_error(const std::size_t position, const char_int_type element_type)
     {
         const std::string cr_str = hex_byte(static_cast<std::uint8_t>(element_type));
         return report_error(position, cr_str,
