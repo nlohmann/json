@@ -5727,6 +5727,65 @@ JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_literal(const exceptio
     JSON_THROW(ExceptionType::create(id_, what_arg, context));
 }
 
+// JSON Patch errors; constructed out of line so that patch_inplace() does not carry them
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_add_parent(const BasicJsonType& parent)
+{
+    static_cast<void>(parent);
+    JSON_THROW(out_of_range::create(exception_id::patch_add_parent_not_container, concat("cannot add value: the JSON Patch 'add' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+}
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_remove_parent(const BasicJsonType& parent)
+{
+    static_cast<void>(parent);
+    JSON_THROW(out_of_range::create(exception_id::patch_remove_parent_not_container, concat("cannot remove value: the JSON Patch 'remove' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+}
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_not_an_array(const BasicJsonType& j)
+{
+    static_cast<void>(j);
+    JSON_THROW(parse_error::create(exception_id::patch_not_an_array, 0, "JSON patch must be an array of objects", &j));
+}
+
+template<typename StringType, typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_missing_member(const StringType& op, const StringType& member, const bool string_type, const BasicJsonType& val)
+{
+    static_cast<void>(op);
+    static_cast<void>(member);
+    static_cast<void>(string_type);
+    static_cast<void>(val);
+    // context-sensitive error message
+    const std::string error_msg = (op == "op") ? std::string("operation") : concat("operation '", op, '\'');
+    JSON_THROW(parse_error::create(exception_id::patch_invalid_operation, 0, concat(error_msg, string_type ? " must have string member '" : " must have member '", member, "'"), &val));
+}
+
+template<typename StringType, typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_move_into_child(const StringType& from_path, const StringType& path, const BasicJsonType& result)
+{
+    static_cast<void>(from_path);
+    static_cast<void>(path);
+    static_cast<void>(result);
+    JSON_THROW(out_of_range::create(exception_id::patch_move_into_child, concat("cannot move value: 'from' path '", from_path, "' is a proper prefix of 'path' '", path, "'"), &result));
+}
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_test_failed(const BasicJsonType& val)
+{
+    static_cast<void>(val);
+    JSON_THROW(other_error::create(exception_id::patch_test_failed, concat("unsuccessful: ", val.dump()), &val));
+}
+
+template<typename StringType, typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_invalid_operation(const StringType& op, const BasicJsonType& val)
+{
+    static_cast<void>(op);
+    static_cast<void>(val);
+    JSON_THROW(parse_error::create(exception_id::patch_invalid_operation, 0, concat("operation value '", op, "' is invalid"), &val));
+}
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -36787,7 +36846,7 @@ public:
                         if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
-                            JSON_THROW(out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat("array index ", std::to_string(idx), " is out of range"), &parent));
+                            throw_array_index_out_of_range(idx, parent);
                         }
 
                         // default case: insert add offset
@@ -36806,7 +36865,7 @@ public:
                 case value_t::binary:
                 case value_t::discarded:
                 default:
-                    JSON_THROW(out_of_range::create(detail::exception_id::patch_add_parent_not_container, detail::concat("cannot add value: the JSON Patch 'add' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+                    detail::throw_patch_add_parent(parent);
             }
         };
 
@@ -36830,7 +36889,7 @@ public:
                 }
                 else
                 {
-                    JSON_THROW(out_of_range::create(detail::exception_id::key_not_found, detail::concat("key '", last_path, "' not found"), this));
+                    throw_key_not_found(last_path, *this);
                 }
             }
             else if (parent.is_array())
@@ -36842,7 +36901,7 @@ public:
             {
                 // the parent of a "remove" target must be an object or array
                 // (see #5396)
-                JSON_THROW(out_of_range::create(detail::exception_id::patch_remove_parent_not_container, detail::concat("cannot remove value: the JSON Patch 'remove' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+                detail::throw_patch_remove_parent(parent);
             }
         };
 
@@ -36873,7 +36932,7 @@ public:
         // type check: top level value must be an array
         if (JSON_HEDLEY_UNLIKELY(!json_patch.is_array()))
         {
-            JSON_THROW(parse_error::create(detail::exception_id::patch_not_an_array, 0, "JSON patch must be an array of objects", &json_patch));
+            detail::throw_patch_not_an_array(json_patch);
         }
 
         // iterate and apply the operations
@@ -36887,21 +36946,16 @@ public:
                 // find value
                 auto it = val.m_data.m_value.object->find(member);
 
-                // context-sensitive error message
-                const auto error_msg = (op == "op") ? "operation" : detail::concat("operation '", op, '\''); // NOLINT(bugprone-unused-local-non-trivial-variable)
-
                 // check if the desired value is present
                 if (JSON_HEDLEY_UNLIKELY(it == val.m_data.m_value.object->end()))
                 {
-                    // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-                    JSON_THROW(parse_error::create(detail::exception_id::patch_invalid_operation, 0, detail::concat(error_msg, " must have member '", member, "'"), &val));
+                    detail::throw_patch_missing_member(op, member, false, val);
                 }
 
                 // check if the result is of type string
                 if (JSON_HEDLEY_UNLIKELY(string_type && !it->second.is_string()))
                 {
-                    // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-                    JSON_THROW(parse_error::create(detail::exception_id::patch_invalid_operation, 0, detail::concat(error_msg, " must have string member '", member, "'"), &val));
+                    detail::throw_patch_missing_member(op, member, true, val);
                 }
 
                 // no error: return value
@@ -36911,7 +36965,7 @@ public:
             // type check: every element of the array must be an object
             if (JSON_HEDLEY_UNLIKELY(!val.is_object()))
             {
-                JSON_THROW(parse_error::create(detail::exception_id::patch_not_an_array, 0, "JSON patch must be an array of objects", &val));
+                detail::throw_patch_not_an_array(val);
             }
 
             // collect mandatory members
@@ -36947,7 +37001,7 @@ public:
 
                     if (JSON_HEDLEY_UNLIKELY(is_proper_prefix(from_ptr, ptr)))
                     {
-                        JSON_THROW(out_of_range::create(detail::exception_id::patch_move_into_child, detail::concat("cannot move value: 'from' path '", from_path, "' is a proper prefix of 'path' '", path, "'"), &result));
+                        detail::throw_patch_move_into_child(from_path, path, result);
                     }
 
                     // the "from" location must exist - use at()
@@ -36993,7 +37047,7 @@ public:
                     // throw an exception if the test fails
                     if (JSON_HEDLEY_UNLIKELY(!success))
                     {
-                        JSON_THROW(other_error::create(detail::exception_id::patch_test_failed, detail::concat("unsuccessful: ", val.dump()), &val));
+                        detail::throw_patch_test_failed(val);
                     }
 
                     break;
@@ -37004,7 +37058,7 @@ public:
                 {
                     // op must be "add", "remove", "replace", "move", "copy", or
                     // "test"
-                    JSON_THROW(parse_error::create(detail::exception_id::patch_invalid_operation, 0, detail::concat("operation value '", op, "' is invalid"), &val));
+                    detail::throw_patch_invalid_operation(op, val);
                 }
             }
         }
