@@ -15,7 +15,7 @@ Requirements are not checked
 
 Three requirements are checked with a `static_assert`: the array iterator category, the width of [`BinaryType`](#binarytype)'s `value_type`, and [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) being at least as wide as [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype). The rest are not diagnosed with dedicated error messages, and violating most of them results in a compiler error somewhere inside the library. Four violations are not caught at compile time at all:
 
-- A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and can silently misparse floating-point numbers, because the lexer may hand the buffer to `std::strtod`, which reads up to the terminating null character.
+- A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and silently misparses numbers stored as a `long double` that is not IEEE 754 binary64 (e.g., the 80-bit x87 format), because the lexer hands the buffer to `std::strtold`.
 - A stateful [`AllocatorType`](#allocatortype) compiles and silently ignores its state: allocation, deallocation, and [`get_allocator()`](https://json.nlohmann.me/api/basic_json/get_allocator/index.md) each use a different default-constructed instance.
 - The two [cross-specialization conversions](#cross-specialization-conversions) below. These abort on an assertion in a normal build, and only fail silently under `NDEBUG`.
 
@@ -608,10 +608,10 @@ true
 
 ### Always required
 
-- A member type `value_type` that is one byte wide and `char`-compatible. The library stores and processes UTF-8 encoded `char` data and passes `data()` to functions that take a `const char*`, such as `std::strtod`. `std::wstring`, `std::u16string`, and `std::u32string` are **not** valid choices; see the FAQ on [wide string handling](https://json.nlohmann.me/home/faq/#wide-string-handling).
+- A member type `value_type` that is one byte wide and `char`-compatible. The library stores and processes UTF-8 encoded `char` data and passes `data()` to functions that take a `const char*`, such as `std::strtold` (only used to parse a `long double` that is not IEEE 754 binary64, see [`NumberFloatType`](#numberfloattype)). `std::wstring`, `std::u16string`, and `std::u32string` are **not** valid choices; see the FAQ on [wide string handling](https://json.nlohmann.me/home/faq/#wide-string-handling).
 - Constructors: default, copy, move, from `const char*` (which must not be `explicit`), from `(const char*, size_type)`, and from `(size_type, char)`; and copy or move assignment.
 - Member functions `size()`, `clear()`, `resize(n, c)`, `data()`, `push_back(char)`, and `operator[]` (const and non-const, returning references). `c_str()` and `back()` are **not** required.
-- `data()` must return a pointer to a contiguous, **null-terminated** buffer -- the parser may hand it to `std::strtod`, which reads up to the null character. A type whose `data()` is not null-terminated does not fail to compile; it can silently misparse floating-point numbers.
+- `data()` must return a pointer to a contiguous, **null-terminated** buffer. `float`, `double`, and a `long double` that is IEEE 754 binary64 are converted by the library itself and do not depend on this. For any other `NumberFloatType` (a `long double` of another format), the parser falls back to `std::strtold` when `std::from_chars` is not available or declines the token, and `std::strtold` reads up to the null character. A type whose `data()` is not null-terminated does not fail to compile; with such a `NumberFloatType` it can silently misparse floating-point numbers.
 - `append(const char*, size_type)`, used by [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), and `append(const StringType&)`, used by the CBOR reader for indefinite-length strings. The library's internal string concatenation additionally has to append a `char` and a `const char*`; for each it selects between `append(arg)`, `operator+=`, `append(first, last)`, and `append(data, size)`.
 - The comparison operator `==` against another `StringType`, and `<` for use as a key of the chosen [`ObjectType`](#objecttype) (with the default comparator, `std::less<>` must be able to compare two `StringType` values, and a `StringType` with the key types used for lookup). `!=` is never applied to a `StringType`, and `==` against `const char*` is resolved by the implicit `const char*` constructor.
 
@@ -920,10 +920,10 @@ The number types influence what the parser accepts: an integer literal that does
 
 `NumberFloatType` must be one of `float`, `double`, or `long double`:
 
-- The [parser](https://json.nlohmann.me/features/parsing/index.md) converts number literals with `std::from_chars` or, as a fallback, with `std::strtof`, `std::strtod`, or `std::strtold`; the library provides overloads for exactly these three types.
+- The [parser](https://json.nlohmann.me/features/parsing/index.md) converts number literals to `float`, `double`, and a `long double` that is IEEE 754 binary64 itself; other `long double` formats are converted with `std::from_chars` where available, or with `std::strtold`. The library provides overloads for exactly these three types.
 - [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) falls back to `std::snprintf` with the `%g` and `%Lg` conversion specifiers, for which the library likewise provides only `double` and `long double` overloads (`float` is promoted to `double`).
 
-If `std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary32 or binary64 number, `dump` uses the Grisu2 algorithm, which produces the shortest representation that round-trips. Otherwise the `snprintf` fallback with `max_digits10` digits is used.
+If `std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary64 number, `dump` uses the algorithm of Żmij, which produces the shortest representation that round-trips. For IEEE 754 binary32 numbers, it uses Grisu2, which produces a short representation that round-trips. Otherwise the `snprintf` fallback with `max_digits10` digits is used.
 
 ### Required for the binary formats
 
@@ -933,7 +933,7 @@ If `std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary32 or bina
 
 | Type               | Support                                                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `double` (default) | full; short round-trip output through Grisu2                                                                          |
+| `double` (default) | full; shortest round-trip output through Żmij                                                                         |
 | `float`            | full; short round-trip output through Grisu2                                                                          |
 | `long double`      | `dump` and `parse` only; the binary format writers do not compile, as they only handle IEEE 754 binary32 and binary64 |
 | any other type     | not usable                                                                                                            |

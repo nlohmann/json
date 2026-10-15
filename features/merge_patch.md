@@ -1,6 +1,6 @@
 # JSON Merge Patch
 
-The library supports JSON Merge Patch ([RFC 7386](https://tools.ietf.org/html/rfc7386)) as a patch format.
+The library supports JSON Merge Patch ([RFC 7396](https://tools.ietf.org/html/rfc7396)) as a patch format.
 The merge patch format is primarily intended for use with the HTTP PATCH method as a means of describing a set of
 modifications to a target resource's content. This function applies a merge patch to the current JSON value.
 

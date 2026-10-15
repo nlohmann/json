@@ -22,7 +22,7 @@ To store integer numbers in C++, a type is defined by the template parameter `Nu
 
 ### Default type
 
-With the default values for `NumberIntegerType` (`std::int64_t`), the default value for `number_integer_t` is `std::int64_t`.
+With the default values for `NumberIntegerType` (`std::int64_t`), the default type for `number_integer_t` is `std::int64_t`.
 
 ### Default behavior
 

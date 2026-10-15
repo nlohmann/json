@@ -66,7 +66,7 @@ Question
 
 Can you add an option to ignore trailing commas?
 
-This library does not support any feature that would jeopardize interoperability.
+Yes, trailing commas in arrays and objects can be allowed by setting parameter `ignore_trailing_commas` of [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) to `true`; see [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md). They are rejected by default, and the library never adds them when serializing.
 
 ### Parse errors reading non-ASCII characters
 
@@ -220,11 +220,11 @@ Question
 - It seems that precision is lost when serializing a double.
 - Can I change the precision for floating-point serialization?
 
-The library uses `std::numeric_limits<number_float_t>::digits10` (15 for IEEE `double`s) digits for serialization. This value is sufficient to guarantee roundtripping. If one uses more than this number of digits of precision, then string -> value -> string is not guaranteed to round-trip.
+The library serializes floating-point numbers with the shortest representation that parses back to the same value, using at most `std::numeric_limits<number_float_t>::max_digits10` (17 for IEEE `double`s) significant digits. This guarantees that value -> string -> value round-trips. The reverse direction, string -> value -> string, is only guaranteed for numbers with at most `std::numeric_limits<number_float_t>::digits10` (15 for IEEE `double`s) significant digits; a number with more digits may not be representable exactly and is then serialized as the closest `double`.
 
-[cppreference.com](https://en.cppreference.com/w/cpp/types/numeric_limits/digits10)
+[cppreference.com](https://en.cppreference.com/w/cpp/types/numeric_limits/max_digits10)
 
-The value of `std::numeric_limits<T>::digits10` is the number of base-10 digits that can be represented by the type T without change, that is, any number with this many significant decimal digits can be converted to a value of type T and back to decimal form, without change due to rounding or overflow.
+The value of `std::numeric_limits<T>::max_digits10` is the number of base-10 digits that are necessary to uniquely represent all distinct values of the type T, such as necessary for serialization/deserialization to text.
 
 Tip
 

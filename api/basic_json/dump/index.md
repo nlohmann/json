@@ -43,6 +43,8 @@ Linear.
 
 ## Notes
 
+Floating-point numbers are written with the fewest digits that read back as the same value (for `double`; see [number handling](https://json.nlohmann.me/features/types/number_handling/#number-serialization)).
+
 Binary values are serialized as an object containing two keys:
 
 - "bytes": an array of bytes as integers
@@ -178,3 +180,4 @@ string with ignored invalid characters: "äü"
 - Error handlers added in version 3.4.0.
 - Serialization of binary values added in version 3.8.0.
 - Error handler `keep` added in version 3.13.0 unreleased.
+- Doubles are written with the shortest digits (Żmij instead of Grisu2) since version 3.13.0 unreleased; about 0.1% of doubles are written differently, most of them with fewer digits.

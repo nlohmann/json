@@ -97,7 +97,7 @@ config.update(user_settings, true);
 // {"log":{"file":"app.log","level":"debug"},"retries":3}
 ```
 
-[JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) ([RFC 7386](https://tools.ietf.org/html/rfc7386)) also merges objects recursively, but it is a different tool: a `null` in the patch means "remove this key". It is meant for applying merge patch documents (e.g., received via HTTP PATCH). To merge configuration-like objects, use `update(..., true)`. To apply a sequence of well-defined edit operations, see [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md).
+[JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) ([RFC 7396](https://tools.ietf.org/html/rfc7396)) also merges objects recursively, but it is a different tool: a `null` in the patch means "remove this key". It is meant for applying merge patch documents (e.g., received via HTTP PATCH). To merge configuration-like objects, use `update(..., true)`. To apply a sequence of well-defined edit operations, see [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md).
 
 ## Removing elements
 
@@ -116,6 +116,6 @@ a.erase(1);             // [1,3,4]  (erase by index)
 - [`push_back`](https://json.nlohmann.me/api/basic_json/push_back/index.md) / [`emplace_back`](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) - append to an array
 - [`emplace`](https://json.nlohmann.me/api/basic_json/emplace/index.md) - insert into an object if the key is absent
 - [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) - merge objects (shallow, or recursive with `merge_objects`)
-- [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - apply an RFC 7386 merge patch
+- [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - apply an RFC 7396 merge patch
 - [`erase`](https://json.nlohmann.me/api/basic_json/erase/index.md) / [`clear`](https://json.nlohmann.me/api/basic_json/clear/index.md) - remove elements
 - [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md) and [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) - structured modifications

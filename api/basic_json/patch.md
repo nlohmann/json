@@ -45,7 +45,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   pointer inside the patch cannot be resolved, e.g., `-` in a "remove" operation or `1a` for an array; example:
   `"unresolved reference token '-'"`.
 - Throws [`out_of_range.405`](../../home/exceptions.md#jsonexceptionout_of_range405) if JSON pointer has no parent
-  ("add", "remove", "move")
+  ("remove", "move")
 - Throws [`out_of_range.411`](../../home/exceptions.md#jsonexceptionout_of_range411) if an "add" operation's target
   location has a parent that is neither an object nor an array.
 - Throws [`out_of_range.413`](../../home/exceptions.md#jsonexceptionout_of_range413) if a "remove" operation's target

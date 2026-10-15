@@ -55,7 +55,7 @@ Notes
 
 - Numbers with a decimal digit or scientific notation are always stored as `double`.
 - The number types can be changed, see [Template number types](#template-number-types).
-- Integers are converted by the library's own digit parser. Floating-point numbers are converted with [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) if the library is compiled with C++17 and the standard library supports it, then with an exact fast path for `double` values with few significant digits, and otherwise with the locale-aware [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof) (`std::strtof`/`std::strtold` for the other floating-point types). Before version 3.13.0 unreleased, the conversion was realized by [`std::strtoull`](https://en.cppreference.com/w/cpp/string/byte/strtoul), [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and `std::strtod`, respectively.
+- The library converts integers and floating-point numbers itself, independent of the locale. Floating-point numbers are correctly rounded (to nearest, ties to even). Only a `long double` that is not IEEE 754 binary64 (e.g., the 80-bit x87 format) is converted with `std::from_chars` where available, or else with [`std::strtold`](https://en.cppreference.com/w/cpp/string/byte/strtof). For that call, the library temporarily replaces the `.` with the decimal point of the current locale (which may be longer than one byte, e.g., in `fa_IR.UTF-8`), so the result does not depend on the locale either. Changing the locale in another thread during parsing is undefined behavior of the C library, though. Before version 3.13.0 unreleased, the conversion was realized by [`std::strtoull`](https://en.cppreference.com/w/cpp/string/byte/strtoul), [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and `std::strtod`, respectively.
 
 Examples
 
@@ -65,7 +65,7 @@ Examples
 ### Number limits
 
 - Any 64-bit signed or unsigned integer can be stored without loss of precision.
-- Numbers exceeding the limits of `double` (i.e., numbers that after conversion via [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof) are not satisfying [`std::isfinite`](https://en.cppreference.com/w/cpp/numeric/math/isfinite) such as `1E400`) will throw exception [`json.exception.out_of_range.406`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range406) during parsing.
+- Numbers exceeding the limits of `double` (i.e., numbers whose rounded value is not satisfying [`std::isfinite`](https://en.cppreference.com/w/cpp/numeric/math/isfinite) such as `1E400`) will throw exception [`json.exception.out_of_range.406`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range406) during parsing. Numbers too small for `double` (such as `1E-400`) become zero, with the sign of the number.
 - Floating-point numbers are rounded to the next number representable as `double`. For instance `3.141592653589793238462643383279` is stored as [`0x400921fb54442d18`](https://float.exposed/0x400921fb54442d18). This is the same behavior as the code `double x = 3.141592653589793238462643383279;`.
 
 Interoperability
@@ -91,7 +91,7 @@ That is, `-0` is stored as a signed integer, but the serialization does not repr
 ### Number serialization
 
 - Integer numbers are serialized as is; that is, no scientific notation is used.
-- Floating-point numbers are serialized as specified by the `%g` printf modifier with [`std::numeric_limits<double>::max_digits10`](https://en.cppreference.com/w/cpp/types/numeric_limits/max_digits10) significant digits. The rationale is to use the shortest representation while still allowing round-tripping.
+- Floating-point numbers are serialized with the fewest digits that read back as the same value (the closest such digits if there are several), in the layout of the `%g` printf modifier: `1.5`, `100.0`, `1e+100`. Doubles are converted with the algorithm of [Żmij](https://github.com/vitaut/zmij), floats with Grisu2, which can write more digits than necessary.
 
 Notes regarding precision of floating-point numbers
 

@@ -117,7 +117,7 @@ Not every type can be passed for these template arguments: the library uses the 
 
 ### Default type
 
-With the default values for *ObjectType* (`std::map`), *StringType* (`std::string`), and *AllocatorType* (`std::allocator`), the default value for `object_t` is:
+With the default values for *ObjectType* (`std::map`), *StringType* (`std::string`), and *AllocatorType* (`std::allocator`), the default type for `object_t` is:
 
 ```
 std::map<
@@ -171,7 +171,7 @@ json j = m;
 
 ### Default type
 
-With the default values for *ArrayType* (`std::vector`) and *AllocatorType* (`std::allocator`), the default value for `array_t` is:
+With the default values for *ArrayType* (`std::vector`) and *AllocatorType* (`std::allocator`), the default type for `array_t` is:
 
 ```
 std::vector<
@@ -202,7 +202,7 @@ Unicode values are split by the JSON class into byte-sized characters during des
 
 ### Default type
 
-With the default values for *StringType* (`std::string`), the default value for `string_t` is `std::string`.
+With the default values for *StringType* (`std::string`), the default type for `string_t` is `std::string`.
 
 ### Encoding
 
@@ -226,7 +226,7 @@ String values are stored as pointers in a `basic_json` type. That is, for any ac
 
 ### Default type
 
-With the default values for *BooleanType* (`bool`), the default value for `boolean_t` is `bool`.
+With the default values for *BooleanType* (`bool`), the default type for `boolean_t` is `bool`.
 
 ### Storage
 
@@ -244,7 +244,7 @@ This description includes both integer and floating-point numbers. However, C++ 
 
 ### Default types
 
-With the default values for *NumberIntegerType* (`std::int64_t`), the default value for `number_integer_t` is `std::int64_t`. With the default values for *NumberUnsignedType* (`std::uint64_t`), the default value for `number_unsigned_t` is `std::uint64_t`. With the default values for *NumberFloatType* (`double`), the default value for `number_float_t` is `double`.
+With the default values for *NumberIntegerType* (`std::int64_t`), the default type for `number_integer_t` is `std::int64_t`. With the default values for *NumberUnsignedType* (`std::uint64_t`), the default type for `number_unsigned_t` is `std::uint64_t`. With the default values for *NumberFloatType* (`double`), the default type for `number_float_t` is `double`.
 
 ### Default behavior
 
@@ -271,7 +271,7 @@ As this range is a subrange of the exactly supported range \[`INT64_MIN`, `INT64
 
 > This specification allows implementations to set limits on the range and precision of numbers accepted. Since software that implements IEEE 754-2008 binary64 (double precision) numbers is generally available and widely used, good interoperability can be achieved by implementations that expect no more precision or range than these provide, in the sense that implementations will approximate JSON numbers within the expected precision.
 
-This implementation does exactly follow this approach, as it uses double precision floating-point numbers. Note values smaller than `-1.79769313486232e+308` and values greater than `1.79769313486232e+308` will be stored as NaN internally and be serialized to `null`.
+This implementation does exactly follow this approach, as it uses double precision floating-point numbers by default (see *NumberFloatType* above). Note that with the default `double`, numbers smaller than `-1.79769313486232e+308` or greater than `1.79769313486232e+308` are rejected during parsing with [`out_of_range.406`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range406). Non-finite values (NaN and infinity) can only be stored by assigning them directly and are serialized to `null`.
 
 ### Storage
 

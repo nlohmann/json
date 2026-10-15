@@ -32,7 +32,7 @@ the type to use.
 
 ### Default type
 
-With the default values for `NumberUnsignedType` (`std::uint64_t`), the default value for `number_unsigned_t` is
+With the default values for `NumberUnsignedType` (`std::uint64_t`), the default type for `number_unsigned_t` is
 `#!cpp std::uint64_t`.
 
 ### Default behavior

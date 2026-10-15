@@ -18,7 +18,7 @@ To store boolean values in C++, a type is defined by the template parameter `Boo
 
 ### Default type
 
-With the default values for `BooleanType` (`bool`), the default value for `boolean_t` is `bool`.
+With the default values for `BooleanType` (`bool`), the default type for `boolean_t` is `bool`.
 
 ### Storage
 

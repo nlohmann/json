@@ -30,7 +30,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [`out_of_range.402`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range402) if the array index `-` is used where an existing element is required (the "path" of "replace", the "from" of "move" and "copy"); example: `"array index '-' (3) is out of range"`.
 - Throws [`out_of_range.403`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range403) if a JSON pointer inside the patch could not be resolved successfully in the current JSON value; example: `"key baz not found"`.
 - Throws [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) if a reference token of a JSON pointer inside the patch cannot be resolved, e.g., `-` in a "remove" operation or `1a` for an array; example: `"unresolved reference token '-'"`.
-- Throws [`out_of_range.405`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range405) if JSON pointer has no parent ("add", "remove", "move")
+- Throws [`out_of_range.405`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range405) if JSON pointer has no parent ("remove", "move")
 - Throws [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) if an "add" operation's target location has a parent that is neither an object nor an array.
 - Throws [`out_of_range.413`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range413) if a "remove" operation's target location has a parent that is neither an object nor an array.
 - Throws [`out_of_range.414`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range414) if a "move" operation's "from" location is a proper prefix of its "path" location.

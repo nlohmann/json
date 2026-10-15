@@ -15,7 +15,7 @@ bool operator<(ScalarType lhs, const const_reference rhs) noexcept(/* see below 
 
    - If either operand is discarded, the comparison yields `false`.
    - If both operands have the same type, the values are compared using their respective `operator<`.
-   - Integer and floating-point numbers are automatically converted before comparison.
+   - Integer and floating-point numbers are compared by their exact values, without converting the integer to floating-point. For instance, `9007199254740992.0` is less than `9007199254740993`.
    - In case `lhs` and `rhs` have different types, the values are ignored and the order of the types is considered, which is:
      1. null
      1. boolean

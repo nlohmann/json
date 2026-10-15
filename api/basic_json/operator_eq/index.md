@@ -20,7 +20,7 @@ bool operator==(ScalarType rhs) const noexcept(/* see below */); // (2)
 1. Compares two JSON values for equality according to the following rules:
 
    - Two JSON values are equal if (1) neither value is discarded, and (2) they are of the same type and their stored values are the same according to their respective `operator==`.
-   - Integer and floating-point numbers are automatically converted before comparison.
+   - Integer and floating-point numbers are compared by their exact values, without converting the integer to floating-point. For instance, `9007199254740993` and `9007199254740992.0` are not equal.
 
 1. Compares a JSON value and a scalar or a scalar and a JSON value for equality by converting the scalar to a JSON value and comparing both JSON values according to 1.
 

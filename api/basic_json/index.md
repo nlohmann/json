@@ -68,7 +68,7 @@ The class satisfies the following concept requirements:
 ### Library-wide
 
 - [EqualityComparable](https://en.cppreference.com/w/cpp/named_req/EqualityComparable): JSON values can be compared with `==`, see [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md).
-- [LessThanComparable](https://en.cppreference.com/w/cpp/named_req/LessThanComparable): JSON values can be compared with `<`, see [`operator<`](https://json.nlohmann.me/api/basic_json/operator_le/index.md).
+- [LessThanComparable](https://en.cppreference.com/w/cpp/named_req/LessThanComparable): JSON values can be compared with `<`, see [`operator<`](https://json.nlohmann.me/api/basic_json/operator_lt/index.md).
 - [Swappable](https://en.cppreference.com/w/cpp/named_req/Swappable): Any JSON lvalue or rvalue of can be swapped with any lvalue or rvalue of other compatible types, using unqualified function `swap`.
 - [NullablePointer](https://en.cppreference.com/w/cpp/named_req/NullablePointer): JSON values can be compared against `std::nullptr_t` objects which are used to model the `null` value.
 

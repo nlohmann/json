@@ -86,14 +86,14 @@ endif()
 
 ### FetchContent
 
-Since CMake v3.11, [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can be used to automatically download a release as a dependency at configure time.
+Since CMake v3.14, [FetchContent](https://cmake.org/cmake/help/v3.14/module/FetchContent.html) can be used to automatically download a release as a dependency at configure time.
 
 Example
 
 CMakeLists.txt
 
 ```
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.14)
 project(ExampleProject LANGUAGES CXX)
 
 include(FetchContent)

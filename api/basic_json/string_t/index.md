@@ -32,7 +32,7 @@ for the string types that are known to work.
 
 ### Default type
 
-With the default values for `StringType` (`std::string`), the default value for `string_t` is `std::string`.
+With the default values for `StringType` (`std::string`), the default type for `string_t` is `std::string`.
 
 ### Encoding
 

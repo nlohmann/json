@@ -1023,7 +1023,9 @@ contains other characters (e.g., `1a`), or `-` where it cannot be used.
 
 ### json.exception.out_of_range.405
 
-The JSON Patch operations 'remove' and 'add' cannot be applied to the root element of the JSON value.
+The JSON Patch operations 'remove' and 'move' cannot be applied to the root element of the JSON value. The exception is
+also thrown when the parent or a reference token of an empty JSON Pointer is requested, for instance by
+[`back`](../api/json_pointer/back.md) or [`pop_back`](../api/json_pointer/pop_back.md).
 
 !!! failure "Example message"
 
@@ -1048,14 +1050,22 @@ double-precision number when `number_float_t` is `#!cpp float`.
 
 ### json.exception.out_of_range.407
 
-This exception previously indicated that the UBJSON and BSON binary formats did not support integer numbers greater than
-9223372036854775807 due to limitations in the implemented mapping. However, these limitations have since been resolved,
-and this exception no longer occurs.
+An unsigned integer number greater than 9223372036854775807 cannot be represented in the binary format. This exception
+is only thrown by [`to_bon8`](../api/basic_json/to_bon8.md), as [BON8](../features/binary_formats/bon8.md) has no
+unsigned 64-bit integer type.
 
-!!! success "Exception cannot occur any more"
+!!! note "Former occurrences"
+
+    The UBJSON and BSON writers used to throw this exception as well:
 
     - Since version 3.9.0, integer numbers beyond int64 are serialized as high-precision UBJSON numbers.
     - Since version 3.12.0, integer numbers beyond int64 are serialized as uint64 BSON numbers.
+
+!!! failure "Example message"
+
+    ```
+    integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
+    ```
 
 ### json.exception.out_of_range.408
 

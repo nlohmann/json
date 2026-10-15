@@ -1008,7 +1008,7 @@ unresolved reference token 'foo'
 
 ### json.exception.out_of_range.405
 
-The JSON Patch operations 'remove' and 'add' cannot be applied to the root element of the JSON value.
+The JSON Patch operations 'remove' and 'move' cannot be applied to the root element of the JSON value. The exception is also thrown when the parent or a reference token of an empty JSON Pointer is requested, for instance by [`back`](https://json.nlohmann.me/api/json_pointer/back/index.md) or [`pop_back`](https://json.nlohmann.me/api/json_pointer/pop_back/index.md).
 
 Example message
 
@@ -1032,12 +1032,20 @@ number overflow parsing '10E1000'
 
 ### json.exception.out_of_range.407
 
-This exception previously indicated that the UBJSON and BSON binary formats did not support integer numbers greater than 9223372036854775807 due to limitations in the implemented mapping. However, these limitations have since been resolved, and this exception no longer occurs.
+An unsigned integer number greater than 9223372036854775807 cannot be represented in the binary format. This exception is only thrown by [`to_bon8`](https://json.nlohmann.me/api/basic_json/to_bon8/index.md), as [BON8](https://json.nlohmann.me/features/binary_formats/bon8/index.md) has no unsigned 64-bit integer type.
 
-Exception cannot occur any more
+Former occurrences
+
+The UBJSON and BSON writers used to throw this exception as well:
 
 - Since version 3.9.0, integer numbers beyond int64 are serialized as high-precision UBJSON numbers.
 - Since version 3.12.0, integer numbers beyond int64 are serialized as uint64 BSON numbers.
+
+Example message
+
+```
+integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
+```
 
 ### json.exception.out_of_range.408
 

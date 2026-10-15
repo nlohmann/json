@@ -27,7 +27,7 @@ To store objects in C++, a type is defined by the template parameters described 
 
 ### Default type
 
-With the default values for `ObjectType` (`std::map`), `StringType` (`std::string`), and `AllocatorType` (`std::allocator`), the default value for `object_t` is:
+With the default values for `ObjectType` (`std::map`), `StringType` (`std::string`), and `AllocatorType` (`std::allocator`), the default type for `object_t` is:
 
 ```
 // until C++14

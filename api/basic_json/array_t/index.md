@@ -22,7 +22,7 @@ To store objects in C++, a type is defined by the template parameters explained 
 
 ### Default type
 
-With the default values for `ArrayType` (`std::vector`) and `AllocatorType` (`std::allocator`), the default value for `array_t` is:
+With the default values for `ArrayType` (`std::vector`) and `AllocatorType` (`std::allocator`), the default type for `array_t` is:
 
 ```
 std::vector<

@@ -144,7 +144,7 @@ Strings are stored and serialized as UTF-8 (see [types](https://json.nlohmann.me
 ```
 json j = "苹果";
 j.dump();               // "苹果"
-j.dump(-1, ' ', true);  // "苹果"
+j.dump(-1, ' ', true);  // "\u82f9\u679c"
 ```
 
 ## Handling invalid UTF-8

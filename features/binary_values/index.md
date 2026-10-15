@@ -250,7 +250,7 @@ Note that the serialization preserves the subtype, and deserializing `v` would y
 
 ### CBOR
 
-[CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md) supports binary values, but no subtypes. Subtypes will be serialized as tags. Any binary value will be serialized as byte strings. The library will choose the smallest representation using the length of the byte array.
+[CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md) supports binary values and subtypes. Any binary value will be serialized as a byte string; a subtype is serialized as a tag preceding it. When parsing, tags are only read back as subtypes with `cbor_tag_handler_t::store` (see [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md)). The library will choose the smallest representation using the length of the byte array.
 
 Example: serialize a binary value to CBOR
 

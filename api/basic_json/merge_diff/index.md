@@ -7,7 +7,7 @@ static basic_json merge_diff(const basic_json& source,
 
 Creates a [JSON Merge Patch](https://tools.ietf.org/html/rfc7396) so that value `source` can be changed into the value `target` by calling the [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) function. The patch contains only what differs: changed and added members with their new values, and removed members with the value `null`. Nested objects are compared member by member; any other value that differs, including an array, is replaced as a whole.
 
-For two JSON values `source` and `target`, where `target` contains no object member whose value is `null`, the following code always yields `true`:
+For two JSON values `source` and `target`, where `target` contains no object member whose value is `null`, the following code always yields `true` (for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), see the notes below):
 
 ```
 basic_json patched = source;

@@ -8,7 +8,7 @@ The numbers below are medians of nine runs compiling a single translation unit w
 
 ## Include `json_fwd.hpp` in headers
 
-Header files that only need to *name* the `json` type — for function declarations, members held by pointer or reference, or friend declarations — can include `<nlohmann/json_fwd.hpp>` instead of `<nlohmann/json.hpp>`. It only forward-declares `basic_json`, `json`, `ordered_json`, `json_pointer`, and `adl_serializer`. The translation units that actually use the values then include `<nlohmann/json.hpp>`.
+Header files that only need to *name* the `json` type — for function declarations, members held by pointer or reference, or friend declarations — can include `<nlohmann/json_fwd.hpp>` instead of `<nlohmann/json.hpp>`. It only forward-declares `basic_json`, `json_pointer`, `adl_serializer`, and `ordered_map`, and defines the aliases `json` and `ordered_json`. The translation units that actually use the values then include `<nlohmann/json.hpp>`.
 
 person.hpp
 

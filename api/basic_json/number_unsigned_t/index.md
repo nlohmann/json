@@ -22,7 +22,7 @@ To store unsigned integer numbers in C++, a type is defined by the template para
 
 ### Default type
 
-With the default values for `NumberUnsignedType` (`std::uint64_t`), the default value for `number_unsigned_t` is `std::uint64_t`.
+With the default values for `NumberUnsignedType` (`std::uint64_t`), the default type for `number_unsigned_t` is `std::uint64_t`.
 
 ### Default behavior
 

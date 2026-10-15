@@ -16,13 +16,13 @@ To store floating-point numbers in C++, a type is defined by the template parame
 
 ## Template parameters
 
-`NumberFloatType` : the type to store floating-point numbers. Parsing and serialization are implemented in terms of `std::strtof`/`std::strtod`/`std::strtold` and `std::snprintf`, so the type must be `float`, `double`, or `long double`. The [binary formats](https://json.nlohmann.me/features/binary_formats/index.md) additionally require `float` or `double`, because they have no encoding for `long double`. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#numberfloattype).
+`NumberFloatType` : the type to store floating-point numbers. The type must be `float`, `double`, or `long double`. The parser converts `float`, `double`, and a `long double` that is IEEE 754 binary64 itself. It converts other `long double` formats with `std::from_chars` where available, or with `std::strtold` otherwise. Serialization falls back to `std::snprintf`. The [binary formats](https://json.nlohmann.me/features/binary_formats/index.md) additionally require `float` or `double`, because they have no encoding for `long double`. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#numberfloattype).
 
 ## Notes
 
 ### Default type
 
-With the default values for `NumberFloatType` (`double`), the default value for `number_float_t` is `double`.
+With the default values for `NumberFloatType` (`double`), the default type for `number_float_t` is `double`.
 
 ### Default behavior
 
@@ -35,7 +35,7 @@ With the default values for `NumberFloatType` (`double`), the default value for 
 
 > This specification allows implementations to set limits on the range and precision of numbers accepted. Since software that implements IEEE 754-2008 binary64 (double precision) numbers is generally available and widely used, good interoperability can be achieved by implementations that expect no more precision or range than these provide, in the sense that implementations will approximate JSON numbers within the expected precision.
 
-This implementation does exactly follow this approach, as it uses double precision floating-point numbers. Note values smaller than `-1.79769313486232e+308` and values greater than `1.79769313486232e+308` will be stored as NaN internally and be serialized to `null`.
+This implementation does exactly follow this approach, as it uses double precision floating-point numbers by default. Note that with the default `double`, numbers smaller than `-1.79769313486232e+308` or greater than `1.79769313486232e+308` are rejected during parsing with [`out_of_range.406`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range406). Non-finite values (NaN and infinity) can only be stored by assigning them directly and are serialized to `null`.
 
 During deserialization (from JSON text or any of the binary formats), a finite number that does not fit into `number_float_t` is rejected with [`out_of_range.406`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range406), for example a double-precision number in a binary format when `number_float_t` is `float`.
 

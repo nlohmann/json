@@ -12,10 +12,8 @@ std::partial_ordering operator<=>(const ScalarType rhs) const noexcept(/* see be
     - Two JSON values compare with a result of `std::partial_ordering::unordered` if either value is discarded.
     - If both JSON values are of the same type, the result is produced by 3-way comparing their stored values using
       their respective `operator<=>`.
-    - Integer and floating-point numbers are converted to their common type and then 3-way compared using their
-      respective `operator<=>`.
-      For instance, comparing an integer and a floating-point value will 3-way compare the first value converted to
-      floating-point with the second value.
+    - Integer and floating-point numbers are 3-way compared by their exact values, without converting the integer to
+      floating-point. For instance, `9007199254740993` compares greater than `9007199254740992.0`.
     - Otherwise, yields a result by comparing the type (see [`value_t`](value_t.md)).
   
 2. 3-way compares a JSON value and a scalar or a scalar and a JSON value by converting the scalar to a JSON value and

@@ -17,7 +17,7 @@ When enabled, comparisons involving at least one discarded JSON value yield resu
 | `>=`         | `true`     |
 | `>`          | `false`    |
 
-Otherwise, comparisons involving at least one discarded JSON value always yield `false`.
+Otherwise, comparisons involving at least one discarded JSON value yield `false`, except for `!=`, which is the negation of `==` and yields `true`.
 
 ## Default definition
 

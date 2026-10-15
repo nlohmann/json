@@ -50,18 +50,12 @@ stack, however deeply it is nested.
 
 Once a value has been parsed, operations that walk it recursively -- serializing it with
 [`dump`](../../api/basic_json/dump.md), hashing it, copying it, comparing two values with `#!cpp ==`, `#!cpp <`, or (in
-C++20) `#!cpp <=>`, merging with [`update`](../../api/basic_json/update.md), and applying a
-[`merge_patch`](../../api/basic_json/merge_patch.md) -- descend at most 128 levels on the call stack and continue
+C++20) `#!cpp <=>`, merging with [`update`](../../api/basic_json/update.md), applying a
+[`merge_patch`](../../api/basic_json/merge_patch.md), creating a patch with [`diff`](../../api/basic_json/diff.md) or
+[`merge_diff`](../../api/basic_json/merge_diff.md), [`flatten`](../../api/basic_json/flatten.md), and the binary
+writers (`to_cbor`, `to_msgpack`, ...) -- descend at most 128 levels on the call stack and continue
 below that with an explicit stack instead, so none of them can exhaust the stack either, however deeply the value is
 nested. Destroying a value (its destructor) never recurses at all, regardless of nesting depth, for the same reason.
-
-!!! note "Not every operation is bounded yet"
-
-    [`diff`](../../api/basic_json/diff.md), [`flatten`](../../api/basic_json/flatten.md), and the binary writers
-    (`to_cbor`, `to_msgpack`, ...) still recurse once per nesting level; this is called out as work in progress in the
-    [assurance case](../../community/assurance_case.md#secure-design). A value deep enough to matter for these
-    operations would typically first have to survive parsing without hitting a self-imposed depth limit, as described
-    above.
 
 ## Input size
 
