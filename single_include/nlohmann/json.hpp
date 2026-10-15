@@ -35138,6 +35138,13 @@ public:
         return compares_unordered(*this, rhs, inverse);
     }
 
+    /// @brief whether objects and arrays are the standard containers, whose
+    ///        elements equal_bounded() may therefore compare itself
+    using equal_bounded_containers = std::integral_constant < bool,
+          std::is_same<object_t, std::map<StringType, basic_json, default_object_comparator_t,
+          AllocatorType<std::pair<const StringType, basic_json>>>>::value &&
+          std::is_same<array_t, std::vector<basic_json, AllocatorType<basic_json>>>::value >;
+
     // out-of-line general comparisons; the operators below handle same-type
     // scalars inline and fall through to these
     JSON_HEDLEY_NEVER_INLINE
@@ -35178,6 +35185,121 @@ public:
     }
 #endif
 
+    /// @brief compare two values of the same type that holds no children
+    /// @return 1 if they are equal, 0 if they are not, and -1 if the values are
+    ///         of different types or have children, which this leaves to
+    ///         equal_structured()
+    JSON_HEDLEY_ALWAYS_INLINE
+    static int equal_scalar(const_reference lhs, const_reference rhs) noexcept
+    {
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+        if (lhs.m_data.m_type == rhs.m_data.m_type)
+        {
+            switch (lhs.m_data.m_type)
+            {
+                case value_t::null:
+                    return 1;
+                case value_t::boolean:
+                    return lhs.m_data.m_value.boolean == rhs.m_data.m_value.boolean;
+                case value_t::number_integer:
+                    return lhs.m_data.m_value.number_integer == rhs.m_data.m_value.number_integer;
+                case value_t::number_unsigned:
+                    return lhs.m_data.m_value.number_unsigned == rhs.m_data.m_value.number_unsigned;
+                case value_t::number_float:
+                    return lhs.m_data.m_value.number_float == rhs.m_data.m_value.number_float;
+                case value_t::string:
+                    return *lhs.m_data.m_value.string == *rhs.m_data.m_value.string;
+                case value_t::object:
+                case value_t::array:
+                case value_t::binary:
+                case value_t::discarded:
+                default:
+                    break;
+            }
+        }
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+        return -1;
+    }
+
+    /// @brief compare for equality, walking objects and arrays here instead of
+    ///        in their containers so that the depth is a parameter and needs no
+    ///        thread-local count; only used for the standard containers
+    static bool equal_bounded(const_reference lhs, const_reference rhs, std::size_t depth) noexcept
+    {
+        const int scalar = equal_scalar(lhs, rhs);
+        return scalar < 0 ? equal_structured(lhs, rhs, depth) : scalar != 0;
+    }
+
+    static bool equal_structured(const_reference lhs, const_reference rhs, std::size_t depth) noexcept
+    {
+        const auto type = lhs.m_data.m_type;
+        if (type != rhs.m_data.m_type || (type != value_t::array && type != value_t::object))
+        {
+            return equal_general(lhs, rhs);
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+        {
+            return compare_iteratively<false>(lhs, rhs, false) == compare_result::equal;
+        }
+
+        if (type == value_t::array)
+        {
+            const auto& a = *lhs.m_data.m_value.array;
+            const auto& b = *rhs.m_data.m_value.array;
+            if (a.size() != b.size())
+            {
+                return false;
+            }
+            auto it_b = b.cbegin();
+            for (auto it_a = a.cbegin(); it_a != a.cend(); ++it_a, ++it_b)
+            {
+                const int scalar = equal_scalar(*it_a, *it_b);
+                if (scalar < 0 ? !equal_structured(*it_a, *it_b, depth + 1) : scalar == 0)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        const auto& a = *lhs.m_data.m_value.object;
+        const auto& b = *rhs.m_data.m_value.object;
+        if (a.size() != b.size())
+        {
+            return false;
+        }
+        auto it_b = b.cbegin();
+        for (auto it_a = a.cbegin(); it_a != a.cend(); ++it_a, ++it_b)
+        {
+            if (!(it_a->first == it_b->first))
+            {
+                return false;
+            }
+            const int scalar = equal_scalar(it_a->second, it_b->second);
+            if (scalar < 0 ? !equal_structured(it_a->second, it_b->second, depth + 1) : scalar == 0)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static bool equal_dispatch(const_reference lhs, const_reference rhs, std::true_type /*standard containers*/) noexcept
+    {
+        return equal_bounded(lhs, rhs, 0);
+    }
+
+    static bool equal_dispatch(const_reference lhs, const_reference rhs, std::false_type /*other containers*/) noexcept
+    {
+        return equal_general(lhs, rhs);
+    }
+
   public:
 #if JSON_HAS_THREE_WAY_COMPARISON
     /// @brief comparison: equal
@@ -35193,7 +35315,7 @@ public:
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
-        return equal_general(lhs, rhs);
+        return equal_dispatch(lhs, rhs, equal_bounded_containers {});
     }
 
     /// @brief comparison: equal
@@ -35303,7 +35425,7 @@ public:
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
-        return equal_general(lhs, rhs);
+        return equal_dispatch(lhs, rhs, equal_bounded_containers {});
     }
 
     // The friend comparisons with a scalar name the JSON type via decltype of
