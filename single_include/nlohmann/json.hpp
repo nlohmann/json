@@ -3338,6 +3338,34 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 }
 #endif
 
+/*!
+@brief whether a value of the given type owns heap memory
+
+Strings, binaries, objects, and arrays are stored as pointers to allocated
+values; all other types are stored directly in the union. Every enumerator is
+listed so that -Wswitch-enum flags this function when a new type is added.
+*/
+inline bool owns_memory(const value_t t) noexcept
+{
+    switch (t)
+    {
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::binary:
+            return true;
+
+        case value_t::null:
+        case value_t::boolean:
+        case value_t::number_integer:
+        case value_t::number_unsigned:
+        case value_t::number_float:
+        case value_t::discarded:
+        default:
+            return false;
+    }
+}
+
 
 /*!
 @brief compare an integer with a floating point number without precision loss
@@ -30706,12 +30734,12 @@ public:
             }
         }
 
-        // only strings, binaries, arrays and objects own memory; keep the
-        // check for them inline so destroying a scalar is a compare and a
-        // branch, and leave the actual work to an out-of-line function
+        // keep the check whether t owns memory inline so destroying a scalar
+        // is a compare and a branch, and leave the actual work to an
+        // out-of-line function
         void destroy(value_t t)
         {
-            if (JSON_HEDLEY_UNLIKELY(t == value_t::string || t == value_t::binary || t == value_t::object || t == value_t::array))
+            if (JSON_HEDLEY_UNLIKELY(detail::owns_memory(t)))
             {
                 destroy_owned(t);
             }
@@ -32365,8 +32393,7 @@ public:
         // check of passed value is valid
         other.assert_invariant();
 
-        if (JSON_HEDLEY_LIKELY(m_data.m_type != value_t::object && m_data.m_type != value_t::array
-                               && m_data.m_type != value_t::string && m_data.m_type != value_t::binary))
+        if (JSON_HEDLEY_LIKELY(!detail::owns_memory(m_data.m_type)))
         {
             // null, boolean, numbers, discarded: plain copy of the union
             m_data.m_value = other.m_data.m_value;
@@ -35001,15 +35028,16 @@ public:
   case value_t::null:                                                                                  \
         return (null_result);                                                                            \
   case value_t::boolean:                                                                               \
-        return (lhs.m_data.m_value.boolean) op (rhs.m_data.m_value.boolean);                             \
+        return lhs.m_data.m_value.boolean op rhs.m_data.m_value.boolean;                                 \
   case value_t::number_integer:                                                                        \
-        return (lhs.m_data.m_value.number_integer) op (rhs.m_data.m_value.number_integer);               \
+        return lhs.m_data.m_value.number_integer op rhs.m_data.m_value.number_integer;                   \
   case value_t::number_unsigned:                                                                       \
-        return (lhs.m_data.m_value.number_unsigned) op (rhs.m_data.m_value.number_unsigned);             \
+        return lhs.m_data.m_value.number_unsigned op rhs.m_data.m_value.number_unsigned;                 \
   case value_t::number_float:                                                                          \
-        return (lhs.m_data.m_value.number_float) op (rhs.m_data.m_value.number_float);
+        return lhs.m_data.m_value.number_float op rhs.m_data.m_value.number_float;
 
-    // note parentheses around operands are necessary; see
+    // note parentheses around the container operands are necessary, because
+    // GCC otherwise parses `array <` as std::array; see
     // https://github.com/nlohmann/json/issues/1530
     // Mixed signed/unsigned integer comparisons check whether the signed value
     // is negative before casting. If it is, the comparison is performed with
@@ -35140,10 +35168,10 @@ public:
 
     /// @brief whether objects and arrays are the standard containers, whose
     ///        elements equal_bounded() may therefore compare itself
-    using equal_bounded_containers = std::integral_constant < bool,
-          std::is_same<object_t, std::map<StringType, basic_json, default_object_comparator_t,
-          AllocatorType<std::pair<const StringType, basic_json>>>>::value &&
-          std::is_same<array_t, std::vector<basic_json, AllocatorType<basic_json>>>::value >;
+    using standard_object_t = std::map<StringType, basic_json, default_object_comparator_t,
+          AllocatorType<std::pair<const StringType, basic_json>>>;
+    using standard_array_t = std::vector<basic_json, AllocatorType<basic_json>>;
+    using equal_bounded_containers = detail::conjunction<std::is_same<object_t, standard_object_t>, std::is_same<array_t, standard_array_t>>;
 
     // out-of-line general comparisons; the operators below handle same-type
     // scalars inline and fall through to these
@@ -35185,12 +35213,17 @@ public:
     }
 #endif
 
-    /// @brief compare two values of the same type that holds no children
+    /// @brief compare two leaves of the same type inside equal_structured()
     /// @return 1 if they are equal, 0 if they are not, and -1 if the values are
-    ///         of different types or have children, which this leaves to
+    ///         of different types or are not handled here, which this leaves to
     ///         equal_structured()
+    /// @note Unlike JSON_IMPLEMENT_SCALAR_FAST, this also compares strings:
+    ///       they are the most common leaves in a document, so comparing them
+    ///       inline pays off in the container walk, while the operators keep
+    ///       their inlined code at each call site small. Binary values are
+    ///       rare and left to equal_general().
     JSON_HEDLEY_ALWAYS_INLINE
-    static int equal_scalar(const_reference lhs, const_reference rhs) noexcept
+    static int equal_leaf(const_reference lhs, const_reference rhs) noexcept
     {
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_PUSH
@@ -35231,8 +35264,8 @@ public:
     ///        thread-local count; only used for the standard containers
     static bool equal_bounded(const_reference lhs, const_reference rhs, std::size_t depth) noexcept
     {
-        const int scalar = equal_scalar(lhs, rhs);
-        return scalar < 0 ? equal_structured(lhs, rhs, depth) : scalar != 0;
+        const int leaf = equal_leaf(lhs, rhs);
+        return leaf < 0 ? equal_structured(lhs, rhs, depth) : leaf != 0;
     }
 
     static bool equal_structured(const_reference lhs, const_reference rhs, std::size_t depth) noexcept
@@ -35259,8 +35292,8 @@ public:
             auto it_b = b.cbegin();
             for (auto it_a = a.cbegin(); it_a != a.cend(); ++it_a, ++it_b)
             {
-                const int scalar = equal_scalar(*it_a, *it_b);
-                if (scalar < 0 ? !equal_structured(*it_a, *it_b, depth + 1) : scalar == 0)
+                const int leaf = equal_leaf(*it_a, *it_b);
+                if (leaf < 0 ? !equal_structured(*it_a, *it_b, depth + 1) : leaf == 0)
                 {
                     return false;
                 }
@@ -35281,8 +35314,8 @@ public:
             {
                 return false;
             }
-            const int scalar = equal_scalar(it_a->second, it_b->second);
-            if (scalar < 0 ? !equal_structured(it_a->second, it_b->second, depth + 1) : scalar == 0)
+            const int leaf = equal_leaf(it_a->second, it_b->second);
+            if (leaf < 0 ? !equal_structured(it_a->second, it_b->second, depth + 1) : leaf == 0)
             {
                 return false;
             }
