@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstddef> // size_t
+#include <utility> // move
 
 #include <nlohmann/detail/abi_macros.hpp>
 
@@ -24,39 +25,46 @@ namespace detail
  * Note the order of escaping "~" to "~0" and "/" to "~1" is important.
  *
  * The string is rebuilt in a single pass, appending whole runs between the
- * characters that need escaping. Scanning with find_first_of() keeps the
- * common case -- nothing to escape -- as fast as a single search, while
- * repeated replace() calls would move the tail of the string once per
- * escaped character.
+ * characters that need escaping, while repeated replace() calls would move
+ * the tail of the string once per escaped character. @ref escape_into appends
+ * the escaped string to an existing one.
  */
+template<typename StringType>
+inline void escape_into(StringType& out, const StringType& s)
+{
+    const std::size_t size = s.size();
+    std::size_t run = 0;
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        const char c = s[i];
+        if (c == '~' || c == '/')
+        {
+            out.append(s.data() + run, i - run);
+            out.append(c == '~' ? "~0" : "~1", 2);
+            run = i + 1;
+        }
+    }
+    out.append(s.data() + run, size - run);
+}
+
 template<typename StringType>
 inline StringType escape(const StringType& s)
 {
-    auto next_special = [&s](std::size_t from)
+    // a single scan for both special characters; nothing to escape is the common case
+    const std::size_t size = s.size();
+    std::size_t i = 0;
+    while (i < size && s[i] != '~' && s[i] != '/')
     {
-        const auto tilde = s.find_first_of('~', from);
-        const auto slash = s.find_first_of('/', from);
-        return tilde < slash ? tilde : slash; // npos is the largest value
-    };
-
-    auto pos = next_special(0);
-    if (pos == StringType::npos)
+        ++i;
+    }
+    if (i == size)
     {
         return s;
     }
 
     StringType result;
-    result.reserve(s.size() + 2);
-
-    std::size_t run = 0;
-    while (pos != StringType::npos)
-    {
-        result.append(s.data() + run, pos - run);
-        result.append(s[pos] == '~' ? "~0" : "~1", 2);
-        run = pos + 1;
-        pos = next_special(run);
-    }
-    result.append(s.data() + run, s.size() - run);
+    result.reserve(size + 2);
+    escape_into(result, s);
     return result;
 }
 
@@ -101,7 +109,7 @@ inline void unescape(StringType& s)
         pos = s.find_first_of('~', run);
     }
     result.append(s.data() + run, s.size() - run);
-    s = result;
+    s = std::move(result);
 }
 
 }  // namespace detail

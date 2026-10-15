@@ -2066,3 +2066,40 @@ TEST_CASE("JSON patch - every operation on ordered_json")
         }
     }
 }
+
+TEST_CASE_TEMPLATE("JSON patch - diff round trip on hand-made documents", Json, nlohmann::json, nlohmann::ordered_json)
+{
+    const auto roundtrip = [](const Json & a, const Json & b)
+    {
+        CAPTURE(a.dump())
+        CAPTURE(b.dump())
+        const Json p = Json::diff(a, b);
+        CHECK(a.patch(p) == b);
+        CHECK(Json::diff(b, b).empty());
+    };
+
+    SECTION("reordered keys")
+    {
+        const Json a = Json::parse(R"({"x":1,"y":2,"z":{"p":1,"q":2}})");
+        const Json b = Json::parse(R"({"z":{"q":2,"p":1},"y":2,"x":1})");
+        roundtrip(a, b);
+        roundtrip(b, a);
+    }
+
+    SECTION("nested add, remove and replace")
+    {
+        const Json a = Json::parse(R"({"a":[1,2,{"k":"v","gone":true}],"b":{"c":{"d":1}},"e":"s"})");
+        const Json b = Json::parse(R"({"a":[1,3,{"k":"w","new":[]}],"b":{"c":{"d":[1,2]}},"f":null})");
+        roundtrip(a, b);
+        roundtrip(b, a);
+    }
+
+    SECTION("arrays of different length and type changes")
+    {
+        roundtrip(Json::parse("[1,2,3,4,5]"), Json::parse("[1,3]"));
+        roundtrip(Json::parse("[1]"), Json::parse("[1,[2],{\"a\":3}]"));
+        roundtrip(Json::parse("[]"), Json::parse("{}"));
+        roundtrip(Json::parse("{\"a\":[]}"), Json::parse("{\"a\":{}}"));
+        roundtrip(Json(1), Json::parse("[1]"));
+    }
+}

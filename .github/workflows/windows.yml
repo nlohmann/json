@@ -90,7 +90,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
       - name: Set extra CXX_FLAGS for latest std_version
         # /wd5285 silences C5285 emitted by the bundled third-party doctest.h, which
         # specializes std::tuple (newly diagnosed by the VS2026 v145 toolset)
@@ -214,7 +214,7 @@ jobs:
       # import-std support. Its opt-in token is CMake-version-specific, so pin
       # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
       - name: Get pinned CMake and ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
         with:
           cmakeVersion: 4.3.4
       # CMAKE_CXX_FLAGS replaces CMake's MSVC defaults (which include /EHsc), and
