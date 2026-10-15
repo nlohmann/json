@@ -685,6 +685,22 @@ struct is_compatible_integer_type
     : is_compatible_integer_type_impl<RealIntegerType,
       CompatibleNumberIntegerType> {};
 
+// whether to_json() stores an integer of type CompatibleNumberIntegerType as
+// number_integer
+template<typename BasicJsonType, typename CompatibleNumberIntegerType, typename = void>
+struct is_compatible_number_integer_type
+    : is_compatible_integer_type<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType> {};
+
+// if number_unsigned_t is the same type as number_integer_t, unsigned integers
+// are stored as number_integer as well (#2573)
+template<typename BasicJsonType, typename CompatibleNumberIntegerType>
+struct is_compatible_number_integer_type<BasicJsonType, CompatibleNumberIntegerType,
+           enable_if_t<conjunction<std::is_same<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>,
+           std::is_integral<CompatibleNumberIntegerType>,
+           std::is_unsigned<CompatibleNumberIntegerType>,
+           negation<std::is_same<bool, CompatibleNumberIntegerType>>>::value>>
+           : std::is_constructible<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType> {};
+
 template<typename BasicJsonType, typename CompatibleType, typename = void>
 struct is_compatible_type_impl: std::false_type {};
 
@@ -1046,6 +1062,25 @@ constexpr bool value_in_range_of(T val)
 
 template<bool Value>
 using bool_constant = std::integral_constant<bool, Value>;
+
+// Stands in for number_unsigned_t in overload sets if it is the same type as
+// number_integer_t, so that the unsigned overloads do not collide with the
+// integer ones. Never constructed. Such a basic_json stores every integer as
+// number_integer (#2573).
+struct same_as_number_integer_type {};
+
+// NumberUnsignedType, or same_as_number_integer_type if it is the same type as
+// NumberIntegerType; basic_json uses this one, as it cannot name its own member
+// types through an incomplete basic_json (MSVC reports a recursive alias, and
+// old GCC versions crash)
+template<typename NumberIntegerType, typename NumberUnsignedType>
+using number_unsigned_overload_type = typename std::conditional<std::is_same<NumberIntegerType, NumberUnsignedType>::value,
+      same_as_number_integer_type, NumberUnsignedType>::type;
+
+// number_unsigned_t of BasicJsonType, or same_as_number_integer_type if it is
+// the same type as number_integer_t
+template<typename BasicJsonType>
+using number_unsigned_overload_t = number_unsigned_overload_type<typename BasicJsonType::number_integer_t, typename BasicJsonType::number_unsigned_t>;
 
 ///////////////////////////////////////////////////////////////////////////////
 // is_c_string
