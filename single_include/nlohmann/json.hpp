@@ -5970,6 +5970,22 @@ template<typename ConstructibleArrayType>
 void from_json_array_reserve(ConstructibleArrayType& /*arr*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
 {}
 
+// append through push_back() where available; containers without it (such as
+// std::set) fall back to insert(end(), ...), which is what std::inserter did
+template<typename ConstructibleArrayType, typename ValueType>
+auto from_json_array_append(ConstructibleArrayType& arr, ValueType&& value, priority_tag<1> /*unused*/)
+-> decltype(arr.push_back(std::forward<ValueType>(value)), void())
+{
+    arr.push_back(std::forward<ValueType>(value));
+}
+
+template<typename ConstructibleArrayType, typename ValueType>
+void from_json_array_append(ConstructibleArrayType& arr, ValueType&& value, priority_tag<0> /*unused*/)
+{
+    using std::end;
+    arr.insert(end(arr), std::forward<ValueType>(value));
+}
+
 template<typename BasicJsonType, typename ConstructibleArrayType,
          enable_if_t<
              std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
@@ -5979,17 +5995,15 @@ auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, p
     j.template get<typename ConstructibleArrayType::value_type>(),
     void())
 {
-    using std::end;
-
     ConstructibleArrayType ret;
-    from_json_array_reserve(ret, j.size(), priority_tag<1> {});
-    std::transform(j.begin(), j.end(),
-                   std::inserter(ret, end(ret)), [](const BasicJsonType & i)
+    const auto* inner_array = j.template get_ptr<const typename BasicJsonType::array_t*>();
+    from_json_array_reserve(ret, inner_array->size(), priority_tag<1> {});
+    for (const auto& elem : *inner_array)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
-        return i.template get<typename ConstructibleArrayType::value_type>();
-    });
+        from_json_array_append(ret, elem.template get<typename ConstructibleArrayType::value_type>(), priority_tag<1> {});
+    }
     arr = std::move(ret);
 }
 
@@ -6075,6 +6089,23 @@ template<typename ConstructibleObjectType>
 inline void from_json_object_reserve(ConstructibleObjectType& /*obj*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
 {}
 
+// the keys of the source are sorted for the usual object types, so hinting the
+// end makes every insertion constant-time (for containers that order their keys
+// the same way); containers without emplace_hint() (such as ordered_map) fall
+// back to emplace()
+template<typename ConstructibleObjectType, typename Key, typename Value>
+auto from_json_object_emplace(ConstructibleObjectType& obj, Key&& key, Value&& value, priority_tag<1> /*unused*/)
+-> decltype(obj.emplace_hint(obj.end(), std::forward<Key>(key), std::forward<Value>(value)), void())
+{
+    obj.emplace_hint(obj.end(), std::forward<Key>(key), std::forward<Value>(value));
+}
+
+template<typename ConstructibleObjectType, typename Key, typename Value>
+void from_json_object_emplace(ConstructibleObjectType& obj, Key&& key, Value&& value, priority_tag<0> /*unused*/)
+{
+    obj.emplace(std::forward<Key>(key), std::forward<Value>(value));
+}
+
 template<typename BasicJsonType, typename ConstructibleObjectType,
          enable_if_t<is_constructible_object_type<BasicJsonType, ConstructibleObjectType>::value, int> = 0>
 inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
@@ -6089,7 +6120,7 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
     from_json_object_reserve(ret, inner_object->size(), priority_tag<1> {});
     for (const auto& p : *inner_object)
     {
-        ret.emplace(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
+        from_json_object_emplace(ret, p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>(), priority_tag<1> {});
     }
     obj = std::move(ret);
 }
