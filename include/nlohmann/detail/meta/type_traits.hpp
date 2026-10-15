@@ -9,9 +9,11 @@
 #pragma once
 
 #include <limits> // numeric_limits
+#include <map> // map, multimap
 #include <string> // char_traits
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
+#include <unordered_map> // unordered_map, unordered_multimap
 #include <utility> // declval
 #include <vector> // vector
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
@@ -896,6 +898,31 @@ struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, 
 // ordered_map inherits capacity() from std::vector)
 template <typename T>
 struct is_ordered_map : has_capacity<T> {};
+
+// whether T is a specialization of nlohmann::ordered_map, which only ever
+// appends members, so they can only move when its capacity changes
+template<typename T>
+struct is_nlohmann_ordered_map : std::false_type {};
+
+template<class Key, class T, class IgnoredLess, class Allocator>
+struct is_nlohmann_ordered_map<ordered_map<Key, T, IgnoredLess, Allocator>> : std::true_type {};
+
+// whether adding or erasing elements never moves the other elements of the
+// container T; only node-based standard containers are known to guarantee this
+template<typename T>
+struct has_stable_elements : std::false_type {};
+
+template<class Key, class T, class Compare, class Allocator>
+struct has_stable_elements<std::map<Key, T, Compare, Allocator>> : std::true_type {};
+
+template<class Key, class T, class Compare, class Allocator>
+struct has_stable_elements<std::multimap<Key, T, Compare, Allocator>> : std::true_type {};
+
+template<class Key, class T, class Hash, class KeyEqual, class Allocator>
+struct has_stable_elements<std::unordered_map<Key, T, Hash, KeyEqual, Allocator>> : std::true_type {};
+
+template<class Key, class T, class Hash, class KeyEqual, class Allocator>
+struct has_stable_elements<std::unordered_multimap<Key, T, Hash, KeyEqual, Allocator>> : std::true_type {};
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >

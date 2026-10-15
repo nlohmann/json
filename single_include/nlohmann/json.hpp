@@ -3743,9 +3743,11 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <limits> // numeric_limits
+#include <map> // map, multimap
 #include <string> // char_traits
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
+#include <unordered_map> // unordered_map, unordered_multimap
 #include <utility> // declval
 #include <vector> // vector
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
@@ -4908,6 +4910,31 @@ struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, 
 // ordered_map inherits capacity() from std::vector)
 template <typename T>
 struct is_ordered_map : has_capacity<T> {};
+
+// whether T is a specialization of nlohmann::ordered_map, which only ever
+// appends members, so they can only move when its capacity changes
+template<typename T>
+struct is_nlohmann_ordered_map : std::false_type {};
+
+template<class Key, class T, class IgnoredLess, class Allocator>
+struct is_nlohmann_ordered_map<ordered_map<Key, T, IgnoredLess, Allocator>> : std::true_type {};
+
+// whether adding or erasing elements never moves the other elements of the
+// container T; only node-based standard containers are known to guarantee this
+template<typename T>
+struct has_stable_elements : std::false_type {};
+
+template<class Key, class T, class Compare, class Allocator>
+struct has_stable_elements<std::map<Key, T, Compare, Allocator>> : std::true_type {};
+
+template<class Key, class T, class Compare, class Allocator>
+struct has_stable_elements<std::multimap<Key, T, Compare, Allocator>> : std::true_type {};
+
+template<class Key, class T, class Hash, class KeyEqual, class Allocator>
+struct has_stable_elements<std::unordered_map<Key, T, Hash, KeyEqual, Allocator>> : std::true_type {};
+
+template<class Key, class T, class Hash, class KeyEqual, class Allocator>
+struct has_stable_elements<std::unordered_multimap<Key, T, Hash, KeyEqual, Allocator>> : std::true_type {};
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
@@ -30834,26 +30861,49 @@ public:
     }
 
     /// @brief the capacity of the stored array or object, or unknown_size()
-    /// Only JSON_DIAGNOSTICS uses the value, to detect a reallocation that
-    /// would invalidate the parent pointers. Containers that do not have a
-    /// capacity() member function report unknown_size() if their elements may
-    /// move (arrays, ordered_map) and 0 if they never do (std::map).
+    /// Only JSON_DIAGNOSTICS uses the value, to detect an insertion that may
+    /// have moved the other elements and so invalidated their parent pointers.
+    /// unknown_size() means "the elements may have moved". Arrays only grow at
+    /// the end, so their capacity tells whether they reallocated; arrays
+    /// without a capacity() member report unknown_size(). For objects, only
+    /// types known to keep their elements in place (std::map and the other
+    /// node-based standard containers) report a fixed 0, and only
+    /// nlohmann::ordered_map, which appends members, reports its capacity; any
+    /// other object type (a sorted flat map, say) reports unknown_size().
 #if JSON_DIAGNOSTICS
-    template < typename C, detail::enable_if_t < detail::has_capacity<C>::value, int > = 0 >
-    static std::size_t capacity_of(const C& container) noexcept
+    template < typename A = array_t, detail::enable_if_t < detail::has_capacity<A>::value, int > = 0 >
+    std::size_t array_capacity() const noexcept
     {
-        return container.capacity();
+        return m_data.m_value.array->capacity();
     }
 
-    template < typename C, detail::enable_if_t < !detail::has_capacity<C>::value, int > = 0 >
-    static std::size_t capacity_of(const C& /*container*/) noexcept
+    template < typename A = array_t, detail::enable_if_t < !detail::has_capacity<A>::value, int > = 0 >
+    std::size_t array_capacity() const noexcept
     {
-        return std::is_same<C, array_t>::value || detail::is_ordered_map<C>::value ? detail::unknown_size() : 0;
+        return detail::unknown_size();
+    }
+
+    template < typename O = object_t, detail::enable_if_t < detail::has_stable_elements<O>::value, int > = 0 >
+    static constexpr std::size_t object_capacity() noexcept
+    {
+        return 0;
+    }
+
+    template < typename O = object_t, detail::enable_if_t < !detail::has_stable_elements<O>::value && detail::is_nlohmann_ordered_map<O>::value, int > = 0 >
+    std::size_t object_capacity() const noexcept
+    {
+        return m_data.m_value.object->capacity();
+    }
+
+    template < typename O = object_t, detail::enable_if_t < !detail::has_stable_elements<O>::value && !detail::is_nlohmann_ordered_map<O>::value, int > = 0 >
+    static constexpr std::size_t object_capacity() noexcept
+    {
+        return detail::unknown_size();
     }
 
     std::size_t container_capacity() const noexcept
     {
-        return is_array() ? capacity_of(*m_data.m_value.array) : capacity_of(*m_data.m_value.object);
+        return is_array() ? array_capacity() : object_capacity();
     }
 #else
     static constexpr std::size_t container_capacity() noexcept
@@ -30889,31 +30939,6 @@ public:
     {
 #if JSON_DIAGNOSTICS
         j.m_parent = this;
-#endif
-        return j;
-    }
-
-    reference set_parent(reference j)
-    {
-#if JSON_DIAGNOSTICS
-        // ordered_json uses a vector internally, so pointers could have
-        // been invalidated; see https://github.com/nlohmann/json/issues/2962
-#ifdef JSON_HEDLEY_MSVC_VERSION
-#pragma warning(push )
-#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
-#endif
-        if (detail::is_ordered_map<object_t>::value)
-        {
-            set_parents();
-            return j;
-        }
-#ifdef JSON_HEDLEY_MSVC_VERSION
-#pragma warning( pop )
-#endif
-
-        j.m_parent = this;
-#else
-        static_cast<void>(j);
 #endif
         return j;
     }
@@ -31903,9 +31928,11 @@ public:
 
 
     /// @brief restore the parent pointers after erasing from an object
-    /// ordered_json keeps its members in a vector, and erasing a member
-    /// re-constructs every member after it in place, which resets their
-    /// parent pointers
+    /// Unless the object type is known to keep its elements in place (see
+    /// detail::has_stable_elements), erasing a member may move the members
+    /// after it; ordered_json, for instance, keeps its members in a vector
+    /// and re-constructs every member after the erased one in place, which
+    /// resets their parent pointers
     void set_parents_after_object_erase()
     {
 #if JSON_DIAGNOSTICS
@@ -31913,7 +31940,7 @@ public:
 #pragma warning(push )
 #pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
 #endif
-        if (detail::is_ordered_map<object_t>::value)
+        if (!detail::has_stable_elements<object_t>::value)
         {
             set_parents();
         }
@@ -34732,7 +34759,7 @@ public:
                     continue;
                 }
             }
-            // operator[] repairs the other members if ordered_json relocates
+            // operator[] repairs the other members if the object type moves
             // them; assigning through it keeps this O(1) per key
             operator[](it.key()) = std::move(it.value());
         }
@@ -34784,7 +34811,7 @@ public:
                     continue;
                 }
             }
-            // operator[] repairs the other members if ordered_json relocates them
+            // operator[] repairs the other members if the object type moves them
             target->operator[](first.key()) = std::move(first.value());
             ++first;
         }

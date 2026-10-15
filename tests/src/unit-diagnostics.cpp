@@ -805,3 +805,66 @@ TEST_CASE_TEMPLATE("update() and merge_patch() keep parent pointers and diagnost
         check_path(j, "399");
     }
 }
+
+namespace
+{
+// an object type that, like a sorted flat map, moves its members when a key is
+// added even if its capacity does not change; it has a capacity() member, but
+// is neither node-based nor nlohmann::ordered_map, so the library must not
+// trust its capacity to tell whether the members moved
+template<class Key, class T, class IgnoredLess = std::less<Key>,
+         class Allocator = std::allocator<std::pair<const Key, T>>>
+             struct relocating_map : nlohmann::ordered_map<Key, T, IgnoredLess, Allocator>
+{
+    using base_type = nlohmann::ordered_map<Key, T, IgnoredLess, Allocator>;
+    using typename base_type::iterator;
+    using typename base_type::Container;
+    using base_type::base_type;
+
+    template<typename... Args>
+    std::pair<iterator, bool> emplace(Args&& ... args)
+    {
+        auto result = base_type::emplace(std::forward<Args>(args)...);
+        const auto index = result.first - this->begin();
+        if (result.second)
+        {
+            // move every member to a new buffer of the same capacity
+            Container relocated;
+            relocated.reserve(this->capacity());
+            for (auto& member : *this)
+            {
+                relocated.emplace_back(member.first, std::move(member.second));
+            }
+            this->Container::swap(relocated);
+        }
+        return {this->begin() + index, result.second};
+    }
+};
+
+using relocating_json = nlohmann::basic_json<relocating_map>;
+} // namespace
+
+TEST_CASE("Parent pointers stay consistent for object types not known to keep their members in place")
+{
+    relocating_json obj = relocating_json::object();
+    for (int i = 0; i < 100; ++i)
+    {
+        obj[std::to_string(i)] = relocating_json::array({i});
+        obj.emplace(std::to_string(i + 1000), relocating_json::array({i}));
+    }
+    CHECK(parents_consistent(obj));
+
+    obj.erase("0");
+    CHECK(parents_consistent(obj));
+
+    relocating_json other = relocating_json::object();
+    for (int i = 0; i < 100; ++i)
+    {
+        other[std::to_string(i + 2000)] = relocating_json::array({i});
+    }
+    obj.update(other);
+    CHECK(parents_consistent(obj));
+
+    obj["1"].push_back(42);
+    CHECK_THROWS_WITH_AS(obj["1"].at(5), "[json.exception.out_of_range.401] (/1) array index 5 is out of range", relocating_json::out_of_range&);
+}
