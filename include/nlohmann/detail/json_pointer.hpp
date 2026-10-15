@@ -24,6 +24,7 @@
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/string_utils.hpp>
@@ -938,6 +939,23 @@ class json_pointer
     }
 
   private:
+    // Add the entry (key, v) to the object `obj`. Flattened paths are pairwise
+    // distinct, so objects that can append a key known to be absent
+    // (ordered_map) skip the lookup, which is linear and would make flatten
+    // quadratic; all other object types use operator[].
+    template<typename ObjectType, typename ValueType>
+    static auto add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<1> /*unused*/)
+    -> decltype(obj.emplace_new_key(key, std::forward<ValueType>(v)), void())
+    {
+        obj.emplace_new_key(key, std::forward<ValueType>(v));
+    }
+
+    template<typename ObjectType, typename ValueType>
+    static void add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<0> /*unused*/)
+    {
+        obj[key] = std::forward<ValueType>(v);
+    }
+
     /*!
     @param[in] reference_string  the reference string to the current value
     @param[in] value             the value to consider
@@ -982,7 +1000,8 @@ class json_pointer
 
         // flatten `v`, whose path is `path`: primitives and empty containers
         // are added to the result right away; other containers get a frame
-        const auto enter = [&stack, &path, &result](const BasicJsonType & v)
+        auto& object = *result.m_data.m_value.object;
+        const auto enter = [&stack, &path, &object](const BasicJsonType & v)
         {
             switch (v.type())
             {
@@ -991,7 +1010,7 @@ class json_pointer
                     if (v.m_data.m_value.array->empty())
                     {
                         // flatten empty array as null
-                        result[path] = nullptr;
+                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
                     }
                     else
                     {
@@ -1005,7 +1024,7 @@ class json_pointer
                     if (v.m_data.m_value.object->empty())
                     {
                         // flatten empty object as null
-                        result[path] = nullptr;
+                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
                     }
                     else
                     {
@@ -1025,7 +1044,7 @@ class json_pointer
                 default:
                 {
                     // add a primitive value with its reference string
-                    result[path] = v;
+                    add_flattened(object, path, v, detail::priority_tag<1> {});
                     return;
                 }
             }
@@ -1071,6 +1090,10 @@ class json_pointer
                 enter(it->second);
             }
         }
+
+        // the entries were added without going through basic_json, so the
+        // parent pointers (JSON_DIAGNOSTICS) have to be set now
+        result.set_parents();
     }
 
     /*!
