@@ -418,8 +418,9 @@ class json_sax_dom_parser
         JSON_ASSERT(!ref_stack.empty());
         JSON_ASSERT(ref_stack.back()->is_object());
 
-        // add null at the given key and store the reference for later
-        object_element = &(ref_stack.back()->m_data.m_value.object->operator[](val));
+        // add null at the given key and store the reference for later; the
+        // key is moved, as the lexer starts the next token with reset()
+        object_element = &(ref_stack.back()->m_data.m_value.object->operator[](std::move(val)));
         return true;
     }
 
