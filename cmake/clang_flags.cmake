@@ -13,6 +13,9 @@
 #                                 adapters, json_pointer) plus vendored Doctest itself (~208
 #                                 distinct sites measured 2026-07-08 on clang trunk) all use
 #                                 raw pointer arithmetic / libc string calls by necessity.
+# -Wno-gnu-zero-variadic-macro-arguments
+#                                 NLOHMANN_DEFINE_TYPE_* accepts zero members via ##__VA_ARGS__,
+#                                 which is a GNU/MSVC extension required for C++11.
 
 set(CLANG_CXXFLAGS
     -Werror
@@ -25,4 +28,5 @@ set(CLANG_CXXFLAGS
     -Wno-covered-switch-default
     -Wno-c2y-extensions
     -Wno-unsafe-buffer-usage
+    -Wno-gnu-zero-variadic-macro-arguments
 )

@@ -1191,3 +1191,82 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
         }
     }
 }
+
+namespace empty_types
+{
+class empty_intrusive
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(empty_intrusive)
+};
+
+class empty_intrusive_with_default
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(empty_intrusive_with_default)
+};
+
+class empty_intrusive_only_serialize
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(empty_intrusive_only_serialize)
+};
+
+class empty_intrusive_with_names
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(empty_intrusive_with_names)
+};
+
+class empty_non_intrusive
+{
+};
+
+class empty_non_intrusive_with_default
+{
+};
+
+class empty_non_intrusive_only_serialize
+{
+};
+
+class empty_non_intrusive_with_names
+{
+};
+
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(empty_non_intrusive)
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(empty_non_intrusive_with_default)
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(empty_non_intrusive_only_serialize)
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(empty_non_intrusive_with_names)
+} // namespace empty_types
+
+TEST_CASE_TEMPLATE("Serialization/deserialization of classes with no members via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
+                   empty_types::empty_intrusive,
+                   empty_types::empty_intrusive_with_default,
+                   empty_types::empty_intrusive_with_names,
+                   empty_types::empty_non_intrusive,
+                   empty_types::empty_non_intrusive_with_default,
+                   empty_types::empty_non_intrusive_with_names)
+{
+    SECTION("empty object")
+    {
+        const T empty{};
+        CHECK(json(empty).dump() == "{}");
+
+        const json parsed = json::parse("{}");
+        T restored;
+        parsed.get_to(restored);
+        CHECK(json(restored).dump() == "{}");
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization of classes with no members via NLOHMANN_DEFINE_TYPE_*_ONLY_SERIALIZE", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
+                   empty_types::empty_intrusive_only_serialize,
+                   empty_types::empty_non_intrusive_only_serialize)
+{
+    SECTION("empty object")
+    {
+        const T empty{};
+        CHECK(json(empty).dump() == "{}");
+    }
+}

@@ -8,6 +8,7 @@
 # -Wno-padded            We do not care about padding warnings.
 # -Wno-system-headers    We do not care about warnings in system headers.
 # -Wno-templates         The library uses templates.
+# -Wno-variadic-macros   NLOHMANN_DEFINE_TYPE_* accepts zero members via ##__VA_ARGS__.
 
 set(GCC_CXXFLAGS
     -pedantic
@@ -347,7 +348,7 @@ set(GCC_CXXFLAGS
     -Wuse-after-free=3
     -Wuseless-cast
     -Wvarargs
-    -Wvariadic-macros
+    -Wno-variadic-macros
     -Wvector-operation-performance
     -Wvexing-parse
     -Wvirtual-inheritance
