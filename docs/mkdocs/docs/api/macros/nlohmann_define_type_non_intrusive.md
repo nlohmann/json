@@ -33,7 +33,7 @@ Summary:
 :   name of the type (class, struct) to serialize/deserialize
 
 `member` (in)
-:   name of the (public) member variable to serialize/deserialize; up to 63 members can be given as a comma-separated list
+:   name of the (public) member variable to serialize/deserialize; zero to 63 members can be given as a comma-separated list. With no members, the value is an empty JSON object.
 
 ## Default definition
 

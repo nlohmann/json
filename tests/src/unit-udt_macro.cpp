@@ -1238,6 +1238,19 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(empty_non_intrusive_with_default
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(empty_non_intrusive_only_serialize)
 // NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(empty_non_intrusive_with_names)
+
+class empty_derived_base
+{
+  public:
+    int value = 7;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(empty_derived_base, value)
+};
+
+class empty_derived : public empty_derived_base
+{
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(empty_derived, empty_derived_base)
+};
 } // namespace empty_types
 
 TEST_CASE_TEMPLATE("Serialization/deserialization of classes with no members via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
@@ -1257,7 +1270,23 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with no members via
         T restored;
         parsed.get_to(restored);
         CHECK(json(restored).dump() == "{}");
+        CHECK(nlohmann::ordered_json(empty).dump() == "{}");
+
+        json existing = json::object();
+        existing["keep"] = true;
+        to_json(existing, empty);
+        CHECK(existing["keep"] == true);
+        CHECK(existing.size() == 1);
     }
+}
+
+TEST_CASE("Derived types with no extra members via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE")
+{
+    const empty_types::empty_derived derived{};
+    CHECK(json(derived).dump() == "{\"value\":7}");
+
+    auto restored = json::parse("{\"value\":4}").get<empty_types::empty_derived>();
+    CHECK(restored.value == 4);
 }
 
 TEST_CASE_TEMPLATE("Serialization of classes with no members via NLOHMANN_DEFINE_TYPE_*_ONLY_SERIALIZE", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
