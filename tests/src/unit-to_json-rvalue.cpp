@@ -39,20 +39,15 @@ struct tracked
     std::string payload;
     bool moved_from = false;
 
-    explicit tracked(std::string p) : payload(std::move(p)) {}
+    explicit tracked(std::string p) noexcept : payload(std::move(p)) {}
     tracked(const tracked&) = default;
     tracked& operator=(const tracked&) = default;
     tracked(tracked&& other) noexcept : payload(std::move(other.payload)), moved_from(other.moved_from)
     {
         other.moved_from = true;
     }
-    tracked& operator=(tracked&& other) noexcept
-    {
-        payload = std::move(other.payload);
-        moved_from = other.moved_from;
-        other.moved_from = true;
-        return *this;
-    }
+    // not needed by the tests (and an unused definition fails -Wunneeded-member-function)
+    tracked& operator=(tracked&&) = delete;
     ~tracked() = default;
 };
 
