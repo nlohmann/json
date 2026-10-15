@@ -90,6 +90,15 @@ private:
         return self.end();
     }
 
+    /// @brief throw the exception of a failed at() lookup
+    /// @note kept out of line so that at_impl() stays small enough to inline
+    /// @throw std::out_of_range always
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_key_not_found()
+    {
+        JSON_THROW(std::out_of_range("key not found"));
+    }
+
     /// @brief shared implementation of the const and non-const at() overloads
     /// @throw std::out_of_range if @a key is not found
     template<typename Self, typename KeyType>
@@ -98,7 +107,7 @@ private:
         const auto it = find_impl(self, key);
         if (it == self.end())
         {
-            JSON_THROW(std::out_of_range("key not found"));
+            throw_key_not_found();
         }
         return it->second;
     }
@@ -141,6 +150,17 @@ public:
         }
         append(std::forward<KeyType>(key), std::forward<V>(t));
         return {std::prev(this->end()), true};
+    }
+
+    /// @brief add an element at the end without checking whether the key exists
+    /// @note The caller must guarantee that @a key is not yet contained, otherwise
+    ///       the container holds duplicate keys. This avoids the linear search of
+    ///       emplace() and operator[] when many keys known to be new are added.
+    template<class V, detail::enable_if_t<
+                 detail::is_constructible<T, V>::value, int> = 0>
+    void emplace_new_key(const key_type& key, V && t)
+    {
+        append(key, std::forward<V>(t));
     }
 
     T& operator[](const key_type& key)

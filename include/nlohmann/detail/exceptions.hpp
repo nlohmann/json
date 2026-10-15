@@ -428,7 +428,7 @@ void templated_json_throw(ExceptionType exception)
 @throw type_error.302 always
 */
 template<typename BasicJsonType>
-JSON_HEDLEY_NO_RETURN inline void throw_type_must_be(const char* expected, const BasicJsonType& j)
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_type_must_be(const char* expected, const BasicJsonType& j)
 {
     static_cast<void>(expected); // unused when JSON_NOEXCEPTION is defined
     static_cast<void>(j);
@@ -443,12 +443,83 @@ JSON_HEDLEY_NO_RETURN inline void throw_type_must_be(const char* expected, const
 @throw type_error always
 */
 template<typename BasicJsonType>
-JSON_HEDLEY_NO_RETURN inline void throw_cannot_use_with(const exception_id id_, const char* operation, const BasicJsonType& j)
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_cannot_use_with(const exception_id id_, const char* operation, const BasicJsonType& j)
 {
     static_cast<void>(id_); // unused when JSON_NOEXCEPTION is defined
     static_cast<void>(operation);
     static_cast<void>(j);
     JSON_THROW(type_error::create(id_, concat("cannot use ", operation, " with ", j.type_name()), &j));
+}
+
+/*!
+@brief throws ExceptionType with a fixed message; kept out of line so that callers do not carry the exception construction
+*/
+template<typename ExceptionType, typename BasicJsonContext>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_literal(const exception_id id_, const char* what_arg, BasicJsonContext context)
+{
+    static_cast<void>(id_); // unused when JSON_NOEXCEPTION is defined
+    static_cast<void>(what_arg);
+    static_cast<void>(context);
+    JSON_THROW(ExceptionType::create(id_, what_arg, context));
+}
+
+// JSON Patch errors; constructed out of line so that patch_inplace() does not carry them
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_add_parent(const BasicJsonType& parent)
+{
+    static_cast<void>(parent);
+    JSON_THROW(out_of_range::create(exception_id::patch_add_parent_not_container, concat("cannot add value: the JSON Patch 'add' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+}
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_remove_parent(const BasicJsonType& parent)
+{
+    static_cast<void>(parent);
+    JSON_THROW(out_of_range::create(exception_id::patch_remove_parent_not_container, concat("cannot remove value: the JSON Patch 'remove' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+}
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_not_an_array(const BasicJsonType& j)
+{
+    static_cast<void>(j);
+    JSON_THROW(parse_error::create(exception_id::patch_not_an_array, 0, "JSON patch must be an array of objects", &j));
+}
+
+template<typename StringType, typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_missing_member(const StringType& op, const StringType& member, const bool string_type, const BasicJsonType& val)
+{
+    static_cast<void>(op);
+    static_cast<void>(member);
+    static_cast<void>(string_type);
+    static_cast<void>(val);
+    // context-sensitive error message
+    const std::string error_msg = (op == "op") ? std::string("operation") : concat("operation '", op, '\'');
+    JSON_THROW(parse_error::create(exception_id::patch_invalid_operation, 0, concat(error_msg, string_type ? " must have string member '" : " must have member '", member, "'"), &val));
+}
+
+template<typename StringType, typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_move_into_child(const StringType& from_path, const StringType& path, const BasicJsonType& result)
+{
+    static_cast<void>(from_path);
+    static_cast<void>(path);
+    static_cast<void>(result);
+    JSON_THROW(out_of_range::create(exception_id::patch_move_into_child, concat("cannot move value: 'from' path '", from_path, "' is a proper prefix of 'path' '", path, "'"), &result));
+}
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_test_failed(const BasicJsonType& val)
+{
+    static_cast<void>(val);
+    JSON_THROW(other_error::create(exception_id::patch_test_failed, concat("unsuccessful: ", val.dump()), &val));
+}
+
+template<typename StringType, typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_invalid_operation(const StringType& op, const BasicJsonType& val)
+{
+    static_cast<void>(op);
+    static_cast<void>(val);
+    JSON_THROW(parse_error::create(exception_id::patch_invalid_operation, 0, concat("operation value '", op, "' is invalid"), &val));
 }
 
 }  // namespace detail
