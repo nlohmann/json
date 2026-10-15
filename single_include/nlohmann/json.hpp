@@ -25874,7 +25874,10 @@ JSON_HEDLEY_ALWAYS_INLINE shortest_decimal to_shortest(std::uint64_t bits) noexc
     const uint128_parts p10 = pow10(-dec_exp - 1);
     const uint128_parts p = umul192_hi128(p10.high, p10.low, bin_sig << static_cast<unsigned>(shift));
     std::uint64_t integral = p.high >> static_cast<unsigned>(extra_shift);
-    const std::uint64_t fractional = (p.high << static_cast<unsigned>(64 - extra_shift)) | (p.low >> static_cast<unsigned>(extra_shift));
+    // (no casts in the shifts: MSVC 2015 warns C4554 on them despite the parentheses)
+    constexpr unsigned fractional_low_shift = static_cast<unsigned>(extra_shift);
+    constexpr unsigned fractional_high_shift = 64u - fractional_low_shift;
+    const std::uint64_t fractional = (p.high << fractional_high_shift) | (p.low >> fractional_low_shift);
     std::uint64_t digit = 0;
     bool round_up = false;
     bool round_down = false;
