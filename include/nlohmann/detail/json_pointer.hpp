@@ -1077,7 +1077,7 @@ class json_pointer
         std::size_t token_count = 0;
         for (std::size_t i = 0; i < size; ++i)
         {
-            token_count += (reference_string[i] == '/') ? 1 : 0;
+            token_count += static_cast<std::size_t>(reference_string[i] == '/');
         }
         result.reserve(token_count);
 
