@@ -30643,34 +30643,85 @@ public:
                 return;
             }
 
-            // Destroy the tree without recursing per nesting level and
-            // without any heap allocation: a heap-allocated flattening
-            // stack (the previous implementation) can itself throw
-            // bad_alloc, which would escape this noexcept destructor and
-            // terminate the program (#5135).
-            //
-            // Instead, walk down a chain of children (always the one
-            // walk_child() picks), reversing links as we go: cur is the
-            // container currently being emptied, and prev is its parent
-            // (value_t::null when there is none). Each parent's
-            // walk_child() slot doubles as storage for that parent's own
-            // parent link while we are below it, so no extra memory is
-            // needed; the parent is not modified meanwhile, so
-            // walk_child() finds that same slot again on the way up. We
-            // only ever remove a child once it is a scalar or an empty
-            // array/object, which neither allocates nor recurses more
-            // than one level deep.
-            //
-            // This json_value is not itself a basic_json, so the
-            // top-level container is first moved into a local stand-in
-            // ("cur"); a default-constructed basic_json has a null
-            // pointer in its m_value (see data::m_value's initializer),
-            // so swapping it with *this leaves this union's own pointer
-            // null, and it is never looked at or freed a second time.
+            // This json_value is not itself a basic_json, so the top-level
+            // container is first moved into a local stand-in ("cur"); a
+            // default-constructed basic_json has a null pointer in its
+            // m_value (see data::m_value's initializer), so swapping it
+            // with *this leaves this union's own pointer null, and it is
+            // never looked at or freed a second time.
             basic_json cur;
             cur.m_data.m_type = t;
             using std::swap;
             swap(cur.m_data.m_value, *this);
+
+            destroy_bounded(cur, 0);
+        }
+
+        // Destroy the array/object v, whose children are destroyed first.
+        // The first recursion_depth_limit() levels are destroyed by plain
+        // recursion, which is the fastest way and cannot throw; anything
+        // nested deeper is handed to destroy_walk(), which uses no call stack.
+        static void destroy_bounded(basic_json& v, std::size_t depth) noexcept
+        {
+            if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+            {
+                destroy_walk(v);
+                return;
+            }
+
+            if (v.m_data.m_type == value_t::array)
+            {
+                for (auto& child : *v.m_data.m_value.array)
+                {
+                    if (child.m_data.m_type == value_t::array || child.m_data.m_type == value_t::object)
+                    {
+                        destroy_bounded(child, depth + 1);
+                    }
+                }
+            }
+            else
+            {
+                for (auto& child : *v.m_data.m_value.object)
+                {
+                    if (child.second.m_data.m_type == value_t::array || child.second.m_data.m_type == value_t::object)
+                    {
+                        destroy_bounded(child.second, depth + 1);
+                    }
+                }
+            }
+
+            // only leaves and already destroyed (null) children remain
+            free_container(v);
+        }
+
+        // Destroy the tree below top without recursing per nesting level and
+        // without any heap allocation: a heap-allocated flattening
+        // stack (the previous implementation) can itself throw
+        // bad_alloc, which would escape this noexcept destructor and
+        // terminate the program (#5135).
+        //
+        // Instead, walk down a chain of children (always the one
+        // walk_child() picks), reversing links as we go: cur is the
+        // container currently being emptied, and prev is its parent
+        // (value_t::null when there is none). Each parent's
+        // walk_child() slot doubles as storage for that parent's own
+        // parent link while we are below it, so no extra memory is
+        // needed; the parent is not modified meanwhile, so
+        // walk_child() finds that same slot again on the way up. We
+        // only ever remove a child once it is a scalar or an empty
+        // array/object, which neither allocates nor recurses more
+        // than one level deep.
+        //
+        // This json_value is not itself a basic_json, so the
+        // top-level container is first moved into a local stand-in
+        // ("cur"); a default-constructed basic_json has a null
+        // pointer in its m_value (see data::m_value's initializer),
+        // so swapping it with *this leaves this union's own pointer
+        // null, and it is never looked at or freed a second time.
+        static void destroy_walk(basic_json& top) noexcept
+        {
+            basic_json cur;
+            take(cur, top);
 
             basic_json prev; // value_t::null: no parent
 
