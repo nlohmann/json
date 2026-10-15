@@ -485,6 +485,13 @@ add_custom_target(ci_clang_analyze
 # Check code with Cppcheck.
 ###############################################################################
 
+# default_defines.hpp expands the Hedley macros to the compiler's feature-test operators, which Cppcheck does not know.
+# Since Cppcheck 2.20, it rejects their invocations in #if conditions instead of evaluating them as 0.
+file(WRITE ${CMAKE_BINARY_DIR}/cppcheck_feature_tests.hpp "")
+foreach(OPERATOR __has_attribute __has_builtin __has_cpp_attribute __has_declspec_attribute __has_extension __has_feature __has_include __has_warning)
+    file(APPEND ${CMAKE_BINARY_DIR}/cppcheck_feature_tests.hpp "#define ${OPERATOR}(x) 0\n")
+endforeach()
+
 add_custom_target(ci_cppcheck
     COMMAND mkdir -p cppcheck
     COMMAND clang -dM -E -x c++ -std=c++11 ${CMAKE_SOURCE_DIR}/include/nlohmann/thirdparty/hedley/hedley.hpp > default_defines.hpp 2> /dev/null
@@ -493,7 +500,7 @@ add_custom_target(ci_cppcheck
     COMMAND venv_cppcheck/bin/cppcheck --enable=warning --check-level=exhaustive --inline-suppr --inconclusive --force
             --std=c++11 ${PROJECT_SOURCE_DIR}/include/nlohmann/json.hpp -I ${CMAKE_SOURCE_DIR}/include
             --error-exitcode=1 --relative-paths=${PROJECT_SOURCE_DIR} -j ${N} --include=default_defines.hpp
-            --cppcheck-build-dir=cppcheck
+            --include=${CMAKE_BINARY_DIR}/cppcheck_feature_tests.hpp --cppcheck-build-dir=cppcheck
             -UJSON_CATCH_USER -UJSON_TRY_USER -UJSON_ASSERT -UJSON_INTERNAL_CATCH -UJSON_THROW
             -DJSON_HAS_CPP_11 -UJSON_HAS_CPP_14 -UJSON_HAS_CPP_17 -UJSON_HAS_CPP_20 -UJSON_HAS_THREE_WAY_COMPARISON
     COMMENT "Check code with Cppcheck"

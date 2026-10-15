@@ -10470,7 +10470,7 @@ inline void float_from_bits(std::uint64_t bits, float& value) noexcept
 {
     static_assert(sizeof(float) == sizeof(std::uint32_t), "float must have 32 bits");
     const auto bits32 = static_cast<std::uint32_t>(bits);
-    std::memcpy(&value, &bits32, sizeof(value));
+    std::memcpy(&value, &bits32, sizeof(bits32));
 }
 
 /// the powers of ten that are exact in binary64 (up to 10^22)
