@@ -385,6 +385,23 @@ template<typename ConstructibleObjectType>
 inline void from_json_object_reserve(ConstructibleObjectType& /*obj*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
 {}
 
+// the keys of the source are sorted for the usual object types, so hinting the
+// end makes every insertion constant-time (for containers that order their keys
+// the same way); containers without emplace_hint() (such as ordered_map) fall
+// back to emplace()
+template<typename ConstructibleObjectType, typename Key, typename Value>
+auto from_json_object_emplace(ConstructibleObjectType& obj, Key&& key, Value&& value, priority_tag<1> /*unused*/)
+-> decltype(obj.emplace_hint(obj.end(), std::forward<Key>(key), std::forward<Value>(value)), void())
+{
+    obj.emplace_hint(obj.end(), std::forward<Key>(key), std::forward<Value>(value));
+}
+
+template<typename ConstructibleObjectType, typename Key, typename Value>
+void from_json_object_emplace(ConstructibleObjectType& obj, Key&& key, Value&& value, priority_tag<0> /*unused*/)
+{
+    obj.emplace(std::forward<Key>(key), std::forward<Value>(value));
+}
+
 template<typename BasicJsonType, typename ConstructibleObjectType,
          enable_if_t<is_constructible_object_type<BasicJsonType, ConstructibleObjectType>::value, int> = 0>
 inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
@@ -397,13 +414,9 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
     ConstructibleObjectType ret;
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
     from_json_object_reserve(ret, inner_object->size(), priority_tag<1> {});
-    using value_type = typename ConstructibleObjectType::value_type;
     for (const auto& p : *inner_object)
     {
-        // the keys of the source are sorted for the usual object types, so
-        // hinting the end makes every insertion constant-time (for containers
-        // that order their keys the same way)
-        ret.insert(ret.end(), value_type(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>()));
+        from_json_object_emplace(ret, p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>(), priority_tag<1> {});
     }
     obj = std::move(ret);
 }
