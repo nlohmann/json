@@ -6562,24 +6562,18 @@ public:
         };
 
         // wrapper for "add" operation; add value at ptr
-        const auto operation_add = [&result](json_pointer & ptr, const basic_json & val)
+        const auto operation_add = [&result](json_pointer & ptr, basic_json val)
         {
             // adding to the root of the target document means replacing it
             if (ptr.empty())
             {
-                result = val;
+                result = std::move(val);
                 return;
             }
 
-            // make sure the top element of the pointer exists
-            json_pointer const top_pointer = ptr.top();
-            if (top_pointer != ptr)
-            {
-                result.at(top_pointer);
-            }
-
-            // get reference to the parent of the JSON pointer ptr
-            const auto last_path = ptr.back();
+            // get reference to the parent of the JSON pointer ptr; a missing
+            // parent (or one of its ancestors) is reported by at()
+            auto last_path = std::move(ptr.reference_tokens.back());
             ptr.pop_back();
             // parent must exist when performing patch add per RFC6902 specs
             basic_json& parent = result.at(ptr);
@@ -6590,7 +6584,7 @@ public:
                 case value_t::object:
                 {
                     // use operator[] to add value
-                    parent[last_path] = val;
+                    parent[std::move(last_path)] = std::move(val);
                     break;
                 }
 
@@ -6599,7 +6593,7 @@ public:
                     if (last_path == "-")
                     {
                         // special case: append to back
-                        parent.push_back(val);
+                        parent.push_back(std::move(val));
                     }
                     else
                     {
@@ -6611,7 +6605,7 @@ public:
                         }
 
                         // default case: insert add offset
-                        parent.insert(parent.begin() + static_cast<difference_type>(idx), val);
+                        parent.insert(parent.begin() + static_cast<difference_type>(idx), std::move(val));
                     }
                     break;
                 }
@@ -6634,7 +6628,8 @@ public:
         const auto operation_remove = [this, & result](json_pointer & ptr)
         {
             // get reference to the parent of the JSON pointer ptr
-            const auto last_path = ptr.back();
+            static_cast<void>(ptr.back()); // throws out_of_range.405 if ptr is the root
+            const auto last_path = std::move(ptr.reference_tokens.back());
             ptr.pop_back();
             basic_json& parent = result.at(ptr);
 
@@ -6734,8 +6729,8 @@ public:
             }
 
             // collect mandatory members
-            const auto op = get_value("op", "op", true).template get<string_t>();
-            const auto path = get_value(op, "path", true).template get<string_t>();
+            const string_t& op = *get_value("op", "op", true).m_data.m_value.string;
+            const string_t& path = *get_value(op, "path", true).m_data.m_value.string;
             json_pointer ptr(path);
 
             switch (get_op(op))
@@ -6761,7 +6756,7 @@ public:
 
                 case patch_operations::move:
                 {
-                    const auto from_path = get_value("move", "from", true).template get<string_t>();
+                    const string_t& from_path = *get_value("move", "from", true).m_data.m_value.string;
                     json_pointer from_ptr(from_path);
 
                     if (JSON_HEDLEY_UNLIKELY(is_proper_prefix(from_ptr, ptr)))
@@ -6770,29 +6765,28 @@ public:
                     }
 
                     // the "from" location must exist - use at()
-                    basic_json const v = result.at(from_ptr);
+                    // a root "from" is rejected by operation_remove below, which must leave result intact
+                    basic_json v = from_ptr.empty() ? basic_json(result) : std::move(result.at(from_ptr));
 
                     // The move operation is functionally identical to a
                     // "remove" operation on the "from" location, followed
                     // immediately by an "add" operation at the target
                     // location with the value that was just removed.
                     operation_remove(from_ptr);
-                    operation_add(ptr, v);
+                    operation_add(ptr, std::move(v));
                     break;
                 }
 
                 case patch_operations::copy:
                 {
-                    const auto from_path = get_value("copy", "from", true).template get<string_t>();
+                    const string_t& from_path = *get_value("copy", "from", true).m_data.m_value.string;
                     const json_pointer from_ptr(from_path);
-
-                    // the "from" location must exist - use at()
-                    basic_json const v = result.at(from_ptr);
 
                     // The copy is functionally identical to an "add"
                     // operation at the target location using the value
-                    // specified in the "from" member.
-                    operation_add(ptr, v);
+                    // specified in the "from" member; the "from" location
+                    // must exist - use at()
+                    operation_add(ptr, result.at(from_ptr));
                     break;
                 }
 
