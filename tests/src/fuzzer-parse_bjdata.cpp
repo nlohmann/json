@@ -47,11 +47,29 @@ dumps is stable under exactly the same values that break operator==.
 The unit tests run the same checks on a fixed corpus (see the "BJData round-trip
 invariants" test case), so keep both in sync.
 
+Finally, it reads the data from a stream, a non-contiguous iterator range, and
+a FILE*, which read byte by byte, and checks that each gives the same value or
+error (id, message, byte position) as the pointer range, which takes the bulk
+fast paths (see check_input_adapters()).
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
 #include "fuzzer_common.hpp"
+
+namespace
+{
+// json::from_bjdata for check_input_adapters()
+struct read_bjdata
+{
+    template<typename... Args>
+    json operator()(Args&& ... args) const
+    {
+        return json::from_bjdata(std::forward<Args>(args)...);
+    }
+};
+} // namespace
 
 // value-stable comparison for the round-trip checks below; see the note
 // above on why this compares dump()s rather than the json values directly
@@ -125,6 +143,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         // out of range errors may happen if provided sizes are excessive
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
     }
+
+    // step 3: the other input adapters must read the data alike
+    check_input_adapters(data, size, read_bjdata());
 
     // return 0 - non-zero return values are reserved for future use
     return 0;

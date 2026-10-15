@@ -9,7 +9,16 @@ Each fuzzer driver (`tests/src/fuzzer-parse_*.cpp`) parses its input twice: once
 once with exceptions. Both calls must agree. Where parsing with exceptions fails, the call without exceptions must
 return a discarded value (or throw the same kind of non-parse error), and it must never throw a `parse_error`. Where
 parsing succeeds, both calls must return the same value. The drivers then serialize the value, parse the result back,
-and check that nothing was lost. The drivers check all of this with `assert`, so they refuse to build with `NDEBUG`.
+and check that nothing was lost.
+
+Finally, each driver reads the same input through the other input adapters: a `std::istringstream`, a non-contiguous
+iterator range (`std::list<std::uint8_t>`), and, on POSIX systems, a `FILE*` from `fmemopen`. The pointer range takes the
+fast paths for contiguous input (bulk string scanning, multi-byte loads, lazy position tracking), while the other
+adapters read byte by byte. Every adapter must give the same value, or the same exception with the same id, message,
+and byte position. The JSON driver checks this for `parse` and `accept`, each with and without `ignore_comments`. The
+shared code is `check_input_adapters()` in `tests/src/fuzzer_common.hpp`.
+
+The drivers check all of this with `assert`, so they refuse to build with `NDEBUG`.
 
 ## Corpus creation
 
