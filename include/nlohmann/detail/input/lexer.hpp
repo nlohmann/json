@@ -1734,10 +1734,6 @@ scan_number_done:
         }
 #endif
 
-        // materialize the token exactly as scan_number() would. reset() already
-        // cleared token_buffer, so append() fills it (assign() is avoided
-        // because custom string_t types need not provide it)
-        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
         decimal_point_position = dot_index;
 
         bulk_consume(data + 1, len - 1);
@@ -1753,10 +1749,27 @@ scan_number_done:
             s.negative = data[0] == '-';
             if (convert_accumulated_float(s, std::integral_constant<bool, has_native_float_format<number_float_t>::value> {}))
             {
+                // the token text is only copied into token_buffer when
+                // get_string() asks for it; the library's own SAX handlers
+                // ignore it. A window into a stream may be refilled by the
+                // next read, so there the text is copied right away.
+                if (bulk_window)
+                {
+                    token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
+                }
+                else
+                {
+                    pending_number_text = data;
+                    pending_number_length = len;
+                }
                 return token_type::value_float;
             }
         }
 
+        // materialize the token exactly as scan_number() would. reset() already
+        // cleared token_buffer, so append() fills it (assign() is avoided
+        // because custom string_t types need not provide it)
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
         return convert_number(number_type, mantissa_end);
     }
 
@@ -1856,6 +1869,7 @@ scan_number_done:
     void reset() noexcept
     {
         token_buffer.clear();
+        pending_number_text = nullptr;
         decimal_point_position = std::string::npos;
 
 #if JSON_DIAGNOSTIC_POSITIONS
@@ -2115,7 +2129,27 @@ scan_number_done:
     /// return current string value
     string_t& get_string()
     {
+        if (pending_number_text != nullptr)
+        {
+            token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(pending_number_text), pending_number_length);
+            pending_number_text = nullptr;
+        }
         // a number token holds '.' regardless of the locale (#4084)
+        return token_buffer;
+    }
+
+    /// the value of a string token (key or string), which never has pending
+    /// number text, so get_string()'s check is not needed
+    string_t& get_string_token() noexcept
+    {
+        JSON_ASSERT(pending_number_text == nullptr);
+        return token_buffer;
+    }
+
+    /// the text of a float token for a SAX handler that ignores it (the
+    /// library's own handlers): empty, without copying the token
+    const string_t& get_ignored_number_text() const noexcept
+    {
         return token_buffer;
     }
 
@@ -2513,6 +2547,11 @@ scan_number_done:
 
     /// whether the next get() call should just return current
     bool next_unget = false;
+
+    /// the text of the current float token in the input, not yet copied into
+    /// token_buffer (see get_string()), or nullptr
+    const char* pending_number_text = nullptr;
+    std::size_t pending_number_length = 0;
 
     /// the start position of the current token
     position_t position {};
