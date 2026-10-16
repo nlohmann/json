@@ -39899,13 +39899,18 @@ public:
     /// @brief append an operation @a op for @a path to @a result, with @a value if it is not null
     static void diff_operation(basic_json& result, const char* op, const string_t& path, const basic_json* value)
     {
+        // the keys are distinct and in the order of std::map; the members are
+        // added without looking them up
         basic_json entry(value_t::object);
-        entry["op"] = op;
-        entry["path"] = path;
+        auto& members = *entry.m_data.m_value.object;
+        typename object_t::iterator hint = members.end();
+        json_pointer::add_flattened(members, hint, string_t("op"), string_t(op), detail::priority_tag<2> {});
+        json_pointer::add_flattened(members, hint, string_t("path"), path, detail::priority_tag<2> {});
         if (value != nullptr)
         {
-            entry["value"] = *value;
+            json_pointer::add_flattened(members, hint, string_t("value"), *value, detail::priority_tag<2> {});
         }
+        entry.set_parents();
         result.push_back(std::move(entry));
     }
 
