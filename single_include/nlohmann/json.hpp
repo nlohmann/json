@@ -20977,6 +20977,8 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <algorithm> // all_of
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
+#include <cstddef> // size_t
+#include <cstdint> // uint64_t
 #include <cstdlib> // strtoull
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
@@ -21502,10 +21504,10 @@ class json_pointer
 
         static std::size_t hash_of(std::size_t parent, const string_t& token) noexcept
         {
-            std::size_t h = parent * static_cast<std::size_t>(0x9E3779B97F4A7C15ULL & static_cast<unsigned long long>((std::numeric_limits<std::size_t>::max)()));
+            std::size_t h = parent * static_cast<std::size_t>(0x9E3779B97F4A7C15ULL & static_cast<std::uint64_t>((std::numeric_limits<std::size_t>::max)()));
             for (std::size_t i = 0; i < token.size(); ++i)
             {
-                h = (h ^ static_cast<unsigned char>(token[i])) * static_cast<std::size_t>(0x100000001B3ULL & static_cast<unsigned long long>((std::numeric_limits<std::size_t>::max)()));
+                h = (h ^ static_cast<unsigned char>(token[i])) * static_cast<std::size_t>(0x100000001B3ULL & static_cast<std::uint64_t>((std::numeric_limits<std::size_t>::max)()));
             }
             return h ^ (h >> 29u);
         }
