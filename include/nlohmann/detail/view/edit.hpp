@@ -363,7 +363,7 @@ class editor
         const std::uint8_t linked = slot->flags & node_flags::linked;
         if (e.region == nullptr)
         {
-            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape && linked == 0)
+            if (is_container(*slot) && slot->next > 1 && slot != m_doc.nodes && linked == 0)
             {
                 // The slot spans its old elements in the enclosing sequence, but
                 // a scalar is one node: the enclosing container first switches to
