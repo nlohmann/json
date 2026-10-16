@@ -815,6 +815,12 @@ class serializer
             else
 #endif
             {
+#if JSON_SCAN_VECTOR
+                if (!copy_plain_halves(d, p, n))
+                {
+                    return false;
+                }
+#else
                 const auto a = load_word<std::uint64_t>(p);
                 const auto b = load_word<std::uint64_t>(p + n - 8);
                 if ((swar_not_plain(a) | swar_not_plain(b)) != 0)
@@ -823,6 +829,7 @@ class serializer
                 }
                 store_word(d, a);
                 store_word(d + n - 8, b);
+#endif
             }
         }
         else if (n >= 4)
@@ -869,6 +876,38 @@ class serializer
     }
 
 #if JSON_SCAN_VECTOR
+    /// copy the 8 to 15 bytes [@a p, @a p + @a n) to @a d with two overlapping
+    /// words, tested together as one vector, see copy_plain_vectors()
+    static bool copy_plain_halves(char* d, const char* p, const std::size_t n) noexcept
+    {
+#if JSON_SCAN_NEON
+        const uint8x8_t lo = vld1_u8(reinterpret_cast<const std::uint8_t*>(p));
+        const uint8x8_t hi = vld1_u8(reinterpret_cast<const std::uint8_t*>(p + n - 8));
+        const uint8x16_t in = vcombine_u8(lo, hi);
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
+                                            vorrq_u8(vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)), vceqq_u8(in, vdupq_n_u8(0x7F))));
+        if (vmaxvq_u8(special) != 0)
+        {
+            return false;
+        }
+        vst1_u8(reinterpret_cast<std::uint8_t*>(d), lo);
+        vst1_u8(reinterpret_cast<std::uint8_t*>(d + n - 8), hi);
+#else
+        const __m128i lo = _mm_loadl_epi64(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+        const __m128i hi = _mm_loadl_epi64(static_cast<const __m128i*>(static_cast<const void*>(p + n - 8))); // NOLINT(bugprone-casting-through-void)
+        const __m128i in = _mm_unpacklo_epi64(lo, hi);
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_or_si128(_mm_cmplt_epi8(in, _mm_set1_epi8(0x20)), _mm_cmpeq_epi8(in, _mm_set1_epi8(0x7F))));
+        if (_mm_movemask_epi8(special) != 0)
+        {
+            return false;
+        }
+        _mm_storel_epi64(static_cast<__m128i*>(static_cast<void*>(d)), lo); // NOLINT(bugprone-casting-through-void)
+        _mm_storel_epi64(static_cast<__m128i*>(static_cast<void*>(d + n - 8)), hi); // NOLINT(bugprone-casting-through-void)
+#endif
+        return true;
+    }
+
     /// copy the 16 to 32 bytes [@a p, @a p + @a n) to @a d with two overlapping
     /// vectors, unless one of them is a quote, a backslash, a control
     /// character, DEL or not ASCII
