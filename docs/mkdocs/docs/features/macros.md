@@ -174,6 +174,13 @@ security reasons (e.g., Intel Software Guard Extensions (SGX)).
 
 See [full documentation of `JSON_NO_IO`](../api/macros/json_no_io.md).
 
+## `JSON_NO_SIMD`
+
+When defined, the library uses only portable code instead of vector instructions (SSE2, SSSE3, NEON) for scanning
+strings and writing floating-point numbers. Results are the same either way. It is not defined by default.
+
+See [full documentation of `JSON_NO_SIMD`](../api/macros/json_no_simd.md).
+
 ## `JSON_NO_THREAD_LOCAL`
 
 When defined, the library does not use `#!cpp thread_local` storage. Copying a value and comparing two values then

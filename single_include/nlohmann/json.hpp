@@ -11156,6 +11156,324 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/bit_ops.hpp>
 
+// #include <nlohmann/detail/input/simd_scan.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2018-2025 The simdjson authors <https://github.com/simdjson/simdjson>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <array> // array
+#include <atomic> // atomic
+#include <cstddef> // size_t
+#include <cstdint> // uint8_t, uint64_t
+
+// #include <nlohmann/detail/bit_ops.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+// Vector code for runs of string bytes, used by the lexer for contiguous input
+// (see string_bulk_run()). NEON (AArch64) and SSE2 (x86-64) belong to the
+// baseline instruction sets and are used by default. The vector UTF-8 check
+// needs NEON or SSSE3. SSSE3 is not part of x86-64, and the code must not
+// depend on the flags of a translation unit (two translation units with
+// different flags would have different definitions of the same inline
+// functions): the check is compiled for SSSE3 with a function attribute and
+// used where the CPU has SSSE3 (all x86-64 CPUs since about 2011), else the
+// portable check. Code compiled for SSSE3 anyway (-mssse3 or more) skips the
+// CPU check. JSON_NO_SIMD selects the portable code everywhere.
+// NLOHMANN_JSON_NO_TARGET_ATTRIBUTE (for compilers that ignore the target
+// attribute and then reject the SSSE3 intrinsics) keeps the check portable
+// without disabling the SSE2 code.
+#if !defined(JSON_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    #include <arm_neon.h>
+    #define JSON_SCAN_NEON 1
+#else
+    #define JSON_SCAN_NEON 0
+#endif
+// (x86 only: other targets can define __SSE2__ as well, e.g., WebAssembly with -msse2, but have no <cpuid.h>)
+#if !defined(JSON_NO_SIMD) && !JSON_SCAN_NEON && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && !defined(_M_ARM64EC) && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
+    #include <emmintrin.h>
+    #define JSON_SCAN_SSE2 1
+#else
+    #define JSON_SCAN_SSE2 0
+#endif
+#if JSON_SCAN_SSE2 && defined(__SSSE3__)
+    #include <tmmintrin.h>
+    #define JSON_SCAN_SSSE3 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#else
+    #define JSON_SCAN_SSSE3 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#endif
+#if JSON_SCAN_SSE2 && !JSON_SCAN_SSSE3 && !defined(NLOHMANN_JSON_NO_TARGET_ATTRIBUTE) && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
+    // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3)
+    #include <cpuid.h>
+    #include <tmmintrin.h>
+    #define JSON_SCAN_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_SCAN_SSSE3_TARGET __attribute__((target("ssse3")))
+#elif JSON_SCAN_SSE2 && !JSON_SCAN_SSSE3 && defined(_MSC_VER)
+    // (MSVC compiles intrinsics of any instruction set)
+    #include <intrin.h>
+    #include <tmmintrin.h>
+    #define JSON_SCAN_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_SCAN_SSSE3_TARGET
+#else
+    #define JSON_SCAN_SSSE3_DISPATCH 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_SCAN_SSSE3_TARGET
+#endif
+#define JSON_SCAN_VECTOR (JSON_SCAN_NEON || JSON_SCAN_SSE2)
+#define JSON_SCAN_VECTOR_UTF8 (JSON_SCAN_NEON || JSON_SCAN_SSSE3 || JSON_SCAN_SSSE3_DISPATCH)
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+#if JSON_SCAN_VECTOR
+/*!
+@brief the first byte of a string run that is a quote, a backslash, a control
+character, or not ASCII, 16 bytes per step
+
+Stops at such a byte, or where fewer than 16 bytes are left (the caller tells
+the two apart). A signed compare with 0x20 finds control characters and
+non-ASCII bytes at once.
+*/
+JSON_HEDLEY_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (e - p >= 16)
+    {
+#if JSON_SCAN_NEON
+        const uint8x16_t in = vld1q_u8(p);
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
+                                            vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
+        // one nibble per byte (the usual NEON replacement of x86's movemask, see
+        // D. Kutenin, "Porting x86 vector bitmask optimizations to Arm NEON", 2022)
+        const std::uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+        if (bits != 0)
+        {
+            return p + (count_trailing_zeros(bits) >> 2u);
+        }
+#else
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
+        const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+        if (bits != 0)
+        {
+            return p + count_trailing_zeros(bits);
+        }
+#endif
+        p += 16;
+    }
+    return p;
+}
+#endif
+
+#if JSON_SCAN_VECTOR
+/// vector_plain_run() for runs that are already longer than a few words:
+/// inline with SSE2, out of line with NEON, where a larger string loop slows
+/// down the rest of the lexer
+#if JSON_SCAN_NEON
+    JSON_HEDLEY_NEVER_INLINE inline
+#else
+    JSON_HEDLEY_ALWAYS_INLINE
+#endif
+const unsigned char* vector_plain_run_long(const unsigned char* p, const unsigned char* e) noexcept
+{
+    return vector_plain_run(p, e);
+}
+#endif
+
+#if JSON_SCAN_SSSE3_DISPATCH
+/// whether the CPU has SSSE3 (CPUID leaf 1, ECX bit 9)
+inline bool cpu_ssse3() noexcept
+{
+#if defined(_MSC_VER) && !defined(__clang__)
+    std::array<int, 4> regs {{}};
+    __cpuid(regs.data(), 1);
+    return (static_cast<unsigned>(regs[2]) & (1u << 9u)) != 0;
+#else
+    unsigned eax = 0;
+    unsigned ebx = 0;
+    unsigned ecx = 0;
+    unsigned edx = 0;
+    return __get_cpuid(1, &eax, &ebx, &ecx, &edx) != 0 && (ecx & (1u << 9u)) != 0;
+#endif
+}
+
+/// whether the CPU has SSSE3, asked once: the answer is kept in an atomic
+/// that is initialized at compile time, so that neither a guard of a local
+/// static nor a global constructor is needed (threads that ask at the same
+/// time all store the same answer)
+JSON_HEDLEY_ALWAYS_INLINE bool cpu_has_ssse3() noexcept
+{
+    static std::atomic<int> known{0}; // 0: not asked yet, 1: no, 2: yes
+    int state = known.load(std::memory_order_relaxed);
+    if (JSON_HEDLEY_UNLIKELY(state == 0))
+    {
+        state = cpu_ssse3() ? 2 : 1;
+        known.store(state, std::memory_order_relaxed);
+    }
+    return state == 2;
+}
+#endif
+
+#if JSON_SCAN_VECTOR_UTF8
+/// Tables of the UTF-8 check of J. Keiser and D. Lemire, "Validating UTF-8 In
+/// Less Than One Instruction Per Byte" (2021), as in simdjson ("lookup4"): each
+/// maps a nibble (high and low nibble of the previous byte, high nibble of the
+/// current byte) to the errors it allows; a byte pair is ill-formed if all
+/// three have an error bit in common.
+template<typename Dummy = void>
+struct utf8_lookup4
+{
+    static constexpr std::uint8_t too_short = 1u << 0u, too_long = 1u << 1u, overlong_3 = 1u << 2u, too_large = 1u << 3u;
+    static constexpr std::uint8_t surrogate = 1u << 4u, overlong_2 = 1u << 5u, too_large_1000 = 1u << 6u, overlong_4 = 1u << 6u;
+    static constexpr std::uint8_t two_conts = 1u << 7u, carry = too_short | too_long | two_conts;
+    static const std::array<std::uint8_t, 16> byte_1_high;
+    static const std::array<std::uint8_t, 16> byte_1_low;
+    static const std::array<std::uint8_t, 16> byte_2_high;
+};
+
+template<typename Dummy>
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_1_high =
+{
+    {
+        too_long, too_long, too_long, too_long, too_long, too_long, too_long, too_long,
+        two_conts, two_conts, two_conts, two_conts,
+        too_short | overlong_2, too_short, too_short | overlong_3 | surrogate, too_short | too_large | too_large_1000 | overlong_4
+    }
+};
+
+template<typename Dummy>
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_1_low =
+{
+    {
+        carry | overlong_3 | overlong_2 | overlong_4, carry | overlong_2, carry, carry,
+        carry | too_large, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
+        carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
+        carry | too_large | too_large_1000, carry | too_large | too_large_1000 | surrogate, carry | too_large | too_large_1000, carry | too_large | too_large_1000
+    }
+};
+
+template<typename Dummy>
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_2_high =
+{
+    {
+        too_short, too_short, too_short, too_short, too_short, too_short, too_short, too_short,
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large_1000 | overlong_4),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
+        too_short, too_short, too_short, too_short
+    }
+};
+
+/*!
+@brief the run of plain string bytes and well-formed UTF-8 at p (a character
+       boundary), 16 bytes per step
+
+The first quote, backslash, or control character is found with vector
+compares, and the UTF-8 check of J. Keiser and D. Lemire covers the bytes up
+to it. Returns true with @a block at that byte; returns false with @a block at
+the start of the 16 bytes where the check found ill-formed UTF-8 or where
+fewer than 16 bytes are left, for the caller to finish one sequence at a time.
+Out of line, so that no constants of the check occupy registers in the
+caller's loop. On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()).
+*/
+JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline bool vector_utf8_run(const unsigned char* p, const unsigned char* e, const unsigned char*& block_out) noexcept
+{
+    using lookup = utf8_lookup4<>;
+    const unsigned char* block = p;
+#if JSON_SCAN_NEON
+    const uint8x16_t t1h = vld1q_u8(lookup::byte_1_high.data());
+    const uint8x16_t t1l = vld1q_u8(lookup::byte_1_low.data());
+    const uint8x16_t t2h = vld1q_u8(lookup::byte_2_high.data());
+    uint8x16_t prev = vdupq_n_u8(0);
+    while (e - block >= 16)
+    {
+        const uint8x16_t in = vld1q_u8(block);
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))), vcltq_u8(in, vdupq_n_u8(0x20)));
+        const uint8x16_t prev1 = vextq_u8(prev, in, 15);
+        const uint8x16_t sc = vandq_u8(vandq_u8(vqtbl1q_u8(t1h, vshrq_n_u8(prev1, 4)), vqtbl1q_u8(t1l, vandq_u8(prev1, vdupq_n_u8(0x0F)))), vqtbl1q_u8(t2h, vshrq_n_u8(in, 4)));
+        const uint8x16_t must23 = vorrq_u8(vqsubq_u8(vextq_u8(prev, in, 14), vdupq_n_u8(0xE0 - 0x80)), vqsubq_u8(vextq_u8(prev, in, 13), vdupq_n_u8(0xF0 - 0x80)));
+        const uint8x16_t err = veorq_u8(vandq_u8(must23, vdupq_n_u8(0x80)), sc);
+        const std::uint64_t special_bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+        const std::uint64_t err_bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(vtstq_u8(err, err)), 4)), 0);
+        if (special_bits != 0)
+        {
+            // errors up to the special byte count (an incomplete sequence
+            // before a quote shows at the quote); the bytes after it do not
+            const unsigned k = static_cast<unsigned>(count_trailing_zeros(special_bits)) >> 2u;
+            const std::uint64_t upto = k == 15 ? ~std::uint64_t{0} :
+                                       (std::uint64_t{1} << (4u * (k + 1u))) - 1u;
+            if ((err_bits & upto) == 0)
+            {
+                block_out = block + k;
+                return true;
+            }
+            break;
+        }
+        if (err_bits != 0)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#else
+    // the same with SSSE3 (pshufb for the table lookups; nibbles from 16-bit
+    // shifts, as there are no byte shifts)
+    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i nibble = _mm_set1_epi8(0x0F);
+    const __m128i zero = _mm_setzero_si128();
+    __m128i prev = zero;
+    while (e - block >= 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_cmpeq_epi8(_mm_subs_epu8(in, _mm_set1_epi8(0x1F)), zero)); // in < 0x20
+        const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
+        const __m128i sc = _mm_and_si128(_mm_and_si128(_mm_shuffle_epi8(t1h, _mm_and_si128(_mm_srli_epi16(prev1, 4), nibble)),
+                                         _mm_shuffle_epi8(t1l, _mm_and_si128(prev1, nibble))),
+                                         _mm_shuffle_epi8(t2h, _mm_and_si128(_mm_srli_epi16(in, 4), nibble)));
+        const __m128i must23 = _mm_or_si128(_mm_subs_epu8(_mm_alignr_epi8(in, prev, 14), _mm_set1_epi8(0xE0 - 0x80)),
+                                            _mm_subs_epu8(_mm_alignr_epi8(in, prev, 13), _mm_set1_epi8(0xF0 - 0x80)));
+        const __m128i err = _mm_xor_si128(_mm_and_si128(must23, _mm_set1_epi8(static_cast<char>(-128))), sc);
+        const auto special_bits = static_cast<unsigned>(_mm_movemask_epi8(special));
+        const auto err_bits = ~static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(err, zero))) & 0xFFFFu;
+        if (special_bits != 0)
+        {
+            const auto k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
+            if ((err_bits & ((2u << k) - 1u)) == 0)
+            {
+                block_out = block + k;
+                return true;
+            }
+            break;
+        }
+        if (err_bits != 0)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#endif
+    block_out = block;
+    return false;
+}
+#endif
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -11177,7 +11495,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // This file contains the byte-level string-scanning helpers used by the lexer's
 // contiguous fast path. They operate purely on raw bytes (no dependency on the
 // lexer's template parameters) so they are free functions, keeping the lexer
-// itself focused on the state machine; see lexer::scan_string_bulk().
+// itself focused on the state machine; see lexer::get_after_string_run().
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -11209,7 +11527,7 @@ inline std::uint64_t swar_string_special(std::uint64_t v) noexcept
 
 // return the index of the first is_string_special() byte in [data, data+n), or
 // n if every byte is ordinary; scans 8 bytes at a time
-inline std::size_t find_string_special(const unsigned char* data, std::size_t n) noexcept
+JSON_HEDLEY_ALWAYS_INLINE std::size_t find_string_special(const unsigned char* data, std::size_t n) noexcept
 {
     std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
@@ -11378,35 +11696,143 @@ inline std::size_t valid_utf8_prefix(const unsigned char* data, std::size_t n) n
     return pos;
 }
 
-// Scalar (C++11) computation of the bulk run length: the number of leading
-// bytes in [data, data+n) that are ordinary ASCII or complete well-formed UTF-8
+#if JSON_SCAN_VECTOR_UTF8
+/// the end of scan_string_vector from block, where the vector loop stopped
+/// (ill-formed UTF-8, or fewer than 16 bytes left): one byte or sequence at a
+/// time, from the start of a sequence that crosses into the block
+inline const unsigned char* scan_string_finish(const unsigned char* p, const unsigned char* block, const unsigned char* e) noexcept
+{
+    for (int i = 1; i <= 3 && block - i >= p; ++i)
+    {
+        const unsigned char c = block[-i];
+        if (c < 0x80)
+        {
+            break;
+        }
+        if (c >= 0xC0)
+        {
+            const int len = 2 + static_cast<int>(c >= 0xE0) + static_cast<int>(c >= 0xF0);
+            if (len > i)
+            {
+                block -= i;
+            }
+            break;
+        }
+    }
+    for (p = block; p != e;)
+    {
+        if (*p < 0x80)
+        {
+            if (is_string_special(*p))
+            {
+                return p;
+            }
+            ++p;
+            continue;
+        }
+        const std::size_t n = validate_one_utf8(p, static_cast<std::size_t>(e - p));
+        if (n == 0)
+        {
+            return p;
+        }
+        p += n;
+    }
+    return p;
+}
+
+/// the rest of a string from p (a character boundary), with the vector UTF-8
+/// check and the scalar check for the end of the block where it stopped
+inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e) noexcept
+{
+    const unsigned char* block = p;
+    if (vector_utf8_run(p, e, block))
+    {
+        return block;
+    }
+    return scan_string_finish(p, block, e);
+}
+#endif
+
+#if JSON_SCAN_VECTOR
+/// the end of the run of plain string characters at @a p: the first quote,
+/// backslash, control character, or non-ASCII byte, or @a e. The first words
+/// are checked with SWAR (one; four with NEON, where the vector mask costs
+/// more), as most keys and short values end there; longer runs continue 16
+/// bytes at a time.
+JSON_HEDLEY_ALWAYS_INLINE const unsigned char* plain_run_end(const unsigned char* p, const unsigned char* e) noexcept
+{
+    constexpr int prefix_words = JSON_SCAN_NEON ? 4 : 1;
+    for (int words = prefix_words; words > 0 && e - p >= 8; --words)
+    {
+        const std::uint64_t special = swar_string_special(read_eight_bytes(p));
+        if (special != 0)
+        {
+            return p + (static_cast<std::size_t>(count_trailing_zeros(special)) / 8);
+        }
+        p += 8;
+    }
+    // the vector loop only for 16 bytes or more: the serializer passes a
+    // string without its closing quote, so most of its runs end at e, and a
+    // call of the out-of-line NEON loop for a shorter rest made dump() up to
+    // 10% slower
+    if (e - p >= 16)
+    {
+        p = vector_plain_run_long(p, e);
+        if (e - p >= 16)
+        {
+            return p; // the vector loop stopped at a special byte
+        }
+    }
+    return p + find_string_special(p, static_cast<std::size_t>(e - p));
+}
+#endif
+
+// Computation of the bulk run length: the number of leading bytes in
+// [data, data+n) that are ordinary ASCII or complete well-formed UTF-8
 // sequences, stopping before the first byte that needs individual handling (the
 // closing quote, an escape, a control character, or an ill-formed/truncated
-// sequence). ASCII is skipped 8 bytes at a time.
-inline std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+// sequence). ASCII is skipped 16 bytes at a time with SSE2 and 8 bytes at a
+// time otherwise; runs of non-ASCII text use the vector UTF-8 check where
+// available.
+JSON_HEDLEY_ALWAYS_INLINE std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
 {
-    std::size_t pos = 0;
-    while (pos < n)
+    const unsigned char* const e = data + n;
+    const unsigned char* p = data;
+    while (p != e)
     {
-        pos += find_string_special(data + pos, n - pos);
-        if (pos >= n || data[pos] < 0x80u)
+#if JSON_SCAN_VECTOR
+        p = plain_run_end(p, e);
+#else
+        p += find_string_special(p, static_cast<std::size_t>(e - p));
+#endif
+        if (p == e || *p < 0x80u)
         {
             break; // end of buffer, or a quote/escape/control byte
         }
+#if JSON_SCAN_VECTOR_UTF8
+#if JSON_SCAN_SSSE3_DISPATCH
+        if (JSON_HEDLEY_LIKELY(cpu_has_ssse3()))
+#endif
+        {
+            return static_cast<std::size_t>(scan_string_vector(p, e) - data);
+        }
+#endif
+#if !JSON_SCAN_VECTOR_UTF8 || JSON_SCAN_SSSE3_DISPATCH
         // a run of multi-byte sequences (e.g. CJK text) is validated sequence
         // by sequence without searching for the next special byte in between
         do
         {
-            const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+            const std::size_t seq = validate_one_utf8(p, static_cast<std::size_t>(e - p));
             if (seq == 0)
             {
-                return pos; // ill-formed or truncated: let the byte path diagnose it
+                return static_cast<std::size_t>(p - data); // ill-formed or truncated: let the byte path diagnose it
             }
-            pos += seq;
+            p += seq;
         }
-        while (pos < n && data[pos] >= 0x80u);
+        while (p != e && *p >= 0x80u);
+#endif
     }
-    return pos;
+    return static_cast<std::size_t>(p - data);
 }
 
 #if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
@@ -11447,7 +11873,7 @@ inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t 
 // next delimiter is validated in one shot by simdutf; on the rare failure the
 // scalar helper recomputes the exact valid prefix so the byte path still
 // produces the precise diagnostic. Without it, the pure scalar path is used.
-inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+JSON_HEDLEY_ALWAYS_INLINE std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noexcept
 {
 #if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
     const std::size_t run = find_string_delimiter(data, n);
@@ -11457,6 +11883,42 @@ inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noe
     }
 #endif
     return scalar_string_bulk_run(data, n);
+}
+
+#if JSON_SCAN_NEON && !(defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17))
+/// scalar_string_bulk_run() from @a start on, out of line (see
+/// lexer_string_bulk_run())
+JSON_HEDLEY_NEVER_INLINE inline std::size_t string_bulk_run_from(const unsigned char* data, std::size_t start, std::size_t n) noexcept
+{
+    return start + scalar_string_bulk_run(data + start, n - start);
+}
+#endif
+
+// string_bulk_run() for the lexer. With NEON, only the first four words are
+// checked inline (most keys and short values end there), and longer runs and
+// non-ASCII text continue out of line. The lexer's scan function runs once per
+// token, and the vector code inlined into it needs more registers, which every
+// token pays for: 5% of json::accept() on jeopardy.json with Apple Clang on
+// Apple M1, even though no string of that file reaches the vector code. The
+// serializer keeps string_bulk_run() inline, which is faster there.
+JSON_HEDLEY_ALWAYS_INLINE std::size_t lexer_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+{
+#if JSON_SCAN_NEON && !(defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17))
+    std::size_t i = 0;
+    for (int words = 4; words > 0 && n - i >= 8; --words)
+    {
+        const std::uint64_t special = swar_string_special(read_eight_bytes(data + i));
+        if (special != 0)
+        {
+            const std::size_t pos = i + (static_cast<std::size_t>(count_trailing_zeros(special)) / 8);
+            return data[pos] < 0x80u ? pos : string_bulk_run_from(data, pos, n);
+        }
+        i += 8;
+    }
+    return string_bulk_run_from(data, i, n);
+#else
+    return string_bulk_run(data, n);
+#endif
 }
 
 // Decode the 4 hex digits at [data, data+4) - the digits following a `\u`
@@ -11905,30 +12367,43 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// contiguous input: bulk-append the run of ordinary characters and complete
-    /// well-formed UTF-8 sequences starting at the current read position, leaving
-    /// the first byte that needs individual handling (the closing quote, an
-    /// escape, a control character, or an ill-formed UTF-8 byte) for get()
-    void scan_string_bulk(std::true_type /*bulk*/)
+    /// well-formed UTF-8 sequences starting at the current read position, then
+    /// read the first byte that needs individual handling (the closing quote, an
+    /// escape, a control character, or an ill-formed UTF-8 byte) like get().
+    /// That byte is taken from the buffer that was just scanned. Through get(),
+    /// Apple Clang merged this read with the other get() calls of the scan
+    /// function, which load the read position again right after it was stored
+    /// (3% of json::accept() on jeopardy.json on Apple M1).
+    char_int_type get_after_string_run(std::true_type /*bulk*/)
     {
         // a pending unget must be consumed through the normal path first
         if (next_unget)
         {
-            return;
+            return get();
         }
         const std::size_t remaining = ia.bulk_remaining();
         if (remaining == 0)
         {
-            return;
+            return get();
         }
-        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        const auto* const raw = ia.bulk_data();
+        const auto* const data = reinterpret_cast<const unsigned char*>(raw);
 
-        const std::size_t pos = string_bulk_run(data, remaining);
-        if (pos == 0)
+        const std::size_t pos = lexer_string_bulk_run(data, remaining);
+        if (pos != 0)
         {
-            return;
+            token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
+            bulk_consume(reinterpret_cast<const char*>(data), pos);
         }
-        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
-        bulk_consume(reinterpret_cast<const char*>(data), pos);
+        if (pos == remaining)
+        {
+            return get(); // end of the contiguous input
+        }
+        // what get() does, with the byte at hand
+        advance_position();
+        ia.bulk_skip(1);
+        current = char_traits<char_type>::to_int_type(raw[pos]);
+        return track_after_read();
     }
 
     /// consume @a n characters at @a data (the adapter's bulk_data()) and do
@@ -11961,7 +12436,10 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// streaming input: no bulk fast path
-    void scan_string_bulk(std::false_type /*bulk*/) const noexcept {}
+    char_int_type get_after_string_run(std::false_type /*bulk*/)
+    {
+        return get();
+    }
 
     /*!
     @brief scan a string literal
@@ -11989,11 +12467,8 @@ class lexer : public lexer_base<BasicJsonType>
         while (true)
         {
             // bulk-consume ordinary characters from contiguous input, then
-            // handle the next special byte through the switch below
-            scan_string_bulk(std::integral_constant<bool, bulk_scan> {});
-
-            // get the next character
-            switch (get())
+            // get the next character, the one that ends the run
+            switch (get_after_string_run(std::integral_constant<bool, bulk_scan>()))
             {
                 // end of file while parsing the string
                 case char_traits<char_type>::eof():
@@ -26855,12 +27330,12 @@ NLOHMANN_JSON_NAMESPACE_END
 #endif
 
 // SSE2 (every x86-64 CPU) and NEON (every 64-bit Arm CPU) convert the 16
-// digits of a double at once
-#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC))
+// digits of a double at once (unless JSON_NO_SIMD selects the portable code)
+#if !defined(JSON_NO_SIMD) && (defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC)))
     #include <emmintrin.h>
     #define JSON_DTOA_SSE2 1
     #define JSON_DTOA_NEON 0
-#elif (defined(__aarch64__) || defined(_M_ARM64)) && !defined(_M_ARM64EC) && !defined(__ARM_BIG_ENDIAN)
+#elif !defined(JSON_NO_SIMD) && (defined(__aarch64__) || defined(_M_ARM64)) && !defined(_M_ARM64EC) && !defined(__ARM_BIG_ENDIAN)
     #include <arm_neon.h>
     #define JSON_DTOA_SSE2 0
     #define JSON_DTOA_NEON 1
@@ -38833,6 +39308,13 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_UNLOCKED_FILE_IO
 #undef JSON_DTOA_SSE2
 #undef JSON_DTOA_NEON
+#undef JSON_SCAN_NEON
+#undef JSON_SCAN_SSE2
+#undef JSON_SCAN_SSSE3
+#undef JSON_SCAN_SSSE3_DISPATCH
+#undef JSON_SCAN_SSSE3_TARGET
+#undef JSON_SCAN_VECTOR
+#undef JSON_SCAN_VECTOR_UTF8
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
