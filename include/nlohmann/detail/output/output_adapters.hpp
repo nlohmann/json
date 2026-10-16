@@ -138,7 +138,7 @@ class output_vector_sink
 {
   public:
     explicit output_vector_sink(std::vector<CharType, AllocatorType>& vec) noexcept
-        : v(&vec), position(vec.size())
+        : v(&vec), cursor(vec.data() + vec.size()), limit(cursor)
     {}
 
     output_vector_sink(const output_vector_sink&) = delete;
@@ -146,7 +146,7 @@ class output_vector_sink
     output_vector_sink& operator=(output_vector_sink&&) = delete;
 
     output_vector_sink(output_vector_sink&& other) noexcept
-        : v(other.v), position(other.position)
+        : v(other.v), cursor(other.cursor), limit(other.limit)
     {
         other.v = nullptr;
     }
@@ -155,7 +155,7 @@ class output_vector_sink
     {
         if (v != nullptr)
         {
-            v->resize(position);
+            v->resize(position());
         }
     }
 
@@ -164,11 +164,11 @@ class output_vector_sink
     JSON_HEDLEY_ALWAYS_INLINE
     void write_character(CharType c)
     {
-        if (JSON_HEDLEY_UNLIKELY(position == v->size()))
+        if (JSON_HEDLEY_UNLIKELY(cursor == limit))
         {
             grow(1);
         }
-        (*v)[position++] = c;
+        *cursor++ = c;
     }
 
     // no JSON_HEDLEY_NON_NULL here: binary_writer legitimately passes a null
@@ -177,7 +177,7 @@ class output_vector_sink
     JSON_HEDLEY_ALWAYS_INLINE
     void write_characters(const CharType* s, std::size_t length)
     {
-        if (JSON_HEDLEY_UNLIKELY(v->size() - position < length))
+        if (JSON_HEDLEY_UNLIKELY(space() < length))
         {
             if (length >= max_reserve_size)
             {
@@ -188,13 +188,13 @@ class output_vector_sink
         }
         if (length <= 32)
         {
-            copy_short(v->data() + position, s, length, std::integral_constant<bool, sizeof(CharType) == 1>());
-            position += length;
+            copy_short(cursor, s, length, std::integral_constant<bool, sizeof(CharType) == 1>());
+            cursor += length;
         }
         else
         {
-            std::memcpy(v->data() + position, s, length * sizeof(CharType));
-            position += length;
+            std::memcpy(cursor, s, length * sizeof(CharType));
+            cursor += length;
         }
     }
 
@@ -209,18 +209,18 @@ class output_vector_sink
     CharType* reserve(const std::size_t length)
     {
         JSON_ASSERT(length <= max_reserve_size);
-        if (JSON_HEDLEY_UNLIKELY(v->size() - position < length))
+        if (JSON_HEDLEY_UNLIKELY(space() < length))
         {
             grow(length);
         }
-        return v->data() + position;
+        return cursor;
     }
 
     /// keep the first @a length characters written to the space from reserve()
     JSON_HEDLEY_ALWAYS_INLINE
     void commit(const std::size_t length) noexcept
     {
-        position += length;
+        cursor += length;
     }
 
     /// nothing to pass on: the characters are in the vector (see output_adapter_sink)
@@ -228,6 +228,18 @@ class output_vector_sink
     {}
 
   private:
+    /// number of characters of *v written so far
+    std::size_t position() const noexcept
+    {
+        return static_cast<std::size_t>(cursor - v->data());
+    }
+
+    /// number of characters that fit the vector behind the write position
+    std::size_t space() const noexcept
+    {
+        return static_cast<std::size_t>(limit - cursor);
+    }
+
     /// make room for at least @a length more characters after the position;
     /// kept out of line so that the write functions stay small enough for
     /// GCC to inline them into the writer
@@ -237,10 +249,13 @@ class output_vector_sink
         // use the capacity the vector already has, else at least double it;
         // never less than min_vector_sink_capacity, so that a small value does not
         // reallocate for every few bytes
-        const std::size_t needed = position + length;
+        const std::size_t written = position();
+        const std::size_t needed = written + length;
         v->resize((std::max)(min_vector_sink_capacity, needed <= v->capacity()
                              ? v->capacity()
                              : (std::max)(needed, v->capacity() * 2)));
+        cursor = v->data() + written;
+        limit = v->data() + v->size();
     }
 
     /// append @a length (at least max_reserve_size) characters that do not fit
@@ -250,20 +265,24 @@ class output_vector_sink
     JSON_HEDLEY_NEVER_INLINE
     void append(const CharType* s, const std::size_t length)
     {
-        v->resize(position);
-        if (v->capacity() - position < length)
+        const std::size_t written = position();
+        v->resize(written);
+        if (v->capacity() - written < length)
         {
             // grow geometrically, with room for the writes that follow, so
             // that the next grow() need not reallocate right away
-            v->reserve((std::max)(v->capacity() * 2, position + length + max_reserve_size));
+            v->reserve((std::max)(v->capacity() * 2, written + length + max_reserve_size));
         }
         v->insert(v->end(), s, s + length);
-        position = v->size();
+        cursor = v->data() + v->size();
+        limit = cursor;
     }
 
     std::vector<CharType, AllocatorType>* v;
-    /// number of characters of *v written so far
-    std::size_t position;
+    /// the write position: in *v, at the number of characters written so far
+    CharType* cursor;
+    /// the end of *v
+    CharType* limit;
 };
 
 /// output adapter for byte vectors
