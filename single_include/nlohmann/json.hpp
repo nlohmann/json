@@ -9695,7 +9695,9 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <algorithm> // find_if, min
 #include <cstddef>
+#include <functional> // hash
 #include <limits> // numeric_limits
+#include <memory> // unique_ptr
 #include <string> // string
 #include <type_traits> // enable_if_t
 #include <utility> // move, pair
@@ -14888,6 +14890,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
+// #include <nlohmann/detail/meta/detected.hpp>
+
 // #include <nlohmann/detail/string_concat.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -15185,6 +15189,90 @@ struct diagnostic_positions
 #endif
 
 /*!
+@brief a hash table that finds the position of a key in an object whose
+       elements are kept in a vector (ordered_map)
+
+The elements stay where they are: the table only holds their hashes and
+positions, and the caller compares the keys.
+*/
+class object_key_index
+{
+  public:
+    static constexpr std::size_t npos = static_cast<std::size_t>(-1);
+
+    /// @param[in] element_hashes  the hashes of the keys of the elements that are there already
+    explicit object_key_index(std::vector<std::size_t>&& element_hashes)
+        : hashes(std::move(element_hashes))
+    {
+        std::size_t size = 256;
+        while (size < 4 * hashes.size())
+        {
+            size *= 2;
+        }
+        rebuild(size);
+    }
+
+    /// @return the position of the element with @a hash for which @a equal(position) holds, or npos
+    template<typename Equal>
+    std::size_t find(const std::size_t hash, Equal equal) const
+    {
+        for (std::size_t slot = hash & mask;; slot = (slot + 1) & mask)
+        {
+            const std::size_t entry = table[slot];
+            if (entry == 0)
+            {
+                return npos;
+            }
+            if (hashes[entry - 1] == hash && equal(entry - 1))
+            {
+                return entry - 1;
+            }
+        }
+    }
+
+    /// add the next element, whose position is the number of elements so far
+    void add(const std::size_t hash)
+    {
+        hashes.push_back(hash);
+        if (hashes.size() * 2 > table.size())
+        {
+            rebuild(table.size() * 2);
+        }
+        else
+        {
+            place(hash, hashes.size());
+        }
+    }
+
+  private:
+    void rebuild(const std::size_t size)
+    {
+        table.assign(size, 0);
+        mask = size - 1;
+        for (std::size_t i = 0; i < hashes.size(); ++i)
+        {
+            place(hashes[i], i + 1);
+        }
+    }
+
+    void place(const std::size_t hash, const std::size_t entry)
+    {
+        std::size_t slot = hash & mask;
+        while (table[slot] != 0)
+        {
+            slot = (slot + 1) & mask;
+        }
+        table[slot] = entry;
+    }
+
+    /// the hash of each element, by position
+    std::vector<std::size_t> hashes;
+    /// open addressing, a power of two in size: position + 1 of an element, or 0 for a free slot
+    std::vector<std::size_t> table {};
+    std::size_t mask = 0;
+};
+
+/*!
 @brief SAX implementation to create a JSON value from SAX events
 
 This class implements the @ref json_sax interface and processes the SAX events
@@ -15278,7 +15366,7 @@ class json_sax_dom_parser
     {
         BasicJsonType* const ref = store(BasicJsonType(BasicJsonType::value_t::object));
         reserve_frames();
-        frames.push_back(frame{ref->m_data.m_value.object, nullptr, ref, 0});
+        frames.push_back(frame{ref->m_data.m_value.object, nullptr, ref, 0, nullptr});
         in_object = true;
         stored_array = nullptr;
 
@@ -15297,7 +15385,7 @@ class json_sax_dom_parser
 
         // add null at the given key and store the reference for later; the
         // key is moved, as the lexer starts the next token with reset()
-        object_element = &(frames.back().object->operator[](std::move(val)));
+        object_element = insert_key(frames.back(), std::move(val), std::integral_constant<bool, indexed_keys> {});
         return true;
     }
 
@@ -15317,6 +15405,10 @@ class json_sax_dom_parser
         ref->set_parents();
 #endif
 
+        if (JSON_HEDLEY_UNLIKELY(frames.back().index != nullptr))
+        {
+            key_indexes.pop_back();
+        }
         frames.pop_back();
         enter_enclosing_container();
         return true;
@@ -15359,7 +15451,7 @@ class json_sax_dom_parser
             }
             reserve_frames();
             reserve_elements();
-            frames.push_back(frame{nullptr, nullptr, slot, elements.size()});
+            frames.push_back(frame{nullptr, nullptr, slot, elements.size(), nullptr});
             in_object = false;
             stored_array = nullptr;
         }
@@ -15441,7 +15533,70 @@ class json_sax_dom_parser
         BasicJsonType* slot;
         /// array without `array`: the index of its first element in `elements`
         std::size_t start;
+        /// object with many keys in a vector: its key_indexes entry, else nullptr
+        object_key_index* index;
     };
+
+    /// whether objects keep their elements in a vector and a key can be hashed,
+    /// so that a big object can find the keys it has in a hash table instead of
+    /// searching all of them
+    template<typename ObjectType, typename StringType>
+    using detect_indexable_keys = decltype(std::declval<ObjectType&>().emplace_new_key(std::declval<const StringType&>(), std::declval<typename ObjectType::mapped_type>()),
+                                           std::hash<StringType>()(std::declval<const StringType&>()));
+    static constexpr bool indexed_keys = is_detected<detect_indexable_keys, object_t, string_t>::value;
+
+    /// the number of keys from which an object looks them up in a hash table
+    static constexpr std::size_t key_index_threshold = 64;
+
+    /// add @a key to the object of @a f (or find it, if it is there), searching it in std::map
+    static BasicJsonType* insert_key(frame& f, string_t&& key, std::false_type /*indexed*/)
+    {
+        return &f.object->operator[](std::move(key));
+    }
+
+    /// add @a key to the object of @a f (or find it, if it is there), searching it in a vector
+    BasicJsonType* insert_key(frame& f, string_t&& key, std::true_type /*indexed*/)
+    {
+        object_t& obj = *f.object;
+        if (JSON_HEDLEY_LIKELY(obj.size() < key_index_threshold))
+        {
+            return &obj[std::move(key)];
+        }
+        return insert_key_with_index(f, std::move(key));
+    }
+
+    /// add @a key to the big object of @a f (or find it, if it is there), using its key index
+    JSON_HEDLEY_NEVER_INLINE
+    BasicJsonType* insert_key_with_index(frame& f, string_t&& key)
+    {
+        object_t& obj = *f.object;
+        const std::hash<string_t> hasher {};
+        const std::size_t hash = hasher(key);
+        if (JSON_HEDLEY_UNLIKELY(f.index == nullptr))
+        {
+            std::vector<std::size_t> hashes;
+            hashes.reserve(obj.size());
+            for (const auto& element : obj)
+            {
+                hashes.push_back(hasher(element.first));
+            }
+            key_indexes.emplace_back(new object_key_index(std::move(hashes)));
+            f.index = key_indexes.back().get();
+        }
+
+        const std::size_t position = f.index->find(hash, [&obj, &key](std::size_t i)
+        {
+            return (obj.begin() + static_cast<std::ptrdiff_t>(i))->first == key;
+        });
+        if (position != object_key_index::npos)
+        {
+            return &(obj.begin() + static_cast<std::ptrdiff_t>(position))->second;
+        }
+
+        obj.emplace_new_key(key, BasicJsonType());
+        f.index->add(hash);
+        return &obj.back().second;
+    }
 
     /// the number of elements an array collects on the stack before it
     /// switches to storing them directly, so that it does not hold up the
@@ -15469,7 +15624,7 @@ class json_sax_dom_parser
     {
         BasicJsonType* const ref = store(BasicJsonType(BasicJsonType::value_t::array));
         reserve_frames();
-        frames.push_back(frame{nullptr, ref->m_data.m_value.array, ref, 0});
+        frames.push_back(frame{nullptr, ref->m_data.m_value.array, ref, 0, nullptr});
         in_object = false;
         stored_array = ref->m_data.m_value.array;
 
@@ -15594,6 +15749,8 @@ class json_sax_dom_parser
     std::vector<frame> frames {};
     /// the elements of the open arrays that are not stored in them yet
     std::vector<BasicJsonType> elements {};
+    /// the key indexes of the open objects that have one, innermost last
+    std::vector<std::unique_ptr<object_key_index>> key_indexes {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether the innermost container is an object (frames.back().object)
