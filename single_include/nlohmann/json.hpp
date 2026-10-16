@@ -38050,7 +38050,8 @@ public:
     {
         // the patch
         basic_json result(value_t::array);
-        diff_recursively(result, source, target, path, 0);
+        string_t buffer = path;
+        diff_recursively(result, source, target, buffer, 0);
         return result;
     }
 
@@ -38210,10 +38211,26 @@ public:
                                  std::vector<const_iterator>& added)
     {
         // first pass: one lookup per source key
+        // Objects of the same size usually have the same keys, in the same
+        // order: walk them together as long as that holds, which takes no lookups.
         target_values.reserve(source.size());
         std::size_t common = 0;
+        bool together = source.size() == target.size();
+        auto partner = target.cbegin();
         for (auto it = source.cbegin(); it != source.cend(); ++it)
         {
+            if (together)
+            {
+                if (it.key() == partner.key())
+                {
+                    target_values.push_back(&partner.value());
+                    ++common;
+                    ++partner;
+                    continue;
+                }
+                together = false;
+            }
+
             const auto found = target.find(it.key());
             if (found != target.cend())
             {
@@ -38224,6 +38241,12 @@ public:
             {
                 target_values.push_back(nullptr);
             }
+        }
+
+        // the same keys in the same order
+        if (together)
+        {
+            return true;
         }
 
         // second pass: find the keys only target has. An object type that
@@ -38291,6 +38314,13 @@ public:
             return true;
         }
 
+        // equal objects, whose members are in a different order, need no
+        // operations
+        if (source == target)
+        {
+            return false;
+        }
+
         // slow path: the common keys are in a different relative
         // order in source and target (only possible for a
         // reorderable object_t like ordered_map). Building a
@@ -38325,6 +38355,9 @@ public:
     @brief @ref diff, for values at nesting level @a depth, appending the
            operations to @a result
 
+    @a path is the path of the values; it is a buffer that is extended and
+    shortened again below, and is the same when the function returns.
+
     Diffing two arrays or objects calls this function again, once per nesting
     level, so values nested deeply enough used to exhaust the call stack and
     terminate the process. The descent is bounded here: once @ref
@@ -38332,7 +38365,7 @@ public:
     diff_iteratively diffs what is left without the call stack.
     */
     static void diff_recursively(basic_json& result, const basic_json& source, const basic_json& target,
-                                 const string_t& path, const std::size_t depth)
+                                 string_t& path, const std::size_t depth)
     {
         // if the values are the same, there is nothing to do
         if (source == target)
@@ -38344,9 +38377,9 @@ public:
     }
 
     /// @brief @ref diff_recursively for values known to be unequal; callers
-    ///        compare first so they build no path for equal ones
+    ///        compare first so they extend the path only for unequal ones
     static void diff_unequal(basic_json& result, const basic_json& source, const basic_json& target,
-                             const string_t& path, const std::size_t depth)
+                             string_t& path, const std::size_t depth)
     {
         if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
         {
@@ -38365,6 +38398,8 @@ public:
         {
             case value_t::array:
             {
+                const std::size_t path_length = path.size();
+
                 // first pass: traverse common elements
                 std::size_t i = 0;
                 while (i < source.size() && i < target.size())
@@ -38372,7 +38407,9 @@ public:
                     // recursive call to compare array values at index i
                     if (!(source[i] == target[i]))
                     {
-                        diff_unequal(result, source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)), depth + 1);
+                        diff_append_index(path, i);
+                        diff_unequal(result, source[i], target[i], path, depth + 1);
+                        path.resize(path_length);
                     }
                     ++i;
                 }
@@ -38394,6 +38431,7 @@ public:
                     // lookup is needed. Deleted keys are interleaved here
                     // too, in source's original order, to match the
                     // historical (pre-reordering-aware) output order.
+                    const std::size_t path_length = path.size();
                     std::size_t i = 0;
                     for (auto it = source.cbegin(); it != source.cend(); ++it, ++i)
                     {
@@ -38401,7 +38439,9 @@ public:
                         {
                             if (!(it.value() == *target_values[i]))
                             {
-                                diff_unequal(result, it.value(), *target_values[i], detail::concat<string_t>(path, '/', detail::escape(it.key())), depth + 1);
+                                diff_append_key(path, it.key());
+                                diff_unequal(result, it.value(), *target_values[i], path, depth + 1);
+                                path.resize(path_length);
                             }
                         }
                         else
