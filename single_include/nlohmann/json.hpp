@@ -31171,6 +31171,27 @@ class serializer
 
             const auto byte = static_cast<std::uint8_t>(s[i]);
 
+            if (EnsureAscii && state == UTF8_ACCEPT && byte >= 0x80)
+            {
+                // a run of well-formed multi-byte characters is escaped
+                // straight into the write buffer; an ill-formed sequence
+                // ends the run and is left to the byte-at-a-time path
+                if (bytes != 0)
+                {
+                    put_buffer(string_buffer, bytes);
+                    bytes = 0;
+                    bytes_after_last_accept = 0;
+                }
+                const std::size_t escaped = write_u_escapes(reinterpret_cast<const unsigned char*>(s.data()) + i, s.size() - i);
+                if (escaped != 0)
+                {
+                    bytes_after_last_accept = 0;
+                    undumped_chars = 0;
+                    i += escaped - 1;
+                    continue;
+                }
+            }
+
             switch (decode(state, codepoint, byte))
             {
                 case UTF8_ACCEPT:  // decode found a new code point
@@ -31745,6 +31766,75 @@ class serializer
             }
         };
         return escapes;
+    }
+
+    /*!
+    @brief escape the well-formed multi-byte characters at the start of @a data
+
+    Writes the "\\uXXXX" escape of each character (two of them for a character
+    above U+FFFF) straight into the write buffer, which is why the caller must
+    have written out what is pending in @ref string_buffer. Stops at the first
+    byte that is below 0x80 or starts an ill-formed or truncated sequence, which
+    the caller handles.
+
+    @return the number of bytes of @a data that have been escaped
+    */
+    JSON_HEDLEY_NEVER_INLINE std::size_t write_u_escapes(const unsigned char* data, std::size_t n)
+    {
+        constexpr const char* nibble_to_hex = "0123456789abcdef";
+        std::size_t i = 0;
+        while (i < n && data[i] >= 0x80)
+        {
+            const std::size_t length = validate_one_utf8(data + i, n - i);
+            if (length == 0)
+            {
+                break;
+            }
+
+            const auto b0 = static_cast<std::uint32_t>(data[i]);
+            const auto b1 = static_cast<std::uint32_t>(data[i + 1]);
+            std::uint32_t codepoint = 0;
+            switch (length)
+            {
+                case 2:
+                    codepoint = ((b0 & 0x1Fu) << 6u) | (b1 & 0x3Fu);
+                    break;
+                case 3:
+                    codepoint = ((b0 & 0x0Fu) << 12u) | ((b1 & 0x3Fu) << 6u) | (static_cast<std::uint32_t>(data[i + 2]) & 0x3Fu);
+                    break;
+                default:
+                    codepoint = ((b0 & 0x07u) << 18u) | ((b1 & 0x3Fu) << 12u) | ((static_cast<std::uint32_t>(data[i + 2]) & 0x3Fu) << 6u) | (static_cast<std::uint32_t>(data[i + 3]) & 0x3Fu);
+                    break;
+            }
+
+            // at most two escapes of six bytes each
+            if (JSON_HEDLEY_UNLIKELY(write_buffer.size() - write_buffer_pos < 12))
+            {
+                flush();
+            }
+            char* d = write_buffer.data() + write_buffer_pos;
+            if (codepoint > 0xFFFFu)
+            {
+                d = put_u_escape(d, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)), nibble_to_hex);
+                codepoint = 0xDC00u + (codepoint & 0x3FFu);
+            }
+            d = put_u_escape(d, static_cast<std::uint16_t>(codepoint), nibble_to_hex);
+            write_buffer_pos = static_cast<std::size_t>(d - write_buffer.data());
+            i += length;
+        }
+        return i;
+    }
+
+    static char* put_u_escape(char* d, const std::uint16_t codeunit, const char* nibble_to_hex) noexcept
+    {
+        const auto unit = static_cast<std::uint32_t>(codeunit);
+        d[0] = '\\';
+        d[1] = 'u';
+        d[2] = nibble_to_hex[(unit >> 12u) & 0x0Fu];
+        d[3] = nibble_to_hex[(unit >> 8u) & 0x0Fu];
+        d[4] = nibble_to_hex[(unit >> 4u) & 0x0Fu];
+        d[5] = nibble_to_hex[unit & 0x0Fu];
+        return d + 6;
     }
 
     /*!
