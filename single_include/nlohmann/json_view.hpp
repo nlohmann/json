@@ -5646,19 +5646,20 @@ class view_item
 
     view_item(const iterator& it, std::size_t index)
         : m_it(it)
-    {
-        if (!it.is_object_iterator())
-        {
-            m_index = std::to_string(index);
-        }
-    }
+        , m_position(index)
+    {}
 
-    /// the member key, or the element index for arrays
+    /// the member key, or the element index for arrays (as text made on the
+    /// first call, so that iterating over the values pays nothing for it)
     string_view_t key() const
     {
         if (m_it.is_object_iterator())
         {
             return m_it.key();
+        }
+        if (m_index.empty())
+        {
+            m_index = std::to_string(m_position);
         }
         return string_view_t(m_index.data(), m_index.size());
     }
@@ -5682,7 +5683,8 @@ class view_item
 
   private:
     iterator m_it;
-    std::string m_index{}; // NOLINT(readability-redundant-member-init)
+    std::size_t m_position; ///< the index of an array element
+    mutable std::string m_index{}; ///< the text of m_position, once key() was called // NOLINT(readability-redundant-member-init)
 };
 
 /// the range returned by basic_json_view::items()

@@ -1113,6 +1113,28 @@ TEST_CASE("json_view element access and iteration")
         CHECK((*first++).key() == "0");
         CHECK((*first).key() == "1");
         CHECK(++first == items.end());
+
+        // the keys of array elements are their indexes, whether or not they are asked for
+        std::string numbers = "[0";
+        for (int i = 1; i < 1234; ++i)
+        {
+            numbers += "," + std::to_string(i);
+        }
+        const json_document array = json_document::parse(numbers + "]");
+        std::size_t position = 0;
+        for (const auto& item : array.root().items())
+        {
+            CHECK(item.value().get<std::size_t>() == position);
+            if (position % 3 != 0) // (not for every item: values alone do not make the key)
+            {
+                CHECK(item.key() == std::to_string(position));
+                CHECK(item.key().data() == item.key().data()); // (the same text every time)
+                const json_view::item copy = item;
+                CHECK(copy.key() == std::to_string(position));
+            }
+            ++position;
+        }
+        CHECK(position == 1234);
 #ifdef JSON_HAS_CPP_17
         std::string pairs;
         for (const auto [key, value] : d.root().items())
