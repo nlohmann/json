@@ -1595,8 +1595,28 @@ class json_pointer
                 {
                     end = key.size();
                 }
+                const std::size_t token_size = end - pos - 1;
+
+                // a token that is a plain index of up to 9 digits, which is
+                // the case for almost all array elements, is not copied
+                std::size_t index = 0;
+                bool plain_index = current->type() == detail::value_t::array && token_size != 0 && token_size <= 9 && (token_size == 1 || data[pos + 1] != '0');
+                for (std::size_t k = pos + 1; plain_index && k < end; ++k)
+                {
+                    plain_index = data[k] >= '0' && data[k] <= '9';
+                    index = (index * 10) + static_cast<std::size_t>(data[k] - '0');
+                }
+                if (plain_index)
+                {
+                    current = &current->operator[](static_cast<typename BasicJsonType::size_type>(index));
+                    values.push_back(current);
+                    ends.push_back(end);
+                    pos = end;
+                    continue;
+                }
+
                 token.clear();
-                token.append(data + pos + 1, end - pos - 1);
+                token.append(data + pos + 1, token_size);
                 if (token.find_first_of('~') != string_t::npos)
                 {
                     detail::unescape(token);
@@ -1606,7 +1626,8 @@ class json_pointer
                 {
                     case detail::value_t::null:
                     {
-                        if (arrays.contains(data, pos))
+                        // a first child 0 makes the value an array without a look-up
+                        if ((token_size == 1 && data[pos + 1] == '0') || arrays.contains(data, pos))
                         {
                             // some reference token below this position is 0, so the
                             // value is an array
