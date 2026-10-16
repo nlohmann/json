@@ -320,8 +320,12 @@ struct diagnostic_positions
 
 This class implements the @ref json_sax interface and processes the SAX events
 to create a JSON value which makes it basically a DOM parser. The structure or
-hierarchy of the JSON value is managed by the stack `ref_stack` which contains
-a pointer to the respective array or object for each recursion depth.
+hierarchy of the JSON value is managed by the stack `frames` which contains
+an entry for each open array or object. The parser of the text formats, for
+which the size of a container is not known up front, collects the elements of
+an array and the members of an `ordered_json` object on a stack and moves them
+into a container of the exact size; the binary readers use the plain
+@ref json_sax_dom_binary_parser instead.
 
 After successful parsing, the value that is passed by reference to the
 constructor contains the parsed value.
@@ -354,6 +358,403 @@ class json_sax_dom_parser
     json_sax_dom_parser& operator=(const json_sax_dom_parser&) = delete;
     json_sax_dom_parser& operator=(json_sax_dom_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     ~json_sax_dom_parser() = default;
+
+    bool null()
+    {
+        handle_value(nullptr);
+        return true;
+    }
+
+    bool boolean(bool val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_integer(number_integer_t val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_unsigned(number_unsigned_t val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_float(number_float_t val, const string_t& /*unused*/)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool string(string_t& val)
+    {
+        // json_sax documents that the passed value may be moved from,
+        // so hand the buffer over instead of copying it
+        handle_value(std::move(val));
+        return true;
+    }
+
+    bool binary(binary_t& val)
+    {
+        // json_sax documents that the passed value may be moved from,
+        // so hand the buffer over instead of copying it
+        handle_value(std::move(val));
+        return true;
+    }
+
+    bool start_object(std::size_t len)
+    {
+        BasicJsonType* const ref = store(BasicJsonType(BasicJsonType::value_t::object));
+        reserve_frames();
+        frames.push_back(frame{ref->m_data.m_value.object, nullptr, ref, 0});
+
+#if JSON_DIAGNOSTIC_POSITIONS
+        // Ensure this is after the call to store to ensure correct start position.
+        diagnostic_positions::set_container_start(*ref, m_lexer_ref);
+#endif
+
+        return check_container_size(*this, len, "object", ref);
+    }
+
+    bool key(string_t& val)
+    {
+        JSON_ASSERT(!frames.empty());
+        JSON_ASSERT(frames.back().object != nullptr);
+
+        // add null at the given key and store the reference for later; the
+        // key is moved, as the lexer starts the next token with reset()
+        object_element = &(frames.back().object->operator[](std::move(val)));
+        return true;
+    }
+
+    bool end_object()
+    {
+        JSON_ASSERT(!frames.empty());
+        JSON_ASSERT(frames.back().object != nullptr);
+
+#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
+        // objects are never buffered, so their value is where it was stored
+        BasicJsonType* const ref = frames.back().slot;
+#endif
+#if JSON_DIAGNOSTIC_POSITIONS
+        diagnostic_positions::set_container_end(*ref, m_lexer_ref);
+#endif
+#if JSON_DIAGNOSTICS
+        ref->set_parents();
+#endif
+
+        frames.pop_back();
+        return true;
+    }
+
+    bool start_array(std::size_t len)
+    {
+        if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > array_t().max_size()))
+        {
+            // the array does not exist yet: report with an empty one
+            BasicJsonType too_large(BasicJsonType::value_t::array);
+            return container_too_large_error(*this, len, "array", &too_large);
+        }
+
+#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
+        // the values need their final place from the start (their parent
+        // pointers and positions refer to it), so no buffering
+        start_stored_array(len);
+#else
+        if (len != detail::unknown_size())
+        {
+            // the number of elements is known: reserve and store them directly
+            start_stored_array(len);
+        }
+        else
+        {
+            // the number of elements is not known, so growing the array
+            // would reallocate it (and, being a vector, move its elements)
+            // again and again. Collect the elements on a stack shared by all
+            // arrays instead, and copy them to an array of the exact size
+            // when the closing bracket arrives.
+            BasicJsonType* slot = nullptr;
+            if (frames.empty())
+            {
+                slot = &root;
+            }
+            else if (frames.back().object != nullptr)
+            {
+                slot = object_element;
+            }
+            reserve_frames();
+            reserve_elements();
+            frames.push_back(frame{nullptr, nullptr, slot, elements.size()});
+        }
+#endif
+        return true;
+    }
+
+    bool end_array()
+    {
+        JSON_ASSERT(!frames.empty());
+        JSON_ASSERT(frames.back().object == nullptr);
+        const frame f = frames.back();
+        frames.pop_back();
+
+        if (f.array == nullptr)
+        {
+            // the elements are on the stack: make them the array
+            const auto first = elements.begin() + static_cast<std::ptrdiff_t>(f.start);
+            array_t* const arr = BasicJsonType::template create<array_t>(std::make_move_iterator(first), std::make_move_iterator(elements.end()));
+            BasicJsonType value;
+            value.m_data.m_type = BasicJsonType::value_t::array;
+            value.m_data.m_value.array = arr;
+            elements.erase(first, elements.end());
+
+            if (f.slot != nullptr)
+            {
+                *f.slot = std::move(value);
+            }
+            else
+            {
+                store(std::move(value));
+            }
+            return true;
+        }
+
+#if JSON_DIAGNOSTIC_POSITIONS
+        diagnostic_positions::set_container_end(*f.slot, m_lexer_ref);
+#endif
+#if JSON_DIAGNOSTICS
+        f.slot->set_parents();
+#endif
+        return true;
+    }
+
+    template<class Exception>
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
+                     const Exception& ex)
+    {
+        errored = true;
+        static_cast<void>(ex);
+        if (allow_exceptions)
+        {
+            JSON_THROW(ex);
+        }
+        return false;
+    }
+
+    constexpr bool is_errored() const
+    {
+        return errored;
+    }
+
+  private:
+    using object_t = typename BasicJsonType::object_t;
+    using array_t = typename BasicJsonType::array_t;
+
+    /// an array or object that is being read
+    struct frame
+    {
+        /// the object, or nullptr for an array
+        object_t* object;
+        /// the array if its elements are stored in it as they arrive, or
+        /// nullptr for an array and an object
+        array_t* array;
+        /// array without `array`: where the finished array goes (nullptr: it
+        /// is an element of the enclosing array); otherwise: the value that
+        /// holds the object or array
+        BasicJsonType* slot;
+        /// array without `array`: the index of its first element in `elements`
+        std::size_t start;
+    };
+
+    /// the number of elements an array collects on the stack before it
+    /// switches to storing them directly, so that it does not hold up the
+    /// stack with its elements (and move all of them in the end)
+    static constexpr std::size_t buffer_limit = 16;
+
+    void reserve_frames()
+    {
+        if (JSON_HEDLEY_UNLIKELY(frames.capacity() == 0))
+        {
+            frames.reserve(16);
+        }
+    }
+
+    void reserve_elements()
+    {
+        if (JSON_HEDLEY_UNLIKELY(elements.capacity() == 0))
+        {
+            elements.reserve(64);
+        }
+    }
+
+    /// store the elements of a new array directly in it
+    void start_stored_array(const std::size_t len)
+    {
+        BasicJsonType* const ref = store(BasicJsonType(BasicJsonType::value_t::array));
+        reserve_frames();
+        frames.push_back(frame{nullptr, ref->m_data.m_value.array, ref, 0});
+
+#if JSON_DIAGNOSTIC_POSITIONS
+        // Ensure this is after the call to store to ensure correct start position.
+        diagnostic_positions::set_container_start(*ref, m_lexer_ref);
+#endif
+
+        if (len != detail::unknown_size())
+        {
+            reserve_array(*ref->m_data.m_value.array, len, priority_tag<1> {});
+        }
+    }
+
+    /*!
+    @brief store a value as the next element of the open array or object (or
+           as the root)
+    @return the stored value
+    */
+    template<typename Value>
+    JSON_HEDLEY_RETURNS_NON_NULL
+    BasicJsonType* store(Value&& v)
+    {
+        if (frames.empty())
+        {
+            root = BasicJsonType(std::forward<Value>(v));
+            return &root;
+        }
+
+        frame& f = frames.back();
+        if (f.object != nullptr)
+        {
+            JSON_ASSERT(object_element);
+            *object_element = BasicJsonType(std::forward<Value>(v));
+            return object_element;
+        }
+
+        if (f.array != nullptr)
+        {
+            f.array->emplace_back(std::forward<Value>(v));
+            return &f.array->back();
+        }
+
+        elements.emplace_back(std::forward<Value>(v));
+        if (JSON_HEDLEY_UNLIKELY(elements.size() - f.start > buffer_limit))
+        {
+            return spill(f);
+        }
+        return &elements.back();
+    }
+
+    /*!
+    @brief switch an array that collects its elements on the stack to storing
+           them directly
+    @return the last element of the array
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    BasicJsonType* spill(frame& f)
+    {
+        JSON_ASSERT(f.array == nullptr);
+        const auto first = elements.begin() + static_cast<std::ptrdiff_t>(f.start);
+        BasicJsonType value(BasicJsonType::value_t::array);
+        array_t& arr = *value.m_data.m_value.array;
+        reserve_array(arr, 4 * buffer_limit, priority_tag<1> {});
+        arr.insert(arr.end(), std::make_move_iterator(first), std::make_move_iterator(elements.end()));
+        elements.erase(first, elements.end());
+        f.array = &arr;
+
+        // the array takes the place its first element had on the stack
+        if (f.slot != nullptr)
+        {
+            *f.slot = std::move(value);
+        }
+        else
+        {
+            JSON_ASSERT(frames.size() >= 2);
+            frame& enclosing = frames[frames.size() - 2];
+            if (enclosing.array != nullptr)
+            {
+                enclosing.array->emplace_back(std::move(value));
+            }
+            else
+            {
+                elements.emplace_back(std::move(value));
+            }
+        }
+        return &arr.back();
+    }
+
+    template<typename Value>
+    void handle_value(Value&& v)
+    {
+        BasicJsonType* const stored = store(std::forward<Value>(v));
+
+#if JSON_DIAGNOSTIC_POSITIONS
+        diagnostic_positions::set_from_lexer(*stored, m_lexer_ref);
+#else
+        static_cast<void>(stored);
+#endif
+    }
+
+    /// the parsed JSON value
+    BasicJsonType& root;
+    /// the open arrays and objects
+    std::vector<frame> frames {};
+    /// the elements of the open arrays that are not stored in them yet
+    std::vector<BasicJsonType> elements {};
+    /// helper to hold the reference for the next object element
+    BasicJsonType* object_element = nullptr;
+    /// whether a syntax error occurred
+    bool errored = false;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
+    /// the lexer reference to obtain the current position
+    lexer_t* m_lexer_ref = nullptr;
+};
+
+/*!
+@brief SAX implementation to create a JSON value from the events of a binary reader
+
+The DOM parser of the text formats (json_sax_dom_parser) collects the elements
+of arrays and the members of objects on a stack and builds them in one
+exact-size allocation, which pays off because a text parser does not know the
+number of elements up front. Binary formats announce the size of their
+containers (CBOR, MessagePack, BSON and BON8 do, and so do the optimized
+containers of UBJSON and BJData), so they store each value directly in its
+container, and the bookkeeping of the collecting parser would be pure
+overhead for them. This is the plain parser: the structure or hierarchy of the
+JSON value is managed by the stack `ref_stack` which contains a pointer to the
+respective array or object for each recursion depth.
+
+After successful parsing, the value that is passed by reference to the
+constructor contains the parsed value.
+
+@tparam BasicJsonType  the JSON type
+*/
+template<typename BasicJsonType, typename InputAdapterType>
+class json_sax_dom_binary_parser
+{
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
+    using lexer_t = lexer<BasicJsonType, InputAdapterType>;
+
+    /*!
+    @param[in,out] r  reference to a JSON value that is manipulated while
+                       parsing
+    @param[in] allow_exceptions_  whether parse errors yield exceptions
+    */
+    explicit json_sax_dom_binary_parser(BasicJsonType& r, const bool allow_exceptions_ = true, lexer_t* lexer_ = nullptr)
+        : root(r), allow_exceptions(allow_exceptions_), m_lexer_ref(lexer_)
+    {}
+
+    // make class move-only
+    json_sax_dom_binary_parser(const json_sax_dom_binary_parser&) = delete;
+    json_sax_dom_binary_parser(json_sax_dom_binary_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
+    json_sax_dom_binary_parser& operator=(const json_sax_dom_binary_parser&) = delete;
+    json_sax_dom_binary_parser& operator=(json_sax_dom_binary_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
+    ~json_sax_dom_binary_parser() = default;
 
     bool null()
     {
