@@ -7507,8 +7507,7 @@ public:
         target_values.reserve(source.size());
         std::size_t common = 0;
         bool together = source.size() == target.size();
-        auto partner = target.cbegin();
-        for (auto it = source.cbegin(); it != source.cend(); ++it)
+        for (auto it = source.cbegin(), partner = target.cbegin(); it != source.cend(); ++it)
         {
             if (together)
             {
