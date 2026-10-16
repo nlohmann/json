@@ -29130,11 +29130,7 @@ class binary_writer
                 // 0x86..0x8A: object with 0..4 members; 0x8B: object ended by 0xFE
                 write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x86 + N : 0x8B), string_open);
 
-                for (const auto& el : *j.m_data.m_value.object)
-                {
-                    write_bon8_string(el.first, string_open, j);
-                    write_bon8_value(el.second, string_open, depth + 1);
-                }
+                write_bon8_members(j, string_open, depth);
 
                 if (N > 4)
                 {
@@ -29394,6 +29390,73 @@ class binary_writer
             {
                 write_bon8_value(*it, string_open, depth + 1);
                 ++it;
+            }
+        }
+    }
+
+    /*!
+    @brief write the members of the object @a j as BON8
+
+    A member whose value is null, a boolean, a number, or a string is written
+    without a call of @ref write_bon8_value. Kept out of line, like
+    @ref write_cbor_object.
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_bon8_members(const BasicJsonType& j, bool& string_open, const std::size_t depth)
+    {
+        for (const auto& el : *j.m_data.m_value.object)
+        {
+            write_bon8_string(el.first, string_open, j);
+
+            const BasicJsonType& value = el.second;
+            switch (value.type())
+            {
+                case value_t::null:
+                    write_bon8_marker(0xFA, string_open);
+                    break;
+
+                case value_t::boolean:
+                    write_bon8_marker(value.m_data.m_value.boolean ? 0xF9 : 0xF8, string_open);
+                    break;
+
+                case value_t::string:
+                    write_bon8_string(*value.m_data.m_value.string, string_open, value);
+                    break;
+
+                case value_t::number_integer:
+                    if (JSON_HEDLEY_LIKELY(integer_fits<std::int64_t>(value.m_data.m_value.number_integer)))
+                    {
+                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_integer));
+                        string_open = false;
+                        break;
+                    }
+                    // beyond 64 bits (number types wider than that): throws
+                    write_bon8_value(value, string_open, depth + 1);
+                    break;
+
+                case value_t::number_float:
+                    write_bon8_float(value.m_data.m_value.number_float);
+                    string_open = false;
+                    break;
+
+                case value_t::number_unsigned:
+                    if (JSON_HEDLEY_LIKELY(integer_fits_max<std::int64_t>(value.m_data.m_value.number_unsigned)))
+                    {
+                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_unsigned));
+                        string_open = false;
+                        break;
+                    }
+                    // too large for BON8: throws
+                    write_bon8_value(value, string_open, depth + 1);
+                    break;
+
+                case value_t::object:
+                case value_t::array:
+                case value_t::binary:
+                case value_t::discarded:
+                default:
+                    write_bon8_value(value, string_open, depth + 1);
+                    break;
             }
         }
     }
