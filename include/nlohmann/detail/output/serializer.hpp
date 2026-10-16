@@ -1325,6 +1325,21 @@ class serializer
             return;
         }
 
+        // the usual indentation: four words of the indentation character are
+        // stored unconditionally and only the part wanted is claimed, which
+        // spares the call of memset
+        if (JSON_HEDLEY_LIKELY(indent <= 32 && write_buffer_pos + 32 <= write_buffer.size()))
+        {
+            const std::uint64_t word = 0x0101010101010101ull * static_cast<unsigned char>(indent_char);
+            char* const d = write_buffer.data() + write_buffer_pos;
+            std::memcpy(d, &word, sizeof(word));
+            std::memcpy(d + 8, &word, sizeof(word));
+            std::memcpy(d + 16, &word, sizeof(word));
+            std::memcpy(d + 24, &word, sizeof(word));
+            write_buffer_pos += indent;
+            return;
+        }
+
         const std::size_t capacity = write_buffer.size();
 
         // fill whatever room is left in the buffer; this is the whole job
