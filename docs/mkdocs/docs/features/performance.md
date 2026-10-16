@@ -65,8 +65,8 @@ a DOM, three alternatives avoid building it:
   unparsed remainder of the input) instead of the whole document -- see the [recipe for streaming a large homogeneous
   array](parsing/parser_callbacks.md#recipe-streaming-a-large-homogeneous-array).
 - Parse into a [`json_document`](json_view.md) (`#!cpp <nlohmann/json_view.hpp>`) instead of a `basic_json`. It keeps
-  the input text and builds a flat index of 16 bytes per value; strings and numbers are not copied, but read from the
-  text when needed. Read-only [views](../api/basic_json_view/index.md) give the familiar element access, and only the
+  the input text and builds a flat index of 16 bytes per value; strings and floating-point numbers are not copied, but
+  read from the text when needed. Read-only [views](../api/basic_json_view/index.md) give the familiar element access, and only the
   parts you [`materialize()`](../api/basic_json_view/materialize.md) become `basic_json` values. A document that
   borrows the text instead of owning a copy needs the text to outlive it; see
   [choosing between `json`, the SAX interface, and `json_view`](json_view.md#choosing-between-json-ordered_json-the-sax-interface-and-json_view).
