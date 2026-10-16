@@ -9693,11 +9693,12 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // find_if, min
+#include <algorithm> // copy, find_if, min
 #include <cstddef>
 #include <functional> // hash
 #include <limits> // numeric_limits
 #include <memory> // unique_ptr
+#include <new> // operator new
 #include <string> // string
 #include <type_traits> // enable_if_t
 #include <utility> // move, pair
@@ -14886,6 +14887,60 @@ scan_number_done:
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+// #include <nlohmann/detail/json_custom_base_class.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <type_traits> // conditional, is_same
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+
+/*!
+@brief Default base class of the @ref basic_json class.
+
+So that the correct implementations of the copy / move ctors / assign operators
+of @ref basic_json do not require complex case distinctions
+(no base class / custom base class used as customization point),
+@ref basic_json always has a base class.
+By default, this class is used because it is empty and thus has no effect
+on the behavior of @ref basic_json.
+
+@note This class intentionally lives in namespace @ref nlohmann rather than
+      @ref nlohmann::detail. Every @ref basic_json specialization derives from
+      it (via @ref detail::json_base_class) unless a custom base class is
+      supplied, which makes its namespace an associated namespace of
+      @ref basic_json for the purpose of argument-dependent lookup (ADL). If
+      it lived in `nlohmann::detail`, that namespace - and with it the
+      library's internal `to_json`/`from_json` overloads - would leak into
+      ADL for any unqualified `to_json`/`from_json` call a user makes
+      involving a @ref basic_json argument, silently shadowing the user's own
+      overloads in some cases.
+*/
+struct json_default_base {};
+
+namespace detail
+{
+
+template<class T>
+using json_base_class = typename std::conditional <
+                        std::is_same<T, void>::value,
+                        ::nlohmann::json_default_base,
+                        T
+                        >::type;
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
@@ -15364,9 +15419,8 @@ class json_sax_dom_parser
 
     bool start_object(std::size_t len)
     {
-        BasicJsonType* const ref = store(BasicJsonType(BasicJsonType::value_t::object));
-        reserve_frames();
-        frames.push_back(frame{ref->m_data.m_value.object, nullptr, ref, 0, nullptr});
+        BasicJsonType* const ref = store(BasicJsonType::value_t::object);
+        frames.push_back(frame{ref->m_data.m_value.object, nullptr, ref, 0, key_index_pointer()});
         in_object = true;
         stored_array = nullptr;
 
@@ -15405,10 +15459,7 @@ class json_sax_dom_parser
         ref->set_parents();
 #endif
 
-        if (JSON_HEDLEY_UNLIKELY(frames.back().index != nullptr))
-        {
-            key_indexes.pop_back();
-        }
+        release_key_index(frames.back(), std::integral_constant<bool, indexed_keys> {});
         frames.pop_back();
         enter_enclosing_container();
         return true;
@@ -15449,9 +15500,8 @@ class json_sax_dom_parser
             {
                 slot = object_element;
             }
-            reserve_frames();
             reserve_elements();
-            frames.push_back(frame{nullptr, nullptr, slot, elements.size(), nullptr});
+            frames.push_back(frame{nullptr, nullptr, slot, elements.size(), key_index_pointer()});
             in_object = false;
             stored_array = nullptr;
         }
@@ -15519,6 +15569,19 @@ class json_sax_dom_parser
     using object_t = typename BasicJsonType::object_t;
     using array_t = typename BasicJsonType::array_t;
 
+    /// whether objects keep their elements in a vector and a key can be hashed,
+    /// so that a big object can find the keys it has in a hash table instead of
+    /// searching all of them
+    template<typename ObjectType, typename StringType>
+    using detect_indexable_keys = decltype(std::declval<ObjectType&>().emplace_new_key(std::declval<const StringType&>(), std::declval<typename ObjectType::mapped_type>()),
+                                           std::hash<StringType>()(std::declval<const StringType&>()));
+    static constexpr bool indexed_keys = is_detected<detect_indexable_keys, object_t, string_t>::value;
+
+    /// what a frame holds of the key index of its object: a pointer for objects
+    /// that have such an index, nothing for the others
+    struct no_key_index {};
+    using key_index_pointer = typename std::conditional<indexed_keys, object_key_index*, no_key_index>::type;
+
     /// an array or object that is being read
     struct frame
     {
@@ -15534,16 +15597,131 @@ class json_sax_dom_parser
         /// array without `array`: the index of its first element in `elements`
         std::size_t start;
         /// object with many keys in a vector: its key_indexes entry, else nullptr
-        object_key_index* index;
+        key_index_pointer index;
     };
 
-    /// whether objects keep their elements in a vector and a key can be hashed,
-    /// so that a big object can find the keys it has in a hash table instead of
-    /// searching all of them
-    template<typename ObjectType, typename StringType>
-    using detect_indexable_keys = decltype(std::declval<ObjectType&>().emplace_new_key(std::declval<const StringType&>(), std::declval<typename ObjectType::mapped_type>()),
-                                           std::hash<StringType>()(std::declval<const StringType&>()));
-    static constexpr bool indexed_keys = is_detected<detect_indexable_keys, object_t, string_t>::value;
+    /// the open arrays and objects; the first few live in the object itself, so
+    /// that the common documents do not allocate for them
+    class frame_stack
+    {
+      public:
+        frame_stack() = default;
+        frame_stack(const frame_stack&) = delete;
+        frame_stack& operator=(const frame_stack&) = delete;
+
+        frame_stack(frame_stack&& other) noexcept
+        {
+            take(other);
+        }
+
+        frame_stack& operator=(frame_stack&& other) noexcept
+        {
+            if (this != &other)
+            {
+                release();
+                take(other);
+            }
+            return *this;
+        }
+
+        ~frame_stack()
+        {
+            release();
+        }
+
+        bool empty() const noexcept
+        {
+            return count == 0;
+        }
+
+        std::size_t size() const noexcept
+        {
+            return count;
+        }
+
+        frame& back() noexcept
+        {
+            return data[count - 1];
+        }
+
+        frame& operator[](const std::size_t i) noexcept
+        {
+            return data[i];
+        }
+
+        void push_back(const frame& f)
+        {
+            if (JSON_HEDLEY_UNLIKELY(count == capacity))
+            {
+                grow();
+            }
+            data[count++] = f;
+        }
+
+        void pop_back() noexcept
+        {
+            JSON_ASSERT(count > 0);
+            --count;
+        }
+
+      private:
+        JSON_HEDLEY_NEVER_INLINE
+        void grow()
+        {
+            const std::size_t new_capacity = capacity * 2;
+            frame* const new_data = new frame[new_capacity];
+            std::copy(data, data + count, new_data);
+            release();
+            data = new_data;
+            capacity = new_capacity;
+        }
+
+        void release() noexcept
+        {
+            if (data != local)
+            {
+                delete[] data;
+                data = local;
+                capacity = local_capacity;
+            }
+        }
+
+        /// make the contents of @a other our own
+        void take(frame_stack& other) noexcept
+        {
+            if (other.data == other.local)
+            {
+                std::copy(other.local, other.local + other.count, local);
+                data = local;
+                capacity = local_capacity;
+            }
+            else
+            {
+                data = other.data;
+                capacity = other.capacity;
+                other.data = other.local;
+                other.capacity = local_capacity;
+            }
+            count = other.count;
+            other.count = 0;
+        }
+
+        static constexpr std::size_t local_capacity = 8;
+        frame local[local_capacity];
+        frame* data = local;
+        std::size_t count = 0;
+        std::size_t capacity = local_capacity;
+    };
+
+    void release_key_index(const frame& f, std::true_type /*indexed*/)
+    {
+        if (JSON_HEDLEY_UNLIKELY(f.index != nullptr))
+        {
+            key_indexes.pop_back();
+        }
+    }
+
+    static void release_key_index(const frame& /*f*/, std::false_type /*indexed*/) noexcept {}
 
     /// the number of keys from which an object looks them up in a hash table
     static constexpr std::size_t key_index_threshold = 64;
@@ -15603,14 +15781,6 @@ class json_sax_dom_parser
     /// stack with its elements (and move all of them in the end)
     static constexpr std::size_t buffer_limit = 16;
 
-    void reserve_frames()
-    {
-        if (JSON_HEDLEY_UNLIKELY(frames.capacity() == 0))
-        {
-            frames.reserve(16);
-        }
-    }
-
     void reserve_elements()
     {
         if (JSON_HEDLEY_UNLIKELY(elements.capacity() == 0))
@@ -15622,9 +15792,8 @@ class json_sax_dom_parser
     /// store the elements of a new array directly in it
     void start_stored_array(const std::size_t len)
     {
-        BasicJsonType* const ref = store(BasicJsonType(BasicJsonType::value_t::array));
-        reserve_frames();
-        frames.push_back(frame{nullptr, ref->m_data.m_value.array, ref, 0, nullptr});
+        BasicJsonType* const ref = store(BasicJsonType::value_t::array);
+        frames.push_back(frame{nullptr, ref->m_data.m_value.array, ref, 0, key_index_pointer()});
         in_object = false;
         stored_array = ref->m_data.m_value.array;
 
@@ -15651,7 +15820,7 @@ class json_sax_dom_parser
         if (in_object)
         {
             JSON_ASSERT(object_element);
-            *object_element = BasicJsonType(std::forward<Value>(v));
+            set_member(*object_element, std::forward<Value>(v), std::is_same<typename BasicJsonType::json_base_class_t, json_default_base> {});
             return object_element;
         }
 
@@ -15688,7 +15857,8 @@ class json_sax_dom_parser
         const auto first = elements.begin() + static_cast<std::ptrdiff_t>(f.start);
         BasicJsonType value(BasicJsonType::value_t::array);
         array_t& arr = *value.m_data.m_value.array;
-        reserve_array(arr, 4 * buffer_limit, priority_tag<1> {});
+        // as much room as the array would have after one more doubling
+        reserve_array(arr, 2 * (elements.size() - f.start), priority_tag<1> {});
         arr.insert(arr.end(), std::make_move_iterator(first), std::make_move_iterator(elements.end()));
         elements.erase(first, elements.end());
         f.array = &arr;
@@ -15713,6 +15883,31 @@ class json_sax_dom_parser
             }
         }
         return &arr.back();
+    }
+
+    /// set the value of the member key() just added
+    template<typename Value>
+    JSON_HEDLEY_ALWAYS_INLINE
+    static void set_member(BasicJsonType& member, Value&& v, std::true_type /*default base*/)
+    {
+        if (JSON_HEDLEY_LIKELY(member.is_null()))
+        {
+            // a new member is null and holds nothing: construct the value
+            // over it instead of destroying and swapping
+            ::new (static_cast<void*>(&member)) BasicJsonType(std::forward<Value>(v));
+        }
+        else
+        {
+            // the key occurred before
+            member = BasicJsonType(std::forward<Value>(v));
+        }
+    }
+
+    /// a custom base class may care about the lifetime of the value
+    template<typename Value>
+    static void set_member(BasicJsonType& member, Value&& v, std::false_type /*custom base*/)
+    {
+        member = BasicJsonType(std::forward<Value>(v));
     }
 
     /// after a container was closed: the one it was in is the one that gets the next value
@@ -15746,7 +15941,7 @@ class json_sax_dom_parser
     /// the parsed JSON value
     BasicJsonType& root;
     /// the open arrays and objects
-    std::vector<frame> frames {};
+    frame_stack frames {};
     /// the elements of the open arrays that are not stored in them yet
     std::vector<BasicJsonType> elements {};
     /// the key indexes of the open objects that have one, innermost last
@@ -22905,58 +23100,6 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
 // #include <nlohmann/detail/json_custom_base_class.hpp>
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.12.0
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-
-
-#include <type_traits> // conditional, is_same
-
-// #include <nlohmann/detail/abi_macros.hpp>
-
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-
-/*!
-@brief Default base class of the @ref basic_json class.
-
-So that the correct implementations of the copy / move ctors / assign operators
-of @ref basic_json do not require complex case distinctions
-(no base class / custom base class used as customization point),
-@ref basic_json always has a base class.
-By default, this class is used because it is empty and thus has no effect
-on the behavior of @ref basic_json.
-
-@note This class intentionally lives in namespace @ref nlohmann rather than
-      @ref nlohmann::detail. Every @ref basic_json specialization derives from
-      it (via @ref detail::json_base_class) unless a custom base class is
-      supplied, which makes its namespace an associated namespace of
-      @ref basic_json for the purpose of argument-dependent lookup (ADL). If
-      it lived in `nlohmann::detail`, that namespace - and with it the
-      library's internal `to_json`/`from_json` overloads - would leak into
-      ADL for any unqualified `to_json`/`from_json` call a user makes
-      involving a @ref basic_json argument, silently shadowing the user's own
-      overloads in some cases.
-*/
-struct json_default_base {};
-
-namespace detail
-{
-
-template<class T>
-using json_base_class = typename std::conditional <
-                        std::is_same<T, void>::value,
-                        ::nlohmann::json_default_base,
-                        T
-                        >::type;
-
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/json_pointer.hpp>
 //     __ _____ _____ _____
