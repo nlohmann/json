@@ -69,12 +69,11 @@ The default value is `0`: streams are scanned in bulk.
     changes the characters in its get area in place, does not meet these requirements. Define the macro to `1` for
     such stream buffers.
 
-!!! warning "Define consistently"
+!!! note "ABI compatibility"
 
-    The macro selects between two definitions of the library's internal stream input adapter. It must therefore be
-    defined identically for **every** translation unit that includes the library; mixing translation units that define
-    it with ones that do not is an ODR violation. Prefer setting it as a compile definition on the target rather than
-    with `#!cpp #define` in individual source files.
+    The value of this macro is encoded in the [namespace](../../features/namespace.md) (tag `_dsbs`), resulting in
+    distinct symbol names. Translation units compiled with and without it can therefore be linked into the same program
+    without One Definition Rule (ODR) violations, but they cannot exchange instances of library types.
 
 !!! note "Other inputs"
 

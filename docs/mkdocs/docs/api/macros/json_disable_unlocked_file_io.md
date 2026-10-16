@@ -49,12 +49,11 @@ The default value is `0`: the file is locked once and read with the unlocked std
     A program in which a SAX handler or parser callback waits for **another** thread that uses the **same** `FILE`
     object would deadlock. Define the macro to `1` for such programs.
 
-!!! warning "Define consistently"
+!!! note "ABI compatibility"
 
-    The macro selects between two definitions of the library's internal `FILE*` input adapter. It must therefore be
-    defined identically for **every** translation unit that includes the library; mixing translation units that define
-    it with ones that do not is an ODR violation (and can leave a file locked). Prefer setting it as a compile
-    definition on the target rather than with `#!cpp #define` in individual source files.
+    The value of this macro is encoded in the [namespace](../../features/namespace.md) (tag `_dufio`), resulting in
+    distinct symbol names. Translation units compiled with and without it can therefore be linked into the same program
+    without One Definition Rule (ODR) violations, but they cannot exchange instances of library types.
 
 !!! note "Other inputs"
 
