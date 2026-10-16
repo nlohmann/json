@@ -25361,14 +25361,16 @@ class binary_writer
             }
 
             case value_t::number_integer:
-            {
-                write_number_with_ubjson_prefix(j.m_data.m_value.number_integer, add_prefix, use_bjdata);
-                break;
-            }
-
             case value_t::number_unsigned:
             {
-                write_number_with_ubjson_prefix(j.m_data.m_value.number_unsigned, add_prefix, use_bjdata);
+                if (j.m_data.m_type == value_t::number_integer)
+                {
+                    write_number_with_ubjson_prefix(j.m_data.m_value.number_integer, add_prefix, use_bjdata);
+                }
+                else
+                {
+                    write_number_with_ubjson_prefix(j.m_data.m_value.number_unsigned, add_prefix, use_bjdata);
+                }
                 break;
             }
 
@@ -25399,9 +25401,19 @@ class binary_writer
                 bool prefix_required = true;
                 const bool write_closer = write_ubjson_start_array(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
 
-                for (const auto& el : *j.m_data.m_value.array)
                 {
-                    write_ubjson(el, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth + 1);
+                    const auto& array = *j.m_data.m_value.array;
+                    if (starts_with_ubjson_number(array, use_bjdata, std::integral_constant<bool, ubjson_integers_fit_64_bits()>()))
+                    {
+                        write_ubjson_array_elements(array, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth);
+                    }
+                    else
+                    {
+                        for (const auto& el : array)
+                        {
+                            write_ubjson(el, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth + 1);
+                        }
+                    }
                 }
 
                 if (write_closer)
@@ -27663,6 +27675,217 @@ class binary_writer
             oa.write_character(prefix);
         }
         write_ubjson_integer_payload(prefix, n, use_bjdata);
+    }
+
+    /*!
+    @brief markers and size classes of UBJSON/BJData integers, by the bit length
+           of the magnitude
+
+    A non-negative integer has the magnitude n, a negative one ~n = -1 - n; the
+    bit length of the magnitude is 1 to 64. The first 130 characters of the
+    table are the markers: 65 for a non-negative integer, then 65 for a negative
+    one (index + 65). The marker is the first of `i`, `U`, `I`, `u` (BJData),
+    `l`, `m` (BJData), `L`, `M` (BJData) whose range contains the integer; `H`
+    (a high-precision number) is for a non-negative integer of 64 bits in
+    UBJSON. The following 130 characters are the size classes at index + 130:
+    the digit 0, 1, 2, or 3 for 1, 2, 4, or 8 bytes. Looked up, like
+    @ref integer_size_class, instead of found by branches or comparisons.
+
+    @sa ubjson_integer_prefix for the integers of types of more than 64 bits
+    */
+    static const char* ubjson_integer_table(const bool use_bjdata) noexcept
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): initialized from string literals
+        static constexpr char ubjson_table[] =
+            // the markers for n >= 0, then n < 0
+            "i" "iiiiiii" "U" "IIIIIII" "llllllllllllllll" "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL" "H"
+            "i" "iiiiiii" "IIIIIIII" "llllllllllllllll" "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL" "L"
+            // the size classes
+            "000000000" "1111111" "2222222222222222" "333333333333333333333333333333333"
+            "00000000" "11111111" "2222222222222222" "333333333333333333333333333333333";
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): initialized from string literals
+        static constexpr char bjdata_table[] =
+            "i" "iiiiiii" "U" "IIIIIII" "u" "lllllllllllllll" "m" "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL" "M"
+            "i" "iiiiiii" "IIIIIIII" "llllllllllllllll" "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL" "L"
+            "000000000" "11111111" "2222222222222222" "33333333333333333333333333333333"
+            "00000000" "11111111" "2222222222222222" "333333333333333333333333333333333";
+        static_assert(sizeof(ubjson_table) == 261 && sizeof(bjdata_table) == 261, "two tables of 130 markers and 130 size classes");
+        return use_bjdata ? bjdata_table : ubjson_table;
+    }
+
+    /// the index in ubjson_integer_table() of the integer with the 64 bits
+    /// @a raw and the sign mask @a sign_mask (all ones if it is negative)
+    static std::size_t ubjson_integer_index(const std::uint64_t raw, const std::uint64_t sign_mask) noexcept
+    {
+        const std::size_t sign_offset = sign_mask != 0 ? std::size_t{65} :
+                                        std::size_t{0};
+        return static_cast<std::size_t>(64 - count_leading_zeros((raw ^ sign_mask) | 1u)) + sign_offset;
+    }
+
+    /*!
+    @brief encode a UBJSON/BJData integer without branching on its size
+    @param[in] out  where the encoding goes; at most 9 characters are written
+    @param[in] raw  the 64 bits of the integer (two's complement)
+    @param[in] sign_mask  all ones if the integer is negative, else zero
+    @param[in] table  ubjson_integer_table(use_bjdata)
+    @return the end of the encoding, or nullptr if the integer is a high-precision
+            number (a non-negative one of 64 bits in UBJSON), which is not written
+    */
+    CharType* encode_ubjson_integer(CharType* out, const std::uint64_t raw, const std::uint64_t sign_mask,
+                                    const bool add_prefix, const bool use_bjdata, const char* table) const noexcept
+    {
+        const std::size_t index = ubjson_integer_index(raw, sign_mask);
+        const char marker = table[index];
+        if (JSON_HEDLEY_UNLIKELY(marker == 'H'))
+        {
+            return nullptr;
+        }
+        const unsigned size_class = static_cast<unsigned>(table[index + 130]) & 3u;
+
+        // the marker (or its place, if not written) and one 8-byte word, whose
+        // bytes after the integer are scratch that the caller drops
+        out[0] = to_char_type(static_cast<std::uint8_t>(marker));
+        out += add_prefix ? 1 : 0;
+        const unsigned unused_bits = 64u - (8u << size_class);
+        // UBJSON in network order, BJData in little-endian
+        std::uint64_t tail = 0;
+        if (use_bjdata)
+        {
+            tail = is_little_endian ? raw : byteswap(raw);
+        }
+        else
+        {
+            tail = is_little_endian ? byteswap(raw) >> unused_bits : raw << unused_bits;
+        }
+        std::memcpy(out, &tail, sizeof(tail));
+        return out + (std::size_t{1} << size_class);
+    }
+
+    /// @brief whether the integers of BasicJsonType are written by
+    ///        @ref encode_ubjson_integer
+    static constexpr bool ubjson_integers_fit_64_bits() noexcept
+    {
+        return integers_fit_64_bits();
+    }
+
+    /// space for the largest encoding of encode_ubjson_integer(): the marker and 8 bytes
+    static constexpr std::size_t ubjson_integer_encoding_space = 9;
+
+    /*!
+    @brief encode a UBJSON/BJData float, with its marker if @a add_prefix
+    @param[in] out  where the encoding goes; at most 9 characters are written
+    @return the end of the encoding
+    */
+    CharType* encode_ubjson_float(CharType* out, const number_float_t n, const bool add_prefix, const bool use_bjdata) const noexcept
+    {
+        if (add_prefix)
+        {
+            *out++ = get_ubjson_float_prefix<number_float_t>();
+        }
+        return store_number(out, n, use_bjdata);
+    }
+
+    /// whether @a array starts with a number that @ref write_ubjson_array_elements
+    /// can encode (all but an integer that UBJSON writes as a high-precision
+    /// number); an array that does not is written by write_ubjson one element at a time
+    template<typename ArrayType>
+    static bool starts_with_ubjson_number(const ArrayType& array, const bool use_bjdata, std::true_type /*fits_64_bits*/) noexcept
+    {
+        if (array.empty() || !array.front().is_number())
+        {
+            return false;
+        }
+        const BasicJsonType& first = array.front();
+        return use_bjdata || first.m_data.m_type != value_t::number_unsigned
+               || (static_cast<std::uint64_t>(first.m_data.m_value.number_unsigned) >> 63u) == 0;
+    }
+
+    template<typename ArrayType>
+    static bool starts_with_ubjson_number(const ArrayType& /*array*/, const bool /*use_bjdata*/, std::false_type /*fits_64_bits*/) noexcept
+    {
+        return false;
+    }
+
+    /*!
+    @brief write the elements of an array of a UBJSON/BJData container that
+           starts with a number, with runs of numbers encoded without a call of
+           @ref write_ubjson for each
+
+    Same output as calling write_ubjson for each element. The numbers of a
+    run are encoded straight into space reserved from the sink, as in
+    @ref write_array_elements; all other values, and an integer that UBJSON
+    writes as a high-precision number, are written with write_ubjson. Kept out
+    of line, like @ref write_cbor_array.
+    */
+    template<typename ArrayType>
+    JSON_HEDLEY_NEVER_INLINE
+    void write_ubjson_array_elements(const ArrayType& array, const bool use_count, const bool use_type,
+                                     const bool prefix_required, const bool use_bjdata, const bjdata_version_t bjdata_version,
+                                     const std::size_t depth)
+    {
+        constexpr std::size_t max_run = max_reserve_size / ubjson_integer_encoding_space;
+        const char* const table = ubjson_integer_table(use_bjdata);
+        auto it = array.begin();
+        const auto end = array.end();
+        while (it != end)
+        {
+            if (!it->is_number())
+            {
+                write_ubjson(*it, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth + 1);
+                ++it;
+                continue;
+            }
+
+            CharType* const start = oa.reserve(max_run * ubjson_integer_encoding_space);
+            CharType* out = start;
+            bool unencodable = false;
+            for (std::size_t n = 0; n < max_run && it != end && it->is_number(); ++n)
+            {
+                CharType* next = nullptr;
+                if (it->is_number_float())
+                {
+                    next = encode_ubjson_float(out, it->m_data.m_value.number_float, prefix_required, use_bjdata);
+                }
+                else
+                {
+                    std::uint64_t sign_mask = 0;
+                    const std::uint64_t raw = integer_bits(*it, sign_mask);
+                    next = encode_ubjson_integer(out, raw, sign_mask, prefix_required, use_bjdata, table);
+                }
+                if (JSON_HEDLEY_UNLIKELY(next == nullptr))
+                {
+                    unencodable = true;
+                    break;
+                }
+                out = next;
+                ++it;
+            }
+            oa.commit(static_cast<std::size_t>(out - start));
+
+            if (unencodable)
+            {
+                write_ubjson(*it, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth + 1);
+                ++it;
+            }
+        }
+    }
+
+    /*!
+    @brief store @a n at @a out in the byte order of the output
+    @param[in] output_little_endian  whether the output is little-endian
+    @return the end of the number
+    */
+    template<typename NumberType>
+    CharType* store_number(CharType* out, const NumberType n, const bool output_little_endian) const noexcept
+    {
+        std::array<CharType, sizeof(NumberType)> vec{};
+        std::memcpy(vec.data(), &n, sizeof(NumberType));
+        if (is_little_endian != output_little_endian)
+        {
+            reverse_bytes(vec);
+        }
+        std::memcpy(out, vec.data(), sizeof(NumberType));
+        return out + sizeof(NumberType);
     }
 
     /*!
