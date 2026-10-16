@@ -8368,10 +8368,7 @@ class file_input_adapter
     file_input_adapter& operator=(file_input_adapter&&) = delete;
     ~file_input_adapter()
     {
-        if (m_file != nullptr)
-        {
-            unlock();
-        }
+        unlock();
     }
 
     std::char_traits<char>::int_type get_character() noexcept
@@ -8409,6 +8406,11 @@ class file_input_adapter
 
     void unlock() noexcept
     {
+        // a moved-from adapter has no file and holds no lock
+        if (m_file == nullptr)
+        {
+            return;
+        }
 #if JSON_UNLOCKED_FILE_IO == 1
         funlockfile(m_file);
 #elif JSON_UNLOCKED_FILE_IO == 2
