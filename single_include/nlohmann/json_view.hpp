@@ -3026,9 +3026,9 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
 inline node* find_parent(const document_data& d, const node* target)
 {
     const std::less<const node*> lt{};
-    const node* lo = d.tape;
-    const node* hi = d.tape + d.tape_size;
-    const node* c = d.tape;
+    const node* lo = d.nodes;
+    const node* hi = d.nodes + d.node_count;
+    const node* c = d.nodes;
     if (lt(target, lo) || !lt(target, hi))
     {
         if (!d.edits)
@@ -3788,7 +3788,7 @@ class editor
         const std::uint8_t linked = slot->flags & node_flags::linked;
         if (e.region == nullptr)
         {
-            if (is_container(*slot) && slot->next > 1 && slot != m_doc.tape && linked == 0)
+            if (is_container(*slot) && slot->next > 1 && slot != m_doc.nodes && linked == 0)
             {
                 // The slot spans its old elements in the enclosing sequence, but
                 // a scalar is one node: the enclosing container first switches to
