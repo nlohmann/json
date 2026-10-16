@@ -1525,7 +1525,7 @@ class serializer
         // without leading zeros
         if (abs_value < 10000000000000000u)
         {
-            const std::uint64_t value = abs_value;
+            const auto value = static_cast<std::uint64_t>(abs_value); // fits: abs_value < 10^16
             const std::uint64_t upper = value / 100000000u;
             const std::uint64_t first = dtoa_impl::eight_digit_bytes(upper != 0 ? upper : value);
             const auto leading = static_cast<unsigned>(count_leading_zeros(first) / 8); // (first is not 0)
