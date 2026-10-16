@@ -1198,33 +1198,32 @@ class json_pointer
         }
         result.reserve(token_count);
 
-        // extract the reference tokens:
-        // - slash: position of the last read slash (or end of string)
-        // - start: position after the previous slash
-        for (
-            // search for the first slash after the first character
-            std::size_t slash = reference_string.find_first_of('/', 1),
-            // set the beginning of the first reference token
-            start = 1;
-            // we can stop if start == 0 (if slash == string_t::npos)
-            start != 0;
-            // set the beginning of the next reference token
-            // (will eventually be 0 if slash == string_t::npos)
-            start = (slash == string_t::npos) ? 0 : slash + 1,
-            // find next slash
-            slash = reference_string.find_first_of('/', start))
+        // extract the reference tokens: every one runs from after a slash to
+        // the next slash or the end of the string; a token without a '~' (the
+        // common case) is stored as it is, others are checked and unescaped
+        const char* const data = reference_string.data();
+        const char* const end = data + size;
+        for (const char* start = data + 1;; ++start)
         {
-            // use the text between the beginning of the reference token
-            // (start) and the last slash (slash).
-            const auto count = (slash == string_t::npos ? reference_string.size() : slash) - start;
-            auto reference_token = string_t(reference_string.data() + start, count);
-
-            // check reference tokens are properly escaped; a token without
-            // a '~' (the common case) needs neither check nor unescaping
-            std::size_t pos = reference_token.find_first_of('~');
-            if (pos != string_t::npos)
+            const char* slash = start;
+            bool escaped = false;
+            while (slash != end && *slash != '/')
             {
-                for (; pos != string_t::npos; pos = reference_token.find_first_of('~', pos + 1))
+                escaped = escaped || *slash == '~';
+                ++slash;
+            }
+
+            const auto count = static_cast<std::size_t>(slash - start);
+            if (JSON_HEDLEY_LIKELY(!escaped))
+            {
+                result.emplace_back(start, count);
+            }
+            else
+            {
+                auto reference_token = string_t(start, count);
+
+                // check reference tokens are properly escaped
+                for (std::size_t pos = reference_token.find_first_of('~'); pos != string_t::npos; pos = reference_token.find_first_of('~', pos + 1))
                 {
                     JSON_ASSERT(reference_token[pos] == '~');
 
@@ -1238,10 +1237,14 @@ class json_pointer
                 }
 
                 detail::unescape(reference_token);
+                result.push_back(std::move(reference_token));
             }
 
-            // finally, store the reference token
-            result.push_back(std::move(reference_token));
+            if (slash == end)
+            {
+                break;
+            }
+            start = slash;
         }
 
         return result;
