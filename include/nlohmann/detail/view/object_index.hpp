@@ -94,6 +94,49 @@ inline std::uint64_t key_hash(const char* s, std::size_t n) noexcept
     return h ^ (h >> 31u);
 }
 
+/// whether the n <= 16 bytes at a and b are equal, as two overlapping words
+/// (the first and the last 8, 4, or 2 bytes) and without a call
+NLOHMANN_VIEW_ALWAYS_INLINE bool same_short_bytes(const unsigned char* a, const unsigned char* b, std::size_t n) noexcept
+{
+    if (n >= 8)
+    {
+        std::uint64_t x0 = 0;
+        std::uint64_t x1 = 0;
+        std::uint64_t y0 = 0;
+        std::uint64_t y1 = 0;
+        std::memcpy(&x0, a, 8);
+        std::memcpy(&x1, a + n - 8, 8);
+        std::memcpy(&y0, b, 8);
+        std::memcpy(&y1, b + n - 8, 8);
+        return x0 == y0 && x1 == y1;
+    }
+    if (n >= 4)
+    {
+        std::uint32_t x0 = 0;
+        std::uint32_t x1 = 0;
+        std::uint32_t y0 = 0;
+        std::uint32_t y1 = 0;
+        std::memcpy(&x0, a, 4);
+        std::memcpy(&x1, a + n - 4, 4);
+        std::memcpy(&y0, b, 4);
+        std::memcpy(&y1, b + n - 4, 4);
+        return x0 == y0 && x1 == y1;
+    }
+    if (n >= 2)
+    {
+        std::uint16_t x0 = 0;
+        std::uint16_t x1 = 0;
+        std::uint16_t y0 = 0;
+        std::uint16_t y1 = 0;
+        std::memcpy(&x0, a, 2);
+        std::memcpy(&x1, a + n - 2, 2);
+        std::memcpy(&y0, b, 2);
+        std::memcpy(&y1, b + n - 2, 2);
+        return x0 == y0 && x1 == y1;
+    }
+    return n == 0 || *a == *b;
+}
+
 /// build the table of a large object
 inline void build_object_index(document_data& d, node* obj)
 {
@@ -158,6 +201,27 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
     const document_data::object_index& ix = d.indexes[obj->extra - 1u];
     const std::uint32_t* const table = d.index_slots.data() + ix.start;
     std::size_t slot = conditional_static_cast<std::size_t>(key_hash(key, n)) & ix.mask;
+    const auto* const k_bytes = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    // (the loop for longer keys comes first, as the code is laid out; it is not the more common case)
+    if (NLOHMANN_VIEW_UNLIKELY(n <= 16))
+    {
+        // (up to 16 bytes, the bytes are compared as two words, without a call)
+        for (std::size_t distance = 0; distance <= index_max_displacement; ++distance)
+        {
+            const std::uint32_t s = table[slot];
+            if (s == 0)
+            {
+                return nullptr;
+            }
+            const node* const k = obj + s;
+            if (k->len == n && same_short_bytes(reinterpret_cast<const unsigned char*>(d.str(*k)), k_bytes, n)) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            {
+                return k;
+            }
+            slot = (slot + 1) & ix.mask;
+        }
+        return nullptr;
+    }
     for (std::size_t distance = 0; distance <= index_max_displacement; ++distance)
     {
         const std::uint32_t s = table[slot];

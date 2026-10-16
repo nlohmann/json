@@ -671,6 +671,59 @@ TEST_CASE("json_view large objects")
         }
     }
 
+    SECTION("keys of every length that differ in one byte")
+    {
+        // In a large object, a key is found by comparing its bytes with those of the member the
+        // table points to: up to 16 bytes as two overlapping words, longer ones with memcmp.
+        // Keys of every length from 0 to 40, and keys that differ from them in one byte.
+        std::mt19937_64 rng(2026);
+        std::vector<std::string> keys;
+        std::set<std::string> distinct;
+        for (std::size_t length = 0; length <= 40; ++length)
+        {
+            for (int copy = 0; copy < 5; ++copy)
+            {
+                std::string key(length, 'a');
+                for (char& c : key)
+                {
+                    c = static_cast<char>('a' + (rng() % 26));
+                }
+                if (distinct.insert(key).second)
+                {
+                    keys.push_back(key);
+                }
+            }
+        }
+        std::string text = "{";
+        for (std::size_t i = 0; i < keys.size(); ++i)
+        {
+            text += (i != 0 ? ",\"" : "\"") + keys[i] + "\":" + std::to_string(i);
+        }
+        text += "}";
+        REQUIRE(keys.size() >= 128); // (a table is built for 128 members)
+        const json_document d = json_document::parse(text);
+        const json_view v = d.root();
+        for (std::size_t i = 0; i < keys.size(); ++i)
+        {
+            CAPTURE(keys[i])
+            CHECK(v[keys[i]].get<std::size_t>() == i);
+            CHECK(v.at(keys[i]).get<std::size_t>() == i);
+            CHECK(v.contains(keys[i]));
+            for (std::size_t at = 0; at < keys[i].size(); ++at)
+            {
+                std::string other = keys[i];
+                other[at] = other[at] == 'z' ? 'y' : 'z';
+                CAPTURE(other)
+                CHECK(v.contains(other) == (distinct.count(other) != 0));
+            }
+            CHECK(v.contains(keys[i] + "a") == (distinct.count(keys[i] + "a") != 0));
+            if (!keys[i].empty())
+            {
+                CHECK(v.contains(keys[i].substr(1)) == (distinct.count(keys[i].substr(1)) != 0));
+            }
+        }
+    }
+
     SECTION("shrink_to_fit releases the tables' spare capacity")
     {
         const auto make_text = [](int objects, int members)
