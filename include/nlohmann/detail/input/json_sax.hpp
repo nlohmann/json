@@ -1064,16 +1064,13 @@ class json_sax_dom_callback_parser
             // handle_value() without touching the key stacks
             if (keep_stack.back())
             {
-                BasicJsonType k = BasicJsonType(val);
-                static_cast<void>(callback(static_cast<int>(ref_stack.size()), parse_event_t::key, k));
+                static_cast<void>(callback(static_cast<int>(ref_stack.size()), parse_event_t::key, key_value(val)));
             }
             return true;
         }
 
-        BasicJsonType k = BasicJsonType(val);
-
         // check callback for the key
-        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::key, k);
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::key, key_value(val));
         key_keep_stack.push_back(keep);
         // remember the key so a rejected value can be erased without searching
         // the object for it (kept in lockstep with key_keep_stack)
@@ -1084,7 +1081,7 @@ class json_sax_dom_callback_parser
         {
             auto& obj = *ref_stack.back()->m_data.m_value.object;
             // a single lookup: insert the placeholder, or find the existing member
-            const auto inserted = obj.emplace(val, discarded);
+            const auto inserted = obj.emplace(std::move(val), discarded);
             const auto it = inserted.first;
             if (!inserted.second)
             {
@@ -1257,6 +1254,31 @@ class json_sax_dom_callback_parser
     }
 
   private:
+
+    /*!
+    @brief the value of a key event for the callback
+
+    A string value of its own for every key would allocate it every time, so
+    one is kept and set to the key. A callback that changed or moved it gets a
+    new one, as it would have got a new value for every key anyway.
+    */
+    BasicJsonType& key_value(const string_t& key)
+    {
+#if JSON_DIAGNOSTIC_POSITIONS
+        // a callback may have left positions on the value
+        key_scratch = BasicJsonType(key);
+#else
+        if (JSON_HEDLEY_LIKELY(key_scratch.is_string()))
+        {
+            *key_scratch.m_data.m_value.string = key;
+        }
+        else
+        {
+            key_scratch = BasicJsonType(key);
+        }
+#endif
+        return key_scratch;
+    }
 
     /// if there is a pending duplicate-key stash entry for this exact slot,
     /// remove it from the stash; if restore_value is true, the stashed
@@ -1505,6 +1527,8 @@ class json_sax_dom_callback_parser
     const bool allow_exceptions = true;
     /// a discarded value for the callback
     BasicJsonType discarded = BasicJsonType::value_t::discarded;
+    /// the value of the key event for the callback (see key_value())
+    BasicJsonType key_scratch {};
     /// the lexer reference to obtain the current position
     lexer_t* m_lexer_ref = nullptr;
 };
