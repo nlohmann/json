@@ -15279,6 +15279,8 @@ class json_sax_dom_parser
         BasicJsonType* const ref = store(BasicJsonType(BasicJsonType::value_t::object));
         reserve_frames();
         frames.push_back(frame{ref->m_data.m_value.object, nullptr, ref, 0});
+        in_object = true;
+        stored_array = nullptr;
 
 #if JSON_DIAGNOSTIC_POSITIONS
         // Ensure this is after the call to store to ensure correct start position.
@@ -15316,6 +15318,7 @@ class json_sax_dom_parser
 #endif
 
         frames.pop_back();
+        enter_enclosing_container();
         return true;
     }
 
@@ -15357,6 +15360,8 @@ class json_sax_dom_parser
             reserve_frames();
             reserve_elements();
             frames.push_back(frame{nullptr, nullptr, slot, elements.size()});
+            in_object = false;
+            stored_array = nullptr;
         }
 #endif
         return true;
@@ -15368,6 +15373,7 @@ class json_sax_dom_parser
         JSON_ASSERT(frames.back().object == nullptr);
         const frame f = frames.back();
         frames.pop_back();
+        enter_enclosing_container();
 
         if (f.array == nullptr)
         {
@@ -15464,6 +15470,8 @@ class json_sax_dom_parser
         BasicJsonType* const ref = store(BasicJsonType(BasicJsonType::value_t::array));
         reserve_frames();
         frames.push_back(frame{nullptr, ref->m_data.m_value.array, ref, 0});
+        in_object = false;
+        stored_array = ref->m_data.m_value.array;
 
 #if JSON_DIAGNOSTIC_POSITIONS
         // Ensure this is after the call to store to ensure correct start position.
@@ -15485,6 +15493,19 @@ class json_sax_dom_parser
     JSON_HEDLEY_RETURNS_NON_NULL
     BasicJsonType* store(Value&& v)
     {
+        if (in_object)
+        {
+            JSON_ASSERT(object_element);
+            *object_element = BasicJsonType(std::forward<Value>(v));
+            return object_element;
+        }
+
+        if (stored_array != nullptr)
+        {
+            stored_array->emplace_back(std::forward<Value>(v));
+            return &stored_array->back();
+        }
+
         if (frames.empty())
         {
             root = BasicJsonType(std::forward<Value>(v));
@@ -15492,19 +15513,6 @@ class json_sax_dom_parser
         }
 
         frame& f = frames.back();
-        if (f.object != nullptr)
-        {
-            JSON_ASSERT(object_element);
-            *object_element = BasicJsonType(std::forward<Value>(v));
-            return object_element;
-        }
-
-        if (f.array != nullptr)
-        {
-            f.array->emplace_back(std::forward<Value>(v));
-            return &f.array->back();
-        }
-
         elements.emplace_back(std::forward<Value>(v));
         if (JSON_HEDLEY_UNLIKELY(elements.size() - f.start > buffer_limit))
         {
@@ -15529,6 +15537,7 @@ class json_sax_dom_parser
         arr.insert(arr.end(), std::make_move_iterator(first), std::make_move_iterator(elements.end()));
         elements.erase(first, elements.end());
         f.array = &arr;
+        stored_array = &arr;
 
         // the array takes the place its first element had on the stack
         if (f.slot != nullptr)
@@ -15551,6 +15560,22 @@ class json_sax_dom_parser
         return &arr.back();
     }
 
+    /// after a container was closed: the one it was in is the one that gets the next value
+    void enter_enclosing_container()
+    {
+        if (frames.empty())
+        {
+            in_object = false;
+            stored_array = nullptr;
+        }
+        else
+        {
+            const frame& f = frames.back();
+            in_object = f.object != nullptr;
+            stored_array = f.array;
+        }
+    }
+
     template<typename Value>
     void handle_value(Value&& v)
     {
@@ -15571,6 +15596,11 @@ class json_sax_dom_parser
     std::vector<BasicJsonType> elements {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
+    /// whether the innermost container is an object (frames.back().object)
+    bool in_object = false;
+    /// the array that stores the elements of the innermost array as they
+    /// arrive (frames.back().array), or nullptr
+    array_t* stored_array = nullptr;
     /// whether a syntax error occurred
     bool errored = false;
     /// whether to throw exceptions in case of errors
