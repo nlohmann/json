@@ -30764,7 +30764,7 @@ class serializer
     JSON_HEDLEY_NEVER_INLINE void dump_string_value(const string_t& s)
     {
 #if JSON_DUMP_SHORT_STRINGS
-        if (s.size() <= 16 && put_short_quoted(s, "\""))
+        if (s.size() <= short_string_max && put_short_quoted(s, "\""))
         {
             return;
         }
@@ -30900,6 +30900,9 @@ class serializer
     }
 
 #if JSON_DUMP_SHORT_STRINGS
+    /// the longest string put_short_quoted() takes
+    static constexpr std::size_t short_string_max = JSON_SCAN_VECTOR ? 32 : 16;
+
     /// the high bit of every byte of @a v that is not printable ASCII or is a
     /// quote, a backslash, or DEL (zero if the bytes can be copied as they are)
     static std::uint64_t swar_not_plain(const std::uint64_t v) noexcept
@@ -30930,17 +30933,18 @@ class serializer
     /*!
     @brief write `"`, @a s and @a tail if @a s is short and needs no escaping
 
-    A string of up to 16 printable ASCII characters (no quote, backslash, or DEL)
-    is read with two overlapping loads and written with two overlapping stores,
-    instead of scanning it and calling memcpy with a length that is only known
-    at run time. Returns false, having changed nothing, if @a s does not
-    qualify or the write buffer lacks the room.
+    A string of up to 16 (32 with vector instructions) printable ASCII
+    characters (no quote, backslash, or DEL) is read with two overlapping loads
+    and written with two overlapping stores, instead of scanning it and calling
+    memcpy with a length that is only known at run time. Returns false, having
+    changed nothing, if @a s does not qualify or the write buffer lacks the
+    room.
     */
     template<std::size_t N>
     bool put_short_quoted(const string_t& s, const char (&tail)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         const std::size_t n = s.size();
-        if (n > 16 || write_buffer_pos + n + N > write_buffer.size())
+        if (n > short_string_max || write_buffer_pos + n + N > write_buffer.size())
         {
             return false;
         }
@@ -30950,14 +30954,26 @@ class serializer
 
         if (n >= 8)
         {
-            const auto a = load_word<std::uint64_t>(p);
-            const auto b = load_word<std::uint64_t>(p + n - 8);
-            if ((swar_not_plain(a) | swar_not_plain(b)) != 0)
+#if JSON_SCAN_VECTOR
+            if (n >= 16)
             {
-                return false;
+                if (!copy_plain_vectors(d, p, n))
+                {
+                    return false;
+                }
             }
-            store_word(d, a);
-            store_word(d + n - 8, b);
+            else
+#endif
+            {
+                const auto a = load_word<std::uint64_t>(p);
+                const auto b = load_word<std::uint64_t>(p + n - 8);
+                if ((swar_not_plain(a) | swar_not_plain(b)) != 0)
+                {
+                    return false;
+                }
+                store_word(d, a);
+                store_word(d + n - 8, b);
+            }
         }
         else if (n >= 4)
         {
@@ -31001,6 +31017,47 @@ class serializer
         write_buffer_pos += n + N;
         return true;
     }
+
+#if JSON_SCAN_VECTOR
+    /// copy the 16 to 32 bytes [@a p, @a p + @a n) to @a d with two overlapping
+    /// vectors, unless one of them is a quote, a backslash, a control
+    /// character, DEL or not ASCII
+    static bool copy_plain_vectors(char* d, const char* p, const std::size_t n) noexcept
+    {
+#if JSON_SCAN_NEON
+        const uint8x16_t a = vld1q_u8(reinterpret_cast<const std::uint8_t*>(p));
+        const uint8x16_t b = vld1q_u8(reinterpret_cast<const std::uint8_t*>(p + n - 16));
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vorrq_u8(vceqq_u8(a, vdupq_n_u8('"')), vceqq_u8(a, vdupq_n_u8('\\'))),
+                                            vorrq_u8(vceqq_u8(b, vdupq_n_u8('"')), vceqq_u8(b, vdupq_n_u8('\\')))),
+                                            vorrq_u8(vorrq_u8(vcltq_s8(vreinterpretq_s8_u8(a), vdupq_n_s8(0x20)), vcltq_s8(vreinterpretq_s8_u8(b), vdupq_n_s8(0x20))),
+                                                vorrq_u8(vceqq_u8(a, vdupq_n_u8(0x7F)), vceqq_u8(b, vdupq_n_u8(0x7F)))));
+        if (vmaxvq_u8(special) != 0)
+        {
+            return false;
+        }
+        vst1q_u8(reinterpret_cast<std::uint8_t*>(d), a);
+        vst1q_u8(reinterpret_cast<std::uint8_t*>(d + n - 16), b);
+#else
+        const __m128i a = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+        const __m128i b = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p + n - 16))); // NOLINT(bugprone-casting-through-void)
+        const __m128i quote = _mm_set1_epi8('"');
+        const __m128i backslash = _mm_set1_epi8('\\');
+        const __m128i space = _mm_set1_epi8(0x20);
+        const __m128i del = _mm_set1_epi8(0x7F);
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(a, quote), _mm_cmpeq_epi8(a, backslash)),
+                                             _mm_or_si128(_mm_cmpeq_epi8(b, quote), _mm_cmpeq_epi8(b, backslash))),
+                                             _mm_or_si128(_mm_or_si128(_mm_cmplt_epi8(a, space), _mm_cmplt_epi8(b, space)),
+                                                 _mm_or_si128(_mm_cmpeq_epi8(a, del), _mm_cmpeq_epi8(b, del))));
+        if (_mm_movemask_epi8(special) != 0)
+        {
+            return false;
+        }
+        _mm_storeu_si128(static_cast<__m128i*>(static_cast<void*>(d)), a); // NOLINT(bugprone-casting-through-void)
+        _mm_storeu_si128(static_cast<__m128i*>(static_cast<void*>(d + n - 16)), b); // NOLINT(bugprone-casting-through-void)
+#endif
+        return true;
+    }
+#endif
 #endif
 
   JSON_PRIVATE_UNLESS_TESTED:

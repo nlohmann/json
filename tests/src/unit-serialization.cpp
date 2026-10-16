@@ -1583,9 +1583,10 @@ TEST_CASE("invalid UTF-8 at every position is handled like the reference")
 
 TEST_CASE("short strings are written like the reference, as values and as keys")
 {
-    // strings of up to 16 characters that need no escaping are written as a
-    // whole (together with the quotes and, for a key, the colon); everything
-    // else, including a string that is merely short, takes the general path.
+    // strings of up to 16 characters (32 with vector instructions) that need no
+    // escaping are written as a whole (together with the quotes and, for a key,
+    // the colon); everything else, including a string that is merely short,
+    // takes the general path.
     // Every length around the edges of the size classes of the fast path is
     // combined with each kind of byte that must send a string to the general
     // path, at each position, and compared with the reference for values and,
@@ -1595,7 +1596,7 @@ TEST_CASE("short strings are written like the reference, as values and as keys")
         "\"", "\\", "\n", "\x1f", "\x7f", "\xc3\xa9", "\xe2\x82\xac", "\xf0\x9f\x98\x80", "\xff", "\x80", "\xc3"
     };
 
-    for (std::size_t length = 0; length <= 20; ++length)
+    for (std::size_t length = 0; length <= 36; ++length)
     {
         const std::string plain(length, 'k');
         check_dump_against_reference(plain, false);
