@@ -237,3 +237,274 @@ TEST_CASE("regression test for issue #5673 - ordered_json::emplace with a non-rv
         CHECK(oj.dump() == "{\"a\":1}");
     }
 }
+
+namespace
+{
+// the sizes around which the DOM parser changes how it stores the elements of
+// an array (16) and the members of an object in a vector (32, and 64 for the
+// key index)
+const std::size_t container_sizes[] = {0, 1, 2, 3, 15, 16, 17, 18, 31, 32, 33, 34, 63, 64, 65, 66, 200};
+
+template<typename Json>
+std::string array_text(const std::size_t n, const std::size_t depth)
+{
+    std::string text = "[";
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        text += (i == 0 ? "" : ",");
+        // alternate scalars, empty containers and nested containers
+        switch (i % 4)
+        {
+            case 0:
+                text += std::to_string(i);
+                break;
+            case 1:
+                text += "\"s" + std::to_string(i) + "\"";
+                break;
+            case 2:
+                text += depth == 0 ? "[]" : array_text<Json>(n / 2, depth - 1);
+                break;
+            default:
+                text += depth == 0 ? "{}" : "{\"a\":" + array_text<Json>(n / 3, depth - 1) + ",\"b\":null}";
+                break;
+        }
+    }
+    return text + "]";
+}
+
+template<typename Json>
+std::string object_text(const std::size_t n, const std::size_t depth, const bool duplicates)
+{
+    std::string text = "{";
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        text += (i == 0 ? "" : ",");
+        text += "\"key" + std::to_string(i) + "\":";
+        switch (i % 4)
+        {
+            case 0:
+                text += std::to_string(i);
+                break;
+            case 1:
+                text += depth == 0 ? "[]" : array_text<Json>(n / 2, depth - 1);
+                break;
+            case 2:
+                text += depth == 0 ? "{}" : object_text<Json>(n / 2, depth - 1, duplicates);
+                break;
+            default:
+                text += "\"value\"";
+                break;
+        }
+    }
+    if (duplicates)
+    {
+        // keys that are there already, the first and the last one, with other values
+        text += n == 0 ? "" : ",";
+        text += "\"key0\":[1,2],\"key" + std::to_string(n - 1) + "\":{\"again\":true}";
+    }
+    return text + "}";
+}
+
+template<typename Json>
+void check_same_dump(const std::string& text)
+{
+    // the text is what dump() writes for the parsed value, and the value
+    // survives a second round trip: arrays keep their elements in order, an
+    // ordered_json keeps its members in order of appearance
+    const Json parsed = Json::parse(text);
+    const Json again = Json::parse(parsed.dump());
+    CHECK(parsed == again);
+    CHECK(parsed.dump() == again.dump());
+    CHECK(Json::accept(text));
+}
+} // namespace
+
+TEST_CASE("parsing containers of sizes around the limits of the DOM parser")
+{
+    SECTION("arrays")
+    {
+        for (const std::size_t n : container_sizes)
+        {
+            const std::string text = array_text<json>(n, 2);
+            INFO("size ", n);
+
+            const json parsed = json::parse(text);
+            CHECK(parsed.is_array());
+            CHECK(parsed.size() == n);
+            for (std::size_t i = 0; i < n; i += 4)
+            {
+                CHECK(parsed[i] == i);
+            }
+            check_same_dump<json>(text);
+            check_same_dump<ordered_json>(text);
+            CHECK(ordered_json::parse(text).dump() == parsed.dump());
+        }
+    }
+
+    SECTION("objects")
+    {
+        for (const bool duplicates :
+                {
+                    false, true
+                })
+        {
+            for (const std::size_t n : container_sizes)
+            {
+                const std::string text = object_text<json>(n, 2, duplicates);
+                INFO("size ", n, " duplicates ", duplicates);
+
+                const json parsed = json::parse(text);
+                const ordered_json ordered = ordered_json::parse(text);
+                CHECK(parsed.is_object());
+                CHECK(ordered.is_object());
+                CHECK(parsed.size() == ordered.size());
+                // the same members, in the order of their first appearance
+                std::size_t i = 0;
+                for (auto it = ordered.begin(); it != ordered.end(); ++it, ++i)
+                {
+                    if (i < n)
+                    {
+                        CHECK(it.key() == "key" + std::to_string(i));
+                    }
+                    CHECK(parsed.at(it.key()) == json(it.value()));
+                }
+                if (duplicates && n > 1)
+                {
+                    // the later value replaced the earlier one in its place
+                    CHECK(ordered.at("key0") == ordered_json::parse("[1,2]"));
+                    CHECK(ordered.at("key" + std::to_string(n - 1)) == ordered_json::parse("{\"again\":true}"));
+                    CHECK(ordered.begin().key() == "key0");
+                    CHECK(ordered.size() == n);
+                }
+                check_same_dump<json>(text);
+                check_same_dump<ordered_json>(text);
+            }
+        }
+    }
+
+    SECTION("objects with many different and repeated keys")
+    {
+        // 300 members of which a third repeat an earlier key
+        std::string text = "{";
+        for (std::size_t i = 0; i < 300; ++i)
+        {
+            text += (i == 0 ? "" : ",");
+            text += "\"k" + std::to_string(i % 200) + "\":" + std::to_string(i);
+        }
+        text += "}";
+
+        const ordered_json ordered = ordered_json::parse(text);
+        const json parsed = json::parse(text);
+        CHECK(ordered.size() == 200);
+        CHECK(parsed.size() == 200);
+        std::size_t i = 0;
+        for (auto it = ordered.begin(); it != ordered.end(); ++it, ++i)
+        {
+            CHECK(it.key() == "k" + std::to_string(i));
+            // the last value written
+            CHECK(it.value() == (i < 100 ? i + 200 : i));
+            CHECK(parsed.at(it.key()) == json(it.value()));
+        }
+    }
+}
+
+namespace
+{
+// a deterministic source of structure for parsing tests: builds a JSON text
+// and, at the same time, the value it has to parse to
+class tree_generator
+{
+  public:
+    explicit tree_generator(std::uint32_t seed) : state(seed) {}
+
+    template<typename Json>
+    Json make(std::string& text, const std::size_t depth)
+    {
+        switch (next(depth == 0 ? 5 : 9))
+        {
+            case 0:
+                text += "null";
+                return Json(nullptr);
+            case 1:
+                text += "true";
+                return Json(true);
+            case 2:
+            {
+                const int n = static_cast<int>(next(2000)) - 1000;
+                text += std::to_string(n);
+                return Json(n);
+            }
+            case 3:
+                text += "\"text\"";
+                return Json("text");
+            case 4:
+                text += "2.5";
+                return Json(2.5);
+            case 5:
+            case 6:
+            case 7:
+            {
+                Json array = Json::array();
+                text += "[";
+                const std::size_t n = size();
+                for (std::size_t i = 0; i < n; ++i)
+                {
+                    text += (i == 0 ? "" : ",");
+                    array.push_back(make<Json>(text, depth - 1));
+                }
+                text += "]";
+                return array;
+            }
+            default:
+            {
+                Json object = Json::object();
+                text += "{";
+                const std::size_t n = size();
+                for (std::size_t i = 0; i < n; ++i)
+                {
+                    const std::string key = "k" + std::to_string(i);
+                    text += (i == 0 ? "\"" : ",\"") + key + "\":";
+                    object[key] = make<Json>(text, depth - 1);
+                }
+                text += "}";
+                return object;
+            }
+        }
+    }
+
+  private:
+    std::uint32_t next(const std::uint32_t bound)
+    {
+        state = state * 1664525U + 1013904223U;
+        return (state >> 8) % bound;
+    }
+
+    std::size_t size()
+    {
+        return container_sizes[next(sizeof(container_sizes) / sizeof(*container_sizes))];
+    }
+
+    std::uint32_t state;
+};
+} // namespace
+
+TEST_CASE("parsing random trees of arrays and objects")
+{
+    for (std::uint32_t seed = 1; seed <= 150; ++seed)
+    {
+        INFO("seed ", seed);
+
+        std::string text;
+        std::string ordered_text;
+        const json expected = tree_generator(seed).make<json>(text, 3);
+        const ordered_json ordered_expected = tree_generator(seed).make<ordered_json>(ordered_text, 3);
+        CHECK(text == ordered_text);
+
+        CHECK(json::parse(text) == expected);
+        CHECK(json::accept(text));
+        const ordered_json ordered = ordered_json::parse(text);
+        CHECK(ordered == ordered_expected);
+        CHECK(ordered.dump() == ordered_expected.dump());
+        CHECK(json::parse(text).dump() == expected.dump());
+    }
+}
