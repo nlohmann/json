@@ -429,7 +429,7 @@ class binary_writer
 
             case value_t::number_float:
             {
-                write_compact_float(j.m_data.m_value.number_float, to_char_type(0xCA), to_char_type(0xCB));
+                write_msgpack_float(j.m_data.m_value.number_float);
                 break;
             }
 
@@ -2899,6 +2899,13 @@ class binary_writer
         }
     }
 
+    /// write a float as MessagePack, into space reserved from the sink
+    JSON_HEDLEY_NEVER_INLINE
+    void write_msgpack_float(const number_float_t n)
+    {
+        oa.commit(encode_compact_float(oa.reserve(integer_encoding_space), n, to_char_type(0xCA), to_char_type(0xCB)));
+    }
+
     /*!
     @brief write an object value (head and members) as MessagePack
 
@@ -2931,6 +2938,10 @@ class binary_writer
                     write_msgpack_integer(value, std::integral_constant<bool, integers_fit_64_bits()>());
                     break;
 
+                case value_t::number_float:
+                    write_msgpack_float(value.m_data.m_value.number_float);
+                    break;
+
                 case value_t::string:
                     write_msgpack_string(*value.m_data.m_value.string, value);
                     break;
@@ -2938,7 +2949,6 @@ class binary_writer
                 case value_t::object:
                 case value_t::array:
                 case value_t::binary:
-                case value_t::number_float:
                 case value_t::discarded:
                 default:
                     write_msgpack(value, depth + 1);
