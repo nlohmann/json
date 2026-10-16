@@ -23704,6 +23704,52 @@ class json_pointer
         obj[key] = std::forward<ValueType>(v);
     }
 
+    /// the number of entries that flattening @a value adds: its primitive
+    /// values and empty containers
+    template<typename BasicJsonType>
+    static std::size_t count_flattened(const BasicJsonType& value)
+    {
+        std::size_t count = 0;
+        std::vector<const BasicJsonType*> pending(1, &value);
+        while (!pending.empty())
+        {
+            const BasicJsonType* const v = pending.back();
+            pending.pop_back();
+            if (v->is_array() && !v->m_data.m_value.array->empty())
+            {
+                for (const auto& element : *v->m_data.m_value.array)
+                {
+                    pending.push_back(&element);
+                }
+            }
+            else if (v->is_object() && !v->m_data.m_value.object->empty())
+            {
+                for (const auto& member : *v->m_data.m_value.object)
+                {
+                    pending.push_back(&member.second);
+                }
+            }
+            else
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+    // Reserve the storage for @a value of objects that have a reserve(), so
+    // that it does not have to be moved while it grows
+    template<typename ObjectType, typename BasicJsonType>
+    static auto reserve_flattened(ObjectType& obj, const BasicJsonType& value, detail::priority_tag<1> /*unused*/)
+    -> decltype(obj.reserve(std::size_t {}), void())
+    {
+        obj.reserve(count_flattened(value));
+    }
+
+    template<typename ObjectType, typename BasicJsonType>
+    static void reserve_flattened(ObjectType& /*obj*/, const BasicJsonType& /*value*/, detail::priority_tag<0> /*unused*/)
+    {}
+
     /// append the decimal representation of @a i to @a out
     static void append_index(string_t& out, std::size_t i)
     {
@@ -23813,6 +23859,7 @@ class json_pointer
             }
         };
 
+        reserve_flattened(object, value, detail::priority_tag<1> {});
         enter(value);
         while (!stack.empty())
         {
