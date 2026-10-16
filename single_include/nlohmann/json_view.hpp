@@ -3421,6 +3421,10 @@ const node* element_at(const document_data& d, const node* array, std::size_t id
     {
         return e + idx; // a growable block: one link per element
     }
+    if (array->next == array->len + 1u && (!nav::editable() || (array->flags & node_flags::moved) == 0))
+    {
+        return e + idx; // no element has a subtree: the elements are the nodes after the array
+    }
     for (std::size_t i = 0; i < idx; ++i)
     {
         e = document_data::after(e);
@@ -3436,6 +3440,10 @@ const node* last_child(const document_data& d, const node* container) noexcept
     const std::size_t value_offset = container->kind == static_cast<std::uint8_t>(value_t::object) ? 1 : 0;
     const node* const end = navigation<Editable>::end(d, container);
     const node* last = navigation<Editable>::first(d, container);
+    if (value_offset == 0 && container->next == container->len + 1u && (!navigation<Editable>::editable() || (container->flags & node_flags::moved) == 0))
+    {
+        return last + (container->len - 1u); // an array without subtrees: the elements are the nodes after it
+    }
     for (const node* c = document_data::after(last + value_offset); c != end; c = document_data::after(c + value_offset))
     {
         last = c;

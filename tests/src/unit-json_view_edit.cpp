@@ -661,6 +661,48 @@ TEST_CASE("json_view edits: replacing arrays and objects by scalars")
     CHECK(d.root().materialize() == expected);
 }
 
+TEST_CASE("json_view edits: arrays whose elements have no subtrees")
+{
+    // such an array is indexed directly while it is in its parsed layout; edits
+    // that replace elements by scalars keep it, others move it
+    json_editable_document d = json_editable_document::parse("[10,20,30,40]");
+    json expected = json::array({10, 20, 30, 40});
+    const auto check = [&]
+    {
+        CHECK(d.root().size() == expected.size());
+        for (std::size_t i = 0; i < expected.size(); ++i)
+        {
+            CHECK(d.root()[i].materialize() == expected[i]);
+            CHECK(d.root().at(i).materialize() == expected[i]);
+        }
+        CHECK(d.root()[expected.size()].is_discarded());
+        CHECK(d.root().back().materialize() == expected.back());
+        CHECK(d.root().dump() == expected.dump());
+    };
+    check();
+    d.set(d.root()[1], "x");
+    expected[1] = "x";
+    check();
+    d.set(d.root()[3], 2.5);
+    expected[3] = 2.5;
+    check();
+    d.set(d.root()[2], json::array({1, 2}));
+    expected[2] = json::array({1, 2});
+    check();
+    d.push_back(d.root(), 50);
+    expected.push_back(50);
+    check();
+    d.insert(d.root(), 0, true);
+    expected.insert(expected.begin(), true);
+    check();
+    d.erase(d.root(), 1);
+    expected.erase(expected.begin() + 1);
+    check();
+    d.set(d.root()[2], nullptr);
+    expected[2] = nullptr;
+    check();
+}
+
 namespace
 {
 // reads of "a" in an object that repeats it: the first member wins, however the

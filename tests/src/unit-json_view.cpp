@@ -1031,6 +1031,49 @@ TEST_CASE("json_view element access and iteration")
 #endif
     }
 
+    SECTION("arrays whose elements have no subtrees: index and back()")
+    {
+        // (the elements are adjacent in the index; an array, an object, or an
+        // empty container anywhere makes the lookup skip element by element)
+        const std::vector<std::string> texts =
+        {
+            "[]", "[1]", "[1,2,3]", "[1,\"two\",3.5,true,null,-7,18446744073709551615]", "[[]]", "[{}]", "[1,[2],3]",
+            "[1,2,{\"a\":3}]", "[[1,2],3,4]", "[1,2,3,[4,5,6,7,8],9,10,11,12]", "[{\"a\":[1]},2]", "[\"a\\u00e4\",\"b\"]"
+        };
+        for (const std::string& text : texts)
+        {
+            CAPTURE(text)
+            const json_document d = json_document::parse(text);
+            const json_view v = d.root();
+            const json expected = json::parse(text);
+            for (std::size_t i = 0; i < expected.size(); ++i)
+            {
+                CHECK(v[i].materialize() == expected[i]);
+                CHECK(v.at(i).materialize() == expected[i]);
+            }
+            CHECK(v[expected.size()].is_discarded());
+            if (!expected.empty())
+            {
+                CHECK(v.back().materialize() == expected.back());
+            }
+        }
+        // a long array (the direct lookup is not limited to short ones), also with a container at its end
+        std::string text = "[0";
+        for (int i = 1; i < 1000; ++i)
+        {
+            text += "," + std::to_string(i);
+        }
+        const json_document scalars = json_document::parse(text + "]");
+        CHECK(scalars.root()[999].get<int>() == 999);
+        CHECK(scalars.root()[500].get<int>() == 500);
+        CHECK(scalars.root().at(1).get<int>() == 1);
+        CHECK(scalars.root().back().get<int>() == 999);
+        const json_document container_last = json_document::parse(text + ",[1000]]");
+        CHECK(container_last.root()[999].get<int>() == 999);
+        CHECK(container_last.root()[1000][0].get<int>() == 1000);
+        CHECK(container_last.root().back()[0].get<int>() == 1000);
+    }
+
     SECTION("iterators")
     {
         const json_document d = json_document::parse(R"({"x":[1,{"y":2}],"z":null})");
