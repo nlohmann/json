@@ -5301,6 +5301,9 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <algorithm> // max
 #include <cstddef> // size_t
+#ifndef JSON_NO_IO
+    #include <cstdio> // FILE, fread
+#endif
 #include <istream> // istream, streambuf
 #include <string> // basic_string, char_traits, string
 #include <type_traits> // decay, integral_constant, is_array, is_const, is_integral, is_lvalue_reference, is_pointer, is_same, remove_cv, remove_extent, remove_pointer, remove_reference
@@ -5445,6 +5448,37 @@ inline void append_stream(std::string& buf, std::istream& is)
     }
     is.clear(is.rdstate() | std::ios::eofbit);
 }
+
+/// a pointer to a C stream (never with JSON_NO_IO, which leaves out <cstdio>)
+template<typename T>
+struct is_c_stream
+#ifndef JSON_NO_IO
+    : std::is_same<T, std::FILE*>
+#else
+    : std::false_type
+#endif
+{};
+
+#ifndef JSON_NO_IO
+/// append the rest of a C stream: in blocks with fread, not character by
+/// character (the library's file adapter reads with fgetc);
+/// f is not null
+inline void append_file(std::string& buf, std::FILE* f)
+{
+    for (;;)
+    {
+        const std::size_t used = buf.size();
+        const std::size_t room = (std::max)(buf.capacity() - used, std::size_t{4096});
+        buf.resize(used + room);
+        const std::size_t got = std::fread(&buf[used], 1, room, f);
+        buf.resize(used + got);
+        if (got < room)
+        {
+            break; // end of file, or an error (as fgetc, which returns EOF for both)
+        }
+    }
+}
+#endif
 
 }  // namespace view
 }  // namespace detail
@@ -8823,7 +8857,8 @@ class basic_json_document
         // NOLINTBEGIN(readability-avoid-nested-conditional-operator): a constant expression of C++11
         append_input_impl(buf, std::forward<T>(input), std::integral_constant < int, detail::is_contiguous_byte_container<D>::value ? 0
                           : std::is_base_of<std::istream, D>::value ? 1
-                          : detail::view::is_adapter_input<D>::value ? 2 : 3 > {});
+                          : detail::view::is_adapter_input<D>::value ? 2
+                          : detail::view::is_c_stream<D>::value ? 4 : 3 > {});
         // NOLINTEND(readability-avoid-nested-conditional-operator)
     }
 
@@ -8844,6 +8879,19 @@ class basic_json_document
     {
         detail::view::append_adapter(buf, std::move(input.ia));
     }
+
+#ifndef JSON_NO_IO
+    static void append_input_impl(std::string& buf, std::FILE* file, std::integral_constant<int, 4> /*C stream*/)
+    {
+        if (file == nullptr)
+        {
+            // (as before: the library's adapter decides what a null stream yields)
+            detail::view::append_adapter(buf, detail::input_adapter(file));
+            return;
+        }
+        detail::view::append_file(buf, file);
+    }
+#endif
 
     template<typename T>
     static void append_input_impl(std::string& buf, T&& input, std::integral_constant<int, 3> /*other*/)

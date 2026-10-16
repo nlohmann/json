@@ -1528,7 +1528,8 @@ class basic_json_document
         // NOLINTBEGIN(readability-avoid-nested-conditional-operator): a constant expression of C++11
         append_input_impl(buf, std::forward<T>(input), std::integral_constant < int, detail::is_contiguous_byte_container<D>::value ? 0
                           : std::is_base_of<std::istream, D>::value ? 1
-                          : detail::view::is_adapter_input<D>::value ? 2 : 3 > {});
+                          : detail::view::is_adapter_input<D>::value ? 2
+                          : detail::view::is_c_stream<D>::value ? 4 : 3 > {});
         // NOLINTEND(readability-avoid-nested-conditional-operator)
     }
 
@@ -1549,6 +1550,19 @@ class basic_json_document
     {
         detail::view::append_adapter(buf, std::move(input.ia));
     }
+
+#ifndef JSON_NO_IO
+    static void append_input_impl(std::string& buf, std::FILE* file, std::integral_constant<int, 4> /*C stream*/)
+    {
+        if (file == nullptr)
+        {
+            // (as before: the library's adapter decides what a null stream yields)
+            detail::view::append_adapter(buf, detail::input_adapter(file));
+            return;
+        }
+        detail::view::append_file(buf, file);
+    }
+#endif
 
     template<typename T>
     static void append_input_impl(std::string& buf, T&& input, std::integral_constant<int, 3> /*other*/)

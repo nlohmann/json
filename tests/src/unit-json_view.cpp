@@ -410,6 +410,31 @@ TEST_CASE("json_view")
         std::istringstream rvalue_source("[1]");
         CHECK(json_document::parse_copy(std::move(rvalue_source)).owns_source());
 
+        // a C stream is read in blocks as well (more than one block, and a
+        // text whose length is a multiple of the block size)
+        for (const std::size_t extra :
+                {
+                    std::size_t{0}, std::size_t{1}
+                })
+        {
+            std::FILE* long_file = std::tmpfile(); // NOLINT(cppcoreguidelines-owning-memory)
+            if (long_file != nullptr)
+            {
+                std::string padded = text;
+                padded.append((4096 - (padded.size() % 4096)) % 4096 + extra, ' ');
+                CHECK(std::fwrite(padded.data(), 1, padded.size(), long_file) == padded.size());
+                CHECK(std::fseek(long_file, 0, SEEK_SET) == 0);
+                const json_document from_long_file = json_document::parse(long_file);
+                CHECK(from_long_file.source() == padded);
+                CHECK(from_long_file.root().materialize() == json::parse(text));
+                CHECK(std::fclose(long_file) == 0); // NOLINT(cppcoreguidelines-owning-memory)
+            }
+        }
+        {
+            json_document from_null;
+            CHECK_THROWS_AS(from_null = json_document::parse(static_cast<std::FILE*>(nullptr)), json::parse_error&);
+        }
+
         // a stream without a buffer is an empty input
         std::istream no_buffer(nullptr);
         CHECK(json_document::parse(no_buffer, false).is_discarded());
