@@ -22137,6 +22137,85 @@ class json_pointer
     }
 
     /*!
+    @brief resolve a plain JSON pointer without building its reference tokens
+
+    @param[in] ptr     the value the pointer starts at
+    @param[in] path    a JSON pointer string
+    @param[in] length  the number of leading bytes of @a path to resolve; 0 or
+                       the position of a slash
+    @param[in,out] token  a string to hold the reference tokens, to reuse its storage
+
+    @return the pointed to value, or `nullptr` if the pointer does not denote
+            an existing value, or does so in a way that is not plain: a
+            reference token with an escape, an array index that is malformed or
+            out of range, or a "-". No exception is thrown for these; callers
+            use @ref json_pointer instead, which handles them.
+    */
+    template<typename BasicJsonType>
+    static BasicJsonType* resolve_plain(BasicJsonType* ptr, const string_t& path, const std::size_t length, string_t& token)
+    {
+        for (std::size_t pos = 0; pos < length;)
+        {
+            if (JSON_HEDLEY_UNLIKELY(path[pos] != '/'))
+            {
+                return nullptr;
+            }
+
+            // the reference token between the slash at pos and the next one
+            std::size_t end = path.find_first_of('/', pos + 1);
+            if (end == string_t::npos || end > length)
+            {
+                end = length;
+            }
+            token.clear();
+            token.append(path.data() + pos + 1, end - pos - 1);
+            if (JSON_HEDLEY_UNLIKELY(token.find_first_of('~') != string_t::npos))
+            {
+                return nullptr;
+            }
+
+            switch (ptr->type())
+            {
+                case detail::value_t::object:
+                {
+                    const auto it = ptr->m_data.m_value.object->find(token);
+                    if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &it->second;
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    typename BasicJsonType::size_type idx{};
+                    if (JSON_HEDLEY_UNLIKELY(parse_array_index<BasicJsonType>(token, idx) != array_index_status::ok || idx >= ptr->m_data.m_value.array->size()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &(*ptr->m_data.m_value.array)[idx];
+                    break;
+                }
+
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
+                default:
+                    return nullptr;
+            }
+            pos = end;
+        }
+
+        return ptr;
+    }
+
+    /*!
     @brief return a reference to the pointed to value
 
     @note This version does not throw if a value is not present, but tries to
@@ -37696,6 +37775,125 @@ public:
             detail::throw_patch_not_an_array(json_patch);
         }
 
+        // the usual patch operations "add", "remove", "replace" and "test" on
+        // a pointer without escapes that denotes existing array elements and
+        // object members (as "add" does for the parent of the new value), as
+        // a diff creates them: apply the operation and return true; return
+        // false, with nothing changed, for all others
+        string_t token;
+        const string_t value_key = "value";
+        const auto try_plain = [&result, &token, &value_key](patch_operations operation, const string_t& path, const basic_json & val)
+        {
+            if (path.empty() || path.find_first_of('~') != string_t::npos)
+            {
+                return false;
+            }
+
+            // a missing "value" is reported below
+            const auto value_it = val.m_data.m_value.object->find(value_key);
+            const basic_json& value = value_it != val.m_data.m_value.object->end() ? value_it->second : val;
+            if (operation != patch_operations::remove && value_it == val.m_data.m_value.object->end())
+            {
+                return false;
+            }
+
+            switch (operation)
+            {
+                case patch_operations::replace:
+                {
+                    basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    if (target == nullptr)
+                    {
+                        return false;
+                    }
+                    *target = value;
+                    return true;
+                }
+
+                case patch_operations::test:
+                {
+                    const basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    // a failing test is reported below
+                    return target != nullptr && *target == value;
+                }
+
+                case patch_operations::add:
+                case patch_operations::remove:
+                {
+                    // the parent of the pointer and its last reference token
+                    std::size_t slash = path.size();
+                    while (slash > 0 && path[slash - 1] != '/')
+                    {
+                        --slash;
+                    }
+                    if (slash == 0)
+                    {
+                        return false;
+                    }
+                    --slash;
+
+                    basic_json* const parent = json_pointer::resolve_plain(&result, path, slash, token);
+                    if (parent == nullptr)
+                    {
+                        return false;
+                    }
+                    token.clear();
+                    token.append(path.data() + slash + 1, path.size() - slash - 1);
+
+                    if (operation == patch_operations::add)
+                    {
+                        if (parent->is_object())
+                        {
+                            (*parent)[token] = value;
+                            return true;
+                        }
+                        if (parent->is_array())
+                        {
+                            typename basic_json::size_type idx{};
+                            if (token == "-")
+                            {
+                                parent->push_back(value);
+                                return true;
+                            }
+                            if (json_pointer::template parse_array_index<basic_json_t>(token, idx) == json_pointer::array_index_status::ok && idx <= parent->size())
+                            {
+                                parent->insert(parent->begin() + static_cast<difference_type>(idx), value);
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    if (parent->is_object())
+                    {
+                        const auto it = parent->find(token);
+                        if (it == parent->end())
+                        {
+                            return false;
+                        }
+                        parent->erase(it);
+                        return true;
+                    }
+                    if (parent->is_array())
+                    {
+                        typename basic_json::size_type idx{};
+                        if (json_pointer::template parse_array_index<basic_json_t>(token, idx) == json_pointer::array_index_status::ok && idx < parent->size())
+                        {
+                            parent->erase(idx);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                case patch_operations::move:
+                case patch_operations::copy:
+                case patch_operations::invalid:
+                default:
+                    return false;
+            }
+        };
+
         // iterate and apply the operations
         for (const auto& val : json_patch)
         {
@@ -37732,9 +37930,19 @@ public:
             // collect mandatory members
             const string_t& op = *get_value("op", "op", true).m_data.m_value.string;
             const string_t& path = *get_value(op, "path", true).m_data.m_value.string;
+            const patch_operations operation = get_op(op);
+
+            // the usual operations on a plain pointer are applied without
+            // building the pointer's reference tokens; anything else (and
+            // every error) is handled below
+            if (try_plain(operation, path, val))
+            {
+                continue;
+            }
+
             json_pointer ptr(path);
 
-            switch (get_op(op))
+            switch (operation)
             {
                 case patch_operations::add:
                 {
