@@ -1412,16 +1412,73 @@ class binary_writer
     */
     std::size_t calc_bson_entry_header_size(const string_t& name, const BasicJsonType& j)
     {
-        const auto it = name.find(static_cast<typename string_t::value_type>(0));
+        const std::size_t it = find_nul(name);
         if (JSON_HEDLEY_UNLIKELY(it != BasicJsonType::string_t::npos))
         {
             JSON_THROW(out_of_range::create(exception_id::bson_key_with_null, concat("BSON key cannot contain code point U+0000 (at byte ", std::to_string(it), ")"), &j));
         }
 
+        if (JSON_HEDLEY_LIKELY(error_handler == error_handler_t::keep))
+        {
+            return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
+        }
+
+        return calc_bson_checked_entry_header_size(name, j);
+    }
+
+    /// @brief the size of a BSON document entry header for a name that the
+    ///        error handler checks or sanitizes; out of line, as the string_t
+    ///        for the sanitized copy would otherwise burden every call of
+    ///        @ref calc_bson_entry_header_size
+    JSON_HEDLEY_NEVER_INLINE
+    std::size_t calc_bson_checked_entry_header_size(const string_t& name, const BasicJsonType& j)
+    {
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(name, j, storage);
 
         return /*id*/ 1ul + sanitized.size() + /*zero-terminator*/1u;
+    }
+
+    /*!
+    @brief the position of the first U+0000 in @a name, or string_t::npos
+
+    The same as `name.find(0)`, without the calls into the standard library for
+    names of a few characters: it looks at eight characters at a time.
+    */
+    static std::size_t find_nul(const string_t& name) noexcept
+    {
+        return find_nul(name, std::integral_constant<bool, sizeof(typename string_t::value_type) == 1>());
+    }
+
+    static std::size_t find_nul(const string_t& name, std::true_type /*is_byte*/) noexcept
+    {
+        constexpr std::uint64_t ones = 0x0101010101010101ull;
+        constexpr std::uint64_t high = 0x8080808080808080ull;
+        const std::size_t size = name.size();
+        const char* const data = reinterpret_cast<const char*>(name.data());
+        std::size_t pos = 0;
+        for (; pos + 8 <= size; pos += 8)
+        {
+            std::uint64_t word = 0;
+            std::memcpy(&word, data + pos, sizeof(word));
+            if (((word - ones) & ~word & high) != 0)
+            {
+                break;
+            }
+        }
+        for (; pos < size; ++pos)
+        {
+            if (data[pos] == '\0')
+            {
+                return pos;
+            }
+        }
+        return BasicJsonType::string_t::npos;
+    }
+
+    static std::size_t find_nul(const string_t& name, std::false_type /*is_byte*/) noexcept
+    {
+        return name.find(static_cast<typename string_t::value_type>(0));
     }
 
     /*!
@@ -1503,11 +1560,23 @@ class binary_writer
     {
         if (JSON_HEDLEY_LIKELY(value_in_range_of<std::int32_t>(value.size())))
         {
-            string_t storage;
-            const string_t& sanitized = sanitize_utf8_for_write(value, j, storage);
-            return sizeof(std::int32_t) + sanitized.size() + 1ul;
+            if (JSON_HEDLEY_LIKELY(error_handler == error_handler_t::keep))
+            {
+                return sizeof(std::int32_t) + value.size() + 1ul;
+            }
+            return calc_bson_checked_string_size(value, j);
         }
         return sizeof(std::int32_t) + value.size() + 1ul;
+    }
+
+    /// @brief the size of a BSON string that the error handler checks or
+    ///        sanitizes; out of line, like @ref calc_bson_checked_entry_header_size
+    JSON_HEDLEY_NEVER_INLINE
+    std::size_t calc_bson_checked_string_size(const string_t& value, const BasicJsonType& j)
+    {
+        string_t storage;
+        const string_t& sanitized = sanitize_utf8_for_write(value, j, storage);
+        return sizeof(std::int32_t) + sanitized.size() + 1ul;
     }
 
     /*!
@@ -1699,12 +1768,179 @@ class binary_writer
         }
     }
 
+    /// the longest name for which write_bson_scalar() writes an entry through a
+    /// single reservation: the type, name, terminating null byte, and the length
+    /// of a string or binary value (4 bytes) or the largest fixed-size value (8
+    /// bytes, a double or a 64-bit integer) must fit max_reserve_size
+    static constexpr std::size_t bson_scalar_max_name_size = max_reserve_size - 2 - 8 - 1;
+
+    /*!
+    @brief store @a n at @a out in little-endian byte order
+    */
+    template<typename NumberType>
+    void store_little_endian(CharType* out, const NumberType n) const noexcept
+    {
+        std::memcpy(out, &n, sizeof(NumberType));
+        if (!is_little_endian)
+        {
+            std::reverse(out, out + sizeof(NumberType));
+        }
+    }
+
+    /*!
+    @brief encode the type and the value of the BSON document entry for @a j
+           if it has a fixed size
+    @param[in] out  where the type byte goes
+    @param[in] value_out  where the value goes: the characters after the name
+                          and its terminating null byte
+    @return the end of the entry, or nullptr (and nothing is written to
+            @a out) if @a j is not a boolean, number, or null; at most 9
+            characters are written to @a out and @a value_out
+
+    The entry is encoded as @ref write_bson_value does.
+    */
+    CharType* encode_bson_fixed_entry(CharType* out, CharType* value_out, const BasicJsonType& j) const noexcept
+    {
+        switch (j.type())
+        {
+            case value_t::boolean:
+                out[0] = to_char_type(0x08);
+                *value_out++ = j.m_data.m_value.boolean ? to_char_type(0x01) : to_char_type(0x00);
+                return value_out;
+
+            case value_t::number_float:
+                out[0] = to_char_type(0x01);
+                store_little_endian<double>(value_out, static_cast<double>(j.m_data.m_value.number_float));
+                return value_out + sizeof(double);
+
+            case value_t::number_integer:
+            {
+                const auto value = static_cast<std::int64_t>(j.m_data.m_value.number_integer);
+                if ((std::numeric_limits<std::int32_t>::min)() <= value && value <= (std::numeric_limits<std::int32_t>::max)())
+                {
+                    out[0] = to_char_type(0x10); // int32
+                    store_little_endian<std::int32_t>(value_out, static_cast<std::int32_t>(value));
+                    return value_out + sizeof(std::int32_t);
+                }
+                out[0] = to_char_type(0x12); // int64
+                store_little_endian<std::int64_t>(value_out, value);
+                return value_out + sizeof(std::int64_t);
+            }
+
+            case value_t::number_unsigned:
+            {
+                const auto value = conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned);
+                if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
+                {
+                    out[0] = to_char_type(0x10); // int32
+                    store_little_endian<std::int32_t>(value_out, static_cast<std::int32_t>(value));
+                    return value_out + sizeof(std::int32_t);
+                }
+                if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
+                {
+                    out[0] = to_char_type(0x12); // int64
+                    store_little_endian<std::int64_t>(value_out, static_cast<std::int64_t>(value));
+                    return value_out + sizeof(std::int64_t);
+                }
+                out[0] = to_char_type(0x11); // uint64
+                store_little_endian<std::uint64_t>(value_out, value);
+                return value_out + sizeof(std::uint64_t);
+            }
+
+            case value_t::null:
+                out[0] = to_char_type(0x0A);
+                return value_out;
+
+            case value_t::string:
+            case value_t::binary:
+            case value_t::object:
+            case value_t::array:
+            case value_t::discarded:
+            default:
+                return nullptr;
+        }
+    }
+
+    /*!
+    @brief Writes the BSON document entry with key @a name for @a j, which is
+           neither an object nor an array, with the key and a fixed-size value
+           (or the header of a string or binary value) in one reservation
+    @return whether the entry was written; false for a discarded value, a
+            string or binary value whose length does not fit the length
+            field, in which case nothing was written
+    @pre    @a name is at most bson_scalar_max_name_size characters long and is
+            not changed by the error handler
+    */
+    bool write_bson_scalar(const string_t& name, const BasicJsonType& j)
+    {
+        const std::size_t name_size = name.size();
+        CharType* const out = oa.reserve(name_size + 2 + 8);
+        // the name and its terminating null byte follow the type byte
+        CharType* p = out + 1;
+        std::memcpy(p, name.data(), name_size);
+        p += name_size;
+        *p++ = to_char_type(0x00);
+
+        if (const CharType* const end = encode_bson_fixed_entry(out, p, j))
+        {
+            oa.commit(static_cast<std::size_t>(end - out));
+            return true;
+        }
+
+        if (j.is_string())
+        {
+            const string_t& value = *j.m_data.m_value.string;
+            if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size() + 1ul)))
+            {
+                return false;
+            }
+            out[0] = to_char_type(0x02);
+            store_little_endian<std::int32_t>(p, static_cast<std::int32_t>(value.size() + 1ul));
+            p += sizeof(std::int32_t);
+            oa.commit(static_cast<std::size_t>(p - out));
+            // the terminating null byte is written explicitly rather than
+            // taken from the buffer, so that string_t::data() need not be
+            // null-terminated
+            oa.write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
+            oa.write_character(to_char_type(0x00));
+            return true;
+        }
+
+        if (j.is_binary())
+        {
+            const binary_t& value = *j.m_data.m_value.binary;
+            if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size())))
+            {
+                return false;
+            }
+            out[0] = to_char_type(0x05);
+            store_little_endian<std::int32_t>(p, static_cast<std::int32_t>(value.size()));
+            p += sizeof(std::int32_t);
+            *p++ = value.has_subtype() ? to_char_type(static_cast<std::uint8_t>(value.subtype())) : to_char_type(0x00);
+            oa.commit(static_cast<std::size_t>(p - out));
+            oa.write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
+            return true;
+        }
+
+        return false;
+    }
+
     /*!
     @brief Writes the BSON document entry with key @a name for @a j, which is
            neither an object nor an array
     */
     void write_bson_value(const string_t& name, const BasicJsonType& j)
     {
+        // The strings are written as they are, as they are neither checked nor
+        // sanitized again here by these two error handlers. The name has to leave
+        // room for the larger payloads (see write_bson_scalar).
+        if (name.size() <= bson_scalar_max_name_size
+                && (error_handler == error_handler_t::keep || error_handler == error_handler_t::strict)
+                && write_bson_scalar(name, j))
+        {
+            return;
+        }
+
         switch (j.type())
         {
             case value_t::binary:
@@ -1757,6 +1993,9 @@ class binary_writer
         write_number<std::int32_t>(to_bson_length(size), true);
     }
 
+    /// space for the name of an array element, the decimal index, in the frame
+    static constexpr std::size_t bson_index_name_space = 24;
+
     /// @brief an object or array of the BSON document being sized or written
     struct bson_frame
     {
@@ -1770,24 +2009,37 @@ class binary_writer
             }
         }
 
-        /// make @ref index the next one: count it and update its decimal name
+        /// @ref calc_bson_sizes only: make @ref index the next one and count the
+        /// digits of its name
+        void count_index() noexcept
+        {
+            if (++index == index_boundary)
+            {
+                ++index_name_size;
+                index_boundary *= 10;
+            }
+        }
+
+        /// @ref write_bson_document only: make @ref index the next one and
+        /// update its decimal name
         void next_index() noexcept
         {
             ++index;
             std::size_t i = index_name_size;
-            while (i > 0)
+            while (i > 0 && index_name[i - 1] == '9')
             {
-                --i;
-                if (index_name[i] != '9')
-                {
-                    ++index_name[i];
-                    return;
-                }
-                index_name[i] = '0';
+                index_name[--i] = '0';
             }
-            // all digits were 9: 10, 100, ...
-            index_name[0] = '1';
-            index_name[index_name_size++] = '0';
+            if (i > 0)
+            {
+                ++index_name[i - 1];
+            }
+            else
+            {
+                // all digits were 9: 10, 100, ...
+                index_name[0] = '1';
+                index_name[index_name_size++] = '0';
+            }
         }
 
         /// the object or array
@@ -1796,16 +2048,90 @@ class binary_writer
         typename BasicJsonType::object_t::const_iterator member{};
         /// arrays: the index of the next element
         std::size_t index = 0;
-        /// arrays: the name BSON gives that element, its decimal index (the
-        /// index is at most 2^64 - 1, which has 20 digits)
-        std::array<char, 20> index_name{{'0'}};
-        /// arrays: the number of characters of @ref index_name
+        /// arrays: the name BSON gives that element, its decimal index (at most
+        /// 2^64 - 1, which has 20 digits), in space for copying a few characters
+        /// more; only maintained by @ref write_bson_document
+        std::array<char, bson_index_name_space> index_name{{'0'}};
+        /// arrays: the number of digits of the index
         std::size_t index_name_size = 1;
+        /// arrays: the first index with one more digit; only maintained by
+        /// @ref calc_bson_sizes
+        std::uint64_t index_boundary = 10;
         /// @ref calc_bson_sizes only: where its size goes in the table
         std::size_t size_slot;
         /// @ref calc_bson_sizes only: the size of its entries seen so far
         std::size_t entries_size = 0;
     };
+
+    /*!
+    @brief Writes the entries of the array in @a frame that have a fixed size
+           (booleans, numbers, and null), from its next element on, until it
+           reaches another element or the end of the array
+
+    The index of the element and its name are advanced in @a frame.
+
+    The entries are encoded straight into space reserved from the sink for as
+    many of them as fit, with the index, its digits, and the write pointer
+    kept in local variables: stores of characters may alias the frame, and
+    would force them to be loaded from it again for every element.
+    */
+    void write_bson_array_fixed_entries(bson_frame& frame)
+    {
+        const auto& array = *frame.value->m_data.m_value.array;
+        const std::size_t count = array.size();
+        std::size_t index = frame.index;
+        std::size_t name_size = frame.index_name_size;
+        std::array<char, bson_index_name_space> name = frame.index_name;
+
+        // an entry is at most the type, 20 digits, the null byte, and 8 bytes
+        constexpr std::size_t max_entry = 1 + 20 + 1 + 8;
+        while (index < count)
+        {
+            CharType* const start = oa.reserve(max_reserve_size);
+            CharType* out = start;
+            const CharType* const limit = start + (max_reserve_size - max_entry);
+            while (out <= limit && index < count)
+            {
+                CharType* p = out + 1;
+                std::memcpy(p, name.data(), name.size());
+                p += name_size;
+                *p++ = to_char_type(0x00);
+                CharType* const end = encode_bson_fixed_entry(out, p, array[index]);
+                if (end == nullptr)
+                {
+                    break;
+                }
+                out = end;
+
+                ++index;
+                std::size_t i = name_size;
+                while (i > 0 && name[i - 1] == '9')
+                {
+                    name[--i] = '0';
+                }
+                if (i > 0)
+                {
+                    ++name[i - 1];
+                }
+                else
+                {
+                    // all digits were 9: 10, 100, ...
+                    name[0] = '1';
+                    name[name_size++] = '0';
+                }
+            }
+            oa.commit(static_cast<std::size_t>(out - start));
+            if (out <= limit && index < count)
+            {
+                // stopped at an element that has no fixed size
+                break;
+            }
+        }
+
+        frame.index = index;
+        frame.index_name_size = name_size;
+        frame.index_name = name;
+    }
 
     /*!
     @brief Calculates the size of every object and array in the BSON document
@@ -1871,7 +2197,7 @@ class binary_writer
                     // the type, the decimal index (which is valid UTF-8 and
                     // has no U+0000), and the terminating null byte
                     current.entries_size += 2ul + current.index_name_size;
-                    current.next_index();
+                    current.count_index();
                     if (el.is_structured())
                     {
                         nested = &el;
@@ -1955,6 +2281,13 @@ class binary_writer
                 const auto& array = *current.value->m_data.m_value.array;
                 while (nested == nullptr && current.index < array.size())
                 {
+                    write_bson_array_fixed_entries(current);
+                    if (current.index == array.size())
+                    {
+                        break;
+                    }
+
+                    // a string, binary value, object or array
                     const BasicJsonType& el = array[current.index];
                     const string_t index_name(current.index_name.data(), current.index_name_size);
                     current.next_index();
