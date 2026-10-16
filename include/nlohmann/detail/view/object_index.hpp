@@ -125,7 +125,7 @@ inline void build_object_indexes(document_data& d)
 {
     for (const std::uint32_t i : d.large_objects)
     {
-        build_object_index(d, d.tape + i);
+        build_object_index(d, d.nodes + i);
     }
 }
 
