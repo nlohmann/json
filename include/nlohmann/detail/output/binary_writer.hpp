@@ -340,7 +340,7 @@ class binary_writer
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::uint32_t>(length)))
         {
-            JSON_THROW(out_of_range::create(exception_id::length_too_large, concat("MessagePack length ", std::to_string(length), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+            throw_msgpack_length_too_large(length, j);
         }
 
         static_cast<void>(j);
@@ -519,7 +519,7 @@ class binary_writer
                 {
                     if (JSON_HEDLEY_UNLIKELY(j.m_data.m_value.binary->subtype() > (std::numeric_limits<std::uint8_t>::max)()))
                     {
-                        JSON_THROW(out_of_range::create(exception_id::subtype_out_of_range, concat("subtype ", std::to_string(j.m_data.m_value.binary->subtype()), " is too large for the MessagePack ext type (max 255)"), &j));
+                        throw_subtype_out_of_range(j.m_data.m_value.binary->subtype(), "the MessagePack ext type", j);
                     }
 
                     write_number(static_cast<std::int8_t>(j.m_data.m_value.binary->subtype()));
@@ -662,7 +662,7 @@ class binary_writer
                 {
                     if (!use_count)
                     {
-                        JSON_THROW(other_error::create(exception_id::size_marker_required, "use_type requires use_size = true", &j));
+                        throw_size_marker_required(j);
                     }
                     oa.write_character(to_char_type('$'));
                     oa.write_character(bjdata_draft3 ? 'B' : 'U');
@@ -871,7 +871,8 @@ class binary_writer
     @brief throws because the integer @a j is too large for @a format_name
     @throw out_of_range.407 always
     */
-    JSON_HEDLEY_NO_RETURN static void throw_integer_out_of_range(const BasicJsonType& j, const char* format_name, const char* range)
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_integer_out_of_range(const BasicJsonType& j, const char* format_name, const char* range)
     {
         // neither std::to_string(), which has no overload for integer types
         // wider than 64 bits, nor dump(), which would also instantiate the
@@ -885,6 +886,43 @@ class binary_writer
         static_cast<void>(format_name);
         static_cast<void>(range);
         JSON_THROW(out_of_range::create(exception_id::integer_too_large, concat("integer number ", number, " cannot be represented by ", format_name, " as it does not fit ", range), &j));
+    }
+
+    // The exceptions below are thrown from functions of their own, out of line:
+    // the code that builds a message (concat, std::to_string) would otherwise
+    // make the frame of the function that checks, which most calls never throw.
+
+    /// @throw out_of_range.412 always
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_msgpack_length_too_large(const std::size_t length, const BasicJsonType& j)
+    {
+        static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
+        JSON_THROW(out_of_range::create(exception_id::length_too_large, concat("MessagePack length ", std::to_string(length), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+    }
+
+    /// @throw out_of_range.412 always
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_bson_length_too_large(const std::size_t size)
+    {
+        JSON_THROW(out_of_range::create(exception_id::length_too_large, concat("BSON length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::int32_t>::max)())), nullptr));
+    }
+
+    /// @throw out_of_range.415 always
+    template<typename SubtypeType>
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_subtype_out_of_range(const SubtypeType subtype, const char* what, const BasicJsonType& j)
+    {
+        static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(what);
+        JSON_THROW(out_of_range::create(exception_id::subtype_out_of_range, concat("subtype ", std::to_string(subtype), " is too large for ", what, " (max 255)"), &j));
+    }
+
+    /// @throw other_error.407 always
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_size_marker_required(const BasicJsonType& j)
+    {
+        static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
+        JSON_THROW(other_error::create(exception_id::size_marker_required, "use_type requires use_size = true", &j));
     }
 
     void write_msgpack_array_prefix(const std::size_t N, const BasicJsonType& j)
@@ -1144,7 +1182,7 @@ class binary_writer
         {
             if (!use_count)
             {
-                JSON_THROW(other_error::create(exception_id::size_marker_required, "use_type requires use_size = true", &j));
+                throw_size_marker_required(j);
             }
             const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
             const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
@@ -1193,7 +1231,7 @@ class binary_writer
         {
             if (!use_count)
             {
-                JSON_THROW(other_error::create(exception_id::size_marker_required, "use_type requires use_size = true", &j));
+                throw_size_marker_required(j);
             }
             const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
             const bool same_prefix = std::all_of(j.begin(), j.end(),
@@ -1404,7 +1442,7 @@ class binary_writer
         const std::size_t it = find_nul(name);
         if (JSON_HEDLEY_UNLIKELY(it != BasicJsonType::string_t::npos))
         {
-            JSON_THROW(out_of_range::create(exception_id::bson_key_with_null, concat("BSON key cannot contain code point U+0000 (at byte ", std::to_string(it), ")"), &j));
+            throw_bson_key_with_null(it, j);
         }
 
         if (JSON_HEDLEY_LIKELY(error_handler == error_handler_t::keep))
@@ -1413,6 +1451,15 @@ class binary_writer
         }
 
         return calc_bson_checked_entry_header_size(name, j);
+    }
+
+    /// @brief throw out_of_range.409 for a name with U+0000 at byte @a index;
+    ///        out of line, so that the message does not burden the check
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_bson_key_with_null(const std::size_t index, const BasicJsonType& j)
+    {
+        static_cast<void>(j); // only used when exceptions are enabled
+        JSON_THROW(out_of_range::create(exception_id::bson_key_with_null, concat("BSON key cannot contain code point U+0000 (at byte ", std::to_string(index), ")"), &j));
     }
 
     /// @brief the size of a BSON document entry header for a name that the
@@ -1479,7 +1526,7 @@ class binary_writer
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
         {
-            JSON_THROW(out_of_range::create(exception_id::length_too_large, concat("BSON length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::int32_t>::max)())), nullptr));
+            throw_bson_length_too_large(size);
         }
 
         return static_cast<std::int32_t>(size);
@@ -1677,7 +1724,7 @@ class binary_writer
 
         if (value.has_subtype() && JSON_HEDLEY_UNLIKELY(value.subtype() > (std::numeric_limits<std::uint8_t>::max)()))
         {
-            JSON_THROW(out_of_range::create(exception_id::subtype_out_of_range, concat("subtype ", std::to_string(value.subtype()), " is too large for the BSON binary subtype (max 255)"), &j));
+            throw_subtype_out_of_range(value.subtype(), "the BSON binary subtype", j);
         }
 
         return sizeof(std::int32_t) + value.size() + 1ul;
@@ -3694,16 +3741,25 @@ class binary_writer
                 break;
             default:
             {
-                // high-precision number: the decimal digits as a string
                 JSON_ASSERT(prefix == 'H');
-                const auto number = BasicJsonType(n).dump();
-                write_number_with_ubjson_prefix(number.size(), true, use_bjdata);
-                for (std::size_t i = 0; i < number.size(); ++i)
-                {
-                    oa.write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
-                }
+                write_ubjson_high_precision(n, use_bjdata);
                 break;
             }
+        }
+    }
+
+    /// @brief write an integer as a high-precision number: its decimal digits as
+    ///        a string; out of line, as the string would otherwise burden
+    ///        @ref write_ubjson_integer_payload for every integer
+    template<typename NumberType>
+    JSON_HEDLEY_NEVER_INLINE
+    void write_ubjson_high_precision(const NumberType n, const bool use_bjdata)
+    {
+        const auto number = BasicJsonType(n).dump();
+        write_number_with_ubjson_prefix(number.size(), true, use_bjdata);
+        for (std::size_t i = 0; i < number.size(); ++i)
+        {
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
         }
     }
 
@@ -4737,13 +4793,21 @@ class binary_writer
     */
     static void check_utf8(const string_t& s, const BasicJsonType& context)
     {
-        static_cast<void>(context); // only used when exceptions are enabled
         const auto* data = reinterpret_cast<const unsigned char*>(s.data());
         const std::size_t valid = valid_utf8_prefix(data, s.size());
         if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
         {
-            JSON_THROW(type_error::create(exception_id::invalid_utf8, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", detail::hex_byte(data[valid])), &context));
+            throw_invalid_utf8(data, valid, context);
         }
+    }
+
+    /// @brief throw type_error.316 for the invalid byte at @a index of @a data;
+    ///        out of line, so that the message does not burden check_utf8()
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_invalid_utf8(const unsigned char* data, const std::size_t index, const BasicJsonType& context)
+    {
+        static_cast<void>(context); // only used when exceptions are enabled
+        JSON_THROW(type_error::create(exception_id::invalid_utf8, concat("invalid UTF-8 byte at index ", std::to_string(index), ": 0x", detail::hex_byte(data[index])), &context));
     }
 
     /*!
