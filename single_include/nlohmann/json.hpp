@@ -22432,12 +22432,35 @@ class json_pointer
     {
         // one buffer: every token adds its escaped form (at least its length) and a slash
         std::size_t length = 0;
+        bool plain = true;
         for (const auto& reference_token : reference_tokens)
         {
             length += reference_token.size() + 1;
+            const char* const data = reference_token.data();
+            for (std::size_t i = 0, size = reference_token.size(); plain && i < size; ++i)
+            {
+                plain = data[i] != '~' && data[i] != '/';
+            }
         }
 
         string_t result;
+        if (JSON_HEDLEY_LIKELY(plain))
+        {
+            // nothing to escape: the tokens are copied into the string
+            result.resize(length);
+            if (length != 0)
+            {
+                char* out = &result[0];
+                for (const auto& reference_token : reference_tokens)
+                {
+                    *out++ = '/';
+                    std::memcpy(out, reference_token.data(), reference_token.size());
+                    out += reference_token.size();
+                }
+            }
+            return result;
+        }
+
         result.reserve(length);
         for (const auto& reference_token : reference_tokens)
         {
