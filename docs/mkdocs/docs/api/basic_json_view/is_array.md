@@ -38,7 +38,8 @@ Constant.
 ## See also
 
 - [is_structured](is_structured.md) - return whether the type is structured
-- [size](size.md), [empty](empty.md) - the number of elements, and whether there are none
+- [size](size.md) - the number of elements
+- [empty](empty.md) - whether there are no elements
 - [`BasicJsonType::is_array`](../basic_json/is_array.md) - the corresponding function of `basic_json`
 
 ## Version history

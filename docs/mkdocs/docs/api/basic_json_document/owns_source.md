@@ -4,7 +4,7 @@
 bool owns_source() const noexcept;
 ```
 
-Returns whether the document holds its own copy of the parsed text, as opposed to borrowing the caller's buffer.
+Returns whether the document holds its own copy of the parsed text or is borrowing the caller's buffer.
 
 ## Return value
 

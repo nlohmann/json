@@ -39,7 +39,8 @@ auto v = doc.root();
 `root()` is a cheap handle into the document's index, not a copy of anything; call it as often as needed. The
 returned view is valid under the same conditions as any other view of the document -- see
 [Object inspection](../basic_json_view/index.md) -- in particular, it is invalidated by the next
-[`read()`](read.md) or [`shrink_to_fit()`](shrink_to_fit.md) on this document.
+[`read()`](read.md) or [`shrink_to_fit()`](shrink_to_fit.md) on this document. A view can dangle, like a
+`#!cpp std::string_view`; see [Ownership and lifetime](../../features/json_view.md#ownership-and-lifetime).
 
 ## Examples
 

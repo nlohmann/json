@@ -16,8 +16,8 @@ most of the resulting tree is thrown away almost immediately.
 [`basic_json_document::parse()`](../api/basic_json_document/parse.md) parses the same JSON grammar, with the same
 options, but instead of a tree it builds a flat index of the values it found: one
 [16-byte entry](../home/architecture.md#node-index-of-json-views) per value (and one per object key), in document
-order. Strings and numbers are not copied out of the input; they stay in the source text, and are only decoded when
-actually needed (for a string, only if it contains escape sequences, into one shared buffer owned by the document).
+order. Strings and numbers are referenced in place in the source text; only strings that contain escape sequences
+are decoded, into one shared buffer owned by the document.
 
 [`basic_json_view`](../api/basic_json_view/index.md) is a small, trivially copyable handle (two pointers) into that
 index. It gives you the read-only, type-inspection part of the `basic_json` interface --
@@ -31,7 +31,8 @@ index. It gives you the read-only, type-inspection part of the `basic_json` inte
 
 Include `<nlohmann/json_view.hpp>` in addition to (or instead of) `<nlohmann/json.hpp>`. Parse into a
 [`json_document`](../api/json_document.md), inspect its [`root()`](../api/basic_json_document/root.md), and
-`materialize()` when you need a real value:
+`materialize()` when you need a real value. `materialize()` works on any view, not just the root, so you can turn just
+the subtree you need into a value:
 
 ??? example "Example: parse a document, inspect its root, and materialize it"
 
@@ -68,15 +69,19 @@ A view is valid only while all of the following hold:
 
 - the document is alive,
 - the document has not been re-parsed since the view was taken (with [`read()`](../api/basic_json_document/read.md)
-  or [`parse()`](../api/basic_json_document/parse.md) into it), and has not had
-  [`shrink_to_fit()`](../api/basic_json_document/shrink_to_fit.md) called on it since, and
+  or [`parse()`](../api/basic_json_document/parse.md) into it),
+- the document has not had [`shrink_to_fit()`](../api/basic_json_document/shrink_to_fit.md) called on it since, and
 - if the document borrows its source text, that text is still alive.
 
-Moving the document itself is fine and does **not** invalidate its views: the index is a separate heap allocation
-that keeps its address across the move. Take a fresh view from [`root()`](../api/basic_json_document/root.md)
+Moving the `basic_json_document<>` itself is fine and does **not** invalidate its views: the index is a separate heap
+allocation that keeps its address across the move. Take a fresh view from [`root()`](../api/basic_json_document/root.md)
 whenever any of the other conditions above was not met.
 
-Because a view dies with its document, [`root()`](../api/basic_json_document/root.md) is not callable on a temporary
+A view can dangle, exactly like a `#!cpp std::string_view`: nothing stops you from using it after its document is
+gone. This is deliberate. A view is two pointers and trivially copyable; making it safe (a `#!cpp std::shared_ptr` in
+the document and a `#!cpp std::weak_ptr` in each view) would make it larger, add reference counting to every copy,
+and a `lock()` to every access -- exactly the costs the view exists to avoid. What is caught is the obvious case:
+because a view dies with its document, [`root()`](../api/basic_json_document/root.md) is not callable on a temporary
 document: `#!cpp auto v = json_document::parse(text).root();` does not compile. Give the document a name first.
 
 ??? example "Example: borrowed and owned documents, and when views become invalid"
@@ -98,14 +103,19 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   [`basic_json::accept()`](../api/basic_json/accept.md)/[`basic_json::parse()`](../api/basic_json/parse.md), with the
   same `ignore_comments` and `ignore_trailing_commas` options.
 - **Errors.** A failing parse throws the same exception -- the same id, message, and position -- because on failure
-  the library's own parser is run on the same bytes to produce the diagnostic.
-  `#!cpp allow_exceptions == false` gives a [discarded](../api/basic_json_document/is_discarded.md) document instead
-  of throwing, just as it gives a discarded value for `#!cpp basic_json::parse()`.
+  the library's own parser is run on the same bytes to produce the diagnostic. Valid input never pays for this, and
+  the replay builds no values: it costs about a lexing pass up to the error.
+  `#!cpp allow_exceptions == false` skips the replay and gives a
+  [discarded](../api/basic_json_document/is_discarded.md) document instead of throwing, just as it gives a discarded
+  value for `#!cpp basic_json::parse()`.
 - **Number classification.** An integer literal that does not fit into the 64-bit integer type becomes a
   floating-point value, exactly as it does for `#!cpp basic_json::parse()`.
 - **Macros.** [`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md) and
   [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md)/[`JSON_THROW_USER`](../api/macros/json_throw_user.md)
-  behave the same way they do for `<nlohmann/json.hpp>`.
+  behave the same way they do for `<nlohmann/json.hpp>`. These are the macros that change what the parser accepts or
+  how it reports errors. The others either do not apply ([`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md)
+  needs parent pointers in `basic_json` values) or only affect the values `materialize()` produces, through
+  `BasicJsonType`.
 
 ## What is different
 
@@ -113,12 +123,15 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   `number_unsigned_t` to both be 64 bits wide; this is a compile-time `#!cpp static_assert`.
 - **A 4 GiB input limit.** An input of 4294967280 bytes (4 GiB minus 16 bytes) or more throws
   [`out_of_range.416`](../home/exceptions.md#jsonexceptionout_of_range416), a limit
-  `#!cpp basic_json::parse()` does not have.
-- **A stream is always read to its end.** There is no partial/streaming read of an `#!cpp std::istream`.
+  `#!cpp basic_json::parse()` does not have. It keeps an index entry at 16 bytes: offsets and counts are 32 bits
+  wide. The limit is 16 bytes below 2^32, because the parser reads in 16-byte steps, and a position one step past the
+  end must still fit.
+- **A stream is always read to its end.** There is no partial/streaming read of an `#!cpp std::istream`: the stream
+  is read to its end into a buffer the document owns, and parsing starts after that.
 - **No source positions on `materialize()`.** Even with
   [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) enabled,
-  [`materialize()`](../api/basic_json_view/materialize.md) does not set them: there is no lexer run during the
-  replay to record them.
+  [`materialize()`](../api/basic_json_view/materialize.md) does not set them. The index has the start offset of every
+  value, but not the end of arrays, objects, and escaped strings, which the positions also need.
 - **Element access, iteration, `get<T>()`, JSON Pointer, `dump()`, and comparison are not (yet) provided** by
   `basic_json_view`. For now, [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you
   can do those things with.

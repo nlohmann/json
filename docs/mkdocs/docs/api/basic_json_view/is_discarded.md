@@ -11,7 +11,7 @@ that is itself [discarded](../basic_json_document/is_discarded.md) -- in particu
 
 ## Return value
 
-`#!cpp true` if the view is discarded, `#!cpp false` otherwise.
+`#!cpp true` if the view or its document is discarded, `#!cpp false` otherwise.
 
 ## Exception safety
 
