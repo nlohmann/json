@@ -167,30 +167,27 @@ class serializer
 
                 if (pretty_print)
                 {
-                    put_literal("{\n");
-
                     // variable to hold indentation for recursive calls
                     const auto new_indent = next_indent(current_indent, indent_step);
+
+                    put_literal_indent("{\n", new_indent);
 
                     // first n-1 elements
                     auto i = val.m_data.m_value.object->cbegin();
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        put_indent(new_indent);
                         put_quoted(i->first, "\": ");
                         dump_element(i->second, new_indent, depth + 1);
-                        put_literal(",\n");
+                        put_literal_indent(",\n", new_indent);
                     }
 
                     // last element
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    put_indent(new_indent);
                     put_quoted(i->first, "\": ");
                     dump_element(i->second, new_indent, depth + 1);
 
-                    put_char('\n');
-                    put_indent(current_indent);
+                    put_literal_indent("\n", current_indent);
                     put_char('}');
                 }
                 else
@@ -234,27 +231,24 @@ class serializer
 
                 if (pretty_print)
                 {
-                    put_literal("[\n");
-
                     // variable to hold indentation for recursive calls
                     const auto new_indent = next_indent(current_indent, indent_step);
+
+                    put_literal_indent("[\n", new_indent);
 
                     // first n-1 elements
                     for (auto i = val.m_data.m_value.array->cbegin();
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
-                        put_indent(new_indent);
                         dump_element(*i, new_indent, depth + 1);
-                        put_literal(",\n");
+                        put_literal_indent(",\n", new_indent);
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    put_indent(new_indent);
                     dump_element(val.m_data.m_value.array->back(), new_indent, depth + 1);
 
-                    put_char('\n');
-                    put_indent(current_indent);
+                    put_literal_indent("\n", current_indent);
                     put_char(']');
                 }
                 else
@@ -1428,6 +1422,32 @@ class serializer
         // the buffer still holds indentation characters throughout, so the tail
         // only has to be claimed, not written again
         write_buffer_pos = indent;
+    }
+
+    /*!
+    @brief append a string literal and then @a indent indentation characters
+
+    The usual line break and indentation go into the buffer with one check of
+    its room and four stores of the indentation, see @ref put_indent.
+    */
+    template<std::size_t N>
+    JSON_HEDLEY_ALWAYS_INLINE void put_literal_indent(const char (&s)[N], const std::size_t indent) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    {
+        constexpr std::size_t length = N - 1;
+        if (JSON_HEDLEY_LIKELY(indent <= 32 && write_buffer_pos + length + 32 <= write_buffer.size()))
+        {
+            const std::uint64_t word = 0x0101010101010101ull * static_cast<unsigned char>(indent_char);
+            char* const d = write_buffer.data() + write_buffer_pos;
+            std::memcpy(d, s, length);
+            std::memcpy(d + length, &word, sizeof(word));
+            std::memcpy(d + length + 8, &word, sizeof(word));
+            std::memcpy(d + length + 16, &word, sizeof(word));
+            std::memcpy(d + length + 24, &word, sizeof(word));
+            write_buffer_pos += length + indent;
+            return;
+        }
+        put_literal(s);
+        put_indent(indent);
     }
 
     /*!
