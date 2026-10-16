@@ -30322,7 +30322,7 @@ class serializer
                     {
                         put_indent(new_indent);
                         put_quoted(i->first, "\": ");
-                        dump_internal(i->second, new_indent, depth + 1);
+                        dump_element(i->second, new_indent, depth + 1);
                         put_literal(",\n");
                     }
 
@@ -30331,7 +30331,7 @@ class serializer
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
                     put_indent(new_indent);
                     put_quoted(i->first, "\": ");
-                    dump_internal(i->second, new_indent, depth + 1);
+                    dump_element(i->second, new_indent, depth + 1);
 
                     put_char('\n');
                     put_indent(current_indent);
@@ -30346,7 +30346,7 @@ class serializer
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
                         put_quoted(i->first, "\":");
-                        dump_internal(i->second, current_indent, depth + 1);
+                        dump_element(i->second, current_indent, depth + 1);
                         put_char(',');
                     }
 
@@ -30354,7 +30354,7 @@ class serializer
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
                     put_quoted(i->first, "\":");
-                    dump_internal(i->second, current_indent, depth + 1);
+                    dump_element(i->second, current_indent, depth + 1);
 
                     put_char('}');
                 }
@@ -30388,14 +30388,14 @@ class serializer
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
                         put_indent(new_indent);
-                        dump_internal(*i, new_indent, depth + 1);
+                        dump_element(*i, new_indent, depth + 1);
                         put_literal(",\n");
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_data.m_value.array->empty());
                     put_indent(new_indent);
-                    dump_internal(val.m_data.m_value.array->back(), new_indent, depth + 1);
+                    dump_element(val.m_data.m_value.array->back(), new_indent, depth + 1);
 
                     put_char('\n');
                     put_indent(current_indent);
@@ -30409,13 +30409,13 @@ class serializer
                     for (auto i = val.m_data.m_value.array->cbegin();
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
-                        dump_internal(*i, current_indent, depth + 1);
+                        dump_element(*i, current_indent, depth + 1);
                         put_char(',');
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    dump_internal(val.m_data.m_value.array->back(), current_indent, depth + 1);
+                    dump_element(val.m_data.m_value.array->back(), current_indent, depth + 1);
 
                     put_char(']');
                 }
@@ -30438,6 +30438,27 @@ class serializer
     }
 
   private:
+    /*!
+    @brief serialize an element of a container
+
+    Most elements are scalars, which need none of the state dump_internal() keeps
+    for a container; writing them from here spares each the entry and exit of
+    that function.
+    */
+    JSON_HEDLEY_ALWAYS_INLINE void dump_element(const BasicJsonType& val,
+            const std::size_t current_indent,
+            const std::size_t depth)
+    {
+        if (val.m_data.m_type == value_t::object || val.m_data.m_type == value_t::array)
+        {
+            dump_internal(val, current_indent, depth);
+        }
+        else
+        {
+            dump_scalar(val, current_indent);
+        }
+    }
+
     /*!
     @brief write out @a val and everything below it without the call stack
 
