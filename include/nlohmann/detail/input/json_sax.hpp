@@ -496,50 +496,25 @@ class json_sax_dom_parser
 
     bool start_object(std::size_t len)
     {
-        BasicJsonType* const ref = store(BasicJsonType::value_t::object);
-        frames.push_back(frame{ref->m_data.m_value.object, nullptr, ref, 0, key_index_pointer()});
-        in_object = true;
-        stored_array = nullptr;
-
-#if JSON_DIAGNOSTIC_POSITIONS
-        // Ensure this is after the call to store to ensure correct start position.
-        diagnostic_positions::set_container_start(*ref, m_lexer_ref);
+#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
+        // the values need their final place from the start (their parent
+        // pointers and positions refer to it), so no buffering
+        return start_stored_object(len);
+#else
+        return start_object(len, std::integral_constant<bool, indexed_keys> {});
 #endif
-
-        return check_container_size(*this, len, "object", ref);
     }
 
     bool key(string_t& val)
     {
         JSON_ASSERT(!frames.empty());
-        JSON_ASSERT(frames.back().object != nullptr);
-
-        // add null at the given key and store the reference for later; the
-        // key is moved, as the lexer starts the next token with reset()
-        object_element = insert_key(frames.back(), std::move(val), std::integral_constant<bool, indexed_keys> {});
-        return true;
+        return key(val, std::integral_constant<bool, indexed_keys> {});
     }
 
     bool end_object()
     {
         JSON_ASSERT(!frames.empty());
-        JSON_ASSERT(frames.back().object != nullptr);
-
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
-        // objects are never buffered, so their value is where it was stored
-        BasicJsonType* const ref = frames.back().slot;
-#endif
-#if JSON_DIAGNOSTIC_POSITIONS
-        diagnostic_positions::set_container_end(*ref, m_lexer_ref);
-#endif
-#if JSON_DIAGNOSTICS
-        ref->set_parents();
-#endif
-
-        release_key_index(frames.back(), std::integral_constant<bool, indexed_keys> {});
-        frames.pop_back();
-        enter_enclosing_container();
-        return true;
+        return end_object(std::integral_constant<bool, indexed_keys> {});
     }
 
     bool start_array(std::size_t len)
@@ -569,16 +544,10 @@ class json_sax_dom_parser
             // arrays instead, and copy them to an array of the exact size
             // when the closing bracket arrives.
             BasicJsonType* slot = nullptr;
-            if (frames.empty())
-            {
-                slot = &root;
-            }
-            else if (frames.back().object != nullptr)
-            {
-                slot = object_element;
-            }
+            std::size_t dest_member = 0;
+            container_destination(slot, dest_member);
             reserve_elements();
-            frames.push_back(frame{nullptr, nullptr, slot, elements.size(), key_index_pointer()});
+            frames.push_back(frame{nullptr, nullptr, slot, elements.size(), ordered_state(dest_member, false)});
             in_object = false;
             stored_array = nullptr;
         }
@@ -604,14 +573,7 @@ class json_sax_dom_parser
             value.m_data.m_value.array = arr;
             elements.erase(first, elements.end());
 
-            if (f.slot != nullptr)
-            {
-                *f.slot = std::move(value);
-            }
-            else
-            {
-                store(std::move(value));
-            }
+            place_container(f, frames.empty() ? nullptr : &frames.back(), std::move(value), true);
             return true;
         }
 
@@ -654,10 +616,37 @@ class json_sax_dom_parser
                                            std::hash<StringType>()(std::declval<const StringType&>()));
     static constexpr bool indexed_keys = is_detected<detect_indexable_keys, object_t, string_t>::value;
 
-    /// what a frame holds of the key index of its object: a pointer for objects
-    /// that have such an index, nothing for the others
-    struct no_key_index {};
-    using key_index_pointer = typename std::conditional<indexed_keys, object_key_index*, no_key_index>::type;
+    /// what a frame holds for objects that are kept in a vector: the key index
+    /// of an object with many keys, and for an object that is collected on the
+    /// stack the member of the enclosing object it will become
+    struct ordered_frame
+    {
+        /// the entry of key_indexes of an object that has one, else nullptr
+        object_key_index* index;
+        /// object or array without a slot in an object collected on the stack:
+        /// the index of the member in `members` it goes to
+        std::size_t dest_member;
+        /// whether this is an object collected on the stack
+        bool buffered;
+    };
+    struct no_ordered_frame {};
+    using ordered_frame_state = typename std::conditional<indexed_keys, ordered_frame, no_ordered_frame>::type;
+
+    static ordered_frame make_ordered_state(const std::size_t dest_member, const bool buffered, std::true_type /*indexed*/) noexcept
+    {
+        ordered_frame state = {nullptr, dest_member, buffered};
+        return state;
+    }
+
+    static no_ordered_frame make_ordered_state(const std::size_t /*dest_member*/, const bool /*buffered*/, std::false_type /*indexed*/) noexcept
+    {
+        return no_ordered_frame();
+    }
+
+    static ordered_frame_state ordered_state(const std::size_t dest_member, const bool buffered) noexcept
+    {
+        return make_ordered_state(dest_member, buffered, std::integral_constant<bool, indexed_keys> {});
+    }
 
     /// an array or object that is being read
     struct frame
@@ -673,8 +662,8 @@ class json_sax_dom_parser
         BasicJsonType* slot;
         /// array without `array`: the index of its first element in `elements`
         std::size_t start;
-        /// object with many keys in a vector: its key_indexes entry, else nullptr
-        key_index_pointer index;
+        /// what objects in a vector add (see ordered_frame)
+        ordered_frame_state ordered;
     };
 
     /// the open arrays and objects; the first few live in the object itself, so
@@ -792,9 +781,9 @@ class json_sax_dom_parser
 
     void release_key_index(const frame& f, std::true_type /*indexed*/)
     {
-        if (JSON_HEDLEY_UNLIKELY(f.index != nullptr))
+        if (JSON_HEDLEY_UNLIKELY(f.ordered.index != nullptr))
         {
-            key_indexes.pop_back();
+            ordered_data.key_indexes.pop_back();
         }
     }
 
@@ -827,7 +816,7 @@ class json_sax_dom_parser
         object_t& obj = *f.object;
         const std::hash<string_t> hasher {};
         const std::size_t hash = hasher(key);
-        if (JSON_HEDLEY_UNLIKELY(f.index == nullptr))
+        if (JSON_HEDLEY_UNLIKELY(f.ordered.index == nullptr))
         {
             std::vector<std::size_t> hashes;
             hashes.reserve(obj.size());
@@ -835,11 +824,11 @@ class json_sax_dom_parser
             {
                 hashes.push_back(hasher(element.first));
             }
-            key_indexes.emplace_back(new object_key_index(std::move(hashes)));
-            f.index = key_indexes.back().get();
+            ordered_data.key_indexes.emplace_back(new object_key_index(std::move(hashes)));
+            f.ordered.index = ordered_data.key_indexes.back().get();
         }
 
-        const std::size_t position = f.index->find(hash, [&obj, &key](std::size_t i)
+        const std::size_t position = f.ordered.index->find(hash, [&obj, &key](std::size_t i)
         {
             return (obj.begin() + static_cast<std::ptrdiff_t>(i))->first == key;
         });
@@ -849,8 +838,260 @@ class json_sax_dom_parser
         }
 
         obj.emplace_new_key(key, BasicJsonType());
-        f.index->add(hash);
+        f.ordered.index->add(hash);
         return &obj.back().second;
+    }
+
+    /// where an array or object that starts now will go when it is finished:
+    /// @a slot is the value to assign it to (the root or a member of an object
+    /// that is stored directly), or nullptr if it is an element of the
+    /// enclosing array or a member of the enclosing object that is collected on
+    /// the stack, in which case @a dest_member is the member
+    void container_destination(BasicJsonType*& slot, std::size_t& dest_member)
+    {
+        if (frames.empty())
+        {
+            slot = &root;
+        }
+        else if (frames.back().object != nullptr)
+        {
+            slot = object_element;
+        }
+        else
+        {
+            collected_object_member(frames.back(), dest_member, std::integral_constant<bool, indexed_keys> {});
+        }
+    }
+
+    void collected_object_member(const frame& enclosing, std::size_t& dest_member, std::true_type /*indexed*/) const noexcept
+    {
+        if (enclosing.ordered.buffered)
+        {
+            dest_member = ordered_data.member_index;
+        }
+    }
+
+    static void collected_object_member(const frame& /*enclosing*/, std::size_t& /*dest_member*/, std::false_type /*indexed*/) noexcept {}
+
+    static bool is_collected_object(const frame& f, std::true_type /*indexed*/) noexcept
+    {
+        return f.ordered.buffered;
+    }
+
+    static bool is_collected_object(const frame& /*f*/, std::false_type /*indexed*/) noexcept
+    {
+        return false;
+    }
+
+    /// put a finished array or object that was collected on the stack, or
+    /// that outgrew it, where it belongs; @a enclosing is the container it is in.
+    /// @a enclosing_is_innermost tells whether that is the container that gets
+    /// the next value, so that it can be switched to storing its elements
+    /// directly if the value was the one too many.
+    void place_container(const frame& f, frame* enclosing, BasicJsonType&& value, const bool enclosing_is_innermost)
+    {
+        if (f.slot != nullptr)
+        {
+            *f.slot = std::move(value);
+        }
+        else if (is_collected_object(*enclosing, std::integral_constant<bool, indexed_keys> {}))
+        {
+            place_member(f, std::move(value), std::integral_constant<bool, indexed_keys> {});
+        }
+        else if (enclosing->array != nullptr)
+        {
+            enclosing->array->emplace_back(std::move(value));
+        }
+        else
+        {
+            elements.emplace_back(std::move(value));
+            if (JSON_HEDLEY_UNLIKELY(enclosing_is_innermost && elements.size() - enclosing->start > buffer_limit))
+            {
+                spill(*enclosing);
+            }
+        }
+    }
+
+    void place_member(const frame& f, BasicJsonType&& value, std::true_type /*indexed*/)
+    {
+        ordered_data.members[f.ordered.dest_member].second = std::move(value);
+    }
+
+    static void place_member(const frame& /*f*/, BasicJsonType&& /*value*/, std::false_type /*indexed*/) noexcept {}
+
+    /// store the members of a new object directly in it
+    bool start_stored_object(std::size_t len)
+    {
+        BasicJsonType* const ref = store(BasicJsonType::value_t::object);
+        frames.push_back(frame{ref->m_data.m_value.object, nullptr, ref, 0, ordered_state(0, false)});
+        in_object = true;
+        stored_array = nullptr;
+
+#if JSON_DIAGNOSTIC_POSITIONS
+        // Ensure this is after the call to store to ensure correct start position.
+        diagnostic_positions::set_container_start(*ref, m_lexer_ref);
+#endif
+
+        return check_container_size(*this, len, "object", ref);
+    }
+
+    /// objects in std::map and the like have no use for collecting their members
+    bool start_object(std::size_t len, std::false_type /*indexed*/)
+    {
+        return start_stored_object(len);
+    }
+
+    /// An object in a vector of members adds a member by appending it to the
+    /// vector, which grows it again and again (and copies the keys each time).
+    /// Collect the members of an object of unknown size on a stack shared by
+    /// all open objects instead, and move them into a vector of the exact size
+    /// when the closing brace arrives.
+    bool start_object(std::size_t len, std::true_type /*indexed*/)
+    {
+        if (len != detail::unknown_size())
+        {
+            return start_stored_object(len);
+        }
+
+        BasicJsonType* slot = nullptr;
+        std::size_t dest_member = 0;
+        container_destination(slot, dest_member);
+        frames.push_back(frame{nullptr, nullptr, slot, ordered_data.members.size(), ordered_state(dest_member, true)});
+        in_object = false;
+        stored_array = nullptr;
+        return true;
+    }
+
+    bool key(string_t& val, std::false_type /*indexed*/)
+    {
+        JSON_ASSERT(frames.back().object != nullptr);
+
+        // add null at the given key and store the reference for later; the
+        // key is moved, as the lexer starts the next token with reset()
+        object_element = insert_key(frames.back(), std::move(val), std::false_type {});
+        return true;
+    }
+
+    bool key(string_t& val, std::true_type /*indexed*/)
+    {
+        frame& f = frames.back();
+        if (JSON_HEDLEY_UNLIKELY(f.object == nullptr))
+        {
+            JSON_ASSERT(f.ordered.buffered);
+            if (collect_member(f, val))
+            {
+                return true;
+            }
+            // the object has grown big: it is stored directly from here on
+        }
+        object_element = insert_key(f, std::move(val), std::true_type {});
+        return true;
+    }
+
+    /*!
+    @brief add a member to the object that is collected on the stack, or find the one with the key
+    @return false if the object has collected enough members to be stored
+            directly, which is done and which leaves the key to be inserted
+    */
+    bool collect_member(frame& f, string_t& key)
+    {
+        for (std::size_t i = f.start; i < ordered_data.members.size(); ++i)
+        {
+            if (ordered_data.members[i].first == key)
+            {
+                ordered_data.member_index = i;
+                return true;
+            }
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(ordered_data.members.size() - f.start >= object_buffer_limit))
+        {
+            spill_object(f);
+            return false;
+        }
+
+        reserve_members();
+        ordered_data.members.emplace_back(std::move(key), BasicJsonType());
+        ordered_data.member_index = ordered_data.members.size() - 1;
+        return true;
+    }
+
+    /// the members of an object that is collected on the stack as an object
+    object_t* members_to_object(const frame& f, BasicJsonType& value)
+    {
+        const auto first = ordered_data.members.begin() + static_cast<std::ptrdiff_t>(f.start);
+        object_t* const obj = BasicJsonType::template create<object_t>(std::make_move_iterator(first), std::make_move_iterator(ordered_data.members.end()));
+        value.m_data.m_type = BasicJsonType::value_t::object;
+        value.m_data.m_value.object = obj;
+        ordered_data.members.erase(first, ordered_data.members.end());
+        return obj;
+    }
+
+    /// switch an object that collects its members on the stack to storing them directly
+    JSON_HEDLEY_NEVER_INLINE
+    void spill_object(frame& f)
+    {
+        BasicJsonType value;
+        f.object = members_to_object(f, value);
+        f.ordered.buffered = false;
+        in_object = true;
+        place_container(f, frames.size() >= 2 ? &frames[frames.size() - 2] : nullptr, std::move(value), false);
+    }
+
+    bool end_object(std::false_type /*indexed*/)
+    {
+        return end_stored_object();
+    }
+
+    bool end_object(std::true_type /*indexed*/)
+    {
+        if (JSON_HEDLEY_LIKELY(frames.back().object != nullptr))
+        {
+            return end_stored_object();
+        }
+
+        // the members are on the stack: make them the object
+        const frame f = frames.back();
+        frames.pop_back();
+        enter_enclosing_container();
+
+        BasicJsonType value;
+        members_to_object(f, value);
+        place_container(f, frames.empty() ? nullptr : &frames.back(), std::move(value), true);
+        return true;
+    }
+
+    bool end_stored_object()
+    {
+        JSON_ASSERT(frames.back().object != nullptr);
+
+#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
+        // objects are never collected, so their value is where it was stored
+        BasicJsonType* const ref = frames.back().slot;
+#endif
+#if JSON_DIAGNOSTIC_POSITIONS
+        diagnostic_positions::set_container_end(*ref, m_lexer_ref);
+#endif
+#if JSON_DIAGNOSTICS
+        ref->set_parents();
+#endif
+
+        release_key_index(frames.back(), std::integral_constant<bool, indexed_keys> {});
+        frames.pop_back();
+        enter_enclosing_container();
+        return true;
+    }
+
+    /// the number of members an object collects on the stack before it
+    /// switches to storing them directly
+    static constexpr std::size_t object_buffer_limit = 32;
+
+    void reserve_members()
+    {
+        if (JSON_HEDLEY_UNLIKELY(ordered_data.members.capacity() == 0))
+        {
+            ordered_data.members.reserve(16);
+        }
     }
 
     /// the number of elements an array collects on the stack before it
@@ -862,7 +1103,7 @@ class json_sax_dom_parser
     {
         if (JSON_HEDLEY_UNLIKELY(elements.capacity() == 0))
         {
-            elements.reserve(64);
+            elements.reserve(32);
         }
     }
 
@@ -870,7 +1111,7 @@ class json_sax_dom_parser
     void start_stored_array(const std::size_t len)
     {
         BasicJsonType* const ref = store(BasicJsonType::value_t::array);
-        frames.push_back(frame{nullptr, ref->m_data.m_value.array, ref, 0, key_index_pointer()});
+        frames.push_back(frame{nullptr, ref->m_data.m_value.array, ref, 0, ordered_state(0, false)});
         in_object = false;
         stored_array = ref->m_data.m_value.array;
 
@@ -894,6 +1135,12 @@ class json_sax_dom_parser
     JSON_HEDLEY_RETURNS_NON_NULL
     BasicJsonType* store(Value&& v)
     {
+        if (stored_array != nullptr)
+        {
+            stored_array->emplace_back(std::forward<Value>(v));
+            return &stored_array->back();
+        }
+
         if (in_object)
         {
             JSON_ASSERT(object_element);
@@ -901,12 +1148,26 @@ class json_sax_dom_parser
             return object_element;
         }
 
-        if (stored_array != nullptr)
-        {
-            stored_array->emplace_back(std::forward<Value>(v));
-            return &stored_array->back();
-        }
+        return store_collected(std::forward<Value>(v), std::integral_constant<bool, indexed_keys> {});
+    }
 
+    /// store a value that is the root, an element of an array that is collected
+    /// on the stack, or (in a vector) a member of an object that is
+    template<typename Value>
+    BasicJsonType* store_collected(Value&& v, std::true_type /*indexed*/)
+    {
+        if (!frames.empty() && frames.back().ordered.buffered)
+        {
+            BasicJsonType& member = ordered_data.members[ordered_data.member_index].second;
+            set_member(member, std::forward<Value>(v), std::is_same<typename BasicJsonType::json_base_class_t, json_default_base> {});
+            return &member;
+        }
+        return store_collected(std::forward<Value>(v), std::false_type {});
+    }
+
+    template<typename Value>
+    BasicJsonType* store_collected(Value&& v, std::false_type /*indexed*/)
+    {
         if (frames.empty())
         {
             root = BasicJsonType(std::forward<Value>(v));
@@ -934,31 +1195,15 @@ class json_sax_dom_parser
         const auto first = elements.begin() + static_cast<std::ptrdiff_t>(f.start);
         BasicJsonType value(BasicJsonType::value_t::array);
         array_t& arr = *value.m_data.m_value.array;
-        // as much room as the array would have after one more doubling
-        reserve_array(arr, 2 * (elements.size() - f.start), priority_tag<1> {});
+        // the capacity a vector that grew by itself has with this many elements
+        reserve_array(arr, 2 * buffer_limit, priority_tag<1> {});
         arr.insert(arr.end(), std::make_move_iterator(first), std::make_move_iterator(elements.end()));
         elements.erase(first, elements.end());
         f.array = &arr;
         stored_array = &arr;
 
         // the array takes the place its first element had on the stack
-        if (f.slot != nullptr)
-        {
-            *f.slot = std::move(value);
-        }
-        else
-        {
-            JSON_ASSERT(frames.size() >= 2);
-            frame& enclosing = frames[frames.size() - 2];
-            if (enclosing.array != nullptr)
-            {
-                enclosing.array->emplace_back(std::move(value));
-            }
-            else
-            {
-                elements.emplace_back(std::move(value));
-            }
-        }
+        place_container(f, frames.size() >= 2 ? &frames[frames.size() - 2] : nullptr, std::move(value), false);
         return &arr.back();
     }
 
@@ -1021,8 +1266,19 @@ class json_sax_dom_parser
     frame_stack frames {};
     /// the elements of the open arrays that are not stored in them yet
     std::vector<BasicJsonType> elements {};
-    /// the key indexes of the open objects that have one, innermost last
-    std::vector<std::unique_ptr<object_key_index>> key_indexes {};
+    /// what objects in a vector need besides the frames (std::map based objects
+    /// need nothing, so they do not carry it)
+    struct ordered_data_t
+    {
+        /// the members of the open objects in a vector that are not stored in them yet
+        std::vector<std::pair<string_t, BasicJsonType>> members {};
+        /// the member of the innermost such object that key() added or found last
+        std::size_t member_index = 0;
+        /// the key indexes of the open objects that have one, innermost last
+        std::vector<std::unique_ptr<object_key_index>> key_indexes {};
+    };
+    struct no_ordered_data_t {};
+    typename std::conditional<indexed_keys, ordered_data_t, no_ordered_data_t>::type ordered_data {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether the innermost container is an object (frames.back().object)
