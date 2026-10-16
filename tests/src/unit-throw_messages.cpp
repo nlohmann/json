@@ -94,6 +94,7 @@ TEST_CASE("exception messages of out-of-line throw sites")
         CHECK_MSG(obj.update(arr.begin(), arr2.end()), "[json.exception.invalid_iterator.210] iterators do not fit");
     }
 
+#if !defined(JSON_NOEXCEPTION) // patch_msg() catches the exceptions, which JSON_NOEXCEPTION turns into std::abort()
     SECTION("patch")
     {
         const auto patch_msg = [](const char* doc, const char* patch)
@@ -138,4 +139,5 @@ TEST_CASE("exception messages of out-of-line throw sites")
         CHECK(patch_msg("{\"a\":1}", "[{\"op\":\"test\",\"path\":\"/a\",\"value\":2}]") == "[json.exception.other_error.501] unsuccessful: {\"op\":\"test\",\"path\":\"/a\",\"value\":2}");
         CHECK(patch_msg("{\"a\":1}", "[{\"op\":\"move\",\"path\":\"/a\"}]") == "[json.exception.parse_error.105] parse error: operation 'move' must have member 'from'");
     }
+#endif
 }

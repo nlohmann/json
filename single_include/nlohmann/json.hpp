@@ -20745,12 +20745,12 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        if (JSON_HEDLEY_LIKELY(m_object->is_object()))
+        if (JSON_HEDLEY_UNLIKELY(!m_object->is_object()))
         {
-            return m_it.object_iterator->first;
+            throw_literal<invalid_iterator>(exception_id::iterator_key_not_object, "cannot use key() for non-object iterators", m_object);
         }
 
-        throw_literal<invalid_iterator>(exception_id::iterator_key_not_object, "cannot use key() for non-object iterators", m_object);
+        return m_it.object_iterator->first;
     }
 
     /*!
@@ -29734,6 +29734,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
+// #include <nlohmann/thirdparty/hedley/hedley.hpp>
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
@@ -34958,19 +34960,19 @@ public:
     iterator insert(const_iterator pos, const basic_json& val) // NOLINT(performance-unnecessary-value-param)
     {
         // insert only works for arrays
-        if (JSON_HEDLEY_LIKELY(is_array()))
+        if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            // check if iterator pos fits to this JSON value
-            if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
-            {
-                detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this);
-            }
-
-            // insert to array and return iterator
-            return insert_iterator(pos, val);
+            detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
         }
 
-        detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
+        // check if iterator pos fits to this JSON value
+        if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
+        {
+            detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this);
+        }
+
+        // insert to array and return iterator
+        return insert_iterator(pos, val);
     }
 
     /// @brief inserts element into array
@@ -34978,21 +34980,21 @@ public:
     iterator insert(const_iterator pos, basic_json&& val) // NOLINT(performance-unnecessary-value-param)
     {
         // insert only works for arrays
-        if (JSON_HEDLEY_LIKELY(is_array()))
+        if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            // check if iterator pos fits to this JSON value
-            if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
-            {
-                detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this);
-            }
-
-            // moving into a local first keeps this safe even if val aliases
-            // an element of this array
-            basic_json tmp(std::move(val));
-            return insert_iterator(pos, std::move(tmp));
+            detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
         }
 
-        detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
+        // check if iterator pos fits to this JSON value
+        if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
+        {
+            detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this);
+        }
+
+        // moving into a local first keeps this safe even if val aliases
+        // an element of this array
+        basic_json tmp(std::move(val));
+        return insert_iterator(pos, std::move(tmp));
     }
 
     /// @brief inserts copies of element into array
@@ -35000,19 +35002,19 @@ public:
     iterator insert(const_iterator pos, size_type cnt, const basic_json& val) // NOLINT(performance-unnecessary-value-param)
     {
         // insert only works for arrays
-        if (JSON_HEDLEY_LIKELY(is_array()))
+        if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            // check if iterator pos fits to this JSON value
-            if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
-            {
-                detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this);
-            }
-
-            // insert to array and return iterator
-            return insert_iterator(pos, cnt, val);
+            detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
         }
 
-        detail::throw_cannot_use_with(detail::exception_id::insert_wrong_type, "insert()", *this);
+        // check if iterator pos fits to this JSON value
+        if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
+        {
+            detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", this);
+        }
+
+        // insert to array and return iterator
+        return insert_iterator(pos, cnt, val);
     }
 
     /// @brief inserts range of elements into array

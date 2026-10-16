@@ -305,7 +305,7 @@ TEST_CASE("copy constructor and destructor across value types")
             // mutating the copy leaves the original alone
             copy[5] = "changed";
             copy[6].push_back(1);
-            CHECK(copy != v);
+            CHECK((copy != v));
             CHECK(v[5] == std::string(5, 'x'));
             CHECK(v[6].size() == 3);
 

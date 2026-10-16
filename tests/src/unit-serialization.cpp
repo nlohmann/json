@@ -1374,7 +1374,13 @@ void check_dump_against_reference(const std::string& s, const bool with_strict =
     };
     for (const auto error_handler : error_handlers)
     {
+#if defined(JSON_NOEXCEPTION)
+        // a strict dump of invalid UTF-8 calls std::abort() instead of throwing
+        static_cast<void>(with_strict);
+        if (error_handler == json::error_handler_t::strict)
+#else
         if (!with_strict && error_handler == json::error_handler_t::strict)
+#endif
         {
             continue;
         }
