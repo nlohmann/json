@@ -7385,31 +7385,69 @@ public:
     // function it appears in. In diff_recursively, which is on the call stack
     // once per nesting level, that made every level cost kilobytes of stack.
 
+    /// @brief append an operation @a op for @a path to @a result, with @a value if it is not null
+    static void diff_operation(basic_json& result, const char* op, const string_t& path, const basic_json* value)
+    {
+        basic_json entry(value_t::object);
+        entry["op"] = op;
+        entry["path"] = path;
+        if (value != nullptr)
+        {
+            entry["value"] = *value;
+        }
+        result.push_back(std::move(entry));
+    }
+
     /// @brief append a "replace" operation for @a path with @a value to @a result
     static void diff_replace(basic_json& result, const string_t& path, const basic_json& value)
     {
-        result.push_back(
-        {
-            {"op", "replace"}, {"path", path}, {"value", value}
-        });
+        diff_operation(result, "replace", path, &value);
     }
 
     /// @brief append a "remove" operation for @a path to @a result
     static void diff_remove(basic_json& result, const string_t& path)
     {
-        result.push_back(object(
-        {
-            {"op", "remove"}, {"path", path}
-        }));
+        diff_operation(result, "remove", path, nullptr);
     }
 
     /// @brief append an "add" operation for @a path with @a value to @a result
     static void diff_add(basic_json& result, const string_t& path, const basic_json& value)
     {
-        result.push_back(
-        {
-            {"op", "add"}, {"path", path}, {"value", value}
-        });
+        diff_operation(result, "add", path, &value);
+    }
+
+    /// @brief append "/" and the decimal representation of @a index to @a path
+    static void diff_append_index(string_t& path, std::size_t index)
+    {
+        path.push_back('/');
+        json_pointer::append_index(path, index);
+    }
+
+    /// @brief append "/" and the escaped @a key to @a path
+    static void diff_append_key(string_t& path, const string_t& key)
+    {
+        path.push_back('/');
+        detail::escape_into(path, key);
+    }
+
+    /// @brief the path of the member @a key of the value at @a path
+    static string_t diff_key_path(const string_t& path, const string_t& key)
+    {
+        string_t result;
+        result.reserve(path.size() + key.size() + 1);
+        result.append(path.data(), path.size());
+        diff_append_key(result, key);
+        return result;
+    }
+
+    /// @brief the path of the element @a index of the value at @a path
+    static string_t diff_index_path(const string_t& path, const std::size_t index)
+    {
+        string_t result;
+        result.reserve(path.size() + 8);
+        result.append(path.data(), path.size());
+        diff_append_index(result, index);
+        return result;
     }
 
     /// @brief append the "remove" operations for the elements of array
@@ -7422,13 +7460,18 @@ public:
         // in that order avoids the quadratic reinsertion done before
         for (std::size_t j = source.size(); j > index; --j)
         {
-            diff_remove(result, detail::concat<string_t>(path, '/', detail::to_string<string_t>(j - 1)));
+            diff_remove(result, diff_index_path(path, j - 1));
         }
 
         // add other remaining elements
-        for (std::size_t i = source.size(); i < target.size(); ++i)
+        if (source.size() < target.size())
         {
-            diff_add(result, detail::concat<string_t>(path, "/-"), target[i]);
+            string_t tail_path = path;
+            tail_path.append("/-", 2);
+            for (std::size_t i = source.size(); i < target.size(); ++i)
+            {
+                diff_add(result, tail_path, target[i]);
+            }
         }
     }
 
@@ -7437,7 +7480,7 @@ public:
     {
         for (const auto& it : added)
         {
-            diff_add(result, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+            diff_add(result, diff_key_path(path, it.key()), it.value());
         }
     }
 
@@ -7555,7 +7598,7 @@ public:
         // it moves it to the end, fixing its position.
         for (auto it = source.cbegin(); it != source.cend(); ++it)
         {
-            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
+            diff_remove(result, diff_key_path(path, it.key()));
         }
 
         // add every key that is either common (just removed
@@ -7564,7 +7607,7 @@ public:
         // target exactly
         for (auto it = target.cbegin(); it != target.cend(); ++it)
         {
-            diff_add(result, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+            diff_add(result, diff_key_path(path, it.key()), it.value());
         }
         return false;
     }
@@ -7655,7 +7698,7 @@ public:
                         else
                         {
                             // found a key that is not in target -> remove it
-                            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
+                            diff_remove(result, diff_key_path(path, it.key()));
                         }
                     }
 
@@ -7786,7 +7829,7 @@ public:
                 if (i < source_array.size() && i < target_array.size())
                 {
                     ++stack.back().index;
-                    detail::concat_into(current_path, '/', detail::to_string<string_t>(i));
+                    diff_append_index(current_path, i);
                     enter(source_array[i], target_array[i]);
                     if (stack.size() == depth)
                     {
@@ -7809,7 +7852,7 @@ public:
                     if (target_value_ptr != nullptr)
                     {
                         const basic_json& target_value = *target_value_ptr;
-                        detail::concat_into(current_path, '/', detail::escape(it.key()));
+                        diff_append_key(current_path, it.key());
                         enter(it.value(), target_value);
                         if (stack.size() == depth)
                         {
@@ -7819,7 +7862,7 @@ public:
                     else
                     {
                         // found a key that is not in target -> remove it
-                        diff_remove(result, detail::concat<string_t>(current_path, '/', detail::escape(it.key())));
+                        diff_remove(result, diff_key_path(current_path, it.key()));
                     }
                     continue;
                 }
