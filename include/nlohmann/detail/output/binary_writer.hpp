@@ -305,16 +305,7 @@ class binary_writer
 
             case value_t::object:
             {
-                // step 1: write control byte and the object size
-                write_cbor_head(0xA0, j.m_data.m_value.object->size());
-
-                for (const auto& el : *j.m_data.m_value.object)
-                {
-                    // el.first is written directly (not via a temporary
-                    // basic_json), with the object as diagnostics context
-                    write_cbor_key(el.first, j);
-                    write_cbor(el.second, depth + 1);
-                }
+                write_cbor_object(j, depth);
                 break;
             }
 
@@ -530,15 +521,7 @@ class binary_writer
             case value_t::object:
             {
                 // step 1: write control byte and the object size
-                write_msgpack_object_prefix(j.m_data.m_value.object->size(), j);
-
-                for (const auto& el : *j.m_data.m_value.object)
-                {
-                    // as in write_cbor, el.first is written directly with the
-                    // object as diagnostics context
-                    write_msgpack_key(el.first, j);
-                    write_msgpack(el.second, depth + 1);
-                }
+                write_msgpack_object(j, depth);
                 break;
             }
 
@@ -708,13 +691,7 @@ class binary_writer
                 bool prefix_required = true;
                 const bool write_closer = write_ubjson_start_object(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
 
-                for (const auto& el : *j.m_data.m_value.object)
-                {
-                    // a converted key must outlive the reference returned by sanitize_utf8_for_write
-                    const object_key_string_t key_string = el.first;
-                    write_ubjson_text(key_string, j, false, use_bjdata);
-                    write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth + 1);
-                }
+                write_ubjson_members(j, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth);
 
                 if (write_closer)
                 {
@@ -2580,6 +2557,56 @@ class binary_writer
     }
 
     /*!
+    @brief write an object value (head and members) as CBOR
+
+    A member whose value is null, a boolean, an integer, or a string is written
+    without a call of @ref write_cbor. Kept out of line, like @ref write_cbor_array.
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_cbor_object(const BasicJsonType& j, const std::size_t depth)
+    {
+        // step 1: write control byte and the object size
+        write_cbor_head(0xA0, j.m_data.m_value.object->size());
+
+        for (const auto& el : *j.m_data.m_value.object)
+        {
+            // el.first is written directly (not via a temporary
+            // basic_json), with the object as diagnostics context
+            write_cbor_key(el.first, j);
+
+            const BasicJsonType& value = el.second;
+            switch (value.type())
+            {
+                case value_t::null:
+                    oa.write_character(to_char_type(0xF6));
+                    break;
+
+                case value_t::boolean:
+                    oa.write_character(value.m_data.m_value.boolean ? to_char_type(0xF5) : to_char_type(0xF4));
+                    break;
+
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                    write_cbor_integer(value, std::integral_constant<bool, integers_fit_64_bits()>());
+                    break;
+
+                case value_t::string:
+                    write_cbor_string(*value.m_data.m_value.string, value);
+                    break;
+
+                case value_t::object:
+                case value_t::array:
+                case value_t::binary:
+                case value_t::number_float:
+                case value_t::discarded:
+                default:
+                    write_cbor(value, depth + 1);
+                    break;
+            }
+        }
+    }
+
+    /*!
     @brief write an array value (head and elements) as CBOR
 
     Integer elements, the most common scalar, are written without a call to
@@ -2853,6 +2880,54 @@ class binary_writer
                 // int 64
                 oa.write_character(to_char_type(0xD3));
                 write_number(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
+            }
+        }
+    }
+
+    /*!
+    @brief write an object value (head and members) as MessagePack
+
+    See @ref write_cbor_object.
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_msgpack_object(const BasicJsonType& j, const std::size_t depth)
+    {
+        write_msgpack_object_prefix(j.m_data.m_value.object->size(), j);
+
+        for (const auto& el : *j.m_data.m_value.object)
+        {
+            // as in write_cbor, el.first is written directly with the
+            // object as diagnostics context
+            write_msgpack_key(el.first, j);
+
+            const BasicJsonType& value = el.second;
+            switch (value.type())
+            {
+                case value_t::null:
+                    oa.write_character(to_char_type(0xC0));
+                    break;
+
+                case value_t::boolean:
+                    oa.write_character(value.m_data.m_value.boolean ? to_char_type(0xC3) : to_char_type(0xC2));
+                    break;
+
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                    write_msgpack_integer(value, std::integral_constant<bool, integers_fit_64_bits()>());
+                    break;
+
+                case value_t::string:
+                    write_msgpack_string(*value.m_data.m_value.string, value);
+                    break;
+
+                case value_t::object:
+                case value_t::array:
+                case value_t::binary:
+                case value_t::number_float:
+                case value_t::discarded:
+                default:
+                    write_msgpack(value, depth + 1);
+                    break;
             }
         }
     }
@@ -3245,6 +3320,68 @@ class binary_writer
             }
             i += block;
             oa.commit(2 * block);
+        }
+    }
+
+    /*!
+    @brief write the members of the object @a j of a UBJSON/BJData container
+
+    A member whose value is null, a boolean, an integer, a float, or a string is
+    written without a call of @ref write_ubjson. Kept out of line, like
+    @ref write_cbor_object.
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_ubjson_members(const BasicJsonType& j, const bool use_count, const bool use_type,
+                              const bool prefix_required, const bool use_bjdata, const bjdata_version_t bjdata_version,
+                              const std::size_t depth)
+    {
+        for (const auto& el : *j.m_data.m_value.object)
+        {
+            // a converted key must outlive the reference returned by sanitize_utf8_for_write
+            const object_key_string_t key_string = el.first;
+            write_ubjson_text(key_string, j, false, use_bjdata);
+
+            const BasicJsonType& value = el.second;
+            switch (value.type())
+            {
+                case value_t::null:
+                    if (prefix_required)
+                    {
+                        oa.write_character(to_char_type('Z'));
+                    }
+                    break;
+
+                case value_t::boolean:
+                    if (prefix_required)
+                    {
+                        oa.write_character(value.m_data.m_value.boolean ? to_char_type('T') : to_char_type('F'));
+                    }
+                    break;
+
+                case value_t::number_integer:
+                    write_number_with_ubjson_prefix(value.m_data.m_value.number_integer, prefix_required, use_bjdata);
+                    break;
+
+                case value_t::number_unsigned:
+                    write_number_with_ubjson_prefix(value.m_data.m_value.number_unsigned, prefix_required, use_bjdata);
+                    break;
+
+                case value_t::number_float:
+                    write_number_with_ubjson_prefix(value.m_data.m_value.number_float, prefix_required, use_bjdata);
+                    break;
+
+                case value_t::string:
+                    write_ubjson_text(*value.m_data.m_value.string, value, prefix_required, use_bjdata);
+                    break;
+
+                case value_t::object:
+                case value_t::array:
+                case value_t::binary:
+                case value_t::discarded:
+                default:
+                    write_ubjson(value, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth + 1);
+                    break;
+            }
         }
     }
 
