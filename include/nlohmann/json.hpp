@@ -1225,7 +1225,7 @@ public:
     }
 
     template < typename O = object_t, detail::enable_if_t < detail::has_stable_elements<O>::value, int > = 0 >
-    static constexpr std::size_t object_capacity() noexcept
+    std::size_t object_capacity() const noexcept
     {
         return 0;
     }
@@ -1237,7 +1237,7 @@ public:
     }
 
     template < typename O = object_t, detail::enable_if_t < !detail::has_stable_elements<O>::value && !detail::is_nlohmann_ordered_map<O>::value, int > = 0 >
-    static constexpr std::size_t object_capacity() noexcept
+    std::size_t object_capacity() const noexcept
     {
         return detail::unknown_size();
     }
