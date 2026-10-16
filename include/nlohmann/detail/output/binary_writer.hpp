@@ -123,8 +123,21 @@ class binary_writer
     template < typename SinkType = OutputSinkType,
                typename std::enable_if < std::is_constructible<SinkType, output_adapter_t<CharType>>::value, int >::type = 0 >
     explicit binary_writer(output_adapter_t<CharType> adapter, const error_handler_t error_handler_ = binary_writer_default_error_handler())
-        : oa(SinkType(std::move(adapter))), error_handler(error_handler_)
+        : oa(std::move(adapter)), error_handler(error_handler_)
     {}
+
+    /*!
+    @brief pass on everything written so far to the output adapter
+
+    A writer over an output_adapter_sink buffers what it writes; this has to
+    be called after the last write, or the buffered end is only passed on, and
+    an error of the adapter lost, when the writer is destroyed. A writer over
+    an output_vector_sink writes straight into the vector.
+    */
+    void flush()
+    {
+        oa.flush();
+    }
 
     /*!
     @param[in] j  JSON value to serialize

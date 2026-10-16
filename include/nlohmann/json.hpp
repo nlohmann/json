@@ -6331,7 +6331,9 @@ public:
     static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                         const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_cbor(j);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_cbor(j);
+        writer.flush();
     }
 
     /// @brief create a CBOR serialization of a given JSON value
@@ -6339,7 +6341,9 @@ public:
     static void to_cbor(const basic_json& j, detail::output_adapter<char> o,
                         const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o, error_handler).write_cbor(j);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_cbor(j);
+        writer.flush();
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
@@ -6358,7 +6362,9 @@ public:
     static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                            const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_msgpack(j);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_msgpack(j);
+        writer.flush();
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
@@ -6366,7 +6372,9 @@ public:
     static void to_msgpack(const basic_json& j, detail::output_adapter<char> o,
                            const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<char>(o, error_handler).write_msgpack(j);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_msgpack(j);
+        writer.flush();
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
@@ -6388,7 +6396,9 @@ public:
                           const bool use_size = false, const bool use_type = false,
                           const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_ubjson(j, use_size, use_type);
+        writer.flush();
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
@@ -6397,7 +6407,9 @@ public:
                           const bool use_size = false, const bool use_type = false,
                           const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_ubjson(j, use_size, use_type);
+        writer.flush();
     }
 
     /// @brief create a BJData serialization of a given JSON value
@@ -6421,7 +6433,9 @@ public:
                           const bjdata_version_t version = bjdata_version_t::draft2,
                           const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_ubjson(j, use_size, use_type, true, true, version);
+        writer.flush();
     }
 
     /// @brief create a BJData serialization of a given JSON value
@@ -6431,7 +6445,9 @@ public:
                           const bjdata_version_t version = bjdata_version_t::draft2,
                           const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_ubjson(j, use_size, use_type, true, true, version);
+        writer.flush();
     }
 
     /// @brief create a BSON serialization of a given JSON value
@@ -6450,7 +6466,9 @@ public:
     static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                         const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_bson(j);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_bson(j);
+        writer.flush();
     }
 
     /// @brief create a BSON serialization of a given JSON value
@@ -6458,7 +6476,9 @@ public:
     static void to_bson(const basic_json& j, detail::output_adapter<char> o,
                         const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o, error_handler).write_bson(j);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_bson(j);
+        writer.flush();
     }
 
     /// @brief create a BON8 serialization of a given JSON value
@@ -6475,14 +6495,18 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
     static void to_bon8(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
-        binary_writer<std::uint8_t>(o).write_bon8(j);
+        binary_writer<std::uint8_t> writer(o);
+        writer.write_bon8(j);
+        writer.flush();
     }
 
     /// @brief create a BON8 serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
     static void to_bon8(const basic_json& j, detail::output_adapter<char> o)
     {
-        binary_writer<char>(o).write_bon8(j);
+        binary_writer<char> writer(o);
+        writer.write_bon8(j);
+        writer.flush();
     }
 
     /// @brief create a JSON value from an input in CBOR format

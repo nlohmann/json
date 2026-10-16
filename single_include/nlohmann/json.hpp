@@ -24424,6 +24424,10 @@ class output_vector_sink
         position += length;
     }
 
+    /// nothing to pass on: the characters are in the vector (see output_adapter_sink)
+    void flush() noexcept
+    {}
+
   private:
     /// make room for at least @a length more characters after the position;
     /// kept out of line so that the write functions stay small enough for
@@ -24543,9 +24547,17 @@ class output_string_adapter : public output_adapter_protocol<CharType>
 ///
 /// Wraps the polymorphic output_adapter_t so the same binary_writer template can
 /// also target arbitrary adapters (output streams, strings, user-provided
-/// adapters) via the `output_adapter`-based overloads. Each write still goes
-/// through one virtual call, exactly as before; only the concrete sinks above
-/// avoid it.
+/// adapters) via the `output_adapter`-based overloads.
+///
+/// A write through the adapter is a virtual call, and for a stream a call with
+/// a sentry on top, which costs more than encoding the few bytes of most values.
+/// The sink therefore collects what is written in a buffer and passes it on in
+/// one piece when it is full, a write is too large for it, or @ref flush is
+/// called. Everything written reaches the adapter in the same order and with
+/// the same bytes; the destructor passes on what is left, so that a write that
+/// throws leaves the adapter with exactly the bytes written before it. Only
+/// @ref flush can report an error of the adapter (the destructor must not
+/// throw), so it has to be called once the value is written.
 template<typename CharType>
 class output_adapter_sink
 {
@@ -24556,36 +24568,116 @@ class output_adapter_sink
         JSON_ASSERT(oa);
     }
 
+    output_adapter_sink(const output_adapter_sink&) = delete;
+    output_adapter_sink& operator=(const output_adapter_sink&) = delete;
+    output_adapter_sink& operator=(output_adapter_sink&&) = delete;
+
+    output_adapter_sink(output_adapter_sink&& other) noexcept
+        : oa(std::move(other.oa)), used(other.used)
+    {
+        std::memcpy(buffer.data(), other.buffer.data(), other.used * sizeof(CharType));
+        other.used = 0;
+    }
+
+    ~output_adapter_sink()
+    {
+        // a normal return has flushed already, so this is for a write that threw
+        if (used != 0)
+        {
+            JSON_TRY
+            {
+                flush();
+            }
+            JSON_CATCH(...)
+            {
+                // nothing can be done about an adapter that throws here
+            }
+        }
+    }
+
+    JSON_HEDLEY_ALWAYS_INLINE
     void write_character(CharType c)
     {
-        oa->write_character(c);
+        if (JSON_HEDLEY_UNLIKELY(used == buffer_size))
+        {
+            flush();
+        }
+        buffer[used++] = c;
     }
 
     // no JSON_HEDLEY_NON_NULL: forwards (null, 0) for empty payloads, exactly as
     // the type-erased path already did before this sink existed
+    JSON_HEDLEY_ALWAYS_INLINE
     void write_characters(const CharType* s, std::size_t length)
     {
-        oa->write_characters(s, length);
+        if (JSON_HEDLEY_UNLIKELY(buffer_size - used < length))
+        {
+            write_large(s, length);
+            return;
+        }
+        if (length != 0)
+        {
+            std::memcpy(buffer.data() + used, s, length * sizeof(CharType));
+            used += length;
+        }
     }
 
     /// space for writing up to @a length characters (see
     /// output_vector_sink::reserve)
-    CharType* reserve(const std::size_t length) noexcept
+    JSON_HEDLEY_ALWAYS_INLINE
+    CharType* reserve(const std::size_t length)
     {
         JSON_ASSERT(length <= max_reserve_size);
-        static_cast<void>(length);
-        return reserved.data();
+        if (JSON_HEDLEY_UNLIKELY(buffer_size - used < length))
+        {
+            flush();
+        }
+        return buffer.data() + used;
     }
 
-    /// write the first @a length characters written to the space from reserve()
-    void commit(const std::size_t length)
+    /// keep the first @a length characters written to the space from reserve()
+    JSON_HEDLEY_ALWAYS_INLINE
+    void commit(const std::size_t length) noexcept
     {
-        oa->write_characters(reserved.data(), length);
+        used += length;
+    }
+
+    /// pass everything written so far on to the adapter
+    void flush()
+    {
+        if (used != 0)
+        {
+            // reset first: the characters count as written even if the adapter throws
+            const std::size_t length = used;
+            used = 0;
+            oa->write_characters(buffer.data(), length);
+        }
     }
 
   private:
+    /// a write that does not fit the space left in the buffer
+    JSON_HEDLEY_NEVER_INLINE
+    void write_large(const CharType* s, const std::size_t length)
+    {
+        flush();
+        if (length >= buffer_size)
+        {
+            oa->write_characters(s, length);
+        }
+        else
+        {
+            std::memcpy(buffer.data(), s, length * sizeof(CharType));
+            used = length;
+        }
+    }
+
+    /// large enough for reserve() at any time
+    static constexpr std::size_t buffer_size = 4 * max_reserve_size;
+
     output_adapter_t<CharType> oa;
-    std::array<CharType, max_reserve_size> reserved{};
+    /// number of characters of @ref buffer not yet passed on
+    std::size_t used = 0;
+    std::array<CharType, buffer_size> buffer{};
 };
 
 /// @brief whether std::basic_string<CharType> has a non-deprecated std::char_traits
@@ -24792,8 +24884,21 @@ class binary_writer
     template < typename SinkType = OutputSinkType,
                typename std::enable_if < std::is_constructible<SinkType, output_adapter_t<CharType>>::value, int >::type = 0 >
     explicit binary_writer(output_adapter_t<CharType> adapter, const error_handler_t error_handler_ = binary_writer_default_error_handler())
-        : oa(SinkType(std::move(adapter))), error_handler(error_handler_)
+        : oa(std::move(adapter)), error_handler(error_handler_)
     {}
+
+    /*!
+    @brief pass on everything written so far to the output adapter
+
+    A writer over an output_adapter_sink buffers what it writes; this has to
+    be called after the last write, or the buffered end is only passed on, and
+    an error of the adapter lost, when the writer is destroyed. A writer over
+    an output_vector_sink writes straight into the vector.
+    */
+    void flush()
+    {
+        oa.flush();
+    }
 
     /*!
     @param[in] j  JSON value to serialize
@@ -38984,7 +39089,9 @@ public:
     static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                         const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_cbor(j);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_cbor(j);
+        writer.flush();
     }
 
     /// @brief create a CBOR serialization of a given JSON value
@@ -38992,7 +39099,9 @@ public:
     static void to_cbor(const basic_json& j, detail::output_adapter<char> o,
                         const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o, error_handler).write_cbor(j);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_cbor(j);
+        writer.flush();
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
@@ -39011,7 +39120,9 @@ public:
     static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                            const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_msgpack(j);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_msgpack(j);
+        writer.flush();
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
@@ -39019,7 +39130,9 @@ public:
     static void to_msgpack(const basic_json& j, detail::output_adapter<char> o,
                            const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<char>(o, error_handler).write_msgpack(j);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_msgpack(j);
+        writer.flush();
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
@@ -39041,7 +39154,9 @@ public:
                           const bool use_size = false, const bool use_type = false,
                           const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_ubjson(j, use_size, use_type);
+        writer.flush();
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
@@ -39050,7 +39165,9 @@ public:
                           const bool use_size = false, const bool use_type = false,
                           const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_ubjson(j, use_size, use_type);
+        writer.flush();
     }
 
     /// @brief create a BJData serialization of a given JSON value
@@ -39074,7 +39191,9 @@ public:
                           const bjdata_version_t version = bjdata_version_t::draft2,
                           const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_ubjson(j, use_size, use_type, true, true, version);
+        writer.flush();
     }
 
     /// @brief create a BJData serialization of a given JSON value
@@ -39084,7 +39203,9 @@ public:
                           const bjdata_version_t version = bjdata_version_t::draft2,
                           const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_ubjson(j, use_size, use_type, true, true, version);
+        writer.flush();
     }
 
     /// @brief create a BSON serialization of a given JSON value
@@ -39103,7 +39224,9 @@ public:
     static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                         const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o, error_handler).write_bson(j);
+        binary_writer<std::uint8_t> writer(o, error_handler);
+        writer.write_bson(j);
+        writer.flush();
     }
 
     /// @brief create a BSON serialization of a given JSON value
@@ -39111,7 +39234,9 @@ public:
     static void to_bson(const basic_json& j, detail::output_adapter<char> o,
                         const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o, error_handler).write_bson(j);
+        binary_writer<char> writer(o, error_handler);
+        writer.write_bson(j);
+        writer.flush();
     }
 
     /// @brief create a BON8 serialization of a given JSON value
@@ -39128,14 +39253,18 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
     static void to_bon8(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
-        binary_writer<std::uint8_t>(o).write_bon8(j);
+        binary_writer<std::uint8_t> writer(o);
+        writer.write_bon8(j);
+        writer.flush();
     }
 
     /// @brief create a BON8 serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
     static void to_bon8(const basic_json& j, detail::output_adapter<char> o)
     {
-        binary_writer<char>(o).write_bon8(j);
+        binary_writer<char> writer(o);
+        writer.write_bon8(j);
+        writer.flush();
     }
 
     /// @brief create a JSON value from an input in CBOR format

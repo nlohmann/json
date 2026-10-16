@@ -158,6 +158,10 @@ class output_vector_sink
         position += length;
     }
 
+    /// nothing to pass on: the characters are in the vector (see output_adapter_sink)
+    void flush() noexcept
+    {}
+
   private:
     /// make room for at least @a length more characters after the position;
     /// kept out of line so that the write functions stay small enough for
@@ -277,9 +281,17 @@ class output_string_adapter : public output_adapter_protocol<CharType>
 ///
 /// Wraps the polymorphic output_adapter_t so the same binary_writer template can
 /// also target arbitrary adapters (output streams, strings, user-provided
-/// adapters) via the `output_adapter`-based overloads. Each write still goes
-/// through one virtual call, exactly as before; only the concrete sinks above
-/// avoid it.
+/// adapters) via the `output_adapter`-based overloads.
+///
+/// A write through the adapter is a virtual call, and for a stream a call with
+/// a sentry on top, which costs more than encoding the few bytes of most values.
+/// The sink therefore collects what is written in a buffer and passes it on in
+/// one piece when it is full, a write is too large for it, or @ref flush is
+/// called. Everything written reaches the adapter in the same order and with
+/// the same bytes; the destructor passes on what is left, so that a write that
+/// throws leaves the adapter with exactly the bytes written before it. Only
+/// @ref flush can report an error of the adapter (the destructor must not
+/// throw), so it has to be called once the value is written.
 template<typename CharType>
 class output_adapter_sink
 {
@@ -290,36 +302,116 @@ class output_adapter_sink
         JSON_ASSERT(oa);
     }
 
+    output_adapter_sink(const output_adapter_sink&) = delete;
+    output_adapter_sink& operator=(const output_adapter_sink&) = delete;
+    output_adapter_sink& operator=(output_adapter_sink&&) = delete;
+
+    output_adapter_sink(output_adapter_sink&& other) noexcept
+        : oa(std::move(other.oa)), used(other.used)
+    {
+        std::memcpy(buffer.data(), other.buffer.data(), other.used * sizeof(CharType));
+        other.used = 0;
+    }
+
+    ~output_adapter_sink()
+    {
+        // a normal return has flushed already, so this is for a write that threw
+        if (used != 0)
+        {
+            JSON_TRY
+            {
+                flush();
+            }
+            JSON_CATCH(...)
+            {
+                // nothing can be done about an adapter that throws here
+            }
+        }
+    }
+
+    JSON_HEDLEY_ALWAYS_INLINE
     void write_character(CharType c)
     {
-        oa->write_character(c);
+        if (JSON_HEDLEY_UNLIKELY(used == buffer_size))
+        {
+            flush();
+        }
+        buffer[used++] = c;
     }
 
     // no JSON_HEDLEY_NON_NULL: forwards (null, 0) for empty payloads, exactly as
     // the type-erased path already did before this sink existed
+    JSON_HEDLEY_ALWAYS_INLINE
     void write_characters(const CharType* s, std::size_t length)
     {
-        oa->write_characters(s, length);
+        if (JSON_HEDLEY_UNLIKELY(buffer_size - used < length))
+        {
+            write_large(s, length);
+            return;
+        }
+        if (length != 0)
+        {
+            std::memcpy(buffer.data() + used, s, length * sizeof(CharType));
+            used += length;
+        }
     }
 
     /// space for writing up to @a length characters (see
     /// output_vector_sink::reserve)
-    CharType* reserve(const std::size_t length) noexcept
+    JSON_HEDLEY_ALWAYS_INLINE
+    CharType* reserve(const std::size_t length)
     {
         JSON_ASSERT(length <= max_reserve_size);
-        static_cast<void>(length);
-        return reserved.data();
+        if (JSON_HEDLEY_UNLIKELY(buffer_size - used < length))
+        {
+            flush();
+        }
+        return buffer.data() + used;
     }
 
-    /// write the first @a length characters written to the space from reserve()
-    void commit(const std::size_t length)
+    /// keep the first @a length characters written to the space from reserve()
+    JSON_HEDLEY_ALWAYS_INLINE
+    void commit(const std::size_t length) noexcept
     {
-        oa->write_characters(reserved.data(), length);
+        used += length;
+    }
+
+    /// pass everything written so far on to the adapter
+    void flush()
+    {
+        if (used != 0)
+        {
+            // reset first: the characters count as written even if the adapter throws
+            const std::size_t length = used;
+            used = 0;
+            oa->write_characters(buffer.data(), length);
+        }
     }
 
   private:
+    /// a write that does not fit the space left in the buffer
+    JSON_HEDLEY_NEVER_INLINE
+    void write_large(const CharType* s, const std::size_t length)
+    {
+        flush();
+        if (length >= buffer_size)
+        {
+            oa->write_characters(s, length);
+        }
+        else
+        {
+            std::memcpy(buffer.data(), s, length * sizeof(CharType));
+            used = length;
+        }
+    }
+
+    /// large enough for reserve() at any time
+    static constexpr std::size_t buffer_size = 4 * max_reserve_size;
+
     output_adapter_t<CharType> oa;
-    std::array<CharType, max_reserve_size> reserved{};
+    /// number of characters of @ref buffer not yet passed on
+    std::size_t used = 0;
+    std::array<CharType, buffer_size> buffer{};
 };
 
 /// @brief whether std::basic_string<CharType> has a non-deprecated std::char_traits
