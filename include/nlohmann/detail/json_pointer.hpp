@@ -1135,18 +1135,43 @@ class json_pointer
     // Add the entry (key, v) to the object `obj`. Flattened paths are pairwise
     // distinct, so objects that can append a key known to be absent
     // (ordered_map) skip the lookup, which is linear and would make flatten
-    // quadratic; all other object types use operator[].
+    // quadratic. Objects with a positional insert (std::map) insert next to
+    // the entry added last: paths come out in nearly sorted order, so the
+    // position is usually right and no search from the root is needed.
+    // All other object types use operator[].
     template<typename ObjectType, typename ValueType>
-    static auto add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<1> /*unused*/)
+    static auto add_flattened(ObjectType& obj, typename ObjectType::iterator& /*hint*/, const string_t& key, ValueType&& v, detail::priority_tag<2> /*unused*/)
     -> decltype(obj.emplace_new_key(key, std::forward<ValueType>(v)), void())
     {
         obj.emplace_new_key(key, std::forward<ValueType>(v));
     }
 
     template<typename ObjectType, typename ValueType>
-    static void add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<0> /*unused*/)
+    static auto add_flattened(ObjectType& obj, typename ObjectType::iterator& hint, const string_t& key, ValueType&& v, detail::priority_tag<1> /*unused*/)
+    -> decltype(hint = obj.emplace_hint(hint, key, std::forward<ValueType>(v)), void())
+    {
+        hint = obj.emplace_hint(hint, key, std::forward<ValueType>(v));
+        ++hint;
+    }
+
+    template<typename ObjectType, typename ValueType>
+    static void add_flattened(ObjectType& obj, typename ObjectType::iterator& /*hint*/, const string_t& key, ValueType&& v, detail::priority_tag<0> /*unused*/)
     {
         obj[key] = std::forward<ValueType>(v);
+    }
+
+    /// append the decimal representation of @a i to @a out
+    static void append_index(string_t& out, std::size_t i)
+    {
+        char buf[24]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        std::size_t pos = sizeof(buf);
+        do
+        {
+            buf[--pos] = static_cast<char>('0' + i % 10);
+            i /= 10;
+        }
+        while (i != 0);
+        out.append(buf + pos, sizeof(buf) - pos);
     }
 
     /*!
@@ -1194,7 +1219,8 @@ class json_pointer
         // flatten `v`, whose path is `path`: primitives and empty containers
         // are added to the result right away; other containers get a frame
         auto& object = *result.m_data.m_value.object;
-        const auto enter = [&stack, &path, &object](const BasicJsonType & v)
+        typename BasicJsonType::object_t::iterator hint = object.end();
+        const auto enter = [&stack, &path, &object, &hint](const BasicJsonType & v)
         {
             switch (v.type())
             {
@@ -1203,7 +1229,7 @@ class json_pointer
                     if (v.m_data.m_value.array->empty())
                     {
                         // flatten empty array as null
-                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
+                        add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
                     }
                     else
                     {
@@ -1217,7 +1243,7 @@ class json_pointer
                     if (v.m_data.m_value.object->empty())
                     {
                         // flatten empty object as null
-                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
+                        add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
                     }
                     else
                     {
@@ -1237,7 +1263,7 @@ class json_pointer
                 default:
                 {
                     // add a primitive value with its reference string
-                    add_flattened(object, path, v, detail::priority_tag<1> {});
+                    add_flattened(object, hint, path, v, detail::priority_tag<2> {});
                     return;
                 }
             }
@@ -1265,7 +1291,8 @@ class json_pointer
 
                 // iterate array and use index as a reference string
                 ++stack.back().index;
-                detail::concat_into(path, '/', detail::to_string<string_t>(i));
+                path.push_back('/');
+                append_index(path, i);
                 enter(array[i]);
             }
             else
@@ -1279,7 +1306,8 @@ class json_pointer
 
                 // iterate object and use keys as reference string
                 ++stack.back().member;
-                detail::concat_into(path, '/', detail::escape(it->first));
+                path.push_back('/');
+                detail::escape_into(path, it->first);
                 enter(it->second);
             }
         }
