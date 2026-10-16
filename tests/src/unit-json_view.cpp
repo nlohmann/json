@@ -185,6 +185,29 @@ TEST_CASE("json_view")
         // duplicate keys: the last value, at the position of the first key
         CHECK(materialized<json_document>(R"({"a":1,"b":2,"a":3})") == json::parse(R"({"a":1,"b":2,"a":3})"));
         CHECK(materialized<ordered_json_document>(R"({"a":1,"b":2,"a":3})").dump() == R"({"a":3,"b":2})");
+        // scalars (made without the handler), and nesting around the depth up to which the stack of open containers is local
+        for (const char* scalar :
+                {"null", "true", "false", "0", "-7", "18446744073709551615", "1.5e300", "-0.0", "\"\"", "\"short\"", "\"a string that is longer than fifteen bytes\"", "\"\\u00e4\\n\""
+                })
+        {
+            CAPTURE(scalar)
+            CHECK(materialized<json_document>(scalar) == json::parse(scalar));
+            const std::string in_array = std::string("[1,") + scalar + "]";
+            const json_document d = json_document::parse(in_array);
+            CHECK(d.root()[1].materialize() == json::parse(scalar));
+            CHECK(d.root()[1].get<json>() == json::parse(scalar));
+        }
+        for (const std::size_t levels :
+                {
+                    std::size_t{1}, std::size_t{15}, std::size_t{16}, std::size_t{17}, std::size_t{32}, std::size_t{33}
+                })
+        {
+            CAPTURE(levels)
+            const std::string nested = std::string(levels, '[') + "{\"k\":[1,{\"j\":2}]}" + std::string(levels, ']');
+            CHECK(materialized<json_document>(nested) == json::parse(nested));
+            const std::string wide = "{\"a\":" + nested + ",\"b\":" + nested + "}";
+            CHECK(materialized<json_document>(wide) == json::parse(wide));
+        }
         // very deep nesting (iterative, as parse())
         const std::string deep = std::string(100000, '[') + std::string(100000, ']');
         // (one check per step, so that a failure shows which step it is)

@@ -703,6 +703,27 @@ TEST_CASE("json_view edits: arrays whose elements have no subtrees")
     check();
 }
 
+TEST_CASE("json_view edits: materializing values nested deeper than the document was parsed")
+{
+    // the stack of open containers of materialize() is sized from the nesting of the parsed text;
+    // a value added by an edit can be deeper than that (and than the stack that is local to the call)
+    json_editable_document d = json_editable_document::parse("[1,[2]]");
+    json expected = json::array({1, json::array({2})});
+    json nested = 3;
+    for (int level = 0; level < 40; ++level)
+    {
+        nested = json::array({nested, json{{"k", level}}});
+    }
+    d.push_back(d.root(), nested);
+    expected.push_back(nested);
+    CHECK(d.root().materialize() == expected);
+    CHECK(d.root()[2].materialize() == nested);
+    d.set(d.root()[1][0], nested);
+    expected[1][0] = nested;
+    CHECK(d.root().materialize() == expected);
+    CHECK(d.root().get<json>() == expected);
+}
+
 namespace
 {
 // reads of "a" in an object that repeats it: the first member wins, however the
