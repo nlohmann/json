@@ -954,11 +954,11 @@ indent_done:
                 ++p;
             }
             const unsigned char* const int_start = p;
-            if (p != e && *p == '0')
+            if (cur() == '0')
             {
                 ++p;
             }
-            else if (NLOHMANN_VIEW_LIKELY(p != e && *p >= '1' && *p <= '9'))
+            else if (NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
             {
                 p = skip_digits(p + 1, e);
             }
@@ -969,7 +969,7 @@ indent_done:
             const auto int_digits = static_cast<std::size_t>(p - int_start);
             std::size_t frac_digits = 0;
             bool is_float = false;
-            if (p != e && *p == '.')
+            if (cur() == '.')
             {
                 ++p;
                 const unsigned char* const f0 = p;
@@ -982,20 +982,20 @@ indent_done:
                 is_float = true;
             }
             std::int64_t exponent = 0;
-            if (p != e && (*p | 0x20) == 'e')
+            if ((cur() | 0x20) == 'e')
             {
                 ++p;
                 bool exp_negative = false;
-                if (p != e && (*p == '+' || *p == '-'))
+                if (cur() == '+' || cur() == '-')
                 {
                     exp_negative = *p == '-';
                     ++p;
                 }
-                if (NLOHMANN_VIEW_UNLIKELY(p == e || !is_digit(*p)))
+                if (NLOHMANN_VIEW_UNLIKELY(!is_digit(cur())))
                 {
                     return fail(error_code::number_after_exponent);
                 }
-                while (p != e && is_digit(*p))
+                while (is_digit(cur()))
                 {
                     if (exponent < 100000)
                     {
@@ -1057,7 +1057,7 @@ indent_done:
             ++p; // opening quote
             const unsigned char* const s = p;
             p = scan_string_run<Value>(p, e);
-            if (NLOHMANN_VIEW_LIKELY(p != e && *p == '"'))
+            if (NLOHMANN_VIEW_LIKELY(cur() == '"'))
             {
                 push_node(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
                 ++p;
