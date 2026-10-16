@@ -31182,7 +31182,7 @@ class serializer
                         put_buffer(string_buffer, bytes);
                         bytes = 0;
                     }
-                    put_string(s, i, i + run);
+                    put_run(s, i, run);
                     bytes_after_last_accept = 0;
                     undumped_chars = 0;
                     i += run;
@@ -31616,6 +31616,28 @@ class serializer
         }
         std::memcpy(write_buffer.data() + write_buffer_pos, s, length);
         write_buffer_pos += length;
+    }
+
+    /*!
+    @brief append the characters of @a str in [@a start, @a start + @a length)
+
+    A run of up to 16 characters with 16 or more in the string from @a start on
+    and in the write buffer from its end on is copied as a whole block of 16,
+    which spares the call of memcpy with a length known only at run time; the
+    surplus characters in the buffer are overwritten by what follows.
+    */
+    template<typename StringType>
+    void put_run(const StringType& str, const std::size_t start, const std::size_t length)
+    {
+        // a short run is the exception in text without escapes (CJK, accented
+        // Latin), for which this keeps the long path the fast one
+        if (JSON_HEDLEY_UNLIKELY(length <= 16 && start + 16 <= str.size() && write_buffer_pos + 16 <= write_buffer.size()))
+        {
+            std::memcpy(write_buffer.data() + write_buffer_pos, str.data() + start, 16);
+            write_buffer_pos += length;
+            return;
+        }
+        put_string(str, start, start + length);
     }
 
     /*!
