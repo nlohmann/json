@@ -27,11 +27,13 @@
 #include <array> // array
 #include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstring> // memcpy, strlen
+#include <istream> // istream
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <memory> // unique_ptr
 #include <string> // string
-#include <type_traits> // enable_if, integral_constant, is_base_of, is_integral, is_same, remove_cv, remove_extent
+#include <type_traits> // decay, enable_if, integral_constant, is_base_of, is_integral, is_same, remove_cv, remove_extent
 #include <utility> // forward, move
+#include <vector> // vector
 
 #include <nlohmann/json.hpp> // IWYU pragma: export
 
@@ -327,7 +329,9 @@ class basic_json_document
                                           const bool ignore_trailing_commas = false)
     {
         basic_json_document d;
-        d.build_owned(collect(std::forward<InputType>(input)), allow_exceptions, ignore_comments, ignore_trailing_commas);
+        std::string buf;
+        append_input(buf, std::forward<InputType>(input));
+        d.build_owned(std::move(buf), allow_exceptions, ignore_comments, ignore_trailing_commas);
         return d;
     }
 
@@ -376,7 +380,7 @@ class basic_json_document
         {
             return view_type();
         }
-        return view_type(m_data.get(), m_data->tape);
+        return view_type(m_data.get(), m_data->nodes);
     }
 
     /// deleted: the view of a temporary document would dangle
@@ -402,7 +406,7 @@ class basic_json_document
     /// number of index nodes (values plus object keys)
     std::size_t node_count() const noexcept
     {
-        return m_data ? m_data->tape_size : 0;
+        return m_data ? m_data->node_count : 0;
     }
 
     /// bytes held by the document (index, decoded strings, owned text)
@@ -412,8 +416,8 @@ class basic_json_document
         {
             return 0;
         }
-        return sizeof(document_data) + (m_data->inline_cap * sizeof(detail::view::node))
-               + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
+        return sizeof(document_data) + (m_data->inline_capacity * sizeof(detail::view::node))
+               + (m_data->nodes != m_data->inline_nodes ? m_data->node_capacity * sizeof(detail::view::node) : 0)
                + m_data->arena.capacity() + m_data->owned.capacity();
     }
 
@@ -432,17 +436,17 @@ class basic_json_document
         // allocate everything first, so that an exception leaves the document
         // unchanged
         const bool shrink_arena = d.arena.capacity() > d.arena.size();
-        std::string arena(shrink_arena ? d.arena : std::string());
-        const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap;
-        const bool into_header = d.tape_size <= d.inline_cap;
-        node* fresh = (shrink_tape && !into_header) ? static_cast<node*>(::operator new (d.tape_size * sizeof(node))) : d.inline_tape;
+        std::vector<char> arena(shrink_arena ? d.arena : std::vector<char>());
+        const bool shrink_nodes = d.nodes != d.inline_nodes && d.node_count != d.node_capacity;
+        const bool into_header = d.node_count <= d.inline_capacity;
+        node* fresh = (shrink_nodes && !into_header) ? static_cast<node*>(::operator new (d.node_count * sizeof(node))) : d.inline_nodes;
 
-        if (shrink_tape)
+        if (shrink_nodes)
         {
-            std::memcpy(fresh, d.tape, d.tape_size * sizeof(node));
-            ::operator delete (d.tape);
-            d.tape = fresh;
-            d.tape_cap = into_header ? d.inline_cap : d.tape_size;
+            std::memcpy(fresh, d.nodes, d.node_count * sizeof(node));
+            ::operator delete (d.nodes);
+            d.nodes = fresh;
+            d.node_capacity = into_header ? d.inline_capacity : d.node_count;
         }
         if (shrink_arena)
         {
@@ -463,12 +467,36 @@ class basic_json_document
         }
     }
 
-    /// parse a buffer the document takes ownership of
+    /// parse a buffer the document takes ownership of (it replaces the
+    /// previous owned copy)
     void build_owned(std::string&& buf, bool allow_exceptions, bool comments, bool trailing_commas)
     {
         ensure_data(buf.data(), buf.size());
         m_data->owned = std::move(buf);
         build(m_data->owned.data(), m_data->owned.size(), allow_exceptions, comments, trailing_commas, true, true);
+    }
+
+    /// parse a copy of the input; the copy is appended to the cleared owned
+    /// buffer, so that its capacity is reused
+    template<typename T>
+    void build_copy(T&& input, bool allow_exceptions, bool comments, bool trailing_commas)
+    {
+        if (!m_data)
+        {
+            std::string buf;
+            append_input(buf, std::forward<T>(input));
+            build_owned(std::move(buf), allow_exceptions, comments, trailing_commas);
+            return;
+        }
+        document_data& d = *m_data;
+        // (the previous text is gone from here on: should reading the input
+        // throw, the document is discarded)
+        d.discarded = true;
+        d.src = "";
+        d.size = 0;
+        d.owned.clear();
+        append_input(d.owned, std::forward<T>(input));
+        build(d.owned.data(), d.owned.size(), allow_exceptions, comments, trailing_commas, true, true);
     }
 
     /// sentinel: src[size] is readable and 0 (std::string, C strings)
@@ -482,7 +510,7 @@ class basic_json_document
         }
         d.src = src;
         d.size = size;
-        d.tape_size = 0;
+        d.node_count = 0;
         d.arena.clear();
         d.discarded = true;
         detail::view::parse_failure failure;
@@ -518,7 +546,6 @@ class basic_json_document
     template<typename CharT>
     void read_kind(CharT* s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::c_string> /*unused*/)
     {
-        static_assert(sizeof(CharT) == 1 && std::is_integral<typename std::remove_cv<CharT>::type>::value, "json_view parses byte (char-like) input");
         if (s == nullptr)
         {
             build("", 0, ae, c, tc, false, true);
@@ -534,7 +561,6 @@ class basic_json_document
     void read_kind(Array& a, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::char_array> /*unused*/)
     {
         using CharT = typename std::remove_cv<typename std::remove_extent<Array>::type>::type;
-        static_assert(sizeof(CharT) == 1 && std::is_integral<CharT>::value, "json_view parses byte (char-like) input");
         const std::size_t n = std::extent<Array>::value;
         // a trailing NUL (string literals) is not part of the text, as for
         // parse(), and serves as sentinel
@@ -554,13 +580,25 @@ class basic_json_document
     template<typename T>
     void read_kind(const T& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
     {
-        build_owned(std::string(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())), ae, c, tc); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        build_copy(s, ae, c, tc);
+    }
+
+    template<typename CharT>
+    void read_kind(CharT* s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::wide_c_string> /*unused*/)
+    {
+        if (s == nullptr)
+        {
+            build("", 0, ae, c, tc, false, true);
+            return;
+        }
+        // NUL-terminated, as for the single-byte C strings
+        build_copy(detail::view::make_adapter_input(detail::input_adapter(s, s + std::char_traits<typename std::remove_cv<CharT>::type>::length(s))), ae, c, tc);
     }
 
     template<typename T>
     void read_kind(T&& input, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::adapter> /*unused*/)
     {
-        build_owned(detail::view::collect_adapter(detail::input_adapter(std::forward<T>(input))), ae, c, tc);
+        build_copy(std::forward<T>(input), ae, c, tc);
     }
 
     template<typename IteratorType>
@@ -584,25 +622,45 @@ class basic_json_document
     template<typename IteratorType>
     void read_range_impl(IteratorType first, IteratorType last, bool ae, bool c, bool tc, std::false_type /*other*/)
     {
-        build_owned(detail::view::collect_adapter(detail::input_adapter(first, last)), ae, c, tc);
+        build_copy(detail::view::make_adapter_input(detail::input_adapter(first, last)), ae, c, tc);
+    }
+
+    /// append the text of an input to buf: a contiguous byte input as one
+    /// block, a stream in blocks, an input adapter (made here for any other
+    /// input) character by character
+    template<typename T>
+    static void append_input(std::string& buf, T&& input)
+    {
+        using D = typename std::decay<T>::type;
+        // NOLINTBEGIN(readability-avoid-nested-conditional-operator): a constant expression of C++11
+        append_input_impl(buf, std::forward<T>(input), std::integral_constant < int, detail::is_contiguous_byte_container<D>::value ? 0
+                          : std::is_base_of<std::istream, D>::value ? 1
+                          : detail::view::is_adapter_input<D>::value ? 2 : 3 > {});
+        // NOLINTEND(readability-avoid-nested-conditional-operator)
     }
 
     template<typename T>
-    static std::string collect(T&& input)
+    static void append_input_impl(std::string& buf, const T& s, std::integral_constant<int, 0> /*contiguous bytes*/)
     {
-        return collect_impl(std::forward<T>(input), std::integral_constant<bool, detail::is_contiguous_byte_container<typename std::decay<T>::type>::value> {});
+        buf.append(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    }
+
+    template<typename Stream>
+    static void append_input_impl(std::string& buf, Stream&& is, std::integral_constant<int, 1> /*stream*/) // NOLINT(cppcoreguidelines-missing-std-forward): read in place, as by the library's stream adapter
+    {
+        detail::view::append_stream(buf, is);
+    }
+
+    template<typename Adapter>
+    static void append_input_impl(std::string& buf, detail::view::adapter_input<Adapter>&& input, std::integral_constant<int, 2> /*input adapter*/)
+    {
+        detail::view::append_adapter(buf, std::move(input.ia));
     }
 
     template<typename T>
-    static std::string collect_impl(const T& s, std::true_type /*contiguous*/)
+    static void append_input_impl(std::string& buf, T&& input, std::integral_constant<int, 3> /*other*/)
     {
-        return {reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())}; // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    }
-
-    template<typename T>
-    static std::string collect_impl(T&& s, std::false_type /*other*/)
-    {
-        return detail::view::collect_adapter(detail::input_adapter(std::forward<T>(s)));
+        detail::view::append_adapter(buf, detail::input_adapter(std::forward<T>(input)));
     }
 
     std::unique_ptr<document_data, document_data::deleter> m_data{}; // NOLINT(readability-redundant-member-init)

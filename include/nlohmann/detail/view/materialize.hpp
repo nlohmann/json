@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <algorithm> // max
+#include <cstddef> // size_t
 #include <cstdint> // int64_t, uint8_t
 #include <string> // string
 #include <vector> // vector
@@ -43,8 +45,15 @@ BasicJsonType materialize(const document_data& d, const node* n)
     BasicJsonType result;
     sax_t sax(result, true);
     const string_t no_token{};
-    // the ends of the open containers, and whether they are objects
-    std::vector<std::pair<const node*, bool>> open;
+    // the ends of the open containers, and whether they are objects; sized
+    // once from the document's deepest nesting (for a subtree an upper bound)
+    struct open_container
+    {
+        const node* end;
+        bool is_object;
+    };
+    std::vector<open_container> open((std::max)(d.max_depth, std::size_t{1}));
+    std::size_t depth = 0;
     for (;;)
     {
         switch (static_cast<value_t>(n->kind))
@@ -61,7 +70,11 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 {
                     sax.start_array(n->len);
                 }
-                open.emplace_back(document_data::child_end(n), object);
+                if (NLOHMANN_VIEW_UNLIKELY(depth == open.size()))
+                {
+                    open.resize(depth * 2); // (deeper than the document's recorded nesting)
+                }
+                open[depth++] = open_container{document_data::child_end(n), object};
                 n = document_data::first_child(n);
                 break;
             }
@@ -98,15 +111,15 @@ BasicJsonType materialize(const document_data& d, const node* n)
         }
         for (;;)
         {
-            if (open.empty())
+            if (depth == 0)
             {
                 return result;
             }
-            if (n != open.back().first)
+            if (n != open[depth - 1].end)
             {
                 break;
             }
-            if (open.back().second)
+            if (open[depth - 1].is_object)
             {
                 sax.end_object();
             }
@@ -114,9 +127,9 @@ BasicJsonType materialize(const document_data& d, const node* n)
             {
                 sax.end_array();
             }
-            open.pop_back();
+            --depth;
         }
-        if (open.back().second)
+        if (open[depth - 1].is_object)
         {
             // the key of the next member
             string_t key(d.str(*n), n->len);

@@ -21,14 +21,6 @@ namespace detail
 namespace view
 {
 
-// the node kinds are value_t values; the tests of is_container() and of the
-// number kinds depend on this numbering
-static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::uint8_t>(value_t::object) == 1
-              && static_cast<std::uint8_t>(value_t::array) == 2 && static_cast<std::uint8_t>(value_t::string) == 3
-              && static_cast<std::uint8_t>(value_t::boolean) == 4 && static_cast<std::uint8_t>(value_t::number_integer) == 5
-              && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
-              "the node format depends on the numbering of value_t");
-
 /// The largest input a document accepts, in bytes. Offsets and node counts are
 /// 32 bits wide; the limit keeps 16 bytes (the width of the scanner's steps)
 /// below 2^32, so that a position one step past the end of the text fits.
@@ -59,6 +51,14 @@ struct node
     std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence)
 };
 static_assert(sizeof(node) == 16, "node must stay 16 bytes");
+
+// the node kinds are value_t values; the test below (object and array are 1
+// and 2) and those of the number kinds depend on this numbering
+static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::uint8_t>(value_t::object) == 1
+              && static_cast<std::uint8_t>(value_t::array) == 2 && static_cast<std::uint8_t>(value_t::string) == 3
+              && static_cast<std::uint8_t>(value_t::boolean) == 4 && static_cast<std::uint8_t>(value_t::number_integer) == 5
+              && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
+              "the node format depends on the numbering of value_t");
 
 NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 {
