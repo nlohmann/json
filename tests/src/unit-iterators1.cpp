@@ -1637,6 +1637,7 @@ TEST_CASE_TEMPLATE("reverse iteration and member access", Json, nlohmann::json, 
     {
         Json j = {1, 2, 3, 4};
 
+        const std::vector<int> reversed = {4, 3, 2, 1};
         auto it = j.end();
         std::vector<int> seen;
         while (it != j.begin())
@@ -1644,7 +1645,7 @@ TEST_CASE_TEMPLATE("reverse iteration and member access", Json, nlohmann::json, 
             --it;
             seen.push_back(it->template get<int>());
         }
-        CHECK(seen == std::vector<int> {4, 3, 2, 1});
+        CHECK(seen == reversed);
 
         auto it2 = j.end();
         auto old = it2--;
@@ -1656,14 +1657,14 @@ TEST_CASE_TEMPLATE("reverse iteration and member access", Json, nlohmann::json, 
         {
             seen.push_back(r->template get<int>());
         }
-        CHECK(seen == std::vector<int> {4, 3, 2, 1});
+        CHECK(seen == reversed);
 
         seen.clear();
         for (auto r = j.crbegin(); r != j.crend(); ++r)
         {
             seen.push_back(r->template get<int>());
         }
-        CHECK(seen == std::vector<int> {4, 3, 2, 1});
+        CHECK(seen == reversed);
     }
 
     SECTION("object: -- and rbegin/rend")
