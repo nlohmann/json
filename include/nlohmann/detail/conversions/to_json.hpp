@@ -52,13 +52,13 @@ namespace detail
 // const (e.g., std::set): libstdc++ before GCC 5 defines the reference of a
 // std::move_iterator as value_type&&, which cannot bind to a const element
 template<typename Iterator>
-std::move_iterator<Iterator> make_move_iterator_if_mutable_impl(Iterator it, std::true_type /*mutable*/)
+std::move_iterator<Iterator> make_move_iterator_if_mutable_impl(const Iterator& it, std::true_type /*mutable*/)
 {
     return std::make_move_iterator(it);
 }
 
 template<typename Iterator>
-Iterator make_move_iterator_if_mutable_impl(Iterator it, std::false_type /*mutable*/)
+Iterator make_move_iterator_if_mutable_impl(const Iterator& it, std::false_type /*mutable*/)
 {
     return it;
 }
@@ -68,7 +68,7 @@ using is_mutable_iterator = std::integral_constant < bool,
       !std::is_const<typename std::remove_reference<decltype(*std::declval<Iterator&>())>::type>::value >;
 
 template<typename Iterator>
-auto make_move_iterator_if_mutable(Iterator it)
+auto make_move_iterator_if_mutable(const Iterator& it)
 -> decltype(make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {}))
 {
     return make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {});

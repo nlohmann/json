@@ -198,11 +198,11 @@ TEST_CASE("copy constructor and destructor across value types")
         const json src_uint = 7u;
         const json src_float = 2.5;
 
-        json c_null(src_null);
-        json c_bool(src_bool);
-        json c_int(src_int);
-        json c_uint(src_uint);
-        json c_float(src_float);
+        json c_null(src_null); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
+        json c_bool(src_bool); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
+        json c_int(src_int); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
+        json c_uint(src_uint); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
+        json c_float(src_float); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
 
         CHECK(c_null.is_null());
         CHECK(c_bool == true);

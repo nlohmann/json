@@ -1435,7 +1435,7 @@ TEST_CASE("invalid UTF-8 at every position is handled like the reference")
         "\xF4\x90\x80\x80",
         // sequences cut short by ASCII, a control character, a quote, a
         // backslash, DEL, or the lead byte of a well-formed character
-        "\xC3" "a", "\xE2\x82" "\n", "\xE2\x82\"", "\xF0\x9F\x98\\", "\xC3\x7F", "\xC3\xC3\xA4", "\xE2\xF0\x9F\x98\x80",
+        "\xC3" "a", "\xE2\x82" "\n", "\xE2\x82\"", "\xF0\x9F\x98\\", "\xC3\x7F", "\xC3\xC3\xA4", "\xE2\xF0\x9F\x98\x80", // NOLINT(bugprone-suspicious-missing-comma): "\xC3" "a" ends the hex escape
         // truncated sequences
         "\xC3", "\xE2\x82", "\xF0\x9F\x98"
     };

@@ -54,8 +54,8 @@ TEST_CASE("exception messages of out-of-line throw sites")
 
     SECTION("at")
     {
-        const json carr = arr;
-        const json cobj = obj;
+        const json& carr = arr;
+        const json& cobj = obj;
         CHECK_MSG((void)arr.at(static_cast<json::size_type>(10)), "[json.exception.out_of_range.401] array index 10 is out of range");
         CHECK_MSG((void)carr.at(static_cast<json::size_type>(3)), "[json.exception.out_of_range.401] array index 3 is out of range");
         CHECK_MSG((void)num.at(static_cast<json::size_type>(0)), "[json.exception.type_error.304] cannot use at() with number");
@@ -65,7 +65,7 @@ TEST_CASE("exception messages of out-of-line throw sites")
         CHECK_MSG((void)num.at("a"), "[json.exception.type_error.304] cannot use at() with number");
 
         nlohmann::ordered_json oobj = {{"a", 1}};
-        const nlohmann::ordered_json coobj = oobj;
+        const nlohmann::ordered_json& coobj = oobj;
         CHECK_MSG((void)oobj.at("z"), "[json.exception.out_of_range.403] key 'z' not found");
         CHECK_MSG((void)coobj.at("z"), "[json.exception.out_of_range.403] key 'z' not found");
         CHECK_MSG((void)coobj.at(std::string("zz")), "[json.exception.out_of_range.403] key 'zz' not found");
@@ -97,7 +97,7 @@ TEST_CASE("exception messages of out-of-line throw sites")
 #if !defined(JSON_NOEXCEPTION) // patch_msg() catches the exceptions, which JSON_NOEXCEPTION turns into std::abort()
     SECTION("patch")
     {
-        const auto patch_msg = [](const char* doc, const char* patch)
+        const auto patch_msg = [](const char* doc, const char* patch) -> std::string
         {
             try
             {
@@ -110,8 +110,9 @@ TEST_CASE("exception messages of out-of-line throw sites")
                 // and with JSON_DIAGNOSTIC_POSITIONS its position like "(bytes 0-2) "; drop both
                 std::string msg = e.what();
                 for (const char* marker :
-                        {" (/", " (bytes "
-                        })
+            {
+                " (/", " (bytes "
+            })
                 {
                     const auto pos = msg.find(marker);
                     if (pos != std::string::npos)
@@ -121,7 +122,7 @@ TEST_CASE("exception messages of out-of-line throw sites")
                 }
                 return msg;
             }
-            return std::string();
+            return {};
         };
 
         CHECK(patch_msg("{}", "{}") == "[json.exception.parse_error.104] parse error: JSON patch must be an array of objects");
