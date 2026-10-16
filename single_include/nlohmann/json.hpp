@@ -25449,17 +25449,7 @@ class binary_writer
 
             case value_t::string:
             {
-                string_t storage;
-                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
-
-                if (add_prefix)
-                {
-                    oa.write_character(to_char_type('S'));
-                }
-                write_number_with_ubjson_prefix(value.size(), true, use_bjdata);
-                oa.write_characters(
-                      reinterpret_cast<const CharType*>(value.data()),
-                      value.size());
+                write_ubjson_text(*j.m_data.m_value.string, j, add_prefix, use_bjdata);
                 break;
             }
 
@@ -25550,12 +25540,7 @@ class binary_writer
                 {
                     // a converted key must outlive the reference returned by sanitize_utf8_for_write
                     const object_key_string_t key_string = el.first;
-                    string_t storage;
-                    const string_t& key = sanitize_utf8_for_write(key_string, j, storage);
-                    write_number_with_ubjson_prefix(key.size(), true, use_bjdata);
-                    oa.write_characters(
-                          reinterpret_cast<const CharType*>(key.data()),
-                          key.size());
+                    write_ubjson_text(key_string, j, false, use_bjdata);
                     write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth + 1);
                 }
 
@@ -26231,12 +26216,7 @@ class binary_writer
 
                 // a converted key must outlive the reference returned by sanitize_utf8_for_write
                 const object_key_string_t key_string = current.object_it->first;
-                string_t storage;
-                const string_t& key = sanitize_utf8_for_write(key_string, j, storage);
-                write_number_with_ubjson_prefix(key.size(), true, use_bjdata);
-                oa.write_characters(
-                      reinterpret_cast<const CharType*>(key.data()),
-                      key.size());
+                write_ubjson_text(key_string, j, false, use_bjdata);
                 const BasicJsonType* child = &(current.object_it->second);
                 const bool child_prefix = current.prefix_required;
                 ++stack.back().object_it;
@@ -26721,16 +26701,35 @@ class binary_writer
     bool write_bson_scalar(const string_t& name, const BasicJsonType& j)
     {
         const std::size_t name_size = name.size();
-        CharType* const out = oa.reserve(name_size + 2 + 8);
+        // a short string is written whole: its type, the name and its null
+        // byte, the length, the characters, and their null byte
+        const bool whole_string = j.is_string() && j.m_data.m_value.string->size() <= max_reserve_size - name_size - 7;
+        CharType* const out = oa.reserve(whole_string ? name_size + j.m_data.m_value.string->size() + 7 : name_size + 2 + 8);
         // the name and its terminating null byte follow the type byte
         CharType* p = out + 1;
-        std::memcpy(p, name.data(), name_size);
+        copy_characters(p, reinterpret_cast<const CharType*>(name.data()), name_size);
         p += name_size;
         *p++ = to_char_type(0x00);
 
         if (const CharType* const end = encode_bson_fixed_entry(out, p, j))
         {
             oa.commit(static_cast<std::size_t>(end - out));
+            return true;
+        }
+
+        if (whole_string)
+        {
+            const string_t& value = *j.m_data.m_value.string;
+            out[0] = to_char_type(0x02);
+            store_little_endian<std::int32_t>(p, static_cast<std::int32_t>(value.size() + 1ul));
+            p += sizeof(std::int32_t);
+            copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+            p += value.size();
+            // the terminating null byte is written explicitly rather than
+            // taken from the buffer, so that string_t::data() need not be
+            // null-terminated
+            *p++ = to_char_type(0x00);
+            oa.commit(static_cast<std::size_t>(p - out));
             return true;
         }
 
@@ -27964,6 +27963,48 @@ class binary_writer
             i += block;
             oa.commit(2 * block);
         }
+    }
+
+    /*!
+    @brief write a UBJSON/BJData string or object key: the optional string
+           marker `S`, the length as an integer with its marker, and the characters
+
+    With the default error handler (keep) and a string of up to 253 characters,
+    which has a length of the marker `i` or `U` and a single byte, everything is
+    written into space reserved from the sink in one go.
+
+    @param[in] value  the string; checked or sanitized according to
+                      @ref error_handler, with @a context as diagnostics context
+    @param[in] add_marker  whether `S` is written first (not for an object key)
+    */
+    void write_ubjson_text(const string_t& value, const BasicJsonType& context, const bool add_marker, const bool use_bjdata)
+    {
+        const std::size_t size = value.size();
+        if (JSON_HEDLEY_LIKELY(error_handler == error_handler_t::keep) && JSON_HEDLEY_LIKELY(size <= max_text_in_reservation - 1))
+        {
+            CharType* const out = oa.reserve(size + 3);
+            CharType* p = out;
+            if (add_marker)
+            {
+                *p++ = to_char_type('S');
+            }
+            *p++ = to_char_type(size <= 127 ? 'i' : 'U');
+            *p++ = to_char_type(static_cast<std::uint8_t>(size));
+            copy_characters(p, reinterpret_cast<const CharType*>(value.data()), size);
+            oa.commit(static_cast<std::size_t>(p - out) + size);
+            return;
+        }
+
+        string_t storage;
+        const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
+        if (add_marker)
+        {
+            oa.write_character(to_char_type('S'));
+        }
+        write_number_with_ubjson_prefix(sanitized.size(), true, use_bjdata);
+        oa.write_characters(
+              reinterpret_cast<const CharType*>(sanitized.data()),
+              sanitized.size());
     }
 
     /*!
