@@ -2081,6 +2081,13 @@ class binary_writer
         std::size_t entries_size = 0;
     };
 
+    /// whether the BSON entry of @a j has a fixed size, which is the case for
+    /// a boolean, a number, and null
+    static bool is_bson_fixed_size(const BasicJsonType& j) noexcept
+    {
+        return j.is_number() || j.is_boolean() || j.is_null();
+    }
+
     /*!
     @brief Writes the entries of the array in @a frame that have a fixed size
            (booleans, numbers, and null), from its next element on, until it
@@ -2149,6 +2156,67 @@ class binary_writer
         frame.index = index;
         frame.index_name_size = name_size;
         frame.index_name = name;
+    }
+
+    /*!
+    @brief Calculates the size of the BSON array @a j if all its elements are
+           booleans, numbers, or null
+    @param[out] size  the size of the array, including its own size field
+    @return false (and nothing is known about @a size) if an element is not,
+            or is an integer that does not fit 64 bits (which the generic
+            path rejects), which is not looked at further
+    */
+    bool calc_bson_fixed_array_size(const BasicJsonType& j, std::size_t& size) const noexcept
+    {
+        std::size_t total = sizeof(std::int32_t) + 1ul;
+        std::size_t index_name_size = 1;
+        std::uint64_t index_boundary = 10;
+        std::uint64_t index = 0;
+        for (const auto& el : *j.m_data.m_value.array)
+        {
+            // the type, the decimal index, and the terminating null byte
+            total += 2ul + index_name_size;
+            if (++index == index_boundary)
+            {
+                ++index_name_size;
+                index_boundary *= 10;
+            }
+            switch (el.type())
+            {
+                case value_t::boolean:
+                    total += 1ul;
+                    break;
+                case value_t::number_float:
+                    total += 8ul;
+                    break;
+                case value_t::number_integer:
+                    // an integer beyond 64 bits is left to the generic path, which throws
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(el.m_data.m_value.number_integer)))
+                    {
+                        return false;
+                    }
+                    total += calc_bson_integer_size(static_cast<std::int64_t>(el.m_data.m_value.number_integer));
+                    break;
+                case value_t::number_unsigned:
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(el.m_data.m_value.number_unsigned)))
+                    {
+                        return false;
+                    }
+                    total += calc_bson_unsigned_size(conditional_static_cast<std::uint64_t>(el.m_data.m_value.number_unsigned));
+                    break;
+                case value_t::null:
+                    break;
+                case value_t::string:
+                case value_t::binary:
+                case value_t::object:
+                case value_t::array:
+                case value_t::discarded:
+                default:
+                    return false;
+            }
+        }
+        size = total;
+        return true;
     }
 
     /*!
@@ -2229,6 +2297,15 @@ class binary_writer
 
             if (nested != nullptr)
             {
+                // an array of booleans, numbers and null: sized without a frame
+                std::size_t fixed_size = 0;
+                if (nested->is_array() && calc_bson_fixed_array_size(*nested, fixed_size))
+                {
+                    nested_sizes.push_back(fixed_size);
+                    current.entries_size += fixed_size;
+                    continue;
+                }
+
                 // its size is added to the current one's once it is done
                 nested_sizes.push_back(0);
                 parents.push_back(std::move(current));
@@ -2299,10 +2376,13 @@ class binary_writer
                 const auto& array = *current.value->m_data.m_value.array;
                 while (nested == nullptr && current.index < array.size())
                 {
-                    write_bson_array_fixed_entries(current);
-                    if (current.index == array.size())
+                    if (is_bson_fixed_size(array[current.index]))
                     {
-                        break;
+                        write_bson_array_fixed_entries(current);
+                        if (current.index == array.size())
+                        {
+                            break;
+                        }
                     }
 
                     // a string, binary value, object or array
@@ -2323,6 +2403,20 @@ class binary_writer
 
             if (nested != nullptr)
             {
+                if (nested->is_array())
+                {
+                    // an array of booleans, numbers and null is written without a frame on the stack
+                    bson_frame leaf(nested);
+                    write_bson_array_fixed_entries(leaf);
+                    if (leaf.index == nested->m_data.m_value.array->size())
+                    {
+                        oa.write_character(to_char_type(0x00));
+                        continue;
+                    }
+                    parents.push_back(std::move(current));
+                    current = std::move(leaf);
+                    continue;
+                }
                 parents.push_back(std::move(current));
                 current = bson_frame(nested);
                 continue;
