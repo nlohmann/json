@@ -26023,8 +26023,7 @@ class binary_writer
 
         if (use_count)
         {
-            oa.write_character(to_char_type('#'));
-            write_number_with_ubjson_prefix(j.m_data.m_value.array->size(), true, use_bjdata);
+            write_ubjson_count(j.m_data.m_value.array->size(), use_bjdata);
         }
 
         return !use_count;
@@ -26063,8 +26062,7 @@ class binary_writer
 
         if (use_count)
         {
-            oa.write_character(to_char_type('#'));
-            write_number_with_ubjson_prefix(j.m_data.m_value.object->size(), true, use_bjdata);
+            write_ubjson_count(j.m_data.m_value.object->size(), use_bjdata);
         }
 
         return !use_count;
@@ -28258,6 +28256,23 @@ class binary_writer
                     break;
             }
         }
+    }
+
+    /// write the count marker `#` and the number of elements of a container as
+    /// an integer; a count of up to 127, which is `i` and a byte, in one reservation
+    void write_ubjson_count(const std::size_t count, const bool use_bjdata)
+    {
+        if (JSON_HEDLEY_LIKELY(count <= 127))
+        {
+            CharType* const out = oa.reserve(3);
+            out[0] = to_char_type('#');
+            out[1] = to_char_type('i');
+            out[2] = to_char_type(static_cast<std::uint8_t>(count));
+            oa.commit(3);
+            return;
+        }
+        oa.write_character(to_char_type('#'));
+        write_number_with_ubjson_prefix(count, true, use_bjdata);
     }
 
     /*!
