@@ -7875,7 +7875,7 @@ class basic_json_view
             }
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
-        return idx < m_node->len ? basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx))) : basic_json_view();
+        return idx < m_node->len ? element(idx) : basic_json_view();
     }
 
     /// any other integer type (int, unsigned, long, std::int64_t, ...; a
@@ -7938,7 +7938,7 @@ class basic_json_view
         {
             detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
         }
-        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
+        return element(idx);
     }
 
     /// any other integer type, see operator[]; negative values are out of
@@ -8024,7 +8024,8 @@ class basic_json_view
     {
         if (is_structured() && m_node->len != 0)
         {
-            return basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
+            return unedited() ? basic_json_view(m_doc, detail::view::last_child<false>(*m_doc, m_node) + (is_object() ? 1 : 0))
+                   : basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
         }
         return front();
     }
@@ -8041,7 +8042,8 @@ class basic_json_view
         {
             return end();
         }
-        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        const node* const k = unedited() ? detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size())
+                              : detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? iterator(m_doc, k, true) : end();
     }
 
@@ -8058,7 +8060,8 @@ class basic_json_view
     /// whether this is an object with a member with this key
     bool contains(string_view_t key) const
     {
-        return is_object() && detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size()) != nullptr;
+        return is_object() && (unedited() ? detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size()) != nullptr
+                               : detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size()) != nullptr);
     }
 
     bool contains(const char* key) const
@@ -8218,7 +8221,14 @@ class basic_json_view
         // the compact writer keeps 64 bytes of slack, so that it does not grow
         // the buffer just before the end
         const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 160;
-        detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
+        if (unedited())
+        {
+            detail::view::view_serializer<BasicJsonType, false>(*m_doc, out, estimate, style).dump(m_node);
+        }
+        else
+        {
+            detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
+        }
         return out;
     }
 
@@ -8298,7 +8308,7 @@ class basic_json_view
         {
             return BasicJsonType(value_t::discarded);
         }
-        return detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
+        return unedited() ? detail::view::materialize<BasicJsonType, false>(*m_doc, m_node) : detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
     }
 
     /// byte offset of this value in the source text (for strings: of the
@@ -8376,8 +8386,30 @@ class basic_json_view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
+        if (unedited())
+        {
+            const node* const k = detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
+            return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+        }
         const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? basic_json_view(m_doc, navigation::value(k + 1)) : basic_json_view();
+    }
+
+    /// whether the document has not been edited yet: until the first edit, its index is walked like that of a
+    /// read-only document (nothing is moved or linked), which is cheaper
+    NLOHMANN_VIEW_ALWAYS_INLINE bool unedited() const noexcept
+    {
+        return !navigation::editable() || m_doc->edits == nullptr;
+    }
+
+    /// the element of an array at an index below its size
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view element(size_type idx) const
+    {
+        if (unedited())
+        {
+            return basic_json_view(m_doc, detail::view::element_at<false>(*m_doc, m_node, idx));
+        }
+        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
     }
 
     // --- get() dispatch ---

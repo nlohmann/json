@@ -724,6 +724,52 @@ TEST_CASE("json_view edits: materializing values nested deeper than the document
     CHECK(d.root().get<json>() == expected);
 }
 
+TEST_CASE("json_view edits: an editable document before and after its first edit")
+{
+    // until the first edit, an editable document is read like a read-only one; views made before the edit
+    // keep working after it
+    const std::string text = R"({"a":[1,2,{"x":"y"},4],"b":{"c":true,"d":null},"e":"text","f":[]})";
+    const json_document read_only = json_document::parse(text);
+    json_editable_document d = json_editable_document::parse(text);
+    const auto root = d.root();
+    const auto same_as_read_only = [&]
+    {
+        CHECK(root.dump() == read_only.root().dump());
+        CHECK(root.dump(2) == read_only.root().dump(2));
+        CHECK(root.materialize() == read_only.root().materialize());
+        CHECK(root["a"][2]["x"].get_string() == "y");
+        CHECK(root["a"].at(3).get<int>() == 4);
+        CHECK(root["a"].back().get<int>() == 4);
+        CHECK(root.contains("b"));
+        CHECK(!root.contains("zz"));
+        CHECK(root.find("e")->get_string() == "text");
+        CHECK(root.find("zz") == root.end());
+        CHECK(root["b"]["c"].get<bool>());
+        CHECK(root.value("e", "none") == "text");
+        std::size_t count = 0;
+        for (const auto m : root["a"])
+        {
+            CHECK(m.materialize() == read_only.root()["a"][count].materialize());
+            ++count;
+        }
+        CHECK(count == 4);
+    };
+    same_as_read_only();
+    // an edit that changes a scalar in place, then one that moves an array
+    d.set(root["e"], "other");
+    CHECK(root["e"].get_string() == "other");
+    CHECK(root["a"][2]["x"].get_string() == "y");
+    CHECK(root["a"].back().get<int>() == 4);
+    d.push_back(root["f"], 7);
+    CHECK(root["f"][0].get<int>() == 7);
+    CHECK(root["f"].back().get<int>() == 7);
+    CHECK(root.dump() == R"({"a":[1,2,{"x":"y"},4],"b":{"c":true,"d":null},"e":"other","f":[7]})");
+    d.set(root["a"], 2, json::array({1, 2}));
+    CHECK(root["a"][2][1].get<int>() == 2);
+    CHECK(root["a"].dump() == "[1,2,[1,2],4]");
+    CHECK(root.materialize() == json::parse(R"({"a":[1,2,[1,2],4],"b":{"c":true,"d":null},"e":"other","f":[7]})"));
+}
+
 namespace
 {
 // reads of "a" in an object that repeats it: the first member wins, however the
