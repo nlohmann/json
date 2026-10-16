@@ -3755,6 +3755,36 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_ubjson_high_precision(const NumberType n, const bool use_bjdata)
     {
+        write_ubjson_high_precision(n, use_bjdata, std::integral_constant < bool, std::is_unsigned<NumberType>::value && sizeof(NumberType) <= sizeof(std::uint64_t) > ());
+    }
+
+    /// an unsigned integer of at most 64 bits: its decimal digits are written directly
+    template<typename NumberType>
+    void write_ubjson_high_precision(const NumberType n, const bool use_bjdata, std::true_type /*is_unsigned_64_bits*/)
+    {
+        std::array<char, 20> digits; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::size_t first = digits.size();
+        auto value = static_cast<std::uint64_t>(n);
+        do
+        {
+            digits[--first] = static_cast<char>('0' + (value % 10));
+            value /= 10;
+        }
+        while (value != 0);
+        const std::size_t length = digits.size() - first;
+        write_number_with_ubjson_prefix(length, true, use_bjdata);
+        CharType* const out = oa.reserve(digits.size());
+        for (std::size_t i = 0; i < length; ++i)
+        {
+            out[i] = to_char_type(static_cast<std::uint8_t>(digits[first + i]));
+        }
+        oa.commit(length);
+    }
+
+    /// any other integer: its decimal digits from basic_json::dump()
+    template<typename NumberType>
+    void write_ubjson_high_precision(const NumberType n, const bool use_bjdata, std::false_type /*is_unsigned_64_bits*/)
+    {
         const auto number = BasicJsonType(n).dump();
         write_number_with_ubjson_prefix(number.size(), true, use_bjdata);
         for (std::size_t i = 0; i < number.size(); ++i)
