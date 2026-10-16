@@ -16,8 +16,8 @@ basic_json_document(const basic_json_document&) = delete;
 2. Move constructor. Takes over `other`'s index and, if owned, its text; `other` is left as an empty document. Views
    taken from `other` before the move remain valid, because the index is heap-allocated independently of the
    `basic_json_document` object.
-3. `basic_json_document` is move-only. Copying is disabled because it would either duplicate a potentially large index
-   and text, or leave two documents claiming to borrow the same buffer.
+3. `basic_json_document` is move-only. Copying is disabled because of its cost: a copy would duplicate the whole
+   index, the decoded-string buffer, and the owned text, while a move is enough in every use we know of.
 
 ## Parameters
 
@@ -30,7 +30,7 @@ No-throw guarantee: the default and move constructors never throw exceptions.
 
 ## Complexity
 
-Constant, for the default and move constructors.
+Constant.
 
 ## Examples
 

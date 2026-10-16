@@ -4,8 +4,9 @@
 bool is_binary() const noexcept;
 ```
 
-This function always returns `#!cpp false`: a JSON text has no binary values, so a view can never refer to one. The
-function exists for interface parity with [`BasicJsonType::is_binary`](../basic_json/is_binary.md).
+This function always returns `#!cpp false`: a document is only ever parsed from JSON text, never from CBOR or the other
+binary formats, and a JSON text has no binary values, so a view can never refer to one. The function exists for
+interface parity with [`BasicJsonType::is_binary`](../basic_json/is_binary.md).
 
 ## Return value
 

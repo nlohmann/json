@@ -12,6 +12,11 @@ Checks whether the input is valid JSON, accepting and rejecting exactly what
 function never throws an exception for invalid input, and the returned `#!cpp bool` is the only result -- no document
 is returned.
 
+The result is the same as that of `BasicJsonType::accept()` by design; the difference is how the check is made. This
+function runs the document's index builder (and discards the index), while `BasicJsonType::accept()` runs the SAX
+parser with a handler that ignores every event. Use this one if you go on to parse the same input with
+[`parse()`](parse.md) anyway, so that both use the same code; either is fine for a plain yes/no answer.
+
 ## Template parameters
 
 `InputType`

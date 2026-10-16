@@ -47,7 +47,9 @@ Every view taken from `#!cpp *this` before the call -- including the previous [`
 whether or not the new parse succeeds; take fresh views from [`root()`](root.md) afterward.
 
 `input` is borrowed or owned by the same rules as [`parse()`](parse.md#notes); a document can borrow on one call and
-own on the next, since ownership is decided freshly each time.
+own on the next, since ownership is decided freshly each time. An input that is copied (see the table in
+[`parse()`](parse.md#notes)) is written into the document's previous owned copy, reusing its memory; a moved-in
+`#!cpp std::string` replaces it.
 
 An integer argument that is not a `#!cpp bool` where the flags are expected, such as `#!cpp read(ptr, len)`, does not
 compile; see [`parse`](parse.md#notes).

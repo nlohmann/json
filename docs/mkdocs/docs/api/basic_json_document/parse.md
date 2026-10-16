@@ -21,13 +21,15 @@ static basic_json_document parse(IteratorType first, IteratorType last,
 
 Both overloads accept the same JSON text as [`BasicJsonType::parse()`](../basic_json/parse.md), with the same
 `ignore_comments`/`ignore_trailing_commas` options, but build a [`basic_json_document`](index.md) (a flat index into
-the input) instead of a tree of `BasicJsonType` values. The input must be byte-oriented (see the template parameters
-below): not every input type of `BasicJsonType::parse()` is supported.
+the input) instead of a tree of `BasicJsonType` values. They take the same inputs as `BasicJsonType::parse()`. Byte
+inputs that stay alive can be borrowed; all others (streams, `#!cpp FILE*`, wide characters, non-contiguous
+iterators) are read into a copy that the document owns -- see the Notes. Use [`parse_copy()`](parse_copy.md) to get an
+owned copy of a borrowable input as well.
 
 ## Template parameters
 
 `InputType`
-:   A byte-oriented input, one of:
+:   A compatible input, for instance:
 
     - a `#!cpp std::string`, `#!cpp std::string_view`, or a C-style array of single-byte characters
     - a pointer to a null-terminated string of single-byte characters (`#!cpp char`, `#!cpp signed char`,
@@ -35,12 +37,10 @@ below): not every input type of `BasicJsonType::parse()` is supported.
     - a container for which `#!cpp obj.data()` and `#!cpp obj.size()` give contiguous single-byte access, e.g.
       `#!cpp std::vector<char>` or `#!cpp std::vector<std::uint8_t>`
     - an `#!cpp std::istream` object
-    - a wide string object (`#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`), which is converted
-      to UTF-8
-
-    Other inputs are not supported: a `#!cpp FILE*`, and pointers to or arrays of wide characters (`#!cpp wchar_t`,
-    `#!cpp char16_t`, `#!cpp char32_t`) are rejected at compile time by a `#!cpp static_assert`. (Use
-    [`BasicJsonType::parse()`](../basic_json/parse.md) for these.)
+    - a `#!cpp FILE*` pointer
+    - wide characters (`#!cpp wchar_t`, `#!cpp char16_t`, `#!cpp char32_t`), which are converted to UTF-8: a wide
+      string object (`#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`), an array (e.g. a wide
+      string literal), or a pointer to a null-terminated wide string
 
 `IteratorType`
 :   an input iterator type, for instance a pair of pointers such as `ptr` and `ptr + len`, or a pair of
@@ -78,7 +78,9 @@ discarded; see [`is_discarded`](is_discarded.md).
 
 Throws the same exception [`BasicJsonType::parse()`](../basic_json/parse.md) throws for the same input and options --
 the same exception id, message, and position -- because on a failing input the library's own parser is run on the
-same bytes to produce the diagnostic. Additionally throws
+same bytes to produce the diagnostic. This replay runs only for a failing input, and costs about a lexing pass up to
+the error (its SAX handler builds no values); with `allow_exceptions` set to `#!cpp false`, it is skipped and a
+discarded document is returned instead. Additionally throws
 [`out_of_range.416`](../../home/exceptions.md#jsonexceptionout_of_range416) if the input is 4294967280 bytes (4 GiB
 minus 16 bytes) or larger, a size [`BasicJsonType::parse()`](../basic_json/parse.md) does not reject.
 
@@ -95,7 +97,7 @@ Linear in the length of the input.
 | lvalue byte container (`std::string`, `std::vector<char>`, ...), `std::string_view`, C string, character array | **borrowed** -- `input` must outlive the document |
 | non-const rvalue `#!cpp std::string`                                                  | **owned**, moved in without a copy                            |
 | other rvalue byte container (including a `#!cpp const` rvalue `#!cpp std::string`)  | **owned**, copied                                             |
-| stream, wide string, or anything else read through the general input adapter          | **owned**, read into a buffer (a stream is read to its end)   |
+| stream, `#!cpp FILE*`, wide characters, or anything else read through the general input adapter | **owned**, read into a buffer (a stream is read to its end) |
 
 For overload (2), a pair of pointers to single-byte integers (e.g. `#!cpp const char*`, `#!cpp std::uint8_t*`) is
 borrowed. From C++20 on, so is any other contiguous iterator over single bytes, such as

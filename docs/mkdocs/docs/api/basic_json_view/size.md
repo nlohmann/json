@@ -10,15 +10,15 @@ Returns the number of elements, as [`BasicJsonType::size()`](../basic_json/size.
 
 The return value depends on the type and is defined as follows:
 
-| Value type          | return value                |
-|----------------------|-----------------------------|
-| null                  | `0`                          |
-| discarded             | `0`                          |
-| boolean               | `1`                          |
-| string                | `1`                          |
-| number                | `1`                          |
-| object                | number of key/value pairs    |
-| array                 | number of elements           |
+| Value type | return value              |
+|------------|---------------------------|
+| null       | `0`                       |
+| discarded  | `0`                       |
+| boolean    | `1`                       |
+| string     | `1`                       |
+| number     | `1`                       |
+| object     | number of key/value pairs |
+| array      | number of elements        |
 
 ## Exception safety
 

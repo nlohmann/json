@@ -14,8 +14,8 @@ if the view is [discarded](is_discarded.md).
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes to the view or the document it refers to (nothing
-about either is mutated by this function).
+Strong guarantee: there are no changes to the view or the document it refers to (nothing about either is mutated by
+this function).
 
 ## Exceptions
 
@@ -28,12 +28,13 @@ Linear in the size of the subtree.
 ## Notes
 
 `materialize()` replays the subtree through the same SAX builder [`BasicJsonType::parse()`](../basic_json/parse.md)
-uses internally, so the result matches it exactly -- including, for an object, that a repeated key keeps only its
+uses, so the result matches it exactly -- including, for an object, that a repeated key keeps only its
 last value. The replay is iterative, so it is not limited by the call stack the way a naive recursive conversion
 would be; the JSON nesting depth is limited only by available memory, as for `BasicJsonType::parse()` itself.
 
 Unlike parsing with [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) enabled, the values
-produced by `materialize()` do not carry source positions: there is no lexer run during the replay to record them.
+produced by `materialize()` do not carry source positions. The index has the start offset of every value, but not the
+end of arrays, objects, and escaped strings, which the positions also need.
 
 Calling `materialize()` on the same view repeatedly builds a new, independent `BasicJsonType` value each time; it
 never caches the result.

@@ -11,13 +11,14 @@ A parsed JSON text, held as a flat index of its values
 ([16 bytes per value](../../home/architecture.md#node-index-of-json-views)) instead of a tree of `BasicJsonType` values.
 Strings and numbers stay in the source text; only strings that contain escapes are decoded, into one buffer owned by
 the document. [`basic_json_view`](../basic_json_view/index.md) is a read-only handle to one value of a
-`basic_json_document`; [`materialize()`](../basic_json_view/materialize.md) turns a subtree back into the
+`basic_json_document`; [`materialize()`](../basic_json_view/materialize.md) turns a subtree into the
 `BasicJsonType` value that [`BasicJsonType::parse()`](../basic_json/parse.md) would have produced for it.
 
 A document may **borrow** the text it was parsed from (the caller's buffer must then outlive the document) or **own**
 it (a copy, or an rvalue `#!cpp std::string` that was moved in); see [`owns_source`](owns_source.md). `basic_json_document`
-is move-only: copying a document would either duplicate a potentially large index and text, or leave two documents
-claiming to borrow the same buffer, so it is disabled.
+is move-only: a copy would duplicate the whole index, the decoded-string buffer, and the owned text, and a move is
+enough in every use we know of. The index, the decoded strings, and the owned text live in one heap block that the
+document holds through a `#!cpp std::unique_ptr`; this is also why views survive a move of the document.
 
 ## Template parameters
 
