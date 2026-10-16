@@ -3239,6 +3239,14 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 0
 #endif
 
+#ifndef JSON_DISABLE_STREAM_BULK_SCAN
+    #define JSON_DISABLE_STREAM_BULK_SCAN 0
+#endif
+
+#ifndef JSON_DISABLE_UNLOCKED_FILE_IO
+    #define JSON_DISABLE_UNLOCKED_FILE_IO 0
+#endif
+
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
@@ -8307,10 +8315,12 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstdint> // uint32_t
 #include <cstring> // strlen
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next, reverse_iterator
+#include <limits> // numeric_limits
 #include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
+#include <vector> // vector
 
 #ifndef JSON_NO_IO
     #include <cstdio>   // FILE *
@@ -8327,6 +8337,24 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_utils.hpp>
 
+
+#ifndef JSON_NO_IO
+    // Which unlocked stdio functions file_input_adapter uses (see
+    // JSON_DISABLE_UNLOCKED_FILE_IO): 1 = POSIX flockfile/getc_unlocked,
+    // 2 = Microsoft CRT _lock_file/_fgetc_nolock, 0 = none (std::fgetc, which
+    // locks the file for every character). Only C libraries known to declare
+    // the functions are listed; the macros are tested after <cstdio>, which
+    // defines __GLIBC__.
+    #if JSON_DISABLE_UNLOCKED_FILE_IO
+        #define JSON_UNLOCKED_FILE_IO 0
+    #elif defined(_MSC_VER)
+        #define JSON_UNLOCKED_FILE_IO 2
+    #elif defined(__GLIBC__) || defined(__APPLE__) || defined(__ANDROID__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+        #define JSON_UNLOCKED_FILE_IO 1
+    #else
+        #define JSON_UNLOCKED_FILE_IO 0
+    #endif
+#endif  // JSON_NO_IO
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -8354,18 +8382,35 @@ class file_input_adapter
         : m_file(f)
     {
         JSON_ASSERT(m_file != nullptr);
+        lock();
     }
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;
-    file_input_adapter(file_input_adapter&&) noexcept = default;
+    file_input_adapter(file_input_adapter&& rhs) noexcept
+        : m_file(rhs.m_file)
+    {
+        // the lock is owned by the thread, not the adapter: hand it over
+        rhs.m_file = nullptr;
+    }
     file_input_adapter& operator=(const file_input_adapter&) = delete;
     file_input_adapter& operator=(file_input_adapter&&) = delete;
-    ~file_input_adapter() = default;
+    ~file_input_adapter()
+    {
+        unlock();
+    }
 
     std::char_traits<char>::int_type get_character() noexcept
     {
+        // the file is locked for the lifetime of the adapter, so the
+        // per-character lock of std::fgetc can be skipped
+#if JSON_UNLOCKED_FILE_IO == 1
+        return getc_unlocked(m_file);
+#elif JSON_UNLOCKED_FILE_IO == 2
+        return _fgetc_nolock(m_file);
+#else
         return std::fgetc(m_file);
+#endif
     }
 
     // returns the number of characters successfully read
@@ -8376,6 +8421,32 @@ class file_input_adapter
     }
 
   private:
+    // Lock the file once for the whole parse instead of once per character.
+    // The lock is recursive, so fread() and the user's own stdio calls on the
+    // same thread keep working.
+    void lock() noexcept
+    {
+#if JSON_UNLOCKED_FILE_IO == 1
+        flockfile(m_file);
+#elif JSON_UNLOCKED_FILE_IO == 2
+        _lock_file(m_file);
+#endif
+    }
+
+    void unlock() noexcept
+    {
+        // a moved-from adapter has no file and holds no lock
+        if (m_file == nullptr)
+        {
+            return;
+        }
+#if JSON_UNLOCKED_FILE_IO == 1
+        funlockfile(m_file);
+#elif JSON_UNLOCKED_FILE_IO == 2
+        _unlock_file(m_file);
+#endif
+    }
+
     /// the file pointer to read from
     std::FILE* m_file;
 };
@@ -8425,15 +8496,26 @@ class input_stream_adapter
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
-#if JSON_PRECISE_STREAM_POSITION
     input_stream_adapter(input_stream_adapter&& rhs) noexcept
-        : is(rhs.is), sb(rhs.sb), lookahead(rhs.lookahead)
+        : is(rhs.is), sb(rhs.sb)
+#if JSON_PRECISE_STREAM_POSITION
+        , lookahead(rhs.lookahead)
+#endif
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+        , token_carry(std::move(rhs.token_carry))
+        , token_segment(rhs.token_segment)
+        , current_in_get_area(rhs.current_in_get_area)
+        , tracking_token(rhs.tracking_token)
+#endif
     {
         rhs.is = nullptr;
         rhs.sb = nullptr;
+#if JSON_PRECISE_STREAM_POSITION
         rhs.lookahead = false;
+#endif
     }
 
+#if JSON_PRECISE_STREAM_POSITION
     // Whether the character last returned by get_character() can be given back
     // to the input with release_lookahead().
     static constexpr bool supports_lookahead = true;
@@ -8453,17 +8535,41 @@ class input_stream_adapter
             sb->sbumpc();
         }
 
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+        // sgetc() refills the get area if it is exhausted
+        const bool refill = streambuf_access::get_ptr(sb) == streambuf_access::get_end(sb);
+        if (JSON_HEDLEY_UNLIKELY(refill))
+        {
+            save_token_segment();
+        }
+#endif
+
         auto res = sb->sgetc();
         // set eof manually, as we don't use the istream interface.
         if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
         {
             // there is nothing to step over next time
             lookahead = false;
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+            current_in_get_area = false;
+#endif
             is->clear(is->rdstate() | std::ios::eofbit);
         }
         else
         {
             lookahead = true;
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+            if (JSON_HEDLEY_UNLIKELY(refill))
+            {
+                // the peeked character is at gptr(), unless the streambuf has
+                // no get area
+                after_refill(res, streambuf_access::get_ptr(sb) != streambuf_access::get_end(sb));
+            }
+            else
+            {
+                current_in_get_area = true;
+            }
+#endif
         }
         return res;
     }
@@ -8477,13 +8583,6 @@ class input_stream_adapter
         lookahead = false;
     }
 #else
-    input_stream_adapter(input_stream_adapter&& rhs) noexcept
-        : is(rhs.is), sb(rhs.sb)
-    {
-        rhs.is = nullptr;
-        rhs.sb = nullptr;
-    }
-
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
     // end up as the same value, e.g., 0xFFFFFFFF.
@@ -8492,12 +8591,37 @@ class input_stream_adapter
     // stays consumed after parsing; see JSON_PRECISE_STREAM_POSITION.
     std::char_traits<char>::int_type get_character()
     {
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+        // sbumpc() refills the get area if it is exhausted
+        const bool refill = streambuf_access::get_ptr(sb) == streambuf_access::get_end(sb);
+        if (JSON_HEDLEY_UNLIKELY(refill))
+        {
+            save_token_segment();
+        }
+#endif
+
         auto res = sb->sbumpc();
         // set eof manually, as we don't use the istream interface.
         if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
         {
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+            current_in_get_area = false;
+#endif
             is->clear(is->rdstate() | std::ios::eofbit);
         }
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+        else if (JSON_HEDLEY_UNLIKELY(refill))
+        {
+            // the consumed character is at gptr() - 1, unless the streambuf
+            // has no get area and returned it from uflow()
+            const char* const next = streambuf_access::get_ptr(sb);
+            after_refill(res, next != nullptr && next != streambuf_access::get_begin(sb));
+        }
+        else
+        {
+            current_in_get_area = true;
+        }
+#endif
         return res;
     }
 #endif
@@ -8516,7 +8640,165 @@ class input_stream_adapter
         return res;
     }
 
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+    // The lexer may scan the characters in the get area of the streambuf
+    // directly (SWAR fast paths). The get area is only a window into the
+    // input: it ends wherever the streambuf's buffer ends, and is refilled by
+    // the next get_character(). The lexer therefore keeps counting the
+    // position itself and treats the end of the window as "unknown", not as
+    // the end of the input.
+    static constexpr bool supports_bulk_scan = true;
+    static constexpr bool bulk_window = true;
+
+    // Pointer to the next unread character; only valid when
+    // bulk_remaining() > 0. The character before it is the one last returned
+    // by get_character().
+    const char* bulk_data() const
+    {
+        return current_end();
+    }
+
+    // Number of unread characters in the get area.
+    std::size_t bulk_remaining() const
+    {
+        if (!current_in_get_area)
+        {
+            return 0;
+        }
+        return static_cast<std::size_t>(streambuf_access::get_end(sb) - current_end());
+    }
+
+    // Consume @a n characters previously inspected via bulk_data(); the last
+    // of them becomes the character last returned by get_character().
+    void bulk_skip(std::size_t n)
+    {
+        JSON_ASSERT(n <= bulk_remaining());
+        // gbump() takes an int, but a get area (e.g., of a std::stringbuf) can
+        // be larger
+        constexpr auto max_bump = static_cast<std::size_t>((std::numeric_limits<int>::max)());
+        for (; n > max_bump; n -= max_bump)
+        {
+            streambuf_access::bump(sb, static_cast<int>(max_bump));
+        }
+        streambuf_access::bump(sb, static_cast<int>(n));
+    }
+
+    // The adapter keeps the current token for the lexer's error messages: the
+    // part in the get area is only remembered as a pointer, and copied out
+    // when the get area is about to be refilled.
+    static constexpr bool supports_token_tracking = true;
+
+    // Start a token with the characters read from now on. Until this is
+    // called, nothing is tracked (the binary readers never call it).
+    void begin_token() noexcept
+    {
+        tracking_token = true;
+        token_carry.clear();
+        token_segment = current_end();
+    }
+
+    // Start a new token with the character @a c last returned by
+    // get_character().
+    void mark_token_start(std::char_traits<char>::int_type c)
+    {
+        tracking_token = true;
+        token_carry.clear();
+        if (current_in_get_area)
+        {
+            token_segment = current_end() - 1;
+        }
+        else
+        {
+            token_segment = nullptr;
+            token_carry.push_back(std::char_traits<char>::to_char_type(c));
+        }
+    }
+
+    // Copy the characters read since mark_token_start() to @a out, without the
+    // last one if @a drop_last.
+    void copy_token(std::vector<char>& out, bool drop_last) const
+    {
+        out = token_carry;
+        if (token_segment != nullptr)
+        {
+            out.insert(out.end(), token_segment, current_end());
+        }
+        if (drop_last && !out.empty())
+        {
+            out.pop_back();
+        }
+    }
+#endif
+
   private:
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+    // Reads the protected get-area pointers of any std::streambuf. Naming the
+    // members through a derived class makes forming the member pointers
+    // accessible; calling them on another streambuf object is then ordinary
+    // member access through a pointer to member.
+    struct streambuf_access : std::streambuf
+    {
+        static const char* get_ptr(std::streambuf* s)
+        {
+            return (s->*(&streambuf_access::gptr))();
+        }
+        static const char* get_end(std::streambuf* s)
+        {
+            return (s->*(&streambuf_access::egptr))();
+        }
+        static const char* get_begin(std::streambuf* s)
+        {
+            return (s->*(&streambuf_access::eback))();
+        }
+        static void bump(std::streambuf* s, int n)
+        {
+            (s->*(&streambuf_access::gbump))(n);
+        }
+    };
+
+    // one past the character last returned by get_character(), if that is in
+    // the get area
+    const char* current_end() const
+    {
+#if JSON_PRECISE_STREAM_POSITION
+        // the character is peeked at gptr() and not stepped over yet, unless
+        // it was given back with release_lookahead()
+        return streambuf_access::get_ptr(sb) + (lookahead ? 1 : 0);
+#else
+        return streambuf_access::get_ptr(sb);
+#endif
+    }
+
+    // the get area is about to be replaced: copy the token's part in it
+    void save_token_segment()
+    {
+        if (token_segment != nullptr)
+        {
+            token_carry.insert(token_carry.end(), token_segment, streambuf_access::get_end(sb));
+            token_segment = nullptr;
+        }
+    }
+
+    // character @a c was just read into a new get area (@a in_get_area) or
+    // returned without one
+    void after_refill(std::char_traits<char>::int_type c, bool in_get_area)
+    {
+        current_in_get_area = in_get_area;
+        if (!tracking_token)
+        {
+            return;
+        }
+        if (in_get_area)
+        {
+            token_segment = current_end() - 1;
+        }
+        else
+        {
+            token_carry.push_back(std::char_traits<char>::to_char_type(c));
+        }
+    }
+#endif
+
 #if JSON_PRECISE_STREAM_POSITION
     // Step over the character last returned by get_character(). The character
     // has already been peeked successfully, so for every streambuf with a get
@@ -8537,6 +8819,16 @@ class input_stream_adapter
 #if JSON_PRECISE_STREAM_POSITION
     /// whether get_character() peeked a character that is not consumed yet
     bool lookahead = false;
+#endif
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+    /// the part of the current token that was in earlier get areas
+    std::vector<char> token_carry{}; // NOLINT(readability-redundant-member-init)
+    /// start of the current token's part in the get area, or nullptr
+    const char* token_segment = nullptr;
+    /// whether the character last returned by get_character() is in the get area
+    bool current_in_get_area = false;
+    /// whether a token is tracked at all; the binary readers never start one
+    bool tracking_token = false;
 #endif
 };
 #endif  // JSON_NO_IO
@@ -11351,6 +11643,43 @@ constexpr bool input_adapter_supports_bulk_scan(std::false_type /*detected*/)
     return false;
 }
 
+// Detect whether an input adapter keeps the current token itself and can
+// hand it out on demand (see input_stream_adapter::supports_token_tracking),
+// so the lexer need not copy every scanned character into token_string.
+template<typename InputAdapterType>
+using detect_supports_token_tracking = decltype(InputAdapterType::supports_token_tracking);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_token_tracking(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_token_tracking;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_token_tracking(std::false_type /*detected*/)
+{
+    return false;
+}
+
+// Detect whether the contiguous block of a bulk-scan adapter is only a window
+// into the input (see input_stream_adapter::bulk_window): its end is not the
+// end of the input, so a token that touches it must be finished character by
+// character.
+template<typename InputAdapterType>
+using detect_bulk_window = decltype(InputAdapterType::bulk_window);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_bulk_window(std::true_type /*detected*/)
+{
+    return InputAdapterType::bulk_window;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_bulk_window(std::false_type /*detected*/)
+{
+    return false;
+}
+
 /*!
 @brief lexical analysis
 
@@ -11369,8 +11698,19 @@ class lexer : public lexer_base<BasicJsonType>
     /// whether the last read token can be reconstructed from the input adapter
     /// on demand (in error paths) instead of being copied on every scanned
     /// character; see input_adapter_supports_seek
-    static constexpr bool lazy_token_string =
+    static constexpr bool seekable =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
+
+    /// whether the adapter keeps the token itself (mark_token_start() /
+    /// copy_token()); see input_adapter_supports_token_tracking
+    static constexpr bool adapter_token =
+        !seekable && input_adapter_supports_token_tracking<InputAdapterType>(is_detected<detect_supports_token_tracking, InputAdapterType> {});
+
+    /// whether the last read token is obtained from the input adapter on
+    /// demand (in error paths) instead of being copied on every scanned
+    /// character: seekable adapters reconstruct it from the consumed input,
+    /// token-tracking adapters keep it themselves
+    static constexpr bool lazy_token_string = seekable || adapter_token;
 
     /// whether the read position is derived from the input adapter on demand
     /// instead of being counted on every scanned character. Seekable adapters
@@ -11379,7 +11719,7 @@ class lexer : public lexer_base<BasicJsonType>
     /// and line and column are recomputed from the consumed input only when
     /// get_position() is called (errors). Counting per character kept two
     /// increments and a newline check in the hot path of every get().
-    static constexpr bool lazy_position = lazy_token_string;
+    static constexpr bool lazy_position = seekable;
 
     /// whether a simulated unget can be passed on to the input adapter, which
     /// then leaves the character in the input; see
@@ -11388,14 +11728,17 @@ class lexer : public lexer_base<BasicJsonType>
         input_adapter_supports_lookahead<InputAdapterType>(is_detected<detect_supports_lookahead, InputAdapterType> {});
 
     /// whether string scanning may bulk-consume runs of ordinary characters
-    /// directly from a contiguous input buffer (SWAR fast path). This requires
-    /// the token to be reconstructible lazily (lazy_token_string), so bypassing
-    /// the per-character capture in get() cannot lose error diagnostics. It
-    /// also implies lazy_position, so the bulk paths need not advance the
-    /// position counters.
+    /// directly from a contiguous input buffer (SWAR fast path). Without
+    /// lazy_token_string / lazy_position, the bulk paths copy the consumed
+    /// characters into token_string and advance the position counters
+    /// themselves (see bulk_consume).
     static constexpr bool bulk_scan =
-        lazy_token_string
-        && input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
+        input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
+
+    /// whether the contiguous block is only a window into the input, so that
+    /// its end does not end a token; see input_adapter_bulk_window
+    static constexpr bool bulk_window =
+        input_adapter_bulk_window<InputAdapterType>(is_detected<detect_bulk_window, InputAdapterType> {});
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -11404,7 +11747,11 @@ class lexer : public lexer_base<BasicJsonType>
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
         , discard_number_values(discard_number_values_)
-    {}
+    {
+        // the token string of an error before the first token is everything
+        // read so far
+        begin_token(std::integral_constant<bool, adapter_token> {});
+    }
 
     // deleted because of pointer members
     lexer(const lexer&) = delete;
@@ -11421,8 +11768,8 @@ class lexer : public lexer_base<BasicJsonType>
     /// contiguous input: try to decode the 4 hex digits following `\\u`
     /// directly from the input buffer via hex_codepoint(), instead of 4 calls
     /// to get(). On success, advances the adapter exactly as those 4 get()
-    /// calls would (bulk_scan implies lazy_position, so there are no position
-    /// counters to advance) and leaves @a current holding the last of
+    /// calls would (including the position and token bookkeeping of a
+    /// streaming adapter, see bulk_consume) and leaves @a current holding the last of
     /// the 4 digits, just as the last such get() would; the codepoint is
     /// written to @a out. Makes no state change and returns false for a
     /// pending unget, fewer than 4 remaining bytes, or any of the 4 bytes not
@@ -11441,7 +11788,7 @@ class lexer : public lexer_base<BasicJsonType>
         {
             return false;
         }
-        ia.bulk_skip(4);
+        bulk_consume(reinterpret_cast<const char*>(raw), 4);
         current = char_traits<char_type>::to_int_type(raw[3]);
         out = codepoint;
         return true;
@@ -11570,7 +11917,36 @@ class lexer : public lexer_base<BasicJsonType>
             return;
         }
         token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
-        ia.bulk_skip(pos);
+        bulk_consume(reinterpret_cast<const char*>(data), pos);
+    }
+
+    /// consume @a n characters at @a data (the adapter's bulk_data()) and do
+    /// the bookkeeping get() would have done for them; the characters are
+    /// never newlines
+    void bulk_consume(const char* data, std::size_t n)
+    {
+        bulk_track_position(n, std::integral_constant<bool, lazy_position> {});
+        bulk_track_token(data, n, std::integral_constant<bool, lazy_token_string> {});
+        ia.bulk_skip(n);
+    }
+
+    /// seekable adapter: the position is derived from the adapter
+    void bulk_track_position(std::size_t /*n*/, std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: count the characters
+    void bulk_track_position(std::size_t n, std::false_type /*lazy*/) noexcept
+    {
+        position.chars_read_total += n;
+        position.chars_read_current_line += n;
+    }
+
+    /// the token is obtained from the adapter
+    void bulk_track_token(const char* /*data*/, std::size_t /*n*/, std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: capture the characters
+    void bulk_track_token(const char* data, std::size_t n, std::false_type /*lazy*/)
+    {
+        token_string.insert(token_string.end(), data, data + n);
     }
 
     /// streaming input: no bulk fast path
@@ -12788,6 +13164,10 @@ scan_number_done:
             }
         }
         const std::size_t len = i;
+        if (number_may_continue(len == avail, std::integral_constant<bool, bulk_window> {}))
+        {
+            return token_type::uninitialized;
+        }
 
         // reset() records where this token starts (for diagnostics), so it has
         // to run before the input position advances below
@@ -12805,7 +13185,8 @@ scan_number_done:
             const token_type integer_result = convert_integer(number_type, data, data + len);
             if (JSON_HEDLEY_LIKELY(integer_result != token_type::uninitialized))
             {
-                ia.bulk_skip(len - 1);
+                bulk_consume(data + 1, len - 1);
+                read_number_terminator(std::integral_constant<bool, bulk_window> {});
                 return integer_result;
             }
             // The value does not fit an integer, so this token converts as a
@@ -12821,10 +13202,36 @@ scan_number_done:
         token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
         decimal_point_position = dot_index;
 
-        ia.bulk_skip(len - 1);
+        bulk_consume(data + 1, len - 1);
+        read_number_terminator(std::integral_constant<bool, bulk_window> {});
 
         return convert_number(number_type, mantissa_end);
     }
+
+    /// window adapter: a number that reaches the end of the window may continue
+    /// after it, so scan_number() has to read it character by character
+    static constexpr bool number_may_continue(bool at_end, std::true_type /*window*/) noexcept
+    {
+        return at_end;
+    }
+
+    /// the end of the block is the end of the input, which ends the number
+    static constexpr bool number_may_continue(bool /*at_end*/, std::false_type /*window*/) noexcept
+    {
+        return false;
+    }
+
+    /// window adapter: read the character after a bulk-scanned number and unget
+    /// it, as scan_number() does. The adapter is a stream that is handed back to
+    /// the user, who must find the same input consumed either way.
+    void read_number_terminator(std::true_type /*window*/)
+    {
+        get();
+        unget();
+    }
+
+    /// the input is not handed back, so the terminator can stay unread
+    void read_number_terminator(std::false_type /*window*/) const noexcept {}
 
     /// contiguous input: try the number fast path, else the byte-path scanner
     token_type scan_number_dispatch(std::true_type /*bulk*/)
@@ -12881,9 +13288,28 @@ scan_number_done:
     /// seekable adapter: remember where the current token starts so it can be
     /// reconstructed from the input on error; current has already been
     /// consumed, hence the -1
-    void note_token_start(std::true_type /*lazy*/) noexcept
+    void note_token_start(std::true_type /*lazy*/)
+    {
+        note_token_start_lazy(std::integral_constant<bool, adapter_token> {});
+    }
+
+    void note_token_start_lazy(std::false_type /*adapter_token*/) noexcept
     {
         token_string_start = ia.get_consumed_count() - 1;
+    }
+
+    /// token-tracking adapter: start tracking the token at the first character
+    void begin_token(std::true_type /*adapter_token*/) noexcept
+    {
+        ia.begin_token();
+    }
+
+    void begin_token(std::false_type /*adapter_token*/) const noexcept {}
+
+    /// token-tracking adapter: the token starts with the current character
+    void note_token_start_lazy(std::true_type /*adapter_token*/)
+    {
+        ia.mark_token_start(current);
     }
 
     /// streaming adapter: start copying the token eagerly, beginning with the
@@ -13207,6 +13633,20 @@ scan_number_done:
     /// seekable adapter: rebuild the last read token from the input on demand
     const std::vector<char_type>& collect_token_chars(std::vector<char_type>& out, std::true_type /*lazy*/) const
     {
+        return collect_token_chars_lazy(out, std::integral_constant<bool, adapter_token> {});
+    }
+
+    /// token-tracking adapter: the adapter hands out everything read since
+    /// mark_token_start(), except a pending unget (see below)
+    const std::vector<char_type>& collect_token_chars_lazy(std::vector<char_type>& out, std::true_type /*adapter_token*/) const
+    {
+        const bool pending_real_unget = next_unget && current != char_traits<char_type>::eof();
+        ia.copy_token(out, pending_real_unget);
+        return out;
+    }
+
+    const std::vector<char_type>& collect_token_chars_lazy(std::vector<char_type>& out, std::false_type /*adapter_token*/) const
+    {
         // a pending unget of a real (non-EOF) character means that character
         // was consumed from the input but is not part of the token; EOF is
         // never consumed, so it must not be subtracted (mirrors unget())
@@ -13327,9 +13767,8 @@ scan_number_done:
     Pretty-printed JSON indents every line with a run of spaces, which the loop
     in skip_whitespace() would otherwise read one character at a time. The
     spaces are skipped 8 bytes at a time; the last 7 bytes of the input and any
-    other whitespace are left to that loop. Skipping bypasses get(), which is
-    fine because bulk_scan implies lazy_position: the position is derived from
-    the adapter, not counted per character.
+    other whitespace are left to that loop. Skipping bypasses get();
+    bulk_consume() does its bookkeeping.
     */
     void skip_indentation(std::true_type /*bulk*/)
     {
@@ -13352,7 +13791,7 @@ scan_number_done:
                 break;
             }
         }
-        ia.bulk_skip(pos);
+        bulk_consume(data, pos);
     }
 
     /// streaming input: no bulk fast path
@@ -38254,6 +38693,9 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_NO_UNIQUE_ADDRESS
 #undef JSON_DISABLE_ENUM_SERIALIZATION
 #undef JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
+#undef JSON_DISABLE_STREAM_BULK_SCAN
+#undef JSON_DISABLE_UNLOCKED_FILE_IO
+#undef JSON_UNLOCKED_FILE_IO
 #undef JSON_DTOA_SSE2
 #undef JSON_DTOA_NEON
 
