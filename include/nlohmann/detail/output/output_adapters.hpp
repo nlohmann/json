@@ -55,6 +55,63 @@ using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
 /// output_vector_sink also appends writes of at least this size with insert()
 constexpr std::size_t max_reserve_size = 256;
 
+/// @brief copy @a length characters, at most 32, without a call of memcpy()
+///
+/// Short strings are the typical payload of a binary value, and a call of
+/// memcpy() costs more than copying them. A copy of 16 to 32 characters is two
+/// possibly overlapping 16-byte copies, one of 8 to 15 two 8-byte copies, and
+/// so on down to a single character; each is a fixed-size load and store.
+/// Nothing outside of [src, src + length) is read or written.
+template<typename CharType>
+inline void copy_short(CharType* dst, const CharType* src, const std::size_t length, std::true_type /*is_byte*/) noexcept
+{
+    JSON_ASSERT(length <= 32);
+    if (length >= 16)
+    {
+        std::array<char, 16> first; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::array<char, 16> last; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::memcpy(first.data(), src, 16);
+        std::memcpy(last.data(), src + (length - 16), 16);
+        std::memcpy(dst, first.data(), 16);
+        std::memcpy(dst + (length - 16), last.data(), 16);
+    }
+    else if (length >= 8)
+    {
+        std::array<char, 8> first; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::array<char, 8> last; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::memcpy(first.data(), src, 8);
+        std::memcpy(last.data(), src + (length - 8), 8);
+        std::memcpy(dst, first.data(), 8);
+        std::memcpy(dst + (length - 8), last.data(), 8);
+    }
+    else if (length >= 4)
+    {
+        std::array<char, 4> first; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::array<char, 4> last; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::memcpy(first.data(), src, 4);
+        std::memcpy(last.data(), src + (length - 4), 4);
+        std::memcpy(dst, first.data(), 4);
+        std::memcpy(dst + (length - 4), last.data(), 4);
+    }
+    else if (length != 0)
+    {
+        // 1 to 3: the first, the middle, and the last character
+        const CharType a = src[0];
+        const CharType b = src[length >> 1];
+        const CharType c = src[length - 1];
+        dst[0] = a;
+        dst[length >> 1] = b;
+        dst[length - 1] = c;
+    }
+}
+
+/// @brief copy @a length characters, of a character type wider than a byte
+template<typename CharType>
+inline void copy_short(CharType* dst, const CharType* src, const std::size_t length, std::false_type /*is_byte*/) noexcept
+{
+    std::memcpy(dst, src, length * sizeof(CharType));
+}
+
 /// @brief non-virtual output sink writing into a std::vector
 ///
 /// This sink is not part of the virtual output_adapter_protocol hierarchy: it is
@@ -126,7 +183,12 @@ class output_vector_sink
             }
             grow(length);
         }
-        if (length != 0)
+        if (length <= 32)
+        {
+            copy_short(v->data() + position, s, length, std::integral_constant<bool, sizeof(CharType) == 1>());
+            position += length;
+        }
+        else
         {
             std::memcpy(v->data() + position, s, length * sizeof(CharType));
             position += length;
@@ -349,7 +411,12 @@ class output_adapter_sink
             write_large(s, length);
             return;
         }
-        if (length != 0)
+        if (length <= 32)
+        {
+            copy_short(buffer.data() + used, s, length, std::integral_constant<bool, sizeof(CharType) == 1>());
+            used += length;
+        }
+        else
         {
             std::memcpy(buffer.data() + used, s, length * sizeof(CharType));
             used += length;

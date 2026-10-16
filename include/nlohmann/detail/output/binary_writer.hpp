@@ -2839,6 +2839,24 @@ class binary_writer
         write_msgpack(BasicJsonType(key));
     }
 
+    /// the longest string that is written, with its head of one or two
+    /// characters, in a single reservation from the sink
+    static constexpr std::size_t max_text_in_reservation = max_reserve_size - 2;
+
+    /// copy the characters of a string to space in the sink; a short one
+    /// without a call of memcpy()
+    static void copy_characters(CharType* dst, const CharType* src, const std::size_t length) noexcept
+    {
+        if (length <= 32)
+        {
+            copy_short(dst, src, length, std::integral_constant<bool, sizeof(CharType) == 1>());
+        }
+        else
+        {
+            std::memcpy(dst, src, length * sizeof(CharType));
+        }
+    }
+
     /*!
     @brief write a CBOR text string
 
@@ -2855,6 +2873,28 @@ class binary_writer
     */
     void write_cbor_string(const string_t& value, const BasicJsonType& context)
     {
+        if (JSON_HEDLEY_LIKELY(error_handler == error_handler_t::keep))
+        {
+            // the string is written as it is: head and characters in one reservation
+            if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
+            {
+                CharType* const out = oa.reserve(value.size() + 2);
+                CharType* p = out;
+                if (value.size() <= 0x17)
+                {
+                    *p++ = to_char_type(static_cast<std::uint8_t>(0x60 + value.size()));
+                }
+                else
+                {
+                    *p++ = to_char_type(0x78);
+                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+                }
+                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                return;
+            }
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -2883,6 +2923,30 @@ class binary_writer
     */
     void write_msgpack_string(const string_t& value, const BasicJsonType& context)
     {
+        if (JSON_HEDLEY_LIKELY(error_handler == error_handler_t::keep))
+        {
+            // the string is written as it is: head and characters in one reservation
+            if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
+            {
+                CharType* const out = oa.reserve(value.size() + 2);
+                CharType* p = out;
+                if (value.size() <= 31)
+                {
+                    // fixstr
+                    *p++ = to_char_type(static_cast<std::uint8_t>(0xA0 | value.size()));
+                }
+                else
+                {
+                    // str 8
+                    *p++ = to_char_type(0xD9);
+                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+                }
+                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                return;
+            }
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
