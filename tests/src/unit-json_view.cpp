@@ -1473,7 +1473,17 @@ TEST_CASE("json_view values")
         CHECK(exception_of([&] { static_cast<void>(v.value("s", 0)); }) == without_path(exception_of([&] { static_cast<void>(j.value("s", 0)); })));
         CHECK(exception_of([&] { static_cast<void>(v["n"].value("x", 0)); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value("x", 0)); })));
         CHECK(exception_of([&] { static_cast<void>(v["n"].value(json::json_pointer("/x"), 0)); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value(json::json_pointer("/x"), 0)); })));
+        // string defaults: the member is not a string, or the value is neither an object nor an array
+        CHECK(exception_of([&] { static_cast<void>(v.value("n", "default")); }) == without_path(exception_of([&] { static_cast<void>(j.value("n", "default")); })));
+        CHECK(exception_of([&] { static_cast<void>(v["n"].value("x", "default")); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value("x", "default")); })));
+        CHECK(exception_of([&] { static_cast<void>(v.value(json::json_pointer("/n"), "default")); }) == without_path(exception_of([&] { static_cast<void>(j.value(json::json_pointer("/n"), "default")); })));
+        CHECK(exception_of([&] { static_cast<void>(v["s"].value(json::json_pointer("/x"), "default")); }) == without_path(exception_of([&] { static_cast<void>(j["s"].value(json::json_pointer("/x"), "default")); })));
 #endif
+        // (defaults and members longer than the short string optimization)
+        CHECK(v.value("s", "a default longer than fifteen characters") == "text");
+        CHECK(v.value("missing", "a default longer than fifteen characters") == "a default longer than fifteen characters");
+        CHECK(v.value(json::json_pointer("/s"), "a default longer than fifteen characters") == "text");
+        CHECK(v.value(json::json_pointer("/zz"), "a default longer than fifteen characters") == "a default longer than fifteen characters");
     }
 }
 

@@ -7731,7 +7731,13 @@ class basic_json_view
 
     string_t value(string_view_t key, const char* default_value) const
     {
-        return value(key, string_t(default_value));
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        // (the default is made only if there is no such member)
+        const basic_json_view r = lookup(key);
+        return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
     }
 
     /// the value a JSON pointer refers to converted to T, or the default
@@ -7750,7 +7756,12 @@ class basic_json_view
 
     string_t value(const json_pointer& ptr, const char* default_value) const
     {
-        return value(ptr, string_t(default_value));
+        if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
+        return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
     }
 
     /// the first element or member value; a primitive value itself. Throws
