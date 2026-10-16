@@ -9,6 +9,7 @@
 #pragma once
 
 #include <algorithm> // all_of
+#include <array> // array
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
 #include <cstddef> // size_t
@@ -1270,15 +1271,15 @@ class json_pointer
     /// append the decimal representation of @a i to @a out
     static void append_index(string_t& out, std::size_t i)
     {
-        char buf[24]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        std::size_t pos = sizeof(buf);
+        std::array<char, 24> buf{};
+        std::size_t pos = buf.size();
         do
         {
             buf[--pos] = static_cast<char>('0' + i % 10);
             i /= 10;
         }
         while (i != 0);
-        out.append(buf + pos, sizeof(buf) - pos);
+        out.append(buf.data() + pos, buf.size() - pos);
     }
 
     /*!
