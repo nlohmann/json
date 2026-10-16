@@ -27,11 +27,13 @@
 #include <array> // array
 #include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstring> // memcpy, strlen
+#include <istream> // istream
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <memory> // unique_ptr
 #include <string> // string
-#include <type_traits> // enable_if, integral_constant, is_base_of, is_integral, is_same, remove_cv, remove_extent
+#include <type_traits> // decay, enable_if, integral_constant, is_base_of, is_integral, is_same, remove_cv, remove_extent
 #include <utility> // forward, move
+#include <vector> // vector
 
 #include <nlohmann/json.hpp> // IWYU pragma: export
 
@@ -93,6 +95,7 @@
 #include <limits> // numeric_limits
 #include <new> // bad_alloc, operator new, placement new
 #include <string> // string
+#include <vector> // vector
 
 // #include <nlohmann/json.hpp>
 // #include <nlohmann/detail/view/macro_scope.hpp>
@@ -193,14 +196,6 @@ namespace detail
 namespace view
 {
 
-// the node kinds are value_t values; the tests of is_container() and of the
-// number kinds depend on this numbering
-static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::uint8_t>(value_t::object) == 1
-              && static_cast<std::uint8_t>(value_t::array) == 2 && static_cast<std::uint8_t>(value_t::string) == 3
-              && static_cast<std::uint8_t>(value_t::boolean) == 4 && static_cast<std::uint8_t>(value_t::number_integer) == 5
-              && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
-              "the node format depends on the numbering of value_t");
-
 /// The largest input a document accepts, in bytes. Offsets and node counts are
 /// 32 bits wide; the limit keeps 16 bytes (the width of the scanner's steps)
 /// below 2^32, so that a position one step past the end of the text fits.
@@ -231,6 +226,14 @@ struct node
     std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence)
 };
 static_assert(sizeof(node) == 16, "node must stay 16 bytes");
+
+// the node kinds are value_t values; the test below (object and array are 1
+// and 2) and those of the number kinds depend on this numbering
+static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::uint8_t>(value_t::object) == 1
+              && static_cast<std::uint8_t>(value_t::array) == 2 && static_cast<std::uint8_t>(value_t::string) == 3
+              && static_cast<std::uint8_t>(value_t::boolean) == 4 && static_cast<std::uint8_t>(value_t::number_integer) == 5
+              && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
+              "the node format depends on the numbering of value_t");
 
 NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 {
@@ -299,28 +302,32 @@ struct document_data
 {
     const char* src = nullptr;
     std::size_t size = 0;
-    node* tape = nullptr;
-    std::size_t tape_size = 0;
-    std::size_t tape_cap = 0;
-    node* inline_tape = nullptr; ///< node array allocated together with this header
-    std::size_t inline_cap = 0;
-    std::string arena; ///< decoded strings that contained escapes
-    std::string owned; ///< owned copy of the input, if any
+    node* nodes = nullptr; ///< the node index (see node.hpp)
+    std::size_t node_count = 0;
+    std::size_t node_capacity = 0;
+    node* inline_nodes = nullptr; ///< node array allocated together with this header
+    std::size_t inline_capacity = 0;
+    std::size_t max_depth = 0; ///< deepest nesting of arrays and objects (the root container is depth 1)
+    std::vector<char> arena; ///< decoded strings that contained escapes (no terminator: they are handed out with their length)
+    std::string owned; ///< owned copy of the input, if any (a std::string, so that its NUL serves as the parser's sentinel)
     std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
     bool discarded = true;
 
-    /// one allocation for the header and room for `nodes` nodes; large
-    /// documents get a separate node array instead (so it can be trimmed)
-    static document_data* create(std::size_t nodes)
+    /// One allocation for the header and room for `count` nodes, so that a
+    /// small document needs one allocation instead of two. Large documents get
+    /// a separate node array instead (so it can be trimmed). When a document
+    /// outgrows the inline array, that array stays unused: at most 256 nodes
+    /// (4 KiB), and only for documents whose estimate was too small.
+    static document_data* create(std::size_t count)
     {
-        nodes = nodes <= 256 ? nodes : 0;
-        void* mem = ::operator new (sizeof(document_data) + (nodes * sizeof(node)));
+        count = count <= 256 ? count : 0;
+        void* mem = ::operator new (sizeof(document_data) + (count * sizeof(node)));
         auto* d = new (mem) document_data(); // NOLINT(cppcoreguidelines-owning-memory): owned by the returned pointer, freed by deleter
         // (aligned: sizeof is a multiple of the alignment; through void*, as GCC's -Wcast-align wants)
-        d->inline_tape = static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // NOLINT(bugprone-casting-through-void)
-        d->inline_cap = nodes;
-        d->tape = d->inline_tape;
-        d->tape_cap = nodes;
+        d->inline_nodes = static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // NOLINT(bugprone-casting-through-void)
+        d->inline_capacity = count;
+        d->nodes = d->inline_nodes;
+        d->node_capacity = count;
         return d;
     }
 
@@ -339,8 +346,8 @@ struct document_data
     /// implicit one); they cannot take default member initializers, which old
     /// Clang (3.4-3.6) rejects. The other members have default member
     /// initializers. noexcept: create() constructs into raw memory and could not
-    /// release it if this threw (the std::string default constructors do not
-    /// allocate).
+    /// release it if this threw (the std::vector and std::string default
+    /// constructors do not allocate).
     document_data() noexcept
         : arena() // NOLINT(readability-redundant-member-init)
         , owned() // NOLINT(readability-redundant-member-init)
@@ -356,12 +363,12 @@ struct document_data
 
     void release() noexcept
     {
-        if (tape != inline_tape)
+        if (nodes != inline_nodes)
         {
-            ::operator delete (tape);
+            ::operator delete (nodes);
         }
-        tape = inline_tape;
-        tape_cap = inline_cap;
+        nodes = inline_nodes;
+        node_capacity = inline_capacity;
     }
 
     /// the largest node count whose size in bytes fits a std::size_t
@@ -375,12 +382,12 @@ struct document_data
         NLOHMANN_VIEW_THROW(std::bad_alloc());
     }
 
-    /// make room for n nodes; keeps the first tape_size nodes (throws
+    /// make room for n nodes; keeps the first node_count nodes (throws
     /// std::bad_alloc for a count that does not fit the address space,
     /// instead of wrapping around in n * sizeof(node))
     void reserve(std::size_t n)
     {
-        if (n <= tape_cap)
+        if (n <= node_capacity)
         {
             return;
         }
@@ -389,13 +396,13 @@ struct document_data
             throw_bad_alloc();
         }
         node* fresh = static_cast<node*>(::operator new (n * sizeof(node)));
-        if (tape_size != 0)
+        if (node_count != 0)
         {
-            std::memcpy(fresh, tape, tape_size * sizeof(node));
+            std::memcpy(fresh, nodes, node_count * sizeof(node));
         }
         release();
-        tape = fresh;
-        tape_cap = n;
+        nodes = fresh;
+        node_capacity = n;
     }
 
     const char* str(const node& n) const noexcept
@@ -573,9 +580,26 @@ inline std::uint64_t int_pow10(unsigned k) noexcept
     static const std::array<std::uint64_t, 20> table =
     {
         {
-            1u, 10u, 100u, 1000u, 10000u, 100000u, 1000000u, 10000000u, 100000000u, 1000000000u,
-            10000000000u, 100000000000u, 1000000000000u, 10000000000000u, 100000000000000u, 1000000000000000u,
-            10000000000000000u, 100000000000000000u, 1000000000000000000u, 10000000000000000000u
+            1u,
+            10u,
+            100u,
+            1000u,
+            10000u,
+            100000u,
+            1000000u,
+            10000000u,
+            100000000u,
+            1000000000u,
+            10000000000u,
+            100000000000u,
+            1000000000000u,
+            10000000000000u,
+            100000000000000u,
+            1000000000000000u,
+            10000000000000000u,
+            100000000000000000u,
+            1000000000000000000u,
+            10000000000000000000u
         }
     };
     return table[k];
@@ -673,9 +697,10 @@ class builder
 {
   public:
     builder(document_data& d, const char* src, std::size_t size) noexcept
-        : doc(d)
-        , b(reinterpret_cast<const unsigned char*>(src))
-        , e(b + size)
+        : m_doc(d)
+        , m_begin(reinterpret_cast<const unsigned char*>(src))
+        , m_end(m_begin + size)
+        , m_shallow()
     {}
 
     /// returns false and fills `failure` on error
@@ -705,21 +730,30 @@ class builder
         bool is_object;
     };
 
-    document_data& doc;
-    const unsigned char* const b;
-    const unsigned char* const e;
+    /// 64 frames, left uninitialized: they are filled as containers open (the
+    /// user-provided constructor keeps the member initialization, which
+    /// -Weffc++ asks for, from zeroing them; that costs up to 30 % on small
+    /// documents)
+    struct frame_stack : std::array<frame, 64>
+    {
+        frame_stack() noexcept {} // NOLINT(modernize-use-equals-default,hicpp-use-equals-default,cppcoreguidelines-pro-type-member-init,hicpp-member-init): see above
+    };
+
+    document_data& m_doc;
+    const unsigned char* const m_begin;
+    const unsigned char* const m_end;
     parse_failure m_failure{};
 
     // the open array/object is in the cursor; enclosing ones on a stack that is
     // inline for the first 64 levels
-    frame shallow[64]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): not initialized on purpose; filled as containers open
-    std::vector<frame> deep{};
+    frame_stack m_shallow;
+    std::vector<frame> m_deep{};
 
     NLOHMANN_VIEW_NOINLINE bool fail(error_code c, const unsigned char* at) noexcept
     {
         m_failure.code = c;
-        m_failure.offset = static_cast<std::size_t>(at - b);
-        doc.tape_size = 0;
+        m_failure.offset = static_cast<std::size_t>(at - m_begin);
+        m_doc.node_count = 0;
         return false;
     }
 
@@ -748,7 +782,7 @@ class builder
     /// the comment at p (*p == '/'): the position after it, or nullptr on error
     NLOHMANN_VIEW_NOINLINE const unsigned char* comment(const unsigned char* p)
     {
-        if (e - p < 2)
+        if (m_end - p < 2)
         {
             ++p;
             return fail_at(error_code::comment_start, p);
@@ -758,7 +792,7 @@ class builder
             p += 2;
             // (as in parse(), a null byte is the end of the input, so it is
             // left for the caller to see)
-            while (p != e && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
+            while (p != m_end && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
             {
                 ++p;
             }
@@ -769,11 +803,11 @@ class builder
             p += 2;
             for (;;)
             {
-                if (p == e || (NulIsEnd && *p == 0))
+                if (p == m_end || (NulIsEnd && *p == 0))
                 {
                     return fail_at(error_code::comment_unterminated, p);
                 }
-                if (*p == '*' && p + 1 != e && p[1] == '/')
+                if (*p == '*' && p + 1 != m_end && p[1] == '/')
                 {
                     p += 2;
                     return p;
@@ -791,31 +825,32 @@ class builder
     /// doubling repeatedly; returns the new node array
     NLOHMANN_VIEW_NOINLINE node* grow(std::size_t n, const unsigned char* at)
     {
-        const std::uint64_t done = static_cast<std::uint64_t>(at - b) + 1;
-        const std::uint64_t guess = static_cast<std::uint64_t>(n) * static_cast<std::uint64_t>(e - b + 1) / done;
-        const std::uint64_t grown = guess + (guess / 4) + 64; // a variable: GCC calls a cast of the sum useless where std::uint64_t is std::size_t
-        // (n is below 2^32: the input is smaller than 4 GiB; the sum cannot wrap)
-        const std::uint64_t wanted = (std::max)(grown, static_cast<std::uint64_t>(n) + (n / 2) + 64);
+        // (n nodes are written; at the limit there is no room for another one)
         const std::uint64_t limit = document_data::max_nodes();
-        doc.tape_size = n;
         // LCOV_EXCL_START (a node array that fills the address space)
         if (NLOHMANN_VIEW_UNLIKELY(n >= limit))
         {
-            document_data::throw_bad_alloc(); // no room for another node
+            document_data::throw_bad_alloc();
         }
         // LCOV_EXCL_STOP
+        const std::uint64_t done = static_cast<std::uint64_t>(at - m_begin) + 1;
+        const std::uint64_t guess = static_cast<std::uint64_t>(n) * static_cast<std::uint64_t>(m_end - m_begin + 1) / done;
+        const std::uint64_t grown = guess + (guess / 4) + 64; // a variable: GCC calls a cast of the sum useless where std::uint64_t is std::size_t
+        // (n is below 2^32: the input is smaller than 4 GiB; the sum cannot wrap)
+        const std::uint64_t wanted = (std::max)(grown, static_cast<std::uint64_t>(n) + (n / 2) + 64);
+        m_doc.node_count = n; // the number of nodes reserve() copies into the new array
         // (a count beyond the limit is cut: the index does not grow beyond what can be addressed)
-        doc.reserve(static_cast<std::size_t>((std::min)(wanted, limit)));
-        return doc.tape;
+        m_doc.reserve(static_cast<std::size_t>((std::min)(wanted, limit)));
+        return m_doc.nodes;
     }
 
-    /// four hex digits at p as a code unit (p moves past them), or -1 (p at
-    /// the first bad digit); one table lookup per digit and a single check,
-    /// the four hex digits of a unicode escape (the library's table, after
-    /// yyjson's read_hex_u16), or -1
+    /// the four hex digits of a unicode escape at p as a code unit, and p
+    /// moved past them; or -1, and p at the first bad digit (one table lookup
+    /// per digit and a single check: the library's table, after yyjson's
+    /// read_hex_u16)
     NLOHMANN_VIEW_ALWAYS_INLINE int hex4(const unsigned char*& p) noexcept
     {
-        if (NLOHMANN_VIEW_LIKELY(e - p >= 4))
+        if (NLOHMANN_VIEW_LIKELY(m_end - p >= 4))
         {
             const int cp = hex_codepoint(p);
             if (NLOHMANN_VIEW_LIKELY(cp >= 0))
@@ -831,7 +866,7 @@ class builder
     /// hex4() failed: the first bad digit (none: p)
     NLOHMANN_VIEW_NOINLINE const unsigned char* hex4_error(const unsigned char* p) noexcept
     {
-        if (e - p >= 4)
+        if (m_end - p >= 4)
         {
             while (is_hex(*p))
             {
@@ -841,8 +876,9 @@ class builder
         return p;
     }
 
-    /// escapes present (or an error) in the string at s, scanned up to p:
-    /// decode into the arena
+    /// s points to the start of the string, p to a backslash, a control
+    /// character, an ill-formed UTF-8 byte, or the end: decode the string into
+    /// the arena
     NLOHMANN_VIEW_NOINLINE decoded slow_string(const unsigned char* s, const unsigned char* p)
     {
         // single-character escapes; 0: invalid (and 'u', handled separately)
@@ -859,7 +895,7 @@ class builder
         arena_run(s, static_cast<std::size_t>(p - s));
         for (;;)
         {
-            if (p == e)
+            if (p == m_end)
             {
                 return failed(error_code::string_missing_quote, p);
             }
@@ -871,20 +907,20 @@ class builder
             }
             if (c != '\\')
             {
-                // (a NUL before the end of the input is a control character, as
-                // for json::parse, also where a NUL ends the input between values)
+                // (without JSON_STRICT_NUL_HANDLING, a NUL between values ends
+                // the input, as in json::parse; inside a string, a NUL is still
+                // a control character and an error)
                 return failed(c < 0x20 ? error_code::string_control_character : error_code::string_utf8, p);
             }
             ++p;
-            if (p == e)
+            if (p == m_end)
             {
                 return failed(error_code::string_missing_quote, p);
             }
             const unsigned char d = *p++;
-            arena_ensure(4);
             if (d == 'u')
             {
-                int cp = hex4(p);
+                int cp = hex4(p); // (moves p past the four digits)
                 if (NLOHMANN_VIEW_UNLIKELY(cp < 0))
                 {
                     return failed(error_code::string_unicode_hex, p);
@@ -895,12 +931,12 @@ class builder
                     {
                         return failed(error_code::string_surrogate_low, p);
                     }
-                    if (e - p < 2 || p[0] != '\\' || p[1] != 'u')
+                    if (m_end - p < 2 || p[0] != '\\' || p[1] != 'u')
                     {
                         return failed(error_code::string_surrogate_high, p);
                     }
                     p += 2;
-                    const int lo = hex4(p);
+                    const int lo = hex4(p); // (moves p past the four digits)
                     if (lo < 0)
                     {
                         return failed(error_code::string_unicode_hex, p);
@@ -911,23 +947,25 @@ class builder
                     }
                     cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
                 }
-                aw = put_utf8(aw, cp);
+                arena_ensure(4);
+                m_arena_write = put_utf8(m_arena_write, cp);
             }
             else if (NLOHMANN_VIEW_LIKELY(d < 128 && simple_escape[d] != 0))
             {
-                *aw++ = simple_escape[d];
+                arena_ensure(1);
+                *m_arena_write++ = simple_escape[d];
             }
             else
             {
                 --p;
                 return failed(error_code::string_escape, p);
             }
-            if (p != e && *p == '\\')
+            if (p != m_end && *p == '\\')
             {
                 continue; // consecutive escapes ("\u00e4\u00f6"): no run in between
             }
             const unsigned char* const r = p;
-            p = scan_string_run(p, e);
+            p = scan_string_run(p, m_end);
             arena_run(r, static_cast<std::size_t>(p - r));
         }
     }
@@ -947,10 +985,17 @@ class builder
         return v > (std::numeric_limits<FloatType>::max)() || v < -(std::numeric_limits<FloatType>::max)();
     }
 
-    /// does the magnitude digits [d, d + n) exceed the given limit (same length)?
-    static bool digits_exceed(const unsigned char* d, const char* limit, std::size_t n) noexcept
+    /// do the `digits` digits of a magnitude at d exceed `limit`, the largest
+    /// magnitude that fits (a string literal: N counts its terminating NUL, so
+    /// it has N - 1 digits)?
+    template<std::size_t N>
+    static NLOHMANN_VIEW_ALWAYS_INLINE bool digits_exceed(const unsigned char* d, std::size_t digits, const char (&limit)[N]) noexcept // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
     {
-        return std::memcmp(d, limit, n) > 0;
+        if (NLOHMANN_VIEW_LIKELY(digits < N - 1))
+        {
+            return false;
+        }
+        return digits > N - 1 || std::memcmp(d, limit, N - 1) > 0;
     }
 
     static bool is_hex(unsigned char c) noexcept
@@ -958,19 +1003,19 @@ class builder
         return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
     }
 
-    // decode arena: the std::string in the document, written through a raw
+    // decode arena: the vector in the document, written through a raw
     // pointer (resized ahead in large steps; trimmed when parsing succeeds)
-    char* aw = nullptr;
-    char* aend = nullptr;
+    char* m_arena_write = nullptr;
+    char* m_arena_end = nullptr;
 
     NLOHMANN_VIEW_ALWAYS_INLINE std::size_t arena_used() const noexcept
     {
-        return aw != nullptr ? static_cast<std::size_t>(aw - doc.arena.data()) : 0;
+        return m_arena_write != nullptr ? static_cast<std::size_t>(m_arena_write - m_doc.arena.data()) : 0;
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE void arena_ensure(std::size_t n)
     {
-        if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(aend - aw) < n))
+        if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(m_arena_end - m_arena_write) < n))
         {
             arena_grow(n);
         }
@@ -979,28 +1024,31 @@ class builder
     NLOHMANN_VIEW_NOINLINE void arena_grow(std::size_t n)
     {
         const std::size_t used = arena_used();
-        doc.arena.resize((std::max)(doc.arena.size() * 2, used + n + 256));
-        aw = &doc.arena[0] + used; // NOLINT(readability-container-data-pointer): data() is const before C++17
-        aend = &doc.arena[0] + doc.arena.size(); // NOLINT(readability-container-data-pointer)
+        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, used + n + 256));
+        m_arena_write = m_doc.arena.data() + used;
+        m_arena_end = m_doc.arena.data() + m_doc.arena.size();
     }
 
     /// append the run [r, r + n) to the arena; short runs as one fixed-size
     /// 16-byte move when both sides have the room (no library call)
     NLOHMANN_VIEW_ALWAYS_INLINE void arena_run(const unsigned char* r, std::size_t n)
     {
-        arena_ensure(n + 16);
-        if (n <= 16 && e - r >= 16)
+        if (n <= 16 && m_end - r >= 16)
         {
-            std::memcpy(aw, r, 16);
+            arena_ensure(16);
+            std::memcpy(m_arena_write, r, 16);
         }
         else
         {
-            std::memcpy(aw, r, n);
+            arena_ensure(n);
+            std::memcpy(m_arena_write, r, n);
         }
-        aw += n;
+        m_arena_write += n;
     }
 
-    /// UTF-8 encoding of cp at w (room for 4 bytes)
+    /// UTF-8 encoding of cp at w (room for 4 bytes); returns the position after
+    /// it. (A returned pointer stays in a register; writing through a
+    /// reference to m_arena_write would store and reload it around every byte.)
     static char* put_utf8(char* w, int cp) noexcept
     {
         if (cp < 0x80)
@@ -1045,9 +1093,9 @@ class builder
     {
         explicit cursor(builder& owner) noexcept
             : cold(owner)
-            , b(owner.b)
-            , p(owner.b)
-            , e(owner.e)
+            , b(owner.m_begin)
+            , p(owner.m_begin)
+            , e(owner.m_end)
         {}
 
         builder& cold; ///< out-of-line helpers and state that needs no registers
@@ -1063,13 +1111,14 @@ class builder
         std::uint32_t cur_count = 0;
         bool cur_is_object = false;
         std::size_t depth = 0;
+        std::size_t max_depth = 0;
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool run()
         {
-            cold.doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
-            base = cold.doc.tape;
+            cold.m_doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
+            base = cold.m_doc.nodes;
             out = base;
-            cap = base + cold.doc.tape_cap;
+            cap = base + cold.m_doc.node_capacity;
 
             if (e - p >= 3 && p[0] == 0xEF && p[1] == 0xBB && p[2] == 0xBF)
             {
@@ -1105,39 +1154,40 @@ class builder
 
             // value dispatch, expanded once for array elements and once for member
             // values: each jump has its own history (arrays tend to hold one kind of
-            // value), and the continuation needs no branch on the container kind
-#define NLOHMANN_VIEW_VALUE(NEXT)                                                                   \
-    switch (cur())                                                                              \
-    {                                                                                           \
-        case '"':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!string())) { return false; }                      \
-            goto NEXT;                                                                          \
-        case '{':                                                                               \
-            open(value_t::object);                                                              \
-            ++p;                                                                                \
-            goto obj_first;                                                                     \
-        case '[':                                                                               \
-            open(value_t::array);                                                               \
-            ++p;                                                                                \
-            goto arr_first;                                                                     \
-        case '-':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!number<true>())) { return false; }                      \
-            goto NEXT;                                                                          \
-        case '0': case '1': case '2': case '3':                                                 \
-        case '4': case '5': case '6': case '7': case '8': case '9':                             \
-            if (NLOHMANN_VIEW_UNLIKELY(!number<false>())) { return false; }                     \
-            goto NEXT;                                                                          \
-        case 't':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!literal("true", 4, value_t::boolean, node_flags::is_true))) { return false; } \
-            goto NEXT;                                                                          \
-        case 'f':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!literal_false())) { return false; }                     \
-            goto NEXT;                                                                          \
-        case 'n':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!literal("null", 4, value_t::null, 0))) { return false; } \
-            goto NEXT;                                                                          \
-        default:                                                                                \
-            return fail(error_code::unexpected_value);                                          \
+            // value), and the continuation needs no branch on the container kind;
+            // after a scalar, the switch is left to the label that follows it
+#define NLOHMANN_VIEW_VALUE                                                         \
+    switch (cur())                                                              \
+    {                                                                           \
+        case '"':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!string())) { return false; }            \
+            break;                                                              \
+        case '{':                                                               \
+            open(value_t::object);                                              \
+            ++p;                                                                \
+            goto obj_first;                                                     \
+        case '[':                                                               \
+            open(value_t::array);                                               \
+            ++p;                                                                \
+            goto arr_first;                                                     \
+        case '-':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!number<true>())) { return false; }      \
+            break;                                                              \
+        case '0': case '1': case '2': case '3': case '4':                       \
+        case '5': case '6': case '7': case '8': case '9':                       \
+            if (NLOHMANN_VIEW_UNLIKELY(!number<false>())) { return false; }     \
+            break;                                                              \
+        case 't':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!literal_true())) { return false; }      \
+            break;                                                              \
+        case 'f':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!literal_false())) { return false; }     \
+            break;                                                              \
+        case 'n':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!literal_null())) { return false; }      \
+            break;                                                              \
+        default:                                                                \
+            return fail(error_code::unexpected_value);                          \
     }
 
 arr_first:
@@ -1151,7 +1201,7 @@ arr_first:
                 goto close_container;
             }
 value:
-            NLOHMANN_VIEW_VALUE(arr_next)
+            NLOHMANN_VIEW_VALUE
 arr_next:
             ++cur_count;
             if (!ws())
@@ -1218,7 +1268,8 @@ obj_key:
             {
                 return false;
             }
-            NLOHMANN_VIEW_VALUE(obj_next)
+            NLOHMANN_VIEW_VALUE
+#undef NLOHMANN_VIEW_VALUE
 obj_next:
             ++cur_count;
             if (!ws())
@@ -1246,8 +1297,6 @@ obj_next:
             }
             return fail(error_code::expected_object_end);
 
-#undef NLOHMANN_VIEW_VALUE
-
 close_container:
             close();
             if (NLOHMANN_VIEW_UNLIKELY(depth == 0))
@@ -1269,8 +1318,11 @@ root_done:
             {
                 return fail(error_code::trailing_characters);
             }
-            cold.doc.tape_size = static_cast<std::size_t>(out - base);
-            cold.doc.arena.resize(cold.arena_used());
+            cold.m_doc.node_count = static_cast<std::size_t>(out - base);
+            cold.m_doc.max_depth = max_depth;
+            // (so that size() is the number of bytes used: the arena grows ahead
+            // in large steps, and shrink_to_fit() keeps size() bytes)
+            cold.m_doc.arena.resize(cold.arena_used());
             return true;
         }
 
@@ -1299,11 +1351,11 @@ root_done:
                 case '"':
                     return string();
                 case 't':
-                    return literal("true", 4, value_t::boolean, node_flags::is_true);
+                    return literal_true();
                 case 'f':
                     return literal_false();
                 case 'n':
-                    return literal("null", 4, value_t::null, 0);
+                    return literal_null();
                 case '-':
                     return number<true>();
                 case '0':
@@ -1322,9 +1374,19 @@ root_done:
             }
         }
 
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal_true()
+        {
+            return literal("true", value_t::boolean, node_flags::is_true);
+        }
+
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_false()
         {
-            return literal("false", 5, value_t::boolean, 0);
+            return literal("false", value_t::boolean, 0);
+        }
+
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal_null()
+        {
+            return literal("null", value_t::null, 0);
         }
 
         /// skip whitespace (and comments); false on a malformed comment
@@ -1397,7 +1459,7 @@ indent_done:
                 const auto n = static_cast<std::size_t>(out - base);
                 base = cold.grow(n, p);
                 out = base + n;
-                cap = base + cold.doc.tape_cap;
+                cap = base + cold.m_doc.node_capacity;
             }
             node* n = out++;
 #if NLOHMANN_VIEW_LITTLE_ENDIAN
@@ -1429,14 +1491,15 @@ indent_done:
                 const frame f = {cur_idx, cur_count, cur_is_object};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    cold.shallow[depth - 1] = f;
+                    cold.m_shallow[depth - 1] = f;
                 }
                 else
                 {
-                    cold.deep.push_back(f);
+                    cold.m_deep.push_back(f);
                 }
             }
             ++depth;
+            max_depth = (std::max)(max_depth, depth);
             cur_idx = idx;
             cur_count = 0;
             cur_is_object = k == value_t::object;
@@ -1452,12 +1515,12 @@ indent_done:
                 frame f{};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    f = cold.shallow[depth - 1];
+                    f = cold.m_shallow[depth - 1];
                 }
                 else
                 {
-                    f = cold.deep.back();
-                    cold.deep.pop_back();
+                    f = cold.m_deep.back();
+                    cold.m_deep.pop_back();
                 }
                 cur_idx = f.idx;
                 cur_count = f.count;
@@ -1465,8 +1528,11 @@ indent_done:
             }
         }
 
-        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char* text, std::size_t n, value_t k, std::uint8_t flags)
+        /// the literal `text` at p (N counts the terminating NUL)
+        template<std::size_t N>
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], value_t k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
         {
+            const std::size_t n = N - 1;
             if (NLOHMANN_VIEW_UNLIKELY(e - p < static_cast<std::ptrdiff_t>(n) || std::memcmp(p, text, n) != 0))
             {
                 return fail(error_code::invalid_literal);
@@ -1546,24 +1612,14 @@ indent_done:
             value_t kind = value_t::number_float;
             if (!is_float)
             {
-                kind = negative ? value_t::number_integer : value_t::number_unsigned;
-            }
-            if (!is_float)
-            {
                 // integers that do not fit become floats, as in parse()
-                if (NLOHMANN_VIEW_UNLIKELY(int_digits >= 19))
+                if (negative)
                 {
-                    if (negative)
-                    {
-                        if (int_digits > 19 || (int_digits == 19 && digits_exceed(int_start, "9223372036854775808", 19)))
-                        {
-                            kind = value_t::number_float;
-                        }
-                    }
-                    else if (int_digits > 20 || (int_digits == 20 && digits_exceed(int_start, "18446744073709551615", 20)))
-                    {
-                        kind = value_t::number_float;
-                    }
+                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? value_t::number_float : value_t::number_integer;
+                }
+                else
+                {
+                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? value_t::number_float : value_t::number_unsigned;
                 }
             }
             // parse() rejects floats that overflow; only numbers whose magnitude
@@ -1584,6 +1640,9 @@ indent_done:
                 // integers are converted now, while their digits are in cache
                 const std::uint64_t m = int_digits <= 19 ? parse_upto19(int_start, static_cast<unsigned>(int_digits), e)
                                         : (parse_upto19(int_start, 19, e) * 10) + static_cast<std::uint64_t>(int_start[19] - '0');
+                // (0 - m rather than -m: unary minus on an unsigned type is
+                // MSVC's C4146, an error under /sdl; both give the bit pattern
+                // of the negative std::int64_t)
                 second = negative ? 0 - m : m;
             }
             emit(kind, 0, layout, static_cast<std::size_t>(s - b), second);
@@ -1615,7 +1674,7 @@ indent_done:
 };
 
 /// run the builder with compile-time options
-template<typename FloatType, bool NulIsEnd, bool Comments, bool TrailingCommas>
+template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd>
 inline bool build_with(document_data& d, const char* src, std::size_t size, bool sentinel, parse_failure& failure)
 {
     if (sentinel)
@@ -1638,11 +1697,11 @@ inline bool build(document_data& d, const char* src, std::size_t size, bool comm
 {
     if (comments)
     {
-        return trailing_commas ? build_with<FloatType, NulIsEnd, true, true>(d, src, size, sentinel, failure)
-               : build_with<FloatType, NulIsEnd, true, false>(d, src, size, sentinel, failure);
+        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd>(d, src, size, sentinel, failure)
+               : build_with<FloatType, true, false, NulIsEnd>(d, src, size, sentinel, failure);
     }
-    return trailing_commas ? build_with<FloatType, NulIsEnd, false, true>(d, src, size, sentinel, failure)
-           : build_with<FloatType, NulIsEnd, false, false>(d, src, size, sentinel, failure);
+    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd>(d, src, size, sentinel, failure)
+           : build_with<FloatType, false, false, NulIsEnd>(d, src, size, sentinel, failure);
 }
 
 }  // namespace view
@@ -1696,14 +1755,96 @@ namespace view
     NLOHMANN_VIEW_THROW(invalid_iterator::create(id, msg, nullptr));
 }
 
+/// SAX handler of the error replay: accepts every event without storing it,
+/// and throws the exception the parser reports
+template<typename BasicJsonType>
+struct throwing_sax
+{
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
+
+    bool null()
+    {
+        return true;
+    }
+
+    bool boolean(bool /*unused*/)
+    {
+        return true;
+    }
+
+    bool number_integer(number_integer_t /*unused*/)
+    {
+        return true;
+    }
+
+    bool number_unsigned(number_unsigned_t /*unused*/)
+    {
+        return true;
+    }
+
+    bool number_float(number_float_t /*unused*/, const string_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool string(string_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool binary(binary_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool start_object(std::size_t /*unused*/)
+    {
+        return true;
+    }
+
+    bool key(string_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool end_object()
+    {
+        return true;
+    }
+
+    bool start_array(std::size_t /*unused*/)
+    {
+        return true;
+    }
+
+    bool end_array()
+    {
+        return true;
+    }
+
+    /// (a template, as in json_sax_dom_parser: the parser passes the concrete
+    /// exception type, which is thrown as is)
+    template<class Exception>
+    [[noreturn]] bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const Exception& ex)
+    {
+        NLOHMANN_VIEW_THROW(ex);
+    }
+};
+
 /*!
 @brief throw the exception BasicJsonType::parse would throw for this input
 
 The view accepts exactly the inputs parse() accepts, so on a failure the
 library parser is run on the same bytes: it throws the exception parse() would
-throw, with the same message, position, and "last read" token. The error path
-is cold, so this costs nothing on valid input. Should parse() accept the input
-nevertheless (a bug), the view's own failure is reported.
+throw, with the same message, position, and "last read" token. The replay
+uses a SAX handler that stores nothing, so it only lexes and parses up to the
+error, without building values. The error path is cold, so this costs nothing
+on valid input. Should parse() accept the input nevertheless (a bug), the
+view's own failure is reported.
 */
 template<typename BasicJsonType>
 [[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_parse_failure(const parse_failure& f, const char* src, std::size_t size,
@@ -1714,7 +1855,8 @@ template<typename BasicJsonType>
         // (the limit is detail::view::max_input_size(): 4 GiB minus 16 bytes)
         NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
-    const BasicJsonType accepted = BasicJsonType::parse(src, src + size, nullptr, true, ignore_comments, ignore_trailing_commas);
+    throwing_sax<BasicJsonType> sax;
+    const bool accepted = BasicJsonType::sax_parse(src, src + size, &sax, input_format_t::json, true, ignore_comments, ignore_trailing_commas);
     // LCOV_EXCL_START (only if parse() accepts what the view rejects: a bug)
     static_cast<void>(accepted);
 
@@ -1750,8 +1892,11 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <algorithm> // max
+#include <cstddef> // size_t
+#include <istream> // istream, streambuf
 #include <string> // basic_string, char_traits, string
-#include <type_traits> // decay, integral_constant, is_array, is_const, is_integral, is_lvalue_reference, is_pointer, is_same, remove_reference
+#include <type_traits> // decay, integral_constant, is_array, is_const, is_integral, is_lvalue_reference, is_pointer, is_same, remove_cv, remove_extent, remove_pointer, remove_reference
 #include <utility> // forward
 
 // #include <nlohmann/json.hpp>
@@ -1771,19 +1916,31 @@ namespace view
 /// how a document takes its input
 enum class input_kind
 {
-    move_string,  ///< non-const rvalue std::string: owned without a copy
-    c_string,     ///< const char* (NUL-terminated): borrowed
-    char_array,   ///< char array (e.g. a string literal): borrowed
-    borrow_range, ///< lvalue contiguous byte container, or std::string_view: borrowed
-    copy_range,   ///< rvalue contiguous byte container (a const rvalue std::string too): copied
-    adapter,      ///< streams, wide strings, and the rest of what the library's input adapter reads: read into a buffer
+    move_string,   ///< non-const rvalue std::string: owned without a copy
+    c_string,      ///< pointer to single-byte characters (NUL-terminated): borrowed
+    char_array,    ///< array of single-byte characters (e.g. a string literal): borrowed
+    borrow_range,  ///< lvalue contiguous byte container, or std::string_view: borrowed
+    copy_range,    ///< rvalue contiguous byte container (a const rvalue std::string too): copied
+    wide_c_string, ///< pointer to wide characters (NUL-terminated): converted to UTF-8 into a buffer
+    adapter,       ///< streams, FILE*, wide strings and arrays, and the rest of what the library's input adapter reads: read into a buffer
 };
+
+/// a single-byte character type (char, signed/unsigned char, char8_t, std::uint8_t, ...)
+template<typename T>
+struct is_byte_char : std::integral_constant < bool, std::is_integral<T>::value && sizeof(T) == 1 > {}; // NOLINT(bugprone-sizeof-expression): T is any pointee or element type
+
+/// a character type the library's input adapter converts to UTF-8
+template<typename T>
+struct is_wide_char : std::integral_constant < bool, std::is_same<T, wchar_t>::value || std::is_same<T, char16_t>::value
+    || std::is_same<T, char32_t>::value > {};
 
 template<typename InputType>
 struct classify_input
 {
     using R = typename std::remove_reference<InputType>::type;
     using D = typename std::decay<InputType>::type;
+    using element = typename std::remove_cv<typename std::remove_extent<R>::type>::type;
+    using pointee = typename std::remove_cv<typename std::remove_pointer<D>::type>::type;
     static constexpr bool is_rvalue = !std::is_lvalue_reference<InputType>::value;
     static constexpr bool is_bytes = is_contiguous_byte_container<D>::value;
 #if NLOHMANN_VIEW_HAS_CPP_17
@@ -1792,9 +1949,14 @@ struct classify_input
     static constexpr bool is_string_view = false;
 #endif
     // NOLINTBEGIN(readability-avoid-nested-conditional-operator): a constant expression of C++11
+    // (arrays and pointers of other types, such as wide-character arrays and
+    // FILE*, go to the library's input adapter)
     static constexpr input_kind value =
-        std::is_array<R>::value ? input_kind::char_array
-        : std::is_pointer<D>::value ? input_kind::c_string
+        (std::is_array<R>::value && is_byte_char<element>::value) ? input_kind::char_array
+        : std::is_array<R>::value ? input_kind::adapter
+        : (std::is_pointer<D>::value && is_byte_char<pointee>::value) ? input_kind::c_string
+        : (std::is_pointer<D>::value && is_wide_char<pointee>::value) ? input_kind::wide_c_string
+        : std::is_pointer<D>::value ? input_kind::adapter
         : (is_rvalue && !std::is_const<R>::value && std::is_same<D, std::string>::value) ? input_kind::move_string
         : (is_bytes && (!is_rvalue || is_string_view)) ? input_kind::borrow_range
         : is_bytes ? input_kind::copy_range
@@ -1816,11 +1978,10 @@ struct is_std_string : std::false_type {};
 template<typename Traits, typename Alloc>
 struct is_std_string<std::basic_string<char, Traits, Alloc>> : std::true_type {};
 
-/// drain a json input adapter (UTF-16/32 inputs arrive as UTF-8)
+/// append what a json input adapter yields (UTF-16/32 inputs arrive as UTF-8)
 template<typename Adapter>
-std::string collect_adapter(Adapter ia)
+void append_adapter(std::string& buf, Adapter ia)
 {
-    std::string buf;
     for (;;)
     {
         const auto ch = ia.get_character();
@@ -1830,7 +1991,53 @@ std::string collect_adapter(Adapter ia)
         }
         buf.push_back(static_cast<char>(ch));
     }
-    return buf;
+}
+
+/// an input adapter made by the document for an input that the library's
+/// input_adapter() does not take as one argument (an iterator range, a wide C
+/// string), to be appended with append_adapter()
+template<typename Adapter>
+struct adapter_input
+{
+    Adapter ia;
+};
+
+template<typename T>
+struct is_adapter_input : std::false_type {};
+
+template<typename Adapter>
+struct is_adapter_input<adapter_input<Adapter>> : std::true_type {};
+
+template<typename Adapter>
+adapter_input<typename std::decay<Adapter>::type> make_adapter_input(Adapter&& ia)
+{
+    return {std::forward<Adapter>(ia)};
+}
+
+/// append the rest of a stream: its characters need no conversion, so they are
+/// read in blocks from the stream buffer, straight into buf (reusing its
+/// capacity). As the library's stream adapter, this reads the stream buffer
+/// directly and sets eofbit at the end.
+inline void append_stream(std::string& buf, std::istream& is)
+{
+    std::streambuf* const sb = is.rdbuf();
+    if (sb == nullptr)
+    {
+        return;
+    }
+    for (;;)
+    {
+        const std::size_t used = buf.size();
+        const std::size_t room = (std::max)(buf.capacity() - used, std::size_t{4096});
+        buf.resize(used + room);
+        const std::streamsize got = sb->sgetn(&buf[used], static_cast<std::streamsize>(room));
+        buf.resize(used + static_cast<std::size_t>(got > 0 ? got : 0));
+        if (got <= 0)
+        {
+            break;
+        }
+    }
+    is.clear(is.rdstate() | std::ios::eofbit);
 }
 
 }  // namespace view
@@ -1850,6 +2057,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <algorithm> // max
+#include <cstddef> // size_t
 #include <cstdint> // int64_t, uint8_t
 #include <string> // string
 #include <vector> // vector
@@ -1958,8 +2167,15 @@ BasicJsonType materialize(const document_data& d, const node* n)
     BasicJsonType result;
     sax_t sax(result, true);
     const string_t no_token{};
-    // the ends of the open containers, and whether they are objects
-    std::vector<std::pair<const node*, bool>> open;
+    // the ends of the open containers, and whether they are objects; sized
+    // once from the document's deepest nesting (for a subtree an upper bound)
+    struct open_container
+    {
+        const node* end;
+        bool is_object;
+    };
+    std::vector<open_container> open((std::max)(d.max_depth, std::size_t{1}));
+    std::size_t depth = 0;
     for (;;)
     {
         switch (static_cast<value_t>(n->kind))
@@ -1976,7 +2192,11 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 {
                     sax.start_array(n->len);
                 }
-                open.emplace_back(document_data::child_end(n), object);
+                if (NLOHMANN_VIEW_UNLIKELY(depth == open.size()))
+                {
+                    open.resize(depth * 2); // (deeper than the document's recorded nesting)
+                }
+                open[depth++] = open_container{document_data::child_end(n), object};
                 n = document_data::first_child(n);
                 break;
             }
@@ -2013,15 +2233,15 @@ BasicJsonType materialize(const document_data& d, const node* n)
         }
         for (;;)
         {
-            if (open.empty())
+            if (depth == 0)
             {
                 return result;
             }
-            if (n != open.back().first)
+            if (n != open[depth - 1].end)
             {
                 break;
             }
-            if (open.back().second)
+            if (open[depth - 1].is_object)
             {
                 sax.end_object();
             }
@@ -2029,9 +2249,9 @@ BasicJsonType materialize(const document_data& d, const node* n)
             {
                 sax.end_array();
             }
-            open.pop_back();
+            --depth;
         }
-        if (open.back().second)
+        if (open[depth - 1].is_object)
         {
             // the key of the next member
             string_t key(d.str(*n), n->len);
@@ -2428,7 +2648,9 @@ class basic_json_document
                                           const bool ignore_trailing_commas = false)
     {
         basic_json_document d;
-        d.build_owned(collect(std::forward<InputType>(input)), allow_exceptions, ignore_comments, ignore_trailing_commas);
+        std::string buf;
+        append_input(buf, std::forward<InputType>(input));
+        d.build_owned(std::move(buf), allow_exceptions, ignore_comments, ignore_trailing_commas);
         return d;
     }
 
@@ -2477,7 +2699,7 @@ class basic_json_document
         {
             return view_type();
         }
-        return view_type(m_data.get(), m_data->tape);
+        return view_type(m_data.get(), m_data->nodes);
     }
 
     /// deleted: the view of a temporary document would dangle
@@ -2503,7 +2725,7 @@ class basic_json_document
     /// number of index nodes (values plus object keys)
     std::size_t node_count() const noexcept
     {
-        return m_data ? m_data->tape_size : 0;
+        return m_data ? m_data->node_count : 0;
     }
 
     /// bytes held by the document (index, decoded strings, owned text)
@@ -2513,8 +2735,8 @@ class basic_json_document
         {
             return 0;
         }
-        return sizeof(document_data) + (m_data->inline_cap * sizeof(detail::view::node))
-               + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
+        return sizeof(document_data) + (m_data->inline_capacity * sizeof(detail::view::node))
+               + (m_data->nodes != m_data->inline_nodes ? m_data->node_capacity * sizeof(detail::view::node) : 0)
                + m_data->arena.capacity() + m_data->owned.capacity();
     }
 
@@ -2533,17 +2755,17 @@ class basic_json_document
         // allocate everything first, so that an exception leaves the document
         // unchanged
         const bool shrink_arena = d.arena.capacity() > d.arena.size();
-        std::string arena(shrink_arena ? d.arena : std::string());
-        const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap;
-        const bool into_header = d.tape_size <= d.inline_cap;
-        node* fresh = (shrink_tape && !into_header) ? static_cast<node*>(::operator new (d.tape_size * sizeof(node))) : d.inline_tape;
+        std::vector<char> arena(shrink_arena ? d.arena : std::vector<char>());
+        const bool shrink_nodes = d.nodes != d.inline_nodes && d.node_count != d.node_capacity;
+        const bool into_header = d.node_count <= d.inline_capacity;
+        node* fresh = (shrink_nodes && !into_header) ? static_cast<node*>(::operator new (d.node_count * sizeof(node))) : d.inline_nodes;
 
-        if (shrink_tape)
+        if (shrink_nodes)
         {
-            std::memcpy(fresh, d.tape, d.tape_size * sizeof(node));
-            ::operator delete (d.tape);
-            d.tape = fresh;
-            d.tape_cap = into_header ? d.inline_cap : d.tape_size;
+            std::memcpy(fresh, d.nodes, d.node_count * sizeof(node));
+            ::operator delete (d.nodes);
+            d.nodes = fresh;
+            d.node_capacity = into_header ? d.inline_capacity : d.node_count;
         }
         if (shrink_arena)
         {
@@ -2564,12 +2786,36 @@ class basic_json_document
         }
     }
 
-    /// parse a buffer the document takes ownership of
+    /// parse a buffer the document takes ownership of (it replaces the
+    /// previous owned copy)
     void build_owned(std::string&& buf, bool allow_exceptions, bool comments, bool trailing_commas)
     {
         ensure_data(buf.data(), buf.size());
         m_data->owned = std::move(buf);
         build(m_data->owned.data(), m_data->owned.size(), allow_exceptions, comments, trailing_commas, true, true);
+    }
+
+    /// parse a copy of the input; the copy is appended to the cleared owned
+    /// buffer, so that its capacity is reused
+    template<typename T>
+    void build_copy(T&& input, bool allow_exceptions, bool comments, bool trailing_commas)
+    {
+        if (!m_data)
+        {
+            std::string buf;
+            append_input(buf, std::forward<T>(input));
+            build_owned(std::move(buf), allow_exceptions, comments, trailing_commas);
+            return;
+        }
+        document_data& d = *m_data;
+        // (the previous text is gone from here on: should reading the input
+        // throw, the document is discarded)
+        d.discarded = true;
+        d.src = "";
+        d.size = 0;
+        d.owned.clear();
+        append_input(d.owned, std::forward<T>(input));
+        build(d.owned.data(), d.owned.size(), allow_exceptions, comments, trailing_commas, true, true);
     }
 
     /// sentinel: src[size] is readable and 0 (std::string, C strings)
@@ -2583,7 +2829,7 @@ class basic_json_document
         }
         d.src = src;
         d.size = size;
-        d.tape_size = 0;
+        d.node_count = 0;
         d.arena.clear();
         d.discarded = true;
         detail::view::parse_failure failure;
@@ -2619,7 +2865,6 @@ class basic_json_document
     template<typename CharT>
     void read_kind(CharT* s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::c_string> /*unused*/)
     {
-        static_assert(sizeof(CharT) == 1 && std::is_integral<typename std::remove_cv<CharT>::type>::value, "json_view parses byte (char-like) input");
         if (s == nullptr)
         {
             build("", 0, ae, c, tc, false, true);
@@ -2635,7 +2880,6 @@ class basic_json_document
     void read_kind(Array& a, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::char_array> /*unused*/)
     {
         using CharT = typename std::remove_cv<typename std::remove_extent<Array>::type>::type;
-        static_assert(sizeof(CharT) == 1 && std::is_integral<CharT>::value, "json_view parses byte (char-like) input");
         const std::size_t n = std::extent<Array>::value;
         // a trailing NUL (string literals) is not part of the text, as for
         // parse(), and serves as sentinel
@@ -2655,13 +2899,25 @@ class basic_json_document
     template<typename T>
     void read_kind(const T& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
     {
-        build_owned(std::string(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())), ae, c, tc); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        build_copy(s, ae, c, tc);
+    }
+
+    template<typename CharT>
+    void read_kind(CharT* s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::wide_c_string> /*unused*/)
+    {
+        if (s == nullptr)
+        {
+            build("", 0, ae, c, tc, false, true);
+            return;
+        }
+        // NUL-terminated, as for the single-byte C strings
+        build_copy(detail::view::make_adapter_input(detail::input_adapter(s, s + std::char_traits<typename std::remove_cv<CharT>::type>::length(s))), ae, c, tc);
     }
 
     template<typename T>
     void read_kind(T&& input, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::adapter> /*unused*/)
     {
-        build_owned(detail::view::collect_adapter(detail::input_adapter(std::forward<T>(input))), ae, c, tc);
+        build_copy(std::forward<T>(input), ae, c, tc);
     }
 
     template<typename IteratorType>
@@ -2685,25 +2941,45 @@ class basic_json_document
     template<typename IteratorType>
     void read_range_impl(IteratorType first, IteratorType last, bool ae, bool c, bool tc, std::false_type /*other*/)
     {
-        build_owned(detail::view::collect_adapter(detail::input_adapter(first, last)), ae, c, tc);
+        build_copy(detail::view::make_adapter_input(detail::input_adapter(first, last)), ae, c, tc);
+    }
+
+    /// append the text of an input to buf: a contiguous byte input as one
+    /// block, a stream in blocks, an input adapter (made here for any other
+    /// input) character by character
+    template<typename T>
+    static void append_input(std::string& buf, T&& input)
+    {
+        using D = typename std::decay<T>::type;
+        // NOLINTBEGIN(readability-avoid-nested-conditional-operator): a constant expression of C++11
+        append_input_impl(buf, std::forward<T>(input), std::integral_constant < int, detail::is_contiguous_byte_container<D>::value ? 0
+                          : std::is_base_of<std::istream, D>::value ? 1
+                          : detail::view::is_adapter_input<D>::value ? 2 : 3 > {});
+        // NOLINTEND(readability-avoid-nested-conditional-operator)
     }
 
     template<typename T>
-    static std::string collect(T&& input)
+    static void append_input_impl(std::string& buf, const T& s, std::integral_constant<int, 0> /*contiguous bytes*/)
     {
-        return collect_impl(std::forward<T>(input), std::integral_constant<bool, detail::is_contiguous_byte_container<typename std::decay<T>::type>::value> {});
+        buf.append(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    }
+
+    template<typename Stream>
+    static void append_input_impl(std::string& buf, Stream&& is, std::integral_constant<int, 1> /*stream*/) // NOLINT(cppcoreguidelines-missing-std-forward): read in place, as by the library's stream adapter
+    {
+        detail::view::append_stream(buf, is);
+    }
+
+    template<typename Adapter>
+    static void append_input_impl(std::string& buf, detail::view::adapter_input<Adapter>&& input, std::integral_constant<int, 2> /*input adapter*/)
+    {
+        detail::view::append_adapter(buf, std::move(input.ia));
     }
 
     template<typename T>
-    static std::string collect_impl(const T& s, std::true_type /*contiguous*/)
+    static void append_input_impl(std::string& buf, T&& input, std::integral_constant<int, 3> /*other*/)
     {
-        return {reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())}; // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    }
-
-    template<typename T>
-    static std::string collect_impl(T&& s, std::false_type /*other*/)
-    {
-        return detail::view::collect_adapter(detail::input_adapter(std::forward<T>(s)));
+        detail::view::append_adapter(buf, detail::input_adapter(std::forward<T>(input)));
     }
 
     std::unique_ptr<document_data, document_data::deleter> m_data{}; // NOLINT(readability-redundant-member-init)

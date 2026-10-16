@@ -17,6 +17,9 @@ using nlohmann::ordered_json_document;
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
+#include <ios>
+#include <istream>
 #include <list>
 #include <map>
 #include <random>
@@ -396,6 +399,112 @@ TEST_CASE("json_view")
         CHECK(materialized<json_document>(wide) == json::parse(wide));
         CHECK(json_document::parse(static_cast<const char*>(nullptr), false).is_discarded());
         CHECK(json_document::parse("", false).is_discarded());
+
+        // wide-character arrays and pointers are converted to UTF-8, as by
+        // parse(); the pointers are NUL-terminated
+        CHECK(materialized<json_document>(L"[\"ä€\", 1]") == json::parse(L"[\"ä€\", 1]"));
+        CHECK(materialized<json_document>(u"[\"ä€\", 1]") == json::parse(u"[\"ä€\", 1]"));
+        CHECK(materialized<json_document>(U"[\"ä€\", 1]") == json::parse(U"[\"ä€\", 1]"));
+        const wchar_t* const wide_pointer = wide.c_str();
+        const json_document from_wide_pointer = json_document::parse(wide_pointer);
+        CHECK(from_wide_pointer.owns_source());
+        CHECK(from_wide_pointer.root().materialize() == json::parse(wide));
+        const std::u16string wide16 = u"{\"\U0001F600\": [true]}";
+        CHECK(materialized<json_document>(wide16.c_str()) == json::parse(wide16));
+        const std::u32string wide32 = U"{\"\U0001F600\": [true]}";
+        CHECK(materialized<json_document>(wide32.c_str()) == json::parse(wide32));
+        CHECK(json_document::parse(static_cast<const wchar_t*>(nullptr), false).is_discarded());
+
+        // FILE*: read to its end
+        std::FILE* file = std::tmpfile(); // NOLINT(cppcoreguidelines-owning-memory)
+        if (file != nullptr)
+        {
+            CHECK(std::fputs(text.c_str(), file) >= 0);
+            CHECK(std::fseek(file, 0, SEEK_SET) == 0);
+            const json_document from_file = json_document::parse(file);
+            CHECK(from_file.owns_source());
+            CHECK(from_file.root().materialize() == expected);
+            CHECK(std::fclose(file) == 0); // NOLINT(cppcoreguidelines-owning-memory)
+        }
+    }
+
+    SECTION("streams")
+    {
+        // longer than one block of the bulk read
+        std::string text = "[";
+        for (int i = 0; i < 5000; ++i)
+        {
+            text += (i != 0 ? ",\"" : "\"") + std::to_string(i) + "\"";
+        }
+        text += ']';
+        std::istringstream stream(text);
+        const json_document from_stream = json_document::parse(stream);
+        CHECK(from_stream.source() == text);
+        CHECK(from_stream.root().materialize() == json::parse(text));
+        // the stream is read to its end, and eofbit set, as by parse()
+        CHECK(stream.eof());
+        CHECK(!stream.bad());
+
+        std::istringstream empty_stream;
+        CHECK(json_document::parse(empty_stream, false).is_discarded());
+        CHECK(empty_stream.eof());
+        std::istringstream rvalue_source("[1]");
+        CHECK(json_document::parse_copy(std::move(rvalue_source)).owns_source());
+
+        // a stream without a buffer is an empty input
+        std::istream no_buffer(nullptr);
+        CHECK(json_document::parse(no_buffer, false).is_discarded());
+
+#if !defined(JSON_NOEXCEPTION)
+        // an exception while reading the input leaves a discarded document
+        json_document d = json_document::parse(std::vector<char>(text.begin(), text.end()));
+        std::istringstream throwing("[1]");
+        throwing.exceptions(std::ios::eofbit);
+        CHECK_THROWS_AS(d.read(throwing), std::ios_base::failure&);
+        CHECK(d.is_discarded());
+        CHECK(d.root().is_discarded());
+        d.read("[2]");
+        CHECK(d.root().materialize() == json::parse("[2]"));
+#endif
+    }
+
+    SECTION("read() reuses the owned copy")
+    {
+        std::string big = "[";
+        for (int i = 0; i < 1000; ++i)
+        {
+            big += (i != 0 ? ",\"" : "\"") + std::to_string(i) + "\"";
+        }
+        big += ']';
+        const std::string small = "{\"a\": [1, 2]}";
+
+        // copied inputs are written into the existing buffer
+        json_document d = json_document::parse(std::vector<char>(big.begin(), big.end()));
+        REQUIRE(d.owns_source());
+        const char* const buffer = d.source().data();
+        d.read(std::vector<char>(small.begin(), small.end()));
+        CHECK(d.owns_source());
+        CHECK(d.source().data() == buffer);
+        CHECK(d.root().materialize() == json::parse(small));
+        std::istringstream stream(small);
+        d.read(stream);
+        CHECK(d.source().data() == buffer);
+        CHECK(d.root().materialize() == json::parse(small));
+        d.read(std::wstring(L"[3]"));
+        CHECK(d.source().data() == buffer);
+        CHECK(d.root().materialize() == json::parse("[3]"));
+
+        // a moved-in string replaces it (long enough to be on the heap)
+        std::string moved = big;
+        const char* const moved_buffer = moved.data();
+        d.read(std::move(moved));
+        CHECK(d.source().data() == moved_buffer);
+        CHECK(d.root().materialize() == json::parse(big));
+
+        // a borrowed input leaves nothing owned
+        d.read(big);
+        CHECK(!d.owns_source());
+        CHECK(d.source().data() == big.data());
     }
 
     SECTION("integer arguments do not compile")

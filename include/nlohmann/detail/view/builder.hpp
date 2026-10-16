@@ -74,9 +74,10 @@ class builder
 {
   public:
     builder(document_data& d, const char* src, std::size_t size) noexcept
-        : doc(d)
-        , b(reinterpret_cast<const unsigned char*>(src))
-        , e(b + size)
+        : m_doc(d)
+        , m_begin(reinterpret_cast<const unsigned char*>(src))
+        , m_end(m_begin + size)
+        , m_shallow()
     {}
 
     /// returns false and fills `failure` on error
@@ -106,21 +107,30 @@ class builder
         bool is_object;
     };
 
-    document_data& doc;
-    const unsigned char* const b;
-    const unsigned char* const e;
+    /// 64 frames, left uninitialized: they are filled as containers open (the
+    /// user-provided constructor keeps the member initialization, which
+    /// -Weffc++ asks for, from zeroing them; that costs up to 30 % on small
+    /// documents)
+    struct frame_stack : std::array<frame, 64>
+    {
+        frame_stack() noexcept {} // NOLINT(modernize-use-equals-default,hicpp-use-equals-default,cppcoreguidelines-pro-type-member-init,hicpp-member-init): see above
+    };
+
+    document_data& m_doc;
+    const unsigned char* const m_begin;
+    const unsigned char* const m_end;
     parse_failure m_failure{};
 
     // the open array/object is in the cursor; enclosing ones on a stack that is
     // inline for the first 64 levels
-    frame shallow[64]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): not initialized on purpose; filled as containers open
-    std::vector<frame> deep{};
+    frame_stack m_shallow;
+    std::vector<frame> m_deep{};
 
     NLOHMANN_VIEW_NOINLINE bool fail(error_code c, const unsigned char* at) noexcept
     {
         m_failure.code = c;
-        m_failure.offset = static_cast<std::size_t>(at - b);
-        doc.tape_size = 0;
+        m_failure.offset = static_cast<std::size_t>(at - m_begin);
+        m_doc.node_count = 0;
         return false;
     }
 
@@ -149,7 +159,7 @@ class builder
     /// the comment at p (*p == '/'): the position after it, or nullptr on error
     NLOHMANN_VIEW_NOINLINE const unsigned char* comment(const unsigned char* p)
     {
-        if (e - p < 2)
+        if (m_end - p < 2)
         {
             ++p;
             return fail_at(error_code::comment_start, p);
@@ -159,7 +169,7 @@ class builder
             p += 2;
             // (as in parse(), a null byte is the end of the input, so it is
             // left for the caller to see)
-            while (p != e && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
+            while (p != m_end && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
             {
                 ++p;
             }
@@ -170,11 +180,11 @@ class builder
             p += 2;
             for (;;)
             {
-                if (p == e || (NulIsEnd && *p == 0))
+                if (p == m_end || (NulIsEnd && *p == 0))
                 {
                     return fail_at(error_code::comment_unterminated, p);
                 }
-                if (*p == '*' && p + 1 != e && p[1] == '/')
+                if (*p == '*' && p + 1 != m_end && p[1] == '/')
                 {
                     p += 2;
                     return p;
@@ -192,31 +202,32 @@ class builder
     /// doubling repeatedly; returns the new node array
     NLOHMANN_VIEW_NOINLINE node* grow(std::size_t n, const unsigned char* at)
     {
-        const std::uint64_t done = static_cast<std::uint64_t>(at - b) + 1;
-        const std::uint64_t guess = static_cast<std::uint64_t>(n) * static_cast<std::uint64_t>(e - b + 1) / done;
-        const std::uint64_t grown = guess + (guess / 4) + 64; // a variable: GCC calls a cast of the sum useless where std::uint64_t is std::size_t
-        // (n is below 2^32: the input is smaller than 4 GiB; the sum cannot wrap)
-        const std::uint64_t wanted = (std::max)(grown, static_cast<std::uint64_t>(n) + (n / 2) + 64);
+        // (n nodes are written; at the limit there is no room for another one)
         const std::uint64_t limit = document_data::max_nodes();
-        doc.tape_size = n;
         // LCOV_EXCL_START (a node array that fills the address space)
         if (NLOHMANN_VIEW_UNLIKELY(n >= limit))
         {
-            document_data::throw_bad_alloc(); // no room for another node
+            document_data::throw_bad_alloc();
         }
         // LCOV_EXCL_STOP
+        const std::uint64_t done = static_cast<std::uint64_t>(at - m_begin) + 1;
+        const std::uint64_t guess = static_cast<std::uint64_t>(n) * static_cast<std::uint64_t>(m_end - m_begin + 1) / done;
+        const std::uint64_t grown = guess + (guess / 4) + 64; // a variable: GCC calls a cast of the sum useless where std::uint64_t is std::size_t
+        // (n is below 2^32: the input is smaller than 4 GiB; the sum cannot wrap)
+        const std::uint64_t wanted = (std::max)(grown, static_cast<std::uint64_t>(n) + (n / 2) + 64);
+        m_doc.node_count = n; // the number of nodes reserve() copies into the new array
         // (a count beyond the limit is cut: the index does not grow beyond what can be addressed)
-        doc.reserve(static_cast<std::size_t>((std::min)(wanted, limit)));
-        return doc.tape;
+        m_doc.reserve(static_cast<std::size_t>((std::min)(wanted, limit)));
+        return m_doc.nodes;
     }
 
-    /// four hex digits at p as a code unit (p moves past them), or -1 (p at
-    /// the first bad digit); one table lookup per digit and a single check,
-    /// the four hex digits of a unicode escape (the library's table, after
-    /// yyjson's read_hex_u16), or -1
+    /// the four hex digits of a unicode escape at p as a code unit, and p
+    /// moved past them; or -1, and p at the first bad digit (one table lookup
+    /// per digit and a single check: the library's table, after yyjson's
+    /// read_hex_u16)
     NLOHMANN_VIEW_ALWAYS_INLINE int hex4(const unsigned char*& p) noexcept
     {
-        if (NLOHMANN_VIEW_LIKELY(e - p >= 4))
+        if (NLOHMANN_VIEW_LIKELY(m_end - p >= 4))
         {
             const int cp = hex_codepoint(p);
             if (NLOHMANN_VIEW_LIKELY(cp >= 0))
@@ -232,7 +243,7 @@ class builder
     /// hex4() failed: the first bad digit (none: p)
     NLOHMANN_VIEW_NOINLINE const unsigned char* hex4_error(const unsigned char* p) noexcept
     {
-        if (e - p >= 4)
+        if (m_end - p >= 4)
         {
             while (is_hex(*p))
             {
@@ -242,8 +253,9 @@ class builder
         return p;
     }
 
-    /// escapes present (or an error) in the string at s, scanned up to p:
-    /// decode into the arena
+    /// s points to the start of the string, p to a backslash, a control
+    /// character, an ill-formed UTF-8 byte, or the end: decode the string into
+    /// the arena
     NLOHMANN_VIEW_NOINLINE decoded slow_string(const unsigned char* s, const unsigned char* p)
     {
         // single-character escapes; 0: invalid (and 'u', handled separately)
@@ -260,7 +272,7 @@ class builder
         arena_run(s, static_cast<std::size_t>(p - s));
         for (;;)
         {
-            if (p == e)
+            if (p == m_end)
             {
                 return failed(error_code::string_missing_quote, p);
             }
@@ -272,20 +284,20 @@ class builder
             }
             if (c != '\\')
             {
-                // (a NUL before the end of the input is a control character, as
-                // for json::parse, also where a NUL ends the input between values)
+                // (without JSON_STRICT_NUL_HANDLING, a NUL between values ends
+                // the input, as in json::parse; inside a string, a NUL is still
+                // a control character and an error)
                 return failed(c < 0x20 ? error_code::string_control_character : error_code::string_utf8, p);
             }
             ++p;
-            if (p == e)
+            if (p == m_end)
             {
                 return failed(error_code::string_missing_quote, p);
             }
             const unsigned char d = *p++;
-            arena_ensure(4);
             if (d == 'u')
             {
-                int cp = hex4(p);
+                int cp = hex4(p); // (moves p past the four digits)
                 if (NLOHMANN_VIEW_UNLIKELY(cp < 0))
                 {
                     return failed(error_code::string_unicode_hex, p);
@@ -296,12 +308,12 @@ class builder
                     {
                         return failed(error_code::string_surrogate_low, p);
                     }
-                    if (e - p < 2 || p[0] != '\\' || p[1] != 'u')
+                    if (m_end - p < 2 || p[0] != '\\' || p[1] != 'u')
                     {
                         return failed(error_code::string_surrogate_high, p);
                     }
                     p += 2;
-                    const int lo = hex4(p);
+                    const int lo = hex4(p); // (moves p past the four digits)
                     if (lo < 0)
                     {
                         return failed(error_code::string_unicode_hex, p);
@@ -312,23 +324,25 @@ class builder
                     }
                     cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
                 }
-                aw = put_utf8(aw, cp);
+                arena_ensure(4);
+                m_arena_write = put_utf8(m_arena_write, cp);
             }
             else if (NLOHMANN_VIEW_LIKELY(d < 128 && simple_escape[d] != 0))
             {
-                *aw++ = simple_escape[d];
+                arena_ensure(1);
+                *m_arena_write++ = simple_escape[d];
             }
             else
             {
                 --p;
                 return failed(error_code::string_escape, p);
             }
-            if (p != e && *p == '\\')
+            if (p != m_end && *p == '\\')
             {
                 continue; // consecutive escapes ("\u00e4\u00f6"): no run in between
             }
             const unsigned char* const r = p;
-            p = scan_string_run(p, e);
+            p = scan_string_run(p, m_end);
             arena_run(r, static_cast<std::size_t>(p - r));
         }
     }
@@ -348,10 +362,17 @@ class builder
         return v > (std::numeric_limits<FloatType>::max)() || v < -(std::numeric_limits<FloatType>::max)();
     }
 
-    /// does the magnitude digits [d, d + n) exceed the given limit (same length)?
-    static bool digits_exceed(const unsigned char* d, const char* limit, std::size_t n) noexcept
+    /// do the `digits` digits of a magnitude at d exceed `limit`, the largest
+    /// magnitude that fits (a string literal: N counts its terminating NUL, so
+    /// it has N - 1 digits)?
+    template<std::size_t N>
+    static NLOHMANN_VIEW_ALWAYS_INLINE bool digits_exceed(const unsigned char* d, std::size_t digits, const char (&limit)[N]) noexcept // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
     {
-        return std::memcmp(d, limit, n) > 0;
+        if (NLOHMANN_VIEW_LIKELY(digits < N - 1))
+        {
+            return false;
+        }
+        return digits > N - 1 || std::memcmp(d, limit, N - 1) > 0;
     }
 
     static bool is_hex(unsigned char c) noexcept
@@ -359,19 +380,19 @@ class builder
         return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
     }
 
-    // decode arena: the std::string in the document, written through a raw
+    // decode arena: the vector in the document, written through a raw
     // pointer (resized ahead in large steps; trimmed when parsing succeeds)
-    char* aw = nullptr;
-    char* aend = nullptr;
+    char* m_arena_write = nullptr;
+    char* m_arena_end = nullptr;
 
     NLOHMANN_VIEW_ALWAYS_INLINE std::size_t arena_used() const noexcept
     {
-        return aw != nullptr ? static_cast<std::size_t>(aw - doc.arena.data()) : 0;
+        return m_arena_write != nullptr ? static_cast<std::size_t>(m_arena_write - m_doc.arena.data()) : 0;
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE void arena_ensure(std::size_t n)
     {
-        if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(aend - aw) < n))
+        if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(m_arena_end - m_arena_write) < n))
         {
             arena_grow(n);
         }
@@ -380,28 +401,31 @@ class builder
     NLOHMANN_VIEW_NOINLINE void arena_grow(std::size_t n)
     {
         const std::size_t used = arena_used();
-        doc.arena.resize((std::max)(doc.arena.size() * 2, used + n + 256));
-        aw = &doc.arena[0] + used; // NOLINT(readability-container-data-pointer): data() is const before C++17
-        aend = &doc.arena[0] + doc.arena.size(); // NOLINT(readability-container-data-pointer)
+        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, used + n + 256));
+        m_arena_write = m_doc.arena.data() + used;
+        m_arena_end = m_doc.arena.data() + m_doc.arena.size();
     }
 
     /// append the run [r, r + n) to the arena; short runs as one fixed-size
     /// 16-byte move when both sides have the room (no library call)
     NLOHMANN_VIEW_ALWAYS_INLINE void arena_run(const unsigned char* r, std::size_t n)
     {
-        arena_ensure(n + 16);
-        if (n <= 16 && e - r >= 16)
+        if (n <= 16 && m_end - r >= 16)
         {
-            std::memcpy(aw, r, 16);
+            arena_ensure(16);
+            std::memcpy(m_arena_write, r, 16);
         }
         else
         {
-            std::memcpy(aw, r, n);
+            arena_ensure(n);
+            std::memcpy(m_arena_write, r, n);
         }
-        aw += n;
+        m_arena_write += n;
     }
 
-    /// UTF-8 encoding of cp at w (room for 4 bytes)
+    /// UTF-8 encoding of cp at w (room for 4 bytes); returns the position after
+    /// it. (A returned pointer stays in a register; writing through a
+    /// reference to m_arena_write would store and reload it around every byte.)
     static char* put_utf8(char* w, int cp) noexcept
     {
         if (cp < 0x80)
@@ -446,9 +470,9 @@ class builder
     {
         explicit cursor(builder& owner) noexcept
             : cold(owner)
-            , b(owner.b)
-            , p(owner.b)
-            , e(owner.e)
+            , b(owner.m_begin)
+            , p(owner.m_begin)
+            , e(owner.m_end)
         {}
 
         builder& cold; ///< out-of-line helpers and state that needs no registers
@@ -464,13 +488,14 @@ class builder
         std::uint32_t cur_count = 0;
         bool cur_is_object = false;
         std::size_t depth = 0;
+        std::size_t max_depth = 0;
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool run()
         {
-            cold.doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
-            base = cold.doc.tape;
+            cold.m_doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
+            base = cold.m_doc.nodes;
             out = base;
-            cap = base + cold.doc.tape_cap;
+            cap = base + cold.m_doc.node_capacity;
 
             if (e - p >= 3 && p[0] == 0xEF && p[1] == 0xBB && p[2] == 0xBF)
             {
@@ -506,39 +531,40 @@ class builder
 
             // value dispatch, expanded once for array elements and once for member
             // values: each jump has its own history (arrays tend to hold one kind of
-            // value), and the continuation needs no branch on the container kind
-#define NLOHMANN_VIEW_VALUE(NEXT)                                                                   \
-    switch (cur())                                                                              \
-    {                                                                                           \
-        case '"':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!string())) { return false; }                      \
-            goto NEXT;                                                                          \
-        case '{':                                                                               \
-            open(value_t::object);                                                              \
-            ++p;                                                                                \
-            goto obj_first;                                                                     \
-        case '[':                                                                               \
-            open(value_t::array);                                                               \
-            ++p;                                                                                \
-            goto arr_first;                                                                     \
-        case '-':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!number<true>())) { return false; }                      \
-            goto NEXT;                                                                          \
-        case '0': case '1': case '2': case '3':                                                 \
-        case '4': case '5': case '6': case '7': case '8': case '9':                             \
-            if (NLOHMANN_VIEW_UNLIKELY(!number<false>())) { return false; }                     \
-            goto NEXT;                                                                          \
-        case 't':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!literal("true", 4, value_t::boolean, node_flags::is_true))) { return false; } \
-            goto NEXT;                                                                          \
-        case 'f':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!literal_false())) { return false; }                     \
-            goto NEXT;                                                                          \
-        case 'n':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!literal("null", 4, value_t::null, 0))) { return false; } \
-            goto NEXT;                                                                          \
-        default:                                                                                \
-            return fail(error_code::unexpected_value);                                          \
+            // value), and the continuation needs no branch on the container kind;
+            // after a scalar, the switch is left to the label that follows it
+#define NLOHMANN_VIEW_VALUE                                                         \
+    switch (cur())                                                              \
+    {                                                                           \
+        case '"':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!string())) { return false; }            \
+            break;                                                              \
+        case '{':                                                               \
+            open(value_t::object);                                              \
+            ++p;                                                                \
+            goto obj_first;                                                     \
+        case '[':                                                               \
+            open(value_t::array);                                               \
+            ++p;                                                                \
+            goto arr_first;                                                     \
+        case '-':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!number<true>())) { return false; }      \
+            break;                                                              \
+        case '0': case '1': case '2': case '3': case '4':                       \
+        case '5': case '6': case '7': case '8': case '9':                       \
+            if (NLOHMANN_VIEW_UNLIKELY(!number<false>())) { return false; }     \
+            break;                                                              \
+        case 't':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!literal_true())) { return false; }      \
+            break;                                                              \
+        case 'f':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!literal_false())) { return false; }     \
+            break;                                                              \
+        case 'n':                                                               \
+            if (NLOHMANN_VIEW_UNLIKELY(!literal_null())) { return false; }      \
+            break;                                                              \
+        default:                                                                \
+            return fail(error_code::unexpected_value);                          \
     }
 
 arr_first:
@@ -552,7 +578,7 @@ arr_first:
                 goto close_container;
             }
 value:
-            NLOHMANN_VIEW_VALUE(arr_next)
+            NLOHMANN_VIEW_VALUE
 arr_next:
             ++cur_count;
             if (!ws())
@@ -619,7 +645,8 @@ obj_key:
             {
                 return false;
             }
-            NLOHMANN_VIEW_VALUE(obj_next)
+            NLOHMANN_VIEW_VALUE
+#undef NLOHMANN_VIEW_VALUE
 obj_next:
             ++cur_count;
             if (!ws())
@@ -647,8 +674,6 @@ obj_next:
             }
             return fail(error_code::expected_object_end);
 
-#undef NLOHMANN_VIEW_VALUE
-
 close_container:
             close();
             if (NLOHMANN_VIEW_UNLIKELY(depth == 0))
@@ -670,8 +695,11 @@ root_done:
             {
                 return fail(error_code::trailing_characters);
             }
-            cold.doc.tape_size = static_cast<std::size_t>(out - base);
-            cold.doc.arena.resize(cold.arena_used());
+            cold.m_doc.node_count = static_cast<std::size_t>(out - base);
+            cold.m_doc.max_depth = max_depth;
+            // (so that size() is the number of bytes used: the arena grows ahead
+            // in large steps, and shrink_to_fit() keeps size() bytes)
+            cold.m_doc.arena.resize(cold.arena_used());
             return true;
         }
 
@@ -700,11 +728,11 @@ root_done:
                 case '"':
                     return string();
                 case 't':
-                    return literal("true", 4, value_t::boolean, node_flags::is_true);
+                    return literal_true();
                 case 'f':
                     return literal_false();
                 case 'n':
-                    return literal("null", 4, value_t::null, 0);
+                    return literal_null();
                 case '-':
                     return number<true>();
                 case '0':
@@ -723,9 +751,19 @@ root_done:
             }
         }
 
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal_true()
+        {
+            return literal("true", value_t::boolean, node_flags::is_true);
+        }
+
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_false()
         {
-            return literal("false", 5, value_t::boolean, 0);
+            return literal("false", value_t::boolean, 0);
+        }
+
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal_null()
+        {
+            return literal("null", value_t::null, 0);
         }
 
         /// skip whitespace (and comments); false on a malformed comment
@@ -798,7 +836,7 @@ indent_done:
                 const auto n = static_cast<std::size_t>(out - base);
                 base = cold.grow(n, p);
                 out = base + n;
-                cap = base + cold.doc.tape_cap;
+                cap = base + cold.m_doc.node_capacity;
             }
             node* n = out++;
 #if NLOHMANN_VIEW_LITTLE_ENDIAN
@@ -830,14 +868,15 @@ indent_done:
                 const frame f = {cur_idx, cur_count, cur_is_object};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    cold.shallow[depth - 1] = f;
+                    cold.m_shallow[depth - 1] = f;
                 }
                 else
                 {
-                    cold.deep.push_back(f);
+                    cold.m_deep.push_back(f);
                 }
             }
             ++depth;
+            max_depth = (std::max)(max_depth, depth);
             cur_idx = idx;
             cur_count = 0;
             cur_is_object = k == value_t::object;
@@ -853,12 +892,12 @@ indent_done:
                 frame f{};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    f = cold.shallow[depth - 1];
+                    f = cold.m_shallow[depth - 1];
                 }
                 else
                 {
-                    f = cold.deep.back();
-                    cold.deep.pop_back();
+                    f = cold.m_deep.back();
+                    cold.m_deep.pop_back();
                 }
                 cur_idx = f.idx;
                 cur_count = f.count;
@@ -866,8 +905,11 @@ indent_done:
             }
         }
 
-        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char* text, std::size_t n, value_t k, std::uint8_t flags)
+        /// the literal `text` at p (N counts the terminating NUL)
+        template<std::size_t N>
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], value_t k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
         {
+            const std::size_t n = N - 1;
             if (NLOHMANN_VIEW_UNLIKELY(e - p < static_cast<std::ptrdiff_t>(n) || std::memcmp(p, text, n) != 0))
             {
                 return fail(error_code::invalid_literal);
@@ -947,24 +989,14 @@ indent_done:
             value_t kind = value_t::number_float;
             if (!is_float)
             {
-                kind = negative ? value_t::number_integer : value_t::number_unsigned;
-            }
-            if (!is_float)
-            {
                 // integers that do not fit become floats, as in parse()
-                if (NLOHMANN_VIEW_UNLIKELY(int_digits >= 19))
+                if (negative)
                 {
-                    if (negative)
-                    {
-                        if (int_digits > 19 || (int_digits == 19 && digits_exceed(int_start, "9223372036854775808", 19)))
-                        {
-                            kind = value_t::number_float;
-                        }
-                    }
-                    else if (int_digits > 20 || (int_digits == 20 && digits_exceed(int_start, "18446744073709551615", 20)))
-                    {
-                        kind = value_t::number_float;
-                    }
+                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? value_t::number_float : value_t::number_integer;
+                }
+                else
+                {
+                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? value_t::number_float : value_t::number_unsigned;
                 }
             }
             // parse() rejects floats that overflow; only numbers whose magnitude
@@ -985,6 +1017,9 @@ indent_done:
                 // integers are converted now, while their digits are in cache
                 const std::uint64_t m = int_digits <= 19 ? parse_upto19(int_start, static_cast<unsigned>(int_digits), e)
                                         : (parse_upto19(int_start, 19, e) * 10) + static_cast<std::uint64_t>(int_start[19] - '0');
+                // (0 - m rather than -m: unary minus on an unsigned type is
+                // MSVC's C4146, an error under /sdl; both give the bit pattern
+                // of the negative std::int64_t)
                 second = negative ? 0 - m : m;
             }
             emit(kind, 0, layout, static_cast<std::size_t>(s - b), second);
@@ -1016,7 +1051,7 @@ indent_done:
 };
 
 /// run the builder with compile-time options
-template<typename FloatType, bool NulIsEnd, bool Comments, bool TrailingCommas>
+template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd>
 inline bool build_with(document_data& d, const char* src, std::size_t size, bool sentinel, parse_failure& failure)
 {
     if (sentinel)
@@ -1039,11 +1074,11 @@ inline bool build(document_data& d, const char* src, std::size_t size, bool comm
 {
     if (comments)
     {
-        return trailing_commas ? build_with<FloatType, NulIsEnd, true, true>(d, src, size, sentinel, failure)
-               : build_with<FloatType, NulIsEnd, true, false>(d, src, size, sentinel, failure);
+        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd>(d, src, size, sentinel, failure)
+               : build_with<FloatType, true, false, NulIsEnd>(d, src, size, sentinel, failure);
     }
-    return trailing_commas ? build_with<FloatType, NulIsEnd, false, true>(d, src, size, sentinel, failure)
-           : build_with<FloatType, NulIsEnd, false, false>(d, src, size, sentinel, failure);
+    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd>(d, src, size, sentinel, failure)
+           : build_with<FloatType, false, false, NulIsEnd>(d, src, size, sentinel, failure);
 }
 
 }  // namespace view

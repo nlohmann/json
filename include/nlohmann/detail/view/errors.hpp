@@ -40,14 +40,96 @@ namespace view
     NLOHMANN_VIEW_THROW(invalid_iterator::create(id, msg, nullptr));
 }
 
+/// SAX handler of the error replay: accepts every event without storing it,
+/// and throws the exception the parser reports
+template<typename BasicJsonType>
+struct throwing_sax
+{
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
+
+    bool null()
+    {
+        return true;
+    }
+
+    bool boolean(bool /*unused*/)
+    {
+        return true;
+    }
+
+    bool number_integer(number_integer_t /*unused*/)
+    {
+        return true;
+    }
+
+    bool number_unsigned(number_unsigned_t /*unused*/)
+    {
+        return true;
+    }
+
+    bool number_float(number_float_t /*unused*/, const string_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool string(string_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool binary(binary_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool start_object(std::size_t /*unused*/)
+    {
+        return true;
+    }
+
+    bool key(string_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool end_object()
+    {
+        return true;
+    }
+
+    bool start_array(std::size_t /*unused*/)
+    {
+        return true;
+    }
+
+    bool end_array()
+    {
+        return true;
+    }
+
+    /// (a template, as in json_sax_dom_parser: the parser passes the concrete
+    /// exception type, which is thrown as is)
+    template<class Exception>
+    [[noreturn]] bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const Exception& ex)
+    {
+        NLOHMANN_VIEW_THROW(ex);
+    }
+};
+
 /*!
 @brief throw the exception BasicJsonType::parse would throw for this input
 
 The view accepts exactly the inputs parse() accepts, so on a failure the
 library parser is run on the same bytes: it throws the exception parse() would
-throw, with the same message, position, and "last read" token. The error path
-is cold, so this costs nothing on valid input. Should parse() accept the input
-nevertheless (a bug), the view's own failure is reported.
+throw, with the same message, position, and "last read" token. The replay
+uses a SAX handler that stores nothing, so it only lexes and parses up to the
+error, without building values. The error path is cold, so this costs nothing
+on valid input. Should parse() accept the input nevertheless (a bug), the
+view's own failure is reported.
 */
 template<typename BasicJsonType>
 [[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_parse_failure(const parse_failure& f, const char* src, std::size_t size,
@@ -58,7 +140,8 @@ template<typename BasicJsonType>
         // (the limit is detail::view::max_input_size(): 4 GiB minus 16 bytes)
         NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
-    const BasicJsonType accepted = BasicJsonType::parse(src, src + size, nullptr, true, ignore_comments, ignore_trailing_commas);
+    throwing_sax<BasicJsonType> sax;
+    const bool accepted = BasicJsonType::sax_parse(src, src + size, &sax, input_format_t::json, true, ignore_comments, ignore_trailing_commas);
     // LCOV_EXCL_START (only if parse() accepts what the view rejects: a bug)
     static_cast<void>(accepted);
 

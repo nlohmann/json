@@ -14,6 +14,7 @@
 #include <limits> // numeric_limits
 #include <new> // bad_alloc, operator new, placement new
 #include <string> // string
+#include <vector> // vector
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
@@ -31,28 +32,32 @@ struct document_data
 {
     const char* src = nullptr;
     std::size_t size = 0;
-    node* tape = nullptr;
-    std::size_t tape_size = 0;
-    std::size_t tape_cap = 0;
-    node* inline_tape = nullptr; ///< node array allocated together with this header
-    std::size_t inline_cap = 0;
-    std::string arena; ///< decoded strings that contained escapes
-    std::string owned; ///< owned copy of the input, if any
+    node* nodes = nullptr; ///< the node index (see node.hpp)
+    std::size_t node_count = 0;
+    std::size_t node_capacity = 0;
+    node* inline_nodes = nullptr; ///< node array allocated together with this header
+    std::size_t inline_capacity = 0;
+    std::size_t max_depth = 0; ///< deepest nesting of arrays and objects (the root container is depth 1)
+    std::vector<char> arena; ///< decoded strings that contained escapes (no terminator: they are handed out with their length)
+    std::string owned; ///< owned copy of the input, if any (a std::string, so that its NUL serves as the parser's sentinel)
     std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
     bool discarded = true;
 
-    /// one allocation for the header and room for `nodes` nodes; large
-    /// documents get a separate node array instead (so it can be trimmed)
-    static document_data* create(std::size_t nodes)
+    /// One allocation for the header and room for `count` nodes, so that a
+    /// small document needs one allocation instead of two. Large documents get
+    /// a separate node array instead (so it can be trimmed). When a document
+    /// outgrows the inline array, that array stays unused: at most 256 nodes
+    /// (4 KiB), and only for documents whose estimate was too small.
+    static document_data* create(std::size_t count)
     {
-        nodes = nodes <= 256 ? nodes : 0;
-        void* mem = ::operator new (sizeof(document_data) + (nodes * sizeof(node)));
+        count = count <= 256 ? count : 0;
+        void* mem = ::operator new (sizeof(document_data) + (count * sizeof(node)));
         auto* d = new (mem) document_data(); // NOLINT(cppcoreguidelines-owning-memory): owned by the returned pointer, freed by deleter
         // (aligned: sizeof is a multiple of the alignment; through void*, as GCC's -Wcast-align wants)
-        d->inline_tape = static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // NOLINT(bugprone-casting-through-void)
-        d->inline_cap = nodes;
-        d->tape = d->inline_tape;
-        d->tape_cap = nodes;
+        d->inline_nodes = static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // NOLINT(bugprone-casting-through-void)
+        d->inline_capacity = count;
+        d->nodes = d->inline_nodes;
+        d->node_capacity = count;
         return d;
     }
 
@@ -71,8 +76,8 @@ struct document_data
     /// implicit one); they cannot take default member initializers, which old
     /// Clang (3.4-3.6) rejects. The other members have default member
     /// initializers. noexcept: create() constructs into raw memory and could not
-    /// release it if this threw (the std::string default constructors do not
-    /// allocate).
+    /// release it if this threw (the std::vector and std::string default
+    /// constructors do not allocate).
     document_data() noexcept
         : arena() // NOLINT(readability-redundant-member-init)
         , owned() // NOLINT(readability-redundant-member-init)
@@ -88,12 +93,12 @@ struct document_data
 
     void release() noexcept
     {
-        if (tape != inline_tape)
+        if (nodes != inline_nodes)
         {
-            ::operator delete (tape);
+            ::operator delete (nodes);
         }
-        tape = inline_tape;
-        tape_cap = inline_cap;
+        nodes = inline_nodes;
+        node_capacity = inline_capacity;
     }
 
     /// the largest node count whose size in bytes fits a std::size_t
@@ -107,12 +112,12 @@ struct document_data
         NLOHMANN_VIEW_THROW(std::bad_alloc());
     }
 
-    /// make room for n nodes; keeps the first tape_size nodes (throws
+    /// make room for n nodes; keeps the first node_count nodes (throws
     /// std::bad_alloc for a count that does not fit the address space,
     /// instead of wrapping around in n * sizeof(node))
     void reserve(std::size_t n)
     {
-        if (n <= tape_cap)
+        if (n <= node_capacity)
         {
             return;
         }
@@ -121,13 +126,13 @@ struct document_data
             throw_bad_alloc();
         }
         node* fresh = static_cast<node*>(::operator new (n * sizeof(node)));
-        if (tape_size != 0)
+        if (node_count != 0)
         {
-            std::memcpy(fresh, tape, tape_size * sizeof(node));
+            std::memcpy(fresh, nodes, node_count * sizeof(node));
         }
         release();
-        tape = fresh;
-        tape_cap = n;
+        nodes = fresh;
+        node_capacity = n;
     }
 
     const char* str(const node& n) const noexcept

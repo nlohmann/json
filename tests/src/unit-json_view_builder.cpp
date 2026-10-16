@@ -113,9 +113,9 @@ json value_of(const document_data& d, const node*& n)
 
 json value_of(const built& b)
 {
-    const node* n = b.data->tape;
+    const node* n = b.data->nodes;
     json v = value_of(*b.data, n);
-    CHECK(n == b.data->tape + b.data->tape_size);
+    CHECK(n == b.data->nodes + b.data->node_count);
     return v;
 }
 
@@ -340,6 +340,17 @@ TEST_CASE("json_view builder")
 
     SECTION("deep nesting")
     {
+        // the deepest nesting is recorded (materialize() sizes its stack from it)
+        CHECK(build("1", false, false, false).data->max_depth == 0);
+        CHECK(build("[]", false, false, false).data->max_depth == 1);
+        CHECK(build(R"([[1],{"a":[[]]},[]])", false, false, false).data->max_depth == 4);
+        // a stack that turns out too small still grows
+        const std::string nested = R"([[1],{"a":[[{"b":[]}]]},[]])";
+        const built shallow = build(nested, false, false, false);
+        REQUIRE(shallow.ok);
+        shallow.data->max_depth = 1;
+        CHECK(nlohmann::detail::view::materialize<json>(*shallow.data, shallow.data->nodes) == json::parse(nested));
+
         // the open containers beyond 64 levels live on the heap
         for (const std::size_t depth :
                 {
@@ -349,8 +360,9 @@ TEST_CASE("json_view builder")
             const std::string arrays = std::string(depth, '[') + std::string(depth, ']');
             const built b = build(arrays, false, false, false);
             REQUIRE(b.ok);
-            CHECK(b.data->tape_size == depth);
-            CHECK(b.data->tape[0].next == depth);
+            CHECK(b.data->node_count == depth);
+            CHECK(b.data->nodes[0].next == depth);
+            CHECK(b.data->max_depth == depth);
             std::string objects;
             for (std::size_t i = 0; i < depth; ++i)
             {
@@ -359,7 +371,8 @@ TEST_CASE("json_view builder")
             objects += '1' + std::string(depth, '}');
             const built o = build(objects, false, false, false);
             REQUIRE(o.ok);
-            CHECK(o.data->tape_size == (2 * depth) + 1);
+            CHECK(o.data->node_count == (2 * depth) + 1);
+            CHECK(o.data->max_depth == depth);
             CHECK(!build(std::string(depth, '[') + std::string(depth - 1, ']'), false, false, false).ok);
         }
     }
@@ -454,7 +467,7 @@ TEST_CASE("json_view node integer bits")
             CAPTURE(c.text)
             const built b = build(c.text, false, false, true);
             REQUIRE(b.ok);
-            const node& n = b.data->tape[1];
+            const node& n = b.data->nodes[1];
             CHECK(integer_bits(n) == c.bits);
             CHECK(n.len == static_cast<std::uint32_t>(c.bits));
             CHECK(n.next == static_cast<std::uint32_t>(c.bits >> 32));
@@ -469,23 +482,23 @@ TEST_CASE("json_view node array size limit")
     // for absurd counts everywhere)
     std::unique_ptr<document_data, document_data::deleter> d(document_data::create(0));
     d->reserve(8);
-    REQUIRE(d->tape_cap >= 8);
-    d->tape_size = 2;
-    const std::size_t cap = d->tape_cap;
-    node* const tape = d->tape;
+    REQUIRE(d->node_capacity >= 8);
+    d->node_count = 2;
+    const std::size_t cap = d->node_capacity;
+    node* const nodes = d->nodes;
 
 #if !defined(JSON_NOEXCEPTION)
     const std::size_t too_many = document_data::max_nodes() + 1;
     CHECK_THROWS_AS(d->reserve(too_many), std::bad_alloc&);
     CHECK_THROWS_AS(d->reserve((std::numeric_limits<std::size_t>::max)()), std::bad_alloc&);
     // the array is unchanged
-    CHECK(d->tape == tape);
-    CHECK(d->tape_cap == cap);
-    CHECK(d->tape_size == 2);
+    CHECK(d->nodes == nodes);
+    CHECK(d->node_capacity == cap);
+    CHECK(d->node_count == 2);
 #endif
 
     // the largest count that fits is not refused by the check (nothing is
     // allocated for a count that is already there)
     d->reserve(cap);
-    CHECK(d->tape == tape);
+    CHECK(d->nodes == nodes);
 }
