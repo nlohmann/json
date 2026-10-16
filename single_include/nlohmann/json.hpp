@@ -30226,7 +30226,7 @@ class serializer
     being threaded through every call to @ref dump, @ref dump_internal and
     @ref dump_iteratively.
     */
-    serializer(output_adapter_protocol<char>& s, const char ichar,
+    serializer(output_adapter_protocol<char>& s, const char ichar, // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): the buffers are written before they are read
                const bool pretty_print_ = false,
                const bool ensure_ascii_ = false,
                const std::size_t indent_step_ = 0,
@@ -32194,11 +32194,15 @@ class serializer
     /// the output of the serializer (non-owning; the adapter lives at the call site)
     output_adapter_protocol<char>* o = nullptr;
 
+    // The three buffers below are left uninitialized: they are written before they
+    // are read (only the part written is ever read), and zeroing 1.6 KiB took
+    // more than half of what dumping a small value costs.
+
     /// a (hopefully) large enough character buffer
-    std::array<char, 64> number_buffer{{}};
+    std::array<char, 64> number_buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
 
     /// string buffer
-    std::array<char, 512> string_buffer{{}};
+    std::array<char, 512> string_buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
 
     /// the indentation character
     const char indent_char;
@@ -32218,7 +32222,7 @@ class serializer
     /// buffer collecting output before it is flushed to the output adapter, so
     /// that the many small structural writes become few bulk writes
     static constexpr std::size_t write_buffer_size = 1024;
-    std::array<char, write_buffer_size> write_buffer{{}};
+    std::array<char, write_buffer_size> write_buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
     /// number of valid bytes currently held in @ref write_buffer
     std::size_t write_buffer_pos = 0;
 };
