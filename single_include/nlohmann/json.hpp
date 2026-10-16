@@ -24241,7 +24241,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // reverse
+#include <algorithm> // min, reverse
 #include <array> // array
 #include <cmath> // isnan, isinf
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
@@ -25455,13 +25455,7 @@ class binary_writer
                 }
                 else
                 {
-                    for (size_t i = 0; i < j.m_data.m_value.binary->size(); ++i)
-                    {
-                        oa.write_character(to_char_type(bjdata_draft3 ? 'B' : 'U'));
-                        // the cast is needed for binary types whose value type
-                        // is not an integer (e.g., std::byte)
-                        oa.write_character(to_char_type(static_cast<std::uint8_t>(j.m_data.m_value.binary->data()[i])));
-                    }
+                    write_ubjson_binary_bytes(*j.m_data.m_value.binary, bjdata_draft3);
                 }
 
                 if (!use_count)
@@ -27772,6 +27766,35 @@ class binary_writer
     static constexpr std::size_t ubjson_integer_encoding_space = 9;
 
     /*!
+    @brief write the bytes of a binary value as an array of UBJSON uint8 values
+
+    Every byte is written with its marker, in blocks that fit the space reserved
+    from the sink. Kept out of line, so that write_ubjson does not carry the
+    registers of its loop.
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_ubjson_binary_bytes(const binary_t& binary, const bool bjdata_draft3)
+    {
+        const CharType marker = to_char_type(bjdata_draft3 ? 'B' : 'U');
+        const auto* const data = binary.data();
+        const std::size_t size = binary.size();
+        for (std::size_t i = 0; i < size;)
+        {
+            const std::size_t block = (std::min)(size - i, max_reserve_size / 2);
+            CharType* const out = oa.reserve(2 * block);
+            for (std::size_t k = 0; k < block; ++k)
+            {
+                out[2 * k] = marker;
+                // the cast is needed for binary types whose value type
+                // is not an integer (e.g., std::byte)
+                out[(2 * k) + 1] = to_char_type(static_cast<std::uint8_t>(data[i + k]));
+            }
+            i += block;
+            oa.commit(2 * block);
+        }
+    }
+
+    /*!
     @brief encode a UBJSON/BJData float, with its marker if @a add_prefix
     @param[in] out  where the encoding goes; at most 9 characters are written
     @return the end of the encoding
@@ -28509,22 +28532,7 @@ class binary_writer
 
             case value_t::binary:
             {
-                // BON8 has no binary type: write the bytes as an array of
-                // integers, like UBJSON and BJData do
-                const auto N = j.m_data.m_value.binary->size();
-                write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x80 + N : 0x85), string_open);
-
-                for (std::size_t i = 0; i < N; ++i)
-                {
-                    // the cast is needed for binary types whose value type
-                    // is not an integer (e.g., std::byte)
-                    write_bon8_integer(static_cast<std::uint8_t>(j.m_data.m_value.binary->data()[i]));
-                }
-
-                if (N > 4)
-                {
-                    write_bon8_marker(0xFE, string_open);
-                }
+                write_bon8_binary(*j.m_data.m_value.binary, string_open);
                 break;
             }
 
@@ -28608,6 +28616,48 @@ class binary_writer
                 ++stack.back().object_it;
             }
             write_bon8_value_or_push(*child, string_open, stack);
+        }
+    }
+
+    /*!
+    @brief write a binary value as BON8
+
+    BON8 has no binary type: the bytes are written as an array of integers,
+    like UBJSON and BJData do. Kept out of line, so that write_bon8_value does
+    not carry the registers of its loop.
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_bon8_binary(const binary_t& binary, bool& string_open)
+    {
+        const auto N = binary.size();
+        write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x80 + N : 0x85), string_open);
+
+        // a byte is an integer of 0 to 255: one byte up to 39, two bytes above
+        const auto* const data = binary.data();
+        for (std::size_t i = 0; i < N;)
+        {
+            const std::size_t block = (std::min)(N - i, max_reserve_size / 2);
+            CharType* const start = oa.reserve(2 * block);
+            CharType* out = start;
+            for (std::size_t k = 0; k < block; ++k, ++i)
+            {
+                // the cast is needed for binary types whose value type
+                // is not an integer (e.g., std::byte)
+                const auto value = static_cast<unsigned>(static_cast<std::uint8_t>(data[i]));
+                // both bytes are stored, the second only counts for a value above 39:
+                // 0xC2 + ((value - 40) >> 7), (value - 40) & 0x7F
+                const unsigned wide = value - 40u;
+                const bool is_wide = value > 39u;
+                out[0] = to_char_type(static_cast<std::uint8_t>(is_wide ? 0xC2u + (wide >> 7u) : 0x90u + value));
+                out[1] = to_char_type(static_cast<std::uint8_t>(wide & 0x7Fu));
+                out += is_wide ? 2 : 1;
+            }
+            oa.commit(static_cast<std::size_t>(out - start));
+        }
+
+        if (N > 4)
+        {
+            write_bon8_marker(0xFE, string_open);
         }
     }
 
