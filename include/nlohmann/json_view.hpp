@@ -715,7 +715,7 @@ class basic_json_view
     /// decoded strings); the estimate sizes the output buffer of dump()
     std::size_t source_extent() const noexcept
     {
-        const node* const end = m_doc->tape + m_doc->tape_size;
+        const node* const end = m_doc->nodes + m_doc->node_count;
         if ((m_node->flags & detail::view::node_flags::storage) != 0)
         {
             return m_node->len;
