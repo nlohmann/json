@@ -22832,8 +22832,27 @@ class json_pointer
     }
 
     /// @brief object member access with a key that is only copied if it is inserted
+    ///
+    /// Objects that can find the position of a key and insert there
+    /// (std::map) search once, others look the key up and add it if it is missing.
     template<typename BasicJsonType>
-    static BasicJsonType& object_member(BasicJsonType& object, const string_t& key)
+    static auto object_member_impl(BasicJsonType& object, const string_t& key, detail::priority_tag<1> /*unused*/)
+    -> decltype(object.m_data.m_value.object->emplace_hint(object.m_data.m_value.object->lower_bound(key), key, nullptr), std::declval<BasicJsonType&>())
+    {
+        auto& members = *object.m_data.m_value.object;
+        auto it = members.lower_bound(key);
+        if (it != members.end() && !members.key_comp()(key, it->first))
+        {
+            return it->second;
+        }
+
+        const auto old_capacity = object.container_capacity();
+        it = members.emplace_hint(it, key, nullptr);
+        return object.set_parent_after_insert(it->second, old_capacity);
+    }
+
+    template<typename BasicJsonType>
+    static BasicJsonType& object_member_impl(BasicJsonType& object, const string_t& key, detail::priority_tag<0> /*unused*/)
     {
         auto& members = *object.m_data.m_value.object;
         const auto it = members.find(key);
@@ -22842,6 +22861,12 @@ class json_pointer
             return it->second;
         }
         return object.operator[](key);
+    }
+
+    template<typename BasicJsonType>
+    static BasicJsonType& object_member(BasicJsonType& object, const string_t& key)
+    {
+        return object_member_impl(object, key, detail::priority_tag<1> {});
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
