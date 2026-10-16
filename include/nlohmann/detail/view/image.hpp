@@ -159,7 +159,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
         }
         out.push_back(r);
     };
-    emit(d.tape);
+    emit(d.nodes);
     while (!stack.empty())
     {
         frame& top = stack.back();
@@ -195,8 +195,8 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     throw_type_error(320, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
 #endif
     const std::size_t arena_size = d.arena_size;
-    const node* nodes = d.tape;
-    std::size_t count = d.tape_size;
+    const node* nodes = d.nodes;
+    std::size_t count = d.node_count;
     std::vector<node> compacted;
     std::string text_tail;
     std::string arena_tail;
@@ -717,10 +717,10 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     d.indexes.clear();
     d.index_slots.clear();
     d.large_objects.clear();
-    d.tape_size = 0;
+    d.node_count = 0;
     d.reserve(count);
-    std::memcpy(d.tape, image + sizeof(h), count * sizeof(node));
-    d.tape_size = count;
+    std::memcpy(d.nodes, image + sizeof(h), count * sizeof(node));
+    d.node_count = count;
     const std::uint8_t* const text = image + text_at;
     const std::uint8_t* const arena = text + text_size + 1;
     d.src = reinterpret_cast<const char*>(text); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -728,14 +728,14 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     d.base[0] = d.src;
     d.base[1] = reinterpret_cast<const char*>(arena); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     d.arena_size = arena_size;
-    if (check != image_check::none && !check_image(d.tape, count, text, text_size, arena, arena_size, check == image_check::full))
+    if (check != image_check::none && !check_image(d.nodes, count, text, text_size, arena, arena_size, check == image_check::full))
     {
         throw_invalid_image("the check failed");
     }
     // the hash indexes of large objects, as after parsing
     for (std::size_t i = 0; i < count; ++i)
     {
-        node& n = d.tape[i];
+        node& n = d.nodes[i];
         if (n.kind == static_cast<std::uint8_t>(value_t::object))
         {
             n.extra = 0;
