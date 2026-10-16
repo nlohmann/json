@@ -3747,8 +3747,8 @@ class binary_writer
     static bool bjdata_ndarray_value_in_range(const BasicJsonType& el)
     {
         return el.is_number_unsigned()
-               ? integer_fits_max<std::uint64_t>(el.m_data.m_value.number_unsigned) && value_in_range_of<TargetType>(el.template get<std::uint64_t>())
-               : integer_fits<std::int64_t>(el.m_data.m_value.number_integer) && value_in_range_of<TargetType>(el.template get<std::int64_t>());
+               ? integer_fits_max<std::uint64_t>(el.m_data.m_value.number_unsigned) && value_in_range_of<TargetType>(static_cast<std::uint64_t>(el.m_data.m_value.number_unsigned))
+               : integer_fits<std::int64_t>(el.m_data.m_value.number_integer) && value_in_range_of<TargetType>(static_cast<std::int64_t>(el.m_data.m_value.number_integer));
     }
 
     /*!
@@ -3837,7 +3837,7 @@ class binary_writer
     */
     bool write_bjdata_ndarray_float_element(const BasicJsonType& el, const bool dry_run)
     {
-        const auto dval = el.template get<double>();
+        const auto dval = static_cast<double>(el.m_data.m_value.number_float);
         if (dry_run)
         {
 #ifdef __GNUC__
@@ -3862,6 +3862,90 @@ class binary_writer
     }
 
     /*!
+    @brief write the elements of an ND-array as the number kind @a dtype names
+           (see @ref write_bjdata_ndarray), after they have been found to be
+           in range by a dry run of @ref write_bjdata_ndarray_elements
+
+    The elements are encoded in blocks into space reserved from the sink.
+    */
+    void write_bjdata_ndarray_values(const BasicJsonType& array_data, const CharType dtype)
+    {
+        switch (dtype)
+        {
+            case 'U':
+            case 'C':
+            case 'B':
+                write_bjdata_ndarray_block<std::uint8_t>(array_data);
+                break;
+            case 'i':
+                write_bjdata_ndarray_block<std::int8_t>(array_data);
+                break;
+            case 'u':
+                write_bjdata_ndarray_block<std::uint16_t>(array_data);
+                break;
+            case 'I':
+                write_bjdata_ndarray_block<std::int16_t>(array_data);
+                break;
+            case 'm':
+                write_bjdata_ndarray_block<std::uint32_t>(array_data);
+                break;
+            case 'l':
+                write_bjdata_ndarray_block<std::int32_t>(array_data);
+                break;
+            case 'M':
+                write_bjdata_ndarray_block<std::uint64_t>(array_data);
+                break;
+            case 'L':
+                write_bjdata_ndarray_block<std::int64_t>(array_data);
+                break;
+            case 'd':
+                write_bjdata_ndarray_block<float>(array_data);
+                break;
+            case 'D':
+            default:
+                // 'D' (double) already spans the full range of number_float_t
+                write_bjdata_ndarray_block<double>(array_data);
+                break;
+        }
+    }
+
+    /// the value of an ND-array element that is an integer, as the integer type that @a T is converted from
+    template<typename T>
+    static T bjdata_ndarray_integer(const BasicJsonType& el, std::true_type /*is_integral*/) noexcept
+    {
+        using storage_type = typename std::conditional<std::is_unsigned<T>::value, std::uint64_t, std::int64_t>::type;
+        return static_cast<T>(el.is_number_unsigned()
+                              ? static_cast<storage_type>(el.m_data.m_value.number_unsigned)
+                              : static_cast<storage_type>(el.m_data.m_value.number_integer));
+    }
+
+    /// the value of an ND-array element that is a float
+    template<typename T>
+    static T bjdata_ndarray_integer(const BasicJsonType& el, std::false_type /*is_integral*/) noexcept
+    {
+        return static_cast<T>(static_cast<double>(el.m_data.m_value.number_float));
+    }
+
+    /// write the elements of an ND-array as @a T, little-endian, in blocks
+    template<typename T>
+    void write_bjdata_ndarray_block(const BasicJsonType& array_data)
+    {
+        constexpr std::size_t per_block = max_reserve_size / sizeof(T);
+        auto it = array_data.m_data.m_value.array->begin();
+        const auto end = array_data.m_data.m_value.array->end();
+        while (it != end)
+        {
+            CharType* const start = oa.reserve(per_block * sizeof(T));
+            CharType* out = start;
+            for (std::size_t n = 0; n < per_block && it != end; ++n, ++it)
+            {
+                out = store_number(out, bjdata_ndarray_integer<T>(*it, std::is_integral<T>()), true);
+            }
+            oa.commit(static_cast<std::size_t>(out - start));
+        }
+    }
+
+    /*!
     @brief validate or write every element of a BJData ND-array's `_ArrayData_`
     @param[in] array_data  the `_ArrayData_` array
     @param[in] dtype       the ND-array dtype marker, as returned by bjdata_ndarray_type_marker()
@@ -3870,6 +3954,12 @@ class binary_writer
     */
     bool write_bjdata_ndarray_elements(const BasicJsonType& array_data, const CharType dtype, const bool dry_run)
     {
+        if (!dry_run)
+        {
+            write_bjdata_ndarray_values(array_data, dtype);
+            return true;
+        }
+
         for (const auto& el : array_data)
         {
             bool ok = true;
