@@ -47,24 +47,50 @@ constexpr std::size_t index_max_displacement = 64;
 static_assert(document_data::index_min_members >= 2 * index_max_displacement,
               "a table must be much larger than the probe window of a lookup");
 
-/// hash of a key: its bytes, eight at a time, in a fixed byte order
+/// hash of a key: its bytes, eight at a time (in a fixed byte order), where the
+/// last word may overlap the one before (so that no loop over single bytes is
+/// needed); a key of fewer than eight bytes is read as two overlapping words of
+/// four or two bytes (in the native byte order: the hash is not stored, and the
+/// same on both sides of a lookup)
 inline std::uint64_t key_hash(const char* s, std::size_t n) noexcept
 {
     std::uint64_t h = 0x9E3779B97F4A7C15u * (n + 1);
     const auto* p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    while (n >= 8)
-    {
-        h = (h ^ read_eight_bytes(p)) * 0xBF58476D1CE4E5B9u;
-        h ^= h >> 29u;
-        p += 8;
-        n -= 8;
-    }
     std::uint64_t w = 0;
-    for (std::size_t i = 0; i < n; ++i)
+    if (n >= 8)
     {
-        w |= static_cast<std::uint64_t>(p[i]) << (8u * i);
+        const unsigned char* const last = p + n - 8;
+        while (p < last)
+        {
+            h = (h ^ read_eight_bytes(p)) * 0xBF58476D1CE4E5B9u;
+            h ^= h >> 29u;
+            p += 8;
+        }
+        w = read_eight_bytes(last);
     }
-    h = (h ^ w) * 0x94D049BB133111EBu;
+    else if (n >= 4)
+    {
+        std::uint32_t head = 0;
+        std::uint32_t tail = 0;
+        std::memcpy(&head, p, 4);
+        std::memcpy(&tail, p + n - 4, 4);
+        w = static_cast<std::uint64_t>(head) | (static_cast<std::uint64_t>(tail) << 32u);
+    }
+    else if (n >= 2)
+    {
+        std::uint16_t head = 0;
+        std::uint16_t tail = 0;
+        std::memcpy(&head, p, 2);
+        std::memcpy(&tail, p + n - 2, 2);
+        w = static_cast<std::uint64_t>(head) | (static_cast<std::uint64_t>(tail) << 16u);
+    }
+    else if (n == 1)
+    {
+        w = p[0];
+    }
+    // (a product only carries bits upwards, and the slot is taken from the low
+    // bits: the high bits of the last word are folded down before the multiplication)
+    h = (h ^ w ^ (w >> 29u)) * 0x94D049BB133111EBu;
     return h ^ (h >> 31u);
 }
 

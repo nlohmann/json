@@ -21,14 +21,17 @@ using nlohmann::ordered_json_view;
 using json_view_test::generator;
 using json_view_test::has_duplicate_keys;
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <iomanip>
 #include <map>
 #include <random>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -596,6 +599,76 @@ TEST_CASE("json_view large objects")
         with_collisions.shrink_to_fit();
         without_collisions.shrink_to_fit();
         CHECK(without_collisions.memory_usage() >= with_collisions.memory_usage() + (table_size * sizeof(std::uint32_t)));
+    }
+
+    SECTION("keys that differ in their last bytes are spread over the table")
+    {
+        // The hash must spread the usual families of keys (numbered names, hex
+        // strings, dates, short names): a key farther than index_max_displacement
+        // from its home slot would leave the object without a table. The keys
+        // are placed with linear probing, as the table does.
+        const auto max_displacement = [](const std::vector<std::string>& keys)
+        {
+            std::size_t slots = 16;
+            while (slots < 2 * keys.size())
+            {
+                slots *= 2;
+            }
+            std::vector<bool> used(slots, false);
+            std::size_t farthest = 0;
+            for (const std::string& key : keys)
+            {
+                std::size_t i = static_cast<std::size_t>(nlohmann::detail::view::key_hash(key.data(), key.size())) & (slots - 1);
+                std::size_t distance = 0;
+                while (used[i])
+                {
+                    i = (i + 1) & (slots - 1);
+                    ++distance;
+                }
+                used[i] = true;
+                farthest = (std::max)(farthest, distance);
+            }
+            return farthest;
+        };
+        const auto numbered = [](const char* format, int count, int step)
+        {
+            std::vector<std::string> keys;
+            for (int i = 0; i < count; ++i)
+            {
+                std::array<char, 64> buffer{};
+                static_cast<void>(std::snprintf(buffer.data(), buffer.size(), format, i * step)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                keys.emplace_back(buffer.data());
+            }
+            return keys;
+        };
+        for (const char* format :
+                {"key%d", "%d", "item_%04d", "a%05d", "%03dxyz", "id%d", "user_%d", "%d_suffix", "0x%04x", "A%07d", "12345678%d", "1234567%d", "123456789%d",
+                 "configuration_parameter_value_%04d_extra", "2026-01-%02dT00:00:00Z"
+                })
+        {
+            CAPTURE(format)
+            CHECK(max_displacement(numbered(format, std::string(format).find("%02d") != std::string::npos ? 60 : 1000, 1)) < nlohmann::detail::view::index_max_displacement);
+            CHECK(max_displacement(numbered(format, 600, 7)) < nlohmann::detail::view::index_max_displacement);
+        }
+        std::mt19937_64 rng(7);
+        for (const std::size_t length :
+                {
+                    std::size_t{1}, std::size_t{2}, std::size_t{3}, std::size_t{5}, std::size_t{7}, std::size_t{8}, std::size_t{9}, std::size_t{12}, std::size_t{16}, std::size_t{17}, std::size_t{33}
+                })
+        {
+            CAPTURE(length)
+            std::set<std::string> distinct;
+            while (distinct.size() < (length == 1 ? 26 : (length == 2 ? 500 : 700))) // (there are 26 and 676 keys of one and two letters)
+            {
+                std::string key(length, 'a');
+                for (char& c : key)
+                {
+                    c = static_cast<char>('a' + (rng() % 26));
+                }
+                distinct.insert(key);
+            }
+            CHECK(max_displacement(std::vector<std::string>(distinct.begin(), distinct.end())) < nlohmann::detail::view::index_max_displacement);
+        }
     }
 
     SECTION("shrink_to_fit releases the tables' spare capacity")
