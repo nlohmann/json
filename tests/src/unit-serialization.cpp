@@ -1374,7 +1374,13 @@ void check_dump_against_reference(const std::string& s, const bool with_strict =
     };
     for (const auto error_handler : error_handlers)
     {
+#if defined(JSON_NOEXCEPTION)
+        // a strict dump of invalid UTF-8 calls std::abort() instead of throwing
+        static_cast<void>(with_strict);
+        if (error_handler == json::error_handler_t::strict)
+#else
         if (!with_strict && error_handler == json::error_handler_t::strict)
+#endif
         {
             continue;
         }
@@ -1429,7 +1435,7 @@ TEST_CASE("invalid UTF-8 at every position is handled like the reference")
         "\xF4\x90\x80\x80",
         // sequences cut short by ASCII, a control character, a quote, a
         // backslash, DEL, or the lead byte of a well-formed character
-        "\xC3" "a", "\xE2\x82" "\n", "\xE2\x82\"", "\xF0\x9F\x98\\", "\xC3\x7F", "\xC3\xC3\xA4", "\xE2\xF0\x9F\x98\x80",
+        "\xC3" "a", "\xE2\x82" "\n", "\xE2\x82\"", "\xF0\x9F\x98\\", "\xC3\x7F", "\xC3\xC3\xA4", "\xE2\xF0\x9F\x98\x80", // NOLINT(bugprone-suspicious-missing-comma): "\xC3" "a" ends the hex escape
         // truncated sequences
         "\xC3", "\xE2\x82", "\xF0\x9F\x98"
     };
@@ -1489,7 +1495,7 @@ TEST_CASE("invalid UTF-8 at every position is handled like the reference")
                 {
                     for (const auto& pattern : patterns)
                     {
-                        check_dump_against_reference(make_string(filler, pos, pattern, length - pos), bytes <= (filler.size() == 1 ? 17 : 8));
+                        check_dump_against_reference(make_string(filler, pos, pattern, length - pos), bytes <= (filler.size() == 1 ? 17u : 8u));
                     }
                 }
             }

@@ -494,8 +494,7 @@ JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_missing_member(c
     static_cast<void>(string_type);
     static_cast<void>(val);
     // context-sensitive error message
-    const std::string error_msg = (op == "op") ? std::string("operation") : concat("operation '", op, '\'');
-    JSON_THROW(parse_error::create(exception_id::patch_invalid_operation, 0, concat(error_msg, string_type ? " must have string member '" : " must have member '", member, "'"), &val));
+    JSON_THROW(parse_error::create(exception_id::patch_invalid_operation, 0, concat((op == "op") ? std::string("operation") : concat("operation '", op, '\''), string_type ? " must have string member '" : " must have member '", member, "'"), &val));
 }
 
 template<typename StringType, typename BasicJsonType>

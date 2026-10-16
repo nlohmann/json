@@ -218,7 +218,11 @@ TEST_CASE("compliance tests from nativejson-benchmark")
             n1e308[0] = '[';
             n1e308[1] = '1';
             n1e308[310] = ']';
+#if JSON_STRICT_NUL_HANDLING
+            n1e308.pop_back(); // a NUL byte after the value is a syntax error in strict mode
+#else
             n1e308[311] = '\0';
+#endif
             TEST_DOUBLE(n1e308, 1E308);
         }
 

@@ -11,6 +11,7 @@
 #include <algorithm> // all_of
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
+#include <cstddef> // size_t
 #include <cstdlib> // strtoull
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
@@ -334,7 +335,7 @@ class json_pointer
                 {
                     break; // not a plain number: let strtoull decide
                 }
-                acc = static_cast<size_type>(acc * 10 + static_cast<size_type>(c - '0'));
+                acc = static_cast<size_type>((acc * 10) + static_cast<size_type>(c - '0'));
                 if (JSON_HEDLEY_UNLIKELY(i == s.size() - 1))
                 {
                     idx = acc;
@@ -529,10 +530,10 @@ class json_pointer
 
         static std::size_t hash_of(std::size_t parent, const string_t& token) noexcept
         {
-            std::size_t h = parent * static_cast<std::size_t>(0x9E3779B97F4A7C15ULL);
+            std::size_t h = parent * static_cast<std::size_t>(0x9E3779B97F4A7C15ULL & (std::numeric_limits<std::size_t>::max)());
             for (std::size_t i = 0; i < token.size(); ++i)
             {
-                h = (h ^ static_cast<unsigned char>(token[i])) * static_cast<std::size_t>(0x100000001B3ULL);
+                h = (h ^ static_cast<unsigned char>(token[i])) * static_cast<std::size_t>(0x100000001B3ULL & (std::numeric_limits<std::size_t>::max)());
             }
             return h ^ (h >> 29u);
         }
