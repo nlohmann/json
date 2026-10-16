@@ -1661,7 +1661,7 @@ TEST_CASE_TEMPLATE("reverse iteration and member access", Json, nlohmann::json, 
         seen.clear();
         for (auto r = j.crbegin(); r != j.crend(); ++r)
         {
-            seen.push_back(*r);
+            seen.push_back(r->template get<int>());
         }
         CHECK(seen == std::vector<int> {4, 3, 2, 1});
     }
