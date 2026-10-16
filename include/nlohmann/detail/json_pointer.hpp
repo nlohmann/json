@@ -795,12 +795,6 @@ class json_pointer
         }
         cache.path = &path;
 
-        // the resolved prefix has no "~"
-        if (JSON_HEDLEY_UNLIKELY(length > steps[depth - 1].first && std::memchr(path.data() + steps[depth - 1].first, '~', length - steps[depth - 1].first) != nullptr))
-        {
-            return nullptr;
-        }
-
         BasicJsonType* ptr = steps[depth - 1].second;
         for (std::size_t pos = steps[depth - 1].first; pos < length;)
         {
@@ -809,11 +803,18 @@ class json_pointer
                 return nullptr;
             }
 
-            // the reference token between the slash at pos and the next one
-            std::size_t end = path.find_first_of('/', pos + 1);
-            if (end == string_t::npos || end > length)
+            // the reference token between the slash at pos and the next one,
+            // which must not have an escape
+            const char* const begin = path.data() + pos + 1;
+            const char* const limit = path.data() + length;
+            const char* end = begin;
+            while (end < limit && *end != '/')
             {
-                end = length;
+                if (JSON_HEDLEY_UNLIKELY(*end == '~'))
+                {
+                    return nullptr;
+                }
+                ++end;
             }
 
             switch (ptr->type())
@@ -821,7 +822,7 @@ class json_pointer
                 case detail::value_t::object:
                 {
                     token.clear();
-                    token.append(path.data() + pos + 1, end - pos - 1);
+                    token.append(begin, static_cast<std::size_t>(end - begin));
                     const auto it = ptr->m_data.m_value.object->find(token);
                     if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
                     {
@@ -833,10 +834,24 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    typename BasicJsonType::size_type idx{};
-                    token.clear();
-                    token.append(path.data() + pos + 1, end - pos - 1);
-                    if (JSON_HEDLEY_UNLIKELY(parse_array_index<BasicJsonType>(token, idx) != array_index_status::ok || idx >= ptr->m_data.m_value.array->size()))
+                    // an index of up to 18 digits without a leading zero fits into size_type
+                    // (9 digits for a 32-bit size_type); everything else is left to json_pointer
+                    constexpr std::size_t max_digits = sizeof(typename BasicJsonType::size_type) >= 8 ? 18 : 9;
+                    const std::size_t digits = static_cast<std::size_t>(end - begin);
+                    if (JSON_HEDLEY_UNLIKELY(digits == 0 || digits > max_digits || (digits > 1 && *begin == '0')))
+                    {
+                        return nullptr;
+                    }
+                    typename BasicJsonType::size_type idx = 0;
+                    for (const char* c = begin; c != end; ++c)
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(*c < '0' || *c > '9'))
+                        {
+                            return nullptr;
+                        }
+                        idx = static_cast<typename BasicJsonType::size_type>((idx * 10) + static_cast<typename BasicJsonType::size_type>(*c - '0'));
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
                     {
                         return nullptr;
                     }
@@ -855,7 +870,7 @@ class json_pointer
                 default:
                     return nullptr;
             }
-            pos = end;
+            pos = static_cast<std::size_t>(end - path.data());
             steps.emplace_back(pos, ptr);
         }
 
