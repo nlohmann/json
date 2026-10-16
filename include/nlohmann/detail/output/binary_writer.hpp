@@ -893,7 +893,7 @@ class binary_writer
         if (n <= 15)
         {
             // fixarray
-            write_number(static_cast<std::uint8_t>(0x90 | n));
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(0x90 | n)));
         }
         else if (n <= (std::numeric_limits<std::uint16_t>::max)())
         {
@@ -915,7 +915,7 @@ class binary_writer
         if (n <= 15)
         {
             // fixmap
-            write_number(static_cast<std::uint8_t>(0x80 | (n & 0xF)));
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(0x80 | (n & 0xF))));
         }
         else if (n <= (std::numeric_limits<std::uint16_t>::max)())
         {
@@ -2569,6 +2569,18 @@ class binary_writer
         return encode_first_byte_and_tail(out, first_byte, size_class, argument);
     }
 
+    /// write the head of an array or object: one byte for a size of up to 23, else as
+    /// @ref write_cbor_head
+    void write_cbor_container_head(const std::uint8_t major_type, const std::uint64_t size)
+    {
+        if (JSON_HEDLEY_LIKELY(size <= 0x17))
+        {
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + size)));
+            return;
+        }
+        write_cbor_head(major_type, size);
+    }
+
     /*!
     @brief write an object value (head and members) as CBOR
 
@@ -2579,7 +2591,7 @@ class binary_writer
     void write_cbor_object(const BasicJsonType& j, const std::size_t depth)
     {
         // step 1: write control byte and the object size
-        write_cbor_head(0xA0, j.m_data.m_value.object->size());
+        write_cbor_container_head(0xA0, j.m_data.m_value.object->size());
 
         for (const auto& el : *j.m_data.m_value.object)
         {
@@ -2630,7 +2642,7 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_cbor_array(const BasicJsonType& j, const std::size_t depth)
     {
-        write_cbor_head(0x80, j.m_data.m_value.array->size());
+        write_cbor_container_head(0x80, j.m_data.m_value.array->size());
         if (!j.m_data.m_value.array->empty())
         {
             write_cbor_array_elements(j, depth, std::integral_constant<bool, integers_fit_64_bits()>());
