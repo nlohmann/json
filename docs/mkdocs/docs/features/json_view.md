@@ -16,8 +16,9 @@ most of the resulting tree is thrown away almost immediately.
 [`basic_json_document::parse()`](../api/basic_json_document/parse.md) parses the same JSON grammar, with the same
 options, but instead of a tree it builds a flat index of the values it found: one
 [16-byte entry](../home/architecture.md#node-index-of-json-views) per value (and one per object key), in document
-order. Strings and numbers are referenced in place in the source text; only strings that contain escape sequences
-are decoded, into one shared buffer owned by the document.
+order. Integers are converted while parsing and stored in their entry. Floating-point numbers and strings are
+referenced in place in the source text: a float is converted when it is read, and only strings that contain escape
+sequences are decoded, into one shared buffer owned by the document.
 
 [`basic_json_view`](../api/basic_json_view/index.md) is a small, trivially copyable handle (two pointers) into that
 index. It gives you the read-only, type-inspection part of the `basic_json` interface --
