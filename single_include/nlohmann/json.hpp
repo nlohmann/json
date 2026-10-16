@@ -22831,6 +22831,18 @@ class json_pointer
         return pos == size;
     }
 
+    /// reserve room for @a n elements of an array type that has reserve()
+    template<typename ArrayType>
+    static auto reserve_elements(ArrayType& array, const std::size_t n, detail::priority_tag<1> /*unused*/)
+    -> decltype(array.reserve(n), void())
+    {
+        array.reserve(n);
+    }
+
+    template<typename ArrayType>
+    static void reserve_elements(ArrayType& /*array*/, const std::size_t /*n*/, detail::priority_tag<0> /*unused*/)
+    {}
+
     /// @brief object member access with a key that is only copied if it is inserted
     ///
     /// Objects that can find the position of a key and insert there
@@ -24067,6 +24079,8 @@ class json_pointer
                         {
                             // some reference token below this position is 0, so the
                             // value is an array
+                            *current = BasicJsonType(detail::value_t::array);
+                            reserve_elements(*current->m_data.m_value.array, 2, detail::priority_tag<1> {});
                             current = &current->operator[](array_index<BasicJsonType>(token));
                         }
                         else
