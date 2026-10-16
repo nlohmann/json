@@ -1770,29 +1770,42 @@ class binary_writer
             }
         }
 
+        /// make @ref index the next one: count it and update its decimal name
+        void next_index() noexcept
+        {
+            ++index;
+            std::size_t i = index_name_size;
+            while (i > 0)
+            {
+                --i;
+                if (index_name[i] != '9')
+                {
+                    ++index_name[i];
+                    return;
+                }
+                index_name[i] = '0';
+            }
+            // all digits were 9: 10, 100, ...
+            index_name[0] = '1';
+            index_name[index_name_size++] = '0';
+        }
+
         /// the object or array
         const BasicJsonType* value;
         /// objects: the next member
         typename BasicJsonType::object_t::const_iterator member{};
         /// arrays: the index of the next element
         std::size_t index = 0;
+        /// arrays: the name BSON gives that element, its decimal index (the
+        /// index is at most 2^64 - 1, which has 20 digits)
+        std::array<char, 20> index_name{{'0'}};
+        /// arrays: the number of characters of @ref index_name
+        std::size_t index_name_size = 1;
         /// @ref calc_bson_sizes only: where its size goes in the table
         std::size_t size_slot;
         /// @ref calc_bson_sizes only: the size of its entries seen so far
         std::size_t entries_size = 0;
     };
-
-    /*!
-    @brief creates the name BSON gives the array element with index @a index
-    @param[out] name  receives the decimal index
-    */
-    static void create_bson_index_name(const std::size_t index, string_t& name)
-    {
-        // the index is built as a std::string; convert explicitly, as the
-        // two are only implicitly convertible for some string types
-        const auto key = std::to_string(index);
-        name = string_t(key.data(), key.size());
-    }
 
     /*!
     @brief Calculates the size of every object and array in the BSON document
@@ -1825,8 +1838,6 @@ class binary_writer
         // is in; nothing is allocated unless the document nests
         bson_frame current(&document);
         std::vector<bson_frame> parents;
-        // string_t need not be default constructible
-        string_t index_name("", 0);
 
         while (true)
         {
@@ -1857,9 +1868,10 @@ class binary_writer
                 while (nested == nullptr && current.index < array.size())
                 {
                     const BasicJsonType& el = array[current.index];
-                    create_bson_index_name(current.index, index_name);
-                    current.entries_size += calc_bson_entry_header_size(index_name, el);
-                    ++current.index;
+                    // the type, the decimal index (which is valid UTF-8 and
+                    // has no U+0000), and the terminating null byte
+                    current.entries_size += 2ul + current.index_name_size;
+                    current.next_index();
                     if (el.is_structured())
                     {
                         nested = &el;
@@ -1914,8 +1926,6 @@ class binary_writer
         bson_frame current(&document);
         std::vector<bson_frame> parents;
         std::size_t next_size = 0;
-        // string_t need not be default constructible
-        string_t index_name("", 0);
 
         while (true)
         {
@@ -1946,8 +1956,8 @@ class binary_writer
                 while (nested == nullptr && current.index < array.size())
                 {
                     const BasicJsonType& el = array[current.index];
-                    create_bson_index_name(current.index, index_name);
-                    ++current.index;
+                    const string_t index_name(current.index_name.data(), current.index_name_size);
+                    current.next_index();
                     if (el.is_structured())
                     {
                         write_bson_nested_head(index_name, el, nested_sizes[next_size++]);
