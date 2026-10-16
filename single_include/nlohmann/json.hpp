@@ -12028,7 +12028,7 @@ JSON_HEDLEY_ALWAYS_INLINE std::size_t string_bulk_run(const unsigned char* data,
     return scalar_string_bulk_run(data, n);
 }
 
-#if JSON_SCAN_NEON
+#if JSON_SCAN_NEON && !(defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17))
 /// scalar_string_bulk_run() from @a start on, out of line (see
 /// lexer_string_bulk_run())
 JSON_HEDLEY_NEVER_INLINE inline std::size_t string_bulk_run_from(const unsigned char* data, std::size_t start, std::size_t n) noexcept
