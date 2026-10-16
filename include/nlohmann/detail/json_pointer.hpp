@@ -712,6 +712,85 @@ class json_pointer
     }
 
     /*!
+    @brief resolve a plain JSON pointer without building its reference tokens
+
+    @param[in] ptr     the value the pointer starts at
+    @param[in] path    a JSON pointer string
+    @param[in] length  the number of leading bytes of @a path to resolve; 0 or
+                       the position of a slash
+    @param[in,out] token  a string to hold the reference tokens, to reuse its storage
+
+    @return the pointed to value, or `nullptr` if the pointer does not denote
+            an existing value, or does so in a way that is not plain: a
+            reference token with an escape, an array index that is malformed or
+            out of range, or a "-". No exception is thrown for these; callers
+            use @ref json_pointer instead, which handles them.
+    */
+    template<typename BasicJsonType>
+    static BasicJsonType* resolve_plain(BasicJsonType* ptr, const string_t& path, const std::size_t length, string_t& token)
+    {
+        for (std::size_t pos = 0; pos < length;)
+        {
+            if (JSON_HEDLEY_UNLIKELY(path[pos] != '/'))
+            {
+                return nullptr;
+            }
+
+            // the reference token between the slash at pos and the next one
+            std::size_t end = path.find_first_of('/', pos + 1);
+            if (end == string_t::npos || end > length)
+            {
+                end = length;
+            }
+            token.clear();
+            token.append(path.data() + pos + 1, end - pos - 1);
+            if (JSON_HEDLEY_UNLIKELY(token.find_first_of('~') != string_t::npos))
+            {
+                return nullptr;
+            }
+
+            switch (ptr->type())
+            {
+                case detail::value_t::object:
+                {
+                    const auto it = ptr->m_data.m_value.object->find(token);
+                    if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &it->second;
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    typename BasicJsonType::size_type idx{};
+                    if (JSON_HEDLEY_UNLIKELY(parse_array_index<BasicJsonType>(token, idx) != array_index_status::ok || idx >= ptr->m_data.m_value.array->size()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &(*ptr->m_data.m_value.array)[idx];
+                    break;
+                }
+
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
+                default:
+                    return nullptr;
+            }
+            pos = end;
+        }
+
+        return ptr;
+    }
+
+    /*!
     @brief return a reference to the pointed to value
 
     @note This version does not throw if a value is not present, but tries to
