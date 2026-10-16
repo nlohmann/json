@@ -1489,7 +1489,7 @@ TEST_CASE("invalid UTF-8 at every position is handled like the reference")
                 {
                     for (const auto& pattern : patterns)
                     {
-                        check_dump_against_reference(make_string(filler, pos, pattern, length - pos), bytes <= (filler.size() == 1 ? 17 : 8));
+                        check_dump_against_reference(make_string(filler, pos, pattern, length - pos), bytes <= (filler.size() == 1 ? 17u : 8u));
                     }
                 }
             }

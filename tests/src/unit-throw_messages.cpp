@@ -105,12 +105,18 @@ TEST_CASE("exception messages of out-of-line throw sites")
             }
             catch (const json::exception& e)
             {
-                // with JSON_DIAGNOSTICS, what() names the offending value like "(/0) "; drop it
+                // with JSON_DIAGNOSTICS, what() names the offending value like "(/0) ",
+                // and with JSON_DIAGNOSTIC_POSITIONS its position like "(bytes 0-2) "; drop both
                 std::string msg = e.what();
-                const auto pos = msg.find(" (/");
-                if (pos != std::string::npos)
+                for (const char* marker :
+                        {" (/", " (bytes "
+                        })
                 {
-                    msg.erase(pos + 1, msg.find(") ", pos) - pos + 1);
+                    const auto pos = msg.find(marker);
+                    if (pos != std::string::npos)
+                    {
+                        msg.erase(pos + 1, msg.find(") ", pos) - pos + 1);
+                    }
                 }
                 return msg;
             }

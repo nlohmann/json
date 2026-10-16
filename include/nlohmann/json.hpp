@@ -29,6 +29,7 @@
 #endif  // JSON_NO_IO
 #include <iterator> // make_move_iterator, random_access_iterator_tag
 #include <limits> // numeric_limits
+#include <map> // map
 #include <memory> // unique_ptr
 #include <set> // swap, operator!=
 #include <stdexcept> // length_error
@@ -754,26 +755,20 @@ private:
         // one level deep); stops at the first structured child it meets
         static bool all_children_leaves(const basic_json& v) noexcept
         {
+            // array_t only needs forward iterators (see custom_array_type)
             if (v.m_data.m_type == value_t::array)
             {
                 const auto& a = *v.m_data.m_value.array;
-                for (auto it = a.rbegin(); it != a.rend(); ++it)
+                return std::all_of(a.begin(), a.end(), [](const basic_json & el)
                 {
-                    if (!has_no_children(*it))
-                    {
-                        return false;
-                    }
-                }
-                return true;
+                    return has_no_children(el);
+                });
             }
-            for (const auto& el : *v.m_data.m_value.object)
+            const auto& o = *v.m_data.m_value.object;
+            return std::all_of(o.begin(), o.end(), [](const typename object_t::value_type & el)
             {
-                if (!has_no_children(el.second))
-                {
-                    return false;
-                }
-            }
-            return true;
+                return has_no_children(el.second);
+            });
         }
 
         // The walk in destroy_container() may take the children of a
@@ -3043,18 +3038,21 @@ public:
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_iterator_range_of_null(const basic_json* obj)
     {
+        static_cast<void>(obj); // unused when JSON_NOEXCEPTION is defined
         JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_range_of_null, detail::concat("cannot construct with iterators from ", obj->type_name()), obj));
     }
 
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_incompatible_reference_type(const basic_json& obj)
     {
+        static_cast<void>(obj); // unused when JSON_NOEXCEPTION is defined
         JSON_THROW(type_error::create(detail::exception_id::incompatible_reference_type, detail::concat("incompatible ReferenceType for get_ref, actual type is ", obj.type_name()), &obj));
     }
 
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_exceeds_size_type(size_type idx)
     {
+        static_cast<void>(idx); // unused when JSON_NOEXCEPTION is defined
         JSON_THROW(std::length_error(detail::concat("array index ", std::to_string(idx), " exceeds size_type")));
     }
 
@@ -3062,6 +3060,8 @@ public:
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_out_of_range(size_type idx, const basic_json& j)
     {
+        static_cast<void>(idx); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(j);
         JSON_THROW(out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat("array index ", std::to_string(idx), " is out of range"), &j));
     }
 
@@ -3070,6 +3070,8 @@ public:
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_key_not_found(const KeyType& key, const basic_json& j)
     {
+        static_cast<void>(key); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(j);
         JSON_THROW(out_of_range::create(detail::exception_id::key_not_found, detail::concat("key '", key, "' not found"), &j));
     }
 
@@ -5453,7 +5455,7 @@ public:
     // inline fast path for two values of the same non-owning scalar type; anything
     // else falls through to the out-of-line general comparison
 #define JSON_IMPLEMENT_SCALAR_FAST(op, null_result)                                                      \
-    if (lhs.m_data.m_type == rhs.m_data.m_type)                                                          \
+    if (lhs.m_data.m_type == rhs.m_data.m_type) /* NOLINT(readability/braces) */                         \
     {                                                                                                    \
         switch (lhs.m_data.m_type)                                                                       \
         {                                                                                                \

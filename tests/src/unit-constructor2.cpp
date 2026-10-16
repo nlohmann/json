@@ -300,7 +300,7 @@ TEST_CASE("copy constructor and destructor across value types")
             REQUIRE(v.size() == 70);
 
             std::vector<json> copy(v);
-            CHECK(copy == v);
+            CHECK((copy == v));
 
             // mutating the copy leaves the original alone
             copy[5] = "changed";

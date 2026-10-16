@@ -29,6 +29,7 @@
 #endif  // JSON_NO_IO
 #include <iterator> // make_move_iterator, random_access_iterator_tag
 #include <limits> // numeric_limits
+#include <map> // map
 #include <memory> // unique_ptr
 #include <set> // swap, operator!=
 #include <stdexcept> // length_error
@@ -6555,7 +6556,7 @@ NLOHMANN_JSON_NAMESPACE_END
     #include <optional> // optional
 #endif
 
-#include <iterator> // begin, end
+#include <iterator> // begin, end, make_move_iterator, move_iterator
 #include <memory> // allocator_traits
 #include <string> //  basic_string, char_traits
 #include <tuple> // tuple, get
@@ -7204,6 +7205,32 @@ namespace detail
  * leave j with the type of the new value, but the pointer to the destroyed old one.
  */
 
+// a move iterator over the elements of an rvalue container, unless they are
+// const (e.g., std::set): libstdc++ before GCC 5 defines the reference of a
+// std::move_iterator as value_type&&, which cannot bind to a const element
+template<typename Iterator>
+std::move_iterator<Iterator> make_move_iterator_if_mutable_impl(Iterator it, std::true_type /*mutable*/)
+{
+    return std::make_move_iterator(it);
+}
+
+template<typename Iterator>
+Iterator make_move_iterator_if_mutable_impl(Iterator it, std::false_type /*mutable*/)
+{
+    return it;
+}
+
+template<typename Iterator>
+using is_mutable_iterator = std::integral_constant < bool,
+      !std::is_const<typename std::remove_reference<decltype(*std::declval<Iterator&>())>::type>::value >;
+
+template<typename Iterator>
+auto make_move_iterator_if_mutable(Iterator it)
+-> decltype(make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {}))
+{
+    return make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {});
+}
+
 template<value_t> struct external_constructor;
 
 template<>
@@ -7330,7 +7357,7 @@ struct external_constructor<value_t::array>
         using std::begin;
         using std::end;
 
-        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(std::make_move_iterator(begin(arr)), std::make_move_iterator(end(arr))));
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(make_move_iterator_if_mutable(begin(arr)), make_move_iterator_if_mutable(end(arr))));
         j.replace_value(value_t::array, value);
     }
 
@@ -7391,7 +7418,7 @@ struct external_constructor<value_t::object>
         using std::begin;
         using std::end;
 
-        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(std::make_move_iterator(begin(obj)), std::make_move_iterator(end(obj))));
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(make_move_iterator_if_mutable(begin(obj)), make_move_iterator_if_mutable(end(obj))));
         j.replace_value(value_t::object, value);
     }
 
@@ -7569,25 +7596,27 @@ using is_movable_container_rvalue = negation<disjunction<
                                     std::is_const<T>,
                                     has_dedicated_to_json<T>,
                                     is_basic_json<T>,
-                                    is_range_view_type<T>,
                                     is_enum_keyed_map_type<T>,
                                     std::is_same<T, std::vector<bool>>>>;
 
-// rvalue array-like containers
+// rvalue array-like containers; object types are ruled out before views are
+// checked, as std::ranges::view<T> for the object_t of an ordered_json would
+// need that ordered_json to be complete (GCC 11, see #3312)
 template<typename BasicJsonType, typename T>
 using is_rvalue_array_to_json = conjunction<is_movable_container_rvalue<T>,
+      negation<is_compatible_object_type<BasicJsonType, T>>,
+      negation<is_range_view_type<T>>,
       is_compatible_array_type<BasicJsonType, T>,
       negation<disjunction<
       std::is_same<T, typename BasicJsonType::array_t>,
       std::is_same<T, typename BasicJsonType::binary_t>,
-      is_compatible_object_type<BasicJsonType, T>,
       is_compatible_string_type<BasicJsonType, T>,
       is_compatible_binary_type<BasicJsonType, T>>>>;
 
 // rvalue containers: their elements are moved instead of copied
 template<typename BasicJsonType, typename CompatibleArrayType,
          enable_if_t<is_rvalue_array_to_json<BasicJsonType, CompatibleArrayType>::value, int> = 0>
-inline void to_json(BasicJsonType& j, CompatibleArrayType && arr)
+inline void to_json(BasicJsonType& j, CompatibleArrayType && arr) // NOLINT(cppcoreguidelines-missing-std-forward)
 {
     external_constructor<value_t::array>::construct_moving(j, arr);
 }
@@ -7665,7 +7694,8 @@ inline void to_json(BasicJsonType& j, const EnumKeyedMap& map)
 }
 #endif
 
-// rvalue object-like containers
+// rvalue object-like containers (views have no key_type and mapped_type, so
+// they are no compatible object type)
 template<typename BasicJsonType, typename T>
 using is_rvalue_object_to_json = conjunction<is_movable_container_rvalue<T>,
       negation<std::is_same<T, typename BasicJsonType::object_t>>,
@@ -7673,7 +7703,7 @@ using is_rvalue_object_to_json = conjunction<is_movable_container_rvalue<T>,
 
 template<typename BasicJsonType, typename CompatibleObjectType,
          enable_if_t<is_rvalue_object_to_json<BasicJsonType, CompatibleObjectType>::value, int> = 0>
-inline void to_json(BasicJsonType& j, CompatibleObjectType && obj)
+inline void to_json(BasicJsonType& j, CompatibleObjectType && obj) // NOLINT(cppcoreguidelines-missing-std-forward)
 {
     external_constructor<value_t::object>::construct_moving(j, obj);
 }
@@ -21277,7 +21307,7 @@ class json_pointer
                 {
                     break; // not a plain number: let strtoull decide
                 }
-                acc = static_cast<size_type>(acc * 10 + static_cast<size_type>(c - '0'));
+                acc = static_cast<size_type>((acc * 10) + static_cast<size_type>(c - '0'));
                 if (JSON_HEDLEY_UNLIKELY(i == s.size() - 1))
                 {
                     idx = acc;
@@ -26454,7 +26484,7 @@ JSON_HEDLEY_ALWAYS_INLINE shortest_decimal to_shortest(std::uint64_t bits) noexc
     const uint128_parts p = umul192_hi128(p10.high, p10.low, bin_sig << static_cast<unsigned>(shift));
     std::uint64_t integral = p.high >> static_cast<unsigned>(extra_shift);
     // (no casts in the shifts: MSVC 2015 warns C4554 on them despite the parentheses)
-    constexpr unsigned fractional_low_shift = static_cast<unsigned>(extra_shift);
+    constexpr auto fractional_low_shift = static_cast<unsigned>(extra_shift);
     constexpr unsigned fractional_high_shift = 64u - fractional_low_shift;
     const std::uint64_t fractional = (p.high << fractional_high_shift) | (p.low >> fractional_low_shift);
     std::uint64_t digit = 0;
@@ -30788,26 +30818,20 @@ private:
         // one level deep); stops at the first structured child it meets
         static bool all_children_leaves(const basic_json& v) noexcept
         {
+            // array_t only needs forward iterators (see custom_array_type)
             if (v.m_data.m_type == value_t::array)
             {
                 const auto& a = *v.m_data.m_value.array;
-                for (auto it = a.rbegin(); it != a.rend(); ++it)
+                return std::all_of(a.begin(), a.end(), [](const basic_json & el)
                 {
-                    if (!has_no_children(*it))
-                    {
-                        return false;
-                    }
-                }
-                return true;
+                    return has_no_children(el);
+                });
             }
-            for (const auto& el : *v.m_data.m_value.object)
+            const auto& o = *v.m_data.m_value.object;
+            return std::all_of(o.begin(), o.end(), [](const typename object_t::value_type & el)
             {
-                if (!has_no_children(el.second))
-                {
-                    return false;
-                }
-            }
-            return true;
+                return has_no_children(el.second);
+            });
         }
 
         // The walk in destroy_container() may take the children of a
@@ -33077,18 +33101,21 @@ public:
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_iterator_range_of_null(const basic_json* obj)
     {
+        static_cast<void>(obj); // unused when JSON_NOEXCEPTION is defined
         JSON_THROW(invalid_iterator::create(detail::exception_id::iterator_range_of_null, detail::concat("cannot construct with iterators from ", obj->type_name()), obj));
     }
 
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_incompatible_reference_type(const basic_json& obj)
     {
+        static_cast<void>(obj); // unused when JSON_NOEXCEPTION is defined
         JSON_THROW(type_error::create(detail::exception_id::incompatible_reference_type, detail::concat("incompatible ReferenceType for get_ref, actual type is ", obj.type_name()), &obj));
     }
 
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_exceeds_size_type(size_type idx)
     {
+        static_cast<void>(idx); // unused when JSON_NOEXCEPTION is defined
         JSON_THROW(std::length_error(detail::concat("array index ", std::to_string(idx), " exceeds size_type")));
     }
 
@@ -33096,6 +33123,8 @@ public:
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_out_of_range(size_type idx, const basic_json& j)
     {
+        static_cast<void>(idx); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(j);
         JSON_THROW(out_of_range::create(detail::exception_id::array_index_out_of_range, detail::concat("array index ", std::to_string(idx), " is out of range"), &j));
     }
 
@@ -33104,6 +33133,8 @@ public:
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_key_not_found(const KeyType& key, const basic_json& j)
     {
+        static_cast<void>(key); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(j);
         JSON_THROW(out_of_range::create(detail::exception_id::key_not_found, detail::concat("key '", key, "' not found"), &j));
     }
 
@@ -35487,7 +35518,7 @@ public:
     // inline fast path for two values of the same non-owning scalar type; anything
     // else falls through to the out-of-line general comparison
 #define JSON_IMPLEMENT_SCALAR_FAST(op, null_result)                                                      \
-    if (lhs.m_data.m_type == rhs.m_data.m_type)                                                          \
+    if (lhs.m_data.m_type == rhs.m_data.m_type) /* NOLINT(readability/braces) */                         \
     {                                                                                                    \
         switch (lhs.m_data.m_type)                                                                       \
         {                                                                                                \

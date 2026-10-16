@@ -334,7 +334,7 @@ class json_pointer
                 {
                     break; // not a plain number: let strtoull decide
                 }
-                acc = static_cast<size_type>(acc * 10 + static_cast<size_type>(c - '0'));
+                acc = static_cast<size_type>((acc * 10) + static_cast<size_type>(c - '0'));
                 if (JSON_HEDLEY_UNLIKELY(i == s.size() - 1))
                 {
                     idx = acc;
