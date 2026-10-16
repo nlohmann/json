@@ -8,11 +8,14 @@
 
 #include <benchmark/benchmark.h>
 #include <nlohmann/json.hpp>
-#include <fstream>
 #include <array>
+#include <cstdint>
 #include <deque>
+#include <fstream>
+#include <map>
 #include <numeric>
 #include <set>
+#include <string>
 #include <vector>
 #include <test_data.hpp>
 
@@ -623,6 +626,584 @@ static void FromCborChunkedString(benchmark::State& state, const std::size_t chu
 }
 
 BENCHMARK_CAPTURE(FromCborChunkedString, 10000 chunks, 10000);
+
+//////////////////////////////////////////////////////////////////////////////
+// SAX-parse JSON from string
+//
+// sax_parse() with a handler that does next to nothing runs the lexer and
+// parser without building values, so the gap to ParseString above is the cost
+// of building the DOM.
+//////////////////////////////////////////////////////////////////////////////
+
+static std::string read_file(const char* filename)
+{
+    std::ifstream f(filename);
+    return std::string((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+}
+
+static json load_json(const char* filename)
+{
+    return json::parse(read_file(filename));
+}
+
+/// SAX handler that only counts the events, so that the handler costs next to nothing
+class counting_sax : public nlohmann::json_sax<json>
+{
+  public:
+    std::size_t events = 0;
+
+    bool null() override
+    {
+        return count();
+    }
+    bool boolean(bool /*val*/) override
+    {
+        return count();
+    }
+    bool number_integer(number_integer_t /*val*/) override
+    {
+        return count();
+    }
+    bool number_unsigned(number_unsigned_t /*val*/) override
+    {
+        return count();
+    }
+    bool number_float(number_float_t /*val*/, const string_t& /*s*/) override
+    {
+        return count();
+    }
+    bool string(string_t& /*val*/) override
+    {
+        return count();
+    }
+    bool binary(binary_t& /*val*/) override
+    {
+        return count();
+    }
+    bool start_object(std::size_t /*elements*/) override
+    {
+        return count();
+    }
+    bool key(string_t& /*val*/) override
+    {
+        return count();
+    }
+    bool end_object() override
+    {
+        return count();
+    }
+    bool start_array(std::size_t /*elements*/) override
+    {
+        return count();
+    }
+    bool end_array() override
+    {
+        return count();
+    }
+    bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& /*ex*/) override
+    {
+        return false;
+    }
+
+  private:
+    bool count()
+    {
+        ++events;
+        return true;
+    }
+};
+
+static void SaxParse(benchmark::State& state, const char* filename)
+{
+    const std::string str = read_file(filename);
+
+    for (auto _ : state)
+    {
+        counting_sax sax;
+        bool result = json::sax_parse(str, &sax);
+        benchmark::DoNotOptimize(result);
+        benchmark::DoNotOptimize(sax.events);
+    }
+
+    state.SetBytesProcessed(state.iterations() * str.size());
+}
+BENCHMARK_CAPTURE(SaxParse, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(SaxParse, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(SaxParse, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+//////////////////////////////////////////////////////////////////////////////
+// work with values: copy, destroy, compare, iterate
+//
+// The parsed test files stand in for a document an application keeps around.
+// Each benchmark times one whole-document operation; setup and cleanup run
+// outside the timed section.
+//
+// A copy is always destroyed again, and how a document is freed shapes the
+// heap the next copy allocates from: a destructor that frees quickly can leave
+// work to the allocator's next calls. Copy, CopyAssign and CopyRing therefore
+// time the copy together with the destruction of a copy; CopyOnly and
+// DestroyOnly time one half each and are meant for telling the halves apart,
+// not for comparing versions.
+//////////////////////////////////////////////////////////////////////////////
+
+/// copy a document and destroy the copy again, as a temporary copy is used
+static void Copy(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+
+    for (auto _ : state)
+    {
+        json copy = j;
+        benchmark::DoNotOptimize(copy);
+    }
+}
+BENCHMARK_CAPTURE(Copy, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(Copy, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(Copy, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+/// copy-assign a document over an earlier copy of it, which is freed in the process
+static void CopyAssign(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+    json target = j;
+
+    for (auto _ : state)
+    {
+        target = j;
+        benchmark::DoNotOptimize(target);
+    }
+}
+BENCHMARK_CAPTURE(CopyAssign, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(CopyAssign, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(CopyAssign, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+/// keep eight copies alive and replace the oldest one, as a cache or an undo
+/// history does, so that the copy is not made from memory just freed by an
+/// identical document
+static void CopyRing(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+    std::vector<json> ring(8, j);
+    std::size_t oldest = 0;
+
+    for (auto _ : state)
+    {
+        ring[oldest] = j;
+        benchmark::DoNotOptimize(ring[oldest]);
+        oldest = (oldest + 1) % ring.size();
+    }
+}
+BENCHMARK_CAPTURE(CopyRing, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(CopyRing, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(CopyRing, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+/// only the copy; the copy is destroyed with the timer paused (diagnostic)
+static void CopyOnly(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+
+    for (auto _ : state)
+    {
+        auto* copy = new json(j);
+
+        state.PauseTiming();
+        delete copy;
+        state.ResumeTiming();
+    }
+}
+BENCHMARK_CAPTURE(CopyOnly, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(CopyOnly, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(CopyOnly, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+/// only the destruction; the copy is made with the timer paused (diagnostic)
+static void DestroyOnly(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+
+    for (auto _ : state)
+    {
+        state.PauseTiming();
+        auto* copy = new json(j);
+        state.ResumeTiming();
+
+        delete copy;
+    }
+}
+BENCHMARK_CAPTURE(DestroyOnly, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(DestroyOnly, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(DestroyOnly, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+static void Equal(benchmark::State& state, const char* filename)
+{
+    // two separate values, so that the comparison cannot stop at identical addresses
+    const json j = load_json(filename);
+    const json copy = j;
+
+    for (auto _ : state)
+    {
+        bool result = (j == copy);
+        benchmark::DoNotOptimize(result);
+    }
+}
+BENCHMARK_CAPTURE(Equal, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(Equal, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(Equal, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+/// visit every value with range-based for loops, as client code walks a document
+static std::size_t count_values(const json& j)
+{
+    std::size_t result = 1;
+    if (j.is_structured())
+    {
+        for (const auto& element : j)
+        {
+            result += count_values(element);
+        }
+    }
+    return result;
+}
+
+static void Iterate(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+
+    for (auto _ : state)
+    {
+        std::size_t result = count_values(j);
+        benchmark::DoNotOptimize(result);
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(count_values(j)));
+}
+BENCHMARK_CAPTURE(Iterate, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(Iterate, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(Iterate, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+//////////////////////////////////////////////////////////////////////////////
+// flatten and unflatten
+//////////////////////////////////////////////////////////////////////////////
+
+static void Flatten(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+
+    for (auto _ : state)
+    {
+        json flat = j.flatten();
+        benchmark::DoNotOptimize(flat);
+    }
+}
+BENCHMARK_CAPTURE(Flatten, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(Flatten, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(Flatten, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+// ordered_json objects look keys up linearly, which flatten() used to do for
+// every value; canada (330,000 values in one flat object) is left out, as it
+// would take minutes with such versions
+static void FlattenOrdered(benchmark::State& state, const char* filename)
+{
+    const nlohmann::ordered_json j = nlohmann::ordered_json::parse(read_file(filename));
+
+    for (auto _ : state)
+    {
+        nlohmann::ordered_json flat = j.flatten();
+        benchmark::DoNotOptimize(flat);
+    }
+}
+BENCHMARK_CAPTURE(FlattenOrdered, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(FlattenOrdered, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+static void Unflatten(benchmark::State& state, const char* filename)
+{
+    const json flat = load_json(filename).flatten();
+
+    for (auto _ : state)
+    {
+        json j = flat.unflatten();
+        benchmark::DoNotOptimize(j);
+    }
+}
+BENCHMARK_CAPTURE(Unflatten, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(Unflatten, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(Unflatten, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+//////////////////////////////////////////////////////////////////////////////
+// diff and patch
+//
+// The target is the document with every eighth scalar changed, so the patch
+// has one "replace" operation per changed value and the structure stays the
+// same.
+//////////////////////////////////////////////////////////////////////////////
+
+static void change_every_eighth_scalar(json& j, std::size_t& counter)
+{
+    if (j.is_structured())
+    {
+        for (auto& element : j)
+        {
+            change_every_eighth_scalar(element, counter);
+        }
+        return;
+    }
+
+    if (++counter % 8 != 0)
+    {
+        return;
+    }
+
+    switch (j.type())
+    {
+        case json::value_t::number_integer:
+            j = j.get<json::number_integer_t>() + 1;
+            break;
+        case json::value_t::number_unsigned:
+            j = j.get<json::number_unsigned_t>() + 1;
+            break;
+        case json::value_t::number_float:
+            j = j.get<json::number_float_t>() + 0.5;
+            break;
+        case json::value_t::string:
+            j = j.get<std::string>() + "!";
+            break;
+        case json::value_t::boolean:
+            j = !j.get<bool>();
+            break;
+        case json::value_t::null:
+        case json::value_t::object:
+        case json::value_t::array:
+        case json::value_t::binary:
+        case json::value_t::discarded:
+        default:
+            j = 0;
+            break;
+    }
+}
+
+static json changed_copy(const json& j)
+{
+    json result = j;
+    std::size_t counter = 0;
+    change_every_eighth_scalar(result, counter);
+    return result;
+}
+
+static void Diff(benchmark::State& state, const char* filename)
+{
+    const json source = load_json(filename);
+    const json target = changed_copy(source);
+
+    for (auto _ : state)
+    {
+        json patch = json::diff(source, target);
+        benchmark::DoNotOptimize(patch);
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(json::diff(source, target).size()));
+}
+BENCHMARK_CAPTURE(Diff, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(Diff, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(Diff, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+static void Patch(benchmark::State& state, const char* filename)
+{
+    const json source = load_json(filename);
+    const json patch = json::diff(source, changed_copy(source));
+
+    for (auto _ : state)
+    {
+        json result = source.patch(patch);
+        benchmark::DoNotOptimize(result);
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(patch.size()));
+}
+BENCHMARK_CAPTURE(Patch, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(Patch, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(Patch, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+//////////////////////////////////////////////////////////////////////////////
+// JSON Pointer
+//
+// The pointers are those of every scalar in the document, i.e., the keys of
+// its flattened form.
+//////////////////////////////////////////////////////////////////////////////
+
+static std::vector<std::string> pointer_strings(const json& j)
+{
+    std::vector<std::string> result;
+    const json flat = j.flatten();
+    result.reserve(flat.size());
+    for (auto it = flat.begin(); it != flat.end(); ++it)
+    {
+        result.push_back(it.key());
+    }
+    return result;
+}
+
+static std::vector<json::json_pointer> pointers(const json& j)
+{
+    const std::vector<std::string> strings = pointer_strings(j);
+    std::vector<json::json_pointer> result;
+    result.reserve(strings.size());
+    for (const auto& s : strings)
+    {
+        result.emplace_back(s);
+    }
+    return result;
+}
+
+static void JsonPointerParse(benchmark::State& state, const char* filename)
+{
+    const std::vector<std::string> strings = pointer_strings(load_json(filename));
+
+    for (auto _ : state)
+    {
+        for (const auto& s : strings)
+        {
+            json::json_pointer ptr(s);
+            benchmark::DoNotOptimize(ptr);
+        }
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(strings.size()));
+}
+BENCHMARK_CAPTURE(JsonPointerParse, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(JsonPointerParse, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+static void JsonPointerToString(benchmark::State& state, const char* filename)
+{
+    const std::vector<json::json_pointer> ptrs = pointers(load_json(filename));
+
+    for (auto _ : state)
+    {
+        for (const auto& ptr : ptrs)
+        {
+            std::string s = ptr.to_string();
+            benchmark::DoNotOptimize(s);
+        }
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(ptrs.size()));
+}
+BENCHMARK_CAPTURE(JsonPointerToString, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(JsonPointerToString, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+static void JsonPointerAt(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+    const std::vector<json::json_pointer> ptrs = pointers(j);
+
+    for (auto _ : state)
+    {
+        for (const auto& ptr : ptrs)
+        {
+            const json& value = j.at(ptr);
+            benchmark::DoNotOptimize(&value);
+        }
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(ptrs.size()));
+}
+BENCHMARK_CAPTURE(JsonPointerAt, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(JsonPointerAt, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+static void JsonPointerContains(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+    const std::vector<json::json_pointer> ptrs = pointers(j);
+
+    for (auto _ : state)
+    {
+        for (const auto& ptr : ptrs)
+        {
+            bool result = j.contains(ptr);
+            benchmark::DoNotOptimize(result);
+        }
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(ptrs.size()));
+}
+BENCHMARK_CAPTURE(JsonPointerContains, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(JsonPointerContains, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+//////////////////////////////////////////////////////////////////////////////
+// conversions from and to C++ containers
+//////////////////////////////////////////////////////////////////////////////
+
+static void GetVectorInt(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+
+    for (auto _ : state)
+    {
+        auto v = j.get<std::vector<std::int64_t>>();
+        benchmark::DoNotOptimize(v);
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(j.size()));
+}
+BENCHMARK_CAPTURE(GetVectorInt, signed_ints, TEST_DATA_DIRECTORY "/regression/signed_ints.json");
+
+static void GetVectorDouble(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename);
+
+    for (auto _ : state)
+    {
+        auto v = j.get<std::vector<double>>();
+        benchmark::DoNotOptimize(v);
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(j.size()));
+}
+BENCHMARK_CAPTURE(GetVectorDouble, floats, TEST_DATA_DIRECTORY "/regression/floats.json");
+
+// a large flat object: the flattened document, one member per scalar
+static void GetMap(benchmark::State& state, const char* filename)
+{
+    const json j = load_json(filename).flatten();
+
+    for (auto _ : state)
+    {
+        auto m = j.get<std::map<std::string, json>>();
+        benchmark::DoNotOptimize(m);
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(j.size()));
+}
+BENCHMARK_CAPTURE(GetMap, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+
+/// 100,000 strings, each too long for the small string optimization
+static std::vector<std::string> make_strings()
+{
+    std::vector<std::string> result;
+    result.reserve(100000);
+    for (std::size_t i = 0; i < 100000; ++i)
+    {
+        result.push_back("a string that does not fit in place: " + std::to_string(i));
+    }
+    return result;
+}
+
+static void ToJsonStrings(benchmark::State& state, const bool move)
+{
+    const std::vector<std::string> strings = make_strings();
+
+    for (auto _ : state)
+    {
+        state.PauseTiming();
+        std::vector<std::string> input = strings;
+        state.ResumeTiming();
+
+        // destroyed inside the timed section, like the copies above
+        auto* j = move ? new json(std::move(input)) : new json(input);
+        delete j;
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(strings.size()));
+}
+BENCHMARK_CAPTURE(ToJsonStrings, copy, false);
+BENCHMARK_CAPTURE(ToJsonStrings, move, true);
 
 // conversion of a JSON array into standard containers
 template<typename Container>
