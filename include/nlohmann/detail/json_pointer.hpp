@@ -15,7 +15,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint64_t
 #include <cstdlib> // strtoull
-#include <cstring> // memcmp, memcpy
+#include <cstring> // memchr, memcmp, memcpy
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO
@@ -303,6 +303,12 @@ class json_pointer
         exceeds_size_type  ///< @a s converts to an integer that exceeds size_type
     };
 
+    /// whether a reference token is "-" (a plain comparison with a string literal is not always inlined)
+    static bool is_dash(const string_t& s) noexcept
+    {
+        return s.size() == 1 && s[0] == '-';
+    }
+
     /*!
     @param[in] s    reference token to be converted into an array index
     @param[out] idx the integer representation of @a s if @ref array_index_status::ok
@@ -328,7 +334,7 @@ class json_pointer
         // error condition (cf. RFC 6901, Sect. 4); this also covers single-
         // character tokens, so "/x" and "/xy" fail alike; "-" and the empty
         // token are left to the conversion below and are reported as unresolved
-        if (JSON_HEDLEY_UNLIKELY(!s.empty() && s != "-" && !(s[0] >= '0' && s[0] <= '9')))
+        if (JSON_HEDLEY_UNLIKELY(!s.empty() && !is_dash(s) && !(s[0] >= '0' && s[0] <= '9')))
         {
             return array_index_status::not_a_number;
         }
@@ -721,24 +727,82 @@ class json_pointer
     }
 
     /*!
+    @brief the values along the pointer last resolved by @ref resolve_plain
+
+    A patch from @ref basic_json::diff lists its operations in document order,
+    so consecutive pointers share most of their reference tokens; the values
+    along the previous pointer are kept to resume from the common prefix.
+    `steps[k]` is the value after the first `k` reference tokens together with
+    the length of the prefix of `*path` that holds them. A value stays valid as
+    long as no operation changes its container: callers keep only values up to
+    the parent of the pointer they modify, or call `reset()`.
+    */
+    template<typename BasicJsonType>
+    struct plain_steps
+    {
+        const string_t* path = nullptr;
+        std::vector<std::pair<std::size_t, BasicJsonType*>> steps{};
+
+        void reset() noexcept
+        {
+            path = nullptr;
+            steps.clear();
+        }
+    };
+
+    /*!
     @brief resolve a plain JSON pointer without building its reference tokens
 
-    @param[in] ptr     the value the pointer starts at
+    @param[in] root    the value the pointer starts at
     @param[in] path    a JSON pointer string
     @param[in] length  the number of leading bytes of @a path to resolve; 0 or
                        the position of a slash
     @param[in,out] token  a string to hold the reference tokens, to reuse its storage
+    @param[in,out] cache  the values along the previously resolved pointer;
+                          @a path must outlive the next call
 
     @return the pointed to value, or `nullptr` if the pointer does not denote
-            an existing value, or does so in a way that is not plain: a
-            reference token with an escape, an array index that is malformed or
-            out of range, or a "-". No exception is thrown for these; callers
-            use @ref json_pointer instead, which handles them.
+            an existing value, or does so in a way that is not plain: an array
+            index that is malformed or out of range, or a "-", or a reference
+            token with an escape. No exception is
+            thrown for these; callers use @ref json_pointer instead, which
+            handles them.
     */
     template<typename BasicJsonType>
-    static BasicJsonType* resolve_plain(BasicJsonType* ptr, const string_t& path, const std::size_t length, string_t& token)
+    static BasicJsonType* resolve_plain(BasicJsonType* root, const string_t& path, const std::size_t length, string_t& token, plain_steps<BasicJsonType>& cache)
     {
-        for (std::size_t pos = 0; pos < length;)
+        auto& steps = cache.steps;
+
+        // resume from the deepest step that is also a prefix of this path
+        std::size_t depth = 1;
+        if (cache.path != nullptr && !steps.empty() && steps[0].second == root)
+        {
+            const string_t& previous = *cache.path;
+            for (depth = steps.size(); depth > 1; --depth)
+            {
+                // a step ends at a token boundary of the previous path
+                const std::size_t prefix = steps[depth - 1].first;
+                if (prefix <= length && (prefix == length || path[prefix] == '/') && std::memcmp(path.data(), previous.data(), prefix) == 0)
+                {
+                    break;
+                }
+            }
+            steps.resize(depth);
+        }
+        else
+        {
+            steps.assign(1, std::make_pair(std::size_t{0}, root));
+        }
+        cache.path = &path;
+
+        // the resolved prefix has no "~"
+        if (JSON_HEDLEY_UNLIKELY(length > steps[depth - 1].first && std::memchr(path.data() + steps[depth - 1].first, '~', length - steps[depth - 1].first) != nullptr))
+        {
+            return nullptr;
+        }
+
+        BasicJsonType* ptr = steps[depth - 1].second;
+        for (std::size_t pos = steps[depth - 1].first; pos < length;)
         {
             if (JSON_HEDLEY_UNLIKELY(path[pos] != '/'))
             {
@@ -751,17 +815,13 @@ class json_pointer
             {
                 end = length;
             }
-            token.clear();
-            token.append(path.data() + pos + 1, end - pos - 1);
-            if (JSON_HEDLEY_UNLIKELY(token.find_first_of('~') != string_t::npos))
-            {
-                return nullptr;
-            }
 
             switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
+                    token.clear();
+                    token.append(path.data() + pos + 1, end - pos - 1);
                     const auto it = ptr->m_data.m_value.object->find(token);
                     if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
                     {
@@ -774,6 +834,8 @@ class json_pointer
                 case detail::value_t::array:
                 {
                     typename BasicJsonType::size_type idx{};
+                    token.clear();
+                    token.append(path.data() + pos + 1, end - pos - 1);
                     if (JSON_HEDLEY_UNLIKELY(parse_array_index<BasicJsonType>(token, idx) != array_index_status::ok || idx >= ptr->m_data.m_value.array->size()))
                     {
                         return nullptr;
@@ -794,6 +856,7 @@ class json_pointer
                     return nullptr;
             }
             pos = end;
+            steps.emplace_back(pos, ptr);
         }
 
         return ptr;
@@ -907,7 +970,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" always fails the range check
                         JSON_THROW(detail::out_of_range::create(detail::exception_id::pointer_past_the_end_index, detail::concat(
@@ -978,7 +1041,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" cannot be used for const access
                         JSON_THROW(detail::out_of_range::create(detail::exception_id::pointer_past_the_end_index, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
@@ -1040,7 +1103,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" always fails the range check
                         return nullptr;
@@ -1117,7 +1180,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" always fails the range check
                         return false;

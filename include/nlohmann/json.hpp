@@ -6878,6 +6878,72 @@ public:
     /// @name JSON Patch functions
     /// @{
 
+  private:
+    /// the members of an operation of a JSON patch that are of interest
+    struct patch_members
+    {
+        basic_json* op = nullptr;
+        basic_json* path = nullptr;
+        basic_json* value = nullptr;
+        basic_json* from = nullptr;
+    };
+
+    /// @brief find the members "op", "path", "value", and "from" of the object @a val in one pass
+    static patch_members find_patch_members(const basic_json& val, std::true_type /*key_type is string_t*/)
+    {
+        patch_members members;
+        for (auto& member : *val.m_data.m_value.object)
+        {
+            const string_t& key = member.first;
+            switch (key.size())
+            {
+                case 2:
+                    if (key == "op")
+                    {
+                        members.op = &member.second;
+                    }
+                    break;
+                case 4:
+                    if (key == "path")
+                    {
+                        members.path = &member.second;
+                    }
+                    else if (key == "from")
+                    {
+                        members.from = &member.second;
+                    }
+                    break;
+                case 5:
+                    if (key == "value")
+                    {
+                        members.value = &member.second;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return members;
+    }
+
+    /// @brief find the members by lookup for key types other than string_t
+    static patch_members find_patch_members(const basic_json& val, std::false_type /*key_type is not string_t*/)
+    {
+        const auto find_member = [&val](const char* name) -> basic_json *
+        {
+            const auto it = val.m_data.m_value.object->find(string_t(name));
+            return it != val.m_data.m_value.object->end() ? &it->second : nullptr;
+        };
+
+        patch_members members;
+        members.op = find_member("op");
+        members.path = find_member("path");
+        members.value = find_member("value");
+        members.from = find_member("from");
+        return members;
+    }
+
+  public:
     /// @brief applies a JSON patch in-place without copying the object
     /// @sa https://json.nlohmann.me/api/basic_json/patch/
     void patch_inplace(const basic_json& json_patch)
@@ -7051,18 +7117,18 @@ public:
         // a diff creates them: apply the operation and return true; return
         // false, with nothing changed, for all others
         string_t token;
-        const string_t value_key = "value";
-        const auto try_plain = [&result, &token, &value_key](patch_operations operation, const string_t& path, const basic_json & val)
+        typename json_pointer::template plain_steps<basic_json> steps;
+        const auto try_plain = [&result, &token, &steps](patch_operations operation, const string_t& path, const patch_members & members, const basic_json & val)
         {
-            if (path.empty() || path.find_first_of('~') != string_t::npos)
+            if (path.empty())
             {
                 return false;
             }
 
             // a missing "value" is reported below
-            const auto value_it = val.m_data.m_value.object->find(value_key);
-            const basic_json& value = value_it != val.m_data.m_value.object->end() ? value_it->second : val;
-            if (operation != patch_operations::remove && value_it == val.m_data.m_value.object->end())
+            const basic_json* const value_ptr = members.value;
+            const basic_json& value = value_ptr != nullptr ? *value_ptr : val;
+            if (operation != patch_operations::remove && value_ptr == nullptr)
             {
                 return false;
             }
@@ -7071,7 +7137,7 @@ public:
             {
                 case patch_operations::replace:
                 {
-                    basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token, steps);
                     if (target == nullptr)
                     {
                         return false;
@@ -7082,7 +7148,7 @@ public:
 
                 case patch_operations::test:
                 {
-                    const basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    const basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token, steps);
                     // a failing test is reported below
                     return target != nullptr && *target == value;
                 }
@@ -7102,13 +7168,17 @@ public:
                     }
                     --slash;
 
-                    basic_json* const parent = json_pointer::resolve_plain(&result, path, slash, token);
+                    basic_json* const parent = json_pointer::resolve_plain(&result, path, slash, token, steps);
                     if (parent == nullptr)
                     {
                         return false;
                     }
                     token.clear();
                     token.append(path.data() + slash + 1, path.size() - slash - 1);
+                    if (token.find_first_of('~') != string_t::npos)
+                    {
+                        return false;
+                    }
 
                     if (operation == patch_operations::add)
                     {
@@ -7164,31 +7234,32 @@ public:
             }
         };
 
+        // the name of the first member to check
+        const string_t op_member = "op";
+
         // iterate and apply the operations
         for (const auto& val : json_patch)
         {
             // wrapper to get a value for an operation
-            const auto get_value = [&val](const string_t& op,
-                                          const string_t& member,
+            const auto get_value = [&val](basic_json * found,
+                                          const string_t& op,
+                                          const char* member,
                                           bool string_type) -> basic_json &
             {
-                // find value
-                auto it = val.m_data.m_value.object->find(member);
-
                 // check if the desired value is present
-                if (JSON_HEDLEY_UNLIKELY(it == val.m_data.m_value.object->end()))
+                if (JSON_HEDLEY_UNLIKELY(found == nullptr))
                 {
-                    detail::throw_patch_missing_member(op, member, false, val);
+                    detail::throw_patch_missing_member(op, string_t(member), false, val);
                 }
 
                 // check if the result is of type string
-                if (JSON_HEDLEY_UNLIKELY(string_type && !it->second.is_string()))
+                if (JSON_HEDLEY_UNLIKELY(string_type && !found->is_string()))
                 {
-                    detail::throw_patch_missing_member(op, member, true, val);
+                    detail::throw_patch_missing_member(op, string_t(member), true, val);
                 }
 
                 // no error: return value
-                return it->second;
+                return *found;
             };
 
             // type check: every element of the array must be an object
@@ -7197,26 +7268,30 @@ public:
                 detail::throw_patch_not_an_array(val);
             }
 
+            const patch_members members = find_patch_members(val, std::is_same<typename object_t::key_type, string_t> {});
+
             // collect mandatory members
-            const string_t& op = *get_value("op", "op", true).m_data.m_value.string;
-            const string_t& path = *get_value(op, "path", true).m_data.m_value.string;
+            const string_t& op = *get_value(members.op, op_member, "op", true).m_data.m_value.string;
+            const string_t& path = *get_value(members.path, op, "path", true).m_data.m_value.string;
             const patch_operations operation = get_op(op);
 
             // the usual operations on a plain pointer are applied without
             // building the pointer's reference tokens; anything else (and
             // every error) is handled below
-            if (try_plain(operation, path, val))
+            if (try_plain(operation, path, members, val))
             {
                 continue;
             }
 
+            // the general operations may change any container
+            steps.reset();
             json_pointer ptr(path);
 
             switch (operation)
             {
                 case patch_operations::add:
                 {
-                    operation_add(ptr, get_value("add", "value", false));
+                    operation_add(ptr, get_value(members.value, "add", "value", false));
                     break;
                 }
 
@@ -7229,13 +7304,13 @@ public:
                 case patch_operations::replace:
                 {
                     // the "path" location must exist - use at()
-                    result.at(ptr) = get_value("replace", "value", false);
+                    result.at(ptr) = get_value(members.value, "replace", "value", false);
                     break;
                 }
 
                 case patch_operations::move:
                 {
-                    const string_t& from_path = *get_value("move", "from", true).m_data.m_value.string;
+                    const string_t& from_path = *get_value(members.from, "move", "from", true).m_data.m_value.string;
                     json_pointer from_ptr(from_path);
 
                     if (JSON_HEDLEY_UNLIKELY(is_proper_prefix(from_ptr, ptr)))
@@ -7258,7 +7333,7 @@ public:
 
                 case patch_operations::copy:
                 {
-                    const string_t& from_path = *get_value("copy", "from", true).m_data.m_value.string;
+                    const string_t& from_path = *get_value(members.from, "copy", "from", true).m_data.m_value.string;
                     const json_pointer from_ptr(from_path);
 
                     // The copy is functionally identical to an "add"
@@ -7276,7 +7351,7 @@ public:
                     {
                         // check if "value" matches the one at "path"
                         // the "path" location must exist - use at()
-                        success = (result.at(ptr) == get_value("test", "value", false));
+                        success = (result.at(ptr) == get_value(members.value, "test", "value", false));
                     }
                     JSON_INTERNAL_CATCH (out_of_range&)
                     {
