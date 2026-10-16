@@ -23867,8 +23867,9 @@ class json_pointer
             // frame, which would invalidate a reference to it
             const BasicJsonType* const container = stack.back().container;
 
-            // drop the path of the previous child
-            path.resize(stack.back().path_length);
+            // the path of the previous child is replaced by the path of the
+            // next one; for an array element in one resize
+            const std::size_t path_length = stack.back().path_length;
 
             if (container->is_array())
             {
@@ -23882,8 +23883,20 @@ class json_pointer
 
                 // iterate array and use index as a reference string
                 ++stack.back().index;
-                path.push_back('/');
-                append_index(path, i);
+                std::array<char, 24> digits{};
+                std::size_t pos = digits.size();
+                std::size_t rest = i;
+                do
+                {
+                    digits[--pos] = static_cast<char>('0' + rest % 10);
+                    rest /= 10;
+                }
+                while (rest != 0);
+                const std::size_t count = digits.size() - pos;
+                path.resize(path_length + 1 + count);
+                char* const out = &path[path_length];
+                out[0] = '/';
+                std::memcpy(out + 1, digits.data() + pos, count);
                 enter(array[i]);
             }
             else
@@ -23897,6 +23910,7 @@ class json_pointer
 
                 // iterate object and use keys as reference string
                 ++stack.back().member;
+                path.resize(path_length);
                 path.push_back('/');
                 detail::escape_into(path, it->first);
                 enter(it->second);
