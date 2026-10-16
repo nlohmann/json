@@ -756,6 +756,34 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned
     }
     return p;
 }
+
+/*!
+@brief copy 16 bytes from p to w, and find the first quote, backslash,
+control character, or non-ASCII byte among them
+
+The bytes are copied whether or not they are all plain (the caller has room
+for 16 bytes and keeps only the plain ones).
+
+@return the offset of that byte, or 16 if there is none
+*/
+NLOHMANN_VIEW_ALWAYS_INLINE unsigned copy_plain_run16(const unsigned char* p, char* w) noexcept
+{
+#if NLOHMANN_VIEW_NEON
+    const uint8x16_t in = vld1q_u8(p);
+    vst1q_u8(reinterpret_cast<std::uint8_t*>(w), in); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
+                                        vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
+    const std::uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+    return bits != 0 ? static_cast<unsigned>(count_trailing_zeros(bits) >> 2u) : 16u;
+#else
+    const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+    _mm_storeu_si128(static_cast<__m128i*>(static_cast<void*>(w)), in); // NOLINT(bugprone-casting-through-void)
+    const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                         _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
+    const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+    return bits != 0 ? static_cast<unsigned>(count_trailing_zeros(bits)) : 16u;
+#endif
+}
 #endif
 
 #if NLOHMANN_VIEW_SSSE3_DISPATCH
@@ -1437,11 +1465,41 @@ class builder
                 0, 0, '\b', 0, 0, 0, '\f', 0, 0, 0, 0, 0, 0, 0, '\n', 0, 0, 0, '\r', 0, '\t', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
             }
         };
+        // The write position is kept in locals: the stores of characters into
+        // the arena may alias the members of the builder, which would then be
+        // reloaded after every one. It is stored back where the arena grows
+        // and at the end.
+        const unsigned char* const end = m_end;
         const std::size_t start = arena_used();
-        arena_run(s, static_cast<std::size_t>(p - s));
+        char* w = m_arena_write;
+        const char* w_end = m_arena_end;
+#define NLOHMANN_VIEW_ENSURE(n)                                                       \
+    if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(w_end - w) < (n)))            \
+    {                                                                                 \
+        m_arena_write = w;                                                            \
+        arena_grow(n);                                                                \
+        w = m_arena_write;                                                            \
+        w_end = m_arena_end;                                                          \
+    }
+        {
+            const auto n = static_cast<std::size_t>(p - s);
+            if (n <= 16 && end - s >= 16)
+            {
+                NLOHMANN_VIEW_ENSURE(16)
+                std::memcpy(w, s, 16);
+            }
+            else if (n != 0)
+            {
+                // (an empty run leaves an empty arena unallocated, and memcpy()
+                // must not be passed its null pointer even for zero bytes)
+                NLOHMANN_VIEW_ENSURE(n)
+                std::memcpy(w, s, n);
+            }
+            w += n;
+        }
         for (;;)
         {
-            if (p == m_end)
+            if (p == end)
             {
                 return failed(error_code::string_missing_quote, p);
             }
@@ -1449,6 +1507,7 @@ class builder
             if (c == '"')
             {
                 ++p;
+                m_arena_write = w;
                 return decoded{p, start, arena_used() - start};
             }
             if (c != '\\')
@@ -1459,7 +1518,7 @@ class builder
                 return failed(c < 0x20 ? error_code::string_control_character : error_code::string_utf8, p);
             }
             ++p;
-            if (p == m_end)
+            if (p == end)
             {
                 return failed(error_code::string_missing_quote, p);
             }
@@ -1477,7 +1536,7 @@ class builder
                     {
                         return failed(error_code::string_surrogate_low, p);
                     }
-                    if (m_end - p < 2 || p[0] != '\\' || p[1] != 'u')
+                    if (end - p < 2 || p[0] != '\\' || p[1] != 'u')
                     {
                         return failed(error_code::string_surrogate_high, p);
                     }
@@ -1493,27 +1552,108 @@ class builder
                     }
                     cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
                 }
-                arena_ensure(4);
-                m_arena_write = put_utf8(m_arena_write, cp);
+                NLOHMANN_VIEW_ENSURE(4)
+                w = put_utf8(w, cp);
             }
             else if (NLOHMANN_VIEW_LIKELY(d < 128 && simple_escape[d] != 0))
             {
-                arena_ensure(1);
-                *m_arena_write++ = simple_escape[d];
+                NLOHMANN_VIEW_ENSURE(1)
+                *w++ = simple_escape[d];
             }
             else
             {
                 --p;
                 return failed(error_code::string_escape, p);
             }
-            if (p != m_end && *p == '\\')
+#if NLOHMANN_VIEW_NEON
+            if (p != end && *p == '\\')
             {
                 continue; // consecutive escapes ("\u00e4\u00f6"): no run in between
             }
+            // The first 16 bytes of the run are checked one by one, in predicted branches, and copied
+            // as one block: where the runs between escapes are short, the vector step below would put
+            // its longer dependency chain (load, compare, mask, count, add) on p for each of them,
+            // and be slower than these steps (the scanner of the keys works the same way)
+            {
+                if (end - p >= 16)
+                {
+                    const std::uint8_t* const plain = string_plain();
+                    std::size_t steps = 16;
+#define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(plain[p[i]] != 0)) {} else { steps = (i); goto run_found; }
+                    NLOHMANN_VIEW_REPEAT16(NLOHMANN_VIEW_STEP)
+#undef NLOHMANN_VIEW_STEP
+run_found:
+                    NLOHMANN_VIEW_ENSURE(16)
+                    std::memcpy(w, p, 16); // (only the first `steps` bytes are kept)
+                    w += steps;
+                    p += steps;
+                    if (steps < 16)
+                    {
+                        if (*p >= 0x80)
+                        {
+                            // non-ASCII: the UTF-8 check, and the rest of the run
+                            const unsigned char* const r = p;
+                            p = scan_string_run(p, end);
+                            const auto n = static_cast<std::size_t>(p - r);
+                            NLOHMANN_VIEW_ENSURE(n)
+                            std::memcpy(w, r, n);
+                            w += n;
+                        }
+                        continue;
+                    }
+                }
+            }
+#else
+            if (p != end && (*p == '\\' || *p == '"'))
+            {
+                continue; // consecutive escapes ("\u00e4\u00f6"), or the end of the string: no run in between
+            }
+#endif
+#if NLOHMANN_VIEW_VECTOR
+            // the plain bytes up to the next quote, backslash, or control
+            // character are copied as they are scanned, 16 bytes at a time
+            for (;;)
+            {
+                if (NLOHMANN_VIEW_UNLIKELY(end - p < 16))
+                {
+                    const unsigned char* const r = p;
+                    p = scan_string_run(p, end);
+                    const auto n = static_cast<std::size_t>(p - r);
+                    NLOHMANN_VIEW_ENSURE(n)
+                    std::memcpy(w, r, n);
+                    w += n;
+                    break;
+                }
+                NLOHMANN_VIEW_ENSURE(16)
+                const unsigned k = copy_plain_run16(p, w);
+                w += k;
+                p += k;
+                if (k == 16)
+                {
+                    continue;
+                }
+                if (NLOHMANN_VIEW_UNLIKELY(*p >= 0x80))
+                {
+                    // non-ASCII: the UTF-8 check, and the rest of the run
+                    const unsigned char* const r = p;
+                    p = scan_string_run(p, end);
+                    const auto n = static_cast<std::size_t>(p - r);
+                    NLOHMANN_VIEW_ENSURE(n)
+                    std::memcpy(w, r, n);
+                    w += n;
+                }
+                break;
+            }
+#else
             const unsigned char* const r = p;
-            p = scan_string_run(p, m_end);
-            arena_run(r, static_cast<std::size_t>(p - r));
+            p = scan_string_run(p, end);
+            const auto n = static_cast<std::size_t>(p - r);
+            NLOHMANN_VIEW_ENSURE(n)
+            std::memcpy(w, r, n);
+            w += n;
+#endif
         }
+#undef NLOHMANN_VIEW_ENSURE
     }
 
     /// does the float token [s, p) overflow FloatType? (parse() rejects it)
@@ -1559,39 +1699,12 @@ class builder
         return m_arena_write != nullptr ? static_cast<std::size_t>(m_arena_write - m_doc.arena.data()) : 0;
     }
 
-    NLOHMANN_VIEW_ALWAYS_INLINE void arena_ensure(std::size_t n)
-    {
-        if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(m_arena_end - m_arena_write) < n))
-        {
-            arena_grow(n);
-        }
-    }
-
     NLOHMANN_VIEW_NOINLINE void arena_grow(std::size_t n)
     {
         const std::size_t used = arena_used();
         m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, used + n + 256));
         m_arena_write = m_doc.arena.data() + used;
         m_arena_end = m_doc.arena.data() + m_doc.arena.size();
-    }
-
-    /// append the run [r, r + n) to the arena; short runs as one fixed-size
-    /// 16-byte move when both sides have the room (no library call)
-    NLOHMANN_VIEW_ALWAYS_INLINE void arena_run(const unsigned char* r, std::size_t n)
-    {
-        if (n <= 16 && m_end - r >= 16)
-        {
-            arena_ensure(16);
-            std::memcpy(m_arena_write, r, 16);
-        }
-        else if (n != 0)
-        {
-            // (an empty run leaves an empty arena unallocated, and memcpy()
-            // must not be passed its null pointer even for zero bytes)
-            arena_ensure(n);
-            std::memcpy(m_arena_write, r, n);
-        }
-        m_arena_write += n;
     }
 
     /// UTF-8 encoding of cp at w (room for 4 bytes); returns the position after
