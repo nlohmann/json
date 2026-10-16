@@ -27259,14 +27259,21 @@ class binary_writer
     void write_cbor_array(const BasicJsonType& j, const std::size_t depth)
     {
         write_cbor_head(0x80, j.m_data.m_value.array->size());
-        write_cbor_array_elements(j, depth, std::integral_constant<bool, integers_fit_64_bits()>());
+        if (!j.m_data.m_value.array->empty())
+        {
+            write_cbor_array_elements(j, depth, std::integral_constant<bool, integers_fit_64_bits()>());
+        }
     }
 
+    JSON_HEDLEY_NEVER_INLINE
     void write_cbor_array_elements(const BasicJsonType& j, const std::size_t depth, std::true_type /*fits_64_bits*/)
     {
         write_array_elements(j, [this](CharType * out, const BasicJsonType & el)
         {
             return encode_cbor_integer(out, el);
+        }, [this](CharType * out, const number_float_t n)
+        {
+            return encode_cbor_float(out, n);
         }, [this, depth](const BasicJsonType & el)
         {
             write_cbor(el, depth + 1);
@@ -27283,22 +27290,28 @@ class binary_writer
 
     /*!
     @brief write the elements of the array @a j, runs of integers with
-           @a encode_integer and all other values with @a write_value
+           @a encode_integer, runs of floats with @a encode_float, and all
+           other values with @a write_value
 
-    Runs of integers are encoded straight into space reserved from the sink
+    Runs of numbers are encoded straight into space reserved from the sink
     for a whole run: the write pointer stays a local, where it would otherwise
     be reloaded from the sink for every value, as a store of a character may
     alias it.
     */
-    template<typename EncodeInteger, typename WriteValue>
-    void write_array_elements(const BasicJsonType& j, EncodeInteger encode_integer, WriteValue write_value)
+    template<typename EncodeInteger, typename EncodeFloat, typename WriteValue>
+    void write_array_elements(const BasicJsonType& j, EncodeInteger encode_integer, EncodeFloat encode_float, WriteValue write_value)
     {
         constexpr std::size_t max_run = max_reserve_size / integer_encoding_space;
         auto it = j.m_data.m_value.array->begin();
         const auto end = j.m_data.m_value.array->end();
         while (it != end)
         {
-            if (it->is_number_integer())
+            if (!it->is_number())
+            {
+                write_value(*it);
+                ++it;
+            }
+            else if (!it->is_number_float())
             {
                 CharType* const start = oa.reserve(max_run * integer_encoding_space);
                 CharType* out = start;
@@ -27310,10 +27323,31 @@ class binary_writer
             }
             else
             {
-                write_value(*it);
-                ++it;
+                it = write_float_elements(it, end, encode_float);
             }
         }
+    }
+
+    /*!
+    @brief write the run of floats that starts at @a it with @a encode_float
+    @return the first element after the run
+
+    Out of line, so that the loop of integers in @ref write_array_elements is
+    not changed by it.
+    */
+    template<typename Iterator, typename EncodeFloat>
+    JSON_HEDLEY_NEVER_INLINE
+    Iterator write_float_elements(Iterator it, const Iterator end, EncodeFloat encode_float)
+    {
+        constexpr std::size_t max_run = max_reserve_size / integer_encoding_space;
+        CharType* const start = oa.reserve(max_run * integer_encoding_space);
+        CharType* out = start;
+        for (std::size_t n = 0; n < max_run && it != end && it->is_number_float(); ++n, ++it)
+        {
+            out += encode_float(out, it->m_data.m_value.number_float);
+        }
+        oa.commit(static_cast<std::size_t>(out - start));
+        return it;
     }
 
     /*!
@@ -27500,14 +27534,21 @@ class binary_writer
     void write_msgpack_array(const BasicJsonType& j, const std::size_t depth)
     {
         write_msgpack_array_prefix(j.m_data.m_value.array->size(), j);
-        write_msgpack_array_elements(j, depth, std::integral_constant<bool, integers_fit_64_bits()>());
+        if (!j.m_data.m_value.array->empty())
+        {
+            write_msgpack_array_elements(j, depth, std::integral_constant<bool, integers_fit_64_bits()>());
+        }
     }
 
+    JSON_HEDLEY_NEVER_INLINE
     void write_msgpack_array_elements(const BasicJsonType& j, const std::size_t depth, std::true_type /*fits_64_bits*/)
     {
         write_array_elements(j, [this](CharType * out, const BasicJsonType & el)
         {
             return encode_msgpack_integer(out, el);
+        }, [this](CharType * out, const number_float_t n)
+        {
+            return encode_compact_float(out, n, to_char_type(0xCA), to_char_type(0xCB));
         }, [this, depth](const BasicJsonType & el)
         {
             write_msgpack(el, depth + 1);
@@ -28975,6 +29016,67 @@ class binary_writer
         oa.write_characters(vec.data(), sizeof(NumberType));
     }
 
+    /// whether @a n is written as a float32 by @ref write_compact_float
+    static bool fits_float32(const number_float_t n) noexcept
+    {
+        static_assert(std::is_same<number_float_t, float>::value || std::is_same<number_float_t, double>::value,
+                      "number_float_t must be float or double for the CBOR/MessagePack/BON8 writer");
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 7)
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wduplicated-branches")
+#endif
+        return !std::isfinite(n) || ((static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                                      static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                                      static_cast<double>(static_cast<float>(n)) == static_cast<double>(n)));
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+    }
+
+    /*!
+    @brief encode @a n to @a out as @ref write_compact_float writes it
+    @return the number of characters, 5 or 9
+    */
+    std::size_t encode_compact_float(CharType* out, const number_float_t n, const CharType float32_marker, const CharType float64_marker) const noexcept
+    {
+        if (fits_float32(n))
+        {
+            *out = float32_marker;
+            store_number(out + 1, static_cast<float>(n), false);
+            return 1 + sizeof(float);
+        }
+        *out = float64_marker;
+        store_number(out + 1, n, false);
+        return 1 + sizeof(number_float_t);
+    }
+
+    /*!
+    @brief encode a float as @ref write_cbor writes it
+    @return the number of characters, 3, 5 or 9
+    */
+    std::size_t encode_cbor_float(CharType* out, const number_float_t n) const noexcept
+    {
+        if (JSON_HEDLEY_UNLIKELY(!std::isfinite(n)))
+        {
+            // NaN is 0xf97e00, Infinity is 0xf97c00, -Infinity is 0xf9fc00
+            out[0] = to_char_type(0xF9);
+            if (std::isnan(n))
+            {
+                out[1] = to_char_type(0x7E);
+            }
+            else
+            {
+                out[1] = n > 0 ? to_char_type(0x7C) : to_char_type(0xFC);
+            }
+            out[2] = to_char_type(0x00);
+            return 3;
+        }
+        return encode_compact_float(out, n, to_char_type(0xFA), to_char_type(0xFB));
+    }
+
     /// @brief write @a n using @a float32_marker if it round-trips through
     ///        float, otherwise using @a float64_marker
     ///
@@ -28984,24 +29086,7 @@ class binary_writer
     /// no longer needs to be passed in.
     void write_compact_float(const number_float_t n, const CharType float32_marker, const CharType float64_marker)
     {
-        static_assert(std::is_same<number_float_t, float>::value || std::is_same<number_float_t, double>::value,
-                      "number_float_t must be float or double for the CBOR/MessagePack/BON8 writer");
-#ifdef __GNUC__
-        JSON_HEDLEY_DIAGNOSTIC_PUSH
-        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
-#endif
-        // When number_float_t is float, static_cast<float>(n) is the identity and
-        // both branches below are intentionally identical (the "compact" float
-        // representation is the value itself). Only GCC diagnoses this, and only
-        // when the sink calls are inlined; clang has no such warning.
-        // (-Wduplicated-branches only exists from GCC 7 on; naming it on an older
-        // GCC would itself warn under -Wpragmas)
-#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 7)
-        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wduplicated-branches")
-#endif
-        if (!std::isfinite(n) || ((static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                                   static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                                   static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))))
+        if (fits_float32(n))
         {
             oa.write_character(float32_marker);
             write_number(static_cast<float>(n));
@@ -29011,9 +29096,6 @@ class binary_writer
             oa.write_character(float64_marker);
             write_number(n);
         }
-#ifdef __GNUC__
-        JSON_HEDLEY_DIAGNOSTIC_POP
-#endif
     }
 
   public:
