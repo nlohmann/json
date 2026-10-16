@@ -30178,6 +30178,14 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/value_t.hpp>
 
 
+// the short-string fast path of the serializer assembles words from little-endian
+// loads, see serializer::put_short_quoted()
+#if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    #define JSON_DUMP_SHORT_STRINGS 1
+#else
+    #define JSON_DUMP_SHORT_STRINGS 0
+#endif
+
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
@@ -30313,9 +30321,7 @@ class serializer
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
                         put_indent(new_indent);
-                        put_char('"');
-                        dump_escaped(i->first);
-                        put_literal("\": ");
+                        put_quoted(i->first, "\": ");
                         dump_internal(i->second, new_indent, depth + 1);
                         put_literal(",\n");
                     }
@@ -30324,9 +30330,7 @@ class serializer
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
                     put_indent(new_indent);
-                    put_char('"');
-                    dump_escaped(i->first);
-                    put_literal("\": ");
+                    put_quoted(i->first, "\": ");
                     dump_internal(i->second, new_indent, depth + 1);
 
                     put_char('\n');
@@ -30341,9 +30345,7 @@ class serializer
                     auto i = val.m_data.m_value.object->cbegin();
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        put_char('"');
-                        dump_escaped(i->first);
-                        put_literal("\":");
+                        put_quoted(i->first, "\":");
                         dump_internal(i->second, current_indent, depth + 1);
                         put_char(',');
                     }
@@ -30351,9 +30353,7 @@ class serializer
                     // last element
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    put_char('"');
-                    dump_escaped(i->first);
-                    put_literal("\":");
+                    put_quoted(i->first, "\":");
                     dump_internal(i->second, current_indent, depth + 1);
 
                     put_char('}');
@@ -30497,16 +30497,13 @@ class serializer
                     put_indent(frame.child_indent);
                 }
 
-                put_char('"');
-                dump_escaped(frame.object_it->first);
-
                 if (pretty_print)
                 {
-                    put_literal("\": ");
+                    put_quoted(frame.object_it->first, "\": ");
                 }
                 else
                 {
-                    put_literal("\":");
+                    put_quoted(frame.object_it->first, "\":");
                 }
 
                 const BasicJsonType& element = frame.object_it->second;
@@ -30681,78 +30678,13 @@ class serializer
         {
             case value_t::string:
             {
-                put_char('"');
-                dump_escaped(*val.m_data.m_value.string);
-                put_char('"');
+                dump_string_value(*val.m_data.m_value.string);
                 return;
             }
 
             case value_t::binary:
             {
-                if (pretty_print)
-                {
-                    put_literal("{\n");
-
-                    // variable to hold indentation for the bytes
-                    const auto new_indent = next_indent(current_indent, indent_step);
-
-                    put_indent(new_indent);
-
-                    put_literal("\"bytes\": [");
-
-                    if (!val.m_data.m_value.binary->empty())
-                    {
-                        for (auto i = val.m_data.m_value.binary->cbegin();
-                                i != val.m_data.m_value.binary->cend() - 1; ++i)
-                        {
-                            dump_byte(*i);
-                            put_literal(", ");
-                        }
-                        dump_byte(val.m_data.m_value.binary->back());
-                    }
-
-                    put_literal("],\n");
-                    put_indent(new_indent);
-
-                    put_literal("\"subtype\": ");
-                    if (val.m_data.m_value.binary->has_subtype())
-                    {
-                        dump_integer(val.m_data.m_value.binary->subtype());
-                    }
-                    else
-                    {
-                        put_literal("null");
-                    }
-                    put_char('\n');
-                    put_indent(current_indent);
-                    put_char('}');
-                }
-                else
-                {
-                    put_literal("{\"bytes\":[");
-
-                    if (!val.m_data.m_value.binary->empty())
-                    {
-                        for (auto i = val.m_data.m_value.binary->cbegin();
-                                i != val.m_data.m_value.binary->cend() - 1; ++i)
-                        {
-                            dump_byte(*i);
-                            put_char(',');
-                        }
-                        dump_byte(val.m_data.m_value.binary->back());
-                    }
-
-                    put_literal("],\"subtype\":");
-                    if (val.m_data.m_value.binary->has_subtype())
-                    {
-                        dump_integer(val.m_data.m_value.binary->subtype());
-                        put_char('}');
-                    }
-                    else
-                    {
-                        put_literal("null}");
-                    }
-                }
+                dump_binary_value(current_indent, *val.m_data.m_value.binary);
                 return;
             }
 
@@ -30771,19 +30703,19 @@ class serializer
 
             case value_t::number_integer:
             {
-                dump_integer(val.m_data.m_value.number_integer);
+                dump_signed_value(val.m_data.m_value.number_integer);
                 return;
             }
 
             case value_t::number_unsigned:
             {
-                dump_integer(val.m_data.m_value.number_unsigned);
+                dump_unsigned_value(val.m_data.m_value.number_unsigned);
                 return;
             }
 
             case value_t::number_float:
             {
-                dump_float(val.m_data.m_value.number_float);
+                dump_float_value(val.m_data.m_value.number_float);
                 return;
             }
 
@@ -30806,6 +30738,107 @@ class serializer
         }
     }
 
+    /// @brief write the string @a s in quotes; kept out of line, so that the
+    /// other scalars do not pay for its register needs (and the other way round)
+    JSON_HEDLEY_NEVER_INLINE void dump_string_value(const string_t& s)
+    {
+#if JSON_DUMP_SHORT_STRINGS
+        if (s.size() <= 16 && put_short_quoted(s, "\""))
+        {
+            return;
+        }
+#endif
+        put_char('"');
+        dump_escaped(s);
+        put_char('"');
+    }
+
+    // The numbers, and the rest of what dump_scalar() writes, are left to
+    // functions of their own as well: a single function holding all of them
+    // saves and restores every register any of them needs, on every call. Now
+    // dump_scalar() only dispatches, and each writer pays for what it uses.
+    JSON_HEDLEY_NEVER_INLINE void dump_signed_value(const number_integer_t x)
+    {
+        dump_integer(x);
+    }
+
+    JSON_HEDLEY_NEVER_INLINE void dump_unsigned_value(const number_unsigned_t x)
+    {
+        dump_integer(x);
+    }
+
+    JSON_HEDLEY_NEVER_INLINE void dump_float_value(const number_float_t x)
+    {
+        dump_float(x);
+    }
+
+    JSON_HEDLEY_NEVER_INLINE void dump_binary_value(const std::size_t current_indent, const typename BasicJsonType::binary_t& binary)
+    {
+        if (pretty_print)
+        {
+            put_literal("{\n");
+
+            // variable to hold indentation for the bytes
+            const auto new_indent = next_indent(current_indent, indent_step);
+
+            put_indent(new_indent);
+
+            put_literal("\"bytes\": [");
+
+            if (!binary.empty())
+            {
+                for (auto i = binary.cbegin();
+                        i != binary.cend() - 1; ++i)
+                {
+                    dump_byte(*i);
+                    put_literal(", ");
+                }
+                dump_byte(binary.back());
+            }
+
+            put_literal("],\n");
+            put_indent(new_indent);
+
+            put_literal("\"subtype\": ");
+            if (binary.has_subtype())
+            {
+                dump_integer(binary.subtype());
+            }
+            else
+            {
+                put_literal("null");
+            }
+            put_char('\n');
+            put_indent(current_indent);
+            put_char('}');
+        }
+        else
+        {
+            put_literal("{\"bytes\":[");
+
+            if (!binary.empty())
+            {
+                for (auto i = binary.cbegin();
+                        i != binary.cend() - 1; ++i)
+                {
+                    dump_byte(*i);
+                    put_char(',');
+                }
+                dump_byte(binary.back());
+            }
+
+            put_literal("],\"subtype\":");
+            if (binary.has_subtype())
+            {
+                dump_integer(binary.subtype());
+                put_char('}');
+            }
+            else
+            {
+                put_literal("null}");
+            }
+        }
+    }
 
     /*!
     @brief the indentation level to use for the children of the current value
@@ -30822,6 +30855,133 @@ class serializer
         return new_indent;
     }
 
+  private:
+    /*!
+    @brief append the string @a s in quotes, followed by @a tail
+
+    The quote, the string and @a tail (the closing quote, possibly with the
+    colon of an object key) are the bulk of what most documents consist of, and
+    most keys and many values are short and plain. Those are handled in one go
+    by put_short_quoted(); everything else takes the general path.
+    */
+    template<std::size_t N>
+    void put_quoted(const string_t& s, const char (&tail)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    {
+#if JSON_DUMP_SHORT_STRINGS
+        if (put_short_quoted(s, tail))
+        {
+            return;
+        }
+#endif
+        put_char('"');
+        dump_escaped(s);
+        put_literal(tail);
+    }
+
+#if JSON_DUMP_SHORT_STRINGS
+    /// the high bit of every byte of @a v that is not printable ASCII or is a
+    /// quote, a backslash, or DEL (zero if the bytes can be copied as they are)
+    static std::uint64_t swar_not_plain(const std::uint64_t v) noexcept
+    {
+        constexpr std::uint64_t ones = 0x0101010101010101ull;
+        const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'
+        const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\'
+        return (((q - ones) & ~q) | ((b - ones) & ~b)         // == '"', == '\\'
+                | ((v - 0x2020202020202020ull) & ~v)          // < 0x20
+                | v | (v + ones))                             // >= 0x7F
+               & 0x8080808080808080ull;
+    }
+
+    template<typename WordType>
+    static WordType load_word(const char* p) noexcept
+    {
+        WordType w;
+        std::memcpy(&w, p, sizeof(w));
+        return w;
+    }
+
+    template<typename WordType>
+    static void store_word(char* p, const WordType w) noexcept
+    {
+        std::memcpy(p, &w, sizeof(w));
+    }
+
+    /*!
+    @brief write `"`, @a s and @a tail if @a s is short and needs no escaping
+
+    A string of up to 16 printable ASCII characters (no quote, backslash, or DEL)
+    is read with two overlapping loads and written with two overlapping stores,
+    instead of scanning it and calling memcpy with a length that is only known
+    at run time. Returns false, having changed nothing, if @a s does not
+    qualify or the write buffer lacks the room.
+    */
+    template<std::size_t N>
+    bool put_short_quoted(const string_t& s, const char (&tail)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    {
+        const std::size_t n = s.size();
+        if (n > 16 || write_buffer_pos + n + N > write_buffer.size())
+        {
+            return false;
+        }
+
+        char* d = write_buffer.data() + write_buffer_pos + 1;
+        const char* const p = s.data();
+
+        if (n >= 8)
+        {
+            const auto a = load_word<std::uint64_t>(p);
+            const auto b = load_word<std::uint64_t>(p + n - 8);
+            if ((swar_not_plain(a) | swar_not_plain(b)) != 0)
+            {
+                return false;
+            }
+            store_word(d, a);
+            store_word(d + n - 8, b);
+        }
+        else if (n >= 4)
+        {
+            const auto a = load_word<std::uint32_t>(p);
+            const auto b = load_word<std::uint32_t>(p + n - 4);
+            // the bytes above the string are filled with a plain character
+            const std::uint64_t w = a | (static_cast<std::uint64_t>(b) << (8 * (n - 4)))
+                                    | (0x4141414141414141ull << (8 * n));
+            if (swar_not_plain(w) != 0)
+            {
+                return false;
+            }
+            store_word(d, a);
+            store_word(d + n - 4, b);
+        }
+        else if (n >= 2)
+        {
+            const auto a = load_word<std::uint16_t>(p);
+            const auto b = load_word<std::uint16_t>(p + n - 2);
+            const std::uint64_t w = a | (static_cast<std::uint64_t>(b) << (8 * (n - 2)))
+                                    | (0x4141414141414141ull << (8 * n));
+            if (swar_not_plain(w) != 0)
+            {
+                return false;
+            }
+            store_word(d, a);
+            store_word(d + n - 2, b);
+        }
+        else if (n == 1)
+        {
+            const std::uint64_t w = static_cast<std::uint64_t>(static_cast<unsigned char>(p[0])) | (0x4141414141414141ull << 8u);
+            if (swar_not_plain(w) != 0)
+            {
+                return false;
+            }
+            *d = p[0];
+        }
+
+        d[-1] = '"';
+        std::memcpy(d + n, tail, N - 1);
+        write_buffer_pos += n + N;
+        return true;
+    }
+#endif
+
   JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief dump escaped string
@@ -30834,14 +30994,23 @@ class serializer
     @param[in] s  the string to escape
 
     Complexity: Linear in the length of string @a s.
+
+    @note kept out of line: with the short-string attempts in front of it gone
+          from here, compilers would otherwise inline it into @ref put_quoted
+          and then no longer into the loops that call that
     */
-    void dump_escaped(const string_t& s)
+    JSON_HEDLEY_NEVER_INLINE void dump_escaped(const string_t& s)
     {
         // Short strings of printable ASCII - most object keys and many values -
         // are checked byte by byte against a table and then copied in one go.
         // For them, this is cheaper than starting the vector scanner below,
         // whose setup costs more than such a string takes to scan. The same
         // check serves both values of ensure_ascii.
+        //
+        // Where put_short_quoted() exists and takes strings of up to 32 bytes,
+        // the callers have tried it already, and repeating the attempt only
+        // costs time for strings that need escaping or are not ASCII.
+#if !(JSON_DUMP_SHORT_STRINGS && JSON_SCAN_VECTOR)
         if (s.size() <= 32)
         {
             const auto& copyable = ascii_copyable();
@@ -30863,6 +31032,7 @@ class serializer
                 return;
             }
         }
+#endif
 
         // dispatch once here rather than test the flag inside the loop: it does
         // not change while a string is written, and folding it lets each of the
@@ -40701,6 +40871,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_SCAN_SSSE3_TARGET
 #undef JSON_SCAN_VECTOR
 #undef JSON_SCAN_VECTOR_UTF8
+#undef JSON_DUMP_SHORT_STRINGS
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
