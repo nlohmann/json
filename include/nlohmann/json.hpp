@@ -7476,6 +7476,50 @@ public:
         diff_operation(result, "add", path, &value);
     }
 
+    /// @brief the values in the target of the members of a source object, for the
+    ///        objects of up to 16 members without allocating
+    ///
+    /// reserve() must be called with the number of values that are added.
+    class diff_target_values
+    {
+      public:
+        diff_target_values() = default;
+        diff_target_values(const diff_target_values&) = delete;
+        diff_target_values& operator=(const diff_target_values&) = delete;
+        ~diff_target_values() = default;
+
+        void reserve(const std::size_t n)
+        {
+            if (n > inline_size)
+            {
+                large.resize(n);
+                items = large.data();
+            }
+        }
+
+        void push_back(const basic_json* value)
+        {
+            items[count++] = value;
+        }
+
+        std::size_t size() const noexcept
+        {
+            return count;
+        }
+
+        const basic_json* operator[](const std::size_t i) const noexcept
+        {
+            return items[i];
+        }
+
+      private:
+        static constexpr std::size_t inline_size = 16;
+        std::size_t count = 0;
+        const basic_json** items = small;
+        std::vector<const basic_json*> large{}; // NOLINT(readability-redundant-member-init)
+        const basic_json* small[inline_size]; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    };
+
     /// @brief append "/" and the decimal representation of @a index to @a path
     static void diff_append_index(string_t& path, std::size_t index)
     {
@@ -7556,8 +7600,9 @@ public:
     operations that remove every member of @a source and add every member of
     @a target to @a result, and returns false.
     */
+    template<typename TargetValues>
     static bool diff_object_keys(basic_json& result, const basic_json& source, const basic_json& target,
-                                 const string_t& path, std::vector<const basic_json*>& target_values,
+                                 const string_t& path, TargetValues& target_values,
                                  std::vector<const_iterator>& added)
     {
         // first pass: one lookup per source key
@@ -7771,7 +7816,7 @@ public:
 
             case value_t::object:
             {
-                std::vector<const basic_json*> target_values;
+                diff_target_values target_values;
                 std::vector<const_iterator> added;
                 if (diff_object_keys(result, source, target, path, target_values, added))
                 {
