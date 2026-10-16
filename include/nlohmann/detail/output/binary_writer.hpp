@@ -4140,9 +4140,16 @@ class binary_writer
                 // 0x80..0x84: array with 0..4 elements; 0x85: array ended by 0xFE
                 write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x80 + N : 0x85), string_open);
 
-                for (const auto& el : *j.m_data.m_value.array)
+                if (N != 0 && j.m_data.m_value.array->front().is_number())
                 {
-                    write_bon8_value(el, string_open, depth + 1);
+                    write_bon8_array_elements(*j.m_data.m_value.array, string_open, depth);
+                }
+                else
+                {
+                    for (const auto& el : *j.m_data.m_value.array)
+                    {
+                        write_bon8_value(el, string_open, depth + 1);
+                    }
                 }
 
                 if (N > 4)
@@ -4257,6 +4264,172 @@ class binary_writer
                 ++stack.back().object_it;
             }
             write_bon8_value_or_push(*child, string_open, stack);
+        }
+    }
+
+    /*!
+    @brief encode an integer as @ref write_bon8_integer writes it
+    @param[in] out  where the encoding goes; at most 9 characters are written
+    @return the end of the encoding
+    */
+    CharType* encode_bon8_integer(CharType* out, std::int64_t value) const noexcept
+    {
+        if (value < (std::numeric_limits<std::int32_t>::min)() || value > (std::numeric_limits<std::int32_t>::max)())
+        {
+            *out++ = to_char_type(0x8D);
+            return store_number(out, value, false);
+        }
+        if (value < -33818506 || value > 67637031)
+        {
+            *out++ = to_char_type(0x8C);
+            return store_number(out, static_cast<std::int32_t>(value), false);
+        }
+        if (value <= -264075)
+        {
+            value = -(value + 264075);
+            return put_bon8_bytes(out, 0xF0 + ((value >> 22) & 0x07), 0xC0 + ((value >> 16) & 0x3F), value >> 8, value);
+        }
+        if (value <= -1931)
+        {
+            value = -(value + 1931);
+            return put_bon8_bytes(out, 0xE0 + ((value >> 14) & 0x0F), 0xC0 + ((value >> 8) & 0x3F), value);
+        }
+        if (value <= -11)
+        {
+            value = -(value + 11);
+            return put_bon8_bytes(out, 0xC2 + ((value >> 6) & 0x1F), 0xC0 + (value & 0x3F));
+        }
+        if (value <= -1)
+        {
+            return put_bon8_bytes(out, 0xB8 - (value + 1));
+        }
+        if (value <= 39)
+        {
+            return put_bon8_bytes(out, 0x90 + value);
+        }
+        if (value <= 3879)
+        {
+            value -= 40;
+            return put_bon8_bytes(out, 0xC2 + ((value >> 7) & 0x1F), value & 0x7F);
+        }
+        if (value <= 528167)
+        {
+            value -= 3880;
+            return put_bon8_bytes(out, 0xE0 + ((value >> 15) & 0x0F), (value >> 8) & 0x7F, value);
+        }
+        value -= 528168;
+        return put_bon8_bytes(out, 0xF0 + ((value >> 23) & 0x07), (value >> 16) & 0x7F, value >> 8, value);
+    }
+
+    /// store the low byte of each argument at @a out; return the end
+    template<typename... Bytes>
+    CharType* put_bon8_bytes(CharType* out, const Bytes... bytes) const noexcept
+    {
+        const std::array<CharType, sizeof...(Bytes)> buffer{{to_char_type(static_cast<std::uint8_t>(bytes & 0xFF))...}};
+        std::memcpy(out, buffer.data(), buffer.size());
+        return out + buffer.size();
+    }
+
+    /*!
+    @brief encode a float as @ref write_bon8_float writes it
+    @param[in] out  where the encoding goes; at most 9 characters are written
+    @return the end of the encoding
+    */
+    CharType* encode_bon8_float(CharType* out, const number_float_t n) const noexcept
+    {
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+        if (n == static_cast<number_float_t>(-1))
+        {
+            *out++ = to_char_type(0xFB);
+            return out;
+        }
+        if (n == static_cast<number_float_t>(0) && !std::signbit(n))
+        {
+            *out++ = to_char_type(0xFC);
+            return out;
+        }
+        if (n == static_cast<number_float_t>(1))
+        {
+            *out++ = to_char_type(0xFD);
+            return out;
+        }
+        if (std::isnan(n))
+        {
+            return put_bon8_bytes(out, 0x8E, 0x7F, 0x80, 0x00, 0x01);
+        }
+        return out + encode_compact_float(out, n, to_char_type(0x8E), to_char_type(0x8F));
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+    }
+
+    /*!
+    @brief write the elements of an array that starts with a number, with runs
+           of numbers encoded without a call of @ref write_bon8_value for each
+
+    Same output as calling write_bon8_value for each element. The numbers of a
+    run are encoded into space reserved from the sink, as in
+    @ref write_array_elements; an integer that BON8 cannot write (an unsigned
+    one above the int64 range, or one of a number type wider than 64 bits) throws
+    from write_bon8_value, like any other value that is not a number. Kept out
+    of line, like @ref write_cbor_array.
+    */
+    template<typename ArrayType>
+    JSON_HEDLEY_NEVER_INLINE
+    void write_bon8_array_elements(const ArrayType& array, bool& string_open, const std::size_t depth)
+    {
+        constexpr std::size_t max_run = max_reserve_size / 9;
+        auto it = array.begin();
+        const auto end = array.end();
+        while (it != end)
+        {
+            if (!it->is_number())
+            {
+                write_bon8_value(*it, string_open, depth + 1);
+                ++it;
+                continue;
+            }
+
+            CharType* const start = oa.reserve(max_run * 9);
+            CharType* out = start;
+            bool unencodable = false;
+            for (std::size_t n = 0; n < max_run && it != end && it->is_number(); ++n)
+            {
+                if (it->is_number_float())
+                {
+                    out = encode_bon8_float(out, it->m_data.m_value.number_float);
+                }
+                else if (JSON_HEDLEY_UNLIKELY((it->m_data.m_type == value_t::number_unsigned
+                                               && !integer_fits_max<std::int64_t>(it->m_data.m_value.number_unsigned))
+                                              || (it->m_data.m_type == value_t::number_integer
+                                                  && !integer_fits<std::int64_t>(it->m_data.m_value.number_integer))))
+                {
+                    unencodable = true;
+                    break;
+                }
+                else
+                {
+                    out = encode_bon8_integer(out, it->m_data.m_type == value_t::number_integer
+                                              ? static_cast<std::int64_t>(it->m_data.m_value.number_integer)
+                                              : static_cast<std::int64_t>(it->m_data.m_value.number_unsigned));
+                }
+                ++it;
+            }
+            oa.commit(static_cast<std::size_t>(out - start));
+            if (out != start)
+            {
+                // a number follows a string without terminating it
+                string_open = false;
+            }
+
+            if (unencodable)
+            {
+                write_bon8_value(*it, string_open, depth + 1);
+                ++it;
+            }
         }
     }
 
