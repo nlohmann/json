@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <algorithm> // min, reverse
+#include <algorithm> // max, min, reverse
 #include <array> // array
 #include <cmath> // isnan, isinf
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
@@ -73,6 +73,21 @@ std::size_t binary_reserve_hint(const BasicJsonType& j)
     }
 
     return 0;
+}
+
+/*!
+@brief the capacity to reserve for the result of a binary serialization into a
+       std::vector
+
+The hint of @ref binary_reserve_hint, but not less than the 64 characters that
+output_vector_sink grows an empty vector to on its first write anyway. A small
+document then costs one allocation, instead of an allocation of a few bytes that
+the first write replaces with one of 64.
+*/
+template<typename BasicJsonType>
+std::size_t binary_initial_capacity(const BasicJsonType& j)
+{
+    return (std::max)(binary_reserve_hint(j), min_vector_sink_capacity);
 }
 
 /*!

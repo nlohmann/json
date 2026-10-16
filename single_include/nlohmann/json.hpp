@@ -24241,7 +24241,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // min, reverse
+#include <algorithm> // max, min, reverse
 #include <array> // array
 #include <cmath> // isnan, isinf
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
@@ -24378,6 +24378,9 @@ inline void copy_short(CharType* dst, const CharType* src, const std::size_t len
     std::memcpy(dst, src, length * sizeof(CharType));
 }
 
+/// the number of characters an empty vector is grown to by output_vector_sink
+constexpr std::size_t min_vector_sink_capacity = 64;
+
 /// @brief non-virtual output sink writing into a std::vector
 ///
 /// This sink is not part of the virtual output_adapter_protocol hierarchy: it is
@@ -24498,10 +24501,10 @@ class output_vector_sink
     void grow(const std::size_t length)
     {
         // use the capacity the vector already has, else at least double it;
-        // never less than 64 characters, so that a small value does not
+        // never less than min_vector_sink_capacity, so that a small value does not
         // reallocate for every few bytes
         const std::size_t needed = position + length;
-        v->resize((std::max)(std::size_t{64}, needed <= v->capacity()
+        v->resize((std::max)(min_vector_sink_capacity, needed <= v->capacity()
                              ? v->capacity()
                              : (std::max)(needed, v->capacity() * 2)));
     }
@@ -24901,6 +24904,21 @@ std::size_t binary_reserve_hint(const BasicJsonType& j)
     }
 
     return 0;
+}
+
+/*!
+@brief the capacity to reserve for the result of a binary serialization into a
+       std::vector
+
+The hint of @ref binary_reserve_hint, but not less than the 64 characters that
+output_vector_sink grows an empty vector to on its first write anyway. A small
+document then costs one allocation, instead of an allocation of a few bytes that
+the first write replaces with one of 64.
+*/
+template<typename BasicJsonType>
+std::size_t binary_initial_capacity(const BasicJsonType& j)
+{
+    return (std::max)(binary_reserve_hint(j), min_vector_sink_capacity);
 }
 
 /*!
@@ -40035,7 +40053,7 @@ public:
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_cbor(j);
         return result;
     }
@@ -40066,7 +40084,7 @@ public:
             const error_handler_t error_handler = error_handler_t::keep)
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_msgpack(j);
         return result;
     }
@@ -40099,7 +40117,7 @@ public:
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_ubjson(j, use_size, use_type);
         return result;
     }
@@ -40135,7 +40153,7 @@ public:
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
         return result;
     }
@@ -40170,7 +40188,7 @@ public:
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_bson(j);
         return result;
     }
@@ -40200,7 +40218,7 @@ public:
     static std::vector<std::uint8_t> to_bon8(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result).write_bon8(j);
         return result;
     }

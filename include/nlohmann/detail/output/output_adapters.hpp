@@ -112,6 +112,9 @@ inline void copy_short(CharType* dst, const CharType* src, const std::size_t len
     std::memcpy(dst, src, length * sizeof(CharType));
 }
 
+/// the number of characters an empty vector is grown to by output_vector_sink
+constexpr std::size_t min_vector_sink_capacity = 64;
+
 /// @brief non-virtual output sink writing into a std::vector
 ///
 /// This sink is not part of the virtual output_adapter_protocol hierarchy: it is
@@ -232,10 +235,10 @@ class output_vector_sink
     void grow(const std::size_t length)
     {
         // use the capacity the vector already has, else at least double it;
-        // never less than 64 characters, so that a small value does not
+        // never less than min_vector_sink_capacity, so that a small value does not
         // reallocate for every few bytes
         const std::size_t needed = position + length;
-        v->resize((std::max)(std::size_t{64}, needed <= v->capacity()
+        v->resize((std::max)(min_vector_sink_capacity, needed <= v->capacity()
                              ? v->capacity()
                              : (std::max)(needed, v->capacity() * 2)));
     }

@@ -6321,7 +6321,7 @@ public:
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_cbor(j);
         return result;
     }
@@ -6352,7 +6352,7 @@ public:
             const error_handler_t error_handler = error_handler_t::keep)
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_msgpack(j);
         return result;
     }
@@ -6385,7 +6385,7 @@ public:
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_ubjson(j, use_size, use_type);
         return result;
     }
@@ -6421,7 +6421,7 @@ public:
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
         return result;
     }
@@ -6456,7 +6456,7 @@ public:
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result, error_handler).write_bson(j);
         return result;
     }
@@ -6486,7 +6486,7 @@ public:
     static std::vector<std::uint8_t> to_bon8(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_reserve_hint(j));
+        result.reserve(detail::binary_initial_capacity(j));
         vector_writer(result).write_bon8(j);
         return result;
     }
