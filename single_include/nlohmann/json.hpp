@@ -27722,6 +27722,15 @@ class binary_writer
             }
         }
 
+        write_cbor_checked_string(value, context);
+    }
+
+    /// @brief write a CBOR text string checked or sanitized by the error handler;
+    ///        out of line, as the string_t for the sanitized copy would make
+    ///        every call of @ref write_cbor_string set up a frame for it
+    JSON_HEDLEY_NEVER_INLINE
+    void write_cbor_checked_string(const string_t& value, const BasicJsonType& context)
+    {
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -27774,6 +27783,14 @@ class binary_writer
             }
         }
 
+        write_msgpack_checked_string(value, context);
+    }
+
+    /// @brief write a MessagePack str checked or sanitized by the error handler;
+    ///        out of line, like @ref write_cbor_checked_string
+    JSON_HEDLEY_NEVER_INLINE
+    void write_msgpack_checked_string(const string_t& value, const BasicJsonType& context)
+    {
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -27995,6 +28012,14 @@ class binary_writer
             return;
         }
 
+        write_ubjson_checked_text(value, context, add_marker, use_bjdata);
+    }
+
+    /// @brief write a UBJSON/BJData string checked or sanitized by the error
+    ///        handler; out of line, like @ref write_cbor_checked_string
+    JSON_HEDLEY_NEVER_INLINE
+    void write_ubjson_checked_text(const string_t& value, const BasicJsonType& context, const bool add_marker, const bool use_bjdata)
+    {
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
         if (add_marker)
