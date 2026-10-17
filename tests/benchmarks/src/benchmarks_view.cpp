@@ -144,3 +144,37 @@ static void ViewMaterialize(benchmark::State& state, const char* filename)
     state.SetBytesProcessed(state.iterations() * str.size());
 }
 JSON_VIEW_BENCHMARK_FILES(ViewMaterialize);
+
+//////////////////////////////////////////////////////////////////////////////
+// serialize a parsed document (compare with Dump)
+//////////////////////////////////////////////////////////////////////////////
+
+static void ViewDump(benchmark::State& state, const char* filename, int indent)
+{
+    const std::string str = read_file(filename);
+    const json_document d = json_document::parse(str);
+
+    while (state.KeepRunning())
+    {
+        std::string output = d.root().dump(indent);
+        benchmark::DoNotOptimize(output);
+    }
+
+    state.SetBytesProcessed(state.iterations() * d.root().dump(indent).size());
+}
+BENCHMARK_CAPTURE(ViewDump, jeopardy / -,          TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json",                 -1);
+BENCHMARK_CAPTURE(ViewDump, jeopardy / 4,          TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json",                 4);
+BENCHMARK_CAPTURE(ViewDump, canada / -,            TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json",       -1);
+BENCHMARK_CAPTURE(ViewDump, canada / 4,            TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json",       4);
+BENCHMARK_CAPTURE(ViewDump, citm_catalog / -,      TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json", -1);
+BENCHMARK_CAPTURE(ViewDump, citm_catalog / 4,      TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json", 4);
+BENCHMARK_CAPTURE(ViewDump, twitter / -,           TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json",      -1);
+BENCHMARK_CAPTURE(ViewDump, twitter / 4,           TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json",      4);
+BENCHMARK_CAPTURE(ViewDump, floats / -,            TEST_DATA_DIRECTORY "/regression/floats.json",                 -1);
+BENCHMARK_CAPTURE(ViewDump, floats / 4,            TEST_DATA_DIRECTORY "/regression/floats.json",                 4);
+BENCHMARK_CAPTURE(ViewDump, signed_ints / -,       TEST_DATA_DIRECTORY "/regression/signed_ints.json",            -1);
+BENCHMARK_CAPTURE(ViewDump, signed_ints / 4,       TEST_DATA_DIRECTORY "/regression/signed_ints.json",            4);
+BENCHMARK_CAPTURE(ViewDump, unsigned_ints / -,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",          -1);
+BENCHMARK_CAPTURE(ViewDump, unsigned_ints / 4,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",          4);
+BENCHMARK_CAPTURE(ViewDump, small_signed_ints / -, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json",      -1);
+BENCHMARK_CAPTURE(ViewDump, small_signed_ints / 4, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json",      4);
