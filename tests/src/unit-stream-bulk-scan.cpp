@@ -190,6 +190,7 @@ std::vector<std::string> corpus()
 
 TEST_CASE("parsing from a std::istream scans the get area in bulk")
 {
+#if !defined(JSON_NOEXCEPTION)
     SECTION("results do not depend on the get area")
     {
         const std::vector<read_mode> read_modes = {read_mode::extract, read_mode::parse, read_mode::parse_lenient};
@@ -210,6 +211,8 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
         }
     }
 
+#endif // !defined(JSON_NOEXCEPTION)
+
     SECTION("values are the same as when parsing from a string")
     {
         const std::string input = R"({"name": "nlohmann::json", "numbers": [1, -2, 3.5, 4e10, 18446744073709551615],)"
@@ -227,6 +230,7 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
         CHECK(json::parse(ss) == expected);
     }
 
+#if !defined(JSON_NOEXCEPTION)
     SECTION("a token that spans several get areas is reported completely")
     {
         // the error is found after the string has crossed many get areas; the
@@ -280,6 +284,8 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
                                  json::parse_error&);
         }
     }
+
+#endif // !defined(JSON_NOEXCEPTION)
 
     SECTION("many values from one stream")
     {

@@ -170,6 +170,7 @@ TEST_CASE("parsing from a FILE*")
         check_unlocked(f.get());
     }
 
+#if !defined(JSON_NOEXCEPTION)
     SECTION("the file is unlocked after a parse error")
     {
         const file_ptr f = open_with(name, "[1, 2, x]");
@@ -185,6 +186,8 @@ TEST_CASE("parsing from a FILE*")
         CHECK(std::fgets(rest.data(), static_cast<int>(rest.size()), f.get()) != nullptr);
         CHECK(std::string(rest.data()) == "]");
     }
+
+#endif // !defined(JSON_NOEXCEPTION)
 
     SECTION("the file can be parsed again and read with stdio afterwards")
     {
