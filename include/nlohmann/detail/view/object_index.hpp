@@ -77,7 +77,7 @@ inline void build_object_index(document_data& d, node* obj)
     }
     const std::size_t start = d.index_slots.size();
     d.index_slots.resize(start + cap, 0);
-    std::uint32_t* const slots = d.index_slots.data() + start;
+    std::uint32_t* const table = d.index_slots.data() + start;
     const std::size_t mask = cap - 1;
     bool degenerate = false;
     for (const node* k = document_data::first_child(obj), *end = document_data::child_end(obj); k != end; k = document_data::after(k + 1))
@@ -87,9 +87,9 @@ inline void build_object_index(document_data& d, node* obj)
         std::size_t i = static_cast<std::size_t>(hash) & mask;
         bool duplicate = false;
         std::size_t distance = 0;
-        while (slots[i] != 0)
+        while (table[i] != 0)
         {
-            const node* const other = obj + slots[i];
+            const node* const other = obj + table[i];
             if (other->len == k->len && (k->len == 0 || std::memcmp(d.str(*other), key, k->len) == 0))
             {
                 duplicate = true; // keep the first
@@ -108,7 +108,7 @@ inline void build_object_index(document_data& d, node* obj)
         }
         if (!duplicate)
         {
-            slots[i] = static_cast<std::uint32_t>(k - obj);
+            table[i] = static_cast<std::uint32_t>(k - obj);
         }
     }
     if (degenerate)
@@ -134,12 +134,12 @@ inline void build_object_indexes(document_data& d)
 inline const node* find_indexed(const document_data& d, const node* obj, const char* key, std::size_t n) noexcept
 {
     const document_data::object_index& ix = d.indexes[obj->extra - 1u];
-    const std::uint32_t* const slots = d.index_slots.data() + ix.start;
+    const std::uint32_t* const table = d.index_slots.data() + ix.start;
     const std::uint64_t hash = key_hash(key, n); // (a cast of the call would be useless where std::uint64_t is std::size_t)
     std::size_t i = static_cast<std::size_t>(hash) & ix.mask;
     for (std::size_t distance = 0; distance <= index_max_displacement; ++distance)
     {
-        const std::uint32_t s = slots[i];
+        const std::uint32_t s = table[i];
         if (s == 0)
         {
             return nullptr;
