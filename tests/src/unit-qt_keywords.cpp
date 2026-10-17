@@ -14,7 +14,7 @@
 #define slots
 #define signals public
 #define emit
-#define Q_FOREACH(variable, container) for (variable : container)
+#define Q_FOREACH(variable, container) for (variable : container) // NOLINT(bugprone-macro-parentheses): variable is a declaration, as in Qt
 #define foreach Q_FOREACH
 #define forever for (;;)
 
@@ -60,3 +60,8 @@ TEST_CASE("Qt keyword macros")
         CHECK(source.patch(json::diff(source, target)) == target);
     }
 }
+
+// testing for the macros also keeps -Wunused-macros from rejecting them
+#if !defined(slots) || !defined(signals) || !defined(emit) || !defined(Q_FOREACH) || !defined(foreach) || !defined(forever)
+    #error "the Qt keyword macros must stay defined for the tests above"
+#endif
