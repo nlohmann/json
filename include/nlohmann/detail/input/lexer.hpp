@@ -1862,7 +1862,7 @@ scan_number_done:
     @param[in] return_type  the token type to return on success
     */
     template<std::size_t N>
-    JSON_HEDLEY_NEVER_INLINE token_type scan_literal(const char (&rest)[N], token_type return_type)
+    JSON_HEDLEY_NEVER_INLINE token_type scan_literal(const char (&rest)[N], token_type return_type) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         constexpr std::size_t length = N - 1;
         if (scan_literal_bulk(rest, length, std::integral_constant<bool, bulk_scan> {}))
