@@ -26,6 +26,10 @@ array data, it performs the following steps:
 The unit tests run the same checks on a fixed corpus (see the "UBJSON round-trip
 invariants" test case), so keep both in sync.
 
+Furthermore, it reads data with a SAX parser that recovers from every error
+and checks that the events are balanced, that reading ends, and that it
+reports an error exactly when from_ubjson() fails (see #3989).
+
 Finally, it reads the data from a stream, a non-contiguous iterator range, and
 a FILE*, which read byte by byte, and checks that each gives the same value or
 error (id, message, byte position) as the pointer range, which takes the bulk
@@ -36,6 +40,7 @@ drivers.
 */
 
 #include "fuzzer_common.hpp"
+#include "fuzzer-recovering_checker.hpp"
 
 namespace
 {
@@ -53,6 +58,9 @@ struct read_ubjson
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    // recover from all errors, reading from memory and from a stream
+    const bool recovered_without_errors = check_recovering_parse(data, size, json::input_format_t::ubjson).errors == 0;
+
     std::vector<uint8_t> const vec1(data, data + size);
 
     // step 0: parse input without exceptions
@@ -70,6 +78,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 
         // without exceptions, the same input must give the same value
         assert(!noexcept_threw && !j_noexcept.is_discarded() && same_value(j_noexcept, j1));
+
+        // the recovering parser must not have reported an error either
+        assert(recovered_without_errors);
 
         try
         {
@@ -102,6 +113,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // parse errors are ok, because input may be random bytes
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
+        assert(parsed || !recovered_without_errors);
     }
     catch (const json::type_error&)
     {
@@ -112,6 +124,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // out of range errors may happen if provided sizes are excessive
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
+        assert(parsed || !recovered_without_errors);
     }
 
     // step 3: the other input adapters must read the data alike

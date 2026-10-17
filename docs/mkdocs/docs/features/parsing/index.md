@@ -75,7 +75,7 @@ You can influence a DOM parse without switching to the SAX interface by passing 
 When the input is not valid JSON, the `parse` function throws an exception by default. If exceptions are undesired or
 unavailable, the parser can instead return a discarded value, or [`accept`](../../api/basic_json/accept.md) can be used
 to only check whether an input is valid JSON. See [parsing and exceptions](parse_exceptions.md) for the available
-options.
+options. To get as much as possible out of malformed input, a SAX parser can [recover from errors](error_recovery.md).
 
 ## See also
 
@@ -86,4 +86,5 @@ options.
 - [parser callbacks](parser_callbacks.md) - influence the parsing by a callback function
 - [SAX interface](sax_interface.md) - implement a custom SAX handler
 - [parsing and exceptions](parse_exceptions.md) - control error handling
+- [error recovery](error_recovery.md) - get as much as possible out of malformed input
 - [parsing untrusted input](untrusted_input.md) - what to consider when parsing input from untrusted sources

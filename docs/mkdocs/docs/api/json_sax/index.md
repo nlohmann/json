@@ -7,7 +7,8 @@ struct json_sax;
 
 This class describes the SAX interface used by [sax_parse](../basic_json/sax_parse.md). Each function is called in
 different situations while the input is parsed. The boolean return value informs the parser whether to continue
-processing the input.
+processing the input; for [`parse_error`](parse_error.md), it decides whether to
+[recover from the error](../../features/parsing/error_recovery.md).
 
 For instance, parsing the JSON text `{"a": [1, true]}` triggers the following callbacks, in order:
 
