@@ -64,6 +64,18 @@ std::vector<json> test_values()
     };
 }
 
+// explicit char -> uint8_t conversion (the iterator-range constructor converts implicitly, which -fsanitize=integer flags)
+std::vector<std::uint8_t> to_bytes(const std::string& str)
+{
+    std::vector<std::uint8_t> result;
+    result.reserve(str.size());
+    for (const char c : str)
+    {
+        result.push_back(static_cast<std::uint8_t>(c));
+    }
+    return result;
+}
+
 // BON8 has no integers above the int64 range, so to_bon8() rejects them
 bool bon8_representable(const json& j)
 {
@@ -407,11 +419,11 @@ TEST_CASE("CBOR and MessagePack integer arrays")
             std::ostringstream stream;
             json::to_cbor(array, stream);
             std::string streamed = stream.str();
-            CHECK(std::vector<std::uint8_t>(streamed.begin(), streamed.end()) == expected_cbor);
+            CHECK(to_bytes(streamed) == expected_cbor);
             stream.str("");
             json::to_msgpack(array, stream);
             streamed = stream.str();
-            CHECK(std::vector<std::uint8_t>(streamed.begin(), streamed.end()) == expected_msgpack);
+            CHECK(to_bytes(streamed) == expected_msgpack);
 
             CHECK(json::from_cbor(expected_cbor) == array);
             CHECK(json::from_msgpack(expected_msgpack) == array);
