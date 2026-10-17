@@ -2012,17 +2012,25 @@ scan_number_done:
         return position.chars_read_total;
     }
 
-    /// seekable adapter: count the lines in the consumed input; O(input read
-    /// so far), but only called on errors
+    /// seekable adapter: count the lines in the consumed input. Only the
+    /// input consumed since the previous call is scanned, so a parse that
+    /// reports many errors (a SAX parser recovering from them) stays linear
+    /// in the input instead of rescanning it for every error.
     position_t get_position_impl(std::true_type /*lazy*/) const
     {
         position_t result;
         result.chars_read_total = get_chars_read_total();
         // reads at EOF count as characters but are not part of the input
         const std::size_t consumed = (std::min)(result.chars_read_total, ia.get_consumed_count());
-        std::size_t line_start = 0;
-        result.lines_read = ia.count_consumed_lines(consumed, line_start);
-        result.chars_read_current_line = result.chars_read_total - line_start;
+        if (JSON_HEDLEY_UNLIKELY(consumed < position_cache.consumed))
+        {
+            // the consumed input never shrinks; recount from the start if it did
+            position_cache = {};
+        }
+        position_cache.lines += ia.count_consumed_lines(position_cache.consumed, consumed, position_cache.line_start);
+        position_cache.consumed = consumed;
+        result.lines_read = position_cache.lines;
+        result.chars_read_current_line = result.chars_read_total - position_cache.line_start;
         return result;
     }
 
@@ -2897,6 +2905,19 @@ scan_number_done:
     /// the value chars_read_current_line had when the last newline was read, so
     /// that unget() can restore the column instead of leaving it at 0
     std::size_t chars_read_before_newline = 0;
+
+    /// seekable adapter: what get_position() counted last, so that the next
+    /// call only scans the input consumed since
+    struct position_cache_t
+    {
+        /// consumed characters scanned so far
+        std::size_t consumed = 0;
+        /// newlines among them
+        std::size_t lines = 0;
+        /// index after the last of these newlines
+        std::size_t line_start = 0;
+    };
+    mutable position_cache_t position_cache {};
 
     /// raw input token string for error messages; only populated for streaming
     /// adapters (seekable adapters reconstruct it lazily via token_string_start)
