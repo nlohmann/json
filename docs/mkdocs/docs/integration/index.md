@@ -49,3 +49,8 @@ for forward declarations (see [Compile times](compile_times.md)), and file
 [`single_include/nlohmann/json_literals.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_literals.hpp)
 for the user-defined string literals if you define
 [`JSON_NO_AUTOMATIC_UDLS`](../api/macros/json_no_automatic_udls.md).
+
+For the read-only, non-owning [`basic_json_document`](../api/basic_json_document/index.md)/[`basic_json_view`](../api/basic_json_view/index.md)
+types, additionally include
+[`single_include/nlohmann/json_view.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_view.hpp);
+see [Zero-copy JSON views](../features/json_view.md).

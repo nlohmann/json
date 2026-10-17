@@ -39,6 +39,7 @@ Constant.
 - [is_primitive](is_primitive.md) checks whether the JSON value is primitive
 - [binary_t](binary_t.md) the type used to store binary values
 - [get_binary](get_binary.md) returns a reference to the stored binary value
+- [basic_json_view::is_binary](../basic_json_view/is_binary.md) - the same check on a zero-copy view
 
 ## Version history
 
