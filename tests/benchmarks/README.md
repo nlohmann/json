@@ -16,6 +16,15 @@ Micro-benchmarks for parsing, serialization and the binary formats, written with
 | `FromBinaryBuffer`, `FromBinaryFile` | read CBOR, MessagePack, UBJSON, BJData and BSON from a buffer or a `FILE*` |
 | `FromBinaryShape` | read deeply nested, container-heavy and scalar-heavy documents in every binary format |
 | `FromCborChunkedString` | read CBOR strings split into indefinite-length chunks |
+| `SaxParse` | parse with a SAX handler that only counts events, so no values are built |
+| `Copy`, `CopyAssign`, `CopyRing` | copy a parsed document and destroy a copy, both timed: a temporary copy, an assignment over an earlier copy, and replacing the oldest of eight live copies |
+| `CopyOnly`, `DestroyOnly` | only the copy or only the destruction, the other half untimed; a fast destructor can leave work to the next allocations, so these tell the halves apart but do not compare versions |
+| `Equal`, `Iterate` | compare a parsed document with a copy, or visit every value with range-based `for` loops |
+| `Flatten`, `FlattenOrdered`, `Unflatten` | `flatten()` for `json` and `ordered_json`, and `unflatten()` |
+| `Diff`, `Patch` | `diff()` against the document with every eighth scalar changed, and applying that patch |
+| `JsonPointerParse`, `JsonPointerToString`, `JsonPointerAt`, `JsonPointerContains` | the JSON pointers of every scalar in a document: parse them from strings, turn them back into strings, look them up with `at()` and `contains()` |
+| `GetVectorInt`, `GetVectorDouble`, `GetMap` | `get<std::vector<std::int64_t>>()`, `get<std::vector<double>>()` and `get<std::map<std::string, json>>()` on large arrays and a large flat object |
+| `ToJsonStrings` | create a `json` array from a `std::vector` of 100,000 strings, copied or moved, and destroy it again |
 
 The input files are those of [nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark) (`canada`,
 `citm_catalog`, `twitter`), a large `jeopardy` file, and number-heavy files (`floats`, `signed_ints`, ...).
