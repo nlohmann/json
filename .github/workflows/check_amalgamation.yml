@@ -37,7 +37,7 @@ jobs:
           path: pr/
 
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       MAIN_DIR: ${{ github.workspace }}/main
       INCLUDE_DIR: ${{ github.workspace }}/main/single_include/nlohmann
