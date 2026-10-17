@@ -600,6 +600,9 @@ TEST_CASE("lexer number fast path")
 #endif
 }
 
+#if !defined(JSON_NOEXCEPTION)
+// this test case compares the errors of both lexer paths, which abort when
+// exceptions are off
 TEST_CASE("lexer literal fast path")
 {
     // For contiguous input, the rest of a literal is compared at once, and a
@@ -656,6 +659,7 @@ TEST_CASE("lexer literal fast path")
     CAPTURE(mismatches)
     CHECK(mismatches.empty());
 }
+#endif
 
 TEST_CASE("lexer string fast path")
 {
