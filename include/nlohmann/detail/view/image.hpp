@@ -105,7 +105,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
         }
         return r;
     };
-    const auto emit = [&](const node * v)
+    const auto copy_node = [&](const node * v)
     {
         node r = *v;
         switch (static_cast<value_t>(v->kind))
@@ -159,7 +159,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
         }
         out.push_back(r);
     };
-    emit(d.nodes);
+    copy_node(d.nodes);
     while (!stack.empty())
     {
         frame& top = stack.back();
@@ -184,7 +184,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
             v = document_data::deref(top.cur);
             top.cur = document_data::after(top.cur);
         }
-        emit(v); // may grow the stack (top is not used afterwards)
+        copy_node(v); // may grow the stack (top is not used afterwards)
     }
 }
 
