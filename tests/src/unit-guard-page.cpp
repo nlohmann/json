@@ -19,6 +19,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -86,7 +87,7 @@ class guarded_buffer
     {
         REQUIRE(input.size() <= page);
         unsigned char* const first = base + (2 * page) - input.size();
-        std::memcpy(first, input.data(), input.size());
+        std::copy(input.begin(), input.end(), first);
         return first;
     }
 
@@ -95,7 +96,7 @@ class guarded_buffer
     {
         REQUIRE(input.size() <= page);
         unsigned char* const first = base + page;
-        std::memcpy(first, input.data(), input.size());
+        std::copy(input.begin(), input.end(), first);
         return first;
     }
 
@@ -313,17 +314,26 @@ void check_binary(guarded_buffer& guard, const std::vector<std::uint8_t>& bytes,
 // parse_float_native() at both ends of the guarded page, compared bit for bit
 // with converting the same token from a std::string
 template<typename FloatType>
+std::uint64_t float_bits(FloatType value)
+{
+    static_assert(sizeof(FloatType) <= sizeof(std::uint64_t), "unsupported floating-point width");
+    std::uint64_t bits = 0;
+    std::memcpy(&bits, &value, sizeof(value));
+    return bits;
+}
+
+template<typename FloatType>
 void check_float_native(guarded_buffer& guard, const std::string& token)
 {
-    const std::size_t decimal_point = token.find('.');
-    const std::size_t exponent = token.find_first_of("eE");
-    const std::size_t mantissa_end = exponent == std::string::npos ? token.size() : exponent;
-    const FloatType expected = nlohmann::detail::parse_float_native<FloatType>(token.data(), token.data() + token.size(), decimal_point, mantissa_end);
+    const auto decimal_point = token.find('.');
+    const auto exponent = token.find_first_of("eE");
+    const auto mantissa_end = exponent == std::string::npos ? token.size() : exponent;
+    const auto expected = nlohmann::detail::parse_float_native<FloatType>(token.data(), token.data() + token.size(), decimal_point, mantissa_end);
     for (int placement = 0; placement < 2; ++placement)
     {
         const char* const first = reinterpret_cast<const char*>(placement == 0 ? guard.at_end(token) : guard.at_start(token));
-        const FloatType value = nlohmann::detail::parse_float_native<FloatType>(first, first + token.size(), decimal_point, mantissa_end);
-        CHECK(std::memcmp(&value, &expected, sizeof(value)) == 0);
+        const auto value = nlohmann::detail::parse_float_native<FloatType>(first, first + token.size(), decimal_point, mantissa_end);
+        CHECK(float_bits(value) == float_bits(expected));
     }
 }
 } // namespace
