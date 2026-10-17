@@ -11253,8 +11253,10 @@ NLOHMANN_JSON_NAMESPACE_END
 #else
     #define JSON_SCAN_SSSE3 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #endif
-#if JSON_SCAN_SSE2 && !JSON_SCAN_SSSE3 && !defined(NLOHMANN_JSON_NO_TARGET_ATTRIBUTE) && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
-    // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3)
+#if JSON_SCAN_SSE2 && !JSON_SCAN_SSSE3 && !defined(NLOHMANN_JSON_NO_TARGET_ATTRIBUTE) && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)) && !defined(__cpp_modules)))
+    // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3; GCC with C++20
+    // modules drops the target attribute from functions it reads from a module
+    // interface and then rejects the intrinsics: "needs isa option -mssse3")
     #include <cpuid.h>
     #include <tmmintrin.h>
     #define JSON_SCAN_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
