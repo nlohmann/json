@@ -87,7 +87,10 @@ class guarded_buffer
     {
         REQUIRE(input.size() <= page);
         unsigned char* const first = base + (2 * page) - input.size();
-        std::copy(input.begin(), input.end(), first);
+        std::transform(input.begin(), input.end(), first, [](const char c)
+        {
+            return static_cast<unsigned char>(c);
+        });
         return first;
     }
 
@@ -96,7 +99,10 @@ class guarded_buffer
     {
         REQUIRE(input.size() <= page);
         unsigned char* const first = base + page;
-        std::copy(input.begin(), input.end(), first);
+        std::transform(input.begin(), input.end(), first, [](const char c)
+        {
+            return static_cast<unsigned char>(c);
+        });
         return first;
     }
 
@@ -288,12 +294,25 @@ JSON_TEST_GUARD_PAGE_READER(read_ubjson, from_ubjson)
 JSON_TEST_GUARD_PAGE_READER(read_bjdata, from_bjdata)
 #undef JSON_TEST_GUARD_PAGE_READER
 
+// @a bytes as characters (explicitly converted: the iterator-range constructor
+// would convert implicitly, which -fsanitize=integer reports)
+std::string as_chars(const std::vector<std::uint8_t>& bytes)
+{
+    std::string result;
+    result.reserve(bytes.size());
+    for (const std::uint8_t b : bytes)
+    {
+        result.push_back(static_cast<char>(b));
+    }
+    return result;
+}
+
 // reads every prefix of @a bytes at both ends of the guarded page and from a
 // std::string, which must give the same outcome
 template<typename Reader>
 void check_binary(guarded_buffer& guard, const std::vector<std::uint8_t>& bytes, Reader parse)
 {
-    for (const auto& input : all_prefixes({std::string(bytes.begin(), bytes.end())}))
+    for (const auto& input : all_prefixes({as_chars(bytes)}))
     {
         CAPTURE(input)
         const std::string expected = outcome([&](bool allow)
