@@ -99,6 +99,8 @@ When iterating over an array, `key()` will return the index of the element as st
 
 - [begin](begin.md) returns an iterator to the first element
 - [end](end.md) returns an iterator to one past the last element
+- [basic_json_view::items](../basic_json_view/items.md) - the same range on a zero-copy view (`#!cpp const auto`,
+  not `#!cpp const auto&`: items are produced on the fly)
 
 ## Version history
 
