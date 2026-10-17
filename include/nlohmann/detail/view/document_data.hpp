@@ -54,7 +54,8 @@ struct document_data
         void* mem = ::operator new (sizeof(document_data) + (count * sizeof(node)));
         auto* d = new (mem) document_data(); // NOLINT(cppcoreguidelines-owning-memory): owned by the returned pointer, freed by deleter
         // (aligned: sizeof is a multiple of the alignment; through void*, as GCC's -Wcast-align wants)
-        d->inline_nodes = static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // NOLINT(bugprone-casting-through-void)
+        // (null without inline nodes, not a pointer past the end of the allocation)
+        d->inline_nodes = count == 0 ? nullptr : static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // NOLINT(bugprone-casting-through-void)
         d->inline_capacity = count;
         d->nodes = d->inline_nodes;
         d->node_capacity = count;

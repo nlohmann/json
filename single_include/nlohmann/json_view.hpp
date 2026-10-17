@@ -324,7 +324,8 @@ struct document_data
         void* mem = ::operator new (sizeof(document_data) + (count * sizeof(node)));
         auto* d = new (mem) document_data(); // NOLINT(cppcoreguidelines-owning-memory): owned by the returned pointer, freed by deleter
         // (aligned: sizeof is a multiple of the alignment; through void*, as GCC's -Wcast-align wants)
-        d->inline_nodes = static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // NOLINT(bugprone-casting-through-void)
+        // (null without inline nodes, not a pointer past the end of the allocation)
+        d->inline_nodes = count == 0 ? nullptr : static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // NOLINT(bugprone-casting-through-void)
         d->inline_capacity = count;
         d->nodes = d->inline_nodes;
         d->node_capacity = count;
@@ -1927,12 +1928,11 @@ enum class input_kind
 
 /// a single-byte character type (char, signed/unsigned char, char8_t, std::uint8_t, ...)
 template<typename T>
-struct is_byte_char : std::integral_constant < bool, std::is_integral<T>::value && sizeof(T) == 1 > {}; // NOLINT(bugprone-sizeof-expression): T is any pointee or element type
+struct is_byte_char : conjunction<std::is_integral<T>, std::integral_constant<bool, sizeof(T) == 1>> {}; // NOLINT(bugprone-sizeof-expression): T is any pointee or element type
 
 /// a character type the library's input adapter converts to UTF-8
 template<typename T>
-struct is_wide_char : std::integral_constant < bool, std::is_same<T, wchar_t>::value || std::is_same<T, char16_t>::value
-    || std::is_same<T, char32_t>::value > {};
+struct is_wide_char : disjunction<std::is_same<T, wchar_t>, std::is_same<T, char16_t>, std::is_same<T, char32_t>> {};
 
 template<typename InputType>
 struct classify_input
@@ -2031,7 +2031,7 @@ inline void append_stream(std::string& buf, std::istream& is)
         const std::size_t room = (std::max)(buf.capacity() - used, std::size_t{4096});
         buf.resize(used + room);
         const std::streamsize got = sb->sgetn(&buf[used], static_cast<std::streamsize>(room));
-        buf.resize(used + static_cast<std::size_t>(got > 0 ? got : 0));
+        buf.resize(used + static_cast<std::size_t>((std::max)(got, std::streamsize{0})));
         if (got <= 0)
         {
             break;
@@ -2762,7 +2762,10 @@ class basic_json_document
 
         if (shrink_nodes)
         {
-            std::memcpy(fresh, d.nodes, d.node_count * sizeof(node));
+            if (d.node_count != 0)
+            {
+                std::memcpy(fresh, d.nodes, d.node_count * sizeof(node));
+            }
             ::operator delete (d.nodes);
             d.nodes = fresh;
             d.node_capacity = into_header ? d.inline_capacity : d.node_count;

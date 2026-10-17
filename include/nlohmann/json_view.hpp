@@ -443,7 +443,10 @@ class basic_json_document
 
         if (shrink_nodes)
         {
-            std::memcpy(fresh, d.nodes, d.node_count * sizeof(node));
+            if (d.node_count != 0)
+            {
+                std::memcpy(fresh, d.nodes, d.node_count * sizeof(node));
+            }
             ::operator delete (d.nodes);
             d.nodes = fresh;
             d.node_capacity = into_header ? d.inline_capacity : d.node_count;
