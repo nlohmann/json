@@ -55,6 +55,30 @@ whitespace, because `operator>>` consumes the character that terminates a number
 [`JSON_PRECISE_STREAM_POSITION`](../../api/macros/json_precise_stream_position.md) is defined to `1` — see the
 [`operator>>` notes](../../api/operator_gtgt.md#notes) for details and examples.
 
+## Input sources and performance
+
+All inputs produce the same values and the same exceptions, but they are read in different ways, which makes some of
+them faster than others:
+
+| input                                                                                      | how it is read                                                                     |
+|--------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| strings, string views, string literals, contiguous containers, pointer or iterator ranges over contiguous memory | the whole input is scanned in bulk: runs of string characters, numbers, and indentation are recognized several bytes at a time |
+| `#!cpp std::istream` (`#!cpp std::ifstream`, `#!cpp std::istringstream`, ...)            | the characters the stream buffer holds are scanned in bulk like a string; the stream buffer is asked for more when they are used up |
+| `#!cpp FILE*`                                                                              | one character at a time, with the file locked once for the whole parse              |
+| other iterator ranges (e.g., `#!cpp std::list<char>`, `#!cpp std::istreambuf_iterator<char>`), wide strings | one character at a time                                                             |
+
+Parsing a file from a `#!cpp std::ifstream` is therefore only about 10 to 20 % slower than reading the whole file into a
+`#!cpp std::string` first and parsing that, and it needs no memory for a copy of the file. The stream is never read
+ahead: after parsing, it is positioned exactly as if every character had been read one at a time, so
+[`operator>>`](../../api/operator_gtgt.md) can still read several values from one stream (see also
+[JSON Lines](json_lines.md)).
+
+Two macros switch these optimizations off without changing any result:
+[`JSON_DISABLE_STREAM_BULK_SCAN`](../../api/macros/json_disable_stream_bulk_scan.md) for stream buffers that do not
+follow the usual `std::streambuf` contract, and
+[`JSON_DISABLE_UNLOCKED_FILE_IO`](../../api/macros/json_disable_unlocked_file_io.md) for programs in which another
+thread must use the same `#!cpp FILE` object while it is parsed.
+
 ## SAX vs. DOM parsing
 
 The library offers two parsing models:

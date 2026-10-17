@@ -52,6 +52,14 @@ TEST_CASE("default namespace")
         expected += "_ekmo";
 #endif
 
+#if JSON_DISABLE_STREAM_BULK_SCAN
+        expected += "_dsbs";
+#endif
+
+#if JSON_DISABLE_UNLOCKED_FILE_IO
+        expected += "_dufio";
+#endif
+
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_MINOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_PATCH) "::basic_json";
