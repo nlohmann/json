@@ -27,6 +27,7 @@
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/string_utils.hpp>
@@ -599,7 +600,7 @@ class json_pointer
                 std::memcpy(&w, data + i, size - i);
             }
             h = (h ^ w) * 0x9E3779B97F4A7C15ULL;
-            return static_cast<std::size_t>(h ^ (h >> 29u));
+            return detail::conditional_static_cast<std::size_t>(h ^ (h >> 29u));
         }
 
         void grow()
@@ -1275,7 +1276,7 @@ class json_pointer
         std::size_t pos = buf.size();
         do
         {
-            buf[--pos] = static_cast<char>('0' + i % 10);
+            buf[--pos] = static_cast<char>('0' + (i % 10));
             i /= 10;
         }
         while (i != 0);
@@ -1327,7 +1328,7 @@ class json_pointer
         // flatten `v`, whose path is `path`: primitives and empty containers
         // are added to the result right away; other containers get a frame
         auto& object = *result.m_data.m_value.object;
-        typename BasicJsonType::object_t::iterator hint = object.end();
+        auto hint = object.end();
         const auto enter = [&stack, &path, &object, &hint](const BasicJsonType & v)
         {
             switch (v.type())
