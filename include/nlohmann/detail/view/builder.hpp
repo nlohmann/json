@@ -415,8 +415,10 @@ class builder
             arena_ensure(16);
             std::memcpy(m_arena_write, r, 16);
         }
-        else
+        else if (n != 0)
         {
+            // (an empty run leaves an empty arena unallocated, and memcpy()
+            // must not be passed its null pointer even for zero bytes)
             arena_ensure(n);
             std::memcpy(m_arena_write, r, n);
         }
