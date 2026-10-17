@@ -412,7 +412,7 @@ TEST_CASE("json_view large objects")
         // make the table build quadratic: such an object gets no table and is
         // searched linearly
         constexpr std::size_t members = 300;
-        constexpr std::size_t slots = 1024; // the table size for 300 members: the next power of two >= 600
+        constexpr std::size_t table_size = 1024; // the table size for 300 members: the next power of two >= 600
         std::vector<std::string> colliding;
         std::vector<std::string> spread;
         for (std::uint64_t counter = 0; colliding.size() < members || spread.size() < members; ++counter)
@@ -423,7 +423,7 @@ TEST_CASE("json_view large objects")
             {
                 key[i] = static_cast<char>('a' + (x % 26));
             }
-            const bool lands_in_slot_zero = (nlohmann::detail::view::key_hash(key.data(), key.size()) & (slots - 1)) == 0;
+            const bool lands_in_slot_zero = (nlohmann::detail::view::key_hash(key.data(), key.size()) & (table_size - 1)) == 0;
             if (lands_in_slot_zero && colliding.size() < members)
             {
                 colliding.push_back(key);
@@ -470,7 +470,7 @@ TEST_CASE("json_view large objects")
         // same length, so the tables are the only difference)
         with_collisions.shrink_to_fit();
         without_collisions.shrink_to_fit();
-        CHECK(without_collisions.memory_usage() >= with_collisions.memory_usage() + (slots * sizeof(std::uint32_t)));
+        CHECK(without_collisions.memory_usage() >= with_collisions.memory_usage() + (table_size * sizeof(std::uint32_t)));
     }
 
     SECTION("shrink_to_fit releases the tables' spare capacity")
