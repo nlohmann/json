@@ -7066,6 +7066,125 @@ public:
             detail::throw_patch_not_an_array(json_patch);
         }
 
+        // the usual patch operations "add", "remove", "replace" and "test" on
+        // a pointer without escapes that denotes existing array elements and
+        // object members (as "add" does for the parent of the new value), as
+        // a diff creates them: apply the operation and return true; return
+        // false, with nothing changed, for all others
+        string_t token;
+        const string_t value_key = "value";
+        const auto try_plain = [&result, &token, &value_key](patch_operations operation, const string_t& path, const basic_json & val)
+        {
+            if (path.empty() || path.find_first_of('~') != string_t::npos)
+            {
+                return false;
+            }
+
+            // a missing "value" is reported below
+            const auto value_it = val.m_data.m_value.object->find(value_key);
+            const basic_json& value = value_it != val.m_data.m_value.object->end() ? value_it->second : val;
+            if (operation != patch_operations::remove && value_it == val.m_data.m_value.object->end())
+            {
+                return false;
+            }
+
+            switch (operation)
+            {
+                case patch_operations::replace:
+                {
+                    basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    if (target == nullptr)
+                    {
+                        return false;
+                    }
+                    *target = value;
+                    return true;
+                }
+
+                case patch_operations::test:
+                {
+                    const basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    // a failing test is reported below
+                    return target != nullptr && *target == value;
+                }
+
+                case patch_operations::add:
+                case patch_operations::remove:
+                {
+                    // the parent of the pointer and its last reference token
+                    std::size_t slash = path.size();
+                    while (slash > 0 && path[slash - 1] != '/')
+                    {
+                        --slash;
+                    }
+                    if (slash == 0)
+                    {
+                        return false;
+                    }
+                    --slash;
+
+                    basic_json* const parent = json_pointer::resolve_plain(&result, path, slash, token);
+                    if (parent == nullptr)
+                    {
+                        return false;
+                    }
+                    token.clear();
+                    token.append(path.data() + slash + 1, path.size() - slash - 1);
+
+                    if (operation == patch_operations::add)
+                    {
+                        if (parent->is_object())
+                        {
+                            (*parent)[token] = value;
+                            return true;
+                        }
+                        if (parent->is_array())
+                        {
+                            typename basic_json::size_type idx{};
+                            if (token == "-")
+                            {
+                                parent->push_back(value);
+                                return true;
+                            }
+                            if (json_pointer::template parse_array_index<basic_json_t>(token, idx) == json_pointer::array_index_status::ok && idx <= parent->size())
+                            {
+                                parent->insert(parent->begin() + static_cast<difference_type>(idx), value);
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    if (parent->is_object())
+                    {
+                        const auto it = parent->find(token);
+                        if (it == parent->end())
+                        {
+                            return false;
+                        }
+                        parent->erase(it);
+                        return true;
+                    }
+                    if (parent->is_array())
+                    {
+                        typename basic_json::size_type idx{};
+                        if (json_pointer::template parse_array_index<basic_json_t>(token, idx) == json_pointer::array_index_status::ok && idx < parent->size())
+                        {
+                            parent->erase(idx);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                case patch_operations::move:
+                case patch_operations::copy:
+                case patch_operations::invalid:
+                default:
+                    return false;
+            }
+        };
+
         // iterate and apply the operations
         for (const auto& val : json_patch)
         {
@@ -7102,9 +7221,19 @@ public:
             // collect mandatory members
             const string_t& op = *get_value("op", "op", true).m_data.m_value.string;
             const string_t& path = *get_value(op, "path", true).m_data.m_value.string;
+            const patch_operations operation = get_op(op);
+
+            // the usual operations on a plain pointer are applied without
+            // building the pointer's reference tokens; anything else (and
+            // every error) is handled below
+            if (try_plain(operation, path, val))
+            {
+                continue;
+            }
+
             json_pointer ptr(path);
 
-            switch (get_op(op))
+            switch (operation)
             {
                 case patch_operations::add:
                 {
@@ -7212,7 +7341,8 @@ public:
     {
         // the patch
         basic_json result(value_t::array);
-        diff_recursively(result, source, target, path, 0);
+        string_t buffer = path;
+        diff_recursively(result, source, target, buffer, 0);
         return result;
     }
 
@@ -7256,31 +7386,69 @@ public:
     // function it appears in. In diff_recursively, which is on the call stack
     // once per nesting level, that made every level cost kilobytes of stack.
 
+    /// @brief append an operation @a op for @a path to @a result, with @a value if it is not null
+    static void diff_operation(basic_json& result, const char* op, const string_t& path, const basic_json* value)
+    {
+        basic_json entry(value_t::object);
+        entry["op"] = op;
+        entry["path"] = path;
+        if (value != nullptr)
+        {
+            entry["value"] = *value;
+        }
+        result.push_back(std::move(entry));
+    }
+
     /// @brief append a "replace" operation for @a path with @a value to @a result
     static void diff_replace(basic_json& result, const string_t& path, const basic_json& value)
     {
-        result.push_back(
-        {
-            {"op", "replace"}, {"path", path}, {"value", value}
-        });
+        diff_operation(result, "replace", path, &value);
     }
 
     /// @brief append a "remove" operation for @a path to @a result
     static void diff_remove(basic_json& result, const string_t& path)
     {
-        result.push_back(object(
-        {
-            {"op", "remove"}, {"path", path}
-        }));
+        diff_operation(result, "remove", path, nullptr);
     }
 
     /// @brief append an "add" operation for @a path with @a value to @a result
     static void diff_add(basic_json& result, const string_t& path, const basic_json& value)
     {
-        result.push_back(
-        {
-            {"op", "add"}, {"path", path}, {"value", value}
-        });
+        diff_operation(result, "add", path, &value);
+    }
+
+    /// @brief append "/" and the decimal representation of @a index to @a path
+    static void diff_append_index(string_t& path, std::size_t index)
+    {
+        path.push_back('/');
+        json_pointer::append_index(path, index);
+    }
+
+    /// @brief append "/" and the escaped @a key to @a path
+    static void diff_append_key(string_t& path, const string_t& key)
+    {
+        path.push_back('/');
+        detail::escape_into(path, key);
+    }
+
+    /// @brief the path of the member @a key of the value at @a path
+    static string_t diff_key_path(const string_t& path, const string_t& key)
+    {
+        string_t result;
+        result.reserve(path.size() + key.size() + 1);
+        result.append(path.data(), path.size());
+        diff_append_key(result, key);
+        return result;
+    }
+
+    /// @brief the path of the element @a index of the value at @a path
+    static string_t diff_index_path(const string_t& path, const std::size_t index)
+    {
+        string_t result;
+        result.reserve(path.size() + 8);
+        result.append(path.data(), path.size());
+        diff_append_index(result, index);
+        return result;
     }
 
     /// @brief append the "remove" operations for the elements of array
@@ -7293,13 +7461,18 @@ public:
         // in that order avoids the quadratic reinsertion done before
         for (std::size_t j = source.size(); j > index; --j)
         {
-            diff_remove(result, detail::concat<string_t>(path, '/', detail::to_string<string_t>(j - 1)));
+            diff_remove(result, diff_index_path(path, j - 1));
         }
 
         // add other remaining elements
-        for (std::size_t i = source.size(); i < target.size(); ++i)
+        if (source.size() < target.size())
         {
-            diff_add(result, detail::concat<string_t>(path, "/-"), target[i]);
+            string_t tail_path = path;
+            tail_path.append("/-", 2);
+            for (std::size_t i = source.size(); i < target.size(); ++i)
+            {
+                diff_add(result, tail_path, target[i]);
+            }
         }
     }
 
@@ -7308,7 +7481,7 @@ public:
     {
         for (const auto& it : added)
         {
-            diff_add(result, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+            diff_add(result, diff_key_path(path, it.key()), it.value());
         }
     }
 
@@ -7329,10 +7502,25 @@ public:
                                  std::vector<const_iterator>& added)
     {
         // first pass: one lookup per source key
+        // Objects of the same size usually have the same keys, in the same
+        // order: walk them together as long as that holds, which takes no lookups.
         target_values.reserve(source.size());
         std::size_t common = 0;
-        for (auto it = source.cbegin(); it != source.cend(); ++it)
+        bool together = source.size() == target.size();
+        for (auto it = source.cbegin(), partner = target.cbegin(); it != source.cend(); ++it)
         {
+            if (together)
+            {
+                if (it.key() == partner.key())
+                {
+                    target_values.push_back(&partner.value());
+                    ++common;
+                    ++partner;
+                    continue;
+                }
+                together = false;
+            }
+
             const auto found = target.find(it.key());
             if (found != target.cend())
             {
@@ -7343,6 +7531,12 @@ public:
             {
                 target_values.push_back(nullptr);
             }
+        }
+
+        // the same keys in the same order
+        if (together)
+        {
+            return true;
         }
 
         // second pass: find the keys only target has. An object type that
@@ -7410,6 +7604,13 @@ public:
             return true;
         }
 
+        // equal objects, whose members are in a different order, need no
+        // operations
+        if (source == target)
+        {
+            return false;
+        }
+
         // slow path: the common keys are in a different relative
         // order in source and target (only possible for a
         // reorderable object_t like ordered_map). Building a
@@ -7426,7 +7627,7 @@ public:
         // it moves it to the end, fixing its position.
         for (auto it = source.cbegin(); it != source.cend(); ++it)
         {
-            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
+            diff_remove(result, diff_key_path(path, it.key()));
         }
 
         // add every key that is either common (just removed
@@ -7435,7 +7636,7 @@ public:
         // target exactly
         for (auto it = target.cbegin(); it != target.cend(); ++it)
         {
-            diff_add(result, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+            diff_add(result, diff_key_path(path, it.key()), it.value());
         }
         return false;
     }
@@ -7444,6 +7645,9 @@ public:
     @brief @ref diff, for values at nesting level @a depth, appending the
            operations to @a result
 
+    @a path is the path of the values; it is a buffer that is extended and
+    shortened again below, and is the same when the function returns.
+
     Diffing two arrays or objects calls this function again, once per nesting
     level, so values nested deeply enough used to exhaust the call stack and
     terminate the process. The descent is bounded here: once @ref
@@ -7451,7 +7655,7 @@ public:
     diff_iteratively diffs what is left without the call stack.
     */
     static void diff_recursively(basic_json& result, const basic_json& source, const basic_json& target,
-                                 const string_t& path, const std::size_t depth)
+                                 string_t& path, const std::size_t depth)
     {
         // if the values are the same, there is nothing to do
         if (source == target)
@@ -7463,9 +7667,9 @@ public:
     }
 
     /// @brief @ref diff_recursively for values known to be unequal; callers
-    ///        compare first so they build no path for equal ones
+    ///        compare first so they extend the path only for unequal ones
     static void diff_unequal(basic_json& result, const basic_json& source, const basic_json& target,
-                             const string_t& path, const std::size_t depth)
+                             string_t& path, const std::size_t depth)
     {
         if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
         {
@@ -7484,6 +7688,8 @@ public:
         {
             case value_t::array:
             {
+                const std::size_t path_length = path.size();
+
                 // first pass: traverse common elements
                 std::size_t i = 0;
                 while (i < source.size() && i < target.size())
@@ -7491,7 +7697,9 @@ public:
                     // recursive call to compare array values at index i
                     if (!(source[i] == target[i]))
                     {
-                        diff_unequal(result, source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)), depth + 1);
+                        diff_append_index(path, i);
+                        diff_unequal(result, source[i], target[i], path, depth + 1);
+                        path.resize(path_length);
                     }
                     ++i;
                 }
@@ -7513,6 +7721,7 @@ public:
                     // lookup is needed. Deleted keys are interleaved here
                     // too, in source's original order, to match the
                     // historical (pre-reordering-aware) output order.
+                    const std::size_t path_length = path.size();
                     std::size_t i = 0;
                     for (auto it = source.cbegin(); it != source.cend(); ++it, ++i)
                     {
@@ -7520,13 +7729,15 @@ public:
                         {
                             if (!(it.value() == *target_values[i]))
                             {
-                                diff_unequal(result, it.value(), *target_values[i], detail::concat<string_t>(path, '/', detail::escape(it.key())), depth + 1);
+                                diff_append_key(path, it.key());
+                                diff_unequal(result, it.value(), *target_values[i], path, depth + 1);
+                                path.resize(path_length);
                             }
                         }
                         else
                         {
                             // found a key that is not in target -> remove it
-                            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
+                            diff_remove(result, diff_key_path(path, it.key()));
                         }
                     }
 
@@ -7657,7 +7868,7 @@ public:
                 if (i < source_array.size() && i < target_array.size())
                 {
                     ++stack.back().index;
-                    detail::concat_into(current_path, '/', detail::to_string<string_t>(i));
+                    diff_append_index(current_path, i);
                     enter(source_array[i], target_array[i]);
                     if (stack.size() == depth)
                     {
@@ -7680,7 +7891,7 @@ public:
                     if (target_value_ptr != nullptr)
                     {
                         const basic_json& target_value = *target_value_ptr;
-                        detail::concat_into(current_path, '/', detail::escape(it.key()));
+                        diff_append_key(current_path, it.key());
                         enter(it.value(), target_value);
                         if (stack.size() == depth)
                         {
@@ -7690,7 +7901,7 @@ public:
                     else
                     {
                         // found a key that is not in target -> remove it
-                        diff_remove(result, detail::concat<string_t>(current_path, '/', detail::escape(it.key())));
+                        diff_remove(result, diff_key_path(current_path, it.key()));
                     }
                     continue;
                 }
