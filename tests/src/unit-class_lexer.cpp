@@ -335,6 +335,8 @@ TEST_CASE("lexer number fast path")
         }
     }
 
+#if !defined(JSON_NOEXCEPTION)
+    // this section reports parse errors, which abort when exceptions are off
     SECTION("digits accumulated while scanning")
     {
         // The fast path accumulates the digits while it validates them, eight
@@ -413,6 +415,7 @@ TEST_CASE("lexer number fast path")
             }
         }
     }
+#endif
 
     SECTION("integers that do not fit a narrower type become floats")
     {
