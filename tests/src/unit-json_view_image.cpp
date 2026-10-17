@@ -294,7 +294,7 @@ TEST_CASE("json_view images: round trips")
     {
         // the hash is not seeded: keys can be found that land in one slot of
         // a table (see json_view: "colliding keys")
-        const auto keys_for = [](std::size_t slots, std::size_t colliding_count, std::size_t spread_count)
+        const auto keys_for = [](std::size_t table_size, std::size_t colliding_count, std::size_t spread_count)
         {
             std::vector<std::string> colliding;
             std::vector<std::string> spread;
@@ -306,7 +306,7 @@ TEST_CASE("json_view images: round trips")
                 {
                     key[i] = static_cast<char>('a' + (x % 26));
                 }
-                const bool lands_in_slot_zero = (nlohmann::detail::view::key_hash(key.data(), key.size()) & (slots - 1)) == 0;
+                const bool lands_in_slot_zero = (nlohmann::detail::view::key_hash(key.data(), key.size()) & (table_size - 1)) == 0;
                 if (lands_in_slot_zero && colliding.size() < colliding_count)
                 {
                     colliding.push_back(key);
@@ -335,14 +335,14 @@ TEST_CASE("json_view images: round trips")
         // long chain
         const struct // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): an unnamed type
         {
-            std::size_t slots;
+            std::size_t table_size;
             std::size_t colliding;
             std::size_t spread;
         } cases[] = {{1024, 300, 0}, {512, 40, 160}};
         for (const auto& c : cases)
         {
-            CAPTURE(c.slots)
-            std::vector<std::string> keys = keys_for(c.slots, c.colliding, c.spread);
+            CAPTURE(c.table_size)
+            std::vector<std::string> keys = keys_for(c.table_size, c.colliding, c.spread);
             const std::size_t members = keys.size();
             // a duplicate of a colliding key, of the first and of a spread key
             const std::vector<std::string> duplicated = {keys[c.colliding - 1], keys[0], keys[members - 1]};
