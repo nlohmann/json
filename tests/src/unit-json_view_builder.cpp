@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 #if JSON_TEST_USING_MULTIPLE_HEADERS
     #include <nlohmann/detail/view/builder.hpp>
+    #include <nlohmann/detail/view/materialize.hpp>
     #include <nlohmann/detail/view/string_ref.hpp>
 #else
     #include <nlohmann/json_view.hpp> // the single header contains the internal headers
