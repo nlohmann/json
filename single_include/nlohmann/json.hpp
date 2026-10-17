@@ -20906,6 +20906,13 @@ class parser
         // value to avoid a goto (see comment where set to true)
         bool skip_to_state_evaluation = false;
 
+        // a document that starts with a container pushes onto the stack at
+        // once: allocate it in one step instead of growing it from 1 byte
+        if (last_token == token_type::begin_object || last_token == token_type::begin_array)
+        {
+            states.reserve(32);
+        }
+
         while (true)
         {
             if (!skip_to_state_evaluation)
