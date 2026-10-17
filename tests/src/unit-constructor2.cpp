@@ -198,11 +198,11 @@ TEST_CASE("copy constructor and destructor across value types")
         const json src_uint = 7u;
         const json src_float = 2.5;
 
-        json c_null(src_null);
-        json c_bool(src_bool);
-        json c_int(src_int);
-        json c_uint(src_uint);
-        json c_float(src_float);
+        json c_null(src_null); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
+        json c_bool(src_bool); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
+        json c_int(src_int); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
+        json c_uint(src_uint); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
+        json c_float(src_float); // NOLINT(performance-unnecessary-copy-initialization): tests the copy constructor
 
         CHECK(c_null.is_null());
         CHECK(c_bool == true);
@@ -300,12 +300,12 @@ TEST_CASE("copy constructor and destructor across value types")
             REQUIRE(v.size() == 70);
 
             std::vector<json> copy(v);
-            CHECK(copy == v);
+            CHECK((copy == v));
 
             // mutating the copy leaves the original alone
             copy[5] = "changed";
             copy[6].push_back(1);
-            CHECK(copy != v);
+            CHECK((copy != v));
             CHECK(v[5] == std::string(5, 'x'));
             CHECK(v[6].size() == 3);
 

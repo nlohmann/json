@@ -680,12 +680,12 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        if (JSON_HEDLEY_LIKELY(m_object->is_object()))
+        if (JSON_HEDLEY_UNLIKELY(!m_object->is_object()))
         {
-            return m_it.object_iterator->first;
+            throw_literal<invalid_iterator>(exception_id::iterator_key_not_object, "cannot use key() for non-object iterators", m_object);
         }
 
-        throw_literal<invalid_iterator>(exception_id::iterator_key_not_object, "cannot use key() for non-object iterators", m_object);
+        return m_it.object_iterator->first;
     }
 
     /*!

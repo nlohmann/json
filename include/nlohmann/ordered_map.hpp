@@ -23,6 +23,7 @@
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 

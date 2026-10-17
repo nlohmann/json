@@ -1230,11 +1230,11 @@ TEST_CASE("JSON pointer array index tokens match strtoull semantics")
 
     SECTION("random tokens")
     {
-        std::mt19937 gen(42);
+        std::mt19937 gen(42); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
         const std::string alphabet = "0123456789012345678901234567890123456789-+ ex";
         for (int i = 0; i < 5000; ++i)
         {
-            std::string token(static_cast<std::size_t>(gen() % 23), '0');
+            std::string token(gen() % 23, '0');
             for (auto& c : token)
             {
                 c = alphabet[gen() % alphabet.size()];

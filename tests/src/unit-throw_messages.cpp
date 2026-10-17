@@ -54,8 +54,8 @@ TEST_CASE("exception messages of out-of-line throw sites")
 
     SECTION("at")
     {
-        const json carr = arr;
-        const json cobj = obj;
+        const json& carr = arr;
+        const json& cobj = obj;
         CHECK_MSG((void)arr.at(static_cast<json::size_type>(10)), "[json.exception.out_of_range.401] array index 10 is out of range");
         CHECK_MSG((void)carr.at(static_cast<json::size_type>(3)), "[json.exception.out_of_range.401] array index 3 is out of range");
         CHECK_MSG((void)num.at(static_cast<json::size_type>(0)), "[json.exception.type_error.304] cannot use at() with number");
@@ -65,7 +65,7 @@ TEST_CASE("exception messages of out-of-line throw sites")
         CHECK_MSG((void)num.at("a"), "[json.exception.type_error.304] cannot use at() with number");
 
         nlohmann::ordered_json oobj = {{"a", 1}};
-        const nlohmann::ordered_json coobj = oobj;
+        const nlohmann::ordered_json& coobj = oobj;
         CHECK_MSG((void)oobj.at("z"), "[json.exception.out_of_range.403] key 'z' not found");
         CHECK_MSG((void)coobj.at("z"), "[json.exception.out_of_range.403] key 'z' not found");
         CHECK_MSG((void)coobj.at(std::string("zz")), "[json.exception.out_of_range.403] key 'zz' not found");
@@ -94,9 +94,10 @@ TEST_CASE("exception messages of out-of-line throw sites")
         CHECK_MSG(obj.update(arr.begin(), arr2.end()), "[json.exception.invalid_iterator.210] iterators do not fit");
     }
 
+#if !defined(JSON_NOEXCEPTION) // patch_msg() catches the exceptions, which JSON_NOEXCEPTION turns into std::abort()
     SECTION("patch")
     {
-        const auto patch_msg = [](const char* doc, const char* patch)
+        const auto patch_msg = [](const char* doc, const char* patch) -> std::string
         {
             try
             {
@@ -105,16 +106,23 @@ TEST_CASE("exception messages of out-of-line throw sites")
             }
             catch (const json::exception& e)
             {
-                // with JSON_DIAGNOSTICS, what() names the offending value like "(/0) "; drop it
+                // with JSON_DIAGNOSTICS, what() names the offending value like "(/0) ",
+                // and with JSON_DIAGNOSTIC_POSITIONS its position like "(bytes 0-2) "; drop both
                 std::string msg = e.what();
-                const auto pos = msg.find(" (/");
-                if (pos != std::string::npos)
+                for (const char* marker :
+            {
+                " (/", " (bytes "
+            })
                 {
-                    msg.erase(pos + 1, msg.find(") ", pos) - pos + 1);
+                    const auto pos = msg.find(marker);
+                    if (pos != std::string::npos)
+                    {
+                        msg.erase(pos + 1, msg.find(") ", pos) - pos + 1);
+                    }
                 }
                 return msg;
             }
-            return std::string();
+            return {};
         };
 
         CHECK(patch_msg("{}", "{}") == "[json.exception.parse_error.104] parse error: JSON patch must be an array of objects");
@@ -132,4 +140,5 @@ TEST_CASE("exception messages of out-of-line throw sites")
         CHECK(patch_msg("{\"a\":1}", "[{\"op\":\"test\",\"path\":\"/a\",\"value\":2}]") == "[json.exception.other_error.501] unsuccessful: {\"op\":\"test\",\"path\":\"/a\",\"value\":2}");
         CHECK(patch_msg("{\"a\":1}", "[{\"op\":\"move\",\"path\":\"/a\"}]") == "[json.exception.parse_error.105] parse error: operation 'move' must have member 'from'");
     }
+#endif
 }

@@ -817,8 +817,8 @@ template<class Key, class T, class IgnoredLess = std::less<Key>,
              struct relocating_map : nlohmann::ordered_map<Key, T, IgnoredLess, Allocator>
 {
     using base_type = nlohmann::ordered_map<Key, T, IgnoredLess, Allocator>;
-    using typename base_type::iterator;
-    using typename base_type::Container;
+    using iterator = typename base_type::iterator;
+    using Container = typename base_type::Container;
     using base_type::base_type;
 
     template<typename... Args>
