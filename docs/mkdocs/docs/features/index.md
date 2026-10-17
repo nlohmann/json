@@ -14,6 +14,7 @@ C++ types, and finally serialize it again.
   [parsing untrusted input](parsing/untrusted_input.md).
 - [Zero-copy JSON views](json_view.md) — read a JSON text through a flat index instead of building a `json` tree;
   strings and numbers stay in the input and are only decoded when needed.
+  [Editable documents](json_view.md#editing-a-document) can also be modified.
 - [Comments](comments.md) and [trailing commas](trailing_commas.md) — opt-in relaxations of the JSON grammar.
 
 ## Accessing and modifying values

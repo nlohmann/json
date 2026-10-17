@@ -377,7 +377,7 @@ TEST_CASE("json_view builder")
         const built shallow = build(nested, false, false, false);
         REQUIRE(shallow.ok);
         shallow.data->max_depth = 1;
-        CHECK(nlohmann::detail::view::materialize<json>(*shallow.data, shallow.data->nodes) == json::parse(nested));
+        CHECK(nlohmann::detail::view::materialize<json, false>(*shallow.data, shallow.data->nodes) == json::parse(nested));
 
         // the open containers beyond 64 levels live on the heap
         for (const std::size_t depth :
