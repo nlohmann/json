@@ -10,7 +10,7 @@
 
 #include <array> // array
 #include <cstddef> // size_t
-#include <cstdint> // uint32_t
+#include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <map> // map
@@ -42,7 +42,9 @@ struct document_data
     std::size_t inline_capacity = 0;
     std::size_t max_depth = 0; ///< deepest nesting of arrays and objects (the root container is depth 1)
     std::vector<char> arena; ///< decoded strings that contained escapes (no terminator: they are handed out with their length)
+    std::size_t arena_size = 0; ///< bytes of decoded strings at base[1] (the arena, or those of a loaded image)
     std::string owned; ///< owned copy of the input, if any (a std::string, so that its NUL serves as the parser's sentinel)
+    std::vector<std::uint8_t> owned_image; ///< a loaded image the document owns (the text and the decoded strings point into it)
 
     // hash indexes of large objects (see object_index.hpp)
     static constexpr std::uint32_t index_min_members = 128;
@@ -117,6 +119,7 @@ struct document_data
     document_data() noexcept
         : arena() // NOLINT(readability-redundant-member-init)
         , owned() // NOLINT(readability-redundant-member-init)
+        , owned_image() // NOLINT(readability-redundant-member-init)
         , indexes() // NOLINT(readability-redundant-member-init)
         , index_slots() // NOLINT(readability-redundant-member-init)
         , large_objects() // NOLINT(readability-redundant-member-init)
