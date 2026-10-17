@@ -126,6 +126,13 @@ class builder
     frame_stack m_shallow;
     std::vector<frame> m_deep{};
 
+    /// remember an object to index after parsing (out of line, so that the
+    /// parse loop only has a call for it)
+    NLOHMANN_VIEW_NOINLINE void note_large_object(std::uint32_t idx)
+    {
+        m_doc.large_objects.push_back(idx);
+    }
+
     NLOHMANN_VIEW_NOINLINE bool fail(error_code c, const unsigned char* at) noexcept
     {
         m_failure.code = c;
@@ -539,7 +546,7 @@ class builder
     switch (cur())                                                              \
     {                                                                           \
         case '"':                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!string())) { return false; }            \
+            if (NLOHMANN_VIEW_UNLIKELY(!string<true>())) { return false; }      \
             break;                                                              \
         case '{':                                                               \
             open(value_t::object);                                              \
@@ -623,7 +630,7 @@ obj_key:
             {
                 return fail(error_code::expected_key);
             }
-            if (NLOHMANN_VIEW_UNLIKELY(!string()))
+            if (NLOHMANN_VIEW_UNLIKELY(!string<false>()))
             {
                 return false;
             }
@@ -665,16 +672,24 @@ obj_next:
                 if (enabled(TrailingCommas) && cur() == '}')
                 {
                     ++p;
-                    goto close_container;
+                    goto close_object;
                 }
                 goto obj_key;
             }
             if (cur() == '}')
             {
                 ++p;
-                goto close_container;
+                goto close_object;
             }
             return fail(error_code::expected_object_end);
+
+close_object:
+            // a large object gets a hash index (objects only, so that closing
+            // an array pays nothing for this)
+            if (NLOHMANN_VIEW_UNLIKELY(cur_count >= document_data::index_min_members))
+            {
+                cold.note_large_object(cur_idx);
+            }
 
 close_container:
             close();
@@ -728,7 +743,7 @@ root_done:
             switch (cur())
             {
                 case '"':
-                    return string();
+                    return string<true>();
                 case 't':
                     return literal_true();
                 case 'f':
@@ -867,14 +882,19 @@ indent_done:
             const auto idx = static_cast<std::uint32_t>(n - base);
             if (depth != 0)
             {
-                const frame f = {cur_idx, cur_count, cur_is_object};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    cold.m_shallow[depth - 1] = f;
+                    // field by field: a frame put together on the stack and
+                    // copied would be read back wider than it was written,
+                    // and that load waits until the stores are done
+                    frame& f = cold.m_shallow[depth - 1];
+                    f.idx = cur_idx;
+                    f.count = cur_count;
+                    f.is_object = cur_is_object;
                 }
                 else
                 {
-                    cold.m_deep.push_back(f);
+                    cold.m_deep.push_back(frame{cur_idx, cur_count, cur_is_object});
                 }
             }
             ++depth;
@@ -891,19 +911,21 @@ indent_done:
             n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
             if (--depth != 0)
             {
-                frame f{};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
-                    f = cold.m_shallow[depth - 1];
+                    const frame& f = cold.m_shallow[depth - 1];
+                    cur_idx = f.idx;
+                    cur_count = f.count;
+                    cur_is_object = f.is_object;
                 }
                 else
                 {
-                    f = cold.m_deep.back();
+                    const frame f = cold.m_deep.back();
                     cold.m_deep.pop_back();
+                    cur_idx = f.idx;
+                    cur_count = f.count;
+                    cur_is_object = f.is_object;
                 }
-                cur_idx = f.idx;
-                cur_count = f.count;
-                cur_is_object = f.is_object;
             }
         }
 
@@ -1028,12 +1050,13 @@ indent_done:
             return true;
         }
 
-        /// a string (value or key) at p
+        /// a string at p: a value (Value) or a key
+        template<bool Value>
         NLOHMANN_VIEW_ALWAYS_INLINE bool string()
         {
             ++p; // opening quote
             const unsigned char* const s = p;
-            p = scan_string_run(p, e);
+            p = scan_string_run<Value>(p, e);
             if (NLOHMANN_VIEW_LIKELY(p != e && *p == '"'))
             {
                 push_node(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));

@@ -51,6 +51,11 @@ own on the next, since ownership is decided freshly each time. An input that is 
 [`parse()`](parse.md#notes)) is written into the document's previous owned copy, reusing its memory; a moved-in
 `#!cpp std::string` replaces it.
 
+Reusing a document matters most for large inputs: the operating system provides the memory of a fresh node index one
+page at a time, and every page costs a page fault the first time it is written. On x86-64 Linux (4 KiB pages), parsing
+a 55 MB document into a reused document took about 40 % less time than parsing it into a fresh one. Programs that parse
+many documents of similar size should therefore keep one document and call `read()`.
+
 An integer argument that is not a `#!cpp bool` where the flags are expected, such as `#!cpp read(ptr, len)`, does not
 compile; see [`parse`](parse.md#notes).
 
