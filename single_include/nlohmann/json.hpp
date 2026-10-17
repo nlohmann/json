@@ -21497,7 +21497,7 @@ class json_pointer
             {}
         };
 
-        std::vector<slot> slots;
+        std::vector<slot> table;
         std::size_t used = 0;
 
         static std::size_t hash_of(std::size_t parent, const string_t& token) noexcept
@@ -21512,19 +21512,19 @@ class json_pointer
 
         void grow()
         {
-            std::vector<slot> old(slots.size() * 2);
-            old.swap(slots);
-            const std::size_t mask = slots.size() - 1;
+            std::vector<slot> old(table.size() * 2);
+            old.swap(table);
+            const std::size_t mask = table.size() - 1;
             for (const auto& s : old)
             {
                 if (s.token != nullptr)
                 {
                     std::size_t i = s.hash & mask;
-                    while (slots[i].token != nullptr)
+                    while (table[i].token != nullptr)
                     {
                         i = (i + 1) & mask;
                     }
-                    slots[i] = s;
+                    table[i] = s;
                 }
             }
         }
@@ -21537,7 +21537,7 @@ class json_pointer
 
         // start with the empty prefix only
         prefix_tree()
-            : slots(16)
+            : table(16)
             , parent(1, 0)
             , is_array(1, false)
         {}
@@ -21547,20 +21547,20 @@ class json_pointer
         std::size_t add_child(std::size_t id, const string_t& reference_token)
         {
             const std::size_t hash = hash_of(id, reference_token);
-            const std::size_t mask = slots.size() - 1;
+            const std::size_t mask = table.size() - 1;
             std::size_t i = hash & mask;
-            while (slots[i].token != nullptr)
+            while (table[i].token != nullptr)
             {
-                if (slots[i].hash == hash && slots[i].parent == id && *slots[i].token == reference_token)
+                if (table[i].hash == hash && table[i].parent == id && *table[i].token == reference_token)
                 {
-                    return slots[i].id;
+                    return table[i].id;
                 }
                 i = (i + 1) & mask;
             }
 
             // new prefix
             const std::size_t child = parent.size();
-            slots[i] = slot(hash, id, &reference_token, child);
+            table[i] = slot(hash, id, &reference_token, child);
             if (reference_token == "0")
             {
                 is_array[id] = true;
@@ -21569,7 +21569,7 @@ class json_pointer
             is_array.push_back(false);
 
             // keep the load factor below 1/2
-            if (++used * 2 > slots.size())
+            if (++used * 2 > table.size())
             {
                 grow();
             }
