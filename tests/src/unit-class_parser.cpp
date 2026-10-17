@@ -2952,3 +2952,32 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
     }
 }
 #endif
+
+TEST_CASE("accept() agrees with parse() on floats around the overflow limit")
+{
+    // accept() does not convert a float that cannot overflow; the tokens
+    // around the limit (and beyond it) must still be rejected exactly as
+    // parse() rejects them
+    const char* const numbers[] =
+    {
+        "1e0", "123.456e-5", "1e-400", "-1e-400", "1e307", "1e308", "1e309", "-1e309",
+        "10e307", "100e307", "0.1e309", "0.1e310", "1E+308", "1E+309",
+        "1.7976931348623157e308", "1.7976931348623159e308", "1.8e308", "-1.7976931348623157e308",
+        "12345678901234567e291", "12345678901234567e292", "123456789012345678e290", "123456789012345678e291",
+        "1234567890123456789e289", "1234567890123456789e290", "9999999999999999999e289", "9999999999999999999e290",
+        "0.00000000000000000001e328", "0.00000000000000000001e329"
+    };
+
+    for (const char* number : numbers)
+    {
+        for (const std::string text :
+                {
+                    std::string(number), "[" + std::string(number) + "]", "{\"a\":" + std::string(number) + "}"
+                })
+        {
+            INFO(text);
+            const bool parses = !json::parse(text, nullptr, false).is_discarded();
+            CHECK(json::accept(text) == parses);
+        }
+    }
+}
