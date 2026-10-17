@@ -1453,7 +1453,7 @@ indent_done:
 
         /// append a node: (kind, flags, extra, off) and the second word (len, or
         /// an integer's value); two stores on little-endian targets
-        NLOHMANN_VIEW_ALWAYS_INLINE node* emit(value_t k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
+        NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(value_t k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
         {
             if (NLOHMANN_VIEW_UNLIKELY(out == cap))
             {
@@ -1483,9 +1483,9 @@ indent_done:
 
         NLOHMANN_VIEW_ALWAYS_INLINE void open(value_t k)
         {
-            // (base is read after emit(), which moves the node array when it
+            // (base is read after push_node(), which moves the node array when it
             // grows; in one expression the order of the two is unspecified)
-            const node* const n = emit(k, 0, 0, static_cast<std::size_t>(p - b), 0);
+            const node* const n = push_node(k, 0, 0, static_cast<std::size_t>(p - b), 0);
             const auto idx = static_cast<std::uint32_t>(n - base);
             if (depth != 0)
             {
@@ -1538,7 +1538,7 @@ indent_done:
             {
                 return fail(error_code::invalid_literal);
             }
-            emit(k, flags, 0, static_cast<std::size_t>(p - b), n);
+            push_node(k, flags, 0, static_cast<std::size_t>(p - b), n);
             p += n;
             return true;
         }
@@ -1646,7 +1646,7 @@ indent_done:
                 // of the negative std::int64_t)
                 second = negative ? 0 - m : m;
             }
-            emit(kind, 0, layout, static_cast<std::size_t>(s - b), second);
+            push_node(kind, 0, layout, static_cast<std::size_t>(s - b), second);
             return true;
         }
 
@@ -1658,7 +1658,7 @@ indent_done:
             p = scan_string_run(p, e);
             if (NLOHMANN_VIEW_LIKELY(p != e && *p == '"'))
             {
-                emit(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
+                push_node(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
                 ++p;
                 return true;
             }
@@ -1668,7 +1668,7 @@ indent_done:
                 return false;
             }
             p = r.p;
-            emit(value_t::string, node_flags::escaped, 0, r.start, r.len);
+            push_node(value_t::string, node_flags::escaped, 0, r.start, r.len);
             return true;
         }
     };
