@@ -13,7 +13,6 @@
 #include <cstring> // memcmp
 
 #include <nlohmann/json.hpp>
-#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/node.hpp>
