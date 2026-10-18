@@ -94,7 +94,7 @@
 
 #include <array> // array
 #include <cstddef> // size_t
-#include <cstring> // memcpy
+#include <cstring> // memcmp, memcpy
 #include <limits> // numeric_limits
 #include <new> // bad_alloc, operator new, placement new
 #include <string> // string
@@ -415,6 +415,12 @@ struct document_data
     const char* str(const node& n) const noexcept
     {
         return base[n.flags & node_flags::storage] + n.off;
+    }
+
+    /// whether the string of node k (a key) is the n bytes at key
+    bool key_equals(const node& k, const char* key, std::size_t n) const noexcept
+    {
+        return k.len == n && (n == 0 || std::memcmp(str(k), key, n) == 0);
     }
 
     /// the node after n's subtree (containers span `next` nodes, scalars one)
@@ -2438,7 +2444,7 @@ inline const node* find_member(const document_data& d, const node* object, const
     }
     for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
     {
-        if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
+        if (d.key_equals(*m, key, n))
         {
             return m;
         }
@@ -2453,7 +2459,7 @@ inline std::size_t count_members(const document_data& d, const node* object, con
     const node* const end = document_data::child_end(object);
     for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
     {
-        if (m->len == n && (n == 0 || std::memcmp(d.str(*m), key, n) == 0))
+        if (d.key_equals(*m, key, n))
         {
             ++result;
         }
