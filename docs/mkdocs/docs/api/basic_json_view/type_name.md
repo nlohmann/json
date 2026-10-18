@@ -14,14 +14,14 @@ same string for a discarded `BasicJsonType` value).
 a string representation of the type ([`value_t`](../basic_json/value_t.md)):
 
 | Value type                                         | return value  |
-|-----------------------------------------------------|---------------|
-| `#!json null`                                        | `"null"`      |
-| boolean                                              | `"boolean"`   |
-| string                                               | `"string"`    |
-| number (integer, unsigned integer, floating-point)   | `"number"`    |
-| object                                               | `"object"`    |
-| array                                                | `"array"`     |
-| discarded                                            | `"discarded"` |
+|----------------------------------------------------|---------------|
+| `#!json null`                                      | `"null"`      |
+| boolean                                            | `"boolean"`   |
+| string                                             | `"string"`    |
+| number (integer, unsigned integer, floating-point) | `"number"`    |
+| object                                             | `"object"`    |
+| array                                              | `"array"`     |
+| discarded                                          | `"discarded"` |
 
 `type_name()` never returns `#!cpp "binary"`, since a JSON text has no binary values (see
 [`is_binary()`](is_binary.md)); it also never returns `#!cpp "invalid"`, since a view's `#!cpp kind` always comes

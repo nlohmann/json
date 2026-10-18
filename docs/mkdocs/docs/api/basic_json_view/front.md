@@ -13,7 +13,7 @@ The first element or member value. For a primitive value (number, string, boolea
 
 ## Exception safety
 
-Strong exception safety: if an exception is thrown, there are no changes to the view or the document it refers to.
+Strong guarantee: there are no changes to the view or the document it refers to.
 
 ## Exceptions
 
@@ -31,8 +31,8 @@ Constant.
 ## Notes
 
 Unlike [`BasicJsonType::front()`](../basic_json/front.md), which has undefined behavior for an empty array or
-object, `front()` throws `invalid_iterator.214` in that case -- the same way it already does for `#!json null` and
-for a discarded view, where `BasicJsonType::front()` also throws.
+object, `front()` throws `invalid_iterator.214` for an empty array, an empty object, a null value, or a discarded
+view.
 
 ## Examples
 

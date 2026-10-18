@@ -15,7 +15,7 @@ had to be decoded once when the document was parsed).
 
 ## Exception safety
 
-Strong exception safety: if an exception is thrown, there are no changes to the view or the document it refers to.
+Strong guarantee: there are no changes to the view or the document it refers to.
 
 ## Exceptions
 
@@ -37,9 +37,14 @@ hand out a reference to a stored `string_t`. `get_string()` (equivalently, [`get
 zero-copy alternative: [`BasicJsonType::get_ref<const string_t&>()`](../basic_json/get_ref.md) is its closest
 counterpart, except that it returns a view instead of a reference to a value that must already exist.
 
+`get_string()` borrows the string: nothing is copied, whereas [`get<std::string>()`](get.md) copies it. For a borrowed
+document, the returned [`string_view_t`](index.md#member-types) is valid as long as the caller's buffer; for an owned
+one, as long as the document.
+
 The returned [`string_view_t`](index.md#member-types) is valid exactly as long as the view that produced it -- see the
 [validity rules](index.md) of `basic_json_view` -- and, for a string with no escapes, for as long as the document's
-source text.
+source text, which for a borrowed document must remain valid **and unmodified** for as long as the document exists,
+since floating-point values and unescaped strings are read from the source lazily.
 
 ## Examples
 

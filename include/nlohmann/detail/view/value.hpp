@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cstddef> // nullptr_t, size_t
 #include <cstdint> // int64_t
 #include <map> // map
 #include <string> // basic_string
@@ -102,6 +103,27 @@ Map map_value(const View& v)
 /// characters and a length); other maps go through basic_json
 template<typename Key>
 struct is_string_key : std::is_constructible<Key, const char*, std::size_t> {};
+
+/// whether View::get<T>() converts to T without materialize(); get_to()
+/// assigns these, and passes the others to from_json
+template<typename T, typename BasicJsonType, typename View>
+struct is_direct_value : std::integral_constant < bool,
+    std::is_arithmetic<T>::value || std::is_same<T, std::nullptr_t>::value
+    || std::is_same<T, typename View::string_view_t>::value
+    || std::is_same<T, BasicJsonType>::value || std::is_same<T, View>::value >
+{};
+
+template<typename Traits, typename Alloc, typename BasicJsonType, typename View>
+struct is_direct_value<std::basic_string<char, Traits, Alloc>, BasicJsonType, View> : std::true_type {};
+
+template<typename U, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : std::true_type {};
+
+template<typename K, typename V, typename C, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::map<K, V, C, A>, BasicJsonType, View> : is_string_key<K> {};
+
+template<typename K, typename V, typename H, typename E, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::unordered_map<K, V, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
 
 }  // namespace view
 }  // namespace detail

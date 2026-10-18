@@ -10,8 +10,8 @@ Converts the value to `T`.
 For the types below, the conversion works directly on the flat index -- no `BasicJsonType` value is built for it:
 
 - `#!cpp bool`
-- arithmetic types other than `#!cpp bool` (from a number; from a boolean, as `#!cpp 0`/`#!cpp 1`, exactly as
-  [`BasicJsonType::get<T>()`](../basic_json/get.md) converts a boolean)
+- arithmetic types other than `#!cpp bool` (for a boolean, `#!cpp 0`/`#!cpp 1`, exactly as for
+  [`BasicJsonType::get<T>()`](../basic_json/get.md))
 - `#!cpp std::nullptr_t`
 - `#!cpp std::basic_string<char, Traits, Alloc>` (including `string_t`) -- a copy of the string
 - [`string_view_t`](index.md#member-types) -- **no copy**: the returned view points into the document's
@@ -19,10 +19,10 @@ For the types below, the conversion works directly on the flat index -- no `Basi
   document's own buffer of decoded strings (see [`get_string()`](get_string.md))
 - `BasicJsonType` -- equivalent to [`materialize()`](materialize.md)
 - `basic_json_view` -- returns `#!cpp *this`
-- `#!cpp std::vector<U, A>` -- element by element, each converted with `#!cpp get<U>()`; `#!cpp
+- `#!cpp std::vector<U, A>` -- from an array, element by element, each converted with `#!cpp get<U>()`; `#!cpp
   std::vector<basic_json_view>` keeps a view of every element instead of a value
 - `#!cpp std::map<K, V, C, A>` and `#!cpp std::unordered_map<K, V, H, E, A>`, if `K` is constructible from a `#!cpp
-  (const char*, std::size_t)` pair -- member by member, each value converted with `#!cpp get<V>()`; with a repeated
+  (const char*, std::size_t)` pair -- from an object, member by member, each value converted with `#!cpp get<V>()`; with a repeated
   key, the *last* value is kept, as [`BasicJsonType::parse()`](../basic_json/parse.md) (and
   [`materialize()`](materialize.md)) does; `#!cpp std::map<std::string, basic_json_view>` keeps views of the members
   instead of values
@@ -43,7 +43,7 @@ the value, converted to `T`
 
 ## Exception safety
 
-Strong exception safety: if an exception is thrown, there are no changes to the view or the document it refers to.
+Strong guarantee: there are no changes to the view or the document it refers to.
 
 ## Exceptions
 
@@ -62,6 +62,9 @@ None of the exceptions thrown directly by this function (the first three bullets
 [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) path: the view has no `BasicJsonType` value to point at. An
 exception thrown while converting through `materialize()` (the last bullet) is different: it is thrown by a real
 `BasicJsonType` value, so it **does** carry a `JSON_DIAGNOSTICS` path if `BasicJsonType` was built with it enabled.
+That path is relative to the root of the view's subtree, because `materialize()` builds only the subtree (with parent
+pointers): it is empty if the failing value is the subtree's root itself, and it never is the path within the whole
+document.
 
 ## Complexity
 
@@ -73,8 +76,8 @@ exception thrown while converting through `materialize()` (the last bullet) is d
 - `#!cpp std::map`/`#!cpp std::unordered_map`: linear in the number of members for walking them, plus the container's
   own insertion cost per member (logarithmic for `#!cpp std::map`, amortized constant for `#!cpp
   std::unordered_map`), times the complexity of converting one member to the mapped type.
-- every other `T`: linear in the size of the subtree (building the `BasicJsonType` value), plus the complexity of
-  [`BasicJsonType::get<T>()`](../basic_json/get.md) on it.
+- every other `T`: the cost of [`materialize()`](materialize.md) and of destroying the `BasicJsonType` value
+  afterwards, plus that of [`BasicJsonType::get<T>()`](../basic_json/get.md).
 
 ## Notes
 

@@ -67,9 +67,10 @@ table). [`parse_copy()`](../api/basic_json_document/parse_copy.md) always owns a
 
 !!! warning "A borrowed document depends on your buffer"
 
-    If a document borrows its text, that text **must outlive the document** (and every view taken from it). Reading
-    or writing through a view after the underlying buffer is gone is undefined behavior, exactly as it would be for
-    a dangling `#!cpp std::string_view`.
+    If a document borrows its text, that text **must outlive the document** (and every view taken from it) and must
+    stay **unmodified** for as long as the document exists, since floating-point values and unescaped strings are
+    read from it lazily. Reading or writing through a view after the underlying buffer is gone is undefined behavior,
+    exactly as it would be for a dangling `#!cpp std::string_view`.
 
 A view is valid only while all of the following hold:
 
@@ -77,7 +78,7 @@ A view is valid only while all of the following hold:
 - the document has not been re-parsed since the view was taken (with [`read()`](../api/basic_json_document/read.md)
   or [`parse()`](../api/basic_json_document/parse.md) into it),
 - the document has not had [`shrink_to_fit()`](../api/basic_json_document/shrink_to_fit.md) called on it since, and
-- if the document borrows its source text, that text is still alive.
+- if the document borrows its source text, that text is still alive and unmodified.
 
 Moving the `basic_json_document<>` itself is fine and does **not** invalidate its views: the index is a separate heap
 allocation that keeps its address across the move. Take a fresh view from [`root()`](../api/basic_json_document/root.md)
@@ -163,10 +164,10 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
 
     If an object in the source text repeats a key, [`operator[]`](../api/basic_json_view/operator%5B%5D.md),
     [`at`](../api/basic_json_view/at.md), [`find`](../api/basic_json_view/find.md),
-    [`value`](../api/basic_json_view/value.md), [`contains`](../api/basic_json_view/contains.md),
-    [`count`](../api/basic_json_view/count.md), and JSON pointer resolution all return the **first** member with that
-    key. `basic_json::parse()` instead keeps the **last** value of a repeated key, so for `#!cpp {"a":1,"a":2}`,
-    `#!cpp view["a"]` is `#!cpp 1` while `#!cpp parse(text)["a"]` is `#!cpp 2`.
+    [`value`](../api/basic_json_view/value.md), [`contains`](../api/basic_json_view/contains.md), and JSON pointer
+    resolution all return the **first** member with that key. `basic_json::parse()` instead keeps the **last** value
+    of a repeated key, so for `#!cpp {"a":1,"a":2}`, `#!cpp view["a"]` is `#!cpp 1` while `#!cpp parse(text)["a"]` is
+    `#!cpp 2`. [`count`](../api/basic_json_view/count.md) counts every member with the key, so it is `#!cpp 2` here.
 
 [`begin()`](../api/basic_json_view/begin.md)/[`end()`](../api/basic_json_view/end.md) and
 [`items()`](../api/basic_json_view/items.md) visit *every* occurrence, in document order, and

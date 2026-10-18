@@ -4,9 +4,9 @@
 /* unspecified */ items() const noexcept;
 ```
 
-Returns a range of [`item`](index.md#member-types) values -- (key, value) pairs -- for use in range-based for loops.
-The key of an array element is its index, converted to a string, as for
-[`BasicJsonType::items()`](../basic_json/items.md).
+Returns a range of items -- (key, value) pairs -- for use in range-based for loops. An item's `#!cpp key()` is a
+`#!cpp string_view_t` (for an array element, its index converted to a string, as for
+[`BasicJsonType::items()`](../basic_json/items.md)), and its `#!cpp value()` is a `basic_json_view` of the element.
 
 The returned type is not part of the public API and may change between versions; use a range-based for loop (see the
 example), or `#!cpp decltype(v.items())` if you need to name it.
@@ -33,8 +33,8 @@ is nothing for a reference to bind to.
 
 ## Return value
 
-A range whose iterators dereference to [`item`](index.md#member-types) and whose `#!cpp begin()`/`#!cpp end()` are
-equivalent to [`basic_json_view::begin()`](begin.md)/[`end()`](end.md), in document order.
+A range whose iterators dereference to an item (with `#!cpp key()` and `#!cpp value()`, see above) and whose
+`#!cpp begin()`/`#!cpp end()` are equivalent to [`basic_json_view::begin()`](begin.md)/[`end()`](end.md), in document order.
 
 ## Exception safety
 
@@ -48,14 +48,14 @@ Constant.
 
 As for [`begin()`](begin.md)/[`end()`](end.md), `items()` visits **every** member of an object, including all
 occurrences of a duplicate key -- unlike [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md),
-[`contains`](contains.md), and [`count`](count.md), which resolve to the *first* member with a given key. See the
+and [`contains`](contains.md), which resolve to the *first* member with a given key. See the
 [Notes on duplicate keys](operator[].md#notes) of `operator[]`.
 
 !!! danger "Lifetime issues"
 
-    As for `BasicJsonType::items()`, calling `items()` on a temporary view (or a temporary document) is dangerous:
-    the range refers back to the document, so the document must outlive the loop. See
-    [#2040](https://github.com/nlohmann/json/issues/2040) for the `BasicJsonType` background.
+    Unlike `BasicJsonType::items()` (see [#2040](https://github.com/nlohmann/json/issues/2040)), calling `items()` on
+    a temporary view is safe, for instance `#!cpp for (auto item : v["a"].items())`: the returned range holds a copy
+    of the view. What must outlive the loop is the document and, for a borrowed document, the source buffer.
 
 ## Examples
 

@@ -50,7 +50,7 @@ basic_json_view operator[](const json_pointer& ptr) const;
 
 ## Exception safety
 
-Strong exception safety: if an exception is thrown, there are no changes to the view or the document it refers to.
+Strong guarantee: there are no changes to the view or the document it refers to.
 
 ## Exceptions
 
@@ -108,7 +108,7 @@ document.
 !!! warning "Duplicate keys: the first member wins"
 
     If the source text has an object with a duplicate key, `#!cpp operator[]` (and [`at`](at.md), [`find`](find.md),
-    [`contains`](contains.md), [`count`](count.md), [`value`](value.md), and JSON pointer resolution) all resolve to
+    [`contains`](contains.md), [`value`](value.md), and JSON pointer resolution) all resolve to
     the *first* member with that key, because a lookup can stop as soon as it finds a match. This is different from
     [`materialize()`](materialize.md) (and [`BasicJsonType::parse()`](../basic_json/parse.md)), which replay every
     member in order and so keep the *last* value for a repeated key, so `#!cpp v["a"]` and

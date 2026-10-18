@@ -1,2 +1,3 @@
 transaction 0: 9.99
-transaction 1 is missing "amount"
+transaction 1 has 0 "amount" fields
+transaction 2 has 2 "amount" fields

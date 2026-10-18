@@ -113,6 +113,21 @@ inline const node* find_member(const document_data& d, const node* object, const
     return nullptr;
 }
 
+/// the number of members of an object with this key (duplicates included)
+inline std::size_t count_members(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
+{
+    std::size_t result = 0;
+    const node* const end = document_data::child_end(object);
+    for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+    {
+        if (m->len == n && (n == 0 || std::memcmp(d.str(*m), key, n) == 0))
+        {
+            ++result;
+        }
+    }
+    return result;
+}
+
 /// whether an integer type is accepted as an array index by the view's
 /// operator[] and at(): every integer type but bool and size_t, which has its
 /// own overload

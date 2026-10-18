@@ -251,7 +251,7 @@ class basic_json_view
         {
             if (is_discarded())
             {
-                return basic_json_view();
+                return {};
             }
             detail::view::throw_type_error(305, "cannot use operator[] with a string argument with ", type_name());
         }
@@ -277,7 +277,7 @@ class basic_json_view
         {
             if (is_discarded())
             {
-                return basic_json_view();
+                return {};
             }
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
@@ -300,7 +300,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(is_discarded()))
         {
-            return basic_json_view();
+            return {};
         }
         return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
     }
@@ -473,11 +473,11 @@ class basic_json_view
         return !detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains).is_discarded();
     }
 
-    /// 1 if this is an object with a member with this key, else 0 (duplicate
-    /// keys count once)
+    /// the number of members with this key (more than 1 if the key occurs
+    /// more than once); 0 if this is not an object
     size_type count(string_view_t key) const
     {
-        return contains(key) ? 1 : 0;
+        return is_object() ? detail::view::count_members(*m_doc, m_node, key.data(), key.size()) : 0;
     }
 
     size_type count(const char* key) const
@@ -544,10 +544,12 @@ class basic_json_view
         return get_impl(detail::view::value_tag<T> {}, detail::priority_tag<2> {});
     }
 
+    /// as BasicJsonType::get_to(): the types get<T>() converts directly are
+    /// assigned, all others are passed to from_json with v as it is
     template<typename T>
     T& get_to(T& v) const
     {
-        v = get<T>();
+        get_to_impl(v, detail::view::is_direct_value<T, BasicJsonType, basic_json_view> {});
         return v;
     }
 
@@ -689,6 +691,21 @@ class basic_json_view
     T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<0> /*unused*/) const
     {
         return materialize().template get<T>();
+    }
+
+    // --- get_to() dispatch ---
+
+    template<typename T>
+    void get_to_impl(T& v, std::true_type /*direct*/) const
+    {
+        v = get<T>();
+    }
+
+    /// from_json may keep parts of v (members a JSON object lacks, say)
+    template<typename T>
+    void get_to_impl(T& v, std::false_type /*direct*/) const
+    {
+        materialize().get_to(v);
     }
 
     const document_data* m_doc = nullptr;

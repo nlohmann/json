@@ -14,17 +14,25 @@ to the document and a pointer into its index), trivially copyable. A view is val
 - the document has not been re-parsed with [`read()`](../basic_json_document/read.md) (or
   [`parse()`](../basic_json_document/parse.md) into it) or shrunk with
   [`shrink_to_fit()`](../basic_json_document/shrink_to_fit.md) since the view was taken, and
-- if the document borrows its source text, that text is still alive.
+- if the document borrows its source text, that text is still alive and unmodified (floating-point values and
+  unescaped strings are read from it lazily).
 
 Moving the document itself does not invalidate its views: the index is heap-allocated independently of the
 `basic_json_document` object.
 
-`basic_json_view` provides the read-only part of the `BasicJsonType` interface: the type-inspection functions, element
-access, lookup, iteration, and conversion -- [`get<T>()`](get.md), [`get_string()`](get_string.md),
-[`number_token()`](number_token.md), and [`materialize()`](materialize.md) to build the `BasicJsonType` value of a
-subtree on demand. [`operator[]`](operator%5B%5D.md), [`at`](at.md), [`contains`](contains.md), and
-[`value`](value.md) also accept a [`json_pointer`](../json_pointer/index.md). It does not (yet) provide `dump()` or
-comparison.
+`basic_json_view` provides the read-only part of the `BasicJsonType` interface:
+
+- the type-inspection functions,
+- element access,
+- lookup,
+- iteration, and
+- conversion: [`get<T>()`](get.md), [`get_string()`](get_string.md), [`number_token()`](number_token.md), and
+  [`materialize()`](materialize.md) to build the `BasicJsonType` value of a subtree on demand.
+
+[`operator[]`](operator%5B%5D.md), [`at`](at.md), [`contains`](contains.md), and [`value`](value.md) also accept a
+[`json_pointer`](../json_pointer/index.md). It does not (yet) provide `dump()` or comparison. Unlike `basic_json`,
+there are no implicit conversion operators (no `#!cpp operator ValueType()`), and no `#!cpp get_ptr()` or
+`#!cpp get_ref()`; see [`get`](get.md).
 
 ## Template parameters
 
@@ -46,7 +54,6 @@ comparison.
 - **string_view_t** - `#!cpp std::string_view` on C++17 and newer, a minimal internal substitute otherwise
 - **iterator**, **const_iterator** - a forward iterator over the elements of an array or the member values of an
   object, in document order; both names refer to the same type, since a view is always read-only
-- **item** - a (key, value) pair produced by [`items()`](items.md)
 
 ## Member functions
 

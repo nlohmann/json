@@ -47,24 +47,24 @@ enum class index_status
 template<typename StringType>
 index_status array_index(const StringType& s, std::size_t& idx) noexcept
 {
+    // as basic_json: the empty token and "-" (past the last element) are
+    // unresolved rather than not a number
+    if (s.empty() || (s.size() == 1 && s[0] == '-'))
+    {
+        return index_status::unresolved;
+    }
+    if (s[0] < '0' || s[0] > '9')
+    {
+        return index_status::not_number;
+    }
     if (s.size() > 1 && s[0] == '0')
     {
         return index_status::leading_zero;
     }
-    // as basic_json: also a single character, but "-" and the empty token are
-    // left to the conversion below and reported as unresolved
-    if (!s.empty() && !(s.size() == 1 && s[0] == '-') && !(s[0] >= '0' && s[0] <= '9'))
-    {
-        return index_status::not_number;
-    }
-    if (s.empty())
-    {
-        return index_status::unresolved;
-    }
     std::uint64_t v = 0;
-    for (std::size_t i = 0; i < s.size(); ++i)
+    for (const auto c : s)
     {
-        const auto d = static_cast<unsigned>(static_cast<unsigned char>(s[i])) - '0';
+        const auto d = static_cast<unsigned>(static_cast<unsigned char>(c)) - '0';
         if (d > 9 || v > ((std::numeric_limits<std::uint64_t>::max)() - d) / 10)
         {
             return index_status::unresolved; // not a number, or beyond unsigned long long

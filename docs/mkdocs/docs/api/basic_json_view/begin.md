@@ -23,13 +23,17 @@ Constant.
 ## Notes
 
 For an object, iteration visits **every** member, including all occurrences of a duplicate key -- unlike
-[`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md), [`contains`](contains.md), and [`count`](count.md),
+[`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md), and [`contains`](contains.md),
 which all resolve to the *first* member with a given key. See the
 [Notes on duplicate keys](operator[].md#notes) of `operator[]`.
 
 Because objects are iterated in document order rather than sorted by key, the order seen here can differ from what
 iterating the [`materialize()`](materialize.md)d `BasicJsonType` value would produce: a `#!cpp basic_json` object
 (`std::map`-backed by default) sorts its keys, while a view does not.
+
+An `ordered_json` value also keeps document order, but it keeps only one entry per key: as `parse()` does, it keeps the
+*last* value, at the position of the key's *first* occurrence. The view, in contrast, visits every member, including
+the duplicates.
 
 ## Examples
 

@@ -53,7 +53,8 @@ view.
 
 !!! info "Postconditions"
 
-    If `#!cpp v.contains(key)` returns `#!cpp true`, then `#!cpp v[key]` is not [discarded](is_discarded.md). If
+    If `#!cpp v.contains(key)` returns `#!cpp true`, then `#!cpp v[key]` is not [discarded](is_discarded.md) and
+    `#!cpp v.at(key)` does not throw. If
     `#!cpp v.contains(ptr)` returns `#!cpp true`, then `#!cpp v[ptr]` is not discarded and `#!cpp v.at(ptr)` does not
     throw.
 

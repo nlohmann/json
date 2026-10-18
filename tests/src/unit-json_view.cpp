@@ -735,7 +735,12 @@ void check_access(const ordered_json_view& v, const ordered_json& j)
             ++members;
             const std::string key(it.key().data(), it.key().size());
             CHECK(v.contains(key));
-            CHECK(v.count(key) == 1);
+            std::size_t occurrences = 0;
+            for (auto other = v.begin(); other != v.end(); ++other)
+            {
+                occurrences += other.key() == it.key() ? 1 : 0;
+            }
+            CHECK(v.count(key) == occurrences);
             // lookups find the first member with the key, which is this one if
             // there is no earlier one
             if (std::find(keys.begin(), keys.end(), key) != keys.end())
@@ -843,7 +848,8 @@ TEST_CASE("json_view element access and iteration")
         CHECK(v.find("a") == v.begin());
         CHECK(v.find("a").value().materialize() == 1);
         CHECK(v.find("b") == std::next(v.begin()));
-        CHECK(v.count("a") == 1);
+        CHECK(v.count("a") == 2); // every member, unlike materialize()
+        CHECK(v.count("b") == 1);
         CHECK(v.contains("a"));
         CHECK(v.value("a", 0) == 1);
         CHECK(v.materialize()["a"] == 3); // materialize() keeps the last value, unlike the lookups
@@ -1252,6 +1258,25 @@ void from_json(const json& j, record& r)
     j.at("name").get_to(r.name);
     j.at("count").get_to(r.count);
 }
+
+struct defaults
+{
+    int a = 1;
+    int b = 2;
+};
+
+// sets only the members the JSON value has
+void from_json(const json& j, defaults& d)
+{
+    if (j.contains("a"))
+    {
+        j.at("a").get_to(d.a);
+    }
+    if (j.contains("b"))
+    {
+        j.at("b").get_to(d.b);
+    }
+}
 } // namespace
 
 TEST_CASE("json_view values")
@@ -1372,6 +1397,14 @@ TEST_CASE("json_view values")
         v["count"].get_to(count);
         CHECK(name == "widget");
         CHECK(count == 3);
+
+        // other types go to from_json with the existing value, as basic_json::get_to()
+        defaults def;
+        def.b = 5;
+        const json_document partial = json_document::parse(R"({"a":4})");
+        partial.root().get_to(def);
+        CHECK(def.a == 4);
+        CHECK(def.b == 5);
 
         // a duplicate key: the last value, as parse()
         const json_document dup = json_document::parse(R"({"a":1,"a":2})");

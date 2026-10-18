@@ -13,7 +13,7 @@ The last element or member value. For a primitive value (number, string, boolean
 
 ## Exception safety
 
-Strong exception safety: if an exception is thrown, there are no changes to the view or the document it refers to.
+Strong guarantee: there are no changes to the view or the document it refers to.
 
 ## Exceptions
 
@@ -33,8 +33,7 @@ index.
 ## Notes
 
 Unlike [`BasicJsonType::back()`](../basic_json/back.md), which has undefined behavior for an empty array or object,
-`back()` throws `invalid_iterator.214` in that case -- the same way it already does for `#!json null` and for a
-discarded view, where `BasicJsonType::back()` also throws.
+`back()` throws `invalid_iterator.214` for an empty array, an empty object, a null value, or a discarded view.
 
 ## Examples
 

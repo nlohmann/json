@@ -93,7 +93,8 @@ Logarithmic in the size of the JSON object.
 
 - [count](count.md) returns the number of occurrences of a key
 - [contains](contains.md) checks whether a key exists
-- [basic_json_view::find](../basic_json_view/find.md) - the same lookup on a zero-copy view
+- [basic_json_view::find](../basic_json_view/find.md) - the same lookup on a zero-copy view (a duplicate key resolves
+  to the first member, whereas `parse()` keeps the last)
 
 ## Version history
 

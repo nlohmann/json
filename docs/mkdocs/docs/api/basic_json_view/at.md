@@ -41,7 +41,7 @@ basic_json_view at(const json_pointer& ptr) const;
 
 ## Exception safety
 
-Strong exception safety: if an exception is thrown, there are no changes to the view or the document it refers to.
+Strong guarantee: there are no changes to the view or the document it refers to.
 
 ## Exceptions
 
