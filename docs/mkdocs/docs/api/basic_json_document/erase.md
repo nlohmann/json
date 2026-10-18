@@ -69,10 +69,10 @@ has `erase`; calling it on a read-only `basic_json_document` fails to compile (`
    [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) (an empty token); otherwise (an
    object, or a primitive value the pointer's parent resolves to) throws what 1. throws.
 
-Every overload also throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) ("view
-does not belong to this document") if `object`/`array` is a [discarded](../basic_json_view/is_discarded.md) view or a
-view of a *different* document (overloads 1-2 only; overload 3 always starts from this document's own
-[`root()`](root.md)).
+Overloads 1. and 2. also throw [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202)
+("view does not belong to this document") if `object`/`array` is a [discarded](../basic_json_view/is_discarded.md)
+view or a view of a *different* document. Overload 3. takes no view: it always starts from this document's own
+[`root()`](root.md).
 
 ## Complexity
 
@@ -92,9 +92,10 @@ view of a *different* document (overloads 1-2 only; overload 3 always starts fro
 
 Like [`set`](set.md) and [`push_back`](push_back.md), `erase` never moves an element's *value*: a view still
 referring to a removed member or element keeps showing what it last held (see [Edits](index.md#edits)) -- it just no
-longer appears when `array`/`object` is read, dumped, or iterated. Removing an element of `array` (2.) does shift the
-*links* to the elements after it, the same way `insert`, `set`, or `push_back` on the same array would; any iterator
-already taken over `array`/`object` is invalidated by an erase, since it was walking the old layout.
+longer appears when `array`/`object` is read, dumped, or iterated. What does change is the container's sequence of
+*links* to its elements: removing an element of `array` (2.) shifts the links to the elements after it by one, as
+[`insert`](insert.md) does in the other direction. *Every* iterator already taken over `array`/`object` is invalidated
+by an erase, not only those at or after the removed element, since the container may now use a different sequence.
 
 ## Examples
 
