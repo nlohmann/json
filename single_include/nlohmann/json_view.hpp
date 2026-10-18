@@ -1932,6 +1932,11 @@ class json_side
     const BasicJsonType* m_json;
 };
 
+inline bool is_number(value_t t) noexcept
+{
+    return t == value_t::number_integer || t == value_t::number_unsigned || t == value_t::number_float;
+}
+
 /// whether two sides are equal; iterative, so that the nesting depth is
 /// limited by memory only
 template<typename BasicJsonType, typename A, typename B>
@@ -1956,8 +1961,6 @@ bool equal(const A& a0, const B& b0)
     {
         const value_t ta = a.type();
         const value_t tb = b.type();
-        const bool numbers = (ta == value_t::number_integer || ta == value_t::number_unsigned || ta == value_t::number_float)
-                             && (tb == value_t::number_integer || tb == value_t::number_unsigned || tb == value_t::number_float);
         if (ta == value_t::discarded || tb == value_t::discarded)
         {
             // basic_json decides (JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON)
@@ -1968,13 +1971,13 @@ bool equal(const A& a0, const B& b0)
         }
         else
         {
-            if (!numbers && ta != tb)
+            if (ta != tb && !(is_number(ta) && is_number(tb))) // numbers of different types can be equal
             {
                 return false;
             }
             if (ta == value_t::string)
             {
-                if (!(a.string() == b.string()))
+                if (a.string() != b.string())
                 {
                     return false;
                 }
@@ -2003,7 +2006,7 @@ bool equal(const A& a0, const B& b0)
                 }
                 stack.push_back(std::move(f));
             }
-            else if (!(a.scalar() == b.scalar())) // numbers (also of different types), null, boolean
+            else if (a.scalar() != b.scalar()) // numbers (also of different types), null, boolean
             {
                 return false;
             }
@@ -2020,7 +2023,7 @@ bool equal(const A& a0, const B& b0)
             const std::size_t count = f.object ? f.members_a.size() : f.elements_a.size();
             if (f.next == count)
             {
-                stack.pop_back();
+                stack.pop_back(); // (f dangles now, and is bound again after continue)
                 continue;
             }
             if (f.object)
@@ -3410,6 +3413,13 @@ class output_buffer
         m_pos += n;
     }
 
+    /// a string literal, without its terminating NUL
+    template<std::size_t N>
+    NLOHMANN_VIEW_ALWAYS_INLINE void put(const char (&s)[N])
+    {
+        put(s, N - 1);
+    }
+
     void put_repeated(char c, std::size_t n)
     {
         reserve(n);
@@ -3511,7 +3521,7 @@ class view_serializer
                 frame& f = stack.back();
                 if (f.pos == f.end)
                 {
-                    const bool object = f.object;
+                    const bool object = f.object; // (f dangles after pop_back)
                     stack.pop_back();
                     newline(stack.size());
                     m_out.put(object ? '}' : ']');
@@ -3528,7 +3538,7 @@ class view_serializer
                     write_string(*f.pos);
                     if (m_style.pretty)
                     {
-                        m_out.put(": ", 2);
+                        m_out.put(": ");
                     }
                     else
                     {
@@ -3561,16 +3571,16 @@ class view_serializer
         switch (static_cast<value_t>(n.kind))
         {
             case value_t::null:
-                m_out.put("null", 4);
+                m_out.put("null");
                 break;
             case value_t::boolean:
                 if ((n.flags & node_flags::is_true) != 0)
                 {
-                    m_out.put("true", 4);
+                    m_out.put("true");
                 }
                 else
                 {
-                    m_out.put("false", 5);
+                    m_out.put("false");
                 }
                 break;
             case value_t::string:
@@ -3615,12 +3625,14 @@ class view_serializer
     {
         if (!std::isfinite(x))
         {
-            m_out.put("null", 4);
+            m_out.put("null");
             return;
         }
-        write_float(x, std::integral_constant < bool,
-                    (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128)
-                    || (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024) > {});
+        static constexpr bool is_ieee_single_or_double
+            = std::numeric_limits<number_float_t>::is_iec559
+              && ((std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128)
+                  || (std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024));
+        write_float(x, std::integral_constant<bool, is_ieee_single_or_double>());
     }
 
     void write_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
@@ -3705,25 +3717,25 @@ class view_serializer
         switch (codepoint)
         {
             case 0x08:
-                m_out.put("\\b", 2);
+                m_out.put("\\b");
                 return;
             case 0x09:
-                m_out.put("\\t", 2);
+                m_out.put("\\t");
                 return;
             case 0x0A:
-                m_out.put("\\n", 2);
+                m_out.put("\\n");
                 return;
             case 0x0C:
-                m_out.put("\\f", 2);
+                m_out.put("\\f");
                 return;
             case 0x0D:
-                m_out.put("\\r", 2);
+                m_out.put("\\r");
                 return;
             case 0x22:
-                m_out.put("\\\"", 2);
+                m_out.put("\\\"");
                 return;
             case 0x5C:
-                m_out.put("\\\\", 2);
+                m_out.put("\\\\");
                 return;
             default:
                 break;
