@@ -60,6 +60,14 @@ TEST_CASE("default namespace")
         expected += "_dufio";
 #endif
 
+#ifdef JSON_VIEW_NO_SIMD
+        expected += "_vns";
+#endif
+
+#ifdef JSON_VIEW_USE_SSSE3
+        expected += "_vssse3";
+#endif
+
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_MINOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_PATCH) "::basic_json";

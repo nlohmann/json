@@ -17,12 +17,12 @@ Define the macro only together with a compiler option that enables SSSE3 (e.g. `
 has it), and only for programs that run on such CPUs. It saves the check of the CPU, which costs little. The same
 input is accepted or rejected either way; only the speed of non-ASCII text differs.
 
-!!! warning "Define consistently"
+!!! note "ABI compatibility"
 
-    The macro selects between two definitions of the same inline functions. It must therefore be defined identically,
-    with the same compiler options, for **every** translation unit that includes `<nlohmann/json_view.hpp>`; mixing
-    translation units that define it with ones that do not is an ODR violation. Prefer a compile definition on the
-    target.
+    The macro selects between two definitions of the same inline functions. Whether it is defined is encoded in the
+    [namespace](../../features/namespace.md) (tag `_vssse3`, on every architecture), resulting in distinct symbol
+    names. Translation units compiled with and without it can therefore be linked into the same program without One
+    Definition Rule (ODR) violations, but they cannot exchange instances of library types.
 
 ## Default definition
 

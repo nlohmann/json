@@ -14,10 +14,12 @@ The same input is accepted or rejected either way, with the same values, and err
 the speed differs. The macro exists for platforms whose compilers lack the intrinsics headers, and to test the portable
 code.
 
-!!! warning "Define consistently"
+!!! note "ABI compatibility"
 
-    The macro selects between two definitions of the same inline functions. It must therefore be defined identically for
-    **every** translation unit that includes `<nlohmann/json_view.hpp>`; prefer a compile definition on the target.
+    The macro selects between two definitions of the same inline functions. Whether it is defined is encoded in the
+    [namespace](../../features/namespace.md) (tag `_vns`), resulting in distinct symbol names. Translation units
+    compiled with and without it can therefore be linked into the same program without One Definition Rule (ODR)
+    violations, but they cannot exchange instances of library types.
 
 ## Default definition
 
