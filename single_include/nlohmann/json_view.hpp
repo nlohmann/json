@@ -3415,7 +3415,7 @@ class output_buffer
 
     /// a string literal, without its terminating NUL
     template<std::size_t N>
-    NLOHMANN_VIEW_ALWAYS_INLINE void put(const char (&s)[N])
+    NLOHMANN_VIEW_ALWAYS_INLINE void put(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         put(s, N - 1);
     }
