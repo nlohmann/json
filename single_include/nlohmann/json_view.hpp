@@ -28,12 +28,12 @@
 #include <array> // array
 #include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstring> // memcpy, strlen
-#include <istream> // istream
+#include <istream> // istream // IWYU pragma: keep
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <map> // map
 #include <memory> // unique_ptr
 #ifndef JSON_NO_IO
-    #include <ostream> // ostream
+    #include <ostream> // ostream // IWYU pragma: keep
 #endif
 #include <string> // string
 #include <tuple> // tuple_element, tuple_size // IWYU pragma: keep
