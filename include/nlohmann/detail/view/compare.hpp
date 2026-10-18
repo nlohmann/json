@@ -201,6 +201,11 @@ class json_side
     const BasicJsonType* m_json;
 };
 
+inline bool is_number(value_t t) noexcept
+{
+    return t == value_t::number_integer || t == value_t::number_unsigned || t == value_t::number_float;
+}
+
 /// whether two sides are equal; iterative, so that the nesting depth is
 /// limited by memory only
 template<typename BasicJsonType, typename A, typename B>
@@ -225,8 +230,6 @@ bool equal(const A& a0, const B& b0)
     {
         const value_t ta = a.type();
         const value_t tb = b.type();
-        const bool numbers = (ta == value_t::number_integer || ta == value_t::number_unsigned || ta == value_t::number_float)
-                             && (tb == value_t::number_integer || tb == value_t::number_unsigned || tb == value_t::number_float);
         if (ta == value_t::discarded || tb == value_t::discarded)
         {
             // basic_json decides (JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON)
@@ -237,13 +240,13 @@ bool equal(const A& a0, const B& b0)
         }
         else
         {
-            if (!numbers && ta != tb)
+            if (ta != tb && !(is_number(ta) && is_number(tb))) // numbers of different types can be equal
             {
                 return false;
             }
             if (ta == value_t::string)
             {
-                if (!(a.string() == b.string()))
+                if (a.string() != b.string())
                 {
                     return false;
                 }
@@ -272,7 +275,7 @@ bool equal(const A& a0, const B& b0)
                 }
                 stack.push_back(std::move(f));
             }
-            else if (!(a.scalar() == b.scalar())) // numbers (also of different types), null, boolean
+            else if (a.scalar() != b.scalar()) // numbers (also of different types), null, boolean
             {
                 return false;
             }
@@ -289,7 +292,7 @@ bool equal(const A& a0, const B& b0)
             const std::size_t count = f.object ? f.members_a.size() : f.elements_a.size();
             if (f.next == count)
             {
-                stack.pop_back();
+                stack.pop_back(); // (f dangles now, and is bound again after continue)
                 continue;
             }
             if (f.object)

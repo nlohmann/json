@@ -69,6 +69,13 @@ class output_buffer
         m_pos += n;
     }
 
+    /// a string literal, without its terminating NUL
+    template<std::size_t N>
+    NLOHMANN_VIEW_ALWAYS_INLINE void put(const char (&s)[N])
+    {
+        put(s, N - 1);
+    }
+
     void put_repeated(char c, std::size_t n)
     {
         reserve(n);
@@ -170,7 +177,7 @@ class view_serializer
                 frame& f = stack.back();
                 if (f.pos == f.end)
                 {
-                    const bool object = f.object;
+                    const bool object = f.object; // (f dangles after pop_back)
                     stack.pop_back();
                     newline(stack.size());
                     m_out.put(object ? '}' : ']');
@@ -187,7 +194,7 @@ class view_serializer
                     write_string(*f.pos);
                     if (m_style.pretty)
                     {
-                        m_out.put(": ", 2);
+                        m_out.put(": ");
                     }
                     else
                     {
@@ -220,16 +227,16 @@ class view_serializer
         switch (static_cast<value_t>(n.kind))
         {
             case value_t::null:
-                m_out.put("null", 4);
+                m_out.put("null");
                 break;
             case value_t::boolean:
                 if ((n.flags & node_flags::is_true) != 0)
                 {
-                    m_out.put("true", 4);
+                    m_out.put("true");
                 }
                 else
                 {
-                    m_out.put("false", 5);
+                    m_out.put("false");
                 }
                 break;
             case value_t::string:
@@ -274,12 +281,14 @@ class view_serializer
     {
         if (!std::isfinite(x))
         {
-            m_out.put("null", 4);
+            m_out.put("null");
             return;
         }
-        write_float(x, std::integral_constant < bool,
-                    (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128)
-                    || (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024) > {});
+        static constexpr bool is_ieee_single_or_double
+            = std::numeric_limits<number_float_t>::is_iec559
+              && ((std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128)
+                  || (std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024));
+        write_float(x, std::integral_constant<bool, is_ieee_single_or_double>());
     }
 
     void write_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
@@ -364,25 +373,25 @@ class view_serializer
         switch (codepoint)
         {
             case 0x08:
-                m_out.put("\\b", 2);
+                m_out.put("\\b");
                 return;
             case 0x09:
-                m_out.put("\\t", 2);
+                m_out.put("\\t");
                 return;
             case 0x0A:
-                m_out.put("\\n", 2);
+                m_out.put("\\n");
                 return;
             case 0x0C:
-                m_out.put("\\f", 2);
+                m_out.put("\\f");
                 return;
             case 0x0D:
-                m_out.put("\\r", 2);
+                m_out.put("\\r");
                 return;
             case 0x22:
-                m_out.put("\\\"", 2);
+                m_out.put("\\\"");
                 return;
             case 0x5C:
-                m_out.put("\\\\", 2);
+                m_out.put("\\\\");
                 return;
             default:
                 break;

@@ -60,11 +60,13 @@ Linear in the size of the output text.
 The walk over the subtree is iterative, so the nesting depth it can write is limited by available memory only, not by
 the call stack -- as for [`materialize()`](materialize.md).
 
-Strings are escaped by the same rules as [`BasicJsonType::dump`](../basic_json/dump.md). With
-`#!cpp numbers == number_format::shortest`, floats are written with the library's shortest round-trip conversion,
+Strings are escaped by the same rules as [`BasicJsonType::dump`](../basic_json/dump.md).
+
+With `#!cpp numbers == number_format::shortest`, floats are written with the library's shortest round-trip conversion,
 exactly as [`BasicJsonType::dump`](../basic_json/dump.md) would (e.g. `#!cpp 1.5`, `#!cpp 100.0`, `#!cpp 1e+100`), and
 integers are copied from the source text -- already canonical in JSON, so this matches their shortest form too --
 except that `#!cpp -0` is written as `#!cpp 0`, the way [`BasicJsonType::parse()`](../basic_json/parse.md) reads it.
+
 `#!cpp number_format::source` copies every number exactly as written in the source text instead, with no exception
 for `#!cpp -0` -- `#!cpp 1.50`, `#!cpp 1E2`, `#!cpp -0.0`, `#!cpp -0`, or all digits of an integer literal with more
 digits than any number type holds (such a literal is itself classified as a float, see
