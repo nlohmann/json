@@ -223,6 +223,17 @@ std::string text_with_duplicates(const ordered_json& j)
     return j.dump();
 }
 
+// the number of members of an object view with this key, by iteration
+std::size_t occurrences(const ordered_json_editable_view& v, const std::string& key)
+{
+    std::size_t result = 0;
+    for (const auto& item : v.items())
+    {
+        result += std::string(item.key().data(), item.key().size()) == key ? 1 : 0;
+    }
+    return result;
+}
+
 // every lookup of the edited view finds the first member of its key, which
 // the iteration of the view shows
 void check_lookups(const ordered_json_editable_view& v)
@@ -248,7 +259,7 @@ void check_lookups(const ordered_json_editable_view& v)
             CHECK(v.at(ptr).materialize() == expected);
             CHECK(v.contains(key));
             CHECK(v.contains(ptr));
-            CHECK(v.count(key) == 1);
+            CHECK(v.count(key) == occurrences(v, key));
             const auto it = v.find(key);
             REQUIRE(it != v.end());
             CHECK((*it).materialize() == expected);
@@ -286,7 +297,7 @@ void check_first_members(const ordered_json_editable_view& v, const ordered_json
             CAPTURE(key)
             REQUIRE(v.contains(key));
             CHECK(v.contains(ptr));
-            CHECK(v.count(key) == 1);
+            CHECK(v.count(key) == occurrences(v, key));
             CHECK(v.find(key) != v.end());
             CHECK(v.at(ptr).type() == kv.value().type());
             check_first_members(v[key], kv.value());
@@ -963,7 +974,12 @@ void check_first_wins(const View& o, int expected)
     CHECK(o.value(json::json_pointer("/a"), -1) == expected);
     CHECK(o.contains("a"));
     CHECK(o.contains(json::json_pointer("/a")));
-    CHECK(o.count("a") == 1);
+    std::size_t members_a = 0;
+    for (const auto& item : o.items())
+    {
+        members_a += std::string(item.key().data(), item.key().size()) == "a" ? 1 : 0;
+    }
+    CHECK(o.count("a") == members_a); // every member, unlike the lookups
 }
 } // namespace
 
