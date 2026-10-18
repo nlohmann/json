@@ -13,11 +13,12 @@
 #include <cstring> // memcmp
 
 #include <nlohmann/json.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/node.hpp>
 
-// Hash indexes of large objects, so that a lookup does not compare thousands
+// Hash indexes of the keys of large objects, so that a lookup does not compare thousands
 // of keys (as Boost.JSON switches from a linear search to a hash table for
 // large objects). An object with document_data::index_min_members members or
 // more gets an open-addressing table after parsing; its node stores the
@@ -41,6 +42,12 @@ namespace view
 /// its slots in use gives random keys a distance of about 50 for millions of
 /// members; and every member costs at most this many steps while building)
 constexpr std::size_t index_max_displacement = 64;
+
+// a table has at least 2 * len slots (len >= index_min_members), so the probe
+// window of index_max_displacement + 1 slots stays far smaller than the table
+// and a probe never wraps around onto its own start
+static_assert(document_data::index_min_members >= 2 * index_max_displacement,
+              "a table must be much larger than the probe window of a lookup");
 
 /// hash of a key: its bytes, eight at a time, in a fixed byte order
 inline std::uint64_t key_hash(const char* s, std::size_t n) noexcept
@@ -79,42 +86,33 @@ inline void build_object_index(document_data& d, node* obj)
     d.index_slots.resize(start + cap, 0);
     std::uint32_t* const table = d.index_slots.data() + start;
     const std::size_t mask = cap - 1;
-    bool degenerate = false;
     for (const node* k = document_data::first_child(obj), *end = document_data::child_end(obj); k != end; k = document_data::after(k + 1))
     {
         const char* const key = d.str(*k);
-        const std::uint64_t hash = key_hash(key, k->len); // (a cast of the call would be useless where std::uint64_t is std::size_t)
-        std::size_t i = static_cast<std::size_t>(hash) & mask;
+        std::size_t slot = conditional_static_cast<std::size_t>(key_hash(key, k->len)) & mask;
         bool duplicate = false;
         std::size_t distance = 0;
-        while (table[i] != 0)
+        while (table[slot] != 0)
         {
-            const node* const other = obj + table[i];
+            const node* const other = obj + table[slot];
             if (other->len == k->len && (k->len == 0 || std::memcmp(d.str(*other), key, k->len) == 0))
             {
                 duplicate = true; // keep the first
                 break;
             }
-            if (++distance > index_max_displacement)
+            if (distance == index_max_displacement)
             {
-                degenerate = true; // too many keys share a home region
-                break;
+                // too many keys share a home region
+                d.index_slots.resize(start); // no table: the object is searched linearly
+                return;
             }
-            i = (i + 1) & mask;
-        }
-        if (degenerate)
-        {
-            break;
+            ++distance;
+            slot = (slot + 1) & mask;
         }
         if (!duplicate)
         {
-            table[i] = static_cast<std::uint32_t>(k - obj);
+            table[slot] = static_cast<std::uint32_t>(k - obj);
         }
-    }
-    if (degenerate)
-    {
-        d.index_slots.resize(start); // no table: the object is searched linearly
-        return;
     }
     d.indexes.push_back(document_data::object_index{start, static_cast<std::uint32_t>(mask)});
     obj->extra = static_cast<std::uint16_t>(d.indexes.size());
@@ -135,11 +133,10 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
 {
     const document_data::object_index& ix = d.indexes[obj->extra - 1u];
     const std::uint32_t* const table = d.index_slots.data() + ix.start;
-    const std::uint64_t hash = key_hash(key, n); // (a cast of the call would be useless where std::uint64_t is std::size_t)
-    std::size_t i = static_cast<std::size_t>(hash) & ix.mask;
+    std::size_t slot = conditional_static_cast<std::size_t>(key_hash(key, n)) & ix.mask;
     for (std::size_t distance = 0; distance <= index_max_displacement; ++distance)
     {
-        const std::uint32_t s = table[i];
+        const std::uint32_t s = table[slot];
         if (s == 0)
         {
             return nullptr;
@@ -149,7 +146,7 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
         {
             return k;
         }
-        i = (i + 1) & ix.mask;
+        slot = (slot + 1) & ix.mask;
     }
     return nullptr; // (no key sits further from its home slot)
 }

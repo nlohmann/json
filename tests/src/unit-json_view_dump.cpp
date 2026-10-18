@@ -366,11 +366,13 @@ TEST_CASE("json_view large objects")
             std::string text = "{";
             std::map<std::string, std::size_t> first;
             std::map<std::string, std::size_t> last;
+            std::map<std::string, std::size_t> occurrences;
             for (const member& m : members)
             {
                 text += (text.size() > 1 ? ",\"" : "\"") + m.key + "\":" + std::to_string(m.position);
                 first.insert({m.key, m.position});
                 last[m.key] = m.position;
+                ++occurrences[m.key];
             }
             text += '}';
             REQUIRE(first.size() < members.size());
@@ -389,7 +391,7 @@ TEST_CASE("json_view large objects")
                 CHECK(v.find(entry.first).value().get<std::size_t>() == expected);
                 CHECK(v.value(entry.first, std::size_t{0}) == expected);
                 CHECK(v.contains(entry.first));
-                CHECK(v.count(entry.first) == 1);
+                CHECK(v.count(entry.first) == occurrences[entry.first]);
                 const std::string pointer = "/" + entry.first;
                 CHECK(v[json::json_pointer(pointer)].get<std::size_t>() == expected);
                 CHECK(v.at(json::json_pointer(pointer)).get<std::size_t>() == expected);

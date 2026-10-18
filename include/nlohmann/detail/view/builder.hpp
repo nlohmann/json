@@ -684,7 +684,7 @@ obj_next:
             return fail(error_code::expected_object_end);
 
 close_object:
-            // a large object gets a hash index (objects only, so that closing
+            // a large object gets a hash index for its keys (objects only, so that closing
             // an array pays nothing for this)
             if (NLOHMANN_VIEW_UNLIKELY(cur_count >= document_data::index_min_members))
             {

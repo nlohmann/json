@@ -42,7 +42,7 @@ struct document_data
     std::vector<char> arena; ///< decoded strings that contained escapes (no terminator: they are handed out with their length)
     std::string owned; ///< owned copy of the input, if any (a std::string, so that its NUL serves as the parser's sentinel)
 
-    // hash indexes of large objects (see object_index.hpp)
+    // hash indexes of the keys of large objects (see object_index.hpp)
     static constexpr std::uint32_t index_min_members = 128;
     struct object_index
     {
