@@ -2627,7 +2627,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cmath> // isinf, isnan
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint8_t, uint32_t, uint64_t
-#include <cstring> // memcmp, memmove
+#include <cstring> // memmove
 #include <limits> // numeric_limits
 #include <string> // string, to_string
 #include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_convertible, is_floating_point, is_same, is_signed
@@ -3738,7 +3738,7 @@ class editor
 
     bool key_equals(const node& k, string_view_t key) const noexcept
     {
-        return k.len == key.size() && (key.size() == 0 || std::memcmp(m_doc.str(k), key.data(), key.size()) == 0);
+        return m_doc.key_equals(k, key.data(), key.size());
     }
 
     /// remove the members with this key (all, or all but the first) from an object
