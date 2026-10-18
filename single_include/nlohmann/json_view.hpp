@@ -2446,6 +2446,21 @@ inline const node* find_member(const document_data& d, const node* object, const
     return nullptr;
 }
 
+/// the number of members of an object with this key (duplicates included)
+inline std::size_t count_members(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
+{
+    std::size_t result = 0;
+    const node* const end = document_data::child_end(object);
+    for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+    {
+        if (m->len == n && (n == 0 || std::memcmp(d.str(*m), key, n) == 0))
+        {
+            ++result;
+        }
+    }
+    return result;
+}
+
 /// whether an integer type is accepted as an array index by the view's
 /// operator[] and at(): every integer type but bool and size_t, which has its
 /// own overload
@@ -2768,24 +2783,24 @@ enum class index_status
 template<typename StringType>
 index_status array_index(const StringType& s, std::size_t& idx) noexcept
 {
+    // as basic_json: the empty token and "-" (past the last element) are
+    // unresolved rather than not a number
+    if (s.empty() || (s.size() == 1 && s[0] == '-'))
+    {
+        return index_status::unresolved;
+    }
+    if (s[0] < '0' || s[0] > '9')
+    {
+        return index_status::not_number;
+    }
     if (s.size() > 1 && s[0] == '0')
     {
         return index_status::leading_zero;
     }
-    // as basic_json: also a single character, but "-" and the empty token are
-    // left to the conversion below and reported as unresolved
-    if (!s.empty() && !(s.size() == 1 && s[0] == '-') && !(s[0] >= '0' && s[0] <= '9'))
-    {
-        return index_status::not_number;
-    }
-    if (s.empty())
-    {
-        return index_status::unresolved;
-    }
     std::uint64_t v = 0;
-    for (std::size_t i = 0; i < s.size(); ++i)
+    for (const auto c : s)
     {
-        const auto d = static_cast<unsigned>(static_cast<unsigned char>(s[i])) - '0';
+        const auto d = static_cast<unsigned>(static_cast<unsigned char>(c)) - '0';
         if (d > 9 || v > ((std::numeric_limits<std::uint64_t>::max)() - d) / 10)
         {
             return index_status::unresolved; // not a number, or beyond unsigned long long
@@ -3020,6 +3035,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <cstddef> // nullptr_t, size_t
 #include <cstdint> // int64_t
 #include <map> // map
 #include <string> // basic_string
@@ -3119,6 +3135,27 @@ Map map_value(const View& v)
 /// characters and a length); other maps go through basic_json
 template<typename Key>
 struct is_string_key : std::is_constructible<Key, const char*, std::size_t> {};
+
+/// whether View::get<T>() converts to T without materialize(); get_to()
+/// assigns these, and passes the others to from_json
+template<typename T, typename BasicJsonType, typename View>
+struct is_direct_value : std::integral_constant < bool,
+    std::is_arithmetic<T>::value || std::is_same<T, std::nullptr_t>::value
+    || std::is_same<T, typename View::string_view_t>::value
+    || std::is_same<T, BasicJsonType>::value || std::is_same<T, View>::value >
+{};
+
+template<typename Traits, typename Alloc, typename BasicJsonType, typename View>
+struct is_direct_value<std::basic_string<char, Traits, Alloc>, BasicJsonType, View> : std::true_type {};
+
+template<typename U, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : std::true_type {};
+
+template<typename K, typename V, typename C, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::map<K, V, C, A>, BasicJsonType, View> : is_string_key<K> {};
+
+template<typename K, typename V, typename H, typename E, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::unordered_map<K, V, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
 
 }  // namespace view
 }  // namespace detail
@@ -3304,7 +3341,7 @@ class basic_json_view
         {
             if (is_discarded())
             {
-                return basic_json_view();
+                return {};
             }
             detail::view::throw_type_error(305, "cannot use operator[] with a string argument with ", type_name());
         }
@@ -3330,7 +3367,7 @@ class basic_json_view
         {
             if (is_discarded())
             {
-                return basic_json_view();
+                return {};
             }
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
@@ -3353,7 +3390,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(is_discarded()))
         {
-            return basic_json_view();
+            return {};
         }
         return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
     }
@@ -3526,11 +3563,11 @@ class basic_json_view
         return !detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains).is_discarded();
     }
 
-    /// 1 if this is an object with a member with this key, else 0 (duplicate
-    /// keys count once)
+    /// the number of members with this key (more than 1 if the key occurs
+    /// more than once); 0 if this is not an object
     size_type count(string_view_t key) const
     {
-        return contains(key) ? 1 : 0;
+        return is_object() ? detail::view::count_members(*m_doc, m_node, key.data(), key.size()) : 0;
     }
 
     size_type count(const char* key) const
@@ -3597,10 +3634,12 @@ class basic_json_view
         return get_impl(detail::view::value_tag<T> {}, detail::priority_tag<2> {});
     }
 
+    /// as BasicJsonType::get_to(): the types get<T>() converts directly are
+    /// assigned, all others are passed to from_json with v as it is
     template<typename T>
     T& get_to(T& v) const
     {
-        v = get<T>();
+        get_to_impl(v, detail::view::is_direct_value<T, BasicJsonType, basic_json_view> {});
         return v;
     }
 
@@ -3742,6 +3781,21 @@ class basic_json_view
     T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<0> /*unused*/) const
     {
         return materialize().template get<T>();
+    }
+
+    // --- get_to() dispatch ---
+
+    template<typename T>
+    void get_to_impl(T& v, std::true_type /*direct*/) const
+    {
+        v = get<T>();
+    }
+
+    /// from_json may keep parts of v (members a JSON object lacks, say)
+    template<typename T>
+    void get_to_impl(T& v, std::false_type /*direct*/) const
+    {
+        materialize().get_to(v);
     }
 
     const document_data* m_doc = nullptr;
