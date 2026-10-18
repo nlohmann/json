@@ -738,7 +738,7 @@ void check_access(const ordered_json_view& v, const ordered_json& j)
             std::size_t occurrences = 0;
             for (auto other = v.begin(); other != v.end(); ++other)
             {
-                occurrences += other.key() == it.key() ? 1 : 0;
+                occurrences += other.key() == it.key() ? 1u : 0u;
             }
             CHECK(v.count(key) == occurrences);
             // lookups find the first member with the key, which is this one if
