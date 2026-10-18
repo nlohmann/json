@@ -105,7 +105,7 @@ inline const node* find_member(const document_data& d, const node* object, const
     }
     for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
     {
-        if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
+        if (d.key_equals(*m, key, n))
         {
             return m;
         }
@@ -120,7 +120,7 @@ inline std::size_t count_members(const document_data& d, const node* object, con
     const node* const end = document_data::child_end(object);
     for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
     {
-        if (m->len == n && (n == 0 || std::memcmp(d.str(*m), key, n) == 0))
+        if (d.key_equals(*m, key, n))
         {
             ++result;
         }

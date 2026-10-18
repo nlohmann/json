@@ -22,12 +22,12 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 
 `basic_json_view` provides the read-only part of the `BasicJsonType` interface:
 
-- the type-inspection functions,
-- element access,
-- lookup,
-- iteration, and
+- the type-inspection functions
+- element access
+- lookup
+- iteration
 - conversion: [`get<T>()`](get.md), [`get_string()`](get_string.md), [`number_token()`](number_token.md), and
-  [`materialize()`](materialize.md) to build the `BasicJsonType` value of a subtree on demand.
+  [`materialize()`](materialize.md) to build the `BasicJsonType` value of a subtree on demand
 
 [`operator[]`](operator%5B%5D.md), [`at`](at.md), [`contains`](contains.md), and [`value`](value.md) also accept a
 [`json_pointer`](../json_pointer/index.md). It does not (yet) provide `dump()` or comparison. Unlike `basic_json`,

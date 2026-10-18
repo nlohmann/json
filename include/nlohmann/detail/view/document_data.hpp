@@ -10,7 +10,7 @@
 
 #include <array> // array
 #include <cstddef> // size_t
-#include <cstring> // memcpy
+#include <cstring> // memcmp, memcpy
 #include <limits> // numeric_limits
 #include <new> // bad_alloc, operator new, placement new
 #include <string> // string
@@ -139,6 +139,12 @@ struct document_data
     const char* str(const node& n) const noexcept
     {
         return base[n.flags & node_flags::storage] + n.off;
+    }
+
+    /// whether the string of node k (a key) is the n bytes at key
+    bool key_equals(const node& k, const char* key, std::size_t n) const noexcept
+    {
+        return k.len == n && (n == 0 || std::memcmp(str(k), key, n) == 0);
     }
 
     /// the node after n's subtree (containers span `next` nodes, scalars one)

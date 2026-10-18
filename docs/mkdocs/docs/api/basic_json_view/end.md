@@ -5,9 +5,8 @@ iterator end() const noexcept;
 ```
 
 Returns an iterator to one past the last element of an array, one past the last member value of an object, in
-**document order** -- see [`begin()`](begin.md). A primitive value iterates as a range of one element (itself);
-`#!json null` and a [discarded](is_discarded.md) view iterate as an empty range, so `#!cpp begin() == end()` for
-them.
+**document order** -- see [`begin()`](begin.md). A primitive value iterates as a range of one element (itself), and a
+`#!json null` value or a [discarded](is_discarded.md) view iterates as an empty range (`#!cpp begin() == end()`).
 
 ## Return value
 

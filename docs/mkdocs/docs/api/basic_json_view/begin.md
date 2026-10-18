@@ -6,7 +6,7 @@ iterator begin() const noexcept;
 
 Returns an iterator to the first element of an array, or the first member value of an object, in **document order**
 -- the order the values appear in the source text, not sorted by key. A primitive value iterates as a range of one
-element (itself); `#!json null` and a [discarded](is_discarded.md) view iterate as an empty range.
+element (itself), and a `#!json null` value or a [discarded](is_discarded.md) view iterates as an empty range.
 
 ## Return value
 
