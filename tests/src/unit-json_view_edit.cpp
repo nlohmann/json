@@ -229,7 +229,7 @@ std::size_t occurrences(const ordered_json_editable_view& v, const std::string& 
     std::size_t result = 0;
     for (const auto& item : v.items())
     {
-        result += std::string(item.key().data(), item.key().size()) == key ? 1 : 0;
+        result += std::string(item.key().data(), item.key().size()) == key ? 1u : 0u;
     }
     return result;
 }
@@ -977,7 +977,7 @@ void check_first_wins(const View& o, int expected)
     std::size_t members_a = 0;
     for (const auto& item : o.items())
     {
-        members_a += std::string(item.key().data(), item.key().size()) == "a" ? 1 : 0;
+        members_a += std::string(item.key().data(), item.key().size()) == "a" ? 1u : 0u;
     }
     CHECK(o.count("a") == members_a); // every member, unlike the lookups
 }
