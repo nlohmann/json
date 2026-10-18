@@ -10,7 +10,6 @@
 
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t, uint64_t
-#include <cstring> // memcmp
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
@@ -94,7 +93,7 @@ inline void build_object_index(document_data& d, node* obj)
         while (table[slot] != 0)
         {
             const node* const other = obj + table[slot];
-            if (other->len == k->len && (k->len == 0 || std::memcmp(d.str(*other), key, k->len) == 0))
+            if (d.key_equals(*other, key, k->len))
             {
                 duplicate = true; // keep the first
                 break;
@@ -141,7 +140,7 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
             return nullptr;
         }
         const node* const k = obj + s;
-        if (k->len == n && (n == 0 || std::memcmp(d.str(*k), key, n) == 0))
+        if (d.key_equals(*k, key, n))
         {
             return k;
         }
