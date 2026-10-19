@@ -511,27 +511,31 @@ TEST_CASE("json_view")
     {
         using nlohmann::detail::is_detected;
 
-        // a length is not a flag: parse(ptr, len) would convert len to
-        // allow_exceptions and read ptr as a C string, which need not end
         static_assert(is_detected<parse_call_t, const char*, bool>::value, "parse(ptr, bool) is valid");
         static_assert(is_detected<parse_call_t, const char*, bool, bool, bool>::value, "parse(ptr, bool, bool, bool) is valid");
         static_assert(is_detected<parse_call_t, const char*, const char*>::value, "parse(first, last) is valid");
         static_assert(is_detected<parse_call_t, const char*, const char*, bool>::value, "parse(first, last, bool) is valid");
+        static_assert(is_detected<parse_copy_call_t, const char*, bool>::value, "parse_copy(ptr, bool) is valid");
+        static_assert(is_detected<accept_call_t, const char*, bool>::value, "accept(ptr, bool) is valid");
+        static_assert(is_detected<read_call_t, const char*, bool>::value, "read(ptr, bool) is valid");
+
+        // a length is not a flag: parse(ptr, len) would convert len to
+        // allow_exceptions and read ptr as a C string, which need not end
+        //
+        // MSVC 2015 does not treat selecting a deleted function in decltype as
+        // a substitution failure, so it detects the deleted overloads as
+        // callable; calling them still fails to compile
+#if !(defined(_MSC_VER) && _MSC_VER < 1910)
         static_assert(!is_detected<parse_call_t, const char*, std::size_t>::value, "parse(ptr, len) must not compile");
         static_assert(!is_detected<parse_call_t, const char*, int>::value, "parse(ptr, int) must not compile");
         static_assert(!is_detected<parse_call_t, const char*, char>::value, "parse(ptr, char) must not compile");
         static_assert(!is_detected<parse_call_t, const char*, std::size_t, bool>::value, "parse(ptr, len, bool) must not compile");
         static_assert(!is_detected<parse_call_t, const std::string&, std::size_t>::value, "parse(string, len) must not compile");
         static_assert(!is_detected<parse_call_t, const std::vector<char>&, std::size_t>::value, "parse(vector, len) must not compile");
-
-        static_assert(is_detected<parse_copy_call_t, const char*, bool>::value, "parse_copy(ptr, bool) is valid");
         static_assert(!is_detected<parse_copy_call_t, const char*, std::size_t>::value, "parse_copy(ptr, len) must not compile");
-
-        static_assert(is_detected<accept_call_t, const char*, bool>::value, "accept(ptr, bool) is valid");
         static_assert(!is_detected<accept_call_t, const char*, std::size_t>::value, "accept(ptr, len) must not compile");
-
-        static_assert(is_detected<read_call_t, const char*, bool>::value, "read(ptr, bool) is valid");
         static_assert(!is_detected<read_call_t, const char*, std::size_t>::value, "read(ptr, len) must not compile");
+#endif
 
         // json_view has no conversion to bool: unlike basic_json's, it would
         // mean "exists", not "is not null"; use is_discarded()
