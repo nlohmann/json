@@ -16,7 +16,7 @@ To store unsigned integer numbers in C++, a type is defined by the template para
 
 ## Template parameters
 
-`NumberUnsignedType` : the type to store unsigned integers. It must be an **unsigned integral** type (`std::is_integral`) with a `std::numeric_limits` specialization, and it must be able to represent the absolute value of every [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md) value. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#numberintegertype-and-numberunsignedtype).
+`NumberUnsignedType` : the type to store unsigned integers. It must be an **unsigned integral** type (`std::is_integral`) with a `std::numeric_limits` specialization, and it must be able to represent the absolute value of every [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md) value. Alternatively, it can be the same type as [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md); then every integer is stored as `number_integer_t`. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#numberintegertype-and-numberunsignedtype).
 
 ## Notes
 
@@ -81,3 +81,4 @@ true
 ## Version history
 
 - Added in version 2.0.0.
+- Can be the same type as `number_integer_t` since version 3.13.0 unreleased.

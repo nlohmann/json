@@ -6,6 +6,8 @@ constexpr bool is_number_unsigned() const noexcept;
 
 This function returns `true` if and only if the JSON value is an unsigned integer number. This excludes floating-point and signed integer values.
 
+If [`number_unsigned_t`](https://json.nlohmann.me/api/basic_json/number_unsigned_t/index.md) is the same type as [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md), every integer is stored as `number_integer_t`, and this function always returns `false`.
+
 ## Return value
 
 `true` if type is an unsigned integer number, `false` otherwise.

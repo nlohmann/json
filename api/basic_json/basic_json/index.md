@@ -59,6 +59,11 @@ basic_json(basic_json&& other) noexcept;
    - **arrays**: [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md) and all kinds of compatible containers such as `std::vector`, `std::deque`, `std::list`, `std::forward_list`, `std::array`, `std::valarray`, `std::set`, `std::unordered_set`, `std::multiset`, and `std::unordered_multiset` with a `value_type` from which a `basic_json` value can be constructed.
    - **objects**: [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md) and all kinds of compatible associative containers such as `std::map`, `std::unordered_map`, `std::multimap`, and `std::unordered_multimap` with a `key_type` compatible to `string_t` and a `value_type` from which a `basic_json` value can be constructed.
    - **strings**: `string_t`, string literals, and all compatible string containers can be used.
+
+   Rvalue containers are moved from
+
+   If `val` is an rvalue of a compatible array-like or object-like container other than `array_t`/`object_t` (e.g., `json j = std::move(vec);` or `json j(std::vector<std::string>{...});`), the elements are moved into the JSON value instead of copied. Afterwards, the elements of the source container are in a valid but unspecified state (**moved-from**). Keys of associative containers are `const` and therefore still copied. Lvalues and `const` rvalues are copied, and the source is left unchanged.
+
    - **numbers**: [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md), [`number_unsigned_t`](https://json.nlohmann.me/api/basic_json/number_unsigned_t/index.md), [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md), and all convertible number types such as `int`, `size_t`, `int64_t`, `float` or `double` can be used.
    - **boolean**: `boolean_t` / `bool` can be used.
    - **binary**: `binary_t` / `std::vector<uint8_t>` may be used; unfortunately because string literals cannot be distinguished from binary character arrays by the C++ type system, all types compatible with `const char*` will be directed to the string constructor instead. This is both for backwards compatibility and due to the fact that a binary type is not a standard JSON type.
@@ -182,7 +187,7 @@ this requirement is not met.
 
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 1. No-throw guarantee: this constructor never throws exceptions.
-1. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any JSON value.
+1. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any JSON value. **Exception:** when `val` is an rvalue array-like or object-like container, its elements are moved one by one; if an exception is thrown in the middle of the conversion (e.g., an allocation failure), the JSON value is unchanged, but the source container may be left partially moved-from.
 1. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any JSON value.
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.

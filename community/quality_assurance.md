@@ -534,6 +534,9 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
   headers are included.
 - [x] On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs (see
   [`unit-windows_h.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-windows_h.cpp)).
+- [x] The library is compiled with Qt's keyword macros (`slots`, `signals`, `emit`, `foreach`, `forever`) being defined
+  to make sure it does not use them as identifiers (see
+  [`unit-qt_keywords.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-qt_keywords.cpp)).
 - [x] The library is compiled with exceptions disabled to support alternative means of error handling.
 
 ## Stable public API

@@ -21,19 +21,19 @@ Three requirements are checked with a `static_assert`: the array iterator catego
 
 ## Overview
 
-| Template parameter                                                | Default                     | Notable substitutes                                                                            |
-| ----------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------- |
-| [`ObjectType`](#objecttype)                                       | `std::map`                  | [`nlohmann::ordered_map`](https://json.nlohmann.me/api/ordered_map/index.md), Abseil hash maps |
-| [`ArrayType`](#arraytype)                                         | `std::vector`               | `std::deque`                                                                                   |
-| [`StringType`](#stringtype)                                       | `std::string`               | `std::string`-like types over `char`                                                           |
-| [`BooleanType`](#booleantype)                                     | `bool`                      | none worth using                                                                               |
-| [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype)  | `std::int64_t`              | any signed integer type                                                                        |
-| [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) | `std::uint64_t`             | any unsigned integer type at least as wide as `NumberIntegerType`                              |
-| [`NumberFloatType`](#numberfloattype)                             | `double`                    | `float` (`long double`: no binary formats)                                                     |
-| [`AllocatorType`](#allocatortype)                                 | `std::allocator`            | stateless allocators                                                                           |
-| [`JSONSerializer`](#jsonserializer)                               | `adl_serializer`            | serializers with the same interface                                                            |
-| [`BinaryType`](#binarytype)                                       | `std::vector<std::uint8_t>` | `std::vector<char>`                                                                            |
-| [`CustomBaseClass`](#custombaseclass)                             | `void`                      | any default-constructible class                                                                |
+| Template parameter                                                | Default                     | Notable substitutes                                                                              |
+| ----------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------ |
+| [`ObjectType`](#objecttype)                                       | `std::map`                  | [`nlohmann::ordered_map`](https://json.nlohmann.me/api/ordered_map/index.md), Abseil hash maps   |
+| [`ArrayType`](#arraytype)                                         | `std::vector`               | `std::deque`                                                                                     |
+| [`StringType`](#stringtype)                                       | `std::string`               | `std::string`-like types over `char`                                                             |
+| [`BooleanType`](#booleantype)                                     | `bool`                      | none worth using                                                                                 |
+| [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype)  | `std::int64_t`              | any signed integer type                                                                          |
+| [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) | `std::uint64_t`             | any unsigned integer type at least as wide as `NumberIntegerType`, or `NumberIntegerType` itself |
+| [`NumberFloatType`](#numberfloattype)                             | `double`                    | `float` (`long double`: no binary formats)                                                       |
+| [`AllocatorType`](#allocatortype)                                 | `std::allocator`            | stateless allocators                                                                             |
+| [`JSONSerializer`](#jsonserializer)                               | `adl_serializer`            | serializers with the same interface                                                              |
+| [`BinaryType`](#binarytype)                                       | `std::vector<std::uint8_t>` | `std::vector<char>`                                                                              |
+| [`CustomBaseClass`](#custombaseclass)                             | `void`                      | any default-constructible class                                                                  |
 
 Third-party containers and incomplete types
 
@@ -885,10 +885,10 @@ Both types are stored **directly** inside `basic_json`'s union.
 
 ### Always required
 
-- `std::is_integral` must be satisfied: `NumberIntegerType` must be a **signed** integer type, `NumberUnsignedType` an **unsigned** integer type. Class types are not supported -- among others, the constructors taking integer values are constrained on `std::is_integral`.
+- `std::is_integral` must be satisfied: `NumberIntegerType` must be a **signed** integer type, `NumberUnsignedType` an **unsigned** integer type or the same type as `NumberIntegerType` (see [below](#same-type-for-both)). Class types are not supported -- among others, the constructors taking integer values are constrained on `std::is_integral`.
 - Trivially default-constructible, trivially copyable, and trivially destructible (union member).
 - `std::numeric_limits` must be specialized for both types.
-- `NumberUnsignedType` must be able to represent the absolute value of every `NumberIntegerType` value; serialization of negative numbers converts the value to `NumberUnsignedType`. A `static_assert` requires it to be at least as wide as `NumberIntegerType`, which is what that amounts to for the standard integer types.
+- An unsigned `NumberUnsignedType` must be able to represent the absolute value of every `NumberIntegerType` value; serialization of negative numbers converts the value to `NumberUnsignedType`. A `static_assert` requires it to be at least as wide as `NumberIntegerType`, which is what that amounts to for the standard integer types.
 - Both types must fit into the internal 64-character number buffer used by [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), which is the case for all standard integer types.
 - [`std::hash<basic_json>`](https://json.nlohmann.me/api/basic_json/std_hash/index.md) additionally requires `std::hash` specializations.
 
@@ -896,15 +896,25 @@ Both types are stored **directly** inside `basic_json`'s union.
 
 The number types influence what the parser accepts: an integer literal that does not round-trip through the chosen type is stored as [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md) instead. Choosing types narrower than 64 bits therefore silently changes parse results rather than raising an error. See [Number Handling](https://json.nlohmann.me/features/types/number_handling/index.md) for details.
 
+#### Same type for both
+
+`NumberUnsignedType` may be the same type as `NumberIntegerType`, e.g. `nlohmann::json::with_integers_t<std::int64_t, std::int64_t>` (see [`with_integers_t`](https://json.nlohmann.me/api/basic_json/with_t/index.md)), for code that only wants to handle one integer type. Such a `basic_json` stores every integer as [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md):
+
+- [`is_number_unsigned()`](https://json.nlohmann.me/api/basic_json/is_number_unsigned/index.md) is always `false`, and [`type()`](https://json.nlohmann.me/api/basic_json/type/index.md) never returns `value_t::number_unsigned`. Constructing a value from `value_t::number_unsigned` gives a `value_t::number_integer` value.
+- Values of unsigned C++ types (e.g., `5u`) are converted to `NumberIntegerType`, so values above its maximum wrap around, as values outside the range of a narrower `NumberIntegerType` already do.
+- The parsers store a non-negative integer above the maximum of `NumberIntegerType` (e.g., `18446744073709551615` for `std::int64_t`) as [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md), like any other integer that does not fit.
+- Converting from a `basic_json` with distinct types turns its unsigned values into `number_integer_t` values.
+
 ### Compatible types
 
-| Type pair                                                            | Support                                                                                                                                                                              |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `std::int64_t` / `std::uint64_t` (default)                           | full                                                                                                                                                                                 |
-| `std::int32_t` / `std::uint32_t`, `long long` / `unsigned long long` | full; narrower types change which literals the parser can represent                                                                                                                  |
-| any other pair of standard signed/unsigned integer types             | full                                                                                                                                                                                 |
-| class types, enumerations                                            | not usable; `std::is_integral` must hold                                                                                                                                             |
-| `bool`, or a type already used for another member of the union       | not usable; `std::is_integral<bool>` is in fact `true`, but the `get_impl_ptr` overloads for `boolean_t`, `number_integer_t`, `number_unsigned_t` and `number_float_t` would collide |
+| Type pair                                                                   | Support                                                                                                                                                                              |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `std::int64_t` / `std::uint64_t` (default)                                  | full                                                                                                                                                                                 |
+| `std::int32_t` / `std::uint32_t`, `long long` / `unsigned long long`        | full; narrower types change which literals the parser can represent                                                                                                                  |
+| any other pair of standard signed/unsigned integer types                    | full                                                                                                                                                                                 |
+| the same signed integer type for both, e.g. `std::int64_t` / `std::int64_t` | full; every integer is stored as `number_integer_t`, see [above](#same-type-for-both)                                                                                                |
+| class types, enumerations                                                   | not usable; `std::is_integral` must hold                                                                                                                                             |
+| `bool`, `number_float_t`, or the type of another member of the union        | not usable; `std::is_integral<bool>` is in fact `true`, but the `get_impl_ptr` overloads for `boolean_t`, `number_integer_t`, `number_unsigned_t` and `number_float_t` would collide |
 
 ## `NumberFloatType`
 

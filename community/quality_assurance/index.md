@@ -527,6 +527,7 @@ The library has no prerequisites other than the Standard Template Library (STL).
 - The library is compiled and tested with both [libc++](https://libcxx.llvm.org) and [libstdc++](https://gcc.gnu.org/onlinedocs/libstdc++/) to detect subtle differences or incompatibilities.
 - The code checked with [Include What You Use (IWYU)](https://include-what-you-use.org) that all required standard headers are included.
 - On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs (see [`unit-windows_h.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-windows_h.cpp)).
+- The library is compiled with Qt's keyword macros (`slots`, `signals`, `emit`, `foreach`, `forever`) being defined to make sure it does not use them as identifiers (see [`unit-qt_keywords.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-qt_keywords.cpp)).
 - The library is compiled with exceptions disabled to support alternative means of error handling.
 
 ## Stable public API
