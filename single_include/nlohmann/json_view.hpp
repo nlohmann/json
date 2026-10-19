@@ -3045,7 +3045,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstdint> // int64_t
 #include <map> // map
 #include <string> // basic_string
-#include <type_traits> // enable_if, is_constructible
+#include <type_traits> // decay, enable_if, is_arithmetic, is_constructible, is_integral, is_same
 #include <unordered_map> // unordered_map
 #include <vector> // vector
 
@@ -3146,6 +3146,11 @@ struct is_string_key : std::is_constructible<Key, const char*, std::size_t> {};
 /// conversion)
 template<typename T>
 struct is_non_bool_arithmetic : conjunction<std::is_arithmetic<T>, negation<std::is_same<T, bool>>> {};
+
+/// the default values of value() other than C strings, which have their own
+/// overload (returning string_t)
+template<typename T>
+struct is_non_c_string_default : negation<std::is_same<typename std::decay<T>::type, const char*>> {};
 
 /// whether View::get<T>() converts to T without materialize(); get_to()
 /// assigns these, and passes the others to from_json
@@ -3466,7 +3471,7 @@ class basic_json_view
     /// the member with this key converted to T, or the default value if there
     /// is no such member (the first one, should the key occur more than
     /// once). Throws type_error.306 if this is not an object.
-    template<typename T, typename std::enable_if<detail::negation<std::is_same<typename std::decay<T>::type, const char*>>::value, int>::type = 0>
+    template<typename T, typename std::enable_if<detail::view::is_non_c_string_default<T>::value, int>::type = 0>
     T value(string_view_t key, const T& default_value) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
@@ -3485,7 +3490,7 @@ class basic_json_view
     /// the value a JSON pointer refers to converted to T, or the default
     /// value if the pointer cannot be resolved. Throws type_error.306 if this
     /// is neither an object nor an array.
-    template<typename T, typename std::enable_if<detail::negation<std::is_same<typename std::decay<T>::type, const char*>>::value, int>::type = 0>
+    template<typename T, typename std::enable_if<detail::view::is_non_c_string_default<T>::value, int>::type = 0>
     T value(const json_pointer& ptr, const T& default_value) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
