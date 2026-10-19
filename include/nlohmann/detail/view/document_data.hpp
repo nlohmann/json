@@ -54,7 +54,7 @@ struct document_data
     std::vector<object_index> indexes;
     std::vector<std::uint32_t> index_slots;
     std::vector<std::uint32_t> large_objects; ///< positions of the objects to index (noted while parsing)
-    std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena, edit arena (indexed by flags & node_flags::storage)
+    std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena, edit arena, unused (indexed by flags & node_flags::storage)
     bool discarded = true;
 
     /// The storage of edits (editable documents only; see edit_storage.hpp).

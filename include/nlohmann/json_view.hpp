@@ -747,8 +747,10 @@ class basic_json_view
     {
         if (editable() && m_doc->edits != nullptr)
         {
-            // positions of moved and new values are not source offsets
-            return m_node == m_doc->nodes ? m_doc->size + m_doc->edits->text_used : 64;
+            // positions of moved and new values are not source offsets; the root
+            // (the first node) spans the source text and every edit
+            const bool is_root = m_node == m_doc->nodes;
+            return is_root ? m_doc->size + m_doc->edits->text_used : 64;
         }
         const node* const end = m_doc->nodes + m_doc->node_count;
         if ((m_node->flags & detail::view::node_flags::storage) != 0)
@@ -1129,7 +1131,7 @@ class basic_json_document
     }
 
     /// assign an existing array element; returns a view of it
-    template < typename I, typename V, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    template<typename I, typename V, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
     view_type set(view_type array, I idx, V && value)
     {
         return editor().set(array, index(idx), std::forward<V>(value));
@@ -1151,14 +1153,14 @@ class basic_json_document
         const auto& token = ptr.back();
         if (parent.is_null())
         {
-            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
-            {
-                return c >= '0' && c <= '9';
-            });
             if (token == "-")
             {
                 return push_back(parent, std::forward<V>(value));
             }
+            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            {
+                return c >= '0' && c <= '9';
+            });
             if (digits)
             {
                 // (an invalid index is an error before the parent changes)
@@ -1196,7 +1198,7 @@ class basic_json_document
 
     /// insert into an array before position idx (idx <= size()); returns a
     /// view of the new element
-    template < typename I, typename V, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    template<typename I, typename V, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
     view_type insert(view_type array, I idx, V && value)
     {
         return editor().insert(array, index(idx), std::forward<V>(value));
@@ -1209,7 +1211,7 @@ class basic_json_document
     }
 
     /// remove an array element
-    template < typename I, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    template<typename I, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
     void erase(view_type array, I idx)
     {
         editor().erase(array, index(idx));

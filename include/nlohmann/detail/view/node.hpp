@@ -34,7 +34,7 @@ struct node_flags
 {
     static constexpr std::uint8_t escaped = 1; ///< string payload lives in the decode arena, not the source
     static constexpr std::uint8_t edited = 2;  ///< string or number token lives in the edit arena (editable documents)
-    static constexpr std::uint8_t storage = 3; ///< mask: where a string or number token lives (index into document_data::base)
+    static constexpr std::uint8_t storage = escaped | edited; ///< mask: where a string or number token lives (index into document_data::base)
     static constexpr std::uint8_t is_true = 4; ///< boolean value
     static constexpr std::uint8_t moved = 8;   ///< array/object: the elements live in a separate sequence (editable documents)
     static constexpr std::uint8_t is_new = 16; ///< written by an edit: no source position
