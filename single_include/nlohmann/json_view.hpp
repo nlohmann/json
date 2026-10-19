@@ -3142,6 +3142,11 @@ Map map_value(const View& v)
 template<typename Key>
 struct is_string_key : std::is_constructible<Key, const char*, std::size_t> {};
 
+/// the arithmetic types arithmetic_value() converts to (bool has its own
+/// conversion)
+template<typename T>
+struct is_non_bool_arithmetic : conjunction<std::is_arithmetic<T>, negation<std::is_same<T, bool>>> {};
+
 /// whether View::get<T>() converts to T without materialize(); get_to()
 /// assigns these, and passes the others to from_json
 template<typename T, typename BasicJsonType, typename View>
@@ -3461,7 +3466,7 @@ class basic_json_view
     /// the member with this key converted to T, or the default value if there
     /// is no such member (the first one, should the key occur more than
     /// once). Throws type_error.306 if this is not an object.
-    template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
+    template<typename T, typename std::enable_if<detail::negation<std::is_same<typename std::decay<T>::type, const char*>>::value, int>::type = 0>
     T value(string_view_t key, const T& default_value) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
@@ -3480,7 +3485,7 @@ class basic_json_view
     /// the value a JSON pointer refers to converted to T, or the default
     /// value if the pointer cannot be resolved. Throws type_error.306 if this
     /// is neither an object nor an array.
-    template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
+    template<typename T, typename std::enable_if<detail::negation<std::is_same<typename std::decay<T>::type, const char*>>::value, int>::type = 0>
     T value(const json_pointer& ptr, const T& default_value) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
@@ -3723,7 +3728,7 @@ class basic_json_view
         return (m_node->flags & detail::view::node_flags::is_true) != 0;
     }
 
-    template < typename T, typename std::enable_if < std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, int >::type = 0 >
+    template<typename T, typename std::enable_if<detail::view::is_non_bool_arithmetic<T>::value, int>::type = 0>
     NLOHMANN_VIEW_ALWAYS_INLINE T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_node == nullptr))
