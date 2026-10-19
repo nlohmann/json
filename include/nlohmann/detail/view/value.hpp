@@ -104,6 +104,11 @@ Map map_value(const View& v)
 template<typename Key>
 struct is_string_key : std::is_constructible<Key, const char*, std::size_t> {};
 
+/// the arithmetic types arithmetic_value() converts to (bool has its own
+/// conversion)
+template<typename T>
+struct is_non_bool_arithmetic : conjunction<std::is_arithmetic<T>, negation<std::is_same<T, bool>>> {};
+
 /// whether View::get<T>() converts to T without materialize(); get_to()
 /// assigns these, and passes the others to from_json
 template<typename T, typename BasicJsonType, typename View>
