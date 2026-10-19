@@ -71,6 +71,14 @@
     #define JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS 0
 #endif
 
+#ifndef JSON_DISABLE_STREAM_BULK_SCAN
+    #define JSON_DISABLE_STREAM_BULK_SCAN 0
+#endif
+
+#ifndef JSON_DISABLE_UNLOCKED_FILE_IO
+    #define JSON_DISABLE_UNLOCKED_FILE_IO 0
+#endif
+
 #if JSON_DIAGNOSTICS
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
@@ -119,14 +127,26 @@
     #define NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS
 #endif
 
+#if JSON_DISABLE_STREAM_BULK_SCAN
+    #define NLOHMANN_JSON_ABI_TAG_DISABLE_STREAM_BULK_SCAN _dsbs
+#else
+    #define NLOHMANN_JSON_ABI_TAG_DISABLE_STREAM_BULK_SCAN
+#endif
+
+#if JSON_DISABLE_UNLOCKED_FILE_IO
+    #define NLOHMANN_JSON_ABI_TAG_DISABLE_UNLOCKED_FILE_IO _dufio
+#else
+    #define NLOHMANN_JSON_ABI_TAG_DISABLE_UNLOCKED_FILE_IO
+#endif
+
 #ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
     #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h) json_abi ## a ## b ## c ## d ## e ## f ## g ## h
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g, h) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j) json_abi ## a ## b ## c ## d ## e ## f ## g ## h ## i ## j
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g, h, i, j) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
@@ -137,7 +157,9 @@
             NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION,           \
             NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING,               \
             NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8,                \
-            NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS)
+            NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS,       \
+            NLOHMANN_JSON_ABI_TAG_DISABLE_STREAM_BULK_SCAN,          \
+            NLOHMANN_JSON_ABI_TAG_DISABLE_UNLOCKED_FILE_IO)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \

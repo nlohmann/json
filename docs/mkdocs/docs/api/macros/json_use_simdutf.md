@@ -12,8 +12,9 @@ non-ASCII characters (e.g. CJK or emoji) this can validate several times faster.
 This is an **opt-in external dependency**. The library itself remains header-only and its behavior is unchanged: the
 same input is accepted or rejected either way, and every parse error is reported at the same position with the same
 message (simdutf is only used to fast-path *valid* runs; anything it flags falls back to the scalar path so the exact
-diagnostic is preserved). Streaming inputs (files, `std::istream`, wide strings, user-defined adapters) always use the
-scalar path.
+diagnostic is preserved). A `std::istream` uses simdutf for the characters its stream buffer holds (see
+[`JSON_DISABLE_STREAM_BULK_SCAN`](json_disable_stream_bulk_scan.md)); other streaming inputs (`FILE*`, wide strings,
+user-defined adapters) always use the scalar path.
 
 When `JSON_USE_SIMDUTF` is defined you must make the `simdutf.h` header available on the include path and link the
 simdutf library. When it is not defined, no simdutf header is included and there is no dependency.

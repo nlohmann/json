@@ -53,6 +53,14 @@ TEST_CASE("default namespace without version component")
         expected += "_ekmo";
 #endif
 
+#if JSON_DISABLE_STREAM_BULK_SCAN
+        expected += "_dsbs";
+#endif
+
+#if JSON_DISABLE_UNLOCKED_FILE_IO
+        expected += "_dufio";
+#endif
+
         expected += "::basic_json";
 
         // fallback for Clang

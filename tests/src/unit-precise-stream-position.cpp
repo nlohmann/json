@@ -20,6 +20,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <algorithm>
 #include <cstddef>
 #include <sstream>
 #include <streambuf>
@@ -70,6 +71,40 @@ class no_putback_streambuf : public std::streambuf
   private:
     std::string m_data;
     std::size_t m_pos = 0;
+};
+
+// A streambuf that serves its input in get areas of a fixed size, so that the
+// end of a number falls on every possible offset of a get area. The lexer scans
+// the get area directly; the stream position must not depend on its size.
+class chunked_streambuf : public std::streambuf
+{
+  public:
+    chunked_streambuf(std::string s, std::size_t chunk_size)
+        : m_data(std::move(s)), m_chunk_size(chunk_size)
+    {}
+
+  protected:
+    int_type underflow() override
+    {
+        if (gptr() < egptr())
+        {
+            return traits_type::to_int_type(*gptr());
+        }
+        m_pos += static_cast<std::size_t>(egptr() - eback());
+        if (m_pos >= m_data.size())
+        {
+            setg(nullptr, nullptr, nullptr);
+            return traits_type::eof();
+        }
+        char* const begin = &m_data[m_pos];
+        setg(begin, begin, begin + (std::min)(m_chunk_size, m_data.size() - m_pos));
+        return traits_type::to_int_type(*gptr());
+    }
+
+  private:
+    std::string m_data;
+    std::size_t m_pos = 0;
+    std::size_t m_chunk_size;
 };
 
 // read the characters that are left in a stream
@@ -262,5 +297,27 @@ TEST_CASE("JSON_PRECISE_STREAM_POSITION")
         std::istream is(nullptr);
         json _;
         CHECK_THROWS_WITH_AS(_ = json::parse(is), "[json.exception.parse_error.101] parse error: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
+    }
+
+    SECTION("the position does not depend on the get area of the streambuf")
+    {
+        const std::vector<std::size_t> chunk_sizes = {1, 2, 3, 4, 5, 7, 8, 13, 4096};
+        for (const std::size_t chunk_size : chunk_sizes)
+        {
+            CAPTURE(chunk_size)
+            chunked_streambuf buf("12345678901234567890true\"a long string value\"-1.25e+3,[1,2]42", chunk_size);
+            std::istream input(&buf);
+            json j;
+
+            input >> j;
+            CHECK(j == 12345678901234567890u);
+            input >> j;
+            CHECK(j == true);
+            input >> j;
+            CHECK(j == "a long string value");
+            input >> j;
+            CHECK(j == -1250.0);
+            CHECK(remaining(input) == ",[1,2]42");
+        }
     }
 }
