@@ -231,7 +231,7 @@ struct node_flags
 {
     static constexpr std::uint8_t escaped = 1; ///< string payload lives in the decode arena, not the source
     static constexpr std::uint8_t edited = 2;  ///< string or number token lives in the edit arena (editable documents)
-    static constexpr std::uint8_t storage = 3; ///< mask: where a string or number token lives (index into document_data::base)
+    static constexpr std::uint8_t storage = escaped | edited; ///< mask: where a string or number token lives (index into document_data::base)
     static constexpr std::uint8_t is_true = 4; ///< boolean value
     static constexpr std::uint8_t moved = 8;   ///< array/object: the elements live in a separate sequence (editable documents)
     static constexpr std::uint8_t is_new = 16; ///< written by an edit: no source position
@@ -368,7 +368,7 @@ struct document_data
     std::vector<object_index> indexes;
     std::vector<std::uint32_t> index_slots;
     std::vector<std::uint32_t> large_objects; ///< positions of the objects to index (noted while parsing)
-    std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena, edit arena (indexed by flags & node_flags::storage)
+    std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena, edit arena, unused (indexed by flags & node_flags::storage)
     bool discarded = true;
 
     /// The storage of edits (editable documents only; see edit_storage.hpp).
@@ -5941,6 +5941,10 @@ struct is_non_bool_arithmetic : conjunction<std::is_arithmetic<T>, negation<std:
 template<typename T>
 struct is_non_c_string_default : negation<std::is_same<typename std::decay<T>::type, const char*>> {};
 
+/// the integral types accepted as an array index by the edits of a document
+template<typename T>
+struct is_non_bool_integral : conjunction<std::is_integral<T>, negation<std::is_same<T, bool>>> {};
+
 /// whether View::get<T>() converts to T without materialize(); get_to()
 /// assigns these, and passes the others to from_json
 template<typename T, typename BasicJsonType, typename View>
@@ -6631,8 +6635,10 @@ class basic_json_view
     {
         if (editable() && m_doc->edits != nullptr)
         {
-            // positions of moved and new values are not source offsets
-            return m_node == m_doc->nodes ? m_doc->size + m_doc->edits->text_used : 64;
+            // positions of moved and new values are not source offsets; the root
+            // (the first node) spans the source text and every edit
+            const bool is_root = m_node == m_doc->nodes;
+            return is_root ? m_doc->size + m_doc->edits->text_used : 64;
         }
         const node* const end = m_doc->nodes + m_doc->node_count;
         if ((m_node->flags & detail::view::node_flags::storage) != 0)
@@ -7013,7 +7019,7 @@ class basic_json_document
     }
 
     /// assign an existing array element; returns a view of it
-    template < typename I, typename V, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    template<typename I, typename V, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
     view_type set(view_type array, I idx, V && value)
     {
         return editor().set(array, index(idx), std::forward<V>(value));
@@ -7035,14 +7041,14 @@ class basic_json_document
         const auto& token = ptr.back();
         if (parent.is_null())
         {
-            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
-            {
-                return c >= '0' && c <= '9';
-            });
             if (token == "-")
             {
                 return push_back(parent, std::forward<V>(value));
             }
+            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            {
+                return c >= '0' && c <= '9';
+            });
             if (digits)
             {
                 // (an invalid index is an error before the parent changes)
@@ -7080,7 +7086,7 @@ class basic_json_document
 
     /// insert into an array before position idx (idx <= size()); returns a
     /// view of the new element
-    template < typename I, typename V, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    template<typename I, typename V, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
     view_type insert(view_type array, I idx, V && value)
     {
         return editor().insert(array, index(idx), std::forward<V>(value));
@@ -7093,7 +7099,7 @@ class basic_json_document
     }
 
     /// remove an array element
-    template < typename I, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    template<typename I, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
     void erase(view_type array, I idx)
     {
         editor().erase(array, index(idx));
