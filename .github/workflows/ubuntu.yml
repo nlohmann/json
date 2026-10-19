@@ -32,7 +32,7 @@ jobs:
         run: cmake --build build --target ci_test_gcc
 
   ci_meson_install:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -77,7 +77,7 @@ jobs:
           cmake --build build-import-split
 
   ci_infer:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -106,7 +106,7 @@ jobs:
           if-no-files-found: ignore
 
   ci_static_analysis_ubuntu:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         target: [ci_test_single_header, ci_cppcheck, ci_cpplint, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata, ci_reuse_compliance, ci_test_valgrind]
@@ -175,7 +175,7 @@ jobs:
         run: cmake --build build --target ${{ matrix.target }}
 
   ci_test_coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -430,7 +430,7 @@ jobs:
         run: cmake --build build --target ci_nvhpc
 
   ci_emscripten:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -450,7 +450,7 @@ jobs:
         run: cmake --build build
 
   ci_test_documentation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         target: [ci_test_examples, ci_test_build_documentation, ci_test_documentation_mermaid]
