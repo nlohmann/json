@@ -45,10 +45,11 @@ inline bool float_token_layout(const char* first, const char* last, std::size_t&
     {
         return false;
     }
-    while (digit(p))
+    do
     {
         ++p;
     }
+    while (digit(p));
     dot = std::string::npos;
     if (p != last && *p == '.')
     {
@@ -57,10 +58,11 @@ inline bool float_token_layout(const char* first, const char* last, std::size_t&
         {
             return false;
         }
-        while (digit(p))
+        do
         {
             ++p;
         }
+        while (digit(p));
     }
     mantissa_end = static_cast<std::size_t>(p - first);
     if (p != last && (*p == 'e' || *p == 'E'))
@@ -71,10 +73,11 @@ inline bool float_token_layout(const char* first, const char* last, std::size_t&
         {
             return false;
         }
-        while (digit(p))
+        do
         {
             ++p;
         }
+        while (digit(p));
     }
     return p == last;
 }

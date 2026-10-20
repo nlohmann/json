@@ -1038,7 +1038,7 @@ class basic_json_document
         return m_data ? m_data->node_count : 0;
     }
 
-    /// bytes held by the document (index, decoded strings, owned text or image)
+    /// bytes held by the document (index, decoded strings, and owned text or image)
     std::size_t memory_usage() const noexcept
     {
         if (!m_data)

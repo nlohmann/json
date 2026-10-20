@@ -110,17 +110,30 @@ enum class image_check
 
 How thoroughly `load()` validates `image` before trusting it.
 
-| value    | checks                                                                                                    | guarantees |
-|----------|--------------------------------------------------------------------------------------------------------------|------------|
-| `full`   | everything the parser itself guarantees: structure and bounds; that every string is valid UTF-8 (and, for a string still in the source text, that it contains no quote, backslash, or control character); and that every number token is well-formed and matches the value stored for it; strings and float tokens may share a range only if the ranges are identical (as nodes that share a value do), and never overlap otherwise | reading and serializing a checked image is safe and always produces valid JSON, exactly as for a parsed document |
-| `bounds` | structure and bounds only -- that every offset and count in the node index stays inside the image            | reading and serializing stay memory-safe, but a crafted image can hold strings that are not valid UTF-8 or that serialize to invalid JSON ([`dump()`](../basic_json_view/dump.md) writes them unchanged or throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316)), and numbers whose values differ from their text |
-| `none`   | nothing                                                                                                       | images from a trusted source only -- reading a damaged image is undefined behavior |
+`full` (the default)
+:   Checks everything the parser itself guarantees: structure and bounds; that every string is valid UTF-8 (and, for a
+    string still in the source text, that it contains no quote, backslash, or control character); and that every number
+    token is well-formed and matches the value stored for it. Strings and float tokens may share a range only if the
+    ranges are identical (as nodes that share a value do), and never overlap otherwise. Reading and serializing a
+    checked image is safe and always produces valid JSON, exactly as for a parsed document. This is the right choice for
+    an image from anything you do not fully control -- a file, a cache shared with other processes, a peer on the
+    network.
 
-`full` is the default and the right choice for an image from anything you do not fully control -- a file, a cache
-shared with other processes, a peer on the network. `bounds` skips scanning the text and the decoded strings, so it
-fits a cache your own process just wrote and reads straight back, where damage would mean a bug or a hardware fault
-rather than adversarial input; it still cannot crash or read out of bounds. `none` skips validation entirely and
-should only be used for an image you trust as much as your own memory.
+`bounds`
+:   Checks structure and bounds only: that every offset and count in the node index stays inside the image. So
+    `load()`, [`root()`](root.md), element access, and [`materialize()`](../basic_json_view/materialize.md) can never
+    read outside the image, even on a damaged one. It does *not* guarantee that the image describes valid JSON: a
+    string that a `full` check would have rejected can make [`dump()`](../basic_json_view/dump.md) write invalid UTF-8
+    or invalid JSON, or throw [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316), and a number can
+    read back with a value that does not match how it is spelled. An [editable document](../json_editable_document.md)
+    does not take such a string over: [`set`](set.md), [`push_back`](push_back.md) and [`insert`](insert.md) throw
+    `type_error.316` when they copy it from a view of the loaded document, and leave the editable document unchanged.
+    `bounds` skips scanning the text and the decoded strings, so it fits a cache your own process just wrote and reads
+    straight back, where damage would mean a bug or a hardware fault rather than adversarial input.
+
+`none`
+:   Checks nothing. Reading a damaged image is undefined behavior, so use it only for an image you trust as much as
+    your own memory.
 
 **Lifetime.** Overloads 1 and 2 borrow `image`: it must stay alive and byte-for-byte unchanged for as long as the
 returned document, and any [view](../basic_json_view/index.md) taken from it, is used -- exactly like a document
@@ -133,16 +146,6 @@ returned document, and any [view](../basic_json_view/index.md) taken from it, is
     stable; `load()` already rejects an image written by a different format version with `parse_error.116`
     ("unknown format"). Use images to cache a document within one build of the library, or to hand one to another
     process running the *same* build on the *same* (little-endian) machine -- not as a long-term storage format.
-
-**What `image_check::bounds` does not guarantee.** A bounds-checked image can never make `load()`,
-[`root()`](root.md), element access, or [`materialize()`](../basic_json_view/materialize.md) read outside the image,
-so those stay safe on a damaged one. It does *not* guarantee that the image describes valid JSON: a string
-that a `full` check would have rejected can make [`dump()`](../basic_json_view/dump.md) write invalid UTF-8 or invalid
-JSON, or throw `type_error.316`, and a number can read back with a value that does not match how it is spelled.
-Reserve `bounds` for images you already trust to be well-formed, and use it only to skip the extra scan.
-An [editable document](../json_editable_document.md) does not take such a string over either:
-[`set`](set.md), [`push_back`](push_back.md) and [`insert`](insert.md) throw `type_error.316` when they copy it from
-a view of the loaded document, and leave the editable document unchanged.
 
 ## Examples
 

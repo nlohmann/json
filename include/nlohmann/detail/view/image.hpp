@@ -8,11 +8,11 @@
 
 #pragma once
 
-#include <algorithm> // sort
+#include <algorithm> // min, sort
 #include <array> // array
-#include <cstddef> // size_t
+#include <cstddef> // offsetof, size_t
 #include <cstdint> // int64_t, uint8_t, uint16_t, uint32_t, uint64_t
-#include <cstring> // memcmp, memcpy
+#include <cstring> // memcmp, memcpy, memset
 #include <limits> // numeric_limits
 #include <string> // string
 #include <vector> // vector
@@ -162,7 +162,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
     copy_node(d.nodes);
     while (!stack.empty())
     {
-        frame& top = stack.back();
+        const frame top = stack.back();
         if (top.cur == top.end)
         {
             node& c = out[top.index];
@@ -171,20 +171,14 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
             stack.pop_back();
             continue;
         }
-        ++top.count;
-        const node* v = nullptr;
         if (top.object)
         {
             out.push_back(string_node(*top.cur));
-            v = document_data::deref(top.cur + 1);
-            top.cur = document_data::after(top.cur + 1);
         }
-        else
-        {
-            v = document_data::deref(top.cur);
-            top.cur = document_data::after(top.cur);
-        }
-        copy_node(v); // may grow the stack (top is not used afterwards)
+        const node* const value = top.cur + (top.object ? 1 : 0);
+        stack.back().cur = document_data::after(value);
+        ++stack.back().count;
+        copy_node(document_data::deref(value)); // may grow the stack
     }
 }
 
@@ -195,17 +189,15 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     throw_type_error(320, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
 #endif
     const std::size_t arena_size = d.arena_size;
-    const node* nodes = d.nodes;
-    std::size_t count = d.node_count;
     std::vector<node> compacted;
     std::string text_tail;
     std::string arena_tail;
     if (d.edits)
     {
         compact_nodes(d, arena_size, compacted, text_tail, arena_tail);
-        nodes = compacted.data();
-        count = compacted.size();
     }
+    const node* const nodes = d.edits ? compacted.data() : d.nodes;
+    const std::size_t count = d.edits ? compacted.size() : d.node_count;
     const std::size_t text_size = d.size + text_tail.size();
     const std::size_t total_arena = arena_size + arena_tail.size();
     if (NLOHMANN_VIEW_UNLIKELY(text_size >= image_limit || total_arena >= image_limit || count >= image_limit))
@@ -225,14 +217,13 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     std::memcpy(o, &h, sizeof(h));
     o += sizeof(h);
     std::memcpy(o, nodes, count * sizeof(node));
-    // the hash indexes are rebuilt by load()
+    // the hash indexes are rebuilt by load(), whose check rejects any other
+    // extra of an object, and the same document saves to the same bytes
     for (std::size_t i = 0; i < count; ++i)
     {
         if (nodes[i].kind == static_cast<std::uint8_t>(value_t::object) && nodes[i].extra != 0)
         {
-            node n = nodes[i];
-            n.extra = 0;
-            std::memcpy(o + (i * sizeof(node)), &n, sizeof(node));
+            std::memset(o + (i * sizeof(node)) + offsetof(node, extra), 0, sizeof(nodes[i].extra));
         }
     }
     o += count * sizeof(node);
@@ -271,21 +262,22 @@ inline bool scan_number_token(const unsigned char* s, std::size_t len, number_to
     const unsigned char* p = s;
     t.negative = p != e && *p == '-';
     p += t.negative ? 1 : 0;
-    t.int_start = p;
     if (p == e)
     {
         return false;
     }
+    t.int_start = p;
     if (*p == '0')
     {
         ++p;
     }
     else if (*p >= '1' && *p <= '9')
     {
-        while (p != e && is_digit(*p))
+        do
         {
             ++p;
         }
+        while (p != e && is_digit(*p));
     }
     else
     {
@@ -318,11 +310,12 @@ inline bool scan_number_token(const unsigned char* s, std::size_t len, number_to
         {
             return false;
         }
-        while (p != e && is_digit(*p))
+        do
         {
             t.exponent = t.exponent < 100000 ? (t.exponent * 10) + (*p - '0') : t.exponent;
             ++p;
         }
+        while (p != e && is_digit(*p));
         t.exponent = exp_negative ? -t.exponent : t.exponent;
         t.is_float = true;
     }
@@ -333,7 +326,7 @@ inline bool scan_number_token(const unsigned char* s, std::size_t len, number_to
 /// writes "many" instead; the caller accepts both)
 inline std::uint16_t float_layout(const number_token& t)
 {
-    return static_cast<std::uint16_t>((t.int_digits < 255 ? t.int_digits : 255) | ((t.frac_digits < 255 ? t.frac_digits : 255) << 8u));
+    return static_cast<std::uint16_t>((std::min)(t.int_digits, std::size_t{255}) | ((std::min)(t.frac_digits, std::size_t{255}) << 8u));
 }
 
 /// whether a float token (well-formed, per scan_number_token) is finite as
@@ -735,14 +728,10 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     // the hash indexes of large objects, as after parsing
     for (std::size_t i = 0; i < count; ++i)
     {
-        node& n = d.nodes[i];
-        if (n.kind == static_cast<std::uint8_t>(value_t::object))
+        const node& n = d.nodes[i];
+        if (n.kind == static_cast<std::uint8_t>(value_t::object) && n.len >= document_data::index_min_members)
         {
-            n.extra = 0;
-            if (n.len >= document_data::index_min_members)
-            {
-                d.large_objects.push_back(static_cast<std::uint32_t>(i));
-            }
+            d.large_objects.push_back(static_cast<std::uint32_t>(i));
         }
     }
     build_object_indexes(d);
