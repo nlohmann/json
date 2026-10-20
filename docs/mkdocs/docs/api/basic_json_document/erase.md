@@ -18,10 +18,10 @@ has `erase`; calling it on a read-only `basic_json_document` fails to compile (`
 1. Removes every member of `object` whose key is `key` (see [Notes](#notes) on duplicate keys) and returns how many
    were removed; `#!cpp 0` if `object` has no member with this key.
 2. Removes the element at index `idx` of `array`, which must already exist (`#!cpp idx < array.size()`).
-3. Removes the value the JSON pointer `ptr` refers to, relative to [`root()`](root.md), and returns how many values
-   were removed: the *parent* of the target must already exist, and the target itself is removed as in 1. (an object
-   member; `#!cpp 0` or more) or 2. (an array element; always `#!cpp 1`). `ptr` must not be empty -- [`root()`](root.md)
-   itself cannot be erased.
+3. Removes the value the JSON pointer `ptr` refers to, relative to [`root()`](root.md). `ptr` must not be empty
+   ([`root()`](root.md) itself cannot be erased), and the *parent* of the target must already exist. The target is
+   removed as in 1. if the parent is an object (returns the number of removed members, `#!cpp 0` or more) and as in 2.
+   if it is an array (always returns `#!cpp 1`).
 
 ## Template parameters
 
@@ -71,8 +71,8 @@ has `erase`; calling it on a read-only `basic_json_document` fails to compile (`
 
 Overloads 1. and 2. also throw [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202)
 ("view does not belong to this document") if `object`/`array` is a [discarded](../basic_json_view/is_discarded.md)
-view or a view of a *different* document. Overload 3. takes no view: it always starts from this document's own
-[`root()`](root.md).
+view or a view of a *different* document. Overload 3. never throws `invalid_iterator.202`: it takes no view, and it
+always starts from this document's own [`root()`](root.md).
 
 ## Complexity
 

@@ -58,10 +58,12 @@ struct document_data
     bool discarded = true;
 
     /// The storage of edits (editable documents only; see edit_storage.hpp).
-    /// Edits never move or resize the parsed index, so views stay valid: an
-    /// array/object whose elements change gets node_flags::moved, and its
-    /// elements then live in a separate sequence (a header node, then the
-    /// entries), whose entries link to the values.
+    /// No edit moves or resizes the parsed index, and the nodes of values
+    /// written by edits never move either, so a view stays valid whenever it
+    /// was taken, before the first edit or between later ones: an array/object
+    /// whose elements change gets node_flags::moved, and its elements then live
+    /// in a separate sequence (a header node, then the entries), whose entries
+    /// link to the values.
     struct edit_state
     {
         std::vector<node*> moved{};                    ///< element sequences of moved arrays/objects (header node first) // NOLINT(readability-redundant-member-init)

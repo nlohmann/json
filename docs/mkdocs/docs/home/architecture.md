@@ -194,8 +194,8 @@ packet-beta
 
 | Bytes | Field   | Type       | Contents                                                                                                                      |
 |-------|---------|------------|-------------------------------------------------------------------------------------------------------------------------------|
-| 0     | `kind`  | `uint8_t`  | the type, numbered as [`value_t`](../api/basic_json/value_t.md): 0 null, 1 object, 2 array, 3 string, 4 boolean, 5 signed integer, 6 unsigned integer, 7 float; 10 for a link (see below) |
-| 1     | `flags` | `uint8_t`  | bits 0-1: where a string's bytes (or a number's token) are (0: the source text, 1: the buffer of decoded strings, for strings with escapes, 2: the edit buffer); bit 2: the value of a boolean; bits 3 and 4: moved and new (see below) |
+| 0     | `kind`  | `uint8_t`  | the type, numbered as [`value_t`](../api/basic_json/value_t.md): 0 null, 1 object, 2 array, 3 string, 4 boolean, 5 signed integer, 6 unsigned integer, 7 float; 10 for a link (see below). There is no node for a discarded value: a [discarded](../api/basic_json_view/is_discarded.md) view has none |
+| 1     | `flags` | `uint8_t`  | bits 0-1: where a string's bytes (or a number's token) are (0: the source text, 1: the buffer of decoded strings, for strings with escapes, 2: the edit buffer); bit 2: the value of a boolean; bit 3: moved, bit 4: new, bit 5: linked (see below) |
 | 2-3   | `extra` | `uint16_t` | numbers: the number of integer digits (low byte) and fraction digits (high byte), 255 for more; objects: the number of their key hash index (1-based), or 0; otherwise 0 |
 | 4-7   | `off`   | `uint32_t` | where the value starts: the first byte after a string's opening quote (or its position in the buffer of decoded strings), the first byte of a number or literal, the bracket of an array or object |
 | 8-11  | `len`   | `uint32_t` | strings: the length after decoding; floats and literals: the length of the token; arrays and objects: the number of elements |
@@ -257,6 +257,8 @@ edited:
   sequence (a header node, then the entries), whose number is in `off`. The entries are links (`kind` 10), whose bytes
   8-15 hold the address of the value's node, so values never move.
 - A node written by an edit gets the flag *new* (bit 4): it has no position in the source text.
+- A value that an entry of such a sequence links to gets the flag *linked* (bit 5): its extent in the parsed layout
+  (`next`) no longer matters, so a scalar can replace an array or object there in place.
 - Views of read-only documents compile without any of this: how views walk the index is a template parameter
   (`navigation<Editable>`).
 

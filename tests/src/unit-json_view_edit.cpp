@@ -26,6 +26,7 @@ using ptr_t = ordered_json::json_pointer;
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <random>
 #include <set>
 #include <string>
@@ -914,6 +915,29 @@ TEST_CASE("json_view edits: the size of a text arena")
     CHECK_THROWS_WITH_AS(text_capacity(limit, limit, 1), "[json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document", json::out_of_range&);
 }
 #endif
+
+TEST_CASE("json_view edits: the chunks of new nodes")
+{
+    using nlohmann::detail::view::alloc_nodes;
+    using nlohmann::detail::view::document_data;
+    const std::unique_ptr<document_data, document_data::deleter> d(document_data::create(0));
+    // the first chunk has room for 64 nodes, the next one for 128
+    const nlohmann::detail::view::node* const first = alloc_nodes(*d, 10);
+    CHECK(d->edits->chunks.size() == 1);
+    // a request of half of the next chunk (128 nodes) or more gets a chunk of
+    // its own
+    const nlohmann::detail::view::node* const large = alloc_nodes(*d, 100);
+    CHECK(d->edits->chunks.size() == 2);
+    CHECK(large == d->edits->chunks.back().get());
+    // and the rest of the first chunk is still used
+    CHECK(alloc_nodes(*d, 50) == first + 10);
+    CHECK(d->edits->chunks.size() == 2);
+    // a smaller request that does not fit starts a new (doubled) chunk
+    CHECK(alloc_nodes(*d, 10) == d->edits->chunks.back().get());
+    CHECK(d->edits->chunks.size() == 3);
+    CHECK(d->edits->chunk_end - d->edits->chunk_cur == 128 - 10);
+    CHECK(d->edits->bytes == (64 + 100 + 128) * sizeof(nlohmann::detail::view::node));
+}
 
 TEST_CASE("json_view edits: replacing arrays and objects by scalars")
 {

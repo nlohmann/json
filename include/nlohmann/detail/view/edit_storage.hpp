@@ -50,7 +50,19 @@ inline node* alloc_nodes(document_data& d, std::size_t k)
     document_data::edit_state& e = edit_state_of(d);
     if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(e.chunk_end - e.chunk_cur) < k))
     {
-        const std::size_t count = (std::max)(k, e.chunk_next);
+        if (k >= e.chunk_next / 2)
+        {
+            // a large request (half of the next chunk or more) gets a chunk of
+            // its own, so that the rest of the current chunk stays available
+            // for smaller ones
+            std::unique_ptr<node[]> own(new node[k]()); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            e.chunks.push_back(std::move(own));
+            e.bytes += k * sizeof(node);
+            return e.chunks.back().get();
+        }
+        // a smaller request leaves the rest of the current chunk unused
+        // (fewer than k nodes, and k is less than half of the new chunk)
+        const std::size_t count = e.chunk_next;
         std::unique_ptr<node[]> fresh(new node[count]()); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         e.chunks.push_back(std::move(fresh));
         e.chunk_cur = e.chunks.back().get();
@@ -81,7 +93,8 @@ inline std::size_t text_capacity(std::size_t cap, std::size_t used, std::size_t 
 }
 
 /// copy n bytes into the edit arena and return their offset; a new buffer
-/// leaves the old one alive, so that string views into it remain valid
+/// leaves the old one alive, so that string views into it remain valid; n is
+/// 0 for an empty string (written by an edit, or the key of a new member)
 inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
 {
     document_data::edit_state& e = edit_state_of(d);
@@ -89,7 +102,7 @@ inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
     {
         const std::size_t cap = text_capacity(e.text_cap, e.text_used, n);
         std::unique_ptr<char[]> fresh(new char[cap]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        if (e.text_used != 0)
+        if (NLOHMANN_VIEW_LIKELY(e.text_used != 0)) // (0 only for the first buffer, and then texts is empty)
         {
             std::memcpy(fresh.get(), e.texts.back().get(), e.text_used);
         }
@@ -127,8 +140,10 @@ inline void reserve_moved(document_data& d)
     if (e.moved.size() == e.moved.capacity() || e.moved_cap.size() == e.moved_cap.capacity())
     {
         // both grow before either changes, so that the push_backs cannot throw
-        e.moved.reserve((2 * e.moved.size()) + 16);
-        e.moved_cap.reserve((2 * e.moved.size()) + 16);
+        // (both conditions are needed: reserve() may allocate more than asked,
+        // so the two capacities can differ)
+        e.moved.reserve((e.moved.size() * 2) + 16);
+        e.moved_cap.reserve((e.moved.size() * 2) + 16);
     }
 }
 
