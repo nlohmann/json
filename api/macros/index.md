@@ -17,6 +17,8 @@ Some aspects of the library can be configured by defining preprocessor macros **
 
 ## Parsing
 
+- [**JSON_DISABLE_STREAM_BULK_SCAN**](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time instead of scanning its stream buffer in bulk
+- [**JSON_DISABLE_UNLOCKED_FILE_IO**](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) - read a `FILE*` with `std::fgetc` instead of locking it once and using the unlocked stdio functions
 - [**JSON_PRECISE_STREAM_POSITION**](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) - opt in to leaving an input stream positioned right after a parsed number
 - [**JSON_STRICT_BINARY_UTF8**](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) - opt in to checking strings for valid UTF-8 in the CBOR, UBJSON, BJData, and BSON writers
 - [**JSON_STRICT_NUL_HANDLING**](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input instead of treating it as end of input

@@ -160,6 +160,7 @@ being read.
 - [`JSON_STRICT_NUL_HANDLING`](macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
   instead of treating it as end of input
 - [`JSON_PRECISE_STREAM_POSITION`](macros/json_precise_stream_position.md) - opt in to leaving the stream positioned right after a number
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](macros/json_disable_stream_bulk_scan.md) - read the stream one character at a time
 
 ## Version history
 
@@ -172,3 +173,6 @@ being read.
   crash (`std::terminate`) when `i` has `eofbit` in its exception mask, in version 3.13.0.
 - Changed to the strong exception safety guarantee in version 3.13.0: `j` is no longer left with a partially parsed
   value if parsing throws.
+- Scans the characters in the stream buffer of `i` in bulk in version 3.13.0; the position of `i` after the call is
+  unchanged ([`JSON_DISABLE_STREAM_BULK_SCAN`](macros/json_disable_stream_bulk_scan.md) restores reading one character
+  at a time).

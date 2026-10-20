@@ -136,6 +136,7 @@ Output:
 - [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
 - [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input instead of treating it as end of input
 - [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) - opt in to leaving the stream positioned right after a number
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read the stream one character at a time
 
 ## Version history
 
@@ -144,3 +145,4 @@ Output:
 - `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 unreleased to optionally leave the character that terminates a number in the stream; planned to become the default in version 4.0.0.
 - Fixed a null pointer dereference for an `std::istream` without a stream buffer (now throws `parse_error.101`), and a crash (`std::terminate`) when `i` has `eofbit` in its exception mask, in version 3.13.0 unreleased.
 - Changed to the strong exception safety guarantee in version 3.13.0 unreleased: `j` is no longer left with a partially parsed value if parsing throws.
+- Scans the characters in the stream buffer of `i` in bulk in version 3.13.0 unreleased; the position of `i` after the call is unchanged ([`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) restores reading one character at a time).

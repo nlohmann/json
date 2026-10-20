@@ -175,6 +175,10 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 - [operator>>](../operator_gtgt.md) - deserialize from stream
 - [`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
   instead of treating it as end of input
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md) - read a `std::istream` one character
+  at a time
+- [`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md) - read a `FILE*` with the locking stdio
+  functions
 
 ## Version history
 
@@ -186,6 +190,10 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 - `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating
   it as end of input; planned to become the default in version 4.0.0.
+- Parsing from an `std::istream` scans the characters in its stream buffer in bulk in version 3.13.0
+  ([`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md)).
+- Parsing from a `FILE*` locks the file once instead of once per character in version 3.13.0
+  ([`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md)).
 
 !!! warning "Deprecation"
 

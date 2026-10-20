@@ -96,6 +96,8 @@ Linear in the length of the input. The parser is a predictive LL(1) parser. The 
 
 A UTF-8 byte order mark is silently ignored.
 
+When reading from a `FILE*`, the file is locked while it is parsed. The lock is recursive, so the SAX handler may use the same file with stdio functions, but it must not wait for another thread that uses the same `FILE` object; see [`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md).
+
 ## Examples
 
 Example
@@ -282,6 +284,8 @@ result: false
 
 - [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
 - [accept](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time
+- [`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) - read a `FILE*` with the locking stdio functions
 
 ## Version history
 
@@ -292,6 +296,8 @@ result: false
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0 unreleased.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0 unreleased.
 - `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 unreleased to optionally leave a `std::istream` positioned right after the parsed value when `strict` is `false`.
+- Parsing from an `std::istream` scans the characters in its stream buffer in bulk in version 3.13.0 unreleased ([`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md)).
+- Parsing from a `FILE*` locks the file once instead of once per character in version 3.13.0 unreleased ([`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md)).
 
 Deprecation
 

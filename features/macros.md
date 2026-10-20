@@ -133,6 +133,14 @@ When defined, default parse and serialize functions for enums are excluded and h
 
 See [full documentation of `JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md).
 
+## `JSON_DISABLE_STREAM_BULK_SCAN`
+
+When defined to `1`, parsing from a `#!cpp std::istream` reads one character at a time instead of scanning the
+characters that the stream buffer holds in bulk. Results are the same either way; the macro is an escape hatch for
+stream buffers that do not follow the usual `std::streambuf` contract. The default value is `0`.
+
+See [full documentation of `JSON_DISABLE_STREAM_BULK_SCAN`](../api/macros/json_disable_stream_bulk_scan.md).
+
 ## `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`
 
 When defined to `1`, a JSON value can no longer be created from a one-element `std::tuple` holding a reference to a JSON
@@ -140,6 +148,14 @@ value, such as the result of `std::forward_as_tuple(j)`. This lets `std::tuple` 
 is planned to become the default in version 4.0.0.
 
 See [full documentation of `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md).
+
+## `JSON_DISABLE_UNLOCKED_FILE_IO`
+
+When defined to `1`, parsing from a `#!cpp FILE*` reads every character with `std::fgetc`, which locks the file each
+time, instead of locking the file once and reading it with the unlocked stdio functions. Results are the same either
+way. The default value is `0`.
+
+See [full documentation of `JSON_DISABLE_UNLOCKED_FILE_IO`](../api/macros/json_disable_unlocked_file_io.md).
 
 ## `JSON_NO_AUTOMATIC_UDLS`
 

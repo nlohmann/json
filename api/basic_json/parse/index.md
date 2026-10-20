@@ -93,6 +93,10 @@ Invalid Unicode escapes and unpaired surrogates in the input are reported as [`p
 
 By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input, rather than as an ordinary (and, outside of a string, invalid) byte; see the [FAQ entry](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input) for details and the [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) macro to opt into rejecting it instead.
 
+Performance
+
+Contiguous inputs (strings, string views, vectors, arrays, pointer ranges) are the fastest to parse. A `std::istream` comes close: the parser scans the characters its stream buffer holds in bulk, without reading ahead, so the stream is left exactly where it would be after reading one character at a time. A `FILE*` is read one character at a time, but the file is locked only once, so other threads that use the same `FILE` object wait until parsing is done. See [input sources and performance](https://json.nlohmann.me/features/parsing/#input-sources-and-performance), [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md), and [`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md).
+
 ## Examples
 
 Example: (1) parse from a character array
@@ -620,6 +624,8 @@ Output:
 - [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - parse input using the SAX interface
 - [operator>>](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream
 - [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input instead of treating it as end of input
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time
+- [`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) - read a `FILE*` with the locking stdio functions
 
 ## Version history
 
@@ -632,6 +638,8 @@ Output:
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0 unreleased.
 - `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 unreleased to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
 - Extended empty-input detection to also cover an `std::istream` without a stream buffer, and fixed a crash (`std::terminate`) when parsing from an `std::istream` with `eofbit` in its exception mask, in version 3.13.0 unreleased.
+- Parsing from an `std::istream` scans the characters in its stream buffer in bulk in version 3.13.0 unreleased ([`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) restores reading one character at a time).
+- Parsing from a `FILE*` locks the file once instead of once per character in version 3.13.0 unreleased ([`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) restores `std::fgetc`).
 
 Deprecation
 
