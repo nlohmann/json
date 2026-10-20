@@ -874,13 +874,13 @@ TEST_CASE("short decimals")
 
     SECTION("powers of ten")
     {
-        const auto& powers = nlohmann::detail::dtoa_impl::powers_of_ten_16();
-        std::uint64_t power = 1;
-        for (const std::uint64_t p : powers)
+        const auto& powers = nlohmann::detail::dtoa_impl::powers_of_ten();
+        CHECK(powers.front() == 1u);
+        for (std::size_t i = 1; i < powers.size(); ++i)
         {
-            CHECK(p == power);
-            power *= 10;
+            CHECK(powers[i] == powers[i - 1] * 10u);
         }
+        CHECK(powers.back() == 10000000000000000000u);
     }
 
     SECTION("examples")

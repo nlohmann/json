@@ -1342,14 +1342,32 @@ inline char* write_shortest(char* first, const zmij::shortest_decimal d) noexcep
     return end + (three ? 5 : 4);
 }
 
-/// the powers of ten up to 10^16
-inline const std::array<std::uint64_t, 17>& powers_of_ten_16() noexcept
+/// the powers of ten up to 10^19 (all that fit in std::uint64_t)
+inline const std::array<std::uint64_t, 20>& powers_of_ten() noexcept
 {
-    static const std::array<std::uint64_t, 17> powers =
+    static const std::array<std::uint64_t, 20> powers =
     {
         {
-            1u, 10u, 100u, 1000u, 10000u, 100000u, 1000000u, 10000000u, 100000000u, 1000000000u, 10000000000u,
-            100000000000u, 1000000000000u, 10000000000000u, 100000000000000u, 1000000000000000u, 10000000000000000u
+            1u,
+            10u,
+            100u,
+            1000u,
+            10000u,
+            100000u,
+            1000000u,
+            10000000u,
+            100000000u,
+            1000000000u,
+            10000000000u,
+            100000000000u,
+            1000000000000u,
+            10000000000000u,
+            100000000000000u,
+            1000000000000000u,
+            10000000000000000u,
+            100000000000000000u,
+            1000000000000000000u,
+            10000000000000000000u
         }
     };
     return powers;
@@ -1367,9 +1385,9 @@ JSON_HEDLEY_NON_NULL(1)
 JSON_HEDLEY_RETURNS_NON_NULL
 inline char* write_short_decimal(char* first, std::uint64_t digits, int count, int exp) noexcept
 {
-    JSON_ASSERT(digits >= powers_of_ten_16()[static_cast<std::size_t>(count - 1)] && count <= 15);
+    JSON_ASSERT(digits >= powers_of_ten()[static_cast<std::size_t>(count - 1)] && count <= 15);
     const int scale = 16 - count;
-    return write_shortest(first, zmij::shortest_decimal{digits * powers_of_ten_16()[static_cast<std::size_t>(scale)], exp - scale - 1, 0, false});
+    return write_shortest(first, zmij::shortest_decimal{digits * powers_of_ten()[static_cast<std::size_t>(scale)], exp - scale - 1, 0, false});
 }
 
 /// as write_short_decimal(), counting the digits (not 0, less than 10^15)
@@ -1380,7 +1398,7 @@ inline char* write_short_decimal(char* first, std::uint64_t digits, int exp) noe
     JSON_ASSERT(digits != 0 && digits < 1000000000000000u);
     // floor(log10(2^bits)) + 1 digits, or one less
     const int log2_bound = ((64 - count_leading_zeros(digits)) * 1233) >> 12;
-    const int count = log2_bound + (digits >= powers_of_ten_16()[static_cast<std::size_t>(log2_bound)] ? 1 : 0);
+    const int count = log2_bound + (digits >= powers_of_ten()[static_cast<std::size_t>(log2_bound)] ? 1 : 0);
     return write_short_decimal(first, digits, count, exp);
 }
 

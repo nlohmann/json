@@ -1136,32 +1136,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* skip_digits(const unsigned char
 /// powers of ten up to 10^19 as integers
 inline std::uint64_t int_pow10(unsigned k) noexcept
 {
-    static const std::array<std::uint64_t, 20> table =
-    {
-        {
-            1u,
-            10u,
-            100u,
-            1000u,
-            10000u,
-            100000u,
-            1000000u,
-            10000000u,
-            100000000u,
-            1000000000u,
-            10000000000u,
-            100000000000u,
-            1000000000000u,
-            10000000000000u,
-            100000000000000u,
-            1000000000000000u,
-            10000000000000000u,
-            100000000000000000u,
-            1000000000000000000u,
-            10000000000000000000u
-        }
-    };
-    return table[k];
+    return ::nlohmann::detail::dtoa_impl::powers_of_ten()[k];
 }
 
 /// value of 0 < k < 8 digits at p in one step if [p, p + 8) lies below
@@ -6195,7 +6170,7 @@ class output_buffer
     /// which a static constexpr member does not have before C++17)
     static constexpr std::size_t step() noexcept
     {
-        return 65536;
+        return 0x10000;
     }
 
     static StringType& sized(StringType& out, std::size_t estimate)
@@ -6267,7 +6242,7 @@ class small_stack
 {
   public:
     small_stack(T* buffer, std::size_t capacity, std::vector<T>& heap) noexcept
-        : m_begin(buffer), m_top(buffer), m_end(buffer + capacity), m_heap(&heap)
+        : m_begin(buffer), m_top(buffer), m_end(buffer + capacity), m_heap(heap)
     {}
     small_stack(const small_stack&) = delete;
     small_stack(small_stack&&) = delete;
@@ -6281,7 +6256,7 @@ class small_stack
         {
             const std::size_t used = size();
             const std::size_t capacity = 2 * static_cast<std::size_t>(m_end - m_begin);
-            m_begin = grow(*m_heap, m_begin, used, capacity);
+            m_begin = grow(m_heap, m_begin, used, capacity);
             m_top = m_begin + used;
             m_end = m_begin + capacity;
         }
@@ -6321,8 +6296,17 @@ class small_stack
     T* m_begin;
     T* m_top;
     T* m_end;
-    std::vector<T>* m_heap;
+    std::vector<T>& m_heap;
 };
+
+/// a string literal at w, without its terminating NUL (after room())
+/// @return a pointer past it
+template<std::size_t N>
+NLOHMANN_VIEW_ALWAYS_INLINE char* put_literal(char* w, const char (&s)[N]) noexcept // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+{
+    std::memcpy(w, s, N - 1);
+    return w + N - 1;
+}
 
 /// how the view's dump() writes a value
 struct dump_style
@@ -6547,12 +6531,6 @@ class view_serializer
             }
             w += n;
         };
-        // a literal of n bytes (after room(n))
-        const auto literal = [&](const char* text, std::size_t n)
-        {
-            std::memcpy(w, text, n);
-            w += n;
-        };
         // a string that is not a plain string of the source (out of line, so
         // that the cursor stays in a register here)
         const auto escaped = [&](const node & n)
@@ -6638,11 +6616,11 @@ class view_serializer
                     room(8);
                     if ((n->flags & node_flags::is_true) != 0)
                     {
-                        literal("true", 4);
+                        w = put_literal(w, "true");
                     }
                     else
                     {
-                        literal("false", 5);
+                        w = put_literal(w, "false");
                     }
                     break;
                 case value_t::object:
@@ -6652,7 +6630,7 @@ class view_serializer
                     room(8);
                     if (n->len == 0)
                     {
-                        literal(object ? "{}" : "[]", 2);
+                        w = object ? put_literal(w, "{}") : put_literal(w, "[]");
                     }
                     else
                     {
@@ -6672,7 +6650,7 @@ class view_serializer
                 }
                 case value_t::null:
                     room(8);
-                    literal("null", 4);
+                    w = put_literal(w, "null");
                     break;
                 case value_t::binary:    // LCOV_EXCL_LINE (not in a document)
                 case value_t::discarded: // LCOV_EXCL_LINE
@@ -6852,7 +6830,7 @@ class view_serializer
                 // check also keeps an image that was only checked for bounds,
                 // whose token may not be made of digits, from the counted
                 // overload)
-                const auto& powers = ::nlohmann::detail::dtoa_impl::powers_of_ten_16();
+                const auto& powers = ::nlohmann::detail::dtoa_impl::powers_of_ten();
                 const unsigned count = int_digits + frac_digits;
                 return count - 1u < 15u && d.w >= powers[count - 1u] && d.w < powers[count]
                        ? ::nlohmann::detail::dtoa_impl::write_short_decimal(w, d.w, static_cast<int>(count), static_cast<int>(d.exponent))
