@@ -174,8 +174,11 @@ inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexc
 /// A stack that starts in a buffer of the caller (a local array) and moves to
 /// the heap (a vector of the caller) only when that is full, so that dumps of
 /// shallow documents need no allocation. The top is a pointer, as in
-/// std::vector. The address of the stack never escapes (the growth gets the
-/// vector and returns the new storage), so its pointers stay in registers.
+/// std::vector. grow() is static and out of line: it gets the vector and the
+/// used range and returns the new storage, so the address of the stack never
+/// reaches a call. Otherwise the compiler would have to keep the three
+/// pointers in memory and load and store them on every push_back() and
+/// pop_back(), not just when growing.
 template<typename T>
 class small_stack
 {
