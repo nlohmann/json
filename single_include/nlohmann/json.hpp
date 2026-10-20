@@ -32299,6 +32299,179 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
+inline bool next_utf16_code_unit(const char*& p, const char* end, std::uint16_t& pending_surrogate, std::uint16_t& out_code_unit) noexcept
+{
+    if (pending_surrogate != 0)
+    {
+        out_code_unit = pending_surrogate;
+        pending_surrogate = 0;
+        return true;
+    }
+
+    if (p >= end)
+    {
+        return false;
+    }
+
+    const auto b0 = static_cast<unsigned char>(*p++);
+    if (b0 < 0x80)
+    {
+        out_code_unit = static_cast<std::uint16_t>(b0);
+        return true;
+    }
+    if ((b0 & 0xE0) == 0xC0)
+    {
+        if (p < end)
+        {
+            const auto b1 = static_cast<unsigned char>(*p++);
+            const auto cp = static_cast<std::uint32_t>(((b0 & 0x1F) << 6) | (b1 & 0x3F));
+            out_code_unit = static_cast<std::uint16_t>(cp);
+            return true;
+        }
+    }
+    else if ((b0 & 0xF0) == 0xE0)
+    {
+        if (p + 1 < end)
+        {
+            const auto b1 = static_cast<unsigned char>(*p++);
+            const auto b2 = static_cast<unsigned char>(*p++);
+            const auto cp = static_cast<std::uint32_t>(((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F));
+            out_code_unit = static_cast<std::uint16_t>(cp);
+            return true;
+        }
+    }
+    else if ((b0 & 0xF8) == 0xF0)
+    {
+        if (p + 2 < end)
+        {
+            const auto b1 = static_cast<unsigned char>(*p++);
+            const auto b2 = static_cast<unsigned char>(*p++);
+            const auto b3 = static_cast<unsigned char>(*p++);
+            const auto cp = static_cast<std::uint32_t>(((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F));
+            if (cp >= 0x10000 && cp <= 0x10FFFF)
+            {
+                const auto u = cp - 0x10000;
+                out_code_unit = static_cast<std::uint16_t>(0xD800 + (u >> 10));
+                pending_surrogate = static_cast<std::uint16_t>(0xDC00 + (u & 0x3FF));
+                return true;
+            }
+        }
+    }
+    out_code_unit = static_cast<std::uint16_t>(b0);
+    return true;
+}
+
+struct utf16_code_unit_less
+{
+    template<typename StringType>
+    bool operator()(const StringType& a, const StringType& b) const noexcept
+    {
+        const char* p1 = a.data();
+        const char* const end1 = p1 + a.size();
+        const char* p2 = b.data();
+        const char* const end2 = p2 + b.size();
+
+        std::uint16_t pending1 = 0;
+        std::uint16_t pending2 = 0;
+        std::uint16_t cu1 = 0;
+        std::uint16_t cu2 = 0;
+
+        while (true)
+        {
+            const bool has1 = next_utf16_code_unit(p1, end1, pending1, cu1);
+            const bool has2 = next_utf16_code_unit(p2, end2, pending2, cu2);
+
+            if (!has1)
+            {
+                return has2;
+            }
+            if (!has2)
+            {
+                return false;
+            }
+            if (cu1 != cu2)
+            {
+                return cu1 < cu2;
+            }
+        }
+    }
+};
+
+inline char* append_exponent_ecmascript(char* buf, int e) noexcept
+{
+    if (e < 0)
+    {
+        *buf++ = '-';
+        e = -e;
+    }
+    else
+    {
+        *buf++ = '+';
+    }
+
+    char temp[16];
+    int idx = 0;
+    auto val = static_cast<std::uint32_t>(e);
+    if (val == 0)
+    {
+        *buf++ = '0';
+        return buf;
+    }
+    while (val > 0)
+    {
+        temp[idx++] = static_cast<char>('0' + (val % 10));
+        val /= 10;
+    }
+    while (idx > 0)
+    {
+        *buf++ = temp[--idx];
+    }
+    return buf;
+}
+
+inline char* format_buffer_ecmascript(char* buf, int len, int decimal_exponent) noexcept
+{
+    const int k = len;
+    const int n = len + decimal_exponent;
+
+    if (k <= n && n <= 21)
+    {
+        std::memset(buf + k, '0', static_cast<std::size_t>(n - k));
+        return buf + n;
+    }
+
+    if (0 < n && n <= 21)
+    {
+        std::memmove(buf + (n + 1), buf + n, static_cast<std::size_t>(k - n));
+        buf[n] = '.';
+        return buf + (k + 1);
+    }
+
+    if (-6 < n && n <= 0)
+    {
+        const auto zeros = static_cast<std::size_t>(-n);
+        std::memmove(buf + (2 + zeros), buf, static_cast<std::size_t>(k));
+        buf[0] = '0';
+        buf[1] = '.';
+        std::memset(buf + 2, '0', zeros);
+        return buf + (2 + zeros + static_cast<std::size_t>(k));
+    }
+
+    if (k == 1)
+    {
+        buf += 1;
+    }
+    else
+    {
+        std::memmove(buf + 2, buf + 1, static_cast<std::size_t>(k - 1));
+        buf[1] = '.';
+        buf += 1 + static_cast<std::size_t>(k);
+    }
+
+    *buf++ = 'e';
+    return append_exponent_ecmascript(buf, n - 1);
+}
+
 ///////////////////
 // serialization //
 ///////////////////
@@ -32381,6 +32554,180 @@ class serializer
     {
         dump_element(val, current_indent, 0);
         flush();
+    }
+
+    /*!
+    @brief serialization using JSON Canonicalization Scheme (RFC 8785)
+
+    @param[in] val  value to serialize
+    */
+    void dump_canonical(const BasicJsonType& val)
+    {
+        dump_canonical_internal(val);
+        flush();
+    }
+
+  JSON_PRIVATE_UNLESS_TESTED:
+    /*!
+    @brief worker for @ref dump_canonical
+    */
+    void dump_canonical_internal(const BasicJsonType& val)
+    {
+        switch (val.m_data.m_type)
+        {
+            case value_t::object:
+            {
+                const auto* obj = val.m_data.m_value.object;
+                if (obj->empty())
+                {
+                    put_literal("{}");
+                    return;
+                }
+
+                put_char('{');
+
+                using value_type = typename BasicJsonType::object_t::value_type;
+                std::vector<const value_type*> sorted_elements;
+                sorted_elements.reserve(obj->size());
+                for (const auto& el : *obj)
+                {
+                    sorted_elements.push_back(&el);
+                }
+
+                std::sort(sorted_elements.begin(), sorted_elements.end(),
+                          [](const value_type* a, const value_type* b) {
+                              return utf16_code_unit_less{}(a->first, b->first);
+                          });
+
+                for (std::size_t i = 0; i < sorted_elements.size(); ++i)
+                {
+                    if (i > 0)
+                    {
+                        put_char(',');
+                    }
+                    put_char('"');
+                    dump_escaped(sorted_elements[i]->first);
+                    put_char('"');
+                    put_char(':');
+                    dump_canonical_internal(sorted_elements[i]->second);
+                }
+
+                put_char('}');
+                return;
+            }
+
+            case value_t::array:
+            {
+                const auto* arr = val.m_data.m_value.array;
+                if (arr->empty())
+                {
+                    put_literal("[]");
+                    return;
+                }
+
+                put_char('[');
+                for (std::size_t i = 0; i < arr->size(); ++i)
+                {
+                    if (i > 0)
+                    {
+                        put_char(',');
+                    }
+                    dump_canonical_internal((*arr)[i]);
+                }
+                put_char(']');
+                return;
+            }
+
+            case value_t::string:
+            {
+                put_char('"');
+                dump_escaped(*val.m_data.m_value.string);
+                put_char('"');
+                return;
+            }
+
+            case value_t::boolean:
+            {
+                if (val.m_data.m_value.boolean)
+                {
+                    put_literal("true");
+                }
+                else
+                {
+                    put_literal("false");
+                }
+                return;
+            }
+
+            case value_t::number_integer:
+            {
+                dump_integer(val.m_data.m_value.number_integer);
+                return;
+            }
+
+            case value_t::number_unsigned:
+            {
+                dump_integer(val.m_data.m_value.number_unsigned);
+                return;
+            }
+
+            case value_t::number_float:
+            {
+                dump_float_canonical(val.m_data.m_value.number_float, &val);
+                return;
+            }
+
+            case value_t::null:
+            {
+                put_literal("null");
+                return;
+            }
+
+            case value_t::binary:
+            case value_t::discarded:
+            default:
+            {
+                JSON_THROW(type_error::create(exception_id::type_not_serializable, concat("type cannot be serialized in canonical JSON (RFC 8785): ", val.type_name()), &val));
+            }
+        }
+    }
+
+    /*!
+    @brief dump a floating-point number according to RFC 8785 (ECMAScript Number::toString)
+    */
+    void dump_float_canonical(number_float_t x, const BasicJsonType* context)
+    {
+        if (!std::isfinite(x))
+        {
+            JSON_THROW(out_of_range::create(exception_id::number_overflow, "cannot serialize non-finite numbers in canonical mode", context));
+        }
+
+        if (x == 0)
+        {
+            put_char('0');
+            return;
+        }
+
+        if (std::signbit(x))
+        {
+            put_char('-');
+            x = -x;
+        }
+
+        char buf[128];
+        int len = 0;
+        int decimal_exponent = 0;
+        ::nlohmann::detail::dtoa_impl::grisu2(buf, len, decimal_exponent, x);
+
+        char* const end = format_buffer_ecmascript(buf, len, decimal_exponent);
+        const auto str_len = static_cast<std::size_t>(end - buf);
+
+        if (JSON_HEDLEY_UNLIKELY(write_buffer_pos + str_len > write_buffer.size()))
+        {
+            flush();
+        }
+        std::memcpy(write_buffer.data() + write_buffer_pos, buf, str_len);
+        write_buffer_pos += str_len;
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -37630,6 +37977,28 @@ public:
         }
 
         return result;
+    }
+
+    /// @brief serialization using JSON Canonicalization Scheme (RFC 8785)
+    /// @return canonical JSON representation
+    /// @sa https://datatracker.ietf.org/doc/html/rfc8785
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    string_t dump_canonical() const
+    {
+        string_t result;
+        detail::output_string_adapter<char, string_t> string_adapter(result);
+        serializer s(string_adapter, ' ', false, false, 0, error_handler_t::strict);
+        s.dump_canonical(*this);
+        return result;
+    }
+
+    /// @brief serialization using JSON Canonicalization Scheme (RFC 8785)
+    /// @sa https://datatracker.ietf.org/doc/html/rfc8785
+    static void dump_canonical(const basic_json& j, detail::output_adapter<char> o)
+    {
+        const detail::output_adapter_t<char> adapter = o;
+        serializer s(*adapter, ' ', false, false, 0, error_handler_t::strict);
+        s.dump_canonical(j);
     }
 
     /// @brief return the type of the JSON value (explicit)

@@ -123,6 +123,7 @@ Besides JSON text, a value can also be serialized to the more compact [binary fo
 ## See also
 
 - [`dump`](../api/basic_json/dump.md) - serialize to a JSON-formatted string
+- [`dump_canonical`](../api/basic_json/dump_canonical.md) - serialize using JSON Canonicalization Scheme (RFC 8785)
 - [`operator<<`](../api/operator_ltlt.md) - serialize to a stream
 - [`to_string`](../api/basic_json/to_string.md) - user-defined-conversion helper
 - [`std::formatter<basic_json>`](../api/basic_json/std_formatter.md) - use JSON values with `std::format` and `std::print`
