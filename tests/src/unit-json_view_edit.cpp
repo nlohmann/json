@@ -932,8 +932,11 @@ TEST_CASE("json_view edits: the chunks of new nodes")
     // and the rest of the first chunk is still used
     CHECK(alloc_nodes(*d, 50) == first + 10);
     CHECK(d->edits->chunks.size() == 2);
-    // a smaller request that does not fit starts a new (doubled) chunk
-    CHECK(alloc_nodes(*d, 10) == d->edits->chunks.back().get());
+    // a smaller request that does not fit starts a new (doubled) chunk; the
+    // call is a statement of its own, as the operands of == are unsequenced
+    // and MSVC reads chunks.back() before the call adds the chunk
+    const nlohmann::detail::view::node* const doubled = alloc_nodes(*d, 10);
+    CHECK(doubled == d->edits->chunks.back().get());
     CHECK(d->edits->chunks.size() == 3);
     CHECK(d->edits->chunk_end - d->edits->chunk_cur == 128 - 10);
     CHECK(d->edits->bytes == (64 + 100 + 128) * sizeof(nlohmann::detail::view::node));
