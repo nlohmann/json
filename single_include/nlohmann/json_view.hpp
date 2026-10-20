@@ -3518,15 +3518,15 @@ class view_serializer
                     m_out.finish();
                     return;
                 }
-                frame& f = stack.back();
-                if (f.pos == f.end)
+                if (stack.back().pos == stack.back().end)
                 {
-                    const bool object = f.object; // (f dangles after pop_back)
+                    const bool object = stack.back().object;
                     stack.pop_back();
                     newline(stack.size());
                     m_out.put(object ? '}' : ']');
                     continue;
                 }
+                frame& f = stack.back();
                 if (!f.first)
                 {
                     m_out.put(',');
