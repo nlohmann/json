@@ -1072,10 +1072,10 @@ inline std::uint64_t eight_digit_bytes(std::uint64_t abcdefgh) noexcept
 /// the byte stores once this is inlined)
 inline void store_msb_first(char* p, std::uint64_t v) noexcept
 {
-#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || defined(_MSC_VER) // (MSVC: little-endian on all its targets)
+#if JSON_LITTLE_ENDIAN_TARGET
     v = byteswap(v);
     std::memcpy(p, &v, sizeof(v));
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#elif JSON_BIG_ENDIAN_TARGET
     std::memcpy(p, &v, sizeof(v));
 #else
     for (unsigned i = 0; i < 8; ++i)

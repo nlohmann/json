@@ -201,8 +201,8 @@ inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexc
 /// targets; always inlined, as GCC otherwise calls it in the number loops)
 JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 {
-#if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-    // the byte order already matches (all MSVC targets are little-endian)
+#if JSON_LITTLE_ENDIAN_TARGET
+    // the byte order already matches
     std::uint64_t result = 0;
     std::memcpy(&result, b, sizeof(result));
     return result;

@@ -2565,6 +2565,22 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #endif
 #endif
 
+// the byte order of the target where the compiler tells it (std::endian is
+// C++20 and cannot select code in #if): JSON_LITTLE_ENDIAN_TARGET or
+// JSON_BIG_ENDIAN_TARGET is 1, or both are 0 where it is unknown (code then
+// handles the bytes one at a time); MSVC and x86 targets are little-endian
+#if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) \
+    || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    #define JSON_LITTLE_ENDIAN_TARGET 1
+    #define JSON_BIG_ENDIAN_TARGET 0
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    #define JSON_LITTLE_ENDIAN_TARGET 0
+    #define JSON_BIG_ENDIAN_TARGET 1
+#else
+    #define JSON_LITTLE_ENDIAN_TARGET 0
+    #define JSON_BIG_ENDIAN_TARGET 0
+#endif
+
 #ifdef JSON_HAS_CPP_17
     #define JSON_INLINE_VARIABLE inline
 #else
@@ -9904,8 +9920,8 @@ inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexc
 /// targets; always inlined, as GCC otherwise calls it in the number loops)
 JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 {
-#if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-    // the byte order already matches (all MSVC targets are little-endian)
+#if JSON_LITTLE_ENDIAN_TARGET
+    // the byte order already matches
     std::uint64_t result = 0;
     std::memcpy(&result, b, sizeof(result));
     return result;
@@ -28971,10 +28987,10 @@ inline std::uint64_t eight_digit_bytes(std::uint64_t abcdefgh) noexcept
 /// the byte stores once this is inlined)
 inline void store_msb_first(char* p, std::uint64_t v) noexcept
 {
-#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || defined(_MSC_VER) // (MSVC: little-endian on all its targets)
+#if JSON_LITTLE_ENDIAN_TARGET
     v = byteswap(v);
     std::memcpy(p, &v, sizeof(v));
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#elif JSON_BIG_ENDIAN_TARGET
     std::memcpy(p, &v, sizeof(v));
 #else
     for (unsigned i = 0; i < 8; ++i)
@@ -39695,6 +39711,8 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_UNLOCKED_FILE_IO
 #undef JSON_DTOA_SSE2
 #undef JSON_DTOA_NEON
+#undef JSON_LITTLE_ENDIAN_TARGET
+#undef JSON_BIG_ENDIAN_TARGET
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
