@@ -18,7 +18,8 @@ environment:
   matrix:
     # The Visual Studio 2017 jobs compile everything with /std:c++17, so they
     # only build the C++17 variant of each test, split into two jobs each to
-    # stay below AppVeyor's 60-minute limit per job.
+    # stay below AppVeyor's 60-minute limit per job. The Visual Studio 2019
+    # job builds the tests for all standards and is split for the same reason.
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       configuration: Debug
       platform: x86
@@ -50,7 +51,13 @@ environment:
       configuration: Release
       platform: x86
       CXX_FLAGS: "/W4 /WX"
-      CMAKE_OPTIONS: "-DJSON_ImplicitConversions=OFF"
+      CMAKE_OPTIONS: "-DJSON_ImplicitConversions=OFF -DJSON_TestShard=0/2"
+      GENERATOR: Visual Studio 16 2019
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      configuration: Release
+      platform: x86
+      CXX_FLAGS: "/W4 /WX"
+      CMAKE_OPTIONS: "-DJSON_ImplicitConversions=OFF -DJSON_TestShard=1/2"
       GENERATOR: Visual Studio 16 2019
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
