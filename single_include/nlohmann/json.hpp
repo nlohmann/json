@@ -24404,6 +24404,17 @@ class binary_writer
         JSON_THROW(type_error::create(exception_id::discarded_value_used, concat("cannot serialize discarded value to ", format_name), &j));
     }
 
+    /// how the range of integer type @a NumberType relates to that of @a TargetType
+    template<typename TargetType, typename NumberType>
+    struct integer_range
+    {
+        /// whether NumberType can hold values above the maximum of TargetType
+        static constexpr bool may_exceed_max = std::numeric_limits<NumberType>::digits > std::numeric_limits<TargetType>::digits;
+        /// whether NumberType can hold values below the minimum of TargetType
+        static constexpr bool may_fall_below_min = std::numeric_limits<NumberType>::is_signed
+            && (!std::numeric_limits<TargetType>::is_signed || may_exceed_max);
+    };
+
     /*!
     @brief whether integer @a n does not exceed the maximum of @a TargetType
 
@@ -24416,8 +24427,7 @@ class binary_writer
     template<typename TargetType, typename NumberType>
     static constexpr bool integer_fits_max(const NumberType n) noexcept
     {
-        return integer_fits_max<TargetType>(n, std::integral_constant < bool,
-                                            (std::numeric_limits<NumberType>::digits > std::numeric_limits<TargetType>::digits) > ());
+        return integer_fits_max<TargetType>(n, std::integral_constant<bool, integer_range<TargetType, NumberType>::may_exceed_max>());
     }
 
     template<typename TargetType, typename NumberType>
@@ -24440,8 +24450,7 @@ class binary_writer
     template<typename TargetType, typename NumberType>
     static constexpr bool integer_fits_min(const NumberType n) noexcept
     {
-        return integer_fits_min<TargetType>(n, std::integral_constant < bool, std::numeric_limits<NumberType>::is_signed &&
-                                            (!std::numeric_limits<TargetType>::is_signed || std::numeric_limits<NumberType>::digits > std::numeric_limits<TargetType>::digits) > ());
+        return integer_fits_min<TargetType>(n, std::integral_constant<bool, integer_range<TargetType, NumberType>::may_fall_below_min>());
     }
 
     template<typename TargetType, typename NumberType>
