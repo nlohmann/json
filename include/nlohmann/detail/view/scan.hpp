@@ -175,32 +175,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* skip_digits(const unsigned char
 /// powers of ten up to 10^19 as integers
 inline std::uint64_t int_pow10(unsigned k) noexcept
 {
-    static const std::array<std::uint64_t, 20> table =
-    {
-        {
-            1u,
-            10u,
-            100u,
-            1000u,
-            10000u,
-            100000u,
-            1000000u,
-            10000000u,
-            100000000u,
-            1000000000u,
-            10000000000u,
-            100000000000u,
-            1000000000000u,
-            10000000000000u,
-            100000000000000u,
-            1000000000000000u,
-            10000000000000000u,
-            100000000000000000u,
-            1000000000000000000u,
-            10000000000000000000u
-        }
-    };
-    return table[k];
+    return ::nlohmann::detail::dtoa_impl::powers_of_ten()[k];
 }
 
 /// value of 0 < k < 8 digits at p in one step if [p, p + 8) lies below
