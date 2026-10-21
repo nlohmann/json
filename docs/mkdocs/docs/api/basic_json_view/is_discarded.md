@@ -1,0 +1,60 @@
+# <small>nlohmann::basic_json_view::</small>is_discarded
+
+```cpp
+bool is_discarded() const noexcept;
+```
+
+Returns whether this view is invalid, i.e. does not refer to a value. This is the case for a default-constructed
+view (see [(constructor)](basic_json_view.md)), and for [`root()`](../basic_json_document/root.md) of a document
+that is itself [discarded](../basic_json_document/is_discarded.md) -- in particular, the root of a failed
+[`parse()`](../basic_json_document/parse.md) with `allow_exceptions` set to `#!cpp false`.
+
+A discarded view is also what [`operator[]`](operator[].md) returns for a missing key, an index out of range, or a
+JSON pointer that cannot be resolved, and for any access on a view that is itself discarded (so a chain such as
+`#!cpp v["a"]["b"]` is safe). [`at`](at.md) throws instead.
+
+## Return value
+
+`#!cpp true` if the view or its document is discarded, `#!cpp false` otherwise.
+
+## Exception safety
+
+No-throw guarantee: this function never throws exceptions.
+
+## Complexity
+
+Constant.
+
+## Notes
+
+A `basic_json_view` is not convertible to `#!cpp bool`: such a conversion would mean "refers to a value", whereas
+`basic_json` converts to the `#!cpp bool` it holds, so the same code would silently behave differently. Test
+`#!cpp !v.is_discarded()` explicitly.
+
+## Examples
+
+??? example
+
+    The example below classifies several parsed documents by the type of their root value, without materializing any
+    of them into a `BasicJsonType` value.
+
+    ```cpp
+    --8<-- "examples/basic_json_view__type_predicates.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/basic_json_view__type_predicates.output"
+    ```
+
+## See also
+
+- [operator[]](operator[].md) - access specified element; yields a discarded view where an element is missing
+- [(constructor)](basic_json_view.md) - the default constructor creates a discarded view
+- [is_discarded (basic_json_document)](../basic_json_document/is_discarded.md) - return whether the last parse failed
+- [`BasicJsonType::is_discarded`](../basic_json/is_discarded.md) - the corresponding function of `basic_json`
+
+## Version history
+
+- Added in version 3.13.0.

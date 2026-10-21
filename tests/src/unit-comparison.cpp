@@ -18,6 +18,7 @@
 
 #include <cctype>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <string>
 #include <utility>
@@ -869,3 +870,140 @@ TEST_CASE("containers are compared element by element")
     }
 }
 
+TEST_CASE("comparison of scalars (inline fast path)")
+{
+    const json::number_integer_t neg = -1;
+    const json::number_integer_t pos = 5;
+    const json::number_unsigned_t big = (std::numeric_limits<json::number_unsigned_t>::max)();
+
+    SECTION("same type")
+    {
+        CHECK(json(pos) == json(pos));
+        CHECK(json(pos) != json(neg));
+        CHECK(json(neg) < json(pos));
+        CHECK_FALSE(json(pos) < json(neg));
+        CHECK_FALSE(json(pos) < json(pos));
+        CHECK(json(pos) <= json(pos));
+
+        CHECK(json(1u) == json(1u));
+        CHECK(json(1u) < json(2u));
+        CHECK_FALSE(json(2u) < json(1u));
+
+        CHECK(json(1.5) == json(1.5));
+        CHECK(json(1.5) < json(2.5));
+        CHECK_FALSE(json(2.5) < json(1.5));
+        CHECK(json(-0.0) == json(0.0));
+    }
+
+    SECTION("mixed number types")
+    {
+        // negative signed vs unsigned must not wrap around
+        CHECK(json(neg) < json(1u));
+        CHECK(json(1u) > json(neg));
+        CHECK(json(neg) != json(big));
+        CHECK(json(neg) < json(big));
+        CHECK_FALSE(json(big) < json(neg));
+
+        CHECK(json(pos) == json(5u));
+        CHECK(json(5u) == json(pos));
+        CHECK(json(pos) < json(6u));
+        CHECK(json(pos) == json(5.0));
+        CHECK(json(5.0) == json(pos));
+        CHECK(json(5u) == json(5.0));
+        CHECK(json(neg) < json(0.5));
+        CHECK(json(0.5) < json(1u));
+    }
+
+    SECTION("boolean and null")
+    {
+        CHECK(json(true) == json(true));
+        CHECK(json(true) != json(false));
+        CHECK(json(false) < json(true));
+        CHECK_FALSE(json(true) < json(false));
+        CHECK_FALSE(json(true) < json(true));
+
+        CHECK(json(nullptr) == json(nullptr));
+        CHECK_FALSE(json(nullptr) < json(nullptr));
+        CHECK(json(nullptr) <= json(nullptr));
+        CHECK(json(nullptr) < json(false));
+        CHECK(json(nullptr) != json(false));
+        CHECK(json(nullptr) != json(0));
+    }
+
+    SECTION("string vs number")
+    {
+        CHECK(json("5") != json(5));
+        CHECK(json(5) != json("5"));
+        CHECK(json(5) < json("5")); // number < string by type order
+        CHECK_FALSE(json("5") < json(5));
+        CHECK(json(1.5) < json(""));
+        CHECK(json("a") == json("a"));
+        CHECK(json("a") < json("b"));
+    }
+
+    SECTION("NaN")
+    {
+        const json nan = std::numeric_limits<json::number_float_t>::quiet_NaN();
+        const json one = 1.0;
+
+        CHECK_FALSE(nan == nan);
+        CHECK(nan != nan);
+        CHECK_FALSE(nan < nan);
+        CHECK_FALSE(nan <= nan);
+        CHECK_FALSE(nan >= nan);
+        CHECK_FALSE(nan > nan);
+
+        CHECK_FALSE(nan == one);
+        CHECK_FALSE(one == nan);
+        CHECK_FALSE(nan < one);
+        CHECK_FALSE(one < nan);
+        CHECK_FALSE(nan <= one);
+        CHECK_FALSE(one <= nan);
+        CHECK_FALSE(nan >= one);
+        CHECK_FALSE(one >= nan);
+
+        // NaN against other number types
+        CHECK_FALSE(nan == json(1));
+        CHECK_FALSE(json(1) == nan);
+        CHECK_FALSE(nan < json(1u));
+        CHECK_FALSE(json(1u) < nan);
+
+    }
+
+    SECTION("discarded")
+    {
+        const json d(json::value_t::discarded);
+
+        CHECK_FALSE(d == d);
+        CHECK_FALSE(d < d);
+        CHECK_FALSE(d == json(1));
+        CHECK_FALSE(json(1) == d);
+        CHECK_FALSE(d < json(1));
+        CHECK_FALSE(json(1) < d);
+        CHECK_FALSE(d == json(nullptr));
+        CHECK_FALSE(json(nullptr) == d);
+
+    }
+
+    SECTION("scalar overloads")
+    {
+        CHECK(json(5) == 5);
+        CHECK(5 == json(5));
+        CHECK(json(5) < 6);
+        CHECK(4 < json(5));
+        CHECK(json(1.5) == 1.5);
+        CHECK(json(true) == true);
+        CHECK(json(5) != 6);
+        CHECK(json(1u) == 1.0);
+    }
+
+    SECTION("structured values still compare")
+    {
+        CHECK(json({1, 2}) == json({1, 2}));
+        CHECK(json({1, 2}) < json({1, 3}));
+        CHECK(json({{"a", 1}}) == json({{"a", 1}}));
+        CHECK(json::binary({1, 2}) == json::binary({1, 2}));
+        CHECK(json(1) < json::array());
+        CHECK(json::object() < json::array());
+    }
+}

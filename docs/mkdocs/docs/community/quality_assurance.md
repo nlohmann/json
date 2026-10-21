@@ -12,7 +12,7 @@ violations will result in a failed build.
 
 Note: C++20 modules support may hit compiler-specific issues not covered by the general compiler matrix below. See [Modules](../features/modules.md#known-issues) for known issues and workarounds.
 
-Note: Some modern features (like C++20 ranges or filesystem support) may be disabled on specific broken or incomplete toolchains even when standard feature-test macros indicate support. See [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md) and [`JSON_HAS_FILESYSTEM`](../api/macros/json_has_filesystem.md) for details on known exclusions.
+Note: Some modern features (like C++20 ranges or filesystem support) may be disabled on specific broken or incomplete toolchains even when standard feature-test macros indicate support. See [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md), [`JSON_HAS_RANGE_VIEW_CONVERSION`](../api/macros/json_has_range_view_conversion.md), and [`JSON_HAS_FILESYSTEM`](../api/macros/json_has_filesystem.md) for details on known exclusions.
 
 - [x] The library is compiled with 50+ different C++ compilers with different operating systems and platforms,
   including the oldest versions known to compile the library.
@@ -107,7 +107,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The library is compiled with all C++ language revisions (C++11, C++14, C++17, C++20, C++23, and C++26) to detect
   and fix language deprecations early.
 - [x] The library is checked for compiler warnings:
-  - On Clang, `-Weverything` is used with 8 exceptions.
+  - On Clang, `-Weverything` is used with 7 exceptions.
 
     ??? abstract "Clang warnings"
 
@@ -135,6 +135,9 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
   headers are included.
 - [x] On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs (see
   [`unit-windows_h.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-windows_h.cpp)).
+- [x] The library is compiled with Qt's keyword macros (`slots`, `signals`, `emit`, `foreach`, `forever`) being defined
+  to make sure it does not use them as identifiers (see
+  [`unit-qt_keywords.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-qt_keywords.cpp)).
 - [x] The library is compiled with exceptions disabled to support alternative means of error handling.
 
 ## Stable public API

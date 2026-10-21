@@ -52,8 +52,13 @@ int main()
     std::ostringstream os;
     os << j << oj << lit;
 
+    // json_document / json_view (json_view.hpp): zero-copy parse of a literal
+    const nlohmann::json_document doc = nlohmann::json_document::parse(R"({"a": 1, "list": [1, 2, 3]})");
+    const std::size_t doc_size = doc.root().size();
+
     // use every result so the references cannot be optimized away
     return (a == 1 && last == 3 && b == 2 && lit.size() == 3
-            && m.size() == 1 && !dumped.empty() && !os.str().empty())
+            && m.size() == 1 && !dumped.empty() && !os.str().empty()
+            && doc_size == 2)
            ? 0 : 1;
 }

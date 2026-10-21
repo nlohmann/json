@@ -26,8 +26,7 @@ To store objects in C++, a type is defined by the template parameters described 
 
 `StringType`
 :   the type of the keys or names (e.g., `std::string`). The comparison function `std::less<StringType>` is used to
-    order elements inside the container. `object_t::key_type` must be implicitly convertible to `string_t` (required by the
-    binary formats).
+    order elements inside the container.
 
 `AllocatorType`
 :   the allocator to use for objects (e.g., `std::allocator`)
@@ -37,7 +36,7 @@ To store objects in C++, a type is defined by the template parameters described 
 ### Default type
 
 With the default values for `ObjectType` (`std::map`), `StringType` (`std::string`), and `AllocatorType`
-(`std::allocator`), the default value for `object_t` is:
+(`std::allocator`), the default type for `object_t` is:
 
 ```cpp
 // until C++14

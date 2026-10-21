@@ -30,9 +30,9 @@ Requirements are split into two groups:
     diagnosed with dedicated error messages, and violating most of them results in a compiler error somewhere inside
     the library. Four violations are not caught at compile time at all:
 
-    - A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and can silently misparse
-      floating-point numbers, because the lexer may hand the buffer to `#!cpp std::strtod`, which reads up to the
-      terminating null character.
+    - A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and silently misparses numbers
+      stored as a `#!cpp long double` that is not IEEE 754 binary64 (e.g., the 80-bit x87 format), because the lexer
+      hands the buffer to `#!cpp std::strtold`.
     - A stateful [`AllocatorType`](#allocatortype) compiles and silently ignores its state: allocation, deallocation,
       and [`get_allocator()`](../../api/basic_json/get_allocator.md) each use a different default-constructed instance.
     - The two [cross-specialization conversions](#cross-specialization-conversions) below. These abort on an assertion
@@ -40,19 +40,19 @@ Requirements are split into two groups:
 
 ## Overview
 
-| Template parameter                                                | Default                           | Notable substitutes                                                   |
-|-------------------------------------------------------------------|-----------------------------------|-----------------------------------------------------------------------|
-| [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map.md), Abseil hash maps |
-| [`ArrayType`](#arraytype)                                         | `std::vector`                     | `#!cpp std::deque`                                                    |
-| [`StringType`](#stringtype)                                       | `std::string`                     | `std::string`-like types over `char`                                  |
-| [`BooleanType`](#booleantype)                                     | `bool`                            | none worth using                                                      |
-| [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype)  | `std::int64_t`                    | any signed integer type                                               |
-| [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) | `std::uint64_t`                   | any unsigned integer type at least as wide as `NumberIntegerType`     |
-| [`NumberFloatType`](#numberfloattype)                             | `double`                          | `float` (`long double`: no binary formats)                            |
-| [`AllocatorType`](#allocatortype)                                 | `std::allocator`                  | stateless allocators                                                  |
-| [`JSONSerializer`](#jsonserializer)                               | `adl_serializer`                  | serializers with the same interface                                   |
-| [`BinaryType`](#binarytype)                                       | `#!cpp std::vector<std::uint8_t>` | `#!cpp std::vector<char>`                                             |
-| [`CustomBaseClass`](#custombaseclass)                             | `void`                            | any default-constructible class                                       |
+| Template parameter                                                | Default                           | Notable substitutes                                                                              |
+|-------------------------------------------------------------------|-----------------------------------|--------------------------------------------------------------------------------------------------|
+| [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map.md), Abseil hash maps                            |
+| [`ArrayType`](#arraytype)                                         | `std::vector`                     | `#!cpp std::deque`                                                                               |
+| [`StringType`](#stringtype)                                       | `std::string`                     | `std::string`-like types over `char`                                                             |
+| [`BooleanType`](#booleantype)                                     | `bool`                            | none worth using                                                                                 |
+| [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype)  | `std::int64_t`                    | any signed integer type                                                                          |
+| [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) | `std::uint64_t`                   | any unsigned integer type at least as wide as `NumberIntegerType`, or `NumberIntegerType` itself |
+| [`NumberFloatType`](#numberfloattype)                             | `double`                          | `float` (`long double`: no binary formats)                                                       |
+| [`AllocatorType`](#allocatortype)                                 | `std::allocator`                  | stateless allocators                                                                             |
+| [`JSONSerializer`](#jsonserializer)                               | `adl_serializer`                  | serializers with the same interface                                                              |
+| [`BinaryType`](#binarytype)                                       | `#!cpp std::vector<std::uint8_t>` | `#!cpp std::vector<char>`                                                                        |
+| [`CustomBaseClass`](#custombaseclass)                             | `void`                            | any default-constructible class                                                                  |
 
 !!! warning "Third-party containers and incomplete types"
 
@@ -353,16 +353,21 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 ### Always required
 
 - A member type `value_type` that is one byte wide and `char`-compatible. The library stores and processes UTF-8
-  encoded `char` data and passes `data()` to functions that take a `#!cpp const char*`, such as `#!cpp std::strtod`.
+  encoded `char` data and passes `data()` to functions that take a `#!cpp const char*`, such as `#!cpp std::strtold`
+  (only used to parse a `#!cpp long double` that is not IEEE 754 binary64, see
+  [`NumberFloatType`](#numberfloattype)).
   `#!cpp std::wstring`, `#!cpp std::u16string`, and `#!cpp std::u32string` are **not** valid choices; see the FAQ on
   [wide string handling](../../home/faq.md#wide-string-handling).
 - Constructors: default, copy, move, from `#!cpp const char*` (which must not be `#!cpp explicit`), from
   `#!cpp (const char*, size_type)`, and from `#!cpp (size_type, char)`; and copy or move assignment.
 - Member functions `size()`, `clear()`, `resize(n, c)`, `data()`, `push_back(char)`, and `operator[]`
   (const and non-const, returning references). `c_str()` and `back()` are **not** required.
-- `data()` must return a pointer to a contiguous, **null-terminated** buffer -- the parser may hand it to
-  `#!cpp std::strtod`, which reads up to the null character. A type whose `data()` is not null-terminated does not
-  fail to compile; it can silently misparse floating-point numbers.
+- `data()` must return a pointer to a contiguous, **null-terminated** buffer. `#!cpp float`, `#!cpp double`, and a
+  `#!cpp long double` that is IEEE 754 binary64 are converted by the library itself and do not depend on this. For any
+  other `NumberFloatType` (a `#!cpp long double` of another format), the parser falls back to `#!cpp std::strtold` when
+  `#!cpp std::from_chars` is not available or declines the token, and `std::strtold` reads up to the null character. A type whose `data()`
+  is not null-terminated does not fail to compile; with such a `NumberFloatType` it can silently misparse
+  floating-point numbers.
 - `append(const char*, size_type)`, used by [`dump`](../../api/basic_json/dump.md), and `append(const StringType&)`,
   used by the CBOR reader for indefinite-length strings. The library's internal string concatenation additionally has
   to append a `#!cpp char` and a `#!cpp const char*`; for each it selects between `append(arg)`, `#!cpp operator+=`,
@@ -499,13 +504,14 @@ Both types are stored **directly** inside `basic_json`'s union.
 ### Always required
 
 - `#!cpp std::is_integral` must be satisfied: `NumberIntegerType` must be a **signed** integer type,
-  `NumberUnsignedType` an **unsigned** integer type. Class types are not supported -- among others, the constructors
-  taking integer values are constrained on `#!cpp std::is_integral`.
+  `NumberUnsignedType` an **unsigned** integer type or the same type as `NumberIntegerType` (see
+  [below](#same-type-for-both)). Class types are not supported -- among others, the constructors taking integer values
+  are constrained on `#!cpp std::is_integral`.
 - Trivially default-constructible, trivially copyable, and trivially destructible (union member).
 - `#!cpp std::numeric_limits` must be specialized for both types.
-- `NumberUnsignedType` must be able to represent the absolute value of every `NumberIntegerType` value; serialization
-  of negative numbers converts the value to `NumberUnsignedType`. A `#!cpp static_assert` requires it to be at least as
-  wide as `NumberIntegerType`, which is what that amounts to for the standard integer types.
+- An unsigned `NumberUnsignedType` must be able to represent the absolute value of every `NumberIntegerType` value;
+  serialization of negative numbers converts the value to `NumberUnsignedType`. A `#!cpp static_assert` requires it to
+  be at least as wide as `NumberIntegerType`, which is what that amounts to for the standard integer types.
 - Both types must fit into the internal 64-character number buffer used by
   [`dump`](../../api/basic_json/dump.md), which is the case for all standard integer types.
 - [`std::hash<basic_json>`](../../api/basic_json/std_hash.md) additionally requires `#!cpp std::hash` specializations.
@@ -517,6 +523,23 @@ is stored as [`number_float_t`](../../api/basic_json/number_float_t.md) instead.
 therefore silently changes parse results rather than raising an error. See
 [Number Handling](number_handling.md) for details.
 
+#### Same type for both
+
+`NumberUnsignedType` may be the same type as `NumberIntegerType`, e.g.
+`#!cpp nlohmann::json::with_integers_t<std::int64_t, std::int64_t>` (see
+[`with_integers_t`](../../api/basic_json/with_t.md)), for code that only wants to handle one integer type. Such a `basic_json` stores every integer as
+[`number_integer_t`](../../api/basic_json/number_integer_t.md):
+
+- [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md) is always `#!cpp false`, and
+  [`type()`](../../api/basic_json/type.md) never returns `value_t::number_unsigned`. Constructing a value from
+  `value_t::number_unsigned` gives a `value_t::number_integer` value.
+- Values of unsigned C++ types (e.g., `#!cpp 5u`) are converted to `NumberIntegerType`, so values above its maximum
+  wrap around, as values outside the range of a narrower `NumberIntegerType` already do.
+- The parsers store a non-negative integer above the maximum of `NumberIntegerType` (e.g., `18446744073709551615` for
+  `#!cpp std::int64_t`) as [`number_float_t`](../../api/basic_json/number_float_t.md), like any other integer that does
+  not fit.
+- Converting from a `basic_json` with distinct types turns its unsigned values into `number_integer_t` values.
+
 ### Compatible types
 
 | Type pair                                                                                    | Support                                                                                                                                                                                          |
@@ -524,8 +547,9 @@ therefore silently changes parse results rather than raising an error. See
 | `#!cpp std::int64_t` / `#!cpp std::uint64_t` (default)                                       | full                                                                                                                                                                                             |
 | `#!cpp std::int32_t` / `#!cpp std::uint32_t`, `#!cpp long long` / `#!cpp unsigned long long` | full; narrower types change which literals the parser can represent                                                                                                                              |
 | any other pair of standard signed/unsigned integer types                                     | full                                                                                                                                                                                             |
+| the same signed integer type for both, e.g. `#!cpp std::int64_t` / `#!cpp std::int64_t`      | full; every integer is stored as `number_integer_t`, see [above](#same-type-for-both)                                                                                                            |
 | class types, enumerations                                                                    | not usable; `#!cpp std::is_integral` must hold                                                                                                                                                   |
-| `#!cpp bool`, or a type already used for another member of the union                         | not usable; `#!cpp std::is_integral<bool>` is in fact `#!cpp true`, but the `get_impl_ptr` overloads for `boolean_t`, `number_integer_t`, `number_unsigned_t` and `number_float_t` would collide |
+| `#!cpp bool`, `number_float_t`, or the type of another member of the union                  | not usable; `#!cpp std::is_integral<bool>` is in fact `#!cpp true`, but the `get_impl_ptr` overloads for `boolean_t`, `number_integer_t`, `number_unsigned_t` and `number_float_t` would collide |
 
 ## `NumberFloatType`
 
@@ -541,16 +565,18 @@ therefore silently changes parse results rather than raising an error. See
 
 `NumberFloatType` must be one of `#!cpp float`, `#!cpp double`, or `#!cpp long double`:
 
-- The [parser](../parsing/index.md) converts number literals with `#!cpp std::from_chars` or, as a fallback, with
-  `#!cpp std::strtof`, `#!cpp std::strtod`, or `#!cpp std::strtold`; the library provides overloads for exactly these
-  three types.
+- The [parser](../parsing/index.md) converts number literals to `#!cpp float`, `#!cpp double`, and a
+  `#!cpp long double` that is IEEE 754 binary64 itself; other `#!cpp long double` formats are converted with
+  `#!cpp std::from_chars` where available, or with `#!cpp std::strtold`. The library provides overloads for exactly
+  these three types.
 - [`dump`](../../api/basic_json/dump.md) falls back to `#!cpp std::snprintf` with the `%g` and `%Lg` conversion
   specifiers, for which the library likewise provides only `#!cpp double` and `#!cpp long double` overloads
   (`#!cpp float` is promoted to `#!cpp double`).
 
-If `#!cpp std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary32 or binary64 number, `dump` uses the
-Grisu2 algorithm, which produces the shortest representation that round-trips. Otherwise the `snprintf` fallback with
-`max_digits10` digits is used.
+If `#!cpp std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary64 number, `dump` uses the algorithm of
+Żmij, which produces the shortest representation that round-trips. For IEEE 754 binary32 numbers, it uses Grisu2,
+which produces a short representation that round-trips. Otherwise the `snprintf` fallback with `max_digits10` digits is
+used.
 
 ### Required for the binary formats
 
@@ -562,7 +588,7 @@ binary32 or binary64 field and have no encoding for `#!cpp long double`.
 
 | Type                     | Support                                                                                                               |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| `#!cpp double` (default) | full; short round-trip output through Grisu2                                                                          |
+| `#!cpp double` (default) | full; shortest round-trip output through Żmij                                                                         |
 | `#!cpp float`            | full; short round-trip output through Grisu2                                                                          |
 | `#!cpp long double`      | `dump` and `parse` only; the binary format writers do not compile, as they only handle IEEE 754 binary32 and binary64 |
 | any other type           | not usable                                                                                                            |

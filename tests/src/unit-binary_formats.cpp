@@ -38,7 +38,7 @@ TEST_CASE("Binary Formats")
         const auto ubjson_2_size = json::to_ubjson(j, true).size();
         const auto ubjson_3_size = json::to_ubjson(j, true, true).size();
 
-        CHECK(json_size == 2090303);
+        CHECK(json_size == 2090234);
         CHECK(bjdata_1_size == 1112030);
         CHECK(bjdata_2_size == 1224148);
         CHECK(bjdata_3_size == 1224148);
@@ -51,16 +51,16 @@ TEST_CASE("Binary Formats")
         CHECK(ubjson_3_size == 1169069);
 
         CHECK((100.0 * double(json_size) / double(json_size)) == Approx(100.0));
-        CHECK((100.0 * double(bjdata_1_size) / double(json_size)) == Approx(53.199));
-        CHECK((100.0 * double(bjdata_2_size) / double(json_size)) == Approx(58.563));
-        CHECK((100.0 * double(bjdata_3_size) / double(json_size)) == Approx(58.563));
-        CHECK((100.0 * double(bon8_size) / double(json_size)) == Approx(50.509));
-        CHECK((100.0 * double(bson_size) / double(json_size)) == Approx(85.849));
-        CHECK((100.0 * double(cbor_size) / double(json_size)) == Approx(50.497));
-        CHECK((100.0 * double(msgpack_size) / double(json_size)) == Approx(50.526));
-        CHECK((100.0 * double(ubjson_1_size) / double(json_size)) == Approx(53.199));
-        CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(58.563));
-        CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(55.928));
+        CHECK((100.0 * double(bjdata_1_size) / double(json_size)) == Approx(53.201));
+        CHECK((100.0 * double(bjdata_2_size) / double(json_size)) == Approx(58.565));
+        CHECK((100.0 * double(bjdata_3_size) / double(json_size)) == Approx(58.565));
+        CHECK((100.0 * double(bon8_size) / double(json_size)) == Approx(50.511));
+        CHECK((100.0 * double(bson_size) / double(json_size)) == Approx(85.853));
+        CHECK((100.0 * double(cbor_size) / double(json_size)) == Approx(50.499));
+        CHECK((100.0 * double(msgpack_size) / double(json_size)) == Approx(50.528));
+        CHECK((100.0 * double(ubjson_1_size) / double(json_size)) == Approx(53.201));
+        CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(58.565));
+        CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(55.930));
     }
 
     SECTION("twitter.json")

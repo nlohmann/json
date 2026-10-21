@@ -35,156 +35,17 @@ using nlohmann::json;
 #include <sstream>
 #include <string>
 #include <valarray>
+#include <vector>
+
+#include "sax_event_loggers.hpp"
+
+using utils::SaxEventLogger;
+using utils::SaxEventLoggerExitAfterKey;
+using utils::SaxEventLoggerExitAfterStartArray;
+using utils::SaxEventLoggerExitAfterStartObject;
 
 namespace
 {
-struct SaxEventLogger : public nlohmann::json_sax<json>
-{
-    bool null() override
-    {
-        events.emplace_back("null()");
-        return true;
-    }
-
-    bool boolean(bool val) override
-    {
-        events.emplace_back(val ? "boolean(true)" : "boolean(false)");
-        return true;
-    }
-
-    bool number_integer(json::number_integer_t val) override
-    {
-        events.push_back("number_integer(" + std::to_string(val) + ")");
-        return true;
-    }
-
-    bool number_unsigned(json::number_unsigned_t val) override
-    {
-        events.push_back("number_unsigned(" + std::to_string(val) + ")");
-        return true;
-    }
-
-    bool number_float(json::number_float_t /*val*/, const std::string& s) override
-    {
-        events.push_back("number_float(" + s + ")");
-        return true;
-    }
-
-    bool string(std::string& val) override
-    {
-        events.push_back("string(" + val + ")");
-        return true;
-    }
-
-    bool binary(json::binary_t& val) override
-    {
-        std::string binary_contents = "binary(";
-        std::string comma_space;
-        for (auto b : val)
-        {
-            binary_contents.append(comma_space);
-            binary_contents.append(std::to_string(static_cast<int>(b)));
-            comma_space = ", ";
-        }
-        binary_contents.append(")");
-        events.push_back(binary_contents);
-        return true;
-    }
-
-    bool start_object(std::size_t elements) override
-    {
-        if (elements == (std::numeric_limits<std::size_t>::max)())
-        {
-            events.emplace_back("start_object()");
-        }
-        else
-        {
-            events.push_back("start_object(" + std::to_string(elements) + ")");
-        }
-        return true;
-    }
-
-    bool key(std::string& val) override
-    {
-        events.push_back("key(" + val + ")");
-        return true;
-    }
-
-    bool end_object() override
-    {
-        events.emplace_back("end_object()");
-        return true;
-    }
-
-    bool start_array(std::size_t elements) override
-    {
-        if (elements == (std::numeric_limits<std::size_t>::max)())
-        {
-            events.emplace_back("start_array()");
-        }
-        else
-        {
-            events.push_back("start_array(" + std::to_string(elements) + ")");
-        }
-        return true;
-    }
-
-    bool end_array() override
-    {
-        events.emplace_back("end_array()");
-        return true;
-    }
-
-    bool parse_error(std::size_t position, const std::string& /*last_token*/, const json::exception& /*ex*/) override
-    {
-        events.push_back("parse_error(" + std::to_string(position) + ")");
-        return false;
-    }
-
-    std::vector<std::string> events {}; // NOLINT(readability-redundant-member-init)
-};
-
-struct SaxEventLoggerExitAfterStartObject : public SaxEventLogger
-{
-    bool start_object(std::size_t elements) override
-    {
-        if (elements == (std::numeric_limits<std::size_t>::max)())
-        {
-            events.emplace_back("start_object()");
-        }
-        else
-        {
-            events.push_back("start_object(" + std::to_string(elements) + ")");
-        }
-        return false;
-    }
-};
-
-struct SaxEventLoggerExitAfterKey : public SaxEventLogger
-{
-    bool key(std::string& val) override
-    {
-        events.push_back("key(" + val + ")");
-        return false;
-    }
-};
-
-struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
-{
-    bool start_array(std::size_t elements) override
-    {
-        if (elements == (std::numeric_limits<std::size_t>::max)())
-        {
-            events.emplace_back("start_array()");
-        }
-        else
-        {
-            events.push_back("start_array(" + std::to_string(elements) + ")");
-        }
-        return false;
-    }
-};
-
 template <typename T>
 class proxy_iterator
 {
@@ -1355,3 +1216,139 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T, c
     CHECK(json::sax_parse(v, &l));
     CHECK(l.events.size() == 1);
 }
+
+namespace
+{
+// records the position and message of a parse error; reporting the error via
+// SAX does not throw, so the test also runs with JSON_NOEXCEPTION
+struct SaxErrorRecorder : public SaxEventLogger
+{
+    bool parse_error(std::size_t position, const std::string& /*last_token*/, const json::exception& ex) override
+    {
+        error = std::to_string(position) + " " + ex.what();
+        return false;
+    }
+
+    std::string error {}; // NOLINT(readability-redundant-member-init)
+};
+} // namespace
+
+TEST_CASE("parse error positions are the same for contiguous and stream input")
+{
+    // contiguous input derives the position from the input on error, stream
+    // input counts it while reading (see lexer::lazy_position); the cases
+    // cover newlines before the error, ungetting a newline after a number,
+    // newlines inside a string, a comment, and reads at the end of input
+    struct test_case
+    {
+        std::string input;
+        std::size_t byte;
+        std::string message;
+    };
+    const std::vector<test_case> cases =
+    {
+        {"[\n  1,\n  2\n", 12, "[json.exception.parse_error.101] parse error at line 4, column 1: syntax error while parsing array - unexpected end of input; expected ']'"},
+        {"[1\n,2,\n]", 8, "[json.exception.parse_error.101] parse error at line 3, column 1: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal"},
+        {"[1\n x]", 5, "[json.exception.parse_error.101] parse error at line 2, column 2: syntax error while parsing array - invalid literal; last read: '1<U+000A> x'; expected ']'"},
+        {"1\n2", 3, "[json.exception.parse_error.101] parse error at line 2, column 1: syntax error while parsing value - unexpected number literal; expected end of input"},
+        {
+            "{\"a\":\n\"b\nc\"}", 9, R"([json.exception.parse_error.101] parse error at line 3, column 0: syntax error while parsing value - invalid string: control character U+000A (LF) must be escaped to \u000A or \n; last read: '"b<U+000A>')"
+        },
+        {"/* a\n b */\n x", 13, "[json.exception.parse_error.101] parse error at line 3, column 2: syntax error while parsing value - invalid literal; last read: '/* a<U+000A> b */<U+000A> x'"},
+        {"\n\n", 3, "[json.exception.parse_error.101] parse error at line 3, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal"},
+        {"[\"a\",\n 1e\n]", 10, "[json.exception.parse_error.101] parse error at line 3, column 0: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1e<U+000A>'"},
+        {"[tru\n]", 5, "[json.exception.parse_error.101] parse error at line 2, column 0: syntax error while parsing value - invalid literal; last read: '[tru<U+000A>'"},
+    };
+
+    for (const auto& c : cases)
+    {
+        CAPTURE(c.input)
+        const std::string expected = std::to_string(c.byte) + " " + c.message;
+
+        SaxErrorRecorder string_sax;
+        CHECK_FALSE(json::sax_parse(c.input, &string_sax, json::input_format_t::json, true, true));
+        CHECK(string_sax.error == expected);
+
+        SaxErrorRecorder pointer_sax;
+        CHECK_FALSE(json::sax_parse(c.input.data(), c.input.data() + c.input.size(), &pointer_sax, json::input_format_t::json, true, true));
+        CHECK(pointer_sax.error == expected);
+
+        std::istringstream is(c.input);
+        SaxErrorRecorder stream_sax;
+        CHECK_FALSE(json::sax_parse(is, &stream_sax, json::input_format_t::json, true, true));
+        CHECK(stream_sax.error == expected);
+    }
+}
+
+#if !defined(JSON_NOEXCEPTION)
+TEST_CASE("indentation runs of every length around the 8-byte skip")
+{
+    // contiguous input skips the spaces after a newline 8 bytes at a time (see
+    // lexer::skip_indentation), stream input reads them one by one; results,
+    // byte offsets, and messages must be the same for runs that end anywhere
+    // relative to a word boundary, including at the end of the input
+    const auto parse_result = [](const std::string & input, bool contiguous)
+    {
+        try
+        {
+            if (contiguous)
+            {
+                return json::parse(input.data(), input.data() + input.size(), nullptr, true, true).dump();
+            }
+            std::istringstream is(input);
+            return json::parse(is, nullptr, true, true).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            return std::to_string(e.byte).append(" ").append(e.what());
+        }
+    };
+
+    // replace every '~' in a pattern by an indentation run
+    const auto indented = [](const std::string & pattern, const std::string & indent)
+    {
+        std::string result;
+        for (const char c : pattern)
+        {
+            if (c == '~')
+            {
+                result += indent;
+            }
+            else
+            {
+                result += c;
+            }
+        }
+        return result;
+    };
+
+    const std::vector<std::string> patterns =
+    {
+        "[\n~1,\n~2\n]",
+        "[\n~1,\n~x]",
+        "[\n~1,\n~",
+        "1\n~",
+        "[\n~\t1,\n~\r\n~2]",
+        "[\n~/* c */ 1]",
+        "[\n~1\n~2]",
+    };
+
+    for (std::size_t n = 0; n <= 33; ++n)
+    {
+        const std::string indent(n, ' ');
+        for (const auto& pattern : patterns)
+        {
+            const std::string input = indented(pattern, indent);
+            CAPTURE(n)
+            CAPTURE(input)
+            const std::string expected = parse_result(input, false);
+            CHECK(parse_result(input, true) == expected);
+            CHECK(json::accept(input.data(), input.data() + input.size(), true) == json::accept(input, true));
+        }
+    }
+
+    // and against fixed expectations, in case both paths broke the same way
+    CHECK(parse_result(indented("[\n~x]", std::string(16, ' ')), true) == "19 [json.exception.parse_error.101] parse error at line 2, column 17: syntax error while parsing value - invalid literal; last read: '[<U+000A>                x'");
+    CHECK(parse_result(indented("[\n~1]", std::string(17, ' ')), true) == "[1]");
+}
+#endif

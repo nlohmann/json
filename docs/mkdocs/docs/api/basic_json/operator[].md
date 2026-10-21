@@ -275,6 +275,9 @@ Strong exception safety: if an exception occurs, the original value stays intact
 - documentation on [runtime assertions](../../features/assertions.md)
 - see [`at`](at.md) for access by reference with range checking
 - see [`value`](value.md) for access with default value
+- [basic_json_view::operator[]](../basic_json_view/operator%5B%5D.md) - the same access on a zero-copy view (a duplicate
+  key resolves to the first member, whereas `parse()` keeps the last; a missing key gives a discarded view instead of
+  undefined behavior)
 
 ## Version history
 
@@ -286,4 +289,6 @@ Strong exception safety: if an exception occurs, the original value stays intact
 3. Added in version 3.11.0. Fixed in version 3.13.0 to consistently accept `std::string_view`-convertible keys, as
    already supported by [`at`](at.md), [`value`](value.md), [`find`](find.md), and other lookup functions.
 4. Added in version 2.0.0. A missing array index in the const version is guarded by a runtime assertion since
-   version 3.13.0.
+   version 3.13.0. Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) instead of
+[`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) for a one-character array index that is not
+a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.

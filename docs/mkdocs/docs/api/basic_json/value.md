@@ -119,6 +119,14 @@ changes to any JSON value.
 
 ## Notes
 
+!!! warning "`null` members are not missing"
+
+    The default value is used only if the key (or JSON Pointer) does not exist. A member that exists but is
+    `#!json null` is converted like any other value, so `#!cpp j.value("k", 0)` throws a
+    [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `"k"` is `#!json null`. See
+    [Access with default value](../../features/element_access/default_value.md)
+    for alternatives.
+
 !!! warning "Return type"
 
     The value function is a template, and the return type of the function is determined by the type of the provided
@@ -216,6 +224,7 @@ changes to any JSON value.
 
 - see [`at`](at.md) for access by reference with range checking
 - see [`operator[]`](operator%5B%5D.md) for unchecked access by reference
+- [basic_json_view::value](../basic_json_view/value.md) - the same access on a zero-copy view
 
 ## Version history
 
@@ -227,4 +236,6 @@ changes to any JSON value.
    [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md), and other lookup functions.
 3. Added in version 2.0.2. Extended to work with arrays in version 3.13.0, including fixing an issue where resolving
    `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or
-   `default_value`, as documented).
+   `default_value`, as documented). Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109)
+   instead of returning `default_value` for a one-character array index that is not a digit (e.g., `/x`) in version
+   3.13.0, as it already did for longer ones.

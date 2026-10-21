@@ -25,14 +25,15 @@ the type to use.
 `NumberUnsignedType`
 :   the type to store unsigned integers. It must be an **unsigned integral** type (`#!cpp std::is_integral`) with a
     `#!cpp std::numeric_limits` specialization, and it must be able to represent the absolute value of every
-    [`number_integer_t`](number_integer_t.md) value. See
+    [`number_integer_t`](number_integer_t.md) value. Alternatively, it can be the same type as
+    [`number_integer_t`](number_integer_t.md); then every integer is stored as `number_integer_t`. See
     [Template Parameter Requirements](../../features/types/template_parameters.md#numberintegertype-and-numberunsignedtype).
 
 ## Notes
 
 ### Default type
 
-With the default values for `NumberUnsignedType` (`std::uint64_t`), the default value for `number_unsigned_t` is
+With the default values for `NumberUnsignedType` (`std::uint64_t`), the default type for `number_unsigned_t` is
 `#!cpp std::uint64_t`.
 
 ### Default behavior
@@ -89,3 +90,4 @@ Integer number values are stored directly inside a `basic_json` type.
 ## Version history
 
 - Added in version 2.0.0.
+- Can be the same type as `number_integer_t` since version 3.13.0.

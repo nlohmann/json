@@ -125,7 +125,7 @@ endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # avoid stack overflow, see https://github.com/nlohmann/json/issues/2955
-    json_test_set_test_options("test-bon8;test-cbor;test-msgpack;test-ubjson;test-bjdata;test-binary_formats" LINK_OPTIONS /STACK:4000000)
+    json_test_set_test_options("test-bon8;test-cbor;test-msgpack;test-ubjson;test-bjdata;test-bjdata_round_trip_draft2;test-bjdata_round_trip_draft3;test-binary_formats" LINK_OPTIONS /STACK:4000000)
 endif()
 
 # disable exceptions for test-disabled_exceptions
@@ -292,6 +292,10 @@ if (JSON_TestSimdutf)
     endif()
 endif()
 
+# test-file_input checks from a second thread that parsing from a FILE* releases the file's lock
+find_package(Threads REQUIRED)
+json_test_set_test_options("test-file_input;test-file_input_unlocked_io_disabled" LINK_LIBRARIES Threads::Threads)
+
 # *DO* use json_test_set_test_options() above this line
 
 json_test_should_build_32bit_test(json_32bit_test json_32bit_test_only "${JSON_32bitTest}")
@@ -402,6 +406,52 @@ json_test_add_test_for(src/unit-diagnostic-positions.cpp
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
 
+# test reading from a std::istream again without scanning the get area in bulk
+json_test_set_test_options(test-stream-bulk-scan_disabled
+    COMPILE_DEFINITIONS JSON_DISABLE_STREAM_BULK_SCAN=1
+)
+json_test_add_test_for(src/unit-stream-bulk-scan.cpp
+    NAME test-stream-bulk-scan_disabled
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test reading from a std::istream again with JSON_PRECISE_STREAM_POSITION
+json_test_set_test_options(test-stream-bulk-scan_precise
+    COMPILE_DEFINITIONS JSON_PRECISE_STREAM_POSITION=1
+)
+json_test_add_test_for(src/unit-stream-bulk-scan.cpp
+    NAME test-stream-bulk-scan_precise
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test reading from a FILE* again with the locking stdio functions
+json_test_set_test_options(test-file_input_unlocked_io_disabled
+    COMPILE_DEFINITIONS JSON_DISABLE_UNLOCKED_FILE_IO=1
+)
+json_test_add_test_for(src/unit-file_input.cpp
+    NAME test-file_input_unlocked_io_disabled
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# the json_view parser again with the portable string scanning instead of
+# NEON/SSE2, and on x86-64 with the SSSE3 UTF-8 check (JSON_VIEW_USE_SSSE3)
+json_test_set_test_options(test-json_view_builder_portable
+    COMPILE_DEFINITIONS JSON_VIEW_NO_SIMD
+)
+json_test_add_test_for(src/unit-json_view_builder.cpp
+    NAME test-json_view_builder_portable
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$" AND NOT MSVC)
+    json_test_set_test_options(test-json_view_builder_ssse3
+        COMPILE_DEFINITIONS JSON_VIEW_USE_SSSE3
+        COMPILE_OPTIONS -mssse3
+    )
+    json_test_add_test_for(src/unit-json_view_builder.cpp
+        NAME test-json_view_builder_ssse3
+        MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+    )
+endif()
 endif()
 
 # *DO NOT* use json_test_set_test_options() below this line

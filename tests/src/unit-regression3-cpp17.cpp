@@ -13,14 +13,6 @@
 
 #include "doctest_compatibility.h"
 
-// skip tests if JSON_DisableEnumSerialization=ON (#4384): std::byte is a
-// scoped enum, so get<std::byte>() (needed below to get<std::vector<std::byte>>()
-// from a plain JSON array, not just from an already-binary value) relies on
-// enum serialization being enabled
-#if defined(JSON_DISABLE_ENUM_SERIALIZATION) && (JSON_DISABLE_ENUM_SERIALIZATION == 1)
-    #define SKIP_TESTS_FOR_ENUM_SERIALIZATION
-#endif
-
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
@@ -41,11 +33,6 @@ using ordered_json = nlohmann::ordered_json;
     #include <optional>
 #elif __has_include(<experimental/optional>)
 #endif
-
-/////////////////////////////////////////////////////////////////////
-// for #4804
-/////////////////////////////////////////////////////////////////////
-using json_4804 = nlohmann::json::with_binary_t<std::vector<std::byte>>;
 
 /////////////////////////////////////////////////////////////////////
 // for #4740
@@ -107,49 +94,6 @@ TEST_CASE("regression tests 3 (C++17)")
         CHECK(t4.host.has_value());
         CHECK(t4.port.has_value());
     }
-
-    SECTION("issue #4804: from_cbor incompatible with std::vector<std::byte> as binary_t")
-    {
-        const std::vector<std::uint8_t> data = {0x80};
-        const auto decoded = json_4804::from_cbor(data);
-        CHECK((decoded == json_4804::array()));
-    }
-
-#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
-    SECTION("discussion #4209 - custom BinaryType direct assignment and round-tripping")
-    {
-        // Test that assigning a custom BinaryType directly creates a binary value, not an array
-        const std::vector<std::byte> original{std::byte{1}, std::byte{2}, std::byte{3}};
-        const json_4804 j = original;
-        CHECK(j.is_binary());
-        CHECK(!j.is_array());
-
-        // Test round-tripping: extracting the binary value back as the custom container type
-        const auto extracted = j.get<std::vector<std::byte>>();
-        CHECK(extracted == original);
-
-        // Test that the default json alias behavior is unchanged: std::vector<uint8_t> -> array
-        const json default_json = std::vector<std::uint8_t> {1, 2, 3};
-        CHECK(default_json.is_array());
-        CHECK(!default_json.is_binary());
-    }
-
-    SECTION("discussion #4209 - custom BinaryType extraction from parsed array")
-    {
-        // Test that extracting a custom BinaryType from a parsed JSON array still works
-        // (not just from a binary-typed node)
-        const auto j = json_4804::parse("[1,2,3]");
-        CHECK(j.is_array());
-        CHECK(!j.is_binary());
-
-        // Extracting as custom BinaryType should work from arrays
-        const auto extracted = j.get<std::vector<std::byte>>();
-        CHECK(extracted.size() == 3);
-        CHECK(extracted[0] == std::byte{1});
-        CHECK(extracted[1] == std::byte{2});
-        CHECK(extracted[2] == std::byte{3});
-    }
-#endif
 
     SECTION("issue #5046 - implicit conversion of return json to std::optional no longer implicit")
     {

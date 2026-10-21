@@ -23,6 +23,7 @@
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
@@ -90,6 +91,28 @@ private:
         return self.end();
     }
 
+    /// @brief throw the exception of a failed at() lookup
+    /// @note kept out of line so that at_impl() stays small enough to inline
+    /// @throw std::out_of_range always
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_key_not_found()
+    {
+        JSON_THROW(std::out_of_range("key not found"));
+    }
+
+    /// @brief shared implementation of the const and non-const at() overloads
+    /// @throw std::out_of_range if @a key is not found
+    template<typename Self, typename KeyType>
+    static auto at_impl(Self& self, const KeyType& key) -> decltype((self.begin()->second))
+    {
+        const auto it = find_impl(self, key);
+        if (it == self.end())
+        {
+            throw_key_not_found();
+        }
+        return it->second;
+    }
+
     /// @brief remove the entry @a it points to, preserving order
     /// @note keys are not movable, so the tail is destroyed and re-constructed in place
     void erase_at(iterator it)
@@ -130,6 +153,17 @@ public:
         return {std::prev(this->end()), true};
     }
 
+    /// @brief add an element at the end without checking whether the key exists
+    /// @note The caller must guarantee that @a key is not yet contained, otherwise
+    ///       the container holds duplicate keys. This avoids the linear search of
+    ///       emplace() and operator[] when many keys known to be new are added.
+    template<class V, detail::enable_if_t<
+                 detail::is_constructible<T, V>::value, int> = 0>
+    void emplace_new_key(const key_type& key, V && t)
+    {
+        append(key, std::forward<V>(t));
+    }
+
     T& operator[](const key_type& key)
     {
         return emplace(key, T{}).first->second;
@@ -156,46 +190,26 @@ public:
 
     T& at(const key_type& key)
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     T & at(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     const T& at(const key_type& key) const
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const T & at(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        const auto it = find_impl(*this, key);
-        if (it == this->end())
-        {
-            JSON_THROW(std::out_of_range("key not found"));
-        }
-        return it->second;
+        return at_impl(*this, key);
     }
 
     size_type erase(const key_type& key)
@@ -246,6 +260,14 @@ public:
         // [ a, b, c, d, e, f, g, h, i, j ]
         //               ^        ^
         //             first    last
+
+        // Note on conformance: before C++20, [basic.life]/8 did not allow an
+        // object of a type with a const member (like value_type's const Key)
+        // to transparently replace the destroyed one, so strictly, accessing
+        // it through the vector's existing pointers would have required
+        // std::launder (which does not exist before C++17). C++20 dropped that
+        // condition (P1971R0, NB comment US 041). Compilers have always treated
+        // this pattern as intended, so it is kept deliberately.
 
         // Since we cannot move const Keys, we re-construct them in place.
         // We start at first and re-construct (viz. copy) the elements from

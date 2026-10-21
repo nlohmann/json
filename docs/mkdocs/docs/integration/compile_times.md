@@ -14,7 +14,8 @@ that cost, ordered by how much they typically save.
 
 Header files that only need to *name* the `json` type — for function declarations, members held by pointer or
 reference, or friend declarations — can include `<nlohmann/json_fwd.hpp>` instead of `<nlohmann/json.hpp>`. It only
-forward-declares `basic_json`, `json`, `ordered_json`, `json_pointer`, and `adl_serializer`. The translation units that
+forward-declares `basic_json`, `json_pointer`, `adl_serializer`, and `ordered_map`, and defines the aliases `json` and
+`ordered_json`. The translation units that
 actually use the values then include `<nlohmann/json.hpp>`.
 
 ```cpp title="person.hpp"

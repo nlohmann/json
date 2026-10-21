@@ -1,7 +1,7 @@
 <!-- https://squidfunk.github.io/mkdocs-material/reference/tooltips/#adding-a-glossary -->
 
 *[ADL]: Argument-dependent lookup
-*[API]: Application Programming Interfaces
+*[API]: Application Programming Interface
 *[ASCII]: American Standard Code for Information Interchange
 *[BDFL]: Benevolent Dictator for Life
 *[BJData]: Binary JData

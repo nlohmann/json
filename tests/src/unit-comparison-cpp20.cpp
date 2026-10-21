@@ -492,5 +492,35 @@ TEST_CASE("operator<=> of binary values with a different subtype does not depend
     }
 }
 
+TEST_CASE("comparison of scalars (inline fast path): operator<=>")
+{
+    // the three-way part of "comparison of scalars (inline fast path)" in
+    // unit-comparison.cpp, which is built for C++11 only
+    const json::number_integer_t neg = -1;
+
+    SECTION("NaN")
+    {
+        const json nan = std::numeric_limits<json::number_float_t>::quiet_NaN();
+        const json one = 1.0;
+        CHECK((nan <=> nan) == std::partial_ordering::unordered); // *NOPAD*
+        CHECK((nan <=> one) == std::partial_ordering::unordered); // *NOPAD*
+        CHECK((one <=> nan) == std::partial_ordering::unordered); // *NOPAD*
+        CHECK((one <=> json(2.0)) == std::partial_ordering::less); // *NOPAD*
+        CHECK((json(2.0) <=> one) == std::partial_ordering::greater); // *NOPAD*
+        CHECK((one <=> one) == std::partial_ordering::equivalent); // *NOPAD*
+        CHECK((json(neg) <=> json(1u)) == std::partial_ordering::less); // *NOPAD*
+        CHECK((json(nullptr) <=> json(nullptr)) == std::partial_ordering::equivalent); // *NOPAD*
+        CHECK((json(true) <=> json(false)) == std::partial_ordering::greater); // *NOPAD*
+    }
+
+    SECTION("discarded")
+    {
+        const json d(json::value_t::discarded);
+        CHECK((d <=> d) == std::partial_ordering::unordered); // *NOPAD*
+        CHECK((d <=> json(1)) == std::partial_ordering::unordered); // *NOPAD*
+        CHECK((json(1) <=> d) == std::partial_ordering::unordered); // *NOPAD*
+    }
+}
+
 #endif // JSON_HAS_THREE_WAY_COMPARISON
 #endif
