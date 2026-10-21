@@ -6146,13 +6146,6 @@ class output_buffer
         put(s, N - 1);
     }
 
-    void put_repeated(char c, std::size_t n)
-    {
-        reserve(n);
-        std::memset(m_pos, c, n);
-        m_pos += n;
-    }
-
     /// the write position and the end of the writable space, for a writer
     /// that keeps the position in a local variable (set_cursor() hands it back)
     char* cursor() const noexcept
@@ -6341,6 +6334,39 @@ NLOHMANN_VIEW_ALWAYS_INLINE char* put_literal(char* w, const char (&s)[N]) noexc
     return w + N - 1;
 }
 
+/// the depth of the innermost open container, counted only for indented output
+template<bool Counted>
+struct depth_counter
+{
+    std::size_t value = 0;
+    void open() noexcept
+    {
+        ++value;
+    }
+    std::size_t close() noexcept
+    {
+        return --value;
+    }
+    std::size_t get() const noexcept
+    {
+        return value;
+    }
+};
+
+template<>
+struct depth_counter<false>
+{
+    void open() noexcept {}
+    std::size_t close() noexcept
+    {
+        return 0;
+    }
+    std::size_t get() const noexcept
+    {
+        return 0;
+    }
+};
+
 /// how the view's dump() writes a value
 struct dump_style
 {
@@ -6377,117 +6403,48 @@ class view_serializer
 
     void dump(const node* root)
     {
-        if (!m_style.pretty)
+        if (m_style.ensure_ascii)
         {
-            if (m_style.ensure_ascii)
-            {
-                dump_compact_ascii(root);
-            }
-            else if (m_style.source_numbers)
-            {
-                dump_compact<true, false>(root);
-            }
-            else
-            {
-                dump_compact<false, false>(root);
-            }
-            return;
+            dump_ascii(root);
         }
-        struct frame
+        else if (m_style.pretty)
         {
-            const node* pos; ///< next element, or key of the next member
-            const node* end;
-            bool object;
-            bool first;  ///< nothing written yet
-        };
-        std::array<frame, 32> buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
-        std::vector<frame> heap;
-        small_stack<frame> stack(buffer.data(), buffer.size(), heap);
-        const node* n = root;
-        for (;;)
+            dump_pretty(root);
+        }
+        else if (m_style.source_numbers)
         {
-            // write the value at n
-            if (is_container(*n))
-            {
-                const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-                if (n->len == 0)
-                {
-                    m_out.put(object ? "{}" : "[]", 2);
-                }
-                else
-                {
-                    m_out.put(object ? '{' : '[');
-                    stack.push_back(frame{nav::first(m_doc, n), nav::end(m_doc, n), object, true});
-                }
-            }
-            else
-            {
-                write_scalar(*n);
-            }
-
-            // go to the next value: close finished containers, then separate
-            for (;;)
-            {
-                if (stack.empty())
-                {
-                    m_out.finish();
-                    return;
-                }
-                if (stack.back().pos == stack.back().end)
-                {
-                    const bool object = stack.back().object;
-                    stack.pop_back();
-                    newline(stack.size());
-                    m_out.put(object ? '}' : ']');
-                    continue;
-                }
-                frame& f = stack.back();
-                if (!f.first)
-                {
-                    m_out.put(',');
-                }
-                f.first = false;
-                newline(stack.size());
-                if (f.object)
-                {
-                    write_string(*f.pos);
-                    if (m_style.pretty)
-                    {
-                        m_out.put(": ");
-                    }
-                    else
-                    {
-                        m_out.put(':');
-                    }
-                    n = nav::value(f.pos + 1);
-                    f.pos = document_data::after(f.pos + 1);
-                }
-                else
-                {
-                    n = nav::value(f.pos);
-                    f.pos = document_data::after(f.pos);
-                }
-                break;
-            }
+            dump_text<true, false, false>(root);
+        }
+        else
+        {
+            dump_text<false, false, false>(root);
         }
     }
 
   private:
     /// a string that is not a plain string of the source (decoded, or written
     /// by an edit), without ensure_ascii: runs without characters to escape
-    /// are copied
-    NLOHMANN_VIEW_NOINLINE void write_decoded(const node& n)
+    /// are copied. If validate is set, the string must be valid UTF-8: the
+    /// runs are found by the lexer's scan, which validates the sequences, and
+    /// invalid UTF-8 throws what basic_json::dump() throws. (The compact output
+    /// writes the bytes of a damaged image unchanged, and scans without
+    /// validating them.)
+    NLOHMANN_VIEW_NOINLINE void write_decoded(const node& n, bool validate)
     {
         const auto* const s = reinterpret_cast<const unsigned char*>(m_doc.str(n)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         m_out.put('"');
         for (std::size_t i = 0; i < n.len;)
         {
-            const std::size_t run = plain_output_run(s + i, n.len - i);
+            const std::size_t run = validate ? string_bulk_run(s + i, n.len - i) : plain_output_run(s + i, n.len - i);
             if (run != 0)
             {
                 m_out.put(reinterpret_cast<const char*>(s + i), run); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
                 i += run;
                 continue;
+            }
+            if (validate && s[i] >= 0x80)
+            {
+                invalid_utf8(s, n.len); // (the scan stopped at ill-formed UTF-8)
             }
             write_codepoint<false>(s[i], s + i, 1); // a quote, a backslash, or a control character
             ++i;
@@ -6495,21 +6452,46 @@ class view_serializer
         m_out.put('"');
     }
 
-    /// dump_compact() with ensure_ascii, out of line: the walk without it is
-    /// faster when it is not merged with this one into dump()
-    NLOHMANN_VIEW_NOINLINE void dump_compact_ascii(const node* root)
+    /// dump_text() with indentation, out of line: the compact walk is faster
+    /// when it is not merged with the indented ones into dump()
+    NLOHMANN_VIEW_NOINLINE void dump_pretty(const node* root)
     {
         if (m_style.source_numbers)
         {
-            dump_compact<true, true>(root);
+            dump_text<true, true, false>(root);
         }
         else
         {
-            dump_compact<false, true>(root);
+            dump_text<false, true, false>(root);
         }
     }
 
-    /// whether dump_compact() copies a string or key from the source: one of
+    /// dump_text() with ensure_ascii, out of line: the walk without it is
+    /// faster when it is not merged with this one into dump()
+    NLOHMANN_VIEW_NOINLINE void dump_ascii(const node* root)
+    {
+        if (m_style.pretty)
+        {
+            if (m_style.source_numbers)
+            {
+                dump_text<true, true, true>(root);
+            }
+            else
+            {
+                dump_text<false, true, true>(root);
+            }
+        }
+        else if (m_style.source_numbers)
+        {
+            dump_text<true, false, true>(root);
+        }
+        else
+        {
+            dump_text<false, false, true>(root);
+        }
+    }
+
+    /// whether dump_text() copies a string or key from the source: one of
     /// the source, and with ensure_ascii one without bytes >= 0x7F (an overload
     /// each, so that the walk without ensure_ascii is compiled exactly as
     /// before: with GCC, a condition that only folds away later changed its
@@ -6524,13 +6506,13 @@ class view_serializer
         return (n.flags & node_flags::storage) == 0 && is_ascii_without_delete(src + n.off, n.len);
     }
 
-    /// a string with ensure_ascii (dump_compact()), out of line
+    /// a string with ensure_ascii (dump_text()), out of line
     NLOHMANN_VIEW_NOINLINE void write_ascii_string(const node& n)
     {
         write_string(n);
     }
 
-    /// the copies of dump_compact() that are not fixed-size moves (long
+    /// the copies of dump_text() that are not fixed-size moves (long
     /// strings, or near the end of the source); out of line, so that the
     /// compiler does not merge the fixed-size moves into this call
     NLOHMANN_VIEW_NOINLINE static void copy_long(char* to, const char* from, std::size_t n) noexcept
@@ -6547,7 +6529,7 @@ class view_serializer
     }
 
     /*!
-    @brief the compact output (the default dump(), or with ensure_ascii)
+    @brief the output, compact (the default dump()) or indented, with or without ensure_ascii
 
     The same walk as dump(), with the write position in a local variable
     (stores through char pointers would otherwise force a reload of the
@@ -6558,8 +6540,8 @@ class view_serializer
     string of the source is copied only if it has no byte >= 0x7F (see
     is_ascii_without_delete()); any other string is written by write_string().
     */
-    template<bool SourceNumbers, bool Ascii>
-    void dump_compact(const node* root)
+    template<bool SourceNumbers, bool Pretty, bool Ascii>
+    void dump_text(const node* root)
     {
         struct frame
         {
@@ -6574,6 +6556,16 @@ class view_serializer
         const char* const src_end = src + m_doc.size;
         char* w = m_out.cursor();
         char* lim = m_out.limit();
+        // (indented output) a line break and 63 indentation characters, from
+        // which the line break of a level of up to 63 characters is a copy
+        std::array<char, 64> ruler; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): filled below if used
+        if (Pretty)
+        {
+            ruler.fill(m_style.indent_char);
+            ruler[0] = '\n';
+        }
+        const std::size_t indent = m_style.indent;
+        depth_counter<Pretty> level; // depth of the innermost open container (indented output)
         // room for n bytes and the slack
         const auto room = [&](std::size_t n)
         {
@@ -6605,6 +6597,22 @@ class view_serializer
             }
             w += n;
         };
+        // (indented output) the line break and the indentation of a level
+        const auto newline = [&](std::size_t depth)
+        {
+            const std::size_t count = 1 + (depth * indent);
+            room(count);
+            if (count <= ruler.size())
+            {
+                std::memcpy(w, ruler.data(), ruler.size());
+            }
+            else
+            {
+                *w = '\n';
+                std::memset(w + 1, m_style.indent_char, count - 1);
+            }
+            w += count;
+        };
         // a string that is not a plain string of the source (out of line, so
         // that the cursor stays in a register here)
         const auto escaped = [&](const node & n)
@@ -6616,7 +6624,7 @@ class view_serializer
             }
             else
             {
-                write_decoded(n);
+                write_decoded(n, Pretty);
             }
             w = m_out.cursor();
             lim = m_out.limit();
@@ -6717,6 +6725,7 @@ class view_serializer
                     {
                         *w++ = object ? '{' : '[';
                         stack.push_back(cur);
+                        level.open();
                         if (Editable)
                         {
                             cur = frame{nav::first(m_doc, n), nav::end(m_doc, n), object};
@@ -6759,6 +6768,10 @@ class view_serializer
                     {
                         break;
                     }
+                    if (Pretty)
+                    {
+                        newline(level.close());
+                    }
                     room(1);
                     *w++ = cur.object ? '}' : ']';
                     cur = stack.back();
@@ -6767,13 +6780,17 @@ class view_serializer
                 room(1);
                 *w++ = ',';
             }
+            if (Pretty)
+            {
+                newline(level.get());
+            }
             const node* const at = Editable ? cur.pos : n;
             if (cur.object)
             {
                 const node& key = *at;
                 if (copied(key, src, std::integral_constant<bool, Ascii>()))
                 {
-                    room(key.len + 3);
+                    room(key.len + (Pretty ? 4 : 3));
                     *w++ = '"';
                     copy(src + key.off, key.len);
                     w[0] = '"';
@@ -6783,8 +6800,12 @@ class view_serializer
                 else
                 {
                     escaped(key);
-                    room(1);
+                    room(Pretty ? 2 : 1);
                     *w++ = ':';
+                }
+                if (Pretty)
+                {
+                    *w++ = ' ';
                 }
                 if (Editable)
                 {
@@ -6801,69 +6822,6 @@ class view_serializer
                 n = nav::value(at);
                 cur.pos = document_data::after(at);
             }
-        }
-    }
-
-    void newline(std::size_t level)
-    {
-        if (m_style.pretty)
-        {
-            m_out.put('\n');
-            m_out.put_repeated(m_style.indent_char, level * m_style.indent);
-        }
-    }
-
-    void write_scalar(const node& n)
-    {
-        switch (static_cast<value_t>(n.kind))
-        {
-            case value_t::null:
-                m_out.put("null");
-                break;
-            case value_t::boolean:
-                if ((n.flags & node_flags::is_true) != 0)
-                {
-                    m_out.put("true");
-                }
-                else
-                {
-                    m_out.put("false");
-                }
-                break;
-            case value_t::string:
-                write_string(n);
-                break;
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            {
-                const char* const token = m_doc.str(n);
-                const std::uint32_t len = number_length(n);
-                if (!m_style.source_numbers && len == 2 && token[0] == '-' && token[1] == '0')
-                {
-                    m_out.put('0'); // parse() reads -0 as the integer 0
-                }
-                else
-                {
-                    m_out.put(token, len);
-                }
-                break;
-            }
-            case value_t::number_float:
-                if (m_style.source_numbers && (n.flags & node_flags::storage) != node_flags::edited)
-                {
-                    m_out.put(m_doc.str(n), n.len); // (a float set by an edit is written as with shortest)
-                }
-                else
-                {
-                    write_float_node(n);
-                }
-                break;
-            case value_t::object:    // LCOV_EXCL_LINE (containers are written by dump())
-            case value_t::array:     // LCOV_EXCL_LINE
-            case value_t::binary:    // LCOV_EXCL_LINE (not in a document)
-            case value_t::discarded: // LCOV_EXCL_LINE
-            default:                 // LCOV_EXCL_LINE
-                break;               // LCOV_EXCL_LINE
         }
     }
 

@@ -186,6 +186,37 @@ TEST_CASE("json_view dump")
         CHECK(deep_document.root().dump() == deep);
     }
 
+    SECTION("deep nesting, indented")
+    {
+        // indentations of up to and beyond the width of the writer's fixed-size copy
+        for (const int depth :
+                {
+                    1, 5, 20, 70, 300
+                })
+        {
+            std::string text;
+            for (int i = 0; i < depth; ++i)
+            {
+                text += i % 2 == 0 ? "[1," : "{\"k\":2,\"\\u00e9\":";
+            }
+            text += "[]";
+            for (int i = depth - 1; i >= 0; --i)
+            {
+                text += i % 2 == 0 ? "]" : "}";
+            }
+            const ordered_json_document d = ordered_json_document::parse(text);
+            const ordered_json j = ordered_json::parse(text);
+            for (const int indent :
+                    {
+                        0, 1, 2, 3, 8
+                    })
+            {
+                CHECK(d.root().dump(indent) == j.dump(indent));
+                CHECK(d.root().dump(indent, '\t') == j.dump(indent, '\t'));
+            }
+        }
+    }
+
     SECTION("the output buffer of a small value is small")
     {
         // an escaped key after the value: its node lies in the arena, so the
