@@ -1,6 +1,10 @@
 # generate_natvis.py
 
-Generate the Natvis debugger visualization file for all supported namespace combinations.
+Generate the Natvis debugger visualization file for namespace combinations with up to two ABI tags.
+
+The checked-in `nlohmann_json.natvis` covers the default namespace (no ABI tags), every single ABI tag, and every pair
+of ABI tags, with both versioned and unversioned namespace variants. Configurations that enable three or more ABI tags
+are not covered by this reduced file.
 
 The ABI tag list and the library version are parsed from
 `include/nlohmann/detail/abi_macros.hpp`, so this script must be re-run (via
