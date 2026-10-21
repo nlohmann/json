@@ -24,6 +24,7 @@ foreach(test default noversion)
         JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1
         JSON_DISABLE_STREAM_BULK_SCAN=1
         JSON_DISABLE_UNLOCKED_FILE_IO=1
+        JSON_NO_SIMD
         JSON_VIEW_NO_SIMD
         JSON_VIEW_USE_SSSE3)
     target_link_libraries(abi_config_${test}_all_tags PRIVATE abi_compat_main)

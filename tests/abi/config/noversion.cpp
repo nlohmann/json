@@ -61,6 +61,10 @@ TEST_CASE("default namespace without version component")
         expected += "_dufio";
 #endif
 
+#ifdef JSON_NO_SIMD
+        expected += "_ns";
+#endif
+
 #ifdef JSON_VIEW_NO_SIMD
         expected += "_vns";
 #endif

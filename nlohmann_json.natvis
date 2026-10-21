@@ -1707,6 +1707,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_ns -->
+    <Type Name="nlohmann::json_abi_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_vns -->
     <Type Name="nlohmann::json_abi_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_vns::detail::value_t::null">null</DisplayString>
@@ -3335,6 +3483,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_diag_ns -->
+    <Type Name="nlohmann::json_abi_diag_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_diag_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_diag_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_diag_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_diag_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_diag_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_diag_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_diag_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_diag_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_diag_vns -->
     <Type Name="nlohmann::json_abi_diag_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_vns::detail::value_t::null">null</DisplayString>
@@ -4815,6 +5111,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_ldvcmp_ns -->
+    <Type Name="nlohmann::json_abi_ldvcmp_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ldvcmp_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_ldvcmp_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ldvcmp_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ldvcmp_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ldvcmp_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ldvcmp_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ldvcmp_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_ldvcmp_vns -->
     <Type Name="nlohmann::json_abi_ldvcmp_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_vns::detail::value_t::null">null</DisplayString>
@@ -6147,6 +6591,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_dp_ns -->
+    <Type Name="nlohmann::json_abi_dp_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_dp_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_dp_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_dp_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_dp_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dp_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_dp_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_dp_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_dp_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_dp_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_dp_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_dp_vns -->
     <Type Name="nlohmann::json_abi_dp_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_vns::detail::value_t::null">null</DisplayString>
@@ -7331,6 +7923,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_bics_ns -->
+    <Type Name="nlohmann::json_abi_bics_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_bics_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_bics_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_bics_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_bics_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_bics_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_bics_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_bics_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_bics_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_bics_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_bics_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_bics_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_bics_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_bics_vns -->
     <Type Name="nlohmann::json_abi_bics_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_vns::detail::value_t::null">null</DisplayString>
@@ -8367,6 +9107,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_psp_ns -->
+    <Type Name="nlohmann::json_abi_psp_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_psp_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_psp_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_psp_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_psp_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_psp_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_psp_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_psp_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_psp_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_psp_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_psp_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_psp_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_psp_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_psp_vns -->
     <Type Name="nlohmann::json_abi_psp_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_vns::detail::value_t::null">null</DisplayString>
@@ -9255,6 +10143,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_snul_ns -->
+    <Type Name="nlohmann::json_abi_snul_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_snul_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_snul_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_snul_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_snul_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_snul_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_snul_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_snul_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_snul_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_snul_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_snul_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_snul_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_snul_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_snul_vns -->
     <Type Name="nlohmann::json_abi_snul_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_vns::detail::value_t::null">null</DisplayString>
@@ -9995,6 +11031,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_sbu8_ns -->
+    <Type Name="nlohmann::json_abi_sbu8_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_sbu8_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_sbu8_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_sbu8_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_sbu8_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_sbu8_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_sbu8_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_sbu8_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_sbu8_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_sbu8_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_sbu8_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_sbu8_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_sbu8_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_sbu8_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_sbu8_vns -->
     <Type Name="nlohmann::json_abi_sbu8_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_sbu8_vns::detail::value_t::null">null</DisplayString>
@@ -10587,6 +11771,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_ekmo_ns -->
+    <Type Name="nlohmann::json_abi_ekmo_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ekmo_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ekmo_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_ekmo_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ekmo_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ekmo_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ekmo_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ekmo_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ekmo_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ekmo_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_ekmo_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ekmo_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ekmo_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ekmo_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_ekmo_vns -->
     <Type Name="nlohmann::json_abi_ekmo_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ekmo_vns::detail::value_t::null">null</DisplayString>
@@ -11031,6 +12363,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_dsbs_ns -->
+    <Type Name="nlohmann::json_abi_dsbs_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dsbs_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_dsbs_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_dsbs_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_dsbs_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_dsbs_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dsbs_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_dsbs_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dsbs_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_dsbs_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_dsbs_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_dsbs_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_dsbs_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dsbs_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_dsbs_vns -->
     <Type Name="nlohmann::json_abi_dsbs_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dsbs_vns::detail::value_t::null">null</DisplayString>
@@ -11327,6 +12807,154 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_dufio_ns -->
+    <Type Name="nlohmann::json_abi_dufio_ns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dufio_ns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_dufio_ns after
+         3.12.0 (#5238) and in nlohmann::json_abi_dufio_ns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_dufio_ns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_dufio_ns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dufio_ns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_dufio_ns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dufio_ns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_dufio_ns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_dufio_ns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_dufio_ns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_dufio_ns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_ns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_dufio_vns -->
     <Type Name="nlohmann::json_abi_dufio_vns::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dufio_vns::detail::value_t::null">null</DisplayString>
@@ -11618,6 +13246,302 @@
                 *(m_data.m_value.object),view(simple)
             </ExpandedItem>
             <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dufio_vssse3_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ns_vns -->
+    <Type Name="nlohmann::json_abi_ns_vns::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ns_vns::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ns_vns after
+         3.12.0 (#5238) and in nlohmann::json_abi_ns_vns::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ns_vns::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ns_vns::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ns_vns_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ns_vns_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ns_vns_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ns_vns_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_ns_vns_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ns_vns_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ns_vns_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vns_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ns_vssse3 -->
+    <Type Name="nlohmann::json_abi_ns_vssse3::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ns_vssse3::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ns_vssse3 after
+         3.12.0 (#5238) and in nlohmann::json_abi_ns_vssse3::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ns_vssse3::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ns_vssse3::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ns_vssse3_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ns_vssse3_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ns_vssse3_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
+         base class of basic_json, and base class visualizers are inherited by derived types and evaluated
+         against the derived object, so m_data is accessible here. The class lives in nlohmann::json_abi_ns_vssse3_v3_12_0 after
+         3.12.0 (#5238) and in nlohmann::json_abi_ns_vssse3_v3_12_0::detail up to 3.12.0, so both names are listed. -->
+    <Type Name="nlohmann::json_abi_ns_vssse3_v3_12_0::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ns_vssse3_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ns_vssse3_v3_12_0::detail::value_t::array">
                 *(m_data.m_value.array),view(simple)
             </ExpandedItem>
         </Expand>

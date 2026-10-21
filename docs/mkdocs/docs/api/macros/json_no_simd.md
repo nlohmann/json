@@ -43,12 +43,12 @@ By default, `#!cpp JSON_NO_SIMD` is not defined, and vector instructions are use
     described here is used for what simdutf does not accept, so that errors are reported at the same position.
     `JSON_NO_SIMD` does not affect simdutf.
 
-!!! warning "Define consistently"
+!!! note "ABI compatibility"
 
-    The macro selects between two definitions of the library's internal scanning and formatting functions. It must
-    therefore be defined identically for **every** translation unit that includes the library; mixing translation units
-    that define it with ones that do not is an ODR violation. Prefer setting it as a compile definition on the target
-    rather than with `#!cpp #define` in individual source files.
+    The macro selects between two definitions of the library's internal scanning and formatting functions. Whether it
+    is defined is encoded in the [namespace](../../features/namespace.md) (tag `_ns`), resulting in distinct symbol
+    names. Translation units compiled with and without it can therefore be linked into the same program without One
+    Definition Rule (ODR) violations, but they cannot exchange instances of library types.
 
 ## Examples
 
