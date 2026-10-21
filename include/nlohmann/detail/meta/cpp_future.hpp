@@ -178,6 +178,7 @@ constexpr T clamp(T v, T lo, T hi) noexcept
 #ifdef __cpp_lib_clamp
     return std::clamp(v, lo, hi);
 #else
+    // NOLINTNEXTLINE(readability-avoid-nested-conditional-operator): a constant expression of C++11
     return v < lo ? lo : (hi < v ? hi : v);
 #endif
 }

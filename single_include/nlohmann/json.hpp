@@ -3870,6 +3870,7 @@ constexpr T clamp(T v, T lo, T hi) noexcept
 #ifdef __cpp_lib_clamp
     return std::clamp(v, lo, hi);
 #else
+    // NOLINTNEXTLINE(readability-avoid-nested-conditional-operator): a constant expression of C++11
     return v < lo ? lo : (hi < v ? hi : v);
 #endif
 }
@@ -9838,7 +9839,7 @@ JSON_HEDLEY_ALWAYS_INLINE To bit_cast(const From& from) noexcept
 #if defined(__cpp_lib_bit_cast)
     return std::bit_cast<To>(from);
 #else
-    To to;
+    To to {};
     std::memcpy(&to, &from, sizeof(To));
     return to;
 #endif
