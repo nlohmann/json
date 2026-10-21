@@ -72,6 +72,89 @@ enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata, bon8 };
 
 #ifndef JSON_NO_IO
 /*!
+A growable array of characters for the part of a token that an input adapter
+copied out of its window: unlike std::vector<char>::push_back(), appending a
+character takes no reference to a local, and is a few instructions when there
+is room.
+*/
+class token_carry_buffer
+{
+  public:
+    token_carry_buffer() = default;
+    token_carry_buffer(const token_carry_buffer&) = delete;
+    token_carry_buffer& operator=(const token_carry_buffer&) = delete;
+    token_carry_buffer(token_carry_buffer&& rhs) noexcept
+        : m_begin(rhs.m_begin), m_end(rhs.m_end), m_capacity_end(rhs.m_capacity_end)
+    {
+        rhs.m_begin = rhs.m_end = rhs.m_capacity_end = nullptr;
+    }
+    token_carry_buffer& operator=(token_carry_buffer&&) = delete;
+    ~token_carry_buffer()
+    {
+        delete[] m_begin;
+    }
+
+    void clear() noexcept
+    {
+        m_end = m_begin;
+    }
+
+    void push_back(char c)
+    {
+        if (JSON_HEDLEY_UNLIKELY(m_end == m_capacity_end))
+        {
+            grow(1);
+        }
+        *m_end++ = c;
+    }
+
+    void append(const char* first, const char* last)
+    {
+        const auto n = static_cast<std::size_t>(last - first);
+        if (n > static_cast<std::size_t>(m_capacity_end - m_end))
+        {
+            grow(n);
+        }
+        if (n != 0)
+        {
+            std::memcpy(m_end, first, n);
+        }
+        m_end += n;
+    }
+
+    /// replace the contents of @a out
+    void copy_to(std::vector<char>& out) const
+    {
+        out.assign(m_begin, m_end);
+    }
+
+  private:
+    /// make room for @a extra more characters
+    JSON_HEDLEY_NEVER_INLINE void grow(std::size_t extra)
+    {
+        const auto size = static_cast<std::size_t>(m_end - m_begin);
+        const auto capacity = static_cast<std::size_t>(m_capacity_end - m_begin);
+        std::size_t new_capacity = capacity < 32 ? 32 : 2 * capacity;
+        if (new_capacity < size + extra)
+        {
+            new_capacity = size + extra;
+        }
+        char* const data = new char[new_capacity];
+        if (size != 0)
+        {
+            std::memcpy(data, m_begin, size);
+        }
+        delete[] m_begin;
+        m_begin = data;
+        m_end = data + size;
+        m_capacity_end = data + new_capacity;
+    }
+
+    char* m_begin = nullptr;
+    char* m_end = nullptr;
+    char* m_capacity_end = nullptr;
+};
+/*!
 Input adapter for stdio file access. This adapter read only 1 byte and do not use any
  buffer. This adapter is a very low level adapter.
 */
@@ -209,6 +292,7 @@ class input_stream_adapter
         , token_segment(rhs.token_segment)
         , current_in_get_area(rhs.current_in_get_area)
         , tracking_token(rhs.tracking_token)
+        , no_get_area(rhs.no_get_area)
 #endif
     {
         rhs.is = nullptr;
@@ -302,6 +386,10 @@ class input_stream_adapter
             current_in_get_area = true;
             streambuf_access::bump(sb, 1);
             return std::char_traits<char>::to_int_type(*next);
+        }
+        if (no_get_area)
+        {
+            return get_character_no_get_area();
         }
 #endif
         return get_character_slow();
@@ -412,7 +500,7 @@ class input_stream_adapter
     // last one if @a drop_last.
     void copy_token(std::vector<char>& out, bool drop_last) const
     {
-        out = token_carry;
+        token_carry.copy_to(out);
         if (token_segment != nullptr)
         {
             out.insert(out.end(), token_segment, current_end());
@@ -489,6 +577,11 @@ class input_stream_adapter
         {
             (s->*(&streambuf_access::gbump))(n);
         }
+        // sbumpc() for an exhausted get area
+        static std::streambuf::int_type next_character(std::streambuf* s)
+        {
+            return (s->*(&streambuf_access::uflow))();
+        }
     };
 
     // one past the character last returned by get_character(), if that is in
@@ -509,16 +602,53 @@ class input_stream_adapter
     {
         if (token_segment != nullptr)
         {
-            token_carry.insert(token_carry.end(), token_segment, streambuf_access::get_end(sb));
+            token_carry.append(token_segment, streambuf_access::get_end(sb));
             token_segment = nullptr;
         }
     }
+
+#if !JSON_PRECISE_STREAM_POSITION
+    // The streambuf has no get area (e.g., std::cin synchronized with stdio):
+    // every character comes from uflow(), and the token is kept by value.
+    JSON_HEDLEY_NEVER_INLINE std::char_traits<char>::int_type get_character_no_get_area()
+    {
+        // the get area is exhausted, so this is what sbumpc() does
+        const auto res = streambuf_access::next_character(sb);
+        if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof() || streambuf_access::get_end(sb) != nullptr))
+        {
+            return get_character_no_get_area_other(res);
+        }
+        // current_in_get_area is false: only the first character of a get
+        // area, or the end of the input, is read here
+        if (tracking_token)
+        {
+            token_carry.push_back(std::char_traits<char>::to_char_type(res));
+        }
+        return res;
+    }
+
+    // @a res came from uflow() of a streambuf without a get area: it is the
+    // end of the input, or the streambuf has a get area now
+    JSON_HEDLEY_NEVER_INLINE std::char_traits<char>::int_type get_character_no_get_area_other(std::char_traits<char>::int_type res)
+    {
+        if (res == std::char_traits<char>::eof())
+        {
+            current_in_get_area = false;
+            is->clear(is->rdstate() | std::ios::eofbit);
+            return res;
+        }
+        // the consumed character is at gptr() - 1
+        after_refill(res, streambuf_access::get_ptr(sb) != streambuf_access::get_begin(sb));
+        return res;
+    }
+#endif
 
     // character @a c was just read into a new get area (@a in_get_area) or
     // returned without one
     void after_refill(std::char_traits<char>::int_type c, bool in_get_area)
     {
         current_in_get_area = in_get_area;
+        no_get_area = !in_get_area;
         if (!tracking_token)
         {
             return;
@@ -557,13 +687,16 @@ class input_stream_adapter
 #endif
 #if !JSON_DISABLE_STREAM_BULK_SCAN
     /// the part of the current token that was in earlier get areas
-    std::vector<char> token_carry{}; // NOLINT(readability-redundant-member-init)
+    token_carry_buffer token_carry{}; // NOLINT(readability-redundant-member-init)
     /// start of the current token's part in the get area, or nullptr
     const char* token_segment = nullptr;
     /// whether the character last returned by get_character() is in the get area
     bool current_in_get_area = false;
     /// whether a token is tracked at all; the binary readers never start one
     bool tracking_token = false;
+    /// whether the streambuf had no get area when it was last asked for a
+    /// character
+    bool no_get_area = false;
 #endif
 };
 #endif  // JSON_NO_IO
