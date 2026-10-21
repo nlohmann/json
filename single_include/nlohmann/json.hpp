@@ -8441,8 +8441,16 @@ NLOHMANN_JSON_NAMESPACE_END
     // 2 = Microsoft CRT _lock_file/_fgetc_nolock, 0 = none (std::fgetc, which
     // locks the file for every character). Only C libraries known to declare
     // the functions are listed; the macros are tested after <cstdio>, which
-    // defines __GLIBC__.
-    #if JSON_DISABLE_UNLOCKED_FILE_IO
+    // defines __GLIBC__. MemorySanitizer builds always use std::fgetc: glibc's
+    // inline getc_unlocked reads the stdio buffer directly, which glibc (not
+    // instrumented) filled, so MemorySanitizer would report a false positive.
+    #if defined(__has_feature)
+        #if __has_feature(memory_sanitizer)
+            #define JSON_UNLOCKED_FILE_IO_MSAN 1
+        #endif
+    #endif
+
+    #if JSON_DISABLE_UNLOCKED_FILE_IO || defined(JSON_UNLOCKED_FILE_IO_MSAN)
         #define JSON_UNLOCKED_FILE_IO 0
     #elif defined(_MSC_VER)
         #define JSON_UNLOCKED_FILE_IO 2
@@ -8451,6 +8459,7 @@ NLOHMANN_JSON_NAMESPACE_END
     #else
         #define JSON_UNLOCKED_FILE_IO 0
     #endif
+    #undef JSON_UNLOCKED_FILE_IO_MSAN
 #endif  // JSON_NO_IO
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
