@@ -1053,6 +1053,10 @@
          <lastmod>2026-10-21</lastmod>
     </url>
     <url>
+         <loc>https://json.nlohmann.me/api/macros/json_no_simd/</loc>
+         <lastmod>2026-10-21</lastmod>
+    </url>
+    <url>
          <loc>https://json.nlohmann.me/api/macros/json_no_thread_local/</loc>
          <lastmod>2026-10-21</lastmod>
     </url>

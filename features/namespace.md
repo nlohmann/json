@@ -27,6 +27,7 @@ The complete default namespace name is derived as follows:
       `_dsbs`.
     - [`JSON_DISABLE_UNLOCKED_FILE_IO`](../api/macros/json_disable_unlocked_file_io.md) defined non-zero appends
       `_dufio`.
+    - [`JSON_NO_SIMD`](../api/macros/json_no_simd.md) defined appends `_ns`.
     - [`JSON_VIEW_NO_SIMD`](../api/macros/json_view_no_simd.md) defined appends `_vns`.
     - [`JSON_VIEW_USE_SSSE3`](../api/macros/json_view_use_ssse3.md) defined appends `_vssse3`.
 - The inline namespace ends with the suffix `_v` followed by the 3 components of the version number separated by
@@ -114,6 +115,7 @@ follows:
   ([`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md)), `_ekmo`
   ([`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md)), `_dsbs`
   ([`JSON_DISABLE_STREAM_BULK_SCAN`](../api/macros/json_disable_stream_bulk_scan.md)), `_dufio`
-  ([`JSON_DISABLE_UNLOCKED_FILE_IO`](../api/macros/json_disable_unlocked_file_io.md)), `_vns`
+  ([`JSON_DISABLE_UNLOCKED_FILE_IO`](../api/macros/json_disable_unlocked_file_io.md)), `_ns`
+  ([`JSON_NO_SIMD`](../api/macros/json_no_simd.md)), `_vns`
   ([`JSON_VIEW_NO_SIMD`](../api/macros/json_view_no_simd.md)), and `_vssse3`
   ([`JSON_VIEW_USE_SSSE3`](../api/macros/json_view_use_ssse3.md)) in version 3.13.0.

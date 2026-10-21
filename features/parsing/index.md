@@ -58,6 +58,8 @@ Parsing a file from a `std::ifstream` is therefore only about 10 to 20 % slower 
 
 Two macros switch these optimizations off without changing any result: [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) for stream buffers that do not follow the usual `std::streambuf` contract, and [`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) for programs in which another thread must use the same `FILE` object while it is parsed.
 
+Where the target has them, strings are scanned with vector instructions: SSE2 on x86-64 (and SSSE3 for UTF-8 text, when the CPU has it) and NEON on AArch64. [`JSON_NO_SIMD`](https://json.nlohmann.me/api/macros/json_no_simd/index.md) selects portable code instead, again without changing any result.
+
 ## SAX vs. DOM parsing
 
 The library offers two parsing models:

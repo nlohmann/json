@@ -130,6 +130,12 @@ When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostrea
 
 See [full documentation of `JSON_NO_IO`](https://json.nlohmann.me/api/macros/json_no_io/index.md).
 
+## `JSON_NO_SIMD`
+
+When defined, the library uses only portable code instead of vector instructions (SSE2, SSSE3, NEON) for scanning strings and writing floating-point numbers. Results are the same either way. It is not defined by default.
+
+See [full documentation of `JSON_NO_SIMD`](https://json.nlohmann.me/api/macros/json_no_simd/index.md).
+
 ## `JSON_NO_THREAD_LOCAL`
 
 When defined, the library does not use `thread_local` storage. Copying a value and comparing two values then always avoid the call stack rather than descending into a bounded number of levels first, which is slower but yields the same values and the same comparisons.
