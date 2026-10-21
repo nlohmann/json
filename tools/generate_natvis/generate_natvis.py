@@ -20,9 +20,11 @@ def semver(v):
 
 
 def abi_info(repo_root):
-    """Derive the ABI tag list (in NLOHMANN_JSON_ABI_TAGS_CONCAT order) and the
+    """Derive the ABI tags (in NLOHMANN_JSON_ABI_TAGS_CONCAT order) and the
     library version from <repo_root>/include/nlohmann/detail/abi_macros.hpp,
-    so this script cannot drift from the header it visualizes."""
+    so this script cannot drift from the header it visualizes. Each tag is
+    returned as a (suffix, configuration macro, tag macro) tuple, for example
+    ('_diag', 'JSON_DIAGNOSTICS', 'NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS')."""
     abi_macros_hpp = os.path.join(repo_root, 'include', 'nlohmann', 'detail', 'abi_macros.hpp')
     with open(abi_macros_hpp) as f:
         content = f.read()
@@ -47,7 +49,9 @@ def abi_info(repo_root):
         match = re.search(r'#define\s+' + re.escape(ident) + r'\s+(_\w+)\s*\n', content)
         if not match:
             raise ValueError(f'could not find a non-empty #define for {ident} in {abi_macros_hpp}')
-        abi_tags.append(match.group(1))
+        # the option that enables the tag is the #if/#ifdef right above it
+        option = re.search(r'#\s*(?:if|ifdef)\s+(\w+)\s*\n\s*#define\s+' + re.escape(ident) + r'\s+_', content)
+        abi_tags.append((match.group(1), option.group(1) if option else '?', ident))
 
     version = {}
     for part in ('MAJOR', 'MINOR', 'PATCH'):
@@ -59,30 +63,79 @@ def abi_info(repo_root):
     return abi_tags, '{MAJOR}.{MINOR}.{PATCH}'.format(**version)
 
 
+def parse_tag_list(value, abi_tags):
+    """Turn one --abi-tags value ("_diag,dp") into the tuple of suffixes it
+    names, in namespace order; unknown tags and empty lists are errors."""
+    known = [suffix for suffix, _, _ in abi_tags]
+    requested = set()
+    for tag in value.split(','):
+        tag = tag.strip()
+        if not tag:
+            continue
+        if not tag.startswith('_'):
+            tag = '_' + tag
+        if tag not in known:
+            raise ValueError(f'unknown ABI tag {tag!r}; valid tags: {", ".join(known)} (see --list-tags)')
+        requested.add(tag)
+    if not requested:
+        raise ValueError(f'empty ABI tag list {value!r}; the namespace without tags is always generated')
+    return tuple(tag for tag in known if tag in requested)
+
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='Generate nlohmann_json.natvis. By default, it covers the namespaces with up to two ABI tags; '
+                    'use --abi-tags or --all for other configurations.')
     parser.add_argument('--version', type=semver,
                          help='Library version number (default: parsed from '
-                              'include/nlohmann/detail/abi_macros.hpp below "output")')
-    parser.add_argument('output', nargs='?', default=REPO_ROOT,
-                         help='Repository root: where include/nlohmann/detail/abi_macros.hpp is '
-                              'read from and where nlohmann_json.natvis is written '
+                              'include/nlohmann/detail/abi_macros.hpp below "repo_root")')
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--abi-tags', action='append', default=[], metavar='TAGS',
+                           help='Comma-separated list of ABI tags (e.g. "_diag,_dp,_vns", leading underscores are '
+                                'optional) of one configuration to add to the default namespaces; can be repeated')
+    selection.add_argument('--all', action='store_true',
+                           help='Generate the namespaces for every combination of ABI tags; the file size doubles '
+                                'with each ABI tag (about 60 MB for 12 tags)')
+    parser.add_argument('--list-tags', action='store_true',
+                        help='List the ABI tags with the macros that enable them, and exit')
+    parser.add_argument('--output', metavar='FILE',
+                        help='Where to write the Natvis file (default: nlohmann_json.natvis below "repo_root")')
+    parser.add_argument('repo_root', nargs='?', default=REPO_ROOT,
+                         help='Repository root: where include/nlohmann/detail/abi_macros.hpp is read from '
                               '(default: the repository root this script lives in)')
     args = parser.parse_args()
 
-    derived_tags, derived_version = abi_info(args.output)
+    abi_tags, derived_version = abi_info(args.repo_root)
+
+    if args.list_tags:
+        width = max(len(suffix) for suffix, _, _ in abi_tags)
+        option_width = max(len(option) for _, option, _ in abi_tags)
+        for suffix, option, ident in abi_tags:
+            print(f'{suffix:<{width}}  {option:<{option_width}}  {ident}')
+        sys.exit(0)
+
+    try:
+        extra_combinations = [parse_tag_list(value, abi_tags) for value in args.abi_tags]
+    except ValueError as e:
+        parser.error(str(e))
 
     namespaces = ['nlohmann']
     abi_prefix = 'json_abi'
-    abi_tags = derived_tags
+    suffixes = [suffix for suffix, _, _ in abi_tags]
     version = '_v' + (args.version or derived_version).replace('.', '_')
-    inline_namespaces = []
 
-    # generate namespace names for up to two ABI tags
-    for n in range(0, min(len(abi_tags), 2) + 1):
-        for tags in itertools.combinations(abi_tags, n):
-            ns = abi_prefix + ''.join(tags)
-            inline_namespaces += [ns, ns + version]
+    # by default, generate the namespace names for up to two ABI tags, plus
+    # the combinations requested with --abi-tags
+    max_tags = len(suffixes) if args.all else min(len(suffixes), 2)
+    combinations = [tags for n in range(0, max_tags + 1) for tags in itertools.combinations(suffixes, n)]
+    for tags in extra_combinations:
+        if tags not in combinations:
+            combinations.append(tags)
+
+    inline_namespaces = []
+    for tags in combinations:
+        ns = abi_prefix + ''.join(tags)
+        inline_namespaces += [ns, ns + version]
 
     namespaces += [f'{namespaces[0]}::{ns}' for ns in inline_namespaces]
 
@@ -91,5 +144,10 @@ if __name__ == '__main__':
     template = env.get_template('nlohmann_json.natvis.j2')
     natvis = template.render(namespaces=namespaces)
 
-    with open(os.path.join(args.output, 'nlohmann_json.natvis'), 'w') as f:
+    output = args.output or os.path.join(args.repo_root, 'nlohmann_json.natvis')
+    with open(output, 'w') as f:
         f.write(natvis)
+
+    if args.all:
+        print(f'wrote {len(namespaces)} namespaces ({os.path.getsize(output) / 1e6:.1f} MB) to {output}',
+              file=sys.stderr)
