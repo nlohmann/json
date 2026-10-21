@@ -181,7 +181,7 @@ TEST_CASE("canonical JSON serialization (RFC 8785 / JCS)")
 
         for (const auto& vec : test_vectors)
         {
-            CAPTURE(vec.name);
+            CAPTURE(vec.name)
             json j = json::parse(vec.input);
             CHECK(j.dump_canonical() == vec.expected);
 
@@ -194,30 +194,30 @@ TEST_CASE("canonical JSON serialization (RFC 8785 / JCS)")
     {
         // NaN is rejected
         json j_nan = std::numeric_limits<double>::quiet_NaN();
-        CHECK_THROWS_WITH_AS(j_nan.dump_canonical(),
+        CHECK_THROWS_WITH_AS(static_cast<void>(j_nan.dump_canonical()),
                              "[json.exception.out_of_range.406] cannot serialize non-finite numbers in canonical mode",
                              json::out_of_range&);
 
         // Infinity is rejected
         json j_inf = std::numeric_limits<double>::infinity();
-        CHECK_THROWS_WITH_AS(j_inf.dump_canonical(),
+        CHECK_THROWS_WITH_AS(static_cast<void>(j_inf.dump_canonical()),
                              "[json.exception.out_of_range.406] cannot serialize non-finite numbers in canonical mode",
                              json::out_of_range&);
 
         json j_neg_inf = -std::numeric_limits<double>::infinity();
-        CHECK_THROWS_WITH_AS(j_neg_inf.dump_canonical(),
+        CHECK_THROWS_WITH_AS(static_cast<void>(j_neg_inf.dump_canonical()),
                              "[json.exception.out_of_range.406] cannot serialize non-finite numbers in canonical mode",
                              json::out_of_range&);
 
         // Binary types are rejected
         json j_bin = json::binary({0x01, 0x02, 0x03});
-        CHECK_THROWS_WITH_AS(j_bin.dump_canonical(),
+        CHECK_THROWS_WITH_AS(static_cast<void>(j_bin.dump_canonical()),
                              "[json.exception.type_error.317] type cannot be serialized in canonical JSON (RFC 8785): binary",
                              json::type_error&);
 
         // Discarded values are rejected
         json j_disc = json::value_t::discarded;
-        CHECK_THROWS_WITH_AS(j_disc.dump_canonical(),
+        CHECK_THROWS_WITH_AS(static_cast<void>(j_disc.dump_canonical()),
                              "[json.exception.type_error.317] type cannot be serialized in canonical JSON (RFC 8785): discarded",
                              json::type_error&);
     }

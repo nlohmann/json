@@ -32694,6 +32694,8 @@ class serializer
                 return;
             }
 
+            case value_t::object:
+            case value_t::array:
             case value_t::binary:
             case value_t::discarded:
             default:
@@ -32952,7 +32954,16 @@ class serializer
             JSON_THROW(out_of_range::create(exception_id::number_overflow, "cannot serialize non-finite numbers in canonical mode", context));
         }
 
-        if (x == 0)
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+        const bool is_zero = (x == 0);
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+
+        if (is_zero)
         {
             put_char('0');
             return;
