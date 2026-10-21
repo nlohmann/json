@@ -11357,7 +11357,12 @@ NLOHMANN_JSON_NAMESPACE_END
     // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3; GCC with C++20
     // modules drops the target attribute from functions it reads from a module
     // interface and then rejects the intrinsics: "needs isa option -mssse3")
-    #include <cpuid.h>
+    // <cpuid.h> of GCC before 11 has no include guard, and json.hpp and
+    // json_view.hpp both include it
+    #ifndef NLOHMANN_JSON_CPUID_INCLUDED
+        #define NLOHMANN_JSON_CPUID_INCLUDED
+        #include <cpuid.h>
+    #endif
     #include <tmmintrin.h>
     #define JSON_SCAN_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
     #define JSON_SCAN_SSSE3_TARGET __attribute__((target("ssse3")))

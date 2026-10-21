@@ -50,7 +50,12 @@
 #endif
 #if NLOHMANN_VIEW_SSE2 && !NLOHMANN_VIEW_SSSE3 && !defined(NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE) && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
     // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3)
-    #include <cpuid.h>
+    // <cpuid.h> of GCC before 11 has no include guard, and json.hpp and
+    // json_view.hpp both include it
+    #ifndef NLOHMANN_JSON_CPUID_INCLUDED
+        #define NLOHMANN_JSON_CPUID_INCLUDED
+        #include <cpuid.h>
+    #endif
     #include <tmmintrin.h>
     #define NLOHMANN_VIEW_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
     #define NLOHMANN_VIEW_SSSE3_TARGET __attribute__((target("ssse3")))
