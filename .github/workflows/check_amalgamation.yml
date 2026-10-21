@@ -154,6 +154,28 @@ jobs:
           # PR content in a job without credentials.
           python3 tools/generate_natvis/generate_natvis.py $MAIN_DIR
 
+      - name: Check the nlohmann_json.natvis generator options
+        run: |
+          cd $MAIN_DIR
+          # The options for configurations outside the checked-in file write
+          # to a temporary file, so they do not affect the diff below.
+          GENERATOR=tools/generate_natvis/generate_natvis.py
+          python3 $GENERATOR --list-tags
+          TAG_COUNT=$(python3 $GENERATOR --list-tags | wc -l)
+
+          python3 $GENERATOR --abi-tags diag,_dp,_vns --abi-tags _diag --output $RUNNER_TEMP/abi_tags.natvis
+          grep -q '<!-- Namespace nlohmann::json_abi_diag_dp_vns -->' $RUNNER_TEMP/abi_tags.natvis
+          grep -q '<!-- Namespace nlohmann::json_abi_diag_dp_vns_v[0-9_]* -->' $RUNNER_TEMP/abi_tags.natvis
+          test $(grep -c '<!-- Namespace ' $RUNNER_TEMP/abi_tags.natvis) -eq $(( $(grep -c '<!-- Namespace ' nlohmann_json.natvis) + 2 ))
+
+          python3 $GENERATOR --all --output $RUNNER_TEMP/all.natvis
+          test $(grep -c '<!-- Namespace ' $RUNNER_TEMP/all.natvis) -eq $(( (1 << TAG_COUNT) * 2 + 1 ))
+
+          if python3 $GENERATOR --abi-tags _unknown --output $RUNNER_TEMP/unknown.natvis; then
+            echo "generate_natvis.py accepted an unknown ABI tag"
+            exit 1
+          fi
+
       - name: Build patch and check for differences
         id: diff
         run: |
