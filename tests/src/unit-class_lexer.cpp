@@ -15,9 +15,12 @@ using nlohmann::json;
 #include <array> // array
 #include <cstdint> // uint32_t, uint64_t
 #include <cstdio> // snprintf
+#include <cmath> // isfinite
 #include <cstdlib> // strtod
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
+#include <initializer_list> // initializer_list
+#include <list> // list
 #include <map> // map
 #include <random> // mt19937
 #include <sstream> // stringstream
@@ -330,6 +333,112 @@ TEST_CASE("lexer number fast path")
                 CHECK(b[0].get<double>() == expected);
             }
         }
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    // this section reports parse errors, which abort when exceptions are off
+    SECTION("digits accumulated while scanning")
+    {
+        // The fast path accumulates the digits while it validates them, eight
+        // at a time where possible, and converts tokens with at most 19
+        // digits (floats) or 18 digits (integers) from that value. Every digit
+        // count from 1 to 25, in the integer and in the fraction part, with
+        // and without sign and exponent, must give the byte path's result. A
+        // std::list has no contiguous storage, so parsing it takes the byte
+        // path.
+        // type and value, or the error (values beyond the range of double
+        // are rejected with out_of_range.406 on both paths)
+        const auto outcome = [](const std::string & doc, bool byte_path) -> std::string
+        {
+            JSON_TRY
+            {
+                const std::list<char> chars(doc.begin(), doc.end());
+                const json j = byte_path ? json::parse(chars.begin(), chars.end()) : json::parse(doc);
+                return std::string(j[0].type_name()) + '|' + j.dump();
+            }
+            JSON_CATCH (const json::exception & e)
+            {
+                return e.what();
+            }
+        };
+
+        // the concatenation of @a parts
+        const auto join = [](std::initializer_list<std::string> parts)
+        {
+            std::string result;
+            for (const auto& part : parts)
+            {
+                result += part;
+            }
+            return result;
+        };
+
+        std::vector<std::string> numbers;
+        for (std::size_t digits = 1; digits <= 25; ++digits)
+        {
+            std::string run;
+            for (std::size_t i = 0; i < digits; ++i)
+            {
+                run += static_cast<char>('1' + static_cast<char>((i * 7) % 9));
+            }
+            const std::string nines(digits, '9');
+            for (const char* sign_text :
+                    {"", "-"
+                    })
+            {
+                const std::string sign = sign_text;
+                numbers.push_back(join({sign, run}));
+                numbers.push_back(join({sign, nines}));
+                numbers.push_back(join({sign, "1", std::string(digits - 1, '0')}));
+                numbers.push_back(join({sign, "0.", run}));
+                numbers.push_back(join({sign, "0.", std::string(digits, '0'), "1"}));
+                numbers.push_back(join({sign, run, ".", run}));
+                numbers.push_back(join({sign, run, "e-", std::to_string(digits)}));
+                numbers.push_back(join({sign, "1.", run, "E+", std::to_string(digits * 13)}));
+            }
+        }
+        // exponents beyond every range, and zeros
+        numbers.insert(numbers.end(), {"1e400", "1e-400", "-1e99999999999999999999", "1e-99999999999999999999",
+                                       "0e99999999999999999999", "0.0e-5", "-0.000", "123456789e-0000000000000000000000330"
+                                      });
+
+        for (const auto& n : numbers)
+        {
+            CAPTURE(n)
+            const std::string doc = "[" + n + "]";
+            const std::string a = outcome(doc, false);
+            CHECK(a == outcome(doc, true));
+            const double expected = std::strtod(n.c_str(), nullptr);
+            if (a.compare(0, 6, "number") == 0 && std::isfinite(expected) && n.find_first_of(".eE") != std::string::npos)
+            {
+                CHECK(json::parse(doc)[0].get<double>() == expected);
+            }
+        }
+    }
+#endif
+
+    SECTION("integers that do not fit a narrower type become floats")
+    {
+        // up to 18 digits, the fast path stores the accumulated value without
+        // an overflow check; a narrower number_integer_t/number_unsigned_t
+        // must still see the value rejected and converted as a float
+        using json32 = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint32_t, float>;
+        for (const char* n :
+                {"4294967295", "4294967296", "2147483647", "-2147483648", "-2147483649", "99999999999", "-99999999999"
+                })
+        {
+            CAPTURE(n)
+            const std::string doc = std::string("[") + n + "]";
+            const std::list<char> chars(doc.begin(), doc.end());
+            const json32 a = json32::parse(doc);
+            const json32 b = json32::parse(chars.begin(), chars.end());
+            CHECK(a[0].type() == b[0].type());
+            CHECK(a == b);
+        }
+        CHECK(json32::parse("[4294967295]")[0].is_number_unsigned());
+        CHECK(json32::parse("[4294967296]")[0].is_number_float());
+        CHECK(json32::parse("[-2147483648]")[0].is_number_integer());
+        CHECK(json32::parse("[-2147483649]")[0].is_number_float());
     }
 
     SECTION("token type classification")
