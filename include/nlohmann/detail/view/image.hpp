@@ -255,6 +255,82 @@ struct number_token
     bool is_float; ///< a fraction or an exponent
 };
 
+/// advance over ASCII digits, eight bytes at a time
+inline const unsigned char* digit_run(const unsigned char* p, const unsigned char* e) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    while (e - p >= 8)
+    {
+        // (the digits become 0..9; a byte above 9, or with bit 7 set, is no digit. A carry
+        // out of a byte with bit 7 set only affects the bytes above, after the first one
+        // that count_trailing_zeros finds.)
+        const std::uint64_t x = read_eight_bytes(p) ^ (ones * 0x30u);
+        const std::uint64_t not_digit = ((x + (ones * 0x76u)) | x) & (ones * 0x80u);
+        if (not_digit != 0)
+        {
+            return p + (static_cast<std::size_t>(count_trailing_zeros(not_digit)) / 8);
+        }
+        p += 8;
+    }
+    while (p != e && is_digit(*p))
+    {
+        ++p;
+    }
+    return p;
+}
+
+/// whether the n bytes at p are ASCII digits (n > 0)
+inline bool all_digits(const unsigned char* p, std::size_t n) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    const auto digits = [](const unsigned char* q)
+    {
+        const std::uint64_t x = read_eight_bytes(q) ^ (ones * 0x30u);
+        return (((x + (ones * 0x76u)) | x) & (ones * 0x80u)) == 0;
+    };
+    if (n >= 8)
+    {
+        std::size_t i = 0;
+        for (; i + 8 < n; i += 8)
+        {
+            if (!digits(p + i))
+            {
+                return false;
+            }
+        }
+        return digits(p + n - 8); // (overlapping the bytes before: they are digits)
+    }
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        if (!is_digit(p[i]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// Whether a float token has the shape that the parser records for most of
+/// them: [-]digits.digits, with the numbers of digits of the node's layout
+/// (extra). Then the token is a number of that layout, and the general scan
+/// that follows is not needed.
+inline bool plain_float_token(const unsigned char* s, std::size_t len, std::uint16_t extra) noexcept
+{
+    const std::size_t int_digits = extra & 0xFFu;
+    const std::size_t frac_digits = extra >> 8u;
+    if (int_digits == 0 || int_digits >= 255 || frac_digits == 0 || frac_digits >= 255 || len == 0)
+    {
+        return false;
+    }
+    const std::size_t negative = *s == '-' ? 1 : 0;
+    if (len != negative + int_digits + 1 + frac_digits)
+    {
+        return false;
+    }
+    const unsigned char* const p = s + negative;
+    return !(int_digits > 1 && *p == '0') && p[int_digits] == '.' && all_digits(p, int_digits) && all_digits(p + int_digits + 1, frac_digits);
+}
+
 /// whether [s, s + len) is a JSON number (the grammar the parser accepts)
 inline bool scan_number_token(const unsigned char* s, std::size_t len, number_token& t)
 {
@@ -273,11 +349,7 @@ inline bool scan_number_token(const unsigned char* s, std::size_t len, number_to
     }
     else if (*p >= '1' && *p <= '9')
     {
-        do
-        {
-            ++p;
-        }
-        while (p != e && is_digit(*p));
+        p = digit_run(p + 1, e);
     }
     else
     {
@@ -289,10 +361,7 @@ inline bool scan_number_token(const unsigned char* s, std::size_t len, number_to
     if (p != e && *p == '.')
     {
         const unsigned char* const f0 = ++p;
-        while (p != e && is_digit(*p))
-        {
-            ++p;
-        }
+        p = digit_run(p, e);
         if (p == f0)
         {
             return false;
@@ -403,10 +472,15 @@ struct float_range
 template<typename Check>
 bool check_distinct_ranges(std::vector<byte_range>& ranges, Check check)
 {
-    std::sort(ranges.begin(), ranges.end(), [](const byte_range & a, const byte_range & b)
+    // (save() writes the ranges in the order of the nodes, which is sorted already)
+    const auto before = [](const byte_range & a, const byte_range & b)
     {
         return a.off != b.off ? a.off < b.off : a.len < b.len;
-    });
+    };
+    if (!std::is_sorted(ranges.begin(), ranges.end(), before))
+    {
+        std::sort(ranges.begin(), ranges.end(), before);
+    }
     std::size_t end = 0;
     for (std::size_t i = 0; i < ranges.size(); ++i)
     {
@@ -428,7 +502,8 @@ bool check_distinct_ranges(std::vector<byte_range>& ranges, Check check)
 /// record layouts that match it), tokens must not overlap.
 inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned char* text)
 {
-    std::sort(ranges.begin(), ranges.end(), [](const float_range & a, const float_range & b)
+    // (save() writes the tokens in the order of the nodes, which is sorted already)
+    const auto before = [](const float_range & a, const float_range & b)
     {
         if (a.off != b.off)
         {
@@ -439,7 +514,11 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
             return a.len < b.len;
         }
         return a.extra < b.extra;
-    });
+    };
+    if (!std::is_sorted(ranges.begin(), ranges.end(), before))
+    {
+        std::sort(ranges.begin(), ranges.end(), before);
+    }
     std::size_t end = 0;
     std::size_t i = 0;
     while (i < ranges.size())
@@ -449,14 +528,18 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
         {
             return false;
         }
-        number_token t{};
         const unsigned char* const s = text + r.off;
-        if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+        std::uint16_t layout = r.extra;
+        if (!plain_float_token(s, r.len, r.extra))
         {
-            return false;
+            number_token t{};
+            if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+            {
+                return false;
+            }
+            // the digit layout the parser records (or "many", as compaction writes it)
+            layout = float_layout(t);
         }
-        // the digit layout the parser records (or "many", as compaction writes it)
-        const std::uint16_t layout = float_layout(t);
         for (; i < ranges.size() && ranges[i].off == r.off && ranges[i].len == r.len; ++i)
         {
             if (ranges[i].extra != layout && ranges[i].extra != 0xFFFFu)
