@@ -10410,6 +10410,30 @@ JSON_HEDLEY_ALWAYS_INLINE bool has_nonzero_digit(const char* first, const char* 
     return false;
 }
 
+/*!
+@brief accumulate the validated digits [p, last) into @a w, as long as
+       @a remaining digits still fit into it
+
+Eight digits are taken at a time while at least eight remain, and @a remaining
+is decreased by the number of digits taken.
+
+@return a pointer past the last digit taken
+*/
+JSON_HEDLEY_ALWAYS_INLINE const char* accumulate_significant_digits(const char* p, const char* last, int& remaining, std::uint64_t& w) noexcept
+{
+    while (remaining >= 8 && last - p >= 8)
+    {
+        w = (w * 100000000u) + parse_eight_digits(read_eight_bytes(p));
+        p += 8;
+        remaining -= 8;
+    }
+    for (; remaining > 0 && p != last; ++p, --remaining)
+    {
+        w = (w * 10u) + static_cast<std::uint64_t>(*p - '0');
+    }
+    return p;
+}
+
 /// the value of the validated exponent digits [+-]?[0-9]+ in [first, last),
 /// saturated far beyond every range
 inline std::int64_t parse_float_exponent(const char* first, const char* last) noexcept
@@ -10468,16 +10492,7 @@ JSON_HEDLEY_ALWAYS_INLINE float_significand parse_float_significand(const char* 
     int remaining = 19; // digits that still fit into w
     if (*p != '0') // the integer part is "0" or [1-9][0-9]*
     {
-        while (remaining >= 8 && integer_last - p >= 8)
-        {
-            w = (w * 100000000u) + parse_eight_digits(read_eight_bytes(p));
-            p += 8;
-            remaining -= 8;
-        }
-        for (; remaining > 0 && p != integer_last; ++p, --remaining)
-        {
-            w = (w * 10u) + static_cast<std::uint64_t>(*p - '0');
-        }
+        p = accumulate_significant_digits(p, integer_last, remaining, w);
         s.exponent = integer_last - p;
         s.truncated = has_nonzero_digit(p, integer_last);
     }
@@ -10496,16 +10511,7 @@ JSON_HEDLEY_ALWAYS_INLINE float_significand parse_float_significand(const char* 
             s.exponent -= p - zeros;
         }
         const char* const digits = p;
-        while (remaining >= 8 && mantissa_last - p >= 8)
-        {
-            w = (w * 100000000u) + parse_eight_digits(read_eight_bytes(p));
-            p += 8;
-            remaining -= 8;
-        }
-        for (; remaining > 0 && p != mantissa_last; ++p, --remaining)
-        {
-            w = (w * 10u) + static_cast<std::uint64_t>(*p - '0');
-        }
+        p = accumulate_significant_digits(p, mantissa_last, remaining, w);
         s.exponent -= p - digits;
         s.truncated = s.truncated || has_nonzero_digit(p, mantissa_last);
     }
