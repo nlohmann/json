@@ -10,6 +10,7 @@
 
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint64_t
+#include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // integral_constant
 
@@ -128,11 +129,31 @@ NLOHMANN_VIEW_ALWAYS_INLINE FloatType layout_float(const unsigned char* p, const
     return decimal_to_float<FloatType>(layout_decimal(p, e, int_digits, frac_digits, limit));
 }
 
+/// the value of a float set by an edit: its token (the shortest round-trip
+/// text, or "nan", "inf", "-inf") in the edit arena
+template<typename FloatType>
+NLOHMANN_VIEW_NOINLINE FloatType edited_float(const char* token, const node& n)
+{
+    if (token[0] == 'n')
+    {
+        return std::numeric_limits<FloatType>::quiet_NaN();
+    }
+    if (token[0] == 'i' || (token[0] == '-' && token[1] == 'i'))
+    {
+        return token[0] == 'i' ? std::numeric_limits<FloatType>::infinity() : -std::numeric_limits<FloatType>::infinity();
+    }
+    return float_value<FloatType>(token, n);
+}
+
 /// the value of the float token of a node, as parse() converts it; floats and
 /// doubles with at most 19 digits are converted from the digit layout
 template<typename FloatType>
 FloatType float_value(const document_data& d, const node& n)
 {
+    if (NLOHMANN_VIEW_UNLIKELY((n.flags & node_flags::storage) == node_flags::edited))
+    {
+        return edited_float<FloatType>(d.str(n), n);
+    }
     return float_value<FloatType>(d, n, std::integral_constant<bool, has_native_float_format<FloatType>::value> {});
 }
 

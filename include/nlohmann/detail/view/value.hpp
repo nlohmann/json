@@ -114,6 +114,10 @@ struct is_non_bool_arithmetic : conjunction<std::is_arithmetic<T>, negation<std:
 template<typename T>
 struct is_non_c_string_default : negation<std::is_same<typename std::decay<T>::type, const char*>> {};
 
+/// the integral types accepted as an array index by the edits of a document
+template<typename T>
+struct is_non_bool_integral : conjunction<std::is_integral<T>, negation<std::is_same<T, bool>>> {};
+
 /// whether View::get<T>() converts to T without materialize(); get_to()
 /// assigns these, and passes the others to from_json
 template<typename T, typename BasicJsonType, typename View>
