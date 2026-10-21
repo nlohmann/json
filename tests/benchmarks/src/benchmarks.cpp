@@ -8,11 +8,13 @@
 
 #include <benchmark/benchmark.h>
 #include <nlohmann/json.hpp>
-#include <fstream>
 #include <array>
+#include <cstdio>
 #include <deque>
+#include <fstream>
 #include <numeric>
 #include <set>
+#include <sstream>
 #include <vector>
 #include <test_data.hpp>
 
@@ -52,6 +54,65 @@ BENCHMARK_CAPTURE(ParseFile, unsigned_ints,     TEST_DATA_DIRECTORY "/regression
 BENCHMARK_CAPTURE(ParseFile, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
 
 //////////////////////////////////////////////////////////////////////////////
+// parse JSON from a FILE*
+//////////////////////////////////////////////////////////////////////////////
+
+static void ParseFILE(benchmark::State& state, const char* filename)
+{
+    while (state.KeepRunning())
+    {
+        state.PauseTiming();
+        std::FILE* f = std::fopen(filename, "rb");
+        auto* j = new json();
+        state.ResumeTiming();
+
+        *j = json::parse(f);
+
+        state.PauseTiming();
+        std::fclose(f);
+        delete j;
+        state.ResumeTiming();
+    }
+
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
+    state.SetBytesProcessed(state.iterations() * file.tellg());
+}
+BENCHMARK_CAPTURE(ParseFILE, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(ParseFILE, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(ParseFILE, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+//////////////////////////////////////////////////////////////////////////////
+// read many small values from one stream (NDJSON)
+//////////////////////////////////////////////////////////////////////////////
+
+static void ParseStreamValues(benchmark::State& state, bool numbers)
+{
+    std::string input;
+    for (int i = 0; i < 10000; ++i)
+    {
+        input += numbers ? std::to_string(i * 7919) + " "
+                 : R"({"id":)" + std::to_string(i) + R"(,"name":"user)" + std::to_string(i) + R"(","active":true,"score":)" + std::to_string(i * 0.25) + "}\n";
+    }
+
+    for (auto _ : state)
+    {
+        std::istringstream is(input);
+        json j;
+        std::size_t count = 0;
+        while (!(is >> std::ws).eof())
+        {
+            is >> j;
+            ++count;
+        }
+        benchmark::DoNotOptimize(count);
+    }
+
+    state.SetBytesProcessed(static_cast<int64_t>(state.iterations() * input.size()));
+}
+BENCHMARK_CAPTURE(ParseStreamValues, ndjson,  false);
+BENCHMARK_CAPTURE(ParseStreamValues, numbers, true);
+
+//////////////////////////////////////////////////////////////////////////////
 // parse JSON from string
 //////////////////////////////////////////////////////////////////////////////
 
@@ -83,6 +144,31 @@ BENCHMARK_CAPTURE(ParseString, floats,            TEST_DATA_DIRECTORY "/regressi
 BENCHMARK_CAPTURE(ParseString, signed_ints,       TEST_DATA_DIRECTORY "/regression/signed_ints.json");
 BENCHMARK_CAPTURE(ParseString, unsigned_ints,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json");
 BENCHMARK_CAPTURE(ParseString, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
+
+//////////////////////////////////////////////////////////////////////////////
+// validate JSON from string
+//////////////////////////////////////////////////////////////////////////////
+
+static void Accept(benchmark::State& state, const char* filename)
+{
+    std::ifstream f(filename);
+    std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+
+    while (state.KeepRunning())
+    {
+        benchmark::DoNotOptimize(json::accept(str));
+    }
+
+    state.SetBytesProcessed(state.iterations() * str.size());
+}
+BENCHMARK_CAPTURE(Accept, jeopardy,          TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(Accept, canada,            TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(Accept, citm_catalog,      TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(Accept, twitter,           TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(Accept, floats,            TEST_DATA_DIRECTORY "/regression/floats.json");
+BENCHMARK_CAPTURE(Accept, signed_ints,       TEST_DATA_DIRECTORY "/regression/signed_ints.json");
+BENCHMARK_CAPTURE(Accept, unsigned_ints,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json");
+BENCHMARK_CAPTURE(Accept, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
 
 //////////////////////////////////////////////////////////////////////////////
 // parse pretty-printed JSON from string

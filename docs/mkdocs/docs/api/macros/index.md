@@ -16,6 +16,10 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Parsing
 
+- [**JSON_DISABLE_STREAM_BULK_SCAN**](json_disable_stream_bulk_scan.md) - read a `std::istream` one character at a time
+  instead of scanning its stream buffer in bulk
+- [**JSON_DISABLE_UNLOCKED_FILE_IO**](json_disable_unlocked_file_io.md) - read a `FILE*` with `std::fgetc` instead of
+  locking it once and using the unlocked stdio functions
 - [**JSON_PRECISE_STREAM_POSITION**](json_precise_stream_position.md) - opt in to leaving an input stream positioned
   right after a parsed number
 - [**JSON_STRICT_BINARY_UTF8**](json_strict_binary_utf8.md) - opt in to checking strings for valid UTF-8 in the CBOR,
@@ -38,6 +42,8 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
 - [**JSON_USE_GLOBAL_UDLS**](json_use_global_udls.md) - place user-defined string literals (UDLs) into the global namespace
 - [**JSON_USE_SIMDUTF**](json_use_simdutf.md) - use the simdutf library to accelerate UTF-8 validation
+- [**JSON_VIEW_NO_SIMD**](json_view_no_simd.md) - use only portable code in the parser of `json_view.hpp`
+- [**JSON_VIEW_USE_SSSE3**](json_view_use_ssse3.md) - validate non-ASCII strings with SSSE3 in the parser of `json_view.hpp`
 
 ## Library version
 

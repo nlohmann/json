@@ -395,6 +395,23 @@ A UBJSON high-precision number could not be parsed.
     [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A
     ```
 
+### json.exception.parse_error.116
+
+[`basic_json_document::load()`](../api/basic_json_document/load.md) rejected an
+[image](../features/json_view.md#images): either the bytes are not one [`save()`](../api/basic_json_document/save.md)
+could have written (too short, an unknown magic number or format version, or sizes that do not fit the buffer), or
+they are, but fail the requested [`image_check`](../api/basic_json_document/load.md#image_check).
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.parse_error.116] parse error: invalid json_document image: the check failed
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0, together with [images](../features/json_view.md#images).
+
 ## Iterator errors
 
 This exception is thrown if iterators passed to a library function do not match
@@ -812,6 +829,45 @@ does not list an enumerator and it is therefore converted like the first listed 
     [json.exception.type_error.318] duplicate object key 'red'
     ```
 
+### json.exception.type_error.319
+
+[`basic_json_document::set`](../api/basic_json_document/set.md),
+[`basic_json_document::push_back`](../api/basic_json_document/push_back.md), and
+[`basic_json_document::insert`](../api/basic_json_document/insert.md) can store any `basic_json` value except
+a binary one: a `json_document` has no representation for [binary values](../features/binary_values.md), which only
+ever arise from parsing a binary format or from an explicit [`json::binary`](../api/basic_json/binary.md) value, not
+from JSON text.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.type_error.319] cannot store a binary value in a json_document
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0, together with editable [`json_document`s](../features/json_view.md).
+
+### json.exception.type_error.320
+
+[`basic_json_document::save()`](../api/basic_json_document/save.md) cannot write an
+[image](../features/json_view.md#images) of a [discarded](../api/basic_json_document/is_discarded.md) document.
+[`save()`](../api/basic_json_document/save.md) and [`load()`](../api/basic_json_document/load.md) also throw this
+exception on a big-endian target, since the image format is little-endian only.
+
+!!! failure "Example messages"
+
+    ```
+    [json.exception.type_error.320] cannot save a discarded json_document
+    ```
+    ```
+    [json.exception.type_error.320] json_document images need a little-endian target
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0, together with [images](../features/json_view.md#images).
+
 ### json.exception.type_error.321
 
 A discarded value (one created by [`parse()`](../api/basic_json/parse.md) with a callback that returns `false` for the
@@ -916,9 +972,19 @@ double-precision number when `number_float_t` is `#!cpp float`.
 
 ### json.exception.out_of_range.407
 
-An unsigned integer number greater than 9223372036854775807 cannot be represented in the binary format. This exception
-is only thrown by [`to_bon8`](../api/basic_json/to_bon8.md), as [BON8](../features/binary_formats/bon8.md) has no
-unsigned 64-bit integer type.
+An integer number cannot be represented by the binary format it is serialized to:
+
+- [BON8](../features/binary_formats/bon8.md) only stores integers that fit into int64, so
+  [`to_bon8`](../api/basic_json/to_bon8.md) throws for unsigned integers greater than 9223372036854775807.
+- [CBOR](../features/binary_formats/cbor.md), [MessagePack](../features/binary_formats/messagepack.md), and
+  [BSON](../features/binary_formats/bson.md) store integers in at most 64 bits. With the default number types, every
+  integer fits, but a [`number_integer_t`](../api/basic_json/number_integer_t.md) or
+  [`number_unsigned_t`](../api/basic_json/number_unsigned_t.md) wider than 64 bits (e.g., `__int128`) can hold values
+  outside the range of the format: [-2^64, 2^64-1] for CBOR, [-2^63, 2^64-1] for MessagePack, and the range of int64
+  (signed integers) or uint64 (unsigned integers) for BSON.
+
+[UBJSON](../features/binary_formats/ubjson.md) and [BJData](../features/binary_formats/bjdata.md) never throw this
+exception, because they serialize integers beyond 64 bits as high-precision numbers.
 
 !!! note "Former occurrences"
 
@@ -927,10 +993,16 @@ unsigned 64-bit integer type.
     - Since version 3.9.0, integer numbers beyond int64 are serialized as high-precision UBJSON numbers.
     - Since version 3.12.0, integer numbers beyond int64 are serialized as uint64 BSON numbers.
 
-!!! failure "Example message"
+    Before version 3.13.0, CBOR, MessagePack, and BSON silently truncated integers wider than 64 bits, and BJData
+    truncated unsigned integers wider than 64 bits.
+
+!!! failure "Example messages"
 
     ```
     integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
+    ```
+    ```
+    integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
     ```
 
 ### json.exception.out_of_range.408
@@ -1061,6 +1133,34 @@ MessagePack's ext type and BSON's binary subtype are each stored in a single byt
 !!! note
 
     This exception was added in version 3.13.0. Before that, subtypes above 255 were silently truncated modulo 256 instead of raising an error.
+
+### json.exception.out_of_range.416
+
+[`basic_json_document::parse()`](../api/basic_json_document/parse.md) and the other parsing functions of
+[`basic_json_document`](../api/basic_json_document/index.md) index a value's position in the source text in 32 bits,
+so they do not support an input of 4294967280 bytes (4 GiB minus 16 bytes) or more. The same 32-bit limit applies to an **editable** document's own
+storage: [`set`](../api/basic_json_document/set.md) and [`push_back`](../api/basic_json_document/push_back.md) throw
+this exception once the strings and number tokens written by edits reach 4 GiB in total, or once more than
+4294967295 arrays/objects have had an element set or appended to them. The same limit applies to an
+[image](../features/json_view.md#images): [`save()`](../api/basic_json_document/save.md) throws it if the node
+count, the text, or the decoded strings it would write would individually reach 4 GiB.
+
+!!! failure "Example messages"
+
+    ```
+    [json.exception.out_of_range.416] input of 4294967280 bytes or more is not supported by json_document
+    ```
+    ```
+    [json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document
+    ```
+    ```
+    [json.exception.out_of_range.416] images of 4 GiB or more are not supported by json_document
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0, together with [`<nlohmann/json_view.hpp>`](../features/json_view.md).
+    [`basic_json::parse()`](../api/basic_json/parse.md) has no such limit.
 
 ## Further exceptions
 

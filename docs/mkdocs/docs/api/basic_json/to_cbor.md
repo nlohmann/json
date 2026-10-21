@@ -46,6 +46,9 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
+- Throws [`out_of_range.407`](../../home/exceptions.md#jsonexceptionout_of_range407) if `j` contains an integer
+  outside [-2^64, 2^64-1], which is only possible with a number type wider than 64 bits; example:
+  `"integer number 18446744073709551616 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]"`
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key in `j` is
   not valid UTF-8 and `error_handler` is `strict` (the default only if
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled)
@@ -90,3 +93,5 @@ Linear in the size of the JSON value `j`.
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled) throws `type_error.316`.
 - Throws `type_error.321` for a discarded value since version 3.13.0; previously, a discarded value nested in an
   array or object was silently skipped, producing invalid CBOR.
+- Throws `out_of_range.407` for integers that do not fit 64 bits since version 3.13.0; previously, integers of a
+  number type wider than 64 bits were silently truncated.

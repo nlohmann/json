@@ -37,7 +37,7 @@ jobs:
           path: pr/
 
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       MAIN_DIR: ${{ github.workspace }}/main
       INCLUDE_DIR: ${{ github.workspace }}/main/single_include/nlohmann
@@ -77,13 +77,12 @@ jobs:
           cd $MAIN_DIR
 
           # Built from this PR's own tools/macro_builder/main.cpp, not a
-          # develop checkout: unlike amalgamate.py and generate_natvis.py,
-          # this tool has no other source of truth to check against (its
-          # own README documents that it must reproduce macro_scope.hpp
-          # byte for byte), so there is nothing to gain from checking out a
-          # separate copy, and doing so would make this step fail on a PR
-          # that adds support for a new dispatch table until that PR itself
-          # merges to develop.
+          # develop checkout: unlike amalgamate.py, this tool has no other
+          # source of truth to check against (its own README documents that
+          # it must reproduce macro_scope.hpp byte for byte), so there is
+          # nothing to gain from checking out a separate copy, and doing so
+          # would make this step fail on a PR that adds support for a new
+          # dispatch table until that PR itself merges to develop.
           TMPDIR=$(mktemp -d ./macro_builder_check.XXXXXX)
           c++ -std=c++11 tools/macro_builder/main.cpp -o "$TMPDIR/macro_builder"
           "$TMPDIR/macro_builder" > "$TMPDIR/paste.hpp"
@@ -116,12 +115,15 @@ jobs:
 
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json.json -s .
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json_fwd.json -s .
+          # the configuration of json_view.hpp comes with the pull request until
+          # it is on develop; the tool itself is still develop's
+          python3 $TOOL_DIR/amalgamate.py -c $MAIN_DIR/tools/amalgamate/config_json_view.json -s .
 
           # the header list of the Bazel "json" target must match the files in include/
           cmake -P cmake/scripts/gen_bazel_build_file.cmake
 
           ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=none --quiet \
-            $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json_fwd.hpp
+            $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json_fwd.hpp $INCLUDE_DIR/json_view.hpp
 
           # fail loudly if a directory is renamed or removed: find would only warn
           # about the missing path and silently drop its files from the check
@@ -143,14 +145,14 @@ jobs:
       - name: Regenerate nlohmann_json.natvis
         run: |
           cd $MAIN_DIR
-          # The template is what this check verifies the committed natvis
-          # file against, so take it from this PR rather than from the
-          # develop checkout: generate_natvis.py loads the template from its
-          # own directory, and with develop's copy a PR that changes the
-          # template could never pass. Like the macro_builder step above,
-          # this only renders PR content in a job without credentials.
-          cp tools/generate_natvis/nlohmann_json.natvis.j2 $NATVIS_TOOL_DIR/
-          python3 $NATVIS_TOOL_DIR/generate_natvis.py $MAIN_DIR
+          # The generator and its template are what this check verifies the
+          # committed natvis file against (which namespaces it lists, and
+          # what each entry looks like), so run this PR's copy rather than
+          # the develop checkout's: with develop's, a PR that changes either
+          # could never pass. generate_natvis.py loads the template from its
+          # own directory. Like the macro_builder step above, this only runs
+          # PR content in a job without credentials.
+          python3 tools/generate_natvis/generate_natvis.py $MAIN_DIR
 
       - name: Build patch and check for differences
         id: diff

@@ -50,6 +50,7 @@
 // tests/iwyu_consumer checks this.
 #include <nlohmann/adl_serializer.hpp> // IWYU pragma: export
 #include <nlohmann/byte_container_with_subtype.hpp>
+#include <nlohmann/detail/abi_config.hpp>
 #include <nlohmann/detail/abi_macros.hpp> // IWYU pragma: export
 #include <nlohmann/detail/conversions/from_json.hpp> // IWYU pragma: keep
 #include <nlohmann/detail/conversions/to_json.hpp> // IWYU pragma: keep
@@ -6217,29 +6218,7 @@ public:
     JSON_HEDLEY_RETURNS_NON_NULL
     const char* type_name() const noexcept
     {
-        switch (m_data.m_type)
-        {
-            case value_t::null:
-                return "null";
-            case value_t::object:
-                return "object";
-            case value_t::array:
-                return "array";
-            case value_t::string:
-                return "string";
-            case value_t::boolean:
-                return "boolean";
-            case value_t::binary:
-                return "binary";
-            case value_t::discarded:
-                return "discarded";
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-                return "number";
-            default:
-                return "invalid";
-        }
+        return detail::value_type_name(m_data.m_type);
     }
 
   JSON_PRIVATE_UNLESS_TESTED:

@@ -361,10 +361,10 @@ add_custom_target(ci_test_coverage
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_coverage32
     COMMAND cd ${PROJECT_BINARY_DIR}/build_coverage32 && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
 
-    COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1 --ignore-errors mismatch --ignore-errors unused
-    COMMAND ${LCOV_TOOL} -e json.info ${SRC_FILES} --output-file json.info.filtered --rc branch_coverage=1 --ignore-errors unused
+    COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1 --ignore-errors mismatch --ignore-errors unused --ignore-errors inconsistent
+    COMMAND ${LCOV_TOOL} -e json.info ${SRC_FILES} --output-file json.info.filtered --rc branch_coverage=1 --ignore-errors unused --ignore-errors inconsistent
     COMMAND ${CMAKE_SOURCE_DIR}/tests/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
-    COMMAND ${GENHTML_TOOL} --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
+    COMMAND ${GENHTML_TOOL} --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage --ignore-errors inconsistent json.info.filtered.noexcept
 
     COMMENT "Compile and test with coverage"
 )
@@ -407,10 +407,11 @@ list(FILTER INDENT_FILES EXCLUDE REGEX "/tests/thirdparty/|/tests/abi/include/nl
 set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
 set(tool_dir ${PROJECT_SOURCE_DIR}/tools/amalgamate)
 add_custom_target(ci_test_amalgamation
-    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~
+    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~ ${include_dir}/json_view.hpp~
     COMMAND cp ${include_dir}/json.hpp ${include_dir}/json.hpp~
     COMMAND cp ${include_dir}/json_fwd.hpp ${include_dir}/json_fwd.hpp~
     COMMAND cp ${include_dir}/json_literals.hpp ${include_dir}/json_literals.hpp~
+    COMMAND cp ${include_dir}/json_view.hpp ${include_dir}/json_view.hpp~
     COMMAND cp ${PROJECT_SOURCE_DIR}/BUILD.bazel ${PROJECT_SOURCE_DIR}/BUILD.bazel~
 
     COMMAND ${Python3_EXECUTABLE} -mvenv venv_astyle
@@ -420,18 +421,20 @@ add_custom_target(ci_test_amalgamation
     COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json.json -s .
     COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_fwd.json -s .
     COMMAND cp ${PROJECT_SOURCE_DIR}/include/nlohmann/json_literals.hpp ${include_dir}/json_literals.hpp
-    COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=none ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp ${include_dir}/json_literals.hpp
+    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_view.json -s .
+    COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=none ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp ${include_dir}/json_literals.hpp ${include_dir}/json_view.hpp
     COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/scripts/gen_bazel_build_file.cmake
 
     COMMAND diff ${include_dir}/json.hpp~ ${include_dir}/json.hpp
     COMMAND diff ${include_dir}/json_fwd.hpp~ ${include_dir}/json_fwd.hpp
     COMMAND diff ${include_dir}/json_literals.hpp~ ${include_dir}/json_literals.hpp
+    COMMAND diff ${include_dir}/json_view.hpp~ ${include_dir}/json_view.hpp
     COMMAND diff ${PROJECT_SOURCE_DIR}/BUILD.bazel~ ${PROJECT_SOURCE_DIR}/BUILD.bazel
 
     COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=orig ${INDENT_FILES}
     COMMAND for FILE in `find . -name '*.orig'`\; do false \; done
 
-    COMMAND rm -f ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~ ${PROJECT_SOURCE_DIR}/BUILD.bazel~
+    COMMAND rm -f ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~ ${include_dir}/json_view.hpp~ ${PROJECT_SOURCE_DIR}/BUILD.bazel~
 
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMENT "Check amalgamation, formatting, and BUILD.bazel"

@@ -32,9 +32,15 @@ Only the following symbols are exported from `nlohmann.json`:
 
 - `nlohmann::adl_serializer`
 - `nlohmann::basic_json`
+- `nlohmann::basic_json_document`
+- `nlohmann::basic_json_view`
 - `nlohmann::json`
+- `nlohmann::json_document`
 - `nlohmann::json_pointer`
+- `nlohmann::json_view`
 - `nlohmann::ordered_json`
+- `nlohmann::ordered_json_document`
+- `nlohmann::ordered_json_view`
 - `nlohmann::ordered_map`
 - `nlohmann::to_string`
 - `nlohmann::literals::json_literals::operator""_json`

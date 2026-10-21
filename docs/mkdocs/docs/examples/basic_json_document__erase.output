@@ -1,0 +1,18 @@
+1
+{
+  "name": "cache",
+  "host": "db1",
+  "price": 19.90,
+  "replicas": [
+    "db4"
+  ]
+}
+
+{
+  "host": "db1",
+  "name": "cache",
+  "price": 19.9,
+  "replicas": [
+    "db4"
+  ]
+}

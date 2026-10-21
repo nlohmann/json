@@ -60,3 +60,6 @@ MODULE.bazel.lock
 /json.tar.xz.asc
 /release_files/
 /single_include/nlohmann/*.asc
+
+# GCC module cache
+/gcm.cache/
