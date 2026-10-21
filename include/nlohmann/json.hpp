@@ -50,6 +50,7 @@
 // tests/iwyu_consumer checks this.
 #include <nlohmann/adl_serializer.hpp> // IWYU pragma: export
 #include <nlohmann/byte_container_with_subtype.hpp>
+#include <nlohmann/detail/abi_config.hpp>
 #include <nlohmann/detail/abi_macros.hpp> // IWYU pragma: export
 #include <nlohmann/detail/conversions/from_json.hpp> // IWYU pragma: keep
 #include <nlohmann/detail/conversions/to_json.hpp> // IWYU pragma: keep

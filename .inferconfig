@@ -1,6 +1,7 @@
 {
   "_comment": "Used by the ci_infer CMake target (#5715 item 4b). fail-on-issue makes CI fail on Infer findings; disable-issue-type is a type-level baseline for the ~174 pre-existing findings (all PULSE_UNNECESSARY_COPY*/PULSE_RESOURCE_LEAK/PULSE_CONST_REFABLE, mostly in test code) triaged in run https://github.com/nlohmann/json/actions/runs/35829411620 on commit 1054b2097, so CI fails only on a NEW issue type. Remove an entry here once its findings have been fixed or explicitly accepted.",
   "_comment_pulse": "Pulse stops exploring paths after pulse-max-disjuncts (default 20). With the default, basic_json::replace_value() (destroy + assert_invariant) exceeds the limit, Pulse loses the stored type, and reports false NULLPTR_DEREFERENCE findings for get_ptr() results in tests/src/unit-pointer_access.cpp.",
+  "_comment_view": "Infer's model of std::unique_ptr mixes up the `built` values that the helper build() in tests/src/unit-json_view_builder.cpp returns by value: it reports USE_AFTER_DELETE for one result after the destructor of an unrelated temporary (e.g. ~built() on line 345 invalidating `shallow` on line 350). AddressSanitizer is clean on the same tests, so reports for that test file are excluded; findings in the library headers it includes are still reported.",
   "pulse-max-disjuncts": 40,
   "fail-on-issue": true,
   "disable-issue-type": [
@@ -10,5 +11,8 @@
     "PULSE_UNNECESSARY_COPY_OPTIONAL",
     "PULSE_RESOURCE_LEAK",
     "PULSE_CONST_REFABLE"
+  ],
+  "report-block-list-path-regex": [
+    "tests/src/unit-json_view_builder\\.cpp"
   ]
 }

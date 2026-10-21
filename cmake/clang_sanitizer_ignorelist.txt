@@ -4,5 +4,11 @@
 # call converts -1 to size_t, which -fsanitize=integer reports as implicit-integer-sign-change. This is
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=119429, not a bug in this library. Only that check and only <format> are
 # excluded, so implicit sign changes in the library and the tests are still reported.
+#
+# libstdc++'s <string_view> compares two views of different lengths through `_S_compare(size_type __n1, size_type
+# __n2)`, which stores `__n1 - __n2` in a signed difference_type and clamps it to int. Any comparison with a shorter
+# view wraps that subtraction on purpose, and -fsanitize=integer reports it as implicit-integer-sign-change. json_view
+# compares keys as string views, so the same check is excluded for <string_view> as well.
 [implicit-integer-sign-change]
 src:*/include/c++/*/format
+src:*/include/c++/*/string_view
