@@ -137,9 +137,25 @@ class output_buffer
 /// image_check::bounds can have others, which are then written unchanged).
 inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexcept
 {
+    std::size_t i = 0;
+#if NLOHMANN_VIEW_SSE2
+    // (16 bytes per step; with NEON, the mask of a step costs more than it saves on the
+    // short runs that are typical here)
+    for (; i + 16 <= n; i += 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(s + i))); // NOLINT(bugprone-casting-through-void)
+        // (a byte is below 0x20 if it is its own minimum with 0x1F)
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_cmpeq_epi8(_mm_min_epu8(in, _mm_set1_epi8(0x1F)), in));
+        const auto mask = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+        if (mask != 0)
+        {
+            return i + static_cast<std::size_t>(count_trailing_zeros(mask));
+        }
+    }
+#endif
     constexpr std::uint64_t ones = 0x0101010101010101ull;
     constexpr std::uint64_t high = 0x8080808080808080ull;
-    std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
     {
         const std::uint64_t v = read_eight_bytes(s + i);
