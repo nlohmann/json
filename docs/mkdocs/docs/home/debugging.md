@@ -10,6 +10,9 @@ at its root, a [Natvis](https://learn.microsoft.com/en-us/visualstudio/debugger/
 file that gives `json`/`ordered_json` values a friendly, key/value debugger view instead of showing raw internal
 fields, when debugging with the MSVC debug engine (`cppvsdbg`) in Visual Studio or VS Code.
 
+The checked-in visualizers cover namespace variants with zero, one, or two ABI tags. Configurations with three or more
+ABI tags are not covered and may show raw internal fields instead.
+
 Debug engines that wrap LLDB instead of the MSVC debug engine (for example, `codelldb` in VS Code) only have
 partial/experimental Natvis support, and commonly fall back to showing raw internal fields even with the
 `.natvis` file present. Switching to `cppvsdbg` where available, or checking your debug extension's own Natvis

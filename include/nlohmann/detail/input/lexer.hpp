@@ -12,6 +12,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
 #include <cstdio> // snprintf
+#include <cstring> // memcmp
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
 #include <utility> // move
@@ -417,30 +418,43 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// contiguous input: bulk-append the run of ordinary characters and complete
-    /// well-formed UTF-8 sequences starting at the current read position, leaving
-    /// the first byte that needs individual handling (the closing quote, an
-    /// escape, a control character, or an ill-formed UTF-8 byte) for get()
-    void scan_string_bulk(std::true_type /*bulk*/)
+    /// well-formed UTF-8 sequences starting at the current read position, then
+    /// read the first byte that needs individual handling (the closing quote, an
+    /// escape, a control character, or an ill-formed UTF-8 byte) like get().
+    /// That byte is taken from the buffer that was just scanned. Through get(),
+    /// Apple Clang merged this read with the other get() calls of the scan
+    /// function, which load the read position again right after it was stored
+    /// (3% of json::accept() on jeopardy.json on Apple M1).
+    char_int_type get_after_string_run(std::true_type /*bulk*/)
     {
         // a pending unget must be consumed through the normal path first
         if (next_unget)
         {
-            return;
+            return get();
         }
         const std::size_t remaining = ia.bulk_remaining();
         if (remaining == 0)
         {
-            return;
+            return get();
         }
-        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        const auto* const raw = ia.bulk_data();
+        const auto* const data = reinterpret_cast<const unsigned char*>(raw);
 
-        const std::size_t pos = string_bulk_run(data, remaining);
-        if (pos == 0)
+        const std::size_t pos = lexer_string_bulk_run(data, remaining);
+        if (pos != 0)
         {
-            return;
+            token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
+            bulk_consume(reinterpret_cast<const char*>(data), pos);
         }
-        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
-        bulk_consume(reinterpret_cast<const char*>(data), pos);
+        if (pos == remaining)
+        {
+            return get(); // end of the contiguous input
+        }
+        // what get() does, with the byte at hand
+        advance_position();
+        ia.bulk_skip(1);
+        current = char_traits<char_type>::to_int_type(raw[pos]);
+        return track_after_read();
     }
 
     /// consume @a n characters at @a data (the adapter's bulk_data()) and do
@@ -473,7 +487,10 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// streaming input: no bulk fast path
-    void scan_string_bulk(std::false_type /*bulk*/) const noexcept {}
+    char_int_type get_after_string_run(std::false_type /*bulk*/)
+    {
+        return get();
+    }
 
     /*!
     @brief scan a string literal
@@ -501,11 +518,8 @@ class lexer : public lexer_base<BasicJsonType>
         while (true)
         {
             // bulk-consume ordinary characters from contiguous input, then
-            // handle the next special byte through the switch below
-            scan_string_bulk(std::integral_constant<bool, bulk_scan> {});
-
-            // get the next character
-            switch (get())
+            // get the next character, the one that ends the run
+            switch (get_after_string_run(std::integral_constant<bool, bulk_scan>()))
             {
                 // end of file while parsing the string
                 case char_traits<char_type>::eof():
@@ -1841,24 +1855,50 @@ scan_number_done:
     }
 
     /*!
-    @param[in] literal_text  the literal text to expect
-    @param[in] length        the length of the passed literal text
-    @param[in] return_type   the token type to return on success
+    @param[in] rest         the literal text after its first character, which
+                            is current (its length is a template parameter, so
+                            that the comparison of the contiguous fast path is
+                            a fixed-size load, not a call of memcmp)
+    @param[in] return_type  the token type to return on success
     */
-    JSON_HEDLEY_NON_NULL(2)
-    token_type scan_literal(const char_type* literal_text, const std::size_t length,
-                            token_type return_type)
+    template<std::size_t N>
+    JSON_HEDLEY_NEVER_INLINE token_type scan_literal(const char (&rest)[N], token_type return_type) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
-        JSON_ASSERT(char_traits<char_type>::to_char_type(current) == literal_text[0]);
-        for (std::size_t i = 1; i < length; ++i)
+        constexpr std::size_t length = N - 1;
+        if (scan_literal_bulk(rest, length, std::integral_constant<bool, bulk_scan> {}))
         {
-            if (JSON_HEDLEY_UNLIKELY(char_traits<char_type>::to_char_type(get()) != literal_text[i]))
+            return return_type;
+        }
+        for (std::size_t i = 0; i < length; ++i)
+        {
+            if (JSON_HEDLEY_UNLIKELY(char_traits<char_type>::to_char_type(get()) != static_cast<char_type>(rest[i])))
             {
                 error_message = "invalid literal";
                 return token_type::parse_error;
             }
         }
         return return_type;
+    }
+
+    /// contiguous input: compare the rest of a literal at once; false (and
+    /// nothing consumed) if it does not match, so that the byte path reports
+    /// the error at the right character
+    JSON_HEDLEY_ALWAYS_INLINE bool scan_literal_bulk(const char* rest, const std::size_t length, std::true_type /*bulk*/)
+    {
+        if (next_unget || ia.bulk_remaining() < length
+                || std::memcmp(ia.bulk_data(), rest, length) != 0)
+        {
+            return false;
+        }
+        bulk_consume(reinterpret_cast<const char*>(ia.bulk_data()), length);
+        current = static_cast<char_int_type>(static_cast<unsigned char>(rest[length - 1]));
+        return true;
+    }
+
+    /// streaming input: no bulk fast path
+    bool scan_literal_bulk(const char* /*rest*/, const std::size_t /*length*/, std::false_type /*bulk*/) const noexcept
+    {
+        return false;
     }
 
     /////////////////////
@@ -2486,21 +2526,14 @@ scan_number_done:
                 return token_type::value_separator;
 
             // literals
+            // (the text after the first character; no local arrays, which
+            // would give this function a stack canary on every token)
             case 't':
-            {
-                std::array<char_type, 4> true_literal = {{static_cast<char_type>('t'), static_cast<char_type>('r'), static_cast<char_type>('u'), static_cast<char_type>('e')}};
-                return scan_literal(true_literal.data(), true_literal.size(), token_type::literal_true);
-            }
+                return scan_literal("rue", token_type::literal_true);
             case 'f':
-            {
-                std::array<char_type, 5> false_literal = {{static_cast<char_type>('f'), static_cast<char_type>('a'), static_cast<char_type>('l'), static_cast<char_type>('s'), static_cast<char_type>('e')}};
-                return scan_literal(false_literal.data(), false_literal.size(), token_type::literal_false);
-            }
+                return scan_literal("alse", token_type::literal_false);
             case 'n':
-            {
-                std::array<char_type, 4> null_literal = {{static_cast<char_type>('n'), static_cast<char_type>('u'), static_cast<char_type>('l'), static_cast<char_type>('l')}};
-                return scan_literal(null_literal.data(), null_literal.size(), token_type::literal_null);
-            }
+                return scan_literal("ull", token_type::literal_null);
 
             // string
             case '\"':
