@@ -295,37 +295,16 @@ class input_stream_adapter
     std::char_traits<char>::int_type get_character()
     {
 #if !JSON_DISABLE_STREAM_BULK_SCAN
-        // sbumpc() refills the get area if it is exhausted
-        const bool refill = streambuf_access::get_ptr(sb) == streambuf_access::get_end(sb);
-        if (JSON_HEDLEY_UNLIKELY(refill))
-        {
-            save_token_segment();
-        }
-#endif
-
-        auto res = sb->sbumpc();
-        // set eof manually, as we don't use the istream interface.
-        if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
-        {
-#if !JSON_DISABLE_STREAM_BULK_SCAN
-            current_in_get_area = false;
-#endif
-            is->clear(is->rdstate() | std::ios::eofbit);
-        }
-#if !JSON_DISABLE_STREAM_BULK_SCAN
-        else if (JSON_HEDLEY_UNLIKELY(refill))
-        {
-            // the consumed character is at gptr() - 1, unless the streambuf
-            // has no get area and returned it from uflow()
-            const char* const next = streambuf_access::get_ptr(sb);
-            after_refill(res, next != nullptr && next != streambuf_access::get_begin(sb));
-        }
-        else
+        // the character is in the get area: step over it, as sbumpc() does
+        const char* const next = streambuf_access::get_ptr(sb);
+        if (JSON_HEDLEY_LIKELY(next != streambuf_access::get_end(sb)))
         {
             current_in_get_area = true;
+            streambuf_access::bump(sb, 1);
+            return std::char_traits<char>::to_int_type(*next);
         }
 #endif
-        return res;
+        return get_character_slow();
     }
 #endif
 
@@ -434,6 +413,47 @@ class input_stream_adapter
 #endif
 
   private:
+#if !JSON_PRECISE_STREAM_POSITION
+    // the get area is exhausted, or there is none
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+    JSON_HEDLEY_NEVER_INLINE
+#endif
+    std::char_traits<char>::int_type get_character_slow()
+    {
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+        // sbumpc() refills the get area if it is exhausted
+        const bool refill = streambuf_access::get_ptr(sb) == streambuf_access::get_end(sb);
+        if (JSON_HEDLEY_UNLIKELY(refill))
+        {
+            save_token_segment();
+        }
+#endif
+
+        auto res = sb->sbumpc();
+        // set eof manually, as we don't use the istream interface.
+        if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
+        {
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+            current_in_get_area = false;
+#endif
+            is->clear(is->rdstate() | std::ios::eofbit);
+        }
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+        else if (JSON_HEDLEY_UNLIKELY(refill))
+        {
+            // the consumed character is at gptr() - 1, unless the streambuf
+            // has no get area and returned it from uflow()
+            const char* const next = streambuf_access::get_ptr(sb);
+            after_refill(res, next != nullptr && next != streambuf_access::get_begin(sb));
+        }
+        else
+        {
+            current_in_get_area = true;
+        }
+#endif
+        return res;
+    }
+#endif
 #if !JSON_DISABLE_STREAM_BULK_SCAN
     // Reads the protected get-area pointers of any std::streambuf. Naming the
     // members through a derived class makes forming the member pointers
