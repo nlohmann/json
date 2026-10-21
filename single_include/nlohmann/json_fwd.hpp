@@ -139,6 +139,12 @@
     #define NLOHMANN_JSON_ABI_TAG_DISABLE_UNLOCKED_FILE_IO
 #endif
 
+#ifdef JSON_NO_SIMD
+    #define NLOHMANN_JSON_ABI_TAG_NO_SIMD _ns
+#else
+    #define NLOHMANN_JSON_ABI_TAG_NO_SIMD
+#endif
+
 #ifdef JSON_VIEW_NO_SIMD
     #define NLOHMANN_JSON_ABI_TAG_VIEW_NO_SIMD _vns
 #else
@@ -156,9 +162,9 @@
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j, k, l) json_abi ## a ## b ## c ## d ## e ## f ## g ## h ## i ## j ## k ## l
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g, h, i, j, k, l) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j, k, l)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j, k, l, m) json_abi ## a ## b ## c ## d ## e ## f ## g ## h ## i ## j ## k ## l ## m
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g, h, i, j, k, l, m) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j, k, l, m)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
@@ -172,6 +178,7 @@
             NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS,       \
             NLOHMANN_JSON_ABI_TAG_DISABLE_STREAM_BULK_SCAN,          \
             NLOHMANN_JSON_ABI_TAG_DISABLE_UNLOCKED_FILE_IO,          \
+            NLOHMANN_JSON_ABI_TAG_NO_SIMD,                           \
             NLOHMANN_JSON_ABI_TAG_VIEW_NO_SIMD,                      \
             NLOHMANN_JSON_ABI_TAG_VIEW_USE_SSSE3)
 

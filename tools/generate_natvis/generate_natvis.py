@@ -78,8 +78,8 @@ if __name__ == '__main__':
     version = '_v' + (args.version or derived_version).replace('.', '_')
     inline_namespaces = []
 
-    # generate all combinations of inline namespace names
-    for n in range(0, len(abi_tags) + 1):
+    # generate namespace names for up to two ABI tags
+    for n in range(0, min(len(abi_tags), 2) + 1):
         for tags in itertools.combinations(abi_tags, n):
             ns = abi_prefix + ''.join(tags)
             inline_namespaces += [ns, ns + version]
