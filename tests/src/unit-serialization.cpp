@@ -1417,6 +1417,27 @@ void check_dump_against_reference(const std::string& s, const bool with_strict =
 }
 } // namespace
 
+TEST_CASE("every ASCII character at every position of a short string is written like the reference")
+{
+    // dump_escaped() copies strings of up to 32 bytes of printable ASCII after
+    // a table lookup per byte, and hands everything else to the scanners; put
+    // each ASCII character and a 2-byte character at every position of
+    // strings of up to 40 bytes to cover both sides of that bound
+    for (std::size_t length = 1; length <= 40; ++length)
+    {
+        for (std::size_t pos = 0; pos < length; ++pos)
+        {
+            for (int c = 0; c < 0x80; ++c)
+            {
+                std::string s(length, 'a');
+                s[pos] = static_cast<char>(c);
+                check_dump_against_reference(s);
+            }
+            check_dump_against_reference(std::string(pos, 'a') + "\xC3\xA4" + std::string(length - pos - 1, 'a'));
+        }
+    }
+}
+
 TEST_CASE("invalid UTF-8 at every position is handled like the reference")
 {
     // ill-formed byte sequences; those that end in a truncated sequence are

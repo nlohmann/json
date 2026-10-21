@@ -30047,6 +30047,33 @@ class serializer
     */
     void dump_escaped(const string_t& s)
     {
+        // Short strings of printable ASCII - most object keys and many values -
+        // are checked byte by byte against a table and then copied in one go.
+        // For them, this is cheaper than starting the vector scanner below,
+        // whose setup costs more than such a string takes to scan. The same
+        // check serves both values of ensure_ascii.
+        if (s.size() <= 32)
+        {
+            const auto& copyable = ascii_copyable();
+            const auto* const data = reinterpret_cast<const unsigned char*>(s.data());
+            const std::size_t n = s.size();
+            std::size_t k = 0;
+            while (k + 4 <= n && copyable[data[k]] != 0 && copyable[data[k + 1]] != 0
+                    && copyable[data[k + 2]] != 0 && copyable[data[k + 3]] != 0)
+            {
+                k += 4;
+            }
+            while (k < n && copyable[data[k]] != 0)
+            {
+                ++k;
+            }
+            if (k == n)
+            {
+                put_string(s, 0, n);
+                return;
+            }
+        }
+
         // dispatch once here rather than test the flag inside the loop: it does
         // not change while a string is written, and folding it lets each of the
         // two scanners be inlined into a loop of its own
@@ -30427,8 +30454,12 @@ class serializer
     the indentation character once and flushing that same content repeatedly:
     flushing does not disturb what the buffer holds, so re-filling it between
     flushes would be redundant work.
+
+    @note inlined on purpose, as is @ref put_literal: GCC otherwise stops
+          inlining both into the pretty-printing loops once @ref dump_escaped
+          has grown, which made indented output up to 13% slower
     */
-    void put_indent(std::size_t indent)
+    JSON_HEDLEY_ALWAYS_INLINE void put_indent(std::size_t indent)
     {
         // closing braces at the outermost level ask for no indentation at all
         if (indent == 0)
@@ -30478,7 +30509,7 @@ class serializer
     write-through path for oversized runs.
     */
     template<std::size_t N>
-    void put_literal(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    JSON_HEDLEY_ALWAYS_INLINE void put_literal(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         static_assert(N >= 2, "put_literal expects a non-empty string literal");
         // the array bound counts the terminating NUL, which is not written
@@ -30585,6 +30616,39 @@ class serializer
             x = x / 10000u;
             n_digits += 4;
         }
+    }
+
+    /*!
+    @brief whether each byte can be written verbatim under either value of ensure_ascii
+
+    Entry c is 1 for printable ASCII other than '"' and '\\' (see
+    is_ascii_copyable()) and 0 otherwise. A table lookup per byte is the
+    cheapest test for the short strings handled first in dump_escaped().
+    */
+    static const std::array<std::uint8_t, 256>& ascii_copyable() noexcept
+    {
+        static const std::array<std::uint8_t, 256> copyable =
+        {
+            {
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x00
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x10
+                1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x20
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x30
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x40
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, // 0x50
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x60
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, // 0x70
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x80
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x90
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xA0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xB0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xC0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xD0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xE0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 // 0xF0
+            }
+        };
+        return copyable;
     }
 
     /*!
