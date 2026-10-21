@@ -12,6 +12,7 @@
 using nlohmann::json;
 using nlohmann::ordered_json;
 using nlohmann::json_document;
+using nlohmann::ordered_json_editable_document;
 using nlohmann::json_view;
 using nlohmann::ordered_json_document;
 using nlohmann::ordered_json_view;
@@ -217,6 +218,76 @@ TEST_CASE("json_view dump")
         const json expected = json::parse("\"" + chars + "\"");
         CHECK(d.root()["a"].dump(-1, ' ', true) == expected.dump(-1, ' ', true));
         CHECK(d.root()["a"].dump(-1, ' ', true).size() == 2 + (5000 * 6));
+    }
+
+    SECTION("ensure_ascii with strings of the source, decoded strings, and edited strings")
+    {
+        // plain ASCII, non-ASCII, escaped (decoded), and mixed strings, as values and as keys;
+        // the second text has a DEL, which ensure_ascii writes as an escape
+        for (const char* const del :
+                {"", "\x7F"
+                })
+        {
+            const std::string text = std::string("{\"plain\":\"abc\",\"caf\xC3\xA9\":\"\xC3\xA9\xE2\x82\xAC\xF0\x9F\x98\x80\",")
+                                     + "\"esc\\n\\\"\":\"a\\tb\\u00e4\\ud83d\\ude00\",\"del\":\"a" + del + "b\",\"\":\"\"," // NOLINT(modernize-raw-string-literal)
+                                     + "\"list\":[\"x\",\"\xC3\xBC\",\"\\\\\",\"long ASCII string with more than thirty-two bytes in it\","
+                                     + "\"long string with more than thirty-two bytes and one non-ASCII byte \xC3\xB6\"],"
+                                     + "\"n\":[1,2.5,-0,true,null]}";
+            const ordered_json j = ordered_json::parse(text);
+            const ordered_json_document d = ordered_json_document::parse(text);
+            CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+            CHECK(d.root().dump(4, ' ', true) == j.dump(4, ' ', true));
+            CHECK(d.root().dump() == j.dump());
+            CHECK(d.root()["list"].dump(-1, ' ', true) == j["list"].dump(-1, ' ', true));
+            CHECK(d.root()["del"].dump(-1, ' ', true) == j["del"].dump(-1, ' ', true));
+
+            // strings that an edit wrote (the source strings that they replace were plain)
+            ordered_json_editable_document e = ordered_json_editable_document::parse(text);
+            ordered_json k = j;
+            e.set(e.root()["plain"], std::string("\xC3\xA4gypten"));
+            k["plain"] = "\xC3\xA4gypten";
+            e.set(e.root()["list"][0], std::string("ascii after edit"));
+            k["list"][0] = "ascii after edit";
+            e.set(e.root()["list"][1], std::string("\xC3\xA4"));
+            k["list"][1] = "\xC3\xA4";
+            e.set(e.root()["del"], std::string("tab\there"));
+            k["del"] = "tab\there";
+            CHECK(e.root().dump(-1, ' ', true) == k.dump(-1, ' ', true));
+            CHECK(e.root().dump(2, ' ', true) == k.dump(2, ' ', true));
+            CHECK(e.root().dump() == k.dump());
+
+            // strings that were edited from or to ASCII text
+            e.set(e.root()["list"][2], std::string("\xC3\xA4"));
+            k["list"][2] = "\xC3\xA4";
+            e.set(e.root()["list"][4], std::string("plain again"));
+            k["list"][4] = "plain again";
+            CHECK(e.root().dump(-1, ' ', true) == k.dump(-1, ' ', true));
+        }
+    }
+
+    SECTION("ensure_ascii with DEL or a non-ASCII character at every position")
+    {
+        // the check whether a string of the source has no byte >= 0x7F reads
+        // eight bytes at a time and then the rest one by one
+        for (std::size_t length = 1; length <= 20; ++length)
+        {
+            for (std::size_t pos = 0; pos < length; ++pos)
+            {
+                for (const char* const c :
+                        {
+                            "\x7F", "\x7E", "\xC3\xA4", "\xC3\xBF" // NOLINT(modernize-raw-string-literal)
+                        })
+                {
+                    const std::string s = std::string(pos, 'a') + c + std::string(length - pos - 1, 'b');
+                    std::string text = "[\"";
+                    text.append(s).append("\",{\"").append(s).append("\":1}]");
+                    const json_document d = json_document::parse(text);
+                    const json j = json::parse(text);
+                    CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+                    CHECK(d.root().dump(1, ' ', true) == j.dump(1, ' ', true));
+                }
+            }
+        }
     }
 
     SECTION("streams and discarded views")
