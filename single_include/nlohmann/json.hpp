@@ -32472,6 +32472,47 @@ inline char* format_buffer_ecmascript(char* buf, int len, int decimal_exponent) 
     return append_exponent_ecmascript(buf, n - 1);
 }
 
+template<typename FloatType>
+inline void get_shortest_digits(FloatType x, char* buf, int& len, int& decimal_exponent, std::true_type /*is_binary64*/)
+{
+    std::uint64_t bits = 0;
+    std::memcpy(&bits, &x, sizeof(bits));
+    const zmij::shortest_decimal sd = zmij::to_shortest(bits);
+    std::uint64_t significand = sd.has_digit ? (sd.integral * 10) + sd.digit : sd.integral;
+    decimal_exponent = sd.has_digit ? sd.exponent : sd.exponent + 1;
+
+    char temp[24];
+    int temp_idx = 0;
+    while (significand > 0)
+    {
+        temp[temp_idx++] = static_cast<char>('0' + (significand % 10));
+        significand /= 10;
+    }
+    if (temp_idx == 0)
+    {
+        buf[len++] = '0';
+    }
+    else
+    {
+        while (temp_idx > 0)
+        {
+            buf[len++] = temp[--temp_idx];
+        }
+    }
+
+    while (len > 1 && buf[len - 1] == '0')
+    {
+        --len;
+        ++decimal_exponent;
+    }
+}
+
+template<typename FloatType>
+inline void get_shortest_digits(FloatType x, char* buf, int& len, int& decimal_exponent, std::false_type /*is_binary64*/)
+{
+    ::nlohmann::detail::dtoa_impl::grisu2(buf, len, decimal_exponent, x);
+}
+
 ///////////////////
 // serialization //
 ///////////////////
@@ -32563,81 +32604,46 @@ class serializer
     */
     void dump_canonical(const BasicJsonType& val)
     {
-        dump_canonical_internal(val);
+        dump_canonical_internal(val, 0);
         flush();
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
-    /*!
-    @brief worker for @ref dump_canonical
-    */
-    void dump_canonical_internal(const BasicJsonType& val)
+    /// @brief a container that has been opened for iterative canonical dump
+    struct canonical_dump_frame
     {
-        switch (val.m_data.m_type)
+        using value_type = typename BasicJsonType::object_t::value_type;
+
+        const BasicJsonType* container;
+        std::vector<const value_type*> sorted_elements{};
+        std::size_t current_idx = 0;
+
+        explicit canonical_dump_frame(const BasicJsonType* c)
+            : container(c)
         {
-            case value_t::object:
+            if (c->is_object())
             {
-                const auto* obj = val.m_data.m_value.object;
-                if (obj->empty())
-                {
-                    put_literal("{}");
-                    return;
-                }
-
-                put_char('{');
-
-                using value_type = typename BasicJsonType::object_t::value_type;
-                std::vector<const value_type*> sorted_elements;
+                const auto* obj = c->m_data.m_value.object;
                 sorted_elements.reserve(obj->size());
                 for (const auto& el : *obj)
                 {
                     sorted_elements.push_back(&el);
                 }
-
                 std::sort(sorted_elements.begin(), sorted_elements.end(),
                           [](const value_type* a, const value_type* b) {
                               return utf16_code_unit_less{}(a->first, b->first);
                           });
-
-                for (std::size_t i = 0; i < sorted_elements.size(); ++i)
-                {
-                    if (i > 0)
-                    {
-                        put_char(',');
-                    }
-                    put_char('"');
-                    dump_escaped(sorted_elements[i]->first);
-                    put_char('"');
-                    put_char(':');
-                    dump_canonical_internal(sorted_elements[i]->second);
-                }
-
-                put_char('}');
-                return;
             }
+        }
+    };
 
-            case value_t::array:
-            {
-                const auto* arr = val.m_data.m_value.array;
-                if (arr->empty())
-                {
-                    put_literal("[]");
-                    return;
-                }
-
-                put_char('[');
-                for (std::size_t i = 0; i < arr->size(); ++i)
-                {
-                    if (i > 0)
-                    {
-                        put_char(',');
-                    }
-                    dump_canonical_internal((*arr)[i]);
-                }
-                put_char(']');
-                return;
-            }
-
+    /*!
+    @brief serialize scalar values according to RFC 8785
+    */
+    void dump_canonical_scalar(const BasicJsonType& val)
+    {
+        switch (val.m_data.m_type)
+        {
             case value_t::string:
             {
                 put_char('"');
@@ -32693,6 +32699,244 @@ class serializer
     }
 
     /*!
+    @brief write out @a val canonically without the call stack
+    */
+    void dump_canonical_iteratively(const BasicJsonType& val)
+    {
+        if (val.is_object())
+        {
+            if (val.m_data.m_value.object->empty())
+            {
+                put_literal("{}");
+                return;
+            }
+            put_char('{');
+        }
+        else if (val.is_array())
+        {
+            if (val.m_data.m_value.array->empty())
+            {
+                put_literal("[]");
+                return;
+            }
+            put_char('[');
+        }
+        else
+        {
+            dump_canonical_scalar(val);
+            return;
+        }
+
+        std::vector<canonical_dump_frame> stack;
+        stack.emplace_back(&val);
+
+        while (!stack.empty())
+        {
+            canonical_dump_frame& frame = stack.back();
+
+            if (frame.container->is_object())
+            {
+                if (frame.current_idx < frame.sorted_elements.size())
+                {
+                    if (frame.current_idx > 0)
+                    {
+                        put_char(',');
+                    }
+
+                    const auto* elem = frame.sorted_elements[frame.current_idx];
+                    ++frame.current_idx;
+
+                    put_char('"');
+                    dump_escaped(elem->first);
+                    put_char('"');
+                    put_char(':');
+
+                    const BasicJsonType& child = elem->second;
+                    if (child.is_object())
+                    {
+                        if (child.m_data.m_value.object->empty())
+                        {
+                            put_literal("{}");
+                        }
+                        else
+                        {
+                            put_char('{');
+                            stack.emplace_back(&child);
+                        }
+                    }
+                    else if (child.is_array())
+                    {
+                        if (child.m_data.m_value.array->empty())
+                        {
+                            put_literal("[]");
+                        }
+                        else
+                        {
+                            put_char('[');
+                            stack.emplace_back(&child);
+                        }
+                    }
+                    else
+                    {
+                        dump_canonical_scalar(child);
+                    }
+                }
+                else
+                {
+                    put_char('}');
+                    stack.pop_back();
+                }
+            }
+            else // is_array
+            {
+                const auto* arr = frame.container->m_data.m_value.array;
+                if (frame.current_idx < arr->size())
+                {
+                    if (frame.current_idx > 0)
+                    {
+                        put_char(',');
+                    }
+
+                    const BasicJsonType& child = (*arr)[frame.current_idx];
+                    ++frame.current_idx;
+
+                    if (child.is_object())
+                    {
+                        if (child.m_data.m_value.object->empty())
+                        {
+                            put_literal("{}");
+                        }
+                        else
+                        {
+                            put_char('{');
+                            stack.emplace_back(&child);
+                        }
+                    }
+                    else if (child.is_array())
+                    {
+                        if (child.m_data.m_value.array->empty())
+                        {
+                            put_literal("[]");
+                        }
+                        else
+                        {
+                            put_char('[');
+                            stack.emplace_back(&child);
+                        }
+                    }
+                    else
+                    {
+                        dump_canonical_scalar(child);
+                    }
+                }
+                else
+                {
+                    put_char(']');
+                    stack.pop_back();
+                }
+            }
+        }
+    }
+
+    /*!
+    @brief worker for @ref dump_canonical
+    */
+    void dump_canonical_internal(const BasicJsonType& val, const std::size_t depth = 0)
+    {
+        switch (val.m_data.m_type)
+        {
+            case value_t::object:
+            {
+                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
+                {
+                    dump_canonical_iteratively(val);
+                    return;
+                }
+
+                const auto* obj = val.m_data.m_value.object;
+                if (obj->empty())
+                {
+                    put_literal("{}");
+                    return;
+                }
+
+                put_char('{');
+
+                using value_type = typename BasicJsonType::object_t::value_type;
+                std::vector<const value_type*> sorted_elements;
+                sorted_elements.reserve(obj->size());
+                for (const auto& el : *obj)
+                {
+                    sorted_elements.push_back(&el);
+                }
+
+                std::sort(sorted_elements.begin(), sorted_elements.end(),
+                          [](const value_type* a, const value_type* b) {
+                              return utf16_code_unit_less{}(a->first, b->first);
+                          });
+
+                for (std::size_t i = 0; i < sorted_elements.size(); ++i)
+                {
+                    if (i > 0)
+                    {
+                        put_char(',');
+                    }
+                    put_char('"');
+                    dump_escaped(sorted_elements[i]->first);
+                    put_char('"');
+                    put_char(':');
+                    dump_canonical_internal(sorted_elements[i]->second, depth + 1);
+                }
+
+                put_char('}');
+                return;
+            }
+
+            case value_t::array:
+            {
+                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
+                {
+                    dump_canonical_iteratively(val);
+                    return;
+                }
+
+                const auto* arr = val.m_data.m_value.array;
+                if (arr->empty())
+                {
+                    put_literal("[]");
+                    return;
+                }
+
+                put_char('[');
+                for (std::size_t i = 0; i < arr->size(); ++i)
+                {
+                    if (i > 0)
+                    {
+                        put_char(',');
+                    }
+                    dump_canonical_internal((*arr)[i], depth + 1);
+                }
+                put_char(']');
+                return;
+            }
+
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::null:
+            case value_t::binary:
+            case value_t::discarded:
+            default:
+            {
+                dump_canonical_scalar(val);
+                return;
+            }
+        }
+    }
+
+    /*!
     @brief dump a floating-point number according to RFC 8785 (ECMAScript Number::toString)
     */
     void dump_float_canonical(number_float_t x, const BasicJsonType* context)
@@ -32717,7 +32961,7 @@ class serializer
         char buf[128];
         int len = 0;
         int decimal_exponent = 0;
-        ::nlohmann::detail::dtoa_impl::grisu2(buf, len, decimal_exponent, x);
+        get_shortest_digits(x, buf, len, decimal_exponent, typename dtoa_impl::is_binary64<number_float_t>::type{});
 
         char* const end = format_buffer_ecmascript(buf, len, decimal_exponent);
         const auto str_len = static_cast<std::size_t>(end - buf);

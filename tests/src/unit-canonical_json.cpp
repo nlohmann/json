@@ -230,4 +230,41 @@ TEST_CASE("canonical JSON serialization (RFC 8785 / JCS)")
         json::dump_canonical(j, ss);
         CHECK(ss.str() == "{\"a\":1,\"b\":2}");
     }
+
+    SECTION("deep nesting beyond recursion_depth_limit (#5387)")
+    {
+        // Recursion limit in recursion_depth_limit.hpp is 512
+        constexpr std::size_t depth = 600;
+
+        // 1. Deeply nested arrays: [[[[... 42 ...]]]]
+        json nested_array = 42;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            nested_array = json::array({nested_array});
+        }
+        std::string expected_arr;
+        expected_arr.reserve(depth * 2 + 3);
+        expected_arr.append(depth, '[');
+        expected_arr.append("42");
+        expected_arr.append(depth, ']');
+        CHECK(nested_array.dump_canonical() == expected_arr);
+
+        // 2. Deeply nested objects with sorted keys: {"b":1,"a":{"b":1,"a":...}}
+        json nested_obj = 42;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            nested_obj = json{{"b", 1}, {"a", nested_obj}};
+        }
+        std::string expected_obj;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            expected_obj.append("{\"a\":");
+        }
+        expected_obj.append("42");
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            expected_obj.append(",\"b\":1}");
+        }
+        CHECK(nested_obj.dump_canonical() == expected_obj);
+    }
 }
