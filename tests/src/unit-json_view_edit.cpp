@@ -52,7 +52,7 @@ int r(int n)
     return static_cast<int>(edit_rng() % static_cast<unsigned>(n));
 }
 
-int counter = 0;
+int edit_counter = 0;
 
 std::uint64_t edit_bits(double x)
 {
@@ -103,7 +103,7 @@ ordered_json random_value(int depth)
         ordered_json o = ordered_json::object();
         for (int i = r(5); i > 0; --i)
         {
-            o[random_string() + "#" + std::to_string(counter++)] = random_value(depth + 1);
+            o[random_string() + "#" + std::to_string(edit_counter++)] = random_value(depth + 1);
         }
         return o;
     }
@@ -435,7 +435,7 @@ TEST_CASE("json_view edits: differential")
                 }
                 else if ((op == 4 || op == 5) && target.is_object()) // set a member (new or existing)
                 {
-                    std::string key = random_string() + "#" + std::to_string(counter++);
+                    std::string key = random_string() + "#" + std::to_string(edit_counter++);
                     if (op == 5 && !target.empty())
                     {
                         key = std::next(target.begin(), r(static_cast<int>(target.size()))).key();

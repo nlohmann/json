@@ -38,7 +38,7 @@ using nlohmann::detail::view::node;
 namespace
 {
 #if !defined(JSON_NOEXCEPTION)
-std::string exception_of(const std::function<void()>& f)
+std::string image_exception_of(const std::function<void()>& f)
 {
     try
     {
@@ -119,7 +119,7 @@ void set_node(std::vector<std::uint8_t>& image, std::size_t i, const node& n)
 /// the result of loading an image with a check: "" or the exception message
 std::string load_result(const std::vector<std::uint8_t>& image, image_check check)
 {
-    return exception_of([&]
+    return image_exception_of([&]
     {
         const json_document d = json_document::load(image, check);
         static_cast<void>(d);
@@ -701,9 +701,9 @@ TEST_CASE("json_view images: errors")
     SECTION("saving a discarded document")
     {
         const json_document empty{};
-        CHECK(exception_of([&] { static_cast<void>(empty.save()); }) == "[json.exception.type_error.320] cannot save a discarded json_document");
+        CHECK(image_exception_of([&] { static_cast<void>(empty.save()); }) == "[json.exception.type_error.320] cannot save a discarded json_document");
         const json_document failed = json_document::parse("[1,", false);
-        CHECK(exception_of([&] { static_cast<void>(failed.save()); }) == "[json.exception.type_error.320] cannot save a discarded json_document");
+        CHECK(image_exception_of([&] { static_cast<void>(failed.save()); }) == "[json.exception.type_error.320] cannot save a discarded json_document");
     }
 
     const std::vector<std::uint8_t> image = json_document::parse(R"({"a": [1, "\u00e9"]})").save();
@@ -711,12 +711,12 @@ TEST_CASE("json_view images: errors")
 
     SECTION("header and sizes")
     {
-        CHECK(exception_of([]
+        CHECK(image_exception_of([]
         {
             const json_document d = json_document::load(nullptr, 0);
             static_cast<void>(d);
         }) == prefix + "too short");
-        CHECK(exception_of([&]
+        CHECK(image_exception_of([&]
         {
             const json_document d = json_document::load(image.data(), 63);
             static_cast<void>(d);
