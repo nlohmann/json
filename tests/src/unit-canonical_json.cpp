@@ -36,7 +36,7 @@ TEST_CASE("canonical JSON serialization (RFC 8785 / JCS)")
         CHECK(json::object().dump_canonical() == "{}");
         CHECK(json::array().dump_canonical() == "[]");
         CHECK(json({{"empty_obj", json::object()}, {"empty_arr", json::array()}}).dump_canonical()
-              == "{\"empty_arr\":[],\"empty_obj\":{}}");
+        == "{\"empty_arr\":[],\"empty_obj\":{}}");
     }
 
     SECTION("string escaping according to RFC 8785")
@@ -119,13 +119,15 @@ TEST_CASE("canonical JSON serialization (RFC 8785 / JCS)")
 
     SECTION("reproducible byte-identical output across different key insertion orders")
     {
-        ordered_json doc1 = {
+        ordered_json doc1 =
+        {
             {"user", {{"id", 101}, {"name", "Alice"}, {"role", "admin"}}},
             {"active", true},
             {"tags", {"security", "audit"}}
         };
 
-        ordered_json doc2 = {
+        ordered_json doc2 =
+        {
             {"tags", {"security", "audit"}},
             {"active", true},
             {"user", {{"role", "admin"}, {"id", 101}, {"name", "Alice"}}}
@@ -143,7 +145,8 @@ TEST_CASE("canonical JSON serialization (RFC 8785 / JCS)")
             const char* expected;
         };
 
-        const std::vector<TestVector> test_vectors = {
+        const std::vector<TestVector> test_vectors =
+        {
             {
                 "arrays",
                 "[\n  56,\n  {\n    \"d\": true,\n    \"10\": null,\n    \"1\": [ ]\n  }\n]\n",

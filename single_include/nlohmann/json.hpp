@@ -32299,6 +32299,10 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
+/////////////////////////////////////////////////////////
+// JSON Canonicalization Scheme (RFC 8785) helpers     //
+/////////////////////////////////////////////////////////
+
 inline bool next_utf16_code_unit(const char*& p, const char* end, std::uint16_t& pending_surrogate, std::uint16_t& out_code_unit) noexcept
 {
     if (pending_surrogate != 0)
@@ -32307,7 +32311,6 @@ inline bool next_utf16_code_unit(const char*& p, const char* end, std::uint16_t&
         pending_surrogate = 0;
         return true;
     }
-
     if (p >= end)
     {
         return false;
@@ -32324,8 +32327,7 @@ inline bool next_utf16_code_unit(const char*& p, const char* end, std::uint16_t&
         if (p < end)
         {
             const auto b1 = static_cast<unsigned char>(*p++);
-            const auto cp = static_cast<std::uint32_t>(((b0 & 0x1F) << 6) | (b1 & 0x3F));
-            out_code_unit = static_cast<std::uint16_t>(cp);
+            out_code_unit = static_cast<std::uint16_t>(((b0 & 0x1F) << 6) | (b1 & 0x3F));
             return true;
         }
     }
@@ -32335,8 +32337,7 @@ inline bool next_utf16_code_unit(const char*& p, const char* end, std::uint16_t&
         {
             const auto b1 = static_cast<unsigned char>(*p++);
             const auto b2 = static_cast<unsigned char>(*p++);
-            const auto cp = static_cast<std::uint32_t>(((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F));
-            out_code_unit = static_cast<std::uint16_t>(cp);
+            out_code_unit = static_cast<std::uint16_t>(((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F));
             return true;
         }
     }
@@ -32347,12 +32348,15 @@ inline bool next_utf16_code_unit(const char*& p, const char* end, std::uint16_t&
             const auto b1 = static_cast<unsigned char>(*p++);
             const auto b2 = static_cast<unsigned char>(*p++);
             const auto b3 = static_cast<unsigned char>(*p++);
-            const auto cp = static_cast<std::uint32_t>(((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F));
+            std::uint32_t cp = ((static_cast<std::uint32_t>(b0 & 0x07)) << 18) |
+                               ((static_cast<std::uint32_t>(b1 & 0x3F)) << 12) |
+                               ((static_cast<std::uint32_t>(b2 & 0x3F)) << 6) |
+                               static_cast<std::uint32_t>(b3 & 0x3F);
             if (cp >= 0x10000 && cp <= 0x10FFFF)
             {
-                const auto u = cp - 0x10000;
-                out_code_unit = static_cast<std::uint16_t>(0xD800 + (u >> 10));
-                pending_surrogate = static_cast<std::uint16_t>(0xDC00 + (u & 0x3FF));
+                cp -= 0x10000;
+                out_code_unit = static_cast<std::uint16_t>(0xD800 + (cp >> 10));
+                pending_surrogate = static_cast<std::uint16_t>(0xDC00 + (cp & 0x3FF));
                 return true;
             }
         }
@@ -32409,8 +32413,8 @@ inline char* append_exponent_ecmascript(char* buf, int e) noexcept
         *buf++ = '+';
     }
 
-    char temp[16];
-    int idx = 0;
+    std::array<char, 16> temp{{}};
+    std::size_t idx = 0;
     auto val = static_cast<std::uint32_t>(e);
     if (val == 0)
     {
@@ -32481,8 +32485,8 @@ inline void get_shortest_digits(FloatType x, char* buf, int& len, int& decimal_e
     std::uint64_t significand = sd.has_digit ? (sd.integral * 10) + sd.digit : sd.integral;
     decimal_exponent = sd.has_digit ? sd.exponent : sd.exponent + 1;
 
-    char temp[24];
-    int temp_idx = 0;
+    std::array<char, 24> temp{{}};
+    std::size_t temp_idx = 0;
     while (significand > 0)
     {
         temp[temp_idx++] = static_cast<char>('0' + (significand % 10));
@@ -32630,9 +32634,10 @@ class serializer
                     sorted_elements.push_back(&el);
                 }
                 std::sort(sorted_elements.begin(), sorted_elements.end(),
-                          [](const value_type* a, const value_type* b) {
-                              return utf16_code_unit_less{}(a->first, b->first);
-                          });
+                          [](const value_type * a, const value_type * b)
+                {
+                    return utf16_code_unit_less{}(a->first, b->first);
+                });
             }
         }
     };
@@ -32871,9 +32876,10 @@ class serializer
                 }
 
                 std::sort(sorted_elements.begin(), sorted_elements.end(),
-                          [](const value_type* a, const value_type* b) {
-                              return utf16_code_unit_less{}(a->first, b->first);
-                          });
+                          [](const value_type * a, const value_type * b)
+                {
+                    return utf16_code_unit_less{}(a->first, b->first);
+                });
 
                 for (std::size_t i = 0; i < sorted_elements.size(); ++i)
                 {
@@ -32958,20 +32964,15 @@ class serializer
             x = -x;
         }
 
-        char buf[128];
+        std::array<char, 128> buf{{}};
         int len = 0;
         int decimal_exponent = 0;
-        get_shortest_digits(x, buf, len, decimal_exponent, typename dtoa_impl::is_binary64<number_float_t>::type{});
+        get_shortest_digits(x, buf.data(), len, decimal_exponent, typename dtoa_impl::is_binary64<number_float_t>::type{});
 
-        char* const end = format_buffer_ecmascript(buf, len, decimal_exponent);
-        const auto str_len = static_cast<std::size_t>(end - buf);
+        const char* const end = format_buffer_ecmascript(buf.data(), len, decimal_exponent);
+        const auto str_len = static_cast<std::size_t>(end - buf.data());
 
-        if (JSON_HEDLEY_UNLIKELY(write_buffer_pos + str_len > write_buffer.size()))
-        {
-            flush();
-        }
-        std::memcpy(write_buffer.data() + write_buffer_pos, buf, str_len);
-        write_buffer_pos += str_len;
+        put_buffer(buf, str_len);
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
