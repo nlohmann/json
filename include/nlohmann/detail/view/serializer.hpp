@@ -119,7 +119,8 @@ class output_buffer
     {
         const auto used = static_cast<std::size_t>(m_pos - m_out.data());
         // (a step does not go beyond the reserved estimate, so that a good
-        // estimate is never copied to a larger allocation)
+        // estimate is never copied to a larger allocation; not a clamp: the
+        // lower bound used + n + 256 can exceed capacity(), and then it must win)
         const std::size_t size = (std::max)((std::min)(m_out.size() + step, m_out.capacity()), used + n + 256);
         if (size > m_out.capacity())
         {
