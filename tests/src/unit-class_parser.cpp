@@ -30,7 +30,9 @@ using nlohmann::json;
 #include <valarray>
 #include <algorithm>
 #include <cstdio>
+#include <cstdint>
 #include <fstream>
+#include <iterator>
 #include <list>
 #include <sstream>
 #include <string>
@@ -2449,6 +2451,79 @@ std::string parse_error_message_range(IteratorType first, IteratorType last)
     }
 }
 } // namespace
+
+TEST_CASE("text of float tokens")
+{
+    // For contiguous input, the lexer copies the text of a float token into
+    // its buffer only when a SAX handler asks for it (the library's own
+    // handlers do not). A user handler must still see the exact text, for
+    // every input adapter and in every position of a document.
+    const std::string doc = R"([1.5, -0.0, 0.1, 1e5, -2.5E-4, 12345678901234567890.5, 0.12345678901234567890123,
+                              {"a": 3.25, "b": [6.02e23, 1]}, "x", true, 7e-1])";
+    const std::vector<std::string> expected_floats =
+    {
+        "number_float(1.5)", "number_float(-0.0)", "number_float(0.1)", "number_float(1e5)", "number_float(-2.5E-4)",
+        "number_float(12345678901234567890.5)", "number_float(0.12345678901234567890123)", "number_float(3.25)",
+        "number_float(6.02e23)", "number_float(7e-1)"
+    };
+
+    const auto floats = [](const std::vector<std::string>& events)
+    {
+        std::vector<std::string> result;
+        std::copy_if(events.begin(), events.end(), std::back_inserter(result), [](const std::string & e)
+        {
+            return e.compare(0, 13, "number_float(") == 0;
+        });
+        return result;
+    };
+
+    SECTION("contiguous input")
+    {
+        SaxEventLogger l;
+        CHECK(json::sax_parse(doc, &l));
+        CHECK(floats(l.events) == expected_floats);
+    }
+
+    SECTION("byte input")
+    {
+        const std::vector<std::uint8_t> bytes(doc.begin(), doc.end());
+        SaxEventLogger l;
+        CHECK(json::sax_parse(bytes, &l));
+        CHECK(floats(l.events) == expected_floats);
+    }
+
+    SECTION("stream input")
+    {
+        std::istringstream is(doc);
+        SaxEventLogger l;
+        CHECK(json::sax_parse(is, &l));
+        CHECK(floats(l.events) == expected_floats);
+    }
+
+    SECTION("non-contiguous iterators")
+    {
+        const std::list<char> chars(doc.begin(), doc.end());
+        SaxEventLogger l;
+        CHECK(json::sax_parse(chars.begin(), chars.end(), &l));
+        CHECK(floats(l.events) == expected_floats);
+    }
+
+    SECTION("the library's own handlers do not need the text")
+    {
+        using lexer_adapter = nlohmann::detail::iterator_input_adapter<const char*>;
+        CHECK(nlohmann::detail::sax_ignores_number_text<nlohmann::detail::json_sax_dom_parser<json, lexer_adapter>>::value);
+        CHECK(nlohmann::detail::sax_ignores_number_text<nlohmann::detail::json_sax_dom_callback_parser<json, lexer_adapter>>::value);
+        CHECK(nlohmann::detail::sax_ignores_number_text<nlohmann::detail::json_sax_acceptor<json>>::value);
+        CHECK_FALSE(nlohmann::detail::sax_ignores_number_text<SaxEventLogger>::value);
+
+        // and the values are the same as when the text is read
+        const json j = json::parse(doc);
+        CHECK(j[0] == 1.5);
+        CHECK(j[5].get<double>() == 12345678901234567890.5);
+        CHECK(j[7]["b"][0] == 6.02e23);
+        CHECK(json::accept(doc));
+    }
+}
 
 TEST_CASE("last-read diagnostics are identical across input adapters")
 {

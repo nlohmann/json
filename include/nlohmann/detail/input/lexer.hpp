@@ -1690,9 +1690,12 @@ scan_number_done:
         const std::size_t avail = rem + 1;
 
         // validate + classify the number extent (mirrors scan_number()'s grammar)
+        // and accumulate the mantissa digits on the way, so that tokens with up
+        // to 19 digits need no second pass for their value
         std::size_t i = 0;
         std::size_t dot_index = std::string::npos;
         token_type number_type = token_type::value_unsigned;
+        std::uint64_t w = 0;
         if (data[0] == '-')
         {
             number_type = token_type::value_integer;
@@ -1702,22 +1705,21 @@ scan_number_done:
                 return token_type::uninitialized;
             }
         }
+        const std::size_t integer_begin = i;
         if (data[i] == '0')
         {
             ++i;
         }
         else if (data[i] >= '1' && data[i] <= '9')
         {
-            ++i;
-            while (i < avail && data[i] >= '0' && data[i] <= '9')
-            {
-                ++i;
-            }
+            i = accumulate_digits(data, i, avail, w);
         }
         else
         {
             return token_type::uninitialized;
         }
+        std::size_t digit_count = i - integer_begin;
+        std::size_t fraction_digits = 0;
         if (i < avail && data[i] == '.')
         {
             number_type = token_type::value_float;
@@ -1727,29 +1729,39 @@ scan_number_done:
             {
                 return token_type::uninitialized;
             }
-            while (i < avail && data[i] >= '0' && data[i] <= '9')
-            {
-                ++i;
-            }
+            const std::size_t fraction_begin = i;
+            i = accumulate_digits(data, i, avail, w);
+            fraction_digits = i - fraction_begin;
+            digit_count += fraction_digits;
         }
         // the mantissa ends here, whether or not an exponent part follows
         const std::size_t mantissa_end = i;
+        std::int64_t exponent = 0;
         if (i < avail && (data[i] == 'e' || data[i] == 'E'))
         {
             number_type = token_type::value_float;
             ++i;
+            bool negative_exponent = false;
             if (i < avail && (data[i] == '+' || data[i] == '-'))
             {
+                negative_exponent = data[i] == '-';
                 ++i;
             }
             if (i >= avail || !(data[i] >= '0' && data[i] <= '9'))
             {
                 return token_type::uninitialized;
             }
+            // saturated far beyond every range, see parse_float_exponent()
+            constexpr std::int64_t saturation = 100000000000000000; // 10^17
             while (i < avail && data[i] >= '0' && data[i] <= '9')
             {
+                if (exponent < saturation)
+                {
+                    exponent = (exponent * 10) + (data[i] - '0');
+                }
                 ++i;
             }
+            exponent = negative_exponent ? -exponent : exponent;
         }
         const std::size_t len = i;
         if (number_may_continue(len == avail, std::integral_constant<bool, bulk_window> {}))
@@ -1770,7 +1782,10 @@ scan_number_done:
 #if !JSON_DIAGNOSTIC_POSITIONS
         if (number_type != token_type::value_float)
         {
-            const token_type integer_result = convert_integer(number_type, data, data + len);
+            // up to 18 digits always fit into std::uint64_t and std::int64_t
+            const token_type integer_result = (digit_count <= 18)
+                                              ? store_integer(number_type, w)
+                                              : convert_integer(number_type, data, data + len);
             if (JSON_HEDLEY_LIKELY(integer_result != token_type::uninitialized))
             {
                 bulk_consume(data + 1, len - 1);
@@ -1784,15 +1799,42 @@ scan_number_done:
         }
 #endif
 
-        // materialize the token exactly as scan_number() would. reset() already
-        // cleared token_buffer, so append() fills it (assign() is avoided
-        // because custom string_t types need not provide it)
-        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
         decimal_point_position = dot_index;
 
         bulk_consume(data + 1, len - 1);
         read_number_terminator(std::integral_constant<bool, bulk_window> {});
 
+        // a float whose digits all fit into w converts from the accumulated
+        // value; longer ones (and other float formats) take the general path
+        if (number_type == token_type::value_float && digit_count <= 19)
+        {
+            float_significand s;
+            s.w = w;
+            s.exponent = exponent - static_cast<std::int64_t>(fraction_digits);
+            s.negative = data[0] == '-';
+            if (convert_accumulated_float(s, std::integral_constant<bool, has_native_float_format<number_float_t>::value> {}))
+            {
+                // the token text is only copied into token_buffer when
+                // get_string() asks for it; the library's own SAX handlers
+                // ignore it. A window into a stream may be refilled by the
+                // next read, so there the text is copied right away.
+                if (bulk_window)
+                {
+                    token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
+                }
+                else
+                {
+                    pending_number_text = data;
+                    pending_number_length = len;
+                }
+                return token_type::value_float;
+            }
+        }
+
+        // materialize the token exactly as scan_number() would. reset() already
+        // cleared token_buffer, so append() fills it (assign() is avoided
+        // because custom string_t types need not provide it)
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
         return convert_number(number_type, mantissa_end);
     }
 
@@ -1820,6 +1862,35 @@ scan_number_done:
 
     /// the input is not handed back, so the terminator can stay unread
     void read_number_terminator(std::false_type /*window*/) const noexcept {}
+
+    /// binary32/binary64: the value of a float token from its accumulated
+    /// significand (see scan_number_bulk_contiguous())
+    bool convert_accumulated_float(const float_significand& s, std::true_type /*native*/) noexcept
+    {
+        value_float = decimal_to_float<number_float_t>(s);
+        return true;
+    }
+
+    /// other formats (e.g. x87 long double): not instantiated for them, as
+    /// decimal_to_float() only supports binary32/binary64
+    static bool convert_accumulated_float(const float_significand& /*s*/, std::false_type /*native*/) noexcept
+    {
+        return false;
+    }
+
+    /// the value of an integer token with at most 18 digits, accumulated in @a w
+    token_type store_integer(token_type number_type, std::uint64_t w) noexcept
+    {
+        if (number_type == token_type::value_unsigned)
+        {
+            value_unsigned = static_cast<number_unsigned_t>(w);
+            // reject values that do not round-trip into a narrower type
+            return (static_cast<std::uint64_t>(value_unsigned) == w) ? token_type::value_unsigned : token_type::uninitialized;
+        }
+        const std::int64_t x = -static_cast<std::int64_t>(w);
+        value_integer = static_cast<number_integer_t>(x);
+        return (static_cast<std::int64_t>(value_integer) == x) ? token_type::value_integer : token_type::uninitialized;
+    }
 
     /// contiguous input: try the number fast path, else the byte-path scanner
     token_type scan_number_dispatch(std::true_type /*bulk*/)
@@ -1864,6 +1935,7 @@ scan_number_done:
     void reset() noexcept
     {
         token_buffer.clear();
+        pending_number_text = nullptr;
         decimal_point_position = std::string::npos;
 
 #if JSON_DIAGNOSTIC_POSITIONS
@@ -2123,7 +2195,27 @@ scan_number_done:
     /// return current string value
     string_t& get_string()
     {
+        if (pending_number_text != nullptr)
+        {
+            token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(pending_number_text), pending_number_length);
+            pending_number_text = nullptr;
+        }
         // a number token holds '.' regardless of the locale (#4084)
+        return token_buffer;
+    }
+
+    /// the value of a string token (key or string), which never has pending
+    /// number text, so get_string()'s check is not needed
+    string_t& get_string_token() noexcept
+    {
+        JSON_ASSERT(pending_number_text == nullptr);
+        return token_buffer;
+    }
+
+    /// the text of a float token for a SAX handler that ignores it (the
+    /// library's own handlers): empty, without copying the token
+    const string_t& get_ignored_number_text() const noexcept
+    {
         return token_buffer;
     }
 
@@ -3103,6 +3195,11 @@ scan_number_done:
 
     /// whether the next get() call should just return current
     bool next_unget = false;
+
+    /// the text of the current float token in the input, not yet copied into
+    /// token_buffer (see get_string()), or nullptr
+    const char* pending_number_text = nullptr;
+    std::size_t pending_number_length = 0;
 
     /// the start position of the current token
     position_t position {};

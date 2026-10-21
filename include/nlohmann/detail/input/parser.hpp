@@ -51,6 +51,20 @@ template<typename BasicJsonType>
 using parser_callback_t =
     std::function<bool(int /*depth*/, parse_event_t /*event*/, BasicJsonType& /*parsed*/)>;
 
+/// whether a SAX handler ignores the text of float tokens (the library's own
+/// handlers do), so that the parser need not materialize it
+template<typename SAX>
+struct sax_ignores_number_text : std::false_type {};
+
+template<typename BasicJsonType, typename InputAdapterType>
+struct sax_ignores_number_text<json_sax_dom_parser<BasicJsonType, InputAdapterType>> : std::true_type {};
+
+template<typename BasicJsonType, typename InputAdapterType>
+struct sax_ignores_number_text<json_sax_dom_callback_parser<BasicJsonType, InputAdapterType>> : std::true_type {};
+
+template<typename BasicJsonType>
+struct sax_ignores_number_text<json_sax_acceptor<BasicJsonType>> : std::true_type {};
+
 /*!
 @brief syntax analysis
 
@@ -205,6 +219,23 @@ class parser
         return result && !error_reported;
     }
 
+    /// the text of the current float token for @a sax (see sax_ignores_number_text)
+    template<typename SAX>
+    const string_t& number_float_text(SAX* /*sax*/)
+    {
+        return number_float_text(std::integral_constant<bool, sax_ignores_number_text<SAX>::value> {});
+    }
+
+    const string_t& number_float_text(std::true_type /*ignored*/) const noexcept
+    {
+        return m_lexer.get_ignored_number_text();
+    }
+
+    string_t& number_float_text(std::false_type /*ignored*/)
+    {
+        return m_lexer.get_string();
+    }
+
     /*!
     @brief run a DOM SAX parser to completion and position the lexer
 
@@ -299,7 +330,7 @@ class parser
                             }
                             continue;
                         }
-                        if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string_token())))
                         {
                             return false;
                         }
@@ -356,7 +387,7 @@ class parser
                             break;
                         }
 
-                        if (JSON_HEDLEY_UNLIKELY(!sax->number_float(res, m_lexer.get_string())))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->number_float(res, number_float_text(sax))))
                         {
                             return false;
                         }
@@ -402,7 +433,7 @@ class parser
 
                     case token_type::value_string:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(!sax->string(m_lexer.get_string())))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->string(m_lexer.get_string_token())))
                         {
                             return false;
                         }
@@ -612,7 +643,7 @@ class parser
                         }
                         continue;
                     }
-                    if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
+                    if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string_token())))
                     {
                         return false;
                     }
@@ -725,7 +756,7 @@ class parser
             return key_error(sax, allow_recovery, false);
         }
 
-        if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
+        if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string_token())))
         {
             return next_step::stop;
         }
@@ -760,7 +791,7 @@ class parser
         {
             return false;
         }
-        return sax->number_float(value, m_lexer.get_string());
+        return sax->number_float(value, number_float_text(sax));
     }
 
     /// @copydoc overflow_error
