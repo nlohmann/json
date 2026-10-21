@@ -124,3 +124,5 @@ Linear in the size of the JSON value `j`.
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled) throws `type_error.316`.
 - Throws `type_error.321` for a discarded value since version 3.13.0; previously, a discarded value nested in an
   array or object was silently skipped, producing invalid BJData.
+- Writes unsigned integers wider than 64 bits as high-precision numbers since version 3.13.0; previously, they were
+  silently truncated to 64 bits.
