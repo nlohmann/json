@@ -11526,6 +11526,20 @@ class lexer : public lexer_base<BasicJsonType>
         return codepoint;
     }
 
+    /// the code point of the surrogate pair @a high (U+D800..U+DBFF) and @a low (U+DC00..U+DFFF)
+    static constexpr int combine_surrogates(const int high, const int low) noexcept
+    {
+        return static_cast<int>(
+                   // high surrogate occupies the most significant 22 bits
+                   (static_cast<unsigned int>(high) << 10u)
+                   // low surrogate occupies the least significant 15 bits
+                   + static_cast<unsigned int>(low)
+                   // there is still the 0xD800, 0xDC00, and 0x10000 noise
+                   // in the result, so we have to subtract with:
+                   // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
+                   - 0x35FDC00u);
+    }
+
     /*!
     @brief check if the next byte(s) are inside a given range
 
@@ -11556,6 +11570,7 @@ class lexer : public lexer_base<BasicJsonType>
             else
             {
                 error_message = "invalid string: ill-formed UTF-8 byte";
+                error_cause = error_kind::string_ill_formed_utf8;
                 return false;
             }
         }
@@ -11629,6 +11644,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case char_traits<char_type>::eof():
                 {
                     error_message = "invalid string: missing closing quote";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
@@ -11685,6 +11701,7 @@ class lexer : public lexer_base<BasicJsonType>
                             if (JSON_HEDLEY_UNLIKELY(codepoint1 == -1))
                             {
                                 error_message = "invalid string: '\\u' must be followed by 4 hex digits";
+                                error_cause = error_kind::string_invalid_escape;
                                 return token_type::parse_error;
                             }
 
@@ -11698,6 +11715,7 @@ class lexer : public lexer_base<BasicJsonType>
                                     {
                                         // current is the character escaped by the backslash
                                         error_message = "invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF";
+                                        error_cause = error_kind::string_invalid_escape;
                                         string_error_resume = resume_kind::escaped_character;
                                         return token_type::parse_error;
                                     }
@@ -11707,6 +11725,7 @@ class lexer : public lexer_base<BasicJsonType>
                                     if (JSON_HEDLEY_UNLIKELY(codepoint2 == -1))
                                     {
                                         error_message = "invalid string: '\\u' must be followed by 4 hex digits";
+                                        error_cause = error_kind::string_invalid_escape;
                                         return token_type::parse_error;
                                     }
 
@@ -11714,21 +11733,14 @@ class lexer : public lexer_base<BasicJsonType>
                                     if (JSON_HEDLEY_LIKELY(0xDC00 <= codepoint2 && codepoint2 <= 0xDFFF))
                                     {
                                         // overwrite codepoint
-                                        codepoint = static_cast<int>(
-                                                        // high surrogate occupies the most significant 22 bits
-                                                        (static_cast<unsigned int>(codepoint1) << 10u)
-                                                        // low surrogate occupies the least significant 15 bits
-                                                        + static_cast<unsigned int>(codepoint2)
-                                                        // there is still the 0xD800, 0xDC00, and 0x10000 noise
-                                                        // in the result, so we have to subtract with:
-                                                        // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
-                                                        - 0x35FDC00u);
+                                        codepoint = combine_surrogates(codepoint1, codepoint2);
                                     }
                                     else
                                     {
                                         // the second escape was read completely and is a
                                         // code point of its own
                                         error_message = "invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF";
+                                        error_cause = error_kind::string_invalid_escape;
                                         string_error_resume = resume_kind::after_escape;
                                         string_error_codepoint = codepoint2;
                                         return token_type::parse_error;
@@ -11737,6 +11749,7 @@ class lexer : public lexer_base<BasicJsonType>
                                 else
                                 {
                                     error_message = "invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF";
+                                    error_cause = error_kind::string_invalid_escape;
                                     return token_type::parse_error;
                                 }
                             }
@@ -11746,6 +11759,7 @@ class lexer : public lexer_base<BasicJsonType>
                                 {
                                     // the escape was read completely
                                     error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
+                                    error_cause = error_kind::string_invalid_escape;
                                     string_error_resume = resume_kind::after_escape;
                                     return token_type::parse_error;
                                 }
@@ -11755,10 +11769,7 @@ class lexer : public lexer_base<BasicJsonType>
                             JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
-                            encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
-                            {
-                                add(static_cast<char_int_type>(byte));
-                            });
+                            add_codepoint(codepoint);
 
                             break;
                         }
@@ -11766,6 +11777,7 @@ class lexer : public lexer_base<BasicJsonType>
                         // other characters after escape
                         default:
                             error_message = "invalid string: forbidden character after backslash";
+                            error_cause = error_kind::string;
                             return token_type::parse_error;
                     }
 
@@ -11776,192 +11788,224 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0x00:
                 {
                     error_message = "invalid string: control character U+0000 (NUL) must be escaped to \\u0000";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x01:
                 {
                     error_message = "invalid string: control character U+0001 (SOH) must be escaped to \\u0001";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x02:
                 {
                     error_message = "invalid string: control character U+0002 (STX) must be escaped to \\u0002";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x03:
                 {
                     error_message = "invalid string: control character U+0003 (ETX) must be escaped to \\u0003";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x04:
                 {
                     error_message = "invalid string: control character U+0004 (EOT) must be escaped to \\u0004";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x05:
                 {
                     error_message = "invalid string: control character U+0005 (ENQ) must be escaped to \\u0005";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x06:
                 {
                     error_message = "invalid string: control character U+0006 (ACK) must be escaped to \\u0006";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x07:
                 {
                     error_message = "invalid string: control character U+0007 (BEL) must be escaped to \\u0007";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x08:
                 {
                     error_message = "invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x09:
                 {
                     error_message = "invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x0A:
                 {
                     error_message = "invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x0B:
                 {
                     error_message = "invalid string: control character U+000B (VT) must be escaped to \\u000B";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x0C:
                 {
                     error_message = "invalid string: control character U+000C (FF) must be escaped to \\u000C or \\f";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x0D:
                 {
                     error_message = "invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x0E:
                 {
                     error_message = "invalid string: control character U+000E (SO) must be escaped to \\u000E";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x0F:
                 {
                     error_message = "invalid string: control character U+000F (SI) must be escaped to \\u000F";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x10:
                 {
                     error_message = "invalid string: control character U+0010 (DLE) must be escaped to \\u0010";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x11:
                 {
                     error_message = "invalid string: control character U+0011 (DC1) must be escaped to \\u0011";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x12:
                 {
                     error_message = "invalid string: control character U+0012 (DC2) must be escaped to \\u0012";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x13:
                 {
                     error_message = "invalid string: control character U+0013 (DC3) must be escaped to \\u0013";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x14:
                 {
                     error_message = "invalid string: control character U+0014 (DC4) must be escaped to \\u0014";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x15:
                 {
                     error_message = "invalid string: control character U+0015 (NAK) must be escaped to \\u0015";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x16:
                 {
                     error_message = "invalid string: control character U+0016 (SYN) must be escaped to \\u0016";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x17:
                 {
                     error_message = "invalid string: control character U+0017 (ETB) must be escaped to \\u0017";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x18:
                 {
                     error_message = "invalid string: control character U+0018 (CAN) must be escaped to \\u0018";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x19:
                 {
                     error_message = "invalid string: control character U+0019 (EM) must be escaped to \\u0019";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x1A:
                 {
                     error_message = "invalid string: control character U+001A (SUB) must be escaped to \\u001A";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x1B:
                 {
                     error_message = "invalid string: control character U+001B (ESC) must be escaped to \\u001B";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x1C:
                 {
                     error_message = "invalid string: control character U+001C (FS) must be escaped to \\u001C";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x1D:
                 {
                     error_message = "invalid string: control character U+001D (GS) must be escaped to \\u001D";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x1E:
                 {
                     error_message = "invalid string: control character U+001E (RS) must be escaped to \\u001E";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
                 case 0x1F:
                 {
                     error_message = "invalid string: control character U+001F (US) must be escaped to \\u001F";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
@@ -12184,6 +12228,7 @@ class lexer : public lexer_base<BasicJsonType>
                 default:
                 {
                     error_message = "invalid string: ill-formed UTF-8 byte";
+                    error_cause = error_kind::string_ill_formed_utf8;
                     return token_type::parse_error;
                 }
             }
@@ -12239,6 +12284,7 @@ class lexer : public lexer_base<BasicJsonType>
                         case char_traits<char_type>::eof():
                         {
                             error_message = "invalid comment; missing closing '*/'";
+                            error_cause = error_kind::unclosed_comment;
                             return false;
                         }
 
@@ -12269,6 +12315,7 @@ class lexer : public lexer_base<BasicJsonType>
             default:
             {
                 error_message = "invalid comment; expecting '/' or '*' after '/'";
+                error_cause = error_kind::other;
                 return false;
             }
         }
@@ -12394,6 +12441,7 @@ scan_number_minus:
             default:
             {
                 error_message = "invalid number; expected digit after '-'";
+                error_cause = error_kind::number;
                 return token_type::parse_error;
             }
         }
@@ -12480,6 +12528,7 @@ scan_number_decimal1:
             default:
             {
                 error_message = "invalid number; expected digit after '.'";
+                error_cause = error_kind::number;
                 return token_type::parse_error;
             }
         }
@@ -12548,6 +12597,7 @@ scan_number_exponent:
             {
                 error_message =
                     "invalid number; expected '+', '-', or digit after exponent";
+                error_cause = error_kind::number;
                 return token_type::parse_error;
             }
         }
@@ -12574,6 +12624,7 @@ scan_number_sign:
             default:
             {
                 error_message = "invalid number; expected digit after exponent sign";
+                error_cause = error_kind::number;
                 return token_type::parse_error;
             }
         }
@@ -12885,6 +12936,7 @@ scan_number_done:
             if (JSON_HEDLEY_UNLIKELY(char_traits<char_type>::to_char_type(get()) != literal_text[i]))
             {
                 error_message = "invalid literal";
+                error_cause = error_kind::other;
                 return token_type::parse_error;
             }
         }
@@ -13403,6 +13455,7 @@ scan_number_done:
         if (get_chars_read_total() == 0 && !skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
+            error_cause = error_kind::other;
             return token_type::parse_error;
         }
 
@@ -13517,6 +13570,7 @@ scan_number_done:
             // error
             default:
                 error_message = "invalid literal";
+                error_cause = error_kind::other;
                 return token_type::parse_error;
         }
     }
@@ -13557,24 +13611,28 @@ scan_number_done:
         string_error_resume = resume_kind::character;
         string_error_codepoint = -1;
 
-        if (error_message_starts_with("invalid string"))
-        {
-            return recover_string(resume, codepoint);
-        }
+        const error_kind cause = error_cause;
+        error_cause = error_kind::other;
 
-        if (error_message_starts_with("invalid number"))
+        switch (cause)
         {
-            return recover_number();
-        }
+            case error_kind::string:
+            case error_kind::string_invalid_escape:
+            case error_kind::string_ill_formed_utf8:
+                return recover_string(cause, resume, codepoint);
 
-        if (error_message_starts_with("invalid comment; missing"))
-        {
-            // the comment runs to the end of the input
-            return token_type::end_of_input;
-        }
+            case error_kind::number:
+                return recover_number();
 
-        skip_to_delimiter();
-        return token_type::uninitialized;
+            case error_kind::unclosed_comment:
+                // the comment runs to the end of the input
+                return token_type::end_of_input;
+
+            case error_kind::other:
+            default:
+                skip_to_delimiter();
+                return token_type::uninitialized;
+        }
     }
 
     /*!
@@ -13616,19 +13674,22 @@ scan_number_done:
         after_escape
     };
 
-    /// whether error_message begins with @a prefix
-    bool error_message_starts_with(const char* prefix) const noexcept
+    /// what kind of token scan() rejected, which decides how recover_token() repairs it
+    enum class error_kind : std::uint8_t
     {
-        const char* message = error_message;
-        while (*prefix != '\0')
-        {
-            if (*message++ != *prefix++)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
+        /// anything not listed below; skipped up to the next delimiter
+        other,
+        /// a string
+        string,
+        /// a string with an invalid Unicode escape, which becomes U+FFFD
+        string_invalid_escape,
+        /// a string with ill-formed UTF-8, which becomes U+FFFD
+        string_ill_formed_utf8,
+        /// a number
+        number,
+        /// a block comment that is not closed
+        unclosed_comment
+    };
 
     /// whether current ends an invalid token (see recover_token())
     bool current_is_delimiter() const noexcept
@@ -13677,38 +13738,17 @@ scan_number_done:
     /// append U+FFFD REPLACEMENT CHARACTER to token_buffer
     void add_replacement_character()
     {
-        add(0xEF);
-        add(0xBF);
-        add(0xBD);
+        add_codepoint(0xFFFD);
     }
 
     /// append the UTF-8 encoding of @a codepoint (not a surrogate) to token_buffer
     void add_codepoint(const int codepoint)
     {
         JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
-        const auto cp = static_cast<unsigned int>(codepoint);
-        if (cp < 0x80)
+        encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
         {
-            add(static_cast<char_int_type>(cp));
-        }
-        else if (cp <= 0x7FF)
-        {
-            add(static_cast<char_int_type>(0xC0u | (cp >> 6u)));
-            add(static_cast<char_int_type>(0x80u | (cp & 0x3Fu)));
-        }
-        else if (cp <= 0xFFFF)
-        {
-            add(static_cast<char_int_type>(0xE0u | (cp >> 12u)));
-            add(static_cast<char_int_type>(0x80u | ((cp >> 6u) & 0x3Fu)));
-            add(static_cast<char_int_type>(0x80u | (cp & 0x3Fu)));
-        }
-        else
-        {
-            add(static_cast<char_int_type>(0xF0u | (cp >> 18u)));
-            add(static_cast<char_int_type>(0x80u | ((cp >> 12u) & 0x3Fu)));
-            add(static_cast<char_int_type>(0x80u | ((cp >> 6u) & 0x3Fu)));
-            add(static_cast<char_int_type>(0x80u | (cp & 0x3Fu)));
-        }
+            add(static_cast<char_int_type>(byte));
+        });
     }
 
     /// append a code point read from a Unicode escape; a surrogate becomes U+FFFD
@@ -13853,8 +13893,7 @@ scan_number_done:
             }
             if (0xDC00 <= low && low <= 0xDFFF)
             {
-                add_codepoint(static_cast<int>((static_cast<unsigned int>(high) << 10u)
-                                               + static_cast<unsigned int>(low) - 0x35FDC00u));
+                add_codepoint(combine_surrogates(high, low));
                 return true;
             }
 
@@ -13932,19 +13971,18 @@ scan_number_done:
     token_buffer holds what scan_string() read before the error. See
     recover_token() for how errors are repaired.
 
+    @param[in] cause      the kind of error scan_string() reported
     @param[in] resume     how to continue, see resume_kind
     @param[in] codepoint  for a high surrogate followed by an escape of another
                           code point: that code point; -1 otherwise
     */
-    token_type recover_string(const resume_kind resume, const int codepoint)
+    token_type recover_string(const error_kind cause, const resume_kind resume, const int codepoint)
     {
         // whether the next character must be read before it can be handled
         bool fetch = false;
 
-        if (error_message_starts_with("invalid string: surrogate")
-                || error_message_starts_with("invalid string: '\\u'")
-                || (error_message_starts_with("invalid string: ill-formed UTF-8")
-                    && remove_incomplete_utf8_sequence()))
+        if (cause == error_kind::string_invalid_escape
+                || (cause == error_kind::string_ill_formed_utf8 && remove_incomplete_utf8_sequence()))
         {
             add_replacement_character();
         }
@@ -14141,6 +14179,8 @@ scan_number_done:
     /// a description of occurred lexer errors
     const char* error_message = "";
 
+    /// what kind of token scan() rejected; set together with error_message
+    error_kind error_cause = error_kind::other;
     /// how recover_token() continues a string that scan_string() rejected;
     /// set only on the error paths that need more than error_message
     resume_kind string_error_resume = resume_kind::character;
@@ -15581,6 +15621,11 @@ class binary_reader
     static constexpr bool bulk_scan =
         input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
 
+    /// selects the stubs that take the place of the code that recovers from
+    /// errors when @a Recover (AllowRecovery) is false
+    template<bool Recover>
+    using unless_recovering_t = enable_if_t<negation<std::integral_constant<bool, Recover>>::value, int>;
+
   public:
     /*!
     @brief create a binary reader
@@ -15935,7 +15980,7 @@ class binary_reader
     }
 
     /// @copydoc skip_unsupported_bson_element
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type skip_unsupported_bson_element(const char_int_type /*element_type*/) const noexcept
     {
@@ -19283,7 +19328,7 @@ class binary_reader
     }
 
     /// @copydoc recover_high_precision_number
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type recover_high_precision_number(const std::vector<char>& /*number_vector*/, const std::size_t /*remaining*/ = 0) const noexcept
     {
@@ -20414,7 +20459,7 @@ class binary_reader
     }
 
     /// @copydoc repair_requested
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type repair_requested() const noexcept
     {
@@ -20439,7 +20484,7 @@ class binary_reader
     }
 
     /// @copydoc value_failed
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type value_failed() const noexcept
     {
@@ -20490,7 +20535,7 @@ class binary_reader
     }
 
     /// @copydoc close_open_containers
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     void close_open_containers() const noexcept {}
 
@@ -20526,7 +20571,7 @@ class binary_reader
     }
 
     /// @copydoc resync
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type resync() const noexcept
     {

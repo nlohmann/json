@@ -125,6 +125,11 @@ class binary_reader
     static constexpr bool bulk_scan =
         input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
 
+    /// selects the stubs that take the place of the code that recovers from
+    /// errors when @a Recover (AllowRecovery) is false
+    template<bool Recover>
+    using unless_recovering_t = enable_if_t<negation<std::integral_constant<bool, Recover>>::value, int>;
+
   public:
     /*!
     @brief create a binary reader
@@ -479,7 +484,7 @@ class binary_reader
     }
 
     /// @copydoc skip_unsupported_bson_element
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type skip_unsupported_bson_element(const char_int_type /*element_type*/) const noexcept
     {
@@ -3827,7 +3832,7 @@ class binary_reader
     }
 
     /// @copydoc recover_high_precision_number
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type recover_high_precision_number(const std::vector<char>& /*number_vector*/, const std::size_t /*remaining*/ = 0) const noexcept
     {
@@ -4958,7 +4963,7 @@ class binary_reader
     }
 
     /// @copydoc repair_requested
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type repair_requested() const noexcept
     {
@@ -4983,7 +4988,7 @@ class binary_reader
     }
 
     /// @copydoc value_failed
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type value_failed() const noexcept
     {
@@ -5034,7 +5039,7 @@ class binary_reader
     }
 
     /// @copydoc close_open_containers
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     void close_open_containers() const noexcept {}
 
@@ -5070,7 +5075,7 @@ class binary_reader
     }
 
     /// @copydoc resync
-    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    template<bool Recover = AllowRecovery, unless_recovering_t<Recover> = 0>
     JSON_INTERNAL_ALWAYS_INLINE
     constexpr std::false_type resync() const noexcept
     {
