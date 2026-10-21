@@ -233,6 +233,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 - documentation on [checked access](../../features/element_access/checked_access.md)
 - [`operator[]`](operator%5B%5D.md) for unchecked access by reference
 - [`value`](value.md) for access with default value
+- [basic_json_view::at](../basic_json_view/at.md) - the same access on a zero-copy view
 
 ## Version history
 
@@ -241,4 +242,6 @@ Strong exception safety: if an exception occurs, the original value stays intact
 3. Added in version 3.11.0. Fixed in version 3.13.0 to consistently accept `std::string_view`-convertible keys, as
    already supported by [`operator[]`](operator[].md), [`value`](value.md), [`find`](find.md), and other lookup
    functions.
-4. Added in version 2.0.0.
+4. Added in version 2.0.0. Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) instead of
+[`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) for a one-character array index that is not
+a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.

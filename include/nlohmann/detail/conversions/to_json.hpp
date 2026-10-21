@@ -13,7 +13,7 @@
     #include <optional> // optional
 #endif
 
-#include <iterator> // begin, end
+#include <iterator> // begin, end, make_move_iterator, move_iterator
 #include <memory> // allocator_traits
 #include <string> //  basic_string, char_traits
 #include <tuple> // tuple, get
@@ -47,6 +47,32 @@ namespace detail
  * were it the other way around, an exception while creating the new value would
  * leave j with the type of the new value, but the pointer to the destroyed old one.
  */
+
+// a move iterator over the elements of an rvalue container, unless they are
+// const (e.g., std::set): libstdc++ before GCC 5 defines the reference of a
+// std::move_iterator as value_type&&, which cannot bind to a const element
+template<typename Iterator>
+std::move_iterator<Iterator> make_move_iterator_if_mutable_impl(const Iterator& it, std::true_type /*mutable*/)
+{
+    return std::make_move_iterator(it);
+}
+
+template<typename Iterator>
+Iterator make_move_iterator_if_mutable_impl(const Iterator& it, std::false_type /*mutable*/)
+{
+    return it;
+}
+
+template<typename Iterator>
+using is_mutable_iterator = std::integral_constant < bool,
+      !std::is_const<typename std::remove_reference<decltype(*std::declval<Iterator&>())>::type>::value >;
+
+template<typename Iterator>
+auto make_move_iterator_if_mutable(const Iterator& it)
+-> decltype(make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {}))
+{
+    return make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {});
+}
 
 template<value_t> struct external_constructor;
 
@@ -167,6 +193,17 @@ struct external_constructor<value_t::array>
         j.replace_value(value_t::array, value);
     }
 
+    /// an rvalue container: move its elements
+    template<typename BasicJsonType, typename CompatibleArrayType>
+    static void construct_moving(BasicJsonType& j, CompatibleArrayType& arr)
+    {
+        using std::begin;
+        using std::end;
+
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(make_move_iterator_if_mutable(begin(arr)), make_move_iterator_if_mutable(end(arr))));
+        j.replace_value(value_t::array, value);
+    }
+
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, const std::vector<bool>& arr)
     {
@@ -214,6 +251,17 @@ struct external_constructor<value_t::object>
     static void construct(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
     {
         const typename BasicJsonType::json_value value(std::move(obj));
+        j.replace_value(value_t::object, value);
+    }
+
+    /// an rvalue container: move its values
+    template<typename BasicJsonType, typename CompatibleObjectType>
+    static void construct_moving(BasicJsonType& j, CompatibleObjectType& obj)
+    {
+        using std::begin;
+        using std::end;
+
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(make_move_iterator_if_mutable(begin(obj)), make_move_iterator_if_mutable(end(obj))));
         j.replace_value(value_t::object, value);
     }
 
@@ -303,14 +351,14 @@ inline void to_json(BasicJsonType& j, FloatType val) noexcept
 }
 
 template<typename BasicJsonType, typename CompatibleNumberUnsignedType,
-         enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t, CompatibleNumberUnsignedType>::value, int> = 0>
+         enable_if_t<is_compatible_integer_type<number_unsigned_overload_t<BasicJsonType>, CompatibleNumberUnsignedType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
 {
     external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename BasicJsonType::number_unsigned_t>(val));
 }
 
 template<typename BasicJsonType, typename CompatibleNumberIntegerType,
-         enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType>::value, int> = 0>
+         enable_if_t<is_compatible_number_integer_type<BasicJsonType, CompatibleNumberIntegerType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
 {
     external_constructor<value_t::number_integer>::construct(j, static_cast<typename BasicJsonType::number_integer_t>(val));
@@ -352,6 +400,68 @@ template < typename BasicJsonType, typename CompatibleArrayType,
 inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
+}
+
+// types that have a dedicated to_json overload and must not be treated as generic containers
+template<typename T>
+struct has_dedicated_to_json : std::false_type {};
+
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+template<>
+struct has_dedicated_to_json<std_fs::path> : std::true_type {};
+#endif
+
+#if defined(__cpp_lib_char8_t)
+template<typename Tr, typename Allocator>
+struct has_dedicated_to_json<std::basic_string<char8_t, Tr, Allocator>> : std::true_type {};
+#endif
+
+#if JSON_HAS_RANGE_VIEW_CONVERSION
+template<typename T>
+struct is_range_view_type : is_compatible_range_view<T> {};
+#else
+template<typename T>
+struct is_range_view_type : std::false_type {};
+#endif
+
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+template<typename T>
+struct is_enum_keyed_map_type : is_enum_keyed_map<T> {};
+#else
+template<typename T>
+struct is_enum_keyed_map_type : std::false_type {};
+#endif
+
+// rvalue (non-const) container: the generic to_json takes its elements by move
+template<typename T>
+using is_movable_container_rvalue = negation<disjunction<
+                                    std::is_lvalue_reference<T>,
+                                    std::is_const<T>,
+                                    has_dedicated_to_json<T>,
+                                    is_basic_json<T>,
+                                    is_enum_keyed_map_type<T>,
+                                    std::is_same<T, std::vector<bool>>>>;
+
+// rvalue array-like containers; object types are ruled out before views are
+// checked, as std::ranges::view<T> for the object_t of an ordered_json would
+// need that ordered_json to be complete (GCC 11, see #3312)
+template<typename BasicJsonType, typename T>
+using is_rvalue_array_to_json = conjunction<is_movable_container_rvalue<T>,
+      negation<is_compatible_object_type<BasicJsonType, T>>,
+      negation<is_range_view_type<T>>,
+      is_compatible_array_type<BasicJsonType, T>,
+      negation<disjunction<
+      std::is_same<T, typename BasicJsonType::array_t>,
+      std::is_same<T, typename BasicJsonType::binary_t>,
+      is_compatible_string_type<BasicJsonType, T>,
+      is_compatible_binary_type<BasicJsonType, T>>>>;
+
+// rvalue containers: their elements are moved instead of copied
+template<typename BasicJsonType, typename CompatibleArrayType,
+         enable_if_t<is_rvalue_array_to_json<BasicJsonType, CompatibleArrayType>::value, int> = 0>
+inline void to_json(BasicJsonType& j, CompatibleArrayType && arr) // NOLINT(cppcoreguidelines-missing-std-forward)
+{
+    external_constructor<value_t::array>::construct_moving(j, arr);
 }
 
 #if JSON_HAS_RANGE_VIEW_CONVERSION
@@ -414,18 +524,32 @@ inline void to_json(BasicJsonType& j, const EnumKeyedMap& map)
         BasicJsonType key = p.first;
         if (JSON_HEDLEY_UNLIKELY(!key.is_string()))
         {
-            JSON_THROW(type_error::create(302, concat("type must be string, but is ", key.type_name()), &key));
+            throw_type_must_be("string", key);
         }
 
         auto& key_string = *key.template get_ptr<typename BasicJsonType::string_t*>();
         if (JSON_HEDLEY_UNLIKELY(!obj.emplace(key_string, BasicJsonType(p.second)).second))
         {
-            JSON_THROW(type_error::create(318, concat("duplicate object key '", key_string, "'"), &key));
+            JSON_THROW(type_error::create(exception_id::enum_key_duplicate, concat("duplicate object key '", key_string, "'"), &key));
         }
     }
     external_constructor<value_t::object>::construct(j, std::move(obj));
 }
 #endif
+
+// rvalue object-like containers (views have no key_type and mapped_type, so
+// they are no compatible object type)
+template<typename BasicJsonType, typename T>
+using is_rvalue_object_to_json = conjunction<is_movable_container_rvalue<T>,
+      negation<std::is_same<T, typename BasicJsonType::object_t>>,
+      is_compatible_object_type<BasicJsonType, T>>;
+
+template<typename BasicJsonType, typename CompatibleObjectType,
+         enable_if_t<is_rvalue_object_to_json<BasicJsonType, CompatibleObjectType>::value, int> = 0>
+inline void to_json(BasicJsonType& j, CompatibleObjectType && obj) // NOLINT(cppcoreguidelines-missing-std-forward)
+{
+    external_constructor<value_t::object>::construct_moving(j, obj);
+}
 
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)

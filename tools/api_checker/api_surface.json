@@ -46,7 +46,7 @@
       "name": "operator<",
       "pretty_signature": "nlohmann::operator<",
       "scope": "nlohmann",
-      "signature": "friend bool operator<(const_reference lhs, const_reference rhs) noexcept { JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type), compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false) }",
+      "signature": "friend bool operator<(const_reference lhs, const_reference rhs) noexcept { JSON_IMPLEMENT_SCALAR_FAST( <, false) return less_general(lhs, rhs); }",
       "tier": "callable"
     },
     {
@@ -1517,6 +1517,15 @@
       "tier": "callable"
     },
     {
+      "identity_name": "merge_diff",
+      "kind": "CXX_METHOD",
+      "name": "merge_diff",
+      "pretty_signature": "nlohmann::basic_json::merge_diff",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json merge_diff(const basic_json& source, const basic_json& target)",
+      "tier": "callable"
+    },
+    {
       "identity_name": "merge_patch",
       "kind": "CXX_METHOD",
       "name": "merge_patch",
@@ -2954,6 +2963,15 @@
       "pretty_signature": "nlohmann::ordered_map::emplace",
       "scope": "nlohmann::ordered_map",
       "signature": "template<class V, detail::enable_if_t< detail::is_constructible<T, V>::value, int> = 0> std::pair<iterator, bool> emplace(const key_type& key, V && t)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "emplace_new_key",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "emplace_new_key",
+      "pretty_signature": "nlohmann::ordered_map::emplace_new_key",
+      "scope": "nlohmann::ordered_map",
+      "signature": "template<class V, detail::enable_if_t< detail::is_constructible<T, V>::value, int> = 0> void emplace_new_key(const key_type& key, V && t)",
       "tier": "callable"
     },
     {

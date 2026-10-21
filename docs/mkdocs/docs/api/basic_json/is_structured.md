@@ -57,6 +57,7 @@ Note that though strings are containers in C++, they are treated as primitive va
 - [is_primitive()](is_primitive.md) returns whether JSON value is primitive
 - [is_array()](is_array.md) returns whether the value is an array
 - [is_object()](is_object.md) returns whether the value is an object
+- [basic_json_view::is_structured](../basic_json_view/is_structured.md) - the same check on a zero-copy view
 
 ## Version history
 

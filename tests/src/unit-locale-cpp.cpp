@@ -260,10 +260,11 @@ struct LocaleSwitchingSax final: public nlohmann::json_sax<json>
 
 TEST_CASE("locale changes between lexer construction and number conversion (#5198)")
 {
-    // The numbers are chosen so that the conversion also takes the strtod
-    // fallback, which honors the locale that is current at conversion time:
-    // too many significant digits for Clinger's fast path, an underflow that
-    // std::from_chars rejects, and a plain value.
+    // float and double are converted without the locale. A long double that
+    // is not binary64 can take the strtold fallback, which honors the locale
+    // that is current at conversion time. The numbers are chosen so that it
+    // does: too many significant digits for Clinger's fast path, an underflow
+    // that std::from_chars rejects, and a plain value.
     const std::vector<std::string> numbers = {"3.14159265358979323846", "1.5e-400", "12.34", "-0.000123456789012345678"};
     std::string text = "[";
     for (const auto& n : numbers)
@@ -327,7 +328,8 @@ TEST_CASE("locale changes between lexer construction and number conversion (#519
             }
         }
 
-        // a long double goes through std::strtold unless std::from_chars supports it
+        // a long double goes through std::strtold unless it is binary64 or
+        // std::from_chars supports it
         {
             bool switched = false;
             const auto cb = [&](int /*depth*/, long_double_json::parse_event_t event, long_double_json& /*parsed*/) noexcept
@@ -353,8 +355,15 @@ TEST_CASE("locale with a multi-byte decimal point")
 {
     // Some locales use a decimal point that is not a single character, e.g.
     // U+066B ARABIC DECIMAL SEPARATOR (two bytes in UTF-8). It cannot be
-    // substituted in place for '.', so the strtod fallback stops early. The
-    // conversion must still terminate rather than retry forever.
+    // substituted in place for '.', so the strtold fallback (only for long
+    // double formats other than binary64) converts a copy of the token with
+    // the whole decimal point instead (#5660). The values must be those of the
+    // "C" locale.
+    using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+    const char* const long_double_numbers = "[3.14159265358979323846, 1.5e-400, -0.000123456789012345678]";
+    REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
+    const long_double_json expected_long_double = long_double_json::parse(long_double_numbers);
+
     const std::array<const char*, 6> names = {{"ar_EG.UTF-8", "ar_SA.UTF-8", "fa_IR.UTF-8", "ps_AF.UTF-8", "ar_EG", "fa_IR"}};
     bool tested = false;
     for (const char* name : names)
@@ -372,11 +381,19 @@ TEST_CASE("locale with a multi-byte decimal point")
         tested = true;
 
         // too many significant digits for Clinger's fast path, and an underflow
-        // that std::from_chars rejects: both reach the strtod fallback
+        // that std::from_chars rejects: double does not depend on the locale
         json j;
         CHECK_NOTHROW(j = json::parse("[3.14159265358979323846, 1.5e-400, -0.000123456789012345678]"));
         CHECK(j.is_array());
+        CHECK(j[0] == 3.14159265358979323846);
+        CHECK(j[1] == 0.0);
+        CHECK(j[2] == -0.000123456789012345678);
         CHECK(json::accept("3.14159265358979323846"));
+
+        // a long double that reaches the strtold fallback is not truncated
+        long_double_json ld;
+        CHECK_NOTHROW(ld = long_double_json::parse(long_double_numbers));
+        CHECK(ld == expected_long_double);
 
         // a value the locale-independent paths convert is not affected
         CHECK(json::parse("12.5") == 12.5);

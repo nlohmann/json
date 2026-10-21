@@ -1,0 +1,5 @@
+retries=1
+timeout=30
+retries=5
+first "retries" seen by operator[]: 1
+last "retries" kept by materialize(): 5

@@ -41,7 +41,7 @@ No guarantees, value may be corrupted by an unsuccessful patch operation.
   pointer inside the patch cannot be resolved, e.g., `-` in a "remove" operation or `1a` for an array; example:
   `"unresolved reference token '-'"`.
 - Throws [`out_of_range.405`](../../home/exceptions.md#jsonexceptionout_of_range405) if JSON pointer has no parent
-  ("add", "remove", "move")
+  ("remove", "move")
 - Throws [`out_of_range.411`](../../home/exceptions.md#jsonexceptionout_of_range411) if an "add" operation's target
   location has a parent that is neither an object nor an array.
 - Throws [`out_of_range.413`](../../home/exceptions.md#jsonexceptionout_of_range413) if a "remove" operation's target
@@ -110,3 +110,6 @@ function throws an exception.
   location has a non-object/non-array parent in version 3.13.0.
 - Added [`out_of_range.414`](../../home/exceptions.md#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper
   prefix of its "path" location instead of silently producing a corrupted result in version 3.13.0.
+- Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) instead of
+  [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) for a one-character array index that is
+  not a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.

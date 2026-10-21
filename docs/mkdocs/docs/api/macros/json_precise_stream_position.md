@@ -72,6 +72,12 @@ The default value is `0` (disabled — existing behavior is preserved).
     distinct symbol names. Translation units compiled with and without it can therefore be linked into the same program
     without One Definition Rule (ODR) violations, but they cannot exchange instances of library types.
 
+!!! note "Bulk scanning"
+
+    The parser scans the characters in the stream buffer in bulk (see
+    [`JSON_DISABLE_STREAM_BULK_SCAN`](json_disable_stream_bulk_scan.md)), but it never reads ahead. The stream is left
+    at the same position with and without bulk scanning, in both modes of this macro.
+
 !!! tip "Workaround without the macro"
 
     Separate the values in the stream with whitespace. The character consumed after a number is then the separator,

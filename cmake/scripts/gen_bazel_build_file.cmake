@@ -49,6 +49,8 @@ cc_library(
     hdrs = [
         "single_include/nlohmann/json.hpp",
         "single_include/nlohmann/json_fwd.hpp",
+        "single_include/nlohmann/json_literals.hpp",
+        "single_include/nlohmann/json_view.hpp",
     ],
     includes = ["single_include"],
     visibility = ["//visibility:public"],

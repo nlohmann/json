@@ -3,13 +3,37 @@
 Each parser of the library (JSON, BJData, BON8, BSON, CBOR, MessagePack, and UBJSON) can be fuzz tested. Currently,
 [libFuzzer](https://llvm.org/docs/LibFuzzer.html) and [afl++](https://github.com/AFLplusplus/AFLplusplus) are supported.
 
+Additionally, `parse_json_view_fuzzer` (`tests/src/fuzzer-parse_json_view.cpp`) cross-checks `json_document`/`json_view`
+(the zero-copy, read-only view declared in `json_view.hpp`) against `basic_json` on the same JSON text: it asserts that
+`json_document::accept` agrees with `json::accept`, that an accepted input materializes to the same value `json::parse`
+produces, and that a rejected input makes both parsers throw with an identical `what()`. It checks this for a
+`std::string` input (borrowed, with a NUL after the last byte) and for an exact-size `std::vector<std::uint8_t>`
+(borrowed, with nothing after the last byte), and for the `ignore_comments` and `ignore_trailing_commas` options, which
+are taken from the low bits of the first input byte (the byte stays part of the text). It takes plain JSON text, so it
+reuses the `corpus_json` corpus rather than a format of its own.
+
+`json_view_image_fuzzer` (`tests/src/fuzzer-json_view_image.cpp`) tests the images of `json_document` (`save()` and
+`load()`). It uses each input twice: as an image, which `load()` must either reject with `parse_error.116` or read
+safely (with `image_check::full`, the document must also serialize to the JSON it reads as), and as a JSON text, whose
+image must load and serialize to the same text. A corpus of images can be made from JSON files with a small program
+that calls `json_document::parse(text).save()`; plain JSON files work as well.
+
 ## What the fuzzers check
 
 Each fuzzer driver (`tests/src/fuzzer-parse_*.cpp`) parses its input twice: once with `allow_exceptions = false` and
 once with exceptions. Both calls must agree. Where parsing with exceptions fails, the call without exceptions must
 return a discarded value (or throw the same kind of non-parse error), and it must never throw a `parse_error`. Where
 parsing succeeds, both calls must return the same value. The drivers then serialize the value, parse the result back,
-and check that nothing was lost. The drivers check all of this with `assert`, so they refuse to build with `NDEBUG`.
+and check that nothing was lost.
+
+Finally, each driver reads the same input through the other input adapters: a `std::istringstream`, a non-contiguous
+iterator range (`std::list<std::uint8_t>`), and, on POSIX systems, a `FILE*` from `fmemopen`. The pointer range takes the
+fast paths for contiguous input (bulk string scanning, multi-byte loads, lazy position tracking), while the other
+adapters read byte by byte. Every adapter must give the same value, or the same exception with the same id, message,
+and byte position. The JSON driver checks this for `parse` and `accept`, each with and without `ignore_comments`. The
+shared code is `check_input_adapters()` in `tests/src/fuzzer_common.hpp`.
+
+The drivers check all of this with `assert`, so they refuse to build with `NDEBUG`.
 
 ## Corpus creation
 

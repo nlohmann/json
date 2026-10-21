@@ -23,6 +23,7 @@
     #include <cstdlib> // _byteswap_ushort, _byteswap_ulong, _byteswap_uint64
 #endif
 
+#include <nlohmann/detail/bit_ops.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -157,7 +158,7 @@ class binary_writer
             case value_t::discarded:
             default:
             {
-                JSON_THROW(type_error::create(317, concat("to serialize to BSON, top-level type must be object, but is ", j.type_name()), &j));
+                JSON_THROW(type_error::create(exception_id::type_not_serializable, concat("to serialize to BSON, top-level type must be object, but is ", j.type_name()), &j));
             }
         }
     }
@@ -204,24 +205,12 @@ class binary_writer
             }
 
             case value_t::number_integer:
-            {
-                if (j.m_data.m_value.number_integer >= 0)
-                {
-                    // CBOR does not differentiate between positive signed
-                    // integers and unsigned integers
-                    write_cbor_head(0x00, static_cast<std::uint64_t>(j.m_data.m_value.number_integer));
-                }
-                else
-                {
-                    // a negative integer n is encoded as -1 - n
-                    write_cbor_head(0x20, static_cast<std::uint64_t>(-1 - j.m_data.m_value.number_integer));
-                }
-                break;
-            }
-
             case value_t::number_unsigned:
             {
-                write_cbor_head(0x00, j.m_data.m_value.number_unsigned);
+                // one case for both, so that an array mixing negative
+                // (number_integer) and non-negative (number_unsigned) values
+                // does not mispredict the switch
+                write_cbor_integer(j, std::integral_constant<bool, integers_fit_64_bits()>());
                 break;
             }
 
@@ -256,13 +245,7 @@ class binary_writer
 
             case value_t::array:
             {
-                // step 1: write control byte and the array size
-                write_cbor_head(0x80, j.m_data.m_value.array->size());
-
-                for (const auto& el : *j.m_data.m_value.array)
-                {
-                    write_cbor(el, depth + 1);
-                }
+                write_cbor_array(j, depth);
                 break;
             }
 
@@ -313,12 +296,6 @@ class binary_writer
 
             case value_t::object:
             {
-                static_assert(
-                    std::is_convertible <
-                    typename BasicJsonType::object_t::key_type,
-                    string_t >::value,
-                    "object_t::key_type must be implicitly convertible to string_t");
-
                 // step 1: write control byte and the object size
                 write_cbor_head(0xA0, j.m_data.m_value.object->size());
 
@@ -326,7 +303,7 @@ class binary_writer
                 {
                     // el.first is written directly (not via a temporary
                     // basic_json), with the object as diagnostics context
-                    write_cbor_string(el.first, j);
+                    write_cbor_key(el.first, j);
                     write_cbor(el.second, depth + 1);
                 }
                 break;
@@ -348,7 +325,7 @@ class binary_writer
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::uint32_t>(length)))
         {
-            JSON_THROW(out_of_range::create(412, concat("MessagePack length ", std::to_string(length), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+            JSON_THROW(out_of_range::create(exception_id::length_too_large, concat("MessagePack length ", std::to_string(length), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
         }
 
         static_cast<void>(j);
@@ -426,54 +403,12 @@ class binary_writer
             }
 
             case value_t::number_integer:
-            {
-                if (j.m_data.m_value.number_integer >= 0)
-                {
-                    // MessagePack does not differentiate between positive
-                    // signed integers and unsigned integers.
-                    write_msgpack_unsigned(static_cast<std::uint64_t>(j.m_data.m_value.number_integer));
-                }
-                else
-                {
-                    if (j.m_data.m_value.number_integer >= -32)
-                    {
-                        // negative fixnum
-                        write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
-                    }
-                    else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)() &&
-                             j.m_data.m_value.number_integer <= (std::numeric_limits<std::int8_t>::max)())
-                    {
-                        // int 8
-                        oa.write_character(to_char_type(0xD0));
-                        write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
-                    }
-                    else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)() &&
-                             j.m_data.m_value.number_integer <= (std::numeric_limits<std::int16_t>::max)())
-                    {
-                        // int 16
-                        oa.write_character(to_char_type(0xD1));
-                        write_number(static_cast<std::int16_t>(j.m_data.m_value.number_integer));
-                    }
-                    else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)() &&
-                             j.m_data.m_value.number_integer <= (std::numeric_limits<std::int32_t>::max)())
-                    {
-                        // int 32
-                        oa.write_character(to_char_type(0xD2));
-                        write_number(static_cast<std::int32_t>(j.m_data.m_value.number_integer));
-                    }
-                    else
-                    {
-                        // int 64
-                        oa.write_character(to_char_type(0xD3));
-                        write_number(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
-                    }
-                }
-                break;
-            }
-
             case value_t::number_unsigned:
             {
-                write_msgpack_unsigned(static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
+                // one case for both, so that an array mixing negative
+                // (number_integer) and non-negative (number_unsigned) values
+                // does not mispredict the switch
+                write_msgpack_integer(j, std::integral_constant<bool, integers_fit_64_bits()>());
                 break;
             }
 
@@ -491,13 +426,7 @@ class binary_writer
 
             case value_t::array:
             {
-                // step 1: write control byte and the array size
-                write_msgpack_array_prefix(j.m_data.m_value.array->size(), j);
-
-                for (const auto& el : *j.m_data.m_value.array)
-                {
-                    write_msgpack(el, depth + 1);
-                }
+                write_msgpack_array(j, depth);
                 break;
             }
 
@@ -575,7 +504,7 @@ class binary_writer
                 {
                     if (JSON_HEDLEY_UNLIKELY(j.m_data.m_value.binary->subtype() > (std::numeric_limits<std::uint8_t>::max)()))
                     {
-                        JSON_THROW(out_of_range::create(415, concat("subtype ", std::to_string(j.m_data.m_value.binary->subtype()), " is too large for the MessagePack ext type (max 255)"), &j));
+                        JSON_THROW(out_of_range::create(exception_id::subtype_out_of_range, concat("subtype ", std::to_string(j.m_data.m_value.binary->subtype()), " is too large for the MessagePack ext type (max 255)"), &j));
                     }
 
                     write_number(static_cast<std::int8_t>(j.m_data.m_value.binary->subtype()));
@@ -591,12 +520,6 @@ class binary_writer
 
             case value_t::object:
             {
-                static_assert(
-                    std::is_convertible <
-                    typename BasicJsonType::object_t::key_type,
-                    string_t >::value,
-                    "object_t::key_type must be implicitly convertible to string_t");
-
                 // step 1: write control byte and the object size
                 write_msgpack_object_prefix(j.m_data.m_value.object->size(), j);
 
@@ -604,7 +527,7 @@ class binary_writer
                 {
                     // as in write_cbor, el.first is written directly with the
                     // object as diagnostics context
-                    write_msgpack_string(el.first, j);
+                    write_msgpack_key(el.first, j);
                     write_msgpack(el.second, depth + 1);
                 }
                 break;
@@ -730,7 +653,7 @@ class binary_writer
                 {
                     if (!use_count)
                     {
-                        JSON_THROW(other_error::create(502, "use_type requires use_size = true", &j));
+                        JSON_THROW(other_error::create(exception_id::size_marker_required, "use_type requires use_size = true", &j));
                     }
                     oa.write_character(to_char_type('$'));
                     oa.write_character(bjdata_draft3 ? 'B' : 'U');
@@ -809,6 +732,8 @@ class binary_writer
 
     /*!
     @param[in] j  JSON value to serialize
+
+    @throw type_error.321 if @a j or a value nested in it is discarded
     */
     void write_bon8(const BasicJsonType& j)
     {
@@ -831,7 +756,143 @@ class binary_writer
     {
         static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
         static_cast<void>(format_name);
-        JSON_THROW(type_error::create(321, concat("cannot serialize discarded value to ", format_name), &j));
+        JSON_THROW(type_error::create(exception_id::discarded_value_used, concat("cannot serialize discarded value to ", format_name), &j));
+    }
+
+    /// how the range of integer type @a NumberType relates to that of @a TargetType
+    template<typename TargetType, typename NumberType>
+    struct integer_range
+    {
+        /// whether NumberType can hold values above the maximum of TargetType
+        static constexpr bool may_exceed_max = std::numeric_limits<NumberType>::digits > std::numeric_limits<TargetType>::digits;
+        /// whether NumberType can hold values below the minimum of TargetType
+        static constexpr bool may_fall_below_min = std::numeric_limits<NumberType>::is_signed
+            && (!std::numeric_limits<TargetType>::is_signed || may_exceed_max);
+    };
+
+    /*!
+    @brief whether integer @a n does not exceed the maximum of @a TargetType
+
+    The binary formats store integers in at most 64 bits, but number_integer_t
+    and number_unsigned_t may be wider (e.g., __int128). The range of the
+    integer is taken from std::numeric_limits, so a number type whose range
+    fits into @a TargetType is never checked: the function is then constant
+    true, and the default int64_t/uint64_t types pay nothing.
+    */
+    template<typename TargetType, typename NumberType>
+    static constexpr bool integer_fits_max(const NumberType n) noexcept
+    {
+        return integer_fits_max<TargetType>(n, std::integral_constant<bool, integer_range<TargetType, NumberType>::may_exceed_max>());
+    }
+
+    template<typename TargetType, typename NumberType>
+    static constexpr bool integer_fits_max(const NumberType /*unused*/, std::false_type /*may_exceed*/) noexcept
+    {
+        return true;
+    }
+
+    template<typename TargetType, typename NumberType>
+    static constexpr bool integer_fits_max(const NumberType n, std::true_type /*may_exceed*/) noexcept
+    {
+        // NumberType has more digits than TargetType, so it can hold its maximum
+        return n <= static_cast<NumberType>((std::numeric_limits<TargetType>::max)());
+    }
+
+    /*!
+    @brief whether integer @a n is not below the minimum of @a TargetType;
+           constant true if NumberType cannot hold such a value
+    */
+    template<typename TargetType, typename NumberType>
+    static constexpr bool integer_fits_min(const NumberType n) noexcept
+    {
+        return integer_fits_min<TargetType>(n, std::integral_constant<bool, integer_range<TargetType, NumberType>::may_fall_below_min>());
+    }
+
+    template<typename TargetType, typename NumberType>
+    static constexpr bool integer_fits_min(const NumberType /*unused*/, std::false_type /*may_fall_below*/) noexcept
+    {
+        return true;
+    }
+
+    template<typename TargetType, typename NumberType>
+    static constexpr bool integer_fits_min(const NumberType n, std::true_type /*may_fall_below*/) noexcept
+    {
+        // NumberType is signed and either TargetType is unsigned (minimum 0)
+        // or NumberType has more digits, so it can hold the minimum
+        return n >= static_cast<NumberType>((std::numeric_limits<TargetType>::min)());
+    }
+
+    /*!
+    @brief whether integer @a n lies in the range of @a TargetType
+    */
+    template<typename TargetType, typename NumberType>
+    static constexpr bool integer_fits(const NumberType n) noexcept
+    {
+        return integer_fits_min<TargetType>(n) && integer_fits_max<TargetType>(n);
+    }
+
+    /*!
+    @brief the decimal digits of the non-negative integer @a n
+    */
+    template<typename NumberType>
+    static std::string integer_to_string(NumberType n, std::false_type /*is_signed*/)
+    {
+        std::string result;
+        do
+        {
+            result.push_back(static_cast<char>('0' + (n % 10)));
+            n = static_cast<NumberType>(n / 10);
+        }
+        while (n != 0);
+        std::reverse(result.begin(), result.end());
+        return result;
+    }
+
+    /*!
+    @brief the decimal digits of the integer @a n, with a leading '-' if it
+           is negative
+    */
+    template<typename NumberType>
+    static std::string integer_to_string(NumberType n, std::true_type /*is_signed*/)
+    {
+        // the remainder of a negative n is not positive; each digit is
+        // negated on its own, because negating the minimum of NumberType
+        // as a whole would overflow
+        const bool negative = n < 0;
+        std::string result;
+        do
+        {
+            const auto remainder = n % 10;
+            result.push_back(static_cast<char>('0' + (remainder < 0 ? -remainder : remainder)));
+            n = static_cast<NumberType>(n / 10);
+        }
+        while (n != 0);
+        if (negative)
+        {
+            result.push_back('-');
+        }
+        std::reverse(result.begin(), result.end());
+        return result;
+    }
+
+    /*!
+    @brief throws because the integer @a j is too large for @a format_name
+    @throw out_of_range.407 always
+    */
+    JSON_HEDLEY_NO_RETURN static void throw_integer_out_of_range(const BasicJsonType& j, const char* format_name, const char* range)
+    {
+        // neither std::to_string(), which has no overload for integer types
+        // wider than 64 bits, nor dump(), which would also instantiate the
+        // serializer for objects and fail for key types it cannot write
+        using integer_limits = std::numeric_limits<typename BasicJsonType::number_integer_t>;
+        using unsigned_limits = std::numeric_limits<typename BasicJsonType::number_unsigned_t>;
+        const std::string number = j.is_number_unsigned()
+                                   ? integer_to_string(j.m_data.m_value.number_unsigned, std::integral_constant<bool, unsigned_limits::is_signed>())
+                                   : integer_to_string(j.m_data.m_value.number_integer, std::integral_constant<bool, integer_limits::is_signed>());
+        static_cast<void>(number); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(format_name);
+        static_cast<void>(range);
+        JSON_THROW(out_of_range::create(exception_id::integer_too_large, concat("integer number ", number, " cannot be represented by ", format_name, " as it does not fit ", range), &j));
     }
 
     void write_msgpack_array_prefix(const std::size_t N, const BasicJsonType& j)
@@ -878,9 +939,9 @@ class binary_writer
         }
     }
 
-    /// @brief a CBOR or MessagePack array or object whose elements
-    ///        @ref write_cbor_iterative or @ref write_msgpack_iterative is
-    ///        still writing
+    /// @brief a CBOR, MessagePack, or BON8 array or object whose elements
+    ///        @ref write_cbor_iterative, @ref write_msgpack_iterative, or
+    ///        @ref write_bon8_iterative is still writing
     struct binary_container_frame
     {
         explicit binary_container_frame(const BasicJsonType* value_) noexcept
@@ -992,7 +1053,7 @@ class binary_writer
 
                 // the key is written directly (not via a temporary basic_json),
                 // with the object as diagnostics context, as in write_cbor
-                write_cbor_string(current.object_it->first, *current.value);
+                write_cbor_key(current.object_it->first, *current.value);
                 const BasicJsonType* child = &(current.object_it->second);
                 ++stack.back().object_it;
                 write_cbor_value_or_push(*child, stack);
@@ -1069,7 +1130,7 @@ class binary_writer
 
                 // as in write_cbor_iterative, the key is written directly with
                 // the object as diagnostics context
-                write_msgpack_string(current.object_it->first, *current.value);
+                write_msgpack_key(current.object_it->first, *current.value);
                 const BasicJsonType* child = &(current.object_it->second);
                 ++stack.back().object_it;
                 write_msgpack_value_or_push(*child, stack);
@@ -1091,7 +1152,7 @@ class binary_writer
         {
             if (!use_count)
             {
-                JSON_THROW(other_error::create(502, "use_type requires use_size = true", &j));
+                JSON_THROW(other_error::create(exception_id::size_marker_required, "use_type requires use_size = true", &j));
             }
             const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
             const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
@@ -1141,7 +1202,7 @@ class binary_writer
         {
             if (!use_count)
             {
-                JSON_THROW(other_error::create(502, "use_type requires use_size = true", &j));
+                JSON_THROW(other_error::create(exception_id::size_marker_required, "use_type requires use_size = true", &j));
             }
             const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
             const bool same_prefix = std::all_of(j.begin(), j.end(),
@@ -1358,7 +1419,7 @@ class binary_writer
         const auto it = name.find(static_cast<typename string_t::value_type>(0));
         if (JSON_HEDLEY_UNLIKELY(it != BasicJsonType::string_t::npos))
         {
-            JSON_THROW(out_of_range::create(409, concat("BSON key cannot contain code point U+0000 (at byte ", std::to_string(it), ")"), &j));
+            JSON_THROW(out_of_range::create(exception_id::bson_key_with_null, concat("BSON key cannot contain code point U+0000 (at byte ", std::to_string(it), ")"), &j));
         }
 
         string_t storage;
@@ -1376,7 +1437,7 @@ class binary_writer
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
         {
-            JSON_THROW(out_of_range::create(412, concat("BSON length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::int32_t>::max)())), nullptr));
+            JSON_THROW(out_of_range::create(exception_id::length_too_large, concat("BSON length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::int32_t>::max)())), nullptr));
         }
 
         return static_cast<std::int32_t>(size);
@@ -1562,7 +1623,7 @@ class binary_writer
 
         if (value.has_subtype() && JSON_HEDLEY_UNLIKELY(value.subtype() > (std::numeric_limits<std::uint8_t>::max)()))
         {
-            JSON_THROW(out_of_range::create(415, concat("subtype ", std::to_string(value.subtype()), " is too large for the BSON binary subtype (max 255)"), &j));
+            JSON_THROW(out_of_range::create(exception_id::subtype_out_of_range, concat("subtype ", std::to_string(value.subtype()), " is too large for the BSON binary subtype (max 255)"), &j));
         }
 
         return sizeof(std::int32_t) + value.size() + 1ul;
@@ -1590,6 +1651,8 @@ class binary_writer
             is neither an object nor an array
     @throw out_of_range.415 if @a j is binary with a subtype that does not fit
            into a byte, before anything is written
+    @throw out_of_range.407 if @a j is an integer that does not fit the 64 bits
+           of a BSON integer, before anything is written
     @throw type_error.316 if @a j is a string that is not valid UTF-8, before
            anything is written
     @throw type_error.321 if @a j is discarded
@@ -1608,10 +1671,18 @@ class binary_writer
                 return 8ul;
 
             case value_t::number_integer:
-                return calc_bson_integer_size(j.m_data.m_value.number_integer);
+                if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(j.m_data.m_value.number_integer)))
+                {
+                    throw_integer_out_of_range(j, "BSON", "int64");
+                }
+                return calc_bson_integer_size(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
 
             case value_t::number_unsigned:
-                return calc_bson_unsigned_size(j.m_data.m_value.number_unsigned);
+                if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
+                {
+                    throw_integer_out_of_range(j, "BSON", "uint64");
+                }
+                return calc_bson_unsigned_size(conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
 
             case value_t::string:
                 return calc_bson_string_size(*j.m_data.m_value.string, j);
@@ -1649,11 +1720,12 @@ class binary_writer
             case value_t::number_float:
                 return write_bson_double(name, j.m_data.m_value.number_float);
 
+            // calc_bson_value_size() checked that integers fit 64 bits
             case value_t::number_integer:
-                return write_bson_integer(name, j.m_data.m_value.number_integer);
+                return write_bson_integer(name, static_cast<std::int64_t>(j.m_data.m_value.number_integer));
 
             case value_t::number_unsigned:
-                return write_bson_unsigned(name, j.m_data.m_value.number_unsigned);
+                return write_bson_unsigned(name, conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
 
             case value_t::string:
                 return write_bson_string(name, *j.m_data.m_value.string);
@@ -1672,6 +1744,21 @@ class binary_writer
                 return;
                 // LCOV_EXCL_STOP
         }
+    }
+
+    /*!
+    @brief Writes the head of a BSON element with key @a name whose value is
+           the object or array @a j: its type, key, and @a size
+
+    Called while the key is in scope: an object key is a key_type, which
+    may only convert to a temporary string_t, so it cannot be kept by
+    pointer until after the loop over the entries.
+    */
+    void write_bson_nested_head(const string_t& name, const BasicJsonType& j,
+                                const std::size_t size)
+    {
+        write_bson_entry_header(name, j.is_object() ? 0x03 : 0x04);
+        write_number<std::int32_t>(to_bson_length(size), true);
     }
 
     /// @brief an object or array of the BSON document being sized or written
@@ -1838,7 +1925,6 @@ class binary_writer
         {
             // write entries until the current object or array is done, or an
             // entry is an object or array itself
-            const string_t* nested_name = nullptr;
             const BasicJsonType* nested = nullptr;
             if (current.value->is_object())
             {
@@ -1849,7 +1935,7 @@ class binary_writer
                     ++current.member;
                     if (el.second.is_structured())
                     {
-                        nested_name = &el.first;
+                        write_bson_nested_head(el.first, el.second, nested_sizes[next_size++]);
                         nested = &el.second;
                     }
                     else
@@ -1868,7 +1954,7 @@ class binary_writer
                     ++current.index;
                     if (el.is_structured())
                     {
-                        nested_name = &index_name;
+                        write_bson_nested_head(index_name, el, nested_sizes[next_size++]);
                         nested = &el;
                     }
                     else
@@ -1880,8 +1966,6 @@ class binary_writer
 
             if (nested != nullptr)
             {
-                write_bson_entry_header(*nested_name, nested->is_object() ? 0x03 : 0x04);
-                write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
                 parents.push_back(std::move(current));
                 current = bson_frame(nested);
                 continue;
@@ -1947,6 +2031,413 @@ class binary_writer
             oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + 0x1B)));
             write_number(argument);
         }
+    }
+
+    /*!
+    @brief size class of an unsigned integer from its bit length
+
+    1, 2, 3, or 4 if @a x fits 1, 2, 4, or 8 bytes. Looked up from the number
+    of leading zero bits instead of found by branches: the sizes of a stream
+    of numbers are hard to predict, and a mispredicted branch costs more than
+    writing the number. (A table, as comparisons are vectorized by clang into
+    slower code.)
+    */
+    static unsigned integer_size_class(const std::uint64_t x) noexcept
+    {
+        static constexpr std::array<std::uint8_t, 64> size_class_by_leading_zeros =
+        {
+            {
+                4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+                3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                2, 2, 2, 2, 2, 2, 2, 2,
+                1, 1, 1, 1, 1, 1, 1, 1
+            }
+        };
+        // x | 1 keeps count_leading_zeros() away from 0
+        return size_class_by_leading_zeros[static_cast<std::size_t>(count_leading_zeros(x | 1u))];
+    }
+
+    /*!
+    @brief encode @a first_byte and the low-order bytes of @a value that
+           @a size_class calls for (none, or 1, 2, 4, or 8) in network order
+           to @a out
+    @return the number of characters of the encoding; up to
+            @ref integer_encoding_space characters at @a out are overwritten
+
+    The bytes are written as one byte and one 8-byte word whose bytes after
+    the value are scratch that the caller drops, so that writing them does not
+    depend on the size class. For class 0 the word is all scratch; it is
+    shifted by 60 bits rather than 64, which would be undefined.
+    */
+    std::size_t encode_first_byte_and_tail(CharType* out, const std::uint8_t first_byte, const unsigned size_class, const std::uint64_t value) const noexcept
+    {
+        out[0] = to_char_type(first_byte);
+        const unsigned unused_bits = 64u - ((8u << size_class) >> 1u);
+        const std::uint64_t tail = is_little_endian ? byte_swap(value) >> unused_bits : value << unused_bits;
+        std::memcpy(out + 1, &tail, sizeof(tail));
+        return ((std::size_t{1} << size_class) >> 1u) + 1;
+    }
+
+    /// characters encode_first_byte_and_tail() may overwrite: the first byte
+    /// and one 8-byte word
+    static constexpr std::size_t integer_encoding_space = 9;
+
+    /*!
+    @brief the 64 bits of a number_integer or number_unsigned value, and a mask
+           that is all ones if it is negative, else zero
+
+    Selected through masks rather than branches, as the type and the sign of
+    the values in an array of mixed signs alternate unpredictably (non-negative
+    integers are number_unsigned after parsing). Up to 64 bits, the sign is bit
+    63 of the result (a narrower integer is sign-extended); computing it with
+    masks keeps GCC from branching on the type. A wider integer has to be
+    compared.
+    */
+    static std::uint64_t integer_bits(const BasicJsonType& j, std::uint64_t& sign_mask) noexcept
+    {
+        const bool is_signed = j.m_data.m_type == value_t::number_integer;
+        const std::uint64_t raw = is_signed
+                                  ? static_cast<std::uint64_t>(j.m_data.m_value.number_integer)
+                                  : static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned);
+        sign_mask = sizeof(typename BasicJsonType::number_integer_t) <= sizeof(std::uint64_t)
+                    ? (std::uint64_t{0} - static_cast<std::uint64_t>(is_signed)) & (std::uint64_t{0} - (raw >> 63u))
+                    : std::uint64_t{0} - static_cast<std::uint64_t>(is_signed && j.m_data.m_value.number_integer < 0);
+        return raw;
+    }
+
+    /*!
+    @brief encode the head of a CBOR integer to @a out without branching on its
+           size
+    @return the number of characters of the head
+
+    Same output as @ref write_cbor_head. The lengths of strings and containers
+    are mostly predictable, so their heads keep the branches; the sizes of a
+    run of integers are not, so an integer's head is assembled without them.
+    */
+    std::size_t encode_cbor_integer_head(CharType* out, const std::uint8_t major_type, const std::uint64_t argument) const noexcept
+    {
+        // an argument of at most 23 is in size class 1 (one byte) and is moved
+        // to class 0, the first byte, by subtracting 1
+        const auto is_immediate = static_cast<unsigned>(argument <= 0x17u);
+        const unsigned size_class = integer_size_class(argument) - is_immediate;
+
+        // the first byte: the argument itself if it is immediate, else
+        // 0x17 + size_class, selected through a mask
+        const std::uint64_t immediate_mask = std::uint64_t{0} - is_immediate;
+        const auto first_byte = static_cast<std::uint8_t>(major_type + ((argument & immediate_mask) | ((0x17u + size_class) & ~immediate_mask)));
+        return encode_first_byte_and_tail(out, first_byte, size_class, argument);
+    }
+
+    /*!
+    @brief write an array value (head and elements) as CBOR
+
+    Integer elements, the most common scalar, are written without a call to
+    @ref write_cbor. The loop is kept out of line: inlined into write_cbor, its
+    registers would be saved and restored on every call of write_cbor, which
+    is one call per value nested in an object.
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_cbor_array(const BasicJsonType& j, const std::size_t depth)
+    {
+        write_cbor_head(0x80, j.m_data.m_value.array->size());
+        write_cbor_array_elements(j, depth, std::integral_constant<bool, integers_fit_64_bits()>());
+    }
+
+    void write_cbor_array_elements(const BasicJsonType& j, const std::size_t depth, std::true_type /*fits_64_bits*/)
+    {
+        write_array_elements(j, [this](CharType * out, const BasicJsonType & el)
+        {
+            return encode_cbor_integer(out, el);
+        }, [this, depth](const BasicJsonType & el)
+        {
+            write_cbor(el, depth + 1);
+        });
+    }
+
+    void write_cbor_array_elements(const BasicJsonType& j, const std::size_t depth, std::false_type /*fits_64_bits*/)
+    {
+        for (const auto& el : *j.m_data.m_value.array)
+        {
+            write_cbor(el, depth + 1);
+        }
+    }
+
+    /*!
+    @brief write the elements of the array @a j, runs of integers with
+           @a encode_integer and all other values with @a write_value
+
+    Runs of integers are encoded straight into space reserved from the sink
+    for a whole run: the write pointer stays a local, where it would otherwise
+    be reloaded from the sink for every value, as a store of a character may
+    alias it.
+    */
+    template<typename EncodeInteger, typename WriteValue>
+    void write_array_elements(const BasicJsonType& j, EncodeInteger encode_integer, WriteValue write_value)
+    {
+        constexpr std::size_t max_run = max_reserve_size / integer_encoding_space;
+        auto it = j.m_data.m_value.array->begin();
+        const auto end = j.m_data.m_value.array->end();
+        while (it != end)
+        {
+            if (it->is_number_integer())
+            {
+                CharType* const start = oa.reserve(max_run * integer_encoding_space);
+                CharType* out = start;
+                for (std::size_t n = 0; n < max_run && it != end && it->is_number_integer(); ++n, ++it)
+                {
+                    out += encode_integer(out, *it);
+                }
+                oa.commit(static_cast<std::size_t>(out - start));
+            }
+            else
+            {
+                write_value(*it);
+                ++it;
+            }
+        }
+    }
+
+    /*!
+    @brief write a number_integer or number_unsigned value as a CBOR integer
+
+    A negative integer n has major type 1 and the argument -1 - n, which is ~n.
+    Kept out of line, like the other per-value paths, so that write_cbor stays
+    small (runs of integers in an array are encoded inline instead).
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_cbor_integer(const BasicJsonType& j, std::true_type /*fits_64_bits*/)
+    {
+        oa.commit(encode_cbor_integer(oa.reserve(integer_encoding_space), j));
+    }
+
+    /// write a number_integer or number_unsigned value of a number type wider
+    /// than 64 bits as a CBOR integer, with range checks on the whole value
+    void write_cbor_integer(const BasicJsonType& j, std::false_type /*fits_64_bits*/)
+    {
+        if (j.m_data.m_type == value_t::number_unsigned)
+        {
+            if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
+            {
+                throw_integer_out_of_range(j, "CBOR", "uint64");
+            }
+            write_cbor_head(0x00, conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
+            return;
+        }
+
+        if (j.m_data.m_value.number_integer >= 0)
+        {
+            if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_integer)))
+            {
+                throw_integer_out_of_range(j, "CBOR", "[-2^64, 2^64-1]");
+            }
+            // CBOR does not differentiate between positive signed
+            // integers and unsigned integers
+            write_cbor_head(0x00, static_cast<std::uint64_t>(j.m_data.m_value.number_integer));
+        }
+        else
+        {
+            // a negative integer n is encoded as -1 - n
+            if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(-1 - j.m_data.m_value.number_integer)))
+            {
+                throw_integer_out_of_range(j, "CBOR", "[-2^64, 2^64-1]");
+            }
+            write_cbor_head(0x20, static_cast<std::uint64_t>(-1 - j.m_data.m_value.number_integer));
+        }
+    }
+
+    /// encode a number_integer or number_unsigned value to @a out (see
+    /// @ref write_cbor_integer) and return the number of characters
+    std::size_t encode_cbor_integer(CharType* out, const BasicJsonType& j) const noexcept
+    {
+        std::uint64_t sign_mask = 0;
+        const std::uint64_t raw = integer_bits(j, sign_mask);
+        // ~raw is -1 - n in the 64 bits that are written
+        return encode_cbor_integer_head(out, static_cast<std::uint8_t>(sign_mask & 0x20u), raw ^ sign_mask);
+    }
+
+    /*!
+    @brief whether the CBOR and MessagePack integers of BasicJsonType are
+           written by @ref encode_cbor_integer and @ref encode_msgpack_integer
+
+    These pick the format from the low 64 bits; a wider number type is written
+    with range checks on the whole value instead.
+    */
+    static constexpr bool integers_fit_64_bits() noexcept
+    {
+        return sizeof(typename BasicJsonType::number_integer_t) <= sizeof(std::uint64_t)
+               && sizeof(typename BasicJsonType::number_unsigned_t) <= sizeof(std::uint64_t);
+    }
+
+    /*!
+    @brief write a number_integer or number_unsigned value as a MessagePack
+           integer without branching on its sign or size
+
+    Same output as @ref write_msgpack: a non-negative integer as positive fixint
+    (< 128) or uint 8/16/32/64, a negative one as negative fixint (>= -32) or
+    int 8/16/32/64. Kept out of line (see @ref write_cbor_integer).
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_msgpack_integer(const BasicJsonType& j, std::true_type /*fits_64_bits*/)
+    {
+        oa.commit(encode_msgpack_integer(oa.reserve(integer_encoding_space), j));
+    }
+
+    /// encode a number_integer or number_unsigned value to @a out (see
+    /// @ref write_msgpack_integer) and return the number of characters
+    std::size_t encode_msgpack_integer(CharType* out, const BasicJsonType& j) const noexcept
+    {
+        std::uint64_t sign_mask = 0;
+        const std::uint64_t raw = integer_bits(j, sign_mask);
+
+        // A negative n fits int 8/16/32 exactly if 2 * (-1 - n) + 1 fits
+        // uint 8/16/32, so x gives the size class of either sign.
+        const std::uint64_t is_negative = sign_mask & 1u;
+        const std::uint64_t x = ((raw ^ sign_mask) << is_negative) | is_negative;
+
+        // A fixint is at most 127, or at least -32 (x at most 63). It is in
+        // size class 1 and is moved to class 0, the first byte, by subtracting 1.
+        const auto is_fixint = static_cast<unsigned>(x <= (127u ^ (sign_mask & 64u)));
+        const unsigned size_class = integer_size_class(x) - is_fixint;
+
+        // the first byte: the low byte of the integer for a fixint, else the
+        // marker 0xCC..0xCF (uint) or 0xD0..0xD3 (int), selected through a mask
+        const std::uint64_t fixint_mask = std::uint64_t{0} - is_fixint;
+        const std::uint64_t marker = 0xCBu + size_class + (sign_mask & 4u);
+        const auto first_byte = static_cast<std::uint8_t>((raw & fixint_mask) | (marker & ~fixint_mask));
+        return encode_first_byte_and_tail(out, first_byte, size_class, raw);
+    }
+
+    /// write a number_integer or number_unsigned value of a number type wider
+    /// than 64 bits as a MessagePack integer, with range checks on the whole value
+    void write_msgpack_integer(const BasicJsonType& j, std::false_type /*fits_64_bits*/)
+    {
+        if (j.m_data.m_type == value_t::number_unsigned)
+        {
+            if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
+            {
+                throw_integer_out_of_range(j, "MessagePack", "uint64");
+            }
+            write_msgpack_unsigned(static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
+            return;
+        }
+
+        if (j.m_data.m_value.number_integer >= 0)
+        {
+            if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_integer)))
+            {
+                throw_integer_out_of_range(j, "MessagePack", "[-2^63, 2^64-1]");
+            }
+            // MessagePack does not differentiate between positive
+            // signed integers and unsigned integers.
+            write_msgpack_unsigned(static_cast<std::uint64_t>(j.m_data.m_value.number_integer));
+        }
+        else
+        {
+            if (JSON_HEDLEY_UNLIKELY(!integer_fits_min<std::int64_t>(j.m_data.m_value.number_integer)))
+            {
+                throw_integer_out_of_range(j, "MessagePack", "[-2^63, 2^64-1]");
+            }
+            if (j.m_data.m_value.number_integer >= -32)
+            {
+                // negative fixnum
+                write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
+            }
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)() &&
+                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int8_t>::max)())
+            {
+                // int 8
+                oa.write_character(to_char_type(0xD0));
+                write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
+            }
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)() &&
+                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int16_t>::max)())
+            {
+                // int 16
+                oa.write_character(to_char_type(0xD1));
+                write_number(static_cast<std::int16_t>(j.m_data.m_value.number_integer));
+            }
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)() &&
+                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int32_t>::max)())
+            {
+                // int 32
+                oa.write_character(to_char_type(0xD2));
+                write_number(static_cast<std::int32_t>(j.m_data.m_value.number_integer));
+            }
+            else
+            {
+                // int 64
+                oa.write_character(to_char_type(0xD3));
+                write_number(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
+            }
+        }
+    }
+
+    /*!
+    @brief write an array value (head and elements) as MessagePack
+
+    See @ref write_cbor_array.
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    void write_msgpack_array(const BasicJsonType& j, const std::size_t depth)
+    {
+        write_msgpack_array_prefix(j.m_data.m_value.array->size(), j);
+        write_msgpack_array_elements(j, depth, std::integral_constant<bool, integers_fit_64_bits()>());
+    }
+
+    void write_msgpack_array_elements(const BasicJsonType& j, const std::size_t depth, std::true_type /*fits_64_bits*/)
+    {
+        write_array_elements(j, [this](CharType * out, const BasicJsonType & el)
+        {
+            return encode_msgpack_integer(out, el);
+        }, [this, depth](const BasicJsonType & el)
+        {
+            write_msgpack(el, depth + 1);
+        });
+    }
+
+    void write_msgpack_array_elements(const BasicJsonType& j, const std::size_t depth, std::false_type /*fits_64_bits*/)
+    {
+        for (const auto& el : *j.m_data.m_value.array)
+        {
+            write_msgpack(el, depth + 1);
+        }
+    }
+
+    /*!
+    @brief write an object key as a CBOR text string
+
+    A key convertible to string_t is written directly. Other key types (only
+    an explicit conversion, or only a to_json overload) go through a temporary
+    basic_json, as in version 3.12.0; the temporary is then the diagnostics
+    context for strict UTF-8 checks.
+    */
+    template<typename Key = typename BasicJsonType::object_t::key_type,
+             enable_if_t<std::is_convertible<Key, string_t>::value, int> = 0>
+    void write_cbor_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& context)
+    {
+        write_cbor_string(key, context);
+    }
+
+    template < typename Key = typename BasicJsonType::object_t::key_type,
+               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
+    void write_cbor_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
+    {
+        write_cbor(BasicJsonType(key));
+    }
+
+    /// @brief write an object key as a MessagePack str, as in @ref write_cbor_key
+    template<typename Key = typename BasicJsonType::object_t::key_type,
+             enable_if_t<std::is_convertible<Key, string_t>::value, int> = 0>
+    void write_msgpack_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& context)
+    {
+        write_msgpack_string(key, context);
+    }
+
+    template < typename Key = typename BasicJsonType::object_t::key_type,
+               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
+    void write_msgpack_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
+    {
+        write_msgpack(BasicJsonType(key));
     }
 
     /*!
@@ -2108,7 +2599,7 @@ class binary_writer
         {
             return 'L';
         }
-        if (use_bjdata && std::is_unsigned<NumberType>::value)
+        if (use_bjdata && std::is_unsigned<NumberType>::value && integer_fits_max<std::uint64_t>(n))
         {
             return 'M';
         }
@@ -2233,14 +2724,16 @@ class binary_writer
     @brief checks whether a JSON number fits into @a TargetType
     @param[in] el a JSON number of either the signed or unsigned integer kind
     @return whether @a el's value can be represented by @a TargetType without
-            wrapping, regardless of which of the two kinds it is stored as
+            wrapping, regardless of which of the two kinds it is stored as;
+            false for a value that does not even fit the 64-bit type it is
+            read as (possible for number types wider than 64 bits)
     */
     template<typename TargetType>
     static bool bjdata_ndarray_value_in_range(const BasicJsonType& el)
     {
         return el.is_number_unsigned()
-               ? value_in_range_of<TargetType>(el.template get<std::uint64_t>())
-               : value_in_range_of<TargetType>(el.template get<std::int64_t>());
+               ? integer_fits_max<std::uint64_t>(el.m_data.m_value.number_unsigned) && value_in_range_of<TargetType>(el.template get<std::uint64_t>())
+               : integer_fits<std::int64_t>(el.m_data.m_value.number_integer) && value_in_range_of<TargetType>(el.template get<std::int64_t>());
     }
 
     /*!
@@ -2472,10 +2965,11 @@ class binary_writer
         for (const auto& el : dims)
         {
             // a dimension is read as an unsigned value below, so anything that
-            // is not a non-negative integer is rejected: a non-integer entry
-            // would pun unrelated bytes as the dimension, and a negative one
-            // would wrap into a nonsensical length
-            if (!el.is_number_integer() || (!el.is_number_unsigned() && el.template get<std::int64_t>() < 0))
+            // is not a non-negative integer in the range of std::uint64_t is
+            // rejected: a non-integer entry would pun unrelated bytes as the
+            // dimension, and a negative or wider one would wrap into a
+            // nonsensical length
+            if (!el.is_number_integer() || !bjdata_ndarray_value_in_range<std::uint64_t>(el))
             {
                 return true;
             }
@@ -2570,9 +3064,27 @@ class binary_writer
     @param[in] j                JSON value to serialize
     @param[in,out] string_open  whether the output ends with a non-empty
                                 string that has not been terminated with 0xFF
+    @param[in] depth            nesting level of @a j, counted from the
+                                top-level value passed to @ref basic_json::to_bon8
+    @throw type_error.316 if a string value or an object key is not valid
+           UTF-8
+    @throw out_of_range.407 if an unsigned integer does not fit int64
+    @throw type_error.321 if @a j or a value nested in it is discarded
+
+    Values nested deeper than @ref recursion_depth_limit are written by
+    @ref write_bon8_iterative without the call stack.
+
+    @sa @ref write_cbor
+    @sa https://github.com/nlohmann/json/issues/5392
     */
-    void write_bon8_value(const BasicJsonType& j, bool& string_open)
+    void write_bon8_value(const BasicJsonType& j, bool& string_open, const std::size_t depth = 0)
     {
+        if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()) && (j.is_array() || j.is_object()))
+        {
+            write_bon8_iterative(j, string_open);
+            return;
+        }
+
         switch (j.type())
         {
             case value_t::null:
@@ -2589,9 +3101,9 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                if (j.m_data.m_value.number_unsigned > static_cast<typename BasicJsonType::number_unsigned_t>((std::numeric_limits<std::int64_t>::max)()))
+                if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::int64_t>(j.m_data.m_value.number_unsigned)))
                 {
-                    JSON_THROW(out_of_range::create(407, concat("integer number ", std::to_string(j.m_data.m_value.number_unsigned), " cannot be represented by BON8 as it does not fit int64"), &j));
+                    throw_integer_out_of_range(j, "BON8", "int64");
                 }
                 write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_unsigned));
                 string_open = false;
@@ -2600,6 +3112,10 @@ class binary_writer
 
             case value_t::number_integer:
             {
+                if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(j.m_data.m_value.number_integer)))
+                {
+                    throw_integer_out_of_range(j, "BON8", "int64");
+                }
                 write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
                 string_open = false;
                 break;
@@ -2626,7 +3142,7 @@ class binary_writer
 
                 for (const auto& el : *j.m_data.m_value.array)
                 {
-                    write_bon8_value(el, string_open);
+                    write_bon8_value(el, string_open, depth + 1);
                 }
 
                 if (N > 4)
@@ -2645,7 +3161,7 @@ class binary_writer
                 for (const auto& el : *j.m_data.m_value.object)
                 {
                     write_bon8_string(el.first, string_open, j);
-                    write_bon8_value(el.second, string_open);
+                    write_bon8_value(el.second, string_open, depth + 1);
                 }
 
                 if (N > 4)
@@ -2678,7 +3194,84 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                break;
+                throw_on_discarded(j, "BON8");
+        }
+    }
+
+    /*!
+    @brief write @a j with @ref write_bon8_value, or write its marker and push
+           a frame for @ref write_bon8_iterative to continue with its elements
+
+    A scalar, and an empty array or object, are written out in full and not
+    pushed.
+
+    @sa @ref write_cbor_value_or_push
+    */
+    void write_bon8_value_or_push(const BasicJsonType& j, bool& string_open, std::vector<binary_container_frame>& stack)
+    {
+        if (j.is_array() || j.is_object())
+        {
+            // arrays use the markers 0x80..0x85, objects 0x86..0x8B; the last
+            // one stands for more than four elements, closed later with 0xFE
+            const auto N = j.size();
+            const std::size_t base = j.is_array() ? 0x80 : 0x86;
+            write_bon8_marker(static_cast<std::uint8_t>(base + (N <= 4 ? N : 5)), string_open);
+            if (N != 0)
+            {
+                stack.emplace_back(&j);
+            }
+            return;
+        }
+
+        write_bon8_value(j, string_open);
+    }
+
+    /*!
+    @brief write out @a root and everything below it without the call stack
+
+    A container with more than four elements is closed with 0xFE once its
+    last element is written, as in @ref write_bon8_value.
+
+    @sa @ref write_cbor_iterative
+    */
+    void write_bon8_iterative(const BasicJsonType& root, bool& string_open)
+    {
+        // only a container with elements is ever pushed; see write_bon8_value_or_push
+        std::vector<binary_container_frame> stack;
+        write_bon8_value_or_push(root, string_open, stack);
+
+        while (!stack.empty())
+        {
+            const binary_container_frame current = stack.back();
+            const bool is_array = current.value->is_array();
+            const bool at_end = is_array
+                                ? current.array_it == current.value->m_data.m_value.array->cend()
+                                : current.object_it == current.value->m_data.m_value.object->cend();
+
+            if (at_end)
+            {
+                if (current.value->size() > 4)
+                {
+                    write_bon8_marker(0xFE, string_open);
+                }
+                stack.pop_back();
+                continue;
+            }
+
+            // read the child before pushing: entering it can move every frame
+            const BasicJsonType* child = nullptr;
+            if (is_array)
+            {
+                child = &(*current.array_it);
+                ++stack.back().array_it;
+            }
+            else
+            {
+                write_bon8_string(current.object_it->first, string_open, *current.value);
+                child = &(current.object_it->second);
+                ++stack.back().object_it;
+            }
+            write_bon8_value_or_push(*child, string_open, stack);
         }
     }
 
@@ -2744,7 +3337,7 @@ class binary_writer
         const std::size_t valid = valid_utf8_prefix(data, s.size());
         if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
         {
-            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", detail::hex_byte(data[valid])), &context));
+            JSON_THROW(type_error::create(exception_id::invalid_utf8, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", detail::hex_byte(data[valid])), &context));
         }
     }
 

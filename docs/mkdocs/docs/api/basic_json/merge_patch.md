@@ -67,6 +67,7 @@ returned by `#!cpp (*this)[key]`); it is read as it was when `merge_patch()` was
 
 - [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396)
 - [patch](patch.md) apply a JSON patch
+- [merge_diff](merge_diff.md) creates a diff as a JSON Merge Patch
 
 ## Version history
 

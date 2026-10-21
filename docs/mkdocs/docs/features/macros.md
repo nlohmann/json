@@ -82,6 +82,45 @@ To override the built-in check, define `JSON_HAS_FILESYSTEM` or `JSON_HAS_EXPERI
 
 See [full documentation of `JSON_HAS_FILESYSTEM` and `JSON_HAS_EXPERIMENTAL_FILESYSTEM`](../api/macros/json_has_filesystem.md).
 
+## `JSON_HAS_RANGES`
+
+The library uses `std::ranges` (and concepts) where available, for example, to parse from C++20 ranges and to
+construct JSON arrays from range views. The library detects whether the standard library supports ranges and
+disables the support on toolchains with an incomplete implementation. To override the built-in check, define
+`JSON_HAS_RANGES` to `1` or `0`.
+
+See [full documentation of `JSON_HAS_RANGES`](../api/macros/json_has_ranges.md).
+
+## `JSON_HAS_RANGE_VIEW_CONVERSION`
+
+When `JSON_HAS_RANGES` is enabled (and the compiler is not MinGW), a JSON array can be constructed directly from a C++20
+range view such as `std::views::filter(...)`. To override the built-in check, define `JSON_HAS_RANGE_VIEW_CONVERSION` to
+`1` or `0`.
+
+See [full documentation of `JSON_HAS_RANGE_VIEW_CONVERSION`](../api/macros/json_has_range_view_conversion.md).
+
+## `JSON_HAS_STATIC_RTTI`
+
+The library detects whether the compiler supports run time type information (RTTI), which it needs, for instance, to
+exclude `std::any` from the candidate types of the implicit conversion on C++17. To override the built-in check, define
+`JSON_HAS_STATIC_RTTI` to `1` or `0`.
+
+See [full documentation of `JSON_HAS_STATIC_RTTI`](../api/macros/json_has_static_rtti.md).
+
+## `JSON_HAS_STD_FORMAT`
+
+When compiling with C++20 and a standard library that provides `<format>`, the library provides a `std::formatter`
+specialization for JSON values. To override the built-in check, define `JSON_HAS_STD_FORMAT` to `1` or `0`.
+
+See [full documentation of `JSON_HAS_STD_FORMAT`](../api/macros/json_has_std_format.md).
+
+## `JSON_HAS_THREE_WAY_COMPARISON`
+
+When the compiler and standard library support 3-way comparison (the spaceship operator `<=>`), the library provides it
+for JSON values. To override the built-in check, define `JSON_HAS_THREE_WAY_COMPARISON` to `1` or `0`.
+
+See [full documentation of `JSON_HAS_THREE_WAY_COMPARISON`](../api/macros/json_has_three_way_comparison.md).
+
 ## `JSON_NOEXCEPTION`
 
 Exceptions can be switched off by defining the symbol `JSON_NOEXCEPTION`.
@@ -94,6 +133,14 @@ When defined, default parse and serialize functions for enums are excluded and h
 
 See [full documentation of `JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md).
 
+## `JSON_DISABLE_STREAM_BULK_SCAN`
+
+When defined to `1`, parsing from a `#!cpp std::istream` reads one character at a time instead of scanning the
+characters that the stream buffer holds in bulk. Results are the same either way; the macro is an escape hatch for
+stream buffers that do not follow the usual `std::streambuf` contract. The default value is `0`.
+
+See [full documentation of `JSON_DISABLE_STREAM_BULK_SCAN`](../api/macros/json_disable_stream_bulk_scan.md).
+
 ## `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`
 
 When defined to `1`, a JSON value can no longer be created from a one-element `std::tuple` holding a reference to a JSON
@@ -101,6 +148,14 @@ value, such as the result of `std::forward_as_tuple(j)`. This lets `std::tuple` 
 is planned to become the default in version 4.0.0.
 
 See [full documentation of `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md).
+
+## `JSON_DISABLE_UNLOCKED_FILE_IO`
+
+When defined to `1`, parsing from a `#!cpp FILE*` reads every character with `std::fgetc`, which locks the file each
+time, instead of locking the file once and reading it with the unlocked stdio functions. Results are the same either
+way. The default value is `0`.
+
+See [full documentation of `JSON_DISABLE_UNLOCKED_FILE_IO`](../api/macros/json_disable_unlocked_file_io.md).
 
 ## `JSON_NO_AUTOMATIC_UDLS`
 
@@ -204,9 +259,9 @@ See [full documentation of `JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global
 
 ## `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`
 
-When defined to `1`, the library restores the legacy behavior in which a discarded value compared equal to itself. This
-behavior is [deprecated](../integration/migration_guide.md#miscellaneous-functions) and switched off (`0`) by
-default.
+When defined to `1`, the library restores the legacy behavior in which comparing a discarded value with `<=` or `>=`
+yields `#!cpp true` instead of `#!cpp false`. This behavior is
+[deprecated](../integration/migration_guide.md#miscellaneous-functions) and switched off (`0`) by default.
 
 See [full documentation of `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md).
 

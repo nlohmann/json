@@ -9,7 +9,9 @@
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
+using nlohmann::json;
 
+#include <cstdint>
 #include <deque>
 #include <map>
 #include <memory>
@@ -163,4 +165,48 @@ TEST_CASE("array type without at()")
 
     CHECK(j.at(no_at_json::json_pointer("/1")) == 2);
     CHECK_THROWS_AS(j.at(no_at_json::json_pointer("/3")), no_at_json::out_of_range);
+}
+
+TEST_CASE("regression test #5476 - array type without reserve()")
+{
+    // the capacity reserved for definite-length arrays must not require the
+    // array type to have a reserve() member function
+    SECTION("std::deque")
+    {
+        const auto j = deque_json::parse(R"({"a":[1,[2,3]],"b":[]})");
+        CHECK(j.dump() == R"({"a":[1,[2,3]],"b":[]})");
+
+        // the binary formats pass a definite length to start_array()
+        CHECK(deque_json::from_cbor(deque_json::to_cbor(j)) == j);
+        CHECK(deque_json::from_msgpack(deque_json::to_msgpack(j)) == j);
+        CHECK(deque_json::from_bon8(deque_json::to_bon8(j)) == j);
+
+        // parse() instantiates the callback parser as well, which reserves too
+        const auto with_callback = deque_json::parse(R"([1,2,3])", [](int /*depth*/, deque_json::parse_event_t /*event*/, deque_json& /*parsed*/) noexcept
+        {
+            return true;
+        });
+        CHECK(with_callback == deque_json({1, 2, 3}));
+    }
+
+    SECTION("std::vector still reserves")
+    {
+        json array = json::array();
+        for (int i = 0; i < 100; ++i)
+        {
+            array.push_back(i);
+        }
+
+        const auto j = json::from_cbor(json::to_cbor(array));
+        CHECK(j == array);
+        CHECK(j.get_ref<const json::array_t&>().capacity() >= 100);
+    }
+
+    SECTION("the reservation stays capped")
+    {
+        // CBOR array announcing 2^32-1 elements, but truncated right after the
+        // header: the input must be rejected without reserving that capacity
+        const std::vector<std::uint8_t> truncated = {0x9A, 0xFF, 0xFF, 0xFF, 0xFF};
+        CHECK(json::from_cbor(truncated, true, false).is_discarded());
+    }
 }

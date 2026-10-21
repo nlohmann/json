@@ -23,9 +23,10 @@ type to use.
 ## Template parameters
 
 `NumberFloatType`
-:   the type to store floating-point numbers. Parsing and serialization are implemented in terms of
-    `#!cpp std::strtof`/`#!cpp std::strtod`/`#!cpp std::strtold` and `#!cpp std::snprintf`, so the type must be
-    `#!cpp float`, `#!cpp double`, or `#!cpp long double`. The
+:   the type to store floating-point numbers. The type must be `#!cpp float`, `#!cpp double`, or
+    `#!cpp long double`. The parser converts `#!cpp float`, `#!cpp double`, and a `#!cpp long double` that is IEEE 754
+    binary64 itself. It converts other `#!cpp long double` formats with `#!cpp std::from_chars` where available, or
+    with `#!cpp std::strtold` otherwise. Serialization falls back to `#!cpp std::snprintf`. The
     [binary formats](../../features/binary_formats/index.md) additionally require `#!cpp float` or `#!cpp double`,
     because they have no encoding for `#!cpp long double`. See
     [Template Parameter Requirements](../../features/types/template_parameters.md#numberfloattype).
@@ -34,7 +35,7 @@ type to use.
 
 ### Default type
 
-With the default values for `NumberFloatType` (`double`), the default value for `number_float_t` is `#!cpp double`.
+With the default values for `NumberFloatType` (`double`), the default type for `number_float_t` is `#!cpp double`.
 
 ### Default behavior
 
@@ -51,9 +52,11 @@ With the default values for `NumberFloatType` (`double`), the default value for 
 > interoperability can be achieved by implementations that expect no more precision or range than these provide, in the
 > sense that implementations will approximate JSON numbers within the expected precision.
 
-This implementation does exactly follow this approach, as it uses double precision floating-point numbers. Note values
-smaller than `-1.79769313486232e+308` and values greater than `1.79769313486232e+308` will be stored as NaN internally
-and be serialized to `null`.
+This implementation does exactly follow this approach, as it uses double precision floating-point numbers by default.
+Note that with the default `double`, numbers smaller than `-1.79769313486232e+308` or greater than
+`1.79769313486232e+308` are rejected during parsing with
+[`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406). Non-finite values (NaN and infinity) can
+only be stored by assigning them directly and are serialized to `null`.
 
 During deserialization (from JSON text or any of the binary formats), a finite number that does not fit into
 `number_float_t` is rejected with [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406), for

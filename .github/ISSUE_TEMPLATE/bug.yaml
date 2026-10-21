@@ -52,7 +52,7 @@ body:
         If possible, provide a small and self-contained example that triggers
         the bug. Please understand that we cannot analyze and debug large code
         bases. Please do not paste screenshots here.
-      render: Shell
+      render: cpp
   - type: textarea
     id: output
     attributes:
@@ -79,7 +79,7 @@ body:
       description: >
         Which version of the library did you use? If it is a released version,
         please enter the version number (e.g., 3.12.0). Otherwise, please enter
-        the commit hash. If you got the library from another source as the
+        the commit hash. If you got the library from another source than the
         GitHub repository (e.g., via a package manager), please also state
         this.
     validations:
