@@ -8779,6 +8779,18 @@ class input_stream_adapter
 #if JSON_PRECISE_STREAM_POSITION
         commit_lookahead();
 #endif
+#if !JSON_DISABLE_STREAM_BULK_SCAN
+        // the elements are in the get area: copy them, as sgetn() does, but
+        // without the virtual call
+        const char* const first = streambuf_access::get_ptr(sb);
+        const auto available = static_cast<std::size_t>(streambuf_access::get_end(sb) - first);
+        if (JSON_HEDLEY_LIKELY(count * sizeof(T) <= available && count * sizeof(T) <= static_cast<std::size_t>((std::numeric_limits<int>::max)())))
+        {
+            std::memcpy(dest, first, count * sizeof(T));
+            streambuf_access::bump(sb, static_cast<int>(count * sizeof(T)));
+            return count * sizeof(T);
+        }
+#endif
         auto res = static_cast<std::size_t>(sb->sgetn(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count * sizeof(T))));
         if (JSON_HEDLEY_UNLIKELY(res < count * sizeof(T)))
         {
