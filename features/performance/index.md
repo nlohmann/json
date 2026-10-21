@@ -11,22 +11,21 @@ That said, how you use this library still makes a measurable difference. This pa
 For inputs backed by contiguous, single-byte memory -- a `std::string`, a `std::vector<char>`, a string literal, or a pointer range -- the library uses `iterator_input_adapter`, wrapped in a raw pointer so the fast paths below apply on every supported standard. This adapter exposes two optimizations the lexer detects at compile time:
 
 - it can reconstruct already-consumed input on demand for error messages, instead of copying every character as it is read, and
-- the lexer can scan ordinary string characters directly out of the buffer, several bytes at a time, rather than one character (and one function call) at a time.
+- the lexer can scan ordinary string characters, numbers, and indentation directly out of the buffer, several bytes at a time, rather than one character (and one function call) at a time.
 
-A `std::istream` (including `std::ifstream`) or `FILE*`, by contrast, is read through `input_stream_adapter` or `file_input_adapter`, which read one character (or one block, for binary formats) at a time and expose neither optimization -- the lexer falls back to the same byte-at-a-time path it uses for any non-contiguous, general-purpose iterator range. An iterator pair over non-contiguous but random-access storage (e.g. `std::deque<char>::iterator`) gets the first optimization but not the second, since the byte-scanning fast path additionally requires contiguous storage.
+A `std::istream` (including `std::ifstream`) gets the same bulk scanning: `input_stream_adapter` scans the characters its stream buffer already holds (the *get area*) and asks the stream buffer for more only when they are used up. Nothing is read ahead, so the stream is left exactly where it would be after reading one character at a time, and [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) can still read several values from one stream. A stream buffer without a get area is read one character at a time. A `FILE*` is still read one character at a time, but `file_input_adapter` locks the file once per parse instead of once per character. See [input sources and performance](https://json.nlohmann.me/features/parsing/#input-sources-and-performance) for the full table. According to the description of [#5828](https://github.com/nlohmann/json/pull/5828), parsing from a stream is within about 10 to 20 % of parsing an equivalent `std::string`.
 
-Practically: if the JSON text is already in memory, or small enough to read into memory, prefer passing a `std::string`, a `std::vector<char>`, or a pointer range to `parse` over a `std::istream`. For a file, that means reading it into a string first and then parsing the string, rather than passing a `std::ifstream` directly to `parse` -- the latter never benefits from either optimization:
+Inputs that are still read one character at a time: iterator ranges that are not contiguous (e.g. `std::list<char>` or `std::istreambuf_iterator<char>`), wide strings, and user-defined adapters. An iterator pair over non-contiguous but random-access storage (e.g. `std::deque<char>::iterator`) gets the first optimization but not the second, since the byte-scanning fast path requires contiguous storage.
+
+Practically: a file can be passed directly to `parse`, which also avoids the memory for a copy of the file. Reading it into a string first is no longer necessary for speed:
 
 ```
-// gets the contiguous fast paths
+// fast: the stream buffer's get area is scanned in bulk
 std::ifstream f("example.json");
-std::string contents((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-json j = json::parse(contents);
-
-// does not: input_stream_adapter has no fast path
-std::ifstream f2("example.json");
-json j2 = json::parse(f2);
+json j = json::parse(f);
 ```
+
+Two macros switch the stream optimizations off without changing any result: [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) for stream buffers that do not follow the usual `std::streambuf` contract, and [`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) for programs in which another thread must use the same `FILE` object while it is parsed.
 
 For contiguous input with many non-ASCII characters, [`JSON_USE_SIMDUTF`](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md) can additionally speed up UTF-8 validation by using the [simdutf](https://github.com/simdutf/simdutf) library instead of the built-in scalar validator; streaming inputs (files, `std::istream`, wide strings, user-defined adapters) always use the scalar path regardless of this macro.
 

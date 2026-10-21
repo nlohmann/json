@@ -33,7 +33,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
-- Throws [out_of_range.407](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range407) if `j` contains an unsigned integer above 9223372036854775807, which BON8 cannot represent
+- Throws [out_of_range.407](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range407) if `j` contains an integer outside the range of int64 (an unsigned integer above 9223372036854775807, or, with a number type wider than 64 bits, any integer beyond int64), which BON8 cannot represent
 - Throws [type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if `j` contains a string that is not valid UTF-8
 - Throws [type_error.321](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error321) if `j` or a value nested in it is discarded; example: `"cannot serialize discarded value to BON8"`
 

@@ -189,3 +189,4 @@ Output:
 - BJData version parameter (for draft3 binary encoding) added in version 3.12.0.
 - Added `error_handler` parameter in version 3.13.0 unreleased. Its default, `keep`, writes the bytes of a string or object key that is not valid UTF-8 unchanged, as before; `strict` (the default if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled) throws `type_error.316`.
 - Throws `type_error.321` for a discarded value since version 3.13.0 unreleased; previously, a discarded value nested in an array or object was silently skipped, producing invalid BJData.
+- Writes unsigned integers wider than 64 bits as high-precision numbers since version 3.13.0 unreleased; previously, they were silently truncated to 64 bits.

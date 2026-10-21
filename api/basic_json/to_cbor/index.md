@@ -38,6 +38,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
+- Throws [`out_of_range.407`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range407) if `j` contains an integer outside [-2^64, 2^64-1], which is only possible with a number type wider than 64 bits; example: `"integer number 18446744073709551616 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]"`
 - Throws [type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string or object key in `j` is not valid UTF-8 and `error_handler` is `strict` (the default only if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled)
 - Throws [type_error.321](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error321) if `j` or a value nested in it is discarded; example: `"cannot serialize discarded value to CBOR"`
 
@@ -97,3 +98,4 @@ Output:
 - Compact representation of floating-point numbers added in version 3.8.0.
 - Added `error_handler` parameter in version 3.13.0 unreleased. Its default, `keep`, writes the bytes of a string or object key that is not valid UTF-8 unchanged, as before; `strict` (the default if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled) throws `type_error.316`.
 - Throws `type_error.321` for a discarded value since version 3.13.0 unreleased; previously, a discarded value nested in an array or object was silently skipped, producing invalid CBOR.
+- Throws `out_of_range.407` for integers that do not fit 64 bits since version 3.13.0 unreleased; previously, integers of a number type wider than 64 bits were silently truncated.

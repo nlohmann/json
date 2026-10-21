@@ -10,6 +10,9 @@ earlier, instead of locking the file once and reading it with the unlocked stdio
 It does not change any result: values, exceptions, and the position of the file after parsing are the same either way.
 Only the speed and the locking of the file differ (see the notes on locking below).
 
+Builds with MemorySanitizer use `std::fgetc` automatically, because the inline `getc_unlocked` of glibc reads the stdio
+buffer directly, which glibc (not instrumented) filled, and MemorySanitizer would report it as uninitialized.
+
 ## Default definition
 
 The default value is `0`: the file is locked once and read with the unlocked stdio functions where they are available.

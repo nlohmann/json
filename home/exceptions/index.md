@@ -1078,7 +1078,12 @@ number overflow parsing '10E1000'
 
 ### json.exception.out_of_range.407
 
-An unsigned integer number greater than 9223372036854775807 cannot be represented in the binary format. This exception is only thrown by [`to_bon8`](https://json.nlohmann.me/api/basic_json/to_bon8/index.md), as [BON8](https://json.nlohmann.me/features/binary_formats/bon8/index.md) has no unsigned 64-bit integer type.
+An integer number cannot be represented by the binary format it is serialized to:
+
+- [BON8](https://json.nlohmann.me/features/binary_formats/bon8/index.md) only stores integers that fit into int64, so [`to_bon8`](https://json.nlohmann.me/api/basic_json/to_bon8/index.md) throws for unsigned integers greater than 9223372036854775807.
+- [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md), [MessagePack](https://json.nlohmann.me/features/binary_formats/messagepack/index.md), and [BSON](https://json.nlohmann.me/features/binary_formats/bson/index.md) store integers in at most 64 bits. With the default number types, every integer fits, but a [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md) or [`number_unsigned_t`](https://json.nlohmann.me/api/basic_json/number_unsigned_t/index.md) wider than 64 bits (e.g., `__int128`) can hold values outside the range of the format: [-2^64, 2^64-1] for CBOR, [-2^63, 2^64-1] for MessagePack, and the range of int64 (signed integers) or uint64 (unsigned integers) for BSON.
+
+[UBJSON](https://json.nlohmann.me/features/binary_formats/ubjson/index.md) and [BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md) never throw this exception, because they serialize integers beyond 64 bits as high-precision numbers.
 
 Former occurrences
 
@@ -1087,10 +1092,16 @@ The UBJSON and BSON writers used to throw this exception as well:
 - Since version 3.9.0, integer numbers beyond int64 are serialized as high-precision UBJSON numbers.
 - Since version 3.12.0, integer numbers beyond int64 are serialized as uint64 BSON numbers.
 
-Example message
+Before version 3.13.0 unreleased, CBOR, MessagePack, and BSON silently truncated integers wider than 64 bits, and BJData truncated unsigned integers wider than 64 bits.
+
+Example messages
 
 ```
 integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
+```
+
+```
+integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
 ```
 
 ### json.exception.out_of_range.408
