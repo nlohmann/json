@@ -6232,6 +6232,34 @@ inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexc
     return n;
 }
 
+/// Whether dump() with ensure_ascii writes the string at s unchanged, for a
+/// string of the source without escape sequences (which has no quote,
+/// backslash, or control character): no byte is DEL (0x7F) or above. Adding 1
+/// to each byte sets its high bit exactly for 0x7F, and a carry into the next
+/// byte only comes from 0xFF, whose own high bit is set anyway.
+inline bool is_ascii_without_delete(const char* s, std::size_t n) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        const std::uint64_t v = read_eight_bytes(s + i);
+        if (((v | (v + ones)) & high) != 0)
+        {
+            return false;
+        }
+    }
+    for (; i < n; ++i)
+    {
+        if (static_cast<unsigned char>(s[i]) >= 0x7F)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 /// A stack that starts in a buffer of the caller (a local array) and moves to
 /// the heap (a vector of the caller) only when that is full, so that dumps of
 /// shallow documents need no allocation. The top is a pointer, as in
@@ -6347,15 +6375,19 @@ class view_serializer
 
     void dump(const node* root)
     {
-        if (!m_style.pretty && !m_style.ensure_ascii)
+        if (!m_style.pretty)
         {
-            if (m_style.source_numbers)
+            if (m_style.ensure_ascii)
             {
-                dump_compact<true>(root);
+                dump_compact_ascii(root);
+            }
+            else if (m_style.source_numbers)
+            {
+                dump_compact<true, false>(root);
             }
             else
             {
-                dump_compact<false>(root);
+                dump_compact<false, false>(root);
             }
             return;
         }
@@ -6461,6 +6493,41 @@ class view_serializer
         m_out.put('"');
     }
 
+    /// dump_compact() with ensure_ascii, out of line: the walk without it is
+    /// faster when it is not merged with this one into dump()
+    NLOHMANN_VIEW_NOINLINE void dump_compact_ascii(const node* root)
+    {
+        if (m_style.source_numbers)
+        {
+            dump_compact<true, true>(root);
+        }
+        else
+        {
+            dump_compact<false, true>(root);
+        }
+    }
+
+    /// whether dump_compact() copies a string or key from the source: one of
+    /// the source, and with ensure_ascii one without bytes >= 0x7F (an overload
+    /// each, so that the walk without ensure_ascii is compiled exactly as
+    /// before: with GCC, a condition that only folds away later changed its
+    /// block layout and made it 4-6% slower)
+    static bool copied(const node& n, const char* /*src*/, std::false_type /*ensure_ascii*/) noexcept
+    {
+        return (n.flags & node_flags::storage) == 0;
+    }
+
+    static bool copied(const node& n, const char* src, std::true_type /*ensure_ascii*/) noexcept
+    {
+        return (n.flags & node_flags::storage) == 0 && is_ascii_without_delete(src + n.off, n.len);
+    }
+
+    /// a string with ensure_ascii (dump_compact()), out of line
+    NLOHMANN_VIEW_NOINLINE void write_ascii_string(const node& n)
+    {
+        write_string(n);
+    }
+
     /// the copies of dump_compact() that are not fixed-size moves (long
     /// strings, or near the end of the source); out of line, so that the
     /// compiler does not merge the fixed-size moves into this call
@@ -6478,16 +6545,18 @@ class view_serializer
     }
 
     /*!
-    @brief the compact output without ensure_ascii (the default dump())
+    @brief the compact output (the default dump(), or with ensure_ascii)
 
     The same walk as dump(), with the write position in a local variable
     (stores through char pointers would otherwise force a reload of the
     buffer's members after each one), and with strings and number tokens of
     the source copied by fixed-size moves of 32 bytes where the source has
     that many bytes left, instead of a library call per token. The buffer
-    keeps 64 bytes of slack for the overshoot.
+    keeps 64 bytes of slack for the overshoot. With ensure_ascii (Ascii), a
+    string of the source is copied only if it has no byte >= 0x7F (see
+    is_ascii_without_delete()); any other string is written by write_string().
     */
-    template<bool SourceNumbers>
+    template<bool SourceNumbers, bool Ascii>
     void dump_compact(const node* root)
     {
         struct frame
@@ -6539,7 +6608,14 @@ class view_serializer
         const auto escaped = [&](const node & n)
         {
             m_out.set_cursor(w);
-            write_decoded(n);
+            if (enabled(Ascii))
+            {
+                write_ascii_string(n);
+            }
+            else
+            {
+                write_decoded(n);
+            }
             w = m_out.cursor();
             lim = m_out.limit();
         };
@@ -6562,7 +6638,7 @@ class view_serializer
             switch (static_cast<value_t>(n->kind))
             {
                 case value_t::string:
-                    if ((n->flags & node_flags::storage) == 0)
+                    if (copied(*n, src, std::integral_constant<bool, Ascii>()))
                     {
                         room(n->len + 2);
                         *w++ = '"';
@@ -6693,7 +6769,7 @@ class view_serializer
             if (cur.object)
             {
                 const node& key = *at;
-                if ((key.flags & node_flags::storage) == 0)
+                if (copied(key, src, std::integral_constant<bool, Ascii>()))
                 {
                     room(key.len + 3);
                     *w++ = '"';
@@ -6904,9 +6980,10 @@ class view_serializer
     {
         const char* const s = m_doc.str(n);
         m_out.put('"');
-        if ((n.flags & node_flags::storage) == 0 && !m_style.ensure_ascii)
+        if ((n.flags & node_flags::storage) == 0 && (!m_style.ensure_ascii || is_ascii_without_delete(s, n.len)))
         {
-            // a string of the source without escape sequences has nothing to escape
+            // a string of the source without escape sequences has nothing to
+            // escape (with ensure_ascii, if it is printable ASCII)
             m_out.put(s, n.len);
         }
         else if (m_style.ensure_ascii)
