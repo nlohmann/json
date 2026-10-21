@@ -14656,11 +14656,31 @@ scan_number_done:
         return result;
     }
 
+    /// seekable or token-tracking adapter: the token string begins at current
+    void restart_token_string_impl(std::true_type /*lazy*/)
+    {
+        restart_token_string_lazy(std::integral_constant<bool, adapter_token> {});
+    }
+
     /// seekable adapter: the token string begins at current, which was consumed
-    void restart_token_string_impl(std::true_type /*lazy*/) noexcept
+    void restart_token_string_lazy(std::false_type /*adapter_token*/) noexcept
     {
         const std::size_t consumed = ia.get_consumed_count();
         token_string_start = (consumed > 0 && current != char_traits<char_type>::eof()) ? consumed - 1 : consumed;
+    }
+
+    /// token-tracking adapter: the token begins with current, or with the next
+    /// character if current was put back or is the end of input
+    void restart_token_string_lazy(std::true_type /*adapter_token*/)
+    {
+        if (!next_unget && current != char_traits<char_type>::eof())
+        {
+            ia.mark_token_start(current);
+        }
+        else
+        {
+            ia.begin_token();
+        }
     }
 
     /// streaming adapter: the token string begins at current; a character
