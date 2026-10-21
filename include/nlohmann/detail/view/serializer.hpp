@@ -105,17 +105,13 @@ class output_buffer
     }
 
   private:
-    /// the size of a growth step (a function: std::min() takes a reference,
-    /// which a static constexpr member does not have before C++17)
-    static constexpr std::size_t step() noexcept
-    {
-        return 0x10000;
-    }
+    /// the size of a growth step
+    static constexpr std::size_t step = 0x10000;
 
     static StringType& sized(StringType& out, std::size_t estimate)
     {
         out.reserve(estimate);
-        out.resize((std::min)((std::max)(estimate, static_cast<std::size_t>(64)), step()));
+        out.resize(detail::clamp(estimate, std::size_t{64}, step));
         return out;
     }
 
@@ -123,8 +119,9 @@ class output_buffer
     {
         const auto used = static_cast<std::size_t>(m_pos - m_out.data());
         // (a step does not go beyond the reserved estimate, so that a good
-        // estimate is never copied to a larger allocation)
-        const std::size_t size = (std::max)((std::min)(m_out.size() + step(), m_out.capacity()), used + n + 256);
+        // estimate is never copied to a larger allocation; not a clamp: the
+        // lower bound used + n + 256 can exceed capacity(), and then it must win)
+        const std::size_t size = (std::max)((std::min)(m_out.size() + step, m_out.capacity()), used + n + 256);
         if (size > m_out.capacity())
         {
             m_out.reserve((std::max)(m_out.capacity() * 2, size));
@@ -870,8 +867,7 @@ class view_serializer
     static char* write_double_value_at(char* w, double x)
     {
         // (from the bits: without the checks of to_chars())
-        std::uint64_t bits = 0;
-        std::memcpy(&bits, &x, sizeof(bits));
+        auto bits = bit_cast<std::uint64_t>(x);
         if (NLOHMANN_VIEW_UNLIKELY((bits & 0x7FF0000000000000u) == 0x7FF0000000000000u))
         {
             return write_text_at(w, "null", 4);

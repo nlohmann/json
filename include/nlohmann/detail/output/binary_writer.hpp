@@ -19,10 +19,6 @@
 #include <utility> // move
 #include <vector> // vector
 
-#ifdef _MSC_VER
-    #include <cstdlib> // _byteswap_ushort, _byteswap_ulong, _byteswap_uint64
-#endif
-
 #include <nlohmann/detail/bit_ops.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/input/string_scan.hpp>
@@ -2073,7 +2069,7 @@ class binary_writer
     {
         out[0] = to_char_type(first_byte);
         const unsigned unused_bits = 64u - ((8u << size_class) >> 1u);
-        const std::uint64_t tail = is_little_endian ? byte_swap(value) >> unused_bits : value << unused_bits;
+        const std::uint64_t tail = is_little_endian ? byteswap(value) >> unused_bits : value << unused_bits;
         std::memcpy(out + 1, &tail, sizeof(tail));
         return ((std::size_t{1} << size_class) >> 1u) + 1;
     }
@@ -3517,53 +3513,14 @@ class binary_writer
     // Utility functions //
     ///////////////////////
 
-    // single-instruction byte swaps (compilers lower these to bswap/rev/movbe);
-    // used to emit big-endian numbers without a per-byte std::reverse loop
-    static std::uint16_t byte_swap(std::uint16_t x) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __builtin_bswap16(x);
-#elif defined(_MSC_VER)
-        return _byteswap_ushort(x);
-#else
-        return static_cast<std::uint16_t>((x >> 8) | (x << 8));
-#endif
-    }
-
-    static std::uint32_t byte_swap(std::uint32_t x) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __builtin_bswap32(x);
-#elif defined(_MSC_VER)
-        return _byteswap_ulong(x);
-#else
-        return ((x & 0x000000FFu) << 24) | ((x & 0x0000FF00u) << 8)
-               | ((x & 0x00FF0000u) >> 8) | ((x & 0xFF000000u) >> 24);
-#endif
-    }
-
-    static std::uint64_t byte_swap(std::uint64_t x) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __builtin_bswap64(x);
-#elif defined(_MSC_VER)
-        return _byteswap_uint64(x);
-#else
-        x = ((x & 0x00000000FFFFFFFFull) << 32) | ((x & 0xFFFFFFFF00000000ull) >> 32);
-        x = ((x & 0x0000FFFF0000FFFFull) << 16) | ((x & 0xFFFF0000FFFF0000ull) >> 16);
-        x = ((x & 0x00FF00FF00FF00FFull) << 8) | ((x & 0xFF00FF00FF00FF00ull) >> 8);
-        return x;
-#endif
-    }
-
     /*!
     @brief reverse the bytes of a buffer by byte-swapping it as UIntType
 
     Loading the buffer into an unsigned integer of the same width and swapping
     that is what lets the compiler emit a single bswap/rev/movbe; reversing the
     buffer element by element does not reliably get there (clang keeps a scalar
-    shuffle). The two memcpy calls are the only portable way to reinterpret the
-    bytes and are folded away by every optimizer.
+    shuffle). (The two memcpy calls, rather than bit_cast, keep GCC from
+    inlining differently in C++20, which made writing slower.)
     */
     template<typename UIntType, std::size_t N>
     static void byte_swap_buffer(std::array<CharType, N>& a) noexcept
@@ -3571,11 +3528,11 @@ class binary_writer
         static_assert(sizeof(UIntType) == N, "swap width must match the buffer size");
         UIntType v{};
         std::memcpy(&v, a.data(), sizeof(v));
-        v = byte_swap(v);
+        v = byteswap(v);
         std::memcpy(a.data(), &v, sizeof(v));
     }
 
-    // reverse the bytes of a fixed-size buffer; a single byte_swap() for the
+    // reverse the bytes of a fixed-size buffer; a single byteswap() for the
     // common 2/4/8-byte number payloads, std::reverse for any other size
     static void reverse_bytes(std::array<CharType, 2>& a) noexcept
     {
@@ -3700,9 +3657,7 @@ class binary_writer
 #endif
 
         static_assert(sizeof(std::uint8_t) == sizeof(CharType), "size of CharType must be equal to std::uint8_t");
-        CharType result;
-        std::memcpy(&result, &x, sizeof(x));
-        return result;
+        return bit_cast<CharType>(x);
     }
 
     template<typename C = CharType,
