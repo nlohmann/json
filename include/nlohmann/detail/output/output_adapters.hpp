@@ -8,7 +8,10 @@
 
 #pragma once
 
+#include <algorithm> // max
+#include <array> // array
 #include <cstddef> // size_t
+#include <cstring> // memcpy
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
 #include <type_traits> // conditional, integral_constant, is_same
@@ -48,65 +51,176 @@ template<typename CharType> struct output_adapter_protocol
 template<typename CharType>
 using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
 
+/// the largest number of characters a writer may reserve() from a sink at once;
+/// output_vector_sink also appends writes of at least this size with insert()
+constexpr std::size_t max_reserve_size = 256;
+
 /// @brief non-virtual output sink writing into a std::vector
 ///
 /// This sink is not part of the virtual output_adapter_protocol hierarchy: it is
 /// passed to binary_writer by value as a template parameter, so
 /// write_character()/write_characters() are ordinary (inlinable) calls with no
 /// vtable lookup and no shared_ptr. It is used for the common
-/// `to_cbor`/`to_msgpack`/... into a std::vector. output_vector_adapter below
-/// wraps this same sink to provide the virtual interface.
+/// `to_cbor`/`to_msgpack`/... into a std::vector.
+///
+/// Most writes are a few bytes - a type marker, or a number of 1, 2, 4, or 8
+/// bytes - and appending those with push_back() or insert() cost more than
+/// encoding them: insert() is an out-of-line call into a routine that can insert
+/// anywhere, and resize() is one as well with libstdc++. The sink therefore keeps
+/// its own write position: it grows the vector geometrically ahead of the
+/// position and copies each write to it, so a write is a capacity check and a
+/// short copy. The destructor shrinks the vector to the bytes actually written,
+/// also when a write throws; shrinking a vector never allocates. The sink owns
+/// that trim, so it can be moved but not copied, and the vector must not be used
+/// while the sink is alive.
 template<typename CharType, typename AllocatorType = std::allocator<CharType>>
 class output_vector_sink
 {
   public:
     explicit output_vector_sink(std::vector<CharType, AllocatorType>& vec) noexcept
+        : v(&vec), position(vec.size())
+    {}
+
+    output_vector_sink(const output_vector_sink&) = delete;
+    output_vector_sink& operator=(const output_vector_sink&) = delete;
+    output_vector_sink& operator=(output_vector_sink&&) = delete;
+
+    output_vector_sink(output_vector_sink&& other) noexcept
+        : v(other.v), position(other.position)
+    {
+        other.v = nullptr;
+    }
+
+    ~output_vector_sink()
+    {
+        if (v != nullptr)
+        {
+            v->resize(position);
+        }
+    }
+
+    // always inlined: GCC otherwise keeps these out of line in a large
+    // translation unit, and a call per byte or number costs more than the write
+    JSON_HEDLEY_ALWAYS_INLINE
+    void write_character(CharType c)
+    {
+        if (JSON_HEDLEY_UNLIKELY(position == v->size()))
+        {
+            grow(1);
+        }
+        (*v)[position++] = c;
+    }
+
+    // no JSON_HEDLEY_NON_NULL here: binary_writer legitimately passes a null
+    // pointer with length 0 for empty strings/binary values; memcpy must not
+    // see it.
+    JSON_HEDLEY_ALWAYS_INLINE
+    void write_characters(const CharType* s, std::size_t length)
+    {
+        if (JSON_HEDLEY_UNLIKELY(v->size() - position < length))
+        {
+            if (length >= max_reserve_size)
+            {
+                append(s, length);
+                return;
+            }
+            grow(length);
+        }
+        if (length != 0)
+        {
+            std::memcpy(v->data() + position, s, length * sizeof(CharType));
+            position += length;
+        }
+    }
+
+    /// @brief space for writing up to @a length characters directly
+    ///
+    /// Returns a pointer to at least @a length (at most @ref max_reserve_size)
+    /// writable characters at the write position; @ref commit then keeps the
+    /// first ones of them. A writer can store whole words there and keep only
+    /// the bytes it needs, and keep its write pointer in a register across many
+    /// values instead of updating the sink after each.
+    JSON_HEDLEY_ALWAYS_INLINE
+    CharType* reserve(const std::size_t length)
+    {
+        JSON_ASSERT(length <= max_reserve_size);
+        if (JSON_HEDLEY_UNLIKELY(v->size() - position < length))
+        {
+            grow(length);
+        }
+        return v->data() + position;
+    }
+
+    /// keep the first @a length characters written to the space from reserve()
+    JSON_HEDLEY_ALWAYS_INLINE
+    void commit(const std::size_t length) noexcept
+    {
+        position += length;
+    }
+
+  private:
+    /// make room for at least @a length more characters after the position;
+    /// kept out of line so that the write functions stay small enough for
+    /// GCC to inline them into the writer
+    JSON_HEDLEY_NEVER_INLINE
+    void grow(const std::size_t length)
+    {
+        // use the capacity the vector already has, else at least double it;
+        // never less than 64 characters, so that a small value does not
+        // reallocate for every few bytes
+        const std::size_t needed = position + length;
+        v->resize((std::max)(std::size_t{64}, needed <= v->capacity()
+                             ? v->capacity()
+                             : (std::max)(needed, v->capacity() * 2)));
+    }
+
+    /// append @a length (at least max_reserve_size) characters that do not fit
+    /// the space ahead of the position: insert() copies them once into the
+    /// grown vector, where grow() would first zero the new space and then copy
+    /// over it - noticeable for a large string or binary value
+    JSON_HEDLEY_NEVER_INLINE
+    void append(const CharType* s, const std::size_t length)
+    {
+        v->resize(position);
+        if (v->capacity() - position < length)
+        {
+            // grow geometrically, with room for the writes that follow, so
+            // that the next grow() need not reallocate right away
+            v->reserve((std::max)(v->capacity() * 2, position + length + max_reserve_size));
+        }
+        v->insert(v->end(), s, s + length);
+        position = v->size();
+    }
+
+    std::vector<CharType, AllocatorType>* v;
+    /// number of characters of *v written so far
+    std::size_t position;
+};
+
+/// output adapter for byte vectors
+template<typename CharType, typename AllocatorType = std::allocator<CharType>>
+class output_vector_adapter : public output_adapter_protocol<CharType>
+{
+  public:
+    explicit output_vector_adapter(std::vector<CharType, AllocatorType>& vec) noexcept
         : v(vec)
     {}
 
-    void write_character(CharType c)
+    void write_character(CharType c) override
     {
         v.push_back(c);
     }
 
     // no JSON_HEDLEY_NON_NULL here: binary_writer legitimately passes a null
-    // pointer with length 0 for empty strings/binary values. Appending an empty
-    // range is a no-op; the type-erased path tolerates this via the (unattributed)
-    // virtual base, and the concrete sink must do the same.
-    void write_characters(const CharType* s, std::size_t length)
+    // pointer with length 0 for empty strings/binary values; appending an empty
+    // range is a no-op
+    void write_characters(const CharType* s, std::size_t length) override
     {
         v.insert(v.end(), s, s + length);
     }
 
   private:
     std::vector<CharType, AllocatorType>& v;
-};
-
-/// output adapter for byte vectors
-///
-/// The appending itself lives in output_vector_sink; this class only adds the
-/// virtual output_adapter_protocol interface on top of it, so both the
-/// type-erased and the templated path share one implementation.
-template<typename CharType, typename AllocatorType = std::allocator<CharType>>
-class output_vector_adapter : public output_adapter_protocol<CharType>
-{
-  public:
-    explicit output_vector_adapter(std::vector<CharType, AllocatorType>& vec) noexcept
-        : sink(vec)
-    {}
-
-    void write_character(CharType c) override
-    {
-        sink.write_character(c);
-    }
-
-    void write_characters(const CharType* s, std::size_t length) override
-    {
-        sink.write_characters(s, length);
-    }
-
-  private:
-    output_vector_sink<CharType, AllocatorType> sink;
 };
 
 #ifndef JSON_NO_IO
@@ -188,8 +302,24 @@ class output_adapter_sink
         oa->write_characters(s, length);
     }
 
+    /// space for writing up to @a length characters (see
+    /// output_vector_sink::reserve)
+    CharType* reserve(const std::size_t length) noexcept
+    {
+        JSON_ASSERT(length <= max_reserve_size);
+        static_cast<void>(length);
+        return reserved.data();
+    }
+
+    /// write the first @a length characters written to the space from reserve()
+    void commit(const std::size_t length)
+    {
+        oa->write_characters(reserved.data(), length);
+    }
+
   private:
     output_adapter_t<CharType> oa;
+    std::array<CharType, max_reserve_size> reserved{};
 };
 
 /// @brief whether std::basic_string<CharType> has a non-deprecated std::char_traits
