@@ -23,12 +23,12 @@
 #endif
 
 // SSE2 (every x86-64 CPU) and NEON (every 64-bit Arm CPU) convert the 16
-// digits of a double at once
-#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC))
+// digits of a double at once (unless JSON_NO_SIMD selects the portable code)
+#if !defined(JSON_NO_SIMD) && (defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC)))
     #include <emmintrin.h>
     #define JSON_DTOA_SSE2 1
     #define JSON_DTOA_NEON 0
-#elif (defined(__aarch64__) || defined(_M_ARM64)) && !defined(_M_ARM64EC) && !defined(__ARM_BIG_ENDIAN)
+#elif !defined(JSON_NO_SIMD) && (defined(__aarch64__) || defined(_M_ARM64)) && !defined(_M_ARM64EC) && !defined(__ARM_BIG_ENDIAN)
     #include <arm_neon.h>
     #define JSON_DTOA_SSE2 0
     #define JSON_DTOA_NEON 1

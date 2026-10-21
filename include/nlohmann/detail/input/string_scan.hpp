@@ -14,6 +14,7 @@
 #include <cstring> // memcpy
 
 #include <nlohmann/detail/bit_ops.hpp>
+#include <nlohmann/detail/input/simd_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 // Optional SIMD backend for bulk UTF-8 validation. This is an opt-in external
@@ -34,7 +35,7 @@
 // This file contains the byte-level string-scanning helpers used by the lexer's
 // contiguous fast path. They operate purely on raw bytes (no dependency on the
 // lexer's template parameters) so they are free functions, keeping the lexer
-// itself focused on the state machine; see lexer::scan_string_bulk().
+// itself focused on the state machine; see lexer::get_after_string_run().
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -66,7 +67,7 @@ inline std::uint64_t swar_string_special(std::uint64_t v) noexcept
 
 // return the index of the first is_string_special() byte in [data, data+n), or
 // n if every byte is ordinary; scans 8 bytes at a time
-inline std::size_t find_string_special(const unsigned char* data, std::size_t n) noexcept
+JSON_HEDLEY_ALWAYS_INLINE std::size_t find_string_special(const unsigned char* data, std::size_t n) noexcept
 {
     std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
@@ -235,35 +236,143 @@ inline std::size_t valid_utf8_prefix(const unsigned char* data, std::size_t n) n
     return pos;
 }
 
-// Scalar (C++11) computation of the bulk run length: the number of leading
-// bytes in [data, data+n) that are ordinary ASCII or complete well-formed UTF-8
+#if JSON_SCAN_VECTOR_UTF8
+/// the end of scan_string_vector from block, where the vector loop stopped
+/// (ill-formed UTF-8, or fewer than 16 bytes left): one byte or sequence at a
+/// time, from the start of a sequence that crosses into the block
+inline const unsigned char* scan_string_finish(const unsigned char* p, const unsigned char* block, const unsigned char* e) noexcept
+{
+    for (int i = 1; i <= 3 && block - i >= p; ++i)
+    {
+        const unsigned char c = block[-i];
+        if (c < 0x80)
+        {
+            break;
+        }
+        if (c >= 0xC0)
+        {
+            const int len = 2 + static_cast<int>(c >= 0xE0) + static_cast<int>(c >= 0xF0);
+            if (len > i)
+            {
+                block -= i;
+            }
+            break;
+        }
+    }
+    for (p = block; p != e;)
+    {
+        if (*p < 0x80)
+        {
+            if (is_string_special(*p))
+            {
+                return p;
+            }
+            ++p;
+            continue;
+        }
+        const std::size_t n = validate_one_utf8(p, static_cast<std::size_t>(e - p));
+        if (n == 0)
+        {
+            return p;
+        }
+        p += n;
+    }
+    return p;
+}
+
+/// the rest of a string from p (a character boundary), with the vector UTF-8
+/// check and the scalar check for the end of the block where it stopped
+inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e) noexcept
+{
+    const unsigned char* block = p;
+    if (vector_utf8_run(p, e, block))
+    {
+        return block;
+    }
+    return scan_string_finish(p, block, e);
+}
+#endif
+
+#if JSON_SCAN_VECTOR
+/// the end of the run of plain string characters at @a p: the first quote,
+/// backslash, control character, or non-ASCII byte, or @a e. The first words
+/// are checked with SWAR (one; four with NEON, where the vector mask costs
+/// more), as most keys and short values end there; longer runs continue 16
+/// bytes at a time.
+JSON_HEDLEY_ALWAYS_INLINE const unsigned char* plain_run_end(const unsigned char* p, const unsigned char* e) noexcept
+{
+    constexpr int prefix_words = JSON_SCAN_NEON ? 4 : 1;
+    for (int words = prefix_words; words > 0 && e - p >= 8; --words)
+    {
+        const std::uint64_t special = swar_string_special(read_eight_bytes(p));
+        if (special != 0)
+        {
+            return p + (static_cast<std::size_t>(count_trailing_zeros(special)) / 8);
+        }
+        p += 8;
+    }
+    // the vector loop only for 16 bytes or more: the serializer passes a
+    // string without its closing quote, so most of its runs end at e, and a
+    // call of the out-of-line NEON loop for a shorter rest made dump() up to
+    // 10% slower
+    if (e - p >= 16)
+    {
+        p = vector_plain_run_long(p, e);
+        if (e - p >= 16)
+        {
+            return p; // the vector loop stopped at a special byte
+        }
+    }
+    return p + find_string_special(p, static_cast<std::size_t>(e - p));
+}
+#endif
+
+// Computation of the bulk run length: the number of leading bytes in
+// [data, data+n) that are ordinary ASCII or complete well-formed UTF-8
 // sequences, stopping before the first byte that needs individual handling (the
 // closing quote, an escape, a control character, or an ill-formed/truncated
-// sequence). ASCII is skipped 8 bytes at a time.
-inline std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+// sequence). ASCII is skipped 16 bytes at a time with SSE2 and 8 bytes at a
+// time otherwise; runs of non-ASCII text use the vector UTF-8 check where
+// available.
+JSON_HEDLEY_ALWAYS_INLINE std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
 {
-    std::size_t pos = 0;
-    while (pos < n)
+    const unsigned char* const e = data + n;
+    const unsigned char* p = data;
+    while (p != e)
     {
-        pos += find_string_special(data + pos, n - pos);
-        if (pos >= n || data[pos] < 0x80u)
+#if JSON_SCAN_VECTOR
+        p = plain_run_end(p, e);
+#else
+        p += find_string_special(p, static_cast<std::size_t>(e - p));
+#endif
+        if (p == e || *p < 0x80u)
         {
             break; // end of buffer, or a quote/escape/control byte
         }
+#if JSON_SCAN_VECTOR_UTF8
+#if JSON_SCAN_SSSE3_DISPATCH
+        if (JSON_HEDLEY_LIKELY(cpu_has_ssse3()))
+#endif
+        {
+            return static_cast<std::size_t>(scan_string_vector(p, e) - data);
+        }
+#endif
+#if !JSON_SCAN_VECTOR_UTF8 || JSON_SCAN_SSSE3_DISPATCH
         // a run of multi-byte sequences (e.g. CJK text) is validated sequence
         // by sequence without searching for the next special byte in between
         do
         {
-            const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+            const std::size_t seq = validate_one_utf8(p, static_cast<std::size_t>(e - p));
             if (seq == 0)
             {
-                return pos; // ill-formed or truncated: let the byte path diagnose it
+                return static_cast<std::size_t>(p - data); // ill-formed or truncated: let the byte path diagnose it
             }
-            pos += seq;
+            p += seq;
         }
-        while (pos < n && data[pos] >= 0x80u);
+        while (p != e && *p >= 0x80u);
+#endif
     }
-    return pos;
+    return static_cast<std::size_t>(p - data);
 }
 
 #if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
@@ -304,7 +413,7 @@ inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t 
 // next delimiter is validated in one shot by simdutf; on the rare failure the
 // scalar helper recomputes the exact valid prefix so the byte path still
 // produces the precise diagnostic. Without it, the pure scalar path is used.
-inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+JSON_HEDLEY_ALWAYS_INLINE std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noexcept
 {
 #if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
     const std::size_t run = find_string_delimiter(data, n);
@@ -314,6 +423,42 @@ inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noe
     }
 #endif
     return scalar_string_bulk_run(data, n);
+}
+
+#if JSON_SCAN_NEON && !(defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17))
+/// scalar_string_bulk_run() from @a start on, out of line (see
+/// lexer_string_bulk_run())
+JSON_HEDLEY_NEVER_INLINE inline std::size_t string_bulk_run_from(const unsigned char* data, std::size_t start, std::size_t n) noexcept
+{
+    return start + scalar_string_bulk_run(data + start, n - start);
+}
+#endif
+
+// string_bulk_run() for the lexer. With NEON, only the first four words are
+// checked inline (most keys and short values end there), and longer runs and
+// non-ASCII text continue out of line. The lexer's scan function runs once per
+// token, and the vector code inlined into it needs more registers, which every
+// token pays for: 5% of json::accept() on jeopardy.json with Apple Clang on
+// Apple M1, even though no string of that file reaches the vector code. The
+// serializer keeps string_bulk_run() inline, which is faster there.
+JSON_HEDLEY_ALWAYS_INLINE std::size_t lexer_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+{
+#if JSON_SCAN_NEON && !(defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17))
+    std::size_t i = 0;
+    for (int words = 4; words > 0 && n - i >= 8; --words)
+    {
+        const std::uint64_t special = swar_string_special(read_eight_bytes(data + i));
+        if (special != 0)
+        {
+            const std::size_t pos = i + (static_cast<std::size_t>(count_trailing_zeros(special)) / 8);
+            return data[pos] < 0x80u ? pos : string_bulk_run_from(data, pos, n);
+        }
+        i += 8;
+    }
+    return string_bulk_run_from(data, i, n);
+#else
+    return string_bulk_run(data, n);
+#endif
 }
 
 // Decode the 4 hex digits at [data, data+4) - the digits following a `\u`
