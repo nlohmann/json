@@ -186,6 +186,100 @@ TEST_CASE("json_view dump")
         CHECK(deep_document.root().dump() == deep);
     }
 
+    SECTION("ensure_ascii: a character that needs an escape at each position of a string")
+    {
+        // string lengths around the width of the vector steps, in a string value, a key, and a value near the end of the text
+        for (const char* const special :
+                {
+                    "\xC3\xA9", "\xE4\xB8\xAD", "\xF0\x9F\x98\x80", "\x7F", "\\n", "\\u0001", "\\\"", "\\\\"
+                })
+        {
+            for (std::size_t length = 0; length <= 40; ++length)
+            {
+                for (std::size_t position = 0; position <= length; ++position)
+                {
+                    std::string content(length, 'a');
+                    content.insert(position, special);
+                    const std::string texts[] =
+                    {
+                        "\"" + content + "\"",
+                        "[\"" + content + "\"]",
+                        "{\"" + content + "\":1}",
+                    };
+                    for (const std::string& text : texts)
+                    {
+                        CAPTURE(text)
+                        const ordered_json_document d = ordered_json_document::parse(text);
+                        const ordered_json j = ordered_json::parse(text);
+                        CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+                        CHECK(d.root().dump(2, ' ', true) == j.dump(2, ' ', true));
+                        CHECK(d.root().dump() == j.dump());
+                    }
+                }
+            }
+        }
+    }
+
+    SECTION("ensure_ascii: every character of the Basic Multilingual Plane and some beyond")
+    {
+        // (the two- and three-byte sequences, including the ranges that need a check: E0, ED, EF BF BF)
+        std::string text = "[";
+        std::size_t in_chunk = 0;
+        const auto append = [&](std::uint32_t cp)
+        {
+            if (cp < 0x80)
+            {
+                if (cp < 0x20 || cp == '"' || cp == '\\')
+                {
+                    return;
+                }
+                text += static_cast<char>(cp);
+            }
+            else if (cp < 0x800)
+            {
+                text += static_cast<char>(0xC0 | (cp >> 6));
+                text += static_cast<char>(0x80 | (cp & 0x3F));
+            }
+            else if (cp < 0x10000)
+            {
+                text += static_cast<char>(0xE0 | (cp >> 12));
+                text += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+                text += static_cast<char>(0x80 | (cp & 0x3F));
+            }
+            else
+            {
+                text += static_cast<char>(0xF0 | (cp >> 18));
+                text += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+                text += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+                text += static_cast<char>(0x80 | (cp & 0x3F));
+            }
+        };
+        for (std::uint32_t cp = 0x20; cp < 0x10400; ++cp)
+        {
+            if (cp >= 0xD800 && cp < 0xE000)
+            {
+                continue;
+            }
+            if (in_chunk == 0)
+            {
+                text += text.size() > 1 ? ",\"" : "\"";
+            }
+            append(cp);
+            if (++in_chunk == 37)
+            {
+                text += "\"";
+                in_chunk = 0;
+            }
+        }
+        text += in_chunk != 0 ? "\"]" : "]";
+        const ordered_json_document d = ordered_json_document::parse(text);
+        const ordered_json j = ordered_json::parse(text);
+        CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+        CHECK(d.root().dump(2, ' ', true) == j.dump(2, ' ', true));
+        CHECK(d.root().dump() == j.dump());
+        CHECK(d.root().dump(2) == j.dump(2));
+    }
+
     SECTION("deep nesting, indented")
     {
         // indentations of up to and beyond the width of the writer's fixed-size copy
