@@ -86,6 +86,7 @@ true
 - [operator value_t](https://json.nlohmann.me/api/basic_json/operator_value_t/index.md) implicit conversion operator equivalent to this named member function
 - [type_name](https://json.nlohmann.me/api/basic_json/type_name/index.md) returns the type as a string, for use in error messages
 - [value_t](https://json.nlohmann.me/api/basic_json/value_t/index.md) the enumeration of JSON types
+- [basic_json_view::type](https://json.nlohmann.me/api/basic_json_view/type/index.md) - the same function on a zero-copy view
 
 ## Version history
 

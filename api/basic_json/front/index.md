@@ -81,6 +81,7 @@ true
 ## See also
 
 - [back](https://json.nlohmann.me/api/basic_json/back/index.md) to access the last element
+- [basic_json_view::front](https://json.nlohmann.me/api/basic_json_view/front/index.md) - the same access on a zero-copy view (document order, not sorted; duplicate keys are visited)
 
 ## Version history
 

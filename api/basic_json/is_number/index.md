@@ -85,6 +85,7 @@ false
 - [is_number_integer()](https://json.nlohmann.me/api/basic_json/is_number_integer/index.md) check if the value is an integer or unsigned integer number
 - [is_number_unsigned()](https://json.nlohmann.me/api/basic_json/is_number_unsigned/index.md) check if the value is an unsigned integer number
 - [is_number_float()](https://json.nlohmann.me/api/basic_json/is_number_float/index.md) check if the value is a floating-point number
+- [basic_json_view::is_number](https://json.nlohmann.me/api/basic_json_view/is_number/index.md) - the same check on a zero-copy view
 
 ## Version history
 

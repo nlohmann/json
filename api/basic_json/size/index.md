@@ -88,6 +88,7 @@ Output:
 
 - [empty](https://json.nlohmann.me/api/basic_json/empty/index.md) checks whether the JSON value has no elements
 - [max_size](https://json.nlohmann.me/api/basic_json/max_size/index.md) returns the maximum possible number of elements
+- [basic_json_view::size](https://json.nlohmann.me/api/basic_json_view/size/index.md) - the same function on a zero-copy view
 
 ## Version history
 

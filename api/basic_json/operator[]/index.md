@@ -494,6 +494,7 @@ Output:
 - documentation on [runtime assertions](https://json.nlohmann.me/features/assertions/index.md)
 - see [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) for access by reference with range checking
 - see [`value`](https://json.nlohmann.me/api/basic_json/value/index.md) for access with default value
+- [basic_json_view::operator[]](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - the same access on a zero-copy view (a duplicate key resolves to the first member, whereas `parse()` keeps the last; a missing key gives a discarded view instead of undefined behavior)
 
 ## Version history
 

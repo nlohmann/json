@@ -77,6 +77,7 @@ false
 - [is_structured](https://json.nlohmann.me/api/basic_json/is_structured/index.md) checks whether the JSON value is structured (array or object)
 - [type](https://json.nlohmann.me/api/basic_json/type/index.md) returns the type of the JSON value
 - [array_t](https://json.nlohmann.me/api/basic_json/array_t/index.md) the type used to store JSON arrays
+- [basic_json_view::is_array](https://json.nlohmann.me/api/basic_json_view/is_array/index.md) - the same check on a zero-copy view
 
 ## Version history
 

@@ -223,6 +223,7 @@ null == nullptr true
 
 - [operator!=](https://json.nlohmann.me/api/basic_json/operator_ne/index.md) compare for inequality
 - [operator\<=>](https://json.nlohmann.me/api/basic_json/operator_spaceship/index.md) comparison: 3-way (C++20)
+- [basic_json_view::operator==](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md) - the same comparison on a zero-copy view, without building a `basic_json` value for it
 
 ## Version history
 

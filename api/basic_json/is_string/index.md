@@ -76,6 +76,7 @@ false
 - [is_primitive](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) checks whether the JSON value is primitive
 - [type](https://json.nlohmann.me/api/basic_json/type/index.md) returns the type of the JSON value
 - [string_t](https://json.nlohmann.me/api/basic_json/string_t/index.md) the type used to store JSON strings
+- [basic_json_view::is_string](https://json.nlohmann.me/api/basic_json_view/is_string/index.md) - the same check on a zero-copy view
 
 ## Version history
 

@@ -36,3 +36,5 @@ using json = nlohmann::json;
 to the files you want to process JSON and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
 You can further use file [`single_include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_fwd.hpp) for forward declarations (see [Compile times](https://json.nlohmann.me/integration/compile_times/index.md)), and file [`single_include/nlohmann/json_literals.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_literals.hpp) for the user-defined string literals if you define [`JSON_NO_AUTOMATIC_UDLS`](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md).
+
+For the read-only, non-owning [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md)/[`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) types, additionally include [`single_include/nlohmann/json_view.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_view.hpp); see [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md).

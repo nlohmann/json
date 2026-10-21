@@ -669,6 +669,7 @@ Output:
 - documentation on [checked access](https://json.nlohmann.me/features/element_access/checked_access/index.md)
 - [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) for unchecked access by reference
 - [`value`](https://json.nlohmann.me/api/basic_json/value/index.md) for access with default value
+- [basic_json_view::at](https://json.nlohmann.me/api/basic_json_view/at/index.md) - the same access on a zero-copy view
 
 ## Version history
 

@@ -327,6 +327,7 @@ Output:
 
 - see [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) for access by reference with range checking
 - see [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) for unchecked access by reference
+- [basic_json_view::value](https://json.nlohmann.me/api/basic_json_view/value/index.md) - the same access on a zero-copy view
 
 ## Version history
 

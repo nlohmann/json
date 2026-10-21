@@ -133,6 +133,7 @@ string: "Hello, world!"
 - [get_ref](https://json.nlohmann.me/api/basic_json/get_ref/index.md) get a reference to the stored value
 - [get_ptr](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) get a pointer to the stored value
 - [Converting values](https://json.nlohmann.me/features/conversions/index.md) - the type conversions article
+- [basic_json_view::get_to](https://json.nlohmann.me/api/basic_json_view/get_to/index.md) - the same conversion on a zero-copy view
 
 ## Version history
 

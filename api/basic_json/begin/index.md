@@ -57,6 +57,7 @@ Output:
 - [rbegin](https://json.nlohmann.me/api/basic_json/rbegin/index.md) returns a reverse iterator to the last element
 - [items](https://json.nlohmann.me/api/basic_json/items/index.md) returns an iteration proxy to access keys and values during range-based for loops
 - [Iterators](https://json.nlohmann.me/features/iterators/index.md) - the article on iterators
+- [basic_json_view::begin](https://json.nlohmann.me/api/basic_json_view/begin/index.md) - the same iteration on a zero-copy view (in document order, not sorted by key)
 
 ## Version history
 

@@ -82,6 +82,7 @@ Output:
 ## See also
 
 - [get_ptr()](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) get a pointer value
+- [basic_json_view::get_string](https://json.nlohmann.me/api/basic_json_view/get_string/index.md) - the closest counterpart on a zero-copy view: a string without a copy, but as a view rather than a reference to a value that must already exist
 
 ## Version history
 

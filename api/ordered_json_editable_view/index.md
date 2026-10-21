@@ -1,0 +1,49 @@
+# nlohmann::ordered_json_editable_view
+
+Defined in header `<nlohmann/json_view.hpp>`
+
+```
+using ordered_json_editable_view = basic_json_view<ordered_json, true>;
+```
+
+This type is a [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) of a value of an [`ordered_json_editable_document`](https://json.nlohmann.me/api/ordered_json_editable_document/index.md), the corresponding view for [`ordered_json_view`](https://json.nlohmann.me/api/ordered_json_view/index.md) the way [`json_editable_view`](https://json.nlohmann.me/api/json_editable_view/index.md) is for [`json_view`](https://json.nlohmann.me/api/json_view/index.md).
+
+## Examples
+
+Example
+
+The example below is the same as [`ordered_json_editable_document`'s](https://json.nlohmann.me/api/ordered_json_editable_document/index.md): the views `set` returns see the document's member order preserved on `materialize()`, unlike for a [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md).
+
+```
+#include <iostream>
+#include <nlohmann/json_view.hpp>
+
+using ordered_json_editable_document = nlohmann::ordered_json_editable_document;
+
+int main()
+{
+    // ordered_json_editable_document is basic_json_document<nlohmann::ordered_json, true>
+    ordered_json_editable_document doc = ordered_json_editable_document::parse(R"({"z": 1, "a": 2, "m": 3})");
+    doc.set(doc.root(), "b", 4); // set() always appends a new member at the end
+
+    // materialize() preserves the document order (with "b" at the end),
+    // instead of sorting the keys the way json_editable_document does
+    std::cout << doc.root().materialize().dump() << '\n';
+}
+```
+
+Output:
+
+```
+{"z":1,"a":2,"m":3,"b":4}
+```
+
+## See also
+
+- [ordered_json_editable_document](https://json.nlohmann.me/api/ordered_json_editable_document/index.md) - the document type this view refers into
+- [ordered_json_view](https://json.nlohmann.me/api/ordered_json_view/index.md) - the corresponding read-only view
+- [json_editable_view](https://json.nlohmann.me/api/json_editable_view/index.md) - the corresponding view for `json_editable_document`
+
+## Version history
+
+Since version 3.13.0 unreleased.

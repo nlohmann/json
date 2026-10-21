@@ -125,6 +125,7 @@ value at key "two": 2
 
 - [count](https://json.nlohmann.me/api/basic_json/count/index.md) returns the number of occurrences of a key
 - [contains](https://json.nlohmann.me/api/basic_json/contains/index.md) checks whether a key exists
+- [basic_json_view::find](https://json.nlohmann.me/api/basic_json_view/find/index.md) - the same lookup on a zero-copy view (a duplicate key resolves to the first member, whereas `parse()` keeps the last)
 
 ## Version history
 

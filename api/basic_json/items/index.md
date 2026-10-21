@@ -120,6 +120,7 @@ key: 4, value: 16
 
 - [begin](https://json.nlohmann.me/api/basic_json/begin/index.md) returns an iterator to the first element
 - [end](https://json.nlohmann.me/api/basic_json/end/index.md) returns an iterator to one past the last element
+- [basic_json_view::items](https://json.nlohmann.me/api/basic_json_view/items/index.md) - the same range on a zero-copy view (`const auto`, not `const auto&`: items are produced on the fly; document order, not sorted; duplicate keys are visited)
 
 ## Version history
 

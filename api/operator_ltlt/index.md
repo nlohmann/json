@@ -125,6 +125,7 @@ Output:
 ## See also
 
 - [dump](https://json.nlohmann.me/api/basic_json/dump/index.md) - serialize to a JSON-formatted string
+- [`basic_json_view::operator<<`](https://json.nlohmann.me/api/basic_json_view/operator_ltlt/index.md) - the corresponding operator for `basic_json_view`
 - [Serialization](https://json.nlohmann.me/features/serialization/index.md) - the serialization article
 
 ## Version history

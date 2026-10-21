@@ -6,6 +6,9 @@ This section describes the features of the library in detail. If you are new to 
 
 - [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) — build values from literals, initializer lists, and STL containers, and understand the `{}` vs. `[]` ambiguity.
 - [Parsing](https://json.nlohmann.me/features/parsing/index.md) — read a JSON value from a string, file, or stream, including [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md), [callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md), the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md), [error handling](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md), and [parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md).
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) — read a JSON text through a flat index instead of building a `json` tree; strings and numbers stay in the input and are only decoded when needed.
+- [Editable documents](https://json.nlohmann.me/features/json_view/#editing-a-document) — modify a parsed document without building a `json` tree.
+- [Images](https://json.nlohmann.me/features/json_view/#images) — save a parsed document and load it again without parsing it.
 - [Comments](https://json.nlohmann.me/features/comments/index.md) and [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md) — opt-in relaxations of the JSON grammar.
 
 ## Accessing and modifying values

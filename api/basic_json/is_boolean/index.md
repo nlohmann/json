@@ -75,6 +75,7 @@ false
 
 - [boolean_t](https://json.nlohmann.me/api/basic_json/boolean_t/index.md) the type used to store JSON booleans
 - [is_primitive](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) checks whether the JSON value is primitive
+- [basic_json_view::is_boolean](https://json.nlohmann.me/api/basic_json_view/is_boolean/index.md) - the same check on a zero-copy view
 
 ## Version history
 

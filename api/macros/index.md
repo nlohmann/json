@@ -42,6 +42,8 @@ Some aspects of the library can be configured by defining preprocessor macros **
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](https://json.nlohmann.me/api/macros/json_skip_unsupported_compiler_check/index.md) - do not warn about unsupported compilers
 - [**JSON_USE_GLOBAL_UDLS**](https://json.nlohmann.me/api/macros/json_use_global_udls/index.md) - place user-defined string literals (UDLs) into the global namespace
 - [**JSON_USE_SIMDUTF**](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md) - use the simdutf library to accelerate UTF-8 validation
+- [**JSON_VIEW_NO_SIMD**](https://json.nlohmann.me/api/macros/json_view_no_simd/index.md) - use only portable code in the parser of `json_view.hpp`
+- [**JSON_VIEW_USE_SSSE3**](https://json.nlohmann.me/api/macros/json_view_use_ssse3/index.md) - validate non-ASCII strings with SSSE3 in the parser of `json_view.hpp`
 
 ## Library version
 

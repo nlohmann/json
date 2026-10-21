@@ -455,6 +455,20 @@ Example message
 [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A
 ```
 
+### json.exception.parse_error.116
+
+[`basic_json_document::load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) rejected an [image](https://json.nlohmann.me/features/json_view/#images): either the bytes are not one [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) could have written (too short, an unknown magic number or format version, or sizes that do not fit the buffer), or they are, but fail the requested [`image_check`](https://json.nlohmann.me/api/basic_json_document/load/#image_check).
+
+Example message
+
+```
+[json.exception.parse_error.116] parse error: invalid json_document image: the check failed
+```
+
+Note
+
+This exception was added in version 3.13.0 unreleased, together with [images](https://json.nlohmann.me/features/json_view/#images).
+
 ## Iterator errors
 
 This exception is thrown if iterators passed to a library function do not match the expected semantics.
@@ -914,6 +928,38 @@ Example message
 [json.exception.type_error.318] duplicate object key 'red'
 ```
 
+### json.exception.type_error.319
+
+[`basic_json_document::set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), [`basic_json_document::push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), and [`basic_json_document::insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md) can store any `basic_json` value except a binary one: a `json_document` has no representation for [binary values](https://json.nlohmann.me/features/binary_values/index.md), which only ever arise from parsing a binary format or from an explicit [`json::binary`](https://json.nlohmann.me/api/basic_json/binary/index.md) value, not from JSON text.
+
+Example message
+
+```
+[json.exception.type_error.319] cannot store a binary value in a json_document
+```
+
+Note
+
+This exception was added in version 3.13.0 unreleased, together with editable [`json_document`s](https://json.nlohmann.me/features/json_view/index.md).
+
+### json.exception.type_error.320
+
+[`basic_json_document::save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) cannot write an [image](https://json.nlohmann.me/features/json_view/#images) of a [discarded](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) document. [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) and [`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) also throw this exception on a big-endian target, since the image format is little-endian only.
+
+Example messages
+
+```
+[json.exception.type_error.320] cannot save a discarded json_document
+```
+
+```
+[json.exception.type_error.320] json_document images need a little-endian target
+```
+
+Note
+
+This exception was added in version 3.13.0 unreleased, together with [images](https://json.nlohmann.me/features/json_view/#images).
+
 ### json.exception.type_error.321
 
 A discarded value (one created by [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) with a callback that returns `false` for the value, or by default-constructing a [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) with [`value_t::discarded`](https://json.nlohmann.me/api/basic_json/value_t/index.md)) was passed to a binary serialization function, either directly or nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, BSON, or BON8.
@@ -1165,6 +1211,28 @@ Example message
 Note
 
 This exception was added in version 3.13.0 unreleased. Before that, subtypes above 255 were silently truncated modulo 256 instead of raising an error.
+
+### json.exception.out_of_range.416
+
+[`basic_json_document::parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) and the other parsing functions of [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) index a value's position in the source text in 32 bits, so they do not support an input of 4294967280 bytes (4 GiB minus 16 bytes) or more. The same 32-bit limit applies to an **editable** document's own storage: [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) throw this exception once the strings and number tokens written by edits reach 4 GiB in total, or once more than 4294967295 arrays/objects have had an element set or appended to them. The same limit applies to an [image](https://json.nlohmann.me/features/json_view/#images): [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) throws it if the node count, the text, or the decoded strings it would write would individually reach 4 GiB.
+
+Example messages
+
+```
+[json.exception.out_of_range.416] input of 4294967280 bytes or more is not supported by json_document
+```
+
+```
+[json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document
+```
+
+```
+[json.exception.out_of_range.416] images of 4 GiB or more are not supported by json_document
+```
+
+Note
+
+This exception was added in version 3.13.0 unreleased, together with [`<nlohmann/json_view.hpp>`](https://json.nlohmann.me/features/json_view/index.md). [`basic_json::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) has no such limit.
 
 ## Further exceptions
 

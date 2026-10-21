@@ -250,6 +250,7 @@ true
 - [get_ref](https://json.nlohmann.me/api/basic_json/get_ref/index.md) get a reference to the stored value
 - [operator ValueType](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) get a value via implicit conversion
 - [Converting values](https://json.nlohmann.me/features/conversions/index.md) - the type conversions article
+- [basic_json_view::get](https://json.nlohmann.me/api/basic_json_view/get/index.md) - the same conversion on a zero-copy view (many types are converted without ever building a `basic_json` value)
 
 ## Version history
 

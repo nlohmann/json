@@ -1,0 +1,181 @@
+# nlohmann::basic_json_document::parse
+
+```
+// (1)
+template<typename InputType>
+static basic_json_document parse(InputType&& input,
+                                 const bool allow_exceptions = true,
+                                 const bool ignore_comments = false,
+                                 const bool ignore_trailing_commas = false);
+
+// (2)
+template<typename IteratorType>
+static basic_json_document parse(IteratorType first, IteratorType last,
+                                 const bool allow_exceptions = true,
+                                 const bool ignore_comments = false,
+                                 const bool ignore_trailing_commas = false);
+```
+
+1. Deserialize from a compatible input, borrowing or owning it depending on its value category and type (see Notes).
+1. Deserialize from a pair of input iterators.
+
+Both overloads accept the same JSON text as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md), with the same `ignore_comments`/`ignore_trailing_commas` options, but build a [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) (a flat index into the input) instead of a tree of `BasicJsonType` values. They take the same inputs as `BasicJsonType::parse()`. Byte inputs that stay alive can be borrowed; all others (streams, `FILE*`, wide characters, non-contiguous iterators) are read into a copy that the document owns -- see the Notes. Use [`parse_copy()`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) to get an owned copy of a borrowable input as well.
+
+## Template parameters
+
+`InputType` : A compatible input, for instance:
+
+```
+- a `std::string`, `std::string_view`, or a C-style array of single-byte characters
+- a pointer to a null-terminated string of single-byte characters (`char`, `signed char`,
+  `unsigned char`, `std::uint8_t`)
+- a container for which `obj.data()` and `obj.size()` give contiguous single-byte access, e.g.
+  `std::vector<char>` or `std::vector<std::uint8_t>`
+- an `std::istream` object
+- a `FILE*` pointer
+- wide characters (`wchar_t`, `char16_t`, `char32_t`), which are converted to UTF-8: a wide
+  string object (`std::wstring`, `std::u16string`, `std::u32string`), an array (e.g. a wide
+  string literal), or a pointer to a null-terminated wide string
+```
+
+`IteratorType` : an input iterator type, for instance a pair of pointers such as `ptr` and `ptr + len`, or a pair of `std::string::iterator`; the iterators of single-byte characters are borrowed or read like the byte inputs above, those of wide characters are converted to UTF-8
+
+## Parameters
+
+`input` (in) : Input to parse from.
+
+`allow_exceptions` (in) : whether to throw exceptions in case of a parse error (optional, `true` by default)
+
+`ignore_comments` (in) : whether comments should be ignored and treated like whitespace (`true`) or yield a parse error (`false`); (optional, `false` by default)
+
+`ignore_trailing_commas` (in) : whether trailing commas in arrays or objects should be ignored and treated like whitespace (`true`) or yield a parse error (`false`); (optional, `false` by default)
+
+`first` (in) : iterator to the start of a character range
+
+`last` (in) : iterator to the end of a character range
+
+## Return value
+
+The parsed document. If `allow_exceptions` is `false` and the input is not valid JSON, the returned document is discarded; see [`is_discarded`](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md).
+
+## Exceptions
+
+Throws the same exception [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) throws for the same input and options -- the same exception id, message, and position -- because on a failing input the library's own parser is run on the same bytes to produce the diagnostic. This replay runs only for a failing input, and costs about a lexing pass up to the error (its SAX handler builds no values); with `allow_exceptions` set to `false`, it is skipped and a discarded document is returned instead. Additionally throws [`out_of_range.416`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range416) if the input is 4294967280 bytes (4 GiB minus 16 bytes) or larger, a size [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) does not reject.
+
+## Complexity
+
+Linear in the length of the input.
+
+## Notes
+
+**Ownership.** Whether the document borrows `input` or owns a copy of it depends on its value category and type:
+
+| `input`                                                                                                        | ownership                                                   |
+| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| lvalue byte container (`std::string`, `std::vector<char>`, ...), `std::string_view`, C string, character array | **borrowed** -- `input` must outlive the document           |
+| non-const rvalue `std::string`                                                                                 | **owned**, moved in without a copy                          |
+| other rvalue byte container (including a `const` rvalue `std::string`)                                         | **owned**, copied                                           |
+| stream, `FILE*`, wide characters, or anything else read through the general input adapter                      | **owned**, read into a buffer (a stream is read to its end) |
+
+For overload (2), a pair of pointers to single-byte integers (e.g. `const char*`, `std::uint8_t*`) is borrowed. From C++20 on, so is any other contiguous iterator over single bytes, such as `std::vector<char>::iterator` or `std::string::const_iterator`. Before C++20 these iterators cannot be told apart from other class-type iterators, so their range is read into an owned buffer, as is any non-contiguous range (e.g. of a `std::list<char>`).
+
+See [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) to check which happened after a call, and the [feature page](https://json.nlohmann.me/features/json_view/index.md) for the reasoning.
+
+**Numbers.** As for [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md), an integer literal too large for the 64-bit integer type becomes a floating-point value.
+
+**No lengths.** An integer argument that is not a `bool` where the flags are expected -- for example `parse(ptr, len)` -- does not compile (the overload is deleted). Such a call would convert `len` to `allow_exceptions` and read `ptr` as a null-terminated string, past the end of a buffer that has none. To parse a buffer of a given length, pass a pair of pointers: `parse(ptr, ptr + len)`. The same holds for [`parse_copy`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md), [`accept`](https://json.nlohmann.me/api/basic_json_document/accept/index.md), and [`read`](https://json.nlohmann.me/api/basic_json_document/read/index.md).
+
+## Examples
+
+Example: (1) borrowed vs. owned input, and errors identical to `BasicJsonType::parse()`
+
+```
+#include <iostream>
+#include <string>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_view.hpp>
+
+using json_document = nlohmann::json_document;
+
+int main()
+{
+    std::cout << std::boolalpha;
+
+    // an lvalue std::string is BORROWED: the document only stores a pointer
+    // into `text`, so `text` must outlive `borrowed`
+    std::string text = R"({"count": 3})";
+    json_document borrowed = json_document::parse(text);
+    std::cout << borrowed.owns_source() << '\n'; // false
+
+    // an rvalue std::string is MOVED into the document -- no copy of the text
+    json_document owned = json_document::parse(std::string(R"({"count": 3})"));
+    std::cout << owned.owns_source() << '\n'; // true
+
+    // errors are identical to basic_json::parse: same exception id, message,
+    // and position, because the library parser runs on the same bytes on a
+    // failing input
+    try
+    {
+        static_cast<void>(json_document::parse(R"({"count": )"));
+    }
+    catch (const nlohmann::json::parse_error& e)
+    {
+        std::cout << e.id << '\n';
+    }
+}
+```
+
+Output:
+
+```
+false
+true
+101
+```
+
+Example: (2) parse an iterator range (no NUL terminator required)
+
+```
+#include <iostream>
+#include <vector>
+#include <nlohmann/json_view.hpp>
+
+using json_document = nlohmann::json_document;
+
+int main()
+{
+    std::cout << std::boolalpha;
+
+    // a JSON value embedded in a larger, non-null-terminated buffer (e.g. a
+    // slice received over the network)
+    std::vector<char> buffer = {'[', '1', ',', '2', ']', 'j', 'u', 'n', 'k'};
+
+    // a pointer pair is BORROWED, exactly like a byte container lvalue: the
+    // document points into the buffer. (From C++20 on, std::vector<char>
+    // iterators are borrowed as well; before, they are copied.)
+    const char* first = buffer.data();
+    json_document doc = json_document::parse(first, first + 5);
+    std::cout << doc.root().is_array() << ' ' << doc.root().size() << '\n';
+    std::cout << doc.owns_source() << '\n'; // false: borrowed
+}
+```
+
+Output:
+
+```
+true 2
+false
+```
+
+## See also
+
+- [parse_copy](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) - deserialize a copy of a compatible input
+- [accept](https://json.nlohmann.me/api/basic_json_document/accept/index.md) - check whether the input is valid JSON
+- [read](https://json.nlohmann.me/api/basic_json_document/read/index.md) - (re-)parse into this document, reusing its memory
+- [owns_source](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) - return whether the document holds its own copy of the text
+- [load](https://json.nlohmann.me/api/basic_json_document/load/index.md) - read a document from an image instead of parsing JSON text
+- [`BasicJsonType::parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - the corresponding function of `basic_json`
+
+## Version history
+
+- Added in version 3.13.0 unreleased.

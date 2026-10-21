@@ -41,6 +41,7 @@ The public headers are in [`include/nlohmann`](https://github.com/nlohmann/json/
 - [`json.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json.hpp) defines class [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md).
 - [`json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) contains forward declarations.
 - [`adl_serializer.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/adl_serializer.hpp), [`byte_container_with_subtype.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/byte_container_with_subtype.hpp), and [`ordered_map.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/ordered_map.hpp) define [`adl_serializer`](https://json.nlohmann.me/api/adl_serializer/index.md), [`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md), and [`ordered_map`](https://json.nlohmann.me/api/ordered_map/index.md).
+- [`json_view.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_view.hpp) is a separate, optional header that defines [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) and [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md), a flat-index, read-only, non-owning way to look at a parsed JSON text; see [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md). It builds on `json.hpp` internals (it requires the same library version) and has its own `detail/view/` subdirectory.
 
 Everything else lives in [`detail/`](https://github.com/nlohmann/json/tree/develop/include/nlohmann/detail) and namespace `nlohmann::detail`, which is not part of the public API. Paths below are relative to `include/nlohmann`.
 
@@ -62,7 +63,7 @@ Everything else lives in [`detail/`](https://github.com/nlohmann/json/tree/devel
 | Type traits and C++ feature backports | [`detail/meta/`](https://github.com/nlohmann/json/tree/develop/include/nlohmann/detail/meta)                                                                                                                                                                                                                                                                                      |
 | Macros                                | [`detail/macro_scope.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/macro_scope.hpp), [`detail/macro_unscope.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/macro_unscope.hpp), [`detail/abi_macros.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/abi_macros.hpp)                         |
 
-The single-header version [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) is generated from these files with `make amalgamate` and must not be edited by hand.
+The single-header version [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) is generated from these files with `make amalgamate` and must not be edited by hand. The same command also generates [`single_include/nlohmann/json_view.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_view.hpp) from `json_view.hpp` and `detail/view/`.
 
 ## Template parameters
 
@@ -144,6 +145,71 @@ union json_value {
 ```
 
 Objects, arrays, strings, and binary values are allocated on the heap with `AllocatorType`, and the union only stores a pointer to them. This keeps a `basic_json` value small: one pointer-sized union and one byte for the type. The class maintains the invariant that the pointer matching `m_type` is never null; `assert_invariant()` checks it with [runtime assertions](https://json.nlohmann.me/features/assertions/index.md).
+
+## Node index of JSON views
+
+A [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) (see [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md)) does not build a tree of values. Its parser ([`detail/view/builder.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/builder.hpp)) writes a flat array of 16-byte nodes, one per value and one per object key, in document order. A [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) is a pointer to the document and a pointer to one node. The layout is `struct node` in [`detail/view/node.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/node.hpp) (the numbers are bit offsets, 32 bits per row):
+
+```
+packet-beta
+  0-7: "kind"
+  8-15: "flags"
+  16-31: "extra"
+  32-63: "off"
+  64-95: "len"
+  96-127: "next"
+```
+
+| Bytes | Field   | Type       | Contents                                                                                                                                                                                                                                                                                                                                                       |
+| ----- | ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | `kind`  | `uint8_t`  | the type, numbered as [`value_t`](https://json.nlohmann.me/api/basic_json/value_t/index.md): 0 null, 1 object, 2 array, 3 string, 4 boolean, 5 signed integer, 6 unsigned integer, 7 float; 10 for a link (see below). There is no node for a discarded value: a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view has none |
+| 1     | `flags` | `uint8_t`  | bits 0-1: where a string's bytes (or a number's token) are (0: the source text, 1: the buffer of decoded strings, for strings with escapes, 2: the edit buffer); bit 2: the value of a boolean; bit 3: moved, bit 4: new, bit 5: linked (see below)                                                                                                            |
+| 2-3   | `extra` | `uint16_t` | numbers: the number of integer digits (low byte) and fraction digits (high byte), 255 for more; objects: the number of their key hash index (1-based), or 0; otherwise 0                                                                                                                                                                                       |
+| 4-7   | `off`   | `uint32_t` | where the value starts: the first byte after a string's opening quote (or its position in the buffer of decoded strings), the first byte of a number or literal, the bracket of an array or object                                                                                                                                                             |
+| 8-11  | `len`   | `uint32_t` | strings: the length after decoding; floats and literals: the length of the token; arrays and objects: the number of elements                                                                                                                                                                                                                                   |
+| 12-15 | `next`  | `uint32_t` | arrays and objects: the number of nodes of the subtree, including the node itself                                                                                                                                                                                                                                                                              |
+
+- **Integers** keep their converted value in bytes 8-15 instead of `len` and `next`; the length of their token follows from the number of digits in `extra` (and the sign). Non-negative integers are unsigned integers, as with [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md).
+- **Floats** keep only their token. The digit layout in `extra` lets the conversion read the digits without scanning the token again, and only when the value is read.
+- **Object members** are the node of the key (a string) followed by the nodes of the value.
+- **Navigation** needs no pointers: the elements of an array or object follow its node, and the node after a value's subtree is `next` nodes further for an array or object, and the next node otherwise (`document_data::after`). Views step from element to element this way and skip whole subtrees in constant time.
+- **Offsets** are 32 bits wide, so a document is limited to 4294967279 bytes, 4 GiB minus 16 bytes (a margin below 2^32 for positions one scanner step past the end of the text; `out_of_range.416`).
+- **Large objects** (128 members or more) get a hash index for their keys after parsing ([`detail/view/object_index.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/object_index.hpp)): an open-addressing table whose slots hold the distance from the object's node to a key's node, so that a lookup does not compare every key. Of duplicate keys the table leads to the first, as a linear search does. The object's `extra` holds the number of its table. Only 65,535 tables fit into `extra`; objects beyond them are searched linearly.
+
+For example, `{"a": [1, 2.5]}` becomes five nodes. Each node's elements follow it, and `next` leads from an array or object past its subtree:
+
+```
+flowchart LR
+    n0["0: object<br>len 1, next 5"]
+    n1["1: key a"]
+    n2["2: array<br>len 2, next 3"]
+    n3["3: unsigned integer 1"]
+    n4["4: float 2.5"]
+    e(["end"])
+    n0 --> n1 --> n2 --> n3 --> n4 --> e
+    n0 -. next .-> e
+    n2 -. next .-> e
+```
+
+| Node | `kind`               | `extra` | `off` | `len` | `next` |
+| ---- | -------------------- | ------- | ----- | ----- | ------ |
+| 0    | 1 (object)           | 0       | 0     | 1     | 5      |
+| 1    | 3 (string)           | 0       | 2     | 1     | 0      |
+| 2    | 2 (array)            | 0       | 6     | 2     | 3      |
+| 3    | 6 (unsigned integer) | 0x0001  | 7     | -     | -      |
+| 4    | 7 (float)            | 0x0101  | 10    | 3     | 0      |
+
+All `flags` are 0. The integer's bytes 8-15 hold its value, 1; its `extra` says it has one digit. The float's `extra` says it has one integer and one fraction digit, and its `len` is that of the token `2.5`.
+
+Editable documents ([`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md), [`detail/view/edit.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/edit.hpp) and [`detail/view/edit_storage.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/edit_storage.hpp)) never write the source text and never move or resize the parsed index, so views stay valid while the document is edited:
+
+- A new scalar is written over its node. Its text (a string, or the token of a number as `dump()` writes it) goes to the edit buffer, which `flags` bits 0-1 then name.
+- An array or object whose elements change gets the flag *moved* (bit 3): its elements then live in a separate sequence (a header node, then the entries), whose number is in `off`. The entries are links (`kind` 10), whose bytes 8-15 hold the address of the value's node, so values never move.
+- A node written by an edit gets the flag *new* (bit 4): it has no position in the source text.
+- A value that an entry of such a sequence links to gets the flag *linked* (bit 5): its extent in the parsed layout (`next`) no longer matters, so a scalar can replace an array or object there in place.
+- Views of read-only documents compile without any of this: how views walk the index is a template parameter (`navigation<Editable>`).
+
+Images ([`save`](https://json.nlohmann.me/api/basic_json_document/save/index.md) and [`load`](https://json.nlohmann.me/api/basic_json_document/load/index.md), [`detail/view/image.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/image.hpp)) store the nodes as they are: a 64-byte header (the magic bytes `NJVI`, a format version, the sizes, and reserved bytes that must be zero), the nodes, the text, and the decoded strings. An edited document is first written in document order, as the parser would have written it (without links), and the numbers of the hash indexes are cleared, since `load` rebuilds the indexes. So a change of the node layout is a change of the image format: it must raise `image_version`, and `load` then rejects images of other versions (`parse_error.116`) instead of misreading them.
 
 ## Input adapters
 

@@ -32,10 +32,11 @@ For contiguous input with many non-ASCII characters, [`JSON_USE_SIMDUTF`](https:
 
 ## Large documents
 
-Parsing always produces SAX events internally; [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) simply feeds them to a consumer that builds a complete `basic_json` value tree (a DOM) in memory. For documents too large to comfortably hold as a DOM, two alternatives avoid building it:
+Parsing always produces SAX events internally; [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) simply feeds them to a consumer that builds a complete `basic_json` value tree (a DOM) in memory. For documents too large to comfortably hold as a DOM, three alternatives avoid building it:
 
 - Implement the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) directly and pass it to [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md); only the parts of the input you choose to keep ever become `basic_json` values.
 - Pass a [parser callback](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md) to `parse`. This still builds a DOM, but the callback can discard finished elements as soon as they are handled, so memory usage stays bounded by one element (plus the unparsed remainder of the input) instead of the whole document -- see the [recipe for streaming a large homogeneous array](https://json.nlohmann.me/features/parsing/parser_callbacks/#recipe-streaming-a-large-homogeneous-array).
+- Parse into a [`json_document`](https://json.nlohmann.me/features/json_view/index.md) (`<nlohmann/json_view.hpp>`) instead of a `basic_json`. It keeps the input text and builds a flat index of 16 bytes per value; strings and floating-point numbers are not copied, but read from the text when needed. Read-only [views](https://json.nlohmann.me/api/basic_json_view/index.md) give the familiar element access, and only the parts you [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) become `basic_json` values. A document that borrows the text instead of owning a copy needs the text to outlive it; see [choosing between `json`, the SAX interface, and `json_view`](https://json.nlohmann.me/features/json_view/#choosing-between-json-ordered_json-the-sax-interface-and-json_view).
 
 If the data is naturally record-oriented, consider [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) instead of one large JSON document: reading and parsing it line by line with `std::getline` means only one line's value is ever in memory at a time, and a malformed line does not invalidate lines already processed.
 
@@ -101,6 +102,7 @@ If I/O support is not needed at all, [`JSON_NO_IO`](https://json.nlohmann.me/api
 - [Architecture](https://json.nlohmann.me/home/architecture/index.md) - how input adapters, the lexer, and the serializer fit together
 - [Parsing](https://json.nlohmann.me/features/parsing/index.md) - the available parsing functions and inputs
 - [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - parse without building a DOM
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - parse into a flat index of the text and read it without building a DOM
 - [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - compact alternatives to JSON text
 - [Object Order](https://json.nlohmann.me/features/object_order/index.md) - `json` vs. `ordered_json` and other `ObjectType` choices
 - [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - custom container and allocator types

@@ -59,6 +59,7 @@ Output:
 - [cend](https://json.nlohmann.me/api/basic_json/cend/index.md) returns a const iterator to one past the last element
 - [rend](https://json.nlohmann.me/api/basic_json/rend/index.md) returns a reverse iterator to one before the first element
 - [Iterators](https://json.nlohmann.me/features/iterators/index.md) - the article on iterators
+- [basic_json_view::end](https://json.nlohmann.me/api/basic_json_view/end/index.md) - the same iteration on a zero-copy view
 
 ## Version history
 

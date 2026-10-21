@@ -193,6 +193,7 @@ false
 
 - [find](https://json.nlohmann.me/api/basic_json/find/index.md) find a value in an object
 - [count](https://json.nlohmann.me/api/basic_json/count/index.md) returns the number of occurrences of a key
+- [basic_json_view::contains](https://json.nlohmann.me/api/basic_json_view/contains/index.md) - the same check on a zero-copy view
 
 ## Version history
 

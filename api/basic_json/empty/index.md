@@ -98,6 +98,7 @@ false
 
 - [size](https://json.nlohmann.me/api/basic_json/size/index.md) returns the number of elements
 - [clear](https://json.nlohmann.me/api/basic_json/clear/index.md) clears the content and resets the value to the default value
+- [basic_json_view::empty](https://json.nlohmann.me/api/basic_json_view/empty/index.md) - the same check on a zero-copy view
 
 ## Version history
 

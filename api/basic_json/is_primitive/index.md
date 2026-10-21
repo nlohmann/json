@@ -96,6 +96,7 @@ true
 - [is_boolean()](https://json.nlohmann.me/api/basic_json/is_boolean/index.md) returns whether the JSON value is a boolean
 - [is_number()](https://json.nlohmann.me/api/basic_json/is_number/index.md) returns whether the JSON value is a number
 - [is_binary()](https://json.nlohmann.me/api/basic_json/is_binary/index.md) returns whether the JSON value is a binary array
+- [basic_json_view::is_primitive](https://json.nlohmann.me/api/basic_json_view/is_primitive/index.md) - the same check on a zero-copy view
 
 ## Version history
 
