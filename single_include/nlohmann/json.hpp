@@ -3678,18 +3678,27 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <cstddef> // size_t
-#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
+#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_arithmetic, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // index_sequence, make_index_sequence, index_sequence_for
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
+#ifdef JSON_HAS_CPP_17
+    #include <algorithm> // clamp
+#endif
+
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
-template<typename T>
-using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+#ifdef __cpp_lib_remove_cvref
+    template<typename T>
+    using uncvref_t = std::remove_cvref_t<T>;
+#else
+    template<typename T>
+    using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+#endif
 
 #ifdef JSON_HAS_CPP_14
 
@@ -3828,6 +3837,19 @@ struct static_const
     template<typename T>
     constexpr T static_const<T>::value;
 #endif
+
+/// @a v bounded to [@a lo, @a hi] (requires !(hi < lo)); like std::clamp,
+/// but by value, so that static constexpr members can be passed without an
+/// out-of-line definition before C++17
+template<typename T, enable_if_t<std::is_arithmetic<T>::value, int> = 0>
+constexpr T clamp(T v, T lo, T hi) noexcept
+{
+#ifdef __cpp_lib_clamp
+    return std::clamp(v, lo, hi);
+#else
+    return v < lo ? lo : (hi < v ? hi : v);
+#endif
+}
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
@@ -4426,6 +4448,14 @@ struct char_traits<std::byte> : std::char_traits<char>
 // is_ functions //
 ///////////////////
 
+#ifdef __cpp_lib_logical_traits
+
+using std::conjunction;
+using std::disjunction;
+using std::negation;
+
+#else
+
 // https://en.cppreference.com/w/cpp/types/conjunction
 template<class...> struct conjunction : std::true_type { };
 template<class B> struct conjunction<B> : B { };
@@ -4442,6 +4472,8 @@ struct disjunction<B, Bn...>
 
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
+
+#endif
 
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
@@ -5173,8 +5205,12 @@ constexpr bool value_in_range_of(T val)
     return value_in_range_of_impl1<OfType, T>::test(val);
 }
 
-template<bool Value>
-using bool_constant = std::integral_constant<bool, Value>;
+#ifdef __cpp_lib_bool_constant
+    using std::bool_constant;
+#else
+    template<bool Value>
+    using bool_constant = std::integral_constant<bool, Value>;
+#endif
 
 // Stands in for number_unsigned_t in overload sets if it is the same type as
 // number_integer_t, so that the unsigned overloads do not collide with the
@@ -9680,12 +9716,25 @@ NLOHMANN_JSON_NAMESPACE_END
     #include <intrin0.h> // __umulh, _umul128, _BitScanForward64, _BitScanReverse64
 #endif
 
+#ifdef _MSC_VER
+    #include <cstdlib> // _byteswap_ushort, _byteswap_ulong, _byteswap_uint64
+#endif
+#if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_IX86) || defined(_M_ARM))
+    #include <intrin.h> // _BitScanForward, _BitScanReverse
+#endif
+
 // #include <nlohmann/detail/macro_scope.hpp>
 // JSON_HEDLEY_ALWAYS_INLINE, NLOHMANN_JSON_NAMESPACE_BEGIN
 
+#if defined(__cpp_lib_bit_cast) || defined(__cpp_lib_bitops) || defined(__cpp_lib_byteswap)
+    #include <bit> // bit_cast, byteswap, countl_zero, countr_zero
+#endif
+
 // Portable bit-level helpers for the number and string scanners. They use
-// compiler builtins or platform-specific intrinsics where available and plain
-// C++ otherwise, so they work regardless of byte order.
+// compiler builtins or platform-specific intrinsics where available, the
+// C++20 <bit> functions next, and plain C++ otherwise, so they work regardless
+// of byte order. (The builtins and intrinsics come first: MSVC's
+// std::countl_zero checks for LZCNT at run time unless AVX2 is enabled.)
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -9700,6 +9749,16 @@ inline int count_leading_zeros(std::uint64_t x) noexcept
     unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
     _BitScanReverse64(&index, x);
     return 63 - static_cast<int>(index);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
+    if (_BitScanReverse(&index, static_cast<unsigned long>(x >> 32u))) // NOLINT(runtime/int)
+    {
+        return 31 - static_cast<int>(index);
+    }
+    _BitScanReverse(&index, static_cast<unsigned long>(x)); // NOLINT(runtime/int)
+    return 63 - static_cast<int>(index);
+#elif defined(__cpp_lib_bitops)
+    return std::countl_zero(x);
 #else
     int n = 0;
     for (int shift = 32; shift != 0; shift >>= 1)
@@ -9723,6 +9782,16 @@ inline int count_trailing_zeros(std::uint64_t x) noexcept
     unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
     _BitScanForward64(&index, x);
     return static_cast<int>(index);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
+    if (_BitScanForward(&index, static_cast<unsigned long>(x))) // NOLINT(runtime/int)
+    {
+        return static_cast<int>(index);
+    }
+    _BitScanForward(&index, static_cast<unsigned long>(x >> 32u)); // NOLINT(runtime/int)
+    return 32 + static_cast<int>(index);
+#elif defined(__cpp_lib_bitops)
+    return std::countr_zero(x);
 #else
     int n = 0;
     for (int shift = 32; shift != 0; shift >>= 1)
@@ -9734,6 +9803,67 @@ inline int count_trailing_zeros(std::uint64_t x) noexcept
         }
     }
     return n;
+#endif
+}
+
+/// the object representation of @a from as a @a To (std::bit_cast in C++20)
+template<typename To, typename From>
+JSON_HEDLEY_ALWAYS_INLINE To bit_cast(const From& from) noexcept
+{
+    static_assert(sizeof(To) == sizeof(From), "bit_cast needs types of the same size");
+#if defined(__cpp_lib_bit_cast)
+    return std::bit_cast<To>(from);
+#else
+    To to;
+    std::memcpy(&to, &from, sizeof(To));
+    return to;
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23); compilers lower
+/// it to a single bswap/rev/movbe
+inline std::uint16_t byteswap(std::uint16_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap16(x);
+#elif defined(_MSC_VER)
+    return _byteswap_ushort(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    return static_cast<std::uint16_t>((x >> 8u) | (x << 8u));
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23)
+inline std::uint32_t byteswap(std::uint32_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap32(x);
+#elif defined(_MSC_VER)
+    return _byteswap_ulong(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    return ((x & 0x000000FFu) << 24u) | ((x & 0x0000FF00u) << 8u)
+           | ((x & 0x00FF0000u) >> 8u) | ((x & 0xFF000000u) >> 24u);
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23)
+inline std::uint64_t byteswap(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap64(x);
+#elif defined(_MSC_VER)
+    return _byteswap_uint64(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    x = ((x & 0x00000000FFFFFFFFull) << 32u) | ((x & 0xFFFFFFFF00000000ull) >> 32u);
+    x = ((x & 0x0000FFFF0000FFFFull) << 16u) | ((x & 0xFFFF0000FFFF0000ull) >> 16u);
+    x = ((x & 0x00FF00FF00FF00FFull) << 8u) | ((x & 0xFF00FF00FF00FF00ull) >> 8u);
+    return x;
 #endif
 }
 
@@ -9817,7 +9947,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // strtof, strtod, strtold
-#include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // conditional, integral_constant, is_signed, true_type, false_type
@@ -10938,15 +11067,14 @@ std::uint64_t digit_comparison(const char* first, const char* last, std::uint64_
 inline void float_from_bits(std::uint64_t bits, double& value) noexcept
 {
     static_assert(sizeof(double) == sizeof(std::uint64_t), "double must have 64 bits");
-    std::memcpy(&value, &bits, sizeof(value));
+    value = bit_cast<double>(bits);
 }
 
 /// the float with the IEEE-754 bits @a bits (the lower 32)
 inline void float_from_bits(std::uint64_t bits, float& value) noexcept
 {
     static_assert(sizeof(float) == sizeof(std::uint32_t), "float must have 32 bits");
-    const auto bits32 = static_cast<std::uint32_t>(bits);
-    std::memcpy(&value, &bits32, sizeof(bits32));
+    value = bit_cast<float>(static_cast<std::uint32_t>(bits));
 }
 
 /// the powers of ten that are exact in binary64 (up to 10^22)
@@ -23402,10 +23530,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // move
 #include <vector> // vector
 
-#ifdef _MSC_VER
-    #include <cstdlib> // _byteswap_ushort, _byteswap_ulong, _byteswap_uint64
-#endif
-
 // #include <nlohmann/detail/bit_ops.hpp>
 
 // #include <nlohmann/detail/input/binary_reader.hpp>
@@ -25892,7 +26016,7 @@ class binary_writer
     {
         out[0] = to_char_type(first_byte);
         const unsigned unused_bits = 64u - ((8u << size_class) >> 1u);
-        const std::uint64_t tail = is_little_endian ? byte_swap(value) >> unused_bits : value << unused_bits;
+        const std::uint64_t tail = is_little_endian ? byteswap(value) >> unused_bits : value << unused_bits;
         std::memcpy(out + 1, &tail, sizeof(tail));
         return ((std::size_t{1} << size_class) >> 1u) + 1;
     }
@@ -27336,53 +27460,14 @@ class binary_writer
     // Utility functions //
     ///////////////////////
 
-    // single-instruction byte swaps (compilers lower these to bswap/rev/movbe);
-    // used to emit big-endian numbers without a per-byte std::reverse loop
-    static std::uint16_t byte_swap(std::uint16_t x) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __builtin_bswap16(x);
-#elif defined(_MSC_VER)
-        return _byteswap_ushort(x);
-#else
-        return static_cast<std::uint16_t>((x >> 8) | (x << 8));
-#endif
-    }
-
-    static std::uint32_t byte_swap(std::uint32_t x) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __builtin_bswap32(x);
-#elif defined(_MSC_VER)
-        return _byteswap_ulong(x);
-#else
-        return ((x & 0x000000FFu) << 24) | ((x & 0x0000FF00u) << 8)
-               | ((x & 0x00FF0000u) >> 8) | ((x & 0xFF000000u) >> 24);
-#endif
-    }
-
-    static std::uint64_t byte_swap(std::uint64_t x) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __builtin_bswap64(x);
-#elif defined(_MSC_VER)
-        return _byteswap_uint64(x);
-#else
-        x = ((x & 0x00000000FFFFFFFFull) << 32) | ((x & 0xFFFFFFFF00000000ull) >> 32);
-        x = ((x & 0x0000FFFF0000FFFFull) << 16) | ((x & 0xFFFF0000FFFF0000ull) >> 16);
-        x = ((x & 0x00FF00FF00FF00FFull) << 8) | ((x & 0xFF00FF00FF00FF00ull) >> 8);
-        return x;
-#endif
-    }
-
     /*!
     @brief reverse the bytes of a buffer by byte-swapping it as UIntType
 
     Loading the buffer into an unsigned integer of the same width and swapping
     that is what lets the compiler emit a single bswap/rev/movbe; reversing the
     buffer element by element does not reliably get there (clang keeps a scalar
-    shuffle). The two memcpy calls are the only portable way to reinterpret the
-    bytes and are folded away by every optimizer.
+    shuffle). (The two memcpy calls, rather than bit_cast, keep GCC from
+    inlining differently in C++20, which made writing slower.)
     */
     template<typename UIntType, std::size_t N>
     static void byte_swap_buffer(std::array<CharType, N>& a) noexcept
@@ -27390,11 +27475,11 @@ class binary_writer
         static_assert(sizeof(UIntType) == N, "swap width must match the buffer size");
         UIntType v{};
         std::memcpy(&v, a.data(), sizeof(v));
-        v = byte_swap(v);
+        v = byteswap(v);
         std::memcpy(a.data(), &v, sizeof(v));
     }
 
-    // reverse the bytes of a fixed-size buffer; a single byte_swap() for the
+    // reverse the bytes of a fixed-size buffer; a single byteswap() for the
     // common 2/4/8-byte number payloads, std::reverse for any other size
     static void reverse_bytes(std::array<CharType, 2>& a) noexcept
     {
@@ -27519,9 +27604,7 @@ class binary_writer
 #endif
 
         static_assert(sizeof(std::uint8_t) == sizeof(CharType), "size of CharType must be equal to std::uint8_t");
-        CharType result;
-        std::memcpy(&result, &x, sizeof(x));
-        return result;
+        return bit_cast<CharType>(x);
     }
 
     template<typename C = CharType,
@@ -27605,9 +27688,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
 
-#ifdef _MSC_VER
-    #include <cstdlib> // _byteswap_uint64
-#endif
 
 // SSE2 (every x86-64 CPU) and NEON (every 64-bit Arm CPU) convert the 16
 // digits of a double at once
@@ -27623,6 +27703,8 @@ NLOHMANN_JSON_NAMESPACE_END
     #define JSON_DTOA_SSE2 0
     #define JSON_DTOA_NEON 0
 #endif
+
+// #include <nlohmann/detail/bit_ops.hpp>
 
 // #include <nlohmann/detail/conversions/zmij.hpp>
 //     __ _____ _____ _____
@@ -27881,16 +27963,6 @@ For a detailed description of the algorithm see:
 namespace dtoa_impl
 {
 
-template<typename Target, typename Source>
-Target reinterpret_bits(const Source source)
-{
-    static_assert(sizeof(Target) == sizeof(Source), "size mismatch");
-
-    Target target;
-    std::memcpy(&target, &source, sizeof(Source));
-    return target;
-}
-
 struct diyfp // f * 2^e
 {
     static constexpr int kPrecision = 64; // = q
@@ -28045,7 +28117,7 @@ boundaries compute_boundaries(FloatType value)
 
     using bits_type = typename std::conditional<kPrecision == 24, std::uint32_t, std::uint64_t >::type;
 
-    const auto bits = static_cast<std::uint64_t>(reinterpret_bits<bits_type>(value));
+    const auto bits = static_cast<std::uint64_t>(bit_cast<bits_type>(value));
     const std::uint64_t E = bits >> (kPrecision - 1);
     const std::uint64_t F = bits & (kHiddenBit - 1);
 
@@ -28899,13 +28971,10 @@ inline std::uint64_t eight_digit_bytes(std::uint64_t abcdefgh) noexcept
 /// the byte stores once this is inlined)
 inline void store_msb_first(char* p, std::uint64_t v) noexcept
 {
-#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    v = __builtin_bswap64(v);
+#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || defined(_MSC_VER) // (MSVC: little-endian on all its targets)
+    v = byteswap(v);
     std::memcpy(p, &v, sizeof(v));
 #elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    std::memcpy(p, &v, sizeof(v));
-#elif defined(_MSC_VER) // (little-endian on all its targets)
-    v = _byteswap_uint64(v);
     std::memcpy(p, &v, sizeof(v));
 #else
     for (unsigned i = 0; i < 8; ++i)
@@ -29277,8 +29346,7 @@ char* write_positive_zmij(char* first, const char* last, FloatType value)
 {
     static_assert(is_binary64<FloatType>::value,
                   "internal error: the conversion of Zmij needs IEEE 754 binary64 numbers");
-    std::uint64_t bits = 0;
-    std::memcpy(&bits, &value, sizeof(bits));
+    const auto bits = bit_cast<std::uint64_t>(value);
     const zmij::shortest_decimal d = zmij::to_shortest(bits);
     if (JSON_HEDLEY_LIKELY(last - first >= 41))
     {

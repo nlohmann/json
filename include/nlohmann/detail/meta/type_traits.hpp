@@ -313,6 +313,14 @@ struct char_traits<std::byte> : std::char_traits<char>
 // is_ functions //
 ///////////////////
 
+#ifdef __cpp_lib_logical_traits
+
+using std::conjunction;
+using std::disjunction;
+using std::negation;
+
+#else
+
 // https://en.cppreference.com/w/cpp/types/conjunction
 template<class...> struct conjunction : std::true_type { };
 template<class B> struct conjunction<B> : B { };
@@ -329,6 +337,8 @@ struct disjunction<B, Bn...>
 
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
+
+#endif
 
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
@@ -1060,8 +1070,12 @@ constexpr bool value_in_range_of(T val)
     return value_in_range_of_impl1<OfType, T>::test(val);
 }
 
-template<bool Value>
-using bool_constant = std::integral_constant<bool, Value>;
+#ifdef __cpp_lib_bool_constant
+    using std::bool_constant;
+#else
+    template<bool Value>
+    using bool_constant = std::integral_constant<bool, Value>;
+#endif
 
 // Stands in for number_unsigned_t in overload sets if it is the same type as
 // number_integer_t, so that the unsigned overloads do not collide with the

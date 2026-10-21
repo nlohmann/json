@@ -14,11 +14,24 @@
     #include <intrin0.h> // __umulh, _umul128, _BitScanForward64, _BitScanReverse64
 #endif
 
+#ifdef _MSC_VER
+    #include <cstdlib> // _byteswap_ushort, _byteswap_ulong, _byteswap_uint64
+#endif
+#if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_IX86) || defined(_M_ARM))
+    #include <intrin.h> // _BitScanForward, _BitScanReverse
+#endif
+
 #include <nlohmann/detail/macro_scope.hpp> // JSON_HEDLEY_ALWAYS_INLINE, NLOHMANN_JSON_NAMESPACE_BEGIN
 
+#if defined(__cpp_lib_bit_cast) || defined(__cpp_lib_bitops) || defined(__cpp_lib_byteswap)
+    #include <bit> // bit_cast, byteswap, countl_zero, countr_zero
+#endif
+
 // Portable bit-level helpers for the number and string scanners. They use
-// compiler builtins or platform-specific intrinsics where available and plain
-// C++ otherwise, so they work regardless of byte order.
+// compiler builtins or platform-specific intrinsics where available, the
+// C++20 <bit> functions next, and plain C++ otherwise, so they work regardless
+// of byte order. (The builtins and intrinsics come first: MSVC's
+// std::countl_zero checks for LZCNT at run time unless AVX2 is enabled.)
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -33,6 +46,16 @@ inline int count_leading_zeros(std::uint64_t x) noexcept
     unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
     _BitScanReverse64(&index, x);
     return 63 - static_cast<int>(index);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
+    if (_BitScanReverse(&index, static_cast<unsigned long>(x >> 32u))) // NOLINT(runtime/int)
+    {
+        return 31 - static_cast<int>(index);
+    }
+    _BitScanReverse(&index, static_cast<unsigned long>(x)); // NOLINT(runtime/int)
+    return 63 - static_cast<int>(index);
+#elif defined(__cpp_lib_bitops)
+    return std::countl_zero(x);
 #else
     int n = 0;
     for (int shift = 32; shift != 0; shift >>= 1)
@@ -56,6 +79,16 @@ inline int count_trailing_zeros(std::uint64_t x) noexcept
     unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
     _BitScanForward64(&index, x);
     return static_cast<int>(index);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
+    if (_BitScanForward(&index, static_cast<unsigned long>(x))) // NOLINT(runtime/int)
+    {
+        return static_cast<int>(index);
+    }
+    _BitScanForward(&index, static_cast<unsigned long>(x >> 32u)); // NOLINT(runtime/int)
+    return 32 + static_cast<int>(index);
+#elif defined(__cpp_lib_bitops)
+    return std::countr_zero(x);
 #else
     int n = 0;
     for (int shift = 32; shift != 0; shift >>= 1)
@@ -67,6 +100,67 @@ inline int count_trailing_zeros(std::uint64_t x) noexcept
         }
     }
     return n;
+#endif
+}
+
+/// the object representation of @a from as a @a To (std::bit_cast in C++20)
+template<typename To, typename From>
+JSON_HEDLEY_ALWAYS_INLINE To bit_cast(const From& from) noexcept
+{
+    static_assert(sizeof(To) == sizeof(From), "bit_cast needs types of the same size");
+#if defined(__cpp_lib_bit_cast)
+    return std::bit_cast<To>(from);
+#else
+    To to;
+    std::memcpy(&to, &from, sizeof(To));
+    return to;
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23); compilers lower
+/// it to a single bswap/rev/movbe
+inline std::uint16_t byteswap(std::uint16_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap16(x);
+#elif defined(_MSC_VER)
+    return _byteswap_ushort(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    return static_cast<std::uint16_t>((x >> 8u) | (x << 8u));
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23)
+inline std::uint32_t byteswap(std::uint32_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap32(x);
+#elif defined(_MSC_VER)
+    return _byteswap_ulong(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    return ((x & 0x000000FFu) << 24u) | ((x & 0x0000FF00u) << 8u)
+           | ((x & 0x00FF0000u) >> 8u) | ((x & 0xFF000000u) >> 24u);
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23)
+inline std::uint64_t byteswap(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap64(x);
+#elif defined(_MSC_VER)
+    return _byteswap_uint64(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    x = ((x & 0x00000000FFFFFFFFull) << 32u) | ((x & 0xFFFFFFFF00000000ull) >> 32u);
+    x = ((x & 0x0000FFFF0000FFFFull) << 16u) | ((x & 0xFFFF0000FFFF0000ull) >> 16u);
+    x = ((x & 0x00FF00FF00FF00FFull) << 8u) | ((x & 0xFF00FF00FF00FF00ull) >> 8u);
+    return x;
 #endif
 }
 

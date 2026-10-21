@@ -13,7 +13,7 @@
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
-using nlohmann::detail::dtoa_impl::reinterpret_bits;
+using nlohmann::detail::bit_cast;
 
 #include <algorithm>
 #include <array>
@@ -44,7 +44,7 @@ float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significa
     bits |= biased_exponent << 23;
     bits |= significand;
 
-    return reinterpret_bits<float>(bits);
+    return bit_cast<float>(bits);
 }
 
 // ldexp -- convert f * 2^e to IEEE single precision
@@ -81,7 +81,7 @@ float make_float(uint64_t f, int e)
                                      : static_cast<uint64_t>(e + kExponentBias);
 
     const uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
-    return reinterpret_bits<float>(static_cast<uint32_t>(bits));
+    return bit_cast<float>(static_cast<uint32_t>(bits));
 }
 
 double make_double(uint64_t sign_bit, uint64_t biased_exponent, uint64_t significand)
@@ -96,7 +96,7 @@ double make_double(uint64_t sign_bit, uint64_t biased_exponent, uint64_t signifi
     bits |= biased_exponent << 52;
     bits |= significand;
 
-    return reinterpret_bits<double>(bits);
+    return bit_cast<double>(bits);
 }
 
 // ldexp -- convert f * 2^e to IEEE double precision
@@ -133,7 +133,7 @@ double make_double(uint64_t f, int e)
                                      : static_cast<uint64_t>(e + kExponentBias);
 
     const uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
-    return reinterpret_bits<double>(bits);
+    return bit_cast<double>(bits);
 }
 } // namespace
 
@@ -652,7 +652,7 @@ bool reads_back(const std::string& digits, int e, double v)
 {
     const std::string text = digits + "e" + std::to_string(e);
     // (compared bit for bit: v is positive and finite, and -Wfloat-equal)
-    return reinterpret_bits<std::uint64_t>(parse_double(text)) == reinterpret_bits<std::uint64_t>(v);
+    return bit_cast<std::uint64_t>(parse_double(text)) == bit_cast<std::uint64_t>(v);
 }
 
 /// Check the representation of a positive finite double: it reads back as
@@ -665,7 +665,7 @@ void check_shortest(double v)
     CAPTURE(text)
     CHECK(parse_double(text) == v);
     // the layout is that of format_buffer() for the digits of Zmij
-    const auto sd = nlohmann::detail::zmij::to_shortest(reinterpret_bits<std::uint64_t>(v));
+    const auto sd = nlohmann::detail::zmij::to_shortest(bit_cast<std::uint64_t>(v));
     const std::uint64_t significand = sd.has_digit ? (sd.integral * 10) + sd.digit : sd.integral;
     int exponent = sd.has_digit ? sd.exponent : sd.exponent + 1;
     std::string significand_digits = std::to_string(significand);
@@ -779,7 +779,7 @@ TEST_CASE("shortest digits of doubles")
         for (int i = 0; i < 100000; ++i)
         {
             const std::uint64_t bits = rng() & 0x7FFFFFFFFFFFFFFFu;
-            const auto v = reinterpret_bits<double>(bits);
+            const auto v = bit_cast<double>(bits);
             if (std::isfinite(v) && bits != 0)
             {
                 check_shortest(v);

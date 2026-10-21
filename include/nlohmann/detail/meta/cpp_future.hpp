@@ -10,17 +10,26 @@
 #pragma once
 
 #include <cstddef> // size_t
-#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
+#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_arithmetic, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // index_sequence, make_index_sequence, index_sequence_for
 
 #include <nlohmann/detail/macro_scope.hpp>
+
+#ifdef JSON_HAS_CPP_17
+    #include <algorithm> // clamp
+#endif
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
-template<typename T>
-using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+#ifdef __cpp_lib_remove_cvref
+    template<typename T>
+    using uncvref_t = std::remove_cvref_t<T>;
+#else
+    template<typename T>
+    using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+#endif
 
 #ifdef JSON_HAS_CPP_14
 
@@ -159,6 +168,19 @@ struct static_const
     template<typename T>
     constexpr T static_const<T>::value;
 #endif
+
+/// @a v bounded to [@a lo, @a hi] (requires !(hi < lo)); like std::clamp,
+/// but by value, so that static constexpr members can be passed without an
+/// out-of-line definition before C++17
+template<typename T, enable_if_t<std::is_arithmetic<T>::value, int> = 0>
+constexpr T clamp(T v, T lo, T hi) noexcept
+{
+#ifdef __cpp_lib_clamp
+    return std::clamp(v, lo, hi);
+#else
+    return v < lo ? lo : (hi < v ? hi : v);
+#endif
+}
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

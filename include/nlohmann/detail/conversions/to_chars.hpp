@@ -18,9 +18,6 @@
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
 
-#ifdef _MSC_VER
-    #include <cstdlib> // _byteswap_uint64
-#endif
 
 // SSE2 (every x86-64 CPU) and NEON (every 64-bit Arm CPU) convert the 16
 // digits of a double at once
@@ -37,6 +34,7 @@
     #define JSON_DTOA_NEON 0
 #endif
 
+#include <nlohmann/detail/bit_ops.hpp>
 #include <nlohmann/detail/conversions/zmij.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
@@ -65,16 +63,6 @@ For a detailed description of the algorithm see:
 */
 namespace dtoa_impl
 {
-
-template<typename Target, typename Source>
-Target reinterpret_bits(const Source source)
-{
-    static_assert(sizeof(Target) == sizeof(Source), "size mismatch");
-
-    Target target;
-    std::memcpy(&target, &source, sizeof(Source));
-    return target;
-}
 
 struct diyfp // f * 2^e
 {
@@ -230,7 +218,7 @@ boundaries compute_boundaries(FloatType value)
 
     using bits_type = typename std::conditional<kPrecision == 24, std::uint32_t, std::uint64_t >::type;
 
-    const auto bits = static_cast<std::uint64_t>(reinterpret_bits<bits_type>(value));
+    const auto bits = static_cast<std::uint64_t>(bit_cast<bits_type>(value));
     const std::uint64_t E = bits >> (kPrecision - 1);
     const std::uint64_t F = bits & (kHiddenBit - 1);
 
@@ -1084,13 +1072,10 @@ inline std::uint64_t eight_digit_bytes(std::uint64_t abcdefgh) noexcept
 /// the byte stores once this is inlined)
 inline void store_msb_first(char* p, std::uint64_t v) noexcept
 {
-#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    v = __builtin_bswap64(v);
+#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || defined(_MSC_VER) // (MSVC: little-endian on all its targets)
+    v = byteswap(v);
     std::memcpy(p, &v, sizeof(v));
 #elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    std::memcpy(p, &v, sizeof(v));
-#elif defined(_MSC_VER) // (little-endian on all its targets)
-    v = _byteswap_uint64(v);
     std::memcpy(p, &v, sizeof(v));
 #else
     for (unsigned i = 0; i < 8; ++i)
@@ -1462,8 +1447,7 @@ char* write_positive_zmij(char* first, const char* last, FloatType value)
 {
     static_assert(is_binary64<FloatType>::value,
                   "internal error: the conversion of Zmij needs IEEE 754 binary64 numbers");
-    std::uint64_t bits = 0;
-    std::memcpy(&bits, &value, sizeof(bits));
+    const auto bits = bit_cast<std::uint64_t>(value);
     const zmij::shortest_decimal d = zmij::to_shortest(bits);
     if (JSON_HEDLEY_LIKELY(last - first >= 41))
     {
