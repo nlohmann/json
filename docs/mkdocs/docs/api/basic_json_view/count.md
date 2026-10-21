@@ -28,7 +28,8 @@ No-throw guarantee: this function never throws exceptions.
 Linear in the number of members: unlike the lookup functions, `count()` does not stop at the first match, because it
 has to count every member with the key. Members are compared one after another, in document order. Each comparison
 first checks the key's length -- already known from the index, without reading the key bytes -- before comparing its
-content.
+content. The hash index of the keys of objects with 128 or more members does not help here, since every member
+is visited.
 
 ## Notes
 
