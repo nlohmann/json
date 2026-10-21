@@ -160,7 +160,7 @@ void check_round_trip(const Document& d)
     CHECK(e.root().dump() == d.root().dump());
 }
 
-std::uint32_t rng()
+std::uint32_t image_rng()
 {
     static std::mt19937 generator(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
     // result_type is std::uint_fast32_t, which may be wider than 32 bits
@@ -1203,12 +1203,12 @@ TEST_CASE("json_view images: damaged images")
         for (int round = 0; round < 3000; ++round)
         {
             std::vector<std::uint8_t> b = image;
-            const std::uint32_t flips = 1 + (rng() % 3);
+            const std::uint32_t flips = 1 + (image_rng() % 3);
             for (std::uint32_t k = 0; k < flips; ++k)
             {
                 // mostly the nodes, where the damage matters most
-                const std::size_t at = rng() % 4 != 0 ? header_size + (rng() % (b.size() - header_size)) : rng() % b.size();
-                b[at] = static_cast<std::uint8_t>(rng() % 3 == 0 ? rng() : b[at] ^ (1u << (rng() % 8)));
+                const std::size_t at = image_rng() % 4 != 0 ? header_size + (image_rng() % (b.size() - header_size)) : image_rng() % b.size();
+                b[at] = static_cast<std::uint8_t>(image_rng() % 3 == 0 ? image_rng() : b[at] ^ (1u << (image_rng() % 8)));
             }
             for (const image_check check :
                     {
