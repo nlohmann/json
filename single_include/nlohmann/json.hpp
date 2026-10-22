@@ -32303,6 +32303,8 @@ namespace detail
 // JSON Canonicalization Scheme (RFC 8785) helpers     //
 /////////////////////////////////////////////////////////
 
+// Note: next_utf16_code_unit decodes code units for ordering without validating
+// continuation bytes; strict validation is performed during dump_escaped().
 inline bool next_utf16_code_unit(const char*& p, const char* end, std::uint16_t& pending_surrogate, std::uint16_t& out_code_unit) noexcept
 {
     if (pending_surrogate != 0)
@@ -32401,6 +32403,8 @@ struct utf16_code_unit_less
     }
 };
 
+// Note: pos is passed by value and returned as a scalar for performance
+// (avoiding reference aliasing overhead in tight loops).
 inline std::size_t append_exponent_ecmascript(std::array<char, 128>& buf, std::size_t pos, int e) noexcept
 {
     if (e < 0)
@@ -32681,19 +32685,19 @@ class serializer
 
             case value_t::number_integer:
             {
-                dump_integer(val.m_data.m_value.number_integer);
+                dump_float_canonical(static_cast<double>(val.m_data.m_value.number_integer), &val);
                 return;
             }
 
             case value_t::number_unsigned:
             {
-                dump_integer(val.m_data.m_value.number_unsigned);
+                dump_float_canonical(static_cast<double>(val.m_data.m_value.number_unsigned), &val);
                 return;
             }
 
             case value_t::number_float:
             {
-                dump_float_canonical(val.m_data.m_value.number_float, &val);
+                dump_float_canonical(static_cast<double>(val.m_data.m_value.number_float), &val);
                 return;
             }
 
@@ -32919,9 +32923,9 @@ class serializer
     }
 
     /*!
-    @brief dump a floating-point number according to RFC 8785 (ECMAScript Number::toString)
+    @brief dump a number according to RFC 8785 (ECMAScript Number::toString modeled as IEEE 754 binary64 double)
     */
-    void dump_float_canonical(number_float_t x, const BasicJsonType* context)
+    void dump_float_canonical(double x, const BasicJsonType* context)
     {
         if (!std::isfinite(x))
         {
@@ -32932,7 +32936,7 @@ class serializer
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-        const bool is_zero = (x == 0);
+        const bool is_zero = (x == 0.0);
 #if defined(__GNUC__) || defined(__clang__)
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
@@ -32952,7 +32956,7 @@ class serializer
         std::array<char, 128> buf{{}};
         std::size_t len = 0;
         int decimal_exponent = 0;
-        get_shortest_digits(x, buf, len, decimal_exponent, typename dtoa_impl::is_binary64<number_float_t>::type{});
+        get_shortest_digits(x, buf, len, decimal_exponent, std::true_type{});
 
         const std::size_t str_len = format_buffer_ecmascript(buf, len, decimal_exponent);
         put_buffer(buf, str_len);

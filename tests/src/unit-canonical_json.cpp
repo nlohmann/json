@@ -106,6 +106,15 @@ TEST_CASE("canonical JSON serialization (RFC 8785 / JCS)")
         CHECK(json(9007199254740992.0).dump_canonical() == "9007199254740992");
         CHECK(json(-9007199254740992.0).dump_canonical() == "-9007199254740992");
 
+        // 64-bit integer values formatted according to IEEE 754 binary64 rules
+        CHECK(json(9007199254740992LL).dump_canonical() == "9007199254740992");
+        CHECK(json(9007199254740993LL).dump_canonical() == "9007199254740992");
+        CHECK(json(-9007199254740993LL).dump_canonical() == "-9007199254740992");
+        CHECK(json(18446744073709551615ULL).dump_canonical() == "18446744073709552000");
+
+        // Single-precision float formatted according to IEEE 754 double value
+        CHECK(json(0.1f).dump_canonical() == "0.10000000149011612");
+
         // Exponential range: |x| < 1e-6 or |x| >= 1e21
         CHECK(json(9.999999999999997e-7).dump_canonical() == "9.999999999999997e-7");
         CHECK(json(1e21).dump_canonical() == "1e+21");
@@ -220,6 +229,16 @@ TEST_CASE("canonical JSON serialization (RFC 8785 / JCS)")
         CHECK_THROWS_WITH_AS(static_cast<void>(j_disc.dump_canonical()),
                              "[json.exception.type_error.317] type cannot be serialized in canonical JSON (RFC 8785): discarded",
                              json::type_error&);
+
+        // Lone surrogates are rejected (RFC 8785 Section 3.2.2.2)
+        json j_high_surrogate = "\xED\xA0\x80";
+        CHECK_THROWS_AS(static_cast<void>(j_high_surrogate.dump_canonical()), json::type_error&);
+
+        json j_low_surrogate = "\xED\xBF\xBF";
+        CHECK_THROWS_AS(static_cast<void>(j_low_surrogate.dump_canonical()), json::type_error&);
+
+        json j_surrogate_key = {{"\xED\xA0\x80", 1}};
+        CHECK_THROWS_AS(static_cast<void>(j_surrogate_key.dump_canonical()), json::type_error&);
     }
 
     SECTION("static dump_canonical with output adapter")
