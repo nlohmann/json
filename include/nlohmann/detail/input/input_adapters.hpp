@@ -8,17 +8,18 @@
 
 #pragma once
 
-#include <algorithm> // count, find, min
+#include <algorithm> // count, find, max, min
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
 #include <cstring> // strlen
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next, reverse_iterator
 #include <limits> // numeric_limits
+#include <memory> // unique_ptr
 #include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
-#include <utility> // pair, declval
+#include <utility> // declval, move, pair
 #include <vector> // vector
 
 #ifndef JSON_NO_IO
@@ -84,19 +85,16 @@ class token_carry_buffer
     token_carry_buffer(const token_carry_buffer&) = delete;
     token_carry_buffer& operator=(const token_carry_buffer&) = delete;
     token_carry_buffer(token_carry_buffer&& rhs) noexcept
-        : m_begin(rhs.m_begin), m_end(rhs.m_end), m_capacity_end(rhs.m_capacity_end)
+        : m_data(std::move(rhs.m_data)), m_end(rhs.m_end), m_capacity_end(rhs.m_capacity_end)
     {
-        rhs.m_begin = rhs.m_end = rhs.m_capacity_end = nullptr;
+        rhs.m_end = rhs.m_capacity_end = nullptr;
     }
     token_carry_buffer& operator=(token_carry_buffer&&) = delete;
-    ~token_carry_buffer()
-    {
-        delete[] m_begin;
-    }
+    ~token_carry_buffer() = default;
 
     void clear() noexcept
     {
-        m_end = m_begin;
+        m_end = m_data.get();
     }
 
     void push_back(char c)
@@ -125,32 +123,27 @@ class token_carry_buffer
     /// replace the contents of @a out
     void copy_to(std::vector<char>& out) const
     {
-        out.assign(m_begin, m_end);
+        out.assign(m_data.get(), m_end);
     }
 
   private:
     /// make room for @a extra more characters
     JSON_HEDLEY_NEVER_INLINE void grow(std::size_t extra)
     {
-        const auto size = static_cast<std::size_t>(m_end - m_begin);
-        const auto capacity = static_cast<std::size_t>(m_capacity_end - m_begin);
-        std::size_t new_capacity = capacity < 32 ? 32 : 2 * capacity;
-        if (new_capacity < size + extra)
-        {
-            new_capacity = size + extra;
-        }
-        char* const data = new char[new_capacity];
+        const auto size = static_cast<std::size_t>(m_end - m_data.get());
+        const auto capacity = static_cast<std::size_t>(m_capacity_end - m_data.get());
+        const std::size_t new_capacity = (std::max)(capacity < 32 ? static_cast<std::size_t>(32) : 2 * capacity, size + extra);
+        std::unique_ptr<char[]> data(new char[new_capacity]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         if (size != 0)
         {
-            std::memcpy(data, m_begin, size);
+            std::memcpy(data.get(), m_data.get(), size);
         }
-        delete[] m_begin;
-        m_begin = data;
-        m_end = data + size;
-        m_capacity_end = data + new_capacity;
+        m_data = std::move(data);
+        m_end = m_data.get() + size;
+        m_capacity_end = m_data.get() + new_capacity;
     }
 
-    char* m_begin = nullptr;
+    std::unique_ptr<char[]> m_data{}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,readability-redundant-member-init)
     char* m_end = nullptr;
     char* m_capacity_end = nullptr;
 };
