@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <algorithm> // all_of
+#include <algorithm> // all_of, copy
 #include <array> // array
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
@@ -104,8 +104,7 @@ class json_pointer
                 for (const auto& reference_token : reference_tokens)
                 {
                     *out++ = '/';
-                    std::memcpy(out, reference_token.data(), reference_token.size());
-                    out += reference_token.size();
+                    out = std::copy(reference_token.data(), reference_token.data() + reference_token.size(), out);
                 }
             }
             return result;
