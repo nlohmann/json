@@ -26,7 +26,6 @@ using json_view_test::has_duplicate_keys;
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <iomanip>
 #include <map>
@@ -630,14 +629,27 @@ TEST_CASE("json_view large objects")
             }
             return farthest;
         };
+        // the keys of a printf-like pattern with one %d, %0Nd or %0Nx, formatted with a stream
+        // (a format string that is not a literal is a Flawfinder error)
         const auto numbered = [](const char* format, int count, int step)
         {
+            const std::string pattern(format);
+            const std::size_t percent = pattern.find('%');
+            std::size_t conversion = percent + 1;
+            std::size_t width = 0;
+            while (pattern[conversion] >= '0' && pattern[conversion] <= '9')
+            {
+                width = width * 10 + static_cast<std::size_t>(pattern[conversion] - '0');
+                ++conversion;
+            }
+            const bool hex = pattern[conversion] == 'x';
             std::vector<std::string> keys;
             for (int i = 0; i < count; ++i)
             {
-                std::array<char, 64> buffer{};
-                static_cast<void>(std::snprintf(buffer.data(), buffer.size(), format, i * step)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                keys.emplace_back(buffer.data());
+                std::ostringstream key;
+                key << pattern.substr(0, percent) << std::setfill('0') << std::setw(static_cast<int>(width))
+                    << (hex ? std::hex : std::dec) << i * step << pattern.substr(conversion + 1);
+                keys.push_back(key.str());
             }
             return keys;
         };
