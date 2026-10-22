@@ -874,7 +874,7 @@ class json_pointer
                     // an index of up to 18 digits without a leading zero fits into size_type
                     // (9 digits for a 32-bit size_type); everything else is left to json_pointer
                     constexpr std::size_t max_digits = sizeof(typename BasicJsonType::size_type) >= 8 ? 18 : 9;
-                    const std::size_t digits = static_cast<std::size_t>(end - begin);
+                    const auto digits = static_cast<std::size_t>(end - begin);
                     if (JSON_HEDLEY_UNLIKELY(digits == 0 || digits > max_digits || (digits > 1 && *begin == '0')))
                     {
                         return nullptr;
@@ -1575,7 +1575,7 @@ class json_pointer
                 std::size_t rest = i;
                 do
                 {
-                    digits[--pos] = static_cast<char>('0' + rest % 10);
+                    digits[--pos] = static_cast<char>('0' + (rest % 10));
                     rest /= 10;
                 }
                 while (rest != 0);

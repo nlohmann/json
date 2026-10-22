@@ -19,6 +19,7 @@
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
 #include <algorithm> // all_of, find, for_each, none_of
+#include <array> // array
 #include <cmath> // isnan
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <cstdint> // uint8_t
@@ -23224,7 +23225,7 @@ class json_pointer
                     // an index of up to 18 digits without a leading zero fits into size_type
                     // (9 digits for a 32-bit size_type); everything else is left to json_pointer
                     constexpr std::size_t max_digits = sizeof(typename BasicJsonType::size_type) >= 8 ? 18 : 9;
-                    const std::size_t digits = static_cast<std::size_t>(end - begin);
+                    const auto digits = static_cast<std::size_t>(end - begin);
                     if (JSON_HEDLEY_UNLIKELY(digits == 0 || digits > max_digits || (digits > 1 && *begin == '0')))
                     {
                         return nullptr;
@@ -23925,7 +23926,7 @@ class json_pointer
                 std::size_t rest = i;
                 do
                 {
-                    digits[--pos] = static_cast<char>('0' + rest % 10);
+                    digits[--pos] = static_cast<char>('0' + (rest % 10));
                     rest /= 10;
                 }
                 while (rest != 0);
@@ -39956,7 +39957,7 @@ public:
         // added without looking them up
         basic_json entry(value_t::object);
         auto& members = *entry.m_data.m_value.object;
-        typename object_t::iterator hint = members.end();
+        auto hint = members.end();
         json_pointer::add_flattened(members, hint, string_t("op"), string_t(op), detail::priority_tag<2> {});
         json_pointer::add_flattened(members, hint, string_t("path"), path, detail::priority_tag<2> {});
         if (value != nullptr)
@@ -39992,9 +39993,13 @@ public:
     class diff_target_values
     {
       public:
-        diff_target_values() = default;
+        diff_target_values() noexcept
+            : inline_items() // NOLINT(readability-redundant-member-init)
+        {}
         diff_target_values(const diff_target_values&) = delete;
         diff_target_values& operator=(const diff_target_values&) = delete;
+        diff_target_values(diff_target_values&&) = delete;
+        diff_target_values& operator=(diff_target_values&&) = delete;
         ~diff_target_values() = default;
 
         void reserve(const std::size_t n)
@@ -40023,10 +40028,18 @@ public:
 
       private:
         static constexpr std::size_t inline_size = 16;
+        /// the values of a small object, left uninitialized: they are written
+        /// before they are read (the user-provided constructor keeps the
+        /// member initialization, which -Weffc++ asks for, from zeroing them)
+        struct uninitialized_items : std::array<const basic_json*, inline_size>
+        {
+            uninitialized_items() noexcept {} // NOLINT(modernize-use-equals-default,hicpp-use-equals-default,cppcoreguidelines-pro-type-member-init,hicpp-member-init): see above
+        };
+
         std::size_t count = 0;
-        const basic_json** items = inline_items;
         std::vector<const basic_json*> large{}; // NOLINT(readability-redundant-member-init)
-        const basic_json* inline_items[inline_size]; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+        uninitialized_items inline_items;
+        const basic_json** items = inline_items.data();
     };
 
     /// @brief append "/" and the decimal representation of @a index to @a path
