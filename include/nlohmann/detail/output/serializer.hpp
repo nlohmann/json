@@ -140,16 +140,16 @@ struct utf16_code_unit_less
     }
 };
 
-inline char* append_exponent_ecmascript(char* buf, int e) noexcept
+inline std::size_t append_exponent_ecmascript(std::array<char, 128>& buf, std::size_t pos, int e) noexcept
 {
     if (e < 0)
     {
-        *buf++ = '-';
+        buf[pos++] = '-';
         e = -e;
     }
     else
     {
-        *buf++ = '+';
+        buf[pos++] = '+';
     }
 
     std::array<char, 16> temp{{}};
@@ -157,8 +157,8 @@ inline char* append_exponent_ecmascript(char* buf, int e) noexcept
     auto val = static_cast<std::uint32_t>(e);
     if (val == 0)
     {
-        *buf++ = '0';
-        return buf;
+        buf[pos++] = '0';
+        return pos;
     }
     while (val > 0)
     {
@@ -167,56 +167,57 @@ inline char* append_exponent_ecmascript(char* buf, int e) noexcept
     }
     while (idx > 0)
     {
-        *buf++ = temp[--idx];
+        buf[pos++] = temp[--idx];
     }
-    return buf;
+    return pos;
 }
 
-inline char* format_buffer_ecmascript(char* buf, int len, int decimal_exponent) noexcept
+inline std::size_t format_buffer_ecmascript(std::array<char, 128>& buf, std::size_t len, int decimal_exponent) noexcept
 {
-    const int k = len;
-    const int n = len + decimal_exponent;
+    const auto k = static_cast<int>(len);
+    const int n = k + decimal_exponent;
 
     if (k <= n && n <= 21)
     {
-        std::memset(buf + k, '0', static_cast<std::size_t>(n - k));
-        return buf + n;
+        std::memset(buf.data() + k, '0', static_cast<std::size_t>(n - k));
+        return static_cast<std::size_t>(n);
     }
 
     if (0 < n && n <= 21)
     {
-        std::memmove(buf + (n + 1), buf + n, static_cast<std::size_t>(k - n));
-        buf[n] = '.';
-        return buf + (k + 1);
+        std::memmove(buf.data() + (n + 1), buf.data() + n, static_cast<std::size_t>(k - n));
+        buf[static_cast<std::size_t>(n)] = '.';
+        return static_cast<std::size_t>(k + 1);
     }
 
     if (-6 < n && n <= 0)
     {
         const auto zeros = static_cast<std::size_t>(-n);
-        std::memmove(buf + (2 + zeros), buf, static_cast<std::size_t>(k));
+        std::memmove(buf.data() + (2 + zeros), buf.data(), static_cast<std::size_t>(k));
         buf[0] = '0';
         buf[1] = '.';
-        std::memset(buf + 2, '0', zeros);
-        return buf + (2 + zeros + static_cast<std::size_t>(k));
+        std::memset(buf.data() + 2, '0', zeros);
+        return 2 + zeros + static_cast<std::size_t>(k);
     }
 
+    std::size_t pos = 0;
     if (k == 1)
     {
-        buf += 1;
+        pos = 1;
     }
     else
     {
-        std::memmove(buf + 2, buf + 1, static_cast<std::size_t>(k - 1));
+        std::memmove(buf.data() + 2, buf.data() + 1, static_cast<std::size_t>(k - 1));
         buf[1] = '.';
-        buf += 1 + static_cast<std::size_t>(k);
+        pos = 1 + static_cast<std::size_t>(k);
     }
 
-    *buf++ = 'e';
-    return append_exponent_ecmascript(buf, n - 1);
+    buf[pos++] = 'e';
+    return append_exponent_ecmascript(buf, pos, n - 1);
 }
 
 template<typename FloatType>
-inline void get_shortest_digits(FloatType x, char* buf, int& len, int& decimal_exponent, std::true_type /*is_binary64*/)
+inline void get_shortest_digits(FloatType x, std::array<char, 128>& buf, std::size_t& len, int& decimal_exponent, std::true_type /*is_binary64*/)
 {
     std::uint64_t bits = 0;
     std::memcpy(&bits, &x, sizeof(bits));
@@ -251,9 +252,11 @@ inline void get_shortest_digits(FloatType x, char* buf, int& len, int& decimal_e
 }
 
 template<typename FloatType>
-inline void get_shortest_digits(FloatType x, char* buf, int& len, int& decimal_exponent, std::false_type /*is_binary64*/)
+inline void get_shortest_digits(FloatType x, std::array<char, 128>& buf, std::size_t& len, int& decimal_exponent, std::false_type /*is_binary64*/)
 {
-    ::nlohmann::detail::dtoa_impl::grisu2(buf, len, decimal_exponent, x);
+    int l = 0;
+    ::nlohmann::detail::dtoa_impl::grisu2(buf.data(), l, decimal_exponent, x);
+    len = static_cast<std::size_t>(l);
 }
 
 ///////////////////
@@ -352,11 +355,27 @@ class serializer
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
+    using value_type = typename BasicJsonType::object_t::value_type;
+
+    static std::vector<const value_type*> sort_canonical_object_elements(const typename BasicJsonType::object_t& obj)
+    {
+        std::vector<const value_type*> sorted_elements;
+        sorted_elements.reserve(obj.size());
+        for (const auto& el : obj)
+        {
+            sorted_elements.push_back(&el);
+        }
+        std::sort(sorted_elements.begin(), sorted_elements.end(),
+                  [](const value_type * a, const value_type * b)
+        {
+            return utf16_code_unit_less{}(a->first, b->first);
+        });
+        return sorted_elements;
+    }
+
     /// @brief a container that has been opened for iterative canonical dump
     struct canonical_dump_frame
     {
-        using value_type = typename BasicJsonType::object_t::value_type;
-
         const BasicJsonType* container;
         std::vector<const value_type*> sorted_elements{};
         std::size_t current_idx = 0;
@@ -366,17 +385,7 @@ class serializer
         {
             if (c->is_object())
             {
-                const auto* obj = c->m_data.m_value.object;
-                sorted_elements.reserve(obj->size());
-                for (const auto& el : *obj)
-                {
-                    sorted_elements.push_back(&el);
-                }
-                std::sort(sorted_elements.begin(), sorted_elements.end(),
-                          [](const value_type * a, const value_type * b)
-                {
-                    return utf16_code_unit_less{}(a->first, b->first);
-                });
+                sorted_elements = sort_canonical_object_elements(*c->m_data.m_value.object);
             }
         }
     };
@@ -435,6 +444,11 @@ class serializer
 
             case value_t::object:
             case value_t::array:
+            {
+                JSON_ASSERT(false);
+                JSON_THROW(type_error::create(exception_id::type_not_serializable, concat("containers cannot be serialized by dump_canonical_scalar(): ", val.type_name()), &val));
+            }
+
             case value_t::binary:
             case value_t::discarded:
             default:
@@ -476,56 +490,57 @@ class serializer
         std::vector<canonical_dump_frame> stack;
         stack.emplace_back(&val);
 
+        auto push_or_dump_child = [this, &stack](const BasicJsonType& child)
+        {
+            if (child.is_object())
+            {
+                if (child.m_data.m_value.object->empty())
+                {
+                    put_literal("{}");
+                }
+                else
+                {
+                    put_char('{');
+                    stack.emplace_back(&child);
+                }
+            }
+            else if (child.is_array())
+            {
+                if (child.m_data.m_value.array->empty())
+                {
+                    put_literal("[]");
+                }
+                else
+                {
+                    put_char('[');
+                    stack.emplace_back(&child);
+                }
+            }
+            else
+            {
+                dump_canonical_scalar(child);
+            }
+        };
+
         while (!stack.empty())
         {
-            canonical_dump_frame& frame = stack.back();
-
-            if (frame.container->is_object())
+            if (stack.back().container->is_object())
             {
-                if (frame.current_idx < frame.sorted_elements.size())
+                if (stack.back().current_idx < stack.back().sorted_elements.size())
                 {
-                    if (frame.current_idx > 0)
+                    if (stack.back().current_idx > 0)
                     {
                         put_char(',');
                     }
 
-                    const auto* elem = frame.sorted_elements[frame.current_idx];
-                    ++frame.current_idx;
+                    const auto* elem = stack.back().sorted_elements[stack.back().current_idx];
+                    ++stack.back().current_idx;
 
                     put_char('"');
                     dump_escaped(elem->first);
-                    put_char('"');
-                    put_char(':');
+                    put_literal("\":");
 
-                    const BasicJsonType& child = elem->second;
-                    if (child.is_object())
-                    {
-                        if (child.m_data.m_value.object->empty())
-                        {
-                            put_literal("{}");
-                        }
-                        else
-                        {
-                            put_char('{');
-                            stack.emplace_back(&child);
-                        }
-                    }
-                    else if (child.is_array())
-                    {
-                        if (child.m_data.m_value.array->empty())
-                        {
-                            put_literal("[]");
-                        }
-                        else
-                        {
-                            put_char('[');
-                            stack.emplace_back(&child);
-                        }
-                    }
-                    else
-                    {
-                        dump_canonical_scalar(child);
-                    }
+                    push_or_dump_child(elem->second);
                 }
                 else
                 {
@@ -535,45 +550,18 @@ class serializer
             }
             else // is_array
             {
-                const auto* arr = frame.container->m_data.m_value.array;
-                if (frame.current_idx < arr->size())
+                const auto* arr = stack.back().container->m_data.m_value.array;
+                if (stack.back().current_idx < arr->size())
                 {
-                    if (frame.current_idx > 0)
+                    if (stack.back().current_idx > 0)
                     {
                         put_char(',');
                     }
 
-                    const BasicJsonType& child = (*arr)[frame.current_idx];
-                    ++frame.current_idx;
+                    const BasicJsonType& child = (*arr)[stack.back().current_idx];
+                    ++stack.back().current_idx;
 
-                    if (child.is_object())
-                    {
-                        if (child.m_data.m_value.object->empty())
-                        {
-                            put_literal("{}");
-                        }
-                        else
-                        {
-                            put_char('{');
-                            stack.emplace_back(&child);
-                        }
-                    }
-                    else if (child.is_array())
-                    {
-                        if (child.m_data.m_value.array->empty())
-                        {
-                            put_literal("[]");
-                        }
-                        else
-                        {
-                            put_char('[');
-                            stack.emplace_back(&child);
-                        }
-                    }
-                    else
-                    {
-                        dump_canonical_scalar(child);
-                    }
+                    push_or_dump_child(child);
                 }
                 else
                 {
@@ -608,20 +596,7 @@ class serializer
 
                 put_char('{');
 
-                using value_type = typename BasicJsonType::object_t::value_type;
-                std::vector<const value_type*> sorted_elements;
-                sorted_elements.reserve(obj->size());
-                for (const auto& el : *obj)
-                {
-                    sorted_elements.push_back(&el);
-                }
-
-                std::sort(sorted_elements.begin(), sorted_elements.end(),
-                          [](const value_type * a, const value_type * b)
-                {
-                    return utf16_code_unit_less{}(a->first, b->first);
-                });
-
+                const auto sorted_elements = sort_canonical_object_elements(*obj);
                 for (std::size_t i = 0; i < sorted_elements.size(); ++i)
                 {
                     if (i > 0)
@@ -630,8 +605,7 @@ class serializer
                     }
                     put_char('"');
                     dump_escaped(sorted_elements[i]->first);
-                    put_char('"');
-                    put_char(':');
+                    put_literal("\":");
                     dump_canonical_internal(sorted_elements[i]->second, depth + 1);
                 }
 
@@ -693,12 +667,12 @@ class serializer
             JSON_THROW(out_of_range::create(exception_id::number_overflow, "cannot serialize non-finite numbers in canonical mode", context));
         }
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         const bool is_zero = (x == 0);
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
 
@@ -715,13 +689,11 @@ class serializer
         }
 
         std::array<char, 128> buf{{}};
-        int len = 0;
+        std::size_t len = 0;
         int decimal_exponent = 0;
-        get_shortest_digits(x, buf.data(), len, decimal_exponent, typename dtoa_impl::is_binary64<number_float_t>::type{});
+        get_shortest_digits(x, buf, len, decimal_exponent, typename dtoa_impl::is_binary64<number_float_t>::type{});
 
-        const char* const end = format_buffer_ecmascript(buf.data(), len, decimal_exponent);
-        const auto str_len = static_cast<std::size_t>(end - buf.data());
-
+        const std::size_t str_len = format_buffer_ecmascript(buf, len, decimal_exponent);
         put_buffer(buf, str_len);
     }
 

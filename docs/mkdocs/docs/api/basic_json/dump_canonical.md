@@ -100,4 +100,4 @@ The canonical serialization strictly adheres to [RFC 8785](https://datatracker.i
 
 ## Version history
 
-- Added in version 3.12.0.
+- Added in version 3.13.0.
