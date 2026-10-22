@@ -720,7 +720,7 @@ TEST_CASE("a write that throws leaves the same bytes in every kind of output")
         CHECK_THROWS_AS(json::to_cbor(document, as_string, strict), json::type_error&);
         CHECK_THROWS_AS(json::to_cbor(document, as_stream, strict), json::type_error&);
         CHECK(!as_vector.empty());
-        CHECK(std::string(as_vector.begin(), as_vector.end()) == as_string);
+        CHECK(std::string(reinterpret_cast<const char*>(as_vector.data()), as_vector.size()) == as_string); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         CHECK(as_stream.str() == as_string);
     }
 
@@ -733,7 +733,7 @@ TEST_CASE("a write that throws leaves the same bytes in every kind of output")
         CHECK_THROWS_AS(json::to_msgpack(document, as_string, strict), json::type_error&);
         CHECK_THROWS_AS(json::to_msgpack(document, as_stream, strict), json::type_error&);
         CHECK(!as_vector.empty());
-        CHECK(std::string(as_vector.begin(), as_vector.end()) == as_string);
+        CHECK(std::string(reinterpret_cast<const char*>(as_vector.data()), as_vector.size()) == as_string); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         CHECK(as_stream.str() == as_string);
     }
 
@@ -746,7 +746,7 @@ TEST_CASE("a write that throws leaves the same bytes in every kind of output")
         CHECK_THROWS_AS(json::to_ubjson(document, as_string, false, false, strict), json::type_error&);
         CHECK_THROWS_AS(json::to_ubjson(document, as_stream, false, false, strict), json::type_error&);
         CHECK(!as_vector.empty());
-        CHECK(std::string(as_vector.begin(), as_vector.end()) == as_string);
+        CHECK(std::string(reinterpret_cast<const char*>(as_vector.data()), as_vector.size()) == as_string); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         CHECK(as_stream.str() == as_string);
     }
 
