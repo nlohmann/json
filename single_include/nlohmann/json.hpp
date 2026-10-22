@@ -8574,7 +8574,8 @@ class token_carry_buffer
     void append(const char* first, const char* last)
     {
         const auto n = static_cast<std::size_t>(last - first);
-        if (n > static_cast<std::size_t>(m_capacity_end - m_end))
+        const auto room = static_cast<std::size_t>(m_capacity_end - m_end);
+        if (n > room)
         {
             grow(n);
         }
