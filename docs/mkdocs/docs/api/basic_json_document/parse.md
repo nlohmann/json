@@ -21,17 +21,18 @@ static basic_json_document parse(IteratorType first, IteratorType last,
 
 Both overloads accept the same JSON text as [`BasicJsonType::parse()`](../basic_json/parse.md), with the same
 `ignore_comments`/`ignore_trailing_commas` options, but build a [`basic_json_document`](index.md) (a flat index into
-the input) instead of a tree of `BasicJsonType` values. They take the same inputs as `BasicJsonType::parse()`. Byte
-inputs that stay alive can be borrowed; all others (streams, `#!cpp FILE*`, wide characters, non-contiguous
-iterators) are read into a copy that the document owns -- see the Notes. Use [`parse_copy()`](parse_copy.md) to get an
-owned copy of a borrowable input as well.
+the input) instead of a tree of `BasicJsonType` values. They take the same inputs as `BasicJsonType::parse()`, plus a
+pointer to a null-terminated wide string, which `BasicJsonType::parse()` does not accept. Byte inputs that stay alive
+can be borrowed; all others (streams, `#!cpp FILE*`, wide characters, non-contiguous iterators) are read into a copy
+that the document owns -- see the Notes. Use [`parse_copy()`](parse_copy.md) to get an owned copy of a borrowable input
+as well.
 
 ## Template parameters
 
 `InputType`
 :   A compatible input, for instance:
 
-    - a `#!cpp std::string`, `#!cpp std::string_view`, or a C-style array of single-byte characters
+    - a `#!cpp std::string`, a `#!cpp std::string_view` (C++17), or a C-style array of single-byte characters
     - a pointer to a null-terminated string of single-byte characters (`#!cpp char`, `#!cpp signed char`,
       `#!cpp unsigned char`, `#!cpp std::uint8_t`)
     - a container for which `#!cpp obj.data()` and `#!cpp obj.size()` give contiguous single-byte access, e.g.
@@ -46,6 +47,10 @@ owned copy of a borrowable input as well.
 :   an input iterator type, for instance a pair of pointers such as `ptr` and `ptr + len`, or a pair of
     `#!cpp std::string::iterator`; the iterators of single-byte characters are borrowed or read like the byte inputs
     above, those of wide characters are converted to UTF-8
+
+Ill-formed UTF-16 and UTF-32 sequences are rejected: a lone surrogate, a high surrogate that is not followed by its low
+surrogate, and a code point above `U+10FFFF` all yield a
+[`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101).
 
 ## Parameters
 
@@ -155,3 +160,5 @@ buffer of a given length, pass a pair of pointers: `#!cpp parse(ptr, ptr + len)`
 ## Version history
 
 - Added in version 3.13.0.
+- Ill-formed UTF-16 and UTF-32 input (a lone surrogate, a high surrogate that is not followed by its low surrogate, or
+  a code point above `U+10FFFF`) is rejected with `parse_error.101`.

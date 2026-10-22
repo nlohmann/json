@@ -143,6 +143,12 @@ still refers to it -- including ones taken before the change -- reads the new va
 
 - [**source_offset**](source_offset.md) - byte offset of this value in the document's source text
 
+## See also
+
+- [basic_json_document](../basic_json_document/index.md) - the document a view refers into
+- [materialize](materialize.md) - build the `BasicJsonType` value of a subtree
+- [Zero-copy JSON views](../../features/json_view.md) - the concept behind documents and views
+
 ## Version history
 
 - Added in version 3.13.0.

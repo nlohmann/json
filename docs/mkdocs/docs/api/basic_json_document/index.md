@@ -115,6 +115,12 @@ points apply to every edit:
   [`source_offset()`](../basic_json_view/source_offset.md) of a value introduced by an edit is
   `#!cpp static_cast<std::size_t>(-1)`, the same value it reports for a decoded string.
 
+## See also
+
+- [basic_json_view](../basic_json_view/index.md) - the read-only handle to a value of a document
+- [json_document](../json_document.md) - the document type of the default specialization
+- [Zero-copy JSON views](../../features/json_view.md) - the concept behind documents and views
+
 ## Version history
 
 - Added in version 3.13.0.
