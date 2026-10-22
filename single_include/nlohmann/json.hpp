@@ -30178,14 +30178,6 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/value_t.hpp>
 
 
-// the short-string fast path of the serializer assembles words from little-endian
-// loads, see serializer::put_short_quoted()
-#if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-    #define JSON_DUMP_SHORT_STRINGS 1
-#else
-    #define JSON_DUMP_SHORT_STRINGS 0
-#endif
-
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
@@ -30223,7 +30215,7 @@ class serializer
 
     None of @a pretty_print_, @a ensure_ascii_ and @a indent_step_ change over
     the life of the serializer, so they are captured once here instead of
-    being threaded through every call to @ref dump, @ref dump_internal and
+    being threaded through every call to @ref dump, @ref dump_container and
     @ref dump_iteratively.
     */
     serializer(output_adapter_protocol<char>& s, const char ichar,
@@ -30270,18 +30262,18 @@ class serializer
     void dump(const BasicJsonType& val,
               const std::size_t current_indent = 0)
     {
-        dump_internal(val, current_indent);
+        dump_element(val, current_indent, 0);
         flush();
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
     /*!
-    @brief worker for @ref dump
+    @brief serialize the object or array @a val
 
-    Identical in behavior to the historical @ref dump, but writes into the
-    serializer's internal @ref write_buffer instead of issuing a virtual call
-    per token. The public @ref dump wraps this and flushes the buffer once the
-    top-level value has been serialized.
+    Writes into the serializer's internal @ref write_buffer instead of issuing
+    a virtual call per token; the public @ref dump flushes the buffer once the
+    top-level value has been serialized. Scalars are written by @ref dump_scalar,
+    which @ref dump_element calls without entering this function.
 
     Serializing a container descends into its elements, so a value nested deeply
     enough used to exhaust the call stack and terminate the process with no
@@ -30292,145 +30284,120 @@ class serializer
 
     @sa https://github.com/nlohmann/json/issues/5387
     */
-    void dump_internal(const BasicJsonType& val,
-                       const std::size_t current_indent = 0,
-                       const std::size_t depth = 0)
+    void dump_container(const BasicJsonType& val,
+                        const std::size_t current_indent,
+                        const std::size_t depth)
     {
-        switch (val.m_data.m_type)
+        JSON_ASSERT(val.m_data.m_type == value_t::object || val.m_data.m_type == value_t::array);
+
+        if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
         {
-            case value_t::object:
+            dump_iteratively(val, current_indent);
+            return;
+        }
+
+        if (val.m_data.m_type == value_t::object)
+        {
+            if (val.m_data.m_value.object->empty())
             {
-                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
+                put_literal("{}");
+                return;
+            }
+
+            if (pretty_print)
+            {
+                // variable to hold indentation for recursive calls
+                const auto new_indent = next_indent(current_indent, indent_step);
+
+                put_literal_indent("{\n", new_indent);
+
+                // first n-1 elements
+                auto i = val.m_data.m_value.object->cbegin();
+                for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                 {
-                    dump_iteratively(val, current_indent);
-                    return;
-                }
-
-                if (val.m_data.m_value.object->empty())
-                {
-                    put_literal("{}");
-                    return;
-                }
-
-                if (pretty_print)
-                {
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = next_indent(current_indent, indent_step);
-
-                    put_literal_indent("{\n", new_indent);
-
-                    // first n-1 elements
-                    auto i = val.m_data.m_value.object->cbegin();
-                    for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
-                    {
-                        put_quoted(i->first, "\": ");
-                        dump_element(i->second, new_indent, depth + 1);
-                        put_literal_indent(",\n", new_indent);
-                    }
-
-                    // last element
-                    JSON_ASSERT(i != val.m_data.m_value.object->cend());
-                    JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    put_quoted(i->first, "\": ");
+                    put_object_key(i->first, "\": ");
                     dump_element(i->second, new_indent, depth + 1);
-
-                    put_literal_indent("\n", current_indent);
-                    put_char('}');
-                }
-                else
-                {
-                    put_char('{');
-
-                    // first n-1 elements
-                    auto i = val.m_data.m_value.object->cbegin();
-                    for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
-                    {
-                        put_quoted(i->first, "\":");
-                        dump_element(i->second, current_indent, depth + 1);
-                        put_char(',');
-                    }
-
-                    // last element
-                    JSON_ASSERT(i != val.m_data.m_value.object->cend());
-                    JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    put_quoted(i->first, "\":");
-                    dump_element(i->second, current_indent, depth + 1);
-
-                    put_char('}');
+                    put_literal_indent(",\n", new_indent);
                 }
 
-                return;
+                // last element
+                JSON_ASSERT(i != val.m_data.m_value.object->cend());
+                JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
+                put_object_key(i->first, "\": ");
+                dump_element(i->second, new_indent, depth + 1);
+
+                put_literal_indent("\n", current_indent);
+                put_char('}');
             }
-
-            case value_t::array:
+            else
             {
-                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
+                put_char('{');
+
+                // first n-1 elements
+                auto i = val.m_data.m_value.object->cbegin();
+                for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                 {
-                    dump_iteratively(val, current_indent);
-                    return;
+                    put_object_key(i->first, "\":");
+                    dump_element(i->second, 0, depth + 1);
+                    put_char(',');
                 }
 
-                if (val.m_data.m_value.array->empty())
-                {
-                    put_literal("[]");
-                    return;
-                }
+                // last element
+                JSON_ASSERT(i != val.m_data.m_value.object->cend());
+                JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
+                put_object_key(i->first, "\":");
+                dump_element(i->second, 0, depth + 1);
 
-                if (pretty_print)
-                {
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = next_indent(current_indent, indent_step);
+                put_char('}');
+            }
+            return;
+        }
 
-                    put_literal_indent("[\n", new_indent);
+        if (val.m_data.m_value.array->empty())
+        {
+            put_literal("[]");
+            return;
+        }
 
-                    // first n-1 elements
-                    for (auto i = val.m_data.m_value.array->cbegin();
-                            i != val.m_data.m_value.array->cend() - 1; ++i)
-                    {
-                        dump_element(*i, new_indent, depth + 1);
-                        put_literal_indent(",\n", new_indent);
-                    }
+        if (pretty_print)
+        {
+            // variable to hold indentation for recursive calls
+            const auto new_indent = next_indent(current_indent, indent_step);
 
-                    // last element
-                    JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    dump_element(val.m_data.m_value.array->back(), new_indent, depth + 1);
+            put_literal_indent("[\n", new_indent);
 
-                    put_literal_indent("\n", current_indent);
-                    put_char(']');
-                }
-                else
-                {
-                    put_char('[');
-
-                    // first n-1 elements
-                    for (auto i = val.m_data.m_value.array->cbegin();
-                            i != val.m_data.m_value.array->cend() - 1; ++i)
-                    {
-                        dump_element(*i, current_indent, depth + 1);
-                        put_char(',');
-                    }
-
-                    // last element
-                    JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    dump_element(val.m_data.m_value.array->back(), current_indent, depth + 1);
-
-                    put_char(']');
-                }
-
-                return;
+            // first n-1 elements
+            for (auto i = val.m_data.m_value.array->cbegin();
+                    i != val.m_data.m_value.array->cend() - 1; ++i)
+            {
+                dump_element(*i, new_indent, depth + 1);
+                put_literal_indent(",\n", new_indent);
             }
 
-            case value_t::string:
-            case value_t::binary:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::discarded:
-            case value_t::null:
-            default:
-                dump_scalar(val, current_indent);
-                return;
+            // last element
+            JSON_ASSERT(!val.m_data.m_value.array->empty());
+            dump_element(val.m_data.m_value.array->back(), new_indent, depth + 1);
+
+            put_literal_indent("\n", current_indent);
+            put_char(']');
+        }
+        else
+        {
+            put_char('[');
+
+            // first n-1 elements
+            for (auto i = val.m_data.m_value.array->cbegin();
+                    i != val.m_data.m_value.array->cend() - 1; ++i)
+            {
+                dump_element(*i, 0, depth + 1);
+                put_char(',');
+            }
+
+            // last element
+            JSON_ASSERT(!val.m_data.m_value.array->empty());
+            dump_element(val.m_data.m_value.array->back(), 0, depth + 1);
+
+            put_char(']');
         }
     }
 
@@ -30438,7 +30405,7 @@ class serializer
     /*!
     @brief serialize an element of a container
 
-    Most elements are scalars, which need none of the state dump_internal() keeps
+    Most elements are scalars, which need none of the state dump_container() keeps
     for a container; writing them from here spares each the entry and exit of
     that function.
     */
@@ -30448,7 +30415,7 @@ class serializer
     {
         if (val.m_data.m_type == value_t::object || val.m_data.m_type == value_t::array)
         {
-            dump_internal(val, current_indent, depth);
+            dump_container(val, current_indent, depth);
         }
         else
         {
@@ -30459,7 +30426,7 @@ class serializer
     /*!
     @brief write out @a val and everything below it without the call stack
 
-    Emits the same bytes as @ref dump_internal, keeping the containers it has
+    Emits the same bytes as @ref dump_container, keeping the containers it has
     entered on an explicit stack instead of descending into them. Only reached
     for values nested deeper than @ref recursion_depth_limit, which is why it is not
     written for speed: walking every value this way measured up to 20% slower on
@@ -30487,8 +30454,7 @@ class serializer
                 {
                     if (pretty_print)
                     {
-                        put_char('\n');
-                        put_indent(frame.current_indent);
+                        put_literal_indent("\n", frame.current_indent);
                     }
 
                     put_char('}');
@@ -30517,11 +30483,11 @@ class serializer
 
                 if (pretty_print)
                 {
-                    put_quoted(frame.object_it->first, "\": ");
+                    put_object_key(frame.object_it->first, "\": ");
                 }
                 else
                 {
-                    put_quoted(frame.object_it->first, "\":");
+                    put_object_key(frame.object_it->first, "\":");
                 }
 
                 const BasicJsonType& element = frame.object_it->second;
@@ -30540,8 +30506,7 @@ class serializer
                 {
                     if (pretty_print)
                     {
-                        put_char('\n');
-                        put_indent(frame.current_indent);
+                        put_literal_indent("\n", frame.current_indent);
                     }
 
                     put_char(']');
@@ -30682,7 +30647,7 @@ class serializer
     /*!
     @brief serialize the value @a val, which is neither an object nor an array
 
-    Shared by @ref dump_internal and @ref dump_value, so that a value is written
+    Shared by @ref dump_element and @ref dump_value, so that a value is written
     the same way however deeply it is nested. A binary value is written out here
     in full: it looks like an object, but has no elements to descend into.
 
@@ -30760,7 +30725,7 @@ class serializer
     /// other scalars do not pay for its register needs (and the other way round)
     JSON_HEDLEY_NEVER_INLINE void dump_string_value(const string_t& s)
     {
-#if JSON_DUMP_SHORT_STRINGS
+#if JSON_LITTLE_ENDIAN_TARGET
         if (s.size() <= short_string_max && put_short_quoted(s, "\""))
         {
             return;
@@ -30794,19 +30759,15 @@ class serializer
     {
         if (pretty_print)
         {
-            put_literal("{\n");
-
             // variable to hold indentation for the bytes
             const auto new_indent = next_indent(current_indent, indent_step);
 
-            put_indent(new_indent);
-
+            put_literal_indent("{\n", new_indent);
             put_literal("\"bytes\": [");
 
             if (!binary.empty())
             {
-                for (auto i = binary.cbegin();
-                        i != binary.cend() - 1; ++i)
+                for (auto i = binary.cbegin(); i != binary.cend() - 1; ++i)
                 {
                     dump_byte(*i);
                     put_literal(", ");
@@ -30814,8 +30775,7 @@ class serializer
                 dump_byte(binary.back());
             }
 
-            put_literal("],\n");
-            put_indent(new_indent);
+            put_literal_indent("],\n", new_indent);
 
             put_literal("\"subtype\": ");
             if (binary.has_subtype())
@@ -30826,8 +30786,7 @@ class serializer
             {
                 put_literal("null");
             }
-            put_char('\n');
-            put_indent(current_indent);
+            put_literal_indent("\n", current_indent);
             put_char('}');
         }
         else
@@ -30836,8 +30795,7 @@ class serializer
 
             if (!binary.empty())
             {
-                for (auto i = binary.cbegin();
-                        i != binary.cend() - 1; ++i)
+                for (auto i = binary.cbegin(); i != binary.cend() - 1; ++i)
                 {
                     dump_byte(*i);
                     put_char(',');
@@ -30875,17 +30833,19 @@ class serializer
 
   private:
     /*!
-    @brief append the string @a s in quotes, followed by @a tail
+    @brief append the object key @a s in quotes, followed by @a tail
 
-    The quote, the string and @a tail (the closing quote, possibly with the
-    colon of an object key) are the bulk of what most documents consist of, and
-    most keys and many values are short and plain. Those are handled in one go
-    by put_short_quoted(); everything else takes the general path.
+    @a tail is the closing quote and the colon, followed by a space when
+    pretty-printing. The callers pass it because each of them already sits on
+    the pretty-printing or the compact path; choosing it here would test
+    @ref pretty_print once more for every key. Most keys are short and plain
+    and are written in one go by put_short_quoted(); everything else takes the
+    general path.
     */
     template<std::size_t N>
-    void put_quoted(const string_t& s, const char (&tail)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    void put_object_key(const string_t& s, const char (&tail)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
-#if JSON_DUMP_SHORT_STRINGS
+#if JSON_LITTLE_ENDIAN_TARGET
         if (put_short_quoted(s, tail))
         {
             return;
@@ -30896,7 +30856,8 @@ class serializer
         put_literal(tail);
     }
 
-#if JSON_DUMP_SHORT_STRINGS
+    // put_short_quoted() assembles words from little-endian loads
+#if JSON_LITTLE_ENDIAN_TARGET
     /// the longest string put_short_quoted() takes
     static constexpr std::size_t short_string_max = JSON_SCAN_VECTOR ? 32 : 16;
 
@@ -31098,7 +31059,7 @@ class serializer
     Complexity: Linear in the length of string @a s.
 
     @note kept out of line: with the short-string attempts in front of it gone
-          from here, compilers would otherwise inline it into @ref put_quoted
+          from here, compilers would otherwise inline it into @ref put_object_key
           and then no longer into the loops that call that
     */
     JSON_HEDLEY_NEVER_INLINE void dump_escaped(const string_t& s)
@@ -31112,7 +31073,7 @@ class serializer
         // Where put_short_quoted() exists and takes strings of up to 32 bytes,
         // the callers have tried it already, and repeating the attempt only
         // costs time for strings that need escaping or are not ASCII.
-#if !(JSON_DUMP_SHORT_STRINGS && JSON_SCAN_VECTOR)
+#if !JSON_LITTLE_ENDIAN_TARGET || !JSON_SCAN_VECTOR
         if (s.size() <= 32)
         {
             const auto& copyable = ascii_copyable();
@@ -31550,18 +31511,9 @@ class serializer
             return;
         }
 
-        // the usual indentation: four words of the indentation character are
-        // stored unconditionally and only the part wanted is claimed, which
-        // spares the call of memset
-        if (JSON_HEDLEY_LIKELY(indent <= 32 && write_buffer_pos + 32 <= write_buffer.size()))
+        // the usual indentation, without a call of memset
+        if (JSON_HEDLEY_LIKELY(put_short_literal_indent("", indent)))
         {
-            const std::uint64_t word = 0x0101010101010101ull * static_cast<unsigned char>(indent_char);
-            char* const d = write_buffer.data() + write_buffer_pos;
-            std::memcpy(d, &word, sizeof(word));
-            std::memcpy(d + 8, &word, sizeof(word));
-            std::memcpy(d + 16, &word, sizeof(word));
-            std::memcpy(d + 24, &word, sizeof(word));
-            write_buffer_pos += indent;
             return;
         }
 
@@ -31602,26 +31554,45 @@ class serializer
     @brief append a string literal and then @a indent indentation characters
 
     The usual line break and indentation go into the buffer with one check of
-    its room and four stores of the indentation, see @ref put_indent.
+    its room and four stores of the indentation, see @ref put_short_literal_indent.
     */
     template<std::size_t N>
     JSON_HEDLEY_ALWAYS_INLINE void put_literal_indent(const char (&s)[N], const std::size_t indent) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
-        constexpr std::size_t length = N - 1;
-        if (JSON_HEDLEY_LIKELY(indent <= 32 && write_buffer_pos + length + 32 <= write_buffer.size()))
+        if (JSON_HEDLEY_LIKELY(put_short_literal_indent(s, indent)))
         {
-            const std::uint64_t word = 0x0101010101010101ull * static_cast<unsigned char>(indent_char);
-            char* const d = write_buffer.data() + write_buffer_pos;
-            std::memcpy(d, s, length);
-            std::memcpy(d + length, &word, sizeof(word));
-            std::memcpy(d + length + 8, &word, sizeof(word));
-            std::memcpy(d + length + 16, &word, sizeof(word));
-            std::memcpy(d + length + 24, &word, sizeof(word));
-            write_buffer_pos += length + indent;
             return;
         }
         put_literal(s);
         put_indent(indent);
+    }
+
+    /*!
+    @brief append a string literal and up to 32 indentation characters in one go
+
+    Four words of the indentation character are stored unconditionally and only
+    the part wanted is claimed, which spares the call of memset. Shared by
+    @ref put_indent (with an empty literal, whose copy compiles to nothing) and
+    @ref put_literal_indent. Returns false, having written nothing, if
+    @a indent is wider or the write buffer lacks the room.
+    */
+    template<std::size_t N>
+    JSON_HEDLEY_ALWAYS_INLINE bool put_short_literal_indent(const char (&s)[N], const std::size_t indent) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    {
+        constexpr std::size_t length = N - 1;
+        if (indent > 32 || write_buffer_pos + length + 32 > write_buffer.size())
+        {
+            return false;
+        }
+        const std::uint64_t word = 0x0101010101010101ull * static_cast<unsigned char>(indent_char);
+        char* const d = write_buffer.data() + write_buffer_pos;
+        std::memcpy(d, s, length);
+        std::memcpy(d + length, &word, sizeof(word));
+        std::memcpy(d + length + 8, &word, sizeof(word));
+        std::memcpy(d + length + 16, &word, sizeof(word));
+        std::memcpy(d + length + 24, &word, sizeof(word));
+        write_buffer_pos += length + indent;
+        return true;
     }
 
     /*!
@@ -31935,6 +31906,9 @@ class serializer
                 break;
             }
 
+            // a lead byte of 0x80 or above starts a sequence of 2 to 4 bytes
+            JSON_ASSERT(length >= 2 && length <= 4);
+
             const auto b0 = static_cast<std::uint32_t>(data[i]);
             const auto b1 = static_cast<std::uint32_t>(data[i + 1]);
             std::uint32_t codepoint = 0;
@@ -31946,7 +31920,7 @@ class serializer
                 case 3:
                     codepoint = ((b0 & 0x0Fu) << 12u) | ((b1 & 0x3Fu) << 6u) | (static_cast<std::uint32_t>(data[i + 2]) & 0x3Fu);
                     break;
-                default:
+                default: // 4
                     codepoint = ((b0 & 0x07u) << 18u) | ((b1 & 0x3Fu) << 12u) | ((static_cast<std::uint32_t>(data[i + 2]) & 0x3Fu) << 6u) | (static_cast<std::uint32_t>(data[i + 3]) & 0x3Fu);
                     break;
             }
@@ -41137,7 +41111,6 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_SCAN_SSSE3_TARGET
 #undef JSON_SCAN_VECTOR
 #undef JSON_SCAN_VECTOR_UTF8
-#undef JSON_DUMP_SHORT_STRINGS
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
