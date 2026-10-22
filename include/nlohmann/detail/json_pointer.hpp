@@ -80,6 +80,11 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/to_string/
     string_t to_string() const
     {
+        if (reference_tokens.empty())
+        {
+            return string_t();
+        }
+
         // one buffer: every token adds its escaped form (at least its length) and a slash
         std::size_t length = 0;
         bool plain = true;
@@ -98,14 +103,11 @@ class json_pointer
         {
             // nothing to escape: the tokens are copied into the string
             result.resize(length);
-            if (length != 0)
+            char* out = &result[0];
+            for (const auto& reference_token : reference_tokens)
             {
-                char* out = &result[0];
-                for (const auto& reference_token : reference_tokens)
-                {
-                    *out++ = '/';
-                    out = std::copy(reference_token.data(), reference_token.data() + reference_token.size(), out);
-                }
+                *out++ = '/';
+                out = std::copy(reference_token.data(), reference_token.data() + reference_token.size(), out);
             }
             return result;
         }
