@@ -648,7 +648,7 @@ TEST_CASE("json_view large objects")
             {
                 std::ostringstream key;
                 key << pattern.substr(0, percent) << std::setfill('0') << std::setw(static_cast<int>(width))
-                    << (hex ? std::hex : std::dec) << i * step << pattern.substr(conversion + 1);
+                    << (hex ? std::hex : std::dec) << (i * step) << pattern.substr(conversion + 1);
                 keys.push_back(key.str());
             }
             return keys;
