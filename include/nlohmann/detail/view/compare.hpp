@@ -357,7 +357,7 @@ class view_side
     }
 
     /// start at the first element of this array
-    void open(cursor& c) const noexcept
+    void enter(cursor& c) const noexcept
     {
         c.pos = nav::first(*m_view.m_doc, m_view.m_node);
     }
@@ -466,7 +466,7 @@ class json_side
         return *m_json;
     }
 
-    void open(cursor& c) const
+    void enter(cursor& c) const
     {
         c.it = m_json->cbegin();
     }
@@ -967,8 +967,8 @@ bool equal(const A& a0, const B& b0)
                 {
                     f.array_a = a;
                     f.array_b = b;
-                    a.open(f.cursor_a);
-                    b.open(f.cursor_b);
+                    a.enter(f.cursor_a);
+                    b.enter(f.cursor_b);
                     f.count = a.size();
                     resume_array(path, a, b, f.cursor_a, f.cursor_b, f.next);
                 }

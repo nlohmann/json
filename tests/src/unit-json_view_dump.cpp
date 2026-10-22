@@ -421,17 +421,17 @@ TEST_CASE("json_view comparison")
                 })
         {
             CAPTURE(depth)
-            std::string open;
-            std::string close;
+            std::string head;
+            std::string tail;
             for (int i = 0; i < depth; ++i)
             {
-                open += i % 2 == 0 ? R"({"k":[1,"s",{"x":true},)" : R"([null,2.5,{"y":)";
-                close = (i % 2 == 0 ? "]}" : "}]") + close;
+                head += i % 2 == 0 ? R"({"k":[1,"s",{"x":true},)" : R"([null,2.5,{"y":)";
+                tail = (i % 2 == 0 ? "]}" : "}]") + tail;
             }
             // the same text, one number changed, and one number written differently
-            const std::string text = open + "7" + close;
-            const std::string changed = open + "8" + close;
-            const std::string spelled = open + "7.0" + close;
+            const std::string text = head + "7" + tail;
+            const std::string changed = head + "8" + tail;
+            const std::string spelled = head + "7.0" + tail;
             const json_document a = json_document::parse(text);
             const json_document b = json_document::parse(text);
             const json_document c = json_document::parse(changed);
