@@ -347,12 +347,14 @@ TEST_CASE("json_view comparison")
 
     SECTION("objects whose first keys differ or repeat")
     {
-        const char* const texts[] =
+        const std::array<const char*, 17> texts =
         {
-            R"({"a":1,"b":2})", R"({"a":1,"c":2})", R"({"b":1,"a":2})", R"({"a":1,"a":2,"b":3})", R"({"a":2,"b":3})",
-            R"({"a":1,"b":1,"a":2})", R"({"a":2,"b":1})", R"({"a":1,"a":2})", R"({"b":1})", R"({"a":1,"b":2,"c":3,"d":4,"e":5})",
-            R"({"a":1,"b":2,"c":3,"d":4,"f":5})", R"({"a":1,"b":2,"c":3,"a":4,"e":5})", R"({"a":4,"b":2,"c":3,"e":5})",
-            R"({"\u0061":1,"b":2})", R"({})", R"([{"a":1,"b":2}])", R"([{"a":1,"c":2}])"
+            {
+                R"({"a":1,"b":2})", R"({"a":1,"c":2})", R"({"b":1,"a":2})", R"({"a":1,"a":2,"b":3})", R"({"a":2,"b":3})",
+                R"({"a":1,"b":1,"a":2})", R"({"a":2,"b":1})", R"({"a":1,"a":2})", R"({"b":1})", R"({"a":1,"b":2,"c":3,"d":4,"e":5})",
+                R"({"a":1,"b":2,"c":3,"d":4,"f":5})", R"({"a":1,"b":2,"c":3,"a":4,"e":5})", R"({"a":4,"b":2,"c":3,"e":5})",
+                R"({"\u0061":1,"b":2})", R"({})", R"([{"a":1,"b":2}])", R"([{"a":1,"c":2}])"
+            }
         };
         for (const char* const x : texts)
         {
@@ -426,12 +428,19 @@ TEST_CASE("json_view comparison")
             for (int i = 0; i < depth; ++i)
             {
                 head += i % 2 == 0 ? R"({"k":[1,"s",{"x":true},)" : R"([null,2.5,{"y":)";
-                tail = (i % 2 == 0 ? "]}" : "}]") + tail;
+                tail.insert(0, i % 2 == 0 ? "]}" : "}]");
             }
             // the same text, one number changed, and one number written differently
-            const std::string text = head + "7" + tail;
-            const std::string changed = head + "8" + tail;
-            const std::string spelled = head + "7.0" + tail;
+            const auto with_number = [&](const char* number)
+            {
+                std::string result = head;
+                result += number;
+                result += tail;
+                return result;
+            };
+            const std::string text = with_number("7");
+            const std::string changed = with_number("8");
+            const std::string spelled = with_number("7.0");
             const json_document a = json_document::parse(text);
             const json_document b = json_document::parse(text);
             const json_document c = json_document::parse(changed);
@@ -500,7 +509,22 @@ TEST_CASE("json_view comparison")
             {
                 text += (i != 0 ? "," : "");
                 const std::string id = std::to_string(i == changed ? i + 1 : i);
-                text += swap_members && i % 3 == 0 ? R"({"v":[1.5,"s",{"k":)" + id + R"(}],"id":)" + id + "}" : R"({"id":)" + id + R"(,"v":[1.5,"s",{"k":)" + id + "}]}";
+                if (swap_members && i % 3 == 0)
+                {
+                    text += R"({"v":[1.5,"s",{"k":)";
+                    text += id;
+                    text += R"(}],"id":)";
+                    text += id;
+                    text += "}";
+                }
+                else
+                {
+                    text += R"({"id":)";
+                    text += id;
+                    text += R"(,"v":[1.5,"s",{"k":)";
+                    text += id;
+                    text += "}]}";
+                }
             }
             return text + R"(],"a":{"y":2,"x":3}})";
         };

@@ -3167,7 +3167,7 @@ class json_side
     }
 
     /// the keys of the first n members of this object (n <= its size), in document order
-    void first_keys(string_view_t* out, std::size_t n) const noexcept
+    void first_keys(string_view_t* out, std::size_t n) const
     {
         auto it = m_json->cbegin();
         for (std::size_t i = 0; i < n; ++i, ++it)
@@ -3496,10 +3496,10 @@ bool keys_differ_early(const SideA& a, const SideB& b)
     using string_view_t = typename SideA::string_view_t;
     constexpr std::size_t limit = 4;
     const std::size_t n = (std::min)((std::min)(a.size(), b.size()), limit);
-    string_view_t ka[limit];
-    string_view_t kb[limit];
-    a.first_keys(ka, n);
-    b.first_keys(kb, n);
+    std::array<string_view_t, limit> ka{};
+    std::array<string_view_t, limit> kb{};
+    a.first_keys(ka.data(), n);
+    b.first_keys(kb.data(), n);
     for (std::size_t i = 0; i < n; ++i)
     {
         if (ka[i] != kb[i])
@@ -3522,6 +3522,9 @@ inline bool is_number(value_t t) noexcept
     return t == value_t::number_integer || t == value_t::number_unsigned || t == value_t::number_float;
 }
 
+/// the index_a/index_b of a frame of equal() whose members are compared in document order
+constexpr std::size_t document_order = static_cast<std::size_t>(-1);
+
 /// whether two sides are equal; iterative, so that the nesting depth is
 /// limited by memory only
 template<typename BasicJsonType, typename A, typename B>
@@ -3530,7 +3533,6 @@ bool equal(const A& a0, const B& b0)
     using string_view_t = typename A::string_view_t;
     const bool ordered = is_ordered_map<typename BasicJsonType::object_t>::value;
 
-    constexpr std::size_t npos = static_cast<std::size_t>(-1);
     struct frame
     {
         A array_a{};
@@ -3539,8 +3541,8 @@ bool equal(const A& a0, const B& b0)
         typename B::cursor cursor_b{};
         std::size_t base_a = 0; ///< the members of an object: from this position in members_a
         std::size_t base_b = 0;
-        std::size_t index_a = npos; ///< their order in the comparison: from this position in indices (npos: as they are)
-        std::size_t index_b = npos;
+        std::size_t index_a = document_order; ///< their order in the comparison: from this position in indices (document_order: as they are)
+        std::size_t index_b = document_order;
         std::size_t index_mark = 0; ///< the size of indices before this frame
         bool object = false;
         std::size_t next = 0;
@@ -3671,9 +3673,20 @@ bool equal(const A& a0, const B& b0)
             else if (numbers && ta == tb)
             {
                 // numbers of one type: as basic_json compares them
-                if (ta == value_t::number_integer ? a.integer() != b.integer()
-                        : ta == value_t::number_unsigned ? a.unsigned_integer() != b.unsigned_integer()
-                        : !floats_equal(a, b))
+                bool differ = false;
+                if (ta == value_t::number_integer)
+                {
+                    differ = a.integer() != b.integer();
+                }
+                else if (ta == value_t::number_unsigned)
+                {
+                    differ = a.unsigned_integer() != b.unsigned_integer();
+                }
+                else
+                {
+                    differ = !floats_equal(a, b);
+                }
+                if (differ)
                 {
                     return false;
                 }
@@ -3706,8 +3719,8 @@ bool equal(const A& a0, const B& b0)
             }
             if (f.object)
             {
-                const auto& member_a = members_a[f.base_a + (f.index_a == npos ? f.next : indices[f.index_a + f.next])];
-                const auto& member_b = members_b[f.base_b + (f.index_b == npos ? f.next : indices[f.index_b + f.next])];
+                const auto& member_a = members_a[f.base_a + (f.index_a == document_order ? f.next : indices[f.index_a + f.next])];
+                const auto& member_b = members_b[f.base_b + (f.index_b == document_order ? f.next : indices[f.index_b + f.next])];
                 if (!(member_a.first == member_b.first))
                 {
                     return false;
@@ -5739,9 +5752,9 @@ inline const unsigned char* digit_run(const unsigned char* p, const unsigned cha
 /// whether the n bytes at p are ASCII digits (n > 0)
 inline bool all_digits(const unsigned char* p, std::size_t n) noexcept
 {
-    constexpr std::uint64_t ones = 0x0101010101010101ull;
     const auto digits = [](const unsigned char* q)
     {
+        constexpr std::uint64_t ones = 0x0101010101010101ull;
         const std::uint64_t x = read_eight_bytes(q) ^ (ones * 0x30u);
         return (((x + (ones * 0x76u)) | x) & (ones * 0x80u)) == 0;
     };

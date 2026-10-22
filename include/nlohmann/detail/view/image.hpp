@@ -282,9 +282,9 @@ inline const unsigned char* digit_run(const unsigned char* p, const unsigned cha
 /// whether the n bytes at p are ASCII digits (n > 0)
 inline bool all_digits(const unsigned char* p, std::size_t n) noexcept
 {
-    constexpr std::uint64_t ones = 0x0101010101010101ull;
     const auto digits = [](const unsigned char* q)
     {
+        constexpr std::uint64_t ones = 0x0101010101010101ull;
         const std::uint64_t x = read_eight_bytes(q) ^ (ones * 0x30u);
         return (((x + (ones * 0x76u)) | x) & (ones * 0x80u)) == 0;
     };
