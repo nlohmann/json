@@ -2578,14 +2578,14 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 // handles the bytes one at a time); MSVC and x86 targets are little-endian
 #if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) \
     || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-    #define JSON_LITTLE_ENDIAN_TARGET 1
-    #define JSON_BIG_ENDIAN_TARGET 0
+    #define JSON_LITTLE_ENDIAN_TARGET 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_BIG_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    #define JSON_LITTLE_ENDIAN_TARGET 0
-    #define JSON_BIG_ENDIAN_TARGET 1
+    #define JSON_LITTLE_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_BIG_ENDIAN_TARGET 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #else
-    #define JSON_LITTLE_ENDIAN_TARGET 0
-    #define JSON_BIG_ENDIAN_TARGET 0
+    #define JSON_LITTLE_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_BIG_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #endif
 
 #ifdef JSON_HAS_CPP_17
