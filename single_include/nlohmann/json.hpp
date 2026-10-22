@@ -15277,9 +15277,9 @@ class object_key_index
         rebuild(size);
     }
 
-    /// @return the position of the element with @a hash for which @a equal(position) holds, or npos
-    template<typename Equal>
-    std::size_t find(const std::size_t hash, Equal equal) const
+    /// @return the position of the element with @a hash for which @a matches(position) holds, or npos
+    template<typename Matches>
+    std::size_t find(const std::size_t hash, Matches matches) const
     {
         for (std::size_t slot = hash & mask;; slot = (slot + 1) & mask)
         {
@@ -15288,7 +15288,7 @@ class object_key_index
             {
                 return npos;
             }
-            if (hashes[entry - 1] == hash && equal(entry - 1))
+            if (hashes[entry - 1] == hash && matches(entry - 1))
             {
                 return entry - 1;
             }
