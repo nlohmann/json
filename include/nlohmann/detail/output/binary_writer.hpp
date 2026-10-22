@@ -896,7 +896,8 @@ class binary_writer
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_msgpack_length_too_large(const std::size_t length, const BasicJsonType& j)
     {
-        static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(length); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(j);
         JSON_THROW(out_of_range::create(exception_id::length_too_large, concat("MessagePack length ", std::to_string(length), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
     }
 
@@ -904,6 +905,7 @@ class binary_writer
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_bson_length_too_large(const std::size_t size)
     {
+        static_cast<void>(size); // unused when JSON_NOEXCEPTION is defined
         JSON_THROW(out_of_range::create(exception_id::length_too_large, concat("BSON length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::int32_t>::max)())), nullptr));
     }
 
@@ -912,8 +914,9 @@ class binary_writer
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_subtype_out_of_range(const SubtypeType subtype, const char* what, const BasicJsonType& j)
     {
-        static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
+        static_cast<void>(subtype); // unused when JSON_NOEXCEPTION is defined
         static_cast<void>(what);
+        static_cast<void>(j);
         JSON_THROW(out_of_range::create(exception_id::subtype_out_of_range, concat("subtype ", std::to_string(subtype), " is too large for ", what, " (max 255)"), &j));
     }
 
@@ -1458,7 +1461,8 @@ class binary_writer
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_bson_key_with_null(const std::size_t index, const BasicJsonType& j)
     {
-        static_cast<void>(j); // only used when exceptions are enabled
+        static_cast<void>(index); // only used when exceptions are enabled
+        static_cast<void>(j);
         JSON_THROW(out_of_range::create(exception_id::bson_key_with_null, concat("BSON key cannot contain code point U+0000 (at byte ", std::to_string(index), ")"), &j));
     }
 
@@ -4836,7 +4840,9 @@ class binary_writer
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_invalid_utf8(const unsigned char* data, const std::size_t index, const BasicJsonType& context)
     {
-        static_cast<void>(context); // only used when exceptions are enabled
+        static_cast<void>(data); // only used when exceptions are enabled
+        static_cast<void>(index);
+        static_cast<void>(context);
         JSON_THROW(type_error::create(exception_id::invalid_utf8, concat("invalid UTF-8 byte at index ", std::to_string(index), ": 0x", detail::hex_byte(data[index])), &context));
     }
 
