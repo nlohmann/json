@@ -82,7 +82,7 @@ rejected by default, and the library never adds them when serializing.
 The library supports **Unicode input** as follows:
 
 - **UTF-8** encoded input is supported, which is the default encoding for JSON, according to [RFC 8259](https://tools.ietf.org/html/rfc8259.html#section-8.1).
-- `std::u16string` and `std::u32string` can be parsed, assuming UTF-16 and UTF-32 encoding, respectively; `std::wstring` works as well and is interpreted as UTF-16 or UTF-32, depending on the width of the platform's `wchar_t`. These encodings cannot be read from a `FILE*` or an `std::istream`, which carry bytes only.
+- `std::u16string` and `std::u32string` can be parsed, assuming UTF-16 and UTF-32 encoding, respectively; `std::wstring` works as well and is interpreted as UTF-16 or UTF-32, depending on the width of the platform's `wchar_t`. These encodings cannot be read from a `FILE*` or a `std::istream`, which carry bytes only.
 - Ill-formed UTF-16 or UTF-32 input is rejected: a lone surrogate, a high surrogate that is not followed by its low surrogate, and a code point above `U+10FFFF` all yield a parse error. The same holds for iterators over 2- or 4-byte characters.
 - Other encodings such as Latin-1 or ISO 8859-1 are **not** supported and will yield parse or serialization errors.
 - The library will not replace [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1).
