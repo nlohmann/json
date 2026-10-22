@@ -7515,9 +7515,9 @@ public:
       private:
         static constexpr std::size_t inline_size = 16;
         std::size_t count = 0;
-        const basic_json** items = small;
+        const basic_json** items = inline_items;
         std::vector<const basic_json*> large{}; // NOLINT(readability-redundant-member-init)
-        const basic_json* small[inline_size]; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+        const basic_json* inline_items[inline_size]; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
     };
 
     /// @brief append "/" and the decimal representation of @a index to @a path
