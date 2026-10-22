@@ -2970,7 +2970,7 @@ TEST_CASE("accept() agrees with parse() on floats around the overflow limit")
 
     for (const char* number : numbers)
     {
-        for (const std::string text :
+        for (const std::string& text :
                 {
                     std::string(number), "[" + std::string(number) + "]", "{\"a\":" + std::string(number) + "}"
                 })
