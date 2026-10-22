@@ -2981,3 +2981,52 @@ TEST_CASE("accept() agrees with parse() on floats around the overflow limit")
         }
     }
 }
+
+namespace
+{
+// a DOM parser that reports parse errors without throwing, as in the sax_no_exception example
+template<typename BasicJsonType>
+class quiet_dom_parser : public nlohmann::detail::json_sax_dom_parser<BasicJsonType, nlohmann::detail::string_input_adapter_type>
+{
+  public:
+    explicit quiet_dom_parser(BasicJsonType& j)
+        : nlohmann::detail::json_sax_dom_parser<BasicJsonType, nlohmann::detail::string_input_adapter_type>(j, false)
+    {}
+
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const nlohmann::detail::exception& /*unused*/)
+    {
+        return false;
+    }
+};
+
+template<typename BasicJsonType>
+std::string read_before_error(const std::string& text)
+{
+    BasicJsonType j;
+    quiet_dom_parser<BasicJsonType> sax(j);
+    CHECK(!BasicJsonType::sax_parse(text, &sax));
+    return j.dump();
+}
+} // namespace
+
+TEST_CASE("a json_sax_dom_parser keeps the values read before a parse error")
+{
+    // a json_sax_dom_parser that a user constructs stores every value in place, so a
+    // handler that does not throw on a parse error sees what was read before it
+    const std::vector<std::pair<std::string, std::string>> cases =
+    {
+        {"[1,2,3,]", "[1,2,3]"},
+        {"[[1,[2,3],4],[5,", "[[1,[2,3],4],[5]]"},
+        {R"({"a":1,"b":[1,2,{"c":)", R"({"a":1,"b":[1,2,{"c":null}]})"},
+        {R"({"a":1,"a":)", R"({"a":1})"},
+        {"[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,]", "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]"},
+        {R"({"k0":0,"k1":1,"k2":{"x":[true,)", R"({"k0":0,"k1":1,"k2":{"x":[true]}})"},
+        {R"([{},[],{"a":[]},x)", R"([{},[],{"a":[]}])"},
+    };
+    for (const auto& c : cases)
+    {
+        CAPTURE(c.first)
+        CHECK(read_before_error<json>(c.first) == c.second);
+        CHECK(read_before_error<nlohmann::ordered_json>(c.first) == c.second);
+    }
+}

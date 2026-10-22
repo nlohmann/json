@@ -9,6 +9,7 @@
 #pragma once
 
 #include <algorithm> // copy, find_if, min
+#include <array> // array
 #include <cstddef>
 #include <functional> // hash
 #include <limits> // numeric_limits
@@ -400,7 +401,7 @@ class object_key_index
     /// the hash of each element, by position
     std::vector<std::size_t> hashes;
     /// open addressing, a power of two in size: position + 1 of an element, or 0 for a free slot
-    std::vector<std::size_t> table {};
+    std::vector<std::size_t> table {}; // NOLINT(readability-redundant-member-init)
     std::size_t mask = 0;
 };
 
@@ -413,15 +414,21 @@ hierarchy of the JSON value is managed by the stack `frames` which contains
 an entry for each open array or object. The parser of the text formats, for
 which the size of a container is not known up front, collects the elements of
 an array and the members of an `ordered_json` object on a stack and moves them
-into a container of the exact size; the binary readers use the plain
+into a container of the exact size (with @a Collect, as basic_json's own parse
+functions use it); the binary readers use the plain
 @ref json_sax_dom_binary_parser instead.
 
 After successful parsing, the value that is passed by reference to the
-constructor contains the parsed value.
+constructor contains the parsed value. Without @a Collect, every value is
+stored in place as it arrives, so after a parse error the value holds what was
+read up to it.
 
 @tparam BasicJsonType  the JSON type
+@tparam Collect  whether to collect the values of containers of unknown size on
+                 a stack (only for a caller that does not use the value after a
+                 parse error)
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, bool Collect = false>
 class json_sax_dom_parser
 {
   public:
@@ -531,9 +538,10 @@ class json_sax_dom_parser
         // pointers and positions refer to it), so no buffering
         start_stored_array(len);
 #else
-        if (len != detail::unknown_size())
+        if (!collects(len))
         {
-            // the number of elements is known: reserve and store them directly
+            // the number of elements is known (or the elements must be in
+            // place as they arrive): store them directly
             start_stored_array(len);
         }
         else
@@ -567,7 +575,7 @@ class json_sax_dom_parser
         {
             // the elements are on the stack: make them the array
             const auto first = elements.begin() + static_cast<std::ptrdiff_t>(f.start);
-            array_t* const arr = BasicJsonType::template create<array_t>(std::make_move_iterator(first), std::make_move_iterator(elements.end()));
+            auto* const arr = BasicJsonType::template create<array_t>(std::make_move_iterator(first), std::make_move_iterator(elements.end()));
             BasicJsonType value;
             value.m_data.m_type = BasicJsonType::value_t::array;
             value.m_data.m_value.array = arr;
@@ -671,11 +679,14 @@ class json_sax_dom_parser
     class frame_stack
     {
       public:
-        frame_stack() = default;
+        frame_stack() noexcept
+            : local() // NOLINT(readability-redundant-member-init)
+        {}
         frame_stack(const frame_stack&) = delete;
         frame_stack& operator=(const frame_stack&) = delete;
 
         frame_stack(frame_stack&& other) noexcept
+            : local() // NOLINT(readability-redundant-member-init)
         {
             take(other);
         }
@@ -690,10 +701,7 @@ class json_sax_dom_parser
             return *this;
         }
 
-        ~frame_stack()
-        {
-            release();
-        }
+        ~frame_stack() = default;
 
         bool empty() const noexcept
         {
@@ -735,37 +743,35 @@ class json_sax_dom_parser
         void grow()
         {
             const std::size_t new_capacity = capacity * 2;
-            frame* const new_data = new frame[new_capacity];
-            std::copy(data, data + count, new_data);
-            release();
-            data = new_data;
+            std::unique_ptr<frame[]> new_heap(new frame[new_capacity]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            std::copy(data, data + count, new_heap.get());
+            heap = std::move(new_heap);
+            data = heap.get();
             capacity = new_capacity;
         }
 
         void release() noexcept
         {
-            if (data != local)
-            {
-                delete[] data;
-                data = local;
-                capacity = local_capacity;
-            }
+            heap.reset();
+            data = local.data();
+            capacity = local_capacity;
         }
 
         /// make the contents of @a other our own
         void take(frame_stack& other) noexcept
         {
-            if (other.data == other.local)
+            if (other.heap == nullptr)
             {
-                std::copy(other.local, other.local + other.count, local);
-                data = local;
+                std::copy(other.local.begin(), other.local.begin() + static_cast<std::ptrdiff_t>(other.count), local.begin());
+                data = local.data();
                 capacity = local_capacity;
             }
             else
             {
-                data = other.data;
+                heap = std::move(other.heap);
+                data = heap.get();
                 capacity = other.capacity;
-                other.data = other.local;
+                other.data = other.local.data();
                 other.capacity = local_capacity;
             }
             count = other.count;
@@ -773,8 +779,19 @@ class json_sax_dom_parser
         }
 
         static constexpr std::size_t local_capacity = 8;
-        frame local[local_capacity];
-        frame* data = local;
+
+        /// the first frames, left uninitialized: a frame is written before it is
+        /// read (the user-provided constructor keeps the member initialization,
+        /// which -Weffc++ asks for, from zeroing them)
+        struct local_frames : std::array<frame, local_capacity>
+        {
+            local_frames() noexcept {} // NOLINT(modernize-use-equals-default,hicpp-use-equals-default,cppcoreguidelines-pro-type-member-init,hicpp-member-init): see above
+        };
+
+        local_frames local;
+        /// the frames once there are more than local_capacity of them
+        std::unique_ptr<frame[]> heap {}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,readability-redundant-member-init)
+        frame* data = local.data();
         std::size_t count = 0;
         std::size_t capacity = local_capacity;
     };
@@ -948,7 +965,7 @@ class json_sax_dom_parser
     /// when the closing brace arrives.
     bool start_object(std::size_t len, std::true_type /*indexed*/)
     {
-        if (len != detail::unknown_size())
+        if (!collects(len))
         {
             return start_stored_object(len);
         }
@@ -1020,7 +1037,7 @@ class json_sax_dom_parser
     object_t* members_to_object(const frame& f, BasicJsonType& value)
     {
         const auto first = ordered_data.members.begin() + static_cast<std::ptrdiff_t>(f.start);
-        object_t* const obj = BasicJsonType::template create<object_t>(std::make_move_iterator(first), std::make_move_iterator(ordered_data.members.end()));
+        auto* const obj = BasicJsonType::template create<object_t>(std::make_move_iterator(first), std::make_move_iterator(ordered_data.members.end()));
         value.m_data.m_type = BasicJsonType::value_t::object;
         value.m_data.m_value.object = obj;
         ordered_data.members.erase(first, ordered_data.members.end());
@@ -1035,6 +1052,9 @@ class json_sax_dom_parser
         f.object = members_to_object(f, value);
         f.ordered.buffered = false;
         in_object = true;
+        // false positive: an object without an enclosing container is the root,
+        // which has a slot, so place_container() does not use the nullptr
+        // @infer-ignore NULLPTR_DEREFERENCE
         place_container(f, frames.size() >= 2 ? &frames[frames.size() - 2] : nullptr, std::move(value), false);
     }
 
@@ -1232,6 +1252,22 @@ class json_sax_dom_parser
         member = BasicJsonType(std::forward<Value>(v));
     }
 
+    /// whether the values of a container of @a len elements are collected on the stack
+    static bool collects(const std::size_t len) noexcept
+    {
+        return collects(len, std::integral_constant<bool, Collect> {});
+    }
+
+    static bool collects(const std::size_t len, std::true_type /*collect*/) noexcept
+    {
+        return len == detail::unknown_size();
+    }
+
+    static bool collects(const std::size_t /*len*/, std::false_type /*collect*/) noexcept
+    {
+        return false;
+    }
+
     /// after a container was closed: the one it was in is the one that gets the next value
     void enter_enclosing_container()
     {
@@ -1251,12 +1287,11 @@ class json_sax_dom_parser
     template<typename Value>
     void handle_value(Value&& v)
     {
-        BasicJsonType* const stored = store(std::forward<Value>(v));
-
 #if JSON_DIAGNOSTIC_POSITIONS
+        BasicJsonType* const stored = store(std::forward<Value>(v));
         diagnostic_positions::set_from_lexer(*stored, m_lexer_ref);
 #else
-        static_cast<void>(stored);
+        store(std::forward<Value>(v));
 #endif
     }
 
@@ -1275,7 +1310,7 @@ class json_sax_dom_parser
         /// the member of the innermost such object that key() added or found last
         std::size_t member_index = 0;
         /// the key indexes of the open objects that have one, innermost last
-        std::vector<std::unique_ptr<object_key_index>> key_indexes {};
+        std::vector<std::unique_ptr<object_key_index>> key_indexes {}; // NOLINT(readability-redundant-member-init)
     };
     struct no_ordered_data_t {};
     typename std::conditional<indexed_keys, ordered_data_t, no_ordered_data_t>::type ordered_data {};

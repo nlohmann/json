@@ -5770,7 +5770,7 @@ template<typename BasicJsonType, bool Editable>
 BasicJsonType materialize(const document_data& d, const node* n)
 {
     using string_t = typename BasicJsonType::string_t;
-    using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>>;
+    using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>, true>;
     using nav = navigation<Editable>;
 
     // the open containers: their next element (or key of the next member),

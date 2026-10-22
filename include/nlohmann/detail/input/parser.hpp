@@ -56,8 +56,8 @@ using parser_callback_t =
 template<typename SAX>
 struct sax_ignores_number_text : std::false_type {};
 
-template<typename BasicJsonType, typename InputAdapterType>
-struct sax_ignores_number_text<json_sax_dom_parser<BasicJsonType, InputAdapterType>> : std::true_type {};
+template<typename BasicJsonType, typename InputAdapterType, bool Collect>
+struct sax_ignores_number_text<json_sax_dom_parser<BasicJsonType, InputAdapterType, Collect>> : std::true_type {};
 
 template<typename BasicJsonType, typename InputAdapterType>
 struct sax_ignores_number_text<json_sax_dom_callback_parser<BasicJsonType, InputAdapterType>> : std::true_type {};
@@ -131,7 +131,7 @@ class parser
         }
         else
         {
-            json_sax_dom_parser<BasicJsonType, InputAdapterType> sdp(result, allow_exceptions, &m_lexer);
+            json_sax_dom_parser<BasicJsonType, InputAdapterType, true> sdp(result, allow_exceptions, &m_lexer);
 
             // in case of an error, return a discarded value
             if (!parse_dom(sdp, strict))
