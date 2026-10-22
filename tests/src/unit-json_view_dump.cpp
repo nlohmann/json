@@ -200,11 +200,13 @@ TEST_CASE("json_view dump")
                 {
                     std::string content(length, 'a');
                     content.insert(position, special);
-                    const std::string texts[] =
+                    const std::array<std::string, 3> texts =
                     {
-                        "\"" + content + "\"",
-                        "[\"" + content + "\"]",
-                        "{\"" + content + "\":1}",
+                        {
+                            "\"" + content + "\"",
+                            "[\"" + content + "\"]",
+                            "{\"" + content + "\":1}",
+                        }
                     };
                     for (const std::string& text : texts)
                     {
@@ -291,7 +293,7 @@ TEST_CASE("json_view dump")
             std::string text;
             for (int i = 0; i < depth; ++i)
             {
-                text += i % 2 == 0 ? "[1," : "{\"k\":2,\"\\u00e9\":";
+                text += i % 2 == 0 ? "[1," : R"({"k":2,"\u00e9":)";
             }
             text += "[]";
             for (int i = depth - 1; i >= 0; --i)

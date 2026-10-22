@@ -6208,6 +6208,7 @@ inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexc
 #if NLOHMANN_VIEW_SSE2
     // (16 bytes per step; with NEON, the mask of a step costs more than it saves on the
     // short runs that are typical here)
+    // NOLINTBEGIN(portability-simd-intrinsics)
     for (; i + 16 <= n; i += 16)
     {
         const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(s + i))); // NOLINT(bugprone-casting-through-void)
@@ -6220,6 +6221,7 @@ inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexc
             return i + static_cast<std::size_t>(count_trailing_zeros(mask));
         }
     }
+    // NOLINTEND(portability-simd-intrinsics)
 #endif
     constexpr std::uint64_t ones = 0x0101010101010101ull;
     constexpr std::uint64_t high = 0x8080808080808080ull;
@@ -6439,11 +6441,11 @@ template<>
 struct depth_counter<false>
 {
     void enter() noexcept {}
-    std::size_t leave() noexcept
+    std::size_t leave() noexcept // NOLINT(readability-convert-member-functions-to-static): same interface as depth_counter<true>
     {
         return 0;
     }
-    std::size_t get() const noexcept
+    std::size_t get() const noexcept // NOLINT(readability-convert-member-functions-to-static): same interface as depth_counter<true>
     {
         return 0;
     }
@@ -6603,7 +6605,8 @@ class view_serializer
         // room for k bytes
         const auto room = [&](std::size_t k)
         {
-            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(lim - w) < k))
+            const auto left = static_cast<std::size_t>(lim - w);
+            if (NLOHMANN_VIEW_UNLIKELY(left < k))
             {
                 m_out.set_cursor(w);
                 m_out.reserve(k);
