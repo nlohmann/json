@@ -30226,17 +30226,20 @@ class serializer
     being threaded through every call to @ref dump, @ref dump_internal and
     @ref dump_iteratively.
     */
-    serializer(output_adapter_protocol<char>& s, const char ichar, // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): the buffers are written before they are read
+    serializer(output_adapter_protocol<char>& s, const char ichar,
                const bool pretty_print_ = false,
                const bool ensure_ascii_ = false,
                const std::size_t indent_step_ = 0,
                error_handler_t error_handler_ = error_handler_t::strict)
         : o(&s)
+        , number_buffer() // NOLINT(readability-redundant-member-init)
+        , string_buffer() // NOLINT(readability-redundant-member-init)
         , indent_char(ichar)
         , pretty_print(pretty_print_)
         , ensure_ascii(ensure_ascii_)
         , indent_step(indent_step_)
         , error_handler(error_handler_)
+        , write_buffer() // NOLINT(readability-redundant-member-init)
     {}
 
     // deleted because of pointer members
@@ -30949,32 +30952,20 @@ class serializer
         if (n >= 8)
         {
 #if JSON_SCAN_VECTOR
-            if (n >= 16)
+            if (!(n >= 16 ? copy_plain_vectors(d, p, n) : copy_plain_halves(d, p, n)))
             {
-                if (!copy_plain_vectors(d, p, n))
-                {
-                    return false;
-                }
+                return false;
             }
-            else
-#endif
-            {
-#if JSON_SCAN_VECTOR
-                if (!copy_plain_halves(d, p, n))
-                {
-                    return false;
-                }
 #else
-                const auto a = load_word<std::uint64_t>(p);
-                const auto b = load_word<std::uint64_t>(p + n - 8);
-                if ((swar_not_plain(a) | swar_not_plain(b)) != 0)
-                {
-                    return false;
-                }
-                store_word(d, a);
-                store_word(d + n - 8, b);
-#endif
+            const auto a = load_word<std::uint64_t>(p);
+            const auto b = load_word<std::uint64_t>(p + n - 8);
+            if ((swar_not_plain(a) | swar_not_plain(b)) != 0)
+            {
+                return false;
             }
+            store_word(d, a);
+            store_word(d + n - 8, b);
+#endif
         }
         else if (n >= 4)
         {
@@ -32347,15 +32338,22 @@ class serializer
     /// the output of the serializer (non-owning; the adapter lives at the call site)
     output_adapter_protocol<char>* o = nullptr;
 
-    // The three buffers below are left uninitialized: they are written before they
-    // are read (only the part written is ever read), and zeroing 1.6 KiB took
-    // more than half of what dumping a small value costs.
+    /// a character buffer left uninitialized: the buffers below are written
+    /// before they are read (only the part written is ever read), and zeroing
+    /// 1.6 KiB took more than half of what dumping a small value costs (the
+    /// user-provided constructor keeps the member initialization, which
+    /// -Weffc++ asks for, from zeroing them)
+    template<std::size_t N>
+    struct uninitialized_buffer : std::array<char, N>
+    {
+        uninitialized_buffer() noexcept {} // NOLINT(modernize-use-equals-default,hicpp-use-equals-default,cppcoreguidelines-pro-type-member-init,hicpp-member-init): see above
+    };
 
     /// a (hopefully) large enough character buffer
-    std::array<char, 64> number_buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    uninitialized_buffer<64> number_buffer;
 
     /// string buffer
-    std::array<char, 512> string_buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    uninitialized_buffer<512> string_buffer;
 
     /// the indentation character
     const char indent_char;
@@ -32375,7 +32373,7 @@ class serializer
     /// buffer collecting output before it is flushed to the output adapter, so
     /// that the many small structural writes become few bulk writes
     static constexpr std::size_t write_buffer_size = 1024;
-    std::array<char, write_buffer_size> write_buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    uninitialized_buffer<write_buffer_size> write_buffer;
     /// number of valid bytes currently held in @ref write_buffer
     std::size_t write_buffer_pos = 0;
 };
