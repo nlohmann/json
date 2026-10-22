@@ -354,11 +354,11 @@ template<bool Counted>
 struct depth_counter
 {
     std::size_t value = 0;
-    void open() noexcept
+    void enter() noexcept
     {
         ++value;
     }
-    std::size_t close() noexcept
+    std::size_t leave() noexcept
     {
         return --value;
     }
@@ -371,8 +371,8 @@ struct depth_counter
 template<>
 struct depth_counter<false>
 {
-    void open() noexcept {}
-    std::size_t close() noexcept
+    void enter() noexcept {}
+    std::size_t leave() noexcept
     {
         return 0;
     }
@@ -881,7 +881,7 @@ class view_serializer
                     {
                         *w++ = object ? '{' : '[';
                         stack.push_back(cur);
-                        level.open();
+                        level.enter();
                         if (Editable)
                         {
                             cur = frame{nav::first(m_doc, n), nav::end(m_doc, n), object};
@@ -926,7 +926,7 @@ class view_serializer
                     }
                     if (Pretty)
                     {
-                        newline(level.close());
+                        newline(level.leave());
                     }
                     room(1);
                     *w++ = cur.object ? '}' : ']';
