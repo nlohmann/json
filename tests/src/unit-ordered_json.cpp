@@ -12,6 +12,11 @@
 using nlohmann::json;
 using nlohmann::ordered_json;
 
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
 TEST_CASE("ordered_json")
 {
     json j;
@@ -243,7 +248,7 @@ namespace
 // the sizes around which the DOM parser changes how it stores the elements of
 // an array (16) and the members of an object in a vector (32, and 64 for the
 // key index)
-const std::size_t container_sizes[] = {0, 1, 2, 3, 15, 16, 17, 18, 31, 32, 33, 34, 63, 64, 65, 66, 200};
+const std::array<std::size_t, 17> container_sizes = {{0, 1, 2, 3, 15, 16, 17, 18, 31, 32, 33, 34, 63, 64, 65, 66, 200}};
 
 template<typename Json>
 std::string array_text(const std::size_t n, const std::size_t depth)
@@ -300,7 +305,9 @@ std::string object_text(const std::size_t n, const std::size_t depth, const bool
     {
         // keys that are there already, the first and the last one, with other values
         text += n == 0 ? "" : ",";
-        text += "\"key0\":[1,2],\"key" + std::to_string(n - 1) + "\":{\"again\":true}";
+        text += R"("key0":[1,2],"key)";
+        text += std::to_string(n - 1);
+        text += R"(":{"again":true})";
     }
     return text + "}";
 }
@@ -391,7 +398,7 @@ TEST_CASE("parsing containers of sizes around the limits of the DOM parser")
             text += (i == 0 ? "" : ",");
             text += "\"k" + std::to_string(i % 200) + "\":" + std::to_string(i);
         }
-        text += "}";
+        text += '}';
 
         const ordered_json ordered = ordered_json::parse(text);
         const json parsed = json::parse(text);
@@ -445,20 +452,20 @@ class tree_generator
             case 7:
             {
                 Json array = Json::array();
-                text += "[";
+                text += '[';
                 const std::size_t n = size();
                 for (std::size_t i = 0; i < n; ++i)
                 {
                     text += (i == 0 ? "" : ",");
                     array.push_back(make<Json>(text, depth - 1));
                 }
-                text += "]";
+                text += ']';
                 return array;
             }
             default:
             {
                 Json object = Json::object();
-                text += "{";
+                text += '{';
                 const std::size_t n = size();
                 for (std::size_t i = 0; i < n; ++i)
                 {
@@ -466,7 +473,7 @@ class tree_generator
                     text += (i == 0 ? "\"" : ",\"") + key + "\":";
                     object[key] = make<Json>(text, depth - 1);
                 }
-                text += "}";
+                text += '}';
                 return object;
             }
         }
@@ -475,13 +482,13 @@ class tree_generator
   private:
     std::uint32_t next(const std::uint32_t bound)
     {
-        state = state * 1664525U + 1013904223U;
+        state = (state * 1664525U) + 1013904223U;
         return (state >> 8) % bound;
     }
 
     std::size_t size()
     {
-        return container_sizes[next(sizeof(container_sizes) / sizeof(*container_sizes))];
+        return container_sizes[next(static_cast<std::uint32_t>(container_sizes.size()))];
     }
 
     std::uint32_t state;
@@ -497,7 +504,7 @@ TEST_CASE("parsing random trees of arrays and objects")
         std::string text;
         std::string ordered_text;
         const json expected = tree_generator(seed).make<json>(text, 3);
-        const ordered_json ordered_expected = tree_generator(seed).make<ordered_json>(ordered_text, 3);
+        const auto ordered_expected = tree_generator(seed).make<ordered_json>(ordered_text, 3);
         CHECK(text == ordered_text);
 
         CHECK(json::parse(text) == expected);
