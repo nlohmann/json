@@ -3089,6 +3089,29 @@ public:
         assert_invariant();
     }
 
+    /// append @a val (moved or copied) to the array; a null value becomes an array
+    template<typename ValueType>
+    JSON_HEDLEY_ALWAYS_INLINE
+    void push_back_array_impl(ValueType&& val)
+    {
+        // push_back only works for null objects or arrays
+        if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
+        {
+            detail::throw_cannot_use_with(detail::exception_id::push_back_wrong_type, "push_back()", *this);
+        }
+
+        // transform a null object into an array
+        if (is_null())
+        {
+            convert_null_to<array_t>();
+        }
+
+        // add the element to the array
+        const auto old_capacity = container_capacity();
+        m_data.m_value.array->push_back(std::forward<ValueType>(val));
+        set_parent_after_insert(m_data.m_value.array->back(), old_capacity);
+    }
+
     /// @throw out_of_range.401 always, as @a idx is out of range of @a j
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_out_of_range(size_type idx, const basic_json& j)
@@ -4717,22 +4740,7 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/push_back/
     void push_back(basic_json&& val)
     {
-        // push_back only works for null objects or arrays
-        if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
-        {
-            detail::throw_cannot_use_with(detail::exception_id::push_back_wrong_type, "push_back()", *this);
-        }
-
-        // transform a null object into an array
-        if (is_null())
-        {
-            convert_null_to<array_t>();
-        }
-
-        // add the element to the array (move semantics)
-        const auto old_capacity = container_capacity();
-        m_data.m_value.array->push_back(std::move(val));
-        set_parent_after_insert(m_data.m_value.array->back(), old_capacity);
+        push_back_array_impl(std::move(val));
         // if val is moved from, basic_json move constructor marks it null, so we do not call the destructor
     }
 
@@ -4748,22 +4756,7 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/push_back/
     void push_back(const basic_json& val)
     {
-        // push_back only works for null objects or arrays
-        if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
-        {
-            detail::throw_cannot_use_with(detail::exception_id::push_back_wrong_type, "push_back()", *this);
-        }
-
-        // transform a null object into an array
-        if (is_null())
-        {
-            convert_null_to<array_t>();
-        }
-
-        // add the element to the array
-        const auto old_capacity = container_capacity();
-        m_data.m_value.array->push_back(val);
-        set_parent_after_insert(m_data.m_value.array->back(), old_capacity);
+        push_back_array_impl(val);
     }
 
     /// @brief add an object to an array
