@@ -66,6 +66,7 @@ enum class exception_id : int
     invalid_string_or_size = 113, ///< a binary input contains an invalid string or size specification
     bson_unsupported_type = 114, ///< a BSON record type is not supported
     invalid_high_precision_number = 115, ///< a UBJSON/BJData high-precision number cannot be parsed
+    invalid_document_image = 116, ///< json_document::load() rejects an image
     // invalid_iterator
     iterators_incompatible = 201, ///< the iterators of a range belong to different values
     iterator_from_other_value = 202, ///< an iterator does not belong to the value it is used with
@@ -100,6 +101,8 @@ enum class exception_id : int
     invalid_utf8 = 316, ///< dump() finds a string that is not valid UTF-8
     type_not_serializable = 317, ///< a value cannot be serialized to the requested binary format
     enum_key_duplicate = 318, ///< an enum-keyed map has two keys that serialize to the same string
+    document_binary_value = 319, ///< a binary value is stored in a json_document
+    document_image_unsupported = 320, ///< a json_document image cannot be saved or loaded (discarded document, big-endian target)
     discarded_value_used = 321, ///< a discarded value is used
     // out_of_range
     array_index_out_of_range = 401, ///< an array index is out of range
@@ -117,6 +120,7 @@ enum class exception_id : int
     patch_remove_parent_not_container = 413, ///< the parent of a JSON Patch 'remove' target is not a container
     patch_move_into_child = 414, ///< a JSON Patch 'move' moves a value into one of its children
     subtype_out_of_range = 415, ///< a binary subtype does not fit into one byte
+    document_too_large = 416, ///< a json_document input, its edit storage, or an image reaches the 32-bit (4 GiB) limit
     // other_error
     internal_error = 500, ///< unreachable code was reached
     patch_test_failed = 501, ///< a JSON Patch 'test' operation failed
