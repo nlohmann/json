@@ -732,23 +732,15 @@ private:
         // true if v is not an array/object, or is an already-empty one
         static bool has_no_children(const basic_json& v) noexcept
         {
-            switch (v.m_data.m_type)
+            if (detail::is_primitive(v.m_data.m_type))
             {
-                case value_t::array:
-                    return v.m_data.m_value.array->empty();
-                case value_t::object:
-                    return v.m_data.m_value.object->empty();
-                case value_t::null:
-                case value_t::string:
-                case value_t::boolean:
-                case value_t::number_integer:
-                case value_t::number_unsigned:
-                case value_t::number_float:
-                case value_t::binary:
-                case value_t::discarded:
-                default:
-                    return true;
+                return true;
             }
+            if (v.m_data.m_type == value_t::array)
+            {
+                return v.m_data.m_value.array->empty();
+            }
+            return v.m_data.m_value.object->empty();
         }
 
         // true if no child of the non-empty array/object v has children of
@@ -1106,36 +1098,24 @@ public:
     void set_parents()
     {
 #if JSON_DIAGNOSTICS
-        switch (m_data.m_type)
+        if (detail::is_primitive(m_data.m_type))
         {
-            case value_t::array:
-            {
-                for (auto& element : *m_data.m_value.array)
-                {
-                    element.m_parent = this;
-                }
-                break;
-            }
+            return;
+        }
 
-            case value_t::object:
+        if (m_data.m_type == value_t::array)
+        {
+            for (auto& element : *m_data.m_value.array)
             {
-                for (auto& element : *m_data.m_value.object)
-                {
-                    element.second.m_parent = this;
-                }
-                break;
+                element.m_parent = this;
             }
-
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                break;
+        }
+        else
+        {
+            for (auto& element : *m_data.m_value.object)
+            {
+                element.second.m_parent = this;
+            }
         }
 #endif
     }
@@ -4602,34 +4582,20 @@ public:
     JSON_HEDLEY_WARN_UNUSED_RESULT
     size_type max_size() const noexcept
     {
-        switch (m_data.m_type)
+        if (detail::is_primitive(m_data.m_type))
         {
-            case value_t::array:
-            {
-                // delegate call to array_t::max_size()
-                return m_data.m_value.array->max_size();
-            }
-
-            case value_t::object:
-            {
-                // delegate call to object_t::max_size()
-                return m_data.m_value.object->max_size();
-            }
-
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-            {
-                // all other types have max_size() == size()
-                return size();
-            }
+            // all other types have max_size() == size()
+            return size();
         }
+
+        if (m_data.m_type == value_t::array)
+        {
+            // delegate call to array_t::max_size()
+            return m_data.m_value.array->max_size();
+        }
+
+        // delegate call to object_t::max_size()
+        return m_data.m_value.object->max_size();
     }
 
     /// @}
@@ -7825,82 +7791,68 @@ public:
             return;
         }
 
-        switch (source.type())
+        if (detail::is_primitive(source.type()))
         {
-            case value_t::array:
+            // both primitive types: replace value
+            diff_replace(result, path, target);
+            return;
+        }
+
+        if (source.is_array())
+        {
+            const std::size_t path_length = path.size();
+
+            // first pass: traverse common elements
+            std::size_t i = 0;
+            while (i < source.size() && i < target.size())
             {
+                // recursive call to compare array values at index i
+                if (!(source[i] == target[i]))
+                {
+                    diff_append_index(path, i);
+                    diff_unequal(result, source[i], target[i], path, depth + 1);
+                    path.resize(path_length);
+                }
+                ++i;
+            }
+
+            // We now reached the end of at least one array
+            // in a second pass, traverse the remaining elements
+            diff_array_tails(result, source, target, path, i);
+        }
+        else
+        {
+            diff_target_values target_values;
+            std::vector<const_iterator> added;
+            if (diff_object_keys(result, source, target, path, target_values, added))
+            {
+                // fast path: target_values holds, for every member of
+                // source in order, its value in target -- so no further
+                // lookup is needed. Deleted keys are interleaved here
+                // too, in source's original order, to match the
+                // historical (pre-reordering-aware) output order.
                 const std::size_t path_length = path.size();
-
-                // first pass: traverse common elements
                 std::size_t i = 0;
-                while (i < source.size() && i < target.size())
+                for (auto it = source.cbegin(); it != source.cend(); ++it, ++i)
                 {
-                    // recursive call to compare array values at index i
-                    if (!(source[i] == target[i]))
+                    if (target_values[i] != nullptr)
                     {
-                        diff_append_index(path, i);
-                        diff_unequal(result, source[i], target[i], path, depth + 1);
-                        path.resize(path_length);
-                    }
-                    ++i;
-                }
-
-                // We now reached the end of at least one array
-                // in a second pass, traverse the remaining elements
-                diff_array_tails(result, source, target, path, i);
-                break;
-            }
-
-            case value_t::object:
-            {
-                diff_target_values target_values;
-                std::vector<const_iterator> added;
-                if (diff_object_keys(result, source, target, path, target_values, added))
-                {
-                    // fast path: target_values holds, for every member of
-                    // source in order, its value in target -- so no further
-                    // lookup is needed. Deleted keys are interleaved here
-                    // too, in source's original order, to match the
-                    // historical (pre-reordering-aware) output order.
-                    const std::size_t path_length = path.size();
-                    std::size_t i = 0;
-                    for (auto it = source.cbegin(); it != source.cend(); ++it, ++i)
-                    {
-                        if (target_values[i] != nullptr)
+                        if (!(it.value() == *target_values[i]))
                         {
-                            if (!(it.value() == *target_values[i]))
-                            {
-                                diff_append_key(path, it.key());
-                                diff_unequal(result, it.value(), *target_values[i], path, depth + 1);
-                                path.resize(path_length);
-                            }
-                        }
-                        else
-                        {
-                            // found a key that is not in target -> remove it
-                            diff_remove(result, diff_key_path(path, it.key()));
+                            diff_append_key(path, it.key());
+                            diff_unequal(result, it.value(), *target_values[i], path, depth + 1);
+                            path.resize(path_length);
                         }
                     }
-
-                    // append the "add" operations for brand-new keys
-                    diff_added(result, added, path);
+                    else
+                    {
+                        // found a key that is not in target -> remove it
+                        diff_remove(result, diff_key_path(path, it.key()));
+                    }
                 }
-                break;
-            }
 
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-            {
-                // both primitive types: replace value
-                diff_replace(result, path, target);
-                break;
+                // append the "add" operations for brand-new keys
+                diff_added(result, added, path);
             }
         }
     }
@@ -7946,45 +7898,33 @@ public:
                 return;
             }
 
-            switch (s.type())
+            if (detail::is_primitive(s.type()))
             {
-                case value_t::array:
+                // both primitive types: replace value
+                diff_replace(result, current_path, t);
+                return;
+            }
+
+            if (s.is_array())
+            {
+                stack.emplace_back(&s, &t, current_path.size());
+                return;
+            }
+            else
+            {
+                std::vector<const basic_json*> target_values;
+                std::vector<const_iterator> added;
+                if (diff_object_keys(result, s, t, current_path, target_values, added))
                 {
+                    // fast path: the frame walks source in lockstep with
+                    // common_keys, as diff_recursively does, and appends
+                    // added_ops once all members are done
                     stack.emplace_back(&s, &t, current_path.size());
-                    return;
+                    stack.back().member = s.cbegin();
+                    stack.back().target_values = std::move(target_values);
+                    stack.back().added = std::move(added);
                 }
-
-                case value_t::object:
-                {
-                    std::vector<const basic_json*> target_values;
-                    std::vector<const_iterator> added;
-                    if (diff_object_keys(result, s, t, current_path, target_values, added))
-                    {
-                        // fast path: the frame walks source in lockstep with
-                        // common_keys, as diff_recursively does, and appends
-                        // added_ops once all members are done
-                        stack.emplace_back(&s, &t, current_path.size());
-                        stack.back().member = s.cbegin();
-                        stack.back().target_values = std::move(target_values);
-                        stack.back().added = std::move(added);
-                    }
-                    return;
-                }
-
-                case value_t::null:
-                case value_t::string:
-                case value_t::boolean:
-                case value_t::number_integer:
-                case value_t::number_unsigned:
-                case value_t::number_float:
-                case value_t::binary:
-                case value_t::discarded:
-                default:
-                {
-                    // both primitive types: replace value
-                    diff_replace(result, current_path, t);
-                    return;
-                }
+                return;
             }
         };
 
