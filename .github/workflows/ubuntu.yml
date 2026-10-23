@@ -42,7 +42,7 @@ jobs:
       - name: Check that Meson and pkg-config offer the CMake options
         run: make check_build_options
       - name: Install Meson
-        run: pip install meson
+        run: pip install --require-hashes -r .github/requirements/meson.txt
       - name: Install with Meson
         run: |
           meson setup build-meson --prefix=${{ github.workspace }}/install

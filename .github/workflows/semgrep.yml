@@ -53,7 +53,7 @@ jobs:
       # SEMGREP_APP_TOKEN is still passed through so registry auth works if a
       # token is ever added.
       - name: Install Semgrep
-        run: python3 -m pip install --user semgrep==1.168.0
+        run: python3 -m pip install --user --require-hashes -r .github/requirements/semgrep.txt
 
       # `semgrep scan --sarif` always exits 0 even with findings; continue-on-error
       # is a safety net so the SARIF upload still runs if the scan itself errors.

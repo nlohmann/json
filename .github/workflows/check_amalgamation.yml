@@ -67,10 +67,10 @@ jobs:
       - name: Install astyle
         run: |
           python3 -mvenv venv
-          venv/bin/pip3 install -r $MAIN_DIR/tools/astyle/requirements.txt
+          venv/bin/pip3 install --require-hashes -r $MAIN_DIR/tools/astyle/requirements.txt
 
       - name: Install generate_natvis dependencies
-        run: pip3 install -r $NATVIS_TOOL_DIR/requirements.txt
+        run: pip3 install --require-hashes -r $MAIN_DIR/tools/generate_natvis/requirements.txt
 
       - name: Regenerate the tools/macro_builder tables in macro_scope.hpp
         run: |
