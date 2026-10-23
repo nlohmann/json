@@ -12,6 +12,7 @@
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint32_t, uint64_t
+#include <cstring> // memcpy
 #include <functional> // equal_to
 #include <string> // string
 #include <utility> // move, pair, swap
@@ -37,6 +38,80 @@ namespace view
 // value, at the position of the first occurrence), and in document order if
 // the object type keeps an order (ordered_json), by key otherwise.
 
+/// whether n bytes are equal; the short texts of JSON (keys, numbers, most
+/// strings) are compared by two overlapping loads instead of a library call
+NLOHMANN_VIEW_ALWAYS_INLINE bool bytes_equal(const char* x, const char* y, std::size_t n) noexcept
+{
+    const auto load8 = [](const char* p)
+    {
+        std::uint64_t v = 0;
+        std::memcpy(&v, p, sizeof(v));
+        return v;
+    };
+    const auto load4 = [](const char* p)
+    {
+        std::uint32_t v = 0;
+        std::memcpy(&v, p, sizeof(v));
+        return v;
+    };
+    if (n >= 8)
+    {
+        for (std::size_t i = 0; i + 8 < n; i += 8)
+        {
+            if (load8(x + i) != load8(y + i))
+            {
+                return false;
+            }
+        }
+        return load8(x + n - 8) == load8(y + n - 8);
+    }
+    if (n >= 4)
+    {
+        return load4(x) == load4(y) && load4(x + n - 4) == load4(y + n - 4);
+    }
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        if (x[i] != y[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// whether the n1 bytes at x are before the n2 bytes at y (memcmp() order, then the shorter first);
+/// the first difference is found eight bytes at a time
+NLOHMANN_VIEW_ALWAYS_INLINE bool bytes_less(const char* x, std::size_t n1, const char* y, std::size_t n2) noexcept
+{
+    const std::size_t n = n1 < n2 ? n1 : n2;
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        const std::uint64_t u = read_eight_bytes(x + i);
+        const std::uint64_t v = read_eight_bytes(y + i);
+        if (u != v)
+        {
+            const auto shift = static_cast<unsigned>(count_trailing_zeros(u ^ v)) & ~7u; // (the first byte that differs)
+            return ((u >> shift) & 0xFFu) < ((v >> shift) & 0xFFu);
+        }
+    }
+    for (; i < n; ++i)
+    {
+        if (x[i] != y[i])
+        {
+            return static_cast<unsigned char>(x[i]) < static_cast<unsigned char>(y[i]);
+        }
+    }
+    return n1 < n2;
+}
+
+/// whether the key a is before the key b
+template<typename Key>
+NLOHMANN_VIEW_ALWAYS_INLINE bool key_less(const Key& a, const Key& b) noexcept
+{
+    return bytes_less(a.data(), a.size(), b.data(), b.size());
+}
+
 /// The members of an object as parse() keeps them: one per key, the last
 /// value at the position of the first occurrence, in the order of the
 /// comparison (sorted by key, or, if the object type keeps the order, the order
@@ -45,13 +120,6 @@ namespace view
 /// (its last one), in the order of the comparison. Most objects have unique
 /// keys; small ones are sorted by insertion, which keeps equal keys in order
 /// and needs no memory.
-/// whether the key a is before the key b
-template<typename Key>
-NLOHMANN_VIEW_ALWAYS_INLINE bool key_less(const Key& a, const Key& b) noexcept
-{
-    return bytes_less(a.data(), a.size(), b.data(), b.size());
-}
-
 template<typename Entry>
 void resolve_indices(const Entry* m, std::size_t n, bool ordered, std::vector<std::uint32_t>& out)
 {

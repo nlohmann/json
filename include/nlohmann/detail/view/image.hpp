@@ -290,8 +290,7 @@ inline bool all_digits(const unsigned char* p, std::size_t n) noexcept
     };
     if (n >= 8)
     {
-        std::size_t i = 0;
-        for (; i + 8 < n; i += 8)
+        for (std::size_t i = 0; i + 8 < n; i += 8)
         {
             if (!digits(p + i))
             {
