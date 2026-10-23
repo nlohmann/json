@@ -8255,7 +8255,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/conversions/to_json.hpp>
 // IWYU pragma: keep
 // #include <nlohmann/detail/exceptions.hpp>
-
+// IWYU pragma: export
 // #include <nlohmann/detail/hash.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -15390,7 +15390,7 @@ class json_sax_dom_error_state
         return false;
     }
 
-    constexpr bool is_errored() const
+    bool is_errored() const
     {
         return errored;
     }
@@ -21024,7 +21024,7 @@ class parser
             return finish_input(*sax, strict);
         }
 
-        return result;
+        return false;
     }
 
   private:
@@ -37855,8 +37855,12 @@ public:
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_initial_capacity(j));
-        auto writer = vector_writer(result, error_handler);
-        write(writer);
+        {
+            // the sink sets the size of result when it is destroyed, which
+            // must happen before result is returned (without NRVO, it is moved)
+            auto writer = vector_writer(result, error_handler);
+            write(writer);
+        }
         return result;
     }
 
