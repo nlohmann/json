@@ -2050,20 +2050,17 @@ class binary_reader
 
             case 0xD9: // str 8
             {
-                std::uint8_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint8_t>(result, context);
             }
 
             case 0xDA: // str 16
             {
-                std::uint16_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint16_t>(result, context);
             }
 
             case 0xDB: // str 32
             {
-                std::uint32_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint32_t>(result, context);
             }
 
             default:
@@ -2508,8 +2505,7 @@ class binary_reader
         {
             case 'U':
             {
-                std::uint8_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint8_t>(result, context);
             }
 
             case 'i':
@@ -2542,8 +2538,7 @@ class binary_reader
                 {
                     break;
                 }
-                std::uint16_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint16_t>(result, context);
             }
 
             case 'm':
@@ -2552,8 +2547,7 @@ class binary_reader
                 {
                     break;
                 }
-                std::uint32_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint32_t>(result, context);
             }
 
             case 'M':
@@ -2562,8 +2556,7 @@ class binary_reader
                 {
                     break;
                 }
-                std::uint64_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint64_t>(result, context);
             }
 
             default:
@@ -4120,6 +4113,22 @@ class binary_reader
 
         result = sanitize_utf8(result, error_handler);
         return true;
+    }
+
+    /*!
+    @brief read a length of type @a NumberType, then a string of that many bytes
+
+    @tparam NumberType  the type of the length field
+    @param[out] result  string the bytes are appended to
+    @param[in] context  further context information (for diagnostics)
+
+    @return whether reading and validating the string succeeded
+    */
+    template<typename NumberType>
+    bool get_string_with_length(string_t& result, const char* context)
+    {
+        NumberType len{};
+        return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
     }
 
     /*!
