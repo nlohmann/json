@@ -28,7 +28,7 @@ This exception does not carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.
 
 Linear in the size of the array or object: unlike [`front()`](front.md), which only ever looks at the first
 element, `back()` has to walk every element to find where they end, since elements are not a fixed size in the
-index. Constant for an array none of whose elements is an array or object, since the elements are then adjacent
+index. Constant if no element of the array is an array or object, since the elements are then adjacent
 in the index.
 
 ## Notes

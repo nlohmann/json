@@ -1468,26 +1468,25 @@ class builder
         };
         // The write position is kept in locals: the stores of characters into
         // the arena may alias the members of the builder, which would then be
-        // reloaded after every one. It is stored back where the arena grows
-        // and at the end.
+        // reloaded after every one. It is stored back where the arena grows,
+        // and by `write_back` on every return.
         const unsigned char* const end = m_end;
         const std::size_t start = arena_used();
         char* w = m_arena_write;
         const char* w_end = m_arena_end;
-#define NLOHMANN_VIEW_ENSURE(n) \
-    if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(w_end - w) < (n))) { m_arena_write = w; arena_grow(n); w = m_arena_write; w_end = m_arena_end; }
+        const arena_write_back write_back(*this, w);
         {
             const auto n = static_cast<std::size_t>(p - s);
             if (n <= 16 && end - s >= 16)
             {
-                NLOHMANN_VIEW_ENSURE(16)
+                arena_ensure(w, w_end, 16);
                 std::memcpy(w, s, 16);
             }
             else if (n != 0)
             {
                 // (an empty run leaves an empty arena unallocated, and memcpy()
                 // must not be passed its null pointer even for zero bytes)
-                NLOHMANN_VIEW_ENSURE(n)
+                arena_ensure(w, w_end, n);
                 std::memcpy(w, s, n);
             }
             w += n;
@@ -1502,8 +1501,9 @@ class builder
             if (c == '"')
             {
                 ++p;
-                m_arena_write = w;
-                return decoded{p, start, arena_used() - start};
+                // (from w: `write_back` stores it only after the return value
+                // is made; the arena is allocated, since an escape was written)
+                return decoded{p, start, static_cast<std::size_t>(w - m_doc.arena.data()) - start};
             }
             if (c != '\\')
             {
@@ -1547,12 +1547,12 @@ class builder
                     }
                     cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
                 }
-                NLOHMANN_VIEW_ENSURE(4)
+                arena_ensure(w, w_end, 4);
                 w = put_utf8(w, cp);
             }
             else if (NLOHMANN_VIEW_LIKELY(d < 128 && simple_escape[d] != 0))
             {
-                NLOHMANN_VIEW_ENSURE(1)
+                arena_ensure(w, w_end, 1);
                 *w++ = simple_escape[d];
             }
             else
@@ -1578,7 +1578,7 @@ class builder
                     NLOHMANN_VIEW_REPEAT16(NLOHMANN_VIEW_STEP)
 #undef NLOHMANN_VIEW_STEP
 run_found:
-                    NLOHMANN_VIEW_ENSURE(16)
+                    arena_ensure(w, w_end, 16);
                     std::memcpy(w, p, 16); // (only the first `steps` bytes are kept)
                     w += steps;
                     p += steps;
@@ -1590,7 +1590,7 @@ run_found:
                             const unsigned char* const r = p;
                             p = scan_string_run(p, end);
                             const auto n = static_cast<std::size_t>(p - r);
-                            NLOHMANN_VIEW_ENSURE(n)
+                            arena_ensure(w, w_end, n);
                             std::memcpy(w, r, n);
                             w += n;
                         }
@@ -1614,12 +1614,12 @@ run_found:
                     const unsigned char* const r = p;
                     p = scan_string_run(p, end);
                     const auto n = static_cast<std::size_t>(p - r);
-                    NLOHMANN_VIEW_ENSURE(n)
+                    arena_ensure(w, w_end, n);
                     std::memcpy(w, r, n);
                     w += n;
                     break;
                 }
-                NLOHMANN_VIEW_ENSURE(16)
+                arena_ensure(w, w_end, 16);
                 const unsigned k = copy_plain_run16(p, w);
                 w += k;
                 p += k;
@@ -1633,7 +1633,7 @@ run_found:
                     const unsigned char* const r = p;
                     p = scan_string_run(p, end);
                     const auto n = static_cast<std::size_t>(p - r);
-                    NLOHMANN_VIEW_ENSURE(n)
+                    arena_ensure(w, w_end, n);
                     std::memcpy(w, r, n);
                     w += n;
                 }
@@ -1643,12 +1643,11 @@ run_found:
             const unsigned char* const r = p;
             p = scan_string_run(p, end);
             const auto n = static_cast<std::size_t>(p - r);
-            NLOHMANN_VIEW_ENSURE(n)
+            arena_ensure(w, w_end, n);
             std::memcpy(w, r, n);
             w += n;
 #endif
         }
-#undef NLOHMANN_VIEW_ENSURE
     }
 
     /// does the float token [s, p) overflow FloatType? (parse() rejects it)
@@ -1688,6 +1687,44 @@ run_found:
     // pointer (resized ahead in large steps; trimmed when parsing succeeds)
     char* m_arena_write = nullptr;
     char* m_arena_end = nullptr;
+
+    /// room for n more bytes at w, the write position kept in a local, with
+    /// w_end the end of the arena. (A lambda instead is not always inlined,
+    /// and then w would be kept in memory, as m_arena_write is.)
+    NLOHMANN_VIEW_ALWAYS_INLINE void arena_ensure(char*& w, const char*& w_end, std::size_t n)
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(w_end - w) < n))
+        {
+            m_arena_write = w;
+            arena_grow(n);
+            w = m_arena_write;
+            w_end = m_arena_end;
+        }
+    }
+
+    /// stores a write position kept in a local back into m_arena_write when
+    /// the function that keeps it returns, on every path
+    class arena_write_back
+    {
+      public:
+        arena_write_back(builder& b, char*& w) noexcept
+            : m_builder(b)
+            , m_w(w)
+        {}
+        ~arena_write_back()
+        {
+            m_builder.m_arena_write = m_w;
+        }
+
+        arena_write_back(const arena_write_back&) = delete;
+        arena_write_back& operator=(const arena_write_back&) = delete;
+        arena_write_back(arena_write_back&&) = delete;
+        arena_write_back& operator=(arena_write_back&&) = delete;
+
+      private:
+        builder& m_builder;
+        char*& m_w;
+    };
 
     NLOHMANN_VIEW_ALWAYS_INLINE std::size_t arena_used() const noexcept
     {
