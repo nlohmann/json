@@ -125,6 +125,19 @@ private:
         Container::pop_back();
     }
 
+    /// @brief remove the entry with the given key; returns the number of removed entries
+    template<class K>
+    size_type erase_impl(const K& key)
+    {
+        const auto it = find_impl(*this, key);
+        if (it != this->end())
+        {
+            erase_at(it);
+            return 1;
+        }
+        return 0;
+    }
+
 public:
     template<class V, detail::enable_if_t<
                  detail::is_constructible<T, V>::value, int> = 0>
@@ -214,26 +227,14 @@ public:
 
     size_type erase(const key_type& key)
     {
-        const auto it = find_impl(*this, key);
-        if (it != this->end())
-        {
-            erase_at(it);
-            return 1;
-        }
-        return 0;
+        return erase_impl(key);
     }
 
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     size_type erase(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        const auto it = find_impl(*this, key);
-        if (it != this->end())
-        {
-            erase_at(it);
-            return 1;
-        }
-        return 0;
+        return erase_impl(key);
     }
 
     iterator erase(iterator pos)
