@@ -2042,3 +2042,32 @@ TEST_CASE("string scanning kernels")
     CHECK(nlohmann::detail::read_eight_bytes(bytes.data() + 8) == 0xFF0F0E0D0C0B0A09u);
     CHECK(nlohmann::detail::read_eight_bytes(reinterpret_cast<const char*>(bytes.data()) + 3) == 0x0B0A090807060504u);
 }
+
+TEST_CASE("find_ascii_copyable_run agrees with is_ascii_copyable for every byte")
+{
+    // the SWAR mask in find_ascii_copyable_run() encodes the predicate a
+    // second time; check every byte value at every position of a 24-byte buffer
+    // (three words) and for several lengths, with the byte at the end or inside
+    for (unsigned int value = 0; value < 256; ++value)
+    {
+        for (std::size_t position = 0; position < 24; ++position)
+        {
+            std::array<unsigned char, 24> buffer{};
+            buffer.fill(static_cast<unsigned char>('a'));
+            buffer[position] = static_cast<unsigned char>(value);
+            const bool copyable = nlohmann::detail::is_ascii_copyable(static_cast<unsigned char>(value));
+            for (const std::size_t n : {position, position + 1, std::size_t{24}})
+            {
+                if (n > 24)
+                {
+                    continue;
+                }
+                const std::size_t expected = (copyable || n <= position) ? n : position;
+                CAPTURE(value)
+                CAPTURE(position)
+                CAPTURE(n)
+                CHECK(nlohmann::detail::find_ascii_copyable_run(buffer.data(), n) == expected);
+            }
+        }
+    }
+}
