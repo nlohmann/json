@@ -150,6 +150,13 @@ class exception : public std::exception
         return concat("[json.exception.", ename, '.', std::to_string(id_), "] ");
     }
 
+    /// build the message "[json.exception.<ename>.<id>] <diagnostics><what_arg>"
+    template<typename BasicJsonContext>
+    static std::string what_impl(const std::string& ename, int id_, const std::string& what_arg, BasicJsonContext context)
+    {
+        return concat(name(ename, id_), diagnostics(context), what_arg);
+    }
+
     static std::string diagnostics(std::nullptr_t /*leaf_element*/)
     {
         return "";
@@ -162,48 +169,33 @@ class exception : public std::exception
         std::vector<std::string> tokens;
         for (const auto* current = leaf_element; current != nullptr && current->m_parent != nullptr; current = current->m_parent)
         {
-            switch (current->m_parent->type())
+            const auto* parent = current->m_parent;
+            if (parent->is_array())
             {
-                case value_t::array:
+                for (std::size_t i = 0; i < parent->m_data.m_value.array->size(); ++i)
                 {
-                    for (std::size_t i = 0; i < current->m_parent->m_data.m_value.array->size(); ++i)
+                    if (&parent->m_data.m_value.array->operator[](i) == current)
                     {
-                        if (&current->m_parent->m_data.m_value.array->operator[](i) == current)
-                        {
-                            tokens.emplace_back(std::to_string(i));
-                            break;
-                        }
+                        tokens.emplace_back(std::to_string(i));
+                        break;
                     }
-                    break;
                 }
-
-                case value_t::object:
-                {
-                    for (const auto& element : *current->m_parent->m_data.m_value.object)
-                    {
-                        if (&element.second == current)
-                        {
-                            // data() is null-terminated, so a key containing
-                            // a null byte is cut short here rather than
-                            // truncating the whole message at what()
-                            tokens.emplace_back(element.first.data());
-                            break;
-                        }
-                    }
-                    break;
-                }
-
-                case value_t::null: // LCOV_EXCL_LINE
-                case value_t::string: // LCOV_EXCL_LINE
-                case value_t::boolean: // LCOV_EXCL_LINE
-                case value_t::number_integer: // LCOV_EXCL_LINE
-                case value_t::number_unsigned: // LCOV_EXCL_LINE
-                case value_t::number_float: // LCOV_EXCL_LINE
-                case value_t::binary: // LCOV_EXCL_LINE
-                case value_t::discarded: // LCOV_EXCL_LINE
-                default:   // LCOV_EXCL_LINE
-                    break; // LCOV_EXCL_LINE
             }
+            else if (parent->is_object())
+            {
+                for (const auto& element : *parent->m_data.m_value.object)
+                {
+                    if (&element.second == current)
+                    {
+                        // data() is null-terminated, so a key containing
+                        // a null byte is cut short here rather than
+                        // truncating the whole message at what()
+                        tokens.emplace_back(element.first.data());
+                        break;
+                    }
+                }
+            }
+            // all other parent types (primitives) contribute no token
         }
 
         if (tokens.empty())
@@ -319,7 +311,7 @@ class invalid_iterator : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static invalid_iterator create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("invalid_iterator", id_), exception::diagnostics(context), what_arg);
+        const std::string w = exception::what_impl("invalid_iterator", id_, what_arg, context);
         return {id_, w.c_str()};
     }
 
@@ -343,7 +335,7 @@ class type_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static type_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("type_error", id_), exception::diagnostics(context), what_arg);
+        const std::string w = exception::what_impl("type_error", id_, what_arg, context);
         return {id_, w.c_str()};
     }
 
@@ -366,7 +358,7 @@ class out_of_range : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static out_of_range create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("out_of_range", id_), exception::diagnostics(context), what_arg);
+        const std::string w = exception::what_impl("out_of_range", id_, what_arg, context);
         return {id_, w.c_str()};
     }
 
@@ -389,7 +381,7 @@ class other_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static other_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("other_error", id_), exception::diagnostics(context), what_arg);
+        const std::string w = exception::what_impl("other_error", id_, what_arg, context);
         return {id_, w.c_str()};
     }
 
