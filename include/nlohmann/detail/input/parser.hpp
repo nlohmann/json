@@ -243,13 +243,13 @@ class parser
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse_internal(SAX* sax)
     {
+        // value to avoid a goto (see comment where set to true)
+        bool skip_to_state_evaluation = false;
+
         // stack to remember the hierarchy of structured values we are parsing
         // true = array; false = object (bytes, not std::vector<bool>, whose
         // push_back() is a call with GCC)
         std::vector<std::uint8_t> states;
-        // value to avoid a goto (see comment where set to true)
-        bool skip_to_state_evaluation = false;
-
         // a document that starts with a container pushes onto the stack at
         // once: allocate it in one step instead of growing it from 1 byte
         if (last_token == token_type::begin_object || last_token == token_type::begin_array)

@@ -569,16 +569,18 @@ class json_sax_dom_parser
         JSON_ASSERT(frames.back().object == nullptr);
         const frame f = frames.back();
         frames.pop_back();
-        enter_enclosing_container();
+        reenter_enclosing_container();
 
         if (f.array == nullptr)
         {
-            // the elements are on the stack: make them the array
+            // the elements are the top of the shared elements stack, from
+            // f.start on (the elements below belong to enclosing arrays that
+            // are still open): move them into the array and pop them
             const auto first = elements.begin() + static_cast<std::ptrdiff_t>(f.start);
             auto* const arr = BasicJsonType::template create<array_t>(std::make_move_iterator(first), std::make_move_iterator(elements.end()));
             BasicJsonType value;
-            value.m_data.m_type = BasicJsonType::value_t::array;
             value.m_data.m_value.array = arr;
+            value.m_data.m_type = BasicJsonType::value_t::array;
             elements.erase(first, elements.end());
 
             place_container(f, frames.empty() ? nullptr : &frames.back(), std::move(value), true);
@@ -1033,13 +1035,15 @@ class json_sax_dom_parser
         return true;
     }
 
-    /// the members of an object that is collected on the stack as an object
+    /// the members of an object that is collected on the stack as an object;
+    /// they are the top of the shared member stack, from f.start on (the
+    /// members below belong to enclosing objects that are still open)
     object_t* members_to_object(const frame& f, BasicJsonType& value)
     {
         const auto first = ordered_data.members.begin() + static_cast<std::ptrdiff_t>(f.start);
         auto* const obj = BasicJsonType::template create<object_t>(std::make_move_iterator(first), std::make_move_iterator(ordered_data.members.end()));
-        value.m_data.m_type = BasicJsonType::value_t::object;
         value.m_data.m_value.object = obj;
+        value.m_data.m_type = BasicJsonType::value_t::object;
         ordered_data.members.erase(first, ordered_data.members.end());
         return obj;
     }
@@ -1073,7 +1077,7 @@ class json_sax_dom_parser
         // the members are on the stack: make them the object
         const frame f = frames.back();
         frames.pop_back();
-        enter_enclosing_container();
+        reenter_enclosing_container();
 
         BasicJsonType value;
         members_to_object(f, value);
@@ -1098,7 +1102,7 @@ class json_sax_dom_parser
 
         release_key_index(frames.back(), std::integral_constant<bool, indexed_keys> {});
         frames.pop_back();
-        enter_enclosing_container();
+        reenter_enclosing_container();
         return true;
     }
 
@@ -1269,7 +1273,7 @@ class json_sax_dom_parser
     }
 
     /// after a container was closed: the one it was in is the one that gets the next value
-    void enter_enclosing_container()
+    void reenter_enclosing_container()
     {
         if (frames.empty())
         {
