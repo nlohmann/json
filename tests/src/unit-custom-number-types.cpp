@@ -304,7 +304,9 @@ TEST_CASE("custom number types: integers beyond 64 bits")
             CHECK_THROWS_AS(_ = wide_json::to_bon8(value), out_of_range&);
         }
 
+#if !defined(JSON_NOEXCEPTION)
         // a failing write leaves no more than the elements before the failing one
+        // (without exceptions, the writes in CHECK_THROWS_AS do not run)
         std::vector<std::uint8_t> out;
         CHECK_THROWS_AS(wide_json::to_cbor(run, out), out_of_range&);
         // (the head of the array, 1, -3, 7, and 1.5 as a single-precision float)
@@ -312,6 +314,7 @@ TEST_CASE("custom number types: integers beyond 64 bits")
         out.clear();
         CHECK_THROWS_AS(wide_json::to_bon8(run, out), out_of_range&);
         CHECK(!out.empty());
+#endif
 
         // the same values that fit are written exactly as with 64-bit number types
         const wide_json fits = wide_json::array({make_int(1), make_int(-3), make_uint(7), wide_json(1.5), make_int(min_int64), make_int(max_int64), make_int(200), make_int(-70000)});

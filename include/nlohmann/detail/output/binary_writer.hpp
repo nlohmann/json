@@ -2772,7 +2772,7 @@ class binary_writer
     */
     template<typename Iterator, typename EncodeFloat>
     JSON_HEDLEY_NEVER_INLINE
-    Iterator write_float_elements(Iterator it, const Iterator end, EncodeFloat encode_float)
+    Iterator write_float_elements(Iterator it, const Iterator end, EncodeFloat encode_float) // NOLINT(performance-unnecessary-value-param): iterators are passed by value
     {
         constexpr std::size_t max_run = max_reserve_size / integer_encoding_space;
         CharType* const start = oa.reserve(max_run * integer_encoding_space);

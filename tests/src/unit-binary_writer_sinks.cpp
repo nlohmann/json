@@ -694,8 +694,10 @@ TEST_CASE("strings of every head length round trip")
     CHECK(json::from_bon8(json::to_bon8(document)) == document);
 }
 
+#if !defined(JSON_NOEXCEPTION)
 // What a write that throws leaves behind in an output adapter is what was written
-// before it, whatever the adapter and however the adapter sink buffers.
+// before it, whatever the adapter and however the adapter sink buffers. (Without
+// exceptions, the writes in CHECK_THROWS_AS do not run.)
 TEST_CASE("a write that throws leaves the same bytes in every kind of output")
 {
     json array = json::array();
@@ -764,3 +766,4 @@ TEST_CASE("a write that throws leaves the same bytes in every kind of output")
         CHECK(as_stream.str().empty());
     }
 }
+#endif
