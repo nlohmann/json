@@ -15,7 +15,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint64_t
 #include <cstdlib> // strtoull
-#include <cstring> // memcmp, memcpy
+#include <cstring> // memchr, memcmp, memcpy
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO
@@ -303,6 +303,12 @@ class json_pointer
         exceeds_size_type  ///< @a s converts to an integer that exceeds size_type
     };
 
+    /// whether a reference token is "-" (a plain comparison with a string literal is not always inlined)
+    static bool is_dash(const string_t& s) noexcept
+    {
+        return s.size() == 1 && s[0] == '-';
+    }
+
     /*!
     @param[in] s    reference token to be converted into an array index
     @param[out] idx the integer representation of @a s if @ref array_index_status::ok
@@ -328,7 +334,7 @@ class json_pointer
         // error condition (cf. RFC 6901, Sect. 4); this also covers single-
         // character tokens, so "/x" and "/xy" fail alike; "-" and the empty
         // token are left to the conversion below and are reported as unresolved
-        if (JSON_HEDLEY_UNLIKELY(!s.empty() && s != "-" && !(s[0] >= '0' && s[0] <= '9')))
+        if (JSON_HEDLEY_UNLIKELY(!s.empty() && !is_dash(s) && !(s[0] >= '0' && s[0] <= '9')))
         {
             return array_index_status::not_a_number;
         }
@@ -475,9 +481,40 @@ class json_pointer
         return pos == size;
     }
 
+    /// reserve room for @a n elements of an array type that has reserve()
+    template<typename ArrayType>
+    static auto reserve_elements(ArrayType& array, const std::size_t n, detail::priority_tag<1> /*unused*/)
+    -> decltype(array.reserve(n), void())
+    {
+        array.reserve(n);
+    }
+
+    template<typename ArrayType>
+    static void reserve_elements(ArrayType& /*array*/, const std::size_t /*n*/, detail::priority_tag<0> /*unused*/)
+    {}
+
     /// @brief object member access with a key that is only copied if it is inserted
+    ///
+    /// Objects that can find the position of a key and insert there
+    /// (std::map) search once, others look the key up and add it if it is missing.
     template<typename BasicJsonType>
-    static BasicJsonType& object_member(BasicJsonType& object, const string_t& key)
+    static auto object_member_impl(BasicJsonType& object, const string_t& key, detail::priority_tag<1> /*unused*/)
+    -> decltype(object.m_data.m_value.object->emplace_hint(object.m_data.m_value.object->lower_bound(key), key, nullptr), std::declval<BasicJsonType&>())
+    {
+        auto& members = *object.m_data.m_value.object;
+        auto it = members.lower_bound(key);
+        if (it != members.end() && !members.key_comp()(key, it->first))
+        {
+            return it->second;
+        }
+
+        const auto old_capacity = object.container_capacity();
+        it = members.emplace_hint(it, key, nullptr);
+        return object.set_parent_after_insert(it->second, old_capacity);
+    }
+
+    template<typename BasicJsonType>
+    static BasicJsonType& object_member_impl(BasicJsonType& object, const string_t& key, detail::priority_tag<0> /*unused*/)
     {
         auto& members = *object.m_data.m_value.object;
         const auto it = members.find(key);
@@ -486,6 +523,12 @@ class json_pointer
             return it->second;
         }
         return object.operator[](key);
+    }
+
+    template<typename BasicJsonType>
+    static BasicJsonType& object_member(BasicJsonType& object, const string_t& key)
+    {
+        return object_member_impl(object, key, detail::priority_tag<1> {});
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -721,47 +764,102 @@ class json_pointer
     }
 
     /*!
+    @brief the values along the pointer last resolved by @ref resolve_plain
+
+    A patch from @ref basic_json::diff lists its operations in document order,
+    so consecutive pointers share most of their reference tokens; the values
+    along the previous pointer are kept to resume from the common prefix.
+    `steps[k]` is the value after the first `k` reference tokens together with
+    the length of the prefix of `*path` that holds them. A value stays valid as
+    long as no operation changes its container: callers keep only values up to
+    the parent of the pointer they modify, or call `reset()`.
+    */
+    template<typename BasicJsonType>
+    struct plain_steps
+    {
+        const string_t* path = nullptr;
+        std::vector<std::pair<std::size_t, BasicJsonType*>> steps{};
+
+        void reset() noexcept
+        {
+            path = nullptr;
+            steps.clear();
+        }
+    };
+
+    /*!
     @brief resolve a plain JSON pointer without building its reference tokens
 
-    @param[in] ptr     the value the pointer starts at
+    @param[in] root    the value the pointer starts at
     @param[in] path    a JSON pointer string
     @param[in] length  the number of leading bytes of @a path to resolve; 0 or
                        the position of a slash
     @param[in,out] token  a string to hold the reference tokens, to reuse its storage
+    @param[in,out] cache  the values along the previously resolved pointer;
+                          @a path must outlive the next call
 
     @return the pointed to value, or `nullptr` if the pointer does not denote
-            an existing value, or does so in a way that is not plain: a
-            reference token with an escape, an array index that is malformed or
-            out of range, or a "-". No exception is thrown for these; callers
-            use @ref json_pointer instead, which handles them.
+            an existing value, or does so in a way that is not plain: an array
+            index that is malformed or out of range, or a "-", or a reference
+            token with an escape. No exception is
+            thrown for these; callers use @ref json_pointer instead, which
+            handles them.
     */
     template<typename BasicJsonType>
-    static BasicJsonType* resolve_plain(BasicJsonType* ptr, const string_t& path, const std::size_t length, string_t& token)
+    static BasicJsonType* resolve_plain(BasicJsonType* root, const string_t& path, const std::size_t length, string_t& token, plain_steps<BasicJsonType>& cache)
     {
-        for (std::size_t pos = 0; pos < length;)
+        auto& steps = cache.steps;
+
+        // resume from the deepest step that is also a prefix of this path
+        std::size_t depth = 1;
+        if (cache.path != nullptr && !steps.empty() && steps[0].second == root)
+        {
+            const string_t& previous = *cache.path;
+            for (depth = steps.size(); depth > 1; --depth)
+            {
+                // a step ends at a token boundary of the previous path
+                const std::size_t prefix = steps[depth - 1].first;
+                if (prefix <= length && (prefix == length || path[prefix] == '/') && std::memcmp(path.data(), previous.data(), prefix) == 0)
+                {
+                    break;
+                }
+            }
+            steps.resize(depth);
+        }
+        else
+        {
+            steps.assign(1, std::make_pair(std::size_t{0}, root));
+        }
+        cache.path = &path;
+
+        BasicJsonType* ptr = steps[depth - 1].second;
+        for (std::size_t pos = steps[depth - 1].first; pos < length;)
         {
             if (JSON_HEDLEY_UNLIKELY(path[pos] != '/'))
             {
                 return nullptr;
             }
 
-            // the reference token between the slash at pos and the next one
-            std::size_t end = path.find_first_of('/', pos + 1);
-            if (end == string_t::npos || end > length)
+            // the reference token between the slash at pos and the next one,
+            // which must not have an escape
+            const char* const begin = path.data() + pos + 1;
+            const char* const limit = path.data() + length;
+            const char* end = begin;
+            while (end < limit && *end != '/')
             {
-                end = length;
-            }
-            token.clear();
-            token.append(path.data() + pos + 1, end - pos - 1);
-            if (JSON_HEDLEY_UNLIKELY(token.find_first_of('~') != string_t::npos))
-            {
-                return nullptr;
+                if (JSON_HEDLEY_UNLIKELY(*end == '~'))
+                {
+                    return nullptr;
+                }
+                ++end;
             }
 
             switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
+                    token.clear();
+                    token.append(begin, static_cast<std::size_t>(end - begin));
                     const auto it = ptr->m_data.m_value.object->find(token);
                     if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
                     {
@@ -773,8 +871,24 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    typename BasicJsonType::size_type idx{};
-                    if (JSON_HEDLEY_UNLIKELY(parse_array_index<BasicJsonType>(token, idx) != array_index_status::ok || idx >= ptr->m_data.m_value.array->size()))
+                    // an index of up to 18 digits without a leading zero fits into size_type
+                    // (9 digits for a 32-bit size_type); everything else is left to json_pointer
+                    constexpr std::size_t max_digits = sizeof(typename BasicJsonType::size_type) >= 8 ? 18 : 9;
+                    const auto digits = static_cast<std::size_t>(end - begin);
+                    if (JSON_HEDLEY_UNLIKELY(digits == 0 || digits > max_digits || (digits > 1 && *begin == '0')))
+                    {
+                        return nullptr;
+                    }
+                    typename BasicJsonType::size_type idx = 0;
+                    for (const char* c = begin; c != end; ++c)
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(*c < '0' || *c > '9'))
+                        {
+                            return nullptr;
+                        }
+                        idx = static_cast<typename BasicJsonType::size_type>((idx * 10) + static_cast<typename BasicJsonType::size_type>(*c - '0'));
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
                     {
                         return nullptr;
                     }
@@ -793,7 +907,8 @@ class json_pointer
                 default:
                     return nullptr;
             }
-            pos = end;
+            pos = static_cast<std::size_t>(end - path.data());
+            steps.emplace_back(pos, ptr);
         }
 
         return ptr;
@@ -907,7 +1022,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" always fails the range check
                         JSON_THROW(detail::out_of_range::create(detail::exception_id::pointer_past_the_end_index, detail::concat(
@@ -978,7 +1093,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" cannot be used for const access
                         JSON_THROW(detail::out_of_range::create(detail::exception_id::pointer_past_the_end_index, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
@@ -1040,7 +1155,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" always fails the range check
                         return nullptr;
@@ -1117,7 +1232,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" always fails the range check
                         return false;
@@ -1276,6 +1391,52 @@ class json_pointer
         obj[key] = std::forward<ValueType>(v);
     }
 
+    /// the number of entries that flattening @a value adds: its primitive
+    /// values and empty containers
+    template<typename BasicJsonType>
+    static std::size_t count_flattened(const BasicJsonType& value)
+    {
+        std::size_t count = 0;
+        std::vector<const BasicJsonType*> pending(1, &value);
+        while (!pending.empty())
+        {
+            const BasicJsonType* const v = pending.back();
+            pending.pop_back();
+            if (v->is_array() && !v->m_data.m_value.array->empty())
+            {
+                for (const auto& element : *v->m_data.m_value.array)
+                {
+                    pending.push_back(&element);
+                }
+            }
+            else if (v->is_object() && !v->m_data.m_value.object->empty())
+            {
+                for (const auto& member : *v->m_data.m_value.object)
+                {
+                    pending.push_back(&member.second);
+                }
+            }
+            else
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+    // Reserve the storage for @a value of objects that have a reserve(), so
+    // that it does not have to be moved while it grows
+    template<typename ObjectType, typename BasicJsonType>
+    static auto reserve_flattened(ObjectType& obj, const BasicJsonType& value, detail::priority_tag<1> /*unused*/)
+    -> decltype(obj.reserve(std::size_t {}), void())
+    {
+        obj.reserve(count_flattened(value));
+    }
+
+    template<typename ObjectType, typename BasicJsonType>
+    static void reserve_flattened(ObjectType& /*obj*/, const BasicJsonType& /*value*/, detail::priority_tag<0> /*unused*/)
+    {}
+
     /// append the decimal representation of @a i to @a out
     static void append_index(string_t& out, std::size_t i)
     {
@@ -1385,6 +1546,7 @@ class json_pointer
             }
         };
 
+        reserve_flattened(object, value, detail::priority_tag<1> {});
         enter(value);
         while (!stack.empty())
         {
@@ -1392,8 +1554,9 @@ class json_pointer
             // frame, which would invalidate a reference to it
             const BasicJsonType* const container = stack.back().container;
 
-            // drop the path of the previous child
-            path.resize(stack.back().path_length);
+            // the path of the previous child is replaced by the path of the
+            // next one; for an array element in one resize
+            const std::size_t path_length = stack.back().path_length;
 
             if (container->is_array())
             {
@@ -1407,8 +1570,20 @@ class json_pointer
 
                 // iterate array and use index as a reference string
                 ++stack.back().index;
-                path.push_back('/');
-                append_index(path, i);
+                std::array<char, 24> digits{};
+                std::size_t pos = digits.size();
+                std::size_t rest = i;
+                do
+                {
+                    digits[--pos] = static_cast<char>('0' + (rest % 10));
+                    rest /= 10;
+                }
+                while (rest != 0);
+                const std::size_t count = digits.size() - pos;
+                path.resize(path_length + 1 + count);
+                char* const out = &path[path_length];
+                out[0] = '/';
+                std::memcpy(out + 1, digits.data() + pos, count);
                 enter(array[i]);
             }
             else
@@ -1422,6 +1597,7 @@ class json_pointer
 
                 // iterate object and use keys as reference string
                 ++stack.back().member;
+                path.resize(path_length);
                 path.push_back('/');
                 detail::escape_into(path, it->first);
                 enter(it->second);
@@ -1517,8 +1693,28 @@ class json_pointer
                 {
                     end = key.size();
                 }
+                const std::size_t token_size = end - pos - 1;
+
+                // a token that is a plain index of up to 9 digits, which is
+                // the case for almost all array elements, is not copied
+                std::size_t index = 0;
+                bool plain_index = current->type() == detail::value_t::array && token_size != 0 && token_size <= 9 && (token_size == 1 || data[pos + 1] != '0');
+                for (std::size_t k = pos + 1; plain_index && k < end; ++k)
+                {
+                    plain_index = data[k] >= '0' && data[k] <= '9';
+                    index = (index * 10) + static_cast<std::size_t>(data[k] - '0');
+                }
+                if (plain_index)
+                {
+                    current = &current->operator[](static_cast<typename BasicJsonType::size_type>(index));
+                    values.push_back(current);
+                    ends.push_back(end);
+                    pos = end;
+                    continue;
+                }
+
                 token.clear();
-                token.append(data + pos + 1, end - pos - 1);
+                token.append(data + pos + 1, token_size);
                 if (token.find_first_of('~') != string_t::npos)
                 {
                     detail::unescape(token);
@@ -1528,10 +1724,13 @@ class json_pointer
                 {
                     case detail::value_t::null:
                     {
-                        if (arrays.contains(data, pos))
+                        // a first child 0 makes the value an array without a look-up
+                        if ((token_size == 1 && data[pos + 1] == '0') || arrays.contains(data, pos))
                         {
                             // some reference token below this position is 0, so the
                             // value is an array
+                            *current = BasicJsonType(detail::value_t::array);
+                            reserve_elements(*current->m_data.m_value.array, 2, detail::priority_tag<1> {});
                             current = &current->operator[](array_index<BasicJsonType>(token));
                         }
                         else

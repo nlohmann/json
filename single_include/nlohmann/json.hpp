@@ -19,6 +19,7 @@
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
 #include <algorithm> // all_of, find, for_each, none_of
+#include <array> // array
 #include <cmath> // isnan
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <cstdint> // uint8_t
@@ -22516,7 +22517,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <cstdint> // uint64_t
 #include <cstdlib> // strtoull
-#include <cstring> // memcmp, memcpy
+#include <cstring> // memchr, memcmp, memcpy
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO
@@ -22812,6 +22813,12 @@ class json_pointer
         exceeds_size_type  ///< @a s converts to an integer that exceeds size_type
     };
 
+    /// whether a reference token is "-" (a plain comparison with a string literal is not always inlined)
+    static bool is_dash(const string_t& s) noexcept
+    {
+        return s.size() == 1 && s[0] == '-';
+    }
+
     /*!
     @param[in] s    reference token to be converted into an array index
     @param[out] idx the integer representation of @a s if @ref array_index_status::ok
@@ -22837,7 +22844,7 @@ class json_pointer
         // error condition (cf. RFC 6901, Sect. 4); this also covers single-
         // character tokens, so "/x" and "/xy" fail alike; "-" and the empty
         // token are left to the conversion below and are reported as unresolved
-        if (JSON_HEDLEY_UNLIKELY(!s.empty() && s != "-" && !(s[0] >= '0' && s[0] <= '9')))
+        if (JSON_HEDLEY_UNLIKELY(!s.empty() && !is_dash(s) && !(s[0] >= '0' && s[0] <= '9')))
         {
             return array_index_status::not_a_number;
         }
@@ -22984,9 +22991,40 @@ class json_pointer
         return pos == size;
     }
 
+    /// reserve room for @a n elements of an array type that has reserve()
+    template<typename ArrayType>
+    static auto reserve_elements(ArrayType& array, const std::size_t n, detail::priority_tag<1> /*unused*/)
+    -> decltype(array.reserve(n), void())
+    {
+        array.reserve(n);
+    }
+
+    template<typename ArrayType>
+    static void reserve_elements(ArrayType& /*array*/, const std::size_t /*n*/, detail::priority_tag<0> /*unused*/)
+    {}
+
     /// @brief object member access with a key that is only copied if it is inserted
+    ///
+    /// Objects that can find the position of a key and insert there
+    /// (std::map) search once, others look the key up and add it if it is missing.
     template<typename BasicJsonType>
-    static BasicJsonType& object_member(BasicJsonType& object, const string_t& key)
+    static auto object_member_impl(BasicJsonType& object, const string_t& key, detail::priority_tag<1> /*unused*/)
+    -> decltype(object.m_data.m_value.object->emplace_hint(object.m_data.m_value.object->lower_bound(key), key, nullptr), std::declval<BasicJsonType&>())
+    {
+        auto& members = *object.m_data.m_value.object;
+        auto it = members.lower_bound(key);
+        if (it != members.end() && !members.key_comp()(key, it->first))
+        {
+            return it->second;
+        }
+
+        const auto old_capacity = object.container_capacity();
+        it = members.emplace_hint(it, key, nullptr);
+        return object.set_parent_after_insert(it->second, old_capacity);
+    }
+
+    template<typename BasicJsonType>
+    static BasicJsonType& object_member_impl(BasicJsonType& object, const string_t& key, detail::priority_tag<0> /*unused*/)
     {
         auto& members = *object.m_data.m_value.object;
         const auto it = members.find(key);
@@ -22995,6 +23033,12 @@ class json_pointer
             return it->second;
         }
         return object.operator[](key);
+    }
+
+    template<typename BasicJsonType>
+    static BasicJsonType& object_member(BasicJsonType& object, const string_t& key)
+    {
+        return object_member_impl(object, key, detail::priority_tag<1> {});
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -23230,47 +23274,102 @@ class json_pointer
     }
 
     /*!
+    @brief the values along the pointer last resolved by @ref resolve_plain
+
+    A patch from @ref basic_json::diff lists its operations in document order,
+    so consecutive pointers share most of their reference tokens; the values
+    along the previous pointer are kept to resume from the common prefix.
+    `steps[k]` is the value after the first `k` reference tokens together with
+    the length of the prefix of `*path` that holds them. A value stays valid as
+    long as no operation changes its container: callers keep only values up to
+    the parent of the pointer they modify, or call `reset()`.
+    */
+    template<typename BasicJsonType>
+    struct plain_steps
+    {
+        const string_t* path = nullptr;
+        std::vector<std::pair<std::size_t, BasicJsonType*>> steps{};
+
+        void reset() noexcept
+        {
+            path = nullptr;
+            steps.clear();
+        }
+    };
+
+    /*!
     @brief resolve a plain JSON pointer without building its reference tokens
 
-    @param[in] ptr     the value the pointer starts at
+    @param[in] root    the value the pointer starts at
     @param[in] path    a JSON pointer string
     @param[in] length  the number of leading bytes of @a path to resolve; 0 or
                        the position of a slash
     @param[in,out] token  a string to hold the reference tokens, to reuse its storage
+    @param[in,out] cache  the values along the previously resolved pointer;
+                          @a path must outlive the next call
 
     @return the pointed to value, or `nullptr` if the pointer does not denote
-            an existing value, or does so in a way that is not plain: a
-            reference token with an escape, an array index that is malformed or
-            out of range, or a "-". No exception is thrown for these; callers
-            use @ref json_pointer instead, which handles them.
+            an existing value, or does so in a way that is not plain: an array
+            index that is malformed or out of range, or a "-", or a reference
+            token with an escape. No exception is
+            thrown for these; callers use @ref json_pointer instead, which
+            handles them.
     */
     template<typename BasicJsonType>
-    static BasicJsonType* resolve_plain(BasicJsonType* ptr, const string_t& path, const std::size_t length, string_t& token)
+    static BasicJsonType* resolve_plain(BasicJsonType* root, const string_t& path, const std::size_t length, string_t& token, plain_steps<BasicJsonType>& cache)
     {
-        for (std::size_t pos = 0; pos < length;)
+        auto& steps = cache.steps;
+
+        // resume from the deepest step that is also a prefix of this path
+        std::size_t depth = 1;
+        if (cache.path != nullptr && !steps.empty() && steps[0].second == root)
+        {
+            const string_t& previous = *cache.path;
+            for (depth = steps.size(); depth > 1; --depth)
+            {
+                // a step ends at a token boundary of the previous path
+                const std::size_t prefix = steps[depth - 1].first;
+                if (prefix <= length && (prefix == length || path[prefix] == '/') && std::memcmp(path.data(), previous.data(), prefix) == 0)
+                {
+                    break;
+                }
+            }
+            steps.resize(depth);
+        }
+        else
+        {
+            steps.assign(1, std::make_pair(std::size_t{0}, root));
+        }
+        cache.path = &path;
+
+        BasicJsonType* ptr = steps[depth - 1].second;
+        for (std::size_t pos = steps[depth - 1].first; pos < length;)
         {
             if (JSON_HEDLEY_UNLIKELY(path[pos] != '/'))
             {
                 return nullptr;
             }
 
-            // the reference token between the slash at pos and the next one
-            std::size_t end = path.find_first_of('/', pos + 1);
-            if (end == string_t::npos || end > length)
+            // the reference token between the slash at pos and the next one,
+            // which must not have an escape
+            const char* const begin = path.data() + pos + 1;
+            const char* const limit = path.data() + length;
+            const char* end = begin;
+            while (end < limit && *end != '/')
             {
-                end = length;
-            }
-            token.clear();
-            token.append(path.data() + pos + 1, end - pos - 1);
-            if (JSON_HEDLEY_UNLIKELY(token.find_first_of('~') != string_t::npos))
-            {
-                return nullptr;
+                if (JSON_HEDLEY_UNLIKELY(*end == '~'))
+                {
+                    return nullptr;
+                }
+                ++end;
             }
 
             switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
+                    token.clear();
+                    token.append(begin, static_cast<std::size_t>(end - begin));
                     const auto it = ptr->m_data.m_value.object->find(token);
                     if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
                     {
@@ -23282,8 +23381,24 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    typename BasicJsonType::size_type idx{};
-                    if (JSON_HEDLEY_UNLIKELY(parse_array_index<BasicJsonType>(token, idx) != array_index_status::ok || idx >= ptr->m_data.m_value.array->size()))
+                    // an index of up to 18 digits without a leading zero fits into size_type
+                    // (9 digits for a 32-bit size_type); everything else is left to json_pointer
+                    constexpr std::size_t max_digits = sizeof(typename BasicJsonType::size_type) >= 8 ? 18 : 9;
+                    const auto digits = static_cast<std::size_t>(end - begin);
+                    if (JSON_HEDLEY_UNLIKELY(digits == 0 || digits > max_digits || (digits > 1 && *begin == '0')))
+                    {
+                        return nullptr;
+                    }
+                    typename BasicJsonType::size_type idx = 0;
+                    for (const char* c = begin; c != end; ++c)
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(*c < '0' || *c > '9'))
+                        {
+                            return nullptr;
+                        }
+                        idx = static_cast<typename BasicJsonType::size_type>((idx * 10) + static_cast<typename BasicJsonType::size_type>(*c - '0'));
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
                     {
                         return nullptr;
                     }
@@ -23302,7 +23417,8 @@ class json_pointer
                 default:
                     return nullptr;
             }
-            pos = end;
+            pos = static_cast<std::size_t>(end - path.data());
+            steps.emplace_back(pos, ptr);
         }
 
         return ptr;
@@ -23416,7 +23532,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" always fails the range check
                         JSON_THROW(detail::out_of_range::create(detail::exception_id::pointer_past_the_end_index, detail::concat(
@@ -23487,7 +23603,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" cannot be used for const access
                         JSON_THROW(detail::out_of_range::create(detail::exception_id::pointer_past_the_end_index, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
@@ -23549,7 +23665,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" always fails the range check
                         return nullptr;
@@ -23626,7 +23742,7 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(is_dash(reference_token)))
                     {
                         // "-" always fails the range check
                         return false;
@@ -23785,6 +23901,52 @@ class json_pointer
         obj[key] = std::forward<ValueType>(v);
     }
 
+    /// the number of entries that flattening @a value adds: its primitive
+    /// values and empty containers
+    template<typename BasicJsonType>
+    static std::size_t count_flattened(const BasicJsonType& value)
+    {
+        std::size_t count = 0;
+        std::vector<const BasicJsonType*> pending(1, &value);
+        while (!pending.empty())
+        {
+            const BasicJsonType* const v = pending.back();
+            pending.pop_back();
+            if (v->is_array() && !v->m_data.m_value.array->empty())
+            {
+                for (const auto& element : *v->m_data.m_value.array)
+                {
+                    pending.push_back(&element);
+                }
+            }
+            else if (v->is_object() && !v->m_data.m_value.object->empty())
+            {
+                for (const auto& member : *v->m_data.m_value.object)
+                {
+                    pending.push_back(&member.second);
+                }
+            }
+            else
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+    // Reserve the storage for @a value of objects that have a reserve(), so
+    // that it does not have to be moved while it grows
+    template<typename ObjectType, typename BasicJsonType>
+    static auto reserve_flattened(ObjectType& obj, const BasicJsonType& value, detail::priority_tag<1> /*unused*/)
+    -> decltype(obj.reserve(std::size_t {}), void())
+    {
+        obj.reserve(count_flattened(value));
+    }
+
+    template<typename ObjectType, typename BasicJsonType>
+    static void reserve_flattened(ObjectType& /*obj*/, const BasicJsonType& /*value*/, detail::priority_tag<0> /*unused*/)
+    {}
+
     /// append the decimal representation of @a i to @a out
     static void append_index(string_t& out, std::size_t i)
     {
@@ -23894,6 +24056,7 @@ class json_pointer
             }
         };
 
+        reserve_flattened(object, value, detail::priority_tag<1> {});
         enter(value);
         while (!stack.empty())
         {
@@ -23901,8 +24064,9 @@ class json_pointer
             // frame, which would invalidate a reference to it
             const BasicJsonType* const container = stack.back().container;
 
-            // drop the path of the previous child
-            path.resize(stack.back().path_length);
+            // the path of the previous child is replaced by the path of the
+            // next one; for an array element in one resize
+            const std::size_t path_length = stack.back().path_length;
 
             if (container->is_array())
             {
@@ -23916,8 +24080,20 @@ class json_pointer
 
                 // iterate array and use index as a reference string
                 ++stack.back().index;
-                path.push_back('/');
-                append_index(path, i);
+                std::array<char, 24> digits{};
+                std::size_t pos = digits.size();
+                std::size_t rest = i;
+                do
+                {
+                    digits[--pos] = static_cast<char>('0' + (rest % 10));
+                    rest /= 10;
+                }
+                while (rest != 0);
+                const std::size_t count = digits.size() - pos;
+                path.resize(path_length + 1 + count);
+                char* const out = &path[path_length];
+                out[0] = '/';
+                std::memcpy(out + 1, digits.data() + pos, count);
                 enter(array[i]);
             }
             else
@@ -23931,6 +24107,7 @@ class json_pointer
 
                 // iterate object and use keys as reference string
                 ++stack.back().member;
+                path.resize(path_length);
                 path.push_back('/');
                 detail::escape_into(path, it->first);
                 enter(it->second);
@@ -24026,8 +24203,28 @@ class json_pointer
                 {
                     end = key.size();
                 }
+                const std::size_t token_size = end - pos - 1;
+
+                // a token that is a plain index of up to 9 digits, which is
+                // the case for almost all array elements, is not copied
+                std::size_t index = 0;
+                bool plain_index = current->type() == detail::value_t::array && token_size != 0 && token_size <= 9 && (token_size == 1 || data[pos + 1] != '0');
+                for (std::size_t k = pos + 1; plain_index && k < end; ++k)
+                {
+                    plain_index = data[k] >= '0' && data[k] <= '9';
+                    index = (index * 10) + static_cast<std::size_t>(data[k] - '0');
+                }
+                if (plain_index)
+                {
+                    current = &current->operator[](static_cast<typename BasicJsonType::size_type>(index));
+                    values.push_back(current);
+                    ends.push_back(end);
+                    pos = end;
+                    continue;
+                }
+
                 token.clear();
-                token.append(data + pos + 1, end - pos - 1);
+                token.append(data + pos + 1, token_size);
                 if (token.find_first_of('~') != string_t::npos)
                 {
                     detail::unescape(token);
@@ -24037,10 +24234,13 @@ class json_pointer
                 {
                     case detail::value_t::null:
                     {
-                        if (arrays.contains(data, pos))
+                        // a first child 0 makes the value an array without a look-up
+                        if ((token_size == 1 && data[pos + 1] == '0') || arrays.contains(data, pos))
                         {
                             // some reference token below this position is 0, so the
                             // value is an array
+                            *current = BasicJsonType(detail::value_t::array);
+                            reserve_elements(*current->m_data.m_value.array, 2, detail::priority_tag<1> {});
                             current = &current->operator[](array_index<BasicJsonType>(token));
                         }
                         else
@@ -39347,6 +39547,72 @@ public:
     /// @name JSON Patch functions
     /// @{
 
+  private:
+    /// the members of an operation of a JSON patch that are of interest
+    struct patch_members
+    {
+        basic_json* op = nullptr;
+        basic_json* path = nullptr;
+        basic_json* value = nullptr;
+        basic_json* from = nullptr;
+    };
+
+    /// @brief find the members "op", "path", "value", and "from" of the object @a val in one pass
+    static patch_members find_patch_members(const basic_json& val, std::true_type /*key_type is string_t*/)
+    {
+        patch_members members;
+        for (auto& member : *val.m_data.m_value.object)
+        {
+            const string_t& key = member.first;
+            switch (key.size())
+            {
+                case 2:
+                    if (key == "op")
+                    {
+                        members.op = &member.second;
+                    }
+                    break;
+                case 4:
+                    if (key == "path")
+                    {
+                        members.path = &member.second;
+                    }
+                    else if (key == "from")
+                    {
+                        members.from = &member.second;
+                    }
+                    break;
+                case 5:
+                    if (key == "value")
+                    {
+                        members.value = &member.second;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return members;
+    }
+
+    /// @brief find the members by lookup for key types other than string_t
+    static patch_members find_patch_members(const basic_json& val, std::false_type /*key_type is not string_t*/)
+    {
+        const auto find_member = [&val](const char* name) -> basic_json *
+        {
+            const auto it = val.m_data.m_value.object->find(string_t(name));
+            return it != val.m_data.m_value.object->end() ? &it->second : nullptr;
+        };
+
+        patch_members members;
+        members.op = find_member("op");
+        members.path = find_member("path");
+        members.value = find_member("value");
+        members.from = find_member("from");
+        return members;
+    }
+
+  public:
     /// @brief applies a JSON patch in-place without copying the object
     /// @sa https://json.nlohmann.me/api/basic_json/patch/
     void patch_inplace(const basic_json& json_patch)
@@ -39520,18 +39786,18 @@ public:
         // a diff creates them: apply the operation and return true; return
         // false, with nothing changed, for all others
         string_t token;
-        const string_t value_key = "value";
-        const auto try_plain = [&result, &token, &value_key](patch_operations operation, const string_t& path, const basic_json & val)
+        typename json_pointer::template plain_steps<basic_json> steps;
+        const auto try_plain = [&result, &token, &steps](patch_operations operation, const string_t& path, const patch_members & members, const basic_json & val)
         {
-            if (path.empty() || path.find_first_of('~') != string_t::npos)
+            if (path.empty())
             {
                 return false;
             }
 
             // a missing "value" is reported below
-            const auto value_it = val.m_data.m_value.object->find(value_key);
-            const basic_json& value = value_it != val.m_data.m_value.object->end() ? value_it->second : val;
-            if (operation != patch_operations::remove && value_it == val.m_data.m_value.object->end())
+            const basic_json* const value_ptr = members.value;
+            const basic_json& value = value_ptr != nullptr ? *value_ptr : val;
+            if (operation != patch_operations::remove && value_ptr == nullptr)
             {
                 return false;
             }
@@ -39540,7 +39806,7 @@ public:
             {
                 case patch_operations::replace:
                 {
-                    basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token, steps);
                     if (target == nullptr)
                     {
                         return false;
@@ -39551,7 +39817,7 @@ public:
 
                 case patch_operations::test:
                 {
-                    const basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    const basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token, steps);
                     // a failing test is reported below
                     return target != nullptr && *target == value;
                 }
@@ -39571,13 +39837,17 @@ public:
                     }
                     --slash;
 
-                    basic_json* const parent = json_pointer::resolve_plain(&result, path, slash, token);
+                    basic_json* const parent = json_pointer::resolve_plain(&result, path, slash, token, steps);
                     if (parent == nullptr)
                     {
                         return false;
                     }
                     token.clear();
                     token.append(path.data() + slash + 1, path.size() - slash - 1);
+                    if (token.find_first_of('~') != string_t::npos)
+                    {
+                        return false;
+                    }
 
                     if (operation == patch_operations::add)
                     {
@@ -39633,31 +39903,32 @@ public:
             }
         };
 
+        // the name of the first member to check
+        const string_t op_member = "op";
+
         // iterate and apply the operations
         for (const auto& val : json_patch)
         {
             // wrapper to get a value for an operation
-            const auto get_value = [&val](const string_t& op,
-                                          const string_t& member,
+            const auto get_value = [&val](basic_json * found,
+                                          const string_t& op,
+                                          const char* member,
                                           bool string_type) -> basic_json &
             {
-                // find value
-                auto it = val.m_data.m_value.object->find(member);
-
                 // check if the desired value is present
-                if (JSON_HEDLEY_UNLIKELY(it == val.m_data.m_value.object->end()))
+                if (JSON_HEDLEY_UNLIKELY(found == nullptr))
                 {
-                    detail::throw_patch_missing_member(op, member, false, val);
+                    detail::throw_patch_missing_member(op, string_t(member), false, val);
                 }
 
                 // check if the result is of type string
-                if (JSON_HEDLEY_UNLIKELY(string_type && !it->second.is_string()))
+                if (JSON_HEDLEY_UNLIKELY(string_type && !found->is_string()))
                 {
-                    detail::throw_patch_missing_member(op, member, true, val);
+                    detail::throw_patch_missing_member(op, string_t(member), true, val);
                 }
 
                 // no error: return value
-                return it->second;
+                return *found;
             };
 
             // type check: every element of the array must be an object
@@ -39666,26 +39937,30 @@ public:
                 detail::throw_patch_not_an_array(val);
             }
 
+            const patch_members members = find_patch_members(val, std::is_same<typename object_t::key_type, string_t> {});
+
             // collect mandatory members
-            const string_t& op = *get_value("op", "op", true).m_data.m_value.string;
-            const string_t& path = *get_value(op, "path", true).m_data.m_value.string;
+            const string_t& op = *get_value(members.op, op_member, "op", true).m_data.m_value.string;
+            const string_t& path = *get_value(members.path, op, "path", true).m_data.m_value.string;
             const patch_operations operation = get_op(op);
 
             // the usual operations on a plain pointer are applied without
             // building the pointer's reference tokens; anything else (and
             // every error) is handled below
-            if (try_plain(operation, path, val))
+            if (try_plain(operation, path, members, val))
             {
                 continue;
             }
 
+            // the general operations may change any container
+            steps.reset();
             json_pointer ptr(path);
 
             switch (operation)
             {
                 case patch_operations::add:
                 {
-                    operation_add(ptr, get_value("add", "value", false));
+                    operation_add(ptr, get_value(members.value, "add", "value", false));
                     break;
                 }
 
@@ -39698,13 +39973,13 @@ public:
                 case patch_operations::replace:
                 {
                     // the "path" location must exist - use at()
-                    result.at(ptr) = get_value("replace", "value", false);
+                    result.at(ptr) = get_value(members.value, "replace", "value", false);
                     break;
                 }
 
                 case patch_operations::move:
                 {
-                    const string_t& from_path = *get_value("move", "from", true).m_data.m_value.string;
+                    const string_t& from_path = *get_value(members.from, "move", "from", true).m_data.m_value.string;
                     json_pointer from_ptr(from_path);
 
                     if (JSON_HEDLEY_UNLIKELY(is_proper_prefix(from_ptr, ptr)))
@@ -39727,7 +40002,7 @@ public:
 
                 case patch_operations::copy:
                 {
-                    const string_t& from_path = *get_value("copy", "from", true).m_data.m_value.string;
+                    const string_t& from_path = *get_value(members.from, "copy", "from", true).m_data.m_value.string;
                     const json_pointer from_ptr(from_path);
 
                     // The copy is functionally identical to an "add"
@@ -39745,7 +40020,7 @@ public:
                     {
                         // check if "value" matches the one at "path"
                         // the "path" location must exist - use at()
-                        success = (result.at(ptr) == get_value("test", "value", false));
+                        success = (result.at(ptr) == get_value(members.value, "test", "value", false));
                     }
                     JSON_INTERNAL_CATCH (out_of_range&)
                     {
@@ -39837,13 +40112,18 @@ public:
     /// @brief append an operation @a op for @a path to @a result, with @a value if it is not null
     static void diff_operation(basic_json& result, const char* op, const string_t& path, const basic_json* value)
     {
+        // the keys are distinct and in the order of std::map; the members are
+        // added without looking them up
         basic_json entry(value_t::object);
-        entry["op"] = op;
-        entry["path"] = path;
+        auto& members = *entry.m_data.m_value.object;
+        auto hint = members.end();
+        json_pointer::add_flattened(members, hint, string_t("op"), string_t(op), detail::priority_tag<2> {});
+        json_pointer::add_flattened(members, hint, string_t("path"), path, detail::priority_tag<2> {});
         if (value != nullptr)
         {
-            entry["value"] = *value;
+            json_pointer::add_flattened(members, hint, string_t("value"), *value, detail::priority_tag<2> {});
         }
+        entry.set_parents();
         result.push_back(std::move(entry));
     }
 
@@ -39864,6 +40144,62 @@ public:
     {
         diff_operation(result, "add", path, &value);
     }
+
+    /// @brief the values in the target of the members of a source object, for the
+    ///        objects of up to 16 members without allocating
+    ///
+    /// reserve() must be called with the number of values that are added.
+    class diff_target_values
+    {
+      public:
+        diff_target_values() noexcept
+            : inline_items() // NOLINT(readability-redundant-member-init)
+        {}
+        diff_target_values(const diff_target_values&) = delete;
+        diff_target_values& operator=(const diff_target_values&) = delete;
+        diff_target_values(diff_target_values&&) = delete;
+        diff_target_values& operator=(diff_target_values&&) = delete;
+        ~diff_target_values() = default;
+
+        void reserve(const std::size_t n)
+        {
+            if (n > inline_size)
+            {
+                large.resize(n);
+                items = large.data();
+            }
+        }
+
+        void push_back(const basic_json* value)
+        {
+            items[count++] = value;
+        }
+
+        std::size_t size() const noexcept
+        {
+            return count;
+        }
+
+        const basic_json* operator[](const std::size_t i) const noexcept
+        {
+            return items[i];
+        }
+
+      private:
+        static constexpr std::size_t inline_size = 16;
+        /// the values of a small object, left uninitialized: they are written
+        /// before they are read (the user-provided constructor keeps the
+        /// member initialization, which -Weffc++ asks for, from zeroing them)
+        struct uninitialized_items : std::array<const basic_json*, inline_size>
+        {
+            uninitialized_items() noexcept {} // NOLINT(modernize-use-equals-default,hicpp-use-equals-default,cppcoreguidelines-pro-type-member-init,hicpp-member-init): see above
+        };
+
+        std::size_t count = 0;
+        std::vector<const basic_json*> large{}; // NOLINT(readability-redundant-member-init)
+        uninitialized_items inline_items;
+        const basic_json** items = inline_items.data();
+    };
 
     /// @brief append "/" and the decimal representation of @a index to @a path
     static void diff_append_index(string_t& path, std::size_t index)
@@ -39945,8 +40281,9 @@ public:
     operations that remove every member of @a source and add every member of
     @a target to @a result, and returns false.
     */
+    template<typename TargetValues>
     static bool diff_object_keys(basic_json& result, const basic_json& source, const basic_json& target,
-                                 const string_t& path, std::vector<const basic_json*>& target_values,
+                                 const string_t& path, TargetValues& target_values,
                                  std::vector<const_iterator>& added)
     {
         // first pass: one lookup per source key
@@ -40160,7 +40497,7 @@ public:
 
             case value_t::object:
             {
-                std::vector<const basic_json*> target_values;
+                diff_target_values target_values;
                 std::vector<const_iterator> added;
                 if (diff_object_keys(result, source, target, path, target_values, added))
                 {
