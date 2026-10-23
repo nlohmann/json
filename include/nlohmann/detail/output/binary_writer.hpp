@@ -1025,6 +1025,11 @@ class binary_writer
             w.write_cbor(j);
         }
 
+        static void string(binary_writer& w, const string_t& key, const BasicJsonType& context)
+        {
+            w.write_cbor_string(key, context);
+        }
+
         template<typename KeyType>
         static void key(binary_writer& w, const KeyType& k, const BasicJsonType& object)
         {
@@ -1048,6 +1053,11 @@ class binary_writer
         static void scalar(binary_writer& w, const BasicJsonType& j)
         {
             w.write_msgpack(j);
+        }
+
+        static void string(binary_writer& w, const string_t& key, const BasicJsonType& context)
+        {
+            w.write_msgpack_string(key, context);
         }
 
         template<typename KeyType>
@@ -2999,40 +3009,37 @@ class binary_writer
     }
 
     /*!
-    @brief write an object key as a CBOR text string
+    @brief write an object key as a CBOR or MessagePack string (@a Walk)
 
     A key convertible to string_t is written directly. Other key types (only
     an explicit conversion, or only a to_json overload) go through a temporary
     basic_json, as in version 3.12.0; the temporary is then the diagnostics
     context for strict UTF-8 checks.
     */
-    template<typename Key = typename BasicJsonType::object_t::key_type,
+    template<typename Walk, typename Key = typename BasicJsonType::object_t::key_type,
              enable_if_t<std::is_convertible<Key, string_t>::value, int> = 0>
+    void write_object_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& context)
+    {
+        Walk::string(*this, key, context);
+    }
+
+    template < typename Walk, typename Key = typename BasicJsonType::object_t::key_type,
+               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
+    void write_object_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
+    {
+        Walk::scalar(*this, BasicJsonType(key));
+    }
+
+    /// @brief write an object key as a CBOR text string
     void write_cbor_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& context)
     {
-        write_cbor_string(key, context);
+        write_object_key<cbor_walk>(key, context);
     }
 
-    template < typename Key = typename BasicJsonType::object_t::key_type,
-               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
-    void write_cbor_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
-    {
-        write_cbor(BasicJsonType(key));
-    }
-
-    /// @brief write an object key as a MessagePack str, as in @ref write_cbor_key
-    template<typename Key = typename BasicJsonType::object_t::key_type,
-             enable_if_t<std::is_convertible<Key, string_t>::value, int> = 0>
+    /// @brief write an object key as a MessagePack str
     void write_msgpack_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& context)
     {
-        write_msgpack_string(key, context);
-    }
-
-    template < typename Key = typename BasicJsonType::object_t::key_type,
-               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
-    void write_msgpack_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
-    {
-        write_msgpack(BasicJsonType(key));
+        write_object_key<msgpack_walk>(key, context);
     }
 
     /// the longest string that is written, with its head of one or two
