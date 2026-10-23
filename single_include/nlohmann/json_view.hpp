@@ -6506,6 +6506,45 @@ class view_serializer
     }
 
   private:
+    /// dump_text() with ensure_ascii, out of line: the walk without it is
+    /// faster when it is not merged with this one into dump()
+    NLOHMANN_VIEW_NOINLINE void dump_ascii(const node* root)
+    {
+        if (m_style.pretty)
+        {
+            if (m_style.source_numbers)
+            {
+                dump_text<true, true, true>(root);
+            }
+            else
+            {
+                dump_text<false, true, true>(root);
+            }
+        }
+        else if (m_style.source_numbers)
+        {
+            dump_text<true, false, true>(root);
+        }
+        else
+        {
+            dump_text<false, false, true>(root);
+        }
+    }
+
+    /// dump_text() with indentation, out of line: the compact walk is faster
+    /// when it is not merged with the indented ones into dump()
+    NLOHMANN_VIEW_NOINLINE void dump_pretty(const node* root)
+    {
+        if (m_style.source_numbers)
+        {
+            dump_text<true, true, false>(root);
+        }
+        else
+        {
+            dump_text<false, true, false>(root);
+        }
+    }
+
     /// a string that is not a plain string of the source (decoded, or written
     /// by an edit), without ensure_ascii: runs without characters to escape
     /// are copied. If validate is set, the string must be valid UTF-8: the
@@ -6534,45 +6573,6 @@ class view_serializer
             ++i;
         }
         m_out.put('"');
-    }
-
-    /// dump_text() with indentation, out of line: the compact walk is faster
-    /// when it is not merged with the indented ones into dump()
-    NLOHMANN_VIEW_NOINLINE void dump_pretty(const node* root)
-    {
-        if (m_style.source_numbers)
-        {
-            dump_text<true, true, false>(root);
-        }
-        else
-        {
-            dump_text<false, true, false>(root);
-        }
-    }
-
-    /// dump_text() with ensure_ascii, out of line: the walk without it is
-    /// faster when it is not merged with this one into dump()
-    NLOHMANN_VIEW_NOINLINE void dump_ascii(const node* root)
-    {
-        if (m_style.pretty)
-        {
-            if (m_style.source_numbers)
-            {
-                dump_text<true, true, true>(root);
-            }
-            else
-            {
-                dump_text<false, true, true>(root);
-            }
-        }
-        else if (m_style.source_numbers)
-        {
-            dump_text<true, false, true>(root);
-        }
-        else
-        {
-            dump_text<false, false, true>(root);
-        }
     }
 
     /// whether dump_text() copies a string or key from the source: one of
