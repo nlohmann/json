@@ -682,7 +682,6 @@ TEST_CASE("json_view images: ownership")
 #if !defined(JSON_NOEXCEPTION)
 TEST_CASE("json_view images: errors")
 {
-#if !defined(JSON_NOEXCEPTION)
     SECTION("float tokens: a changed byte is accepted if the text is still a number with the digits the node records")
     {
         for (const char* const token :
@@ -721,7 +720,7 @@ TEST_CASE("json_view images: errors")
                         }
                     }
                     // (as a JSON text, the token may have white space around it)
-                    const bool float_token = json::accept(t) && t.find_first_of(std::string(" \t\r\n\0", 5)) == std::string::npos && (t.find('.') != std::string::npos || t.find_first_of("eE") != std::string::npos)
+                    const bool float_token = json::accept(t) && t.find_first_of(std::string(" \t\r\n\0", 5)) == std::string::npos && (t.find('.') != std::string::npos || t.find_first_of("eE") != std::string::npos) // NOLINT(abseil-string-find-str-contains)
                                              && ((integer | (fraction << 8U)) == recorded);
                     CAPTURE(pos)
                     CAPTURE(byte)
@@ -740,7 +739,6 @@ TEST_CASE("json_view images: errors")
             }
         }
     }
-#endif
 
     SECTION("a literal as the root: dump() after loading")
     {
