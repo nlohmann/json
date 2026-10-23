@@ -16,7 +16,6 @@
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // strtof, strtod, strtold
-#include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // conditional, integral_constant, is_signed, true_type, false_type
@@ -758,15 +757,14 @@ std::uint64_t digit_comparison(const char* first, const char* last, std::uint64_
 inline void float_from_bits(std::uint64_t bits, double& value) noexcept
 {
     static_assert(sizeof(double) == sizeof(std::uint64_t), "double must have 64 bits");
-    std::memcpy(&value, &bits, sizeof(value));
+    value = bit_cast<double>(bits);
 }
 
 /// the float with the IEEE-754 bits @a bits (the lower 32)
 inline void float_from_bits(std::uint64_t bits, float& value) noexcept
 {
     static_assert(sizeof(float) == sizeof(std::uint32_t), "float must have 32 bits");
-    const auto bits32 = static_cast<std::uint32_t>(bits);
-    std::memcpy(&value, &bits32, sizeof(bits32));
+    value = bit_cast<float>(static_cast<std::uint32_t>(bits));
 }
 
 /// the powers of ten that are exact in binary64 (up to 10^22)

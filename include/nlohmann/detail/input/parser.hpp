@@ -288,8 +288,9 @@ class parser
         const std::integral_constant<bool, AllowRecovery> allow_recovery{};
 
         // stack to remember the hierarchy of structured values we are parsing
-        // true = array; false = object
-        std::vector<bool> states;
+        // true = array; false = object (bytes, not std::vector<bool>, whose
+        // push_back() is a call with GCC)
+        std::vector<std::uint8_t> states;
         // value to avoid a goto (see comment where set to true)
         bool skip_to_state_evaluation = false;
 
@@ -318,7 +319,7 @@ class parser
                         }
 
                         // remember we are now inside an object
-                        states.push_back(false);
+                        states.push_back(0);
 
                         // parse key (the steps of parse_key(), which are
                         // repeated here and below for speed)
@@ -368,7 +369,7 @@ class parser
                         }
 
                         // remember we are now inside an array
-                        states.push_back(true);
+                        states.push_back(1);
 
                         // parse values (no need to call get_token)
                         continue;
@@ -562,7 +563,7 @@ class parser
                 return true;
             }
 
-            if (states.back())  // array
+            if (states.back() != 0)  // array
             {
                 // comma -> next value
                 // or end of array (ignore_trailing_commas = true)
@@ -969,18 +970,18 @@ class parser
     /// @copydoc recover_missing_value
     template<typename SAX>
     JSON_INTERNAL_ALWAYS_INLINE
-    static std::false_type recover_missing_value(SAX* /*sax*/, const std::vector<bool>& /*states*/, std::false_type /*allow_recovery*/) noexcept
+    static std::false_type recover_missing_value(SAX* /*sax*/, const std::vector<std::uint8_t>& /*states*/, std::false_type /*allow_recovery*/) noexcept
     {
         return {};
     }
 
     /// pass the end events of all open containers
     template<typename SAX>
-    bool close_containers(SAX* sax, std::vector<bool>& states, std::true_type /*allow_recovery*/)
+    bool close_containers(SAX* sax, std::vector<std::uint8_t>& states, std::true_type /*allow_recovery*/)
     {
         while (!states.empty())
         {
-            const bool is_array = states.back();
+            const bool is_array = states.back() != 0;
             states.pop_back();
             if (JSON_HEDLEY_UNLIKELY(is_array ? !sax->end_array() : !sax->end_object()))
             {
@@ -993,7 +994,7 @@ class parser
     /// @copydoc close_containers
     template<typename SAX>
     JSON_INTERNAL_ALWAYS_INLINE
-    static std::false_type close_containers(SAX* /*sax*/, std::vector<bool>& /*states*/, std::false_type /*allow_recovery*/) noexcept
+    static std::false_type close_containers(SAX* /*sax*/, std::vector<std::uint8_t>& /*states*/, std::false_type /*allow_recovery*/) noexcept
     {
         return {};
     }
@@ -1111,10 +1112,10 @@ class parser
     ends there just ends.
     */
     template<typename SAX>
-    bool recover_missing_value(SAX* sax, const std::vector<bool>& states, std::true_type /*allow_recovery*/)
+    bool recover_missing_value(SAX* sax, const std::vector<std::uint8_t>& states, std::true_type /*allow_recovery*/)
     {
         JSON_ASSERT(!states.empty());
-        if (!states.back() || last_token == token_type::value_separator)
+        if (states.back() == 0 || last_token == token_type::value_separator)
         {
             return sax->null();
         }

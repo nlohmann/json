@@ -2452,6 +2452,36 @@ std::string parse_error_message_range(IteratorType first, IteratorType last)
 }
 } // namespace
 
+TEST_CASE("object keys are moved into the value")
+{
+    // json_sax_dom_parser::key() moves the key out of the lexer's buffer into
+    // the object, and the lexer starts the next token with an empty buffer.
+    // Keys of every length (inline and allocated strings), keys with escapes,
+    // and duplicate keys must give the same objects as reading the input one
+    // character at a time, and as ordered_json, whose map copies the key.
+    const std::string long_key(100, 'k');
+    const std::string doc = R"({"a": 1, ")" + long_key + R"(": {"b": [2, 3], "sixteen_chars_xx": 4}, )"
+                            R"("esc\"apedé": 5, "a": 6, ")" + long_key + R"(x": 7, "": 8, "dup": 9, "dup": 10})";
+
+    const json j = json::parse(doc);
+    const std::list<char> chars(doc.begin(), doc.end());
+    CHECK(j == json::parse(chars.begin(), chars.end()));
+
+    CHECK(j.size() == 6);
+    CHECK(j["a"] == 6);
+    CHECK(j[long_key]["b"] == json({2, 3}));
+    CHECK(j[long_key]["sixteen_chars_xx"] == 4);
+    CHECK(j["esc\"aped\xc3\xa9"] == 5);
+    CHECK(j[long_key + "x"] == 7);
+    CHECK(j[""] == 8);
+    CHECK(j["dup"] == 10);
+
+    const auto o = nlohmann::ordered_json::parse(doc);
+    CHECK(o.size() == 6);
+    CHECK(o[long_key + "x"] == 7);
+    CHECK(json(o) == j);
+}
+
 TEST_CASE("text of float tokens")
 {
     // For contiguous input, the lexer copies the text of a float token into

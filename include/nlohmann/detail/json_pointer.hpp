@@ -9,10 +9,13 @@
 #pragma once
 
 #include <algorithm> // all_of
+#include <array> // array
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
 #include <cstddef> // size_t
+#include <cstdint> // uint64_t
 #include <cstdlib> // strtoull
+#include <cstring> // memcmp, memcpy
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO
@@ -24,6 +27,7 @@
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/string_utils.hpp>
@@ -499,50 +503,111 @@ class json_pointer
 
   private:
     /*!
-    @brief the pointer prefixes of a flattened object, and which of them denote arrays
+    @brief the pointer prefixes of a flattened object that denote arrays
 
-    @ref unflatten collects the pointer prefixes that have a reference token 0
-    among their children; @ref get_and_create creates arrays exactly below
-    those prefixes and objects everywhere else. Deciding this up front keeps
-    the result independent of the order in which the flattened object is
-    iterated, which is unspecified for some object types.
+    @ref unflatten creates arrays exactly below the prefixes that have a
+    reference token 0 among their children, and objects everywhere else.
+    Deciding this up front keeps the result independent of the order in which
+    the flattened object is iterated, which is unspecified for some object
+    types.
 
-    The prefixes form a tree and are numbered (number 0 is the empty prefix),
-    so each of them is stored only once (as a node) rather than as a copy of
-    all of its reference tokens. The tree does not own the reference tokens:
-    it refers to the tokens of the parsed keys, which must outlive it.
+    A prefix is identified by the text of the key it is the beginning of:
+    escaping is unambiguous, so equal prefixes of valid keys are equal texts.
+    The set refers to the keys, which must outlive it.
     */
-    struct prefix_tree
+    class array_prefix_set
     {
-        // open-addressing hash table from (parent, last reference token) to
-        // the number of the node; empty slots have token == nullptr
+      public:
+        void insert(const char* data, std::size_t size)
+        {
+            // flattened objects are usually sorted, so most keys that have a
+            // 0 yield the prefix of the previous one
+            if (last_data != nullptr && last_size == size && std::memcmp(last_data, data, size) == 0)
+            {
+                return;
+            }
+            last_data = data;
+            last_size = size;
+
+            if (table.empty())
+            {
+                table.resize(16);
+            }
+            const std::size_t hash = hash_of(data, size);
+            const std::size_t mask = table.size() - 1;
+            std::size_t i = hash & mask;
+            while (table[i].data != nullptr)
+            {
+                if (table[i].hash == hash && table[i].size == size && std::memcmp(table[i].data, data, size) == 0)
+                {
+                    return;
+                }
+                i = (i + 1) & mask;
+            }
+            table[i] = slot(hash, data, size);
+
+            // keep the load factor below 1/2
+            if (++used * 2 > table.size())
+            {
+                grow();
+            }
+        }
+
+        bool empty() const noexcept
+        {
+            return used == 0;
+        }
+
+        bool contains(const char* data, std::size_t size) const noexcept
+        {
+            if (used == 0)
+            {
+                return false;
+            }
+            const std::size_t hash = hash_of(data, size);
+            const std::size_t mask = table.size() - 1;
+            for (std::size_t i = hash & mask; table[i].data != nullptr; i = (i + 1) & mask)
+            {
+                if (table[i].hash == hash && table[i].size == size && std::memcmp(table[i].data, data, size) == 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+      private:
         struct slot
         {
-            std::size_t hash;
-            std::size_t parent;
-            const string_t* token;
-            std::size_t id;
+            slot() noexcept = default;
 
-            slot() noexcept
-                : hash(0), parent(0), token(nullptr), id(0)
+            slot(std::size_t h, const char* d, std::size_t s) noexcept
+                : hash(h), data(d), size(s)
             {}
 
-            slot(std::size_t h, std::size_t p, const string_t* t, std::size_t i) noexcept
-                : hash(h), parent(p), token(t), id(i)
-            {}
+            std::size_t hash = 0;
+            const char* data = nullptr; // nullptr: the slot is empty
+            std::size_t size = 0;
         };
 
-        std::vector<slot> table;
-        std::size_t used = 0;
-
-        static std::size_t hash_of(std::size_t parent, const string_t& token) noexcept
+        static std::size_t hash_of(const char* data, std::size_t size) noexcept
         {
-            std::size_t h = parent * static_cast<std::size_t>(0x9E3779B97F4A7C15ULL & (std::numeric_limits<std::size_t>::max)());
-            for (std::size_t i = 0; i < token.size(); ++i)
+            std::uint64_t h = 0x9E3779B97F4A7C15ULL ^ size;
+            std::size_t i = 0;
+            for (; i + 8 <= size; i += 8)
             {
-                h = (h ^ static_cast<unsigned char>(token[i])) * static_cast<std::size_t>(0x100000001B3ULL & (std::numeric_limits<std::size_t>::max)());
+                std::uint64_t w = 0;
+                std::memcpy(&w, data + i, 8);
+                h = (h ^ w) * 0x100000001B3ULL;
+                h ^= h >> 32u;
             }
-            return h ^ (h >> 29u);
+            std::uint64_t w = 0;
+            if (i < size)
+            {
+                std::memcpy(&w, data + i, size - i);
+            }
+            h = (h ^ w) * 0x9E3779B97F4A7C15ULL;
+            return detail::conditional_static_cast<std::size_t>(h ^ (h >> 29u));
         }
 
         void grow()
@@ -552,10 +617,10 @@ class json_pointer
             const std::size_t mask = table.size() - 1;
             for (const auto& s : old)
             {
-                if (s.token != nullptr)
+                if (s.data != nullptr)
                 {
                     std::size_t i = s.hash & mask;
-                    while (table[i].token != nullptr)
+                    while (table[i].data != nullptr)
                     {
                         i = (i + 1) & mask;
                     }
@@ -564,117 +629,160 @@ class json_pointer
             }
         }
 
-        // parent[id] is the number of the prefix without its last token
-        std::vector<std::size_t> parent;
-        // is_array[id] is true iff some flattened key has the reference token
-        // 0 directly below the prefix with number id
-        std::vector<bool> is_array;
-
-        // start with the empty prefix only
-        prefix_tree()
-            : table(16)
-            , parent(1, 0)
-            , is_array(1, false)
-        {}
-
-        // return the number of the prefix with number id extended by
-        // reference_token, adding it if it is new
-        std::size_t add_child(std::size_t id, const string_t& reference_token)
-        {
-            const std::size_t hash = hash_of(id, reference_token);
-            const std::size_t mask = table.size() - 1;
-            std::size_t i = hash & mask;
-            while (table[i].token != nullptr)
-            {
-                if (table[i].hash == hash && table[i].parent == id && *table[i].token == reference_token)
-                {
-                    return table[i].id;
-                }
-                i = (i + 1) & mask;
-            }
-
-            // new prefix
-            const std::size_t child = parent.size();
-            table[i] = slot(hash, id, &reference_token, child);
-            if (reference_token == "0")
-            {
-                is_array[id] = true;
-            }
-            parent.push_back(id);
-            is_array.push_back(false);
-
-            // keep the load factor below 1/2
-            if (++used * 2 > table.size())
-            {
-                grow();
-            }
-            return child;
-        }
+        std::vector<slot> table{};
+        std::size_t used = 0;
+        const char* last_data = nullptr;
+        std::size_t last_size = 0;
     };
 
+    /// @brief the length of the longest common prefix of the first @a limit bytes of @a a and @a b
+    static std::size_t common_prefix_length(const char* a, const char* b, const std::size_t limit) noexcept
+    {
+        std::size_t i = 0;
+        for (; i + 8 <= limit; i += 8)
+        {
+            std::uint64_t x = 0;
+            std::uint64_t y = 0;
+            std::memcpy(&x, a + i, 8);
+            std::memcpy(&y, b + i, 8);
+            if (x != y)
+            {
+                break;
+            }
+        }
+        while (i < limit && a[i] == b[i])
+        {
+            ++i;
+        }
+        return i;
+    }
+
     /*!
-    @brief create and return a reference to the pointed to value
+    @brief check that @a key is a valid JSON pointer, and add the prefixes of
+           it that denote arrays to @a arrays
 
-    @param[in] j  the value to create the pointed to value in
-    @param[in] tokens  the reference tokens of the pointer
-    @param[in] prefixes  prefixes[i] is the number in @a tree of the prefix
-                         consisting of the first i reference tokens
+    @throw parse_error.107  if the key is not empty or begins with '/'
+    @throw parse_error.108  if character '~' is not followed by '0' or '1'
 
-    Complexity: Linear in the number of reference tokens.
+    The same checks as @ref split, which throws the same exceptions, but
+    without building the reference tokens.
+    */
+    static void scan_key(const string_t& key, const string_t* previous, array_prefix_set& arrays)
+    {
+        const std::size_t size = key.size();
+        if (size == 0)
+        {
+            return;
+        }
 
-    @throw parse_error.106 if an array index begins with '0'
-    @throw parse_error.109 if array index is not a number
-    @throw type_error.313 if value cannot be unflattened
+        const char* const data = key.data();
+        if (JSON_HEDLEY_UNLIKELY(data[0] != '/'))
+        {
+            JSON_THROW(detail::parse_error::create(detail::exception_id::pointer_missing_slash, 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", key, "'"), nullptr));
+        }
+
+        // The beginning of the key that it has in common with the previous
+        // one, which was checked already, is skipped: the scan starts with
+        // the token after the last slash in it.
+        std::size_t begin = 1;
+        if (previous != nullptr)
+        {
+            std::size_t same = common_prefix_length(data, previous->data(), (std::min)(size, previous->size()));
+            while (same > 1 && data[same - 1] != '/')
+            {
+                --same;
+            }
+            if (same > 1)
+            {
+                begin = same;
+            }
+        }
+
+        for (std::size_t i = begin; i <= size; ++i)
+        {
+            if (i == size || data[i] == '/')
+            {
+                // a token 0 makes the pointer before it an array
+                if (i - begin == 1 && data[begin] == '0')
+                {
+                    arrays.insert(data, begin - 1);
+                }
+                begin = i + 1;
+            }
+            else if (data[i] == '~')
+            {
+                // ~ must be followed by 0 or 1
+                if (JSON_HEDLEY_UNLIKELY(i + 1 == size || (data[i + 1] != '0' && data[i + 1] != '1')))
+                {
+                    JSON_THROW(detail::parse_error::create(detail::exception_id::pointer_invalid_escape, 0, "escape character '~' must be followed with '0' or '1'", nullptr));
+                }
+            }
+        }
+    }
+
+    /*!
+    @brief resolve a plain JSON pointer without building its reference tokens
+
+    @param[in] ptr     the value the pointer starts at
+    @param[in] path    a JSON pointer string
+    @param[in] length  the number of leading bytes of @a path to resolve; 0 or
+                       the position of a slash
+    @param[in,out] token  a string to hold the reference tokens, to reuse its storage
+
+    @return the pointed to value, or `nullptr` if the pointer does not denote
+            an existing value, or does so in a way that is not plain: a
+            reference token with an escape, an array index that is malformed or
+            out of range, or a "-". No exception is thrown for these; callers
+            use @ref json_pointer instead, which handles them.
     */
     template<typename BasicJsonType>
-    static BasicJsonType& get_and_create(BasicJsonType& j, const std::vector<string_t>& tokens,
-                                         const std::vector<std::size_t>& prefixes, const prefix_tree& tree)
+    static BasicJsonType* resolve_plain(BasicJsonType* ptr, const string_t& path, const std::size_t length, string_t& token)
     {
-        auto* result = &j;
-
-        // in case no reference tokens exist, return a reference to the JSON value
-        // j which will be overwritten by a primitive value
-        for (std::size_t i = 0; i < tokens.size(); ++i)
+        for (std::size_t pos = 0; pos < length;)
         {
-            const auto& reference_token = tokens[i];
-            switch (result->type())
+            if (JSON_HEDLEY_UNLIKELY(path[pos] != '/'))
             {
-                case detail::value_t::null:
-                {
-                    if (tree.is_array[prefixes[i]])
-                    {
-                        // some reference token below this position is 0, so the
-                        // value is an array
-                        result = &result->operator[](array_index<BasicJsonType>(reference_token));
-                    }
-                    else
-                    {
-                        // start a new object otherwise
-                        result = &result->operator[](reference_token);
-                    }
-                    break;
-                }
+                return nullptr;
+            }
 
+            // the reference token between the slash at pos and the next one
+            std::size_t end = path.find_first_of('/', pos + 1);
+            if (end == string_t::npos || end > length)
+            {
+                end = length;
+            }
+            token.clear();
+            token.append(path.data() + pos + 1, end - pos - 1);
+            if (JSON_HEDLEY_UNLIKELY(token.find_first_of('~') != string_t::npos))
+            {
+                return nullptr;
+            }
+
+            switch (ptr->type())
+            {
                 case detail::value_t::object:
                 {
-                    // create an entry in the object
-                    result = &object_member(*result, reference_token);
+                    const auto it = ptr->m_data.m_value.object->find(token);
+                    if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &it->second;
                     break;
                 }
 
                 case detail::value_t::array:
                 {
-                    // create an entry in the array
-                    result = &result->operator[](array_index<BasicJsonType>(reference_token));
+                    typename BasicJsonType::size_type idx{};
+                    if (JSON_HEDLEY_UNLIKELY(parse_array_index<BasicJsonType>(token, idx) != array_index_status::ok || idx >= ptr->m_data.m_value.array->size()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &(*ptr->m_data.m_value.array)[idx];
                     break;
                 }
 
-                /*
-                The following code is only reached if there exists a reference
-                token _and_ the current value is primitive. In this case, we have
-                an error situation, because primitive values may only occur as
-                a single value; that is, with an empty list of reference tokens.
-                */
+                case detail::value_t::null:
                 case detail::value_t::string:
                 case detail::value_t::boolean:
                 case detail::value_t::number_integer:
@@ -683,11 +791,12 @@ class json_pointer
                 case detail::value_t::binary:
                 case detail::value_t::discarded:
                 default:
-                    JSON_THROW(detail::type_error::create(detail::exception_id::unflatten_invalid_value, "invalid value to unflatten", &j));
+                    return nullptr;
             }
+            pos = end;
         }
 
-        return *result;
+        return ptr;
     }
 
     /*!
@@ -1142,18 +1251,43 @@ class json_pointer
     // Add the entry (key, v) to the object `obj`. Flattened paths are pairwise
     // distinct, so objects that can append a key known to be absent
     // (ordered_map) skip the lookup, which is linear and would make flatten
-    // quadratic; all other object types use operator[].
+    // quadratic. Objects with a positional insert (std::map) insert next to
+    // the entry added last: paths come out in nearly sorted order, so the
+    // position is usually right and no search from the root is needed.
+    // All other object types use operator[].
     template<typename ObjectType, typename ValueType>
-    static auto add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<1> /*unused*/)
+    static auto add_flattened(ObjectType& obj, typename ObjectType::iterator& /*hint*/, const string_t& key, ValueType&& v, detail::priority_tag<2> /*unused*/)
     -> decltype(obj.emplace_new_key(key, std::forward<ValueType>(v)), void())
     {
         obj.emplace_new_key(key, std::forward<ValueType>(v));
     }
 
     template<typename ObjectType, typename ValueType>
-    static void add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<0> /*unused*/)
+    static auto add_flattened(ObjectType& obj, typename ObjectType::iterator& hint, const string_t& key, ValueType&& v, detail::priority_tag<1> /*unused*/)
+    -> decltype(hint = obj.emplace_hint(hint, key, std::forward<ValueType>(v)), void())
+    {
+        hint = obj.emplace_hint(hint, key, std::forward<ValueType>(v));
+        ++hint;
+    }
+
+    template<typename ObjectType, typename ValueType>
+    static void add_flattened(ObjectType& obj, typename ObjectType::iterator& /*hint*/, const string_t& key, ValueType&& v, detail::priority_tag<0> /*unused*/)
     {
         obj[key] = std::forward<ValueType>(v);
+    }
+
+    /// append the decimal representation of @a i to @a out
+    static void append_index(string_t& out, std::size_t i)
+    {
+        std::array<char, 24> buf{};
+        std::size_t pos = buf.size();
+        do
+        {
+            buf[--pos] = static_cast<char>('0' + (i % 10));
+            i /= 10;
+        }
+        while (i != 0);
+        out.append(buf.data() + pos, buf.size() - pos);
     }
 
     /*!
@@ -1201,7 +1335,8 @@ class json_pointer
         // flatten `v`, whose path is `path`: primitives and empty containers
         // are added to the result right away; other containers get a frame
         auto& object = *result.m_data.m_value.object;
-        const auto enter = [&stack, &path, &object](const BasicJsonType & v)
+        auto hint = object.end();
+        const auto enter = [&stack, &path, &object, &hint](const BasicJsonType & v)
         {
             switch (v.type())
             {
@@ -1210,7 +1345,7 @@ class json_pointer
                     if (v.m_data.m_value.array->empty())
                     {
                         // flatten empty array as null
-                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
+                        add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
                     }
                     else
                     {
@@ -1224,7 +1359,7 @@ class json_pointer
                     if (v.m_data.m_value.object->empty())
                     {
                         // flatten empty object as null
-                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
+                        add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
                     }
                     else
                     {
@@ -1244,7 +1379,7 @@ class json_pointer
                 default:
                 {
                     // add a primitive value with its reference string
-                    add_flattened(object, path, v, detail::priority_tag<1> {});
+                    add_flattened(object, hint, path, v, detail::priority_tag<2> {});
                     return;
                 }
             }
@@ -1272,7 +1407,8 @@ class json_pointer
 
                 // iterate array and use index as a reference string
                 ++stack.back().index;
-                detail::concat_into(path, '/', detail::to_string<string_t>(i));
+                path.push_back('/');
+                append_index(path, i);
                 enter(array[i]);
             }
             else
@@ -1286,7 +1422,8 @@ class json_pointer
 
                 // iterate object and use keys as reference string
                 ++stack.back().member;
-                detail::concat_into(path, '/', detail::escape(it->first));
+                path.push_back('/');
+                detail::escape_into(path, it->first);
                 enter(it->second);
             }
         }
@@ -1317,53 +1454,30 @@ class json_pointer
 
         BasicJsonType result;
 
-        // parse every key once; the reference tokens are kept for the second
-        // pass (the vectors are never resized, so the tree may refer to them)
-        std::vector<std::vector<string_t>> keys;
-        keys.reserve(value.m_data.m_value.object->size());
+        // check every key, and collect the prefixes that have a reference
+        // token 0 among their children; the values below them are arrays,
+        // all others are objects (see array_prefix_set)
+        array_prefix_set arrays;
+        const string_t* previous_key = nullptr;
         for (const auto& element : *value.m_data.m_value.object)
         {
-            json_pointer ptr(element.first);
-            keys.push_back(std::move(ptr.reference_tokens));
+            scan_key(element.first, previous_key, arrays);
+            previous_key = &element.first;
         }
 
-        // collect the pointer prefixes that have a reference token 0 among
-        // their children; the values below them are arrays, all others are
-        // objects (see prefix_tree)
-        prefix_tree tree;
-        // the number of the prefix with i + 1 tokens of the previous key; keys
-        // are often sorted, so most of the prefix is the same as for the
-        // previous key and need not be looked up again
-        std::vector<std::size_t> path;
-        const std::vector<string_t>* previous = nullptr;
-        // the number of the complete prefix (i.e., the key) of each key
-        std::vector<std::size_t> leaves;
-        leaves.reserve(keys.size());
-        for (const auto& tokens : keys)
-        {
-            std::size_t common = 0;
-            if (previous != nullptr)
-            {
-                const std::size_t limit = (std::min)(tokens.size(), previous->size());
-                while (common < limit && tokens[common] == (*previous)[common])
-                {
-                    ++common;
-                }
-            }
-            path.resize(common);
-            std::size_t id = common == 0 ? 0 : path[common - 1];
-            for (std::size_t i = common; i < tokens.size(); ++i)
-            {
-                id = tree.add_child(id, tokens[i]);
-                path.push_back(id);
-            }
-            leaves.push_back(id);
-            previous = &tokens;
-        }
+        // values[i] is the value after the first i reference tokens of the
+        // previous key, ends[i] the length of that prefix of the key. Keys are
+        // often sorted, so most of the path to the value of a key is the
+        // same as for the previous key and need not be looked up again. Only
+        // the values below the common prefix are dropped, and only they can
+        // move when a value is added: the ones above are not inside the
+        // container that grows.
+        std::vector<BasicJsonType*> values(1, &result);
+        std::vector<std::size_t> ends(1, 0);
+        const string_t* previous = nullptr;
+        string_t token;
 
         // iterate the JSON object values
-        std::vector<std::size_t> prefixes;
-        std::size_t key_index = 0;
         for (const auto& element : *value.m_data.m_value.object)
         {
             if (JSON_HEDLEY_UNLIKELY(!element.second.is_primitive()))
@@ -1371,21 +1485,100 @@ class json_pointer
                 JSON_THROW(detail::type_error::create(detail::exception_id::unflatten_value_not_primitive, "values in object must be primitive", &element.second));
             }
 
-            const auto& tokens = keys[key_index];
-            // number the prefixes of this key from its last one to the first
-            prefixes.resize(tokens.size());
-            for (std::size_t i = tokens.size(), id = leaves[key_index]; i > 0; --i)
+            const string_t& key = element.first;
+            const char* const data = key.data();
+
+            // the number of reference tokens the key has in common with the
+            // previous one
+            std::size_t depth = 0;
+            if (previous != nullptr)
             {
-                id = tree.parent[id];
-                prefixes[i - 1] = id;
+                const std::size_t same = common_prefix_length(data, previous->data(), (std::min)(key.size(), previous->size()));
+                depth = ends.size() - 1;
+                while (depth > 0 && (ends[depth] > same || (ends[depth] == same && same < key.size() && data[same] != '/')))
+                {
+                    --depth;
+                }
             }
-            ++key_index;
+            values.resize(depth + 1);
+            ends.resize(depth + 1);
+            previous = &key;
 
             // Assign the value to the reference pointed to by JSON pointer. Note
             // that if the JSON pointer is "" (i.e., points to the whole value),
-            // function get_and_create returns a reference to the result itself.
-            // An assignment will then create a primitive value.
-            get_and_create(result, tokens, prefixes, tree) = element.second;
+            // the value is the result itself. An assignment will then create a
+            // primitive value.
+            BasicJsonType* current = values.back();
+            for (std::size_t pos = ends.back(); pos < key.size();)
+            {
+                // the reference token between the slash at pos and the next
+                std::size_t end = key.find_first_of('/', pos + 1);
+                if (end == string_t::npos)
+                {
+                    end = key.size();
+                }
+                token.clear();
+                token.append(data + pos + 1, end - pos - 1);
+                if (token.find_first_of('~') != string_t::npos)
+                {
+                    detail::unescape(token);
+                }
+
+                switch (current->type())
+                {
+                    case detail::value_t::null:
+                    {
+                        if (arrays.contains(data, pos))
+                        {
+                            // some reference token below this position is 0, so the
+                            // value is an array
+                            current = &current->operator[](array_index<BasicJsonType>(token));
+                        }
+                        else
+                        {
+                            // start a new object otherwise
+                            current = &current->operator[](token);
+                        }
+                        break;
+                    }
+
+                    case detail::value_t::object:
+                    {
+                        // create an entry in the object
+                        current = &object_member(*current, token);
+                        break;
+                    }
+
+                    case detail::value_t::array:
+                    {
+                        // create an entry in the array
+                        current = &current->operator[](array_index<BasicJsonType>(token));
+                        break;
+                    }
+
+                    /*
+                    The following code is only reached if there exists a reference
+                    token _and_ the current value is primitive. In this case, we have
+                    an error situation, because primitive values may only occur as
+                    a single value; that is, with an empty list of reference tokens.
+                    */
+                    case detail::value_t::string:
+                    case detail::value_t::boolean:
+                    case detail::value_t::number_integer:
+                    case detail::value_t::number_unsigned:
+                    case detail::value_t::number_float:
+                    case detail::value_t::binary:
+                    case detail::value_t::discarded:
+                    default:
+                        JSON_THROW(detail::type_error::create(detail::exception_id::unflatten_invalid_value, "invalid value to unflatten", &result));
+                }
+
+                values.push_back(current);
+                ends.push_back(end);
+                pos = end;
+            }
+
+            *current = element.second;
         }
 
         return result;

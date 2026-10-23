@@ -46,7 +46,7 @@ all:
 	@echo "clean - remove built files"
 	@echo "(fuzzers) - see tests/fuzzing.md, or run 'make -C tests fuzzers' to build the AFL fuzzers"
 	@echo "macro_builder_check - check that macro_scope.hpp matches tools/macro_builder's output"
-	@echo "natvis - regenerate nlohmann_json.natvis from the current ABI tags and version"
+	@echo "natvis - regenerate nlohmann_json.natvis from the current ABI tags and version (pass generator options via NATVIS_ARGS, see tools/generate_natvis/README.md)"
 	@echo "pretty - beautify code with Artistic Style"
 	@echo "pvs_studio - run the PVS-Studio static analyzer and open the report"
 	@echo "release - create the release files (include.zip, json.tar.xz, single headers, signatures, hashes)"
@@ -120,13 +120,15 @@ $(AMALGAMATED_VIEW_FILE): $(SRCS)
 	tools/amalgamate/amalgamate.py -c tools/amalgamate/config_json_view.json -s . --verbose=yes
 
 NATVIS_VENV=tools/generate_natvis/venv
+# extra options for generate_natvis.py, e.g. NATVIS_ARGS="--abi-tags _diag,_dp,_vns --output my.natvis"
+NATVIS_ARGS=
 
 # regenerate nlohmann_json.natvis from the ABI tags and version in include/nlohmann/detail/abi_macros.hpp
 # (the dependencies are installed into a virtual environment first)
 natvis:
 	@test -d $(NATVIS_VENV) || python3 -mvenv $(NATVIS_VENV)
 	@$(NATVIS_VENV)/bin/python3 -c 'import jinja2' 2>/dev/null || $(NATVIS_VENV)/bin/pip3 install --quiet -r tools/generate_natvis/requirements.txt
-	$(NATVIS_VENV)/bin/python3 tools/generate_natvis/generate_natvis.py .
+	$(NATVIS_VENV)/bin/python3 tools/generate_natvis/generate_natvis.py $(NATVIS_ARGS) .
 
 # regenerate the two tools/macro_builder blocks of $(MACRO_SCOPE_HPP) (see its README.md) and diff against the
 # checked-in header; phony, because it never writes $(MACRO_SCOPE_HPP) itself

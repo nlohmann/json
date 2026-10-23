@@ -186,6 +186,12 @@
     #define NLOHMANN_JSON_ABI_TAG_DISABLE_UNLOCKED_FILE_IO
 #endif
 
+#ifdef JSON_NO_SIMD
+    #define NLOHMANN_JSON_ABI_TAG_NO_SIMD _ns
+#else
+    #define NLOHMANN_JSON_ABI_TAG_NO_SIMD
+#endif
+
 #ifdef JSON_VIEW_NO_SIMD
     #define NLOHMANN_JSON_ABI_TAG_VIEW_NO_SIMD _vns
 #else
@@ -203,9 +209,9 @@
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j, k, l) json_abi ## a ## b ## c ## d ## e ## f ## g ## h ## i ## j ## k ## l
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g, h, i, j, k, l) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j, k, l)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j, k, l, m) json_abi ## a ## b ## c ## d ## e ## f ## g ## h ## i ## j ## k ## l ## m
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g, h, i, j, k, l, m) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h, i, j, k, l, m)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
@@ -219,6 +225,7 @@
             NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS,       \
             NLOHMANN_JSON_ABI_TAG_DISABLE_STREAM_BULK_SCAN,          \
             NLOHMANN_JSON_ABI_TAG_DISABLE_UNLOCKED_FILE_IO,          \
+            NLOHMANN_JSON_ABI_TAG_NO_SIMD,                           \
             NLOHMANN_JSON_ABI_TAG_VIEW_NO_SIMD,                      \
             NLOHMANN_JSON_ABI_TAG_VIEW_USE_SSSE3)
 
@@ -2565,6 +2572,22 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #endif
 #endif
 
+// the byte order of the target where the compiler tells it (std::endian is
+// C++20 and cannot select code in #if): JSON_LITTLE_ENDIAN_TARGET or
+// JSON_BIG_ENDIAN_TARGET is 1, or both are 0 where it is unknown (code then
+// handles the bytes one at a time); MSVC and x86 targets are little-endian
+#if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) \
+    || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    #define JSON_LITTLE_ENDIAN_TARGET 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_BIG_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    #define JSON_LITTLE_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_BIG_ENDIAN_TARGET 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#else
+    #define JSON_LITTLE_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_BIG_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#endif
+
 #ifdef JSON_HAS_CPP_17
     #define JSON_INLINE_VARIABLE inline
 #else
@@ -3689,18 +3712,27 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <cstddef> // size_t
-#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
+#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_arithmetic, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // index_sequence, make_index_sequence, index_sequence_for
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
+#ifdef JSON_HAS_CPP_17
+    #include <algorithm> // clamp
+#endif
+
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
-template<typename T>
-using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+#ifdef __cpp_lib_remove_cvref
+    template<typename T>
+    using uncvref_t = std::remove_cvref_t<T>;
+#else
+    template<typename T>
+    using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+#endif
 
 #ifdef JSON_HAS_CPP_14
 
@@ -3839,6 +3871,20 @@ struct static_const
     template<typename T>
     constexpr T static_const<T>::value;
 #endif
+
+/// @a v bounded to [@a lo, @a hi] (requires !(hi < lo)); like std::clamp,
+/// but by value, so that static constexpr members can be passed without an
+/// out-of-line definition before C++17
+template<typename T, enable_if_t<std::is_arithmetic<T>::value, int> = 0>
+constexpr T clamp(T v, T lo, T hi) noexcept
+{
+#ifdef __cpp_lib_clamp
+    return std::clamp(v, lo, hi);
+#else
+    // NOLINTNEXTLINE(readability-avoid-nested-conditional-operator): a constant expression of C++11
+    return v < lo ? lo : (hi < v ? hi : v);
+#endif
+}
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
@@ -4437,6 +4483,14 @@ struct char_traits<std::byte> : std::char_traits<char>
 // is_ functions //
 ///////////////////
 
+#ifdef __cpp_lib_logical_traits
+
+using std::conjunction;
+using std::disjunction;
+using std::negation;
+
+#else
+
 // https://en.cppreference.com/w/cpp/types/conjunction
 template<class...> struct conjunction : std::true_type { };
 template<class B> struct conjunction<B> : B { };
@@ -4453,6 +4507,8 @@ struct disjunction<B, Bn...>
 
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
+
+#endif
 
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
@@ -5184,8 +5240,12 @@ constexpr bool value_in_range_of(T val)
     return value_in_range_of_impl1<OfType, T>::test(val);
 }
 
-template<bool Value>
-using bool_constant = std::integral_constant<bool, Value>;
+#ifdef __cpp_lib_bool_constant
+    using std::bool_constant;
+#else
+    template<bool Value>
+    using bool_constant = std::integral_constant<bool, Value>;
+#endif
 
 // Stands in for number_unsigned_t in overload sets if it is the same type as
 // number_integer_t, so that the unsigned overloads do not collide with the
@@ -9675,6 +9735,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
 #include <cstdio> // snprintf
+#include <cstring> // memcmp
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
 #include <utility> // move
@@ -9697,12 +9758,25 @@ NLOHMANN_JSON_NAMESPACE_END
     #include <intrin0.h> // __umulh, _umul128, _BitScanForward64, _BitScanReverse64
 #endif
 
+#ifdef _MSC_VER
+    #include <cstdlib> // _byteswap_ushort, _byteswap_ulong, _byteswap_uint64
+#endif
+#if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_IX86) || defined(_M_ARM))
+    #include <intrin.h> // _BitScanForward, _BitScanReverse
+#endif
+
 // #include <nlohmann/detail/macro_scope.hpp>
 // JSON_HEDLEY_ALWAYS_INLINE, NLOHMANN_JSON_NAMESPACE_BEGIN
 
+#if defined(__cpp_lib_bit_cast) || defined(__cpp_lib_bitops) || defined(__cpp_lib_byteswap)
+    #include <bit> // bit_cast, byteswap, countl_zero, countr_zero
+#endif
+
 // Portable bit-level helpers for the number and string scanners. They use
-// compiler builtins or platform-specific intrinsics where available and plain
-// C++ otherwise, so they work regardless of byte order.
+// compiler builtins or platform-specific intrinsics where available, the
+// C++20 <bit> functions next, and plain C++ otherwise, so they work regardless
+// of byte order. (The builtins and intrinsics come first: MSVC's
+// std::countl_zero checks for LZCNT at run time unless AVX2 is enabled.)
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -9717,6 +9791,16 @@ inline int count_leading_zeros(std::uint64_t x) noexcept
     unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
     _BitScanReverse64(&index, x);
     return 63 - static_cast<int>(index);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
+    if (_BitScanReverse(&index, static_cast<unsigned long>(x >> 32u))) // NOLINT(runtime/int)
+    {
+        return 31 - static_cast<int>(index);
+    }
+    _BitScanReverse(&index, static_cast<unsigned long>(x)); // NOLINT(runtime/int)
+    return 63 - static_cast<int>(index);
+#elif defined(__cpp_lib_bitops)
+    return std::countl_zero(x);
 #else
     int n = 0;
     for (int shift = 32; shift != 0; shift >>= 1)
@@ -9740,6 +9824,16 @@ inline int count_trailing_zeros(std::uint64_t x) noexcept
     unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
     _BitScanForward64(&index, x);
     return static_cast<int>(index);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
+    if (_BitScanForward(&index, static_cast<unsigned long>(x))) // NOLINT(runtime/int)
+    {
+        return static_cast<int>(index);
+    }
+    _BitScanForward(&index, static_cast<unsigned long>(x >> 32u)); // NOLINT(runtime/int)
+    return 32 + static_cast<int>(index);
+#elif defined(__cpp_lib_bitops)
+    return std::countr_zero(x);
 #else
     int n = 0;
     for (int shift = 32; shift != 0; shift >>= 1)
@@ -9751,6 +9845,67 @@ inline int count_trailing_zeros(std::uint64_t x) noexcept
         }
     }
     return n;
+#endif
+}
+
+/// the object representation of @a from as a @a To (std::bit_cast in C++20)
+template<typename To, typename From>
+JSON_HEDLEY_ALWAYS_INLINE To bit_cast(const From& from) noexcept
+{
+    static_assert(sizeof(To) == sizeof(From), "bit_cast needs types of the same size");
+#if defined(__cpp_lib_bit_cast)
+    return std::bit_cast<To>(from);
+#else
+    To to {};
+    std::memcpy(&to, &from, sizeof(To));
+    return to;
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23); compilers lower
+/// it to a single bswap/rev/movbe
+inline std::uint16_t byteswap(std::uint16_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap16(x);
+#elif defined(_MSC_VER)
+    return _byteswap_ushort(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    return static_cast<std::uint16_t>((x >> 8u) | (x << 8u));
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23)
+inline std::uint32_t byteswap(std::uint32_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap32(x);
+#elif defined(_MSC_VER)
+    return _byteswap_ulong(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    return ((x & 0x000000FFu) << 24u) | ((x & 0x0000FF00u) << 8u)
+           | ((x & 0x00FF0000u) >> 8u) | ((x & 0xFF000000u) >> 24u);
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23)
+inline std::uint64_t byteswap(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap64(x);
+#elif defined(_MSC_VER)
+    return _byteswap_uint64(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    x = ((x & 0x00000000FFFFFFFFull) << 32u) | ((x & 0xFFFFFFFF00000000ull) >> 32u);
+    x = ((x & 0x0000FFFF0000FFFFull) << 16u) | ((x & 0xFFFF0000FFFF0000ull) >> 16u);
+    x = ((x & 0x00FF00FF00FF00FFull) << 8u) | ((x & 0xFF00FF00FF00FF00ull) >> 8u);
+    return x;
 #endif
 }
 
@@ -9791,8 +9946,8 @@ inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexc
 /// targets; always inlined, as GCC otherwise calls it in the number loops)
 JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 {
-#if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-    // the byte order already matches (all MSVC targets are little-endian)
+#if JSON_LITTLE_ENDIAN_TARGET
+    // the byte order already matches
     std::uint64_t result = 0;
     std::memcpy(&result, b, sizeof(result));
     return result;
@@ -9834,7 +9989,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // strtof, strtod, strtold
-#include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // conditional, integral_constant, is_signed, true_type, false_type
@@ -10955,15 +11109,14 @@ std::uint64_t digit_comparison(const char* first, const char* last, std::uint64_
 inline void float_from_bits(std::uint64_t bits, double& value) noexcept
 {
     static_assert(sizeof(double) == sizeof(std::uint64_t), "double must have 64 bits");
-    std::memcpy(&value, &bits, sizeof(value));
+    value = bit_cast<double>(bits);
 }
 
 /// the float with the IEEE-754 bits @a bits (the lower 32)
 inline void float_from_bits(std::uint64_t bits, float& value) noexcept
 {
     static_assert(sizeof(float) == sizeof(std::uint32_t), "float must have 32 bits");
-    const auto bits32 = static_cast<std::uint32_t>(bits);
-    std::memcpy(&value, &bits32, sizeof(bits32));
+    value = bit_cast<float>(static_cast<std::uint32_t>(bits));
 }
 
 /// the powers of ten that are exact in binary64 (up to 10^22)
@@ -11316,6 +11469,331 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/bit_ops.hpp>
 
+// #include <nlohmann/detail/input/simd_scan.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2018-2025 The simdjson authors <https://github.com/simdjson/simdjson>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <array> // array
+#include <atomic> // atomic
+#include <cstddef> // size_t
+#include <cstdint> // uint8_t, uint64_t
+
+// #include <nlohmann/detail/bit_ops.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+// Vector code for runs of string bytes, used by the lexer for contiguous input
+// (see string_bulk_run()). NEON (AArch64) and SSE2 (x86-64) belong to the
+// baseline instruction sets and are used by default. The vector UTF-8 check
+// needs NEON or SSSE3. SSSE3 is not part of x86-64, and the code must not
+// depend on the flags of a translation unit (two translation units with
+// different flags would have different definitions of the same inline
+// functions): the check is compiled for SSSE3 with a function attribute and
+// used where the CPU has SSSE3 (all x86-64 CPUs since about 2011), else the
+// portable check. Code compiled for SSSE3 anyway (-mssse3 or more) skips the
+// CPU check. JSON_NO_SIMD selects the portable code everywhere.
+// NLOHMANN_JSON_NO_TARGET_ATTRIBUTE (for compilers that ignore the target
+// attribute and then reject the SSSE3 intrinsics) keeps the check portable
+// without disabling the SSE2 code.
+#if !defined(JSON_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    #include <arm_neon.h>
+    #define JSON_SCAN_NEON 1
+#else
+    #define JSON_SCAN_NEON 0
+#endif
+// (x86 only: other targets can define __SSE2__ as well, e.g., WebAssembly with -msse2, but have no <cpuid.h>)
+#if !defined(JSON_NO_SIMD) && !JSON_SCAN_NEON && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && !defined(_M_ARM64EC) && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
+    #include <emmintrin.h>
+    #define JSON_SCAN_SSE2 1
+#else
+    #define JSON_SCAN_SSE2 0
+#endif
+#if JSON_SCAN_SSE2 && defined(__SSSE3__)
+    #include <tmmintrin.h>
+    #define JSON_SCAN_SSSE3 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#else
+    #define JSON_SCAN_SSSE3 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#endif
+#if JSON_SCAN_SSE2 && !JSON_SCAN_SSSE3 && !defined(NLOHMANN_JSON_NO_TARGET_ATTRIBUTE) && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)) && !defined(__cpp_modules)))
+    // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3; GCC with C++20
+    // modules drops the target attribute from functions it reads from a module
+    // interface and then rejects the intrinsics: "needs isa option -mssse3")
+    // <cpuid.h> of GCC before 11 has no include guard, and json.hpp and
+    // json_view.hpp both include it
+    #ifndef NLOHMANN_JSON_CPUID_INCLUDED
+        #define NLOHMANN_JSON_CPUID_INCLUDED
+        #include <cpuid.h>
+    #endif
+    #include <tmmintrin.h>
+    #define JSON_SCAN_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_SCAN_SSSE3_TARGET __attribute__((target("ssse3")))
+#elif JSON_SCAN_SSE2 && !JSON_SCAN_SSSE3 && defined(_MSC_VER)
+    // (MSVC compiles intrinsics of any instruction set)
+    #include <intrin.h>
+    #include <tmmintrin.h>
+    #define JSON_SCAN_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_SCAN_SSSE3_TARGET
+#else
+    #define JSON_SCAN_SSSE3_DISPATCH 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_SCAN_SSSE3_TARGET
+#endif
+#define JSON_SCAN_VECTOR (JSON_SCAN_NEON || JSON_SCAN_SSE2)
+#define JSON_SCAN_VECTOR_UTF8 (JSON_SCAN_NEON || JSON_SCAN_SSSE3 || JSON_SCAN_SSSE3_DISPATCH)
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+#if JSON_SCAN_VECTOR
+/*!
+@brief the first byte of a string run that is a quote, a backslash, a control
+character, or not ASCII, 16 bytes per step
+
+Stops at such a byte, or where fewer than 16 bytes are left (the caller tells
+the two apart). A signed compare with 0x20 finds control characters and
+non-ASCII bytes at once.
+*/
+JSON_HEDLEY_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (e - p >= 16)
+    {
+#if JSON_SCAN_NEON
+        const uint8x16_t in = vld1q_u8(p);
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
+                                            vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
+        // one nibble per byte (the usual NEON replacement of x86's movemask, see
+        // D. Kutenin, "Porting x86 vector bitmask optimizations to Arm NEON", 2022)
+        const std::uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+        if (bits != 0)
+        {
+            return p + (count_trailing_zeros(bits) >> 2u);
+        }
+#else
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
+        const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+        if (bits != 0)
+        {
+            return p + count_trailing_zeros(bits);
+        }
+#endif
+        p += 16;
+    }
+    return p;
+}
+#endif
+
+#if JSON_SCAN_VECTOR
+/// vector_plain_run() for runs that are already longer than a few words:
+/// inline with SSE2, out of line with NEON, where a larger string loop slows
+/// down the rest of the lexer
+#if JSON_SCAN_NEON
+    JSON_HEDLEY_NEVER_INLINE inline
+#else
+    JSON_HEDLEY_ALWAYS_INLINE
+#endif
+const unsigned char* vector_plain_run_long(const unsigned char* p, const unsigned char* e) noexcept
+{
+    return vector_plain_run(p, e);
+}
+#endif
+
+#if JSON_SCAN_SSSE3_DISPATCH
+/// whether the CPU has SSSE3 (CPUID leaf 1, ECX bit 9)
+inline bool cpu_ssse3() noexcept
+{
+#if defined(_MSC_VER) && !defined(__clang__)
+    std::array<int, 4> regs {{}};
+    __cpuid(regs.data(), 1);
+    return (static_cast<unsigned>(regs[2]) & (1u << 9u)) != 0;
+#else
+    unsigned eax = 0;
+    unsigned ebx = 0;
+    unsigned ecx = 0;
+    unsigned edx = 0;
+    return __get_cpuid(1, &eax, &ebx, &ecx, &edx) != 0 && (ecx & (1u << 9u)) != 0;
+#endif
+}
+
+/// whether the CPU has SSSE3, asked once: the answer is kept in an atomic
+/// that is initialized at compile time, so that neither a guard of a local
+/// static nor a global constructor is needed (threads that ask at the same
+/// time all store the same answer)
+JSON_HEDLEY_ALWAYS_INLINE bool cpu_has_ssse3() noexcept
+{
+    static std::atomic<int> known{0}; // 0: not asked yet, 1: no, 2: yes
+    int state = known.load(std::memory_order_relaxed);
+    if (JSON_HEDLEY_UNLIKELY(state == 0))
+    {
+        state = cpu_ssse3() ? 2 : 1;
+        known.store(state, std::memory_order_relaxed);
+    }
+    return state == 2;
+}
+#endif
+
+#if JSON_SCAN_VECTOR_UTF8
+/// Tables of the UTF-8 check of J. Keiser and D. Lemire, "Validating UTF-8 In
+/// Less Than One Instruction Per Byte" (2021), as in simdjson ("lookup4"): each
+/// maps a nibble (high and low nibble of the previous byte, high nibble of the
+/// current byte) to the errors it allows; a byte pair is ill-formed if all
+/// three have an error bit in common.
+template<typename Dummy = void>
+struct utf8_lookup4
+{
+    static constexpr std::uint8_t too_short = 1u << 0u, too_long = 1u << 1u, overlong_3 = 1u << 2u, too_large = 1u << 3u;
+    static constexpr std::uint8_t surrogate = 1u << 4u, overlong_2 = 1u << 5u, too_large_1000 = 1u << 6u, overlong_4 = 1u << 6u;
+    static constexpr std::uint8_t two_conts = 1u << 7u, carry = too_short | too_long | two_conts;
+    static const std::array<std::uint8_t, 16> byte_1_high;
+    static const std::array<std::uint8_t, 16> byte_1_low;
+    static const std::array<std::uint8_t, 16> byte_2_high;
+};
+
+template<typename Dummy>
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_1_high =
+{
+    {
+        too_long, too_long, too_long, too_long, too_long, too_long, too_long, too_long,
+        two_conts, two_conts, two_conts, two_conts,
+        too_short | overlong_2, too_short, too_short | overlong_3 | surrogate, too_short | too_large | too_large_1000 | overlong_4
+    }
+};
+
+template<typename Dummy>
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_1_low =
+{
+    {
+        carry | overlong_3 | overlong_2 | overlong_4, carry | overlong_2, carry, carry,
+        carry | too_large, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
+        carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
+        carry | too_large | too_large_1000, carry | too_large | too_large_1000 | surrogate, carry | too_large | too_large_1000, carry | too_large | too_large_1000
+    }
+};
+
+template<typename Dummy>
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_2_high =
+{
+    {
+        too_short, too_short, too_short, too_short, too_short, too_short, too_short, too_short,
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large_1000 | overlong_4),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
+        too_short, too_short, too_short, too_short
+    }
+};
+
+/*!
+@brief the run of plain string bytes and well-formed UTF-8 at p (a character
+       boundary), 16 bytes per step
+
+The first quote, backslash, or control character is found with vector
+compares, and the UTF-8 check of J. Keiser and D. Lemire covers the bytes up
+to it. Returns true with @a block at that byte; returns false with @a block at
+the start of the 16 bytes where the check found ill-formed UTF-8 or where
+fewer than 16 bytes are left, for the caller to finish one sequence at a time.
+Out of line, so that no constants of the check occupy registers in the
+caller's loop. On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()).
+*/
+JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline bool vector_utf8_run(const unsigned char* p, const unsigned char* e, const unsigned char*& block_out) noexcept
+{
+    using lookup = utf8_lookup4<>;
+    const unsigned char* block = p;
+#if JSON_SCAN_NEON
+    const uint8x16_t t1h = vld1q_u8(lookup::byte_1_high.data());
+    const uint8x16_t t1l = vld1q_u8(lookup::byte_1_low.data());
+    const uint8x16_t t2h = vld1q_u8(lookup::byte_2_high.data());
+    uint8x16_t prev = vdupq_n_u8(0);
+    while (e - block >= 16)
+    {
+        const uint8x16_t in = vld1q_u8(block);
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))), vcltq_u8(in, vdupq_n_u8(0x20)));
+        const uint8x16_t prev1 = vextq_u8(prev, in, 15);
+        const uint8x16_t sc = vandq_u8(vandq_u8(vqtbl1q_u8(t1h, vshrq_n_u8(prev1, 4)), vqtbl1q_u8(t1l, vandq_u8(prev1, vdupq_n_u8(0x0F)))), vqtbl1q_u8(t2h, vshrq_n_u8(in, 4)));
+        const uint8x16_t must23 = vorrq_u8(vqsubq_u8(vextq_u8(prev, in, 14), vdupq_n_u8(0xE0 - 0x80)), vqsubq_u8(vextq_u8(prev, in, 13), vdupq_n_u8(0xF0 - 0x80)));
+        const uint8x16_t err = veorq_u8(vandq_u8(must23, vdupq_n_u8(0x80)), sc);
+        const std::uint64_t special_bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+        const std::uint64_t err_bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(vtstq_u8(err, err)), 4)), 0);
+        if (special_bits != 0)
+        {
+            // errors up to the special byte count (an incomplete sequence
+            // before a quote shows at the quote); the bytes after it do not
+            const unsigned k = static_cast<unsigned>(count_trailing_zeros(special_bits)) >> 2u;
+            const std::uint64_t upto = k == 15 ? ~std::uint64_t{0} :
+                                       (std::uint64_t{1} << (4u * (k + 1u))) - 1u;
+            if ((err_bits & upto) == 0)
+            {
+                block_out = block + k;
+                return true;
+            }
+            break;
+        }
+        if (err_bits != 0)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#else
+    // the same with SSSE3 (pshufb for the table lookups; nibbles from 16-bit
+    // shifts, as there are no byte shifts)
+    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i nibble = _mm_set1_epi8(0x0F);
+    const __m128i zero = _mm_setzero_si128();
+    __m128i prev = zero;
+    while (e - block >= 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_cmpeq_epi8(_mm_subs_epu8(in, _mm_set1_epi8(0x1F)), zero)); // in < 0x20
+        const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
+        const __m128i sc = _mm_and_si128(_mm_and_si128(_mm_shuffle_epi8(t1h, _mm_and_si128(_mm_srli_epi16(prev1, 4), nibble)),
+                                         _mm_shuffle_epi8(t1l, _mm_and_si128(prev1, nibble))),
+                                         _mm_shuffle_epi8(t2h, _mm_and_si128(_mm_srli_epi16(in, 4), nibble)));
+        const __m128i must23 = _mm_or_si128(_mm_subs_epu8(_mm_alignr_epi8(in, prev, 14), _mm_set1_epi8(0xE0 - 0x80)),
+                                            _mm_subs_epu8(_mm_alignr_epi8(in, prev, 13), _mm_set1_epi8(0xF0 - 0x80)));
+        const __m128i err = _mm_xor_si128(_mm_and_si128(must23, _mm_set1_epi8(static_cast<char>(-128))), sc);
+        const auto special_bits = static_cast<unsigned>(_mm_movemask_epi8(special));
+        const auto err_bits = ~static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(err, zero))) & 0xFFFFu;
+        if (special_bits != 0)
+        {
+            const auto k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
+            if ((err_bits & ((2u << k) - 1u)) == 0)
+            {
+                block_out = block + k;
+                return true;
+            }
+            break;
+        }
+        if (err_bits != 0)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#endif
+    block_out = block;
+    return false;
+}
+#endif
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -11337,7 +11815,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // This file contains the byte-level string-scanning helpers used by the lexer's
 // contiguous fast path. They operate purely on raw bytes (no dependency on the
 // lexer's template parameters) so they are free functions, keeping the lexer
-// itself focused on the state machine; see lexer::scan_string_bulk().
+// itself focused on the state machine; see lexer::get_after_string_run().
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -11369,7 +11847,7 @@ inline std::uint64_t swar_string_special(std::uint64_t v) noexcept
 
 // return the index of the first is_string_special() byte in [data, data+n), or
 // n if every byte is ordinary; scans 8 bytes at a time
-inline std::size_t find_string_special(const unsigned char* data, std::size_t n) noexcept
+JSON_HEDLEY_ALWAYS_INLINE std::size_t find_string_special(const unsigned char* data, std::size_t n) noexcept
 {
     std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
@@ -11538,35 +12016,143 @@ inline std::size_t valid_utf8_prefix(const unsigned char* data, std::size_t n) n
     return pos;
 }
 
-// Scalar (C++11) computation of the bulk run length: the number of leading
-// bytes in [data, data+n) that are ordinary ASCII or complete well-formed UTF-8
+#if JSON_SCAN_VECTOR_UTF8
+/// the end of scan_string_vector from block, where the vector loop stopped
+/// (ill-formed UTF-8, or fewer than 16 bytes left): one byte or sequence at a
+/// time, from the start of a sequence that crosses into the block
+inline const unsigned char* scan_string_finish(const unsigned char* p, const unsigned char* block, const unsigned char* e) noexcept
+{
+    for (int i = 1; i <= 3 && block - i >= p; ++i)
+    {
+        const unsigned char c = block[-i];
+        if (c < 0x80)
+        {
+            break;
+        }
+        if (c >= 0xC0)
+        {
+            const int len = 2 + static_cast<int>(c >= 0xE0) + static_cast<int>(c >= 0xF0);
+            if (len > i)
+            {
+                block -= i;
+            }
+            break;
+        }
+    }
+    for (p = block; p != e;)
+    {
+        if (*p < 0x80)
+        {
+            if (is_string_special(*p))
+            {
+                return p;
+            }
+            ++p;
+            continue;
+        }
+        const std::size_t n = validate_one_utf8(p, static_cast<std::size_t>(e - p));
+        if (n == 0)
+        {
+            return p;
+        }
+        p += n;
+    }
+    return p;
+}
+
+/// the rest of a string from p (a character boundary), with the vector UTF-8
+/// check and the scalar check for the end of the block where it stopped
+inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e) noexcept
+{
+    const unsigned char* block = p;
+    if (vector_utf8_run(p, e, block))
+    {
+        return block;
+    }
+    return scan_string_finish(p, block, e);
+}
+#endif
+
+#if JSON_SCAN_VECTOR
+/// the end of the run of plain string characters at @a p: the first quote,
+/// backslash, control character, or non-ASCII byte, or @a e. The first words
+/// are checked with SWAR (one; four with NEON, where the vector mask costs
+/// more), as most keys and short values end there; longer runs continue 16
+/// bytes at a time.
+JSON_HEDLEY_ALWAYS_INLINE const unsigned char* plain_run_end(const unsigned char* p, const unsigned char* e) noexcept
+{
+    constexpr int prefix_words = JSON_SCAN_NEON ? 4 : 1;
+    for (int words = prefix_words; words > 0 && e - p >= 8; --words)
+    {
+        const std::uint64_t special = swar_string_special(read_eight_bytes(p));
+        if (special != 0)
+        {
+            return p + (static_cast<std::size_t>(count_trailing_zeros(special)) / 8);
+        }
+        p += 8;
+    }
+    // the vector loop only for 16 bytes or more: the serializer passes a
+    // string without its closing quote, so most of its runs end at e, and a
+    // call of the out-of-line NEON loop for a shorter rest made dump() up to
+    // 10% slower
+    if (e - p >= 16)
+    {
+        p = vector_plain_run_long(p, e);
+        if (e - p >= 16)
+        {
+            return p; // the vector loop stopped at a special byte
+        }
+    }
+    return p + find_string_special(p, static_cast<std::size_t>(e - p));
+}
+#endif
+
+// Computation of the bulk run length: the number of leading bytes in
+// [data, data+n) that are ordinary ASCII or complete well-formed UTF-8
 // sequences, stopping before the first byte that needs individual handling (the
 // closing quote, an escape, a control character, or an ill-formed/truncated
-// sequence). ASCII is skipped 8 bytes at a time.
-inline std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+// sequence). ASCII is skipped 16 bytes at a time with SSE2 and 8 bytes at a
+// time otherwise; runs of non-ASCII text use the vector UTF-8 check where
+// available.
+JSON_HEDLEY_ALWAYS_INLINE std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
 {
-    std::size_t pos = 0;
-    while (pos < n)
+    const unsigned char* const e = data + n;
+    const unsigned char* p = data;
+    while (p != e)
     {
-        pos += find_string_special(data + pos, n - pos);
-        if (pos >= n || data[pos] < 0x80u)
+#if JSON_SCAN_VECTOR
+        p = plain_run_end(p, e);
+#else
+        p += find_string_special(p, static_cast<std::size_t>(e - p));
+#endif
+        if (p == e || *p < 0x80u)
         {
             break; // end of buffer, or a quote/escape/control byte
         }
+#if JSON_SCAN_VECTOR_UTF8
+#if JSON_SCAN_SSSE3_DISPATCH
+        if (JSON_HEDLEY_LIKELY(cpu_has_ssse3()))
+#endif
+        {
+            return static_cast<std::size_t>(scan_string_vector(p, e) - data);
+        }
+#endif
+#if !JSON_SCAN_VECTOR_UTF8 || JSON_SCAN_SSSE3_DISPATCH
         // a run of multi-byte sequences (e.g. CJK text) is validated sequence
         // by sequence without searching for the next special byte in between
         do
         {
-            const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+            const std::size_t seq = validate_one_utf8(p, static_cast<std::size_t>(e - p));
             if (seq == 0)
             {
-                return pos; // ill-formed or truncated: let the byte path diagnose it
+                return static_cast<std::size_t>(p - data); // ill-formed or truncated: let the byte path diagnose it
             }
-            pos += seq;
+            p += seq;
         }
-        while (pos < n && data[pos] >= 0x80u);
+        while (p != e && *p >= 0x80u);
+#endif
     }
-    return pos;
+    return static_cast<std::size_t>(p - data);
 }
 
 #if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
@@ -11607,7 +12193,7 @@ inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t 
 // next delimiter is validated in one shot by simdutf; on the rare failure the
 // scalar helper recomputes the exact valid prefix so the byte path still
 // produces the precise diagnostic. Without it, the pure scalar path is used.
-inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+JSON_HEDLEY_ALWAYS_INLINE std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noexcept
 {
 #if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
     const std::size_t run = find_string_delimiter(data, n);
@@ -11617,6 +12203,42 @@ inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noe
     }
 #endif
     return scalar_string_bulk_run(data, n);
+}
+
+#if JSON_SCAN_NEON && !(defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17))
+/// scalar_string_bulk_run() from @a start on, out of line (see
+/// lexer_string_bulk_run())
+JSON_HEDLEY_NEVER_INLINE inline std::size_t string_bulk_run_from(const unsigned char* data, std::size_t start, std::size_t n) noexcept
+{
+    return start + scalar_string_bulk_run(data + start, n - start);
+}
+#endif
+
+// string_bulk_run() for the lexer. With NEON, only the first four words are
+// checked inline (most keys and short values end there), and longer runs and
+// non-ASCII text continue out of line. The lexer's scan function runs once per
+// token, and the vector code inlined into it needs more registers, which every
+// token pays for: 5% of json::accept() on jeopardy.json with Apple Clang on
+// Apple M1, even though no string of that file reaches the vector code. The
+// serializer keeps string_bulk_run() inline, which is faster there.
+JSON_HEDLEY_ALWAYS_INLINE std::size_t lexer_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+{
+#if JSON_SCAN_NEON && !(defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17))
+    std::size_t i = 0;
+    for (int words = 4; words > 0 && n - i >= 8; --words)
+    {
+        const std::uint64_t special = swar_string_special(read_eight_bytes(data + i));
+        if (special != 0)
+        {
+            const std::size_t pos = i + (static_cast<std::size_t>(count_trailing_zeros(special)) / 8);
+            return data[pos] < 0x80u ? pos : string_bulk_run_from(data, pos, n);
+        }
+        i += 8;
+    }
+    return string_bulk_run_from(data, i, n);
+#else
+    return string_bulk_run(data, n);
+#endif
 }
 
 // Decode the 4 hex digits at [data, data+4) - the digits following a `\u`
@@ -12080,30 +12702,43 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// contiguous input: bulk-append the run of ordinary characters and complete
-    /// well-formed UTF-8 sequences starting at the current read position, leaving
-    /// the first byte that needs individual handling (the closing quote, an
-    /// escape, a control character, or an ill-formed UTF-8 byte) for get()
-    void scan_string_bulk(std::true_type /*bulk*/)
+    /// well-formed UTF-8 sequences starting at the current read position, then
+    /// read the first byte that needs individual handling (the closing quote, an
+    /// escape, a control character, or an ill-formed UTF-8 byte) like get().
+    /// That byte is taken from the buffer that was just scanned. Through get(),
+    /// Apple Clang merged this read with the other get() calls of the scan
+    /// function, which load the read position again right after it was stored
+    /// (3% of json::accept() on jeopardy.json on Apple M1).
+    char_int_type get_after_string_run(std::true_type /*bulk*/)
     {
         // a pending unget must be consumed through the normal path first
         if (next_unget)
         {
-            return;
+            return get();
         }
         const std::size_t remaining = ia.bulk_remaining();
         if (remaining == 0)
         {
-            return;
+            return get();
         }
-        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        const auto* const raw = ia.bulk_data();
+        const auto* const data = reinterpret_cast<const unsigned char*>(raw);
 
-        const std::size_t pos = string_bulk_run(data, remaining);
-        if (pos == 0)
+        const std::size_t pos = lexer_string_bulk_run(data, remaining);
+        if (pos != 0)
         {
-            return;
+            token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
+            bulk_consume(reinterpret_cast<const char*>(data), pos);
         }
-        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
-        bulk_consume(reinterpret_cast<const char*>(data), pos);
+        if (pos == remaining)
+        {
+            return get(); // end of the contiguous input
+        }
+        // what get() does, with the byte at hand
+        advance_position();
+        ia.bulk_skip(1);
+        current = char_traits<char_type>::to_int_type(raw[pos]);
+        return track_after_read();
     }
 
     /// consume @a n characters at @a data (the adapter's bulk_data()) and do
@@ -12136,7 +12771,10 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// streaming input: no bulk fast path
-    void scan_string_bulk(std::false_type /*bulk*/) const noexcept {}
+    char_int_type get_after_string_run(std::false_type /*bulk*/)
+    {
+        return get();
+    }
 
     /*!
     @brief scan a string literal
@@ -12164,11 +12802,8 @@ class lexer : public lexer_base<BasicJsonType>
         while (true)
         {
             // bulk-consume ordinary characters from contiguous input, then
-            // handle the next special byte through the switch below
-            scan_string_bulk(std::integral_constant<bool, bulk_scan> {});
-
-            // get the next character
-            switch (get())
+            // get the next character, the one that ends the run
+            switch (get_after_string_run(std::integral_constant<bool, bulk_scan>()))
             {
                 // end of file while parsing the string
                 case char_traits<char_type>::eof():
@@ -13554,18 +14189,23 @@ scan_number_done:
     }
 
     /*!
-    @param[in] literal_text  the literal text to expect
-    @param[in] length        the length of the passed literal text
-    @param[in] return_type   the token type to return on success
+    @param[in] rest         the literal text after its first character, which
+                            is current (its length is a template parameter, so
+                            that the comparison of the contiguous fast path is
+                            a fixed-size load, not a call of memcmp)
+    @param[in] return_type  the token type to return on success
     */
-    JSON_HEDLEY_NON_NULL(2)
-    token_type scan_literal(const char_type* literal_text, const std::size_t length,
-                            token_type return_type)
+    template<std::size_t N>
+    JSON_HEDLEY_NEVER_INLINE token_type scan_literal(const char (&rest)[N], token_type return_type) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
-        JSON_ASSERT(char_traits<char_type>::to_char_type(current) == literal_text[0]);
-        for (std::size_t i = 1; i < length; ++i)
+        constexpr std::size_t length = N - 1;
+        if (scan_literal_bulk(rest, length, std::integral_constant<bool, bulk_scan> {}))
         {
-            if (JSON_HEDLEY_UNLIKELY(char_traits<char_type>::to_char_type(get()) != literal_text[i]))
+            return return_type;
+        }
+        for (std::size_t i = 0; i < length; ++i)
+        {
+            if (JSON_HEDLEY_UNLIKELY(char_traits<char_type>::to_char_type(get()) != static_cast<char_type>(rest[i])))
             {
                 error_message = "invalid literal";
                 error_cause = error_kind::other;
@@ -13573,6 +14213,27 @@ scan_number_done:
             }
         }
         return return_type;
+    }
+
+    /// contiguous input: compare the rest of a literal at once; false (and
+    /// nothing consumed) if it does not match, so that the byte path reports
+    /// the error at the right character
+    JSON_HEDLEY_ALWAYS_INLINE bool scan_literal_bulk(const char* rest, const std::size_t length, std::true_type /*bulk*/)
+    {
+        if (next_unget || ia.bulk_remaining() < length
+                || std::memcmp(ia.bulk_data(), rest, length) != 0)
+        {
+            return false;
+        }
+        bulk_consume(reinterpret_cast<const char*>(ia.bulk_data()), length);
+        current = static_cast<char_int_type>(static_cast<unsigned char>(rest[length - 1]));
+        return true;
+    }
+
+    /// streaming input: no bulk fast path
+    bool scan_literal_bulk(const char* /*rest*/, const std::size_t /*length*/, std::false_type /*bulk*/) const noexcept
+    {
+        return false;
     }
 
     /////////////////////
@@ -14209,21 +14870,14 @@ scan_number_done:
                 return token_type::value_separator;
 
             // literals
+            // (the text after the first character; no local arrays, which
+            // would give this function a stack canary on every token)
             case 't':
-            {
-                std::array<char_type, 4> true_literal = {{static_cast<char_type>('t'), static_cast<char_type>('r'), static_cast<char_type>('u'), static_cast<char_type>('e')}};
-                return scan_literal(true_literal.data(), true_literal.size(), token_type::literal_true);
-            }
+                return scan_literal("rue", token_type::literal_true);
             case 'f':
-            {
-                std::array<char_type, 5> false_literal = {{static_cast<char_type>('f'), static_cast<char_type>('a'), static_cast<char_type>('l'), static_cast<char_type>('s'), static_cast<char_type>('e')}};
-                return scan_literal(false_literal.data(), false_literal.size(), token_type::literal_false);
-            }
+                return scan_literal("alse", token_type::literal_false);
             case 'n':
-            {
-                std::array<char_type, 4> null_literal = {{static_cast<char_type>('n'), static_cast<char_type>('u'), static_cast<char_type>('l'), static_cast<char_type>('l')}};
-                return scan_literal(null_literal.data(), null_literal.size(), token_type::literal_null);
-            }
+                return scan_literal("ull", token_type::literal_null);
 
             // string
             case '\"':
@@ -15325,8 +15979,9 @@ class json_sax_dom_parser
         JSON_ASSERT(!ref_stack.empty());
         JSON_ASSERT(ref_stack.back()->is_object());
 
-        // add null at the given key and store the reference for later
-        object_element = &(ref_stack.back()->m_data.m_value.object->operator[](val));
+        // add null at the given key and store the reference for later; the
+        // key is moved, as the lexer starts the next token with reset()
+        object_element = &(ref_stack.back()->m_data.m_value.object->operator[](std::move(val)));
         return true;
     }
 
@@ -21991,8 +22646,9 @@ class parser
         const std::integral_constant<bool, AllowRecovery> allow_recovery{};
 
         // stack to remember the hierarchy of structured values we are parsing
-        // true = array; false = object
-        std::vector<bool> states;
+        // true = array; false = object (bytes, not std::vector<bool>, whose
+        // push_back() is a call with GCC)
+        std::vector<std::uint8_t> states;
         // value to avoid a goto (see comment where set to true)
         bool skip_to_state_evaluation = false;
 
@@ -22021,7 +22677,7 @@ class parser
                         }
 
                         // remember we are now inside an object
-                        states.push_back(false);
+                        states.push_back(0);
 
                         // parse key (the steps of parse_key(), which are
                         // repeated here and below for speed)
@@ -22071,7 +22727,7 @@ class parser
                         }
 
                         // remember we are now inside an array
-                        states.push_back(true);
+                        states.push_back(1);
 
                         // parse values (no need to call get_token)
                         continue;
@@ -22265,7 +22921,7 @@ class parser
                 return true;
             }
 
-            if (states.back())  // array
+            if (states.back() != 0)  // array
             {
                 // comma -> next value
                 // or end of array (ignore_trailing_commas = true)
@@ -22672,18 +23328,18 @@ class parser
     /// @copydoc recover_missing_value
     template<typename SAX>
     JSON_INTERNAL_ALWAYS_INLINE
-    static std::false_type recover_missing_value(SAX* /*sax*/, const std::vector<bool>& /*states*/, std::false_type /*allow_recovery*/) noexcept
+    static std::false_type recover_missing_value(SAX* /*sax*/, const std::vector<std::uint8_t>& /*states*/, std::false_type /*allow_recovery*/) noexcept
     {
         return {};
     }
 
     /// pass the end events of all open containers
     template<typename SAX>
-    bool close_containers(SAX* sax, std::vector<bool>& states, std::true_type /*allow_recovery*/)
+    bool close_containers(SAX* sax, std::vector<std::uint8_t>& states, std::true_type /*allow_recovery*/)
     {
         while (!states.empty())
         {
-            const bool is_array = states.back();
+            const bool is_array = states.back() != 0;
             states.pop_back();
             if (JSON_HEDLEY_UNLIKELY(is_array ? !sax->end_array() : !sax->end_object()))
             {
@@ -22696,7 +23352,7 @@ class parser
     /// @copydoc close_containers
     template<typename SAX>
     JSON_INTERNAL_ALWAYS_INLINE
-    static std::false_type close_containers(SAX* /*sax*/, std::vector<bool>& /*states*/, std::false_type /*allow_recovery*/) noexcept
+    static std::false_type close_containers(SAX* /*sax*/, std::vector<std::uint8_t>& /*states*/, std::false_type /*allow_recovery*/) noexcept
     {
         return {};
     }
@@ -22814,10 +23470,10 @@ class parser
     ends there just ends.
     */
     template<typename SAX>
-    bool recover_missing_value(SAX* sax, const std::vector<bool>& states, std::true_type /*allow_recovery*/)
+    bool recover_missing_value(SAX* sax, const std::vector<std::uint8_t>& states, std::true_type /*allow_recovery*/)
     {
         JSON_ASSERT(!states.empty());
-        if (!states.back() || last_token == token_type::value_separator)
+        if (states.back() == 0 || last_token == token_type::value_separator)
         {
             return sax->null();
         }
@@ -24099,10 +24755,13 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <algorithm> // all_of
+#include <array> // array
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
 #include <cstddef> // size_t
+#include <cstdint> // uint64_t
 #include <cstdlib> // strtoull
+#include <cstring> // memcmp, memcpy
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO
@@ -24116,6 +24775,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/string_concat.hpp>
 
@@ -24596,50 +25257,111 @@ class json_pointer
 
   private:
     /*!
-    @brief the pointer prefixes of a flattened object, and which of them denote arrays
+    @brief the pointer prefixes of a flattened object that denote arrays
 
-    @ref unflatten collects the pointer prefixes that have a reference token 0
-    among their children; @ref get_and_create creates arrays exactly below
-    those prefixes and objects everywhere else. Deciding this up front keeps
-    the result independent of the order in which the flattened object is
-    iterated, which is unspecified for some object types.
+    @ref unflatten creates arrays exactly below the prefixes that have a
+    reference token 0 among their children, and objects everywhere else.
+    Deciding this up front keeps the result independent of the order in which
+    the flattened object is iterated, which is unspecified for some object
+    types.
 
-    The prefixes form a tree and are numbered (number 0 is the empty prefix),
-    so each of them is stored only once (as a node) rather than as a copy of
-    all of its reference tokens. The tree does not own the reference tokens:
-    it refers to the tokens of the parsed keys, which must outlive it.
+    A prefix is identified by the text of the key it is the beginning of:
+    escaping is unambiguous, so equal prefixes of valid keys are equal texts.
+    The set refers to the keys, which must outlive it.
     */
-    struct prefix_tree
+    class array_prefix_set
     {
-        // open-addressing hash table from (parent, last reference token) to
-        // the number of the node; empty slots have token == nullptr
+      public:
+        void insert(const char* data, std::size_t size)
+        {
+            // flattened objects are usually sorted, so most keys that have a
+            // 0 yield the prefix of the previous one
+            if (last_data != nullptr && last_size == size && std::memcmp(last_data, data, size) == 0)
+            {
+                return;
+            }
+            last_data = data;
+            last_size = size;
+
+            if (table.empty())
+            {
+                table.resize(16);
+            }
+            const std::size_t hash = hash_of(data, size);
+            const std::size_t mask = table.size() - 1;
+            std::size_t i = hash & mask;
+            while (table[i].data != nullptr)
+            {
+                if (table[i].hash == hash && table[i].size == size && std::memcmp(table[i].data, data, size) == 0)
+                {
+                    return;
+                }
+                i = (i + 1) & mask;
+            }
+            table[i] = slot(hash, data, size);
+
+            // keep the load factor below 1/2
+            if (++used * 2 > table.size())
+            {
+                grow();
+            }
+        }
+
+        bool empty() const noexcept
+        {
+            return used == 0;
+        }
+
+        bool contains(const char* data, std::size_t size) const noexcept
+        {
+            if (used == 0)
+            {
+                return false;
+            }
+            const std::size_t hash = hash_of(data, size);
+            const std::size_t mask = table.size() - 1;
+            for (std::size_t i = hash & mask; table[i].data != nullptr; i = (i + 1) & mask)
+            {
+                if (table[i].hash == hash && table[i].size == size && std::memcmp(table[i].data, data, size) == 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+      private:
         struct slot
         {
-            std::size_t hash;
-            std::size_t parent;
-            const string_t* token;
-            std::size_t id;
+            slot() noexcept = default;
 
-            slot() noexcept
-                : hash(0), parent(0), token(nullptr), id(0)
+            slot(std::size_t h, const char* d, std::size_t s) noexcept
+                : hash(h), data(d), size(s)
             {}
 
-            slot(std::size_t h, std::size_t p, const string_t* t, std::size_t i) noexcept
-                : hash(h), parent(p), token(t), id(i)
-            {}
+            std::size_t hash = 0;
+            const char* data = nullptr; // nullptr: the slot is empty
+            std::size_t size = 0;
         };
 
-        std::vector<slot> table;
-        std::size_t used = 0;
-
-        static std::size_t hash_of(std::size_t parent, const string_t& token) noexcept
+        static std::size_t hash_of(const char* data, std::size_t size) noexcept
         {
-            std::size_t h = parent * static_cast<std::size_t>(0x9E3779B97F4A7C15ULL & (std::numeric_limits<std::size_t>::max)());
-            for (std::size_t i = 0; i < token.size(); ++i)
+            std::uint64_t h = 0x9E3779B97F4A7C15ULL ^ size;
+            std::size_t i = 0;
+            for (; i + 8 <= size; i += 8)
             {
-                h = (h ^ static_cast<unsigned char>(token[i])) * static_cast<std::size_t>(0x100000001B3ULL & (std::numeric_limits<std::size_t>::max)());
+                std::uint64_t w = 0;
+                std::memcpy(&w, data + i, 8);
+                h = (h ^ w) * 0x100000001B3ULL;
+                h ^= h >> 32u;
             }
-            return h ^ (h >> 29u);
+            std::uint64_t w = 0;
+            if (i < size)
+            {
+                std::memcpy(&w, data + i, size - i);
+            }
+            h = (h ^ w) * 0x9E3779B97F4A7C15ULL;
+            return detail::conditional_static_cast<std::size_t>(h ^ (h >> 29u));
         }
 
         void grow()
@@ -24649,10 +25371,10 @@ class json_pointer
             const std::size_t mask = table.size() - 1;
             for (const auto& s : old)
             {
-                if (s.token != nullptr)
+                if (s.data != nullptr)
                 {
                     std::size_t i = s.hash & mask;
-                    while (table[i].token != nullptr)
+                    while (table[i].data != nullptr)
                     {
                         i = (i + 1) & mask;
                     }
@@ -24661,117 +25383,160 @@ class json_pointer
             }
         }
 
-        // parent[id] is the number of the prefix without its last token
-        std::vector<std::size_t> parent;
-        // is_array[id] is true iff some flattened key has the reference token
-        // 0 directly below the prefix with number id
-        std::vector<bool> is_array;
-
-        // start with the empty prefix only
-        prefix_tree()
-            : table(16)
-            , parent(1, 0)
-            , is_array(1, false)
-        {}
-
-        // return the number of the prefix with number id extended by
-        // reference_token, adding it if it is new
-        std::size_t add_child(std::size_t id, const string_t& reference_token)
-        {
-            const std::size_t hash = hash_of(id, reference_token);
-            const std::size_t mask = table.size() - 1;
-            std::size_t i = hash & mask;
-            while (table[i].token != nullptr)
-            {
-                if (table[i].hash == hash && table[i].parent == id && *table[i].token == reference_token)
-                {
-                    return table[i].id;
-                }
-                i = (i + 1) & mask;
-            }
-
-            // new prefix
-            const std::size_t child = parent.size();
-            table[i] = slot(hash, id, &reference_token, child);
-            if (reference_token == "0")
-            {
-                is_array[id] = true;
-            }
-            parent.push_back(id);
-            is_array.push_back(false);
-
-            // keep the load factor below 1/2
-            if (++used * 2 > table.size())
-            {
-                grow();
-            }
-            return child;
-        }
+        std::vector<slot> table{};
+        std::size_t used = 0;
+        const char* last_data = nullptr;
+        std::size_t last_size = 0;
     };
 
+    /// @brief the length of the longest common prefix of the first @a limit bytes of @a a and @a b
+    static std::size_t common_prefix_length(const char* a, const char* b, const std::size_t limit) noexcept
+    {
+        std::size_t i = 0;
+        for (; i + 8 <= limit; i += 8)
+        {
+            std::uint64_t x = 0;
+            std::uint64_t y = 0;
+            std::memcpy(&x, a + i, 8);
+            std::memcpy(&y, b + i, 8);
+            if (x != y)
+            {
+                break;
+            }
+        }
+        while (i < limit && a[i] == b[i])
+        {
+            ++i;
+        }
+        return i;
+    }
+
     /*!
-    @brief create and return a reference to the pointed to value
+    @brief check that @a key is a valid JSON pointer, and add the prefixes of
+           it that denote arrays to @a arrays
 
-    @param[in] j  the value to create the pointed to value in
-    @param[in] tokens  the reference tokens of the pointer
-    @param[in] prefixes  prefixes[i] is the number in @a tree of the prefix
-                         consisting of the first i reference tokens
+    @throw parse_error.107  if the key is not empty or begins with '/'
+    @throw parse_error.108  if character '~' is not followed by '0' or '1'
 
-    Complexity: Linear in the number of reference tokens.
+    The same checks as @ref split, which throws the same exceptions, but
+    without building the reference tokens.
+    */
+    static void scan_key(const string_t& key, const string_t* previous, array_prefix_set& arrays)
+    {
+        const std::size_t size = key.size();
+        if (size == 0)
+        {
+            return;
+        }
 
-    @throw parse_error.106 if an array index begins with '0'
-    @throw parse_error.109 if array index is not a number
-    @throw type_error.313 if value cannot be unflattened
+        const char* const data = key.data();
+        if (JSON_HEDLEY_UNLIKELY(data[0] != '/'))
+        {
+            JSON_THROW(detail::parse_error::create(detail::exception_id::pointer_missing_slash, 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", key, "'"), nullptr));
+        }
+
+        // The beginning of the key that it has in common with the previous
+        // one, which was checked already, is skipped: the scan starts with
+        // the token after the last slash in it.
+        std::size_t begin = 1;
+        if (previous != nullptr)
+        {
+            std::size_t same = common_prefix_length(data, previous->data(), (std::min)(size, previous->size()));
+            while (same > 1 && data[same - 1] != '/')
+            {
+                --same;
+            }
+            if (same > 1)
+            {
+                begin = same;
+            }
+        }
+
+        for (std::size_t i = begin; i <= size; ++i)
+        {
+            if (i == size || data[i] == '/')
+            {
+                // a token 0 makes the pointer before it an array
+                if (i - begin == 1 && data[begin] == '0')
+                {
+                    arrays.insert(data, begin - 1);
+                }
+                begin = i + 1;
+            }
+            else if (data[i] == '~')
+            {
+                // ~ must be followed by 0 or 1
+                if (JSON_HEDLEY_UNLIKELY(i + 1 == size || (data[i + 1] != '0' && data[i + 1] != '1')))
+                {
+                    JSON_THROW(detail::parse_error::create(detail::exception_id::pointer_invalid_escape, 0, "escape character '~' must be followed with '0' or '1'", nullptr));
+                }
+            }
+        }
+    }
+
+    /*!
+    @brief resolve a plain JSON pointer without building its reference tokens
+
+    @param[in] ptr     the value the pointer starts at
+    @param[in] path    a JSON pointer string
+    @param[in] length  the number of leading bytes of @a path to resolve; 0 or
+                       the position of a slash
+    @param[in,out] token  a string to hold the reference tokens, to reuse its storage
+
+    @return the pointed to value, or `nullptr` if the pointer does not denote
+            an existing value, or does so in a way that is not plain: a
+            reference token with an escape, an array index that is malformed or
+            out of range, or a "-". No exception is thrown for these; callers
+            use @ref json_pointer instead, which handles them.
     */
     template<typename BasicJsonType>
-    static BasicJsonType& get_and_create(BasicJsonType& j, const std::vector<string_t>& tokens,
-                                         const std::vector<std::size_t>& prefixes, const prefix_tree& tree)
+    static BasicJsonType* resolve_plain(BasicJsonType* ptr, const string_t& path, const std::size_t length, string_t& token)
     {
-        auto* result = &j;
-
-        // in case no reference tokens exist, return a reference to the JSON value
-        // j which will be overwritten by a primitive value
-        for (std::size_t i = 0; i < tokens.size(); ++i)
+        for (std::size_t pos = 0; pos < length;)
         {
-            const auto& reference_token = tokens[i];
-            switch (result->type())
+            if (JSON_HEDLEY_UNLIKELY(path[pos] != '/'))
             {
-                case detail::value_t::null:
-                {
-                    if (tree.is_array[prefixes[i]])
-                    {
-                        // some reference token below this position is 0, so the
-                        // value is an array
-                        result = &result->operator[](array_index<BasicJsonType>(reference_token));
-                    }
-                    else
-                    {
-                        // start a new object otherwise
-                        result = &result->operator[](reference_token);
-                    }
-                    break;
-                }
+                return nullptr;
+            }
 
+            // the reference token between the slash at pos and the next one
+            std::size_t end = path.find_first_of('/', pos + 1);
+            if (end == string_t::npos || end > length)
+            {
+                end = length;
+            }
+            token.clear();
+            token.append(path.data() + pos + 1, end - pos - 1);
+            if (JSON_HEDLEY_UNLIKELY(token.find_first_of('~') != string_t::npos))
+            {
+                return nullptr;
+            }
+
+            switch (ptr->type())
+            {
                 case detail::value_t::object:
                 {
-                    // create an entry in the object
-                    result = &object_member(*result, reference_token);
+                    const auto it = ptr->m_data.m_value.object->find(token);
+                    if (JSON_HEDLEY_UNLIKELY(it == ptr->m_data.m_value.object->end()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &it->second;
                     break;
                 }
 
                 case detail::value_t::array:
                 {
-                    // create an entry in the array
-                    result = &result->operator[](array_index<BasicJsonType>(reference_token));
+                    typename BasicJsonType::size_type idx{};
+                    if (JSON_HEDLEY_UNLIKELY(parse_array_index<BasicJsonType>(token, idx) != array_index_status::ok || idx >= ptr->m_data.m_value.array->size()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &(*ptr->m_data.m_value.array)[idx];
                     break;
                 }
 
-                /*
-                The following code is only reached if there exists a reference
-                token _and_ the current value is primitive. In this case, we have
-                an error situation, because primitive values may only occur as
-                a single value; that is, with an empty list of reference tokens.
-                */
+                case detail::value_t::null:
                 case detail::value_t::string:
                 case detail::value_t::boolean:
                 case detail::value_t::number_integer:
@@ -24780,11 +25545,12 @@ class json_pointer
                 case detail::value_t::binary:
                 case detail::value_t::discarded:
                 default:
-                    JSON_THROW(detail::type_error::create(detail::exception_id::unflatten_invalid_value, "invalid value to unflatten", &j));
+                    return nullptr;
             }
+            pos = end;
         }
 
-        return *result;
+        return ptr;
     }
 
     /*!
@@ -25239,18 +26005,43 @@ class json_pointer
     // Add the entry (key, v) to the object `obj`. Flattened paths are pairwise
     // distinct, so objects that can append a key known to be absent
     // (ordered_map) skip the lookup, which is linear and would make flatten
-    // quadratic; all other object types use operator[].
+    // quadratic. Objects with a positional insert (std::map) insert next to
+    // the entry added last: paths come out in nearly sorted order, so the
+    // position is usually right and no search from the root is needed.
+    // All other object types use operator[].
     template<typename ObjectType, typename ValueType>
-    static auto add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<1> /*unused*/)
+    static auto add_flattened(ObjectType& obj, typename ObjectType::iterator& /*hint*/, const string_t& key, ValueType&& v, detail::priority_tag<2> /*unused*/)
     -> decltype(obj.emplace_new_key(key, std::forward<ValueType>(v)), void())
     {
         obj.emplace_new_key(key, std::forward<ValueType>(v));
     }
 
     template<typename ObjectType, typename ValueType>
-    static void add_flattened(ObjectType& obj, const string_t& key, ValueType&& v, detail::priority_tag<0> /*unused*/)
+    static auto add_flattened(ObjectType& obj, typename ObjectType::iterator& hint, const string_t& key, ValueType&& v, detail::priority_tag<1> /*unused*/)
+    -> decltype(hint = obj.emplace_hint(hint, key, std::forward<ValueType>(v)), void())
+    {
+        hint = obj.emplace_hint(hint, key, std::forward<ValueType>(v));
+        ++hint;
+    }
+
+    template<typename ObjectType, typename ValueType>
+    static void add_flattened(ObjectType& obj, typename ObjectType::iterator& /*hint*/, const string_t& key, ValueType&& v, detail::priority_tag<0> /*unused*/)
     {
         obj[key] = std::forward<ValueType>(v);
+    }
+
+    /// append the decimal representation of @a i to @a out
+    static void append_index(string_t& out, std::size_t i)
+    {
+        std::array<char, 24> buf{};
+        std::size_t pos = buf.size();
+        do
+        {
+            buf[--pos] = static_cast<char>('0' + (i % 10));
+            i /= 10;
+        }
+        while (i != 0);
+        out.append(buf.data() + pos, buf.size() - pos);
     }
 
     /*!
@@ -25298,7 +26089,8 @@ class json_pointer
         // flatten `v`, whose path is `path`: primitives and empty containers
         // are added to the result right away; other containers get a frame
         auto& object = *result.m_data.m_value.object;
-        const auto enter = [&stack, &path, &object](const BasicJsonType & v)
+        auto hint = object.end();
+        const auto enter = [&stack, &path, &object, &hint](const BasicJsonType & v)
         {
             switch (v.type())
             {
@@ -25307,7 +26099,7 @@ class json_pointer
                     if (v.m_data.m_value.array->empty())
                     {
                         // flatten empty array as null
-                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
+                        add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
                     }
                     else
                     {
@@ -25321,7 +26113,7 @@ class json_pointer
                     if (v.m_data.m_value.object->empty())
                     {
                         // flatten empty object as null
-                        add_flattened(object, path, nullptr, detail::priority_tag<1> {});
+                        add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
                     }
                     else
                     {
@@ -25341,7 +26133,7 @@ class json_pointer
                 default:
                 {
                     // add a primitive value with its reference string
-                    add_flattened(object, path, v, detail::priority_tag<1> {});
+                    add_flattened(object, hint, path, v, detail::priority_tag<2> {});
                     return;
                 }
             }
@@ -25369,7 +26161,8 @@ class json_pointer
 
                 // iterate array and use index as a reference string
                 ++stack.back().index;
-                detail::concat_into(path, '/', detail::to_string<string_t>(i));
+                path.push_back('/');
+                append_index(path, i);
                 enter(array[i]);
             }
             else
@@ -25383,7 +26176,8 @@ class json_pointer
 
                 // iterate object and use keys as reference string
                 ++stack.back().member;
-                detail::concat_into(path, '/', detail::escape(it->first));
+                path.push_back('/');
+                detail::escape_into(path, it->first);
                 enter(it->second);
             }
         }
@@ -25414,53 +26208,30 @@ class json_pointer
 
         BasicJsonType result;
 
-        // parse every key once; the reference tokens are kept for the second
-        // pass (the vectors are never resized, so the tree may refer to them)
-        std::vector<std::vector<string_t>> keys;
-        keys.reserve(value.m_data.m_value.object->size());
+        // check every key, and collect the prefixes that have a reference
+        // token 0 among their children; the values below them are arrays,
+        // all others are objects (see array_prefix_set)
+        array_prefix_set arrays;
+        const string_t* previous_key = nullptr;
         for (const auto& element : *value.m_data.m_value.object)
         {
-            json_pointer ptr(element.first);
-            keys.push_back(std::move(ptr.reference_tokens));
+            scan_key(element.first, previous_key, arrays);
+            previous_key = &element.first;
         }
 
-        // collect the pointer prefixes that have a reference token 0 among
-        // their children; the values below them are arrays, all others are
-        // objects (see prefix_tree)
-        prefix_tree tree;
-        // the number of the prefix with i + 1 tokens of the previous key; keys
-        // are often sorted, so most of the prefix is the same as for the
-        // previous key and need not be looked up again
-        std::vector<std::size_t> path;
-        const std::vector<string_t>* previous = nullptr;
-        // the number of the complete prefix (i.e., the key) of each key
-        std::vector<std::size_t> leaves;
-        leaves.reserve(keys.size());
-        for (const auto& tokens : keys)
-        {
-            std::size_t common = 0;
-            if (previous != nullptr)
-            {
-                const std::size_t limit = (std::min)(tokens.size(), previous->size());
-                while (common < limit && tokens[common] == (*previous)[common])
-                {
-                    ++common;
-                }
-            }
-            path.resize(common);
-            std::size_t id = common == 0 ? 0 : path[common - 1];
-            for (std::size_t i = common; i < tokens.size(); ++i)
-            {
-                id = tree.add_child(id, tokens[i]);
-                path.push_back(id);
-            }
-            leaves.push_back(id);
-            previous = &tokens;
-        }
+        // values[i] is the value after the first i reference tokens of the
+        // previous key, ends[i] the length of that prefix of the key. Keys are
+        // often sorted, so most of the path to the value of a key is the
+        // same as for the previous key and need not be looked up again. Only
+        // the values below the common prefix are dropped, and only they can
+        // move when a value is added: the ones above are not inside the
+        // container that grows.
+        std::vector<BasicJsonType*> values(1, &result);
+        std::vector<std::size_t> ends(1, 0);
+        const string_t* previous = nullptr;
+        string_t token;
 
         // iterate the JSON object values
-        std::vector<std::size_t> prefixes;
-        std::size_t key_index = 0;
         for (const auto& element : *value.m_data.m_value.object)
         {
             if (JSON_HEDLEY_UNLIKELY(!element.second.is_primitive()))
@@ -25468,21 +26239,100 @@ class json_pointer
                 JSON_THROW(detail::type_error::create(detail::exception_id::unflatten_value_not_primitive, "values in object must be primitive", &element.second));
             }
 
-            const auto& tokens = keys[key_index];
-            // number the prefixes of this key from its last one to the first
-            prefixes.resize(tokens.size());
-            for (std::size_t i = tokens.size(), id = leaves[key_index]; i > 0; --i)
+            const string_t& key = element.first;
+            const char* const data = key.data();
+
+            // the number of reference tokens the key has in common with the
+            // previous one
+            std::size_t depth = 0;
+            if (previous != nullptr)
             {
-                id = tree.parent[id];
-                prefixes[i - 1] = id;
+                const std::size_t same = common_prefix_length(data, previous->data(), (std::min)(key.size(), previous->size()));
+                depth = ends.size() - 1;
+                while (depth > 0 && (ends[depth] > same || (ends[depth] == same && same < key.size() && data[same] != '/')))
+                {
+                    --depth;
+                }
             }
-            ++key_index;
+            values.resize(depth + 1);
+            ends.resize(depth + 1);
+            previous = &key;
 
             // Assign the value to the reference pointed to by JSON pointer. Note
             // that if the JSON pointer is "" (i.e., points to the whole value),
-            // function get_and_create returns a reference to the result itself.
-            // An assignment will then create a primitive value.
-            get_and_create(result, tokens, prefixes, tree) = element.second;
+            // the value is the result itself. An assignment will then create a
+            // primitive value.
+            BasicJsonType* current = values.back();
+            for (std::size_t pos = ends.back(); pos < key.size();)
+            {
+                // the reference token between the slash at pos and the next
+                std::size_t end = key.find_first_of('/', pos + 1);
+                if (end == string_t::npos)
+                {
+                    end = key.size();
+                }
+                token.clear();
+                token.append(data + pos + 1, end - pos - 1);
+                if (token.find_first_of('~') != string_t::npos)
+                {
+                    detail::unescape(token);
+                }
+
+                switch (current->type())
+                {
+                    case detail::value_t::null:
+                    {
+                        if (arrays.contains(data, pos))
+                        {
+                            // some reference token below this position is 0, so the
+                            // value is an array
+                            current = &current->operator[](array_index<BasicJsonType>(token));
+                        }
+                        else
+                        {
+                            // start a new object otherwise
+                            current = &current->operator[](token);
+                        }
+                        break;
+                    }
+
+                    case detail::value_t::object:
+                    {
+                        // create an entry in the object
+                        current = &object_member(*current, token);
+                        break;
+                    }
+
+                    case detail::value_t::array:
+                    {
+                        // create an entry in the array
+                        current = &current->operator[](array_index<BasicJsonType>(token));
+                        break;
+                    }
+
+                    /*
+                    The following code is only reached if there exists a reference
+                    token _and_ the current value is primitive. In this case, we have
+                    an error situation, because primitive values may only occur as
+                    a single value; that is, with an empty list of reference tokens.
+                    */
+                    case detail::value_t::string:
+                    case detail::value_t::boolean:
+                    case detail::value_t::number_integer:
+                    case detail::value_t::number_unsigned:
+                    case detail::value_t::number_float:
+                    case detail::value_t::binary:
+                    case detail::value_t::discarded:
+                    default:
+                        JSON_THROW(detail::type_error::create(detail::exception_id::unflatten_invalid_value, "invalid value to unflatten", &result));
+                }
+
+                values.push_back(current);
+                ends.push_back(end);
+                pos = end;
+            }
+
+            *current = element.second;
         }
 
         return result;
@@ -25805,10 +26655,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <type_traits> // enable_if, is_constructible
 #include <utility> // move
 #include <vector> // vector
-
-#ifdef _MSC_VER
-    #include <cstdlib> // _byteswap_ushort, _byteswap_ulong, _byteswap_uint64
-#endif
 
 // #include <nlohmann/detail/bit_ops.hpp>
 
@@ -28296,7 +29142,7 @@ class binary_writer
     {
         out[0] = to_char_type(first_byte);
         const unsigned unused_bits = 64u - ((8u << size_class) >> 1u);
-        const std::uint64_t tail = is_little_endian ? byte_swap(value) >> unused_bits : value << unused_bits;
+        const std::uint64_t tail = is_little_endian ? byteswap(value) >> unused_bits : value << unused_bits;
         std::memcpy(out + 1, &tail, sizeof(tail));
         return ((std::size_t{1} << size_class) >> 1u) + 1;
     }
@@ -29740,53 +30586,14 @@ class binary_writer
     // Utility functions //
     ///////////////////////
 
-    // single-instruction byte swaps (compilers lower these to bswap/rev/movbe);
-    // used to emit big-endian numbers without a per-byte std::reverse loop
-    static std::uint16_t byte_swap(std::uint16_t x) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __builtin_bswap16(x);
-#elif defined(_MSC_VER)
-        return _byteswap_ushort(x);
-#else
-        return static_cast<std::uint16_t>((x >> 8) | (x << 8));
-#endif
-    }
-
-    static std::uint32_t byte_swap(std::uint32_t x) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __builtin_bswap32(x);
-#elif defined(_MSC_VER)
-        return _byteswap_ulong(x);
-#else
-        return ((x & 0x000000FFu) << 24) | ((x & 0x0000FF00u) << 8)
-               | ((x & 0x00FF0000u) >> 8) | ((x & 0xFF000000u) >> 24);
-#endif
-    }
-
-    static std::uint64_t byte_swap(std::uint64_t x) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __builtin_bswap64(x);
-#elif defined(_MSC_VER)
-        return _byteswap_uint64(x);
-#else
-        x = ((x & 0x00000000FFFFFFFFull) << 32) | ((x & 0xFFFFFFFF00000000ull) >> 32);
-        x = ((x & 0x0000FFFF0000FFFFull) << 16) | ((x & 0xFFFF0000FFFF0000ull) >> 16);
-        x = ((x & 0x00FF00FF00FF00FFull) << 8) | ((x & 0xFF00FF00FF00FF00ull) >> 8);
-        return x;
-#endif
-    }
-
     /*!
     @brief reverse the bytes of a buffer by byte-swapping it as UIntType
 
     Loading the buffer into an unsigned integer of the same width and swapping
     that is what lets the compiler emit a single bswap/rev/movbe; reversing the
     buffer element by element does not reliably get there (clang keeps a scalar
-    shuffle). The two memcpy calls are the only portable way to reinterpret the
-    bytes and are folded away by every optimizer.
+    shuffle). (The two memcpy calls, rather than bit_cast, keep GCC from
+    inlining differently in C++20, which made writing slower.)
     */
     template<typename UIntType, std::size_t N>
     static void byte_swap_buffer(std::array<CharType, N>& a) noexcept
@@ -29794,11 +30601,11 @@ class binary_writer
         static_assert(sizeof(UIntType) == N, "swap width must match the buffer size");
         UIntType v{};
         std::memcpy(&v, a.data(), sizeof(v));
-        v = byte_swap(v);
+        v = byteswap(v);
         std::memcpy(a.data(), &v, sizeof(v));
     }
 
-    // reverse the bytes of a fixed-size buffer; a single byte_swap() for the
+    // reverse the bytes of a fixed-size buffer; a single byteswap() for the
     // common 2/4/8-byte number payloads, std::reverse for any other size
     static void reverse_bytes(std::array<CharType, 2>& a) noexcept
     {
@@ -29923,9 +30730,7 @@ class binary_writer
 #endif
 
         static_assert(sizeof(std::uint8_t) == sizeof(CharType), "size of CharType must be equal to std::uint8_t");
-        CharType result;
-        std::memcpy(&result, &x, sizeof(x));
-        return result;
+        return bit_cast<CharType>(x);
     }
 
     template<typename C = CharType,
@@ -30009,17 +30814,14 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
 
-#ifdef _MSC_VER
-    #include <cstdlib> // _byteswap_uint64
-#endif
 
 // SSE2 (every x86-64 CPU) and NEON (every 64-bit Arm CPU) convert the 16
-// digits of a double at once
-#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC))
+// digits of a double at once (unless JSON_NO_SIMD selects the portable code)
+#if !defined(JSON_NO_SIMD) && (defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC)))
     #include <emmintrin.h>
     #define JSON_DTOA_SSE2 1
     #define JSON_DTOA_NEON 0
-#elif (defined(__aarch64__) || defined(_M_ARM64)) && !defined(_M_ARM64EC) && !defined(__ARM_BIG_ENDIAN)
+#elif !defined(JSON_NO_SIMD) && (defined(__aarch64__) || defined(_M_ARM64)) && !defined(_M_ARM64EC) && !defined(__ARM_BIG_ENDIAN)
     #include <arm_neon.h>
     #define JSON_DTOA_SSE2 0
     #define JSON_DTOA_NEON 1
@@ -30027,6 +30829,8 @@ NLOHMANN_JSON_NAMESPACE_END
     #define JSON_DTOA_SSE2 0
     #define JSON_DTOA_NEON 0
 #endif
+
+// #include <nlohmann/detail/bit_ops.hpp>
 
 // #include <nlohmann/detail/conversions/zmij.hpp>
 //     __ _____ _____ _____
@@ -30285,16 +31089,6 @@ For a detailed description of the algorithm see:
 namespace dtoa_impl
 {
 
-template<typename Target, typename Source>
-Target reinterpret_bits(const Source source)
-{
-    static_assert(sizeof(Target) == sizeof(Source), "size mismatch");
-
-    Target target;
-    std::memcpy(&target, &source, sizeof(Source));
-    return target;
-}
-
 struct diyfp // f * 2^e
 {
     static constexpr int kPrecision = 64; // = q
@@ -30449,7 +31243,7 @@ boundaries compute_boundaries(FloatType value)
 
     using bits_type = typename std::conditional<kPrecision == 24, std::uint32_t, std::uint64_t >::type;
 
-    const auto bits = static_cast<std::uint64_t>(reinterpret_bits<bits_type>(value));
+    const auto bits = static_cast<std::uint64_t>(bit_cast<bits_type>(value));
     const std::uint64_t E = bits >> (kPrecision - 1);
     const std::uint64_t F = bits & (kHiddenBit - 1);
 
@@ -31303,13 +32097,10 @@ inline std::uint64_t eight_digit_bytes(std::uint64_t abcdefgh) noexcept
 /// the byte stores once this is inlined)
 inline void store_msb_first(char* p, std::uint64_t v) noexcept
 {
-#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    v = __builtin_bswap64(v);
+#if JSON_LITTLE_ENDIAN_TARGET
+    v = byteswap(v);
     std::memcpy(p, &v, sizeof(v));
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    std::memcpy(p, &v, sizeof(v));
-#elif defined(_MSC_VER) // (little-endian on all its targets)
-    v = _byteswap_uint64(v);
+#elif JSON_BIG_ENDIAN_TARGET
     std::memcpy(p, &v, sizeof(v));
 #else
     for (unsigned i = 0; i < 8; ++i)
@@ -31681,8 +32472,7 @@ char* write_positive_zmij(char* first, const char* last, FloatType value)
 {
     static_assert(is_binary64<FloatType>::value,
                   "internal error: the conversion of Zmij needs IEEE 754 binary64 numbers");
-    std::uint64_t bits = 0;
-    std::memcpy(&bits, &value, sizeof(bits));
+    const auto bits = bit_cast<std::uint64_t>(value);
     const zmij::shortest_decimal d = zmij::to_shortest(bits);
     if (JSON_HEDLEY_LIKELY(last - first >= 41))
     {
@@ -32451,6 +33241,33 @@ class serializer
     */
     void dump_escaped(const string_t& s)
     {
+        // Short strings of printable ASCII - most object keys and many values -
+        // are checked byte by byte against a table and then copied in one go.
+        // For them, this is cheaper than starting the vector scanner below,
+        // whose setup costs more than such a string takes to scan. The same
+        // check serves both values of ensure_ascii.
+        if (s.size() <= 32)
+        {
+            const auto& copyable = ascii_copyable();
+            const auto* const data = reinterpret_cast<const unsigned char*>(s.data());
+            const std::size_t n = s.size();
+            std::size_t k = 0;
+            while (k + 4 <= n && copyable[data[k]] != 0 && copyable[data[k + 1]] != 0
+                    && copyable[data[k + 2]] != 0 && copyable[data[k + 3]] != 0)
+            {
+                k += 4;
+            }
+            while (k < n && copyable[data[k]] != 0)
+            {
+                ++k;
+            }
+            if (k == n)
+            {
+                put_string(s, 0, n);
+                return;
+            }
+        }
+
         // dispatch once here rather than test the flag inside the loop: it does
         // not change while a string is written, and folding it lets each of the
         // two scanners be inlined into a loop of its own
@@ -32831,8 +33648,12 @@ class serializer
     the indentation character once and flushing that same content repeatedly:
     flushing does not disturb what the buffer holds, so re-filling it between
     flushes would be redundant work.
+
+    @note inlined on purpose, as is @ref put_literal: GCC otherwise stops
+          inlining both into the pretty-printing loops once @ref dump_escaped
+          has grown, which made indented output up to 13% slower
     */
-    void put_indent(std::size_t indent)
+    JSON_HEDLEY_ALWAYS_INLINE void put_indent(std::size_t indent)
     {
         // closing braces at the outermost level ask for no indentation at all
         if (indent == 0)
@@ -32882,7 +33703,7 @@ class serializer
     write-through path for oversized runs.
     */
     template<std::size_t N>
-    void put_literal(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    JSON_HEDLEY_ALWAYS_INLINE void put_literal(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         static_assert(N >= 2, "put_literal expects a non-empty string literal");
         // the array bound counts the terminating NUL, which is not written
@@ -32989,6 +33810,39 @@ class serializer
             x = x / 10000u;
             n_digits += 4;
         }
+    }
+
+    /*!
+    @brief whether each byte can be written verbatim under either value of ensure_ascii
+
+    Entry c is 1 for printable ASCII other than '"' and '\\' (see
+    is_ascii_copyable()) and 0 otherwise. A table lookup per byte is the
+    cheapest test for the short strings handled first in dump_escaped().
+    */
+    static const std::array<std::uint8_t, 256>& ascii_copyable() noexcept
+    {
+        static const std::array<std::uint8_t, 256> copyable =
+        {
+            {
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x00
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x10
+                1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x20
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x30
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x40
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, // 0x50
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x60
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, // 0x70
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x80
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x90
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xA0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xB0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xC0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xD0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xE0
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 // 0xF0
+            }
+        };
+        return copyable;
     }
 
     /*!
@@ -40905,6 +41759,125 @@ public:
             detail::throw_patch_not_an_array(json_patch);
         }
 
+        // the usual patch operations "add", "remove", "replace" and "test" on
+        // a pointer without escapes that denotes existing array elements and
+        // object members (as "add" does for the parent of the new value), as
+        // a diff creates them: apply the operation and return true; return
+        // false, with nothing changed, for all others
+        string_t token;
+        const string_t value_key = "value";
+        const auto try_plain = [&result, &token, &value_key](patch_operations operation, const string_t& path, const basic_json & val)
+        {
+            if (path.empty() || path.find_first_of('~') != string_t::npos)
+            {
+                return false;
+            }
+
+            // a missing "value" is reported below
+            const auto value_it = val.m_data.m_value.object->find(value_key);
+            const basic_json& value = value_it != val.m_data.m_value.object->end() ? value_it->second : val;
+            if (operation != patch_operations::remove && value_it == val.m_data.m_value.object->end())
+            {
+                return false;
+            }
+
+            switch (operation)
+            {
+                case patch_operations::replace:
+                {
+                    basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    if (target == nullptr)
+                    {
+                        return false;
+                    }
+                    *target = value;
+                    return true;
+                }
+
+                case patch_operations::test:
+                {
+                    const basic_json* const target = json_pointer::resolve_plain(&result, path, path.size(), token);
+                    // a failing test is reported below
+                    return target != nullptr && *target == value;
+                }
+
+                case patch_operations::add:
+                case patch_operations::remove:
+                {
+                    // the parent of the pointer and its last reference token
+                    std::size_t slash = path.size();
+                    while (slash > 0 && path[slash - 1] != '/')
+                    {
+                        --slash;
+                    }
+                    if (slash == 0)
+                    {
+                        return false;
+                    }
+                    --slash;
+
+                    basic_json* const parent = json_pointer::resolve_plain(&result, path, slash, token);
+                    if (parent == nullptr)
+                    {
+                        return false;
+                    }
+                    token.clear();
+                    token.append(path.data() + slash + 1, path.size() - slash - 1);
+
+                    if (operation == patch_operations::add)
+                    {
+                        if (parent->is_object())
+                        {
+                            (*parent)[token] = value;
+                            return true;
+                        }
+                        if (parent->is_array())
+                        {
+                            typename basic_json::size_type idx{};
+                            if (token == "-")
+                            {
+                                parent->push_back(value);
+                                return true;
+                            }
+                            if (json_pointer::template parse_array_index<basic_json_t>(token, idx) == json_pointer::array_index_status::ok && idx <= parent->size())
+                            {
+                                parent->insert(parent->begin() + static_cast<difference_type>(idx), value);
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    if (parent->is_object())
+                    {
+                        const auto it = parent->find(token);
+                        if (it == parent->end())
+                        {
+                            return false;
+                        }
+                        parent->erase(it);
+                        return true;
+                    }
+                    if (parent->is_array())
+                    {
+                        typename basic_json::size_type idx{};
+                        if (json_pointer::template parse_array_index<basic_json_t>(token, idx) == json_pointer::array_index_status::ok && idx < parent->size())
+                        {
+                            parent->erase(idx);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                case patch_operations::move:
+                case patch_operations::copy:
+                case patch_operations::invalid:
+                default:
+                    return false;
+            }
+        };
+
         // iterate and apply the operations
         for (const auto& val : json_patch)
         {
@@ -40941,9 +41914,19 @@ public:
             // collect mandatory members
             const string_t& op = *get_value("op", "op", true).m_data.m_value.string;
             const string_t& path = *get_value(op, "path", true).m_data.m_value.string;
+            const patch_operations operation = get_op(op);
+
+            // the usual operations on a plain pointer are applied without
+            // building the pointer's reference tokens; anything else (and
+            // every error) is handled below
+            if (try_plain(operation, path, val))
+            {
+                continue;
+            }
+
             json_pointer ptr(path);
 
-            switch (get_op(op))
+            switch (operation)
             {
                 case patch_operations::add:
                 {
@@ -41051,7 +42034,8 @@ public:
     {
         // the patch
         basic_json result(value_t::array);
-        diff_recursively(result, source, target, path, 0);
+        string_t buffer = path;
+        diff_recursively(result, source, target, buffer, 0);
         return result;
     }
 
@@ -41095,31 +42079,69 @@ public:
     // function it appears in. In diff_recursively, which is on the call stack
     // once per nesting level, that made every level cost kilobytes of stack.
 
+    /// @brief append an operation @a op for @a path to @a result, with @a value if it is not null
+    static void diff_operation(basic_json& result, const char* op, const string_t& path, const basic_json* value)
+    {
+        basic_json entry(value_t::object);
+        entry["op"] = op;
+        entry["path"] = path;
+        if (value != nullptr)
+        {
+            entry["value"] = *value;
+        }
+        result.push_back(std::move(entry));
+    }
+
     /// @brief append a "replace" operation for @a path with @a value to @a result
     static void diff_replace(basic_json& result, const string_t& path, const basic_json& value)
     {
-        result.push_back(
-        {
-            {"op", "replace"}, {"path", path}, {"value", value}
-        });
+        diff_operation(result, "replace", path, &value);
     }
 
     /// @brief append a "remove" operation for @a path to @a result
     static void diff_remove(basic_json& result, const string_t& path)
     {
-        result.push_back(object(
-        {
-            {"op", "remove"}, {"path", path}
-        }));
+        diff_operation(result, "remove", path, nullptr);
     }
 
     /// @brief append an "add" operation for @a path with @a value to @a result
     static void diff_add(basic_json& result, const string_t& path, const basic_json& value)
     {
-        result.push_back(
-        {
-            {"op", "add"}, {"path", path}, {"value", value}
-        });
+        diff_operation(result, "add", path, &value);
+    }
+
+    /// @brief append "/" and the decimal representation of @a index to @a path
+    static void diff_append_index(string_t& path, std::size_t index)
+    {
+        path.push_back('/');
+        json_pointer::append_index(path, index);
+    }
+
+    /// @brief append "/" and the escaped @a key to @a path
+    static void diff_append_key(string_t& path, const string_t& key)
+    {
+        path.push_back('/');
+        detail::escape_into(path, key);
+    }
+
+    /// @brief the path of the member @a key of the value at @a path
+    static string_t diff_key_path(const string_t& path, const string_t& key)
+    {
+        string_t result;
+        result.reserve(path.size() + key.size() + 1);
+        result.append(path.data(), path.size());
+        diff_append_key(result, key);
+        return result;
+    }
+
+    /// @brief the path of the element @a index of the value at @a path
+    static string_t diff_index_path(const string_t& path, const std::size_t index)
+    {
+        string_t result;
+        result.reserve(path.size() + 8);
+        result.append(path.data(), path.size());
+        diff_append_index(result, index);
+        return result;
     }
 
     /// @brief append the "remove" operations for the elements of array
@@ -41132,13 +42154,18 @@ public:
         // in that order avoids the quadratic reinsertion done before
         for (std::size_t j = source.size(); j > index; --j)
         {
-            diff_remove(result, detail::concat<string_t>(path, '/', detail::to_string<string_t>(j - 1)));
+            diff_remove(result, diff_index_path(path, j - 1));
         }
 
         // add other remaining elements
-        for (std::size_t i = source.size(); i < target.size(); ++i)
+        if (source.size() < target.size())
         {
-            diff_add(result, detail::concat<string_t>(path, "/-"), target[i]);
+            string_t tail_path = path;
+            tail_path.append("/-", 2);
+            for (std::size_t i = source.size(); i < target.size(); ++i)
+            {
+                diff_add(result, tail_path, target[i]);
+            }
         }
     }
 
@@ -41147,7 +42174,7 @@ public:
     {
         for (const auto& it : added)
         {
-            diff_add(result, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+            diff_add(result, diff_key_path(path, it.key()), it.value());
         }
     }
 
@@ -41168,10 +42195,25 @@ public:
                                  std::vector<const_iterator>& added)
     {
         // first pass: one lookup per source key
+        // Objects of the same size usually have the same keys, in the same
+        // order: walk them together as long as that holds, which takes no lookups.
         target_values.reserve(source.size());
         std::size_t common = 0;
-        for (auto it = source.cbegin(); it != source.cend(); ++it)
+        bool together = source.size() == target.size();
+        for (auto it = source.cbegin(), partner = target.cbegin(); it != source.cend(); ++it)
         {
+            if (together)
+            {
+                if (it.key() == partner.key())
+                {
+                    target_values.push_back(&partner.value());
+                    ++common;
+                    ++partner;
+                    continue;
+                }
+                together = false;
+            }
+
             const auto found = target.find(it.key());
             if (found != target.cend())
             {
@@ -41182,6 +42224,12 @@ public:
             {
                 target_values.push_back(nullptr);
             }
+        }
+
+        // the same keys in the same order
+        if (together)
+        {
+            return true;
         }
 
         // second pass: find the keys only target has. An object type that
@@ -41249,6 +42297,13 @@ public:
             return true;
         }
 
+        // equal objects, whose members are in a different order, need no
+        // operations
+        if (source == target)
+        {
+            return false;
+        }
+
         // slow path: the common keys are in a different relative
         // order in source and target (only possible for a
         // reorderable object_t like ordered_map). Building a
@@ -41265,7 +42320,7 @@ public:
         // it moves it to the end, fixing its position.
         for (auto it = source.cbegin(); it != source.cend(); ++it)
         {
-            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
+            diff_remove(result, diff_key_path(path, it.key()));
         }
 
         // add every key that is either common (just removed
@@ -41274,7 +42329,7 @@ public:
         // target exactly
         for (auto it = target.cbegin(); it != target.cend(); ++it)
         {
-            diff_add(result, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+            diff_add(result, diff_key_path(path, it.key()), it.value());
         }
         return false;
     }
@@ -41283,6 +42338,9 @@ public:
     @brief @ref diff, for values at nesting level @a depth, appending the
            operations to @a result
 
+    @a path is the path of the values; it is a buffer that is extended and
+    shortened again below, and is the same when the function returns.
+
     Diffing two arrays or objects calls this function again, once per nesting
     level, so values nested deeply enough used to exhaust the call stack and
     terminate the process. The descent is bounded here: once @ref
@@ -41290,7 +42348,7 @@ public:
     diff_iteratively diffs what is left without the call stack.
     */
     static void diff_recursively(basic_json& result, const basic_json& source, const basic_json& target,
-                                 const string_t& path, const std::size_t depth)
+                                 string_t& path, const std::size_t depth)
     {
         // if the values are the same, there is nothing to do
         if (source == target)
@@ -41302,9 +42360,9 @@ public:
     }
 
     /// @brief @ref diff_recursively for values known to be unequal; callers
-    ///        compare first so they build no path for equal ones
+    ///        compare first so they extend the path only for unequal ones
     static void diff_unequal(basic_json& result, const basic_json& source, const basic_json& target,
-                             const string_t& path, const std::size_t depth)
+                             string_t& path, const std::size_t depth)
     {
         if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
         {
@@ -41323,6 +42381,8 @@ public:
         {
             case value_t::array:
             {
+                const std::size_t path_length = path.size();
+
                 // first pass: traverse common elements
                 std::size_t i = 0;
                 while (i < source.size() && i < target.size())
@@ -41330,7 +42390,9 @@ public:
                     // recursive call to compare array values at index i
                     if (!(source[i] == target[i]))
                     {
-                        diff_unequal(result, source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)), depth + 1);
+                        diff_append_index(path, i);
+                        diff_unequal(result, source[i], target[i], path, depth + 1);
+                        path.resize(path_length);
                     }
                     ++i;
                 }
@@ -41352,6 +42414,7 @@ public:
                     // lookup is needed. Deleted keys are interleaved here
                     // too, in source's original order, to match the
                     // historical (pre-reordering-aware) output order.
+                    const std::size_t path_length = path.size();
                     std::size_t i = 0;
                     for (auto it = source.cbegin(); it != source.cend(); ++it, ++i)
                     {
@@ -41359,13 +42422,15 @@ public:
                         {
                             if (!(it.value() == *target_values[i]))
                             {
-                                diff_unequal(result, it.value(), *target_values[i], detail::concat<string_t>(path, '/', detail::escape(it.key())), depth + 1);
+                                diff_append_key(path, it.key());
+                                diff_unequal(result, it.value(), *target_values[i], path, depth + 1);
+                                path.resize(path_length);
                             }
                         }
                         else
                         {
                             // found a key that is not in target -> remove it
-                            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
+                            diff_remove(result, diff_key_path(path, it.key()));
                         }
                     }
 
@@ -41496,7 +42561,7 @@ public:
                 if (i < source_array.size() && i < target_array.size())
                 {
                     ++stack.back().index;
-                    detail::concat_into(current_path, '/', detail::to_string<string_t>(i));
+                    diff_append_index(current_path, i);
                     enter(source_array[i], target_array[i]);
                     if (stack.size() == depth)
                     {
@@ -41519,7 +42584,7 @@ public:
                     if (target_value_ptr != nullptr)
                     {
                         const basic_json& target_value = *target_value_ptr;
-                        detail::concat_into(current_path, '/', detail::escape(it.key()));
+                        diff_append_key(current_path, it.key());
                         enter(it.value(), target_value);
                         if (stack.size() == depth)
                         {
@@ -41529,7 +42594,7 @@ public:
                     else
                     {
                         // found a key that is not in target -> remove it
-                        diff_remove(result, detail::concat<string_t>(current_path, '/', detail::escape(it.key())));
+                        diff_remove(result, diff_key_path(current_path, it.key()));
                     }
                     continue;
                 }
@@ -42032,6 +43097,15 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_UNLOCKED_FILE_IO
 #undef JSON_DTOA_SSE2
 #undef JSON_DTOA_NEON
+#undef JSON_LITTLE_ENDIAN_TARGET
+#undef JSON_BIG_ENDIAN_TARGET
+#undef JSON_SCAN_NEON
+#undef JSON_SCAN_SSE2
+#undef JSON_SCAN_SSSE3
+#undef JSON_SCAN_SSSE3_DISPATCH
+#undef JSON_SCAN_SSSE3_TARGET
+#undef JSON_SCAN_VECTOR
+#undef JSON_SCAN_VECTOR_UTF8
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH

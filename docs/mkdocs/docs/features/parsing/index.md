@@ -79,6 +79,10 @@ follow the usual `std::streambuf` contract, and
 [`JSON_DISABLE_UNLOCKED_FILE_IO`](../../api/macros/json_disable_unlocked_file_io.md) for programs in which another
 thread must use the same `#!cpp FILE` object while it is parsed.
 
+Where the target has them, strings are scanned with vector instructions: SSE2 on x86-64 (and SSSE3 for UTF-8 text, when
+the CPU has it) and NEON on AArch64. [`JSON_NO_SIMD`](../../api/macros/json_no_simd.md) selects portable code instead,
+again without changing any result.
+
 ## SAX vs. DOM parsing
 
 The library offers two parsing models:

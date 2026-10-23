@@ -171,7 +171,8 @@ std::vector<std::string> corpus()
         R"("unterminated)", "\"control\x01character\"", "\"ill-formed \xc3\x28 UTF-8\"", R"("bad \x escape")",
         R"("\ud800 lone surrogate")",
         // literals
-        "true", "false", "null", "tru", "nul", "falsey",
+        "true", "false", "null", "tru", "nul", "falsey", "[true,false,null]", "nulL", "truex", "[fals e]", "t",
+        "true1", "null null", "[false]",
         // structures
         "[]", "{}", "[1,2,3]", R"({"a":1,"b":[true,false,null],"c":{"d":"e"}})", "[1,]", R"({"a" 1})", "[[[[[]]]]]",
         // pretty-printed
