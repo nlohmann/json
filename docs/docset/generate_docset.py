@@ -341,13 +341,14 @@ def download(url, docs) -> str:
         raise ValueError(f'not an http(s) URL: {url}')
     req = urllib.request.Request(u.geturl(), headers={'User-Agent': USER_AGENT})
     # (the scheme is checked above)
+    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
     with urllib.request.urlopen(req, timeout=20) as r:  # nosec B310
         data = r.read()
         ctype = r.headers.get_content_type()
     path = urllib.parse.unquote(u.path).lstrip('/')
     ext = os.path.splitext(path)[1]
     if u.query or not ext or path.endswith('/'):
-        digest = hashlib.sha1(url.encode(), usedforsecurity=False).hexdigest()[:12]
+        digest = hashlib.sha256(url.encode()).hexdigest()[:12]
         path = os.path.join(os.path.dirname(path), digest + CONTENT_TYPE_EXT.get(ctype, ext or '.bin'))
     rel = os.path.normpath(os.path.join('assets', 'external', u.hostname, path))
     out = os.path.join(docs, rel)
