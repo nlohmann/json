@@ -109,35 +109,25 @@ template<typename IteratorType> class iteration_proxy_value
     {
         JSON_ASSERT(anchor.m_object != nullptr);
 
-        switch (anchor.m_object->type())
+        if (anchor.m_object->is_array())
         {
             // use integer array index as key
-            case value_t::array:
+            if (array_index != array_index_last)
             {
-                if (array_index != array_index_last)
-                {
-                    int_to_string( array_index_str, array_index );
-                    array_index_last = array_index;
-                }
-                return array_index_str;
+                int_to_string( array_index_str, array_index );
+                array_index_last = array_index;
             }
-
-            // use key from the object
-            case value_t::object:
-                return anchor.key();
-
-            // use an empty key for all primitive types
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                return empty_str;
+            return array_index_str;
         }
+
+        if (anchor.m_object->is_object())
+        {
+            // use key from the object
+            return anchor.key();
+        }
+
+        // use an empty key for all primitive types
+        return empty_str;
     }
 
     /// return value of the iterator
