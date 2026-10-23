@@ -1065,6 +1065,23 @@ class binary_reader
     }
 
     /*!
+    @brief read the length of a CBOR string or byte array and then its bytes
+
+    @tparam NumberType    the type of the length field
+    @tparam ContainerType the destination container (string_t or binary_t)
+    @param[in] context  further context information (for diagnostics)
+    @param[out] result  container the bytes are appended to
+
+    @return whether reading completed
+    */
+    template<typename NumberType, typename ContainerType>
+    bool get_cbor_sized_bytes(const char* context, ContainerType& result)
+    {
+        NumberType len{};
+        return get_number(len) && get_bytes(len, context, result);
+    }
+
+    /*!
     @brief reads a definite-length CBOR string
 
     Reads everything @ref get_cbor_string accepts except the indefinite-length
@@ -1114,26 +1131,22 @@ class binary_reader
 
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
             {
-                std::uint8_t len{};
-                return get_number(len) && get_string(len, result);
+                return get_cbor_sized_bytes<std::uint8_t>("string", result);
             }
 
             case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
             {
-                std::uint16_t len{};
-                return get_number(len) && get_string(len, result);
+                return get_cbor_sized_bytes<std::uint16_t>("string", result);
             }
 
             case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
             {
-                std::uint32_t len{};
-                return get_number(len) && get_string(len, result);
+                return get_cbor_sized_bytes<std::uint32_t>("string", result);
             }
 
             case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
             {
-                std::uint64_t len{};
-                return get_number(len) && get_string(len, result);
+                return get_cbor_sized_bytes<std::uint64_t>("string", result);
             }
 
             default:
@@ -1321,30 +1334,22 @@ class binary_reader
 
             case 0x58: // Binary data (one-byte uint8_t for n follows)
             {
-                std::uint8_t len{};
-                return get_number(len) &&
-                       get_binary(len, result);
+                return get_cbor_sized_bytes<std::uint8_t>("binary", result);
             }
 
             case 0x59: // Binary data (two-byte uint16_t for n follow)
             {
-                std::uint16_t len{};
-                return get_number(len) &&
-                       get_binary(len, result);
+                return get_cbor_sized_bytes<std::uint16_t>("binary", result);
             }
 
             case 0x5A: // Binary data (four-byte uint32_t for n follow)
             {
-                std::uint32_t len{};
-                return get_number(len) &&
-                       get_binary(len, result);
+                return get_cbor_sized_bytes<std::uint32_t>("binary", result);
             }
 
             case 0x5B: // Binary data (eight-byte uint64_t for n follow)
             {
-                std::uint64_t len{};
-                return get_number(len) &&
-                       get_binary(len, result);
+                return get_cbor_sized_bytes<std::uint64_t>("binary", result);
             }
 
             default:
