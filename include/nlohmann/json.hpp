@@ -3149,6 +3149,17 @@ public:
                : detail::binary_reader<basic_json, InputAdapterType, SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
     }
 
+    /// serialize @a j into a new vector; @a write receives the vector-backed writer
+    template<typename WriteFunction>
+    static std::vector<std::uint8_t> to_binary_vector(const basic_json& j, const error_handler_t error_handler, WriteFunction write)
+    {
+        std::vector<std::uint8_t> result;
+        result.reserve(detail::binary_initial_capacity(j));
+        auto writer = vector_writer(result, error_handler);
+        write(writer);
+        return result;
+    }
+
     /// @throw out_of_range.401 always, as @a idx is out of range of @a j
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_out_of_range(size_type idx, const basic_json& j)
@@ -6296,10 +6307,10 @@ public:
     static std::vector<std::uint8_t> to_cbor(const basic_json& j,
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_initial_capacity(j));
-        vector_writer(result, error_handler).write_cbor(j);
-        return result;
+        return to_binary_vector(j, error_handler, [&](vector_binary_writer<std::uint8_t>& w)
+        {
+            w.write_cbor(j);
+        });
     }
 
     /// @brief create a CBOR serialization of a given JSON value
@@ -6327,10 +6338,10 @@ public:
     static std::vector<std::uint8_t> to_msgpack(const basic_json& j,
             const error_handler_t error_handler = error_handler_t::keep)
     {
-        std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_initial_capacity(j));
-        vector_writer(result, error_handler).write_msgpack(j);
-        return result;
+        return to_binary_vector(j, error_handler, [&](vector_binary_writer<std::uint8_t>& w)
+        {
+            w.write_msgpack(j);
+        });
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
@@ -6360,10 +6371,10 @@ public:
             const bool use_type = false,
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_initial_capacity(j));
-        vector_writer(result, error_handler).write_ubjson(j, use_size, use_type);
-        return result;
+        return to_binary_vector(j, error_handler, [&](vector_binary_writer<std::uint8_t>& w)
+        {
+            w.write_ubjson(j, use_size, use_type);
+        });
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
@@ -6396,10 +6407,10 @@ public:
             const bjdata_version_t version = bjdata_version_t::draft2,
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_initial_capacity(j));
-        vector_writer(result, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
-        return result;
+        return to_binary_vector(j, error_handler, [&](vector_binary_writer<std::uint8_t>& w)
+        {
+            w.write_ubjson(j, use_size, use_type, true, true, version);
+        });
     }
 
     /// @brief create a BJData serialization of a given JSON value
@@ -6431,10 +6442,10 @@ public:
     static std::vector<std::uint8_t> to_bson(const basic_json& j,
             const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_initial_capacity(j));
-        vector_writer(result, error_handler).write_bson(j);
-        return result;
+        return to_binary_vector(j, error_handler, [&](vector_binary_writer<std::uint8_t>& w)
+        {
+            w.write_bson(j);
+        });
     }
 
     /// @brief create a BSON serialization of a given JSON value
@@ -6461,10 +6472,10 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
     static std::vector<std::uint8_t> to_bon8(const basic_json& j)
     {
-        std::vector<std::uint8_t> result;
-        result.reserve(detail::binary_initial_capacity(j));
-        vector_writer(result).write_bon8(j);
-        return result;
+        return to_binary_vector(j, detail::binary_writer_default_error_handler(), [&](vector_binary_writer<std::uint8_t>& w)
+        {
+            w.write_bon8(j);
+        });
     }
 
     /// @brief create a BON8 serialization of a given JSON value
