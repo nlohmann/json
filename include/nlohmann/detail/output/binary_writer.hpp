@@ -1550,14 +1550,15 @@ class binary_writer
     {
         oa.write_character(to_char_type(element_type));
 
-        if (error_handler == error_handler_t::keep || error_handler == error_handler_t::strict || is_valid_utf8(name))
+        if (JSON_HEDLEY_LIKELY(error_handler == error_handler_t::keep || error_handler == error_handler_t::strict))
         {
             oa.write_characters(reinterpret_cast<const CharType*>(name.data()), name.size());
         }
         else
         {
-            const string_t sanitized = sanitize_utf8(name, error_handler);
-            oa.write_characters(reinterpret_cast<const CharType*>(sanitized.data()), sanitized.size());
+            string_t storage;
+            const string_t& written = sanitize_utf8_for_bson_write(name, storage);
+            oa.write_characters(reinterpret_cast<const CharType*>(written.data()), written.size());
         }
 
         // the terminating null byte is written explicitly rather than taken
@@ -1633,11 +1634,8 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x02);
 
-        const bool sanitize = error_handler != error_handler_t::keep
-                              && error_handler != error_handler_t::strict
-                              && !is_valid_utf8(value);
-        const string_t sanitized = sanitize ? sanitize_utf8(value, error_handler) : string_t{};
-        const string_t& written = sanitize ? sanitized : value;
+        string_t storage;
+        const string_t& written = sanitize_utf8_for_bson_write(value, storage);
 
         write_number<std::int32_t>(to_bson_length(written.size() + 1ul), true);
         oa.write_characters(
@@ -4900,6 +4898,31 @@ class binary_writer
                 storage = sanitize_utf8(s, error_handler);
                 return storage;
         }
+    }
+
+    /*!
+    @brief the write-pass counterpart of @ref sanitize_utf8_for_write for BSON
+
+    The size pass (@ref calc_bson_entry_header_size, @ref
+    calc_bson_string_size) has already validated @a s, and thrown for @ref
+    error_handler_t::strict if it was ill-formed. Here, @ref
+    error_handler_t::strict therefore behaves like @ref error_handler_t::keep,
+    and @ref error_handler_t::replace / @ref error_handler_t::ignore produce
+    exactly the bytes the size pass measured. Hence no context is needed.
+
+    @param[in] s        the string (value or object key) to write
+    @param[out] storage  backing storage for a sanitized copy
+
+    @return a reference to @a s, or to @a storage once it holds a sanitized copy
+    */
+    const string_t& sanitize_utf8_for_bson_write(const string_t& s, string_t& storage) const
+    {
+        if (error_handler == error_handler_t::keep || error_handler == error_handler_t::strict || is_valid_utf8(s))
+        {
+            return s; // NOLINT(bugprone-return-const-ref-from-parameter): callers pass lvalues that outlive the call
+        }
+        storage = sanitize_utf8(s, error_handler);
+        return storage;
     }
 
     /// deleted: anything but a string_t would bind a temporary that dies before the returned reference is used
