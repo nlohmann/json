@@ -721,6 +721,18 @@ class lockstep
         }
     }
 
+    /// whether the object @a a of a document that cannot be edited has scalar values only
+    static bool scalar_values_only(const node* a, std::false_type /*editable*/) noexcept
+    {
+        return a->next == 1 + (2 * static_cast<std::size_t>(a->len));
+    }
+
+    /// (the nodes of an editable document can be elsewhere: not decided)
+    static bool scalar_values_only(const node* /*a*/, std::true_type /*editable*/) noexcept
+    {
+        return false;
+    }
+
     /// Whether the comparison that follows visits the members of the object a in the
     /// order of the document: if the object type keeps the order, if the keys
     /// ascend (it sorts by key), or if all values are scalars (then the walk costs
@@ -733,9 +745,9 @@ class lockstep
         {
             return true;
         }
-        if (!EA && a->next == 1 + (2 * static_cast<std::size_t>(a->len)))
+        if (scalar_values_only(a, std::integral_constant<bool, EA> {}))
         {
-            return true; // (scalar values only)
+            return true;
         }
         const node* k = nav_a::first(m_a, a);
         string_ref previous(m_a.str(*k), k->len);
@@ -897,6 +909,20 @@ bool keys_differ_early(const SideA& a, const SideB& b)
     return false;
 }
 
+/// keys_differ_early() for a type that keeps the order of the members
+template<typename SideA, typename SideB>
+bool keys_differ_early(const SideA& a, const SideB& b, std::true_type /*ordered*/)
+{
+    return keys_differ_early(a, b);
+}
+
+/// (a type that sorts the members by key: not decided early)
+template<typename SideA, typename SideB>
+bool keys_differ_early(const SideA& /*a*/, const SideB& /*b*/, std::false_type /*ordered*/) noexcept
+{
+    return false;
+}
+
 inline bool is_number(value_t t) noexcept
 {
     return t == value_t::number_integer || t == value_t::number_unsigned || t == value_t::number_float;
@@ -987,7 +1013,7 @@ bool equal(const A& a0, const B& b0)
                 {
                     return false;
                 }
-                if (ordered && ta == value_t::object && keys_differ_early(a, b))
+                if (ta == value_t::object && keys_differ_early(a, b, std::integral_constant<bool, is_ordered_map<typename BasicJsonType::object_t>::value> {}))
                 {
                     return false;
                 }
