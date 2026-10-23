@@ -21,6 +21,7 @@
 
 #include <nlohmann/detail/bit_ops.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
+#include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/output/error_handler.hpp>
@@ -324,7 +325,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, "CBOR");
+                throw_on_discarded(j, input_format_name(input_format_t::cbor));
         }
     }
 
@@ -538,7 +539,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, "MessagePack");
+                throw_on_discarded(j, input_format_name(input_format_t::msgpack));
         }
     }
 
@@ -712,7 +713,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, use_bjdata ? "BJData" : "UBJSON");
+                throw_on_discarded(j, input_format_name(use_bjdata ? input_format_t::bjdata : input_format_t::ubjson));
         }
     }
 
@@ -1730,14 +1731,14 @@ class binary_writer
             case value_t::number_integer:
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(j.m_data.m_value.number_integer)))
                 {
-                    throw_integer_out_of_range(j, "BSON", "int64");
+                    throw_integer_out_of_range(j, input_format_name(input_format_t::bson), "int64");
                 }
                 return calc_bson_integer_size(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
 
             case value_t::number_unsigned:
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
                 {
-                    throw_integer_out_of_range(j, "BSON", "uint64");
+                    throw_integer_out_of_range(j, input_format_name(input_format_t::bson), "uint64");
                 }
                 return calc_bson_unsigned_size(conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
 
@@ -1748,7 +1749,7 @@ class binary_writer
                 return 0ul;
 
             case value_t::discarded:
-                throw_on_discarded(j, "BSON");
+                throw_on_discarded(j, input_format_name(input_format_t::bson));
 
             // LCOV_EXCL_START
             case value_t::object:
@@ -1977,7 +1978,7 @@ class binary_writer
                 return write_bson_null(name);
 
             case value_t::discarded:
-                throw_on_discarded(j, "BSON");
+                throw_on_discarded(j, input_format_name(input_format_t::bson));
 
             // LCOV_EXCL_START
             case value_t::object:
@@ -2758,7 +2759,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
             {
-                throw_integer_out_of_range(j, "CBOR", "uint64");
+                throw_integer_out_of_range(j, input_format_name(input_format_t::cbor), "uint64");
             }
             write_cbor_head(0x00, conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
             return;
@@ -2768,7 +2769,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, "CBOR", "[-2^64, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_name(input_format_t::cbor), "[-2^64, 2^64-1]");
             }
             // CBOR does not differentiate between positive signed
             // integers and unsigned integers
@@ -2779,7 +2780,7 @@ class binary_writer
             // a negative integer n is encoded as -1 - n
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(-1 - j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, "CBOR", "[-2^64, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_name(input_format_t::cbor), "[-2^64, 2^64-1]");
             }
             write_cbor_head(0x20, static_cast<std::uint64_t>(-1 - j.m_data.m_value.number_integer));
         }
@@ -2855,7 +2856,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
             {
-                throw_integer_out_of_range(j, "MessagePack", "uint64");
+                throw_integer_out_of_range(j, input_format_name(input_format_t::msgpack), "uint64");
             }
             write_msgpack_unsigned(static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
             return;
@@ -2865,7 +2866,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, "MessagePack", "[-2^63, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_name(input_format_t::msgpack), "[-2^63, 2^64-1]");
             }
             // MessagePack does not differentiate between positive
             // signed integers and unsigned integers.
@@ -2875,7 +2876,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_min<std::int64_t>(j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, "MessagePack", "[-2^63, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_name(input_format_t::msgpack), "[-2^63, 2^64-1]");
             }
             if (j.m_data.m_value.number_integer >= -32)
             {
@@ -4278,7 +4279,7 @@ class binary_writer
             {
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::int64_t>(j.m_data.m_value.number_unsigned)))
                 {
-                    throw_integer_out_of_range(j, "BON8", "int64");
+                    throw_integer_out_of_range(j, input_format_name(input_format_t::bon8), "int64");
                 }
                 write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_unsigned));
                 string_open = false;
@@ -4289,7 +4290,7 @@ class binary_writer
             {
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(j.m_data.m_value.number_integer)))
                 {
-                    throw_integer_out_of_range(j, "BON8", "int64");
+                    throw_integer_out_of_range(j, input_format_name(input_format_t::bon8), "int64");
                 }
                 write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
                 string_open = false;
@@ -4357,7 +4358,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, "BON8");
+                throw_on_discarded(j, input_format_name(input_format_t::bon8));
         }
     }
 
