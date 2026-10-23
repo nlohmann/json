@@ -1005,19 +1005,72 @@ class binary_writer
         typename BasicJsonType::array_t::const_iterator array_it{};
     };
 
+    /// @brief the CBOR specifics of @ref write_container_iterative
+    struct cbor_walk
+    {
+        static void array_head(binary_writer& w, const BasicJsonType& j)
+        {
+            w.write_cbor_head(0x80, j.m_data.m_value.array->size());
+        }
+
+        static void object_head(binary_writer& w, const BasicJsonType& j)
+        {
+            w.write_cbor_head(0xA0, j.m_data.m_value.object->size());
+        }
+
+        static void scalar(binary_writer& w, const BasicJsonType& j)
+        {
+            w.write_cbor(j);
+        }
+
+        template<typename KeyType>
+        static void key(binary_writer& w, const KeyType& k, const BasicJsonType& object)
+        {
+            w.write_cbor_key(k, object);
+        }
+    };
+
+    /// @brief the MessagePack specifics of @ref write_container_iterative
+    struct msgpack_walk
+    {
+        static void array_head(binary_writer& w, const BasicJsonType& j)
+        {
+            w.write_msgpack_array_prefix(j.m_data.m_value.array->size(), j);
+        }
+
+        static void object_head(binary_writer& w, const BasicJsonType& j)
+        {
+            w.write_msgpack_object_prefix(j.m_data.m_value.object->size(), j);
+        }
+
+        static void scalar(binary_writer& w, const BasicJsonType& j)
+        {
+            w.write_msgpack(j);
+        }
+
+        template<typename KeyType>
+        static void key(binary_writer& w, const KeyType& k, const BasicJsonType& object)
+        {
+            w.write_msgpack_key(k, object);
+        }
+    };
+
     /*!
-    @brief write @a j with @ref write_cbor, or write its header and push a
-           frame for @ref write_cbor_iterative to continue with its elements
+    @brief write @a j with @a Walk::scalar, or write its header and push a
+           frame for @ref write_container_iterative to continue with its
+           elements
 
     A scalar, and an empty array or object, are written out in full: there is
-    nothing below them for @ref write_cbor_iterative to come back to, so
+    nothing below them for @ref write_container_iterative to come back to, so
     nothing is pushed for them.
     */
-    void write_cbor_value_or_push(const BasicJsonType& j, std::vector<binary_container_frame>& stack)
+    template<typename Walk>
+    JSON_HEDLEY_ALWAYS_INLINE
+    void write_container_value_or_push(const BasicJsonType& j, std::vector<binary_container_frame>& stack)
     {
         if (j.is_array())
         {
-            write_cbor_head(0x80, j.m_data.m_value.array->size());
+            Walk::array_head(*this, j);
             if (!j.m_data.m_value.array->empty())
             {
                 stack.emplace_back(&j);
@@ -1027,7 +1080,7 @@ class binary_writer
 
         if (j.is_object())
         {
-            write_cbor_head(0xA0, j.m_data.m_value.object->size());
+            Walk::object_head(*this, j);
             if (!j.m_data.m_value.object->empty())
             {
                 stack.emplace_back(&j);
@@ -1035,22 +1088,26 @@ class binary_writer
             return;
         }
 
-        write_cbor(j);
+        Walk::scalar(*this, j);
     }
 
     /*!
     @brief write out @a root and everything below it without the call stack
 
-    Emits the same bytes as @ref write_cbor, keeping the containers it has
+    Emits the same bytes as the recursive writer, keeping the containers it has
     entered on an explicit stack instead of descending into them. Only reached
     for values nested deeper than @ref recursion_depth_limit, which is why it
-    is not written for speed.
+    is not written for speed. Shared by CBOR and MessagePack, which differ only
+    in the @a Walk policy (@ref cbor_walk, @ref msgpack_walk); BON8 has its own
+    walker, as it tracks an open string run and closes a container with a
+    marker.
     */
-    void write_cbor_iterative(const BasicJsonType& root)
+    template<typename Walk>
+    void write_container_iterative(const BasicJsonType& root)
     {
-        // only a container with elements is ever pushed; see write_cbor_value_or_push
+        // only a container with elements is ever pushed; see write_container_value_or_push
         std::vector<binary_container_frame> stack;
-        write_cbor_value_or_push(root, stack);
+        write_container_value_or_push<Walk>(root, stack);
 
         while (!stack.empty())
         {
@@ -1068,7 +1125,7 @@ class binary_writer
                 // read the child before pushing: entering it can move every frame
                 const BasicJsonType* child = &(*current.array_it);
                 ++stack.back().array_it;
-                write_cbor_value_or_push(*child, stack);
+                write_container_value_or_push<Walk>(*child, stack);
             }
             else
             {
@@ -1080,90 +1137,23 @@ class binary_writer
                 }
 
                 // the key is written directly (not via a temporary basic_json),
-                // with the object as diagnostics context, as in write_cbor
-                write_cbor_key(current.object_it->first, *current.value);
+                // with the object as diagnostics context, as in the recursive writer
+                Walk::key(*this, current.object_it->first, *current.value);
                 const BasicJsonType* child = &(current.object_it->second);
                 ++stack.back().object_it;
-                write_cbor_value_or_push(*child, stack);
+                write_container_value_or_push<Walk>(*child, stack);
             }
         }
     }
 
-    /*!
-    @brief write @a j with @ref write_msgpack, or write its header and push a
-           frame for @ref write_msgpack_iterative to continue with its elements
-
-    @sa @ref write_cbor_value_or_push
-    */
-    void write_msgpack_value_or_push(const BasicJsonType& j, std::vector<binary_container_frame>& stack)
+    void write_cbor_iterative(const BasicJsonType& root)
     {
-        if (j.is_array())
-        {
-            write_msgpack_array_prefix(j.m_data.m_value.array->size(), j);
-            if (!j.m_data.m_value.array->empty())
-            {
-                stack.emplace_back(&j);
-            }
-            return;
-        }
-
-        if (j.is_object())
-        {
-            write_msgpack_object_prefix(j.m_data.m_value.object->size(), j);
-            if (!j.m_data.m_value.object->empty())
-            {
-                stack.emplace_back(&j);
-            }
-            return;
-        }
-
-        write_msgpack(j);
+        write_container_iterative<cbor_walk>(root);
     }
 
-    /*!
-    @brief write out @a root and everything below it without the call stack
-
-    @sa @ref write_cbor_iterative
-    */
     void write_msgpack_iterative(const BasicJsonType& root)
     {
-        std::vector<binary_container_frame> stack;
-        write_msgpack_value_or_push(root, stack);
-
-        while (!stack.empty())
-        {
-            const binary_container_frame current = stack.back();
-
-            if (current.value->is_array())
-            {
-                const auto& array = *current.value->m_data.m_value.array;
-                if (current.array_it == array.cend())
-                {
-                    stack.pop_back();
-                    continue;
-                }
-
-                const BasicJsonType* child = &(*current.array_it);
-                ++stack.back().array_it;
-                write_msgpack_value_or_push(*child, stack);
-            }
-            else
-            {
-                const auto& object = *current.value->m_data.m_value.object;
-                if (current.object_it == object.cend())
-                {
-                    stack.pop_back();
-                    continue;
-                }
-
-                // as in write_cbor_iterative, the key is written directly with
-                // the object as diagnostics context
-                write_msgpack_key(current.object_it->first, *current.value);
-                const BasicJsonType* child = &(current.object_it->second);
-                ++stack.back().object_it;
-                write_msgpack_value_or_push(*child, stack);
-            }
-        }
+        write_container_iterative<msgpack_walk>(root);
     }
 
     /// @return true when a closing ']' still has to be written after the elements
@@ -1319,7 +1309,7 @@ class binary_writer
                elements of an optimized container, and everything below the
                top level, never repeat it)
 
-    @sa @ref write_cbor_value_or_push
+    @sa @ref write_container_value_or_push
     */
     void write_ubjson_value_or_push(const BasicJsonType& j, const bool add_prefix, const bool use_count,
                                     const bool use_type, const bool use_bjdata, const bjdata_version_t bjdata_version,
@@ -4418,7 +4408,7 @@ class binary_writer
     A scalar, and an empty array or object, are written out in full and not
     pushed.
 
-    @sa @ref write_cbor_value_or_push
+    @sa @ref write_container_value_or_push
     */
     void write_bon8_value_or_push(const BasicJsonType& j, bool& string_open, std::vector<binary_container_frame>& stack)
     {
