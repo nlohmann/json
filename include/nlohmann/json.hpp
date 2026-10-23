@@ -3052,6 +3052,27 @@ public:
         detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterator does not fit current value", obj);
     }
 
+    /// @throw type_error.310 always, as swap() with the given operand is not defined for the type of @a j
+    JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
+    static void throw_swap_wrong_type(const char* operation, const basic_json& j)
+    {
+        detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, operation, j);
+    }
+
+    /// exchange the stored @a Stored value (if the value has that type) with @a other
+    template<typename Stored, typename Other>
+    void swap_impl(Other& other, const char* operation)
+    {
+        Stored* const stored = get_impl_ptr(static_cast<Stored*>(nullptr));
+        if (JSON_HEDLEY_UNLIKELY(stored == nullptr))
+        {
+            throw_swap_wrong_type(operation, *this);
+        }
+
+        using std::swap;
+        swap(*stored, other);
+    }
+
     /// @throw out_of_range.401 always, as @a idx is out of range of @a j
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_out_of_range(size_type idx, const basic_json& j)
@@ -5248,82 +5269,37 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(array_t& other) // NOLINT(bugprone-exception-escape,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
     {
-        // swap only works for arrays
-        if (JSON_HEDLEY_LIKELY(is_array()))
-        {
-            using std::swap;
-            swap(*(m_data.m_value.array), other);
-            set_parents();
-        }
-        else
-        {
-            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(array_t&)", *this);
-        }
+        swap_impl<array_t>(other, "swap(array_t&)");
+        set_parents();
     }
 
     /// @brief exchanges the values
     /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(object_t& other) // NOLINT(bugprone-exception-escape,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
     {
-        // swap only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            using std::swap;
-            swap(*(m_data.m_value.object), other);
-            set_parents();
-        }
-        else
-        {
-            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(object_t&)", *this);
-        }
+        swap_impl<object_t>(other, "swap(object_t&)");
+        set_parents();
     }
 
     /// @brief exchanges the values
     /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(string_t& other) // NOLINT(bugprone-exception-escape,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
     {
-        // swap only works for strings
-        if (JSON_HEDLEY_LIKELY(is_string()))
-        {
-            using std::swap;
-            swap(*(m_data.m_value.string), other);
-        }
-        else
-        {
-            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(string_t&)", *this);
-        }
+        swap_impl<string_t>(other, "swap(string_t&)");
     }
 
     /// @brief exchanges the values
     /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(binary_t& other) // NOLINT(bugprone-exception-escape,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
     {
-        // swap only works for binary values
-        if (JSON_HEDLEY_LIKELY(is_binary()))
-        {
-            using std::swap;
-            swap(*(m_data.m_value.binary), other);
-        }
-        else
-        {
-            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(binary_t&)", *this);
-        }
+        swap_impl<binary_t>(other, "swap(binary_t&)");
     }
 
     /// @brief exchanges the values
     /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(typename binary_t::container_type& other) // NOLINT(bugprone-exception-escape)
     {
-        // swap only works for binary values
-        if (JSON_HEDLEY_LIKELY(is_binary()))
-        {
-            using std::swap;
-            swap(*(m_data.m_value.binary), other);
-        }
-        else
-        {
-            detail::throw_cannot_use_with(detail::exception_id::swap_wrong_type, "swap(binary_t::container_type&)", *this);
-        }
+        swap_impl<binary_t>(other, "swap(binary_t::container_type&)");
     }
 
     /// @}
