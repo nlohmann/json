@@ -617,7 +617,7 @@ TEST_CASE("json_view large objects")
             std::size_t farthest = 0;
             for (const std::string& key : keys)
             {
-                std::size_t i = static_cast<std::size_t>(nlohmann::detail::view::key_hash(key.data(), key.size())) & (slots - 1);
+                std::size_t i = nlohmann::detail::conditional_static_cast<std::size_t>(nlohmann::detail::view::key_hash(key.data(), key.size())) & (slots - 1);
                 std::size_t distance = 0;
                 while (used[i])
                 {
@@ -639,7 +639,7 @@ TEST_CASE("json_view large objects")
             std::size_t width = 0;
             while (pattern[conversion] >= '0' && pattern[conversion] <= '9')
             {
-                width = width * 10 + static_cast<std::size_t>(pattern[conversion] - '0');
+                width = (width * 10) + static_cast<std::size_t>(pattern[conversion] - '0');
                 ++conversion;
             }
             const bool hex = pattern[conversion] == 'x';
@@ -659,10 +659,10 @@ TEST_CASE("json_view large objects")
                 })
         {
             CAPTURE(format)
-            CHECK(max_displacement(numbered(format, std::string(format).find("%02d") != std::string::npos ? 60 : 1000, 1)) < nlohmann::detail::view::index_max_displacement);
+            CHECK(max_displacement(numbered(format, std::string(format).find("%02d") != std::string::npos ? 60 : 1000, 1)) < nlohmann::detail::view::index_max_displacement); // NOLINT(abseil-string-find-str-contains)
             CHECK(max_displacement(numbered(format, 600, 7)) < nlohmann::detail::view::index_max_displacement);
         }
-        std::mt19937_64 rng(7);
+        std::mt19937_64 rng(7); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
         for (const std::size_t length :
                 {
                     std::size_t{1}, std::size_t{2}, std::size_t{3}, std::size_t{5}, std::size_t{7}, std::size_t{8}, std::size_t{9}, std::size_t{12}, std::size_t{16}, std::size_t{17}, std::size_t{33}
@@ -670,7 +670,17 @@ TEST_CASE("json_view large objects")
         {
             CAPTURE(length)
             std::set<std::string> distinct;
-            while (distinct.size() < (length == 1 ? 26 : (length == 2 ? 500 : 700))) // (there are 26 and 676 keys of one and two letters)
+            // (there are 26 and 676 keys of one and two letters)
+            std::size_t wanted = 700;
+            if (length == 1)
+            {
+                wanted = 26;
+            }
+            else if (length == 2)
+            {
+                wanted = 500;
+            }
+            while (distinct.size() < wanted)
             {
                 std::string key(length, 'a');
                 for (char& c : key)
@@ -688,7 +698,7 @@ TEST_CASE("json_view large objects")
         // In a large object, a key is found by comparing its bytes with those of the member the
         // table points to: up to 16 bytes as two overlapping words, longer ones with memcmp.
         // Keys of every length from 0 to 40, and keys that differ from them in one byte.
-        std::mt19937_64 rng(2026);
+        std::mt19937_64 rng(2026); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
         std::vector<std::string> keys;
         std::set<std::string> distinct;
         for (std::size_t length = 0; length <= 40; ++length)

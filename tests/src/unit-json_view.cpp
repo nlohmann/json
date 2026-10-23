@@ -187,7 +187,7 @@ TEST_CASE("json_view")
         CHECK(materialized<ordered_json_document>(R"({"a":1,"b":2,"a":3})").dump() == R"({"a":3,"b":2})");
         // scalars (made without the handler), and nesting around the depth up to which the stack of open containers is local
         for (const char* scalar :
-                {"null", "true", "false", "0", "-7", "18446744073709551615", "1.5e300", "-0.0", "\"\"", "\"short\"", "\"a string that is longer than fifteen bytes\"", "\"\\u00e4\\n\""
+                {"null", "true", "false", "0", "-7", "18446744073709551615", "1.5e300", "-0.0", "\"\"", "\"short\"", "\"a string that is longer than fifteen bytes\"", R"("\u00e4\n")"
                 })
         {
             CAPTURE(scalar)
@@ -203,9 +203,13 @@ TEST_CASE("json_view")
                 })
         {
             CAPTURE(levels)
-            const std::string nested = std::string(levels, '[') + "{\"k\":[1,{\"j\":2}]}" + std::string(levels, ']');
+            const std::string nested = std::string(levels, '[') + R"({"k":[1,{"j":2}]})" + std::string(levels, ']');
             CHECK(materialized<json_document>(nested) == json::parse(nested));
-            const std::string wide = "{\"a\":" + nested + ",\"b\":" + nested + "}";
+            std::string wide = R"({"a":)";
+            wide += nested;
+            wide += R"(,"b":)";
+            wide += nested;
+            wide += "}";
             CHECK(materialized<json_document>(wide) == json::parse(wide));
         }
         // very deep nesting (iterative, as parse())
@@ -444,7 +448,7 @@ TEST_CASE("json_view")
             if (long_file != nullptr)
             {
                 std::string padded = text;
-                padded.append((4096 - (padded.size() % 4096)) % 4096 + extra, ' ');
+                padded.append(((4096 - (padded.size() % 4096)) % 4096) + extra, ' ');
                 CHECK(std::fwrite(padded.data(), 1, padded.size(), long_file) == padded.size());
                 CHECK(std::fseek(long_file, 0, SEEK_SET) == 0);
                 const json_document from_long_file = json_document::parse(long_file);
@@ -1061,7 +1065,7 @@ TEST_CASE("json_view element access and iteration")
         const std::vector<std::string> texts =
         {
             "[]", "[1]", "[1,2,3]", "[1,\"two\",3.5,true,null,-7,18446744073709551615]", "[[]]", "[{}]", "[1,[2],3]",
-            "[1,2,{\"a\":3}]", "[[1,2],3,4]", "[1,2,3,[4,5,6,7,8],9,10,11,12]", "[{\"a\":[1]},2]", "[\"a\\u00e4\",\"b\"]"
+            "[1,2,{\"a\":3}]", "[[1,2],3,4]", "[1,2,3,[4,5,6,7,8],9,10,11,12]", "[{\"a\":[1]},2]", R"(["a\u00e4","b"])"
         };
         for (const std::string& text : texts)
         {

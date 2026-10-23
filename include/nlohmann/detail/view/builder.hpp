@@ -283,14 +283,8 @@ class builder
         const std::size_t start = arena_used();
         char* w = m_arena_write;
         const char* w_end = m_arena_end;
-#define NLOHMANN_VIEW_ENSURE(n)                                                       \
-    if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(w_end - w) < (n)))            \
-    {                                                                                 \
-        m_arena_write = w;                                                            \
-        arena_grow(n);                                                                \
-        w = m_arena_write;                                                            \
-        w_end = m_arena_end;                                                          \
-    }
+#define NLOHMANN_VIEW_ENSURE(n) \
+    if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(w_end - w) < (n))) { m_arena_write = w; arena_grow(n); w = m_arena_write; w_end = m_arena_end; }
         {
             const auto n = static_cast<std::size_t>(p - s);
             if (n <= 16 && end - s >= 16)

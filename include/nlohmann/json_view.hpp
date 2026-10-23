@@ -30,6 +30,7 @@
 #include <array> // array
 #include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstdint> // uint8_t, uint32_t
+#include <cstdio> // FILE
 #include <cstring> // memcpy, strlen
 #include <istream> // istream // IWYU pragma: keep
 #include <iterator> // distance, input_iterator_tag, iterator_traits
@@ -462,8 +463,7 @@ class basic_json_view
         {
             return end();
         }
-        const node* const k = unedited() ? detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size())
-                              : detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        const node* const k = find_key(key);
         return k != nullptr ? iterator(m_doc, k, true) : end();
     }
 
@@ -480,8 +480,7 @@ class basic_json_view
     /// whether this is an object with a member with this key
     bool contains(string_view_t key) const
     {
-        return is_object() && (unedited() ? detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size()) != nullptr
-                               : detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size()) != nullptr);
+        return is_object() && find_key(key) != nullptr;
     }
 
     bool contains(const char* key) const
@@ -820,6 +819,24 @@ class basic_json_view
     NLOHMANN_VIEW_ALWAYS_INLINE bool unedited() const noexcept
     {
         return !navigation::editable() || m_doc->edits == nullptr;
+    }
+
+    /// the member of this object with @a key (the last one if the key occurs more than once), or nullptr
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key) const
+    {
+        return find_key(key, std::integral_constant<bool, Editable> {});
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::true_type /*editable*/) const
+    {
+        // (an editable document without edits is looked up as one that cannot be edited)
+        return unedited() ? detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size())
+               : detail::view::find_member<true>(*m_doc, m_node, key.data(), key.size());
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::false_type /*editable*/) const
+    {
+        return detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
     }
 
     /// the element of an array at an index below its size
