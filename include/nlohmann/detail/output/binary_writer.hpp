@@ -626,7 +626,7 @@ class binary_writer
             case value_t::array:
             {
                 bool prefix_required = true;
-                const bool write_closer = write_ubjson_start_array(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
+                const bool write_closer = write_ubjson_start_container<true>(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
 
                 {
                     const auto& array = *j.m_data.m_value.array;
@@ -704,7 +704,7 @@ class binary_writer
                 }
 
                 bool prefix_required = true;
-                const bool write_closer = write_ubjson_start_object(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
+                const bool write_closer = write_ubjson_start_container<false>(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
 
                 write_ubjson_members(j, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth);
 
@@ -967,9 +967,10 @@ class binary_writer
         write_msgpack_container_prefix(N, j, 0x80, 0xDE, 0xDF);
     }
 
-    /// @brief a CBOR, MessagePack, or BON8 array or object whose elements
-    ///        @ref write_cbor_iterative, @ref write_msgpack_iterative, or
-    ///        @ref write_bon8_iterative is still writing
+    /// @brief a CBOR, MessagePack, BON8, or (as the base of @ref ubjson_frame)
+    ///        UBJSON array or object whose elements @ref write_container_iterative,
+    ///        @ref write_bon8_iterative, or @ref write_ubjson_iterative is still
+    ///        writing
     struct binary_container_frame
     {
         explicit binary_container_frame(const BasicJsonType* value_) noexcept
@@ -1156,24 +1157,34 @@ class binary_writer
         write_container_iterative<msgpack_walk>(root);
     }
 
-    /// @return true when a closing ']' still has to be written after the elements
-    bool write_ubjson_start_array(const BasicJsonType& j, const bool use_count, const bool use_type,
-                                  const bool add_prefix, const bool use_bjdata, bool& prefix_required)
+    /*!
+    @brief write the start of an array (@a IsArray) or object: its opening
+           marker, the optimized type, and the count
+
+    @return true when a closing ']' or '}' still has to be written after the
+            elements
+    */
+    template<bool IsArray>
+    bool write_ubjson_start_container(const BasicJsonType& j, const bool use_count, const bool use_type,
+                                      const bool add_prefix, const bool use_bjdata, bool& prefix_required)
     {
         prefix_required = true;
         if (add_prefix)
         {
-            oa.write_character(to_char_type('['));
+            oa.write_character(to_char_type(IsArray ? '[' : '{'));
         }
 
-        if (use_type && !j.m_data.m_value.array->empty())
+        const std::size_t size = IsArray ? j.m_data.m_value.array->size() : j.m_data.m_value.object->size();
+
+        if (use_type && size != 0)
         {
             if (!use_count)
             {
                 throw_size_marker_required(j);
             }
             const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
-            const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
+            // the first element of an array has been compared with itself
+            const bool same_prefix = std::all_of(IsArray ? j.begin() + 1 : j.begin(), j.end(),
                                                  [this, first_prefix, use_bjdata](const BasicJsonType & v)
             {
                 return ubjson_prefix(v, use_bjdata) == first_prefix;
@@ -1185,8 +1196,9 @@ class binary_writer
             // those, at one byte per element, so the result can be read back.
             // Objects are not affected: every element is preceded by its key.
             const bool valueless_type = (first_prefix == 'Z' || first_prefix == 'T' || first_prefix == 'F');
-            const bool excessive_valueless = valueless_type
-                                             && j.m_data.m_value.array->size() > detail::max_valueless_container_size;
+            const bool excessive_valueless = IsArray
+                                             && valueless_type
+                                             && size > detail::max_valueless_container_size;
 
             if (same_prefix && !excessive_valueless
                     && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
@@ -1199,46 +1211,7 @@ class binary_writer
 
         if (use_count)
         {
-            write_ubjson_count(j.m_data.m_value.array->size(), use_bjdata);
-        }
-
-        return !use_count;
-    }
-
-    /// @return true when a closing '}' still has to be written after the elements
-    bool write_ubjson_start_object(const BasicJsonType& j, const bool use_count, const bool use_type,
-                                   const bool add_prefix, const bool use_bjdata, bool& prefix_required)
-    {
-        prefix_required = true;
-        if (add_prefix)
-        {
-            oa.write_character(to_char_type('{'));
-        }
-
-        if (use_type && !j.m_data.m_value.object->empty())
-        {
-            if (!use_count)
-            {
-                throw_size_marker_required(j);
-            }
-            const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
-            const bool same_prefix = std::all_of(j.begin(), j.end(),
-                                                 [this, first_prefix, use_bjdata](const BasicJsonType & v)
-            {
-                return ubjson_prefix(v, use_bjdata) == first_prefix;
-            });
-
-            if (same_prefix && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
-            {
-                prefix_required = false;
-                oa.write_character(to_char_type('$'));
-                oa.write_character(first_prefix);
-            }
-        }
-
-        if (use_count)
-        {
-            write_ubjson_count(j.m_data.m_value.object->size(), use_bjdata);
+            write_ubjson_count(size, use_bjdata);
         }
 
         return !use_count;
@@ -1266,21 +1239,12 @@ class binary_writer
 
     /// @brief an object or array @ref write_ubjson_iterative is still writing
     ///        the elements of
-    struct ubjson_frame
+    struct ubjson_frame : binary_container_frame
     {
         ubjson_frame(const BasicJsonType* value_, const bool prefix_required_) noexcept
-            : value(value_)
+            : binary_container_frame(value_)
             , prefix_required(prefix_required_)
-        {
-            if (value->is_object())
-            {
-                object_it = value->m_data.m_value.object->cbegin();
-            }
-            else
-            {
-                array_it = value->m_data.m_value.array->cbegin();
-            }
-        }
+        {}
 
         // declared for GCC's -Weffc++, which asks for them in a class with
         // pointer members and a non-trivial destructor; the exception
@@ -1292,13 +1256,9 @@ class binary_writer
         ubjson_frame& operator=(ubjson_frame&&) = default;
         ~ubjson_frame() = default;
 
-        /// the array or object being written
-        const BasicJsonType* value;
         /// whether value's elements each carry their own type marker; an
         /// optimized ($type) container writes it once for all of them instead
         bool prefix_required;
-        typename BasicJsonType::object_t::const_iterator object_it{};
-        typename BasicJsonType::array_t::const_iterator array_it{};
     };
 
     /*!
@@ -1332,11 +1292,11 @@ class binary_writer
         bool prefix_required = true;
         if (is_array)
         {
-            write_ubjson_start_array(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
+            write_ubjson_start_container<true>(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
         }
         else
         {
-            write_ubjson_start_object(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
+            write_ubjson_start_container<false>(j, use_count, use_type, add_prefix, use_bjdata, prefix_required);
         }
 
         const bool empty = is_array ? j.m_data.m_value.array->empty() : j.m_data.m_value.object->empty();
@@ -1346,7 +1306,7 @@ class binary_writer
             return;
         }
 
-        // write_ubjson_start_array/_object return !use_count, i.e. whether a
+        // write_ubjson_start_container returns !use_count, i.e. whether a
         // closer still has to be written; use_count is constant for the whole
         // document, so that is recomputed here instead of being carried along
         if (!use_count)
