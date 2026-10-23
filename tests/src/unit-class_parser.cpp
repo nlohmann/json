@@ -2958,7 +2958,7 @@ TEST_CASE("accept() agrees with parse() on floats around the overflow limit")
     // accept() does not convert a float that cannot overflow; the tokens
     // around the limit (and beyond it) must still be rejected exactly as
     // parse() rejects them
-    const char* const numbers[] =
+    const std::vector<const char*> numbers =
     {
         "1e0", "123.456e-5", "1e-400", "-1e-400", "1e307", "1e308", "1e309", "-1e309",
         "10e307", "100e307", "0.1e309", "0.1e310", "1E+308", "1E+309",
