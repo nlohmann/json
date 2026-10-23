@@ -1462,50 +1462,34 @@ class json_pointer
         auto hint = object.end();
         const auto enter = [&stack, &path, &object, &hint](const BasicJsonType & v)
         {
-            switch (v.type())
+            if (v.is_array())
             {
-                case detail::value_t::array:
+                if (v.m_data.m_value.array->empty())
                 {
-                    if (v.m_data.m_value.array->empty())
-                    {
-                        // flatten empty array as null
-                        add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
-                    }
-                    else
-                    {
-                        stack.emplace_back(&v, object_const_iterator(), path.size());
-                    }
-                    return;
+                    // flatten empty array as null
+                    add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
                 }
-
-                case detail::value_t::object:
+                else
                 {
-                    if (v.m_data.m_value.object->empty())
-                    {
-                        // flatten empty object as null
-                        add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
-                    }
-                    else
-                    {
-                        stack.emplace_back(&v, v.m_data.m_value.object->begin(), path.size());
-                    }
-                    return;
+                    stack.emplace_back(&v, object_const_iterator(), path.size());
                 }
-
-                case detail::value_t::null:
-                case detail::value_t::string:
-                case detail::value_t::boolean:
-                case detail::value_t::number_integer:
-                case detail::value_t::number_unsigned:
-                case detail::value_t::number_float:
-                case detail::value_t::binary:
-                case detail::value_t::discarded:
-                default:
+            }
+            else if (v.is_object())
+            {
+                if (v.m_data.m_value.object->empty())
                 {
-                    // add a primitive value with its reference string
-                    add_flattened(object, hint, path, v, detail::priority_tag<2> {});
-                    return;
+                    // flatten empty object as null
+                    add_flattened(object, hint, path, nullptr, detail::priority_tag<2> {});
                 }
+                else
+                {
+                    stack.emplace_back(&v, v.m_data.m_value.object->begin(), path.size());
+                }
+            }
+            else
+            {
+                // add a primitive value with its reference string
+                add_flattened(object, hint, path, v, detail::priority_tag<2> {});
             }
         };
 
