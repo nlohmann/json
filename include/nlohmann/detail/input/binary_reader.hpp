@@ -1065,6 +1065,17 @@ class binary_reader
     }
 
     /*!
+    @brief report an object key that is not a string
+
+    @param[in] found  description of what was found instead of a string key
+    @return false
+    */
+    bool unsupported_key_type(const char* found) const
+    {
+        return last_byte_error(exception_id::invalid_string_or_size, "only string keys are supported, but found ", "object key", found);
+    }
+
+    /*!
     @brief read the length of a CBOR string or byte array and then its bytes
 
     @tparam NumberType    the type of the length field
@@ -1281,7 +1292,7 @@ class binary_reader
                 break;
         }
 
-        return last_byte_error(exception_id::invalid_string_or_size, "only string keys are supported, but found ", "object key", found);
+        return unsupported_key_type(found);
     }
 
     /*!
@@ -2157,7 +2168,7 @@ class binary_reader
                 break;
         }
 
-        return last_byte_error(exception_id::invalid_string_or_size, "only string keys are supported, but found ", "object key", found);
+        return unsupported_key_type(found);
     }
 
     /*!
@@ -4340,37 +4351,7 @@ class binary_reader
                                   const std::string& context) const
     {
         std::string error_msg = "syntax error while parsing ";
-
-        switch (input_format)
-        {
-            case input_format_t::cbor:
-                error_msg += "CBOR";
-                break;
-
-            case input_format_t::msgpack:
-                error_msg += "MessagePack";
-                break;
-
-            case input_format_t::ubjson:
-                error_msg += "UBJSON";
-                break;
-
-            case input_format_t::bson:
-                error_msg += "BSON";
-                break;
-
-            case input_format_t::bjdata:
-                error_msg += "BJData";
-                break;
-
-            case input_format_t::bon8:
-                error_msg += "BON8";
-                break;
-
-            case input_format_t::json: // LCOV_EXCL_LINE
-            default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-        }
+        error_msg += input_format_name(input_format);
 
         return concat(error_msg, ' ', context, ": ", detail);
     }

@@ -1298,7 +1298,7 @@ inline file_input_adapter input_adapter(std::FILE* file)
 {
     if (file == nullptr)
     {
-        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, empty_input_message(), nullptr));
     }
     return file_input_adapter(file);
 }
@@ -1307,7 +1307,7 @@ inline input_stream_adapter input_adapter(std::istream& stream)
 {
     if (stream.rdbuf() == nullptr)
     {
-        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, empty_input_message(), nullptr));
     }
     return input_stream_adapter(stream);
 }
@@ -1332,7 +1332,7 @@ contiguous_bytes_input_adapter input_adapter(CharT b)
 {
     if (b == nullptr)
     {
-        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, empty_input_message(), nullptr));
     }
     auto length = std::strlen(reinterpret_cast<const char*>(b));
     const auto* ptr = reinterpret_cast<const char*>(b);

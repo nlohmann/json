@@ -404,7 +404,7 @@ class parser
                     {
                         if (JSON_HEDLEY_UNLIKELY(m_lexer.get_chars_read_total() == 1))
                         {
-                            return syntax_error(*sax, "attempting to parse an empty input; check that your input string or stream contains the expected JSON");
+                            return syntax_error(*sax, empty_input_message());
                         }
 
                         return syntax_error(*sax, exception_message(token_type::literal_or_value, "value"));
