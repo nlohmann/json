@@ -2563,8 +2563,7 @@ public:
             case value_t::string:
             case value_t::binary:
             {
-                if (JSON_HEDLEY_UNLIKELY(!first.m_it.primitive_iterator.is_begin()
-                                         || !last.m_it.primitive_iterator.is_end()))
+                if (JSON_HEDLEY_UNLIKELY(!primitive_range_is_complete(first, last)))
                 {
                     detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_range_out_of_range, "iterators out of range", first.m_object);
                 }
@@ -3071,6 +3070,23 @@ public:
 
         using std::swap;
         swap(*stored, other);
+    }
+
+    /// whether [first, last) spans the whole of a primitive value
+    template<typename IteratorType>
+    JSON_HEDLEY_ALWAYS_INLINE
+    static bool primitive_range_is_complete(const IteratorType& first, const IteratorType& last) noexcept
+    {
+        return first.m_it.primitive_iterator.is_begin() && last.m_it.primitive_iterator.is_end();
+    }
+
+    /// destroy the current (primitive) value and become null
+    void reset_to_null_impl()
+    {
+        m_data.m_value.destroy(m_data.m_type);
+        m_data.m_value = {};
+        m_data.m_type = value_t::null;
+        assert_invariant();
     }
 
     /// @throw out_of_range.401 always, as @a idx is out of range of @a j
@@ -4074,10 +4090,7 @@ public:
                     detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_out_of_range, "iterator out of range", this);
                 }
 
-                m_data.m_value.destroy(m_data.m_type);
-                m_data.m_value = {};
-                m_data.m_type = value_t::null;
-                assert_invariant();
+                reset_to_null_impl();
                 break;
             }
 
@@ -4127,16 +4140,12 @@ public:
             case value_t::string:
             case value_t::binary:
             {
-                if (JSON_HEDLEY_UNLIKELY(!first.m_it.primitive_iterator.is_begin()
-                                         || !last.m_it.primitive_iterator.is_end()))
+                if (JSON_HEDLEY_UNLIKELY(!primitive_range_is_complete(first, last)))
                 {
                     detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_range_out_of_range, "iterators out of range", this);
                 }
 
-                m_data.m_value.destroy(m_data.m_type);
-                m_data.m_value = {};
-                m_data.m_type = value_t::null;
-                assert_invariant();
+                reset_to_null_impl();
                 break;
             }
 
