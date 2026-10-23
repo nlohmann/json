@@ -168,7 +168,7 @@ class parser
             return finish_input(*sax, strict);
         }
 
-        return result;
+        return false;
     }
 
   private:
