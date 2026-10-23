@@ -147,7 +147,7 @@ json::parse(std::string("\"") + '\0' + "\""); // throws parse_error.101: control
 
     Why are wide strings (e.g., `std::wstring`) dumped as arrays of numbers?
 
-As described [above](#parse-errors-reading-non-ascii-characters), the library stores its strings as UTF-8. To store a wide string, you need to change the encoding.
+As described [above](#parse-errors-reading-non-ascii-characters), the library stores its strings as UTF-8. To store a wide string as a string, convert it to a UTF-8 encoded `std::string` first, as in the example below.
 
 !!! example
 

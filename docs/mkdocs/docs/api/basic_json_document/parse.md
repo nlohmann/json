@@ -21,10 +21,11 @@ static basic_json_document parse(IteratorType first, IteratorType last,
 
 Both overloads accept the same JSON text as [`BasicJsonType::parse()`](../basic_json/parse.md), with the same
 `ignore_comments`/`ignore_trailing_commas` options, but build a [`basic_json_document`](index.md) (a flat index into
-the input) instead of a tree of `BasicJsonType` values. They take the same inputs as `BasicJsonType::parse()`, plus a
-pointer to a null-terminated wide string, which `BasicJsonType::parse()` does not accept. Byte inputs that stay alive
-can be borrowed; all others (streams, `#!cpp FILE*`, wide characters, non-contiguous iterators) are read into a copy
-that the document owns -- see the Notes. Use [`parse_copy()`](parse_copy.md) to get an owned copy of a borrowable input
+the input) instead of a tree of `BasicJsonType` values. They take every input `BasicJsonType::parse()` takes, and in
+addition a pointer to a null-terminated wide string (which `BasicJsonType::parse()` rejects). Contiguous inputs of
+single-byte characters that stay alive can be borrowed; all others (streams, `#!cpp FILE*`, wide characters, which
+must be converted to UTF-8, and non-contiguous iterators) are read into a copy that the document owns -- see the
+Notes. Use [`parse_copy()`](parse_copy.md) to get an owned copy of a borrowable input
 as well.
 
 ## Template parameters

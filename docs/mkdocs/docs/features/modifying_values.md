@@ -89,10 +89,12 @@ a.erase(1);             // [1,3,4]  (erase by index)
 
 The operations above work on a `basic_json` value. A JSON text that was parsed into a
 [document](json_view.md#editing-a-document) can also be changed in place, without building a `basic_json` tree for the
-parts that are not touched: [`set`](../api/basic_json_document/set.md) replaces a value or an object member,
+parts that are not touched: [`set`](../api/basic_json_document/set.md) replaces a value, adds or replaces an object
+member, or replaces an array element (also through a JSON pointer),
 [`push_back`](../api/basic_json_document/push_back.md) appends to an array,
-[`insert`](../api/basic_json_document/insert.md) inserts into an array, and
-[`erase`](../api/basic_json_document/erase.md) removes a member or an element. These functions are available on the
+[`insert`](../api/basic_json_document/insert.md) inserts into an array (unlike `basic_json::insert`, it has no object
+overload; members are added with `set`), and [`erase`](../api/basic_json_document/erase.md) removes a member or an
+element. These functions are available on the
 editable document types, such as [`json_editable_document`](../api/json_editable_document.md).
 
 ## See also

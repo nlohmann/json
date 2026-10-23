@@ -40,8 +40,10 @@ which avoids repeating it:
 
 !!! info "Getting values out of a document or a view"
 
-    A [view](../api/basic_json_view/index.md) offers the same `get<T>()` conversion, but reads it straight from the
-    document's index, without building a `basic_json` value first. Two conversions never copy at all:
+    A [view](../api/basic_json_view/index.md) offers the same `get<T>()` conversion. For the built-in types (booleans,
+    numbers, strings, `#!cpp std::vector`, `#!cpp std::map`, ...) it reads the value straight from the document's
+    index, without building a `basic_json` value first; user-defined types with a `from_json()` are converted from a
+    `basic_json` value, see the [list](../api/basic_json_view/get.md). Two conversions never copy at all:
     [`get_string()`](../api/basic_json_view/get_string.md) returns a string as a view into the source text, and
     [`number_token()`](../api/basic_json_view/number_token.md) returns a number exactly as it was written. Every other
     type is obtained from a subtree that is built on demand with

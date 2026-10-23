@@ -110,8 +110,10 @@ You can influence a DOM parse without switching to the SAX interface by passing 
 A third model sits between DOM and SAX: [`basic_json_document::parse`](../../api/basic_json_document/parse.md) parses
 the input into a document that keeps the text and a flat index of the values in it, and
 [`basic_json_view`](../../api/basic_json_view/index.md) gives read-only access to the values through that index.
-Strings and numbers stay in the source text and are only decoded when they are read, which is faster and uses less
-memory than building a tree of `basic_json` values when only parts of the document are needed. A document can also be
+The whole input is validated during parsing, but only strings that contain escape sequences are decoded right away
+(into a buffer owned by the document). Numbers and all other strings stay in the source text and are only converted
+when they are read, which is faster and uses less memory than building a tree of `basic_json` values when only parts
+of the document are needed. A document can also be
 modified in place, and it can be saved and loaded again without parsing it.
 
 ```cpp
