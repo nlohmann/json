@@ -32,51 +32,15 @@ enum class pointer_mode
     contains,  ///< as basic_json::contains(): no exceptions at all
 };
 
-/// the outcome of reading an array index from a reference token
-enum class index_status
-{
-    ok,
-    leading_zero, ///< parse_error.106
-    not_number,   ///< parse_error.109
-    unresolved,   ///< out_of_range.404
-    too_large,    ///< out_of_range.410
-};
+/// the outcome of reading an array index: detail::parse_array_index(), shared with json_pointer
+using index_status = detail::array_index_status;
 
 /// reads an array index like json_pointer::array_index (RFC 6901, Sect. 4),
 /// but reports errors instead of throwing them
 template<typename StringType>
 index_status array_index(const StringType& s, std::size_t& idx) noexcept
 {
-    // as basic_json: the empty token and "-" (past the last element) are
-    // unresolved rather than not a number
-    if (s.empty() || (s.size() == 1 && s[0] == '-'))
-    {
-        return index_status::unresolved;
-    }
-    if (s[0] < '0' || s[0] > '9')
-    {
-        return index_status::not_number;
-    }
-    if (s.size() > 1 && s[0] == '0')
-    {
-        return index_status::leading_zero;
-    }
-    std::uint64_t v = 0;
-    for (const auto c : s)
-    {
-        const auto d = static_cast<unsigned>(static_cast<unsigned char>(c)) - '0';
-        if (d > 9 || v > ((std::numeric_limits<std::uint64_t>::max)() - d) / 10)
-        {
-            return index_status::unresolved; // not a number, or beyond unsigned long long
-        }
-        v = (v * 10) + d;
-    }
-    if (v >= (std::numeric_limits<std::size_t>::max)()) // (std::size_t converts to std::uint64_t implicitly)
-    {
-        return index_status::too_large;
-    }
-    idx = static_cast<std::size_t>(v);
-    return index_status::ok;
+    return detail::parse_array_index(s, idx);
 }
 
 /// throws the exception json_pointer::array_index throws for this status
@@ -87,9 +51,9 @@ template<typename StringType>
     {
         case index_status::leading_zero:
             throw_parse_error(exception_id::pointer_index_leading_zero, concat("array index '", s, "' must not begin with '0'"));
-        case index_status::not_number:
+        case index_status::not_a_number:
             throw_parse_error(exception_id::pointer_index_not_a_number, concat("array index '", s, "' is not a number"));
-        case index_status::too_large:
+        case index_status::exceeds_size_type:
             throw_out_of_range(exception_id::value_out_of_range, concat("array index ", s, " exceeds size_type")); // LCOV_EXCL_LINE
         case index_status::unresolved:
         case index_status::ok:
@@ -139,7 +103,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             const index_status status = array_index(token, idx);
             if (status != index_status::ok)
             {
-                const bool parse_error = status == index_status::leading_zero || status == index_status::not_number;
+                const bool parse_error = status == index_status::leading_zero || status == index_status::not_a_number;
                 if (throwing || (mode == pointer_mode::value && parse_error))
                 {
                     throw_array_index_error(status, token);

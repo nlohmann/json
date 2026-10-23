@@ -38,6 +38,100 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 struct json_pointer_access;
+
+/*!
+@brief result of parse_array_index()
+
+json_pointer::array_index() maps each value to the corresponding
+parse_error/out_of_range exception; json_pointer::contains() and
+get_checked_or_null(), which must not throw for an out-of-range or
+unrepresentable index, and the json_view pointer resolution switch on it
+directly instead.
+*/
+enum class array_index_status
+{
+    ok,                ///< @a s is a valid, representable array index
+    leading_zero,      ///< @a s begins with '0' but has more than one character
+    not_a_number,      ///< @a s is neither empty nor "-" and does not begin with a digit
+    unresolved,        ///< @a s could not be converted to an integer
+    exceeds_size_type  ///< @a s converts to an integer that exceeds SizeType
+};
+
+/*!
+@brief convert a JSON Pointer reference token into an array index (RFC 6901, Sect. 4)
+
+@param[in] s    reference token to be converted into an array index; its data()
+                must be NUL-terminated
+@param[out] idx the integer representation of @a s if array_index_status::ok
+                is returned; left unchanged otherwise
+
+@return whether @a s is a valid array index, and if not, why
+
+@note this function never throws; json_pointer::array_index(), the callers that
+      must not throw, and the json_view pointer resolution build on it instead
+      of each re-implementing the RFC 6901 digit rules and the range check
+*/
+template<typename SizeType, typename StringType>
+array_index_status parse_array_index(const StringType& s, SizeType& idx) noexcept
+{
+    // error condition (cf. RFC 6901, Sect. 4)
+    if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
+    {
+        return array_index_status::leading_zero;
+    }
+
+    // error condition (cf. RFC 6901, Sect. 4); this also covers single-
+    // character tokens, so "/x" and "/xy" fail alike; "-" and the empty
+    // token are left to the conversion below and are reported as unresolved
+    if (JSON_HEDLEY_UNLIKELY(!s.empty() && !(s.size() == 1 && s[0] == '-') && !(s[0] >= '0' && s[0] <= '9')))
+    {
+        return array_index_status::not_a_number;
+    }
+
+    // fast path: up to 18 decimal digits cannot overflow unsigned long long or
+    // SizeType (9 digits for a 32-bit SizeType), so strtoull and errno are not needed
+    constexpr std::size_t max_fast_digits = sizeof(SizeType) >= 8 ? 18 : 9;
+    if (!s.empty() && s.size() <= max_fast_digits)
+    {
+        SizeType acc = 0;
+        for (std::size_t i = 0; i < s.size(); ++i)
+        {
+            const char c = s[i];
+            if (JSON_HEDLEY_UNLIKELY(c < '0' || c > '9'))
+            {
+                break; // not a plain number: let strtoull decide
+            }
+            acc = static_cast<SizeType>((acc * 10) + static_cast<SizeType>(c - '0'));
+            if (JSON_HEDLEY_UNLIKELY(i == s.size() - 1))
+            {
+                idx = acc;
+                return array_index_status::ok;
+            }
+        }
+    }
+
+    const char* p = s.data();
+    char* p_end = nullptr; // NOLINT(misc-const-correctness)
+    errno = 0; // strtoull doesn't reset errno
+    const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
+    if (p == p_end // invalid input or empty string
+            || errno == ERANGE // out of range
+            || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size())) // incomplete read
+    {
+        return array_index_status::unresolved;
+    }
+
+    // the index does not fit into SizeType; on 64-bit platforms this is
+    // only SIZE_MAX itself (see #2203 and #5395)
+    if (res >= static_cast<unsigned long long>((std::numeric_limits<SizeType>::max)()))  // NOLINT(runtime/int)
+    {
+        return array_index_status::exceeds_size_type;
+    }
+
+    idx = static_cast<SizeType>(res);
+    return array_index_status::ok;
+}
+
 }  // namespace detail
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
@@ -333,21 +427,7 @@ class json_pointer
         JSON_THROW(detail::out_of_range::create(detail::exception_id::pointer_unresolved, detail::concat("unresolved reference token '", reference_token, "'"), context));
     }
 
-    /*!
-    @brief result of @ref parse_array_index
-
-    @ref array_index maps each value to the corresponding parse_error/out_of_range
-    exception; @ref contains and @ref get_checked_or_null, which must not throw for
-    an out-of-range or unrepresentable index, switch on it directly instead.
-    */
-    enum class array_index_status
-    {
-        ok,                ///< @a s is a valid, representable array index
-        leading_zero,      ///< @a s begins with '0' but has more than one character
-        not_a_number,      ///< @a s is neither empty nor "-" and does not begin with a digit
-        unresolved,        ///< @a s could not be converted to an integer
-        exceeds_size_type  ///< @a s converts to an integer that exceeds size_type
-    };
+    using array_index_status = detail::array_index_status;
 
     /// whether a reference token is "-" (a plain comparison with a string literal is not always inlined)
     static bool is_dash(const string_t& s) noexcept
@@ -355,78 +435,11 @@ class json_pointer
         return s.size() == 1 && s[0] == '-';
     }
 
-    /*!
-    @param[in] s    reference token to be converted into an array index
-    @param[out] idx the integer representation of @a s if @ref array_index_status::ok
-                     is returned; left unchanged otherwise
-
-    @return whether @a s is a valid array index, and if not, why
-
-    @note this function never throws; @ref array_index and the callers that must not
-          throw (@ref contains, @ref get_checked_or_null) build on it instead of each
-          re-implementing the RFC 6901 digit rules and the @a size_type range check
-    */
+    /// detail::parse_array_index() for the size_type of @a BasicJsonType
     template<typename BasicJsonType>
     static array_index_status parse_array_index(const string_t& s, typename BasicJsonType::size_type& idx) noexcept
     {
-        using size_type = typename BasicJsonType::size_type;
-
-        // error condition (cf. RFC 6901, Sect. 4)
-        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
-        {
-            return array_index_status::leading_zero;
-        }
-
-        // error condition (cf. RFC 6901, Sect. 4); this also covers single-
-        // character tokens, so "/x" and "/xy" fail alike; "-" and the empty
-        // token are left to the conversion below and are reported as unresolved
-        if (JSON_HEDLEY_UNLIKELY(!s.empty() && !is_dash(s) && !(s[0] >= '0' && s[0] <= '9')))
-        {
-            return array_index_status::not_a_number;
-        }
-
-        // fast path: up to 18 decimal digits cannot overflow unsigned long long or
-        // size_type (9 digits for a 32-bit size_type), so strtoull and errno are not needed
-        constexpr std::size_t max_fast_digits = sizeof(size_type) >= 8 ? 18 : 9;
-        if (!s.empty() && s.size() <= max_fast_digits)
-        {
-            size_type acc = 0;
-            for (std::size_t i = 0; i < s.size(); ++i)
-            {
-                const char c = s[i];
-                if (JSON_HEDLEY_UNLIKELY(c < '0' || c > '9'))
-                {
-                    break; // not a plain number: let strtoull decide
-                }
-                acc = static_cast<size_type>((acc * 10) + static_cast<size_type>(c - '0'));
-                if (JSON_HEDLEY_UNLIKELY(i == s.size() - 1))
-                {
-                    idx = acc;
-                    return array_index_status::ok;
-                }
-            }
-        }
-
-        const char* p = s.data();
-        char* p_end = nullptr; // NOLINT(misc-const-correctness)
-        errno = 0; // strtoull doesn't reset errno
-        const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
-        if (p == p_end // invalid input or empty string
-                || errno == ERANGE // out of range
-                || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size())) // incomplete read
-        {
-            return array_index_status::unresolved;
-        }
-
-        // the index does not fit into size_type; on 64-bit platforms this is
-        // only SIZE_MAX itself (see #2203 and #5395)
-        if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
-        {
-            return array_index_status::exceeds_size_type;
-        }
-
-        idx = static_cast<size_type>(res);
-        return array_index_status::ok;
+        return detail::parse_array_index(s, idx);
     }
 
     /*!
