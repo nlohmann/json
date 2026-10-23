@@ -3112,6 +3112,43 @@ public:
         set_parent_after_insert(m_data.m_value.array->back(), old_capacity);
     }
 
+    /// parse the input behind an already created adapter
+    template<typename InputAdapterType>
+    static basic_json parse_impl(InputAdapterType&& adapter,
+                                 parser_callback_t cb,
+                                 const bool allow_exceptions,
+                                 const bool ignore_comments,
+                                 const bool ignore_trailing_commas)
+    {
+        basic_json result;
+        auto p = parser(std::forward<InputAdapterType>(adapter), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
+        p.parse(true, result);
+        return result;
+    }
+
+    /// check the input behind an already created adapter
+    template<typename InputAdapterType>
+    static bool accept_impl(InputAdapterType&& adapter,
+                            const bool ignore_comments,
+                            const bool ignore_trailing_commas)
+    {
+        return parser(std::forward<InputAdapterType>(adapter), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
+    }
+
+    /// generate SAX events from the input behind an already created adapter
+    template<typename InputAdapterType, typename SAX>
+    static bool sax_parse_impl(InputAdapterType ia, SAX* sax,
+                               const input_format_t format,
+                               const bool strict,
+                               const bool ignore_comments,
+                               const bool ignore_trailing_commas,
+                               const cbor_tag_handler_t tag_handler)
+    {
+        return format == input_format_t::json
+               ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
+               : detail::binary_reader<basic_json, InputAdapterType, SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
+    }
+
     /// @throw out_of_range.401 always, as @a idx is out of range of @a j
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_array_index_out_of_range(size_type idx, const basic_json& j)
@@ -5982,10 +6019,7 @@ public:
                             const bool ignore_comments = false,
                             const bool ignore_trailing_commas = false)
     {
-        basic_json result;
-        auto p = parser(detail::input_adapter(std::forward<InputType>(i)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
-        p.parse(true, result);
-        return result;
+        return parse_impl(detail::input_adapter(std::forward<InputType>(i)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
     }
 
     /// @brief deserialize from a pair of character iterators (or an iterator+sentinel pair, C++20 ranges support)
@@ -6000,10 +6034,7 @@ public:
                             const bool ignore_comments = false,
                             const bool ignore_trailing_commas = false)
     {
-        basic_json result;
-        auto p = parser(detail::input_adapter(std::move(first), std::move(last)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
-        p.parse(true, result);
-        return result;
+        return parse_impl(detail::input_adapter(std::move(first), std::move(last)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
@@ -6017,10 +6048,7 @@ public:
         = delete;
 #else
     {
-        basic_json result;
-        auto p = parser(i.get(), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
-        p.parse(true, result);
-        return result;
+        return parse_impl(i.get(), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
     }
 #endif
 
@@ -6032,7 +6060,7 @@ public:
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
     {
-        return parser(detail::input_adapter(std::forward<InputType>(i)), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
+        return accept_impl(detail::input_adapter(std::forward<InputType>(i)), ignore_comments, ignore_trailing_commas);
     }
 
     /// @brief check if the input is valid JSON (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -6044,7 +6072,7 @@ public:
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
     {
-        return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
+        return accept_impl(detail::input_adapter(std::move(first), std::move(last)), ignore_comments, ignore_trailing_commas);
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
@@ -6056,7 +6084,7 @@ public:
         = delete;
 #else
     {
-        return parser(i.get(), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
+        return accept_impl(i.get(), ignore_comments, ignore_trailing_commas);
     }
 #endif
 
@@ -6071,10 +6099,7 @@ public:
                           const bool ignore_trailing_commas = false,
                           const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
-        auto ia = detail::input_adapter(std::forward<InputType>(i));
-        return format == input_format_t::json
-               ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
+        return sax_parse_impl(detail::input_adapter(std::forward<InputType>(i)), sax, format, strict, ignore_comments, ignore_trailing_commas, tag_handler);
     }
 
     /// @brief generate SAX events (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -6089,10 +6114,7 @@ public:
                           const bool ignore_trailing_commas = false,
                           const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
-        auto ia = detail::input_adapter(std::move(first), std::move(last));
-        return format == input_format_t::json
-               ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
+        return sax_parse_impl(detail::input_adapter(std::move(first), std::move(last)), sax, format, strict, ignore_comments, ignore_trailing_commas, tag_handler);
     }
 
     /// @brief generate SAX events
@@ -6126,12 +6148,7 @@ public:
     = delete;
 #else
     {
-        auto ia = i.get();
-        return format == input_format_t::json
-               // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-               ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
+        return sax_parse_impl(i.get(), sax, format, strict, ignore_comments, ignore_trailing_commas, tag_handler);
     }
 #endif
 #if defined(__clang__)
