@@ -70,9 +70,11 @@ enum class array_index_status
 @note this function never throws; json_pointer::array_index(), the callers that
       must not throw, and the json_view pointer resolution build on it instead
       of each re-implementing the RFC 6901 digit rules and the range check
+@note force-inlined: as a free function template it is no longer inlined into
+      the pointer resolution, which makes JsonPointerAt up to 17% slower (#5891)
 */
 template<typename SizeType, typename StringType>
-array_index_status parse_array_index(const StringType& s, SizeType& idx) noexcept
+JSON_HEDLEY_ALWAYS_INLINE array_index_status parse_array_index(const StringType& s, SizeType& idx) noexcept
 {
     // error condition (cf. RFC 6901, Sect. 4)
     if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
