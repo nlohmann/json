@@ -31,3 +31,12 @@ jobs:
           persist-credentials: false
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          # Semgrep pins mcp==1.29.0 and opentelemetry-api~=1.37.0 exactly
+          # (.github/requirements/semgrep.txt), so these cannot be upgraded
+          # until Semgrep lifts its pins. They do not apply to our use: CI
+          # only runs `semgrep scan` on the checkout and never starts the MCP
+          # server (GHSA-84m7-p3x7-pcfv, StreamableHTTP sessions) or parses
+          # incoming trace context (GHSA-xcq7-p3pf-p88h, tracestate parsing).
+          # Remove the entries once a Semgrep release allows the fixed versions.
+          allow-ghsas: GHSA-84m7-p3x7-pcfv, GHSA-xcq7-p3pf-p88h

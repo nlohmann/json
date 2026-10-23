@@ -42,6 +42,7 @@ certifi==2026.10.19 \
     #   httpcore
     #   httpx
     #   requests
+    #   semgrep
 cffi==2.1.1 \
     --hash=sha256:046bfc24911b37851ee1b51aab8bffe713d89c68c6a057b09484ce9fd5f69b4e \
     --hash=sha256:06c72bb76605a4b0cd0aad6930b69d4baf7dd5d806cfc409b824191099700e66 \
@@ -318,9 +319,9 @@ charset-normalizer==3.5.2 \
     --hash=sha256:fd1fbe0f116b6e55da77aca2c6ddcddcfac2186cbf78bdebf40fc156efca389d \
     --hash=sha256:fe9753dfee015c570d73df76f899f18444d41388bffcde097deba51c4fadbb9f
     # via requests
-click==8.1.8 \
-    --hash=sha256:63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2 \
-    --hash=sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a
+click==8.4.2 \
+    --hash=sha256:9a6cea6e60b17ebe0a44c5cc636d94f09bd66142c1cd7d8b4cd731c4917a15f6 \
+    --hash=sha256:e6f9f66136c816745b9d65817da91d61d957fb16e02e4dcd0552553c5a197b76
     # via
     #   click-option-group
     #   semgrep
@@ -453,9 +454,9 @@ markdown-it-py==4.2.0 \
     --hash=sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49 \
     --hash=sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a
     # via rich
-mcp==1.23.3 \
-    --hash=sha256:32768af4b46a1b4f7df34e2bfdf5c6011e7b63d7f1b0e321d0fdef4cd6082031 \
-    --hash=sha256:b3b0da2cc949950ce1259c7bfc1b081905a51916fcd7c8182125b85e70825201
+mcp==1.29.0 \
+    --hash=sha256:52d01f334de1868cc3bb2d6604931126a67631f99a6c5d3b82ba47290315ec36 \
+    --hash=sha256:f5a075bb611f23d6f4d080c6a1699fa62772eebc562ba9e66b306ddde1c755f7
     # via semgrep
 mdurl==0.1.2 \
     --hash=sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8 \
@@ -698,9 +699,9 @@ pygments==2.21.0 \
     --hash=sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9 \
     --hash=sha256:610ca751c9bc2492b38eb9a38a7fbc93edbbb2d7182edaf34e66ae493dee5c8c
     # via rich
-pyjwt==2.13.0 \
-    --hash=sha256:41571c89ca91598c79e8ef18a2d07367d4810fbbd6f637794879baf1b7703423 \
-    --hash=sha256:66adcc2aff09b3f1bbd95fc1e1577df8ac8723c978552fd43304c8a290ac5728
+pyjwt==2.15.1 \
+    --hash=sha256:42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193 \
+    --hash=sha256:4f259e80cdfb6b3fc18a7de51fd1ef9ec79652f25019bae68975ca2468a34df8
     # via
     #   mcp
     #   semgrep
@@ -931,15 +932,15 @@ semantic-version==2.10.0 \
     --hash=sha256:bdabb6d336998cbb378d4b9db3a4b56a1e3235701dc05ea2690d9a997ed5041c \
     --hash=sha256:de78a3b8e0feda74cabc54aab2da702113e33ac9d9eb9d2389bcf1f58b7d9177
     # via semgrep
-semgrep==1.168.0 \
-    --hash=sha256:09dfacb0530ed4a17bd2deb7914e9a25fc3581d5d84d5365cdac77bbebed8081 \
-    --hash=sha256:1a5d6b5b47347b22bcb1d6f15a5e51a21e734244884624c3494e09bc1de955cd \
-    --hash=sha256:86e99b095b80492b6cfe5087bf4a3b0175a1132c9c9dcd25a96c3745cc58d85a \
-    --hash=sha256:a072b1734b5c54e39cbbe957b10cf0b83a114b9b9fc762b4ea51afe2f114cd11 \
-    --hash=sha256:c4a664f4dda097fbdf657d64f79217e94c4d87502c16c991fac569f07aaecb8e \
-    --hash=sha256:d288699c4c056cc3d7cf82830e00f9c07fac33227c3a5290a2113bd1be63da46 \
-    --hash=sha256:e6b85d84e815ff86f56dcb6b4a6370b98f1bc0e402144daafa9b41aa00ea9a90 \
-    --hash=sha256:fa22f0a41ee3857ecec1b3883b2920b1d41d07ef1bdd7e216da3c519210ae5fb
+semgrep==1.182.1 \
+    --hash=sha256:1db6d5becbb60d697a312fce6ec7e00cfde4eff1d221cce7ce85c49df55240eb \
+    --hash=sha256:1e18f12a091cb7258f879c5fea1b47a10768af212f1f78ee0c16c52e00be32b7 \
+    --hash=sha256:3fdfbd68ac5eeead60983dbcd539428bbc40d01f805e0569301068d06be7eaa3 \
+    --hash=sha256:89fe0afe240455800f806145f5679707892ea9bbd442a56eab1ea0b25a95f4c6 \
+    --hash=sha256:b072c59734384784a912b991c417b6c8e4771abdb3c39b9196fc01efdff8aa10 \
+    --hash=sha256:bba25e5a38db5061d725c0920699ecee3e8137026427e722a271bd9bb8d25a40 \
+    --hash=sha256:c38a3490fca93080e26e5f169e7e1fcb46742dd77e3d8e0fd9190653cb6c4ccd \
+    --hash=sha256:e464d398107d026aa6e9c938fab2efabdf2ff8a9c7a52d7abeed0c149e62b68c
     # via -r .github/requirements/semgrep.in
 sse-starlette==3.5.0 \
     --hash=sha256:3e6e1070df3f0f5d9cea81496de92dbb72f6721871d99748ece67441dd8b7997 \
