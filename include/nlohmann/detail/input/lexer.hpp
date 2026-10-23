@@ -688,7 +688,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0x1E:
                 case 0x1F:
                 {
-                    static const char* const control_character_messages[32] =
+                    static const char* const control_character_messages[32] = // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                     {
                         "invalid string: control character U+0000 (NUL) must be escaped to \\u0000",
                         "invalid string: control character U+0001 (SOH) must be escaped to \\u0001",
