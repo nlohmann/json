@@ -6460,17 +6460,46 @@ template < typename BasicJsonType, typename ArithmeticType,
                int > = 0 >
 inline void from_json(const BasicJsonType& j, ArithmeticType& val)
 {
-    if (get_number_value(j, val))
+    // the number cases repeat get_number_value() on purpose: calling it here
+    // changes the inlining of get<T>() in the std::array conversion, which then
+    // runs 2.4x slower (GetArray benchmark, #5891); unlike get_arithmetic_value(),
+    // a boolean is accepted
+    switch (static_cast<value_t>(j))
     {
-        return;
-    }
+        case value_t::number_unsigned:
+        {
+            // never null: a basic_json whose number_unsigned_t is number_integer_t
+            // stores no number_unsigned values (#2573)
+            const auto* ptr = j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>();
+            JSON_ASSERT(ptr != nullptr);
+            val = static_cast<ArithmeticType>(*ptr);
+            break;
+        }
+        case value_t::number_integer:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_integer_t*>());
+            break;
+        }
+        case value_t::number_float:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
+            break;
+        }
+        case value_t::boolean:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
+            break;
+        }
 
-    // unlike get_arithmetic_value(), a boolean is accepted here
-    if (JSON_HEDLEY_UNLIKELY(!j.is_boolean()))
-    {
-        throw_type_must_be("number", j);
+        case value_t::null:
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::binary:
+        case value_t::discarded:
+        default:
+            throw_type_must_be("number", j);
     }
-    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
 }
 
 template<typename BasicJsonType, typename Type>
@@ -6991,8 +7020,8 @@ places, which differ in speed, diagnostics, and how they read the input:
   bulk string scan, the bulk path of the BON8 reader, and the BON8 writer.
   They must accept exactly what the lexer's switch accepts.
 - the byte path of binary_reader::get_bon8_string(): BON8 input without bulk
-  access, and the bytes the bulk path leaves to it. It takes the valid range
-  of the second byte from utf8_shape().
+  access, and the bytes the bulk path leaves to it. It keeps its own ranges:
+  taking them from utf8_shape() made BON8 decoding 2-3% slower (#5891).
 - check_utf8() in detail/view/edit.hpp: strings stored in an editable
   json_document, with the index of the offending byte. It also uses
   utf8_shape().
@@ -20124,11 +20153,23 @@ class binary_reader
 
             // the valid range of the second byte excludes overlong forms,
             // surrogates, and code points above U+10FFFF
-            // (RFC 3629, section 4); length 0 flags the lead bytes
-            // 0xF5..0xF7, which BON8 can read but UTF-8 cannot encode
-            const auto shape = utf8_shape(static_cast<std::uint8_t>(byte));
-            const int continuation_bytes = (byte <= 0xDF) ? 1 : ((byte <= 0xEF) ? 2 : 3);
-            const bool valid_second = shape.length != 0 && second >= shape.second_lo && second <= shape.second_hi;
+            // (RFC 3629, section 4)
+            int continuation_bytes = 0;
+            bool valid_second = true;
+            if (byte <= 0xDF)
+            {
+                continuation_bytes = 1;
+            }
+            else if (byte <= 0xEF)
+            {
+                continuation_bytes = 2;
+                valid_second = (byte != 0xE0 || second >= 0xA0) && (byte != 0xED || second <= 0x9F);
+            }
+            else
+            {
+                continuation_bytes = 3;
+                valid_second = byte <= 0xF4 && (byte != 0xF0 || second >= 0x90) && (byte != 0xF4 || second <= 0x8F);
+            }
 
             if (JSON_HEDLEY_UNLIKELY(!valid_second))
             {
@@ -22535,9 +22576,11 @@ enum class array_index_status
 @note this function never throws; json_pointer::array_index(), the callers that
       must not throw, and the json_view pointer resolution build on it instead
       of each re-implementing the RFC 6901 digit rules and the range check
+@note force-inlined: as a free function template it is no longer inlined into
+      the pointer resolution, which makes JsonPointerAt up to 17% slower (#5891)
 */
 template<typename SizeType, typename StringType>
-array_index_status parse_array_index(const StringType& s, SizeType& idx) noexcept
+JSON_HEDLEY_ALWAYS_INLINE array_index_status parse_array_index(const StringType& s, SizeType& idx) noexcept
 {
     // error condition (cf. RFC 6901, Sect. 4)
     if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
