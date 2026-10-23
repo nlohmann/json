@@ -845,28 +845,17 @@ private:
         }
 
 public:
-        void destroy_string() noexcept
+        template<typename T>
+        static void destroy_pointer(T*& ptr) noexcept
         {
-            if (string == nullptr)
+            if (ptr == nullptr)
             {
                 // not initialized (e.g., due to exception in the ctor)
                 return;
             }
-            AllocatorType<string_t> alloc;
-            std::allocator_traits<decltype(alloc)>::destroy(alloc, string);
-            std::allocator_traits<decltype(alloc)>::deallocate(alloc, string, 1);
-        }
-
-        void destroy_binary() noexcept
-        {
-            if (binary == nullptr)
-            {
-                // not initialized (e.g., due to exception in the ctor)
-                return;
-            }
-            AllocatorType<binary_t> alloc;
-            std::allocator_traits<decltype(alloc)>::destroy(alloc, binary);
-            std::allocator_traits<decltype(alloc)>::deallocate(alloc, binary, 1);
+            AllocatorType<T> alloc;
+            std::allocator_traits<decltype(alloc)>::destroy(alloc, ptr);
+            std::allocator_traits<decltype(alloc)>::deallocate(alloc, ptr, 1);
         }
 
         // t must be value_t::array or value_t::object
@@ -1032,11 +1021,11 @@ public:
             switch (t)
             {
                 case value_t::string:
-                    destroy_string();
+                    destroy_pointer(string);
                     break;
 
                 case value_t::binary:
-                    destroy_binary();
+                    destroy_pointer(binary);
                     break;
 
                 case value_t::object:
