@@ -2056,7 +2056,10 @@ TEST_CASE("find_ascii_copyable_run agrees with is_ascii_copyable for every byte"
             buffer.fill(static_cast<unsigned char>('a'));
             buffer[position] = static_cast<unsigned char>(value);
             const bool copyable = nlohmann::detail::is_ascii_copyable(static_cast<unsigned char>(value));
-            for (const std::size_t n : {position, position + 1, std::size_t{24}})
+            for (const std::size_t n :
+                    {
+                        position, position + 1, std::size_t{24}
+                    })
             {
                 if (n > 24)
                 {
