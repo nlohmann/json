@@ -55,6 +55,66 @@ using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
 /// output_vector_sink also appends writes of at least this size with insert()
 constexpr std::size_t max_reserve_size = 256;
 
+/// @brief copy @a length characters, at most 32, without a call of memcpy()
+///
+/// Short strings are the typical payload of a binary value, and a call of
+/// memcpy() costs more than copying them. A copy of 16 to 32 characters is two
+/// possibly overlapping 16-byte copies, one of 8 to 15 two 8-byte copies, and
+/// so on down to a single character; each is a fixed-size load and store.
+/// Nothing outside of [src, src + length) is read or written.
+template<typename CharType>
+inline void copy_short(CharType* dst, const CharType* src, const std::size_t length, std::true_type /*is_byte*/) noexcept
+{
+    JSON_ASSERT(length <= 32);
+    if (length >= 16)
+    {
+        std::array<char, 16> first; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::array<char, 16> last; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::memcpy(first.data(), src, 16);
+        std::memcpy(last.data(), src + (length - 16), 16);
+        std::memcpy(dst, first.data(), 16);
+        std::memcpy(dst + (length - 16), last.data(), 16);
+    }
+    else if (length >= 8)
+    {
+        std::array<char, 8> first; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::array<char, 8> last; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::memcpy(first.data(), src, 8);
+        std::memcpy(last.data(), src + (length - 8), 8);
+        std::memcpy(dst, first.data(), 8);
+        std::memcpy(dst + (length - 8), last.data(), 8);
+    }
+    else if (length >= 4)
+    {
+        std::array<char, 4> first; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::array<char, 4> last; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::memcpy(first.data(), src, 4);
+        std::memcpy(last.data(), src + (length - 4), 4);
+        std::memcpy(dst, first.data(), 4);
+        std::memcpy(dst + (length - 4), last.data(), 4);
+    }
+    else if (length != 0)
+    {
+        // 1 to 3: the first, the middle, and the last character
+        const CharType a = src[0];
+        const CharType b = src[length >> 1];
+        const CharType c = src[length - 1];
+        dst[0] = a;
+        dst[length >> 1] = b;
+        dst[length - 1] = c;
+    }
+}
+
+/// @brief copy @a length characters, of a character type wider than a byte
+template<typename CharType>
+inline void copy_short(CharType* dst, const CharType* src, const std::size_t length, std::false_type /*is_byte*/) noexcept
+{
+    std::memcpy(dst, src, length * sizeof(CharType));
+}
+
+/// the number of characters an empty vector is grown to by output_vector_sink
+constexpr std::size_t min_vector_sink_capacity = 64;
+
 /// @brief non-virtual output sink writing into a std::vector
 ///
 /// This sink is not part of the virtual output_adapter_protocol hierarchy: it is
@@ -78,7 +138,7 @@ class output_vector_sink
 {
   public:
     explicit output_vector_sink(std::vector<CharType, AllocatorType>& vec) noexcept
-        : v(&vec), position(vec.size())
+        : v(&vec), cursor(vec.data() + vec.size()), limit(cursor)
     {}
 
     output_vector_sink(const output_vector_sink&) = delete;
@@ -86,7 +146,7 @@ class output_vector_sink
     output_vector_sink& operator=(output_vector_sink&&) = delete;
 
     output_vector_sink(output_vector_sink&& other) noexcept
-        : v(other.v), position(other.position)
+        : v(other.v), cursor(other.cursor), limit(other.limit)
     {
         other.v = nullptr;
     }
@@ -95,7 +155,7 @@ class output_vector_sink
     {
         if (v != nullptr)
         {
-            v->resize(position);
+            v->resize(position());
         }
     }
 
@@ -104,11 +164,11 @@ class output_vector_sink
     JSON_HEDLEY_ALWAYS_INLINE
     void write_character(CharType c)
     {
-        if (JSON_HEDLEY_UNLIKELY(position == v->size()))
+        if (JSON_HEDLEY_UNLIKELY(cursor == limit))
         {
             grow(1);
         }
-        (*v)[position++] = c;
+        *cursor++ = c;
     }
 
     // no JSON_HEDLEY_NON_NULL here: binary_writer legitimately passes a null
@@ -117,7 +177,7 @@ class output_vector_sink
     JSON_HEDLEY_ALWAYS_INLINE
     void write_characters(const CharType* s, std::size_t length)
     {
-        if (JSON_HEDLEY_UNLIKELY(v->size() - position < length))
+        if (JSON_HEDLEY_UNLIKELY(space() < length))
         {
             if (length >= max_reserve_size)
             {
@@ -126,10 +186,15 @@ class output_vector_sink
             }
             grow(length);
         }
-        if (length != 0)
+        if (length <= 32)
         {
-            std::memcpy(v->data() + position, s, length * sizeof(CharType));
-            position += length;
+            copy_short(cursor, s, length, std::integral_constant<bool, sizeof(CharType) == 1>());
+            cursor += length;
+        }
+        else
+        {
+            std::memcpy(cursor, s, length * sizeof(CharType));
+            cursor += length;
         }
     }
 
@@ -144,21 +209,37 @@ class output_vector_sink
     CharType* reserve(const std::size_t length)
     {
         JSON_ASSERT(length <= max_reserve_size);
-        if (JSON_HEDLEY_UNLIKELY(v->size() - position < length))
+        if (JSON_HEDLEY_UNLIKELY(space() < length))
         {
             grow(length);
         }
-        return v->data() + position;
+        return cursor;
     }
 
     /// keep the first @a length characters written to the space from reserve()
     JSON_HEDLEY_ALWAYS_INLINE
     void commit(const std::size_t length) noexcept
     {
-        position += length;
+        cursor += length;
     }
 
+    /// nothing to pass on: the characters are in the vector (see output_adapter_sink)
+    void flush() noexcept
+    {}
+
   private:
+    /// number of characters of *v written so far
+    std::size_t position() const noexcept
+    {
+        return static_cast<std::size_t>(cursor - v->data());
+    }
+
+    /// number of characters that fit the vector behind the write position
+    std::size_t space() const noexcept
+    {
+        return static_cast<std::size_t>(limit - cursor);
+    }
+
     /// make room for at least @a length more characters after the position;
     /// kept out of line so that the write functions stay small enough for
     /// GCC to inline them into the writer
@@ -166,12 +247,15 @@ class output_vector_sink
     void grow(const std::size_t length)
     {
         // use the capacity the vector already has, else at least double it;
-        // never less than 64 characters, so that a small value does not
+        // never less than min_vector_sink_capacity, so that a small value does not
         // reallocate for every few bytes
-        const std::size_t needed = position + length;
-        v->resize((std::max)(std::size_t{64}, needed <= v->capacity()
+        const std::size_t written = position();
+        const std::size_t needed = written + length;
+        v->resize((std::max)(min_vector_sink_capacity, needed <= v->capacity()
                              ? v->capacity()
                              : (std::max)(needed, v->capacity() * 2)));
+        cursor = v->data() + written;
+        limit = v->data() + v->size();
     }
 
     /// append @a length (at least max_reserve_size) characters that do not fit
@@ -181,20 +265,24 @@ class output_vector_sink
     JSON_HEDLEY_NEVER_INLINE
     void append(const CharType* s, const std::size_t length)
     {
-        v->resize(position);
-        if (v->capacity() - position < length)
+        const std::size_t written = position();
+        v->resize(written);
+        if (v->capacity() - written < length)
         {
             // grow geometrically, with room for the writes that follow, so
             // that the next grow() need not reallocate right away
-            v->reserve((std::max)(v->capacity() * 2, position + length + max_reserve_size));
+            v->reserve((std::max)(v->capacity() * 2, written + length + max_reserve_size));
         }
         v->insert(v->end(), s, s + length);
-        position = v->size();
+        cursor = v->data() + v->size();
+        limit = cursor;
     }
 
     std::vector<CharType, AllocatorType>* v;
-    /// number of characters of *v written so far
-    std::size_t position;
+    /// the write position: in *v, at the number of characters written so far
+    CharType* cursor;
+    /// the end of *v
+    CharType* limit;
 };
 
 /// output adapter for byte vectors
@@ -277,9 +365,17 @@ class output_string_adapter : public output_adapter_protocol<CharType>
 ///
 /// Wraps the polymorphic output_adapter_t so the same binary_writer template can
 /// also target arbitrary adapters (output streams, strings, user-provided
-/// adapters) via the `output_adapter`-based overloads. Each write still goes
-/// through one virtual call, exactly as before; only the concrete sinks above
-/// avoid it.
+/// adapters) via the `output_adapter`-based overloads.
+///
+/// A write through the adapter is a virtual call, and for a stream a call with
+/// a sentry on top, which costs more than encoding the few bytes of most values.
+/// The sink therefore collects what is written in a buffer and passes it on in
+/// one piece when it is full, a write is too large for it, or @ref flush is
+/// called. Everything written reaches the adapter in the same order and with
+/// the same bytes; the destructor passes on what is left, so that a write that
+/// throws leaves the adapter with exactly the bytes written before it. Only
+/// @ref flush can report an error of the adapter (the destructor must not
+/// throw), so it has to be called once the value is written.
 template<typename CharType>
 class output_adapter_sink
 {
@@ -290,36 +386,121 @@ class output_adapter_sink
         JSON_ASSERT(oa);
     }
 
+    output_adapter_sink(const output_adapter_sink&) = delete;
+    output_adapter_sink& operator=(const output_adapter_sink&) = delete;
+    output_adapter_sink& operator=(output_adapter_sink&&) = delete;
+
+    output_adapter_sink(output_adapter_sink&& other) noexcept
+        : oa(std::move(other.oa)), used(other.used)
+    {
+        std::memcpy(buffer.data(), other.buffer.data(), other.used * sizeof(CharType));
+        other.used = 0;
+    }
+
+    ~output_adapter_sink()
+    {
+        // a normal return has flushed already, so this is for a write that threw
+        if (used != 0)
+        {
+            JSON_TRY
+            {
+                flush();
+            }
+            JSON_CATCH(...)
+            {
+                // nothing can be done about an adapter that throws here
+            }
+        }
+    }
+
+    JSON_HEDLEY_ALWAYS_INLINE
     void write_character(CharType c)
     {
-        oa->write_character(c);
+        if (JSON_HEDLEY_UNLIKELY(used == buffer_size))
+        {
+            flush();
+        }
+        buffer[used++] = c;
     }
 
     // no JSON_HEDLEY_NON_NULL: forwards (null, 0) for empty payloads, exactly as
     // the type-erased path already did before this sink existed
+    JSON_HEDLEY_ALWAYS_INLINE
     void write_characters(const CharType* s, std::size_t length)
     {
-        oa->write_characters(s, length);
+        if (JSON_HEDLEY_UNLIKELY(buffer_size - used < length))
+        {
+            write_large(s, length);
+            return;
+        }
+        if (length <= 32)
+        {
+            copy_short(buffer.data() + used, s, length, std::integral_constant<bool, sizeof(CharType) == 1>());
+            used += length;
+        }
+        else
+        {
+            std::memcpy(buffer.data() + used, s, length * sizeof(CharType));
+            used += length;
+        }
     }
 
     /// space for writing up to @a length characters (see
     /// output_vector_sink::reserve)
-    CharType* reserve(const std::size_t length) noexcept
+    JSON_HEDLEY_ALWAYS_INLINE
+    CharType* reserve(const std::size_t length)
     {
         JSON_ASSERT(length <= max_reserve_size);
-        static_cast<void>(length);
-        return reserved.data();
+        if (JSON_HEDLEY_UNLIKELY(buffer_size - used < length))
+        {
+            flush();
+        }
+        return buffer.data() + used;
     }
 
-    /// write the first @a length characters written to the space from reserve()
-    void commit(const std::size_t length)
+    /// keep the first @a length characters written to the space from reserve()
+    JSON_HEDLEY_ALWAYS_INLINE
+    void commit(const std::size_t length) noexcept
     {
-        oa->write_characters(reserved.data(), length);
+        used += length;
+    }
+
+    /// pass everything written so far on to the adapter
+    void flush()
+    {
+        if (used != 0)
+        {
+            // reset first: the characters count as written even if the adapter throws
+            const std::size_t length = used;
+            used = 0;
+            oa->write_characters(buffer.data(), length);
+        }
     }
 
   private:
+    /// a write that does not fit the space left in the buffer
+    JSON_HEDLEY_NEVER_INLINE
+    void write_large(const CharType* s, const std::size_t length)
+    {
+        flush();
+        if (length >= buffer_size)
+        {
+            oa->write_characters(s, length);
+        }
+        else
+        {
+            std::memcpy(buffer.data(), s, length * sizeof(CharType));
+            used = length;
+        }
+    }
+
+    /// large enough for reserve() at any time
+    static constexpr std::size_t buffer_size = 4 * max_reserve_size;
+
     output_adapter_t<CharType> oa;
-    std::array<CharType, max_reserve_size> reserved{};
+    /// number of characters of @ref buffer not yet passed on
+    std::size_t used = 0;
+    std::array<CharType, buffer_size> buffer{};
 };
 
 /// @brief whether std::basic_string<CharType> has a non-deprecated std::char_traits
