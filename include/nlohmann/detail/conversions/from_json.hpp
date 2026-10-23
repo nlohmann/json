@@ -437,17 +437,46 @@ template < typename BasicJsonType, typename ArithmeticType,
                int > = 0 >
 inline void from_json(const BasicJsonType& j, ArithmeticType& val)
 {
-    if (get_number_value(j, val))
+    // the number cases repeat get_number_value() on purpose: calling it here
+    // changes the inlining of get<T>() in the std::array conversion, which then
+    // runs 2.4x slower (GetArray benchmark, #5891); unlike get_arithmetic_value(),
+    // a boolean is accepted
+    switch (static_cast<value_t>(j))
     {
-        return;
-    }
+        case value_t::number_unsigned:
+        {
+            // never null: a basic_json whose number_unsigned_t is number_integer_t
+            // stores no number_unsigned values (#2573)
+            const auto* ptr = j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>();
+            JSON_ASSERT(ptr != nullptr);
+            val = static_cast<ArithmeticType>(*ptr);
+            break;
+        }
+        case value_t::number_integer:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_integer_t*>());
+            break;
+        }
+        case value_t::number_float:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
+            break;
+        }
+        case value_t::boolean:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
+            break;
+        }
 
-    // unlike get_arithmetic_value(), a boolean is accepted here
-    if (JSON_HEDLEY_UNLIKELY(!j.is_boolean()))
-    {
-        throw_type_must_be("number", j);
+        case value_t::null:
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::binary:
+        case value_t::discarded:
+        default:
+            throw_type_must_be("number", j);
     }
-    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
 }
 
 template<typename BasicJsonType, typename Type>
