@@ -374,9 +374,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["name"] = "JSON for Modern C++";
         result["url"] = "https://github.com/nlohmann/json";
         result["version"]["string"] =
-            detail::concat(std::to_string(NLOHMANN_JSON_VERSION_MAJOR), '.',
-                           std::to_string(NLOHMANN_JSON_VERSION_MINOR), '.',
-                           std::to_string(NLOHMANN_JSON_VERSION_PATCH));
+            detail::concat<string_t>(detail::to_string<string_t>(static_cast<std::size_t>(NLOHMANN_JSON_VERSION_MAJOR)), '.',
+                                     detail::to_string<string_t>(static_cast<std::size_t>(NLOHMANN_JSON_VERSION_MINOR)), '.',
+                                     detail::to_string<string_t>(static_cast<std::size_t>(NLOHMANN_JSON_VERSION_PATCH)));
         result["version"]["major"] = NLOHMANN_JSON_VERSION_MAJOR;
         result["version"]["minor"] = NLOHMANN_JSON_VERSION_MINOR;
         result["version"]["patch"] = NLOHMANN_JSON_VERSION_PATCH;
@@ -398,10 +398,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #elif defined(__clang__)
         result["compiler"] = {{"family", "clang"}, {"version", __clang_version__}};
 #elif defined(__GNUC__) || defined(__GNUG__)
-        result["compiler"] = {{"family", "gcc"}, {"version", detail::concat(
-                    std::to_string(__GNUC__), '.',
-                    std::to_string(__GNUC_MINOR__), '.',
-                    std::to_string(__GNUC_PATCHLEVEL__))
+        result["compiler"] = {{"family", "gcc"}, {"version", detail::concat<string_t>(
+                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC__)), '.',
+                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_MINOR__)), '.',
+                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_PATCHLEVEL__)))
             }
         };
 #elif defined(__HP_aCC)
@@ -419,9 +419,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
 
 #if defined(_MSVC_LANG)
-        result["compiler"]["c++"] = std::to_string(_MSVC_LANG);
+        result["compiler"]["c++"] = detail::to_string<string_t>(static_cast<std::size_t>(_MSVC_LANG));
 #elif defined(__cplusplus)
-        result["compiler"]["c++"] = std::to_string(__cplusplus);
+        result["compiler"]["c++"] = detail::to_string<string_t>(static_cast<std::size_t>(__cplusplus));
 #else
         result["compiler"]["c++"] = "unknown";
 #endif
