@@ -293,6 +293,40 @@ class binary_reader
         return is_object ? sax->end_object() : sax->end_array();
     }
 
+    /*!
+    @brief close the innermost open container and report whether that
+           completed the value being read
+
+    The value begun by the driver is complete once its container is not
+    inside another one.
+
+    @param[out] value_complete  whether no container is left open
+    @return whether the SAX parser accepted the end event
+    */
+    bool leave_container_and_check(bool& value_complete)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!leave_container()))
+        {
+            return false;
+        }
+        value_complete = container_stack.empty();
+        return true;
+    }
+
+    /*!
+    @brief read an object key and pass it to the SAX parser
+
+    @tparam GetKey  member function that reads the key into a string
+    @param[in,out] key  string the key is read into; cleared first
+    @return whether reading the key and the SAX event succeeded
+    */
+    template<bool (binary_reader::*GetKey)(string_t&)>
+    bool read_object_key(string_t& key)
+    {
+        key.clear();
+        return (this->*GetKey)(key) && sax->key(key);
+    }
+
     //////////
     // BSON //
     //////////
@@ -1575,12 +1609,12 @@ class binary_reader
 
                 if (at_end)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!leave_container()))
+                    bool value_complete = false;
+                    if (JSON_HEDLEY_UNLIKELY(!leave_container_and_check(value_complete)))
                     {
                         return false;
                     }
-                    // the value begun here is complete once its container is
-                    if (container_stack.empty())
+                    if (value_complete)
                     {
                         return true;
                     }
@@ -1589,8 +1623,7 @@ class binary_reader
 
                 if (top.is_object)
                 {
-                    key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_object_key(key) || !sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!read_object_key<&binary_reader::get_cbor_object_key>(key)))
                     {
                         return false;
                     }
@@ -2313,12 +2346,12 @@ class binary_reader
 
                 if (container_stack.back().remaining == 0)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!leave_container()))
+                    bool value_complete = false;
+                    if (JSON_HEDLEY_UNLIKELY(!leave_container_and_check(value_complete)))
                     {
                         return false;
                     }
-                    // the value begun here is complete once its container is
-                    if (container_stack.empty())
+                    if (value_complete)
                     {
                         return true;
                     }
@@ -2331,8 +2364,7 @@ class binary_reader
                 if (is_object)
                 {
                     get();
-                    key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_msgpack_object_key(key) || !sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!read_object_key<&binary_reader::get_msgpack_object_key>(key)))
                     {
                         return false;
                     }
@@ -3383,12 +3415,12 @@ class binary_reader
 
                 if (at_end)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!leave_container()))
+                    bool value_complete = false;
+                    if (JSON_HEDLEY_UNLIKELY(!leave_container_and_check(value_complete)))
                     {
                         return false;
                     }
-                    // the value begun here is complete once its container is
-                    if (container_stack.empty())
+                    if (value_complete)
                     {
                         return true;
                     }
@@ -3397,8 +3429,7 @@ class binary_reader
 
                 if (top.is_object)
                 {
-                    key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_key(key) || !sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!read_object_key<&binary_reader::get_bon8_key>(key)))
                     {
                         return false;
                     }
