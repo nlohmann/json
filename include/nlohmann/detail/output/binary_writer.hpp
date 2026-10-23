@@ -928,48 +928,43 @@ class binary_writer
         JSON_THROW(other_error::create(exception_id::size_marker_required, "use_type requires use_size = true", &j));
     }
 
-    void write_msgpack_array_prefix(const std::size_t N, const BasicJsonType& j)
+    /// @brief write the MessagePack prefix of an array or object with @a N
+    ///        elements: the fix marker @a fix_marker | n, or @a marker_16 or
+    ///        @a marker_32 followed by the length
+    JSON_HEDLEY_ALWAYS_INLINE
+    void write_msgpack_container_prefix(const std::size_t N, const BasicJsonType& j,
+                                        const std::uint8_t fix_marker, const std::uint8_t marker_16, const std::uint8_t marker_32)
     {
         const auto n = to_msgpack_length(N, j);
         if (n <= 15)
         {
-            // fixarray
-            oa.write_character(to_char_type(static_cast<std::uint8_t>(0x90 | n)));
+            // fixarray, fixmap
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(fix_marker | n)));
         }
         else if (n <= (std::numeric_limits<std::uint16_t>::max)())
         {
-            // array 16
-            oa.write_character(to_char_type(0xDC));
+            // array 16, map 16
+            oa.write_character(to_char_type(marker_16));
             write_number(static_cast<std::uint16_t>(n));
         }
         else
         {
-            // array 32
-            oa.write_character(to_char_type(0xDD));
+            // array 32, map 32
+            oa.write_character(to_char_type(marker_32));
             write_number(static_cast<std::uint32_t>(n));
         }
     }
 
+    JSON_HEDLEY_ALWAYS_INLINE
+    void write_msgpack_array_prefix(const std::size_t N, const BasicJsonType& j)
+    {
+        write_msgpack_container_prefix(N, j, 0x90, 0xDC, 0xDD);
+    }
+
+    JSON_HEDLEY_ALWAYS_INLINE
     void write_msgpack_object_prefix(const std::size_t N, const BasicJsonType& j)
     {
-        const auto n = to_msgpack_length(N, j);
-        if (n <= 15)
-        {
-            // fixmap
-            oa.write_character(to_char_type(static_cast<std::uint8_t>(0x80 | (n & 0xF))));
-        }
-        else if (n <= (std::numeric_limits<std::uint16_t>::max)())
-        {
-            // map 16
-            oa.write_character(to_char_type(0xDE));
-            write_number(static_cast<std::uint16_t>(n));
-        }
-        else
-        {
-            // map 32
-            oa.write_character(to_char_type(0xDF));
-            write_number(static_cast<std::uint32_t>(n));
-        }
+        write_msgpack_container_prefix(N, j, 0x80, 0xDE, 0xDF);
     }
 
     /// @brief a CBOR, MessagePack, or BON8 array or object whose elements
