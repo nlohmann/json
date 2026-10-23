@@ -311,9 +311,7 @@ class binary_writer
                 write_cbor_head(0x40, N);
 
                 // step 2: write each element
-                oa.write_characters(
-                      reinterpret_cast<const CharType*>(j.m_data.m_value.binary->data()),
-                      N);
+                write_bytes(j.m_data.m_value.binary->data(), N);
 
                 break;
             }
@@ -526,9 +524,7 @@ class binary_writer
                 }
 
                 // step 2: write the byte string
-                oa.write_characters(
-                      reinterpret_cast<const CharType*>(j.m_data.m_value.binary->data()),
-                      N);
+                write_bytes(j.m_data.m_value.binary->data(), N);
 
                 break;
             }
@@ -676,9 +672,7 @@ class binary_writer
 
                 if (use_type)
                 {
-                    oa.write_characters(
-                          reinterpret_cast<const CharType*>(j.m_data.m_value.binary->data()),
-                          j.m_data.m_value.binary->size());
+                    write_bytes(j.m_data.m_value.binary->data(), j.m_data.m_value.binary->size());
                 }
                 else
                 {
@@ -926,6 +920,13 @@ class binary_writer
     {
         static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
         JSON_THROW(other_error::create(exception_id::size_marker_required, "use_type requires use_size = true", &j));
+    }
+
+    /// @brief write @a size bytes starting at @a data to the output adapter
+    JSON_HEDLEY_ALWAYS_INLINE
+    void write_bytes(const void* data, const std::size_t size)
+    {
+        oa.write_characters(static_cast<const CharType*>(data), size);
     }
 
     /// @brief write the MessagePack prefix of an array or object with @a N
@@ -1497,13 +1498,13 @@ class binary_writer
 
         if (JSON_HEDLEY_LIKELY(error_handler == error_handler_t::keep || error_handler == error_handler_t::strict))
         {
-            oa.write_characters(reinterpret_cast<const CharType*>(name.data()), name.size());
+            write_bytes(name.data(), name.size());
         }
         else
         {
             string_t storage;
             const string_t& written = sanitize_utf8_for_bson_write(name, storage);
-            oa.write_characters(reinterpret_cast<const CharType*>(written.data()), written.size());
+            write_bytes(written.data(), written.size());
         }
 
         // the terminating null byte is written explicitly rather than taken
@@ -1583,9 +1584,7 @@ class binary_writer
         const string_t& written = sanitize_utf8_for_bson_write(value, storage);
 
         write_number<std::int32_t>(to_bson_length(written.size() + 1ul), true);
-        oa.write_characters(
-              reinterpret_cast<const CharType*>(written.data()),
-              written.size());
+        write_bytes(written.data(), written.size());
         // the terminating null byte is written explicitly rather than taken
         // from the buffer, so that string_t::data() need not be null-terminated
         oa.write_character(to_char_type(0x00));
@@ -1691,7 +1690,7 @@ class binary_writer
 
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
 
-        oa.write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
+        write_bytes(value.data(), value.size());
     }
 
     /*!
@@ -1903,7 +1902,7 @@ class binary_writer
             // the terminating null byte is written explicitly rather than
             // taken from the buffer, so that string_t::data() need not be
             // null-terminated
-            oa.write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
+            write_bytes(value.data(), value.size());
             oa.write_character(to_char_type(0x00));
             return true;
         }
@@ -1920,7 +1919,7 @@ class binary_writer
             p += sizeof(std::int32_t);
             *p++ = value.has_subtype() ? to_char_type(static_cast<std::uint8_t>(value.subtype())) : to_char_type(0x00);
             oa.commit(static_cast<std::size_t>(p - out));
-            oa.write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
+            write_bytes(value.data(), value.size());
             return true;
         }
 
@@ -3108,9 +3107,7 @@ class binary_writer
         write_cbor_head(0x60, sanitized.size());
 
         // step 2: write the string
-        oa.write_characters(
-              reinterpret_cast<const CharType*>(sanitized.data()),
-              sanitized.size());
+        write_bytes(sanitized.data(), sanitized.size());
     }
 
     /////////////
@@ -3191,9 +3188,7 @@ class binary_writer
         }
 
         // step 2: write the string
-        oa.write_characters(
-              reinterpret_cast<const CharType*>(sanitized.data()),
-              sanitized.size());
+        write_bytes(sanitized.data(), sanitized.size());
     }
 
     ////////////
@@ -3476,9 +3471,7 @@ class binary_writer
             oa.write_character(to_char_type('S'));
         }
         write_number_with_ubjson_prefix(sanitized.size(), true, use_bjdata);
-        oa.write_characters(
-              reinterpret_cast<const CharType*>(sanitized.data()),
-              sanitized.size());
+        write_bytes(sanitized.data(), sanitized.size());
     }
 
     /*!
@@ -4754,7 +4747,7 @@ class binary_writer
         }
         else
         {
-            oa.write_characters(reinterpret_cast<const CharType*>(s.data()), s.size());
+            write_bytes(s.data(), s.size());
             string_open = true;
         }
     }
