@@ -86,15 +86,15 @@ template<typename StringType>
     switch (status)
     {
         case index_status::leading_zero:
-            throw_parse_error(106, concat("array index '", s, "' must not begin with '0'"));
+            throw_parse_error(exception_id::pointer_index_leading_zero, concat("array index '", s, "' must not begin with '0'"));
         case index_status::not_number:
-            throw_parse_error(109, concat("array index '", s, "' is not a number"));
+            throw_parse_error(exception_id::pointer_index_not_a_number, concat("array index '", s, "' is not a number"));
         case index_status::too_large:
-            throw_out_of_range(410, concat("array index ", s, " exceeds size_type")); // LCOV_EXCL_LINE
+            throw_out_of_range(exception_id::value_out_of_range, concat("array index ", s, " exceeds size_type")); // LCOV_EXCL_LINE
         case index_status::unresolved:
         case index_status::ok:
         default:
-            throw_out_of_range(404, concat("unresolved reference token '", s, "'"));
+            throw_out_of_range(exception_id::pointer_unresolved, concat("unresolved reference token '", s, "'"));
     }
 }
 
@@ -119,7 +119,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             {
                 if (mode == pointer_mode::checked)
                 {
-                    throw_out_of_range(403, concat("key '", token, "' not found"));
+                    throw_key_not_found(token);
                 }
                 return View();
             }
@@ -131,7 +131,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             {
                 if (throwing)
                 {
-                    throw_out_of_range(402, concat("array index '-' (", std::to_string(cur.size()), ") is out of range"));
+                    throw_array_index_past_end(cur.size());
                 }
                 return View();
             }
@@ -150,7 +150,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             {
                 if (mode == pointer_mode::checked)
                 {
-                    throw_out_of_range(401, concat("array index ", std::to_string(idx), " is out of range"));
+                    throw_array_index_out_of_range(idx);
                 }
                 return View();
             }
@@ -160,7 +160,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
         {
             if (throwing)
             {
-                throw_out_of_range(404, concat("unresolved reference token '", token, "'"));
+                throw_out_of_range(exception_id::pointer_unresolved, concat("unresolved reference token '", token, "'"));
             }
             return View();
         }

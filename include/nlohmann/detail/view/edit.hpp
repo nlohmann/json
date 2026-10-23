@@ -51,11 +51,6 @@ struct first_true<false, Conditions...> : std::integral_constant < int, 1 + firs
 inline void check_utf8(const char* s, std::size_t n)
 {
     const auto* const p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    const auto hex = [](unsigned char c)
-    {
-        constexpr const char* digits = "0123456789ABCDEF";
-        return std::string{digits[c >> 4u], digits[c & 0xFu]};
-    };
     for (std::size_t i = 0; i < n;)
     {
         const unsigned char c = p[i];
@@ -64,39 +59,22 @@ inline void check_utf8(const char* s, std::size_t n)
             ++i;
             continue;
         }
-        std::size_t len = 0;
-        unsigned char lo = 0x80;
-        unsigned char hi = 0xBF;
-        if (c >= 0xC2 && c <= 0xDF)
+        const utf8_sequence_shape shape = utf8_shape(c);
+        const std::size_t len = shape.length;
+        if (len == 0)
         {
-            len = 2;
-        }
-        else if (c >= 0xE0 && c <= 0xEF)
-        {
-            len = 3;
-            lo = c == 0xE0 ? 0xA0 : 0x80;
-            hi = c == 0xED ? 0x9F : 0xBF;
-        }
-        else if (c >= 0xF0 && c <= 0xF4)
-        {
-            len = 4;
-            lo = c == 0xF0 ? 0x90 : 0x80;
-            hi = c == 0xF4 ? 0x8F : 0xBF;
-        }
-        else
-        {
-            throw_type_error(316, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", hex(c)));
+            throw_type_error(exception_id::invalid_utf8, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", hex_byte(c)));
         }
         for (std::size_t k = 1; k < len; ++k)
         {
             if (i + k == n)
             {
-                throw_type_error(316, concat("incomplete UTF-8 string; last byte: 0x", hex(p[n - 1])));
+                throw_type_error(exception_id::invalid_utf8, concat("incomplete UTF-8 string; last byte: 0x", hex_byte(p[n - 1])));
             }
             const unsigned char b = p[i + k];
-            if (b < (k == 1 ? lo : 0x80) || b > (k == 1 ? hi : 0xBF))
+            if (b < (k == 1 ? shape.second_lo : 0x80) || b > (k == 1 ? shape.second_hi : 0xBF))
             {
-                throw_type_error(316, concat("invalid UTF-8 byte at index ", std::to_string(i + k), ": 0x", hex(b)));
+                throw_type_error(exception_id::invalid_utf8, concat("invalid UTF-8 byte at index ", std::to_string(i + k), ": 0x", hex_byte(b)));
             }
         }
         i += len;
@@ -144,7 +122,7 @@ class editor
         node* const o = own(object);
         if (o->kind != static_cast<std::uint8_t>(value_t::object) && o->kind != static_cast<std::uint8_t>(value_t::null))
         {
-            throw_type_error(305, "cannot use operator[] with a string argument with ", object.type_name());
+            throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", object.type_name());
         }
         check_utf8(key.data(), key.size());
         const encoded e = encode(std::forward<V>(value));
@@ -195,7 +173,7 @@ class editor
         node* const a = own(array);
         if (a->kind != static_cast<std::uint8_t>(value_t::array))
         {
-            throw_type_error(305, "cannot use operator[] with a numeric argument with ", array.type_name());
+            throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", array.type_name());
         }
         check_index(idx, a->len);
         const encoded e = encode(std::forward<V>(value));
@@ -212,7 +190,7 @@ class editor
         node* const a = own(array);
         if (a->kind != static_cast<std::uint8_t>(value_t::array) && a->kind != static_cast<std::uint8_t>(value_t::null))
         {
-            throw_type_error(308, "cannot use push_back() with ", array.type_name());
+            throw_type_error(exception_id::push_back_wrong_type, "cannot use push_back() with ", array.type_name());
         }
         const encoded e = encode(std::forward<V>(value));
         if (a->kind == static_cast<std::uint8_t>(value_t::null))
@@ -236,7 +214,7 @@ class editor
         node* const a = own(array);
         if (a->kind != static_cast<std::uint8_t>(value_t::array))
         {
-            throw_type_error(309, "cannot use insert() with ", array.type_name());
+            throw_type_error(exception_id::insert_wrong_type, "cannot use insert() with ", array.type_name());
         }
         check_index(idx, a->len + 1);
         const encoded e = encode(std::forward<V>(value));
@@ -256,7 +234,7 @@ class editor
         node* const o = own(object);
         if (o->kind != static_cast<std::uint8_t>(value_t::object))
         {
-            throw_type_error(307, "cannot use erase() with ", object.type_name());
+            throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", object.type_name());
         }
         for (const node* k = nav::first(m_doc, o), *end = nav::end(m_doc, o); k != end; k = document_data::after(k + 1))
         {
@@ -274,7 +252,7 @@ class editor
         node* const a = own(array);
         if (a->kind != static_cast<std::uint8_t>(value_t::array))
         {
-            throw_type_error(307, "cannot use erase() with ", array.type_name());
+            throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", array.type_name());
         }
         check_index(idx, a->len);
         node* const h = block_of(m_doc, a, 0);
@@ -297,7 +275,7 @@ class editor
     {
         if (NLOHMANN_VIEW_UNLIKELY(v.m_doc != &m_doc || v.m_node == nullptr))
         {
-            throw_invalid_iterator(202, "view does not belong to this document");
+            throw_invalid_iterator(exception_id::iterator_from_other_value, "view does not belong to this document");
         }
         edit_state_of(m_doc);
         return const_cast<node*>(v.m_node); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to this document
@@ -307,7 +285,7 @@ class editor
     {
         if (idx >= limit)
         {
-            throw_out_of_range(401, concat("array index ", std::to_string(idx), " is out of range"));
+            throw_array_index_out_of_range(idx);
         }
     }
 
@@ -448,7 +426,7 @@ class editor
     {
         if (NLOHMANN_VIEW_UNLIKELY(v.m_node == nullptr))
         {
-            throw_type_error(302, "type must be a value, but is ", "discarded");
+            throw_type_error(exception_id::type_mismatch, "type must be a value, but is ", "discarded");
         }
         encoded r;
         if (!is_container(*v.m_node))
@@ -598,7 +576,7 @@ class editor
     {
         if (NLOHMANN_VIEW_UNLIKELY(len >= 0xFFFFFFFFu))
         {
-            throw_out_of_range(416, "strings of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE
+            throw_out_of_range(exception_id::document_too_large, "strings of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE
         }
         node n = plain_node(value_t::string);
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
@@ -673,12 +651,12 @@ class editor
                 return string_node(s.data(), s.size());
             }
             case value_t::binary:
-                throw_type_error(319, "cannot store a binary value in a json_document", "");
+                throw_type_error(exception_id::document_binary_value, "cannot store a binary value in a json_document", "");
             case value_t::discarded:
             case value_t::object:
             case value_t::array:
             default:
-                throw_type_error(302, "type must be a value, but is ", "discarded");
+                throw_type_error(exception_id::type_mismatch, "type must be a value, but is ", "discarded");
         }
     }
 

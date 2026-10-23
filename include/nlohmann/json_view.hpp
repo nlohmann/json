@@ -267,7 +267,7 @@ class basic_json_view
             {
                 return {};
             }
-            detail::view::throw_type_error(305, "cannot use operator[] with a string argument with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", type_name());
         }
         return lookup(key);
     }
@@ -293,7 +293,7 @@ class basic_json_view
             {
                 return {};
             }
-            detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", type_name());
         }
         return idx < m_node->len ? basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx))) : basic_json_view();
     }
@@ -326,12 +326,12 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
-            detail::view::throw_type_error(304, "cannot use at() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
         }
         const basic_json_view r = lookup(key);
         if (NLOHMANN_VIEW_UNLIKELY(r.is_discarded()))
         {
-            detail::view::throw_out_of_range(403, detail::concat("key '", std::string(key.data(), key.size()), "' not found"));
+            detail::view::throw_key_not_found(std::string(key.data(), key.size()));
         }
         return r;
     }
@@ -352,11 +352,11 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
         {
-            detail::view::throw_type_error(304, "cannot use at() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
         }
         if (NLOHMANN_VIEW_UNLIKELY(idx >= m_node->len))
         {
-            detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+            detail::view::throw_array_index_out_of_range(idx);
         }
         return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
     }
@@ -384,7 +384,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
-            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         const basic_json_view r = lookup(key);
         return r.is_discarded() ? default_value : r.template get<T>();
@@ -403,7 +403,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
         {
-            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
         return r.is_discarded() ? default_value : r.template get<T>();
@@ -421,7 +421,7 @@ class basic_json_view
         const iterator it = begin();
         if (NLOHMANN_VIEW_UNLIKELY(it == end()))
         {
-            detail::view::throw_invalid_iterator(214, "cannot get value");
+            detail::view::throw_invalid_iterator(detail::exception_id::iterator_value_unavailable, "cannot get value");
         }
         return *it;
     }
@@ -573,7 +573,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_string()))
         {
-            detail::view::throw_type_error(302, "type must be string, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be string, but is ", type_name());
         }
         return {m_doc->str(*m_node), m_node->len};
     }
@@ -585,7 +585,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_number()))
         {
-            detail::view::throw_type_error(302, "type must be number, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
         }
         return {m_doc->str(*m_node), detail::view::number_length(*m_node)};
     }
@@ -795,7 +795,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_boolean()))
         {
-            detail::view::throw_type_error(302, "type must be boolean, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be boolean, but is ", type_name());
         }
         return (m_node->flags & detail::view::node_flags::is_true) != 0;
     }
@@ -805,7 +805,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_node == nullptr))
         {
-            detail::view::throw_type_error(302, "type must be number, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
         }
         return detail::view::arithmetic_value<T, BasicJsonType>(*m_doc, *m_node);
     }
@@ -814,7 +814,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_null()))
         {
-            detail::view::throw_type_error(302, "type must be null, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be null, but is ", type_name());
         }
         return nullptr;
     }
@@ -1123,7 +1123,7 @@ class basic_json_document
     {
         if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
         {
-            detail::view::throw_type_error(320, "cannot save a discarded json_document");
+            detail::view::throw_type_error(detail::exception_id::document_image_unsupported, "cannot save a discarded json_document");
         }
         return detail::view::save_image(*m_data);
     }
@@ -1224,7 +1224,7 @@ class basic_json_document
                 const std::size_t idx = pointer_index(token);
                 if (idx >= 0xFFFFFFFFu)
                 {
-                    detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+                    detail::view::throw_array_index_out_of_range(idx);
                 }
                 for (std::size_t i = 0; i < idx; ++i)
                 {
@@ -1280,7 +1280,7 @@ class basic_json_document
     {
         if (ptr.empty())
         {
-            detail::view::throw_out_of_range(405, "JSON pointer has no parent");
+            detail::view::throw_out_of_range(detail::exception_id::patch_on_root, "JSON pointer has no parent");
         }
         const view_type parent = root().at(ptr.parent_pointer());
         const auto& token = ptr.back();
@@ -1300,7 +1300,7 @@ class basic_json_document
         static_assert(Editable, "only an editable document can be edited: use basic_json_document<BasicJsonType, true> (json_editable_document)");
         if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
         {
-            detail::view::throw_invalid_iterator(202, "view does not belong to this document");
+            detail::view::throw_invalid_iterator(detail::exception_id::iterator_from_other_value, "view does not belong to this document");
         }
         return detail::view::editor<BasicJsonType, view_type>(*m_data);
     }
@@ -1317,7 +1317,7 @@ class basic_json_document
     {
         if (idx < 0)
         {
-            detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+            detail::view::throw_array_index_out_of_range(idx);
         }
         return static_cast<std::size_t>(idx);
     }
