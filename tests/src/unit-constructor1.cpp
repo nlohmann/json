@@ -369,7 +369,9 @@ TEST_CASE("constructors")
             std::array<int, 3> a{{0, 0, 0}};
             CHECK_THROWS_WITH_AS(j2.get_to(a), "[json.exception.type_error.302] type must be number, but is string", json::type_error&);
             CHECK_THROWS_WITH_AS(j.get_to(a), "[json.exception.out_of_range.401] array index 1 is out of range", json::out_of_range&);
+#if !defined(JSON_NOEXCEPTION) // without exceptions, the get_to calls in CHECK_THROWS_WITH_AS do not run
             CHECK(a[0] == 1);
+#endif
 
             json const j3{"one", "two"};
             CHECK_THROWS_WITH_AS((j3.get<std::array<std::string, 3>>()), "[json.exception.out_of_range.401] array index 2 is out of range", json::out_of_range&);
