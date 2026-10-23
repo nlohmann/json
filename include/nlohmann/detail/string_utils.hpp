@@ -210,8 +210,8 @@ places, which differ in speed, diagnostics, and how they read the input:
   bulk string scan, the bulk path of the BON8 reader, and the BON8 writer.
   They must accept exactly what the lexer's switch accepts.
 - the byte path of binary_reader::get_bon8_string(): BON8 input without bulk
-  access, and the bytes the bulk path leaves to it. It takes the valid range
-  of the second byte from utf8_shape().
+  access, and the bytes the bulk path leaves to it. It keeps its own ranges:
+  taking them from utf8_shape() made BON8 decoding 2-3% slower (#5891).
 - check_utf8() in detail/view/edit.hpp: strings stored in an editable
   json_document, with the index of the offending byte. It also uses
   utf8_shape().

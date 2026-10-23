@@ -3810,11 +3810,23 @@ class binary_reader
 
             // the valid range of the second byte excludes overlong forms,
             // surrogates, and code points above U+10FFFF
-            // (RFC 3629, section 4); length 0 flags the lead bytes
-            // 0xF5..0xF7, which BON8 can read but UTF-8 cannot encode
-            const auto shape = utf8_shape(static_cast<std::uint8_t>(byte));
-            const int continuation_bytes = (byte <= 0xDF) ? 1 : ((byte <= 0xEF) ? 2 : 3);
-            const bool valid_second = shape.length != 0 && second >= shape.second_lo && second <= shape.second_hi;
+            // (RFC 3629, section 4)
+            int continuation_bytes = 0;
+            bool valid_second = true;
+            if (byte <= 0xDF)
+            {
+                continuation_bytes = 1;
+            }
+            else if (byte <= 0xEF)
+            {
+                continuation_bytes = 2;
+                valid_second = (byte != 0xE0 || second >= 0xA0) && (byte != 0xED || second <= 0x9F);
+            }
+            else
+            {
+                continuation_bytes = 3;
+                valid_second = byte <= 0xF4 && (byte != 0xF0 || second >= 0x90) && (byte != 0xF4 || second <= 0x8F);
+            }
 
             if (JSON_HEDLEY_UNLIKELY(!valid_second))
             {
