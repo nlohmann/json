@@ -6399,7 +6399,7 @@ struct is_trivial_element
 
 // the element type may not be default constructible: construct every element
 // in place (a pack expansion that is unrolled N times)
-template < typename BasicJsonType, typename T, std::size_t N >
+template<typename BasicJsonType, typename T, std::size_t N>
 std::array<T, N> from_json_make_array(const BasicJsonType& j, identity_tag<std::array<T, N>> tag,
                                       std::false_type /*is_trivial_element*/)
 {
@@ -6408,7 +6408,7 @@ std::array<T, N> from_json_make_array(const BasicJsonType& j, identity_tag<std::
 
 // a trivial element type cannot tell default construction plus assignment from
 // construction in place, so use a loop instead of unrolling N conversions
-template < typename BasicJsonType, typename T, std::size_t N >
+template<typename BasicJsonType, typename T, std::size_t N>
 std::array<T, N> from_json_make_array(const BasicJsonType& j, identity_tag<std::array<T, N>> /*unused*/,
                                       std::true_type /*is_trivial_element*/)
 {
