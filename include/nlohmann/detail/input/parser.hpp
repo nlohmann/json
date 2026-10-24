@@ -56,8 +56,8 @@ using parser_callback_t =
 template<typename SAX>
 struct sax_ignores_number_text : std::false_type {};
 
-template<typename BasicJsonType, typename InputAdapterType>
-struct sax_ignores_number_text<json_sax_dom_parser<BasicJsonType, InputAdapterType>> : std::true_type {};
+template<typename BasicJsonType, typename InputAdapterType, bool Collect>
+struct sax_ignores_number_text<json_sax_dom_parser<BasicJsonType, InputAdapterType, Collect>> : std::true_type {};
 
 template<typename BasicJsonType, typename InputAdapterType>
 struct sax_ignores_number_text<json_sax_dom_callback_parser<BasicJsonType, InputAdapterType>> : std::true_type {};
@@ -131,7 +131,7 @@ class parser
         }
         else
         {
-            json_sax_dom_parser<BasicJsonType, InputAdapterType> sdp(result, allow_exceptions, &m_lexer);
+            json_sax_dom_parser<BasicJsonType, InputAdapterType, true> sdp(result, allow_exceptions, &m_lexer);
 
             // in case of an error, return a discarded value
             if (!parse_dom(sdp, strict))
@@ -250,12 +250,19 @@ class parser
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse_internal(SAX* sax)
     {
+        // value to avoid a goto (see comment where set to true)
+        bool skip_to_state_evaluation = false;
+
         // stack to remember the hierarchy of structured values we are parsing
         // true = array; false = object (bytes, not std::vector<bool>, whose
         // push_back() is a call with GCC)
         std::vector<std::uint8_t> states;
-        // value to avoid a goto (see comment where set to true)
-        bool skip_to_state_evaluation = false;
+        // a document that starts with a container pushes onto the stack at
+        // once: allocate it in one step instead of growing it from 1 byte
+        if (last_token == token_type::begin_object || last_token == token_type::begin_array)
+        {
+            states.reserve(32);
+        }
 
         while (true)
         {
