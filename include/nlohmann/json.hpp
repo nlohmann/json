@@ -2798,6 +2798,28 @@ public:
         return result;
     }
 
+    /// @brief serialization using JSON Canonicalization Scheme (RFC 8785)
+    /// @return canonical JSON representation
+    /// @sa https://datatracker.ietf.org/doc/html/rfc8785
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    string_t dump_canonical() const
+    {
+        string_t result;
+        detail::output_string_adapter<char, string_t> string_adapter(result);
+        serializer s(string_adapter, ' ', false, false, 0, error_handler_t::strict);
+        s.dump_canonical(*this);
+        return result;
+    }
+
+    /// @brief serialization using JSON Canonicalization Scheme (RFC 8785)
+    /// @sa https://datatracker.ietf.org/doc/html/rfc8785
+    static void dump_canonical(const basic_json& j, detail::output_adapter<char> o)
+    {
+        const detail::output_adapter_t<char> adapter = o;
+        serializer s(*adapter, ' ', false, false, 0, error_handler_t::strict);
+        s.dump_canonical(j);
+    }
+
     /// @brief return the type of the JSON value (explicit)
     /// @sa https://json.nlohmann.me/api/basic_json/type/
     JSON_HEDLEY_WARN_UNUSED_RESULT
