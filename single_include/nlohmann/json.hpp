@@ -16060,6 +16060,8 @@ class json_sax_dom_parser : public json_sax_dom_error_state
     /// directly if the value was the one too many.
     void place_container(const frame& f, frame* enclosing, BasicJsonType&& value, const bool enclosing_is_innermost)
     {
+        // only a container with a slot may have no enclosing container
+        JSON_ASSERT(f.slot != nullptr || enclosing != nullptr);
         if (f.slot != nullptr)
         {
             *f.slot = std::move(value);
