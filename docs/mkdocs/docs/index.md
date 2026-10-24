@@ -6,7 +6,9 @@ JSON for Modern C++ is a header-only C++11 library that turns JSON into a first-
 magic of modern C++ so that creating, reading, and modifying JSON values feels as natural as it does in languages like
 Python. The whole library is available as a single header, `json.hpp`, with no dependencies, no subproject, and no
 complex build system to set up; a companion header, `json_fwd.hpp`, provides forward declarations to keep compile times
-down. See [header-only integration](integration/index.md) for details. It is heavily unit-tested with 100% code
+down, `<nlohmann/json_literals.hpp>` holds the user-defined string literals on their own, and
+`<nlohmann/json_view.hpp>` adds zero-copy views and editable documents. See
+[header-only integration](integration/index.md) for details. It is heavily unit-tested with 100% code
 coverage, checked with Valgrind and the Clang Sanitizers for memory leaks, and continuously fuzz-tested by Google
 OSS-Fuzz.
 
@@ -58,7 +60,8 @@ Conda, and more), and pkg-config.
 
     ---
 
-    Creating, parsing, accessing, and serializing JSON values, JSON Pointer/Patch, binary formats, and more.
+    Creating, parsing, accessing, and serializing JSON values, JSON Pointer/Patch, binary formats, zero-copy views,
+    and more.
 
     [:octicons-arrow-right-24: Features](features/index.md)
 
@@ -74,7 +77,8 @@ Conda, and more), and pkg-config.
 
     ---
 
-    The complete reference for `basic_json` and its member functions, types, and related classes.
+    The complete reference for `basic_json` and its member functions, types, and related classes, as well as for
+    `json_document` and `json_view`.
 
     [:octicons-arrow-right-24: API documentation](api/basic_json/index.md)
 

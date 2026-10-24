@@ -18,6 +18,7 @@ flowchart LR
 The [`parse`](../../api/basic_json/parse.md) function reads a JSON value from an input. The input can be
 
 - a string (`#!cpp std::string`, C string, or string literal),
+- a wide string (`#!cpp std::u16string`, `#!cpp std::u32string`, or `#!cpp std::wstring`, or a wide string literal),
 - a `#!cpp std::istream` (e.g., an `#!cpp std::ifstream` reading from a file),
 - a `#!cpp FILE*` pointer,
 - a pair of iterators over a contiguous range (e.g., a `#!cpp std::vector<std::uint8_t>`), or
@@ -32,11 +33,17 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
-The input must be encoded in UTF-8; other encodings are not supported. A single input may contain only one JSON value.
+The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which
+is read as UTF-16 or UTF-32 -- depending on the character type -- and converted to UTF-8; see the
+[`parse`](../../api/basic_json/parse.md) page for an example. A single input may contain only one JSON value.
 Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](json_lines.md) format.
 
 By default, the library rejects comments and trailing commas. Both can be enabled with parameters of the `parse`
 function — see [comments](../comments.md) and [trailing commas](../trailing_commas.md).
+
+[`basic_json_document::parse`](../../api/basic_json_document/parse.md) accepts the same inputs with the same options,
+but keeps the result in a document rather than in a `basic_json` value; see
+[Documents and views](#documents-and-views) below.
 
 ## Strictness and trailing data
 
@@ -98,6 +105,26 @@ The library offers two parsing models:
 You can influence a DOM parse without switching to the SAX interface by passing a
 [parser callback](parser_callbacks.md), which is called during parsing and can, for example, discard parts of the input.
 
+## Documents and views
+
+A third model sits between DOM and SAX: [`basic_json_document::parse`](../../api/basic_json_document/parse.md) parses
+the input into a document that keeps the text and a flat index of the values in it, and
+[`basic_json_view`](../../api/basic_json_view/index.md) gives read-only access to the values through that index.
+The whole input is validated during parsing, but only integers and strings that contain escape sequences are converted
+right away (the strings into a buffer owned by the document). Floating-point numbers and all other strings stay in the
+source text and are only converted when they are read, which is faster and uses less memory than building a tree of `basic_json` values when only parts
+of the document are needed. A document can also be
+modified in place, and it can be saved and loaded again without parsing it.
+
+```cpp
+#include <nlohmann/json_view.hpp>
+
+json_document doc = json_document::parse(R"({"happy": true, "pi": 3.141})");
+std::cout << doc.root()["happy"].get<bool>() << '\n';
+```
+
+See [Zero-copy JSON views](../json_view.md) for the concept and the trade-offs.
+
 ## Exceptions
 
 When the input is not valid JSON, the `parse` function throws an exception by default. If exceptions are undesired or
@@ -108,6 +135,7 @@ options.
 ## See also
 
 - [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input
+- [`basic_json_document::parse`](../../api/basic_json_document/parse.md) - deserialize into a document instead of a value
 - [`accept`](../../api/basic_json/accept.md) - check if the input is valid JSON
 - [`sax_parse`](../../api/basic_json/sax_parse.md) - generate SAX events
 - [JSON Lines](json_lines.md) - parse newline-delimited JSON
@@ -115,3 +143,4 @@ options.
 - [SAX interface](sax_interface.md) - implement a custom SAX handler
 - [parsing and exceptions](parse_exceptions.md) - control error handling
 - [parsing untrusted input](untrusted_input.md) - what to consider when parsing input from untrusted sources
+- [Zero-copy JSON views](../json_view.md) - parse into a document and read it through a view

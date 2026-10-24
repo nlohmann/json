@@ -25,6 +25,10 @@ static basic_json parse(IteratorType first, SentinelType last,
     respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to
     the iterator type with `operator!=`.
 
+    Ill-formed UTF-16 and UTF-32 sequences are rejected: a lone surrogate, a high surrogate that is not followed by its
+    low surrogate, and a code point above `U+10FFFF` all yield a
+    [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101).
+
 ## Template parameters
 
 `InputType`
@@ -34,9 +38,12 @@ static basic_json parse(IteratorType first, SentinelType last,
     - a `FILE` pointer (throws if null)
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters (throws if null)
-    - a `std::string`
+    - a `std::string` or a `std::string_view` (C++17)
     - a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
       (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
+    - wide characters (`wchar_t`, `char16_t`, `char32_t`), which are converted to UTF-8: a wide string object
+      (`std::wstring`, `std::u16string`, `std::u32string`) or an array (e.g. a wide string literal); a pointer to a
+      null-terminated wide string (e.g. `std::u16string::c_str()`) is not supported
 
 `IteratorType`
 :   a compatible iterator type, for instance.
@@ -111,6 +118,13 @@ Invalid Unicode escapes and unpaired surrogates in the input are reported as
 By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input, rather than as an ordinary (and,
 outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-bytes-in-the-input) for details and the
 [`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) macro to opt into rejecting it instead.
+
+!!! tip "Parsing into a document instead of a value"
+
+    [`basic_json_document::parse`](../basic_json_document/parse.md) accepts the same inputs and the same options, but
+    keeps the result as a flat index of the parsed values instead of a tree of `basic_json` values. It is faster and uses
+    less memory when only parts of the document are read, and it also accepts a pointer to a null-terminated wide string,
+    which `parse()` does not. See [Zero-copy JSON views](../../features/json_view.md).
 
 !!! tip "Performance"
 
@@ -250,6 +264,22 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/trailing_commas.output"
     ```
 
+??? example "Example: parse from UTF-16, UTF-32, and wide strings"
+
+    The encoding is deduced from the character type of the input; `std::u16string` and `std::u32string` are interpreted
+    as UTF-16 and UTF-32, and `std::wstring` uses the platform's `wchar_t` width. String literals like `u"..."`,
+    `U"..."`, and `L"..."` work as well, as do iterators over wide characters.
+
+    ```cpp
+    --8<-- "examples/parse__wide_string.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/parse__wide_string.output"
+    ```
+
 ## See also
 
 - [accept](accept.md) - check if the input is valid JSON
@@ -280,6 +310,9 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
   time).
 - Parsing from a `FILE*` locks the file once instead of once per character in version 3.13.0
   ([`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md) restores `std::fgetc`).
+- Ill-formed UTF-16 and UTF-32 input (a lone surrogate, a high surrogate that is not followed by its low surrogate, or
+  a code point above `U+10FFFF`) is rejected with `parse_error.101` in version 3.13.0; before that, some such
+  sequences were accepted or ended the input silently.
 
 !!! warning "Deprecation"
 
