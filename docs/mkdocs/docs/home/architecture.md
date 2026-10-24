@@ -339,6 +339,11 @@ The `serializer` (used by [`dump`](../api/basic_json/dump.md) and [`operator<<`]
 - `output_stream_adapter` writes to a `std::ostream`.
 - `output_string_adapter` appends to a string.
 
+The `binary_writer` does not call an adapter for every byte. The `to_*` functions that return a `std::vector` write
+into the vector through a sink (`output_vector_sink`) that is not virtual. The functions that take an output adapter
+write through a sink (`output_adapter_sink`) that collects the output in a buffer of one kibibyte and passes it to the
+adapter in blocks, so that the adapter is called (and a stream locked) once per block instead of once per value.
+
 ## Value conversion
 
 Values are converted from and to other types with the `JSONSerializer` template parameter. The default,

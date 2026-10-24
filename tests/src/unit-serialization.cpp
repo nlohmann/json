@@ -1580,3 +1580,94 @@ TEST_CASE("invalid UTF-8 at every position is handled like the reference")
         }
     }
 }
+
+TEST_CASE("short strings are written like the reference, as values and as keys")
+{
+    // strings of up to 16 characters (32 with vector instructions) that need no
+    // escaping are written as a whole (together with the quotes and, for a key,
+    // the colon); everything else, including a string that is merely short,
+    // takes the general path.
+    // Every length around the edges of the size classes of the fast path is
+    // combined with each kind of byte that must send a string to the general
+    // path, at each position, and compared with the reference for values and,
+    // via the value, for keys.
+    const std::vector<std::string> specials =
+    {
+        "\"", "\\", "\n", "\x1f", "\x7f", "\xc3\xa9", "\xe2\x82\xac", "\xf0\x9f\x98\x80", "\xff", "\x80", "\xc3"
+    };
+
+    for (std::size_t length = 0; length <= 36; ++length)
+    {
+        const std::string plain(length, 'k');
+        check_dump_against_reference(plain, false);
+
+        for (const auto& special : specials)
+        {
+            for (std::size_t pos = 0; pos <= length; ++pos)
+            {
+                std::string s = plain;
+                s.insert(pos, special);
+                check_dump_against_reference(s, false);
+
+                for (const bool ensure_ascii :
+                        {
+                            false, true
+                        })
+                {
+                    // a key and a value are written alike, in compact and
+                    // in pretty-printed form
+                    const json value = s;
+                    const json object = json::object({{s, 1}});
+                    for (const auto error_handler :
+                            {
+                                json::error_handler_t::replace, json::error_handler_t::keep
+                            })
+                    {
+                        const std::string quoted = value.dump(-1, ' ', ensure_ascii, error_handler);
+                        CHECK(object.dump(-1, ' ', ensure_ascii, error_handler) == "{" + quoted + ":1}");
+                        CHECK(object.dump(2, ' ', ensure_ascii, error_handler) == "{\n  " + quoted + ": 1\n}");
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("runs of multi-byte characters are escaped like the reference under ensure_ascii")
+{
+    // a run of well-formed multi-byte characters is escaped straight into the
+    // write buffer; it has to flush that mid-run, stop at an ASCII character or
+    // an ill-formed sequence and leave those to the general path, and pick up
+    // behind what the general path has pending
+    const std::vector<std::string> characters =
+    {
+        "\xc2\x80", "\xdf\xbf", "\xe0\xa0\x80", "\xe2\x82\xac", "\xed\x9f\xbf", "\xef\xbf\xbf",
+        "\xf0\x90\x80\x80", "\xf0\x9f\x98\x80", "\xf4\x8f\xbf\xbf"
+    };
+    const std::vector<std::string> interruptions =
+    {
+        "", "a", "\n", "\"", "\x7f", "\xff", "\x80", "\xc3", "\xe2\x82", "\xf0\x9f\x98", "\xed\xa0\x80"
+    };
+
+    for (std::size_t shift = 0; shift <= 13; ++shift)
+    {
+        for (const auto& interruption : interruptions)
+        {
+            for (const std::size_t count :
+                    {
+                        std::size_t{1}, std::size_t{2}, std::size_t{85}, std::size_t{200}
+                    })
+            {
+                std::string s(shift, 'x');
+                for (std::size_t i = 0; i < count; ++i)
+                {
+                    s += characters[(i + shift) % characters.size()];
+                }
+                s += interruption;
+                s += characters[shift % characters.size()];
+                s += characters[(shift + 3) % characters.size()];
+                check_dump_against_reference(s, shift < 2);
+            }
+        }
+    }
+}

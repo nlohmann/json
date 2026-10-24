@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <algorithm> // max
+#include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint8_t
 #include <string> // string
@@ -40,12 +40,13 @@ template<typename BasicJsonType, bool Editable>
 BasicJsonType materialize(const document_data& d, const node* n)
 {
     using string_t = typename BasicJsonType::string_t;
-    using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>>;
+    using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>, true>;
     using nav = navigation<Editable>;
 
     // the open containers: their next element (or key of the next member),
-    // their end, and whether they are objects; sized once from the
-    // document's deepest nesting (for a subtree an upper bound)
+    // their end, and whether they are objects; for the first 16 levels on the
+    // stack, else sized once from the document's deepest nesting (for a
+    // subtree an upper bound)
     struct frame
     {
         const node* pos;
@@ -53,10 +54,43 @@ BasicJsonType materialize(const document_data& d, const node* n)
         bool object;
     };
 
+    // a scalar needs neither the handler nor the stack of open containers
+    switch (static_cast<value_t>(n->kind))
+    {
+        case value_t::string:
+            return BasicJsonType(string_t(d.str(*n), n->len));
+        case value_t::number_integer:
+            return BasicJsonType(static_cast<typename BasicJsonType::number_integer_t>(static_cast<std::int64_t>(integer_bits(*n))));
+        case value_t::number_unsigned:
+            return BasicJsonType(static_cast<typename BasicJsonType::number_unsigned_t>(integer_bits(*n)));
+        case value_t::number_float:
+            return BasicJsonType(float_value<typename BasicJsonType::number_float_t>(d, *n));
+        case value_t::boolean:
+            return BasicJsonType((n->flags & node_flags::is_true) != 0);
+        case value_t::null:
+            return BasicJsonType(nullptr);
+        case value_t::object:
+        case value_t::array:
+        case value_t::binary:
+        case value_t::discarded:
+        default:
+            break;
+    }
+
     BasicJsonType result;
     sax_t sax(result, true);
     const string_t no_token{};
-    std::vector<frame> open((std::max)(d.max_depth, std::size_t{1}));
+    // (shallow subtrees on the stack: a call for a small value then allocates only for the value)
+    std::array<frame, 16> shallow; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): filled as containers open
+    std::vector<frame> deep{};
+    frame* open = shallow.data();
+    std::size_t capacity = shallow.size();
+    if (d.max_depth > capacity)
+    {
+        deep.resize(d.max_depth);
+        open = deep.data();
+        capacity = deep.size();
+    }
     std::size_t depth = 0;
     for (;;)
     {
@@ -76,9 +110,13 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 {
                     sax.start_array(n->len);
                 }
-                if (NLOHMANN_VIEW_UNLIKELY(depth == open.size()))
+                if (NLOHMANN_VIEW_UNLIKELY(depth == capacity))
                 {
-                    open.resize(depth * 2); // (deeper than the recorded nesting, e.g. after edits)
+                    // (deeper than the recorded nesting, e.g. after edits)
+                    deep.assign(open, open + depth);
+                    deep.resize(depth * 2);
+                    open = deep.data();
+                    capacity = deep.size();
                 }
                 open[depth++] = frame{nav::first(d, n), nav::end(d, n), object};
                 break;

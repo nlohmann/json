@@ -139,9 +139,12 @@ if __name__ == '__main__':
 
     namespaces += [f'{namespaces[0]}::{ns}' for ns in inline_namespaces]
 
+    # The template renders a local XML file, not a web response, and autoescape is enabled.
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=sys.path[0]), autoescape=True, trim_blocks=True,
                                                             lstrip_blocks=True, keep_trailing_newline=True)
     template = env.get_template('nlohmann_json.natvis.j2')
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
     natvis = template.render(namespaces=namespaces)
 
     output = args.output or os.path.join(args.repo_root, 'nlohmann_json.natvis')

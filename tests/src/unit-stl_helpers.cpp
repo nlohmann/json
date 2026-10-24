@@ -78,7 +78,8 @@ TEST_CASE("detail::bit_cast")
 
     // to and from byte arrays
     const auto bytes = bit_cast<std::array<std::uint8_t, 4>>(std::uint32_t{0x01020304u});
-    CHECK(bit_cast<std::uint32_t>(bytes) == 0x01020304u);
+    // qualified: with a std::array argument, ADL would also find std::bit_cast in C++20
+    CHECK(nlohmann::detail::bit_cast<std::uint32_t>(bytes) == 0x01020304u);
 
     static_assert(noexcept(bit_cast<std::uint64_t>(1.0)), "bit_cast must be noexcept");
 }

@@ -740,6 +740,26 @@ TEST_CASE("json_view images: errors")
         }
     }
 
+    SECTION("invalid UTF-8 of a decoded string: the compact dump writes it, the others throw")
+    {
+        const json_document d = json_document::parse(R"({"k\n":"\u00e9x"})");
+        std::vector<std::uint8_t> image = d.save();
+        const std::size_t arena = text_at(image) + header_size_field(image, 16) + 1;
+        image[arena + 3] = 0x28; // the key is "k\n"; the value starts at 3: 0xC3 0x28 is invalid
+        const json_document loaded = json_document::load(image, image_check::bounds);
+        CHECK(loaded.root().dump().size() == 13);
+        for (const int indent :
+                {
+                    0, 2
+                })
+        {
+            CHECK_THROWS_AS(loaded.root().dump(indent), json::type_error);
+            CHECK_THROWS_AS(loaded.root().dump(indent, ' ', true), json::type_error);
+        }
+        CHECK_THROWS_AS(loaded.root().dump(-1, ' ', true), json::type_error);
+        CHECK_THROWS_WITH_AS(loaded.root().dump(2), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0x28", json::type_error&);
+    }
+
     SECTION("a literal as the root: dump() after loading")
     {
         for (const char* text :

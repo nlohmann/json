@@ -523,6 +523,58 @@ TEST_CASE("json_view builder: strings across vector blocks")
     }
 }
 
+TEST_CASE("json_view builder: escapes between runs of text")
+{
+    // The text between escapes is copied 16 bytes at a time where there are
+    // that many bytes left, and with the UTF-8 check where there is
+    // non-ASCII text. Runs of every length from 0 to 40 between valid and
+    // invalid escapes, UTF-8 sequences, and control characters, in strings
+    // that are cut at all places near the end of the text.
+    const std::array<const char*, 9> valid = {{"\\n", "\\\"", "\\\\", "\\/", "\\t", "\\u00e4", "\\u20ac", "\\ud83d\\ude00", "\\u0000"}};
+    const std::array<const char*, 9> invalid = {{"\\x", "\\ud800", "\\udc00", "\\u12G4", "\\u12", "\\ud83dx", "\\ud83d\\u0041", "\\", "\x01"}};
+    const std::array<const char*, 6> utf8 = {{"\xc3\xa4", "\xe2\x82\xac", "\xf0\x9f\x98\x80", "\xc3", "\xff", "\x80"}};
+    std::mt19937 rng(2026); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+    for (std::size_t run = 0; run <= 40; ++run)
+    {
+        for (int i = 0; i < 60; ++i)
+        {
+            std::string content = std::string(rng() % 20, 'a');
+            const auto pieces = 1 + (rng() % 6);
+            for (unsigned k = 0; k < pieces; ++k)
+            {
+                content += valid[rng() % valid.size()];
+                content += std::string(k == 0 ? run : rng() % 41, static_cast<char>('b' + (rng() % 20)));
+                switch (rng() % 8)
+                {
+                    case 0:
+                        content += utf8[rng() % 3];
+                        break;
+                    case 1:
+                        content += utf8[rng() % utf8.size()];
+                        break;
+                    case 2:
+                        content += invalid[rng() % invalid.size()];
+                        break;
+                    default:
+                        break;
+                }
+            }
+            check_string(content);
+            check_string(content.substr(0, content.size() - (rng() % 4)));
+        }
+    }
+    // the text before the first escape, and runs and escapes at the end of the text
+    for (std::size_t before = 0; before <= 40; ++before)
+    {
+        for (const char* escape : valid)
+        {
+            check_string(std::string(before, 'a') + escape);
+            check_string(std::string(before, 'a') + escape + std::string(before % 19, 'z'));
+            check_string(std::string(before, 'a') + escape + escape + std::string(before % 19, 'z'));
+        }
+    }
+}
+
 TEST_CASE("json_view node integer bits")
 {
     using nlohmann::detail::view::integer_bits;

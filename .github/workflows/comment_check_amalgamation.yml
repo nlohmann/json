@@ -37,6 +37,14 @@ jobs:
             var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "pr"
             })[0];
+            // a run that failed before its jobs started (e.g. a stale queued
+            // run cancelled long after its push) has no artifact to report on
+            if (!matchArtifact) {
+              core.notice('Run ${{ github.event.workflow_run.id }} has no "pr" artifact; nothing to comment on.');
+              core.setOutput('found', 'false');
+              return;
+            }
+            core.setOutput('found', 'true');
             var download = await github.rest.actions.downloadArtifact({
                owner: context.repo.owner,
                repo: context.repo.repo,
@@ -51,9 +59,11 @@ jobs:
       # Extract the untrusted PR artifact into a dedicated empty directory and
       # read only the two expected files by fixed path afterwards. This avoids a
       # malicious archive overwriting workspace files or escaping via ../ paths.
-      - run: unzip -o pr.zip -d ./pr_artifact
+      - if: steps.download.outputs.found == 'true'
+        run: unzip -o pr.zip -d ./pr_artifact
 
       - name: 'Comment on PR'
+        if: steps.download.outputs.found == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

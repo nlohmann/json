@@ -492,3 +492,278 @@ TEST_CASE("binary_reserve_hint never over-reserves")
         CHECK(nlohmann::detail::binary_reserve_hint(json({{"a", 1}, {"b", 2}})) == 5);
     }
 }
+
+namespace
+{
+
+// numbers around every boundary of the integer encodings, and floats of each
+// kind (exact in float, needing double, special values)
+std::vector<json> boundary_numbers()
+{
+    std::vector<json> numbers;
+    for (int k = 0; k < 64; ++k)
+    {
+        const std::uint64_t p = std::uint64_t{1} << k;
+        for (const std::uint64_t d :
+                {
+                    p - 1, p, p + 1
+                })
+        {
+            numbers.emplace_back(d);
+            if (d <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
+            {
+                numbers.emplace_back(static_cast<std::int64_t>(d));
+                numbers.emplace_back(-static_cast<std::int64_t>(d));
+                numbers.emplace_back(-static_cast<std::int64_t>(d) - 1);
+            }
+        }
+    }
+    numbers.emplace_back((std::numeric_limits<std::int64_t>::min)());
+    numbers.emplace_back((std::numeric_limits<std::uint64_t>::max)());
+    for (const double f :
+            {
+                0.0, -0.0, 1.0, -1.0, 0.5, 0.1, 3.25, 1e300, -1e-300, 3.4028234663852886e38, 1e39,
+                std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(),
+                std::numeric_limits<double>::quiet_NaN()
+            })
+    {
+        numbers.emplace_back(f);
+    }
+    return numbers;
+}
+
+// the concatenation of the encodings of the elements of @a numbers[first, first + count)
+template<typename Single>
+std::vector<std::uint8_t> concat_singles(const std::vector<json>& numbers, const std::size_t first, const std::size_t count, Single single)
+{
+    std::vector<std::uint8_t> bytes;
+    for (std::size_t i = first; i < first + count; ++i)
+    {
+        const auto one = single(numbers[i]);
+        bytes.insert(bytes.end(), one.begin(), one.end());
+    }
+    return bytes;
+}
+
+} // namespace
+
+// Runs of numbers in arrays are encoded straight into space reserved from the
+// sink, by code that is separate from the encoding of a single value. Both have
+// to agree on every number: an array is its head and the encodings of its
+// elements, one after the other.
+TEST_CASE("runs of numbers in arrays are encoded as the numbers one by one")
+{
+    const std::vector<json> numbers = boundary_numbers();
+
+    // arrays of every length that a one-byte head covers, so that runs are as
+    // long as, and longer and shorter than, what fits one reservation
+    for (const std::size_t count :
+            {
+                1u, 2u, 3u, 5u, 14u, 15u, 23u
+            })
+    {
+        for (std::size_t first = 0; first + count <= numbers.size(); first += 7)
+        {
+            const json array(std::vector<json>(numbers.begin() + static_cast<std::ptrdiff_t>(first),
+                                               numbers.begin() + static_cast<std::ptrdiff_t>(first + count)));
+            CAPTURE(array.dump(-1, ' ', false, json::error_handler_t::replace))
+
+            std::vector<std::uint8_t> expected{static_cast<std::uint8_t>(0x80 + count)};
+            auto elements = concat_singles(numbers, first, count, [](const json & j)
+            {
+                return json::to_cbor(j);
+            });
+            expected.insert(expected.end(), elements.begin(), elements.end());
+            CHECK(json::to_cbor(array) == expected);
+
+            expected.assign(1, static_cast<std::uint8_t>(count <= 15 ? 0x90 + count : 0xDC));
+            if (count > 15)
+            {
+                expected.push_back(0);
+                expected.push_back(static_cast<std::uint8_t>(count));
+            }
+            elements = concat_singles(numbers, first, count, [](const json & j)
+            {
+                return json::to_msgpack(j);
+            });
+            expected.insert(expected.end(), elements.begin(), elements.end());
+            CHECK(json::to_msgpack(array) == expected);
+
+            for (const bool bjdata :
+                    {
+                        false, true
+                    })
+            {
+                expected.assign(1, static_cast<std::uint8_t>('['));
+                elements = concat_singles(numbers, first, count, [bjdata](const json & j)
+                {
+                    return bjdata ? json::to_bjdata(j) : json::to_ubjson(j);
+                });
+                expected.insert(expected.end(), elements.begin(), elements.end());
+                expected.push_back(static_cast<std::uint8_t>(']'));
+                CHECK((bjdata ? json::to_bjdata(array) : json::to_ubjson(array)) == expected);
+            }
+
+            // BON8 has no integers above the int64 range
+            bool representable = true;
+            for (std::size_t i = first; i < first + count; ++i)
+            {
+                representable = representable && bon8_representable(numbers[i]);
+            }
+            if (representable)
+            {
+                expected.assign(1, static_cast<std::uint8_t>(count <= 4 ? 0x80 + count : 0x85));
+                elements = concat_singles(numbers, first, count, [](const json & j)
+                {
+                    return json::to_bon8(j);
+                });
+                expected.insert(expected.end(), elements.begin(), elements.end());
+                if (count > 4)
+                {
+                    expected.push_back(0xFE);
+                }
+                CHECK(json::to_bon8(array) == expected);
+            }
+            else
+            {
+                CHECK_THROWS_AS(json::to_bon8(array), json::out_of_range&);
+            }
+        }
+    }
+}
+
+// An array that is written in more than one reservation (more numbers than fit
+// one), and arrays of an index with more digits, round trip for every format.
+TEST_CASE("large arrays and many digits of indices round trip")
+{
+    json array = json::array();
+    for (int i = 0; i < 12000; ++i)
+    {
+        switch (i % 4)
+        {
+            case 0:
+                array.push_back(i);
+                break;
+            case 1:
+                array.push_back(-i);
+                break;
+            case 2:
+                array.push_back(i * 0.25);
+                break;
+            default:
+                array.push_back(i % 8 == 3);
+                break;
+        }
+    }
+    json document = json::object();
+    document["numbers"] = array;
+    document["nested"] = json::array({array, "text", array});
+
+    CHECK(json::from_cbor(json::to_cbor(document)) == document);
+    CHECK(json::from_msgpack(json::to_msgpack(document)) == document);
+    CHECK(json::from_ubjson(json::to_ubjson(document)) == document);
+    CHECK(json::from_ubjson(json::to_ubjson(document, true, true)) == document);
+    CHECK(json::from_bjdata(json::to_bjdata(document)) == document);
+    CHECK(json::from_bson(json::to_bson(document)) == document);
+    CHECK(json::from_bon8(json::to_bon8(document)) == document);
+}
+
+// Strings and keys are written with their head in one reservation up to a
+// length; around that length, and with every kind of head, they must read back.
+TEST_CASE("strings of every head length round trip")
+{
+    json document = json::object();
+    json array = json::array();
+    for (const std::size_t length :
+            {
+                0u, 1u, 2u, 3u, 4u, 7u, 8u, 15u, 16u, 17u, 23u, 24u, 25u, 31u, 32u, 33u, 63u, 127u, 128u, 129u, 200u, 245u, 246u, 247u, 248u, 249u, 250u, 251u, 252u, 253u, 254u, 255u, 256u, 257u, 300u, 1000u, 65535u, 65536u, 70000u
+            })
+    {
+        const std::string text(length, 'x');
+        array.push_back(text);
+        document[std::string(length, 'k')] = text;
+    }
+    document["array"] = array;
+
+    CHECK(json::from_cbor(json::to_cbor(document)) == document);
+    CHECK(json::from_msgpack(json::to_msgpack(document)) == document);
+    CHECK(json::from_ubjson(json::to_ubjson(document)) == document);
+    CHECK(json::from_ubjson(json::to_ubjson(document, true, true)) == document);
+    CHECK(json::from_bjdata(json::to_bjdata(document)) == document);
+    CHECK(json::from_bson(json::to_bson(document)) == document);
+    CHECK(json::from_bon8(json::to_bon8(document)) == document);
+}
+
+#if !defined(JSON_NOEXCEPTION)
+// What a write that throws leaves behind in an output adapter is what was written
+// before it, whatever the adapter and however the adapter sink buffers. (Without
+// exceptions, the writes in CHECK_THROWS_AS do not run.)
+TEST_CASE("a write that throws leaves the same bytes in every kind of output")
+{
+    json array = json::array();
+    for (int i = 0; i < 700; ++i)
+    {
+        array.push_back(i * 1000);
+        array.push_back("text " + std::to_string(i));
+    }
+    array.push_back("bad \xFF byte");
+    json document = json::object();
+    document["first"] = array;
+    document["second"] = 1;
+
+    const auto strict = json::error_handler_t::strict;
+
+    SECTION("cbor")
+    {
+        std::vector<std::uint8_t> as_vector;
+        std::string as_string;
+        std::ostringstream as_stream;
+        CHECK_THROWS_AS(json::to_cbor(document, as_vector, strict), json::type_error&);
+        CHECK_THROWS_AS(json::to_cbor(document, as_string, strict), json::type_error&);
+        CHECK_THROWS_AS(json::to_cbor(document, as_stream, strict), json::type_error&);
+        CHECK(!as_vector.empty());
+        CHECK(std::string(reinterpret_cast<const char*>(as_vector.data()), as_vector.size()) == as_string); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        CHECK(as_stream.str() == as_string);
+    }
+
+    SECTION("msgpack")
+    {
+        std::vector<std::uint8_t> as_vector;
+        std::string as_string;
+        std::ostringstream as_stream;
+        CHECK_THROWS_AS(json::to_msgpack(document, as_vector, strict), json::type_error&);
+        CHECK_THROWS_AS(json::to_msgpack(document, as_string, strict), json::type_error&);
+        CHECK_THROWS_AS(json::to_msgpack(document, as_stream, strict), json::type_error&);
+        CHECK(!as_vector.empty());
+        CHECK(std::string(reinterpret_cast<const char*>(as_vector.data()), as_vector.size()) == as_string); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        CHECK(as_stream.str() == as_string);
+    }
+
+    SECTION("ubjson")
+    {
+        std::vector<std::uint8_t> as_vector;
+        std::string as_string;
+        std::ostringstream as_stream;
+        CHECK_THROWS_AS(json::to_ubjson(document, as_vector, false, false, strict), json::type_error&);
+        CHECK_THROWS_AS(json::to_ubjson(document, as_string, false, false, strict), json::type_error&);
+        CHECK_THROWS_AS(json::to_ubjson(document, as_stream, false, false, strict), json::type_error&);
+        CHECK(!as_vector.empty());
+        CHECK(std::string(reinterpret_cast<const char*>(as_vector.data()), as_vector.size()) == as_string); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        CHECK(as_stream.str() == as_string);
+    }
+
+    SECTION("bson")
+    {
+        // the size pass finds the string before anything is written
+        std::vector<std::uint8_t> as_vector;
+        std::string as_string;
+        std::ostringstream as_stream;
+        CHECK_THROWS_AS(json::to_bson(document, as_vector, strict), json::type_error&);
+        CHECK_THROWS_AS(json::to_bson(document, as_string, strict), json::type_error&);
+        CHECK_THROWS_AS(json::to_bson(document, as_stream, strict), json::type_error&);
+        CHECK(as_vector.empty());
+        CHECK(as_string.empty());
+        CHECK(as_stream.str().empty());
+    }
+}
+#endif
