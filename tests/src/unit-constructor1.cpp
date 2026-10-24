@@ -361,13 +361,23 @@ TEST_CASE("constructors")
             CHECK_THROWS_WITH_AS((j.get<std::pair<int, int>>()), "[json.exception.out_of_range.401] array index 1 is out of range", json::out_of_range&);
             CHECK_THROWS_WITH_AS((j.get<std::tuple<int, int>>()), "[json.exception.out_of_range.401] array index 1 is out of range", json::out_of_range&);
             CHECK_THROWS_WITH_AS((j.get<std::array<int, 3>>()), "[json.exception.out_of_range.401] array index 1 is out of range", json::out_of_range&);
+#if JSON_DIAGNOSTICS
+            // the exception names the element that has the wrong type
+            CHECK_THROWS_WITH_AS((j.get<std::array<std::string, 3>>()), "[json.exception.type_error.302] (/0) type must be string, but is number", json::type_error&);
+#else
             CHECK_THROWS_WITH_AS((j.get<std::array<std::string, 3>>()), "[json.exception.type_error.302] type must be string, but is number", json::type_error&);
+#endif
 
             // the elements are converted in order, so a type error comes before a missing element
             json const j2{1, "two"};
-            CHECK_THROWS_WITH_AS((j2.get<std::array<int, 3>>()), "[json.exception.type_error.302] type must be number, but is string", json::type_error&);
             std::array<int, 3> a{{0, 0, 0}};
+#if JSON_DIAGNOSTICS
+            CHECK_THROWS_WITH_AS((j2.get<std::array<int, 3>>()), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error&);
+            CHECK_THROWS_WITH_AS(j2.get_to(a), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error&);
+#else
+            CHECK_THROWS_WITH_AS((j2.get<std::array<int, 3>>()), "[json.exception.type_error.302] type must be number, but is string", json::type_error&);
             CHECK_THROWS_WITH_AS(j2.get_to(a), "[json.exception.type_error.302] type must be number, but is string", json::type_error&);
+#endif
             CHECK_THROWS_WITH_AS(j.get_to(a), "[json.exception.out_of_range.401] array index 1 is out of range", json::out_of_range&);
 #if !defined(JSON_NOEXCEPTION) // without exceptions, the get_to calls in CHECK_THROWS_WITH_AS do not run
             CHECK(a[0] == 1);
