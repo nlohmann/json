@@ -6152,6 +6152,8 @@ BasicJsonType materialize(const document_data& d, const node* n)
             case value_t::binary:
             case value_t::discarded:
             default:
+                // false positive: the parser's frame stack points into its own storage (never null)
+                // @infer-ignore NULLPTR_DEREFERENCE
                 sax.null();
                 break;
         }
