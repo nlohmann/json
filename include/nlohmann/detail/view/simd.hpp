@@ -116,6 +116,34 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned
     }
     return p;
 }
+
+/*!
+@brief copy 16 bytes from p to w, and find the first quote, backslash,
+control character, or non-ASCII byte among them
+
+The bytes are copied whether or not they are all plain (the caller has room
+for 16 bytes and keeps only the plain ones).
+
+@return the offset of that byte, or 16 if there is none
+*/
+NLOHMANN_VIEW_ALWAYS_INLINE unsigned copy_plain_run16(const unsigned char* p, char* w) noexcept
+{
+#if NLOHMANN_VIEW_NEON
+    const uint8x16_t in = vld1q_u8(p);
+    vst1q_u8(reinterpret_cast<std::uint8_t*>(w), in); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
+                                        vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
+    const std::uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+    return bits != 0 ? static_cast<unsigned>(count_trailing_zeros(bits) >> 2u) : 16u;
+#else
+    const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+    _mm_storeu_si128(static_cast<__m128i*>(static_cast<void*>(w)), in); // NOLINT(bugprone-casting-through-void)
+    const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                         _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
+    const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+    return bits != 0 ? static_cast<unsigned>(count_trailing_zeros(bits)) : 16u;
+#endif
+}
 #endif
 
 #if NLOHMANN_VIEW_SSSE3_DISPATCH

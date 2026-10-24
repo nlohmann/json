@@ -10,6 +10,9 @@
 
 #include <algorithm> // max
 #include <cstddef> // size_t
+#ifndef JSON_NO_IO
+    #include <cstdio> // FILE, fread
+#endif
 #include <istream> // istream, streambuf
 #include <string> // basic_string, char_traits, string
 #include <type_traits> // decay, integral_constant, is_array, is_const, is_integral, is_lvalue_reference, is_pointer, is_same, remove_cv, remove_extent, remove_pointer, remove_reference
@@ -153,6 +156,37 @@ inline void append_stream(std::string& buf, std::istream& is)
     }
     is.clear(is.rdstate() | std::ios::eofbit);
 }
+
+/// a pointer to a C stream (never with JSON_NO_IO, which leaves out <cstdio>)
+template<typename T>
+struct is_c_stream
+#ifndef JSON_NO_IO
+    : std::is_same<T, std::FILE*>
+#else
+    : std::false_type
+#endif
+{};
+
+#ifndef JSON_NO_IO
+/// append the rest of a C stream: in blocks with fread, not character by
+/// character (the library's file adapter reads with fgetc);
+/// f is not null
+inline void append_file(std::string& buf, std::FILE* f)
+{
+    for (;;)
+    {
+        const std::size_t used = buf.size();
+        const std::size_t room = (std::max)(buf.capacity() - used, std::size_t{4096});
+        buf.resize(used + room);
+        const std::size_t got = std::fread(&buf[used], 1, room, f);
+        buf.resize(used + got);
+        if (got < room)
+        {
+            break; // end of file, or an error (as fgetc, which returns EOF for both)
+        }
+    }
+}
+#endif
 
 }  // namespace view
 }  // namespace detail

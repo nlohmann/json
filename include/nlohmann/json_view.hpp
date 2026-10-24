@@ -30,6 +30,7 @@
 #include <array> // array
 #include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstdint> // uint8_t, uint32_t
+#include <cstdio> // FILE
 #include <cstring> // memcpy, strlen
 #include <istream> // istream // IWYU pragma: keep
 #include <iterator> // distance, input_iterator_tag, iterator_traits
@@ -295,7 +296,7 @@ class basic_json_view
             }
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
-        return idx < m_node->len ? basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx))) : basic_json_view();
+        return idx < m_node->len ? element(idx) : basic_json_view();
     }
 
     /// any other integer type (int, unsigned, long, std::int64_t, ...; a
@@ -358,7 +359,7 @@ class basic_json_view
         {
             detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
         }
-        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
+        return element(idx);
     }
 
     /// any other integer type, see operator[]; negative values are out of
@@ -392,7 +393,13 @@ class basic_json_view
 
     string_t value(string_view_t key, const char* default_value) const
     {
-        return value(key, string_t(default_value));
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        // (the default is made only if there is no such member)
+        const basic_json_view r = lookup(key);
+        return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
     }
 
     /// the value a JSON pointer refers to converted to T, or the default
@@ -411,7 +418,12 @@ class basic_json_view
 
     string_t value(const json_pointer& ptr, const char* default_value) const
     {
-        return value(ptr, string_t(default_value));
+        if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
+        return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
     }
 
     /// the first element or member value; a primitive value itself. Throws
@@ -433,7 +445,8 @@ class basic_json_view
     {
         if (is_structured() && m_node->len != 0)
         {
-            return basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
+            return unedited() ? basic_json_view(m_doc, detail::view::last_child<false>(*m_doc, m_node) + (is_object() ? 1 : 0))
+                   : basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
         }
         return front();
     }
@@ -450,7 +463,7 @@ class basic_json_view
         {
             return end();
         }
-        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        const node* const k = find_key(key);
         return k != nullptr ? iterator(m_doc, k, true) : end();
     }
 
@@ -467,7 +480,7 @@ class basic_json_view
     /// whether this is an object with a member with this key
     bool contains(string_view_t key) const
     {
-        return is_object() && detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size()) != nullptr;
+        return is_object() && find_key(key) != nullptr;
     }
 
     bool contains(const char* key) const
@@ -627,7 +640,14 @@ class basic_json_view
         // the compact writer keeps 64 bytes of slack, so that it does not grow
         // the buffer just before the end
         const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 160;
-        detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
+        if (unedited())
+        {
+            detail::view::view_serializer<BasicJsonType, false>(*m_doc, out, estimate, style).dump(m_node);
+        }
+        else
+        {
+            detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
+        }
         return out;
     }
 
@@ -707,7 +727,7 @@ class basic_json_view
         {
             return BasicJsonType(value_t::discarded);
         }
-        return detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
+        return unedited() ? detail::view::materialize<BasicJsonType, false>(*m_doc, m_node) : detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
     }
 
     /// byte offset of this value in the source text (for strings: of the
@@ -785,8 +805,48 @@ class basic_json_view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
+        if (unedited())
+        {
+            const node* const k = detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
+            return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+        }
         const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? basic_json_view(m_doc, navigation::value(k + 1)) : basic_json_view();
+    }
+
+    /// whether the document has not been edited yet: until the first edit, its index is walked like that of a
+    /// read-only document (nothing is moved or linked), which is cheaper
+    NLOHMANN_VIEW_ALWAYS_INLINE bool unedited() const noexcept
+    {
+        return !navigation::editable() || m_doc->edits == nullptr;
+    }
+
+    /// the member of this object with @a key (the last one if the key occurs more than once), or nullptr
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key) const
+    {
+        return find_key(key, std::integral_constant<bool, Editable> {});
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::true_type /*editable*/) const
+    {
+        // (an editable document without edits is looked up as one that cannot be edited)
+        return unedited() ? detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size())
+               : detail::view::find_member<true>(*m_doc, m_node, key.data(), key.size());
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::false_type /*editable*/) const
+    {
+        return detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
+    }
+
+    /// the element of an array at an index below its size
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view element(size_type idx) const
+    {
+        if (unedited())
+        {
+            return basic_json_view(m_doc, detail::view::element_at<false>(*m_doc, m_node, idx));
+        }
+        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
     }
 
     // --- get() dispatch ---
@@ -1528,7 +1588,8 @@ class basic_json_document
         // NOLINTBEGIN(readability-avoid-nested-conditional-operator): a constant expression of C++11
         append_input_impl(buf, std::forward<T>(input), std::integral_constant < int, detail::is_contiguous_byte_container<D>::value ? 0
                           : std::is_base_of<std::istream, D>::value ? 1
-                          : detail::view::is_adapter_input<D>::value ? 2 : 3 > {});
+                          : detail::view::is_adapter_input<D>::value ? 2
+                          : detail::view::is_c_stream<D>::value ? 4 : 3 > {});
         // NOLINTEND(readability-avoid-nested-conditional-operator)
     }
 
@@ -1549,6 +1610,19 @@ class basic_json_document
     {
         detail::view::append_adapter(buf, std::move(input.ia));
     }
+
+#ifndef JSON_NO_IO
+    static void append_input_impl(std::string& buf, std::FILE* file, std::integral_constant<int, 4> /*C stream*/)
+    {
+        if (file == nullptr)
+        {
+            // (as before: the library's adapter decides what a null stream yields)
+            detail::view::append_adapter(buf, detail::input_adapter(file));
+            return;
+        }
+        detail::view::append_file(buf, file);
+    }
+#endif
 
     template<typename T>
     static void append_input_impl(std::string& buf, T&& input, std::integral_constant<int, 3> /*other*/)
