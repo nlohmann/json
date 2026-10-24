@@ -1,0 +1,81 @@
+name: "Check API documentation"
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check_api_docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout pull request
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install clang
+        # Used only as a subprocess for `clang++ -E -v` system-include-path discovery in
+        # extract_api.py; it does not need to version-match the pinned libclang pip wheel
+        # below, which does the actual AST parsing. Do not "fix" this to be version-matched.
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Install Python dependencies
+        run: pip install -r tools/api_checker/requirements.txt
+
+      - name: Extract API and regenerate the committed surface file
+        run: |
+          python3 tools/api_checker/extract_api.py \
+            --header include/nlohmann/json.hpp \
+            --include include \
+            --output /tmp/api_snapshot.json \
+            --surface-output tools/api_checker/api_surface.json
+
+      - name: "Check API documentation (Phase 1: advisory)"
+        # Surfaces missing/broken @sa links without failing the job while the backlog from the
+        # initial AST-based rollout is burned down. See tools/api_checker/POLICY.md and the PR
+        # that introduced this workflow for the two-phase rollout plan.
+        continue-on-error: true
+        run: |
+          python3 tools/api_checker/check_docs.py \
+            --snapshot /tmp/api_snapshot.json
+
+      - name: Check macro documentation (advisory only)
+        # Cross-checks docs/mkdocs/docs/api/macros/ pages against #define sites. Only checks the
+        # documented-macro-still-exists direction; never blocks CI. See POLICY.md.
+        run: python3 tools/api_checker/check_macros.py
+
+      - name: Check for uncommitted API surface changes
+        id: diff
+        run: |
+          mkdir -p ${{ github.workspace }}/patch
+          git diff --patch --no-color -- tools/api_checker/api_surface.json > ${{ github.workspace }}/patch/api_surface.patch
+          if [ -s ${{ github.workspace }}/patch/api_surface.patch ]; then
+            echo "tools/api_checker/api_surface.json is out of date. Diff:"
+            cat ${{ github.workspace }}/patch/api_surface.patch
+            echo "has_diff=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_diff=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Uploaded so contributors can fix their PR with `git apply api_surface.patch`
+      # instead of installing libclang locally.
+      - name: Upload patch
+        if: steps.diff.outputs.has_diff == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: api-surface-patch
+          path: patch/api_surface.patch
+
+      - name: Fail if API surface file is not up to date
+        # Unlike the doc-backlog check above, this is purely mechanical regeneration with no
+        # backlog to phase in -- blocking from the start, matching check_amalgamation.yml's
+        # precedent. Contributors who add/remove/rename public API must regenerate and commit
+        # tools/api_checker/api_surface.json as part of their PR.
+        if: steps.diff.outputs.has_diff == 'true'
+        run: exit 1

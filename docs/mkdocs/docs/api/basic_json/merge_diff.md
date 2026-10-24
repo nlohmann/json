@@ -38,7 +38,7 @@ Strong guarantee: `source` and `target` are never modified.
 
 Linear in the total number of values (including nested ones) in `source` and `target`, times the cost of a key-based
 object operation (looking up a key, or adding one to the patch): logarithmic for [`json`](../json.md), and linear for
-[`ordered_json`](../ordered_json.md) (see [`ordered_map` complexity](../ordered_map.md#complexity)). For
+[`ordered_json`](../ordered_json.md) (see [`ordered_map` complexity](../ordered_map/index.md#complexity)). For
 `ordered_json`, diffing two objects with `n` and `m` members therefore takes O((n+m)²).
 
 ## Notes

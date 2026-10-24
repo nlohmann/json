@@ -1,0 +1,2 @@
+m.count("one") = 1
+m.count("two") = 0

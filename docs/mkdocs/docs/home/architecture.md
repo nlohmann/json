@@ -50,7 +50,7 @@ The public headers are in [`include/nlohmann`](https://github.com/nlohmann/json/
 - [`adl_serializer.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/adl_serializer.hpp), [`byte_container_with_subtype.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/byte_container_with_subtype.hpp), and [`ordered_map.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/ordered_map.hpp) define
   [`adl_serializer`](../api/adl_serializer/index.md),
   [`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md), and
-  [`ordered_map`](../api/ordered_map.md).
+  [`ordered_map`](../api/ordered_map/index.md).
 - [`json_view.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_view.hpp) is a separate,
   optional header that defines [`basic_json_document`](../api/basic_json_document/index.md) and
   [`basic_json_view`](../api/basic_json_view/index.md), a flat-index, read-only, non-owning way to look at a parsed
@@ -104,7 +104,7 @@ from `json_view.hpp` and `detail/view/`.
 The library provides two specializations:
 
 - [`json`](../api/json.md) uses all default template arguments.
-- [`ordered_json`](../api/ordered_json.md) uses [`ordered_map`](../api/ordered_map.md) as `ObjectType` to keep the
+- [`ordered_json`](../api/ordered_json.md) uses [`ordered_map`](../api/ordered_map/index.md) as `ObjectType` to keep the
   insertion order of object keys.
 
 The requirements on the template arguments are listed in

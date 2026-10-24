@@ -35,30 +35,41 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 {
     using key_type = Key;
     using mapped_type = T;
+    /// @sa https://json.nlohmann.me/api/ordered_map/Container/
     using Container = std::vector<std::pair<const Key, T>, Allocator>;
     using iterator = typename Container::iterator;
     using const_iterator = typename Container::const_iterator;
     using size_type = typename Container::size_type;
     using value_type = typename Container::value_type;
 #ifdef JSON_HAS_CPP_14
+    /// @sa https://json.nlohmann.me/api/ordered_map/key_compare/
     using key_compare = std::equal_to<>;
 #else
+    /// @sa https://json.nlohmann.me/api/ordered_map/key_compare/
     using key_compare = std::equal_to<Key>;
 #endif
 
     // Explicit constructors instead of `using Container::Container`
     // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
+    /// @sa https://json.nlohmann.me/api/ordered_map/ordered_map/
     ordered_map() noexcept(noexcept(Container())) : Container{} {}
+    /// @sa https://json.nlohmann.me/api/ordered_map/ordered_map/
     explicit ordered_map(const Allocator& alloc) noexcept(noexcept(Container(alloc))) : Container{alloc} {}
+    /// @sa https://json.nlohmann.me/api/ordered_map/ordered_map/
     template <class It>
     ordered_map(It first, It last, const Allocator& alloc = Allocator())
         : Container{first, last, alloc} {}
+    /// @sa https://json.nlohmann.me/api/ordered_map/ordered_map/
     ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator() )
         : Container{init, alloc} {}
+    /// @sa https://json.nlohmann.me/api/ordered_map/ordered_map/
     ordered_map(const ordered_map&) = default;
+    /// @sa https://json.nlohmann.me/api/ordered_map/ordered_map/
     ordered_map(ordered_map&&) noexcept(std::is_nothrow_move_constructible<Container>::value) = default;
+    /// @sa https://json.nlohmann.me/api/ordered_map/~ordered_map/
     ~ordered_map() = default;
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/operator=/
     ordered_map& operator=(const ordered_map& other)
     {
         if (this != &other)
@@ -69,6 +80,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return *this;
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/operator=/
     ordered_map& operator=(ordered_map&& other) noexcept(std::is_nothrow_move_assignable<Container>::value)
     {
         Container::operator=(std::move(static_cast<Container&>(other)));
@@ -126,6 +138,7 @@ private:
     }
 
 public:
+    /// @sa https://json.nlohmann.me/api/ordered_map/emplace/
     template<class V, detail::enable_if_t<
                  detail::is_constructible<T, V>::value, int> = 0>
     std::pair<iterator, bool> emplace(const key_type& key, V && t)
@@ -139,6 +152,7 @@ public:
         return {std::prev(this->end()), true};
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/emplace/
     template<class KeyType, class V, detail::enable_if_t<
                  detail::conjunction<detail::is_usable_as_key_type<key_compare, key_type, KeyType>,
                                      detail::is_constructible<T, V>>::value, int> = 0>
@@ -164,11 +178,13 @@ public:
         append(key, std::forward<V>(t));
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/operator[]/
     T& operator[](const key_type& key)
     {
         return emplace(key, T{}).first->second;
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/operator[]/
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     T & operator[](KeyType && key)
@@ -176,11 +192,13 @@ public:
         return emplace(std::forward<KeyType>(key), T{}).first->second;
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/operator[]/
     const T& operator[](const key_type& key) const
     {
         return at(key);
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/operator[]/
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const T & operator[](KeyType && key) const
@@ -188,11 +206,13 @@ public:
         return at(std::forward<KeyType>(key));
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/at/
     T& at(const key_type& key)
     {
         return at_impl(*this, key);
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/at/
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     T & at(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
@@ -200,11 +220,13 @@ public:
         return at_impl(*this, key);
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/at/
     const T& at(const key_type& key) const
     {
         return at_impl(*this, key);
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/at/
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const T & at(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
@@ -212,6 +234,7 @@ public:
         return at_impl(*this, key);
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/erase/
     size_type erase(const key_type& key)
     {
         const auto it = find_impl(*this, key);
@@ -223,6 +246,7 @@ public:
         return 0;
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/erase/
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     size_type erase(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
@@ -236,11 +260,13 @@ public:
         return 0;
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/erase/
     iterator erase(iterator pos)
     {
         return erase(pos, std::next(pos));
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/erase/
     iterator erase(iterator first, iterator last)
     {
         if (first == last)
@@ -305,11 +331,13 @@ public:
         return Container::begin() + offset;
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/count/
     size_type count(const key_type& key) const
     {
         return find_impl(*this, key) != this->end() ? 1 : 0;
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/count/
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     size_type count(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
@@ -317,11 +345,13 @@ public:
         return find_impl(*this, key) != this->end() ? 1 : 0;
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/find/
     iterator find(const key_type& key)
     {
         return find_impl(*this, key);
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/find/
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     iterator find(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
@@ -329,11 +359,13 @@ public:
         return find_impl(*this, key);
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/find/
     const_iterator find(const key_type& key) const
     {
         return find_impl(*this, key);
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/find/
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const_iterator find(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
@@ -341,11 +373,13 @@ public:
         return find_impl(*this, key);
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/insert/
     std::pair<iterator, bool> insert( value_type&& value )
     {
         return emplace(value.first, std::move(value.second));
     }
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/insert/
     std::pair<iterator, bool> insert( const value_type& value )
     {
         const auto it = find_impl(*this, value.first);
@@ -361,6 +395,7 @@ public:
     using require_input_iter = typename std::enable_if<std::is_convertible<typename std::iterator_traits<InputIt>::iterator_category,
         std::input_iterator_tag>::value>::type;
 
+    /// @sa https://json.nlohmann.me/api/ordered_map/insert/
     template<typename InputIt, typename = require_input_iter<InputIt>>
     void insert(InputIt first, InputIt last)
     {
