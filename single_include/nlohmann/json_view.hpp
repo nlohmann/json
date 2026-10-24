@@ -7185,8 +7185,7 @@ BasicJsonType materialize(const document_data& d, const node* n)
             case value_t::binary:
             case value_t::discarded:
             default:
-                // false positive: a value in an object follows its key(), which set the
-                // member the parser stores it in
+                // false positive: the parser's frame stack points into its own storage (never null)
                 // @infer-ignore NULLPTR_DEREFERENCE
                 sax.null();
                 break;
