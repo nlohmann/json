@@ -53,6 +53,13 @@ Note `elements` is passed as `std::numeric_limits<std::size_t>::max()` (i.e., "u
 - [**start_object**](https://json.nlohmann.me/api/json_sax/start_object/index.md) (*virtual*) - the beginning of an object was read
 - [**string**](https://json.nlohmann.me/api/json_sax/string/index.md) (*virtual*) - a string value was read
 
+## See also
+
+- [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - guide to event-based parsing
+- [**sax_parse**](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events from an input
+- [**parse**](https://json.nlohmann.me/api/basic_json/parse/index.md) - DOM parsing, with optional [parser callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md)
+- [Parse exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md)
+
 ## Version history
 
 - Added in version 3.2.0.

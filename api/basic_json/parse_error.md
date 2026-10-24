@@ -107,4 +107,4 @@ or the end of file. This also holds true when reading a byte vector for binary f
 
 ## Version history
 
-- Since version 3.0.0.
+- Added in version 3.0.0.

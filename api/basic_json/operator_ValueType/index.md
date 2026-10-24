@@ -148,5 +148,5 @@ string: "Hello, world!"
 
 ## Version history
 
-- Since version 1.0.0.
+- Added in version 1.0.0.
 - Macros `JSON_EXPLICIT`/[`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) added in version 3.9.0.

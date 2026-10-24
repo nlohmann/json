@@ -146,5 +146,5 @@ Depends on the `json_serializer<ValueType>::from_json()` implementation.
 
 ## Version history
 
-- Since version 3.3.0.
+- Added in version 3.3.0.
 - Added a `static_assert` with a clear message for `const` arguments in version 3.13.0.

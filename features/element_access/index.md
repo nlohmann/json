@@ -19,3 +19,12 @@ flowchart TD
     A --> F{"just testing first?"}
     F -->|"yes"| G["contains() / find()"]
 ```
+
+## See also
+
+- [**operator[]**](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) - unchecked access
+- [**at**](https://json.nlohmann.me/api/basic_json/at/index.md) - checked access
+- [**value**](https://json.nlohmann.me/api/basic_json/value/index.md) - access with default value
+- [**contains**](https://json.nlohmann.me/api/basic_json/contains/index.md) and [**find**](https://json.nlohmann.me/api/basic_json/find/index.md) - test for existence
+- [**front**](https://json.nlohmann.me/api/basic_json/front/index.md) and [**back**](https://json.nlohmann.me/api/basic_json/back/index.md) - first and last element
+- [**items**](https://json.nlohmann.me/api/basic_json/items/index.md) - iterate over keys and values

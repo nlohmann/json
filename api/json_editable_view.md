@@ -72,4 +72,4 @@ still referring to it seeing the change, see [Edits](basic_json_document/index.m
 
 ## Version history
 
-Since version 3.13.0.
+Added in version 3.13.0.

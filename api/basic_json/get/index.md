@@ -254,6 +254,6 @@ true
 
 ## Version history
 
-1. Since version 2.1.0.
-1. Since version 2.1.0. Extended to work with other specializations of `basic_json` in version 3.2.0.
-1. Since version 1.0.0.
+1. Added in version 2.1.0.
+1. Added in version 2.1.0. Extended to work with other specializations of `basic_json` in version 3.1.2.
+1. Added in version 1.0.0.

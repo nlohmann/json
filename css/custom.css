@@ -18,3 +18,32 @@
     white-space: nowrap;
     cursor: help;
 }
+
+/* byte layout tables of the binary formats */
+.md-typeset .byte-layout td code {
+    white-space: pre-wrap;
+}
+
+.md-typeset .bl {
+    display: inline-block;
+    padding: 0 .25em;
+    border-radius: .2em;
+    font-family: var(--md-code-font-family);
+    font-size: .85em;
+    white-space: nowrap;
+}
+
+.md-typeset .bl-t {
+    background-color: rgba(66, 133, 244, .25);
+    box-shadow: inset 0 -.12em 0 rgba(66, 133, 244, .8);
+}
+
+.md-typeset .bl-l {
+    background-color: rgba(251, 140, 0, .25);
+    box-shadow: inset 0 -.12em 0 rgba(251, 140, 0, .8);
+}
+
+.md-typeset .bl-d {
+    background-color: rgba(67, 160, 71, .25);
+    box-shadow: inset 0 -.12em 0 rgba(67, 160, 71, .8);
+}

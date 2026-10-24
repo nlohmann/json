@@ -110,3 +110,12 @@ Some aspects of the library can be configured by defining preprocessor macros **
 - [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES**](https://json.nlohmann.me/api/macros/nlohmann_define_type_with_names/index.md) - serialize/deserialize a derived class; uses custom names
 - [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](https://json.nlohmann.me/api/macros/nlohmann_define_type_with_names/index.md) - serialize/deserialize a derived class; uses default values; uses custom names
 - [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](https://json.nlohmann.me/api/macros/nlohmann_define_type_with_names/index.md) - serialize a derived class; uses custom names
+
+## See also
+
+- [Macros](https://json.nlohmann.me/features/macros/index.md) - guide to the supported macros
+- [Runtime assertions](https://json.nlohmann.me/features/assertions/index.md)
+- [Arbitrary type conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - using the `NLOHMANN_DEFINE_TYPE_*` macros
+- [Enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md) - using `NLOHMANN_JSON_SERIALIZE_ENUM`
+- [The `nlohmann` namespace](https://json.nlohmann.me/features/namespace/index.md)
+- [CMake integration](https://json.nlohmann.me/integration/cmake/index.md) - setting macros from the build system

@@ -119,5 +119,5 @@ number of elements with key "three": 0
 ## Version history
 
 1. Added in version 3.11.0.
-1. Added in version 1.0.0. Changed parameter `key` type to `KeyType&&` in version 3.11.0. Fixed in version 3.13.0 unreleased to consistently accept `std::string_view`-convertible keys, as already supported by [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), and other lookup functions.
+1. Added in version 1.0.0. Changed to support comparable key types in version 3.11.0. Support for keys convertible to `std::string_view` added in version 3.13.0 unreleased, consistently across the lookup functions.
 1. Deleted overload for integral key types added in version 3.13.0 unreleased to reject such calls at compile time instead of causing undefined behavior at runtime.

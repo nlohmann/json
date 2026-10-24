@@ -58,7 +58,7 @@ particular, a 3.x release does not:
 - remove or rename a documented macro, CMake option, CMake target, or header, or change what a documented macro does.
 
 Exceptions to these rules, for instance when fixing a bug requires changing the exception a function throws, are
-documented in the [release notes](../home/releases.md).
+documented in the [release notes](../home/releases/index.md).
 
 The following are **not** part of the public API and may change in any release, including patch releases:
 

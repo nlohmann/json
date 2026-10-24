@@ -72,6 +72,36 @@ Output:
 0x1b 0x00 0x00 0x00 0x08 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0x00 0x01 0x10 0x73 0x63 0x68 0x65 0x6d 0x61 0x00 0x00 0x00 0x00 0x00 0x00
 ```
 
+### Byte layout
+
+Consider the following JSON value (shown formatted for readability):
+
+```
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_bson` encodes it to 69 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: type/marker length/count/size data.
+
+| JSON              | Bytes                                        | Meaning                                                                   |
+| ----------------- | -------------------------------------------- | ------------------------------------------------------------------------- |
+| `{`               | 45 00 00 00                                  | document size: 69 bytes (int32, little-endian)                            |
+| `"id": 300,`      | 10 69 64 00 2C 01 00 00                      | int32 element; key as NUL-terminated string; value (little-endian)        |
+| `"name": "json",` | 02 6E 61 6D 65 00 05 00 00 00 6A 73 6F 6E 00 | string element; key; length incl. NUL (int32); NUL-terminated UTF-8 bytes |
+| `"pi": 3.14,`     | 01 70 69 00 1F 85 EB 51 B8 1E 09 40          | double element; key; value (little-endian)                                |
+| `"tags": [`       | 04 74 61 67 73 00 17 00 00 00                | array element; key; embedded document of 23 bytes (keys are the indices)  |
+| `"a",`            | 02 30 00 02 00 00 00 61 00                   | string element; key `"0"`; length 2; `a` + NUL                            |
+| `"b"`             | 02 31 00 02 00 00 00 62 00                   | string element; key `"1"`; length 2; `b` + NUL                            |
+| `]`               | 00                                           | end of the array document                                                 |
+| `}`               | 00                                           | end of the document                                                       |
+
 ## Deserialization
 
 The library maps BSON record types to JSON value types as follows:

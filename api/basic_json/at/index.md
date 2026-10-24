@@ -675,5 +675,5 @@ Output:
 
 1. Added in version 1.0.0.
 1. Added in version 1.0.0.
-1. Added in version 3.11.0. Fixed in version 3.13.0 unreleased to consistently accept `std::string_view`-convertible keys, as already supported by [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), [`find`](https://json.nlohmann.me/api/basic_json/find/index.md), and other lookup functions.
+1. Added in version 3.11.0. Support for keys convertible to `std::string_view` added in version 3.13.0 unreleased, consistently across the lookup functions.
 1. Added in version 2.0.0. Throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) instead of [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) for a one-character array index that is not a digit (e.g., `/x`) in version 3.13.0 unreleased, as it already did for longer ones.

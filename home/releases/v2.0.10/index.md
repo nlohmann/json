@@ -1,0 +1,9 @@
+# v2.0.10
+
+Released on 2017-01-02.
+
+Fixes several security-relevant bugs in the CBOR and MessagePack parsers found by OSS-Fuzz. All changes are backward-compatible. [Full release notes](https://github.com/nlohmann/json/releases/tag/v2.0.10).
+
+## API changes
+
+No documented API changes.

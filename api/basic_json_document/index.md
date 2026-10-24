@@ -75,6 +75,13 @@ An editable document (`Editable == true`) can be changed after parsing, with [`s
 - [`dump()`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) writes an edited document with members in document order, new members at the end, and, with [`number_format::source`](https://json.nlohmann.me/api/basic_json_view/number_format/index.md), keeps the spelling of every number that was not itself edited -- see [Editing a document](https://json.nlohmann.me/features/json_view/#editing-a-document) for why this matters.
 - [`read()`](https://json.nlohmann.me/api/basic_json_document/read/index.md) discards all edits, [`shrink_to_fit()`](https://json.nlohmann.me/api/basic_json_document/shrink_to_fit/index.md) does not move the node index once there are edits, and [`memory_usage()`](https://json.nlohmann.me/api/basic_json_document/memory_usage/index.md) includes the memory edits use. [`source_offset()`](https://json.nlohmann.me/api/basic_json_view/source_offset/index.md) of a value introduced by an edit is `static_cast<std::size_t>(-1)`, the same value it reports for a decoded string.
 
+## See also
+
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - guide to documents and views
+- [**basic_json_view**](https://json.nlohmann.me/api/basic_json_view/index.md) - the non-owning handle to a value in a document
+- [**json_document**](https://json.nlohmann.me/api/json_document/index.md) and [**json_editable_document**](https://json.nlohmann.me/api/json_editable_document/index.md) - the default specializations
+- [**materialize**](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build a `basic_json` value from a view
+
 ## Version history
 
 - Added in version 3.13.0 unreleased.

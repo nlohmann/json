@@ -105,6 +105,36 @@ Output:
 0x82 0xa7 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xc3 0xa6 0x73 0x63 0x68 0x65 0x6d 0x61 0x00
 ```
 
+### Byte layout
+
+Consider the following JSON value (shown formatted for readability):
+
+```
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_msgpack` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: type/marker length/count/size data.
+
+| JSON              | Bytes                               | Meaning                                                                    |
+| ----------------- | ----------------------------------- | -------------------------------------------------------------------------- |
+| `{`               | 84                                  | map with 4 key/value pairs                                                 |
+| `"id": 300,`      | A2 69 64 CD 01 2C                   | key: fixstr of length 2, then its UTF-8 bytes; value: uint 16 (big-endian) |
+| `"name": "json",` | A4 6E 61 6D 65 A4 6A 73 6F 6E       | key: fixstr of length 4; value: fixstr of length 4                         |
+| `"pi": 3.14,`     | A2 70 69 CB 40 09 1E B8 51 EB 85 1F | key: fixstr of length 2; value: float 64 (IEEE 754, big-endian)            |
+| `"tags": [`       | A4 74 61 67 73 92                   | key: fixstr of length 4; value: fixarray with 2 elements                   |
+| `"a",`            | A1 61                               | fixstr of length 1                                                         |
+| `"b"`             | A1 62                               | fixstr of length 1                                                         |
+| `]`               |                                     | no end marker: the element count was given up front                        |
+| `}`               |                                     | no end marker: the member count was given up front                         |
+
 ## Deserialization
 
 The library maps MessagePack types to JSON value types as follows:

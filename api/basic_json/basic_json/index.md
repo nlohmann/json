@@ -832,12 +832,12 @@ null
 
 ## Version history
 
-1. Since version 1.0.0.
-1. Since version 1.0.0.
-1. Since version 2.1.0.
-1. Since version 3.2.0. Explicit for different string types if `JSON_USE_IMPLICIT_CONVERSIONS` is `0` since version 3.13.0 unreleased.
-1. Since version 1.0.0.
-1. Since version 1.0.0.
-1. Since version 1.0.0. Fixed in version 3.13.0 unreleased to also check the iterator range for binary values; before, a range that did not cover the whole value (such as `(end(), end())`) was accepted and the whole binary value was copied, unlike the other primitive types.
-1. Since version 1.0.0.
-1. Since version 1.0.0.
+1. Added in version 1.0.0.
+1. Added in version 1.0.0.
+1. Added in version 2.1.0.
+1. Added in version 3.1.2. Explicit for different string types if `JSON_USE_IMPLICIT_CONVERSIONS` is `0` since version 3.13.0 unreleased.
+1. Added in version 1.0.0.
+1. Added in version 1.0.0.
+1. Added in version 1.0.0. Fixed in version 3.13.0 unreleased to also check the iterator range for binary values; before, a range that did not cover the whole value (such as `(end(), end())`) was accepted and the whole binary value was copied, unlike the other primitive types.
+1. Added in version 1.0.0.
+1. Added in version 1.0.0.

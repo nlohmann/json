@@ -1,0 +1,9 @@
+# v3.10.2
+
+Released on 2021-08-26.
+
+Re-release of 3.10.1, whose Git tag pointed at the wrong commit due to a bug in the release script. All changes are backward-compatible. [Full release notes](https://github.com/nlohmann/json/releases/tag/v3.10.2).
+
+## API changes
+
+No documented API changes.

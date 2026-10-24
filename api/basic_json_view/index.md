@@ -121,6 +121,13 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 
 - [**source_offset**](https://json.nlohmann.me/api/basic_json_view/source_offset/index.md) - byte offset of this value in the document's source text
 
+## See also
+
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - guide to documents and views
+- [**basic_json_document**](https://json.nlohmann.me/api/basic_json_document/index.md) - the document that owns the parsed data
+- [**json_view**](https://json.nlohmann.me/api/json_view/index.md) and [**json_editable_view**](https://json.nlohmann.me/api/json_editable_view/index.md) - the default specializations
+- [**materialize**](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build a `basic_json` value from a view
+
 ## Version history
 
 - Added in version 3.13.0 unreleased.

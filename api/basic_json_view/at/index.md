@@ -58,7 +58,7 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/a
 ## Complexity
 
 1. Linear in the number of members: as for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), members are compared one after another, in document order, stopping at the first match. Each comparison first checks the key's length -- already known from the index, without reading the key bytes -- before comparing its content. Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
-1. Linear in `idx`: elements are skipped one at a time from the first one, since they are not a fixed size in the index (unlike `BasicJsonType`'s array, which is random-access).
+1. Linear in `idx`: elements are skipped one at a time from the first one, since they are not a fixed size in the index (unlike `BasicJsonType`'s array, which is random-access). Constant if no element of the array is an array or object, since the elements are then adjacent in the index.
 1. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at that level (as 1.) or the index into the array (as 2.).
 
 ## Notes

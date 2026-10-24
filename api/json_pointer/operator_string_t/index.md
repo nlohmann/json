@@ -69,5 +69,5 @@ Output:
 
 ## Version history
 
-- Since version 2.0.0.
+- Added in version 2.0.0.
 - Changed type to `string_t` and deprecated in version 3.11.0.

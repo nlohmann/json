@@ -49,4 +49,4 @@ of object keys, instead of sorting them like [`json_document`](json_document.md)
 
 ## Version history
 
-Since version 3.13.0.
+Added in version 3.13.0.

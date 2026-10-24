@@ -22,7 +22,7 @@ This exception does not carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/ap
 
 ## Complexity
 
-Linear in the size of the array or object: unlike [`front()`](https://json.nlohmann.me/api/basic_json_view/front/index.md), which only ever looks at the first element, `back()` has to walk every element to find where they end, since elements are not a fixed size in the index.
+Linear in the size of the array or object: unlike [`front()`](https://json.nlohmann.me/api/basic_json_view/front/index.md), which only ever looks at the first element, `back()` has to walk every element to find where they end, since elements are not a fixed size in the index. Constant if no element of the array is an array or object, since the elements are then adjacent in the index.
 
 ## Notes
 

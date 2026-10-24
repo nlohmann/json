@@ -85,5 +85,5 @@ null
 
 ## Version history
 
-- Since version 2.0.8.
+- Added in version 2.0.8.
 - Returns reference since 3.7.0.

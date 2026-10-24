@@ -255,10 +255,10 @@ binary = {"bytes":[1,2,3],"subtype":null}
 
 ## Version history
 
-1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0 unreleased.
-1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0 unreleased.
-1. Since version 1.0.0.
-1. Since version 1.0.0.
-1. Since version 1.0.0.
-1. Since version 3.8.0.
-1. Since version 3.8.0.
+1. Added in version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0 unreleased.
+1. Added in version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0 unreleased.
+1. Added in version 1.0.0.
+1. Added in version 1.0.0.
+1. Added in version 1.0.0.
+1. Added in version 3.8.0.
+1. Added in version 3.8.0.

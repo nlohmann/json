@@ -42,3 +42,11 @@ This section describes the features of the library in detail. If you are new to 
 Looking for a specific function?
 
 This section gives conceptual overviews. For the precise signature, parameters, and return value of a function, see the [API Documentation](https://json.nlohmann.me/api/basic_json/index.md).
+
+## See also
+
+- [API documentation](https://json.nlohmann.me/api/basic_json/index.md) - reference of all classes and functions
+- [FAQ](https://json.nlohmann.me/home/faq/index.md) - answers to common questions
+- [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - all exceptions and their error codes
+- [Design goals](https://json.nlohmann.me/home/design_goals/index.md)
+- [Integration](https://json.nlohmann.me/integration/index.md) - how to add the library to a project

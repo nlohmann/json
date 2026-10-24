@@ -111,6 +111,36 @@ Output:
 0x89 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xf9 0x66 0x6f 0x72 0x6d 0x61 0x74 0xff 0x42 0x4f 0x4e 0x38 0xff 0x73 0x63 0x68 0x65 0x6d 0x61 0x90
 ```
 
+### Byte layout
+
+Consider the following JSON value (shown formatted for readability):
+
+```
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_bon8` encodes it to 35 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: type/marker length/count/size data.
+
+| JSON              | Bytes                            | Meaning                                                                                                                                                         |
+| ----------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{`               | 8A                               | object with 4 members                                                                                                                                           |
+| `"id": 300,`      | 69 64 C4 04                      | key: UTF-8 bytes; the string ends at the next byte, which cannot continue a UTF-8 character; value: 2-byte positive integer (lead byte, then a byte below 0x80) |
+| `"name": "json",` | 6E 61 6D 65 FF 6A 73 6F 6E FF    | key: UTF-8 bytes; 0xFF terminates the string as another string follows; value: UTF-8 bytes; terminated as a string key follows                                  |
+| `"pi": 3.14,`     | 70 69 8F 40 09 1E B8 51 EB 85 1F | key: UTF-8 bytes; value: binary64 (IEEE 754, big-endian); its marker also ends `"pi"`                                                                           |
+| `"tags": [`       | 74 61 67 73 82                   | key: UTF-8 bytes; value: array with 2 elements; its marker also ends `"tags"`                                                                                   |
+| `"a",`            | 61 FF                            | UTF-8 bytes; terminated as a string follows                                                                                                                     |
+| `"b"`             | 62 FF                            | UTF-8 bytes; terminated as nothing follows                                                                                                                      |
+| `]`               |                                  | no end marker: the element count was given up front                                                                                                             |
+| `}`               |                                  | no end marker: the member count was given up front                                                                                                              |
+
 ## Deserialization
 
 The library maps BON8 types to JSON value types as follows:

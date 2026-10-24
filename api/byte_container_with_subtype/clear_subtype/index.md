@@ -59,4 +59,4 @@ after calling clear_subtype(): {"bytes":[202,254,186,190],"subtype":null}
 
 ## Version history
 
-Since version 3.8.0.
+Added in version 3.8.0.

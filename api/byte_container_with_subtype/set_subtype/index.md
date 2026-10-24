@@ -64,4 +64,4 @@ after calling set_subtype(42): {"bytes":[202,254,186,190],"subtype":42}
 
 ## Version history
 
-Since version 3.8.0.
+Added in version 3.8.0.

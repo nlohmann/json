@@ -276,3 +276,12 @@ This implementation does exactly follow this approach, as it uses double precisi
 ### Storage
 
 Integer number values, unsigned integer number values, and floating-point number values are stored directly inside a `basic_json` type.
+
+## See also
+
+- [Number handling](https://json.nlohmann.me/features/types/number_handling/index.md) - how numbers are stored and converted
+- [Template parameter requirements](https://json.nlohmann.me/features/types/template_parameters/index.md)
+- [**basic_json**](https://json.nlohmann.me/api/basic_json/index.md) - the class template and its member types
+- [**type**](https://json.nlohmann.me/api/basic_json/type/index.md) and [**value_t**](https://json.nlohmann.me/api/basic_json/value_t/index.md) - query the type of a value
+- [**object_t**](https://json.nlohmann.me/api/basic_json/object_t/index.md), [**array_t**](https://json.nlohmann.me/api/basic_json/array_t/index.md), [**string_t**](https://json.nlohmann.me/api/basic_json/string_t/index.md), [**number_integer_t**](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md), [**number_float_t**](https://json.nlohmann.me/api/basic_json/number_float_t/index.md) - the underlying types
+- [Object order](https://json.nlohmann.me/features/object_order/index.md)

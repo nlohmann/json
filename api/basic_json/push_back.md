@@ -214,6 +214,6 @@ throws.
 
 ## Version history
 
-1. Since version 1.0.0.
-2. Since version 1.0.0.
-3. Since version 2.0.0.
+1. Added in version 1.0.0.
+2. Added in version 1.0.0.
+3. Added in version 2.0.0.

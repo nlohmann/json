@@ -291,6 +291,6 @@ overload (3).
 
 ## Version history
 
-1. Since version 2.1.0.
-2. Since version 2.1.0. Extended to work with other specializations of `basic_json` in version 3.2.0.
-3. Since version 1.0.0.
+1. Added in version 2.1.0.
+2. Added in version 2.1.0. Extended to work with other specializations of `basic_json` in version 3.1.2.
+3. Added in version 1.0.0.

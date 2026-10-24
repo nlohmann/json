@@ -203,6 +203,36 @@ Output:
 [$i#i812345678
 ```
 
+### Byte layout
+
+Consider the following JSON value (shown formatted for readability):
+
+```
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_bjdata` encodes it to 51 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: type/marker length/count/size data.
+
+| JSON              | Bytes                                  | Meaning                                                                          |
+| ----------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
+| `{`               | 7B                                     | object start (`{`)                                                               |
+| `"id": 300,`      | 69 02 69 64 49 2C 01                   | key: length 2 as int8 (`i`), then UTF-8 bytes; value: int16 (`I`), little-endian |
+| `"name": "json",` | 69 04 6E 61 6D 65 53 69 04 6A 73 6F 6E | key: length 4; value: string (`S`), length 4 as int8, UTF-8 bytes                |
+| `"pi": 3.14,`     | 69 02 70 69 44 1F 85 EB 51 B8 1E 09 40 | key: length 2; value: float64 (`D`), little-endian                               |
+| `"tags": [`       | 69 04 74 61 67 73 5B                   | key: length 4; value: array start (`[`)                                          |
+| `"a",`            | 53 69 01 61                            | string, length 1                                                                 |
+| `"b"`             | 53 69 01 62                            | string, length 1                                                                 |
+| `]`               | 5D                                     | array end (`]`)                                                                  |
+| `}`               | 7D                                     | object end (`}`)                                                                 |
+
 ## Deserialization
 
 The library maps BJData types to JSON value types as follows:

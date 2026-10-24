@@ -124,6 +124,36 @@ Output:
 0xa2 0x67 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xf5 0x66 0x73 0x63 0x68 0x65 0x6d 0x61 0x00
 ```
 
+### Byte layout
+
+Consider the following JSON value (shown formatted for readability):
+
+```
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_cbor` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: type/marker length/count/size data.
+
+| JSON              | Bytes                               | Meaning                                                                                                  |
+| ----------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `{`               | A4                                  | map with 4 key/value pairs                                                                               |
+| `"id": 300,`      | 62 69 64 19 01 2C                   | key: text string of length 2, then its UTF-8 bytes; value: unsigned integer, 2 bytes follow (big-endian) |
+| `"name": "json",` | 64 6E 61 6D 65 64 6A 73 6F 6E       | key: text string of length 4; value: text string of length 4                                             |
+| `"pi": 3.14,`     | 62 70 69 FB 40 09 1E B8 51 EB 85 1F | key: text string of length 2; value: double-precision float (IEEE 754, big-endian)                       |
+| `"tags": [`       | 64 74 61 67 73 82                   | key: text string of length 4; value: array with 2 elements                                               |
+| `"a",`            | 61 61                               | text string of length 1                                                                                  |
+| `"b"`             | 61 62                               | text string of length 1                                                                                  |
+| `]`               |                                     | no end marker: the element count was given up front                                                      |
+| `}`               |                                     | no end marker: the member count was given up front                                                       |
+
 ## Deserialization
 
 The library maps CBOR types to JSON value types as follows:

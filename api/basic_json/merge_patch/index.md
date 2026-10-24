@@ -116,5 +116,5 @@ Output:
 
 ## Version history
 
-- Added in version 3.0.0.
+- Added in version 3.1.0.
 - Fixed use of freed or relocated memory when `apply_patch` is `*this` or refers to a value contained in `*this`, in version 3.13.0 unreleased.
