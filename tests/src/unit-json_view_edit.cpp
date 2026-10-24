@@ -39,7 +39,7 @@ using ptr_t = ordered_json::json_pointer;
 
 namespace
 {
-std::uint32_t rng()
+std::uint32_t edit_rng()
 {
     static std::mt19937 generator(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
     // result_type is std::uint_fast32_t, which may be wider than 32 bits
@@ -49,12 +49,12 @@ std::uint32_t rng()
 
 int r(int n)
 {
-    return static_cast<int>(rng() % static_cast<unsigned>(n));
+    return static_cast<int>(edit_rng() % static_cast<unsigned>(n));
 }
 
-int counter = 0;
+int edit_counter = 0;
 
-std::uint64_t bits(double x)
+std::uint64_t edit_bits(double x)
 {
     std::uint64_t b = 0;
     std::memcpy(&b, &x, sizeof(b));
@@ -81,11 +81,11 @@ ordered_json random_scalar()
         case 1:
             return r(2) == 0;
         case 2:
-            return static_cast<std::int64_t>(rng()) - 2147483648LL;
+            return static_cast<std::int64_t>(edit_rng()) - 2147483648LL;
         case 3:
-            return (static_cast<std::uint64_t>(rng()) * 4294967296ULL) + rng();
+            return (static_cast<std::uint64_t>(edit_rng()) * 4294967296ULL) + edit_rng();
         case 4:
-            return static_cast<double>(static_cast<std::int32_t>(rng())) / (1 + r(1000));
+            return static_cast<double>(static_cast<std::int32_t>(edit_rng())) / (1 + r(1000));
         case 5:
             return r(2) == 0 ? 1e300 * (r(2) == 0 ? 1 : -1) : 5e-324;
         case 6:
@@ -103,7 +103,7 @@ ordered_json random_value(int depth)
         ordered_json o = ordered_json::object();
         for (int i = r(5); i > 0; --i)
         {
-            o[random_string() + "#" + std::to_string(counter++)] = random_value(depth + 1);
+            o[random_string() + "#" + std::to_string(edit_counter++)] = random_value(depth + 1);
         }
         return o;
     }
@@ -178,7 +178,7 @@ void compare(const ordered_json_editable_view& v, const ordered_json& j)
     }
     else if (j.is_number_float())
     {
-        CHECK(bits(v.get<double>()) == bits(j.get<double>()));
+        CHECK(edit_bits(v.get<double>()) == edit_bits(j.get<double>()));
     }
     else if (j.is_number_integer())
     {
@@ -435,7 +435,7 @@ TEST_CASE("json_view edits: differential")
                 }
                 else if ((op == 4 || op == 5) && target.is_object()) // set a member (new or existing)
                 {
-                    std::string key = random_string() + "#" + std::to_string(counter++);
+                    std::string key = random_string() + "#" + std::to_string(edit_counter++);
                     if (op == 5 && !target.empty())
                     {
                         key = std::next(target.begin(), r(static_cast<int>(target.size()))).key();

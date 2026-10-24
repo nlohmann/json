@@ -35,7 +35,7 @@ using nlohmann::json;
 
 #if SIZE_MAX > UINT32_MAX
 template<typename T, typename A = std::allocator<T>>
-struct huge_array : std::vector<T, A>
+struct msgpack_huge_array : std::vector<T, A>
 {
     using base = std::vector<T, A>;
     using base::base;
@@ -53,24 +53,24 @@ struct huge_array : std::vector<T, A>
     }
 };
 
-using huge_array_json = nlohmann::json::with_array_t<huge_array>;
+using msgpack_huge_array_json = nlohmann::json::with_array_t<msgpack_huge_array>;
 
 TEST_CASE("MessagePack Size above uint32 for array")
 {
-    huge_array_json j = huge_array_json::array();
+    msgpack_huge_array_json j = msgpack_huge_array_json::array();
 
     j.push_back(1);
     j.push_back(2);
     j.push_back(3);
 
-    auto& array = j.get_ref<huge_array_json::array_t&>();
+    auto& array = j.get_ref<msgpack_huge_array_json::array_t&>();
     array.fake_size = true;
 
     // write into a caller-owned vector: to_msgpack(j) reserves space based on
     // the (faked) element count, which fails with bad_alloc on Windows
     std::vector<std::uint8_t> result;
     CHECK_THROWS_WITH_AS(
-        huge_array_json::to_msgpack(j, result),
+        msgpack_huge_array_json::to_msgpack(j, result),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 
@@ -80,7 +80,7 @@ TEST_CASE("MessagePack Size above uint32 for array")
 template<typename K, typename V,
          typename C = std::less<K>,
          typename A = std::allocator<std::pair<const K, V>>>
-                                     struct huge_map : std::map<K, V, C, A>
+                                     struct msgpack_huge_map : std::map<K, V, C, A>
 {
     using base = std::map<K, V, C, A>;
     using base::base;
@@ -98,24 +98,24 @@ template<typename K, typename V,
     }
 };
 
-using huge_object_json = nlohmann::json::with_object_t<huge_map>;
+using msgpack_huge_object_json = nlohmann::json::with_object_t<msgpack_huge_map>;
 
 TEST_CASE("MessagePack Size above uint32 for object")
 {
 
-    huge_object_json j = huge_object_json::object();
+    msgpack_huge_object_json j = msgpack_huge_object_json::object();
 
     j["one"] = 1;
     j["two"] = 2;
 
-    auto& object = j.get_ref<huge_object_json::object_t&>();
+    auto& object = j.get_ref<msgpack_huge_object_json::object_t&>();
     object.fake_size = true;
 
     // write into a caller-owned vector: to_msgpack(j) reserves space based on
     // the (faked) element count, which fails with bad_alloc on Windows
     std::vector<std::uint8_t> result;
     CHECK_THROWS_WITH_AS(
-        huge_object_json::to_msgpack(j, result),
+        msgpack_huge_object_json::to_msgpack(j, result),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 
@@ -123,7 +123,7 @@ TEST_CASE("MessagePack Size above uint32 for object")
 }
 
 #ifdef JSON_TEST_BEYOND_UINT32_STRING
-struct huge_string : std::string
+struct msgpack_huge_string : std::string
 {
     using std::string::string;
 
@@ -133,20 +133,20 @@ struct huge_string : std::string
     }
 };
 
-using huge_string_json = nlohmann::json::with_string_t<huge_string>;
+using msgpack_huge_string_json = nlohmann::json::with_string_t<msgpack_huge_string>;
 
 TEST_CASE("MessagePack Size above uint32 for string")
 {
-    const huge_string_json j = "hello";
+    const msgpack_huge_string_json j = "hello";
 
     CHECK_THROWS_WITH_AS(
-        huge_string_json::to_msgpack(j),
+        msgpack_huge_string_json::to_msgpack(j),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 }
 #endif
 
-struct huge_binary : std::vector<std::uint8_t>
+struct msgpack_huge_binary : std::vector<std::uint8_t>
 {
     using std::vector<std::uint8_t>::vector;
 
@@ -156,18 +156,18 @@ struct huge_binary : std::vector<std::uint8_t>
     }
 };
 
-using huge_binary_json = nlohmann::json::with_binary_t<huge_binary>;
+using msgpack_huge_binary_json = nlohmann::json::with_binary_t<msgpack_huge_binary>;
 
 TEST_CASE("MessagePack Size above uint32 for binary")
 {
 
-    huge_binary_json j = huge_binary_json::binary(huge_binary{});
+    msgpack_huge_binary_json j = msgpack_huge_binary_json::binary(msgpack_huge_binary{});
 
     j.get_binary().push_back(0x01);
     j.get_binary().push_back(0x02);
 
     CHECK_THROWS_WITH_AS(
-        huge_binary_json::to_msgpack(j),
+        msgpack_huge_binary_json::to_msgpack(j),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 }

@@ -6,12 +6,11 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-// cmake/test.cmake selects the C++ standard versions with which to build a
-// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
-// When using macros that are only defined for particular versions of the standard
-// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
-// version macro in a comment close by, like this:
-// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+// cmake/test.cmake builds a unit test with C++ standards beyond C++11 only if the
+// source file mentions the corresponding version macro. To avoid rebuilding this
+// large file for every standard, tests that depend on the standard version (e.g.,
+// those using JSON_HAS_FILESYSTEM, JSON_HAS_RANGES, or JSON_HAS_THREE_WAY_COMPARISON)
+// go into a separate file unit-regression2-cpp<NN>.cpp. This file stays C++11-only.
 
 #include "doctest_compatibility.h"
 
@@ -49,30 +48,6 @@ using ordered_json = nlohmann::ordered_json;
 
 #include "test_utils.hpp"
 
-#ifdef JSON_HAS_CPP_17
-    #include <any>
-    #include <variant>
-#endif
-
-#ifdef JSON_HAS_CPP_17
-    #if __has_include(<optional>)
-        #include <optional>
-    #elif __has_include(<experimental/optional>)
-        #include <experimental/optional>
-    #endif
-
-    /////////////////////////////////////////////////////////////////////
-    // for #4804
-    /////////////////////////////////////////////////////////////////////
-    using json_4804 = nlohmann::json::with_binary_t<std::vector<std::byte>>;
-#endif
-
-#ifdef JSON_HAS_CPP_20
-    #if __has_include(<span>)
-        #include <span>
-    #endif
-#endif
-
 /////////////////////////////////////////////////////////////////////
 // for #4825 - explicitly instantiating basic_json must compile; this
 // forces instantiation of binary_writer::write_bjdata_ndarray, whose
@@ -80,13 +55,6 @@ using ordered_json = nlohmann::ordered_json;
 // C++17. Merely compiling this translation unit is the regression test.
 /////////////////////////////////////////////////////////////////////
 template class nlohmann::basic_json<>;
-
-/////////////////////////////////////////////////////////////////////
-// for #4440
-/////////////////////////////////////////////////////////////////////
-#if JSON_HAS_RANGES == 1
-    #include <ranges>
-#endif
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
@@ -285,18 +253,18 @@ struct adl_serializer<NonDefaultConstructible>
 /////////////////////////////////////////////////////////////////////
 
 template<class T>
-class my_allocator : public std::allocator<T>
+class my_allocator_2982 : public std::allocator<T>
 {
   public:
     using std::allocator<T>::allocator;
 
-    my_allocator() = default;
-    template<class U> my_allocator(const my_allocator<U>& /*unused*/) { }
+    my_allocator_2982() = default;
+    template<class U> my_allocator_2982(const my_allocator_2982<U>& /*unused*/) { }
 
     template <class U>
     struct rebind
     {
-        using other = my_allocator<U>;
+        using other = my_allocator_2982<U>;
     };
 };
 
@@ -467,13 +435,6 @@ TEST_CASE("regression tests 2")
 
         CHECK(diffs.size() == 1);  // Note the change here, was 2
     }
-
-#ifdef JSON_HAS_CPP_17
-    SECTION("issue #1292 - Serializing std::variant causes stack overflow")
-    {
-        static_assert(!std::is_constructible<json, std::variant<int, float>>::value, "unexpected value");
-    }
-#endif
 
     SECTION("issue #1299 - compile error in from_json converting to container "
             "with std::pair")
@@ -718,26 +679,6 @@ TEST_CASE("regression tests 2")
         CHECK(j.dump() == "{}");
     }
 
-#ifdef JSON_HAS_CPP_20
-#ifndef _LIBCPP_VERSION // see https://github.com/nlohmann/json/issues/4490
-    // classic Intel ICC reports <span> as includable but cannot actually compile
-    // std::span/std::as_bytes usage below
-#if __has_include(<span>) && !defined(__ICC) && !defined(__INTEL_COMPILER)
-    SECTION("issue #2546 - parsing containers of std::byte")
-    {
-        const char DATA[] = R"("Hello, world!")"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        // exclude the trailing '\0' that string-literal initialization adds to
-        // DATA: std::span(DATA) would span the full array extent (including
-        // that NUL), which is only silently accepted as end-of-input by default
-        // and would fail under JSON_STRICT_NUL_HANDLING
-        const auto s = std::as_bytes(std::span(DATA, sizeof(DATA) - 1));
-        const json j = json::parse(s);
-        CHECK(j.dump() == "\"Hello, world!\"");
-    }
-#endif
-#endif
-#endif
-
     SECTION("issue #2574 - Deserialization to std::array, std::pair, and std::tuple with non-default constructable types fails")
     {
         SECTION("std::array")
@@ -868,7 +809,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #2982 - to_{binary format} does not provide a mechanism for specifying a custom allocator for the returned type")
     {
-        std::vector<std::uint8_t, my_allocator<std::uint8_t>> my_vector;
+        std::vector<std::uint8_t, my_allocator_2982<std::uint8_t>> my_vector;
         const json j = {1, 2, 3, 4};
         json::to_cbor(j, my_vector);
         json k = json::from_cbor(my_vector);
@@ -883,26 +824,6 @@ TEST_CASE("regression tests 2")
         CHECK(node.dump(-1, ' ', false, json::error_handler_t::keep) == "{\"test\":\"test\334\\u0005\"}");
         CHECK(node.dump(-1, ' ', true, json::error_handler_t::keep) == "{\"test\":\"test\334\\u0005\"}");
     }
-
-#ifdef JSON_HAS_CPP_17
-    SECTION("issue #5066 - MSVC converts json to std::variant<json> via the conversion operator")
-    {
-        // std::variant<json> must not be retrievable via get<>(), because otherwise the
-        // implicit conversion operator becomes a candidate that MSVC picks over the variant's
-        // converting constructor, routing a number through the string from_json overload
-        static_assert(!nlohmann::detail::is_detected<nlohmann::detail::get_template_function, const json&, std::variant<json>>::value,
-                      "std::variant<json> must not be retrievable via get<>()");
-
-        // clang before 7 cannot instantiate libstdc++'s std::variant<json>
-#if !(defined(__clang__) && __clang_major__ < 7)
-        // push_back, not emplace_back: #5066 needs the implicit conversion
-        // from json to the vector's value type
-        std::vector<std::variant<json>> v;
-        v.push_back(json(1)); // NOLINT(hicpp-use-emplace,modernize-use-emplace)
-        CHECK(std::get<0>(v[0]) == 1);
-#endif
-    }
-#endif
 
     SECTION("issue #3669 - invalid use of incomplete type with optional member and to_json")
     {

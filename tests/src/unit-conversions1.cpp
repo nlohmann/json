@@ -6,12 +6,11 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-// cmake/test.cmake selects the C++ standard versions with which to build a
-// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
-// When using macros that are only defined for particular versions of the standard
-// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
-// version macro in a comment close by, like this:
-// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+// cmake/test.cmake builds a unit test with C++ standards beyond C++11 only if the
+// source file mentions the corresponding version macro. To avoid rebuilding this
+// large file for every standard, tests that depend on the standard version (e.g.,
+// those using JSON_HAS_FILESYSTEM, JSON_HAS_RANGES, or JSON_HAS_THREE_WAY_COMPARISON)
+// go into a separate file unit-conversions1-cpp<NN>.cpp. This file stays C++11-only.
 
 #include "doctest_compatibility.h"
 
@@ -30,25 +29,6 @@ using nlohmann::json;
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
-
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
-    #define JSON_HAS_CPP_17
-    #define JSON_HAS_CPP_14
-#elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
-    #define JSON_HAS_CPP_14
-#endif
-
-#ifdef JSON_HAS_CPP_17
-    #if __has_include(<optional>)
-        #include <optional>
-    #elif __has_include(<experimental/optional>)
-        #include <experimental/optional>
-    #endif
-#endif
-
-#if defined(JSON_HAS_CPP_17)
-    #include <string_view>
-#endif
 
 TEST_CASE("value conversion")
 {
@@ -519,13 +499,6 @@ TEST_CASE("value conversion")
             const std::string s = j.get<std::string>();
             CHECK(json(s) == j);
         }
-#if defined(JSON_HAS_CPP_17)
-        SECTION("std::string_view")
-        {
-            std::string_view const s = j.get<std::string_view>();
-            CHECK(json(s) == j);
-        }
-#endif
 
         SECTION("exception in case of a non-string type")
         {
@@ -551,26 +524,6 @@ TEST_CASE("value conversion")
                 json(json::value_t::number_float).get<json::string_t>(),
                 "[json.exception.type_error.302] type must be string, but is number", json::type_error&);
         }
-
-#if defined(JSON_HAS_CPP_17)
-        SECTION("exception in case of a non-string type using string_view")
-        {
-            CHECK_THROWS_WITH_AS(json(json::value_t::null).get<std::string_view>(),
-                                 "[json.exception.type_error.302] type must be string, but is null", json::type_error&);
-            CHECK_THROWS_WITH_AS(json(json::value_t::object).get<std::string_view>(),
-                                 "[json.exception.type_error.302] type must be string, but is object", json::type_error&);
-            CHECK_THROWS_WITH_AS(json(json::value_t::array).get<std::string_view>(),
-                                 "[json.exception.type_error.302] type must be string, but is array", json::type_error&);
-            CHECK_THROWS_WITH_AS(json(json::value_t::boolean).get<std::string_view>(),
-                                 "[json.exception.type_error.302] type must be string, but is boolean", json::type_error&);
-            CHECK_THROWS_WITH_AS(json(json::value_t::number_integer).get<std::string_view>(),
-                                 "[json.exception.type_error.302] type must be string, but is number", json::type_error&);
-            CHECK_THROWS_WITH_AS(json(json::value_t::number_unsigned).get<std::string_view>(),
-                                 "[json.exception.type_error.302] type must be string, but is number", json::type_error&);
-            CHECK_THROWS_WITH_AS(json(json::value_t::number_float).get<std::string_view>(),
-                                 "[json.exception.type_error.302] type must be string, but is number", json::type_error&);
-        }
-#endif
     }
 
     SECTION("get a string (explicit, get_to)")
@@ -591,15 +544,6 @@ TEST_CASE("value conversion")
             j.get_to(s);
             CHECK(json(s) == j);
         }
-#if defined(JSON_HAS_CPP_17)
-        SECTION("std::string_view")
-        {
-            std::string const s = "previous value";
-            std::string_view sv = s;
-            j.get_to(sv);
-            CHECK(json(sv) == j);
-        }
-#endif
     }
 
     SECTION("get null (explicit)")
@@ -637,14 +581,6 @@ TEST_CASE("value conversion")
             const json::string_t s = j;
             CHECK(json(s) == j);
         }
-
-#if defined(JSON_HAS_CPP_17)
-        SECTION("std::string_view")
-        {
-            std::string_view const s = j.get<std::string_view>();
-            CHECK(json(s) == j);
-        }
-#endif
 
         SECTION("std::string")
         {
@@ -1256,11 +1192,4 @@ TEST_CASE("value conversion")
 #endif
 }
 
-#ifdef JSON_HAS_CPP_17
-    #undef JSON_HAS_CPP_17
-#endif
-
-#ifdef JSON_HAS_CPP_14
-    #undef JSON_HAS_CPP_14
-#endif
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
