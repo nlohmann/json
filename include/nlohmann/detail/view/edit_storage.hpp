@@ -84,7 +84,7 @@ inline std::size_t text_capacity(std::size_t cap, std::size_t used, std::size_t 
     constexpr std::size_t limit = 0xFFFFFFFFu;
     if (NLOHMANN_VIEW_UNLIKELY(used > limit || n > limit - used))
     {
-        throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document");
+        throw_out_of_range(exception_id::document_too_large, "edits of 4 GiB or more are not supported by json_document");
     }
     const std::size_t needed = used + n;
     const std::size_t wanted = needed + (std::min)(limit - needed, std::size_t{256});
@@ -135,7 +135,7 @@ inline void reserve_moved(document_data& d)
     document_data::edit_state& e = edit_state_of(d);
     if (e.moved.size() >= 0xFFFFFFFFu)
     {
-        throw_out_of_range(416, "more than 4294967295 edited arrays and objects are not supported by json_document"); // LCOV_EXCL_LINE
+        throw_out_of_range(exception_id::document_too_large, "more than 4294967295 edited arrays and objects are not supported by json_document"); // LCOV_EXCL_LINE
     }
     if (e.moved.size() == e.moved.capacity() || e.moved_cap.size() == e.moved_cap.capacity())
     {

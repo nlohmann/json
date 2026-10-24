@@ -177,6 +177,36 @@ inline bool owns_memory(const value_t t) noexcept
     }
 }
 
+/*!
+@brief whether a value of the given type is neither an object nor an array
+
+Unlike basic_json::is_primitive(), this includes value_t::discarded: it names
+the types that iterators walk with a primitive_iterator_t (a single value, or no
+value for null and discarded) and that JSON Pointer resolution and the
+serializer treat as leaves. Every enumerator is listed so that -Wswitch-enum
+flags this function when a new type is added.
+*/
+inline bool is_primitive(const value_t t) noexcept
+{
+    switch (t)
+    {
+        case value_t::object:
+        case value_t::array:
+            return false;
+
+        case value_t::null:
+        case value_t::string:
+        case value_t::boolean:
+        case value_t::number_integer:
+        case value_t::number_unsigned:
+        case value_t::number_float:
+        case value_t::binary:
+        case value_t::discarded:
+        default:
+            return true;
+    }
+}
+
 
 /*!
 @brief compare an integer with a floating point number without precision loss
