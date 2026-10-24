@@ -325,7 +325,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, input_format_name(input_format_t::cbor));
+                throw_on_discarded(j, input_format_t::cbor);
         }
     }
 
@@ -539,7 +539,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, input_format_name(input_format_t::msgpack));
+                throw_on_discarded(j, input_format_t::msgpack);
         }
     }
 
@@ -713,7 +713,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, input_format_name(use_bjdata ? input_format_t::bjdata : input_format_t::ubjson));
+                throw_on_discarded(j, use_bjdata ? input_format_t::bjdata : input_format_t::ubjson);
         }
     }
 
@@ -739,11 +739,11 @@ class binary_writer
     @brief throws because @a j is discarded and cannot be serialized
     @throw type_error.321 always
     */
-    JSON_HEDLEY_NO_RETURN static void throw_on_discarded(const BasicJsonType& j, const char* format_name)
+    JSON_HEDLEY_NO_RETURN static void throw_on_discarded(const BasicJsonType& j, const input_format_t format)
     {
         static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
-        static_cast<void>(format_name);
-        JSON_THROW(type_error::create(exception_id::discarded_value_used, concat("cannot serialize discarded value to ", format_name), &j));
+        static_cast<void>(format);
+        JSON_THROW(type_error::create(exception_id::discarded_value_used, concat("cannot serialize discarded value to ", input_format_name(format)), &j));
     }
 
     /// how the range of integer type @a NumberType relates to that of @a TargetType
@@ -863,11 +863,11 @@ class binary_writer
     }
 
     /*!
-    @brief throws because the integer @a j is too large for @a format_name
+    @brief throws because the integer @a j is too large for @a format
     @throw out_of_range.407 always
     */
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
-    static void throw_integer_out_of_range(const BasicJsonType& j, const char* format_name, const char* range)
+    static void throw_integer_out_of_range(const BasicJsonType& j, const input_format_t format, const char* range)
     {
         // neither std::to_string(), which has no overload for integer types
         // wider than 64 bits, nor dump(), which would also instantiate the
@@ -878,9 +878,9 @@ class binary_writer
                                    ? integer_to_string(j.m_data.m_value.number_unsigned, std::integral_constant<bool, unsigned_limits::is_signed>())
                                    : integer_to_string(j.m_data.m_value.number_integer, std::integral_constant<bool, integer_limits::is_signed>());
         static_cast<void>(number); // unused when JSON_NOEXCEPTION is defined
-        static_cast<void>(format_name);
+        static_cast<void>(format);
         static_cast<void>(range);
-        JSON_THROW(out_of_range::create(exception_id::integer_too_large, concat("integer number ", number, " cannot be represented by ", format_name, " as it does not fit ", range), &j));
+        JSON_THROW(out_of_range::create(exception_id::integer_too_large, concat("integer number ", number, " cannot be represented by ", input_format_name(format), " as it does not fit ", range), &j));
     }
 
     // The exceptions below are thrown from functions of their own, out of line:
@@ -1731,14 +1731,14 @@ class binary_writer
             case value_t::number_integer:
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(j.m_data.m_value.number_integer)))
                 {
-                    throw_integer_out_of_range(j, input_format_name(input_format_t::bson), "int64");
+                    throw_integer_out_of_range(j, input_format_t::bson, "int64");
                 }
                 return calc_bson_integer_size(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
 
             case value_t::number_unsigned:
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
                 {
-                    throw_integer_out_of_range(j, input_format_name(input_format_t::bson), "uint64");
+                    throw_integer_out_of_range(j, input_format_t::bson, "uint64");
                 }
                 return calc_bson_unsigned_size(conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
 
@@ -1749,7 +1749,7 @@ class binary_writer
                 return 0ul;
 
             case value_t::discarded:
-                throw_on_discarded(j, input_format_name(input_format_t::bson));
+                throw_on_discarded(j, input_format_t::bson);
 
             // LCOV_EXCL_START
             case value_t::object:
@@ -1978,7 +1978,7 @@ class binary_writer
                 return write_bson_null(name);
 
             case value_t::discarded:
-                throw_on_discarded(j, input_format_name(input_format_t::bson));
+                throw_on_discarded(j, input_format_t::bson);
 
             // LCOV_EXCL_START
             case value_t::object:
@@ -2759,7 +2759,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::cbor), "uint64");
+                throw_integer_out_of_range(j, input_format_t::cbor, "uint64");
             }
             write_cbor_head(0x00, conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
             return;
@@ -2769,7 +2769,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::cbor), "[-2^64, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_t::cbor, "[-2^64, 2^64-1]");
             }
             // CBOR does not differentiate between positive signed
             // integers and unsigned integers
@@ -2780,7 +2780,7 @@ class binary_writer
             // a negative integer n is encoded as -1 - n
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(-1 - j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::cbor), "[-2^64, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_t::cbor, "[-2^64, 2^64-1]");
             }
             write_cbor_head(0x20, static_cast<std::uint64_t>(-1 - j.m_data.m_value.number_integer));
         }
@@ -2856,7 +2856,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::msgpack), "uint64");
+                throw_integer_out_of_range(j, input_format_t::msgpack, "uint64");
             }
             write_msgpack_unsigned(static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
             return;
@@ -2866,7 +2866,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::msgpack), "[-2^63, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_t::msgpack, "[-2^63, 2^64-1]");
             }
             // MessagePack does not differentiate between positive
             // signed integers and unsigned integers.
@@ -2876,7 +2876,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_min<std::int64_t>(j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::msgpack), "[-2^63, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_t::msgpack, "[-2^63, 2^64-1]");
             }
             if (j.m_data.m_value.number_integer >= -32)
             {
@@ -3024,8 +3024,8 @@ class binary_writer
         Walk::string(*this, key, context);
     }
 
-    template < typename Walk, typename Key = typename BasicJsonType::object_t::key_type,
-               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
+    template<typename Walk, typename Key = typename BasicJsonType::object_t::key_type,
+             enable_if_t<negation<std::is_convertible<Key, string_t>>::value, int> = 0>
     void write_object_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
     {
         Walk::scalar(*this, BasicJsonType(key));
@@ -4279,7 +4279,7 @@ class binary_writer
             {
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::int64_t>(j.m_data.m_value.number_unsigned)))
                 {
-                    throw_integer_out_of_range(j, input_format_name(input_format_t::bon8), "int64");
+                    throw_integer_out_of_range(j, input_format_t::bon8, "int64");
                 }
                 write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_unsigned));
                 string_open = false;
@@ -4290,7 +4290,7 @@ class binary_writer
             {
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(j.m_data.m_value.number_integer)))
                 {
-                    throw_integer_out_of_range(j, input_format_name(input_format_t::bon8), "int64");
+                    throw_integer_out_of_range(j, input_format_t::bon8, "int64");
                 }
                 write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
                 string_open = false;
@@ -4358,7 +4358,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, input_format_name(input_format_t::bon8));
+                throw_on_discarded(j, input_format_t::bon8);
         }
     }
 
