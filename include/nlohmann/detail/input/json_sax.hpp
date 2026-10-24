@@ -749,6 +749,8 @@ class json_sax_dom_parser
         JSON_HEDLEY_NEVER_INLINE
         void grow()
         {
+            // the stack starts with local_capacity frames and only grows
+            JSON_ASSERT(capacity != 0);
             const std::size_t new_capacity = capacity * 2;
             std::unique_ptr<frame[]> new_heap(new frame[new_capacity]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             std::copy(data, data + count, new_heap.get());
@@ -914,6 +916,8 @@ class json_sax_dom_parser
     /// directly if the value was the one too many.
     void place_container(const frame& f, frame* enclosing, BasicJsonType&& value, const bool enclosing_is_innermost)
     {
+        // a container without a slot of its own is collected for an enclosing one
+        JSON_ASSERT(f.slot != nullptr || enclosing != nullptr);
         if (f.slot != nullptr)
         {
             *f.slot = std::move(value);
