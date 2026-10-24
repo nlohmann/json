@@ -14,6 +14,7 @@
 #include <cstdio> // snprintf
 #include <cstring> // memcmp
 #include <initializer_list> // initializer_list
+#include <limits> // numeric_limits
 #include <string> // char_traits, string
 #include <utility> // move
 #include <vector> // vector
@@ -1881,6 +1882,15 @@ scan_number_done:
     /// significand (see scan_number_bulk_contiguous())
     bool convert_accumulated_float(const float_significand& s, std::true_type /*native*/) noexcept
     {
+        // accept() only needs to know that the value is finite (see the parser):
+        // w < 10^19, so a value below 10^max_exponent10 cannot overflow, and a
+        // value that underflows is a finite number as well. Only a token that
+        // may overflow has to be converted to find out.
+        if (JSON_HEDLEY_UNLIKELY(discard_number_values && s.exponent + 19 <= std::numeric_limits<number_float_t>::max_exponent10))
+        {
+            value_float = 0;
+            return true;
+        }
         value_float = decimal_to_float<number_float_t>(s);
         return true;
     }

@@ -108,7 +108,7 @@ inline bool is_cbor_item_head(const unsigned int byte) noexcept
         into a JSON value use false, because their SAX parsers never do, and
         then the code that recovers is not compiled.
 */
-template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_parser<BasicJsonType, InputAdapterType>, bool AllowRecovery = false>
+template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_binary_parser<BasicJsonType, InputAdapterType>, bool AllowRecovery = false>
 class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;

@@ -48,14 +48,16 @@ namespace
 class chunked_streambuf : public std::streambuf
 {
   public:
-    chunked_streambuf(std::string s, std::size_t chunk_size)
-        : m_data(std::move(s)), m_chunk_size(chunk_size)
+    // The first @a unbuffered characters are served without a get area, the
+    // rest in get areas of @a chunk_size.
+    chunked_streambuf(std::string s, std::size_t chunk_size, std::size_t unbuffered = 0)
+        : m_data(std::move(s)), m_chunk_size(chunk_size), m_unbuffered(unbuffered)
     {}
 
   protected:
     int_type underflow() override
     {
-        if (m_chunk_size == 0)
+        if (m_chunk_size == 0 || m_pos < m_unbuffered)
         {
             return m_pos < m_data.size() ? traits_type::to_int_type(m_data[m_pos]) : traits_type::eof();
         }
@@ -77,7 +79,7 @@ class chunked_streambuf : public std::streambuf
 
     int_type uflow() override
     {
-        if (m_chunk_size == 0)
+        if (m_chunk_size == 0 || m_pos < m_unbuffered)
         {
             return m_pos < m_data.size() ? traits_type::to_int_type(m_data[m_pos++]) : traits_type::eof();
         }
@@ -88,6 +90,7 @@ class chunked_streambuf : public std::streambuf
     std::string m_data;
     std::size_t m_pos = 0;
     std::size_t m_chunk_size;
+    std::size_t m_unbuffered;
 };
 
 // how a test reads from the stream
@@ -101,9 +104,9 @@ enum class read_mode
 // Read @a input from a chunked_streambuf and describe everything observable:
 // the values or the exception, the stream state after each value, and the
 // characters left in the stream.
-std::string observe(const std::string& input, std::size_t chunk_size, read_mode mode)
+std::string observe(const std::string& input, std::size_t chunk_size, read_mode mode, std::size_t unbuffered = 0)
 {
-    chunked_streambuf buf(input, chunk_size);
+    chunked_streambuf buf(input, chunk_size, unbuffered);
     std::istream is(&buf);
     std::string result;
     for (int i = 0; i < 4; ++i)
@@ -212,6 +215,31 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
         }
     }
 
+    SECTION("results do not depend on a get area that appears late")
+    {
+        // the first characters come without a get area, then the streambuf
+        // starts to use one: the token that is read at that point is complete
+        for (const auto& input : corpus())
+        {
+            const std::string expected = observe(input, 0, read_mode::extract);
+            for (const std::size_t unbuffered :
+                    {
+                        1u, 2u, 3u, 5u, 8u, 13u, 21u
+                    })
+            {
+                for (const std::size_t chunk_size :
+                        {
+                            1u, 2u, 3u, 7u, 64u
+                        })
+                {
+                    CAPTURE(input)
+                    CAPTURE(unbuffered)
+                    CAPTURE(chunk_size)
+                    CHECK(observe(input, chunk_size, read_mode::extract, unbuffered) == expected);
+                }
+            }
+        }
+    }
 #endif // !defined(JSON_NOEXCEPTION)
 
     SECTION("values are the same as when parsing from a string")

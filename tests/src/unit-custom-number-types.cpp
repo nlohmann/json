@@ -285,6 +285,58 @@ TEST_CASE("custom number types: integers beyond 64 bits")
         CHECK(wide_json::to_bjdata(wide_json::array({uint_big, uint_big}), true, true) == expected_bjdata_array);
     }
 
+    SECTION("integers in arrays and objects")
+    {
+        // runs of numbers and scalar object members are encoded by loops of
+        // their own for the number types up to 64 bits; a wider number type
+        // takes the generic path, which checks the range of every integer
+        const wide_json run = wide_json::array({make_int(1), make_int(-3), make_uint(7), wide_json(1.5), int_big, make_int(5)});
+        const wide_json run_negative = wide_json::array({make_int(1), make_int(-3), int_big_negative});
+        const wide_json run_unsigned = wide_json::array({make_uint(1), make_uint(7), uint_big});
+        const wide_json members = wide_json::object({{"a", make_int(1)}, {"b", wide_json(1.5)}, {"c", int_big}});
+
+        const std::vector<wide_json> failing = {run, run_negative, run_unsigned, members, wrap(run), wrap(members)};
+        for (const auto& value : failing)
+        {
+            CHECK_THROWS_AS(_ = wide_json::to_cbor(value), out_of_range&);
+            CHECK_THROWS_AS(_ = wide_json::to_msgpack(value), out_of_range&);
+            CHECK_THROWS_AS(_ = wide_json::to_bson(wrap(value)), out_of_range&);
+            CHECK_THROWS_AS(_ = wide_json::to_bon8(value), out_of_range&);
+        }
+
+#if !defined(JSON_NOEXCEPTION)
+        // a failing write leaves no more than the elements before the failing one
+        // (without exceptions, the writes in CHECK_THROWS_AS do not run)
+        std::vector<std::uint8_t> out;
+        CHECK_THROWS_AS(wide_json::to_cbor(run, out), out_of_range&);
+        // (the head of the array, 1, -3, 7, and 1.5 as a single-precision float)
+        CHECK(out == std::vector<std::uint8_t>({0x86, 0x01, 0x22, 0x07, 0xFA, 0x3F, 0xC0, 0x00, 0x00}));
+        out.clear();
+        CHECK_THROWS_AS(wide_json::to_bon8(run, out), out_of_range&);
+        CHECK(!out.empty());
+#endif
+
+        // the same values that fit are written exactly as with 64-bit number types
+        const wide_json fits = wide_json::array({make_int(1), make_int(-3), make_uint(7), wide_json(1.5), make_int(min_int64), make_int(max_int64), make_int(200), make_int(-70000)});
+        const nlohmann::json fits64 = nlohmann::json::array({1, -3, 7, 1.5, (std::numeric_limits<std::int64_t>::min)(), (std::numeric_limits<std::int64_t>::max)(), 200, -70000});
+        CHECK(wide_json::to_cbor(fits) == nlohmann::json::to_cbor(fits64));
+        CHECK(wide_json::to_msgpack(fits) == nlohmann::json::to_msgpack(fits64));
+        CHECK(wide_json::to_ubjson(fits) == nlohmann::json::to_ubjson(fits64));
+        CHECK(wide_json::to_ubjson(fits, true, true) == nlohmann::json::to_ubjson(fits64, true, true));
+        CHECK(wide_json::to_bjdata(fits) == nlohmann::json::to_bjdata(fits64));
+        CHECK(wide_json::to_bjdata(fits, true, true) == nlohmann::json::to_bjdata(fits64, true, true));
+        CHECK(wide_json::to_bon8(fits) == nlohmann::json::to_bon8(fits64));
+        CHECK(wide_json::to_bson(wrap(fits)) == nlohmann::json::to_bson(nlohmann::json::object({{"v", fits64}})));
+
+        const wide_json fit_members = wide_json::object({{"a", make_int(1)}, {"b", make_int(-300)}, {"c", make_uint(max_uint64)}, {"d", wide_json(2.5)}});
+        const nlohmann::json fit_members64 = nlohmann::json::object({{"a", 1}, {"b", -300}, {"c", (std::numeric_limits<std::uint64_t>::max)()}, {"d", 2.5}});
+        CHECK(wide_json::to_cbor(fit_members) == nlohmann::json::to_cbor(fit_members64));
+        CHECK(wide_json::to_msgpack(fit_members) == nlohmann::json::to_msgpack(fit_members64));
+        CHECK(wide_json::to_ubjson(fit_members) == nlohmann::json::to_ubjson(fit_members64));
+        CHECK(wide_json::to_bjdata(fit_members) == nlohmann::json::to_bjdata(fit_members64));
+        CHECK(wide_json::to_bson(fit_members) == nlohmann::json::to_bson(fit_members64));
+    }
+
     SECTION("BJData ND-array")
     {
         // an ND-array element beyond 64 bits does not fit any dtype, so the

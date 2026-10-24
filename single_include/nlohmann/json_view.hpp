@@ -30,6 +30,7 @@
 #include <array> // array
 #include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
 #include <cstdint> // uint8_t, uint32_t
+#include <cstdio> // FILE
 #include <cstring> // memcpy, strlen
 #include <istream> // istream // IWYU pragma: keep
 #include <iterator> // distance, input_iterator_tag, iterator_traits
@@ -756,6 +757,34 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned
     }
     return p;
 }
+
+/*!
+@brief copy 16 bytes from p to w, and find the first quote, backslash,
+control character, or non-ASCII byte among them
+
+The bytes are copied whether or not they are all plain (the caller has room
+for 16 bytes and keeps only the plain ones).
+
+@return the offset of that byte, or 16 if there is none
+*/
+NLOHMANN_VIEW_ALWAYS_INLINE unsigned copy_plain_run16(const unsigned char* p, char* w) noexcept
+{
+#if NLOHMANN_VIEW_NEON
+    const uint8x16_t in = vld1q_u8(p);
+    vst1q_u8(reinterpret_cast<std::uint8_t*>(w), in); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
+                                        vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
+    const std::uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+    return bits != 0 ? static_cast<unsigned>(count_trailing_zeros(bits) >> 2u) : 16u;
+#else
+    const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+    _mm_storeu_si128(static_cast<__m128i*>(static_cast<void*>(w)), in); // NOLINT(bugprone-casting-through-void)
+    const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                         _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
+    const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+    return bits != 0 ? static_cast<unsigned>(count_trailing_zeros(bits)) : 16u;
+#endif
+}
 #endif
 
 #if NLOHMANN_VIEW_SSSE3_DISPATCH
@@ -1437,11 +1466,34 @@ class builder
                 0, 0, '\b', 0, 0, 0, '\f', 0, 0, 0, 0, 0, 0, 0, '\n', 0, 0, 0, '\r', 0, '\t', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
             }
         };
+        // The write position is kept in locals: the stores of characters into
+        // the arena may alias the members of the builder, which would then be
+        // reloaded after every one. It is stored back where the arena grows,
+        // and by `write_back` on every return.
+        const unsigned char* const end = m_end;
         const std::size_t start = arena_used();
-        arena_run(s, static_cast<std::size_t>(p - s));
+        char* w = m_arena_write;
+        const char* w_end = m_arena_end;
+        const arena_write_back write_back(*this, w);
+        {
+            const auto n = static_cast<std::size_t>(p - s);
+            if (n <= 16 && end - s >= 16)
+            {
+                arena_ensure(w, w_end, 16);
+                std::memcpy(w, s, 16);
+            }
+            else if (n != 0)
+            {
+                // (an empty run leaves an empty arena unallocated, and memcpy()
+                // must not be passed its null pointer even for zero bytes)
+                arena_ensure(w, w_end, n);
+                std::memcpy(w, s, n);
+            }
+            w += n;
+        }
         for (;;)
         {
-            if (p == m_end)
+            if (p == end)
             {
                 return failed(error_code::string_missing_quote, p);
             }
@@ -1449,7 +1501,9 @@ class builder
             if (c == '"')
             {
                 ++p;
-                return decoded{p, start, arena_used() - start};
+                // (from w: `write_back` stores it only after the return value
+                // is made; the arena is allocated, since an escape was written)
+                return decoded{p, start, static_cast<std::size_t>(w - m_doc.arena.data()) - start};
             }
             if (c != '\\')
             {
@@ -1459,7 +1513,7 @@ class builder
                 return failed(c < 0x20 ? error_code::string_control_character : error_code::string_utf8, p);
             }
             ++p;
-            if (p == m_end)
+            if (p == end)
             {
                 return failed(error_code::string_missing_quote, p);
             }
@@ -1477,7 +1531,7 @@ class builder
                     {
                         return failed(error_code::string_surrogate_low, p);
                     }
-                    if (m_end - p < 2 || p[0] != '\\' || p[1] != 'u')
+                    if (end - p < 2 || p[0] != '\\' || p[1] != 'u')
                     {
                         return failed(error_code::string_surrogate_high, p);
                     }
@@ -1493,26 +1547,106 @@ class builder
                     }
                     cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
                 }
-                arena_ensure(4);
-                m_arena_write = put_utf8(m_arena_write, cp);
+                arena_ensure(w, w_end, 4);
+                w = put_utf8(w, cp);
             }
             else if (NLOHMANN_VIEW_LIKELY(d < 128 && simple_escape[d] != 0))
             {
-                arena_ensure(1);
-                *m_arena_write++ = simple_escape[d];
+                arena_ensure(w, w_end, 1);
+                *w++ = simple_escape[d];
             }
             else
             {
                 --p;
                 return failed(error_code::string_escape, p);
             }
-            if (p != m_end && *p == '\\')
+#if NLOHMANN_VIEW_NEON
+            if (p != end && *p == '\\')
             {
                 continue; // consecutive escapes ("\u00e4\u00f6"): no run in between
             }
+            // The first 16 bytes of the run are checked one by one, in predicted branches, and copied
+            // as one block: where the runs between escapes are short, the vector step below would put
+            // its longer dependency chain (load, compare, mask, count, add) on p for each of them,
+            // and be slower than these steps (the scanner of the keys works the same way)
+            {
+                if (end - p >= 16)
+                {
+                    const std::uint8_t* const plain = string_plain();
+                    std::size_t steps = 16;
+#define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(plain[p[i]] != 0)) {} else { steps = (i); goto run_found; }
+                    NLOHMANN_VIEW_REPEAT16(NLOHMANN_VIEW_STEP)
+#undef NLOHMANN_VIEW_STEP
+run_found:
+                    arena_ensure(w, w_end, 16);
+                    std::memcpy(w, p, 16); // (only the first `steps` bytes are kept)
+                    w += steps;
+                    p += steps;
+                    if (steps < 16)
+                    {
+                        if (*p >= 0x80)
+                        {
+                            // non-ASCII: the UTF-8 check, and the rest of the run
+                            const unsigned char* const r = p;
+                            p = scan_string_run(p, end);
+                            const auto n = static_cast<std::size_t>(p - r);
+                            arena_ensure(w, w_end, n);
+                            std::memcpy(w, r, n);
+                            w += n;
+                        }
+                        continue;
+                    }
+                }
+            }
+#else
+            if (p != end && (*p == '\\' || *p == '"'))
+            {
+                continue; // consecutive escapes ("\u00e4\u00f6"), or the end of the string: no run in between
+            }
+#endif
+#if NLOHMANN_VIEW_VECTOR
+            // the plain bytes up to the next quote, backslash, or control
+            // character are copied as they are scanned, 16 bytes at a time
+            for (;;)
+            {
+                if (NLOHMANN_VIEW_UNLIKELY(end - p < 16))
+                {
+                    const unsigned char* const r = p;
+                    p = scan_string_run(p, end);
+                    const auto n = static_cast<std::size_t>(p - r);
+                    arena_ensure(w, w_end, n);
+                    std::memcpy(w, r, n);
+                    w += n;
+                    break;
+                }
+                arena_ensure(w, w_end, 16);
+                const unsigned k = copy_plain_run16(p, w);
+                w += k;
+                p += k;
+                if (k == 16)
+                {
+                    continue;
+                }
+                if (NLOHMANN_VIEW_UNLIKELY(*p >= 0x80))
+                {
+                    // non-ASCII: the UTF-8 check, and the rest of the run
+                    const unsigned char* const r = p;
+                    p = scan_string_run(p, end);
+                    const auto n = static_cast<std::size_t>(p - r);
+                    arena_ensure(w, w_end, n);
+                    std::memcpy(w, r, n);
+                    w += n;
+                }
+                break;
+            }
+#else
             const unsigned char* const r = p;
-            p = scan_string_run(p, m_end);
-            arena_run(r, static_cast<std::size_t>(p - r));
+            p = scan_string_run(p, end);
+            const auto n = static_cast<std::size_t>(p - r);
+            arena_ensure(w, w_end, n);
+            std::memcpy(w, r, n);
+            w += n;
+#endif
         }
     }
 
@@ -1554,17 +1688,47 @@ class builder
     char* m_arena_write = nullptr;
     char* m_arena_end = nullptr;
 
+    /// room for n more bytes at w, the write position kept in a local, with
+    /// w_end the end of the arena. (A lambda instead is not always inlined,
+    /// and then w would be kept in memory, as m_arena_write is.)
+    NLOHMANN_VIEW_ALWAYS_INLINE void arena_ensure(char*& w, const char*& w_end, std::size_t n)
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(w_end - w) < n))
+        {
+            m_arena_write = w;
+            arena_grow(n);
+            w = m_arena_write;
+            w_end = m_arena_end;
+        }
+    }
+
+    /// stores a write position kept in a local back into m_arena_write when
+    /// the function that keeps it returns, on every path
+    class arena_write_back
+    {
+      public:
+        arena_write_back(builder& b, char*& w) noexcept
+            : m_builder(b)
+            , m_w(w)
+        {}
+        ~arena_write_back()
+        {
+            m_builder.m_arena_write = m_w;
+        }
+
+        arena_write_back(const arena_write_back&) = delete;
+        arena_write_back& operator=(const arena_write_back&) = delete;
+        arena_write_back(arena_write_back&&) = delete;
+        arena_write_back& operator=(arena_write_back&&) = delete;
+
+      private:
+        builder& m_builder;
+        char*& m_w;
+    };
+
     NLOHMANN_VIEW_ALWAYS_INLINE std::size_t arena_used() const noexcept
     {
         return m_arena_write != nullptr ? static_cast<std::size_t>(m_arena_write - m_doc.arena.data()) : 0;
-    }
-
-    NLOHMANN_VIEW_ALWAYS_INLINE void arena_ensure(std::size_t n)
-    {
-        if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(m_arena_end - m_arena_write) < n))
-        {
-            arena_grow(n);
-        }
     }
 
     NLOHMANN_VIEW_NOINLINE void arena_grow(std::size_t n)
@@ -1573,25 +1737,6 @@ class builder
         m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, used + n + 256));
         m_arena_write = m_doc.arena.data() + used;
         m_arena_end = m_doc.arena.data() + m_doc.arena.size();
-    }
-
-    /// append the run [r, r + n) to the arena; short runs as one fixed-size
-    /// 16-byte move when both sides have the room (no library call)
-    NLOHMANN_VIEW_ALWAYS_INLINE void arena_run(const unsigned char* r, std::size_t n)
-    {
-        if (n <= 16 && m_end - r >= 16)
-        {
-            arena_ensure(16);
-            std::memcpy(m_arena_write, r, 16);
-        }
-        else if (n != 0)
-        {
-            // (an empty run leaves an empty arena unallocated, and memcpy()
-            // must not be passed its null pointer even for zero bytes)
-            arena_ensure(n);
-            std::memcpy(m_arena_write, r, n);
-        }
-        m_arena_write += n;
     }
 
     /// UTF-8 encoding of cp at w (room for 4 bytes); returns the position after
@@ -2116,11 +2261,11 @@ indent_done:
                 ++p;
             }
             const unsigned char* const int_start = p;
-            if (p != e && *p == '0')
+            if (cur() == '0')
             {
                 ++p;
             }
-            else if (NLOHMANN_VIEW_LIKELY(p != e && *p >= '1' && *p <= '9'))
+            else if (NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
             {
                 p = skip_digits(p + 1, e);
             }
@@ -2131,7 +2276,7 @@ indent_done:
             const auto int_digits = static_cast<std::size_t>(p - int_start);
             std::size_t frac_digits = 0;
             bool is_float = false;
-            if (p != e && *p == '.')
+            if (cur() == '.')
             {
                 ++p;
                 const unsigned char* const f0 = p;
@@ -2144,20 +2289,20 @@ indent_done:
                 is_float = true;
             }
             std::int64_t exponent = 0;
-            if (p != e && (*p | 0x20) == 'e')
+            if ((cur() | 0x20) == 'e')
             {
                 ++p;
                 bool exp_negative = false;
-                if (p != e && (*p == '+' || *p == '-'))
+                if (cur() == '+' || cur() == '-')
                 {
                     exp_negative = *p == '-';
                     ++p;
                 }
-                if (NLOHMANN_VIEW_UNLIKELY(p == e || !is_digit(*p)))
+                if (NLOHMANN_VIEW_UNLIKELY(!is_digit(cur())))
                 {
                     return fail(error_code::number_after_exponent);
                 }
-                while (p != e && is_digit(*p))
+                while (is_digit(cur()))
                 {
                     if (exponent < 100000)
                     {
@@ -2219,7 +2364,7 @@ indent_done:
             ++p; // opening quote
             const unsigned char* const s = p;
             p = scan_string_run<Value>(p, e);
-            if (NLOHMANN_VIEW_LIKELY(p != e && *p == '"'))
+            if (NLOHMANN_VIEW_LIKELY(cur() == '"'))
             {
                 push_node(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
                 ++p;
@@ -3178,25 +3323,94 @@ constexpr std::size_t index_max_displacement = 64;
 static_assert(document_data::index_min_members >= 2 * index_max_displacement,
               "a table must be much larger than the probe window of a lookup");
 
-/// hash of a key: its bytes, eight at a time, in a fixed byte order
+/// hash of a key: its bytes, eight at a time (in a fixed byte order), where the
+/// last word may overlap the one before (so that no loop over single bytes is
+/// needed); a key of fewer than eight bytes is read as two overlapping words of
+/// four or two bytes (in the native byte order: the hash is not stored, and the
+/// same on both sides of a lookup)
 inline std::uint64_t key_hash(const char* s, std::size_t n) noexcept
 {
     std::uint64_t h = 0x9E3779B97F4A7C15u * (n + 1);
     const auto* p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    while (n >= 8)
-    {
-        h = (h ^ read_eight_bytes(p)) * 0xBF58476D1CE4E5B9u;
-        h ^= h >> 29u;
-        p += 8;
-        n -= 8;
-    }
     std::uint64_t w = 0;
-    for (std::size_t i = 0; i < n; ++i)
+    if (n >= 8)
     {
-        w |= static_cast<std::uint64_t>(p[i]) << (8u * i);
+        const unsigned char* const last = p + n - 8;
+        while (p < last)
+        {
+            h = (h ^ read_eight_bytes(p)) * 0xBF58476D1CE4E5B9u;
+            h ^= h >> 29u;
+            p += 8;
+        }
+        w = read_eight_bytes(last);
     }
-    h = (h ^ w) * 0x94D049BB133111EBu;
+    else if (n >= 4)
+    {
+        std::uint32_t head = 0;
+        std::uint32_t tail = 0;
+        std::memcpy(&head, p, 4);
+        std::memcpy(&tail, p + n - 4, 4);
+        w = static_cast<std::uint64_t>(head) | (static_cast<std::uint64_t>(tail) << 32u);
+    }
+    else if (n >= 2)
+    {
+        std::uint16_t head = 0;
+        std::uint16_t tail = 0;
+        std::memcpy(&head, p, 2);
+        std::memcpy(&tail, p + n - 2, 2);
+        w = static_cast<std::uint64_t>(head) | (static_cast<std::uint64_t>(tail) << 16u);
+    }
+    else if (n == 1)
+    {
+        w = p[0];
+    }
+    // (a product only carries bits upwards, and the slot is taken from the low
+    // bits: the high bits of the last word are folded down before the multiplication)
+    h = (h ^ w ^ (w >> 29u)) * 0x94D049BB133111EBu;
     return h ^ (h >> 31u);
+}
+
+/// whether the n <= 16 bytes at a and b are equal, as two overlapping words
+/// (the first and the last 8, 4, or 2 bytes) and without a call
+NLOHMANN_VIEW_ALWAYS_INLINE bool same_short_bytes(const unsigned char* a, const unsigned char* b, std::size_t n) noexcept
+{
+    if (n >= 8)
+    {
+        std::uint64_t x0 = 0;
+        std::uint64_t x1 = 0;
+        std::uint64_t y0 = 0;
+        std::uint64_t y1 = 0;
+        std::memcpy(&x0, a, 8);
+        std::memcpy(&x1, a + n - 8, 8);
+        std::memcpy(&y0, b, 8);
+        std::memcpy(&y1, b + n - 8, 8);
+        return x0 == y0 && x1 == y1;
+    }
+    if (n >= 4)
+    {
+        std::uint32_t x0 = 0;
+        std::uint32_t x1 = 0;
+        std::uint32_t y0 = 0;
+        std::uint32_t y1 = 0;
+        std::memcpy(&x0, a, 4);
+        std::memcpy(&x1, a + n - 4, 4);
+        std::memcpy(&y0, b, 4);
+        std::memcpy(&y1, b + n - 4, 4);
+        return x0 == y0 && x1 == y1;
+    }
+    if (n >= 2)
+    {
+        std::uint16_t x0 = 0;
+        std::uint16_t x1 = 0;
+        std::uint16_t y0 = 0;
+        std::uint16_t y1 = 0;
+        std::memcpy(&x0, a, 2);
+        std::memcpy(&x1, a + n - 2, 2);
+        std::memcpy(&y0, b, 2);
+        std::memcpy(&y1, b + n - 2, 2);
+        return x0 == y0 && x1 == y1;
+    }
+    return n == 0 || *a == *b;
 }
 
 /// build the table of a large object
@@ -3263,6 +3477,27 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
     const document_data::object_index& ix = d.indexes[obj->extra - 1u];
     const std::uint32_t* const table = d.index_slots.data() + ix.start;
     std::size_t slot = conditional_static_cast<std::size_t>(key_hash(key, n)) & ix.mask;
+    const auto* const k_bytes = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    // (the loop for longer keys comes first, as the code is laid out; it is not the more common case)
+    if (NLOHMANN_VIEW_UNLIKELY(n <= 16))
+    {
+        // (up to 16 bytes, the bytes are compared as two words, without a call)
+        for (std::size_t distance = 0; distance <= index_max_displacement; ++distance)
+        {
+            const std::uint32_t s = table[slot];
+            if (s == 0)
+            {
+                return nullptr;
+            }
+            const node* const k = obj + s;
+            if (k->len == n && same_short_bytes(reinterpret_cast<const unsigned char*>(d.str(*k)), k_bytes, n)) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            {
+                return k;
+            }
+            slot = (slot + 1) & ix.mask;
+        }
+        return nullptr;
+    }
     for (std::size_t distance = 0; distance <= index_max_displacement; ++distance)
     {
         const std::uint32_t s = table[slot];
@@ -3431,6 +3666,10 @@ const node* element_at(const document_data& d, const node* array, std::size_t id
     {
         return e + idx; // a growable block: one link per element
     }
+    if (array->next == array->len + 1u && (!nav::editable() || (array->flags & node_flags::moved) == 0))
+    {
+        return e + idx; // no element has a subtree: the elements are the nodes after the array
+    }
     for (std::size_t i = 0; i < idx; ++i)
     {
         e = document_data::after(e);
@@ -3446,6 +3685,10 @@ const node* last_child(const document_data& d, const node* container) noexcept
     const std::size_t value_offset = container->kind == static_cast<std::uint8_t>(value_t::object) ? 1 : 0;
     const node* const end = navigation<Editable>::end(d, container);
     const node* last = navigation<Editable>::first(d, container);
+    if (value_offset == 0 && container->next == container->len + 1u && (!navigation<Editable>::editable() || (container->flags & node_flags::moved) == 0))
+    {
+        return last + (container->len - 1u); // an array without subtrees: the elements are the nodes after it
+    }
     for (const node* c = document_data::after(last + value_offset); c != end; c = document_data::after(c + value_offset))
     {
         last = c;
@@ -5311,6 +5554,9 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <algorithm> // max
 #include <cstddef> // size_t
+#ifndef JSON_NO_IO
+    #include <cstdio> // FILE, fread
+#endif
 #include <istream> // istream, streambuf
 #include <string> // basic_string, char_traits, string
 #include <type_traits> // decay, integral_constant, is_array, is_const, is_integral, is_lvalue_reference, is_pointer, is_same, remove_cv, remove_extent, remove_pointer, remove_reference
@@ -5455,6 +5701,37 @@ inline void append_stream(std::string& buf, std::istream& is)
     }
     is.clear(is.rdstate() | std::ios::eofbit);
 }
+
+/// a pointer to a C stream (never with JSON_NO_IO, which leaves out <cstdio>)
+template<typename T>
+struct is_c_stream
+#ifndef JSON_NO_IO
+    : std::is_same<T, std::FILE*>
+#else
+    : std::false_type
+#endif
+{};
+
+#ifndef JSON_NO_IO
+/// append the rest of a C stream: in blocks with fread, not character by
+/// character (the library's file adapter reads with fgetc);
+/// f is not null
+inline void append_file(std::string& buf, std::FILE* f)
+{
+    for (;;)
+    {
+        const std::size_t used = buf.size();
+        const std::size_t room = (std::max)(buf.capacity() - used, std::size_t{4096});
+        buf.resize(used + room);
+        const std::size_t got = std::fread(&buf[used], 1, room, f);
+        buf.resize(used + got);
+        if (got < room)
+        {
+            break; // end of file, or an error (as fgetc, which returns EOF for both)
+        }
+    }
+}
+#endif
 
 }  // namespace view
 }  // namespace detail
@@ -5614,19 +5891,20 @@ class view_item
 
     view_item(const iterator& it, std::size_t index)
         : m_it(it)
-    {
-        if (!it.is_object_iterator())
-        {
-            m_index = std::to_string(index);
-        }
-    }
+        , m_position(index)
+    {}
 
-    /// the member key, or the element index for arrays
+    /// the member key, or the element index for arrays (as text made on the
+    /// first call, so that iterating over the values pays nothing for it)
     string_view_t key() const
     {
         if (m_it.is_object_iterator())
         {
             return m_it.key();
+        }
+        if (m_index.empty())
+        {
+            m_index = std::to_string(m_position);
         }
         return string_view_t(m_index.data(), m_index.size());
     }
@@ -5650,7 +5928,8 @@ class view_item
 
   private:
     iterator m_it;
-    std::string m_index{}; // NOLINT(readability-redundant-member-init)
+    std::size_t m_position; ///< the index of an array element
+    mutable std::string m_index{}; ///< the text of m_position, once key() was called // NOLINT(readability-redundant-member-init)
 };
 
 /// the range returned by basic_json_view::items()
@@ -5744,7 +6023,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // max
+#include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint8_t
 #include <string> // string
@@ -5780,12 +6059,13 @@ template<typename BasicJsonType, bool Editable>
 BasicJsonType materialize(const document_data& d, const node* n)
 {
     using string_t = typename BasicJsonType::string_t;
-    using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>>;
+    using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>, true>;
     using nav = navigation<Editable>;
 
     // the open containers: their next element (or key of the next member),
-    // their end, and whether they are objects; sized once from the
-    // document's deepest nesting (for a subtree an upper bound)
+    // their end, and whether they are objects; for the first 16 levels on the
+    // stack, else sized once from the document's deepest nesting (for a
+    // subtree an upper bound)
     struct frame
     {
         const node* pos;
@@ -5793,10 +6073,43 @@ BasicJsonType materialize(const document_data& d, const node* n)
         bool object;
     };
 
+    // a scalar needs neither the handler nor the stack of open containers
+    switch (static_cast<value_t>(n->kind))
+    {
+        case value_t::string:
+            return BasicJsonType(string_t(d.str(*n), n->len));
+        case value_t::number_integer:
+            return BasicJsonType(static_cast<typename BasicJsonType::number_integer_t>(static_cast<std::int64_t>(integer_bits(*n))));
+        case value_t::number_unsigned:
+            return BasicJsonType(static_cast<typename BasicJsonType::number_unsigned_t>(integer_bits(*n)));
+        case value_t::number_float:
+            return BasicJsonType(float_value<typename BasicJsonType::number_float_t>(d, *n));
+        case value_t::boolean:
+            return BasicJsonType((n->flags & node_flags::is_true) != 0);
+        case value_t::null:
+            return BasicJsonType(nullptr);
+        case value_t::object:
+        case value_t::array:
+        case value_t::binary:
+        case value_t::discarded:
+        default:
+            break;
+    }
+
     BasicJsonType result;
     sax_t sax(result, true);
     const string_t no_token{};
-    std::vector<frame> open((std::max)(d.max_depth, std::size_t{1}));
+    // (shallow subtrees on the stack: a call for a small value then allocates only for the value)
+    std::array<frame, 16> shallow; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): filled as containers open
+    std::vector<frame> deep{};
+    frame* open = shallow.data();
+    std::size_t capacity = shallow.size();
+    if (d.max_depth > capacity)
+    {
+        deep.resize(d.max_depth);
+        open = deep.data();
+        capacity = deep.size();
+    }
     std::size_t depth = 0;
     for (;;)
     {
@@ -5816,9 +6129,13 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 {
                     sax.start_array(n->len);
                 }
-                if (NLOHMANN_VIEW_UNLIKELY(depth == open.size()))
+                if (NLOHMANN_VIEW_UNLIKELY(depth == capacity))
                 {
-                    open.resize(depth * 2); // (deeper than the recorded nesting, e.g. after edits)
+                    // (deeper than the recorded nesting, e.g. after edits)
+                    deep.assign(open, open + depth);
+                    deep.resize(depth * 2);
+                    open = deep.data();
+                    capacity = deep.size();
                 }
                 open[depth++] = frame{nav::first(d, n), nav::end(d, n), object};
                 break;
@@ -6099,6 +6416,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/number.hpp>
 
+// #include <nlohmann/detail/view/simd.hpp>
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -6154,13 +6473,6 @@ class output_buffer
     NLOHMANN_VIEW_ALWAYS_INLINE void put(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         put(s, N - 1);
-    }
-
-    void put_repeated(char c, std::size_t n)
-    {
-        reserve(n);
-        std::memset(m_pos, c, n);
-        m_pos += n;
     }
 
     /// the write position and the end of the writable space, for a writer
@@ -6219,9 +6531,27 @@ class output_buffer
 /// image_check::bounds can have others, which are then written unchanged).
 inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexcept
 {
+    std::size_t i = 0;
+#if NLOHMANN_VIEW_SSE2
+    // (16 bytes per step; with NEON, the mask of a step costs more than it saves on the
+    // short runs that are typical here)
+    // NOLINTBEGIN(portability-simd-intrinsics)
+    for (; i + 16 <= n; i += 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(s + i))); // NOLINT(bugprone-casting-through-void)
+        // (a byte is below 0x20 if it is its own minimum with 0x1F)
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_cmpeq_epi8(_mm_min_epu8(in, _mm_set1_epi8(0x1F)), in));
+        const auto mask = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+        if (mask != 0)
+        {
+            return i + static_cast<std::size_t>(count_trailing_zeros(mask));
+        }
+    }
+    // NOLINTEND(portability-simd-intrinsics)
+#endif
     constexpr std::uint64_t ones = 0x0101010101010101ull;
     constexpr std::uint64_t high = 0x8080808080808080ull;
-    std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
     {
         const std::uint64_t v = read_eight_bytes(s + i);
@@ -6270,6 +6600,70 @@ inline bool is_ascii_without_delete(const char* s, std::size_t n) noexcept
         }
     }
     return true;
+}
+
+#if NLOHMANN_VIEW_VECTOR
+/// the bytes of the 16 at p that ensure_ascii cannot copy (a quote, a
+/// backslash, a control character, DEL, or not ASCII; a signed compare with
+/// 0x20 finds control characters and non-ASCII bytes at once), one bit per
+/// byte (x86) or one nibble per byte (NEON)
+NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t ascii_stop_mask(const unsigned char* p) noexcept
+{
+#if NLOHMANN_VIEW_NEON
+    const uint8x16_t in = vld1q_u8(p);
+    const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
+                                        vorrq_u8(vceqq_u8(in, vdupq_n_u8(0x7F)), vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20))));
+    return vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+#else
+    const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+    const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                         _mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8(0x7F)), _mm_cmplt_epi8(in, _mm_set1_epi8(0x20))));
+    return static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+#endif
+}
+
+/// the width in bits of a byte in the mask of ascii_stop_mask()
+constexpr unsigned ascii_stop_bits() noexcept
+{
+    return NLOHMANN_VIEW_NEON ? 4u : 1u;
+}
+#endif
+
+/// As find_ascii_copyable_run(), 16 bytes per step. end is the end of the
+/// buffer that holds the n bytes at p (a short run is read as 16 bytes if
+/// they are in the buffer).
+inline std::size_t ascii_copyable_run(const unsigned char* p, std::size_t n, const unsigned char* end) noexcept
+{
+#if NLOHMANN_VIEW_VECTOR
+    if (n >= 16)
+    {
+        std::size_t i = 0;
+        for (; i + 16 <= n; i += 16)
+        {
+            const std::uint64_t mask = ascii_stop_mask(p + i);
+            if (mask != 0)
+            {
+                return i + (static_cast<std::size_t>(count_trailing_zeros(mask)) / ascii_stop_bits());
+            }
+        }
+        if (i == n)
+        {
+            return n;
+        }
+        // the last 16 bytes: those before i are known to be copyable
+        const std::uint64_t mask = ascii_stop_mask(p + n - 16);
+        return mask != 0 ? n - 16 + (static_cast<std::size_t>(count_trailing_zeros(mask)) / ascii_stop_bits()) : n;
+    }
+    if (end - p >= 16)
+    {
+        // (the bytes after the run are masked out)
+        const std::uint64_t mask = ascii_stop_mask(p) & ((std::uint64_t{1} << (n * ascii_stop_bits())) - 1u);
+        return mask != 0 ? static_cast<std::size_t>(count_trailing_zeros(mask)) / ascii_stop_bits() : n;
+    }
+#else
+    static_cast<void>(end);
+#endif
+    return find_ascii_copyable_run(p, n);
 }
 
 /// A stack that starts in a buffer of the caller (a local array) and moves to
@@ -6351,6 +6745,39 @@ NLOHMANN_VIEW_ALWAYS_INLINE char* put_literal(char* w, const char (&s)[N]) noexc
     return w + N - 1;
 }
 
+/// the depth of the innermost open container, counted only for indented output
+template<bool Counted>
+struct depth_counter
+{
+    std::size_t value = 0;
+    void enter() noexcept
+    {
+        ++value;
+    }
+    std::size_t leave() noexcept
+    {
+        return --value;
+    }
+    std::size_t get() const noexcept
+    {
+        return value;
+    }
+};
+
+template<>
+struct depth_counter<false>
+{
+    void enter() noexcept {}
+    std::size_t leave() noexcept // NOLINT(readability-convert-member-functions-to-static): same interface as depth_counter<true>
+    {
+        return 0;
+    }
+    std::size_t get() const noexcept // NOLINT(readability-convert-member-functions-to-static): same interface as depth_counter<true>
+    {
+        return 0;
+    }
+};
+
 /// how the view's dump() writes a value
 struct dump_style
 {
@@ -6387,117 +6814,87 @@ class view_serializer
 
     void dump(const node* root)
     {
-        if (!m_style.pretty)
+        if (m_style.ensure_ascii)
         {
-            if (m_style.ensure_ascii)
-            {
-                dump_compact_ascii(root);
-            }
-            else if (m_style.source_numbers)
-            {
-                dump_compact<true, false>(root);
-            }
-            else
-            {
-                dump_compact<false, false>(root);
-            }
-            return;
+            dump_ascii(root);
         }
-        struct frame
+        else if (m_style.pretty)
         {
-            const node* pos; ///< next element, or key of the next member
-            const node* end;
-            bool object;
-            bool first;  ///< nothing written yet
-        };
-        std::array<frame, 32> buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
-        std::vector<frame> heap;
-        small_stack<frame> stack(buffer.data(), buffer.size(), heap);
-        const node* n = root;
-        for (;;)
+            dump_pretty(root);
+        }
+        else if (m_style.source_numbers)
         {
-            // write the value at n
-            if (is_container(*n))
-            {
-                const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-                if (n->len == 0)
-                {
-                    m_out.put(object ? "{}" : "[]", 2);
-                }
-                else
-                {
-                    m_out.put(object ? '{' : '[');
-                    stack.push_back(frame{nav::first(m_doc, n), nav::end(m_doc, n), object, true});
-                }
-            }
-            else
-            {
-                write_scalar(*n);
-            }
-
-            // go to the next value: close finished containers, then separate
-            for (;;)
-            {
-                if (stack.empty())
-                {
-                    m_out.finish();
-                    return;
-                }
-                if (stack.back().pos == stack.back().end)
-                {
-                    const bool object = stack.back().object;
-                    stack.pop_back();
-                    newline(stack.size());
-                    m_out.put(object ? '}' : ']');
-                    continue;
-                }
-                frame& f = stack.back();
-                if (!f.first)
-                {
-                    m_out.put(',');
-                }
-                f.first = false;
-                newline(stack.size());
-                if (f.object)
-                {
-                    write_string(*f.pos);
-                    if (m_style.pretty)
-                    {
-                        m_out.put(": ");
-                    }
-                    else
-                    {
-                        m_out.put(':');
-                    }
-                    n = nav::value(f.pos + 1);
-                    f.pos = document_data::after(f.pos + 1);
-                }
-                else
-                {
-                    n = nav::value(f.pos);
-                    f.pos = document_data::after(f.pos);
-                }
-                break;
-            }
+            dump_text<true, false, false>(root);
+        }
+        else
+        {
+            dump_text<false, false, false>(root);
         }
     }
 
   private:
+    /// dump_text() with ensure_ascii, out of line: the walk without it is
+    /// faster when it is not merged with this one into dump()
+    NLOHMANN_VIEW_NOINLINE void dump_ascii(const node* root)
+    {
+        if (m_style.pretty)
+        {
+            if (m_style.source_numbers)
+            {
+                dump_text<true, true, true>(root);
+            }
+            else
+            {
+                dump_text<false, true, true>(root);
+            }
+        }
+        else if (m_style.source_numbers)
+        {
+            dump_text<true, false, true>(root);
+        }
+        else
+        {
+            dump_text<false, false, true>(root);
+        }
+    }
+
+    /// dump_text() with indentation, out of line: the compact walk is faster
+    /// when it is not merged with the indented ones into dump()
+    NLOHMANN_VIEW_NOINLINE void dump_pretty(const node* root)
+    {
+        if (m_style.source_numbers)
+        {
+            dump_text<true, true, false>(root);
+        }
+        else
+        {
+            dump_text<false, true, false>(root);
+        }
+    }
+
     /// a string that is not a plain string of the source (decoded, or written
     /// by an edit), without ensure_ascii: runs without characters to escape
-    /// are copied
-    NLOHMANN_VIEW_NOINLINE void write_decoded(const node& n)
+    /// are copied. If validate is set, the string must be valid UTF-8: the
+    /// runs are found by the lexer's scan, which validates the sequences, and
+    /// invalid UTF-8 throws what basic_json::dump() throws. (The compact output
+    /// writes the bytes of a damaged image unchanged, and scans without
+    /// validating them.)
+    NLOHMANN_VIEW_NOINLINE void write_decoded(const node& n, bool validate)
     {
         const auto* const s = reinterpret_cast<const unsigned char*>(m_doc.str(n)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         m_out.put('"');
         for (std::size_t i = 0; i < n.len;)
         {
-            const std::size_t run = plain_output_run(s + i, n.len - i);
+            const std::size_t run = validate ? string_bulk_run(s + i, n.len - i) : plain_output_run(s + i, n.len - i);
             if (run != 0)
             {
                 m_out.put(reinterpret_cast<const char*>(s + i), run); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
                 i += run;
                 continue;
+            }
+            if (validate && s[i] >= 0x80)
+            {
+                invalid_utf8(s, n.len); // (the scan stopped at ill-formed UTF-8)
             }
             write_codepoint<false>(s[i], s + i, 1); // a quote, a backslash, or a control character
             ++i;
@@ -6505,21 +6902,7 @@ class view_serializer
         m_out.put('"');
     }
 
-    /// dump_compact() with ensure_ascii, out of line: the walk without it is
-    /// faster when it is not merged with this one into dump()
-    NLOHMANN_VIEW_NOINLINE void dump_compact_ascii(const node* root)
-    {
-        if (m_style.source_numbers)
-        {
-            dump_compact<true, true>(root);
-        }
-        else
-        {
-            dump_compact<false, true>(root);
-        }
-    }
-
-    /// whether dump_compact() copies a string or key from the source: one of
+    /// whether dump_text() copies a string or key from the source: one of
     /// the source, and with ensure_ascii one without bytes >= 0x7F (an overload
     /// each, so that the walk without ensure_ascii is compiled exactly as
     /// before: with GCC, a condition that only folds away later changed its
@@ -6534,13 +6917,155 @@ class view_serializer
         return (n.flags & node_flags::storage) == 0 && is_ascii_without_delete(src + n.off, n.len);
     }
 
-    /// a string with ensure_ascii (dump_compact()), out of line
-    NLOHMANN_VIEW_NOINLINE void write_ascii_string(const node& n)
+    /*!
+    @brief a string with ensure_ascii: the characters that are not printable ASCII as \\uXXXX
+    (a character beyond U+FFFF as a surrogate pair); strings of a document
+    are valid UTF-8, except in a damaged image loaded with image_check::bounds,
+    for which this throws what basic_json::dump() throws for the string
+    */
+    NLOHMANN_VIEW_NOINLINE void write_ascii(const node& n)
     {
-        write_string(n);
+        const auto* const s = reinterpret_cast<const unsigned char*>(m_doc.str(n)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        const std::size_t size = n.len;
+        char* w = m_out.cursor();
+        char* lim = m_out.limit();
+        // room for k bytes
+        const auto room = [&](std::size_t k)
+        {
+            const auto left = static_cast<std::size_t>(lim - w);
+            if (NLOHMANN_VIEW_UNLIKELY(left < k))
+            {
+                m_out.set_cursor(w);
+                m_out.reserve(k);
+                w = m_out.cursor();
+                lim = m_out.limit();
+            }
+        };
+        static constexpr const char* hex = "0123456789abcdef";
+        // \\uXXXX
+        const auto u_escape = [&](std::uint32_t u)
+        {
+            w[0] = '\\';
+            w[1] = 'u';
+            w[2] = hex[(u >> 12u) & 0xFu];
+            w[3] = hex[(u >> 8u) & 0xFu];
+            w[4] = hex[(u >> 4u) & 0xFu];
+            w[5] = hex[u & 0xFu];
+            w += 6;
+        };
+        room(1);
+        *w++ = '"';
+        std::size_t i = 0;
+        // (a string of the source starts with a run that has nothing to escape, 16 bytes per step)
+        const std::size_t prefix = (n.flags & node_flags::storage) == 0 ? ascii_copyable_run(s, size, reinterpret_cast<const unsigned char*>(m_doc.src + m_doc.size)) : 0; // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        if (prefix != 0)
+        {
+            room(prefix);
+            std::memcpy(w, s, prefix);
+            w += prefix;
+            i = prefix;
+        }
+        while (i < size)
+        {
+            // (a character that needs an escape sequence is not worth a call)
+            const std::size_t run = is_ascii_copyable(s[i]) ? find_ascii_copyable_run(s + i, size - i) : 0;
+            if (run != 0)
+            {
+                room(run);
+                std::memcpy(w, s + i, run);
+                w += run;
+                i += run;
+                continue;
+            }
+            room(12);
+            if (s[i] >= 0x80)
+            {
+                const unsigned char lead = s[i];
+                // (the two-byte sequences of Latin text and the three-byte sequences of most other
+                // text, with continuation bytes of any value: the ranges that are restricted (E0,
+                // ED, and the sequences of four bytes) go through validate_one_utf8())
+                if (lead >= 0xE1 && lead <= 0xEF && lead != 0xED && size - i >= 3 && (s[i + 1] & 0xC0u) == 0x80 && (s[i + 2] & 0xC0u) == 0x80)
+                {
+                    u_escape(((lead & 0x0Fu) << 12u) | ((s[i + 1] & 0x3Fu) << 6u) | (s[i + 2] & 0x3Fu));
+                    i += 3;
+                    continue;
+                }
+                if (lead >= 0xC2 && lead <= 0xDF && size - i >= 2 && (s[i + 1] & 0xC0u) == 0x80)
+                {
+                    u_escape(((lead & 0x1Fu) << 6u) | (s[i + 1] & 0x3Fu));
+                    i += 2;
+                    continue;
+                }
+                const std::size_t len = validate_one_utf8(s + i, size - i);
+                if (NLOHMANN_VIEW_UNLIKELY(len == 0))
+                {
+                    m_out.set_cursor(w);
+                    invalid_utf8(s, size);
+                    return; // LCOV_EXCL_LINE (invalid_utf8 throws)
+                }
+                std::uint32_t codepoint = s[i] & (0xFFu >> (len + 1));
+                for (std::size_t k = 1; k < len; ++k)
+                {
+                    codepoint = (codepoint << 6u) | (s[i + k] & 0x3Fu);
+                }
+                i += len;
+                if (codepoint <= 0xFFFF)
+                {
+                    u_escape(codepoint);
+                }
+                else
+                {
+                    u_escape(0xD7C0u + (codepoint >> 10u));
+                    u_escape(0xDC00u + (codepoint & 0x3FFu));
+                }
+                continue;
+            }
+            // a quote, a backslash, or a control character (or DEL)
+            const unsigned char c = s[i++];
+            char escape = 0;
+            switch (c)
+            {
+                case 0x08:
+                    escape = 'b';
+                    break;
+                case 0x09:
+                    escape = 't';
+                    break;
+                case 0x0A:
+                    escape = 'n';
+                    break;
+                case 0x0C:
+                    escape = 'f';
+                    break;
+                case 0x0D:
+                    escape = 'r';
+                    break;
+                case 0x22:
+                    escape = '"';
+                    break;
+                case 0x5C:
+                    escape = '\\';
+                    break;
+                default:
+                    break;
+            }
+            if (escape != 0)
+            {
+                w[0] = '\\';
+                w[1] = escape;
+                w += 2;
+            }
+            else
+            {
+                u_escape(c);
+            }
+        }
+        room(1);
+        *w++ = '"';
+        m_out.set_cursor(w);
     }
 
-    /// the copies of dump_compact() that are not fixed-size moves (long
+    /// the copies of dump_text() that are not fixed-size moves (long
     /// strings, or near the end of the source); out of line, so that the
     /// compiler does not merge the fixed-size moves into this call
     NLOHMANN_VIEW_NOINLINE static void copy_long(char* to, const char* from, std::size_t n) noexcept
@@ -6557,7 +7082,7 @@ class view_serializer
     }
 
     /*!
-    @brief the compact output (the default dump(), or with ensure_ascii)
+    @brief the output, compact (the default dump()) or indented, with or without ensure_ascii
 
     The same walk as dump(), with the write position in a local variable
     (stores through char pointers would otherwise force a reload of the
@@ -6565,11 +7090,11 @@ class view_serializer
     the source copied by fixed-size moves of 32 bytes where the source has
     that many bytes left, instead of a library call per token. The buffer
     keeps 64 bytes of slack for the overshoot. With ensure_ascii (Ascii), a
-    string of the source is copied only if it has no byte >= 0x7F (see
-    is_ascii_without_delete()); any other string is written by write_string().
+    string of the source is copied only if it has nothing to escape (see
+    copied()); any other string is written by write_ascii().
     */
-    template<bool SourceNumbers, bool Ascii>
-    void dump_compact(const node* root)
+    template<bool SourceNumbers, bool Pretty, bool Ascii>
+    void dump_text(const node* root)
     {
         struct frame
         {
@@ -6584,6 +7109,16 @@ class view_serializer
         const char* const src_end = src + m_doc.size;
         char* w = m_out.cursor();
         char* lim = m_out.limit();
+        // (indented output) a line break and 63 indentation characters, from
+        // which the line break of a level of up to 63 characters is a copy
+        std::array<char, 64> ruler; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): filled below if used
+        if (Pretty)
+        {
+            ruler.fill(m_style.indent_char);
+            ruler[0] = '\n';
+        }
+        const std::size_t indent = m_style.indent;
+        depth_counter<Pretty> level; // depth of the innermost open container (indented output)
         // room for n bytes and the slack
         const auto room = [&](std::size_t n)
         {
@@ -6615,6 +7150,22 @@ class view_serializer
             }
             w += n;
         };
+        // (indented output) the line break and the indentation of a level
+        const auto newline = [&](std::size_t depth)
+        {
+            const std::size_t count = 1 + (depth * indent);
+            room(count);
+            if (count <= ruler.size())
+            {
+                std::memcpy(w, ruler.data(), ruler.size());
+            }
+            else
+            {
+                *w = '\n';
+                std::memset(w + 1, m_style.indent_char, count - 1);
+            }
+            w += count;
+        };
         // a string that is not a plain string of the source (out of line, so
         // that the cursor stays in a register here)
         const auto escaped = [&](const node & n)
@@ -6622,11 +7173,11 @@ class view_serializer
             m_out.set_cursor(w);
             if (enabled(Ascii))
             {
-                write_ascii_string(n);
+                write_ascii(n);
             }
             else
             {
-                write_decoded(n);
+                write_decoded(n, Pretty);
             }
             w = m_out.cursor();
             lim = m_out.limit();
@@ -6727,6 +7278,7 @@ class view_serializer
                     {
                         *w++ = object ? '{' : '[';
                         stack.push_back(cur);
+                        level.enter();
                         if (Editable)
                         {
                             cur = frame{nav::first(m_doc, n), nav::end(m_doc, n), object};
@@ -6769,6 +7321,10 @@ class view_serializer
                     {
                         break;
                     }
+                    if (Pretty)
+                    {
+                        newline(level.leave());
+                    }
                     room(1);
                     *w++ = cur.object ? '}' : ']';
                     cur = stack.back();
@@ -6777,13 +7333,17 @@ class view_serializer
                 room(1);
                 *w++ = ',';
             }
+            if (Pretty)
+            {
+                newline(level.get());
+            }
             const node* const at = Editable ? cur.pos : n;
             if (cur.object)
             {
                 const node& key = *at;
                 if (copied(key, src, std::integral_constant<bool, Ascii>()))
                 {
-                    room(key.len + 3);
+                    room(key.len + (Pretty ? 4 : 3));
                     *w++ = '"';
                     copy(src + key.off, key.len);
                     w[0] = '"';
@@ -6793,8 +7353,12 @@ class view_serializer
                 else
                 {
                     escaped(key);
-                    room(1);
+                    room(Pretty ? 2 : 1);
                     *w++ = ':';
+                }
+                if (Pretty)
+                {
+                    *w++ = ' ';
                 }
                 if (Editable)
                 {
@@ -6811,69 +7375,6 @@ class view_serializer
                 n = nav::value(at);
                 cur.pos = document_data::after(at);
             }
-        }
-    }
-
-    void newline(std::size_t level)
-    {
-        if (m_style.pretty)
-        {
-            m_out.put('\n');
-            m_out.put_repeated(m_style.indent_char, level * m_style.indent);
-        }
-    }
-
-    void write_scalar(const node& n)
-    {
-        switch (static_cast<value_t>(n.kind))
-        {
-            case value_t::null:
-                m_out.put("null");
-                break;
-            case value_t::boolean:
-                if ((n.flags & node_flags::is_true) != 0)
-                {
-                    m_out.put("true");
-                }
-                else
-                {
-                    m_out.put("false");
-                }
-                break;
-            case value_t::string:
-                write_string(n);
-                break;
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            {
-                const char* const token = m_doc.str(n);
-                const std::uint32_t len = number_length(n);
-                if (!m_style.source_numbers && len == 2 && token[0] == '-' && token[1] == '0')
-                {
-                    m_out.put('0'); // parse() reads -0 as the integer 0
-                }
-                else
-                {
-                    m_out.put(token, len);
-                }
-                break;
-            }
-            case value_t::number_float:
-                if (m_style.source_numbers && (n.flags & node_flags::storage) != node_flags::edited)
-                {
-                    m_out.put(m_doc.str(n), n.len); // (a float set by an edit is written as with shortest)
-                }
-                else
-                {
-                    write_float_node(n);
-                }
-                break;
-            case value_t::object:    // LCOV_EXCL_LINE (containers are written by dump())
-            case value_t::array:     // LCOV_EXCL_LINE
-            case value_t::binary:    // LCOV_EXCL_LINE (not in a document)
-            case value_t::discarded: // LCOV_EXCL_LINE
-            default:                 // LCOV_EXCL_LINE
-                break;               // LCOV_EXCL_LINE
         }
     }
 
@@ -6985,72 +7486,6 @@ class view_serializer
         // other types (e.g. long double) are rare: the library writes them
         const string_t s = BasicJsonType(x).dump();
         m_out.put(s.data(), s.size());
-    }
-
-    void write_string(const node& n)
-    {
-        const char* const s = m_doc.str(n);
-        m_out.put('"');
-        if ((n.flags & node_flags::storage) == 0 && (!m_style.ensure_ascii || is_ascii_without_delete(s, n.len)))
-        {
-            // a string of the source without escape sequences has nothing to
-            // escape (with ensure_ascii, if it is printable ASCII)
-            m_out.put(s, n.len);
-        }
-        else if (m_style.ensure_ascii)
-        {
-            write_escaped<true>(reinterpret_cast<const unsigned char*>(s), n.len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-        }
-        else
-        {
-            write_escaped<false>(reinterpret_cast<const unsigned char*>(s), n.len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-        }
-        m_out.put('"');
-    }
-
-    /// as serializer::dump_escaped(); strings of a document are valid UTF-8,
-    /// except in a damaged image loaded with image_check::bounds, for which
-    /// this throws what basic_json::dump() throws for the string
-    template<bool EnsureAscii>
-    void write_escaped(const unsigned char* s, std::size_t n)
-    {
-        std::size_t i = 0;
-        while (i < n)
-        {
-            std::size_t run = 0;
-            if (!EnsureAscii)
-            {
-                run = string_bulk_run(s + i, n - i);
-            }
-            else if (is_ascii_copyable(s[i]))
-            {
-                run = find_ascii_copyable_run(s + i, n - i);
-            }
-            if (run != 0)
-            {
-                m_out.put(reinterpret_cast<const char*>(s + i), run); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                i += run;
-                continue;
-            }
-            std::uint32_t codepoint = s[i];
-            std::size_t len = 1;
-            if (codepoint >= 0x80)
-            {
-                len = validate_one_utf8(s + i, n - i);
-                if (NLOHMANN_VIEW_UNLIKELY(len == 0))
-                {
-                    invalid_utf8(s, n);
-                    return;
-                }
-                codepoint &= 0xFFu >> (len + 1);
-                for (std::size_t k = 1; k < len; ++k)
-                {
-                    codepoint = (codepoint << 6u) | (s[i + k] & 0x3Fu);
-                }
-            }
-            write_codepoint<EnsureAscii>(codepoint, s + i, len);
-            i += len;
-        }
     }
 
     /// throw what basic_json::dump() throws for a string that is not valid UTF-8
@@ -7600,7 +8035,7 @@ class basic_json_view
             }
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
-        return idx < m_node->len ? basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx))) : basic_json_view();
+        return idx < m_node->len ? element(idx) : basic_json_view();
     }
 
     /// any other integer type (int, unsigned, long, std::int64_t, ...; a
@@ -7663,7 +8098,7 @@ class basic_json_view
         {
             detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
         }
-        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
+        return element(idx);
     }
 
     /// any other integer type, see operator[]; negative values are out of
@@ -7697,7 +8132,13 @@ class basic_json_view
 
     string_t value(string_view_t key, const char* default_value) const
     {
-        return value(key, string_t(default_value));
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        // (the default is made only if there is no such member)
+        const basic_json_view r = lookup(key);
+        return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
     }
 
     /// the value a JSON pointer refers to converted to T, or the default
@@ -7716,7 +8157,12 @@ class basic_json_view
 
     string_t value(const json_pointer& ptr, const char* default_value) const
     {
-        return value(ptr, string_t(default_value));
+        if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
+        return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
     }
 
     /// the first element or member value; a primitive value itself. Throws
@@ -7738,7 +8184,8 @@ class basic_json_view
     {
         if (is_structured() && m_node->len != 0)
         {
-            return basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
+            return unedited() ? basic_json_view(m_doc, detail::view::last_child<false>(*m_doc, m_node) + (is_object() ? 1 : 0))
+                   : basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
         }
         return front();
     }
@@ -7755,7 +8202,7 @@ class basic_json_view
         {
             return end();
         }
-        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        const node* const k = find_key(key);
         return k != nullptr ? iterator(m_doc, k, true) : end();
     }
 
@@ -7772,7 +8219,7 @@ class basic_json_view
     /// whether this is an object with a member with this key
     bool contains(string_view_t key) const
     {
-        return is_object() && detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size()) != nullptr;
+        return is_object() && find_key(key) != nullptr;
     }
 
     bool contains(const char* key) const
@@ -7932,7 +8379,14 @@ class basic_json_view
         // the compact writer keeps 64 bytes of slack, so that it does not grow
         // the buffer just before the end
         const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 160;
-        detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
+        if (unedited())
+        {
+            detail::view::view_serializer<BasicJsonType, false>(*m_doc, out, estimate, style).dump(m_node);
+        }
+        else
+        {
+            detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
+        }
         return out;
     }
 
@@ -8012,7 +8466,7 @@ class basic_json_view
         {
             return BasicJsonType(value_t::discarded);
         }
-        return detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
+        return unedited() ? detail::view::materialize<BasicJsonType, false>(*m_doc, m_node) : detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
     }
 
     /// byte offset of this value in the source text (for strings: of the
@@ -8090,8 +8544,48 @@ class basic_json_view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
+        if (unedited())
+        {
+            const node* const k = detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
+            return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+        }
         const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? basic_json_view(m_doc, navigation::value(k + 1)) : basic_json_view();
+    }
+
+    /// whether the document has not been edited yet: until the first edit, its index is walked like that of a
+    /// read-only document (nothing is moved or linked), which is cheaper
+    NLOHMANN_VIEW_ALWAYS_INLINE bool unedited() const noexcept
+    {
+        return !navigation::editable() || m_doc->edits == nullptr;
+    }
+
+    /// the member of this object with @a key (the last one if the key occurs more than once), or nullptr
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key) const
+    {
+        return find_key(key, std::integral_constant<bool, Editable> {});
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::true_type /*editable*/) const
+    {
+        // (an editable document without edits is looked up as one that cannot be edited)
+        return unedited() ? detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size())
+               : detail::view::find_member<true>(*m_doc, m_node, key.data(), key.size());
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::false_type /*editable*/) const
+    {
+        return detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
+    }
+
+    /// the element of an array at an index below its size
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view element(size_type idx) const
+    {
+        if (unedited())
+        {
+            return basic_json_view(m_doc, detail::view::element_at<false>(*m_doc, m_node, idx));
+        }
+        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
     }
 
     // --- get() dispatch ---
@@ -8833,7 +9327,8 @@ class basic_json_document
         // NOLINTBEGIN(readability-avoid-nested-conditional-operator): a constant expression of C++11
         append_input_impl(buf, std::forward<T>(input), std::integral_constant < int, detail::is_contiguous_byte_container<D>::value ? 0
                           : std::is_base_of<std::istream, D>::value ? 1
-                          : detail::view::is_adapter_input<D>::value ? 2 : 3 > {});
+                          : detail::view::is_adapter_input<D>::value ? 2
+                          : detail::view::is_c_stream<D>::value ? 4 : 3 > {});
         // NOLINTEND(readability-avoid-nested-conditional-operator)
     }
 
@@ -8854,6 +9349,19 @@ class basic_json_document
     {
         detail::view::append_adapter(buf, std::move(input.ia));
     }
+
+#ifndef JSON_NO_IO
+    static void append_input_impl(std::string& buf, std::FILE* file, std::integral_constant<int, 4> /*C stream*/)
+    {
+        if (file == nullptr)
+        {
+            // (as before: the library's adapter decides what a null stream yields)
+            detail::view::append_adapter(buf, detail::input_adapter(file));
+            return;
+        }
+        detail::view::append_file(buf, file);
+    }
+#endif
 
     template<typename T>
     static void append_input_impl(std::string& buf, T&& input, std::integral_constant<int, 3> /*other*/)
