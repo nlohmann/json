@@ -23,6 +23,7 @@
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/node.hpp>
 #include <nlohmann/detail/view/number.hpp>
+#include <nlohmann/detail/view/simd.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -78,13 +79,6 @@ class output_buffer
     NLOHMANN_VIEW_ALWAYS_INLINE void put(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         put(s, N - 1);
-    }
-
-    void put_repeated(char c, std::size_t n)
-    {
-        reserve(n);
-        std::memset(m_pos, c, n);
-        m_pos += n;
     }
 
     /// the write position and the end of the writable space, for a writer
@@ -143,9 +137,27 @@ class output_buffer
 /// image_check::bounds can have others, which are then written unchanged).
 inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexcept
 {
+    std::size_t i = 0;
+#if NLOHMANN_VIEW_SSE2
+    // (16 bytes per step; with NEON, the mask of a step costs more than it saves on the
+    // short runs that are typical here)
+    // NOLINTBEGIN(portability-simd-intrinsics)
+    for (; i + 16 <= n; i += 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(s + i))); // NOLINT(bugprone-casting-through-void)
+        // (a byte is below 0x20 if it is its own minimum with 0x1F)
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                             _mm_cmpeq_epi8(_mm_min_epu8(in, _mm_set1_epi8(0x1F)), in));
+        const auto mask = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+        if (mask != 0)
+        {
+            return i + static_cast<std::size_t>(count_trailing_zeros(mask));
+        }
+    }
+    // NOLINTEND(portability-simd-intrinsics)
+#endif
     constexpr std::uint64_t ones = 0x0101010101010101ull;
     constexpr std::uint64_t high = 0x8080808080808080ull;
-    std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
     {
         const std::uint64_t v = read_eight_bytes(s + i);
@@ -194,6 +206,70 @@ inline bool is_ascii_without_delete(const char* s, std::size_t n) noexcept
         }
     }
     return true;
+}
+
+#if NLOHMANN_VIEW_VECTOR
+/// the bytes of the 16 at p that ensure_ascii cannot copy (a quote, a
+/// backslash, a control character, DEL, or not ASCII; a signed compare with
+/// 0x20 finds control characters and non-ASCII bytes at once), one bit per
+/// byte (x86) or one nibble per byte (NEON)
+NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t ascii_stop_mask(const unsigned char* p) noexcept
+{
+#if NLOHMANN_VIEW_NEON
+    const uint8x16_t in = vld1q_u8(p);
+    const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
+                                        vorrq_u8(vceqq_u8(in, vdupq_n_u8(0x7F)), vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20))));
+    return vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
+#else
+    const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+    const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
+                                         _mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8(0x7F)), _mm_cmplt_epi8(in, _mm_set1_epi8(0x20))));
+    return static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
+#endif
+}
+
+/// the width in bits of a byte in the mask of ascii_stop_mask()
+constexpr unsigned ascii_stop_bits() noexcept
+{
+    return NLOHMANN_VIEW_NEON ? 4u : 1u;
+}
+#endif
+
+/// As find_ascii_copyable_run(), 16 bytes per step. end is the end of the
+/// buffer that holds the n bytes at p (a short run is read as 16 bytes if
+/// they are in the buffer).
+inline std::size_t ascii_copyable_run(const unsigned char* p, std::size_t n, const unsigned char* end) noexcept
+{
+#if NLOHMANN_VIEW_VECTOR
+    if (n >= 16)
+    {
+        std::size_t i = 0;
+        for (; i + 16 <= n; i += 16)
+        {
+            const std::uint64_t mask = ascii_stop_mask(p + i);
+            if (mask != 0)
+            {
+                return i + (static_cast<std::size_t>(count_trailing_zeros(mask)) / ascii_stop_bits());
+            }
+        }
+        if (i == n)
+        {
+            return n;
+        }
+        // the last 16 bytes: those before i are known to be copyable
+        const std::uint64_t mask = ascii_stop_mask(p + n - 16);
+        return mask != 0 ? n - 16 + (static_cast<std::size_t>(count_trailing_zeros(mask)) / ascii_stop_bits()) : n;
+    }
+    if (end - p >= 16)
+    {
+        // (the bytes after the run are masked out)
+        const std::uint64_t mask = ascii_stop_mask(p) & ((std::uint64_t{1} << (n * ascii_stop_bits())) - 1u);
+        return mask != 0 ? static_cast<std::size_t>(count_trailing_zeros(mask)) / ascii_stop_bits() : n;
+    }
+#else
+    static_cast<void>(end);
+#endif
+    return find_ascii_copyable_run(p, n);
 }
 
 /// A stack that starts in a buffer of the caller (a local array) and moves to
@@ -275,6 +351,39 @@ NLOHMANN_VIEW_ALWAYS_INLINE char* put_literal(char* w, const char (&s)[N]) noexc
     return w + N - 1;
 }
 
+/// the depth of the innermost open container, counted only for indented output
+template<bool Counted>
+struct depth_counter
+{
+    std::size_t value = 0;
+    void enter() noexcept
+    {
+        ++value;
+    }
+    std::size_t leave() noexcept
+    {
+        return --value;
+    }
+    std::size_t get() const noexcept
+    {
+        return value;
+    }
+};
+
+template<>
+struct depth_counter<false>
+{
+    void enter() noexcept {}
+    std::size_t leave() noexcept // NOLINT(readability-convert-member-functions-to-static): same interface as depth_counter<true>
+    {
+        return 0;
+    }
+    std::size_t get() const noexcept // NOLINT(readability-convert-member-functions-to-static): same interface as depth_counter<true>
+    {
+        return 0;
+    }
+};
+
 /// how the view's dump() writes a value
 struct dump_style
 {
@@ -311,117 +420,87 @@ class view_serializer
 
     void dump(const node* root)
     {
-        if (!m_style.pretty)
+        if (m_style.ensure_ascii)
         {
-            if (m_style.ensure_ascii)
-            {
-                dump_compact_ascii(root);
-            }
-            else if (m_style.source_numbers)
-            {
-                dump_compact<true, false>(root);
-            }
-            else
-            {
-                dump_compact<false, false>(root);
-            }
-            return;
+            dump_ascii(root);
         }
-        struct frame
+        else if (m_style.pretty)
         {
-            const node* pos; ///< next element, or key of the next member
-            const node* end;
-            bool object;
-            bool first;  ///< nothing written yet
-        };
-        std::array<frame, 32> buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
-        std::vector<frame> heap;
-        small_stack<frame> stack(buffer.data(), buffer.size(), heap);
-        const node* n = root;
-        for (;;)
+            dump_pretty(root);
+        }
+        else if (m_style.source_numbers)
         {
-            // write the value at n
-            if (is_container(*n))
-            {
-                const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
-                if (n->len == 0)
-                {
-                    m_out.put(object ? "{}" : "[]", 2);
-                }
-                else
-                {
-                    m_out.put(object ? '{' : '[');
-                    stack.push_back(frame{nav::first(m_doc, n), nav::end(m_doc, n), object, true});
-                }
-            }
-            else
-            {
-                write_scalar(*n);
-            }
-
-            // go to the next value: close finished containers, then separate
-            for (;;)
-            {
-                if (stack.empty())
-                {
-                    m_out.finish();
-                    return;
-                }
-                if (stack.back().pos == stack.back().end)
-                {
-                    const bool object = stack.back().object;
-                    stack.pop_back();
-                    newline(stack.size());
-                    m_out.put(object ? '}' : ']');
-                    continue;
-                }
-                frame& f = stack.back();
-                if (!f.first)
-                {
-                    m_out.put(',');
-                }
-                f.first = false;
-                newline(stack.size());
-                if (f.object)
-                {
-                    write_string(*f.pos);
-                    if (m_style.pretty)
-                    {
-                        m_out.put(": ");
-                    }
-                    else
-                    {
-                        m_out.put(':');
-                    }
-                    n = nav::value(f.pos + 1);
-                    f.pos = document_data::after(f.pos + 1);
-                }
-                else
-                {
-                    n = nav::value(f.pos);
-                    f.pos = document_data::after(f.pos);
-                }
-                break;
-            }
+            dump_text<true, false, false>(root);
+        }
+        else
+        {
+            dump_text<false, false, false>(root);
         }
     }
 
   private:
+    /// dump_text() with ensure_ascii, out of line: the walk without it is
+    /// faster when it is not merged with this one into dump()
+    NLOHMANN_VIEW_NOINLINE void dump_ascii(const node* root)
+    {
+        if (m_style.pretty)
+        {
+            if (m_style.source_numbers)
+            {
+                dump_text<true, true, true>(root);
+            }
+            else
+            {
+                dump_text<false, true, true>(root);
+            }
+        }
+        else if (m_style.source_numbers)
+        {
+            dump_text<true, false, true>(root);
+        }
+        else
+        {
+            dump_text<false, false, true>(root);
+        }
+    }
+
+    /// dump_text() with indentation, out of line: the compact walk is faster
+    /// when it is not merged with the indented ones into dump()
+    NLOHMANN_VIEW_NOINLINE void dump_pretty(const node* root)
+    {
+        if (m_style.source_numbers)
+        {
+            dump_text<true, true, false>(root);
+        }
+        else
+        {
+            dump_text<false, true, false>(root);
+        }
+    }
+
     /// a string that is not a plain string of the source (decoded, or written
     /// by an edit), without ensure_ascii: runs without characters to escape
-    /// are copied
-    NLOHMANN_VIEW_NOINLINE void write_decoded(const node& n)
+    /// are copied. If validate is set, the string must be valid UTF-8: the
+    /// runs are found by the lexer's scan, which validates the sequences, and
+    /// invalid UTF-8 throws what basic_json::dump() throws. (The compact output
+    /// writes the bytes of a damaged image unchanged, and scans without
+    /// validating them.)
+    NLOHMANN_VIEW_NOINLINE void write_decoded(const node& n, bool validate)
     {
         const auto* const s = reinterpret_cast<const unsigned char*>(m_doc.str(n)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         m_out.put('"');
         for (std::size_t i = 0; i < n.len;)
         {
-            const std::size_t run = plain_output_run(s + i, n.len - i);
+            const std::size_t run = validate ? string_bulk_run(s + i, n.len - i) : plain_output_run(s + i, n.len - i);
             if (run != 0)
             {
                 m_out.put(reinterpret_cast<const char*>(s + i), run); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
                 i += run;
                 continue;
+            }
+            if (validate && s[i] >= 0x80)
+            {
+                invalid_utf8(s, n.len); // (the scan stopped at ill-formed UTF-8)
             }
             write_codepoint<false>(s[i], s + i, 1); // a quote, a backslash, or a control character
             ++i;
@@ -429,21 +508,7 @@ class view_serializer
         m_out.put('"');
     }
 
-    /// dump_compact() with ensure_ascii, out of line: the walk without it is
-    /// faster when it is not merged with this one into dump()
-    NLOHMANN_VIEW_NOINLINE void dump_compact_ascii(const node* root)
-    {
-        if (m_style.source_numbers)
-        {
-            dump_compact<true, true>(root);
-        }
-        else
-        {
-            dump_compact<false, true>(root);
-        }
-    }
-
-    /// whether dump_compact() copies a string or key from the source: one of
+    /// whether dump_text() copies a string or key from the source: one of
     /// the source, and with ensure_ascii one without bytes >= 0x7F (an overload
     /// each, so that the walk without ensure_ascii is compiled exactly as
     /// before: with GCC, a condition that only folds away later changed its
@@ -458,13 +523,155 @@ class view_serializer
         return (n.flags & node_flags::storage) == 0 && is_ascii_without_delete(src + n.off, n.len);
     }
 
-    /// a string with ensure_ascii (dump_compact()), out of line
-    NLOHMANN_VIEW_NOINLINE void write_ascii_string(const node& n)
+    /*!
+    @brief a string with ensure_ascii: the characters that are not printable ASCII as \\uXXXX
+    (a character beyond U+FFFF as a surrogate pair); strings of a document
+    are valid UTF-8, except in a damaged image loaded with image_check::bounds,
+    for which this throws what basic_json::dump() throws for the string
+    */
+    NLOHMANN_VIEW_NOINLINE void write_ascii(const node& n)
     {
-        write_string(n);
+        const auto* const s = reinterpret_cast<const unsigned char*>(m_doc.str(n)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        const std::size_t size = n.len;
+        char* w = m_out.cursor();
+        char* lim = m_out.limit();
+        // room for k bytes
+        const auto room = [&](std::size_t k)
+        {
+            const auto left = static_cast<std::size_t>(lim - w);
+            if (NLOHMANN_VIEW_UNLIKELY(left < k))
+            {
+                m_out.set_cursor(w);
+                m_out.reserve(k);
+                w = m_out.cursor();
+                lim = m_out.limit();
+            }
+        };
+        static constexpr const char* hex = "0123456789abcdef";
+        // \\uXXXX
+        const auto u_escape = [&](std::uint32_t u)
+        {
+            w[0] = '\\';
+            w[1] = 'u';
+            w[2] = hex[(u >> 12u) & 0xFu];
+            w[3] = hex[(u >> 8u) & 0xFu];
+            w[4] = hex[(u >> 4u) & 0xFu];
+            w[5] = hex[u & 0xFu];
+            w += 6;
+        };
+        room(1);
+        *w++ = '"';
+        std::size_t i = 0;
+        // (a string of the source starts with a run that has nothing to escape, 16 bytes per step)
+        const std::size_t prefix = (n.flags & node_flags::storage) == 0 ? ascii_copyable_run(s, size, reinterpret_cast<const unsigned char*>(m_doc.src + m_doc.size)) : 0; // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        if (prefix != 0)
+        {
+            room(prefix);
+            std::memcpy(w, s, prefix);
+            w += prefix;
+            i = prefix;
+        }
+        while (i < size)
+        {
+            // (a character that needs an escape sequence is not worth a call)
+            const std::size_t run = is_ascii_copyable(s[i]) ? find_ascii_copyable_run(s + i, size - i) : 0;
+            if (run != 0)
+            {
+                room(run);
+                std::memcpy(w, s + i, run);
+                w += run;
+                i += run;
+                continue;
+            }
+            room(12);
+            if (s[i] >= 0x80)
+            {
+                const unsigned char lead = s[i];
+                // (the two-byte sequences of Latin text and the three-byte sequences of most other
+                // text, with continuation bytes of any value: the ranges that are restricted (E0,
+                // ED, and the sequences of four bytes) go through validate_one_utf8())
+                if (lead >= 0xE1 && lead <= 0xEF && lead != 0xED && size - i >= 3 && (s[i + 1] & 0xC0u) == 0x80 && (s[i + 2] & 0xC0u) == 0x80)
+                {
+                    u_escape(((lead & 0x0Fu) << 12u) | ((s[i + 1] & 0x3Fu) << 6u) | (s[i + 2] & 0x3Fu));
+                    i += 3;
+                    continue;
+                }
+                if (lead >= 0xC2 && lead <= 0xDF && size - i >= 2 && (s[i + 1] & 0xC0u) == 0x80)
+                {
+                    u_escape(((lead & 0x1Fu) << 6u) | (s[i + 1] & 0x3Fu));
+                    i += 2;
+                    continue;
+                }
+                const std::size_t len = validate_one_utf8(s + i, size - i);
+                if (NLOHMANN_VIEW_UNLIKELY(len == 0))
+                {
+                    m_out.set_cursor(w);
+                    invalid_utf8(s, size);
+                    return; // LCOV_EXCL_LINE (invalid_utf8 throws)
+                }
+                std::uint32_t codepoint = s[i] & (0xFFu >> (len + 1));
+                for (std::size_t k = 1; k < len; ++k)
+                {
+                    codepoint = (codepoint << 6u) | (s[i + k] & 0x3Fu);
+                }
+                i += len;
+                if (codepoint <= 0xFFFF)
+                {
+                    u_escape(codepoint);
+                }
+                else
+                {
+                    u_escape(0xD7C0u + (codepoint >> 10u));
+                    u_escape(0xDC00u + (codepoint & 0x3FFu));
+                }
+                continue;
+            }
+            // a quote, a backslash, or a control character (or DEL)
+            const unsigned char c = s[i++];
+            char escape = 0;
+            switch (c)
+            {
+                case 0x08:
+                    escape = 'b';
+                    break;
+                case 0x09:
+                    escape = 't';
+                    break;
+                case 0x0A:
+                    escape = 'n';
+                    break;
+                case 0x0C:
+                    escape = 'f';
+                    break;
+                case 0x0D:
+                    escape = 'r';
+                    break;
+                case 0x22:
+                    escape = '"';
+                    break;
+                case 0x5C:
+                    escape = '\\';
+                    break;
+                default:
+                    break;
+            }
+            if (escape != 0)
+            {
+                w[0] = '\\';
+                w[1] = escape;
+                w += 2;
+            }
+            else
+            {
+                u_escape(c);
+            }
+        }
+        room(1);
+        *w++ = '"';
+        m_out.set_cursor(w);
     }
 
-    /// the copies of dump_compact() that are not fixed-size moves (long
+    /// the copies of dump_text() that are not fixed-size moves (long
     /// strings, or near the end of the source); out of line, so that the
     /// compiler does not merge the fixed-size moves into this call
     NLOHMANN_VIEW_NOINLINE static void copy_long(char* to, const char* from, std::size_t n) noexcept
@@ -481,7 +688,7 @@ class view_serializer
     }
 
     /*!
-    @brief the compact output (the default dump(), or with ensure_ascii)
+    @brief the output, compact (the default dump()) or indented, with or without ensure_ascii
 
     The same walk as dump(), with the write position in a local variable
     (stores through char pointers would otherwise force a reload of the
@@ -489,11 +696,11 @@ class view_serializer
     the source copied by fixed-size moves of 32 bytes where the source has
     that many bytes left, instead of a library call per token. The buffer
     keeps 64 bytes of slack for the overshoot. With ensure_ascii (Ascii), a
-    string of the source is copied only if it has no byte >= 0x7F (see
-    is_ascii_without_delete()); any other string is written by write_string().
+    string of the source is copied only if it has nothing to escape (see
+    copied()); any other string is written by write_ascii().
     */
-    template<bool SourceNumbers, bool Ascii>
-    void dump_compact(const node* root)
+    template<bool SourceNumbers, bool Pretty, bool Ascii>
+    void dump_text(const node* root)
     {
         struct frame
         {
@@ -508,6 +715,16 @@ class view_serializer
         const char* const src_end = src + m_doc.size;
         char* w = m_out.cursor();
         char* lim = m_out.limit();
+        // (indented output) a line break and 63 indentation characters, from
+        // which the line break of a level of up to 63 characters is a copy
+        std::array<char, 64> ruler; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): filled below if used
+        if (Pretty)
+        {
+            ruler.fill(m_style.indent_char);
+            ruler[0] = '\n';
+        }
+        const std::size_t indent = m_style.indent;
+        depth_counter<Pretty> level; // depth of the innermost open container (indented output)
         // room for n bytes and the slack
         const auto room = [&](std::size_t n)
         {
@@ -539,6 +756,22 @@ class view_serializer
             }
             w += n;
         };
+        // (indented output) the line break and the indentation of a level
+        const auto newline = [&](std::size_t depth)
+        {
+            const std::size_t count = 1 + (depth * indent);
+            room(count);
+            if (count <= ruler.size())
+            {
+                std::memcpy(w, ruler.data(), ruler.size());
+            }
+            else
+            {
+                *w = '\n';
+                std::memset(w + 1, m_style.indent_char, count - 1);
+            }
+            w += count;
+        };
         // a string that is not a plain string of the source (out of line, so
         // that the cursor stays in a register here)
         const auto escaped = [&](const node & n)
@@ -546,11 +779,11 @@ class view_serializer
             m_out.set_cursor(w);
             if (enabled(Ascii))
             {
-                write_ascii_string(n);
+                write_ascii(n);
             }
             else
             {
-                write_decoded(n);
+                write_decoded(n, Pretty);
             }
             w = m_out.cursor();
             lim = m_out.limit();
@@ -651,6 +884,7 @@ class view_serializer
                     {
                         *w++ = object ? '{' : '[';
                         stack.push_back(cur);
+                        level.enter();
                         if (Editable)
                         {
                             cur = frame{nav::first(m_doc, n), nav::end(m_doc, n), object};
@@ -693,6 +927,10 @@ class view_serializer
                     {
                         break;
                     }
+                    if (Pretty)
+                    {
+                        newline(level.leave());
+                    }
                     room(1);
                     *w++ = cur.object ? '}' : ']';
                     cur = stack.back();
@@ -701,13 +939,17 @@ class view_serializer
                 room(1);
                 *w++ = ',';
             }
+            if (Pretty)
+            {
+                newline(level.get());
+            }
             const node* const at = Editable ? cur.pos : n;
             if (cur.object)
             {
                 const node& key = *at;
                 if (copied(key, src, std::integral_constant<bool, Ascii>()))
                 {
-                    room(key.len + 3);
+                    room(key.len + (Pretty ? 4 : 3));
                     *w++ = '"';
                     copy(src + key.off, key.len);
                     w[0] = '"';
@@ -717,8 +959,12 @@ class view_serializer
                 else
                 {
                     escaped(key);
-                    room(1);
+                    room(Pretty ? 2 : 1);
                     *w++ = ':';
+                }
+                if (Pretty)
+                {
+                    *w++ = ' ';
                 }
                 if (Editable)
                 {
@@ -735,69 +981,6 @@ class view_serializer
                 n = nav::value(at);
                 cur.pos = document_data::after(at);
             }
-        }
-    }
-
-    void newline(std::size_t level)
-    {
-        if (m_style.pretty)
-        {
-            m_out.put('\n');
-            m_out.put_repeated(m_style.indent_char, level * m_style.indent);
-        }
-    }
-
-    void write_scalar(const node& n)
-    {
-        switch (static_cast<value_t>(n.kind))
-        {
-            case value_t::null:
-                m_out.put("null");
-                break;
-            case value_t::boolean:
-                if ((n.flags & node_flags::is_true) != 0)
-                {
-                    m_out.put("true");
-                }
-                else
-                {
-                    m_out.put("false");
-                }
-                break;
-            case value_t::string:
-                write_string(n);
-                break;
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            {
-                const char* const token = m_doc.str(n);
-                const std::uint32_t len = number_length(n);
-                if (!m_style.source_numbers && len == 2 && token[0] == '-' && token[1] == '0')
-                {
-                    m_out.put('0'); // parse() reads -0 as the integer 0
-                }
-                else
-                {
-                    m_out.put(token, len);
-                }
-                break;
-            }
-            case value_t::number_float:
-                if (m_style.source_numbers && (n.flags & node_flags::storage) != node_flags::edited)
-                {
-                    m_out.put(m_doc.str(n), n.len); // (a float set by an edit is written as with shortest)
-                }
-                else
-                {
-                    write_float_node(n);
-                }
-                break;
-            case value_t::object:    // LCOV_EXCL_LINE (containers are written by dump())
-            case value_t::array:     // LCOV_EXCL_LINE
-            case value_t::binary:    // LCOV_EXCL_LINE (not in a document)
-            case value_t::discarded: // LCOV_EXCL_LINE
-            default:                 // LCOV_EXCL_LINE
-                break;               // LCOV_EXCL_LINE
         }
     }
 
@@ -905,72 +1088,6 @@ class view_serializer
         // other types (e.g. long double) are rare: the library writes them
         const string_t s = BasicJsonType(x).dump();
         m_out.put(s.data(), s.size());
-    }
-
-    void write_string(const node& n)
-    {
-        const char* const s = m_doc.str(n);
-        m_out.put('"');
-        if ((n.flags & node_flags::storage) == 0 && (!m_style.ensure_ascii || is_ascii_without_delete(s, n.len)))
-        {
-            // a string of the source without escape sequences has nothing to
-            // escape (with ensure_ascii, if it is printable ASCII)
-            m_out.put(s, n.len);
-        }
-        else if (m_style.ensure_ascii)
-        {
-            write_escaped<true>(reinterpret_cast<const unsigned char*>(s), n.len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-        }
-        else
-        {
-            write_escaped<false>(reinterpret_cast<const unsigned char*>(s), n.len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-        }
-        m_out.put('"');
-    }
-
-    /// as serializer::dump_escaped(); strings of a document are valid UTF-8,
-    /// except in a damaged image loaded with image_check::bounds, for which
-    /// this throws what basic_json::dump() throws for the string
-    template<bool EnsureAscii>
-    void write_escaped(const unsigned char* s, std::size_t n)
-    {
-        std::size_t i = 0;
-        while (i < n)
-        {
-            std::size_t run = 0;
-            if (!EnsureAscii)
-            {
-                run = string_bulk_run(s + i, n - i);
-            }
-            else if (is_ascii_copyable(s[i]))
-            {
-                run = find_ascii_copyable_run(s + i, n - i);
-            }
-            if (run != 0)
-            {
-                m_out.put(reinterpret_cast<const char*>(s + i), run); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                i += run;
-                continue;
-            }
-            std::uint32_t codepoint = s[i];
-            std::size_t len = 1;
-            if (codepoint >= 0x80)
-            {
-                len = validate_one_utf8(s + i, n - i);
-                if (NLOHMANN_VIEW_UNLIKELY(len == 0))
-                {
-                    invalid_utf8(s, n);
-                    return;
-                }
-                codepoint &= 0xFFu >> (len + 1);
-                for (std::size_t k = 1; k < len; ++k)
-                {
-                    codepoint = (codepoint << 6u) | (s[i + k] & 0x3Fu);
-                }
-            }
-            write_codepoint<EnsureAscii>(codepoint, s + i, len);
-            i += len;
-        }
     }
 
     /// throw what basic_json::dump() throws for a string that is not valid UTF-8
