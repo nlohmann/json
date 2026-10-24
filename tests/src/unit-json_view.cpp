@@ -185,6 +185,33 @@ TEST_CASE("json_view")
         // duplicate keys: the last value, at the position of the first key
         CHECK(materialized<json_document>(R"({"a":1,"b":2,"a":3})") == json::parse(R"({"a":1,"b":2,"a":3})"));
         CHECK(materialized<ordered_json_document>(R"({"a":1,"b":2,"a":3})").dump() == R"({"a":3,"b":2})");
+        // scalars (made without the handler), and nesting around the depth up to which the stack of open containers is local
+        for (const char* scalar :
+                {"null", "true", "false", "0", "-7", "18446744073709551615", "1.5e300", "-0.0", "\"\"", "\"short\"", "\"a string that is longer than fifteen bytes\"", R"("\u00e4\n")"
+                })
+        {
+            CAPTURE(scalar)
+            CHECK(materialized<json_document>(scalar) == json::parse(scalar));
+            const std::string in_array = std::string("[1,") + scalar + "]";
+            const json_document d = json_document::parse(in_array);
+            CHECK(d.root()[1].materialize() == json::parse(scalar));
+            CHECK(d.root()[1].get<json>() == json::parse(scalar));
+        }
+        for (const std::size_t levels :
+                {
+                    std::size_t{1}, std::size_t{15}, std::size_t{16}, std::size_t{17}, std::size_t{32}, std::size_t{33}
+                })
+        {
+            CAPTURE(levels)
+            const std::string nested = std::string(levels, '[') + R"({"k":[1,{"j":2}]})" + std::string(levels, ']');
+            CHECK(materialized<json_document>(nested) == json::parse(nested));
+            std::string wide = R"({"a":)";
+            wide += nested;
+            wide += R"(,"b":)";
+            wide += nested;
+            wide += "}";
+            CHECK(materialized<json_document>(wide) == json::parse(wide));
+        }
         // very deep nesting (iterative, as parse())
         const std::string deep = std::string(100000, '[') + std::string(100000, ']');
         // (one check per step, so that a failure shows which step it is)
@@ -409,6 +436,31 @@ TEST_CASE("json_view")
         CHECK(empty_stream.eof());
         std::istringstream rvalue_source("[1]");
         CHECK(json_document::parse_copy(std::move(rvalue_source)).owns_source());
+
+        // a C stream is read in blocks as well (more than one block, and a
+        // text whose length is a multiple of the block size)
+        for (const std::size_t extra :
+                {
+                    std::size_t{0}, std::size_t{1}
+                })
+        {
+            std::FILE* long_file = std::tmpfile(); // NOLINT(cppcoreguidelines-owning-memory)
+            if (long_file != nullptr)
+            {
+                std::string padded = text;
+                padded.append(((4096 - (padded.size() % 4096)) % 4096) + extra, ' ');
+                CHECK(std::fwrite(padded.data(), 1, padded.size(), long_file) == padded.size());
+                CHECK(std::fseek(long_file, 0, SEEK_SET) == 0);
+                const json_document from_long_file = json_document::parse(long_file);
+                CHECK(from_long_file.source() == padded);
+                CHECK(from_long_file.root().materialize() == json::parse(text));
+                CHECK(std::fclose(long_file) == 0); // NOLINT(cppcoreguidelines-owning-memory)
+            }
+        }
+        {
+            json_document from_null;
+            CHECK_THROWS_AS(from_null = json_document::parse(static_cast<std::FILE*>(nullptr)), json::parse_error&);
+        }
 
         // a stream without a buffer is an empty input
         std::istream no_buffer(nullptr);
@@ -1006,6 +1058,49 @@ TEST_CASE("json_view element access and iteration")
 #endif
     }
 
+    SECTION("arrays whose elements have no subtrees: index and back()")
+    {
+        // (the elements are adjacent in the index; an array, an object, or an
+        // empty container anywhere makes the lookup skip element by element)
+        const std::vector<std::string> texts =
+        {
+            "[]", "[1]", "[1,2,3]", "[1,\"two\",3.5,true,null,-7,18446744073709551615]", "[[]]", "[{}]", "[1,[2],3]",
+            "[1,2,{\"a\":3}]", "[[1,2],3,4]", "[1,2,3,[4,5,6,7,8],9,10,11,12]", "[{\"a\":[1]},2]", R"(["a\u00e4","b"])"
+        };
+        for (const std::string& text : texts)
+        {
+            CAPTURE(text)
+            const json_document d = json_document::parse(text);
+            const json_view v = d.root();
+            const json expected = json::parse(text);
+            for (std::size_t i = 0; i < expected.size(); ++i)
+            {
+                CHECK(v[i].materialize() == expected[i]);
+                CHECK(v.at(i).materialize() == expected[i]);
+            }
+            CHECK(v[expected.size()].is_discarded());
+            if (!expected.empty())
+            {
+                CHECK(v.back().materialize() == expected.back());
+            }
+        }
+        // a long array (the direct lookup is not limited to short ones), also with a container at its end
+        std::string text = "[0";
+        for (int i = 1; i < 1000; ++i)
+        {
+            text += "," + std::to_string(i);
+        }
+        const json_document scalars = json_document::parse(text + "]");
+        CHECK(scalars.root()[999].get<int>() == 999);
+        CHECK(scalars.root()[500].get<int>() == 500);
+        CHECK(scalars.root().at(1).get<int>() == 1);
+        CHECK(scalars.root().back().get<int>() == 999);
+        const json_document container_last = json_document::parse(text + ",[1000]]");
+        CHECK(container_last.root()[999].get<int>() == 999);
+        CHECK(container_last.root()[1000][0].get<int>() == 1000);
+        CHECK(container_last.root().back()[0].get<int>() == 1000);
+    }
+
     SECTION("iterators")
     {
         const json_document d = json_document::parse(R"({"x":[1,{"y":2}],"z":null})");
@@ -1045,6 +1140,28 @@ TEST_CASE("json_view element access and iteration")
         CHECK((*first++).key() == "0");
         CHECK((*first).key() == "1");
         CHECK(++first == items.end());
+
+        // the keys of array elements are their indexes, whether or not they are asked for
+        std::string numbers = "[0";
+        for (int i = 1; i < 1234; ++i)
+        {
+            numbers += "," + std::to_string(i);
+        }
+        const json_document array = json_document::parse(numbers + "]");
+        std::size_t position = 0;
+        for (const auto& item : array.root().items())
+        {
+            CHECK(item.value().get<std::size_t>() == position);
+            if (position % 3 != 0) // (not for every item: values alone do not make the key)
+            {
+                CHECK(item.key() == std::to_string(position));
+                CHECK(item.key().data() == item.key().data()); // (the same text every time)
+                const json_view::item copy = item;
+                CHECK(copy.key() == std::to_string(position));
+            }
+            ++position;
+        }
+        CHECK(position == 1234);
 #ifdef JSON_HAS_CPP_17
         std::string pairs;
         for (const auto [key, value] : d.root().items())
@@ -1383,7 +1500,17 @@ TEST_CASE("json_view values")
         CHECK(exception_of([&] { static_cast<void>(v.value("s", 0)); }) == without_path(exception_of([&] { static_cast<void>(j.value("s", 0)); })));
         CHECK(exception_of([&] { static_cast<void>(v["n"].value("x", 0)); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value("x", 0)); })));
         CHECK(exception_of([&] { static_cast<void>(v["n"].value(json::json_pointer("/x"), 0)); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value(json::json_pointer("/x"), 0)); })));
+        // string defaults: the member is not a string, or the value is neither an object nor an array
+        CHECK(exception_of([&] { static_cast<void>(v.value("n", "default")); }) == without_path(exception_of([&] { static_cast<void>(j.value("n", "default")); })));
+        CHECK(exception_of([&] { static_cast<void>(v["n"].value("x", "default")); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value("x", "default")); })));
+        CHECK(exception_of([&] { static_cast<void>(v.value(json::json_pointer("/n"), "default")); }) == without_path(exception_of([&] { static_cast<void>(j.value(json::json_pointer("/n"), "default")); })));
+        CHECK(exception_of([&] { static_cast<void>(v["s"].value(json::json_pointer("/x"), "default")); }) == without_path(exception_of([&] { static_cast<void>(j["s"].value(json::json_pointer("/x"), "default")); })));
 #endif
+        // (defaults and members longer than the short string optimization)
+        CHECK(v.value("s", "a default longer than fifteen characters") == "text");
+        CHECK(v.value("missing", "a default longer than fifteen characters") == "a default longer than fifteen characters");
+        CHECK(v.value(json::json_pointer("/s"), "a default longer than fifteen characters") == "text");
+        CHECK(v.value(json::json_pointer("/zz"), "a default longer than fifteen characters") == "a default longer than fifteen characters");
     }
 }
 

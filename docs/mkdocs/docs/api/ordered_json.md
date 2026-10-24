@@ -42,4 +42,4 @@ parsing an object of `n` keys costs O(n²) rather than O(n log n). See
 
 ## Version history
 
-Since version 3.9.0.
+Added in version 3.9.0.

@@ -21,6 +21,7 @@ using nlohmann::ordered_json_view;
 using json_view_test::generator;
 using json_view_test::has_duplicate_keys;
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -29,6 +30,7 @@ using json_view_test::has_duplicate_keys;
 #include <iomanip>
 #include <map>
 #include <random>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -184,6 +186,133 @@ TEST_CASE("json_view dump")
         const std::string deep = std::string(100000, '[') + std::string(100000, ']');
         const json_document deep_document = json_document::parse(deep);
         CHECK(deep_document.root().dump() == deep);
+    }
+
+    SECTION("ensure_ascii: a character that needs an escape at each position of a string")
+    {
+        // string lengths around the width of the vector steps, in a string value, a key, and a value near the end of the text
+        for (const char* const special :
+                {
+                    "\xC3\xA9", "\xE4\xB8\xAD", "\xF0\x9F\x98\x80", "\x7F", "\\n", "\\u0001", "\\\"", "\\\\"
+                })
+        {
+            for (std::size_t length = 0; length <= 40; ++length)
+            {
+                for (std::size_t position = 0; position <= length; ++position)
+                {
+                    std::string content(length, 'a');
+                    content.insert(position, special);
+                    const std::array<std::string, 3> texts =
+                    {
+                        {
+                            "\"" + content + "\"",
+                            "[\"" + content + "\"]",
+                            "{\"" + content + "\":1}",
+                        }
+                    };
+                    for (const std::string& text : texts)
+                    {
+                        CAPTURE(text)
+                        const ordered_json_document d = ordered_json_document::parse(text);
+                        const ordered_json j = ordered_json::parse(text);
+                        CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+                        CHECK(d.root().dump(2, ' ', true) == j.dump(2, ' ', true));
+                        CHECK(d.root().dump() == j.dump());
+                    }
+                }
+            }
+        }
+    }
+
+    SECTION("ensure_ascii: every character of the Basic Multilingual Plane and some beyond")
+    {
+        // (the two- and three-byte sequences, including the ranges that need a check: E0, ED, EF BF BF)
+        std::string text = "[";
+        std::size_t in_chunk = 0;
+        const auto append = [&](std::uint32_t cp)
+        {
+            if (cp < 0x80)
+            {
+                if (cp < 0x20 || cp == '"' || cp == '\\')
+                {
+                    return;
+                }
+                text += static_cast<char>(cp);
+            }
+            else if (cp < 0x800)
+            {
+                text += static_cast<char>(0xC0 | (cp >> 6));
+                text += static_cast<char>(0x80 | (cp & 0x3F));
+            }
+            else if (cp < 0x10000)
+            {
+                text += static_cast<char>(0xE0 | (cp >> 12));
+                text += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+                text += static_cast<char>(0x80 | (cp & 0x3F));
+            }
+            else
+            {
+                text += static_cast<char>(0xF0 | (cp >> 18));
+                text += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+                text += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+                text += static_cast<char>(0x80 | (cp & 0x3F));
+            }
+        };
+        for (std::uint32_t cp = 0x20; cp < 0x10400; ++cp)
+        {
+            if (cp >= 0xD800 && cp < 0xE000)
+            {
+                continue;
+            }
+            if (in_chunk == 0)
+            {
+                text += text.size() > 1 ? ",\"" : "\"";
+            }
+            append(cp);
+            if (++in_chunk == 37)
+            {
+                text += "\"";
+                in_chunk = 0;
+            }
+        }
+        text += in_chunk != 0 ? "\"]" : "]";
+        const ordered_json_document d = ordered_json_document::parse(text);
+        const ordered_json j = ordered_json::parse(text);
+        CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+        CHECK(d.root().dump(2, ' ', true) == j.dump(2, ' ', true));
+        CHECK(d.root().dump() == j.dump());
+        CHECK(d.root().dump(2) == j.dump(2));
+    }
+
+    SECTION("deep nesting, indented")
+    {
+        // indentations of up to and beyond the width of the writer's fixed-size copy
+        for (const int depth :
+                {
+                    1, 5, 20, 70, 300
+                })
+        {
+            std::string text;
+            for (int i = 0; i < depth; ++i)
+            {
+                text += i % 2 == 0 ? "[1," : R"({"k":2,"\u00e9":)";
+            }
+            text += "[]";
+            for (int i = depth - 1; i >= 0; --i)
+            {
+                text += i % 2 == 0 ? "]" : "}";
+            }
+            const ordered_json_document d = ordered_json_document::parse(text);
+            const ordered_json j = ordered_json::parse(text);
+            for (const int indent :
+                    {
+                        0, 1, 2, 3, 8
+                    })
+            {
+                CHECK(d.root().dump(indent) == j.dump(indent));
+                CHECK(d.root().dump(indent, '\t') == j.dump(indent, '\t'));
+            }
+        }
     }
 
     SECTION("the output buffer of a small value is small")
@@ -596,6 +725,152 @@ TEST_CASE("json_view large objects")
         with_collisions.shrink_to_fit();
         without_collisions.shrink_to_fit();
         CHECK(without_collisions.memory_usage() >= with_collisions.memory_usage() + (table_size * sizeof(std::uint32_t)));
+    }
+
+    SECTION("keys that differ in their last bytes are spread over the table")
+    {
+        // The hash must spread the usual families of keys (numbered names, hex
+        // strings, dates, short names): a key farther than index_max_displacement
+        // from its home slot would leave the object without a table. The keys
+        // are placed with linear probing, as the table does.
+        const auto max_displacement = [](const std::vector<std::string>& keys)
+        {
+            std::size_t slots = 16;
+            while (slots < 2 * keys.size())
+            {
+                slots *= 2;
+            }
+            std::vector<bool> used(slots, false);
+            std::size_t farthest = 0;
+            for (const std::string& key : keys)
+            {
+                std::size_t i = nlohmann::detail::conditional_static_cast<std::size_t>(nlohmann::detail::view::key_hash(key.data(), key.size())) & (slots - 1);
+                std::size_t distance = 0;
+                while (used[i])
+                {
+                    i = (i + 1) & (slots - 1);
+                    ++distance;
+                }
+                used[i] = true;
+                farthest = (std::max)(farthest, distance);
+            }
+            return farthest;
+        };
+        // the keys of a printf-like pattern with one %d, %0Nd or %0Nx, formatted with a stream
+        // (a format string that is not a literal is a Flawfinder error)
+        const auto numbered = [](const char* format, int count, int step)
+        {
+            const std::string pattern(format);
+            const std::size_t percent = pattern.find('%');
+            std::size_t conversion = percent + 1;
+            std::size_t width = 0;
+            while (pattern[conversion] >= '0' && pattern[conversion] <= '9')
+            {
+                width = (width * 10) + static_cast<std::size_t>(pattern[conversion] - '0');
+                ++conversion;
+            }
+            const bool hex = pattern[conversion] == 'x';
+            std::vector<std::string> keys;
+            for (int i = 0; i < count; ++i)
+            {
+                std::ostringstream key;
+                key << pattern.substr(0, percent) << std::setfill('0') << std::setw(static_cast<int>(width))
+                    << (hex ? std::hex : std::dec) << (i * step) << pattern.substr(conversion + 1);
+                keys.push_back(key.str());
+            }
+            return keys;
+        };
+        for (const char* format :
+                {"key%d", "%d", "item_%04d", "a%05d", "%03dxyz", "id%d", "user_%d", "%d_suffix", "0x%04x", "A%07d", "12345678%d", "1234567%d", "123456789%d",
+                 "configuration_parameter_value_%04d_extra", "2026-01-%02dT00:00:00Z"
+                })
+        {
+            CAPTURE(format)
+            CHECK(max_displacement(numbered(format, std::string(format).find("%02d") != std::string::npos ? 60 : 1000, 1)) < nlohmann::detail::view::index_max_displacement); // NOLINT(abseil-string-find-str-contains)
+            CHECK(max_displacement(numbered(format, 600, 7)) < nlohmann::detail::view::index_max_displacement);
+        }
+        std::mt19937_64 rng(7); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
+        for (const std::size_t length :
+                {
+                    std::size_t{1}, std::size_t{2}, std::size_t{3}, std::size_t{5}, std::size_t{7}, std::size_t{8}, std::size_t{9}, std::size_t{12}, std::size_t{16}, std::size_t{17}, std::size_t{33}
+                })
+        {
+            CAPTURE(length)
+            std::set<std::string> distinct;
+            // (there are 26 and 676 keys of one and two letters)
+            std::size_t wanted = 700;
+            if (length == 1)
+            {
+                wanted = 26;
+            }
+            else if (length == 2)
+            {
+                wanted = 500;
+            }
+            while (distinct.size() < wanted)
+            {
+                std::string key(length, 'a');
+                for (char& c : key)
+                {
+                    c = static_cast<char>('a' + (rng() % 26));
+                }
+                distinct.insert(key);
+            }
+            CHECK(max_displacement(std::vector<std::string>(distinct.begin(), distinct.end())) < nlohmann::detail::view::index_max_displacement);
+        }
+    }
+
+    SECTION("keys of every length that differ in one byte")
+    {
+        // In a large object, a key is found by comparing its bytes with those of the member the
+        // table points to: up to 16 bytes as two overlapping words, longer ones with memcmp.
+        // Keys of every length from 0 to 40, and keys that differ from them in one byte.
+        std::mt19937_64 rng(2026); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
+        std::vector<std::string> keys;
+        std::set<std::string> distinct;
+        for (std::size_t length = 0; length <= 40; ++length)
+        {
+            for (int copy = 0; copy < 5; ++copy)
+            {
+                std::string key(length, 'a');
+                for (char& c : key)
+                {
+                    c = static_cast<char>('a' + (rng() % 26));
+                }
+                if (distinct.insert(key).second)
+                {
+                    keys.push_back(key);
+                }
+            }
+        }
+        std::string text = "{";
+        for (std::size_t i = 0; i < keys.size(); ++i)
+        {
+            text += (i != 0 ? ",\"" : "\"") + keys[i] + "\":" + std::to_string(i);
+        }
+        text += "}";
+        REQUIRE(keys.size() >= 128); // (a table is built for 128 members)
+        const json_document d = json_document::parse(text);
+        const json_view v = d.root();
+        for (std::size_t i = 0; i < keys.size(); ++i)
+        {
+            CAPTURE(keys[i])
+            CHECK(v[keys[i]].get<std::size_t>() == i);
+            CHECK(v.at(keys[i]).get<std::size_t>() == i);
+            CHECK(v.contains(keys[i]));
+            for (std::size_t at = 0; at < keys[i].size(); ++at)
+            {
+                std::string other = keys[i];
+                other[at] = other[at] == 'z' ? 'y' : 'z';
+                CAPTURE(other)
+                CHECK(v.contains(other) == (distinct.count(other) != 0));
+            }
+            CHECK(v.contains(keys[i] + "a") == (distinct.count(keys[i] + "a") != 0));
+            if (!keys[i].empty())
+            {
+                CHECK(v.contains(keys[i].substr(1)) == (distinct.count(keys[i].substr(1)) != 0));
+            }
+        }
     }
 
     SECTION("shrink_to_fit releases the tables' spare capacity")

@@ -117,9 +117,10 @@ points apply to every edit:
 
 ## See also
 
-- [basic_json_view](../basic_json_view/index.md) - the read-only handle to a value of a document
-- [json_document](../json_document.md) - this template for the default specialization `nlohmann::json`
-- [Zero-copy JSON views](../../features/json_view.md) - the concept behind documents and views
+- [Zero-copy JSON views](../../features/json_view.md) - guide to documents and views
+- [**basic_json_view**](../basic_json_view/index.md) - the non-owning handle to a value in a document
+- [**json_document**](../json_document.md) and [**json_editable_document**](../json_editable_document.md) - the default specializations
+- [**materialize**](../basic_json_view/materialize.md) - build a `basic_json` value from a view
 
 ## Version history
 

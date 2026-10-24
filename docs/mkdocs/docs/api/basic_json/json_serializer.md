@@ -51,4 +51,4 @@ deserializes. See [Template Parameter Requirements](../../features/types/templat
 
 ## Version history
 
-- Since version 2.0.0.
+- Added in version 2.1.0.

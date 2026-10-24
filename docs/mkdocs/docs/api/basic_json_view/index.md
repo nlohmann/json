@@ -145,9 +145,10 @@ still refers to it -- including ones taken before the change -- reads the new va
 
 ## See also
 
-- [basic_json_document](../basic_json_document/index.md) - the document a view refers into
-- [materialize](materialize.md) - build the `BasicJsonType` value of a subtree
-- [Zero-copy JSON views](../../features/json_view.md) - the concept behind documents and views
+- [Zero-copy JSON views](../../features/json_view.md) - guide to documents and views
+- [**basic_json_document**](../basic_json_document/index.md) - the document that owns the parsed data
+- [**json_view**](../json_view.md) and [**json_editable_view**](../json_editable_view.md) - the default specializations
+- [**materialize**](materialize.md) - build a `basic_json` value from a view
 
 ## Version history
 

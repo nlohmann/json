@@ -286,3 +286,12 @@ This implementation does exactly follow this approach, as it uses double precisi
 ### Storage
 
 Integer number values, unsigned integer number values, and floating-point number values are stored directly inside a `basic_json` type.
+
+## See also
+
+- [Number handling](number_handling.md) - how numbers are stored and converted
+- [Template parameter requirements](template_parameters.md)
+- [**basic_json**](../../api/basic_json/index.md) - the class template and its member types
+- [**type**](../../api/basic_json/type.md) and [**value_t**](../../api/basic_json/value_t.md) - query the type of a value
+- [**object_t**](../../api/basic_json/object_t.md), [**array_t**](../../api/basic_json/array_t.md), [**string_t**](../../api/basic_json/string_t.md), [**number_integer_t**](../../api/basic_json/number_integer_t.md), [**number_float_t**](../../api/basic_json/number_float_t.md) - the underlying types
+- [Object order](../object_order.md)
