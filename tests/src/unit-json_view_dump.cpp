@@ -150,6 +150,68 @@ TEST_CASE("json_view dump")
             CHECK(many_doc.root().dump() == json::parse(many_tokens).dump());
         }
 
+        // tokens of 16 and 17 digits without an exponent (like GeoJSON
+        // coordinates), which dump() converts in batches: random digits, and
+        // digits near a shorter decimal (...99999997, ...00000003), whose
+        // rounding carries; in pairs and among other values, so that the
+        // batches are interrupted; the last token near the end of the coordinates
+        {
+            std::mt19937_64 tokens(5627); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
+            const auto draw = [&tokens](std::size_t n)
+            {
+                const std::uint64_t r = tokens() % n;
+                return static_cast<std::size_t>(r);
+            };
+            std::string coordinates = "[";
+            for (int i = 0; i < 20000; ++i)
+            {
+                const std::size_t length = 16 + draw(2);
+                std::string digits(1, static_cast<char>('1' + draw(9)));
+                const std::size_t kept = draw(3) == 0 ? length : 2 + draw(length - 3);
+                for (std::size_t k = 1; k < kept; ++k)
+                {
+                    digits += static_cast<char>('0' + draw(10));
+                }
+                digits += std::string(length - kept, draw(2) == 0 ? '9' : '0');
+                digits.back() = static_cast<char>('0' + draw(10));
+                const std::size_t point = 1 + draw(9);
+                const std::string token = (draw(2) == 0 ? "-" : "") + digits.substr(0, point) + "." + digits.substr(point);
+                coordinates += (i != 0 ? "," : "") + (draw(8) == 0 ? "{\"x\":" + token + ",\"s\":\"a\"}" : "[" + token + "," + token + "]");
+            }
+            coordinates += ",-65.613616999999977]";
+            const json_document parsed = json_document::parse(coordinates);
+            const ordered_json j = ordered_json::parse(coordinates);
+            CHECK(parsed.root().dump() == j.dump());
+            CHECK(parsed.root().dump(1) == j.dump(1));
+            CHECK(parsed.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+            CHECK(parsed.root().back().get<double>() == j.back().get<double>());
+            CHECK(parsed.root().back().dump() == "-65.61361699999998");
+            std::size_t i = 0;
+            for (const json_view v : parsed.root())
+            {
+                const ordered_json& e = j[i++];
+                CHECK(v.dump() == e.dump());
+                if (v.is_array())
+                {
+                    CHECK(v[0].get<double>() == e[0].get<double>());
+                }
+            }
+
+            // an editable document: edits move some arrays, so that the walk
+            // leaves the order of the parsed nodes
+            ordered_json_editable_document editable = ordered_json_editable_document::parse(coordinates);
+            ordered_json expected = j;
+            for (std::size_t k = 0; k < 20000; k += 97)
+            {
+                if (expected[k].is_array())
+                {
+                    editable.push_back(editable.root()[k], ordered_json(1.5));
+                    expected[k].push_back(1.5);
+                }
+            }
+            CHECK(editable.root().dump() == expected.dump());
+        }
+
         // random doubles, written as parse() and dump() would
         std::mt19937_64 rng(1170); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
         std::string many = "[";

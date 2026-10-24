@@ -14,6 +14,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcpy, memset
+#include <functional> // less
 #include <limits> // numeric_limits
 #include <type_traits> // integral_constant
 #include <vector> // vector
@@ -384,6 +385,92 @@ struct depth_counter<false>
     }
 };
 
+/*!
+@brief the digits of the double nearest to a token w * 10^q (with the given
+bits, from eisel_lemire()) as dump() writes them (in units of 10^q), for
+10^15 <= w < 10^17 and -17 <= q <= -1; 0 if they are not decided here
+
+dump() writes the shortest decimal in the rounding interval of the double x
+(the closest one if there are several, see zmij::to_shortest()). Its digits
+are those of a multiple of 10^g of the token's last digit, with g = dec_exp +
+1 - q for x's decimal exponent dec_exp (at most 2 here): the multiple of 10^g
+nearest to x if it lies in the interval (at most one does), else the multiple
+of 10^(g - 1) nearest to x. For g <= 0, the token itself is in the interval.
+
+All of it is exact in a 64-bit fixed-point number with 56 bits after the point
+(of the token's last digit): x / 10^q = 2c * 5^-q / 2^t for x = c * 2^e2 and t
+= q + 1 - e2, with at most 56 bits after the point here, and |x / 10^q - w| is
+at most half the spacing of the doubles, below 12 units. So only the low 64
+bits of 2c * 5^-q are needed, one multiplication beyond Eisel-Lemire's. An
+exact tie between two candidates and a power of two (whose interval is not
+symmetric) are left to the full conversion.
+*/
+NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t shortest_token_digits(std::uint64_t w, int q, std::uint64_t bits) noexcept
+{
+    const std::uint64_t fraction = bits & ((std::uint64_t{1} << 52u) - 1);
+    const std::uint64_t c = fraction | (std::uint64_t{1} << 52u);
+    const int e2 = static_cast<int>(bits >> 52u) - 1075;
+    const int t = q + 1 - e2;
+    const int g = ((e2 * 315653) >> 20) + 1 - q; // (dec_exp as in zmij::to_shortest(), for a regular x)
+    if (NLOHMANN_VIEW_UNLIKELY(fraction == 0 || t < 1 || t > 56 || g > 2))
+    {
+        return 0;
+    }
+    if (g <= 0)
+    {
+        return w;
+    }
+    const unsigned s = static_cast<unsigned>(56 - t);
+    const unsigned minus_q = static_cast<unsigned>(-q);
+    const std::uint64_t five = ::nlohmann::detail::dtoa_impl::powers_of_ten()[minus_q] >> minus_q; // 5^-q
+    constexpr std::uint64_t one = std::uint64_t{1} << 56u;
+    // positions are kept 32 units above their value, so that they are not
+    // negative; x and the candidates are at most 112 units apart
+    constexpr std::uint64_t bias = 32;
+    const std::uint64_t x = (2 * c * five) << s;   // x / 10^q modulo 256 units
+    const std::uint64_t half = five << s;          // half the spacing of the doubles (the interval's radius)
+    const bool even = (c & 1u) == 0;               // (the interval is closed)
+    // (the choices are masks, not conditions, which compilers could make
+    // branches that these data mispredict)
+    const std::uint64_t g1 = 0 - static_cast<std::uint64_t>(g == 1);
+    const std::uint64_t r10 = w - ((w / 10) * 10);
+    const std::uint64_t r100 = w - ((w / 100) * 100);
+    // the multiple of G = 10^g nearest to x: a0 or a neighbor
+    const std::uint64_t grid = (10u & g1) | (100u & ~g1);
+    const std::uint64_t r = (r10 & g1) | (r100 & ~g1);
+    const std::uint64_t at = x - ((w - r - bias) << 56u); // x - a0, biased
+    const std::uint64_t up = 0 - static_cast<std::uint64_t>(at > (bias * one) + (grid * (one / 2)));
+    const std::uint64_t down = 0 - static_cast<std::uint64_t>(at + (grid * (one / 2)) < bias * one);
+    const std::uint64_t step = (grid & up) - (grid & down);
+    const std::uint64_t center = (bias + step) * one;
+    const std::uint64_t below = 0 - static_cast<std::uint64_t>(at < center);
+    const std::uint64_t dist = ((center - at) & below) | ((at - center) & ~below);
+    const std::uint64_t shorter = 0 - static_cast<std::uint64_t>(dist < half + (even ? 1u : 0u));
+    const std::uint64_t a = w - r + step;
+    // else the multiple of 1 (g == 1) or 10 (g == 2) nearest to x
+    const std::uint64_t rl = r10 & ~g1;
+    const std::uint64_t pos = x - ((w - rl - bias) << 56u) + ((one / 2) & g1) + ((5 * one) & ~g1); // x - b0 + half a step, biased
+    const std::uint64_t whole = pos >> 56u;        // in [20, 59]
+    const std::uint64_t m = whole + 20 - bias;     // (a multiple of 10 above whole - bias)
+    const std::uint64_t tens = (m * 205) >> 11u;   // m / 10
+    const std::uint64_t tie = 0 - static_cast<std::uint64_t>((pos & (one - 1)) == 0 && (g == 1 || m == tens * 10));
+    const std::uint64_t b = ((w + whole - bias) & g1) | ((w - rl + (tens * 10) - 20) & ~g1);
+    return (a & shorter) | (b & ~tie & ~shorter);
+}
+
+/// the eight ASCII digits of x < 10^8, the first in the lowest byte (as
+/// little-endian memory holds them)
+NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t eight_digit_text(std::uint64_t x) noexcept
+{
+    const std::uint64_t abcd = (x * 109951163u) >> 40u; // x / 10000
+    std::uint64_t v = abcd | ((x - (abcd * 10000u)) << 32u);
+    const std::uint64_t ab = ((v * 10486u) >> 20u) & 0x0000007F0000007Fu; // / 100 per 32-bit lane
+    v = ab | ((v - (ab * 100u)) << 16u);
+    const std::uint64_t a = ((v * 103u) >> 10u) & 0x000F000F000F000Fu;   // / 10 per 16-bit lane
+    v = a | ((v - (a * 10u)) << 8u);
+    return v + 0x3030303030303030u;
+}
+
 /// how the view's dump() writes a value
 struct dump_style
 {
@@ -711,6 +798,7 @@ class view_serializer
         std::array<frame, 32> buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
         std::vector<frame> heap;
         small_stack<frame> stack(buffer.data(), buffer.size(), heap);
+        float_batch batch;
         const char* const src = m_doc.src;
         const char* const src_end = src + m_doc.size;
         char* w = m_out.cursor();
@@ -850,7 +938,7 @@ class view_serializer
                     else if (enabled(fast_double::value))
                     {
                         room(64);
-                        w = write_double_at(w, *n);
+                        w = write_double_ahead(w, n, batch);
                     }
                     else
                     {
@@ -983,6 +1071,152 @@ class view_serializer
             }
         }
     }
+
+    /// floats of 16 or 17 digits ahead of the walk, converted together (see
+    /// convert_ahead()); the digits are those of shortest_token_digits(), 0
+    /// for a float the batch does not write
+    struct float_batch
+    {
+        std::array<const node*, 32> at; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::array<std::uint64_t, 32> digits; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::size_t count = 0;
+        std::size_t next = 0;
+        const node* scanned = nullptr; ///< where the last scan of the node array ended
+    };
+
+    /// (doubles) the float at n as dump() writes it, at w (64 bytes of room):
+    /// from the batch if it holds n
+    NLOHMANN_VIEW_ALWAYS_INLINE char* write_double_ahead(char* w, const node* n, float_batch& batch)
+    {
+#if NLOHMANN_VIEW_NEON
+        if (batch.next != batch.count && batch.at[batch.next] == n && batch.digits[batch.next] != 0)
+        {
+            return write_token_digits(w, m_doc.src + n->off, n->len, n->extra >> 8u, batch.digits[batch.next++]);
+        }
+        return write_double_beside(w, n, batch);
+#else
+        static_cast<void>(batch);
+        return write_double_at(w, *n);
+#endif
+    }
+
+#if NLOHMANN_VIEW_NEON
+    /// write_double_ahead() for a float that is not the batch's next one (out
+    /// of line: the walk is faster with less code in its loop)
+    NLOHMANN_VIEW_NOINLINE char* write_double_beside(char* w, const node* n, float_batch& batch)
+    {
+        // (an editable document's walk can skip nodes of the array)
+        const std::less<const node*> before;
+        while (batch.next != batch.count && before(batch.at[batch.next], n))
+        {
+            ++batch.next;
+        }
+        if ((batch.next != batch.count && batch.at[batch.next] == n) || convert_ahead(n, batch))
+        {
+            const std::uint64_t digits = batch.digits[batch.next++];
+            if (digits != 0)
+            {
+                return write_token_digits(w, m_doc.src + n->off, n->len, n->extra >> 8u, digits);
+            }
+        }
+        return write_double_at(w, *n);
+    }
+
+    /*!
+    @brief convert the floats of 16 or 17 digits among the next nodes of the
+    array at once; whether n is the first of them
+
+    Such tokens (like the coordinates of GeoJSON, written with 17 digits) are
+    written as the token with its last digits replaced (write_token_digits()).
+    Each step (the digits, Eisel-Lemire, shortest_token_digits()) is a long
+    chain of dependent multiplications; one loop per step over many floats lets
+    the processor overlap the floats, which it does not across the steps of
+    one float (on Apple M1, the dump of canada.json takes 30 % less time than
+    with a conversion of each float, of which 10 points are this). Each node of the array
+    is scanned once; a node that the walk does not reach in order (in an
+    editable document) is written without the batch. (AArch64 only: on x86-64
+    (Haswell, GCC 13 and Clang 18), the batch was not faster than the
+    conversion of each float.)
+    */
+    NLOHMANN_VIEW_NOINLINE bool convert_ahead(const node* n, float_batch& batch)
+    {
+        const std::less<const node*> before;
+        const node* const last = m_doc.nodes + m_doc.node_count;
+        if (before(n, batch.scanned) || before(n, m_doc.nodes) || !before(n, last))
+        {
+            return false;
+        }
+        const char* const src = m_doc.src;
+        const char* const src_end = src + m_doc.size;
+        const node* const stop = last - n > 128 ? n + 128 : last;
+        batch.count = 0;
+        batch.next = 0;
+        const node* p = n;
+        for (; p != stop && batch.count != batch.at.size(); ++p)
+        {
+            // a token of the source: 16 or 17 digits, at least 8 after the
+            // point, no exponent, no leading zero, 32 bytes to read
+            const unsigned frac_digits = p->extra >> 8u;
+            const unsigned count = (p->extra & 0xFFu) + frac_digits;
+            if (p->kind == static_cast<std::uint8_t>(value_t::number_float) && (p->flags & node_flags::storage) == 0
+                    && count - 16u <= 1u && frac_digits >= 8 && src_end - (src + p->off) >= 33)
+            {
+                const char* const token = src + p->off;
+                const unsigned sign = token[0] == '-' ? 1 : 0;
+                if (p->len == sign + count + 1 && token[sign] != '0')
+                {
+                    batch.at[batch.count++] = p;
+                }
+            }
+        }
+        batch.scanned = p;
+        for (std::size_t i = 0; i != batch.count; ++i)
+        {
+            const node& f = *batch.at[i];
+            const auto* digits = reinterpret_cast<const unsigned char*>(src + f.off); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            digits += *digits == '-' ? 1 : 0;
+            const std::uint64_t w = sixteen_digits(digits, f.extra & 0xFFu);
+            // (the 17th digit follows the point)
+            batch.digits[i] = (f.extra & 0xFFu) + (f.extra >> 8u) == 17 ? (w * 10) + static_cast<std::uint64_t>(digits[17] - '0') : w;
+        }
+        std::array<std::uint64_t, 32> bits; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        for (std::size_t i = 0; i != batch.count; ++i)
+        {
+            bits[i] = eisel_lemire<ieee_binary_format<53>>(-static_cast<int>(batch.at[i]->extra >> 8u), batch.digits[i]);
+        }
+        for (std::size_t i = 0; i != batch.count; ++i)
+        {
+            const std::uint64_t w = batch.digits[i];
+            // (the range also excludes the values of bytes that are not
+            // digits, only in a damaged image loaded with image_check::bounds)
+            const std::uint64_t s = w - 1000000000000000u < 99000000000000000u ? shortest_token_digits(w, -static_cast<int>(batch.at[i]->extra >> 8u), bits[i]) : 0;
+            // (only the last eight digits are written over the token's)
+            batch.digits[i] = s / 100000000u == w / 100000000u ? s : 0;
+        }
+        return batch.count != 0 && batch.at[0] == n;
+    }
+
+    /// a float token of 16 or 17 digits as dump() writes it, at w (64 bytes
+    /// of room): the token with its last eight digits replaced by those of
+    /// digits (see shortest_token_digits(); the others are the token's), and
+    /// without trailing zeros after the point, but one
+    static char* write_token_digits(char* w, const char* token, std::uint32_t len, unsigned frac_digits, std::uint64_t digits) noexcept
+    {
+        std::memcpy(w, token, 32);
+        char* const end = w + len;
+        const std::uint64_t last = eight_digit_text(digits % 100000000u);
+        std::memcpy(end - 8, &last, 8);
+        // (the token's text before the new digits, from the source: reading
+        // the output back would wait for the stores)
+        std::uint64_t before = 0;
+        std::memcpy(&before, token + len - 16, 8);
+        const std::uint64_t last_zeros = last ^ 0x3030303030303030u;
+        const std::uint64_t before_zeros = before ^ 0x3030303030303030u;
+        const unsigned zeros = last_zeros != 0 ? static_cast<unsigned>(count_leading_zeros(last_zeros)) / 8
+                               : 8 + (before_zeros != 0 ? static_cast<unsigned>(count_leading_zeros(before_zeros)) / 8 : 8);
+        return end - (zeros < frac_digits ? zeros : frac_digits - 1);
+    }
+#endif
 
     /// a float node as dump() writes it
     void write_float_node(const node& n)
