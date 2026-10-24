@@ -54,3 +54,12 @@ For the read-only, non-owning [`basic_json_document`](../api/basic_json_document
 types, additionally include
 [`single_include/nlohmann/json_view.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_view.hpp);
 see [Zero-copy JSON views](../features/json_view.md).
+
+## See also
+
+- [CMake](cmake.md) - integrate the library into a CMake project
+- [Package managers](package_managers.md)
+- [pkg-config](pkg-config.md)
+- [Compile times](compile_times.md) - reduce the compile time overhead
+- [Migration guide](migration_guide.md) - upgrade from an earlier version
+- [Releases](../home/releases/index.md)

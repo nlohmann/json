@@ -92,7 +92,7 @@ Conda, and more), and pkg-config.
 
     What changed in each release, with links to the relevant documentation.
 
-    [:octicons-arrow-right-24: Releases](home/releases.md)
+    [:octicons-arrow-right-24: Releases](home/releases/index.md)
 
 -   :octicons-people-24:{ .lg .middle } __Community__
 
@@ -108,7 +108,7 @@ Conda, and more), and pkg-config.
 
     This documentation is built from the `develop` branch and may describe changes that are not part of a release
     yet. Their version numbers are followed by an <span class="unreleased-version">unreleased</span> badge; see
-    [Releases](home/releases.md) for what shipped in each version.
+    [Releases](home/releases/index.md) for what shipped in each version.
 
 The library is licensed under the [MIT License](home/license.md). The source code, issue tracker, and discussions
 are on [GitHub](https://github.com/nlohmann/json).

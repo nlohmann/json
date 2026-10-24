@@ -76,4 +76,4 @@ classDiagram
 
 ## Version history
 
-- Since version 3.0.0.
+- Added in version 3.0.0.

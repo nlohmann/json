@@ -190,6 +190,41 @@ The library uses the following mapping from JSON values types to BJData types ac
     --8<-- "examples/to_bjdata.output"
     ```
 
+
+
+
+
+### Byte layout
+
+Consider the following JSON value (shown formatted for readability):
+
+```json
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_bjdata` encodes it to 51 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-l">length/count/size</span> <span class="bl bl-d">data</span>.
+
+<div class="byte-layout" markdown="0"><table>
+<thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>{</code></td><td><span class="bl bl-t">7B</span></td><td>object start (<code>{</code>)</td></tr>
+<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-l">69 02</span> <span class="bl bl-d">69 64</span> <span class="bl bl-t">49</span> <span class="bl bl-d">2C 01</span></td><td>key: length 2 as int8 (<code>i</code>), then UTF-8 bytes; value: int16 (<code>I</code>), little-endian</td></tr>
+<tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-l">69 04</span> <span class="bl bl-d">6E 61 6D 65</span> <span class="bl bl-t">53</span> <span class="bl bl-l">69 04</span> <span class="bl bl-d">6A 73 6F 6E</span></td><td>key: length 4; value: string (<code>S</code>), length 4 as int8, UTF-8 bytes</td></tr>
+<tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-l">69 02</span> <span class="bl bl-d">70 69</span> <span class="bl bl-t">44</span> <span class="bl bl-d">1F 85 EB 51 B8 1E 09 40</span></td><td>key: length 2; value: float64 (<code>D</code>), little-endian</td></tr>
+<tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-l">69 04</span> <span class="bl bl-d">74 61 67 73</span> <span class="bl bl-t">5B</span></td><td>key: length 4; value: array start (<code>[</code>)</td></tr>
+<tr><td><code>&quot;a&quot;,</code></td><td><span class="bl bl-t">53</span> <span class="bl bl-l">69 01</span> <span class="bl bl-d">61</span></td><td>string, length 1</td></tr>
+<tr><td><code>&quot;b&quot;</code></td><td><span class="bl bl-t">53</span> <span class="bl bl-l">69 01</span> <span class="bl bl-d">62</span></td><td>string, length 1</td></tr>
+<tr><td><code>]</code></td><td><span class="bl bl-t">5D</span></td><td>array end (<code>]</code>)</td></tr>
+<tr><td><code>}</code></td><td><span class="bl bl-t">7D</span></td><td>object end (<code>}</code>)</td></tr>
+</tbody></table></div>
+
 ## Deserialization
 
 The library maps BJData types to JSON value types as follows:

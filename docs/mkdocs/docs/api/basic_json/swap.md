@@ -182,10 +182,10 @@ Constant.
 
 ## Version history
 
-1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
-2. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
-3. Since version 1.0.0.
-4. Since version 1.0.0.
-5. Since version 1.0.0.
-6. Since version 3.8.0.
-7. Since version 3.8.0.
+1. Added in version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
+2. Added in version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
+3. Added in version 1.0.0.
+4. Added in version 1.0.0.
+5. Added in version 1.0.0.
+6. Added in version 3.8.0.
+7. Added in version 3.8.0.

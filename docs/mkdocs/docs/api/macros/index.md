@@ -138,3 +138,12 @@ header. See also the [macro overview page](../../features/macros.md).
   a derived class; uses default values; uses custom names
 - [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a derived
   class; uses custom names
+
+## See also
+
+- [Macros](../../features/macros.md) - guide to the supported macros
+- [Runtime assertions](../../features/assertions.md)
+- [Arbitrary type conversions](../../features/arbitrary_types.md) - using the `NLOHMANN_DEFINE_TYPE_*` macros
+- [Enum conversion](../../features/enum_conversion.md) - using `NLOHMANN_JSON_SERIALIZE_ENUM`
+- [The `nlohmann` namespace](../../features/namespace.md)
+- [CMake integration](../../integration/cmake.md) - setting macros from the build system
