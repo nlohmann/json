@@ -6386,14 +6386,16 @@ std::array<T, sizeof...(Idx)> from_json_inplace_array_impl(const BasicJsonType& 
     return { { j.at(Idx).template get<T>()... } };
 }
 
-// std::is_trivial is deprecated in C++26 (see binary_writer::to_char_type)
+// std::is_trivial is deprecated in C++26 (see binary_writer::to_char_type);
+// a struct rather than an alias, as astyle indents an #ifdef block of aliases
+template<typename T>
+struct is_trivial_element
 #ifdef JSON_HAS_CPP_26
-    template<typename T>
-    using is_trivial_element = conjunction<std::is_trivially_copyable<T>, std::is_trivially_default_constructible<T>>;
+    : conjunction<std::is_trivially_copyable<T>, std::is_trivially_default_constructible<T>>
 #else
-    template<typename T>
-    using is_trivial_element = std::is_trivial<T>;
+    : std::is_trivial<T>
 #endif
+{};
 
 // the element type may not be default constructible: construct every element
 // in place (a pack expansion that is unrolled N times)
