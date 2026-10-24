@@ -181,9 +181,10 @@ inline bool owns_memory(const value_t t) noexcept
 @brief whether a value of the given type is neither an object nor an array
 
 Unlike basic_json::is_primitive(), this includes value_t::discarded: it names
-the types for which iterators, JSON Pointer resolution, and the serializer take
-the "single value" path. Every enumerator is listed so that -Wswitch-enum flags
-this function when a new type is added.
+the types that iterators walk with a primitive_iterator_t (a single value, or no
+value for null and discarded) and that JSON Pointer resolution and the
+serializer treat as leaves. Every enumerator is listed so that -Wswitch-enum
+flags this function when a new type is added.
 */
 inline bool is_primitive(const value_t t) noexcept
 {

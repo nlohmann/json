@@ -732,15 +732,15 @@ private:
         // true if v is not an array/object, or is an already-empty one
         static bool has_no_children(const basic_json& v) noexcept
         {
-            if (detail::is_primitive(v.m_data.m_type))
-            {
-                return true;
-            }
             if (v.m_data.m_type == value_t::array)
             {
                 return v.m_data.m_value.array->empty();
             }
-            return v.m_data.m_value.object->empty();
+            if (v.m_data.m_type == value_t::object)
+            {
+                return v.m_data.m_value.object->empty();
+            }
+            return true;
         }
 
         // true if no child of the non-empty array/object v has children of
@@ -1087,11 +1087,6 @@ public:
     void set_parents()
     {
 #if JSON_DIAGNOSTICS
-        if (detail::is_primitive(m_data.m_type))
-        {
-            return;
-        }
-
         if (m_data.m_type == value_t::array)
         {
             for (auto& element : *m_data.m_value.array)
@@ -1099,7 +1094,7 @@ public:
                 element.m_parent = this;
             }
         }
-        else
+        else if (m_data.m_type == value_t::object)
         {
             for (auto& element : *m_data.m_value.object)
             {
@@ -3110,8 +3105,7 @@ public:
                                  const bool ignore_trailing_commas)
     {
         basic_json result;
-        auto p = parser(std::forward<InputAdapterType>(adapter), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
-        p.parse(true, result);
+        parser(std::forward<InputAdapterType>(adapter), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas).parse(true, result);
         return result;
     }
 
@@ -3133,9 +3127,11 @@ public:
                                const bool ignore_trailing_commas,
                                const cbor_tag_handler_t tag_handler)
     {
-        return format == input_format_t::json
-               ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, InputAdapterType, SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
+        if (format == input_format_t::json)
+        {
+            return parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict);
+        }
+        return detail::binary_reader<basic_json, InputAdapterType, SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
     }
 
     /// serialize @a j into a new vector; @a write receives the vector-backed writer
@@ -4690,20 +4686,20 @@ public:
     JSON_HEDLEY_WARN_UNUSED_RESULT
     size_type max_size() const noexcept
     {
-        if (detail::is_primitive(m_data.m_type))
-        {
-            // all other types have max_size() == size()
-            return size();
-        }
-
         if (m_data.m_type == value_t::array)
         {
             // delegate call to array_t::max_size()
             return m_data.m_value.array->max_size();
         }
 
-        // delegate call to object_t::max_size()
-        return m_data.m_value.object->max_size();
+        if (m_data.m_type == value_t::object)
+        {
+            // delegate call to object_t::max_size()
+            return m_data.m_value.object->max_size();
+        }
+
+        // all other types have max_size() == size()
+        return size();
     }
 
     /// @}

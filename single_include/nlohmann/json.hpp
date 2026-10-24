@@ -3463,9 +3463,10 @@ inline bool owns_memory(const value_t t) noexcept
 @brief whether a value of the given type is neither an object nor an array
 
 Unlike basic_json::is_primitive(), this includes value_t::discarded: it names
-the types for which iterators, JSON Pointer resolution, and the serializer take
-the "single value" path. Every enumerator is listed so that -Wswitch-enum flags
-this function when a new type is added.
+the types that iterators walk with a primitive_iterator_t (a single value, or no
+value for null and discarded) and that JSON Pointer resolution and the
+serializer treat as leaves. Every enumerator is listed so that -Wswitch-enum
+flags this function when a new type is added.
 */
 inline bool is_primitive(const value_t t) noexcept
 {
@@ -13247,40 +13248,40 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0x1E:
                 case 0x1F:
                 {
-                    static const char* const control_character_messages[32] = // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-                    {
-                        "invalid string: control character U+0000 (NUL) must be escaped to \\u0000",
-                        "invalid string: control character U+0001 (SOH) must be escaped to \\u0001",
-                        "invalid string: control character U+0002 (STX) must be escaped to \\u0002",
-                        "invalid string: control character U+0003 (ETX) must be escaped to \\u0003",
-                        "invalid string: control character U+0004 (EOT) must be escaped to \\u0004",
-                        "invalid string: control character U+0005 (ENQ) must be escaped to \\u0005",
-                        "invalid string: control character U+0006 (ACK) must be escaped to \\u0006",
-                        "invalid string: control character U+0007 (BEL) must be escaped to \\u0007",
-                        "invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b",
-                        "invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t",
-                        "invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n",
-                        "invalid string: control character U+000B (VT) must be escaped to \\u000B",
-                        "invalid string: control character U+000C (FF) must be escaped to \\u000C or \\f",
-                        "invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r",
-                        "invalid string: control character U+000E (SO) must be escaped to \\u000E",
-                        "invalid string: control character U+000F (SI) must be escaped to \\u000F",
-                        "invalid string: control character U+0010 (DLE) must be escaped to \\u0010",
-                        "invalid string: control character U+0011 (DC1) must be escaped to \\u0011",
-                        "invalid string: control character U+0012 (DC2) must be escaped to \\u0012",
-                        "invalid string: control character U+0013 (DC3) must be escaped to \\u0013",
-                        "invalid string: control character U+0014 (DC4) must be escaped to \\u0014",
-                        "invalid string: control character U+0015 (NAK) must be escaped to \\u0015",
-                        "invalid string: control character U+0016 (SYN) must be escaped to \\u0016",
-                        "invalid string: control character U+0017 (ETB) must be escaped to \\u0017",
-                        "invalid string: control character U+0018 (CAN) must be escaped to \\u0018",
-                        "invalid string: control character U+0019 (EM) must be escaped to \\u0019",
-                        "invalid string: control character U+001A (SUB) must be escaped to \\u001A",
-                        "invalid string: control character U+001B (ESC) must be escaped to \\u001B",
-                        "invalid string: control character U+001C (FS) must be escaped to \\u001C",
-                        "invalid string: control character U+001D (GS) must be escaped to \\u001D",
-                        "invalid string: control character U+001E (RS) must be escaped to \\u001E",
-                        "invalid string: control character U+001F (US) must be escaped to \\u001F"
+                    static const std::array<const char*, 32> control_character_messages = {{
+                            "invalid string: control character U+0000 (NUL) must be escaped to \\u0000",
+                            "invalid string: control character U+0001 (SOH) must be escaped to \\u0001",
+                            "invalid string: control character U+0002 (STX) must be escaped to \\u0002",
+                            "invalid string: control character U+0003 (ETX) must be escaped to \\u0003",
+                            "invalid string: control character U+0004 (EOT) must be escaped to \\u0004",
+                            "invalid string: control character U+0005 (ENQ) must be escaped to \\u0005",
+                            "invalid string: control character U+0006 (ACK) must be escaped to \\u0006",
+                            "invalid string: control character U+0007 (BEL) must be escaped to \\u0007",
+                            "invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b",
+                            "invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t",
+                            "invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n",
+                            "invalid string: control character U+000B (VT) must be escaped to \\u000B",
+                            "invalid string: control character U+000C (FF) must be escaped to \\u000C or \\f",
+                            "invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r",
+                            "invalid string: control character U+000E (SO) must be escaped to \\u000E",
+                            "invalid string: control character U+000F (SI) must be escaped to \\u000F",
+                            "invalid string: control character U+0010 (DLE) must be escaped to \\u0010",
+                            "invalid string: control character U+0011 (DC1) must be escaped to \\u0011",
+                            "invalid string: control character U+0012 (DC2) must be escaped to \\u0012",
+                            "invalid string: control character U+0013 (DC3) must be escaped to \\u0013",
+                            "invalid string: control character U+0014 (DC4) must be escaped to \\u0014",
+                            "invalid string: control character U+0015 (NAK) must be escaped to \\u0015",
+                            "invalid string: control character U+0016 (SYN) must be escaped to \\u0016",
+                            "invalid string: control character U+0017 (ETB) must be escaped to \\u0017",
+                            "invalid string: control character U+0018 (CAN) must be escaped to \\u0018",
+                            "invalid string: control character U+0019 (EM) must be escaped to \\u0019",
+                            "invalid string: control character U+001A (SUB) must be escaped to \\u001A",
+                            "invalid string: control character U+001B (ESC) must be escaped to \\u001B",
+                            "invalid string: control character U+001C (FS) must be escaped to \\u001C",
+                            "invalid string: control character U+001D (GS) must be escaped to \\u001D",
+                            "invalid string: control character U+001E (RS) must be escaped to \\u001E",
+                            "invalid string: control character U+001F (US) must be escaped to \\u001F"
+                        }
                     };
                     error_message = control_character_messages[static_cast<std::size_t>(current)];
                     return token_type::parse_error;
@@ -25508,7 +25509,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, input_format_name(input_format_t::cbor));
+                throw_on_discarded(j, input_format_t::cbor);
         }
     }
 
@@ -25722,7 +25723,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, input_format_name(input_format_t::msgpack));
+                throw_on_discarded(j, input_format_t::msgpack);
         }
     }
 
@@ -25896,7 +25897,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, input_format_name(use_bjdata ? input_format_t::bjdata : input_format_t::ubjson));
+                throw_on_discarded(j, use_bjdata ? input_format_t::bjdata : input_format_t::ubjson);
         }
     }
 
@@ -25922,11 +25923,11 @@ class binary_writer
     @brief throws because @a j is discarded and cannot be serialized
     @throw type_error.321 always
     */
-    JSON_HEDLEY_NO_RETURN static void throw_on_discarded(const BasicJsonType& j, const char* format_name)
+    JSON_HEDLEY_NO_RETURN static void throw_on_discarded(const BasicJsonType& j, const input_format_t format)
     {
         static_cast<void>(j); // unused when JSON_NOEXCEPTION is defined
-        static_cast<void>(format_name);
-        JSON_THROW(type_error::create(exception_id::discarded_value_used, concat("cannot serialize discarded value to ", format_name), &j));
+        static_cast<void>(format);
+        JSON_THROW(type_error::create(exception_id::discarded_value_used, concat("cannot serialize discarded value to ", input_format_name(format)), &j));
     }
 
     /// how the range of integer type @a NumberType relates to that of @a TargetType
@@ -26046,11 +26047,11 @@ class binary_writer
     }
 
     /*!
-    @brief throws because the integer @a j is too large for @a format_name
+    @brief throws because the integer @a j is too large for @a format
     @throw out_of_range.407 always
     */
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
-    static void throw_integer_out_of_range(const BasicJsonType& j, const char* format_name, const char* range)
+    static void throw_integer_out_of_range(const BasicJsonType& j, const input_format_t format, const char* range)
     {
         // neither std::to_string(), which has no overload for integer types
         // wider than 64 bits, nor dump(), which would also instantiate the
@@ -26061,9 +26062,9 @@ class binary_writer
                                    ? integer_to_string(j.m_data.m_value.number_unsigned, std::integral_constant<bool, unsigned_limits::is_signed>())
                                    : integer_to_string(j.m_data.m_value.number_integer, std::integral_constant<bool, integer_limits::is_signed>());
         static_cast<void>(number); // unused when JSON_NOEXCEPTION is defined
-        static_cast<void>(format_name);
+        static_cast<void>(format);
         static_cast<void>(range);
-        JSON_THROW(out_of_range::create(exception_id::integer_too_large, concat("integer number ", number, " cannot be represented by ", format_name, " as it does not fit ", range), &j));
+        JSON_THROW(out_of_range::create(exception_id::integer_too_large, concat("integer number ", number, " cannot be represented by ", input_format_name(format), " as it does not fit ", range), &j));
     }
 
     // The exceptions below are thrown from functions of their own, out of line:
@@ -26914,14 +26915,14 @@ class binary_writer
             case value_t::number_integer:
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(j.m_data.m_value.number_integer)))
                 {
-                    throw_integer_out_of_range(j, input_format_name(input_format_t::bson), "int64");
+                    throw_integer_out_of_range(j, input_format_t::bson, "int64");
                 }
                 return calc_bson_integer_size(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
 
             case value_t::number_unsigned:
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
                 {
-                    throw_integer_out_of_range(j, input_format_name(input_format_t::bson), "uint64");
+                    throw_integer_out_of_range(j, input_format_t::bson, "uint64");
                 }
                 return calc_bson_unsigned_size(conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
 
@@ -26932,7 +26933,7 @@ class binary_writer
                 return 0ul;
 
             case value_t::discarded:
-                throw_on_discarded(j, input_format_name(input_format_t::bson));
+                throw_on_discarded(j, input_format_t::bson);
 
             // LCOV_EXCL_START
             case value_t::object:
@@ -27161,7 +27162,7 @@ class binary_writer
                 return write_bson_null(name);
 
             case value_t::discarded:
-                throw_on_discarded(j, input_format_name(input_format_t::bson));
+                throw_on_discarded(j, input_format_t::bson);
 
             // LCOV_EXCL_START
             case value_t::object:
@@ -27942,7 +27943,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::cbor), "uint64");
+                throw_integer_out_of_range(j, input_format_t::cbor, "uint64");
             }
             write_cbor_head(0x00, conditional_static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
             return;
@@ -27952,7 +27953,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::cbor), "[-2^64, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_t::cbor, "[-2^64, 2^64-1]");
             }
             // CBOR does not differentiate between positive signed
             // integers and unsigned integers
@@ -27963,7 +27964,7 @@ class binary_writer
             // a negative integer n is encoded as -1 - n
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(-1 - j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::cbor), "[-2^64, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_t::cbor, "[-2^64, 2^64-1]");
             }
             write_cbor_head(0x20, static_cast<std::uint64_t>(-1 - j.m_data.m_value.number_integer));
         }
@@ -28039,7 +28040,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_unsigned)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::msgpack), "uint64");
+                throw_integer_out_of_range(j, input_format_t::msgpack, "uint64");
             }
             write_msgpack_unsigned(static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
             return;
@@ -28049,7 +28050,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::uint64_t>(j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::msgpack), "[-2^63, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_t::msgpack, "[-2^63, 2^64-1]");
             }
             // MessagePack does not differentiate between positive
             // signed integers and unsigned integers.
@@ -28059,7 +28060,7 @@ class binary_writer
         {
             if (JSON_HEDLEY_UNLIKELY(!integer_fits_min<std::int64_t>(j.m_data.m_value.number_integer)))
             {
-                throw_integer_out_of_range(j, input_format_name(input_format_t::msgpack), "[-2^63, 2^64-1]");
+                throw_integer_out_of_range(j, input_format_t::msgpack, "[-2^63, 2^64-1]");
             }
             if (j.m_data.m_value.number_integer >= -32)
             {
@@ -28207,8 +28208,8 @@ class binary_writer
         Walk::string(*this, key, context);
     }
 
-    template < typename Walk, typename Key = typename BasicJsonType::object_t::key_type,
-               enable_if_t < !std::is_convertible<Key, string_t>::value, int > = 0 >
+    template<typename Walk, typename Key = typename BasicJsonType::object_t::key_type,
+             enable_if_t<negation<std::is_convertible<Key, string_t>>::value, int> = 0>
     void write_object_key(const typename BasicJsonType::object_t::key_type& key, const BasicJsonType& /*context*/)
     {
         Walk::scalar(*this, BasicJsonType(key));
@@ -29462,7 +29463,7 @@ class binary_writer
             {
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::int64_t>(j.m_data.m_value.number_unsigned)))
                 {
-                    throw_integer_out_of_range(j, input_format_name(input_format_t::bon8), "int64");
+                    throw_integer_out_of_range(j, input_format_t::bon8, "int64");
                 }
                 write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_unsigned));
                 string_open = false;
@@ -29473,7 +29474,7 @@ class binary_writer
             {
                 if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(j.m_data.m_value.number_integer)))
                 {
-                    throw_integer_out_of_range(j, input_format_name(input_format_t::bon8), "int64");
+                    throw_integer_out_of_range(j, input_format_t::bon8, "int64");
                 }
                 write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
                 string_open = false;
@@ -29541,7 +29542,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                throw_on_discarded(j, input_format_name(input_format_t::bon8));
+                throw_on_discarded(j, input_format_t::bon8);
         }
     }
 
@@ -35458,15 +35459,15 @@ private:
         // true if v is not an array/object, or is an already-empty one
         static bool has_no_children(const basic_json& v) noexcept
         {
-            if (detail::is_primitive(v.m_data.m_type))
-            {
-                return true;
-            }
             if (v.m_data.m_type == value_t::array)
             {
                 return v.m_data.m_value.array->empty();
             }
-            return v.m_data.m_value.object->empty();
+            if (v.m_data.m_type == value_t::object)
+            {
+                return v.m_data.m_value.object->empty();
+            }
+            return true;
         }
 
         // true if no child of the non-empty array/object v has children of
@@ -35813,11 +35814,6 @@ public:
     void set_parents()
     {
 #if JSON_DIAGNOSTICS
-        if (detail::is_primitive(m_data.m_type))
-        {
-            return;
-        }
-
         if (m_data.m_type == value_t::array)
         {
             for (auto& element : *m_data.m_value.array)
@@ -35825,7 +35821,7 @@ public:
                 element.m_parent = this;
             }
         }
-        else
+        else if (m_data.m_type == value_t::object)
         {
             for (auto& element : *m_data.m_value.object)
             {
@@ -37836,8 +37832,7 @@ public:
                                  const bool ignore_trailing_commas)
     {
         basic_json result;
-        auto p = parser(std::forward<InputAdapterType>(adapter), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
-        p.parse(true, result);
+        parser(std::forward<InputAdapterType>(adapter), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas).parse(true, result);
         return result;
     }
 
@@ -37859,9 +37854,11 @@ public:
                                const bool ignore_trailing_commas,
                                const cbor_tag_handler_t tag_handler)
     {
-        return format == input_format_t::json
-        ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-        : detail::binary_reader<basic_json, InputAdapterType, SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
+        if (format == input_format_t::json)
+        {
+            return parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict);
+        }
+        return detail::binary_reader<basic_json, InputAdapterType, SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
     }
 
     /// serialize @a j into a new vector; @a write receives the vector-backed writer
@@ -39416,20 +39413,20 @@ public:
     JSON_HEDLEY_WARN_UNUSED_RESULT
     size_type max_size() const noexcept
     {
-        if (detail::is_primitive(m_data.m_type))
-        {
-            // all other types have max_size() == size()
-            return size();
-        }
-
         if (m_data.m_type == value_t::array)
         {
             // delegate call to array_t::max_size()
             return m_data.m_value.array->max_size();
         }
 
-        // delegate call to object_t::max_size()
-        return m_data.m_value.object->max_size();
+        if (m_data.m_type == value_t::object)
+        {
+            // delegate call to object_t::max_size()
+            return m_data.m_value.object->max_size();
+        }
+
+        // all other types have max_size() == size()
+        return size();
     }
 
     /// @}
