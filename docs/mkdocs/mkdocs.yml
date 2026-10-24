@@ -60,6 +60,7 @@ nav:
   - Features:
       - features/index.md
       - features/arbitrary_types.md
+      - features/type_recipes.md
       - Binary Formats:
           - features/binary_formats/index.md
           - features/binary_formats/bjdata.md
@@ -84,11 +85,13 @@ nav:
       - features/modifying_values.md
       - features/modules.md
       - 'nlohmann Namespace': features/namespace.md
+      - features/no_exceptions.md
       - features/object_order.md
       - features/performance.md
       - Parsing:
           - features/parsing/index.md
           - features/parsing/json_lines.md
+          - features/parsing/large_and_partial_input.md
           - features/parsing/parse_exceptions.md
           - features/parsing/parser_callbacks.md
           - features/parsing/sax_interface.md

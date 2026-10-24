@@ -7,7 +7,9 @@ detect bugs in client code.
 ## Switch off runtime assertions
 
 Runtime assertions can be switched off by defining the preprocessor macro `NDEBUG` (see the
-[documentation of assert](https://en.cppreference.com/w/cpp/error/assert)) which is the default for release builds.
+[documentation of assert](https://en.cppreference.com/w/cpp/error/assert)) which is the default for release builds. Without `NDEBUG`, the assertions are compiled in and contain the name of the source
+file (`__FILE__`); see [notes for builds and distribution](../integration/index.md#notes-for-builds-and-distribution)
+if that path must not end up in your binaries.
 
 ## Change assertion behavior
 

@@ -1,0 +1,4 @@
+parse: discarded = true
+accept: false
+from_cbor: discarded = true
+valid input: {"name":"Mary"}

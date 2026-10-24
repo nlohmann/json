@@ -21,3 +21,42 @@ flowchart TD
     A --> F{"just testing first?"}
     F -->|"yes"| G["contains() / find()"]
 ```
+
+## Does this key exist?
+
+Use [`contains`](../../api/basic_json/contains.md) to test for a key; it does not modify the value and does not throw:
+
+```cpp
+json j = {{"name", "Mary"}, {"address", {{"city", "Berlin"}}}};
+
+j.contains("name");                   // true
+j.contains("age");                    // false
+j.contains("city");                   // false: contains() only looks at the top level
+j["address"].contains("city");        // true
+j.contains(json::json_pointer("/address/city"));  // true: a JSON pointer tests a nested path in one call
+```
+
+If the value is needed afterwards, [`find`](../../api/basic_json/find.md) tests and accesses with a single lookup:
+
+```cpp
+if (auto it = j.find("name"); it != j.end())
+{
+    std::cout << *it << '\n';
+}
+```
+
+`contains` also returns `true` for a key whose value is `null`; use `j.contains("k") && !j["k"].is_null()` if a
+`null` should count as missing. To read a value with a fallback instead, see [`value`](default_value.md).
+
+!!! warning "`operator[]` inserts missing keys"
+
+    Like `#!cpp std::map::operator[]`, the non-const [`operator[]`](unchecked_access.md) adds a `null` value if the key
+    is missing. Testing a key with it therefore *changes the object*:
+
+    ```cpp
+    json j = {{"foo", 1}};
+    bool absent = j["bar"].is_null();   // true, but j is now {"bar": null, "foo": 1}
+    ```
+
+    Use `contains`/`find` to test, and [`at`](checked_access.md) to access a value that must exist (it throws an
+    [`out_of_range`](../../home/exceptions.md#out-of-range) exception otherwise).

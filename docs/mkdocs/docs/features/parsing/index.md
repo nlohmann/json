@@ -33,7 +33,9 @@ json data = json::parse(f);
 ```
 
 The input must be encoded in UTF-8; other encodings are not supported. A single input may contain only one JSON value.
-Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](json_lines.md) format.
+Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](json_lines.md) format; input
+that arrives in chunks or contains several values is covered in
+[Large, streamed, and partial input](large_and_partial_input.md).
 
 By default, the library rejects comments and trailing commas. Both can be enabled with parameters of the `parse`
 function — see [comments](../comments.md) and [trailing commas](../trailing_commas.md).
@@ -85,7 +87,7 @@ again without changing any result.
 
 ## SAX vs. DOM parsing
 
-The library offers two parsing models:
+The library offers two parsing models, and a third, read-only alternative:
 
 - **DOM parsing** (the default): the complete input is read and stored as an in-memory `basic_json` value that can be
   traversed and modified freely. This is what [`parse`](../../api/basic_json/parse.md) does, and it is the right choice
@@ -94,6 +96,13 @@ The library offers two parsing models:
   started") to a handler that you implement. This avoids building the full value in memory and is useful for very large
   inputs or when you only need to extract parts of the input. See the [SAX interface](sax_interface.md) for details and
   [`sax_parse`](../../api/basic_json/sax_parse.md) for the API.
+
+- **Document and views** (`#!cpp <nlohmann/json_view.hpp>`, added in version 3.13.0): [`json_document::parse`](../../api/basic_json_document/parse.md)
+  reads the same JSON grammar but builds a flat, read-only index of the values instead of a `basic_json` tree. Strings and
+  floating-point numbers are read from the text on demand, and only the parts you
+  [`materialize()`](../../api/basic_json_view/materialize.md) become `basic_json` values. This avoids most of the work when you
+  need only a few values from a large or frequently parsed text; see [Zero-copy JSON views](../json_view.md). It is read-only, so use
+  `parse` when you need to modify the value.
 
 You can influence a DOM parse without switching to the SAX interface by passing a
 [parser callback](parser_callbacks.md), which is called during parsing and can, for example, discard parts of the input.
@@ -111,7 +120,9 @@ options.
 - [`accept`](../../api/basic_json/accept.md) - check if the input is valid JSON
 - [`sax_parse`](../../api/basic_json/sax_parse.md) - generate SAX events
 - [JSON Lines](json_lines.md) - parse newline-delimited JSON
+- [Large, streamed, and partial input](large_and_partial_input.md) - chunked, concatenated, and very large input
 - [parser callbacks](parser_callbacks.md) - influence the parsing by a callback function
 - [SAX interface](sax_interface.md) - implement a custom SAX handler
+- [Zero-copy JSON views](../json_view.md) - parse into a read-only document and read it through views
 - [parsing and exceptions](parse_exceptions.md) - control error handling
 - [parsing untrusted input](untrusted_input.md) - what to consider when parsing input from untrusted sources
