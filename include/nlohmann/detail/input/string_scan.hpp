@@ -96,7 +96,7 @@ JSON_HEDLEY_ALWAYS_INLINE std::size_t find_string_special(const unsigned char* d
 // printable ASCII except '"' and '\\' - is emitted unchanged. Note this differs
 // from is_string_special() only in that 0x7F is also a stop (it is escaped as
 // \u007f under ensure_ascii).
-inline bool is_ascii_copyable(unsigned char c) noexcept
+constexpr bool is_ascii_copyable(unsigned char c) noexcept
 {
     return c >= 0x20u && c < 0x7Fu && c != '"' && c != '\\';
 }

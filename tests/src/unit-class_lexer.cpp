@@ -2042,3 +2042,118 @@ TEST_CASE("string scanning kernels")
     CHECK(nlohmann::detail::read_eight_bytes(bytes.data() + 8) == 0xFF0F0E0D0C0B0A09u);
     CHECK(nlohmann::detail::read_eight_bytes(reinterpret_cast<const char*>(bytes.data()) + 3) == 0x0B0A090807060504u);
 }
+
+TEST_CASE("find_ascii_copyable_run agrees with is_ascii_copyable for every byte")
+{
+    // the SWAR mask in find_ascii_copyable_run() encodes the predicate a
+    // second time; check every byte value at every position of a 24-byte buffer
+    // (three words) and for several lengths, with the byte at the end or inside
+    for (unsigned int value = 0; value < 256; ++value)
+    {
+        for (std::size_t position = 0; position < 24; ++position)
+        {
+            std::array<unsigned char, 24> buffer{};
+            buffer.fill(static_cast<unsigned char>('a'));
+            buffer[position] = static_cast<unsigned char>(value);
+            const bool copyable = nlohmann::detail::is_ascii_copyable(static_cast<unsigned char>(value));
+            for (const std::size_t n :
+                    {
+                        position, position + 1, std::size_t{24}
+                    })
+            {
+                if (n > 24)
+                {
+                    continue;
+                }
+                const std::size_t expected = (copyable || n <= position) ? n : position;
+                CAPTURE(value)
+                CAPTURE(position)
+                CAPTURE(n)
+                CHECK(nlohmann::detail::find_ascii_copyable_run(buffer.data(), n) == expected);
+            }
+        }
+    }
+}
+
+TEST_CASE("UTF-8 validators accept the same sequences")
+{
+    // The library checks UTF-8 in several places: detail::decode (serializer),
+    // the per-lead-byte switch of the lexer (json::accept), validate_one_utf8
+    // (bulk string scan), utf8_shape, and the byte path of the BON8 reader.
+    // They must accept exactly the same sequences (RFC 3629, section 4).
+    using nlohmann::json;
+
+    // bytes for the third and fourth position: the first two pairs are checked
+    // against all validators, the others only against the cheap ones
+    const std::array<std::array<unsigned char, 2>, 6> tails =
+    {
+        {
+            {{0x80, 0x80}}, {{0xBF, 0xBF}}, {{0x7F, 0x80}}, {{0xC0, 0x80}}, {{0x80, 0x7F}}, {{0x80, 0xC0}}
+        }
+    };
+
+    for (unsigned lead = 0x80; lead <= 0xFF; ++lead)
+    {
+        const auto shape = nlohmann::detail::utf8_shape(static_cast<std::uint8_t>(lead));
+        for (unsigned second = 0; second <= 0xFF; ++second)
+        {
+            for (std::size_t t = 0; t < tails.size(); ++t)
+            {
+                const std::array<unsigned char, 4> bytes = {{static_cast<unsigned char>(lead), static_cast<unsigned char>(second), tails[t][0], tails[t][1]}};
+
+                // expectation from the shape: the sequence is bytes[0..length)
+                const std::size_t length = shape.length;
+                bool expected = length >= 2 && second >= shape.second_lo && second <= shape.second_hi;
+                for (std::size_t i = 2; expected && i < length; ++i)
+                {
+                    expected = bytes[i] >= 0x80 && bytes[i] <= 0xBF;
+                }
+
+                // the DFA of the serializer
+                bool dfa = length >= 2;
+                if (dfa)
+                {
+                    std::uint8_t state = nlohmann::detail::UTF8_ACCEPT;
+                    std::uint32_t codep = 0;
+                    for (std::size_t i = 0; i < length; ++i)
+                    {
+                        nlohmann::detail::decode(state, codep, bytes[i]);
+                    }
+                    dfa = state == nlohmann::detail::UTF8_ACCEPT;
+                }
+
+                // the bulk path: exactly the sequence, and one byte short
+                const std::size_t bulk = nlohmann::detail::validate_one_utf8(bytes.data(), length);
+                const std::size_t bulk_short = length > 0 ? nlohmann::detail::validate_one_utf8(bytes.data(), length - 1) : 0;
+
+                CAPTURE(lead)
+                CAPTURE(second)
+                CAPTURE(t)
+                CHECK((dfa == expected && bulk == (expected ? length : 0) && bulk_short == 0));
+
+                if (t < 2 && length >= 2)
+                {
+                    // the lexer's byte path
+                    const std::string sequence(reinterpret_cast<const char*>(bytes.data()), length); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                    CHECK(json::accept("\"" + sequence + "\"") == expected);
+
+                    // the byte path of the BON8 reader (a string ends at 0xFF)
+                    if (lead >= 0xC2 && lead <= 0xF7)
+                    {
+                        std::vector<std::uint8_t> packed(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(length));
+                        packed.push_back(0xFF);
+                        const json j = json::from_bon8(packed, true, false);
+                        if (expected)
+                        {
+                            CHECK(j == json(sequence));
+                        }
+                        else
+                        {
+                            CHECK_FALSE((j.is_string() && j.get<std::string>() == sequence));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

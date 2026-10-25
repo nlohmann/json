@@ -966,6 +966,28 @@ class serializer
         }
     }
 
+    /// write out the bytes pending in @ref string_buffer and reset @a bytes
+    JSON_HEDLEY_ALWAYS_INLINE void emit_pending(std::size_t& bytes)
+    {
+        if (bytes != 0)
+        {
+            put_buffer(string_buffer, bytes);
+            bytes = 0;
+        }
+    }
+
+    /// write buffer and reset index if fewer than 13 bytes are left, as this
+    /// is the maximal number of bytes to be written ("\uxxxx\uxxxx\0") for one
+    /// code point
+    JSON_HEDLEY_ALWAYS_INLINE void reserve_string_buffer(std::size_t& bytes)
+    {
+        if (string_buffer.size() - bytes < 13)
+        {
+            put_buffer(string_buffer, bytes);
+            bytes = 0;
+        }
+    }
+
     /*!
     @brief worker for @ref dump_escaped
 
@@ -1024,11 +1046,7 @@ class serializer
                 {
                     // emit any bytes still pending in string_buffer first to
                     // preserve output order, then write the run directly
-                    if (bytes != 0)
-                    {
-                        put_buffer(string_buffer, bytes);
-                        bytes = 0;
-                    }
+                    emit_pending(bytes);
                     put_run(s, i, run);
                     bytes_after_last_accept = 0;
                     undumped_chars = 0;
@@ -1049,11 +1067,10 @@ class serializer
                 {
                     // emit any bytes still pending in string_buffer first to
                     // preserve output order
-                    if (bytes != 0)
-                    {
-                        put_buffer(string_buffer, bytes);
-                        bytes = 0;
-                    }
+                    emit_pending(bytes);
+                    // deliberately not put_buffer(): a fixed 8-byte memcpy
+                    // has no asserts and no write-through branch, which
+                    // matters on the hot path
                     const auto& escape = ascii_escapes()[data[i]];
                     if (JSON_HEDLEY_UNLIKELY(write_buffer.size() - write_buffer_pos < escape.size()))
                     {
@@ -1128,14 +1145,7 @@ class serializer
                         string_buffer[bytes++] = s[i];
                     }
 
-                    // write buffer and reset index; there must be 13 bytes
-                    // left, as this is the maximal number of bytes to be
-                    // written ("\uxxxx\uxxxx\0") for one code point
-                    if (string_buffer.size() - bytes < 13)
-                    {
-                        put_buffer(string_buffer, bytes);
-                        bytes = 0;
-                    }
+                    reserve_string_buffer(bytes);
 
                     // remember the byte position of this accept
                     bytes_after_last_accept = bytes;
@@ -1187,14 +1197,7 @@ class serializer
                                     string_buffer[bytes++] = '\xBD';
                                 }
 
-                                // write buffer and reset index; there must be 13 bytes
-                                // left, as this is the maximal number of bytes to be
-                                // written ("\uxxxx\uxxxx\0") for one code point
-                                if (string_buffer.size() - bytes < 13)
-                                {
-                                    put_buffer(string_buffer, bytes);
-                                    bytes = 0;
-                                }
+                                reserve_string_buffer(bytes);
 
                                 bytes_after_last_accept = bytes;
                             }
@@ -1227,14 +1230,7 @@ class serializer
                                 string_buffer[bytes++] = s[i];
                             }
 
-                            // write buffer and reset index; there must be 13 bytes
-                            // left, as this is the maximal number of bytes to be
-                            // written ("\uxxxx\uxxxx\0") for one code point
-                            if (string_buffer.size() - bytes < 13)
-                            {
-                                put_buffer(string_buffer, bytes);
-                                bytes = 0;
-                            }
+                            reserve_string_buffer(bytes);
 
                             bytes_after_last_accept = bytes;
                             undumped_chars = 0;
@@ -1600,28 +1596,15 @@ class serializer
     */
     static const std::array<std::uint8_t, 256>& ascii_copyable() noexcept
     {
-        static const std::array<std::uint8_t, 256> copyable =
-        {
-            {
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x00
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x10
-                1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x20
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x30
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x40
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, // 0x50
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x60
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, // 0x70
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x80
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x90
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xA0
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xB0
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xC0
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xD0
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xE0
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 // 0xF0
-            }
-        };
+        // constant-initialized from the predicate: no runtime loop, no guard
+        static constexpr std::array<std::uint8_t, 256> copyable = make_ascii_copyable(make_index_sequence<256> {});
         return copyable;
+    }
+
+    template<std::size_t... Is>
+    static constexpr std::array<std::uint8_t, 256> make_ascii_copyable(index_sequence<Is...> /*unused*/) noexcept
+    {
+        return {{ static_cast<std::uint8_t>(is_ascii_copyable(static_cast<unsigned char>(Is)) ? 1 : 0)... }};
     }
 
     /*!
@@ -1752,7 +1735,6 @@ class serializer
     */
     JSON_HEDLEY_NEVER_INLINE std::size_t write_u_escapes(const unsigned char* data, std::size_t n)
     {
-        constexpr const char* nibble_to_hex = "0123456789abcdef";
         std::size_t i = 0;
         while (i < n && data[i] >= 0x80)
         {
@@ -1789,26 +1771,21 @@ class serializer
             char* d = write_buffer.data() + write_buffer_pos;
             if (codepoint > 0xFFFFu)
             {
-                d = put_u_escape(d, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)), nibble_to_hex);
+                d = put_u_escape(d, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)));
                 codepoint = 0xDC00u + (codepoint & 0x3FFu);
             }
-            d = put_u_escape(d, static_cast<std::uint16_t>(codepoint), nibble_to_hex);
+            d = put_u_escape(d, static_cast<std::uint16_t>(codepoint));
             write_buffer_pos = static_cast<std::size_t>(d - write_buffer.data());
             i += length;
         }
         return i;
     }
 
-    static char* put_u_escape(char* d, const std::uint16_t codeunit, const char* nibble_to_hex) noexcept
+    static char* put_u_escape(char* d, const std::uint16_t codeunit) noexcept
     {
-        const auto unit = static_cast<std::uint32_t>(codeunit);
         d[0] = '\\';
         d[1] = 'u';
-        d[2] = nibble_to_hex[(unit >> 12u) & 0x0Fu];
-        d[3] = nibble_to_hex[(unit >> 8u) & 0x0Fu];
-        d[4] = nibble_to_hex[(unit >> 4u) & 0x0Fu];
-        d[5] = nibble_to_hex[unit & 0x0Fu];
-        return d + 6;
+        return hex4_lower(codeunit, d + 2);
     }
 
     /*!
@@ -1817,7 +1794,7 @@ class serializer
      * Branch-free replacement for `snprintf(buf, 7, "\\u%04x", codeunit)` in the
      * string escaping hot path. It writes exactly six characters ('\\', 'u' and
      * four hex digits) at position @a pos of @a string_buffer via a nibble
-     * lookup table, avoiding the format-string parsing and locale machinery of
+     * lookup table (@ref hex4_lower), avoiding the format-string parsing and locale machinery of
      * `snprintf`. Advances @a pos by the number of bytes written (6).
      *
      * @param[in] pos       position in @a string_buffer to write at; there must
@@ -1827,13 +1804,9 @@ class serializer
     void write_u_escape(std::size_t& pos, std::uint16_t codeunit) noexcept
     {
         JSON_ASSERT(string_buffer.size() - pos >= 6);
-        constexpr const char* nibble_to_hex = "0123456789abcdef";
         string_buffer[pos + 0] = '\\';
         string_buffer[pos + 1] = 'u';
-        string_buffer[pos + 2] = nibble_to_hex[(codeunit >> 12u) & 0x0Fu];
-        string_buffer[pos + 3] = nibble_to_hex[(codeunit >> 8u) & 0x0Fu];
-        string_buffer[pos + 4] = nibble_to_hex[(codeunit >> 4u) & 0x0Fu];
-        string_buffer[pos + 5] = nibble_to_hex[codeunit & 0x0Fu];
+        hex4_lower(codeunit, &string_buffer[pos + 2]);
         pos += 6;
     }
 

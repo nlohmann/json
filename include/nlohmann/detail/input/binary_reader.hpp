@@ -293,6 +293,40 @@ class binary_reader
         return is_object ? sax->end_object() : sax->end_array();
     }
 
+    /*!
+    @brief close the innermost open container and report whether that
+           completed the value being read
+
+    The value begun by the driver is complete once its container is not
+    inside another one.
+
+    @param[out] value_complete  whether no container is left open
+    @return whether the SAX parser accepted the end event
+    */
+    bool leave_container_and_check(bool& value_complete)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!leave_container()))
+        {
+            return false;
+        }
+        value_complete = container_stack.empty();
+        return true;
+    }
+
+    /*!
+    @brief read an object key and pass it to the SAX parser
+
+    @tparam GetKey  member function that reads the key into a string
+    @param[in,out] key  string the key is read into; cleared first
+    @return whether reading the key and the SAX event succeeded
+    */
+    template<bool (binary_reader::*GetKey)(string_t&)>
+    bool read_object_key(string_t& key)
+    {
+        key.clear();
+        return (this->*GetKey)(key) && sax->key(key);
+    }
+
     //////////
     // BSON //
     //////////
@@ -1065,6 +1099,34 @@ class binary_reader
     }
 
     /*!
+    @brief report an object key that is not a string
+
+    @param[in] found  description of what was found instead of a string key
+    @return false
+    */
+    bool unsupported_key_type(const char* found) const
+    {
+        return last_byte_error(exception_id::invalid_string_or_size, "only string keys are supported, but found ", "object key", found);
+    }
+
+    /*!
+    @brief read the length of a CBOR string or byte array and then its bytes
+
+    @tparam NumberType    the type of the length field
+    @tparam ContainerType the destination container (string_t or binary_t)
+    @param[in] context  further context information (for diagnostics)
+    @param[out] result  container the bytes are appended to
+
+    @return whether reading completed
+    */
+    template<typename NumberType, typename ContainerType>
+    bool get_cbor_sized_bytes(const char* context, ContainerType& result)
+    {
+        NumberType len{};
+        return get_number(len) && get_bytes(len, context, result);
+    }
+
+    /*!
     @brief reads a definite-length CBOR string
 
     Reads everything @ref get_cbor_string accepts except the indefinite-length
@@ -1114,26 +1176,22 @@ class binary_reader
 
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
             {
-                std::uint8_t len{};
-                return get_number(len) && get_string(len, result);
+                return get_cbor_sized_bytes<std::uint8_t>("string", result);
             }
 
             case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
             {
-                std::uint16_t len{};
-                return get_number(len) && get_string(len, result);
+                return get_cbor_sized_bytes<std::uint16_t>("string", result);
             }
 
             case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
             {
-                std::uint32_t len{};
-                return get_number(len) && get_string(len, result);
+                return get_cbor_sized_bytes<std::uint32_t>("string", result);
             }
 
             case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
             {
-                std::uint64_t len{};
-                return get_number(len) && get_string(len, result);
+                return get_cbor_sized_bytes<std::uint64_t>("string", result);
             }
 
             default:
@@ -1268,7 +1326,7 @@ class binary_reader
                 break;
         }
 
-        return last_byte_error(exception_id::invalid_string_or_size, "only string keys are supported, but found ", "object key", found);
+        return unsupported_key_type(found);
     }
 
     /*!
@@ -1321,30 +1379,22 @@ class binary_reader
 
             case 0x58: // Binary data (one-byte uint8_t for n follows)
             {
-                std::uint8_t len{};
-                return get_number(len) &&
-                       get_binary(len, result);
+                return get_cbor_sized_bytes<std::uint8_t>("binary", result);
             }
 
             case 0x59: // Binary data (two-byte uint16_t for n follow)
             {
-                std::uint16_t len{};
-                return get_number(len) &&
-                       get_binary(len, result);
+                return get_cbor_sized_bytes<std::uint16_t>("binary", result);
             }
 
             case 0x5A: // Binary data (four-byte uint32_t for n follow)
             {
-                std::uint32_t len{};
-                return get_number(len) &&
-                       get_binary(len, result);
+                return get_cbor_sized_bytes<std::uint32_t>("binary", result);
             }
 
             case 0x5B: // Binary data (eight-byte uint64_t for n follow)
             {
-                std::uint64_t len{};
-                return get_number(len) &&
-                       get_binary(len, result);
+                return get_cbor_sized_bytes<std::uint64_t>("binary", result);
             }
 
             default:
@@ -1559,12 +1609,12 @@ class binary_reader
 
                 if (at_end)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!leave_container()))
+                    bool value_complete = false;
+                    if (JSON_HEDLEY_UNLIKELY(!leave_container_and_check(value_complete)))
                     {
                         return false;
                     }
-                    // the value begun here is complete once its container is
-                    if (container_stack.empty())
+                    if (value_complete)
                     {
                         return true;
                     }
@@ -1573,8 +1623,7 @@ class binary_reader
 
                 if (top.is_object)
                 {
-                    key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_object_key(key) || !sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!read_object_key<&binary_reader::get_cbor_object_key>(key)))
                     {
                         return false;
                     }
@@ -2045,20 +2094,17 @@ class binary_reader
 
             case 0xD9: // str 8
             {
-                std::uint8_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint8_t>(result, context);
             }
 
             case 0xDA: // str 16
             {
-                std::uint16_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint16_t>(result, context);
             }
 
             case 0xDB: // str 32
             {
-                std::uint32_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint32_t>(result, context);
             }
 
             default:
@@ -2155,7 +2201,7 @@ class binary_reader
                 break;
         }
 
-        return last_byte_error(exception_id::invalid_string_or_size, "only string keys are supported, but found ", "object key", found);
+        return unsupported_key_type(found);
     }
 
     /*!
@@ -2300,12 +2346,12 @@ class binary_reader
 
                 if (container_stack.back().remaining == 0)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!leave_container()))
+                    bool value_complete = false;
+                    if (JSON_HEDLEY_UNLIKELY(!leave_container_and_check(value_complete)))
                     {
                         return false;
                     }
-                    // the value begun here is complete once its container is
-                    if (container_stack.empty())
+                    if (value_complete)
                     {
                         return true;
                     }
@@ -2318,8 +2364,7 @@ class binary_reader
                 if (is_object)
                 {
                     get();
-                    key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_msgpack_object_key(key) || !sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!read_object_key<&binary_reader::get_msgpack_object_key>(key)))
                     {
                         return false;
                     }
@@ -2503,8 +2548,7 @@ class binary_reader
         {
             case 'U':
             {
-                std::uint8_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint8_t>(result, context);
             }
 
             case 'i':
@@ -2537,8 +2581,7 @@ class binary_reader
                 {
                     break;
                 }
-                std::uint16_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint16_t>(result, context);
             }
 
             case 'm':
@@ -2547,8 +2590,7 @@ class binary_reader
                 {
                     break;
                 }
-                std::uint32_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint32_t>(result, context);
             }
 
             case 'M':
@@ -2557,8 +2599,7 @@ class binary_reader
                 {
                     break;
                 }
-                std::uint64_t len{};
-                return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+                return get_string_with_length<std::uint64_t>(result, context);
             }
 
             default:
@@ -3374,12 +3415,12 @@ class binary_reader
 
                 if (at_end)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!leave_container()))
+                    bool value_complete = false;
+                    if (JSON_HEDLEY_UNLIKELY(!leave_container_and_check(value_complete)))
                     {
                         return false;
                     }
-                    // the value begun here is complete once its container is
-                    if (container_stack.empty())
+                    if (value_complete)
                     {
                         return true;
                     }
@@ -3388,8 +3429,7 @@ class binary_reader
 
                 if (top.is_object)
                 {
-                    key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_key(key) || !sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!read_object_key<&binary_reader::get_bon8_key>(key)))
                     {
                         return false;
                     }
@@ -4130,6 +4170,22 @@ class binary_reader
     }
 
     /*!
+    @brief read a length of type @a NumberType, then a string of that many bytes
+
+    @tparam NumberType  the type of the length field
+    @param[out] result  string the bytes are appended to
+    @param[in] context  further context information (for diagnostics)
+
+    @return whether reading and validating the string succeeded
+    */
+    template<typename NumberType>
+    bool get_string_with_length(string_t& result, const char* context)
+    {
+        NumberType len{};
+        return get_number(len) && get_string(len, result) && check_string_utf8(result, context);
+    }
+
+    /*!
     @brief create a byte array by reading bytes from the input
 
     @tparam NumberType the type of the number
@@ -4338,37 +4394,7 @@ class binary_reader
                                   const std::string& context) const
     {
         std::string error_msg = "syntax error while parsing ";
-
-        switch (input_format)
-        {
-            case input_format_t::cbor:
-                error_msg += "CBOR";
-                break;
-
-            case input_format_t::msgpack:
-                error_msg += "MessagePack";
-                break;
-
-            case input_format_t::ubjson:
-                error_msg += "UBJSON";
-                break;
-
-            case input_format_t::bson:
-                error_msg += "BSON";
-                break;
-
-            case input_format_t::bjdata:
-                error_msg += "BJData";
-                break;
-
-            case input_format_t::bon8:
-                error_msg += "BON8";
-                break;
-
-            case input_format_t::json: // LCOV_EXCL_LINE
-            default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-        }
+        error_msg += input_format_name(input_format);
 
         return concat(error_msg, ' ', context, ": ", detail);
     }

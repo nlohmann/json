@@ -105,6 +105,41 @@ serialized as 0x81 0x65 0xFF, but `[1,2,3,4,"e"]` as 0x85 0x91 0x92 0x93 0x94 0x
     --8<-- "examples/to_bon8.output"
     ```
 
+
+
+
+
+### Byte layout
+
+Consider the following JSON value (shown formatted for readability):
+
+```json
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_bon8` encodes it to 35 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-l">length/count/size</span> <span class="bl bl-d">data</span>.
+
+<div class="byte-layout" markdown="0"><table>
+<thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>{</code></td><td><span class="bl bl-t">8A</span></td><td>object with 4 members</td></tr>
+<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-d">69 64</span> <span class="bl bl-t">C4</span> <span class="bl bl-d">04</span></td><td>key: UTF-8 bytes; the string ends at the next byte, which cannot continue a UTF-8 character; value: 2-byte positive integer (lead byte, then a byte below 0x80)</td></tr>
+<tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-d">6E 61 6D 65</span> <span class="bl bl-l">FF</span> <span class="bl bl-d">6A 73 6F 6E</span> <span class="bl bl-l">FF</span></td><td>key: UTF-8 bytes; 0xFF terminates the string as another string follows; value: UTF-8 bytes; terminated as a string key follows</td></tr>
+<tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-d">70 69</span> <span class="bl bl-t">8F</span> <span class="bl bl-d">40 09 1E B8 51 EB 85 1F</span></td><td>key: UTF-8 bytes; value: binary64 (IEEE 754, big-endian); its marker also ends <code>&quot;pi&quot;</code></td></tr>
+<tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-d">74 61 67 73</span> <span class="bl bl-t">82</span></td><td>key: UTF-8 bytes; value: array with 2 elements; its marker also ends <code>&quot;tags&quot;</code></td></tr>
+<tr><td><code>&quot;a&quot;,</code></td><td><span class="bl bl-d">61</span> <span class="bl bl-l">FF</span></td><td>UTF-8 bytes; terminated as a string follows</td></tr>
+<tr><td><code>&quot;b&quot;</code></td><td><span class="bl bl-d">62</span> <span class="bl bl-l">FF</span></td><td>UTF-8 bytes; terminated as nothing follows</td></tr>
+<tr><td><code>]</code></td><td></td><td>no end marker: the element count was given up front</td></tr>
+<tr><td><code>}</code></td><td></td><td>no end marker: the member count was given up front</td></tr>
+</tbody></table></div>
+
 ## Deserialization
 
 The library maps BON8 types to JSON value types as follows:

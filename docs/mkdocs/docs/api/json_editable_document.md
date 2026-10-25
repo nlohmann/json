@@ -40,4 +40,4 @@ parsing, without ever rewriting the source text -- see [Edits](basic_json_docume
 
 ## Version history
 
-Since version 3.13.0.
+Added in version 3.13.0.

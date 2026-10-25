@@ -44,6 +44,22 @@ are collected in [Template Parameter Requirements](../../features/types/template
 - [**json**](../json.md) - default specialization
 - [**ordered_json**](../ordered_json.md) - a specialization that maintains the insertion order of object keys
 
+## Documents and views
+
+Besides `basic_json`, the library offers a second way to hold a parsed JSON text: a
+[`basic_json_document`](../basic_json_document/index.md), which owns or borrows the text and holds a flat index of the
+values in it, and a [`basic_json_view`](../basic_json_view/index.md), a read-only handle to one value of such a document.
+Both are defined in the header `<nlohmann/json_view.hpp>`; see
+[Zero-copy JSON views](../../features/json_view.md) for the concept and the trade-offs.
+
+- [**json_document**](../json_document.md) / [**ordered_json_document**](../ordered_json_document.md) - read-only
+  documents of the `basic_json` specialization they belong to
+- [**json_editable_document**](../json_editable_document.md) /
+  [**ordered_json_editable_document**](../ordered_json_editable_document.md) - documents that can be modified in place
+- [**json_view**](../json_view.md) / [**ordered_json_view**](../ordered_json_view.md) - views of a document
+- [**json_editable_view**](../json_editable_view.md) /
+  [**ordered_json_editable_view**](../ordered_json_editable_view.md) - views of an editable document
+
 ## Iterator invalidation
 
 All operations that add values to an **array** ([`push_back`](push_back.md) , [`operator+=`](operator+=.md),
@@ -343,6 +359,9 @@ Access to the JSON value
 ## See also
 
 - [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format](https://tools.ietf.org/html/rfc8259)
+- [basic_json_document](../basic_json_document/index.md) / [basic_json_view](../basic_json_view/index.md) - parse a JSON
+  text into a flat index and read it through a view
+- [Zero-copy JSON views](../../features/json_view.md) - when to use a document and a view instead of a `basic_json`
 
 ## Version history
 

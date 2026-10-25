@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <algorithm> // transform
+#include <algorithm> // min, transform
 #include <array> // array
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
@@ -69,12 +69,10 @@ void from_json(const BasicJsonType& j, std::optional<T>& opt)
 }
 #endif // JSON_HAS_CPP_17
 
-// overloads for basic_json template parameters
-template < typename BasicJsonType, typename ArithmeticType,
-           enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
-                         !std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
-                         int > = 0 >
-void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
+// read a number value of any of the three number types into val;
+// returns false (leaving val untouched) if j is not a number
+template<typename BasicJsonType, typename ArithmeticType>
+bool get_number_value(const BasicJsonType& j, ArithmeticType& val)
 {
     switch (static_cast<value_t>(j))
     {
@@ -85,17 +83,17 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
             const auto* ptr = j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>();
             JSON_ASSERT(ptr != nullptr);
             val = static_cast<ArithmeticType>(*ptr);
-            break;
+            return true;
         }
         case value_t::number_integer:
         {
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_integer_t*>());
-            break;
+            return true;
         }
         case value_t::number_float:
         {
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
-            break;
+            return true;
         }
 
         case value_t::null:
@@ -106,7 +104,20 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
         case value_t::binary:
         case value_t::discarded:
         default:
-            throw_type_must_be("number", j);
+            return false;
+    }
+}
+
+// overloads for basic_json template parameters
+template < typename BasicJsonType, typename ArithmeticType,
+           enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
+                         !std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
+                         int > = 0 >
+void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
+{
+    if (JSON_HEDLEY_UNLIKELY(!get_number_value(j, val)))
+    {
+        throw_type_must_be("number", j);
     }
 }
 
@@ -245,29 +256,44 @@ inline void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType:
     arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
 }
 
+// fill a std::array from the JSON array j: the size is checked once and the
+// elements are read in order, so a short array converts the elements it has and
+// then throws the out_of_range error at() would throw for the first missing one
+template<typename BasicJsonType, typename T, std::size_t N>
+void from_json_std_array(const BasicJsonType& j, std::array<T, N>& arr)
+{
+    const auto& inner_array = *j.template get_ptr<const typename BasicJsonType::array_t*>();
+    const std::size_t size = (std::min)(N, inner_array.size());
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        arr[i] = inner_array[i].template get<T>();
+    }
+    if (JSON_HEDLEY_UNLIKELY(size < N))
+    {
+        static_cast<void>(j.at(size));
+    }
+}
+
 template<typename BasicJsonType, typename T, std::size_t N>
 auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
                           priority_tag<2> /*unused*/)
 -> decltype(j.template get<T>(), void())
 {
-    for (std::size_t i = 0; i < N; ++i)
-    {
-        arr[i] = j.at(i).template get<T>();
-    }
+    from_json_std_array(j, arr);
 }
 
-// reserve() is called through this pair (modeled on from_json_object_reserve)
-// so from_json_array_impl below has a single body for both ConstructibleArrayType
-// that support reserve() and those that don't.
-template<typename ConstructibleArrayType>
-auto from_json_array_reserve(ConstructibleArrayType& arr, typename ConstructibleArrayType::size_type size, priority_tag<1> /*unused*/)
--> decltype(arr.reserve(size), void())
+// reserve() is called through this pair (used for arrays and objects alike)
+// so from_json_array_impl and the object from_json have a single body for both
+// containers that support reserve() and those that don't.
+template<typename ConstructibleContainerType>
+auto reserve_if_possible(ConstructibleContainerType& c, typename ConstructibleContainerType::size_type size, priority_tag<1> /*unused*/)
+-> decltype(c.reserve(size), void())
 {
-    arr.reserve(size);
+    c.reserve(size);
 }
 
-template<typename ConstructibleArrayType>
-void from_json_array_reserve(ConstructibleArrayType& /*arr*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
+template<typename ConstructibleContainerType>
+void reserve_if_possible(ConstructibleContainerType& /*c*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
 {}
 
 // append through push_back() where available; containers without it (such as
@@ -297,7 +323,7 @@ auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, p
 {
     ConstructibleArrayType ret;
     const auto* inner_array = j.template get_ptr<const typename BasicJsonType::array_t*>();
-    from_json_array_reserve(ret, inner_array->size(), priority_tag<1> {});
+    reserve_if_possible(ret, inner_array->size(), priority_tag<1> {});
     for (const auto& elem : *inner_array)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
@@ -336,6 +362,37 @@ std::array<T, sizeof...(Idx)> from_json_inplace_array_impl(const BasicJsonType& 
     return { { j.at(Idx).template get<T>()... } };
 }
 
+// std::is_trivial is deprecated in C++26 (see binary_writer::to_char_type);
+// a struct rather than an alias, as astyle indents an #ifdef block of aliases
+template<typename T>
+struct is_trivial_element
+#ifdef JSON_HAS_CPP_26
+    : conjunction<std::is_trivially_copyable<T>, std::is_trivially_default_constructible<T>>
+#else
+    : std::is_trivial<T>
+#endif
+{};
+
+// the element type may not be default constructible: construct every element
+// in place (a pack expansion that is unrolled N times)
+template<typename BasicJsonType, typename T, std::size_t N>
+std::array<T, N> from_json_make_array(const BasicJsonType& j, identity_tag<std::array<T, N>> tag,
+                                      std::false_type /*is_trivial_element*/)
+{
+    return from_json_inplace_array_impl(j, tag, make_index_sequence<N> {});
+}
+
+// a trivial element type cannot tell default construction plus assignment from
+// construction in place, so use a loop instead of unrolling N conversions
+template<typename BasicJsonType, typename T, std::size_t N>
+std::array<T, N> from_json_make_array(const BasicJsonType& j, identity_tag<std::array<T, N>> /*unused*/,
+                                      std::true_type /*is_trivial_element*/)
+{
+    std::array<T, N> arr; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): every element is assigned or an exception is thrown
+    from_json_std_array(j, arr);
+    return arr;
+}
+
 template < typename BasicJsonType, typename T, std::size_t N >
 auto from_json(const BasicJsonType& j, identity_tag<std::array<T, N>> tag)
 -> decltype(from_json_inplace_array_impl(j, tag, make_index_sequence<N> {}))
@@ -345,7 +402,7 @@ auto from_json(const BasicJsonType& j, identity_tag<std::array<T, N>> tag)
         throw_type_must_be("array", j);
     }
 
-    return from_json_inplace_array_impl(j, tag, make_index_sequence<N> {});
+    return from_json_make_array(j, tag, is_trivial_element<T> {});
 }
 
 template<typename BasicJsonType>
@@ -378,17 +435,6 @@ inline void from_json(const BasicJsonType& j, CompatibleArrayType& bin)
     }
 }
 
-template<typename ConstructibleObjectType>
-auto from_json_object_reserve(ConstructibleObjectType& obj, typename ConstructibleObjectType::size_type size, priority_tag<1> /*unused*/)
--> decltype(obj.reserve(size), void())
-{
-    obj.reserve(size);
-}
-
-template<typename ConstructibleObjectType>
-inline void from_json_object_reserve(ConstructibleObjectType& /*obj*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
-{}
-
 // the keys of the source are sorted for the usual object types, so hinting the
 // end makes every insertion constant-time (for containers that order their keys
 // the same way); containers without emplace_hint() (such as ordered_map) fall
@@ -417,7 +463,7 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 
     ConstructibleObjectType ret;
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
-    from_json_object_reserve(ret, inner_object->size(), priority_tag<1> {});
+    reserve_if_possible(ret, inner_object->size(), priority_tag<1> {});
     for (const auto& p : *inner_object)
     {
         from_json_object_emplace(ret, p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>(), priority_tag<1> {});
@@ -437,42 +483,17 @@ template < typename BasicJsonType, typename ArithmeticType,
                int > = 0 >
 inline void from_json(const BasicJsonType& j, ArithmeticType& val)
 {
-    switch (static_cast<value_t>(j))
+    if (get_number_value(j, val))
     {
-        case value_t::number_unsigned:
-        {
-            // never null: a basic_json whose number_unsigned_t is number_integer_t
-            // stores no number_unsigned values (#2573)
-            const auto* ptr = j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>();
-            JSON_ASSERT(ptr != nullptr);
-            val = static_cast<ArithmeticType>(*ptr);
-            break;
-        }
-        case value_t::number_integer:
-        {
-            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_integer_t*>());
-            break;
-        }
-        case value_t::number_float:
-        {
-            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
-            break;
-        }
-        case value_t::boolean:
-        {
-            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
-            break;
-        }
-
-        case value_t::null:
-        case value_t::object:
-        case value_t::array:
-        case value_t::string:
-        case value_t::binary:
-        case value_t::discarded:
-        default:
-            throw_type_must_be("number", j);
+        return;
     }
+
+    // unlike get_arithmetic_value(), a boolean is accepted here
+    if (JSON_HEDLEY_UNLIKELY(!j.is_boolean()))
+    {
+        throw_type_must_be("number", j);
+    }
+    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
 }
 
 template<typename BasicJsonType, typename Type>

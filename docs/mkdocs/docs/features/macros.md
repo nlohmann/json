@@ -287,6 +287,23 @@ external dependency and is not defined by default.
 
 See [full documentation of `JSON_USE_SIMDUTF`](../api/macros/json_use_simdutf.md).
 
+## `JSON_VIEW_NO_SIMD`
+
+When defined, the parser of [`basic_json_document`](../api/basic_json_document/index.md)
+(`<nlohmann/json_view.hpp>`) uses only portable C++ to scan strings, instead of vector instructions (SSE2 on x86-64,
+NEON on AArch64). The same input is accepted or rejected either way; only the speed differs. It is not defined by
+default.
+
+See [full documentation of `JSON_VIEW_NO_SIMD`](../api/macros/json_view_no_simd.md).
+
+## `JSON_VIEW_USE_SSSE3`
+
+When defined on x86-64, the parser of [`basic_json_document`](../api/basic_json_document/index.md)
+(`<nlohmann/json_view.hpp>`) validates non-ASCII text in strings with SSSE3 without asking the CPU first. It is not
+defined by default.
+
+See [full documentation of `JSON_VIEW_USE_SSSE3`](../api/macros/json_view_use_ssse3.md).
+
 ## `NLOHMANN_DEFINE_TYPE_*(...)`, `NLOHMANN_DEFINE_DERIVED_TYPE_*(...)`
 
 The library defines 12 macros to simplify the serialization/deserialization of types. See the page on

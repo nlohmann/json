@@ -25,30 +25,50 @@ namespace view
 // Exceptions are thrown out of line, so that the accessors that may throw stay
 // small enough to be inlined.
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(int id, const char* prefix, const char* type)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(exception_id id, const char* prefix, const char* type)
 {
     NLOHMANN_VIEW_THROW(type_error::create(id, concat(prefix, type), nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(int id, const std::string& msg)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(exception_id id, const std::string& msg)
 {
     NLOHMANN_VIEW_THROW(type_error::create(id, msg, nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_out_of_range(int id, const std::string& msg)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_out_of_range(exception_id id, const std::string& msg)
 {
     NLOHMANN_VIEW_THROW(out_of_range::create(id, msg, nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_invalid_iterator(int id, const char* msg)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_invalid_iterator(exception_id id, const char* msg)
 {
     NLOHMANN_VIEW_THROW(invalid_iterator::create(id, msg, nullptr));
 }
 
 /// a parse error without a position (as those of json_pointer)
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_parse_error(int id, const std::string& msg)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_parse_error(exception_id id, const std::string& msg)
 {
     NLOHMANN_VIEW_THROW(parse_error::create(id, 0, msg, nullptr));
+}
+
+/// out_of_range.401: the array index @a idx is not below the size
+template<typename Index>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_array_index_out_of_range(const Index idx)
+{
+    throw_out_of_range(exception_id::array_index_out_of_range, concat("array index ", std::to_string(idx), " is out of range"));
+}
+
+/// out_of_range.402: the JSON Pointer token '-' of an array of @a size elements
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_array_index_past_end(std::size_t size)
+{
+    throw_out_of_range(exception_id::pointer_past_the_end_index, concat("array index '-' (", std::to_string(size), ") is out of range"));
+}
+
+/// out_of_range.403: the object has no member @a key
+template<typename Key>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_key_not_found(const Key& key)
+{
+    throw_out_of_range(exception_id::key_not_found, concat("key '", key, "' not found"));
 }
 
 /// SAX handler of the error replay: accepts every event without storing it,
@@ -149,7 +169,7 @@ template<typename BasicJsonType>
     if (f.code == error_code::input_too_large)
     {
         // (the limit is detail::view::max_input_size(): 4 GiB minus 16 bytes)
-        NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
+        NLOHMANN_VIEW_THROW(out_of_range::create(exception_id::document_too_large, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
     throwing_sax<BasicJsonType> sax;
     const bool accepted = BasicJsonType::sax_parse(src, src + size, &sax, input_format_t::json, true, ignore_comments, ignore_trailing_commas);
@@ -169,7 +189,7 @@ template<typename BasicJsonType>
         }
     }
     pos.chars_read_current_line = off + 1 - line_start;
-    NLOHMANN_VIEW_THROW(parse_error::create(101, pos, "syntax error while parsing value", nullptr));
+    NLOHMANN_VIEW_THROW(parse_error::create(exception_id::syntax_error, pos, "syntax error while parsing value", nullptr));
     // LCOV_EXCL_STOP
 }
 
