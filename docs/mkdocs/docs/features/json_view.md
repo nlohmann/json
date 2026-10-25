@@ -214,14 +214,15 @@ number of distinct keys, or reject duplicates when iterating.
 
 ## Getting values out without copying
 
-[`get<T>()`](../api/basic_json_view/get.md) converts many `T` directly from the flat index, without ever building a
+[`get<T>()`](../api/basic_json_view/get.md) converts most `T` directly from the flat index, without ever building a
 `basic_json` value for the conversion: `#!cpp bool`, arithmetic types, `#!cpp std::nullptr_t`,
-`#!cpp std::string`/other `#!cpp std::basic_string`s (copied once), `basic_json`/`ordered_json` (via
-[`materialize()`](../api/basic_json_view/materialize.md)), `basic_json_view` itself, `#!cpp std::vector<U>`, and
-`#!cpp std::map`/`#!cpp std::unordered_map` with string-like keys. Every other type -- `#!cpp std::list`,
-`#!cpp std::pair`, `#!cpp std::array`, enumerations, user types with a `from_json()` -- goes through
+`#!cpp std::string`/other `#!cpp std::basic_string`s (copied once), `basic_json_view` itself, the standard containers
+and other types the library converts (`#!cpp std::vector`, `#!cpp std::map`, `#!cpp std::list`, `#!cpp std::array`,
+`#!cpp std::pair`, `#!cpp std::tuple`, `#!cpp std::optional`, ...), and the types of the `NLOHMANN_DEFINE_TYPE_*` and
+`NLOHMANN_JSON_SERIALIZE_ENUM` macros. Types whose `from_json()` is written for `basic_json` only go through
 [`materialize()`](../api/basic_json_view/materialize.md)`.get<T>()` instead: the subtree is built into a real
-`basic_json` value first, exactly as [`parse()`](../api/basic_json/parse.md) would, and converted from there.
+`basic_json` value first, exactly as [`parse()`](../api/basic_json/parse.md) would, and converted from there. See
+[Writing generic code](#writing-generic-code) for how to write a `from_json()` that reads views.
 
 Two conversions never copy at all:
 
@@ -235,6 +236,89 @@ Two conversions never copy at all:
   [`basic_json::parse()`](../api/basic_json/parse.md)) would.
 
 Both results are only valid as long as the view -- and, for a string with no escapes, the borrowed source text -- is.
+
+## Writing generic code
+
+A view's type names its `BasicJsonType` and its [`view_mode`](../api/view_mode.md):
+[`json_view`](../api/json_view.md) is `#!cpp basic_json_view<json, view_mode::read_only>`, and
+[`json_editable_view`](../api/json_editable_view.md) is `#!cpp basic_json_view<json, view_mode::editable>`. These are
+different types, and there is no conversion between them, so a function written for one shortcut accepts no other
+view:
+
+```cpp
+void print_names(json_view v);  // accepts neither an ordered_json_view nor a json_editable_view
+```
+
+This is the same pitfall as a `to_json`/`from_json` written for `json` instead of any `BasicJsonType`, which then does
+not work for `ordered_json`. The shortcuts are for declaring documents and views; a function that takes a view names
+the views it accepts with a template:
+
+```cpp
+// views of editable documents only
+template<typename BasicJsonType>
+void f(basic_json_view<BasicJsonType, view_mode::editable> v);
+
+// views of read-only documents only
+template<typename BasicJsonType>
+void f(basic_json_view<BasicJsonType, view_mode::read_only> v);
+
+// either
+template<typename BasicJsonType, view_mode Mode>
+void f(basic_json_view<BasicJsonType, Mode> v);
+```
+
+Views are passed by value: they are two pointers, cheap to copy, like a `#!cpp std::string_view`. A `const&` works as
+well, but a non-`const` reference does not bind to the views that [`root()`](../api/basic_json_document/root.md),
+[`operator[]`](../api/basic_json_view/operator%5B%5D.md), and [`at()`](../api/basic_json_view/at.md) return, so
+`#!cpp f(doc.root())` would not compile.
+
+There is no conversion from an editable view to a read-only one, by design: the mode decides how a view walks the
+index. A read-only view reads a container in place, while a view of an editable document follows the links that edits
+leave behind, so a read-only view of an edited document would read stale values. Views of both modes compare with
+[`operator==`](../api/basic_json_view/operator_eq.md).
+
+[`is_json_view<T>`](../api/is_json_view.md) tells views from other types, for constraints that cannot be written as a
+`basic_json_view<...>` parameter.
+
+### A `from_json()` that reads views
+
+[`get<T>()`](../api/basic_json_view/get.md) on a view calls `T`'s `from_json()` with the view itself if that
+`from_json()` accepts views, and with [`materialize()`](../api/basic_json_view/materialize.md) otherwise. The
+`from_json()` functions of the [`NLOHMANN_DEFINE_TYPE_*`](../api/macros/nlohmann_define_type_intrusive.md),
+[`NLOHMANN_DEFINE_DERIVED_TYPE_*`](../api/macros/nlohmann_define_derived_type.md), and
+[`NLOHMANN_JSON_SERIALIZE_ENUM`](../api/macros/nlohmann_json_serialize_enum.md) macros, and those of the library
+for the standard types, accept views, so these types need nothing else. For decoding the statuses of
+twitter.json into structs, reading the view is about 5 times faster than `#!cpp materialize().get<T>()`.
+
+A hand-written `from_json()` reads views if it is constrained to `json` values and views:
+
+```cpp
+template < typename J, typename std::enable_if <
+               nlohmann::is_json_view<J>::value || std::is_same<J, nlohmann::json>::value, int >::type = 0 >
+void from_json(const J& j, person& p)
+{
+    p.name = j.at("name").template get<std::string>();
+    p.age = j.at("age").template get<int>();
+}
+```
+
+Its body may only use what views and `basic_json` have in common: the type checks, `at()`, `operator[]`, `contains()`,
+`value()`, `size()`, iteration and `items()`, and `get<T>()`/`get_to()`. An unconstrained
+`#!cpp template<typename BasicJsonType> void from_json(const BasicJsonType& j, person& p)`, as in
+[arbitrary type conversions](arbitrary_types.md), is never called with a view, as it might use `basic_json` functions
+a view does not have; such a type is converted through `materialize()`. A `from_json()` for `json` only is
+converted through `materialize()` as well.
+
+Two things differ when a `from_json()` reads the view:
+
+- **Duplicate keys.** Members looked up by name (`at()`, `value()`, ... and thus the macros) find the **first** member
+  with a repeated key, see [Duplicate keys](#duplicate-keys); `#!cpp materialize().get<T>()` would see the last one.
+  Containers built from an object, such as `#!cpp std::map`, keep the **last** value either way, as
+  [`parse()`](../api/basic_json/parse.md) does.
+- **[`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md).** Exceptions thrown by the view carry no path to the
+  value.
+
+`to_json()` is unaffected: it writes `basic_json` values, never views.
 
 ## Writing a view back
 

@@ -82,6 +82,7 @@ nor a [`json_editable_view`](json_editable_view.md). Views of the two modes comp
 - [basic_json_view](basic_json_view/index.md) - a handle to one value of a document
 - [json_editable_document](json_editable_document.md) - an editable document of `json`
 - [(constructor)](basic_json_view/basic_json_view.md) - the conversion from a read-only to an editable view
+- [Writing generic code](../features/json_view.md#writing-generic-code) - functions that accept views
 
 ## Version history
 
