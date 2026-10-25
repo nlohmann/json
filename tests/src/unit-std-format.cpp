@@ -6,12 +6,10 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-// cmake/test.cmake selects the C++ standard versions with which to build a
-// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
-// When using macros that are only defined for particular versions of the standard
-// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
-// version macro in a comment close by, like this:
-// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+// cmake/test.cmake builds a unit test with C++ standards beyond C++11 only if the
+// source file mentions the corresponding version macro. This whole file tests
+// std::format (C++20), so it cannot be split: it is built for C++20 as well:
+// JSON_HAS_CPP_20 (do not remove)
 
 #include "doctest_compatibility.h"
 
@@ -19,7 +17,6 @@
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
 
-// JSON_HAS_CPP_20 (do not remove; see note at top of file)
 #if JSON_HAS_STD_FORMAT
 
 #include <iterator>

@@ -173,7 +173,7 @@ void check_string(const std::string& content)
 }
 
 // a small deterministic generator of documents
-struct generator
+struct builder_generator
 {
     std::mt19937 rng{5295}; // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
 
@@ -407,7 +407,7 @@ TEST_CASE("json_view builder")
 
     SECTION("generated documents and damaged copies")
     {
-        generator g;
+        builder_generator g;
         for (int i = 0; i < 3000; ++i)
         {
             std::string text;
