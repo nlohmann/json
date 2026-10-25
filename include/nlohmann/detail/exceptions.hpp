@@ -102,7 +102,7 @@ enum class exception_id : int
     type_not_serializable = 317, ///< a value cannot be serialized to the requested binary format
     enum_key_duplicate = 318, ///< an enum-keyed map has two keys that serialize to the same string
     document_binary_value = 319, ///< a binary value is stored in a json_document
-    document_image_unsupported = 320, ///< a json_document image cannot be saved or loaded (discarded document, big-endian target)
+    document_image_unsupported = 320, ///< a discarded json_document cannot be saved as an image
     discarded_value_used = 321, ///< a discarded value is used
     // out_of_range
     array_index_out_of_range = 401, ///< an array index is out of range

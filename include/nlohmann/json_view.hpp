@@ -1191,6 +1191,10 @@ class basic_json_document
     /// how load() checks an image (full, bounds, or none)
     using image_check = detail::view::image_check;
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
+    // (the image format is little-endian: big-endian targets have no save()
+    // and load(), so that a call fails to compile instead of always throwing)
+
     /// The document as an image that load() reads without parsing: the node
     /// index, the text, and the decoded strings. An edited document is
     /// written in its current state (floats that are not finite become null,
@@ -1232,6 +1236,7 @@ class basic_json_document
         detail::view::load_image(*d.m_data, d.m_data->owned_image.data(), d.m_data->owned_image.size(), check);
         return d;
     }
+#endif
 
     ///////////
     // edits //

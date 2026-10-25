@@ -5032,12 +5032,10 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
     }
 }
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN // (the image format is little-endian: no save() elsewhere)
 /// the document as an image
 inline std::vector<std::uint8_t> save_image(const document_data& d)
 {
-#if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
-#endif
     const std::size_t arena_size = d.arena_size;
     std::vector<node> compacted;
     std::string text_tail;
@@ -5093,6 +5091,7 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     *o = 0;
     return image;
 }
+#endif
 
 /// the parts of a number token that the checks need
 struct number_token
@@ -5513,13 +5512,11 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
     throw_parse_error(exception_id::invalid_document_image, concat("invalid json_document image: ", what));
 }
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN // (the image format is little-endian: no load() elsewhere)
 /// Read an image into d. The text and the decoded strings stay in the image;
 /// the nodes are copied (so that they are aligned, and edits can change them).
 inline void load_image(document_data& d, const std::uint8_t* image, std::size_t size, image_check check)
 {
-#if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
-#endif
     if (image == nullptr || size < sizeof(image_header))
     {
         throw_invalid_image("too short");
@@ -5588,6 +5585,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while building)
     d.discarded = false;
 }
+#endif
 
 }  // namespace view
 }  // namespace detail
@@ -8945,6 +8943,10 @@ class basic_json_document
     /// how load() checks an image (full, bounds, or none)
     using image_check = detail::view::image_check;
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
+    // (the image format is little-endian: big-endian targets have no save()
+    // and load(), so that a call fails to compile instead of always throwing)
+
     /// The document as an image that load() reads without parsing: the node
     /// index, the text, and the decoded strings. An edited document is
     /// written in its current state (floats that are not finite become null,
@@ -8986,6 +8988,7 @@ class basic_json_document
         detail::view::load_image(*d.m_data, d.m_data->owned_image.data(), d.m_data->owned_image.size(), check);
         return d;
     }
+#endif
 
     ///////////
     // edits //

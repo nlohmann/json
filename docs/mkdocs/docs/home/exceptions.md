@@ -853,16 +853,11 @@ from JSON text.
 
 [`basic_json_document::save()`](../api/basic_json_document/save.md) cannot write an
 [image](../features/json_view.md#images) of a [discarded](../api/basic_json_document/is_discarded.md) document.
-[`save()`](../api/basic_json_document/save.md) and [`load()`](../api/basic_json_document/load.md) also throw this
-exception on a big-endian target, since the image format is little-endian only.
 
 !!! failure "Example messages"
 
     ```
     [json.exception.type_error.320] cannot save a discarded json_document
-    ```
-    ```
-    [json.exception.type_error.320] json_document images need a little-endian target
     ```
 
 !!! note
