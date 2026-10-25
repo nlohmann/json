@@ -195,7 +195,7 @@ This error indicates a syntax error while deserializing a JSON text. The error m
     - Make sure the input is correctly read. Try to write the input to standard output to check if, for instance, the input file was successfully opened.
     - Paste the input to a JSON validator like <https://jsonlint.com> or a tool like [jq](https://jqlang.github.io/jq/).
 
-??? info "Parsing a file fails at line 1, column 1 (or \"unexpected end of input\")"
+??? info "Parsing a file fails at line 1, column 1 (unexpected end of input)"
 
     The messages `attempting to parse an empty input` (since version 3.11.3) and `unexpected end of input` (also the message of
     earlier versions for an empty input) at the very start of the input mean
