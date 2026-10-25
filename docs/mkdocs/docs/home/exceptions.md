@@ -906,17 +906,11 @@ value, or by default-constructing a [`basic_json`](../api/basic_json/index.md) w
 [`value_t::discarded`](../api/basic_json/value_t.md)) was passed to a binary serialization function, either directly or
 nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, BSON, or BON8.
 
-!!! failure "Example messages"
+!!! failure "Example message"
 
     Serializing `#!json [1, 2]` to CBOR, where the second element was discarded by a parser callback:
     ```
     [json.exception.type_error.321] cannot serialize discarded value to CBOR
-    ```
-
-    Serializing an object with a discarded member to BSON (a discarded value at the top level is reported as
-    [`type_error.317`](#jsonexceptiontype_error317) instead, since BSON requires an object there):
-    ```
-    [json.exception.type_error.321] cannot serialize discarded value to BSON
     ```
 
 ## Out of range
