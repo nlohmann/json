@@ -112,8 +112,8 @@ The library uses the following mapping from JSON values types to UBJSON types ac
     object or binary value.
 
     Two elements have the same type if they are written with the same type marker. For example, `[1, 2]` is written with
-    the type `i`, but `[1, 200]` (`i`, `U`), `[true, false]` (`T`, `F`) and `[1, 2.5]` (`i`, `D`) are not; empty
-    containers (`[]`, `{}`) are never typed.
+    the type `i`, but `[1, 200]` (`i`, `U`), `[true, false]` (`T`, `F`) and `[1, 2.5]` (`i`, `D`) are not; an empty
+    container is never given a `$` annotation of its own (an array of empty arrays is still typed `[`).
 
     Note that `use_size = true` alone may result in larger representations - the benefit of this parameter is that the
     receiving side is immediately informed on the number of elements of the container.
@@ -194,7 +194,8 @@ The library maps UBJSON types to JSON value types as follows:
 
     The type marker after `$` must be one of `Z`, `N`, `T`, `F`, `i`, `U`, `I`, `l`, `L`, `d`, `D`, `H`, `C`, `S`, `[` or
     `{`. It is checked even if the count is 0; any other marker raises
-    [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112).
+    [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112). A counted object typed `N` (`{$N#i1 ...`)
+    is not supported.
 
 !!! warning "Ill-formed UTF-8 in string values and object keys"
 
