@@ -216,7 +216,7 @@ array of integers.
     0x87                                     // object with 1 member
         0x62 0x69 0x6E 0x61 0x72 0x79        // "binary"
         0x84                                 // array with 4 elements
-            0xC3 0x22 0xC3 0x56 0xC3 0x12 0xC3 0x16  // content (each byte as a 2-byte integer)
+            0xC3 0x22 0xC3 0x56 0xC3 0x12 0xC3 0x16  // content (each byte, here all above 39, as a 2-byte integer)
     ```
 
     Note that the subtype is lost, and deserializing `v` would yield the following value:

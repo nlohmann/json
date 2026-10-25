@@ -346,7 +346,7 @@ been read, or (with `strict = true`) further bytes follow the value.
 
 ### json.exception.parse_error.112
 
-An unexpected byte was read in a [binary format](../features/binary_formats/index.md) or length information is invalid ([BSON](../features/binary_formats/bson.md)).
+An unexpected byte was read in a [binary format](../features/binary_formats/index.md) or length information is invalid ([BSON](../features/binary_formats/bson.md)). In [BON8](../features/binary_formats/bon8.md), this exception is also thrown for a key that is not a string and for ill-formed UTF-8.
 
 !!! failure "Example messages"
 
@@ -371,15 +371,21 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
     ```
     [json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)
     ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 2: syntax error while parsing BON8 string: invalid UTF-8 byte: 0x80
+    ```
 
 ### json.exception.parse_error.113
 
 A string could not be read from a [binary format](../features/binary_formats/index.md): either a value that is not a
 string was read where one was required (for instance as a map key), the string's length specification is invalid, or
 the string's bytes are not valid UTF-8 and the `error_handler` parameter of the corresponding `from_*` function is
-set to `strict`. By default (`error_handler_t::keep`), the bytes of a string are not checked for valid UTF-8 on read;
+set to `strict`. By default (`error_handler_t::keep`), the bytes of a string are not checked for valid UTF-8 on read
+for the formats whose `from_*` function has an `error_handler` parameter;
 see the ill-formed UTF-8 notes on the individual [binary format](../features/binary_formats/index.md) pages for how
 such a string is handled depending on `error_handler`.
+[`from_bon8()`](../api/basic_json/from_bon8.md) never throws this exception: BON8 non-string keys and ill-formed UTF-8
+are reported as [parse_error.112](#jsonexceptionparse_error112).
 
 CBOR and MessagePack allow map keys of any type, but JSON object keys are always strings. Maps with keys of any other
 type (for instance integers or `null`) are therefore not supported; see the notes on
@@ -815,6 +821,9 @@ The binary writers [`to_cbor()`](../api/basic_json/to_cbor.md), [`to_ubjson()`](
 as well for a string value or object key that is not valid UTF-8 if their `error_handler` is `strict` (the default if
 [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) is enabled). So does
 [`to_msgpack()`](../api/basic_json/to_msgpack.md) if `error_handler_t::strict` is passed.
+[`to_bon8()`](../api/basic_json/to_bon8.md) always throws this exception for such a string or key, regardless of
+[`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md), because the end of a BON8 string is determined
+from its UTF-8 encoding.
 
 !!! failure "Example message"
 
@@ -1009,7 +1018,8 @@ double-precision number when `number_float_t` is `#!cpp float`.
 An integer number cannot be represented by the binary format it is serialized to:
 
 - [BON8](../features/binary_formats/bon8.md) only stores integers that fit into int64, so
-  [`to_bon8`](../api/basic_json/to_bon8.md) throws for unsigned integers greater than 9223372036854775807.
+  [`to_bon8`](../api/basic_json/to_bon8.md) throws for unsigned integers greater than 9223372036854775807 and, with a
+  number type wider than 64 bits, for any integer outside the int64 range.
 - [CBOR](../features/binary_formats/cbor.md), [MessagePack](../features/binary_formats/messagepack.md), and
   [BSON](../features/binary_formats/bson.md) store integers in at most 64 bits. With the default number types, every
   integer fits, but a [`number_integer_t`](../api/basic_json/number_integer_t.md) or
