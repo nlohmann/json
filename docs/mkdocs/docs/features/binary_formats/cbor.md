@@ -95,11 +95,9 @@ see "binary" cells in the table above.
 
 !!! success "Complete mapping"
 
-    The mapping is **complete** in the sense that any JSON value type can be converted to a CBOR value, with two
-    exceptions: a [`discarded`](../../api/basic_json/is_discarded.md) value cannot be serialized and throws
-    [`type_error.321`](../../home/exceptions.md#jsonexceptiontype_error321), and an integer outside the range of CBOR
-    integers (only possible with a number type wider than 64 bits) throws
-    [`out_of_range.407`](../../home/exceptions.md#jsonexceptionout_of_range407).
+    The mapping is **complete** in the sense that any JSON value type can be converted to a CBOR value, with one
+    exception: an integer outside the range of CBOR integers (only possible with a number type wider than 64 bits)
+    throws [`out_of_range.407`](../../home/exceptions.md#jsonexceptionout_of_range407).
 
 !!! info "Not a deterministic encoding"
 
