@@ -906,11 +906,17 @@ value, or by default-constructing a [`basic_json`](../api/basic_json/index.md) w
 [`value_t::discarded`](../api/basic_json/value_t.md)) was passed to a binary serialization function, either directly or
 nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, BSON, or BON8.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     Serializing `#!json [1, 2]` to CBOR, where the second element was discarded by a parser callback:
     ```
     [json.exception.type_error.321] cannot serialize discarded value to CBOR
+    ```
+
+    Serializing an object with a discarded member to BSON (a discarded value at the top level is reported as
+    [`type_error.317`](#jsonexceptiontype_error317) instead, since BSON requires an object there):
+    ```
+    [json.exception.type_error.321] cannot serialize discarded value to BSON
     ```
 
 ## Out of range
@@ -1155,10 +1161,14 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 MessagePack's ext type and BSON's binary subtype are each stored in a single byte. This exception is thrown when serializing a
 [`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255, the largest value the library can store in that byte.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.out_of_range.415] subtype 70000 is too large for the MessagePack ext type (max 255)
+    ```
+
+    ```
+    [json.exception.out_of_range.415] subtype 70000 is too large for the BSON binary subtype (max 255)
     ```
 
 !!! note

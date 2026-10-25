@@ -66,7 +66,12 @@ The library uses the following mapping from JSON values types to BSON types:
 !!! warning "Incomplete mapping"
 
     The mapping is **incomplete**, since only JSON-objects (and things contained therein) can be serialized to BSON.
-    Also, keys may not contain U+0000, since they are serialized a zero-terminated c-strings.
+    Also, keys may not contain U+0000, since they are serialized as zero-terminated C strings.
+
+!!! info "Order of object members"
+
+    The members of an object are written in the order in which iteration visits them: sorted by key for
+    [`json`](../../api/json.md), in insertion order for [`ordered_json`](../../api/ordered_json.md).
 
 !!! warning "BSON type 0x11 interoperability"
 
@@ -80,6 +85,18 @@ The library uses the following mapping from JSON values types to BSON types:
     with the generic subtype `0x00`. After deserialization, `has_subtype()` returns `true` and `subtype()` returns `0`.
     As a result, serializing and deserializing a JSON object containing such a value produces a different JSON object,
     even though the binary data is unchanged.
+
+!!! info "Binary subtype 0x02 (old binary)"
+
+    The BSON specification defines the payload of the "binary (old)" subtype `0x02` as an int32 followed by that many
+    bytes, so the value is preceded by two lengths: the length of the binary element and, as the first four bytes of
+    the payload, the number of bytes that follow. A binary value with subtype `2` is therefore written with the outer
+    length 4 bytes larger than its size and the size as inner length: `binary({1, 2, 3}, 2)` becomes
+    `07 00 00 00 02 03 00 00 00 01 02 03`. When reading, the inner length is checked and removed, so the value
+    contains only the bytes that follow it. `from_bson()` throws
+    [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) if the outer length is less than 4 or the
+    inner length is not the outer length minus 4. Versions before 3.13.0 did not write the inner length and returned
+    it as part of the payload.
 
 ??? example "Example: serialize a JSON value to BSON"
 
@@ -135,11 +152,27 @@ The library maps BSON record types to JSON value types as follows:
     The BSON reader is lenient in a few areas where the BSON specification is more restrictive:
 
     - array element keys are not checked against the required decimal sequence (`0`, `1`, `2`, ...),
-    - any non-zero byte is accepted as `true` for the boolean type, and
-    - the payload for binary subtype `0x02` is returned as-is, including its inner length prefix.
+    - any non-zero byte is accepted as `true` for the boolean type,
+    - the payloads of the binary subtypes `0x03` (UUID, old), `0x04` (UUID), and `0x05` (MD5) are not checked to have
+      16 bytes,
+    - duplicate keys within a document are accepted; the last value wins (`{"a": 1, "a": 2}` is read as `{"a": 2}`),
+      while a SAX handler receives every occurrence,
+    - a `string` value may contain embedded `0x00` bytes, and
+    - with `strict` set to `false`, bytes after the end of the document are ignored.
 
     If BSON input must be validated for strict specification compliance, validate it separately before passing it to
     `from_bson()`.
+
+!!! note "Document size"
+
+    Every document starts with its size. `from_bson()` rejects a document with
+    [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) if the size is less than 5 (the size prefix and the terminator), if an embedded document does not end before the
+    end of the document that contains it, if an element does not fit into the declared size, or if the size does not
+    match the number of bytes read when the terminating `0x00` byte is reached. A size that is too small is detected
+    before the element that exceeds it is read; a size that is too large only at the terminator, so a SAX handler has
+    received the content of such a document by then. Passing `strict` as `false` skips only the check for bytes after
+    the end of the document ([`parse_error.110`](../../home/exceptions.md#jsonexceptionparse_error110)), not the
+    document size checks.
 
 !!! warning "Ill-formed UTF-8 in string values"
 
@@ -154,8 +187,9 @@ The library maps BSON record types to JSON value types as follows:
     ill-formed bytes. `to_bson()`'s own `error_handler` parameter defaults to `keep`, so such a string value or element
     (key) name is written unchanged; with `strict` (the default if
     [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) is enabled), it throws the same exception
-    instead. Element (key) names are never validated on read, since they are read byte-by-byte as a C string. `binary`
-    values (type `0x05`) are unaffected, since they are not required to hold text.
+    instead. Element (key) names are treated like string values: with `keep` they are read unchanged, with `strict`,
+    `replace`, or `ignore` they are checked and handled in the same way. `binary` values (type `0x05`) are unaffected,
+    since they are not required to hold text.
 
 ??? example "Example: deserialize a JSON value from BSON"
 

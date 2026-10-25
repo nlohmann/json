@@ -227,7 +227,10 @@ array of integers.
 ### BSON
 
 [BSON](binary_formats/bson.md) supports binary values and subtypes. If a subtype is given, it is used and added as an
-unsigned 8-bit integer. If no subtype is given, the generic binary subtype 0x00 is used.
+unsigned 8-bit integer; a subtype above 255 throws
+[`out_of_range.415`](../home/exceptions.md#jsonexceptionout_of_range415). If no subtype is given, the generic binary
+subtype 0x00 is used. The payload of the "old binary" subtype 0x02 is preceded by a second length, which the library
+writes and removes again when reading; it is not part of the payload.
 
 ??? example "Example: serialize a binary value to BSON"
 
