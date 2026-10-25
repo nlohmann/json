@@ -21,3 +21,12 @@ flowchart TD
     A --> F{"just testing first?"}
     F -->|"yes"| G["contains() / find()"]
 ```
+
+## See also
+
+- [**operator[]**](../../api/basic_json/operator%5B%5D.md) - unchecked access
+- [**at**](../../api/basic_json/at.md) - checked access
+- [**value**](../../api/basic_json/value.md) - access with default value
+- [**contains**](../../api/basic_json/contains.md) and [**find**](../../api/basic_json/find.md) - test for existence
+- [**front**](../../api/basic_json/front.md) and [**back**](../../api/basic_json/back.md) - first and last element
+- [**items**](../../api/basic_json/items.md) - iterate over keys and values

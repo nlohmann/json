@@ -237,6 +237,39 @@ class parser
     }
 
     /*!
+    @brief apply the end-of-input handling after a value was parsed
+
+    In strict mode, the next token must be the end of the input; otherwise
+    parse_error.101 is reported through @a sax. In non-strict mode, the
+    lookahead is released so the caller can keep reading the input right after
+    the parsed value.
+
+    @param[in,out] sax  the SAX parser to report an error to
+    @param[in] strict   whether to expect the last token to be EOF
+    @return true, or what @a sax returned for the error
+    */
+    template<typename SAX>
+    bool finish_input(SAX& sax, const bool strict)
+    {
+        if (strict)
+        {
+            // strict mode: next byte must be EOF
+            if (get_token() != token_type::end_of_input)
+            {
+                return syntax_error(sax, exception_message(token_type::end_of_input, "value"));
+            }
+        }
+        else
+        {
+            // the caller keeps using the input: position it right after
+            // the value by leaving the character that terminated it
+            m_lexer.release_lookahead();
+        }
+
+        return true;
+    }
+
+    /*!
     @brief run a DOM SAX parser to completion and position the lexer
 
     Shared by both branches of @ref parse(): builds no SAX parser itself,
@@ -255,20 +288,7 @@ class parser
     {
         sax_parse_internal<false>(&sdp);
 
-        if (strict)
-        {
-            // in strict mode, input must be completely read
-            if (get_token() != token_type::end_of_input)
-            {
-                syntax_error(sdp, exception_message(token_type::end_of_input, "value"));
-            }
-        }
-        else
-        {
-            // the caller keeps using the input: position it right after
-            // the value by leaving the character that terminated it
-            m_lexer.release_lookahead();
-        }
+        static_cast<void>(finish_input(sdp, strict));
 
         return !sdp.is_errored();
     }
@@ -493,7 +513,7 @@ class parser
                         {
                             // there is nothing to recover
                             static_cast<void>(report_error(sax, parse_error::create(exception_id::syntax_error, m_lexer.get_position(),
-                                                           "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr), allow_recovery));
+                                                           empty_input_message(), nullptr), allow_recovery));
                             return false;
                         }
 

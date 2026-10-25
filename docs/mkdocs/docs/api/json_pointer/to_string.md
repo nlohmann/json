@@ -49,5 +49,5 @@ ptr == json_pointer(ptr.to_string());
 
 ## Version history
 
-- Since version 2.0.0.
+- Added in version 2.0.0.
 - Changed return type to `string_t` in version 3.11.0.

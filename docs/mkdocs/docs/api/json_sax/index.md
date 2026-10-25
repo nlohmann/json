@@ -60,6 +60,13 @@ leading `-` sign.
 - [**start_object**](start_object.md) (_virtual_) - the beginning of an object was read
 - [**string**](string.md) (_virtual_) - a string value was read
 
+## See also
+
+- [SAX interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
+- [**sax_parse**](../basic_json/sax_parse.md) - generate SAX events from an input
+- [**parse**](../basic_json/parse.md) - DOM parsing, with optional [parser callbacks](../../features/parsing/parser_callbacks.md)
+- [Parse exceptions](../../features/parsing/parse_exceptions.md)
+
 ## Version history
 
 - Added in version 3.2.0.

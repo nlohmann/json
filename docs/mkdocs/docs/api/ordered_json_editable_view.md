@@ -37,4 +37,4 @@ This type is a [`basic_json_view`](basic_json_view/index.md) of a value of an
 
 ## Version history
 
-Since version 3.13.0.
+Added in version 3.13.0.

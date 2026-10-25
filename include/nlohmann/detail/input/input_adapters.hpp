@@ -67,6 +67,36 @@ namespace detail
 /// the supported input formats
 enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata, bon8 };
 
+/// @return the name of a binary input format, as used in exception messages
+inline const char* input_format_name(const input_format_t format) noexcept
+{
+    switch (format)
+    {
+        case input_format_t::cbor:
+            return "CBOR";
+        case input_format_t::msgpack:
+            return "MessagePack";
+        case input_format_t::ubjson:
+            return "UBJSON";
+        case input_format_t::bson:
+            return "BSON";
+        case input_format_t::bjdata:
+            return "BJData";
+        case input_format_t::bon8:
+            return "BON8";
+        case input_format_t::json: // LCOV_EXCL_LINE
+        default:            // LCOV_EXCL_LINE
+            JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+            return ""; // LCOV_EXCL_LINE
+    }
+}
+
+/// @return the message of the parse_error thrown or reported for an empty input
+inline const char* empty_input_message() noexcept
+{
+    return "attempting to parse an empty input; check that your input string or stream contains the expected JSON";
+}
+
 ////////////////////
 // input adapters //
 ////////////////////
@@ -1273,7 +1303,7 @@ inline file_input_adapter input_adapter(std::FILE* file)
 {
     if (file == nullptr)
     {
-        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, empty_input_message(), nullptr));
     }
     return file_input_adapter(file);
 }
@@ -1282,7 +1312,7 @@ inline input_stream_adapter input_adapter(std::istream& stream)
 {
     if (stream.rdbuf() == nullptr)
     {
-        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, empty_input_message(), nullptr));
     }
     return input_stream_adapter(stream);
 }
@@ -1307,7 +1337,7 @@ contiguous_bytes_input_adapter input_adapter(CharT b)
 {
     if (b == nullptr)
     {
-        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+        JSON_THROW(parse_error::create(exception_id::syntax_error, 0, empty_input_message(), nullptr));
     }
     auto length = std::strlen(reinterpret_cast<const char*>(b));
     const auto* ptr = reinterpret_cast<const char*>(b);

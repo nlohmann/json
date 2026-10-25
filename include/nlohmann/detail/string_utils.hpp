@@ -49,6 +49,24 @@ inline std::string hex_byte(const std::uint8_t byte)
     return result;
 }
 
+/*!
+@brief write a UTF-16 code unit as four lowercase hexadecimal digits
+
+The lowercase counterpart of hex_byte(), used for the `\\uXXXX` escapes of the
+serializers, whose output is lowercase. Writes exactly four characters to
+@a out and returns the pointer past them.
+*/
+JSON_HEDLEY_ALWAYS_INLINE char* hex4_lower(const std::uint16_t codeunit, char* out) noexcept
+{
+    constexpr const char* nibble_to_hex = "0123456789abcdef";
+    const unsigned int unit = codeunit;
+    out[0] = nibble_to_hex[(unit >> 12u) & 0x0Fu];
+    out[1] = nibble_to_hex[(unit >> 8u) & 0x0Fu];
+    out[2] = nibble_to_hex[(unit >> 4u) & 0x0Fu];
+    out[3] = nibble_to_hex[unit & 0x0Fu];
+    return out + 4;
+}
+
 ///////////////////
 // UTF-8 encoding //
 ///////////////////
@@ -104,6 +122,66 @@ void encode_utf8(std::uint32_t cp, const Out& out)
     }
 }
 
+/*!
+@brief the shape of a well-formed UTF-8 sequence, by its lead byte
+
+@a length is 1 for ASCII, 2 to 4 for a valid lead byte, and 0 for a byte that
+cannot start a well-formed sequence (a continuation byte, 0xC0, 0xC1, or 0xF5
+to 0xFF). For a multibyte sequence, the second byte must lie in
+[@a second_lo, @a second_hi], and every later byte in [0x80, 0xBF]
+(RFC 3629, section 4; Unicode Table 3-7). The narrower second-byte ranges
+exclude overlong forms (0xE0, 0xF0), surrogates (0xED), and code points
+beyond U+10FFFF (0xF4).
+*/
+struct utf8_sequence_shape
+{
+    std::uint8_t length;
+    std::uint8_t second_lo;
+    std::uint8_t second_hi;
+};
+
+/// @return the shape of a UTF-8 sequence starting with @a lead, see utf8_sequence_shape
+inline utf8_sequence_shape utf8_shape(const std::uint8_t lead) noexcept
+{
+    if (lead < 0x80u)
+    {
+        return {1, 0, 0};
+    }
+    if (lead < 0xC2u)
+    {
+        return {0, 0, 0};
+    }
+    if (lead <= 0xDFu)
+    {
+        return {2, 0x80u, 0xBFu};
+    }
+    if (lead == 0xE0u)
+    {
+        return {3, 0xA0u, 0xBFu};
+    }
+    if (lead == 0xEDu)
+    {
+        return {3, 0x80u, 0x9Fu};
+    }
+    if (lead <= 0xEFu)
+    {
+        return {3, 0x80u, 0xBFu};
+    }
+    if (lead == 0xF0u)
+    {
+        return {4, 0x90u, 0xBFu};
+    }
+    if (lead <= 0xF3u)
+    {
+        return {4, 0x80u, 0xBFu};
+    }
+    if (lead == 0xF4u)
+    {
+        return {4, 0x80u, 0x8Fu};
+    }
+    return {0, 0, 0};
+}
+
 ///////////////////
 // UTF-8 decoding //
 ///////////////////
@@ -119,7 +197,7 @@ This is a single-byte step of a "shift-based" UTF-8 decoder originally
 written by Björn Hoehrmann. See
 http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-The library checks UTF-8 well-formedness (RFC 3629, section 4) in three
+The library checks UTF-8 well-formedness (RFC 3629, section 4) in five
 places, which differ in speed, diagnostics, and how they read the input:
 
 - decode() below: the serializer, to escape and, in strict mode, reject
@@ -133,10 +211,15 @@ places, which differ in speed, diagnostics, and how they read the input:
   bulk string scan, the bulk path of the BON8 reader, and the BON8 writer.
   They must accept exactly what the lexer's switch accepts.
 - the byte path of binary_reader::get_bon8_string(): BON8 input without bulk
-  access, and the bytes the bulk path leaves to it.
+  access, and the bytes the bulk path leaves to it. It keeps its own ranges:
+  taking them from utf8_shape() made BON8 decoding 2-3% slower (#5891).
+- check_utf8() in detail/view/edit.hpp: strings stored in an editable
+  json_document, with the index of the offending byte. It also uses
+  utf8_shape().
 
-All four must accept the same set of sequences, so a change to one needs a
-matching change to the others.
+All five must accept the same set of sequences, which the test "UTF-8
+validators accept the same sequences" in unit-class_lexer.cpp checks
+exhaustively against decode() and utf8_shape().
 
 @param[in,out] state  the current decoder state
 @param[in,out] codep  codepoint (valid only if resulting state is UTF8_ACCEPT)

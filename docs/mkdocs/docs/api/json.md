@@ -30,4 +30,4 @@ types.
 
 ## Version history
 
-Since version 1.0.0.
+Added in version 1.0.0.

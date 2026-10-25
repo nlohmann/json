@@ -2819,30 +2819,50 @@ namespace view
 // Exceptions are thrown out of line, so that the accessors that may throw stay
 // small enough to be inlined.
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(int id, const char* prefix, const char* type)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(exception_id id, const char* prefix, const char* type)
 {
     NLOHMANN_VIEW_THROW(type_error::create(id, concat(prefix, type), nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(int id, const std::string& msg)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(exception_id id, const std::string& msg)
 {
     NLOHMANN_VIEW_THROW(type_error::create(id, msg, nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_out_of_range(int id, const std::string& msg)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_out_of_range(exception_id id, const std::string& msg)
 {
     NLOHMANN_VIEW_THROW(out_of_range::create(id, msg, nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_invalid_iterator(int id, const char* msg)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_invalid_iterator(exception_id id, const char* msg)
 {
     NLOHMANN_VIEW_THROW(invalid_iterator::create(id, msg, nullptr));
 }
 
 /// a parse error without a position (as those of json_pointer)
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_parse_error(int id, const std::string& msg)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_parse_error(exception_id id, const std::string& msg)
 {
     NLOHMANN_VIEW_THROW(parse_error::create(id, 0, msg, nullptr));
+}
+
+/// out_of_range.401: the array index @a idx is not below the size
+template<typename Index>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_array_index_out_of_range(const Index idx)
+{
+    throw_out_of_range(exception_id::array_index_out_of_range, concat("array index ", std::to_string(idx), " is out of range"));
+}
+
+/// out_of_range.402: the JSON Pointer token '-' of an array of @a size elements
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_array_index_past_end(std::size_t size)
+{
+    throw_out_of_range(exception_id::pointer_past_the_end_index, concat("array index '-' (", std::to_string(size), ") is out of range"));
+}
+
+/// out_of_range.403: the object has no member @a key
+template<typename Key>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_key_not_found(const Key& key)
+{
+    throw_out_of_range(exception_id::key_not_found, concat("key '", key, "' not found"));
 }
 
 /// SAX handler of the error replay: accepts every event without storing it,
@@ -2953,7 +2973,7 @@ template<typename BasicJsonType>
     if (f.code == error_code::input_too_large)
     {
         // (the limit is detail::view::max_input_size(): 4 GiB minus 16 bytes)
-        NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
+        NLOHMANN_VIEW_THROW(out_of_range::create(exception_id::document_too_large, "input of 4294967280 bytes or more is not supported by json_document", nullptr));
     }
     throwing_sax<BasicJsonType> sax;
     const bool accepted = BasicJsonType::sax_parse(src, src + size, &sax, input_format_t::json, true, ignore_comments, ignore_trailing_commas);
@@ -2973,7 +2993,7 @@ template<typename BasicJsonType>
         }
     }
     pos.chars_read_current_line = off + 1 - line_start;
-    NLOHMANN_VIEW_THROW(parse_error::create(101, pos, "syntax error while parsing value", nullptr));
+    NLOHMANN_VIEW_THROW(parse_error::create(exception_id::syntax_error, pos, "syntax error while parsing value", nullptr));
     // LCOV_EXCL_STOP
 }
 
@@ -3048,7 +3068,7 @@ inline std::size_t text_capacity(std::size_t cap, std::size_t used, std::size_t 
     constexpr std::size_t limit = 0xFFFFFFFFu;
     if (NLOHMANN_VIEW_UNLIKELY(used > limit || n > limit - used))
     {
-        throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document");
+        throw_out_of_range(exception_id::document_too_large, "edits of 4 GiB or more are not supported by json_document");
     }
     const std::size_t needed = used + n;
     const std::size_t wanted = needed + (std::min)(limit - needed, std::size_t{256});
@@ -3099,7 +3119,7 @@ inline void reserve_moved(document_data& d)
     document_data::edit_state& e = edit_state_of(d);
     if (e.moved.size() >= 0xFFFFFFFFu)
     {
-        throw_out_of_range(416, "more than 4294967295 edited arrays and objects are not supported by json_document"); // LCOV_EXCL_LINE
+        throw_out_of_range(exception_id::document_too_large, "more than 4294967295 edited arrays and objects are not supported by json_document"); // LCOV_EXCL_LINE
     }
     if (e.moved.size() == e.moved.capacity() || e.moved_cap.size() == e.moved_cap.capacity())
     {
@@ -3729,11 +3749,6 @@ struct first_true<false, Conditions...> : std::integral_constant < int, 1 + firs
 inline void check_utf8(const char* s, std::size_t n)
 {
     const auto* const p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    const auto hex = [](unsigned char c)
-    {
-        constexpr const char* digits = "0123456789ABCDEF";
-        return std::string{digits[c >> 4u], digits[c & 0xFu]};
-    };
     for (std::size_t i = 0; i < n;)
     {
         const unsigned char c = p[i];
@@ -3742,39 +3757,22 @@ inline void check_utf8(const char* s, std::size_t n)
             ++i;
             continue;
         }
-        std::size_t len = 0;
-        unsigned char lo = 0x80;
-        unsigned char hi = 0xBF;
-        if (c >= 0xC2 && c <= 0xDF)
+        const utf8_sequence_shape shape = utf8_shape(c);
+        const std::size_t len = shape.length;
+        if (len == 0)
         {
-            len = 2;
-        }
-        else if (c >= 0xE0 && c <= 0xEF)
-        {
-            len = 3;
-            lo = c == 0xE0 ? 0xA0 : 0x80;
-            hi = c == 0xED ? 0x9F : 0xBF;
-        }
-        else if (c >= 0xF0 && c <= 0xF4)
-        {
-            len = 4;
-            lo = c == 0xF0 ? 0x90 : 0x80;
-            hi = c == 0xF4 ? 0x8F : 0xBF;
-        }
-        else
-        {
-            throw_type_error(316, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", hex(c)));
+            throw_type_error(exception_id::invalid_utf8, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", hex_byte(c)));
         }
         for (std::size_t k = 1; k < len; ++k)
         {
             if (i + k == n)
             {
-                throw_type_error(316, concat("incomplete UTF-8 string; last byte: 0x", hex(p[n - 1])));
+                throw_type_error(exception_id::invalid_utf8, concat("incomplete UTF-8 string; last byte: 0x", hex_byte(p[n - 1])));
             }
             const unsigned char b = p[i + k];
-            if (b < (k == 1 ? lo : 0x80) || b > (k == 1 ? hi : 0xBF))
+            if (b < (k == 1 ? shape.second_lo : 0x80) || b > (k == 1 ? shape.second_hi : 0xBF))
             {
-                throw_type_error(316, concat("invalid UTF-8 byte at index ", std::to_string(i + k), ": 0x", hex(b)));
+                throw_type_error(exception_id::invalid_utf8, concat("invalid UTF-8 byte at index ", std::to_string(i + k), ": 0x", hex_byte(b)));
             }
         }
         i += len;
@@ -3822,7 +3820,7 @@ class editor
         node* const o = own(object);
         if (o->kind != static_cast<std::uint8_t>(value_t::object) && o->kind != static_cast<std::uint8_t>(value_t::null))
         {
-            throw_type_error(305, "cannot use operator[] with a string argument with ", object.type_name());
+            throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", object.type_name());
         }
         check_utf8(key.data(), key.size());
         const encoded e = encode(std::forward<V>(value));
@@ -3873,7 +3871,7 @@ class editor
         node* const a = own(array);
         if (a->kind != static_cast<std::uint8_t>(value_t::array))
         {
-            throw_type_error(305, "cannot use operator[] with a numeric argument with ", array.type_name());
+            throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", array.type_name());
         }
         check_index(idx, a->len);
         const encoded e = encode(std::forward<V>(value));
@@ -3890,7 +3888,7 @@ class editor
         node* const a = own(array);
         if (a->kind != static_cast<std::uint8_t>(value_t::array) && a->kind != static_cast<std::uint8_t>(value_t::null))
         {
-            throw_type_error(308, "cannot use push_back() with ", array.type_name());
+            throw_type_error(exception_id::push_back_wrong_type, "cannot use push_back() with ", array.type_name());
         }
         const encoded e = encode(std::forward<V>(value));
         if (a->kind == static_cast<std::uint8_t>(value_t::null))
@@ -3914,7 +3912,7 @@ class editor
         node* const a = own(array);
         if (a->kind != static_cast<std::uint8_t>(value_t::array))
         {
-            throw_type_error(309, "cannot use insert() with ", array.type_name());
+            throw_type_error(exception_id::insert_wrong_type, "cannot use insert() with ", array.type_name());
         }
         check_index(idx, a->len + 1);
         const encoded e = encode(std::forward<V>(value));
@@ -3934,7 +3932,7 @@ class editor
         node* const o = own(object);
         if (o->kind != static_cast<std::uint8_t>(value_t::object))
         {
-            throw_type_error(307, "cannot use erase() with ", object.type_name());
+            throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", object.type_name());
         }
         for (const node* k = nav::first(m_doc, o), *end = nav::end(m_doc, o); k != end; k = document_data::after(k + 1))
         {
@@ -3952,7 +3950,7 @@ class editor
         node* const a = own(array);
         if (a->kind != static_cast<std::uint8_t>(value_t::array))
         {
-            throw_type_error(307, "cannot use erase() with ", array.type_name());
+            throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", array.type_name());
         }
         check_index(idx, a->len);
         node* const h = block_of(m_doc, a, 0);
@@ -3975,7 +3973,7 @@ class editor
     {
         if (NLOHMANN_VIEW_UNLIKELY(v.m_doc != &m_doc || v.m_node == nullptr))
         {
-            throw_invalid_iterator(202, "view does not belong to this document");
+            throw_invalid_iterator(exception_id::iterator_from_other_value, "view does not belong to this document");
         }
         edit_state_of(m_doc);
         return const_cast<node*>(v.m_node); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to this document
@@ -3985,7 +3983,7 @@ class editor
     {
         if (idx >= limit)
         {
-            throw_out_of_range(401, concat("array index ", std::to_string(idx), " is out of range"));
+            throw_array_index_out_of_range(idx);
         }
     }
 
@@ -4126,7 +4124,7 @@ class editor
     {
         if (NLOHMANN_VIEW_UNLIKELY(v.m_node == nullptr))
         {
-            throw_type_error(302, "type must be a value, but is ", "discarded");
+            throw_type_error(exception_id::type_mismatch, "type must be a value, but is ", "discarded");
         }
         encoded r;
         if (!is_container(*v.m_node))
@@ -4276,7 +4274,7 @@ class editor
     {
         if (NLOHMANN_VIEW_UNLIKELY(len >= 0xFFFFFFFFu))
         {
-            throw_out_of_range(416, "strings of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE
+            throw_out_of_range(exception_id::document_too_large, "strings of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE
         }
         node n = plain_node(value_t::string);
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
@@ -4351,12 +4349,12 @@ class editor
                 return string_node(s.data(), s.size());
             }
             case value_t::binary:
-                throw_type_error(319, "cannot store a binary value in a json_document", "");
+                throw_type_error(exception_id::document_binary_value, "cannot store a binary value in a json_document", "");
             case value_t::discarded:
             case value_t::object:
             case value_t::array:
             default:
-                throw_type_error(302, "type must be a value, but is ", "discarded");
+                throw_type_error(exception_id::type_mismatch, "type must be a value, but is ", "discarded");
         }
     }
 
@@ -4984,7 +4982,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
 inline std::vector<std::uint8_t> save_image(const document_data& d)
 {
 #if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(320, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
+    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
 #endif
     const std::size_t arena_size = d.arena_size;
     std::vector<node> compacted;
@@ -5001,7 +4999,7 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     if (NLOHMANN_VIEW_UNLIKELY(text_size >= image_limit || total_arena >= image_limit || count >= image_limit))
     {
         // LCOV_EXCL_START (4 GiB)
-        throw_out_of_range(416, "images of 4 GiB or more are not supported by json_document");
+        throw_out_of_range(exception_id::document_too_large, "images of 4 GiB or more are not supported by json_document");
         // LCOV_EXCL_STOP
     }
     image_header h{};
@@ -5458,7 +5456,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
 
 [[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_invalid_image(const char* what)
 {
-    throw_parse_error(116, concat("invalid json_document image: ", what));
+    throw_parse_error(exception_id::invalid_document_image, concat("invalid json_document image: ", what));
 }
 
 /// Read an image into d. The text and the decoded strings stay in the image;
@@ -5466,7 +5464,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
 inline void load_image(document_data& d, const std::uint8_t* image, std::size_t size, image_check check)
 {
 #if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(320, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
+    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
 #endif
     if (image == nullptr || size < sizeof(image_header))
     {
@@ -5854,7 +5852,7 @@ class view_iterator
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_value_offset == 0))
         {
-            throw_invalid_iterator(207, "cannot use key() for non-object iterators");
+            throw_invalid_iterator(exception_id::iterator_key_not_object, "cannot use key() for non-object iterators");
         }
         return string_view_t(m_doc->str(*m_pos), m_pos->len);
     }
@@ -6162,6 +6160,8 @@ BasicJsonType materialize(const document_data& d, const node* n)
             case value_t::binary:
             case value_t::discarded:
             default:
+                // false positive: the parser's frame stack points into its own storage (never null)
+                // @infer-ignore NULLPTR_DEREFERENCE
                 sax.null();
                 break;
         }
@@ -6246,51 +6246,15 @@ enum class pointer_mode
     contains,  ///< as basic_json::contains(): no exceptions at all
 };
 
-/// the outcome of reading an array index from a reference token
-enum class index_status
-{
-    ok,
-    leading_zero, ///< parse_error.106
-    not_number,   ///< parse_error.109
-    unresolved,   ///< out_of_range.404
-    too_large,    ///< out_of_range.410
-};
+/// the outcome of reading an array index: detail::parse_array_index(), shared with json_pointer
+using index_status = detail::array_index_status;
 
 /// reads an array index like json_pointer::array_index (RFC 6901, Sect. 4),
 /// but reports errors instead of throwing them
 template<typename StringType>
 index_status array_index(const StringType& s, std::size_t& idx) noexcept
 {
-    // as basic_json: the empty token and "-" (past the last element) are
-    // unresolved rather than not a number
-    if (s.empty() || (s.size() == 1 && s[0] == '-'))
-    {
-        return index_status::unresolved;
-    }
-    if (s[0] < '0' || s[0] > '9')
-    {
-        return index_status::not_number;
-    }
-    if (s.size() > 1 && s[0] == '0')
-    {
-        return index_status::leading_zero;
-    }
-    std::uint64_t v = 0;
-    for (const auto c : s)
-    {
-        const auto d = static_cast<unsigned>(static_cast<unsigned char>(c)) - '0';
-        if (d > 9 || v > ((std::numeric_limits<std::uint64_t>::max)() - d) / 10)
-        {
-            return index_status::unresolved; // not a number, or beyond unsigned long long
-        }
-        v = (v * 10) + d;
-    }
-    if (v >= (std::numeric_limits<std::size_t>::max)()) // (std::size_t converts to std::uint64_t implicitly)
-    {
-        return index_status::too_large;
-    }
-    idx = static_cast<std::size_t>(v);
-    return index_status::ok;
+    return detail::parse_array_index(s, idx);
 }
 
 /// throws the exception json_pointer::array_index throws for this status
@@ -6300,15 +6264,15 @@ template<typename StringType>
     switch (status)
     {
         case index_status::leading_zero:
-            throw_parse_error(106, concat("array index '", s, "' must not begin with '0'"));
-        case index_status::not_number:
-            throw_parse_error(109, concat("array index '", s, "' is not a number"));
-        case index_status::too_large:
-            throw_out_of_range(410, concat("array index ", s, " exceeds size_type")); // LCOV_EXCL_LINE
+            throw_parse_error(exception_id::pointer_index_leading_zero, concat("array index '", s, "' must not begin with '0'"));
+        case index_status::not_a_number:
+            throw_parse_error(exception_id::pointer_index_not_a_number, concat("array index '", s, "' is not a number"));
+        case index_status::exceeds_size_type:
+            throw_out_of_range(exception_id::value_out_of_range, concat("array index ", s, " exceeds size_type")); // LCOV_EXCL_LINE
         case index_status::unresolved:
         case index_status::ok:
         default:
-            throw_out_of_range(404, concat("unresolved reference token '", s, "'"));
+            throw_out_of_range(exception_id::pointer_unresolved, concat("unresolved reference token '", s, "'"));
     }
 }
 
@@ -6333,7 +6297,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             {
                 if (mode == pointer_mode::checked)
                 {
-                    throw_out_of_range(403, concat("key '", token, "' not found"));
+                    throw_key_not_found(token);
                 }
                 return View();
             }
@@ -6345,7 +6309,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             {
                 if (throwing)
                 {
-                    throw_out_of_range(402, concat("array index '-' (", std::to_string(cur.size()), ") is out of range"));
+                    throw_array_index_past_end(cur.size());
                 }
                 return View();
             }
@@ -6353,7 +6317,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             const index_status status = array_index(token, idx);
             if (status != index_status::ok)
             {
-                const bool parse_error = status == index_status::leading_zero || status == index_status::not_number;
+                const bool parse_error = status == index_status::leading_zero || status == index_status::not_a_number;
                 if (throwing || (mode == pointer_mode::value && parse_error))
                 {
                     throw_array_index_error(status, token);
@@ -6364,7 +6328,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             {
                 if (mode == pointer_mode::checked)
                 {
-                    throw_out_of_range(401, concat("array index ", std::to_string(idx), " is out of range"));
+                    throw_array_index_out_of_range(idx);
                 }
                 return View();
             }
@@ -6374,7 +6338,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
         {
             if (throwing)
             {
-                throw_out_of_range(404, concat("unresolved reference token '", token, "'"));
+                throw_out_of_range(exception_id::pointer_unresolved, concat("unresolved reference token '", token, "'"));
             }
             return View();
         }
@@ -7467,21 +7431,17 @@ class view_serializer
             m_out.put("null");
             return;
         }
-        static constexpr bool is_ieee_single_or_double
-            = std::numeric_limits<number_float_t>::is_iec559
-              && ((std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128)
-                  || (std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024));
-        write_float(x, std::integral_constant<bool, is_ieee_single_or_double>());
+        write_float(x, std::integral_constant<bool, ::nlohmann::detail::has_native_float_format<number_float_t>::value>());
     }
 
-    void write_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
+    void write_float(number_float_t x, std::true_type /*has_native_float_format*/)
     {
         std::array<char, 64> buf{};
         const char* const end = ::nlohmann::detail::to_chars(buf.data(), buf.data() + buf.size(), x);
         m_out.put(buf.data(), static_cast<std::size_t>(end - buf.data()));
     }
 
-    void write_float(number_float_t x, std::false_type /*is_ieee_single_or_double*/)
+    void write_float(number_float_t x, std::false_type /*has_native_float_format*/)
     {
         // other types (e.g. long double) are rare: the library writes them
         const string_t s = BasicJsonType(x).dump();
@@ -7542,8 +7502,8 @@ class view_serializer
 
     void write_u_escape(std::uint32_t u)
     {
-        static constexpr const char* hex = "0123456789abcdef";
-        const std::array<char, 6> e = {{'\\', 'u', hex[(u >> 12u) & 0xFu], hex[(u >> 8u) & 0xFu], hex[(u >> 4u) & 0xFu], hex[u & 0xFu]}};
+        std::array<char, 6> e = {{'\\', 'u', 0, 0, 0, 0}};
+        hex4_lower(static_cast<std::uint16_t>(u), &e[2]);
         m_out.put(e.data(), e.size());
     }
 
@@ -7740,7 +7700,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const nod
         case value_t::binary:
         case value_t::discarded:
         default:
-            throw_type_error(302, "type must be number, but is ", value_type_name(static_cast<value_t>(n.kind)));
+            throw_type_error(exception_id::type_mismatch, "type must be number, but is ", value_type_name(static_cast<value_t>(n.kind)));
     }
 }
 
@@ -7750,7 +7710,7 @@ std::vector<U, A> vector_value(const View& v)
 {
     if (NLOHMANN_VIEW_UNLIKELY(!v.is_array()))
     {
-        throw_type_error(302, "type must be array, but is ", v.type_name());
+        throw_type_error(exception_id::type_mismatch, "type must be array, but is ", v.type_name());
     }
     std::vector<U, A> r;
     r.reserve(v.size());
@@ -7768,7 +7728,7 @@ Map map_value(const View& v)
 {
     if (NLOHMANN_VIEW_UNLIKELY(!v.is_object()))
     {
-        throw_type_error(302, "type must be object, but is ", v.type_name());
+        throw_type_error(exception_id::type_mismatch, "type must be object, but is ", v.type_name());
     }
     Map r;
     for (auto it = v.begin(); it != v.end(); ++it)
@@ -8007,7 +7967,7 @@ class basic_json_view
             {
                 return {};
             }
-            detail::view::throw_type_error(305, "cannot use operator[] with a string argument with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", type_name());
         }
         return lookup(key);
     }
@@ -8033,7 +7993,7 @@ class basic_json_view
             {
                 return {};
             }
-            detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", type_name());
         }
         return idx < m_node->len ? element(idx) : basic_json_view();
     }
@@ -8066,12 +8026,12 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
-            detail::view::throw_type_error(304, "cannot use at() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
         }
         const basic_json_view r = lookup(key);
         if (NLOHMANN_VIEW_UNLIKELY(r.is_discarded()))
         {
-            detail::view::throw_out_of_range(403, detail::concat("key '", std::string(key.data(), key.size()), "' not found"));
+            detail::view::throw_key_not_found(std::string(key.data(), key.size()));
         }
         return r;
     }
@@ -8092,11 +8052,11 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
         {
-            detail::view::throw_type_error(304, "cannot use at() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
         }
         if (NLOHMANN_VIEW_UNLIKELY(idx >= m_node->len))
         {
-            detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+            detail::view::throw_array_index_out_of_range(idx);
         }
         return element(idx);
     }
@@ -8124,7 +8084,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
-            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         const basic_json_view r = lookup(key);
         return r.is_discarded() ? default_value : r.template get<T>();
@@ -8134,7 +8094,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
-            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         // (the default is made only if there is no such member)
         const basic_json_view r = lookup(key);
@@ -8149,7 +8109,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
         {
-            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
         return r.is_discarded() ? default_value : r.template get<T>();
@@ -8159,7 +8119,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
         {
-            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
         return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
@@ -8172,7 +8132,7 @@ class basic_json_view
         const iterator it = begin();
         if (NLOHMANN_VIEW_UNLIKELY(it == end()))
         {
-            detail::view::throw_invalid_iterator(214, "cannot get value");
+            detail::view::throw_invalid_iterator(detail::exception_id::iterator_value_unavailable, "cannot get value");
         }
         return *it;
     }
@@ -8325,7 +8285,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_string()))
         {
-            detail::view::throw_type_error(302, "type must be string, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be string, but is ", type_name());
         }
         return {m_doc->str(*m_node), m_node->len};
     }
@@ -8337,7 +8297,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_number()))
         {
-            detail::view::throw_type_error(302, "type must be number, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
         }
         return {m_doc->str(*m_node), detail::view::number_length(*m_node)};
     }
@@ -8594,7 +8554,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_boolean()))
         {
-            detail::view::throw_type_error(302, "type must be boolean, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be boolean, but is ", type_name());
         }
         return (m_node->flags & detail::view::node_flags::is_true) != 0;
     }
@@ -8604,7 +8564,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_node == nullptr))
         {
-            detail::view::throw_type_error(302, "type must be number, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
         }
         return detail::view::arithmetic_value<T, BasicJsonType>(*m_doc, *m_node);
     }
@@ -8613,7 +8573,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_null()))
         {
-            detail::view::throw_type_error(302, "type must be null, but is ", type_name());
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be null, but is ", type_name());
         }
         return nullptr;
     }
@@ -8922,7 +8882,7 @@ class basic_json_document
     {
         if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
         {
-            detail::view::throw_type_error(320, "cannot save a discarded json_document");
+            detail::view::throw_type_error(detail::exception_id::document_image_unsupported, "cannot save a discarded json_document");
         }
         return detail::view::save_image(*m_data);
     }
@@ -9023,7 +8983,7 @@ class basic_json_document
                 const std::size_t idx = pointer_index(token);
                 if (idx >= 0xFFFFFFFFu)
                 {
-                    detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+                    detail::view::throw_array_index_out_of_range(idx);
                 }
                 for (std::size_t i = 0; i < idx; ++i)
                 {
@@ -9079,7 +9039,7 @@ class basic_json_document
     {
         if (ptr.empty())
         {
-            detail::view::throw_out_of_range(405, "JSON pointer has no parent");
+            detail::view::throw_out_of_range(detail::exception_id::patch_on_root, "JSON pointer has no parent");
         }
         const view_type parent = root().at(ptr.parent_pointer());
         const auto& token = ptr.back();
@@ -9099,7 +9059,7 @@ class basic_json_document
         static_assert(Editable, "only an editable document can be edited: use basic_json_document<BasicJsonType, true> (json_editable_document)");
         if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
         {
-            detail::view::throw_invalid_iterator(202, "view does not belong to this document");
+            detail::view::throw_invalid_iterator(detail::exception_id::iterator_from_other_value, "view does not belong to this document");
         }
         return detail::view::editor<BasicJsonType, view_type>(*m_data);
     }
@@ -9116,7 +9076,7 @@ class basic_json_document
     {
         if (idx < 0)
         {
-            detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+            detail::view::throw_array_index_out_of_range(idx);
         }
         return static_cast<std::size_t>(idx);
     }

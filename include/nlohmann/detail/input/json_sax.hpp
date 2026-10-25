@@ -324,6 +324,52 @@ struct diagnostic_positions
 #endif
 
 /*!
+@brief error state shared by the DOM-building SAX parsers
+
+Holds whether a parse error occurred and whether errors are thrown, and
+implements the parse_error() and is_errored() members of the SAX interface for
+json_sax_dom_parser and json_sax_dom_callback_parser.
+*/
+class json_sax_dom_error_state
+{
+  public:
+    explicit json_sax_dom_error_state(const bool allow_exceptions_) noexcept
+        : allow_exceptions(allow_exceptions_)
+    {}
+
+    // make class move-only
+    json_sax_dom_error_state(const json_sax_dom_error_state&) = delete;
+    json_sax_dom_error_state(json_sax_dom_error_state&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
+    json_sax_dom_error_state& operator=(const json_sax_dom_error_state&) = delete;
+    json_sax_dom_error_state& operator=(json_sax_dom_error_state&&) = delete; // the const member prevents assignment
+    ~json_sax_dom_error_state() = default;
+
+    template<class Exception>
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
+                     const Exception& ex)
+    {
+        errored = true;
+        static_cast<void>(ex);
+        if (allow_exceptions)
+        {
+            JSON_THROW(ex);
+        }
+        return false;
+    }
+
+    bool is_errored() const
+    {
+        return errored;
+    }
+
+  private:
+    /// whether a syntax error occurred
+    bool errored = false;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
+};
+
+/*!
 @brief a hash table that finds the position of a key in an object whose
        elements are kept in a vector (ordered_map)
 
@@ -434,7 +480,7 @@ read up to it.
                           not use the value after a parse error)
 */
 template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type, bool Collect = false>
-class json_sax_dom_parser
+class json_sax_dom_parser : public json_sax_dom_error_state
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -450,7 +496,7 @@ class json_sax_dom_parser
     @param[in] allow_exceptions_  whether parse errors yield exceptions
     */
     explicit json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true, lexer_t* lexer_ = nullptr)
-        : root(r), allow_exceptions(allow_exceptions_), m_lexer_ref(lexer_)
+        : json_sax_dom_error_state(allow_exceptions_), root(r), m_lexer_ref(lexer_)
     {}
 
     // make class move-only
@@ -599,24 +645,6 @@ class json_sax_dom_parser
         f.slot->set_parents();
 #endif
         return true;
-    }
-
-    template<class Exception>
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const Exception& ex)
-    {
-        errored = true;
-        static_cast<void>(ex);
-        if (allow_exceptions)
-        {
-            JSON_THROW(ex);
-        }
-        return false;
-    }
-
-    constexpr bool is_errored() const
-    {
-        return errored;
     }
 
   private:
@@ -916,7 +944,7 @@ class json_sax_dom_parser
     /// directly if the value was the one too many.
     void place_container(const frame& f, frame* enclosing, BasicJsonType&& value, const bool enclosing_is_innermost)
     {
-        // a container without a slot of its own is collected for an enclosing one
+        // only a container with a slot may have no enclosing container
         JSON_ASSERT(f.slot != nullptr || enclosing != nullptr);
         if (f.slot != nullptr)
         {
@@ -1334,10 +1362,6 @@ class json_sax_dom_parser
     /// the array that stores the elements of the innermost array as they
     /// arrive (frames.back().array), or nullptr
     array_t* stored_array = nullptr;
-    /// whether a syntax error occurred
-    bool errored = false;
-    /// whether to throw exceptions in case of errors
-    const bool allow_exceptions = true;
     /// the lexer reference to obtain the current position
     lexer_t* m_lexer_ref = nullptr;
 };
@@ -1362,7 +1386,7 @@ constructor contains the parsed value.
 @tparam BasicJsonType  the JSON type
 */
 template<typename BasicJsonType, typename InputAdapterType>
-class json_sax_dom_binary_parser
+class json_sax_dom_binary_parser : public json_sax_dom_error_state
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -1378,7 +1402,7 @@ class json_sax_dom_binary_parser
     @param[in] allow_exceptions_  whether parse errors yield exceptions
     */
     explicit json_sax_dom_binary_parser(BasicJsonType& r, const bool allow_exceptions_ = true, lexer_t* lexer_ = nullptr)
-        : root(r), allow_exceptions(allow_exceptions_), m_lexer_ref(lexer_)
+        : json_sax_dom_error_state(allow_exceptions_), root(r), m_lexer_ref(lexer_)
     {}
 
     // make class move-only
@@ -1507,24 +1531,6 @@ class json_sax_dom_binary_parser
         return true;
     }
 
-    template<class Exception>
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const Exception& ex)
-    {
-        errored = true;
-        static_cast<void>(ex);
-        if (allow_exceptions)
-        {
-            JSON_THROW(ex);
-        }
-        return false;
-    }
-
-    constexpr bool is_errored() const
-    {
-        return errored;
-    }
-
   private:
 
     /*!
@@ -1578,16 +1584,12 @@ class json_sax_dom_binary_parser
     std::vector<BasicJsonType*> ref_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
-    /// whether a syntax error occurred
-    bool errored = false;
-    /// whether to throw exceptions in case of errors
-    const bool allow_exceptions = true;
     /// the lexer reference to obtain the current position
     lexer_t* m_lexer_ref = nullptr;
 };
 
 template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type>
-class json_sax_dom_callback_parser
+class json_sax_dom_callback_parser : public json_sax_dom_error_state
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -1603,7 +1605,7 @@ class json_sax_dom_callback_parser
                                  parser_callback_t cb,
                                  const bool allow_exceptions_ = true,
                                  lexer_t* lexer_ = nullptr)
-        : root(r), callback(std::move(cb)), allow_exceptions(allow_exceptions_), m_lexer_ref(lexer_)
+        : json_sax_dom_error_state(allow_exceptions_), root(r), callback(std::move(cb)), m_lexer_ref(lexer_)
     {
         keep_stack.push_back(true);
     }
@@ -1865,24 +1867,6 @@ class json_sax_dom_callback_parser
         }
 
         return true;
-    }
-
-    template<class Exception>
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const Exception& ex)
-    {
-        errored = true;
-        static_cast<void>(ex);
-        if (allow_exceptions)
-        {
-            JSON_THROW(ex);
-        }
-        return false;
-    }
-
-    constexpr bool is_errored() const
-    {
-        return errored;
     }
 
   private:
@@ -2151,12 +2135,8 @@ class json_sax_dom_callback_parser
     /// value is later rejected by the callback, instead of erasing the
     /// member entirely
     std::vector<std::pair<BasicJsonType*, BasicJsonType>> duplicate_key_stash {};
-    /// whether a syntax error occurred
-    bool errored = false;
     /// callback function
     const parser_callback_t callback = nullptr;
-    /// whether to throw exceptions in case of errors
-    const bool allow_exceptions = true;
     /// a discarded value for the callback
     BasicJsonType discarded = BasicJsonType::value_t::discarded;
     /// the value of the key event for the callback (see key_value())
