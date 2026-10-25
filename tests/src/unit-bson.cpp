@@ -1430,7 +1430,10 @@ TEST_CASE("BSON declared document size bounds the content")
 
     SECTION("a document size that is less than 5")
     {
-        for (const std::int32_t size : {0, 1, 4, -1, (std::numeric_limits<std::int32_t>::min)()})
+        for (const std::int32_t size :
+                {
+                    0, 1, 4, -1, (std::numeric_limits<std::int32_t>::min)()
+                })
         {
             CAPTURE(size)
             std::vector<std::uint8_t> input =

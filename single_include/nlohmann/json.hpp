@@ -17702,6 +17702,9 @@ class binary_reader
         /// UBJSON/BJData: the type marker of an optimized container, so that
         /// its elements are read without one of their own; 0 otherwise
         char_int_type type_marker;
+        /// BSON: the position right after this document, according to the
+        /// size it declares
+        std::size_t end_position = 0;
         /// BSON: the size this document declares, in bytes
         std::int32_t declared_size = 0;
         /// whether to close this container with end_object() or end_array()
@@ -17838,6 +17841,23 @@ class binary_reader
             return false;
         }
 
+        // the smallest document is the size prefix and the terminator
+        if (JSON_HEDLEY_UNLIKELY(document_size < 5))
+        {
+            return bson_document_size_error("document size ", document_size, " is less than 5");
+        }
+
+        // the declared size bounds where the document ends: an embedded
+        // document must end before the terminator of the document that contains it
+        const std::size_t unsigned_size = static_cast<std::size_t>(document_size);
+        const std::size_t document_end = unsigned_size > (std::numeric_limits<std::size_t>::max)() - document_start
+                                         ? (std::numeric_limits<std::size_t>::max)()
+                                         : document_start + unsigned_size;
+        if (JSON_HEDLEY_UNLIKELY(!container_stack.empty() && document_end >= container_stack.back().end_position))
+        {
+            return bson_document_size_error("document size ", document_size, " exceeds the size of the enclosing document");
+        }
+
         if (JSON_HEDLEY_UNLIKELY(!enter_container(is_object, detail::unknown_size())))
         {
             return false;
@@ -17845,6 +17865,7 @@ class binary_reader
 
         container_frame& frame = container_stack.back();
         frame.start_position = document_start;
+        frame.end_position = document_end;
         frame.declared_size = document_size;
         return true;
     }
@@ -17901,6 +17922,13 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("element list")))
             {
                 return false;
+            }
+
+            // an element needs at least its name's terminator, and the
+            // document its own terminator, within the declared size
+            if (JSON_HEDLEY_UNLIKELY(chars_read + 2 > container_stack.back().end_position))
+            {
+                return bson_document_size_error("document size ", container_stack.back().declared_size, " is too small for its content");
             }
 
             const std::size_t element_type_parse_position = chars_read;
@@ -18051,7 +18079,44 @@ class binary_reader
         }
         result.set_subtype(subtype);
 
+        // the "old binary" subtype 0x02 starts with an int32 that repeats the
+        // size of the payload following it; the payload does not include it
+        if (subtype == 0x02)
+        {
+            return get_bson_old_binary(len, result);
+        }
+
         return get_binary(len, result);
+    }
+
+    /*!
+    @brief Parses the payload of a BSON binary value with subtype 0x02.
+    @param[in] len  The length of the binary value, including the inner int32.
+    @param[in,out] result  A reference to the binary variable where the payload
+                           (without the inner int32) is to be stored.
+    @pre len >= 0
+    @return `true` if the inner length was present and matches @a len
+    */
+    template<typename NumberType>
+    bool get_bson_old_binary(const NumberType len, binary_t& result)
+    {
+        if (JSON_HEDLEY_UNLIKELY(len < 4))
+        {
+            return bson_length_error("length of binary subtype 0x02 must be at least 4, is ", len, "binary");
+        }
+
+        std::int32_t inner_length{};
+        if (JSON_HEDLEY_UNLIKELY((!get_number<std::int32_t, true>(inner_length))))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(static_cast<std::int64_t>(inner_length) != static_cast<std::int64_t>(len) - 4))
+        {
+            return bson_length_error("inner length of binary subtype 0x02 does not match the payload size; inner length is ", inner_length, "binary");
+        }
+
+        return get_binary(inner_length, result);
     }
 
     /*!
@@ -21864,6 +21929,12 @@ class binary_reader
     bool bson_document_size_error(const std::int32_t document_size, const std::size_t bytes_read) const
     {
         return last_byte_error(exception_id::unexpected_byte, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(bytes_read), ")"), "document");
+    }
+
+    JSON_HEDLEY_NEVER_INLINE
+    bool bson_document_size_error(const char* prefix, const std::int32_t document_size, const char* suffix) const
+    {
+        return last_byte_error(exception_id::unexpected_byte, concat(prefix, std::to_string(document_size), suffix), "document");
     }
 
     JSON_HEDLEY_NEVER_INLINE
@@ -28041,7 +28112,15 @@ class binary_writer
             throw_subtype_out_of_range(value.subtype(), "the BSON binary subtype", j);
         }
 
-        return sizeof(std::int32_t) + value.size() + 1ul;
+        // the "old binary" subtype 0x02 repeats the payload size in an inner
+        // int32 in front of the payload
+        return sizeof(std::int32_t) + (is_bson_old_binary(value) ? sizeof(std::int32_t) : 0ul) + value.size() + 1ul;
+    }
+
+    /// @return whether @a value has the BSON subtype 0x02 ("binary (old)")
+    static bool is_bson_old_binary(const binary_t& value) noexcept
+    {
+        return value.has_subtype() && value.subtype() == 0x02;
     }
 
     /*!
@@ -28054,9 +28133,17 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x05);
 
-        write_number<std::int32_t>(to_bson_length(value.size()), true);
+        const bool old_binary = is_bson_old_binary(value);
+
+        // the length field counts the inner int32 of the old binary subtype
+        write_number<std::int32_t>(to_bson_length(value.size() + (old_binary ? sizeof(std::int32_t) : 0ul)), true);
 
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
+
+        if (old_binary)
+        {
+            write_number<std::int32_t>(to_bson_length(value.size()), true);
+        }
 
         write_bytes(value.data(), value.size());
     }
@@ -28217,7 +28304,8 @@ class binary_writer
            (or the header of a string or binary value) in one reservation
     @return whether the entry was written; false for a discarded value, a
             string or binary value whose length does not fit the length
-            field, in which case nothing was written
+            field, or a binary value with subtype 0x02, in which case nothing
+            was written
     @pre    @a name is at most bson_scalar_max_name_size characters long and is
             not changed by the error handler
     */
@@ -28278,7 +28366,9 @@ class binary_writer
         if (j.is_binary())
         {
             const binary_t& value = *j.m_data.m_value.binary;
-            if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size())))
+            // the old binary subtype 0x02 has an inner length that the single
+            // reservation has no room for; write_bson_binary writes it
+            if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size()) || is_bson_old_binary(value)))
             {
                 return false;
             }
