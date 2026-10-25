@@ -239,6 +239,8 @@ def main():
     ap.add_argument('--download', action='store_true', help='use pinned downloads instead of system libraries')
     ap.add_argument('--no-boost', action='store_true', help='skip Boost.JSON')
     ap.add_argument('--native', action='store_true', help='compile for this CPU (-march=native / -mcpu=native)')
+    ap.add_argument('--aligned', action='store_true',
+                    help='also build and run with all functions (and loops) aligned, to make code layout artifacts visible')
     ap.add_argument('--rounds', type=int, default=30, help='rounds of bench_view (default: 30)')
     ap.add_argument('--corpus', nargs='*', default=[], help='more files for bench_corpus')
     ap.add_argument('--build-dir', default=os.path.join(HERE, 'build'), help='where to build (default: build/ next to this script)')
@@ -282,30 +284,44 @@ def main():
                 + ['-I' + d for d in lib.include])
             objects.append(obj)
 
-    binaries = {}
-    for bench in ['bench_view', 'bench_corpus', 'bench_edit']:
-        exe = os.path.join(args.build_dir, bench)
-        run(cxx + flags + include + [os.path.join(HERE, bench + '.cpp')] + objects + link + ['-o', exe])
-        binaries[bench] = exe
+    cxx_version = output(cxx + ['--version'])
+    is_clang = 'clang' in cxx_version.lower()
+    # alignment flags: functions and (gcc) loops on 64-byte boundaries
+    align_flags = ['-mllvm', '-align-all-functions=6'] if is_clang else ['-falign-functions=64', '-falign-loops=64']
 
-    # run: bench_view on its documents, bench_corpus on those and the given files
+    # the builds: the default one and, with --aligned, one with aligned code
+    variants = [('default build', args.build_dir, [])]
+    if args.aligned:
+        variants.append(('aligned build', os.path.join(args.build_dir, 'aligned'), align_flags))
+
     corpus = [os.path.join(args.data, f) for f in DEFAULT_CORPUS] + args.corpus
-    outputs = {}
-    outputs['bench_view'] = run([binaries['bench_view'], args.data, str(args.rounds)], cwd=args.build_dir,
-                                capture_output=True, text=True).stdout
-    outputs['bench_corpus'] = run([binaries['bench_corpus']] + corpus, cwd=args.build_dir,
-                                  capture_output=True, text=True).stdout
-    outputs['bench_edit'] = run([binaries['bench_edit'], args.data, str(max(1, args.rounds // 2))], cwd=args.build_dir,
-                                capture_output=True, text=True).stdout
-    for name, text in outputs.items():
-        print(text)
+    # label -> {benchmark: output}
+    all_outputs = {}
+    for label, build_dir, extra in variants:
+        os.makedirs(build_dir, exist_ok=True)
+        binaries = {}
+        for bench in ['bench_view', 'bench_corpus', 'bench_edit']:
+            exe = os.path.join(build_dir, bench)
+            run(cxx + flags + extra + include + [os.path.join(HERE, bench + '.cpp')] + objects + link + ['-o', exe])
+            binaries[bench] = exe
+
+        # run: bench_view on its documents, bench_corpus on those and the given files
+        outputs = {}
+        outputs['bench_view'] = run([binaries['bench_view'], args.data, str(args.rounds)], cwd=build_dir,
+                                    capture_output=True, text=True).stdout
+        outputs['bench_corpus'] = run([binaries['bench_corpus']] + corpus, cwd=build_dir,
+                                      capture_output=True, text=True).stdout
+        outputs['bench_edit'] = run([binaries['bench_edit'], args.data, str(max(1, args.rounds // 2))], cwd=build_dir,
+                                    capture_output=True, text=True).stdout
+        for name, text in outputs.items():
+            print(text)
+        all_outputs[label] = outputs
 
     # results with their metadata
     now = datetime.datetime.now()
     host = re.sub(r'[^A-Za-z0-9-]+', '-', platform.node().split('.')[0]) or 'host'
     stem = os.path.join(HERE, 'results', f'{now:%Y-%m-%d}-{host}')
     os.makedirs(os.path.dirname(stem), exist_ok=True)
-    cxx_version = output(cxx + ['--version'])
     compiler_version = cxx_version.splitlines()[0] if cxx_version else ' '.join(cxx)
     meta = [
         ('date', f'{now:%Y-%m-%d %H:%M}'),
@@ -314,6 +330,7 @@ def main():
         ('OS', f'{platform.system()} {platform.release()} ({platform.machine()})'),
         ('compiler', compiler_version),
         ('flags', ' '.join(flags)),
+        ('aligned results', ('included (flags: ' + ' '.join(align_flags) + ')') if args.aligned else 'not included'),
         ('yyjson', libs['yyjson'].version),
         ('simdjson', libs['simdjson'].version),
         ('Boost.JSON', libs['boost'].version if with_boost else 'skipped (not found)'),
@@ -326,15 +343,20 @@ def main():
         f.write('| | |\n|---|---|\n')
         for key, value in meta:
             f.write(f'| {key} | {value} |\n')
-        for name, text in outputs.items():
-            f.write(f'\n## {name}\n\n```\n{text.rstrip()}\n```\n')
+        for label, outputs in all_outputs.items():
+            # (without --aligned there is only the default build, and no extra heading level)
+            prefix = f'{label}: ' if args.aligned else ''
+            for name, text in outputs.items():
+                f.write(f'\n## {prefix}{name}\n\n```\n{text.rstrip()}\n```\n')
     with open(stem + '.csv', 'w', encoding='utf-8') as out:
         out.write(''.join(f'# {key}: {value}\n' for key, value in meta))
-        for name in ['bench_view', 'bench_corpus', 'bench_edit']:
-            path = os.path.join(args.build_dir, name + '.csv')
-            if os.path.isfile(path):
-                with open(path, encoding='utf-8') as f:
-                    out.write(f'# {name}\n' + f.read())
+        for label, build_dir, _ in variants:
+            for name in ['bench_view', 'bench_corpus', 'bench_edit']:
+                path = os.path.join(build_dir, name + '.csv')
+                if os.path.isfile(path):
+                    with open(path, encoding='utf-8') as f:
+                        # (the default build keeps its plain section names)
+                        out.write(f'# {name}' + (f' ({label})' if args.aligned else '') + '\n' + f.read())
     print(f'results: {stem}.md, {stem}.csv')
 
 
