@@ -4629,11 +4629,18 @@ TEST_CASE("BJData optimized container type marker is validated for count 0")
     SECTION("invalid marker")
     {
         // 'Z', 'T', 'F', 'N', 'S', 'H', '[' and '{' are excluded in BJData
-        for (const char marker : {'x', 'E', 'Z', 'T', 'F', 'N', 'S', 'H', '[', '{'})
+        for (const char marker :
+                {'x', 'E', 'Z', 'T', 'F', 'N', 'S', 'H', '[', '{'
+                })
         {
-            for (const char open : {'[', '{'})
+            for (const char open :
+                    {'[', '{'
+                    })
             {
-                for (const std::uint8_t count : {0, 1})
+                for (const std::uint8_t count :
+                        {
+                            0, 1
+                        })
                 {
                     CAPTURE(marker)
                     CAPTURE(open)
@@ -4656,7 +4663,9 @@ TEST_CASE("BJData optimized container type marker is validated for count 0")
 
     SECTION("valid marker")
     {
-        for (const char marker : {'i', 'U', 'I', 'u', 'l', 'm', 'L', 'M', 'h', 'd', 'D', 'C'})
+        for (const char marker :
+                {'i', 'U', 'I', 'u', 'l', 'm', 'L', 'M', 'h', 'd', 'D', 'C'
+                })
         {
             CAPTURE(marker)
             const std::vector<std::uint8_t> va = {'[', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};

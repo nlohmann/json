@@ -3354,11 +3354,18 @@ TEST_CASE("UBJSON optimized container type marker is validated for count 0")
     // the '$' type marker must be a legal marker even if no element follows
     SECTION("invalid marker")
     {
-        for (const char marker : {'x', 'E', 'B', 'u', 'm', 'M', 'h'})
+        for (const char marker :
+                {'x', 'E', 'B', 'u', 'm', 'M', 'h'
+                })
         {
-            for (const char open : {'[', '{'})
+            for (const char open :
+                    {'[', '{'
+                    })
             {
-                for (const std::uint8_t count : {0, 1})
+                for (const std::uint8_t count :
+                        {
+                            0, 1
+                        })
                 {
                     CAPTURE(marker)
                     CAPTURE(open)
@@ -3381,7 +3388,9 @@ TEST_CASE("UBJSON optimized container type marker is validated for count 0")
 
     SECTION("valid marker")
     {
-        for (const char marker : {'Z', 'N', 'T', 'F', 'i', 'U', 'I', 'l', 'L', 'd', 'D', 'H', 'C', 'S', '[', '{'})
+        for (const char marker :
+                {'Z', 'N', 'T', 'F', 'i', 'U', 'I', 'l', 'L', 'd', 'D', 'H', 'C', 'S', '[', '{'
+                })
         {
             CAPTURE(marker)
             const std::vector<std::uint8_t> va = {'[', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};
