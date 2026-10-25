@@ -81,6 +81,12 @@ See the examples below for the concrete generated code.
       that serializes a struct's members positionally into a JSON array; for that, write `to_json`/`from_json` by
       hand, building/reading a `json::array()` of the members in order.
 
+!!! info "Views"
+
+    The generated `from_json()` also reads the views of [`json_document`](../json_document.md)s
+    (`<nlohmann/json_view.hpp>`): [`get<T>()`](../basic_json_view/get.md) on a view looks the members up in the
+    view, without building a `json` value first.
+
 ## Examples
 
 ??? example "Example: (1) NLOHMANN_DEFINE_TYPE_INTRUSIVE"
@@ -189,3 +195,5 @@ See the examples below for the concrete generated code.
 
 All three macros were changed to work with any `basic_json` specialization (not only `nlohmann::json`) in version 3.12.0,
 and to allow an empty member list in version 3.13.0.
+
+The generated `from_json()` reads the views of `json_document`s since version 3.13.0.

@@ -340,6 +340,47 @@ template<class B> struct negation : std::integral_constant < bool, !B::value > {
 
 #endif
 
+///////////////////////
+// json_view helpers //
+///////////////////////
+
+template<typename T>
+using basic_json_type_t = typename T::basic_json_type;
+
+template<typename T>
+using materialize_function_t = decltype(std::declval<const T&>().materialize());
+
+// a basic_json_view of <nlohmann/json_view.hpp> (detected by its member type
+// basic_json_type, a basic_json, and materialize() returning that type, so that
+// json.hpp needs no declaration of the view)
+template<typename T, typename = void>
+struct is_json_view : std::false_type {};
+
+template<typename T>
+struct is_json_view<T, enable_if_t<is_basic_json<detected_t<basic_json_type_t, T>>::value>>
+    : std::is_same<detected_t<materialize_function_t, T>, basic_json_type_t<T>> {};
+
+// the types from_json() functions of the NLOHMANN_DEFINE_TYPE_* and
+// NLOHMANN_JSON_SERIALIZE_ENUM macros read from
+template<typename T>
+struct is_basic_json_or_view : disjunction<is_basic_json<T>, is_json_view<T>> {};
+
+// the basic_json type of a basic_json value or of a view
+template<typename T, typename = void>
+struct json_type_of
+{
+    using type = T;
+};
+
+template<typename T>
+struct json_type_of<T, enable_if_t<is_json_view<T>::value>>
+{
+    using type = typename T::basic_json_type;
+};
+
+template<typename T>
+using json_type_of_t = typename json_type_of<T>::type;
+
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
 // This causes compile errors in e.g., Clang 3.5 or GCC 4.9.

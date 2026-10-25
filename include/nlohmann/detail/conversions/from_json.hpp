@@ -10,6 +10,7 @@
 
 #include <algorithm> // min, transform
 #include <array> // array
+#include <cstddef> // nullptr_t
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
 #include <map> // map
@@ -27,6 +28,7 @@
 #include <nlohmann/detail/meta/identity_tag.hpp>
 #include <nlohmann/detail/meta/std_fs.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/output/error_handler.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
@@ -665,16 +667,114 @@ inline void from_json(const BasicJsonType& j, std_fs::path& p)
 }
 #endif
 
-struct from_json_fn
+namespace from_json_adl
 {
-    template<typename BasicJsonType, typename T>
-    auto operator()(const BasicJsonType& j, T&& val) const
+// hides the library's from_json() overloads above (and the from_json object):
+// a call from this namespace finds only the from_json() functions of the
+// arguments' own namespaces and classes (ADL); the declaration is never viable
+// and never defined (not "= delete", which GCC before 6 reports as a use)
+struct hidden;
+void from_json(const hidden&);
+
+// a type no from_json() written for JSON values accepts: a from_json() that
+// accepts it is not constrained to them (see has_view_from_json; it lives
+// here, so that ADL finds no other from_json() for it)
+struct probe
+{};
+
+struct fn
+{
+    template<typename SourceType, typename T>
+    auto operator()(const SourceType& j, T&& val) const
     noexcept(noexcept(from_json(j, std::forward<T>(val))))
     -> decltype(from_json(j, std::forward<T>(val)))
     {
         return from_json(j, std::forward<T>(val));
     }
 };
+}  // namespace from_json_adl
+
+// the sources whose from_json() is only looked up by ADL: views (the library's
+// overloads are written for basic_json) and the probe
+template<typename T>
+struct is_adl_only_from_json_source : disjunction<is_json_view<T>, std::is_same<T, from_json_adl::probe>> {};
+
+struct from_json_fn
+{
+    template < typename BasicJsonType, typename T,
+               enable_if_t < !is_adl_only_from_json_source<BasicJsonType>::value, int > = 0 >
+    auto operator()(const BasicJsonType& j, T && val) const
+    noexcept(noexcept(from_json(j, std::forward<T>(val))))
+    -> decltype(from_json(j, std::forward<T>(val)))
+    {
+        return from_json(j, std::forward<T>(val));
+    }
+
+    template < typename SourceType, typename T,
+               enable_if_t < is_adl_only_from_json_source<SourceType>::value, int > = 0 >
+    auto operator()(const SourceType& j, T && val) const
+    noexcept(noexcept(from_json_adl::fn {}(j, std::forward<T>(val))))
+    -> decltype(from_json_adl::fn {}(j, std::forward<T>(val)))
+    {
+        return from_json_adl::fn {}(j, std::forward<T>(val));
+    }
+};
+
+// Whether JSONSerializer::from_json(view, T&) reads T from a view (of
+// <nlohmann/json_view.hpp>) directly: it must accept the view but not the
+// probe. An unconstrained from_json() template (written for basic_json, but
+// accepting anything) is thus not called with a view, nor are the library's
+// own conversions; the view converts such types through materialize().
+template<typename Serializer, typename SourceType, typename T>
+using serializer_from_json_t = decltype(Serializer::from_json(std::declval<const SourceType&>(), std::declval<T&>()));
+
+template<typename Serializer, typename View, typename T>
+struct has_view_from_json
+    : conjunction < is_detected<serializer_from_json_t, Serializer, View, T>,
+      negation<is_detected<serializer_from_json_t, Serializer, from_json_adl::probe, T>>> {};
+
+// the base part of a type of the NLOHMANN_DEFINE_DERIVED_TYPE_* macros: from a
+// view through its get_to(), which reads the base from the view where the
+// base's from_json() accepts views, and from materialize() otherwise
+template<typename BasicJsonType, typename T, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+void from_json_base(const BasicJsonType& j, T& base)
+{
+    from_json_fn {}(j, base);
+}
+
+template<typename View, typename T, enable_if_t<is_json_view<View>::value, int> = 0>
+void from_json_base(const View& v, T& base)
+{
+    v.get_to(base);
+}
+
+// the context of an exception thrown by a from_json() of the macros: the value
+// itself for basic_json (for JSON_DIAGNOSTICS), none for a view
+template<typename BasicJsonType, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+const BasicJsonType * from_json_context(const BasicJsonType& j) noexcept
+{
+    return &j;
+}
+
+template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
+std::nullptr_t from_json_context(const View& /*unused*/) noexcept
+{
+    return nullptr;
+}
+
+// a value as an exception message shows it (invalid UTF-8 replaced; the
+// strings of a view are always valid UTF-8)
+template<typename BasicJsonType, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+typename BasicJsonType::string_t from_json_dump(const BasicJsonType& j)
+{
+    return j.dump(-1, ' ', false, error_handler_t::replace);
+}
+
+template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
+typename View::string_t from_json_dump(const View& v)
+{
+    return v.dump();
+}
 
 }  // namespace detail
 

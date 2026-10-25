@@ -64,6 +64,7 @@ still refers to it -- including ones taken before the change -- reads the new va
 
 ## Member types
 
+- **basic_json_type** - `BasicJsonType` (it also marks the class for [`is_json_view`](../is_json_view.md))
 - **value_t** - the JSON type enumeration, see [`basic_json::value_t`](../basic_json/value_t.md)
 - **string_t**, **number_integer_t**, **number_unsigned_t**, **number_float_t**, **json_pointer** - the corresponding
   member types of `BasicJsonType`

@@ -185,6 +185,10 @@ key as well. Other zero-copy parsers that index the source text, such as yyjson 
 member. RFC 8259 only says that names within an object SHOULD be unique and that the behavior of a receiver that sees
 duplicates is unpredictable, so neither choice is wrong.
 
+The same holds for [`get<T>()`](../api/basic_json_view/get.md) of a type whose `from_json()` reads the view, such as
+the types of the `NLOHMANN_DEFINE_TYPE_*` macros: their members are looked up, so `#!cpp get<point>()` of
+`#!cpp {"x":1,"x":2}` reads `#!cpp x == 1`, while `#!cpp materialize().get<point>()` reads `#!cpp 2`.
+
 **What stays the same as `parse()`?** [`materialize()`](../api/basic_json_view/materialize.md) and
 [`get<std::map<...>>()`](../api/basic_json_view/get.md) replay every member in order, so they keep the *last* value
 exactly like `#!cpp basic_json::parse()` (at the position of the first occurrence of the key, for an

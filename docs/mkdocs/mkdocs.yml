@@ -358,6 +358,7 @@ nav:
           - 'Overview': api/adl_serializer/index.md
           - 'from_json': api/adl_serializer/from_json.md
           - 'to_json': api/adl_serializer/to_json.md
+      - 'is_json_view': api/is_json_view.md
       - 'json': api/json.md
       - 'json_document': api/json_document.md
       - 'json_editable_document': api/json_editable_document.md
