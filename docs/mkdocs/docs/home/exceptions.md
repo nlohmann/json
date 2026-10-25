@@ -418,12 +418,15 @@ The parsing of the corresponding BSON record type is not implemented (yet).
 
 ### json.exception.parse_error.115
 
-A UBJSON high-precision number could not be parsed.
+A UBJSON or BJData high-precision number could not be parsed.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A
+    ```
+    ```
+    [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1A
     ```
 
 ### json.exception.parse_error.116
@@ -1025,7 +1028,7 @@ exception, because they serialize integers beyond 64 bits as high-precision numb
     - Since version 3.12.0, integer numbers beyond int64 are serialized as uint64 BSON numbers.
 
     Before version 3.13.0, CBOR, MessagePack, and BSON silently truncated integers wider than 64 bits, and BJData
-    truncated unsigned integers wider than 64 bits.
+    truncated unsigned integers wider than 64 bits that were elements of ND-arrays with `"_ArrayType_": "uint64"`.
 
 !!! failure "Example messages"
 
@@ -1233,8 +1236,9 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 ### json.exception.other_error.502
 
 [`to_ubjson`](../api/basic_json/to_ubjson.md) and [`to_bjdata`](../api/basic_json/to_bjdata.md) were called with
-`use_type = true` but `use_size = false` for a value that contains a non-empty array, object, or binary value. UBJSON
-requires a size marker (`#`) after a type marker (`$`); scalars and empty containers do not throw.
+`use_type = true` but `use_size = false`, and the value contains a non-empty array or object (or, with BJData Draft 3,
+any binary value). UBJSON requires a size marker (`#`) after a type marker (`$`); scalars and empty arrays or objects
+do not throw.
 
 !!! failure "Example message"
 
