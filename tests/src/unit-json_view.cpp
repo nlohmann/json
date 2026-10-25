@@ -709,7 +709,7 @@ TEST_CASE("json_view")
 
         // a large document with a single escape does not need a buffer of the
         // size of its input
-        std::string large = "[\"a\\n\"";
+        std::string large = R"(["a\n")";
         for (int i = 0; i < 100000; ++i)
         {
             large += ",1";

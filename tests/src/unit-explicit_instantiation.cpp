@@ -15,7 +15,7 @@
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
-using json = nlohmann::json;
+using nlohmann::json;
 
 /////////////////////////////////////////////////////////////////////
 // for #4825 - explicitly instantiating basic_json must compile; this

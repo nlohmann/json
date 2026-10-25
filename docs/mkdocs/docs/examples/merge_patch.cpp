@@ -2,7 +2,7 @@
 #include <nlohmann/json.hpp>
 #include <iomanip> // for std::setw
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -37,5 +37,5 @@ int main()
     document.merge_patch(patch);
 
     // output original and patched document
-    std::cout << std::setw(4) << document << std::endl;
+    std::cout << std::setw(4) << document << '\n';
 }

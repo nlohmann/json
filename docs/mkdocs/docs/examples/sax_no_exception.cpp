@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 // a DOM parser that reports parse errors instead of throwing
 class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>
@@ -18,7 +18,7 @@ class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json, nloh
         std::cout << "parse error at input byte " << position << "\n"
                   << ex.what() << "\n"
                   << "last read: \"" << last_token << "\""
-                  << std::endl;
+                  << '\n';
         return false;
     }
 };
@@ -33,8 +33,8 @@ int main()
     bool parse_result = json::sax_parse(myinput, &sax);
     if (!parse_result)
     {
-        std::cout << "parsing unsuccessful!" << std::endl;
+        std::cout << "parsing unsuccessful!" << '\n';
     }
 
-    std::cout << "parsed value: " << result << std::endl;
+    std::cout << "parsed value: " << result << '\n';
 }

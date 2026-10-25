@@ -16,8 +16,8 @@
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
+using nlohmann::json;
+using nlohmann::ordered_json;
 
 // JSON_HAS_CPP_20 (do not remove; see note at top of file)
 #if JSON_HAS_STD_FORMAT

@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -16,5 +16,5 @@ int main()
               << "hash({}) = " << std::hash<json> {}(json::object()) << '\n'
               << "hash([]) = " << std::hash<json> {}(json::array()) << '\n'
               << "hash({\"hello\": \"world\"}) = " << std::hash<json> {}("{\"hello\": \"world\"}"_json)
-              << std::endl;
+              << '\n';
 }

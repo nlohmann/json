@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 namespace ns
@@ -22,5 +22,5 @@ int main()
 
     // serialization: person -> json
     json j = p;
-    std::cout << "serialization: " << j << std::endl;
+    std::cout << "serialization: " << j << '\n';
 }

@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -25,11 +25,11 @@ int main()
     )"_json;
 
     // output original document
-    std::cout << "Before\n" << std::setw(4) << doc << std::endl;
+    std::cout << "Before\n" << std::setw(4) << doc << '\n';
 
     // apply the patch
     doc.patch_inplace(patch);
 
     // output patched document
-    std::cout << "\nAfter\n" << std::setw(4) << doc << std::endl;
+    std::cout << "\nAfter\n" << std::setw(4) << doc << '\n';
 }
