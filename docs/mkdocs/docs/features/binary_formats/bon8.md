@@ -105,7 +105,6 @@ serialized as 0x81 0x65 0xFF, but `[1,2,3,4,"e"]` as 0x85 0x91 0x92 0x93 0x94 0x
         ([out_of_range.407](../../home/exceptions.md#jsonexceptionout_of_range407))
       - strings that are not valid UTF-8, because the end of a string is determined from its encoding
         ([type_error.316](../../home/exceptions.md#jsonexceptiontype_error316))
-      - discarded values ([type_error.321](../../home/exceptions.md#jsonexceptiontype_error321))
 
 !!! info "NaN/infinity handling"
 
