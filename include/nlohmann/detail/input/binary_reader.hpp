@@ -584,7 +584,44 @@ class binary_reader
         }
         result.set_subtype(subtype);
 
+        // the "old binary" subtype 0x02 starts with an int32 that repeats the
+        // size of the payload following it; the payload does not include it
+        if (subtype == 0x02)
+        {
+            return get_bson_old_binary(len, result);
+        }
+
         return get_binary(len, result);
+    }
+
+    /*!
+    @brief Parses the payload of a BSON binary value with subtype 0x02.
+    @param[in] len  The length of the binary value, including the inner int32.
+    @param[in,out] result  A reference to the binary variable where the payload
+                           (without the inner int32) is to be stored.
+    @pre len >= 0
+    @return `true` if the inner length was present and matches @a len
+    */
+    template<typename NumberType>
+    bool get_bson_old_binary(const NumberType len, binary_t& result)
+    {
+        if (JSON_HEDLEY_UNLIKELY(len < 4))
+        {
+            return bson_length_error("length of binary subtype 0x02 must be at least 4, is ", len, "binary");
+        }
+
+        std::int32_t inner_length{};
+        if (JSON_HEDLEY_UNLIKELY((!get_number<std::int32_t, true>(inner_length))))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(static_cast<std::int64_t>(inner_length) != static_cast<std::int64_t>(len) - 4))
+        {
+            return bson_length_error("inner length of binary subtype 0x02 does not match the payload size; inner length is ", inner_length, "binary");
+        }
+
+        return get_binary(inner_length, result);
     }
 
     /*!

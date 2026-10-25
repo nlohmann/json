@@ -802,12 +802,11 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
-        SECTION("binary member with subtype 0x02 (old binary) keeps its inner length prefix (lenient parsing)")
+        SECTION("binary member with subtype 0x02 (old binary) carries an inner length")
         {
-            // documented lenient behavior (see gh-5333): the payload for
-            // binary subtype 0x02 ("old binary") is returned as-is,
-            // including its own inner 4-byte length prefix; it is not
-            // stripped or reinterpreted
+            // the payload of binary subtype 0x02 ("old binary") starts with an
+            // int32 that repeats the payload size; the bytes below are what
+            // pymongo and the bson-corpus (binary.json) use
             std::vector<std::uint8_t> const input =
             {
                 0x17, 0x00, 0x00, 0x00, // size (little endian)
@@ -815,16 +814,87 @@ TEST_CASE("BSON")
 
                 0x06, 0x00, 0x00, 0x00, // size of binary (little endian)
                 0x02, // "old binary" subtype
-                0x02, 0x00, 0x00, 0x00, // inner length prefix (part of the old-binary payload)
+                0x02, 0x00, 0x00, 0x00, // inner length
                 0x68, 0x69, // payload ('h', 'i')
 
                 0x00 // end marker
             };
 
-            // the inner length prefix is part of the (unmodified) payload
-            const std::vector<std::uint8_t> expected_payload = {0x02, 0x00, 0x00, 0x00, 0x68, 0x69};
-            const json expected = { { "entry", json::binary(expected_payload, 0x02) } };
+            // the inner length is not part of the payload
+            const json expected = { { "entry", json::binary({0x68, 0x69}, 0x02) } };
             CHECK(json::from_bson(input) == expected);
+            CHECK(json::to_bson(expected) == input);
+            CHECK(json::from_bson(json::to_bson(expected)) == expected);
+        }
+
+        SECTION("binary member with subtype 0x02 (old binary) and empty payload")
+        {
+            std::vector<std::uint8_t> const input =
+            {
+                0x15, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, 'e', 'n', 't', 'r', 'y', '\x00', // entry: binary
+                0x04, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x02, // "old binary" subtype
+                0x00, 0x00, 0x00, 0x00, // inner length
+                0x00 // end marker
+            };
+
+            const json expected = { { "entry", json::binary({}, 0x02) } };
+            CHECK(json::from_bson(input) == expected);
+            CHECK(json::to_bson(expected) == input);
+        }
+
+        SECTION("binary member with subtype 0x02 (old binary) with an invalid inner length")
+        {
+            std::vector<std::uint8_t> input =
+            {
+                0x17, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, 'e', 'n', 't', 'r', 'y', '\x00', // entry: binary
+                0x06, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x02, // "old binary" subtype
+                0x02, 0x00, 0x00, 0x00, // inner length
+                0x68, 0x69, // payload ('h', 'i')
+                0x00 // end marker
+            };
+
+            SECTION("inner length too long")
+            {
+                input[19] = 0x03;
+            }
+
+            SECTION("inner length too short")
+            {
+                input[19] = 0x01;
+            }
+
+            SECTION("inner length negative")
+            {
+                input[19] = 0xFF;
+                input[20] = 0xFF;
+                input[21] = 0xFF;
+                input[22] = 0xFF;
+            }
+
+            CAPTURE(input)
+            json _;
+            CHECK_THROWS_AS(_ = json::from_bson(input), json::parse_error&);
+        }
+
+        SECTION("binary member with subtype 0x02 (old binary) without an inner length")
+        {
+            // the payload is shorter than the inner length field
+            std::vector<std::uint8_t> const input =
+            {
+                0x14, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, 'e', 'n', 't', 'r', 'y', '\x00', // entry: binary
+                0x03, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x02, // "old binary" subtype
+                0x01, 0x02, 0x03, // payload without an inner length
+                0x00 // end marker
+            };
+
+            json _;
+            CHECK_THROWS_AS(_ = json::from_bson(input), json::parse_error&);
         }
 
         SECTION("Some more complex document")

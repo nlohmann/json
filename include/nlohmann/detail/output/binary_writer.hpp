@@ -1684,7 +1684,15 @@ class binary_writer
             throw_subtype_out_of_range(value.subtype(), "the BSON binary subtype", j);
         }
 
-        return sizeof(std::int32_t) + value.size() + 1ul;
+        // the "old binary" subtype 0x02 repeats the payload size in an inner
+        // int32 in front of the payload
+        return sizeof(std::int32_t) + (is_bson_old_binary(value) ? sizeof(std::int32_t) : 0ul) + value.size() + 1ul;
+    }
+
+    /// @return whether @a value has the BSON subtype 0x02 ("binary (old)")
+    static bool is_bson_old_binary(const binary_t& value) noexcept
+    {
+        return value.has_subtype() && value.subtype() == 0x02;
     }
 
     /*!
@@ -1697,9 +1705,17 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x05);
 
-        write_number<std::int32_t>(to_bson_length(value.size()), true);
+        const bool old_binary = is_bson_old_binary(value);
+
+        // the length field counts the inner int32 of the old binary subtype
+        write_number<std::int32_t>(to_bson_length(value.size() + (old_binary ? sizeof(std::int32_t) : 0ul)), true);
 
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
+
+        if (old_binary)
+        {
+            write_number<std::int32_t>(to_bson_length(value.size()), true);
+        }
 
         write_bytes(value.data(), value.size());
     }
@@ -1860,7 +1876,8 @@ class binary_writer
            (or the header of a string or binary value) in one reservation
     @return whether the entry was written; false for a discarded value, a
             string or binary value whose length does not fit the length
-            field, in which case nothing was written
+            field, or a binary value with subtype 0x02, in which case nothing
+            was written
     @pre    @a name is at most bson_scalar_max_name_size characters long and is
             not changed by the error handler
     */
@@ -1921,7 +1938,9 @@ class binary_writer
         if (j.is_binary())
         {
             const binary_t& value = *j.m_data.m_value.binary;
-            if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size())))
+            // the old binary subtype 0x02 has an inner length that the single
+            // reservation has no room for; write_bson_binary writes it
+            if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size()) || is_bson_old_binary(value)))
             {
                 return false;
             }
