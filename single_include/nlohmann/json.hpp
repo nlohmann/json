@@ -15773,9 +15773,16 @@ class json_sax_dom_parser : public json_sax_dom_error_state
     /// so that a big object can find the keys it has in a hash table instead of
     /// searching all of them
     template<typename ObjectType, typename StringType>
-    using detect_indexable_keys = decltype(std::declval<ObjectType&>().emplace_new_key(std::declval<const StringType&>(), std::declval<typename ObjectType::mapped_type>()),
-                                           std::hash<StringType>()(std::declval<const StringType&>()));
-    static constexpr bool indexed_keys = is_detected<detect_indexable_keys, object_t, string_t>::value;
+    using detect_emplace_new_key = decltype(std::declval<ObjectType&>().emplace_new_key(std::declval<const StringType&>(), std::declval<typename ObjectType::mapped_type>()));
+    template<typename StringType>
+    using detect_hash = decltype(std::hash<StringType>()(std::declval<const StringType&>()));
+    /// (std::hash is only looked at for objects in a vector: the one of VS 2015
+    /// fails to compile, instead of being undetectable, for a type it does not hash)
+    template<bool InVector, typename StringType>
+    struct has_indexable_keys : std::false_type {};
+    template<typename StringType>
+    struct has_indexable_keys<true, StringType> : is_detected<detect_hash, StringType> {};
+    static constexpr bool indexed_keys = has_indexable_keys<is_detected<detect_emplace_new_key, object_t, string_t>::value, string_t>::value;
 
     /// what a frame holds for objects that are kept in a vector: the key index
     /// of an object with many keys, and for an object that is collected on the
@@ -15897,7 +15904,11 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         {
             const std::size_t new_capacity = capacity * 2;
             std::unique_ptr<frame[]> new_heap(new frame[new_capacity]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-            std::copy(data, data + count, new_heap.get());
+            // (a loop, not std::copy: VS 2015 rejects std::copy to a raw pointer, C4996)
+            for (std::size_t i = 0; i < count; ++i)
+            {
+                new_heap[i] = data[i];
+            }
             heap = std::move(new_heap);
             data = heap.get();
             capacity = new_capacity;
