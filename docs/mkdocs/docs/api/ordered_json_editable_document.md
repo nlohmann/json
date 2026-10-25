@@ -44,4 +44,4 @@ members [`set`](basic_json_document/set.md) added -- instead of sorting them lik
 
 ## Version history
 
-Since version 3.13.0.
+Added in version 3.13.0.

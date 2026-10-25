@@ -71,6 +71,6 @@ returned by `#!cpp (*this)[key]`); it is read as it was when `merge_patch()` was
 
 ## Version history
 
-- Added in version 3.0.0.
+- Added in version 3.1.0.
 - Fixed use of freed or relocated memory when `apply_patch` is `#!cpp *this` or refers to a value contained in
   `#!cpp *this`, in version 3.13.0.

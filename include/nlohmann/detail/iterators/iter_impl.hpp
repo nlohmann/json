@@ -108,33 +108,18 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_data.m_type)
+        if (m_object->is_object())
         {
-            case value_t::object:
-            {
-                m_it.object_iterator = typename object_t::iterator();
-                break;
-            }
-
-            case value_t::array:
-            {
-                m_it.array_iterator = typename array_t::iterator();
-                break;
-            }
-
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-            {
-                m_it.primitive_iterator = primitive_iterator_t();
-                break;
-            }
+            m_it.object_iterator = typename object_t::iterator();
+        }
+        else if (m_object->is_array())
+        {
+            m_it.array_iterator = typename array_t::iterator();
+        }
+        else
+        {
+            // primitive (is_primitive(), including discarded)
+            m_it.primitive_iterator = primitive_iterator_t();
         }
     }
 
@@ -249,33 +234,28 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_data.m_type)
+        if (m_object->is_object())
         {
-            case value_t::object:
-            {
-                m_it.object_iterator = m_object->m_data.m_value.object->end();
-                break;
-            }
+            m_it.object_iterator = m_object->m_data.m_value.object->end();
+        }
+        else if (m_object->is_array())
+        {
+            m_it.array_iterator = m_object->m_data.m_value.array->end();
+        }
+        else
+        {
+            // primitive (is_primitive(), including discarded)
+            m_it.primitive_iterator.set_end();
+        }
+    }
 
-            case value_t::array:
-            {
-                m_it.array_iterator = m_object->m_data.m_value.array->end();
-                break;
-            }
-
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-            {
-                m_it.primitive_iterator.set_end();
-                break;
-            }
+    /// @throw invalid_iterator.212 if @a other points to another container
+    template<typename IterImpl>
+    JSON_HEDLEY_ALWAYS_INLINE void check_same_container(const IterImpl& other) const
+    {
+        if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
+        {
+            throw_literal<invalid_iterator>(exception_id::iterators_compare_different_values, "cannot compare iterators of different containers", m_object);
         }
     }
 
@@ -424,10 +404,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     bool operator==(const IterImpl& other) const
     {
         // if objects are not the same, the comparison is undefined
-        if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
-        {
-            throw_literal<invalid_iterator>(exception_id::iterators_compare_different_values, "cannot compare iterators of different containers", m_object);
-        }
+        check_same_container(other);
 
         // value-initialized forward iterators can be compared, and must compare equal to other value-initialized iterators of the same type #4493
         if (m_object == nullptr)
@@ -466,10 +443,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     bool operator<(const iter_impl& other) const
     {
         // if objects are not the same, the comparison is undefined
-        if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
-        {
-            throw_literal<invalid_iterator>(exception_id::iterators_compare_different_values, "cannot compare iterators of different containers", m_object);
-        }
+        check_same_container(other);
 
         // value-initialized forward iterators can be compared, and must compare equal to other value-initialized iterators of the same type #4493
         if (m_object == nullptr)
@@ -478,25 +452,18 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
             return false;
         }
 
-        switch (m_object->m_data.m_type)
+        if (m_object->is_object())
         {
-            case value_t::object:
-                throw_literal<invalid_iterator>(exception_id::iterator_order_on_object, "cannot compare order of object iterators", m_object);
-
-            case value_t::array:
-                return (m_it.array_iterator < other.m_it.array_iterator);
-
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                return (m_it.primitive_iterator < other.m_it.primitive_iterator);
+            throw_literal<invalid_iterator>(exception_id::iterator_order_on_object, "cannot compare order of object iterators", m_object);
         }
+
+        if (m_object->is_array())
+        {
+            return (m_it.array_iterator < other.m_it.array_iterator);
+        }
+
+        // primitive (is_primitive(), including discarded)
+        return (m_it.primitive_iterator < other.m_it.primitive_iterator);
     }
 
     /*!
@@ -534,30 +501,19 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_data.m_type)
+        if (m_object->is_object())
         {
-            case value_t::object:
-                throw_literal<invalid_iterator>(exception_id::iterator_arithmetic_on_object, "cannot use offsets with object iterators", m_object);
+            throw_literal<invalid_iterator>(exception_id::iterator_arithmetic_on_object, "cannot use offsets with object iterators", m_object);
+        }
 
-            case value_t::array:
-            {
-                std::advance(m_it.array_iterator, i);
-                break;
-            }
-
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-            {
-                m_it.primitive_iterator += i;
-                break;
-            }
+        if (m_object->is_array())
+        {
+            std::advance(m_it.array_iterator, i);
+        }
+        else
+        {
+            // primitive (is_primitive(), including discarded)
+            m_it.primitive_iterator += i;
         }
 
         return *this;
@@ -613,25 +569,18 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_data.m_type)
+        if (m_object->is_object())
         {
-            case value_t::object:
-                throw_literal<invalid_iterator>(exception_id::iterator_arithmetic_on_object, "cannot use offsets with object iterators", m_object);
-
-            case value_t::array:
-                return m_it.array_iterator - other.m_it.array_iterator;
-
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                return m_it.primitive_iterator - other.m_it.primitive_iterator;
+            throw_literal<invalid_iterator>(exception_id::iterator_arithmetic_on_object, "cannot use offsets with object iterators", m_object);
         }
+
+        if (m_object->is_array())
+        {
+            return m_it.array_iterator - other.m_it.array_iterator;
+        }
+
+        // primitive (is_primitive(), including discarded)
+        return m_it.primitive_iterator - other.m_it.primitive_iterator;
     }
 
     /*!

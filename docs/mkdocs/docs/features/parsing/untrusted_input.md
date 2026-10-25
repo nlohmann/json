@@ -83,6 +83,9 @@ Invalid UTF-8 is rejected while parsing, not just while serializing:
 
 - In JSON text, an ill-formed UTF-8 byte in a string is a
   [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) ("invalid string: ill-formed UTF-8 byte").
+- In UTF-16 or UTF-32 input, an ill-formed sequence is a
+  [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) as well: a lone surrogate, a high surrogate
+  that is not followed by its low surrogate, and a code point above `U+10FFFF` are all rejected.
 - In a binary format, a string that is not valid UTF-8 is a
   [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113).
 

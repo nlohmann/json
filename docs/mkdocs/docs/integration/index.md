@@ -87,3 +87,12 @@ shows how to [instantiate `basic_json` once](compile_times.md#instantiate-basic_
 
 **Debugger visualization.** The Natvis file works with the Visual Studio debugger, including the `cppvsdbg` engine in
 Visual Studio Code, but not with debuggers that wrap LLDB, such as `codelldb`; see [Debugging](../home/debugging.md).
+
+## See also
+
+- [CMake](cmake.md) - integrate the library into a CMake project
+- [Package managers](package_managers.md)
+- [pkg-config](pkg-config.md)
+- [Compile times](compile_times.md) - reduce the compile time overhead
+- [Migration guide](migration_guide.md) - upgrade from an earlier version
+- [Releases](../home/releases/index.md)

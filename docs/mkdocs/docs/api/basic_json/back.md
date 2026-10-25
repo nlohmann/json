@@ -63,4 +63,4 @@ Constant.
 ## Version history
 
 - Added in version 1.0.0.
-- Adjusted code to return reference to binary values in version 3.8.0.
+- Binary values are supported since version 3.8.0.
