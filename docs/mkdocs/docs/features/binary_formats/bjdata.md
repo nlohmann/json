@@ -38,7 +38,7 @@ simple processing.
 
 ## Byte layout
 
-BJData follows the structure of UBJSON: a one-byte, human-readable ASCII *type marker* followed by the payload of that type, with strings prefixed by a length that is itself an integer value. In contrast to UBJSON, numbers are stored in little-endian byte order, and additional markers cover unsigned 16/32/64-bit integers, half-precision floats, and bytes. Containers can be written unoptimized (opened with `[` or `{`, closed with `]` or `}`) or optimized with a declared element type (`$`) and/or count (`#`). BJData extends the optimized form: the count can be a list of dimensions, which stores an N-dimensional packed array as a flat sequence of values without any per-element markers.
+BJData follows the structure of UBJSON: a one-byte, human-readable ASCII *type marker* followed by the payload of that type, with strings prefixed by a length that is itself an integer value. In contrast to UBJSON, numbers are stored in little-endian byte order, and additional markers cover unsigned 16/32/64-bit integers, half-precision floats, and bytes. Containers can be written unoptimized (opened with `[` or `{`, closed with `]` or `}`) or optimized with a count (`#`), optionally preceded by a declared element type (`$`). BJData extends the optimized form: the count can be a list of dimensions, which stores an N-dimensional packed array as a flat sequence of values without any per-element markers.
 
 Consider the following JSON value (shown formatted for readability):
 
@@ -221,11 +221,12 @@ The library uses the following mapping from JSON values types to BJData types ac
 
 !!! info "Restrictions in optimized data types for arrays and objects"
 
-    Due to diminished space saving, hampered readability, and increased security risks, in BJData (since Draft 3), the
+    Due to diminished space saving, hampered readability, and increased security risks, in BJData, the
     allowed data types following the `$` marker in an optimized array and object container are restricted to
     **non-zero-fixed-length** data types. Therefore, the valid optimized type markers can only be one of
-    `UiuImlMLhdDCB`. This also means other variable (`[{SH`) or zero-length types (`TFZN`) can not be used in an
-    optimized array or object in BJData. The library enforces this restriction for both drafts. With `use_type`, the
+    `UiuImlMLhdDC`, plus `B` since Draft 3 (the reader accepts `B` in both drafts). This also means other variable (`[{SH`) or zero-length types (`TFZN`) can not be used in an
+    optimized array or object in BJData. The library enforces this restriction for both drafts. A `C` (char) element above 127 is rejected on read with
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113), in 1-D and in N-dimensional arrays. With `use_type`, the
     elements must have the same marker (`[1,200,3]` is not optimized, since it mixes `i` and `U`); booleans, null,
     strings, arrays, and objects are never optimized with `$`.
 
