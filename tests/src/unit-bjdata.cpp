@@ -2921,14 +2921,20 @@ TEST_CASE("BJData")
                 // both BJData drafts limit a char to 0..127; larger values must not
                 // be written as 'C' elements (the reader rejects them), so such an
                 // object stays a plain object that round-trips
-                for (const auto version : {json::bjdata_version_t::draft2, json::bjdata_version_t::draft3})
+                for (const auto version :
+                        {
+                            json::bjdata_version_t::draft2, json::bjdata_version_t::draft3
+                        })
                 {
                     json const j_ok = json({{"_ArrayType_", "char"}, {"_ArraySize_", {2, 2}}, {"_ArrayData_", {0, 97, 98, 127}}});
                     const auto out_ok = json::to_bjdata(j_ok, true, true, version);
                     CHECK(out_ok == std::vector<uint8_t>({'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 2, 2, 0, 97, 98, 127}));
                     CHECK(json::from_bjdata(out_ok) == j_ok);
 
-                    for (const int bad : {128, 200, 255, 256, -1})
+                    for (const int bad :
+                            {
+                                128, 200, 255, 256, -1
+                            })
                     {
                         CAPTURE(bad)
                         json const j_bad = json({{"_ArrayType_", "char"}, {"_ArraySize_", {2, 2}}, {"_ArrayData_", {97, 98, 99, bad}}});

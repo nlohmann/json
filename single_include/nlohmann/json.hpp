@@ -20744,6 +20744,8 @@ class binary_reader
             // get_ubjson_size_value() (the type marker is known before the dimension vector
             // that determines size_and_type.first is read, so it is emitted first there to
             // match the documented _ArrayType_, _ArraySize_, _ArrayData_ key order)
+            // 'C' elements are read as unsigned bytes, but BJData limits a char to 0..127
+            const bool nd_is_char = size_and_type.second == 'C';
             if (size_and_type.second == 'C' || size_and_type.second == 'B')
             {
                 size_and_type.second = 'U';
@@ -20757,6 +20759,24 @@ class binary_reader
 
             for (std::size_t i = 0; i < size_and_type.first; ++i)
             {
+                if (nd_is_char)
+                {
+                    get();
+                    if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("char")))
+                    {
+                        return false;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(current > 127))
+                    {
+                        return last_byte_error(exception_id::invalid_string_or_size, "byte after 'C' must be in range 0x00..0x7F", "char", "");
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(current))))
+                    {
+                        return false;
+                    }
+                    continue;
+                }
+
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
                 {
                     return false;
@@ -22122,6 +22142,8 @@ class binary_reader
                 return "uint8";
             case 'd':
                 return "single";
+            case 'h':
+                return "half";
             case 'i':
                 return "int8";
             case 'l':
@@ -30276,7 +30298,7 @@ class binary_writer
     A C++11 `constexpr` function cannot contain a `switch`, so this is a plain
     comparison chain instead; it is only reached once per ND-array candidate
     object. Keep in sync with binary_reader's `bjd_type_name()`, which maps
-    the other way.
+    the other way (it also reads "half", which is never written).
     */
     static CharType bjdata_ndarray_type_marker(const string_t& name)
     {
@@ -30484,9 +30506,12 @@ class binary_writer
             switch (dtype)
             {
                 case 'U':
-                case 'C':
                 case 'B':
                     ok = write_bjdata_ndarray_element<std::uint8_t>(el, dry_run);
+                    break;
+                case 'C':
+                    // BJData limits a char to 0..127 (the intersection of the int8 and uint8 ranges)
+                    ok = bjdata_ndarray_value_in_range<std::int8_t>(el) && bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'i':
                     ok = write_bjdata_ndarray_element<std::int8_t>(el, dry_run);
