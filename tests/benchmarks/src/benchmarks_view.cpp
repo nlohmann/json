@@ -17,8 +17,8 @@
 #include <string>
 #include <test_data.hpp>
 
-using json = nlohmann::json;
-using json_document = nlohmann::json_document;
+using nlohmann::json;
+using nlohmann::json_document;
 
 static std::string read_file(const char* filename)
 {

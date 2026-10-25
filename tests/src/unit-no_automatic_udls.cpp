@@ -19,7 +19,7 @@
 #include <utility>
 
 #include <nlohmann/json.hpp>
-using json = nlohmann::json;
+using nlohmann::json;
 
 // An argument type whose associated namespace is the library namespace, so
 // argument-dependent lookup of a literal operator called by its function name

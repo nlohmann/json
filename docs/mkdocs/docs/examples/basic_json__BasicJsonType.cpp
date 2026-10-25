@@ -1,8 +1,8 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
+using nlohmann::json;
+using nlohmann::ordered_json;
 
 int main()
 {

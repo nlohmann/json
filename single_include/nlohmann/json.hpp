@@ -15776,13 +15776,14 @@ class json_sax_dom_parser : public json_sax_dom_error_state
     using detect_emplace_new_key = decltype(std::declval<ObjectType&>().emplace_new_key(std::declval<const StringType&>(), std::declval<typename ObjectType::mapped_type>()));
     template<typename StringType>
     using detect_hash = decltype(std::hash<StringType>()(std::declval<const StringType&>()));
-    /// (std::hash is only looked at for objects in a vector: the one of VS 2015
-    /// fails to compile, instead of being undetectable, for a type it does not hash)
-    template<bool InVector, typename StringType>
-    struct has_indexable_keys : std::false_type {};
-    template<typename StringType>
-    struct has_indexable_keys<true, StringType> : is_detected<detect_hash, StringType> {};
-    static constexpr bool indexed_keys = has_indexable_keys<is_detected<detect_emplace_new_key, object_t, string_t>::value, string_t>::value;
+    // std::hash is only named once the object can hold the keys in a vector:
+    // VS 2015 static-asserts on std::hash of a type without one instead of
+    // reporting a substitution failure
+    template<typename ObjectType, typename StringType, bool = is_detected<detect_emplace_new_key, ObjectType, StringType>::value>
+    struct detect_indexable_keys : std::false_type {};
+    template<typename ObjectType, typename StringType>
+    struct detect_indexable_keys<ObjectType, StringType, true> : is_detected<detect_hash, StringType> {};
+    static constexpr bool indexed_keys = detect_indexable_keys<object_t, string_t>::value;
 
     /// what a frame holds for objects that are kept in a vector: the key index
     /// of an object with many keys, and for an object that is collected on the
@@ -15904,7 +15905,6 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         {
             const std::size_t new_capacity = capacity * 2;
             std::unique_ptr<frame[]> new_heap(new frame[new_capacity]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-            // (a loop, not std::copy: VS 2015 rejects std::copy to a raw pointer, C4996)
             for (std::size_t i = 0; i < count; ++i)
             {
                 new_heap[i] = data[i];
@@ -15926,7 +15926,10 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         {
             if (other.heap == nullptr)
             {
-                std::copy(other.local.begin(), other.local.begin() + static_cast<std::ptrdiff_t>(other.count), local.begin());
+                for (std::size_t i = 0; i < other.count; ++i)
+                {
+                    local[i] = other.local[i];
+                }
                 data = local.data();
                 capacity = local_capacity;
             }

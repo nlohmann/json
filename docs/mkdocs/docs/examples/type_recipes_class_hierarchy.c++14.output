@@ -1,0 +1,4 @@
+[{"radius":1.5,"type":"circle"},{"height":3.0,"type":"rectangle","width":2.0}]
+first is a circle: true
+second is a rectangle: true
+unknown shape type: star

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -34,7 +34,7 @@ int main()
     }
     catch (const json::exception e)
     {
-        std::cout << "deserialization failed: " << e.what() << std::endl;
+        std::cout << "deserialization failed: " << e.what() << '\n';
     }
 
     // invalid deserialization
@@ -46,7 +46,7 @@ int main()
     }
     catch (const json::exception e)
     {
-        std::cout << "deserialization failed: " << e.what() << std::endl;
+        std::cout << "deserialization failed: " << e.what() << '\n';
     }
 
     return 0;

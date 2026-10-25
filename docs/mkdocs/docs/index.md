@@ -20,7 +20,7 @@ Add the single header to your project and use the library like this:
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -30,6 +30,10 @@ int main()
     // access and modify values
     j["name"] = "Niels";
     j["list"] = {1, 0, 2};
+
+    // read a value into a C++ variable and use it
+    double pi = j["pi"].get<double>();
+    std::cout << "2 * pi = " << 2 * pi << '\n';
 
     // serialize with an indent of 4 spaces
     std::cout << j.dump(4) << '\n';

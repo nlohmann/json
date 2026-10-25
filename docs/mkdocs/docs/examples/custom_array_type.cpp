@@ -13,6 +13,6 @@ int main()
     j.push_back(2);
     j.push_back(3);
 
-    std::cout << j.dump() << std::endl;
-    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+    std::cout << j.dump() << '\n';
+    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << '\n';
 }

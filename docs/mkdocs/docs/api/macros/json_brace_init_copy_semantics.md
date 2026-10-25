@@ -79,7 +79,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     ```cpp
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {
@@ -98,7 +98,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     #define JSON_BRACE_INIT_COPY_SEMANTICS 1
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {

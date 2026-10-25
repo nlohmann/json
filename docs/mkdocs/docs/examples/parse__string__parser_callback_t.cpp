@@ -2,12 +2,12 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
     // a JSON text
-    auto text = R"(
+    const auto* text = R"(
     {
         "Image": {
             "Width":  800,

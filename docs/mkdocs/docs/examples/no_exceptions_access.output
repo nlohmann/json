@@ -1,0 +1,5 @@
+name: string "Mary"
+age: not a string, but number
+city: missing
+get_ptr<string*>: name = 1, age = 0
+[json.exception.type_error.302] type must be number, but is string

@@ -9,6 +9,39 @@ extremely small code sizes, fairly small message size, and extensibility without
     - [CBOR Playground](http://cbor.me) - an interactive webpage to translate between JSON and CBOR
     - [RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html) - the CBOR specification
 
+## Byte layout
+
+CBOR encodes every data item as a *head* followed by optional content. The first byte of the head holds the *major type* in its upper three bits (unsigned integer, negative integer, byte string, text string, array, map, tag, or simple/float) and an *additional information* value in its lower five bits. Additional information below 24 is the argument itself (for example, a small integer or a short length); the values 24 to 27 announce that the argument follows in 1, 2, 4, or 8 big-endian bytes. Strings, arrays, and maps are prefixed with their length (or count of elements/pairs), and content follows directly, so a reader always knows how many items to expect without a terminator.
+
+Consider the following JSON value (shown formatted for readability):
+
+```json
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_cbor` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-d">data</span>.
+
+<div class="byte-layout" markdown="0"><table>
+<thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>{</code></td><td><span class="bl bl-t">A4</span></td><td>map with 4 key/value pairs</td></tr>
+<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-t">62</span> <span class="bl bl-d">69 64</span> <span class="bl bl-t">19</span> <span class="bl bl-d">01 2C</span></td><td>key: text string of length 2, then its UTF-8 bytes; value: unsigned integer, 2 bytes follow (big-endian)</td></tr>
+<tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-t">64</span> <span class="bl bl-d">6E 61 6D 65</span> <span class="bl bl-t">64</span> <span class="bl bl-d">6A 73 6F 6E</span></td><td>key: text string of length 4; value: text string of length 4</td></tr>
+<tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-t">62</span> <span class="bl bl-d">70 69</span> <span class="bl bl-t">FB</span> <span class="bl bl-d">40 09 1E B8 51 EB 85 1F</span></td><td>key: text string of length 2; value: double-precision float (IEEE 754, big-endian)</td></tr>
+<tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-t">64</span> <span class="bl bl-d">74 61 67 73</span> <span class="bl bl-t">82</span></td><td>key: text string of length 4; value: array with 2 elements</td></tr>
+<tr><td><code>&quot;a&quot;,</code></td><td><span class="bl bl-t">61</span> <span class="bl bl-d">61</span></td><td>text string of length 1</td></tr>
+<tr><td><code>&quot;b&quot;</code></td><td><span class="bl bl-t">61</span> <span class="bl bl-d">62</span></td><td>text string of length 1</td></tr>
+<tr><td><code>]</code></td><td></td><td>no end marker: the element count was given up front</td></tr>
+<tr><td><code>}</code></td><td></td><td>no end marker: the member count was given up front</td></tr>
+</tbody></table></div>
+
 ## Serialization
 
 The library uses the following mapping from JSON values types to CBOR types according to the CBOR specification
@@ -109,41 +142,6 @@ see "binary" cells in the table above.
     ```c
     --8<-- "examples/to_cbor.output"
     ```
-
-
-
-
-
-### Byte layout
-
-Consider the following JSON value (shown formatted for readability):
-
-```json
-{
-  "id": 300,
-  "name": "json",
-  "pi": 3.14,
-  "tags": [
-    "a",
-    "b"
-  ]
-}
-```
-
-`to_cbor` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-l">length/count/size</span> <span class="bl bl-d">data</span>.
-
-<div class="byte-layout" markdown="0"><table>
-<thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
-<tr><td><code>{</code></td><td><span class="bl bl-t">A4</span></td><td>map with 4 key/value pairs</td></tr>
-<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-t">62</span> <span class="bl bl-d">69 64</span> <span class="bl bl-t">19</span> <span class="bl bl-d">01 2C</span></td><td>key: text string of length 2, then its UTF-8 bytes; value: unsigned integer, 2 bytes follow (big-endian)</td></tr>
-<tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-t">64</span> <span class="bl bl-d">6E 61 6D 65</span> <span class="bl bl-t">64</span> <span class="bl bl-d">6A 73 6F 6E</span></td><td>key: text string of length 4; value: text string of length 4</td></tr>
-<tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-t">62</span> <span class="bl bl-d">70 69</span> <span class="bl bl-t">FB</span> <span class="bl bl-d">40 09 1E B8 51 EB 85 1F</span></td><td>key: text string of length 2; value: double-precision float (IEEE 754, big-endian)</td></tr>
-<tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-t">64</span> <span class="bl bl-d">74 61 67 73</span> <span class="bl bl-t">82</span></td><td>key: text string of length 4; value: array with 2 elements</td></tr>
-<tr><td><code>&quot;a&quot;,</code></td><td><span class="bl bl-t">61</span> <span class="bl bl-d">61</span></td><td>text string of length 1</td></tr>
-<tr><td><code>&quot;b&quot;</code></td><td><span class="bl bl-t">61</span> <span class="bl bl-d">62</span></td><td>text string of length 1</td></tr>
-<tr><td><code>]</code></td><td></td><td>no end marker: the element count was given up front</td></tr>
-<tr><td><code>}</code></td><td></td><td>no end marker: the member count was given up front</td></tr>
-</tbody></table></div>
 
 ## Deserialization
 

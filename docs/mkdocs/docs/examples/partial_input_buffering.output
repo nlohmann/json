@@ -1,0 +1,7 @@
+chunk {"na -> incomplete
+chunk me": "Ma -> incomplete
+chunk ry", "l -> incomplete
+chunk ist": [1, 2 -> incomplete
+chunk , 3]} -> complete
+{"list":[1,2,3],"name":"Mary"}
+[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal

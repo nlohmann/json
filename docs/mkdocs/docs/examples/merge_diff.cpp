@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -47,5 +47,5 @@ int main()
 
     // output patch and roundtrip result
     std::cout << std::setw(4) << patch << "\n\n"
-              << std::setw(4) << patched_source << std::endl;
+              << std::setw(4) << patched_source << '\n';
 }
