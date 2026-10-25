@@ -136,6 +136,7 @@ The library maps MessagePack types to JSON value types as follows:
 | fixarray         | array           | 0x90..0x9F |
 | fixstr           | string          | 0xA0..0xBF |
 | nil              | `null`          | 0xC0       |
+| (never used)     | –               | 0xC1       |
 | false            | `false`         | 0xC2       |
 | true             | `true`          | 0xC3       |
 | float 32         | number_float    | 0xCA       |
@@ -167,10 +168,13 @@ The library maps MessagePack types to JSON value types as follows:
 | fixext 8         | binary          | 0xD7       |
 | fixext 16        | binary          | 0xD8       |
 | negative fixint  | number_integer  | 0xE0-0xFF  |
-| (never used)     | –               | 0xC1       |
 
-The byte 0xC1 is reserved as "never used" by the specification and is rejected with
-[`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112).
+The byte 0xC1 is reserved as "never used" by the specification. As a value it is rejected with
+[`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) (`invalid byte: 0xC1`); as a map key it is
+rejected with [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) and the generic "expected length
+specification" message, because the key is read as a string.
+
+Duplicate keys in a map are accepted; the last value wins.
 
 ### Extension types (ext, fixext)
 
@@ -188,8 +192,6 @@ written as the reserved negative ext types (255 as -1), so `json::binary({1,2,3,
 `d6 ff 01 02 03 04`, which other MessagePack libraries decode as a 32-bit timestamp. A subtype above 255 throws
 [`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415). The payload length is limited to
 4294967295 bytes like all other lengths.
-
-Duplicate keys in a map are accepted; the last value wins.
 
 !!! info
 
