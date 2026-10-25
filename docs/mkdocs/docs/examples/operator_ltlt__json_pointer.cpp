@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -9,5 +9,5 @@ int main()
     json::json_pointer ptr("/foo/bar/baz");
 
     // write string representation to stream
-    std::cout << ptr << std::endl;
+    std::cout << ptr << '\n';
 }

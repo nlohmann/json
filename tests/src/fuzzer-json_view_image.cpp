@@ -33,8 +33,8 @@ drivers.
     #error "the fuzzer drivers must be built without NDEBUG"
 #endif
 
-using json = nlohmann::json;
-using json_document = nlohmann::json_document;
+using nlohmann::json;
+using nlohmann::json_document;
 using image_check = json_document::image_check;
 
 // see http://llvm.org/docs/LibFuzzer.html

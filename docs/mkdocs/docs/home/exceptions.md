@@ -39,6 +39,8 @@ classDiagram
 
 Exceptions are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md). In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `#!cpp throw`), `JSON_TRY_USER` (overriding `#!cpp try`), and `JSON_CATCH_USER` (overriding `#!cpp catch`).
 
+See [Working without exceptions](../features/no_exceptions.md) for the functions that report errors without throwing.
+
 Note that [`JSON_THROW_USER`](../api/macros/json_throw_user.md) should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
 
 ??? example "Example: switch off exceptions and log errors before aborting"
@@ -192,6 +194,34 @@ This error indicates a syntax error while deserializing a JSON text. The error m
 
     - Make sure the input is correctly read. Try to write the input to standard output to check if, for instance, the input file was successfully opened.
     - Paste the input to a JSON validator like <https://jsonlint.com> or a tool like [jq](https://jqlang.github.io/jq/).
+
+??? info "Parsing a file fails at line 1, column 1 (unexpected end of input)"
+
+    The messages `attempting to parse an empty input` (since version 3.11.3) and `unexpected end of input` (also the message of
+    earlier versions for an empty input) at the very start of the input mean
+    that the parser did not see a single character. The library only reads from the stream it is given: it does not
+    open files and cannot tell a missing file from an empty one. The usual causes are:
+
+    - **The file was not opened.** A relative path is resolved against the *working directory of the running program*,
+      not against the source file or the project. IDEs and build tools often start the program in a build directory
+      (for example `build/` or `cmake-build-debug/`), so `"example.json"` may need to be `"../example.json"`. Use an
+      absolute path to rule this out.
+    - **The file is empty**, or a previous run truncated it (for example when it was opened for writing).
+    - **The stream was already read.** A stream whose content has been consumed (by printing it with
+      `std::cout << file.rdbuf()`, or by an earlier `accept`/`parse`/`>>`) is at its end. Parse it once, or rewind it
+      with `seekg(0)` after clearing the state with `clear()`.
+
+    Check the stream before parsing it:
+
+    ```cpp
+    std::ifstream f("example.json");
+    if (!f.is_open())
+    {
+        std::cerr << "cannot open example.json\n";
+        return 1;
+    }
+    json data = json::parse(f);
+    ```
 
 ### json.exception.parse_error.102
 

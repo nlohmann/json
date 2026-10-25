@@ -77,7 +77,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     #include <map>
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     enum TaskState { TS_STOPPED, TS_RUNNING, TS_COMPLETED };
 
@@ -105,7 +105,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     #include <map>
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     enum TaskState { TS_STOPPED, TS_RUNNING, TS_COMPLETED };
 

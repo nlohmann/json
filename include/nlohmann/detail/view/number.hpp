@@ -179,7 +179,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE float_significand layout_decimal(const unsigned char
         p += count + (frac_digits != 0 ? 1 : 0);
         q = -static_cast<std::int64_t>(frac_digits);
     }
-    else
+    else /* NOLINT(readability/braces) */
 #endif
     {
         w = parse_upto19(p, int_digits, limit);
@@ -292,7 +292,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t coordinate_bits(std::int64_t q, std::u
     }
     const auto upperbit = static_cast<unsigned>(high >> 63u);
     std::uint64_t mantissa = high >> (upperbit + 9);
-    std::uint64_t power2 = static_cast<std::uint64_t>(((217706 * q) >> 16) + 63 + static_cast<std::int64_t>(upperbit) - lz + 1023);
+    auto power2 = static_cast<std::uint64_t>(((217706 * q) >> 16) + 63 + static_cast<std::int64_t>(upperbit) - lz + 1023);
     mantissa = (mantissa + (mantissa & 1u)) >> 1u;
     const bool carry = mantissa >= (std::uint64_t{2} << 52u);
     mantissa = carry ? (std::uint64_t{1} << 52u) : mantissa;

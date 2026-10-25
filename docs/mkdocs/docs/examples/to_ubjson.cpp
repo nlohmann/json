@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 // function to print UBJSON's diagnostic format
@@ -10,11 +10,11 @@ void print_byte(uint8_t byte)
 {
     if (32 < byte and byte < 128)
     {
-        std::cout << (char)byte;
+        std::cout << static_cast<char>(byte);
     }
     else
     {
-        std::cout << (int)byte;
+        std::cout << static_cast<int>(byte);
     }
 }
 
@@ -31,7 +31,7 @@ int main()
     {
         print_byte(byte);
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 
     // create an array of numbers
     json array = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -48,17 +48,17 @@ int main()
     {
         print_byte(byte);
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 
     for (auto& byte : v_array_size)
     {
         print_byte(byte);
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 
     for (auto& byte : v_array_size_and_type)
     {
         print_byte(byte);
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 }

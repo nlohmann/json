@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -34,5 +34,5 @@ int main()
     }
 
     // the first operation has already been applied to doc
-    std::cout << std::setw(4) << doc << std::endl;
+    std::cout << std::setw(4) << doc << '\n';
 }

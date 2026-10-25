@@ -4,7 +4,7 @@
 // define a byte container based on std::vector
 using byte_container_with_subtype = nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>>;
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -19,5 +19,5 @@ int main()
     // (3) create container with subtype
     auto c3 = byte_container_with_subtype(bytes, 42);
 
-    std::cout << json(c1) << "\n" << json(c2) << "\n" << json(c3) << std::endl;
+    std::cout << json(c1) << "\n" << json(c2) << "\n" << json(c3) << '\n';
 }

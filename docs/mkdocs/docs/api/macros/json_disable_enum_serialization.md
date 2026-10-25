@@ -39,7 +39,7 @@ The default value is `0`.
     #define JSON_DISABLE_ENUM_SERIALIZATION 1
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     enum class Choice
     {
@@ -66,7 +66,7 @@ The default value is `0`.
     #define JSON_DISABLE_ENUM_SERIALIZATION 1
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     enum class Choice
     {
@@ -99,7 +99,7 @@ The default value is `0`.
     #define JSON_DISABLE_ENUM_SERIALIZATION 1
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     enum class Choice
     {

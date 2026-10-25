@@ -21,7 +21,7 @@
 #include <vector>
 #include <test_data.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 //////////////////////////////////////////////////////////////////////////////
 // parse JSON from file

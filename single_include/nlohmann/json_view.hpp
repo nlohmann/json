@@ -4766,7 +4766,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE float_significand layout_decimal(const unsigned char
         p += count + (frac_digits != 0 ? 1 : 0);
         q = -static_cast<std::int64_t>(frac_digits);
     }
-    else
+    else /* NOLINT(readability/braces) */
 #endif
     {
         w = parse_upto19(p, int_digits, limit);
@@ -4879,7 +4879,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t coordinate_bits(std::int64_t q, std::u
     }
     const auto upperbit = static_cast<unsigned>(high >> 63u);
     std::uint64_t mantissa = high >> (upperbit + 9);
-    std::uint64_t power2 = static_cast<std::uint64_t>(((217706 * q) >> 16) + 63 + static_cast<std::int64_t>(upperbit) - lz + 1023);
+    auto power2 = static_cast<std::uint64_t>(((217706 * q) >> 16) + 63 + static_cast<std::int64_t>(upperbit) - lz + 1023);
     mantissa = (mantissa + (mantissa & 1u)) >> 1u;
     const bool carry = mantissa >= (std::uint64_t{2} << 52u);
     mantissa = carry ? (std::uint64_t{1} << 52u) : mantissa;
@@ -7681,7 +7681,7 @@ class view_serializer
     NLOHMANN_VIEW_NOINLINE char* write_double_beside(char* w, const node* n, float_batch& batch)
     {
         // (an editable document's walk can skip nodes of the array)
-        const std::less<const node*> before;
+        const std::less<const node*> before{}; // NOLINT(modernize-use-transparent-functors) C++11 has no std::less<>
         while (batch.next != batch.count && before(batch.at[batch.next], n))
         {
             ++batch.next;
@@ -7717,7 +7717,7 @@ class view_serializer
     */
     NLOHMANN_VIEW_NOINLINE bool convert_ahead(const node* n, float_batch& batch)
     {
-        const std::less<const node*> before;
+        const std::less<const node*> before{}; // NOLINT(modernize-use-transparent-functors) C++11 has no std::less<>
         const node* const last = m_doc.nodes + m_doc.node_count;
         if (before(n, batch.scanned) || before(n, m_doc.nodes) || !before(n, last))
         {
@@ -7760,7 +7760,14 @@ class view_serializer
                 const std::uint64_t w17 = (w * 10) + static_cast<std::uint64_t>(first[17] - '0');
                 const std::size_t i = batch.count++;
                 batch.at[i] = p;
-                digits[i] = p->len != sign + count + 1 ? 0 : (count == 17 ? w17 : w);
+                if (p->len != sign + count + 1)
+                {
+                    digits[i] = 0;
+                }
+                else
+                {
+                    digits[i] = count == 17 ? w17 : w;
+                }
                 exponent[i] = -static_cast<int>(frac_digits);
                 // (byte 0: the last digit, byte 1: the last two, bits 16-29: the last four)
                 std::uint32_t four = 0;
@@ -7860,7 +7867,7 @@ class view_serializer
         {
             return write_double_at(w, n); // (twelve or more trailing zeros)
         }
-        const unsigned zeros = last_zeros != 0 ? static_cast<unsigned>(count_leading_zeros(last_zeros)) / 8 - 4
+        const unsigned zeros = last_zeros != 0 ? (static_cast<unsigned>(count_leading_zeros(last_zeros)) / 8) - 4
                                : 4 + (static_cast<unsigned>(count_leading_zeros(before_zeros)) / 8);
         const unsigned frac_digits = n.extra >> 8u;
         return end - (zeros < frac_digits ? zeros : frac_digits - 1);

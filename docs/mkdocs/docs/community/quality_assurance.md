@@ -188,10 +188,13 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         ```
 
 - [x] The code is checked with the latest [Cppcheck](https://cppcheck.sourceforge.io) with all warnings enabled.
-- [x] The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) with 89 enabled
-  rules.
+- [x] The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) with 52 enabled
+  checkers.
 - [x] The code is checked with [Infer](https://fbinfer.com).
 - [x] The code is checked with [Codacy](https://app.codacy.com/gh/nlohmann/json/dashboard).
+- [x] The code is scanned with [CodeQL](https://codeql.github.com), [Semgrep](https://semgrep.dev), and
+  [Flawfinder](https://dwheeler.com/flawfinder/) on every push and pull request and on a schedule; the findings are
+  reported to GitHub's code scanning.
 
 ## Dynamic analysis
 
@@ -204,6 +207,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The test suite is executed with [Valgrind](https://valgrind.org) (Memcheck) to detect memory leaks.
 - [x] The test suite is executed with [Sanitizers](https://github.com/google/sanitizers) (address sanitizer, undefined
   behavior sanitizer, integer overflow detection, nullability violations).
+- [x] The fuzz targets are run with [CIFuzz](https://google.github.io/oss-fuzz/getting-started/continuous-integration/)
+  on every pull request to catch regressions before they are merged.
 
 ## Dependencies
 
@@ -223,6 +228,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
   No release is made while such an alert is open.
 - [x] Third-party code included in the repository for testing, such as [doctest](https://github.com/doctest/doctest),
   is updated manually.
+- [x] The repository is evaluated with the [OpenSSF Scorecard](https://securityscorecards.dev) on a schedule and on
+  every push to the default branch, and the results are reported to GitHub's code scanning.
 
 ## Style check
 
@@ -258,4 +265,21 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The library is tested against relevant CMake versions:
   - CMake 3.5 (the earliest supported)
   - CMake 3.31.6 (the latest 3.x release)
-  - CMake 4.0.0 (a very recent release)
+  - CMake 4.0.0 (the first 4.x release)
+!!! success "Requirement: Other build systems"
+
+    The library can be used with build systems and package managers other than CMake.
+
+- [x] The library can be consumed with [Meson](https://json.nlohmann.me/integration/package_managers/) and the Swift
+  Package Manager; the installation with Meson and the resolution of `Package.swift` are tested in the CI.
+
+!!! success "Requirement: Reproducible and verifiable builds"
+
+    The library can be built and tested without network access or a Git checkout, and its licensing is machine-readable.
+
+- [x] The test suite is executed from an exported source tree without the `.git` directory and with the test data
+  being available offline.
+- [x] The test suite is executed without the tests that change installed files to check that builds are reproducible.
+- [x] The repository is checked for compliance with the [REUSE specification](https://reuse.software) so that the
+  license and copyright of every file is machine-readable.
+- [x] The documentation is built with warnings treated as errors, and its links are checked regularly.

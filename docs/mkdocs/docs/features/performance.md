@@ -122,7 +122,9 @@ an adapter, since their template argument order does not match what `basic_json`
   [linear in its size](../api/basic_json/basic_json.md#complexity) for the copy constructor but
   [constant](../api/basic_json/basic_json.md#complexity) for the move constructor. The same applies to assigning a
   large `#!cpp std::string`, `#!cpp std::vector`, or other container into a value: pass it as `#!cpp std::move(x)`
-  rather than `x` whenever `x` is no longer needed afterwards.
+  rather than `x` whenever `x` is no longer needed afterwards. Since version 3.13.0, converting an rvalue container
+  (`#!cpp json j = std::move(vec);`) moves the elements instead of copying them; the source is then left in a valid but
+  unspecified state.
 - **Access without copying.** [`get<T>()`](../api/basic_json/get.md) returns a copy of the stored value converted to
   `T`. When a reference or pointer to the value already stored inside the `basic_json` is enough,
   [`get_ref()`](../api/basic_json/get_ref.md) and [`get_ptr()`](../api/basic_json/get_ptr.md) access it directly:
@@ -150,6 +152,29 @@ an adapter, since their template argument order does not match what `basic_json`
   `#!cpp array_t` so it can be reserved directly -- see
   ["reserving array capacity"](element_access/unchecked_access.md#performance-reserving-array-capacity) for the
   one-line recipe.
+
+## Memory
+
+- **A value is small, its content is on the heap.** A `basic_json` is 16 bytes on a 64-bit platform (a type tag and a
+  union). Strings, arrays, objects, and binary values are allocated on the heap and owned by the value. Destroying the
+  value frees everything it owns.
+- **Copies are deep.** After `#!cpp json b = a;`, changing `b` does not change `a`, and both own their memory. Copying a
+  large value therefore doubles its memory; see [Avoiding copies](#avoiding-copies). `#!cpp auto x = j["key"];` is a
+  copy, `#!cpp auto& x = j["key"];` is not.
+- **A moved-from value is `null`.** After `#!cpp json c = std::move(a);` the value `a` is `#!json null` and owns nothing.
+- **Reading does not require a tree.** If you only read the data, parse it into a [`json_document`](json_view.md)
+  (`#!cpp <nlohmann/json_view.hpp>`, added in version 3.13.0) instead of a `basic_json`. It stores 16 bytes per value, does not copy floating-point
+  numbers or strings without escape sequences out of the text, and creates no `basic_json` value except for the parts
+  you [`materialize()`](../api/basic_json_view/materialize.md). A document that borrows the text needs the text to
+  outlive it; see [Zero-copy JSON views](json_view.md).
+- **Containers keep their capacity.** `clear()` and `erase()` on an array remove the elements, but the underlying
+  `#!cpp std::vector` keeps its allocated capacity, like `#!cpp std::vector::clear` does. To give the memory back,
+  assign a new value (`#!cpp j = json::array();`) or destroy the value.
+- **Freed memory does not always go back to the operating system.** The library returns memory to the allocator
+  (`#!cpp std::allocator` by default, or the [one you configured](types/template_parameters.md)). Whether the process
+  size shrinks then depends on the allocator and the platform, as for any C++ program. A process that parses a large
+  document and drops it is not leaking if its resident size stays high; run it under a tool such as
+  [Valgrind](https://valgrind.org) or the sanitizers to tell a leak from retained memory.
 
 ## Serialization
 
