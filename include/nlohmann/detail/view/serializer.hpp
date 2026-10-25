@@ -1073,21 +1073,17 @@ class view_serializer
             m_out.put("null");
             return;
         }
-        static constexpr bool is_ieee_single_or_double
-            = std::numeric_limits<number_float_t>::is_iec559
-              && ((std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128)
-                  || (std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024));
-        write_float(x, std::integral_constant<bool, is_ieee_single_or_double>());
+        write_float(x, std::integral_constant<bool, ::nlohmann::detail::has_native_float_format<number_float_t>::value>());
     }
 
-    void write_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
+    void write_float(number_float_t x, std::true_type /*has_native_float_format*/)
     {
         std::array<char, 64> buf{};
         const char* const end = ::nlohmann::detail::to_chars(buf.data(), buf.data() + buf.size(), x);
         m_out.put(buf.data(), static_cast<std::size_t>(end - buf.data()));
     }
 
-    void write_float(number_float_t x, std::false_type /*is_ieee_single_or_double*/)
+    void write_float(number_float_t x, std::false_type /*has_native_float_format*/)
     {
         // other types (e.g. long double) are rare: the library writes them
         const string_t s = BasicJsonType(x).dump();
@@ -1148,8 +1144,8 @@ class view_serializer
 
     void write_u_escape(std::uint32_t u)
     {
-        static constexpr const char* hex = "0123456789abcdef";
-        const std::array<char, 6> e = {{'\\', 'u', hex[(u >> 12u) & 0xFu], hex[(u >> 8u) & 0xFu], hex[(u >> 4u) & 0xFu], hex[u & 0xFu]}};
+        std::array<char, 6> e = {{'\\', 'u', 0, 0, 0, 0}};
+        hex4_lower(static_cast<std::uint16_t>(u), &e[2]);
         m_out.put(e.data(), e.size());
     }
 

@@ -186,7 +186,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
 inline std::vector<std::uint8_t> save_image(const document_data& d)
 {
 #if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(320, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
+    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
 #endif
     const std::size_t arena_size = d.arena_size;
     std::vector<node> compacted;
@@ -203,7 +203,7 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     if (NLOHMANN_VIEW_UNLIKELY(text_size >= image_limit || total_arena >= image_limit || count >= image_limit))
     {
         // LCOV_EXCL_START (4 GiB)
-        throw_out_of_range(416, "images of 4 GiB or more are not supported by json_document");
+        throw_out_of_range(exception_id::document_too_large, "images of 4 GiB or more are not supported by json_document");
         // LCOV_EXCL_STOP
     }
     image_header h{};
@@ -660,7 +660,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
 
 [[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_invalid_image(const char* what)
 {
-    throw_parse_error(116, concat("invalid json_document image: ", what));
+    throw_parse_error(exception_id::invalid_document_image, concat("invalid json_document image: ", what));
 }
 
 /// Read an image into d. The text and the decoded strings stay in the image;
@@ -668,7 +668,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
 inline void load_image(document_data& d, const std::uint8_t* image, std::size_t size, image_check check)
 {
 #if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(320, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
+    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
 #endif
     if (image == nullptr || size < sizeof(image_header))
     {
