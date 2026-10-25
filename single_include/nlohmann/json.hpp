@@ -18685,6 +18685,10 @@ class binary_reader
         // level as required by RFC 8949, Section 3.2.3
         bool indefinite = false;
 
+        // the chunk currently being validated; only used for the chunks of an
+        // indefinite-length string when the UTF-8 check can do something
+        string_t chunk;
+
         while (true)
         {
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("string")))
@@ -18704,24 +18708,80 @@ class binary_reader
             }
 
             // a break marker closes the indefinite-length string; outside
-            // of one it falls through to the error below
+            // of one it falls through to the error below. Every chunk has
+            // been checked on its own, so there is nothing left to check.
             if (indefinite && current == 0xFF)
             {
-                return check_string_utf8(result, context);
-            }
-
-            if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(result, indefinite)))
-            {
-                return false;
+                return true;
             }
 
             if (!indefinite)
             {
-                return check_string_utf8(result, context);
+                return get_cbor_string_chunk(result, false) && check_string_utf8(result, context);
+            }
+
+            if (error_handler == error_handler_t::keep)
+            {
+                // nothing to check: read the chunk directly into the result
+                if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(result, true)))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                // RFC 8949, Section 3.2.3: each chunk is a text string of its
+                // own and must be valid UTF-8 by itself, i.e., a code point
+                // cannot be spread over two chunks
+                chunk.clear();
+                if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(chunk, true) || !check_string_utf8(chunk, context)))
+                {
+                    return false;
+                }
+                result.append(chunk.data(), chunk.size());
             }
 
             get();
         }
+    }
+
+    /*!
+    @brief skips the tags in front of a CBOR object key
+
+    A tag may wrap any data item, so it may also wrap a key. Like in front of a
+    value, the tags are skipped for the handlers ignore and store; with the
+    handler error they are left to @ref get_cbor_object_key, which rejects the
+    key. The tag loop is iterative, so the number of tags is not limited by the
+    recursion depth.
+
+    @param[in] tag_handler  how CBOR tags should be treated
+
+    @return whether the tags could be skipped (false on EOF in a tag argument)
+
+    @pre @a current is the first byte of the key
+    */
+    bool skip_cbor_key_tags(const cbor_tag_handler_t tag_handler)
+    {
+        if (tag_handler == cbor_tag_handler_t::error)
+        {
+            return true;
+        }
+
+        // 0xC0..0xDB: tag with the tag number in the head (0xC0..0xD7) or in
+        // the 1, 2, 4, or 8 bytes that follow (0xD8..0xDB)
+        while (current >= 0xC0 && current <= 0xDB)
+        {
+            if (current >= 0xD8)
+            {
+                std::uint64_t tag_to_ignore{};
+                if (JSON_HEDLEY_UNLIKELY(!get_cbor_argument(tag_to_ignore)))
+                {
+                    return false;
+                }
+            }
+            get();
+        }
+        return true;
     }
 
     /*!
@@ -19090,6 +19150,10 @@ class binary_reader
 
                 if (top.is_object)
                 {
+                    if (JSON_HEDLEY_UNLIKELY(!skip_cbor_key_tags(tag_handler)))
+                    {
+                        return false;
+                    }
                     if (JSON_HEDLEY_UNLIKELY(!read_object_key<&binary_reader::get_cbor_object_key>(key)))
                     {
                         return false;

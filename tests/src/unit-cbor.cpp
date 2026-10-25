@@ -2043,7 +2043,10 @@ TEST_CASE("CBOR")
             const std::vector<std::uint8_t> truncated = {0x7f, 0x62, 0x41, 0xc3, 0x61, 0xa9, 0xff};
 
             // strict: the string is invalid
-            for (const auto& input : {split, split_emoji, split_key, truncated})
+            for (const auto& input :
+                    {
+                        split, split_emoji, split_key, truncated
+                    })
             {
                 CAPTURE(input)
                 json _;
@@ -2069,7 +2072,10 @@ TEST_CASE("CBOR")
 
             // conforming input is unaffected by the error handler
             const std::vector<std::uint8_t> valid = {0x7f, 0x62, 0xc3, 0xa9, 0x64, 0xf0, 0x9f, 0x98, 0x80, 0x60, 0xff};
-            for (const auto handler : {strict, replace, ignore, keep})
+            for (const auto handler :
+                    {
+                        strict, replace, ignore, keep
+                    })
             {
                 CHECK(json::from_cbor(valid, true, true, tags, handler) == "\xc3\xa9\xf0\x9f\x98\x80");
                 CHECK(json::from_cbor(std::vector<std::uint8_t>({0x7f, 0xff}), true, true, tags, handler) == "");
