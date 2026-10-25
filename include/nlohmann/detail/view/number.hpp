@@ -259,6 +259,80 @@ NLOHMANN_VIEW_NOINLINE FloatType edited_float(const char* token, const node& n)
     return float_value<FloatType>(token, n);
 }
 
+#if NLOHMANN_VIEW_VECTOR
+/// eisel_lemire() for the token w * 10^q of coordinate_float()
+template<typename Format>
+NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t coordinate_bits(std::int64_t q, std::uint64_t w, Format /*format*/) noexcept
+{
+    return eisel_lemire<Format>(q, w);
+}
+
+/*!
+@brief (binary64) eisel_lemire() without the cases that tokens of 16 or 17
+digits with 5 or more after the point cannot reach: a value of 0, a
+subnormal, an infinity, or a tie (q < -4)
+*/
+NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t coordinate_bits(std::int64_t q, std::uint64_t w, ieee_binary_format<53> format) noexcept
+{
+    if (NLOHMANN_VIEW_UNLIKELY(w == 0 || q > -5))
+    {
+        return eisel_lemire<ieee_binary_format<53>>(q, w);
+    }
+    static_cast<void>(format);
+    const int lz = count_leading_zeros(w);
+    const std::uint64_t normalized = w << static_cast<unsigned>(lz);
+    const auto index = static_cast<std::size_t>(2 * (q - pow5_128_smallest_power));
+    const uint128_parts product = full_multiplication(normalized, pow5_128()[index]);
+    std::uint64_t high = product.high;
+    if (NLOHMANN_VIEW_UNLIKELY((high & 0x1FFu) == 0x1FFu))
+    {
+        // (the lower bits may carry into the result)
+        const std::uint64_t second = full_multiplication(normalized, pow5_128()[index + 1]).high;
+        high += product.low + second < product.low ? 1u : 0u;
+    }
+    const auto upperbit = static_cast<unsigned>(high >> 63u);
+    std::uint64_t mantissa = high >> (upperbit + 9);
+    std::uint64_t power2 = static_cast<std::uint64_t>(((217706 * q) >> 16) + 63 + static_cast<std::int64_t>(upperbit) - lz + 1023);
+    mantissa = (mantissa + (mantissa & 1u)) >> 1u;
+    const bool carry = mantissa >= (std::uint64_t{2} << 52u);
+    mantissa = carry ? (std::uint64_t{1} << 52u) : mantissa;
+    power2 += carry ? 1u : 0u;
+    return (mantissa & ~(std::uint64_t{1} << 52u)) | (power2 << 52u);
+}
+
+/*!
+@brief (binary32 and binary64) the value of a float token of the source with
+16 or 17 digits, a point, and no exponent, the shape of most coordinates
+written with full precision; whether the token of n has this shape
+
+These tokens skip the general layout of layout_decimal(): no digits beyond
+the 17th, no exponent (and Eisel-Lemire directly, as in layout_float()).
+*/
+template<typename FloatType>
+NLOHMANN_VIEW_ALWAYS_INLINE bool coordinate_float(const document_data& d, const node& n, FloatType& value) noexcept
+{
+    const unsigned int_digits = n.extra & 0xFFu;
+    const unsigned frac_digits = n.extra >> 8u;
+    const unsigned count = int_digits + frac_digits;
+    const auto* const first = reinterpret_cast<const unsigned char*>(d.src + n.off); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    const unsigned negative = first[0] == '-' ? 1u : 0u;
+    if (count - 16u > 1u || frac_digits == 0 || n.len != negative + count + 1 || d.size - n.off < 33)
+    {
+        return false;
+    }
+    const unsigned char* const digits = first + negative;
+    const std::uint64_t w = sixteen_digits(digits, int_digits);
+    // (the 17th digit follows the point)
+    const std::uint64_t w17 = (w * 10) + static_cast<std::uint64_t>(digits[17] - '0');
+    using format = ieee_binary_format<std::numeric_limits<FloatType>::digits>;
+    native_float_t<FloatType> result{};
+    float_from_bits(coordinate_bits(-static_cast<std::int64_t>(frac_digits), count == 17 ? w17 : w, format{}) | (static_cast<std::uint64_t>(negative) << format::sign_bit()), result);
+    value = result;
+    return true;
+}
+
+#endif
+
 /// the value of the float token of a node, as parse() converts it; floats and
 /// doubles with at most 19 digits are converted from the digit layout
 template<typename FloatType>
@@ -274,6 +348,13 @@ FloatType float_value(const document_data& d, const node& n)
 template<typename FloatType>
 FloatType float_value(const document_data& d, const node& n, std::true_type /*binary32 or binary64*/)
 {
+#if NLOHMANN_VIEW_VECTOR
+    FloatType value {};
+    if (coordinate_float(d, n, value))
+    {
+        return value;
+    }
+#endif
     const unsigned int_digits = n.extra & 0xFFu;
     const unsigned frac_digits = n.extra >> 8u;
     if (NLOHMANN_VIEW_LIKELY(int_digits + frac_digits <= 19)) // (255 marks "many")

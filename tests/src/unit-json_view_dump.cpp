@@ -151,10 +151,12 @@ TEST_CASE("json_view dump")
         }
 
         // tokens of 16 and 17 digits without an exponent (like GeoJSON
-        // coordinates), which dump() converts in batches: random digits, and
-        // digits near a shorter decimal (...99999997, ...00000003), whose
-        // rounding carries; in pairs and among other values, so that the
-        // batches are interrupted; the last token near the end of the coordinates
+        // coordinates), which dump() converts in batches: doubles exactly
+        // halfway between two candidates for the shortest digits, random
+        // digits, and digits near a shorter decimal (...99999997,
+        // ...00000003), whose rounding carries; in pairs and among other
+        // values, so that the batches are interrupted; the last token near the
+        // end of the text
         {
             std::mt19937_64 tokens(5627); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
             const auto draw = [&tokens](std::size_t n)
@@ -162,7 +164,8 @@ TEST_CASE("json_view dump")
                 const std::uint64_t r = tokens() % n;
                 return static_cast<std::size_t>(r);
             };
-            std::string coordinates = "[";
+            std::string coordinates = "[754570942.33984373,257769445.56835938,858106901.94921875,97944964.876953125,"
+                                      "[0.5,1e-7],[1.5,-0.0,2.5],[1E2,12.5,0.1,3.25,4.5,5.75,6.125,7.0,8.5],[],[1.5],[1,2.5],[2.5,\"x\"],[[1.5],2.5],";
             for (int i = 0; i < 20000; ++i)
             {
                 const std::size_t length = 16 + draw(2);
@@ -191,7 +194,7 @@ TEST_CASE("json_view dump")
             {
                 const ordered_json& e = j[i++];
                 CHECK(v.dump() == e.dump());
-                if (v.is_array())
+                if (v.is_array() && v.size() != 0 && v[0].is_number())
                 {
                     CHECK(v[0].get<double>() == e[0].get<double>());
                 }
