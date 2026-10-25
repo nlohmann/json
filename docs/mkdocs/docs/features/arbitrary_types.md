@@ -124,20 +124,20 @@ For all the macros, the first parameter is the name of the class/struct. The `DE
 
 ```mermaid
 flowchart TD
-    A["choosing a NLOHMANN_DEFINE_* macro"] --> B{"adding fields to a base class?"}
+    A["choosing a NLOHMANN_DEFINE_* macro"] --> B{{"adding fields to a base class?"}}
     B -->|"yes"| C["...DERIVED_TYPE..."]
     B -->|"no"| D["...TYPE..."]
-    C --> E{"need access to private members?"}
+    C --> E{{"need access to private members?"}}
     D --> E
     E -->|"yes"| F["...INTRUSIVE... (used inside the class)"]
     E -->|"no"| G["...NON_INTRUSIVE... (used in the namespace)"]
-    F --> H{"only serializing, never parsing back?"}
+    F --> H{{"only serializing, never parsing back?"}}
     G --> H
     H -->|"yes"| I["...ONLY_SERIALIZE"]
-    H -->|"no"| J{"allow missing keys when parsing?"}
+    H -->|"no"| J{{"allow missing keys when parsing?"}}
     J -->|"yes"| K["...WITH_DEFAULT"]
     J -->|"no"| L["plain (missing keys throw)"]
-    I --> M{"need custom JSON key names?"}
+    I --> M{{"need custom JSON key names?"}}
     K --> M
     L --> M
     M -->|"yes"| N["...WITH_NAMES"]

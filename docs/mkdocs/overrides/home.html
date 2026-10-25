@@ -1,0 +1,33 @@
+{#- Home page: the brand's blue hero band below the tabs (selected with "template: home.html" in index.md) -#}
+{% extends "main.html" %}
+
+{% block tabs %}
+  {{ super() }}
+  <section class="nj-hero">
+    <div class="nj-hero__inner md-grid">
+      <div class="nj-hero__text">
+        <h1 class="nj-hero__title">JSON for <span>Modern C++</span></h1>
+        <p class="nj-hero__lead">What if JSON was part of modern C++?</p>
+        <p class="nj-hero__actions">
+          <a href="{{ 'integration/' | url }}" class="md-button md-button--primary nj-hero__button">Get started</a>
+          <a href="{{ 'api/basic_json/' | url }}" class="md-button nj-hero__button">API documentation</a>
+        </p>
+      </div>
+      <div class="nj-hero__code" aria-hidden="true">
+<pre><code><span class="nj-k">#include</span> <span class="nj-s">&lt;iostream&gt;</span>
+<span class="nj-k">#include</span> <span class="nj-s">&lt;nlohmann/json.hpp&gt;</span>
+
+<span class="nj-k">using</span> json = nlohmann::json;
+
+<span class="nj-k">int</span> main()
+{
+    json j = json::parse(<span class="nj-s">R"({"happy": true})"</span>);
+    j[<span class="nj-s">"pi"</span>] = <span class="nj-n">3.141</span>;
+    j[<span class="nj-s">"list"</span>] = {<span class="nj-n">1</span>, <span class="nj-n">0</span>, <span class="nj-n">2</span>};
+
+    std::cout &lt;&lt; j.dump(<span class="nj-n">4</span>) &lt;&lt; <span class="nj-s">"\n"</span>;
+}</code></pre>
+      </div>
+    </div>
+  </section>
+{% endblock %}

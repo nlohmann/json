@@ -7,7 +7,9 @@ const_iterator end() const noexcept;
 
 Returns an iterator to one past the last element.
 
-![Illustration from cppreference.com](../../images/range-begin-end.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-begin-end.svg"
+</div>
 
 ## Return value
 

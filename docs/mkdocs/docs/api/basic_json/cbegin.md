@@ -6,7 +6,9 @@ const_iterator cbegin() const noexcept;
 
 Returns an iterator to the first element.
 
-![Illustration from cppreference.com](../../images/range-begin-end.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-begin-end.svg"
+</div>
 
 ## Return value
 

@@ -23,7 +23,9 @@ table describes the values of the parameters `depth`, `event`, and `parsed`.
 | `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
 | `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
-![Example when certain parse events are triggered](../../images/callback_events.png)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/callback_events.svg"
+</div>
 
 Discarding a value (i.e., returning `#!cpp false`) has different effects depending on the context in which function was
 called:

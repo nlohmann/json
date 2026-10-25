@@ -113,15 +113,15 @@ basic_json(basic_json&& other) noexcept;
 
     ```mermaid
     flowchart TD
-        A(["initializer_list init"]) --> B{"empty, or every element is a 2-element<br/>array whose first element is a string?"}
-        B -->|"yes"| C{"type_deduction"}
-        B -->|"no"| D{"type_deduction"}
+        A(["initializer_list init"]) --> B{{"empty, or every element is a 2-element<br/>array whose first element is a string?"}}
+        B -->|"yes"| C{{"type_deduction"}}
+        B -->|"no"| D{{"type_deduction"}}
         C -->|"true"| OBJ["create object"]
-        C -->|"false"| E{"manual_type"}
+        C -->|"false"| E{{"manual_type"}}
         E -->|"object"| OBJ
         E -->|"array"| ARR["create array"]
         D -->|"true"| ARR
-        D -->|"false"| F{"manual_type"}
+        D -->|"false"| F{{"manual_type"}}
         F -->|"array"| ARR
         F -->|"object"| ERR["throw type_error.301"]
     ```

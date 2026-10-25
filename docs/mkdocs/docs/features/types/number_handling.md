@@ -27,7 +27,9 @@ JSON defines the syntax of numbers as follows:
 
 The following railroad diagram from [json.org](https://json.org) visualizes the number syntax:
 
-![Syntax for JSON numbers](../../images/json_syntax_number.png)
+<div class="railroad-wrap" markdown>
+--8<-- "images/json_syntax_number.svg"
+</div>
 
 ### Number interoperability
 
@@ -69,9 +71,9 @@ otherwise, it uses unsigned integer storage.
 
 ```mermaid
 flowchart TD
-    A["number literal"] --> B{"has a fraction (.) or exponent (e/E)?"}
+    A["number literal"] --> B{{"has a fraction (.) or exponent (e/E)?"}}
     B -->|"yes"| F["number_float_t"]
-    B -->|"no"| C{"has a leading minus sign?"}
+    B -->|"no"| C{{"has a leading minus sign?"}}
     C -->|"yes"| D["try number_integer_t"]
     C -->|"no"| E["try number_unsigned_t"]
     D -->|"overflow"| F

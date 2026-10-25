@@ -6,7 +6,9 @@ const_reverse_iterator crbegin() const noexcept;
 
 Returns an iterator to the reverse-beginning; that is, the last element.
 
-![Illustration from cppreference.com](../../images/range-rbegin-rend.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-rbegin-rend.svg"
+</div>
 
 ## Return value
 

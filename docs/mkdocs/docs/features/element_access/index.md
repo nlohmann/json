@@ -14,11 +14,11 @@ the value, or `end()` if it is not found).
 
 ```mermaid
 flowchart TD
-    A["accessing a value"] --> B{"must it exist?"}
+    A["accessing a value"] --> B{{"must it exist?"}}
     B -->|"yes, missing is an error"| C["at() -- throws"]
     B -->|"yes, but checking is my job"| D["operator[] -- unchecked"]
     B -->|"no, a fallback is fine"| E["value() -- default value"]
-    A --> F{"just testing first?"}
+    A --> F{{"just testing first?"}}
     F -->|"yes"| G["contains() / find()"]
 ```
 

@@ -5,13 +5,13 @@ pick one:
 
 ```mermaid
 flowchart TD
-    A[Add the library to a C++ project] --> B{Already using CMake?}
-    B -- no --> C{Using pkg-config or plain Makefiles?}
+    A[Add the library to a C++ project] --> B{{Already using CMake?}}
+    B -- no --> C{{Using pkg-config or plain Makefiles?}}
     C -- yes --> D[pkg-config]
     C -- no --> E[Copy the single header]
-    B -- yes --> F{Library installed system-wide?}
+    B -- yes --> F{{Library installed system-wide?}}
     F -- yes --> G["find_package()"]
-    F -- no --> H{Use a package manager?}
+    F -- no --> H{{Use a package manager?}}
     H -- yes --> I[Package manager]
     H -- no --> J["add_subdirectory() or FetchContent"]
 ```

@@ -9,7 +9,9 @@ As for other containers, [`begin()`](../api/basic_json/begin.md) returns an iter
 placeholder and cannot be dereferenced. In case of null values, empty arrays, or empty objects, `begin()` will return
 `end()`.
 
-![Illustration from cppreference.com](../images/range-begin-end.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-begin-end.svg"
+</div>
 
 ### Iteration order for objects
 
@@ -112,7 +114,9 @@ for (auto& [key, val] : j_object.items())
 [`rbegin()`](../api/basic_json/rbegin.md) and [`rend()`](../api/basic_json/rend.md) return iterators in the reverse
 sequence.
     
-![Illustration from cppreference.com](../images/range-rbegin-rend.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-rbegin-rend.svg"
+</div>
 
 ??? example "Example: reverse iteration with `rbegin()` and `rend()`"
 

@@ -22,7 +22,9 @@ The parser callback distinguishes the following events:
 
 ## Examples
 
-![Example when certain parse events are triggered](../../images/callback_events.png)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/callback_events.svg"
+</div>
 
 ??? example
 

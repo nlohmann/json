@@ -1,5 +1,6 @@
 # Project information
 site_name: JSON for Modern C++
+site_description: JSON for Modern C++ is a header-only C++11 library that makes JSON a first-class data type.
 site_author: Niels Lohmann
 site_url: https://json.nlohmann.me/
 
@@ -14,33 +15,38 @@ copyright: Copyright &copy; 2013-2026 Niels Lohmann
 # Configuration
 theme:
   name: material
+  custom_dir: overrides
   language: en
   palette:
     - media: '(prefers-color-scheme: light)'
       scheme: default
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: '(prefers-color-scheme: dark)'
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
   icon:
     repo: fontawesome/brands/github
-  font:
-    text: Roboto
-    code: JetBrains Mono
+  font: false
+  logo: images/wordmark-header.svg
   features:
     - navigation.instant
     - navigation.tracking
     - navigation.tabs
     - navigation.indexes
     - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
     - content.tabs.link
     - content.action.edit
     - content.action.view
@@ -619,3 +625,7 @@ plugins:
 
 extra_css:
   - css/custom.css
+  - css/brand.css
+
+extra_javascript:
+  - js/mermaid-brand.js
