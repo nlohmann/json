@@ -1,7 +1,7 @@
 # BON8
 
 BON8 (Binary Object Notation 8) is a compact binary serialization format for JSON values. It uses byte values that
-cannot occur in valid UTF-8 as type markers, so strings are stored as plain UTF-8 without a length prefix: a string
+cannot begin a UTF-8 character as type markers, so strings are stored as plain UTF-8 without a length prefix: a string
 ends at the first byte that cannot continue it. Integers from -10 to 39, `true`, `false`, `null`, and the floating-point
 values -1.0, 0.0, and 1.0 take a single byte, and arrays and objects with up to four elements need no terminator.
 
@@ -12,7 +12,7 @@ values -1.0, 0.0, and 1.0 take a single byte, and arrays and objects with up to 
 
 ## Byte layout
 
-BON8 exploits the fact that some byte values can never occur in valid UTF-8. These bytes serve as *type markers*, so strings can be stored as plain UTF-8 without a length prefix: a string ends at the first byte that is not part of a valid UTF-8 character: a marker byte, or a lead byte 0xC2..0xF7 followed by a byte outside 0x80..0xBF (often the marker of the next value). Small integers, `true`, `false`, `null`, and a few common floats are a single byte. Arrays and objects are introduced by a marker; those with up to four elements encode their size in the marker and need no terminator, while larger ones are closed by the end marker `0xFE`.
+BON8 exploits the fact that some byte values can never start a UTF-8 character. These bytes serve as *type markers*, so strings can be stored as plain UTF-8 without a length prefix: a string ends at the first byte that cannot continue it: a marker byte, or a lead byte 0xC2..0xF7 followed by a byte outside 0x80..0xBF. The ending byte is often the marker of the next value. Small integers, `true`, `false`, `null`, and a few common floats are a single byte. Arrays and objects are introduced by a marker; those with up to four elements encode their size in the marker and need no terminator, while larger ones are closed by the end marker `0xFE`.
 
 Consider the following JSON value (shown formatted for readability):
 
