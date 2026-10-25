@@ -417,6 +417,20 @@ void templated_json_throw(ExceptionType exception)
     (void)exception;
 }
 
+// the context of an exception about j: j itself for a basic_json value (whose
+// path JSON_DIAGNOSTICS shows), none for a view of <nlohmann/json_view.hpp>
+template<typename BasicJsonType, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+const BasicJsonType * exception_context(const BasicJsonType& j) noexcept
+{
+    return &j;
+}
+
+template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
+std::nullptr_t exception_context(const View& /*unused*/) noexcept
+{
+    return nullptr;
+}
+
 /*!
 @brief throws because @a j does not have the type a conversion expects
 @param[in] expected  the expected type(s), e.g. "array" or "binary or array"
@@ -428,7 +442,7 @@ JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_type_must_be(const cha
 {
     static_cast<void>(expected); // unused when JSON_NOEXCEPTION is defined
     static_cast<void>(j);
-    JSON_THROW(type_error::create(exception_id::type_mismatch, concat("type must be ", expected, ", but is ", j.type_name()), &j));
+    JSON_THROW(type_error::create(exception_id::type_mismatch, concat("type must be ", expected, ", but is ", j.type_name()), exception_context(j)));
 }
 
 /*!

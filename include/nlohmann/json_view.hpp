@@ -919,22 +919,25 @@ class basic_json_view
         return *this;
     }
 
-    template<typename U, typename A>
+    /// vectors of the types converted directly (faster than the library's
+    /// from_json()) and containers of views (no from_json() reads them: a view
+    /// is no value of BasicJsonType); other containers are read by from_json()
+    template < typename U, typename A, typename std::enable_if < detail::view::is_direct_value<U, BasicJsonType, basic_json_view>::value, int >::type = 0 >
     std::vector<U, A> get_impl(detail::view::value_tag<std::vector<U, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
         return detail::view::vector_value<basic_json_view, U, A>(*this);
     }
 
-    template<typename K, typename V, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
-    std::map<K, V, C, A> get_impl(detail::view::value_tag<std::map<K, V, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    template<typename K, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::map<K, basic_json_view, C, A> get_impl(detail::view::value_tag<std::map<K, basic_json_view, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
-        return detail::view::map_value<std::map<K, V, C, A>>(*this);
+        return detail::view::map_value<std::map<K, basic_json_view, C, A>>(*this);
     }
 
-    template<typename K, typename V, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
-    std::unordered_map<K, V, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, V, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    template<typename K, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::unordered_map<K, basic_json_view, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, basic_json_view, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
-        return detail::view::map_value<std::unordered_map<K, V, H, E, A>>(*this);
+        return detail::view::map_value<std::unordered_map<K, basic_json_view, H, E, A>>(*this);
     }
 
     /// whether the from_json() of T's serializer reads views (see
