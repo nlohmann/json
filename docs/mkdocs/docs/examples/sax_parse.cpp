@@ -95,7 +95,7 @@ class sax_event_consumer : public json::json_sax_t
 int main()
 {
     // a JSON text
-    const auto *text = R"(
+    const auto* text = R"(
     {
         "Image": {
             "Width":  800,

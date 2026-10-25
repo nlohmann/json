@@ -29,7 +29,7 @@ std::string event_name(json::parse_event_t event)
 int main()
 {
     // a small JSON text
-    const auto *text = R"({"pi": 3.141, "numbers": [1, 2]})";
+    const auto* text = R"({"pi": 3.141, "numbers": [1, 2]})";
 
     // parse the text and report every event together with its depth;
     // returning true keeps every value unchanged

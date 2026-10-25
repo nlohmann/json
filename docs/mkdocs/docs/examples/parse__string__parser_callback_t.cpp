@@ -7,7 +7,7 @@ using nlohmann::json;
 int main()
 {
     // a JSON text
-    const auto *text = R"(
+    const auto* text = R"(
     {
         "Image": {
             "Width":  800,
