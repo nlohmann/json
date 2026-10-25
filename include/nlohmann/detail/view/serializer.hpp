@@ -1001,7 +1001,7 @@ class view_serializer
                     const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
                     // (read-only documents, compact output) a pair of floats,
                     // like the coordinates of GeoJSON, without a frame
-                    if (!Editable && !Pretty && !SourceNumbers && enabled(fast_double::value) && n->next == 3 && n->len == 2
+                    if (enabled(!Editable && !Pretty && !SourceNumbers && fast_double::value) && n->next == 3 && n->len == 2
                             && n[1].kind == static_cast<std::uint8_t>(value_t::number_float) && n[2].kind == static_cast<std::uint8_t>(value_t::number_float))
                     {
                         room(2 * 64);
@@ -1313,7 +1313,7 @@ class view_serializer
     */
     NLOHMANN_VIEW_NOINLINE char* write_carried_digits(char* w, const node& n, std::uint64_t digits) const noexcept
     {
-        const int exponent = -static_cast<int>(n.extra >> 8u);
+        const int exponent = -(n.extra >> 8u);
         const std::uint64_t leading = digits / 10;
         const auto last = static_cast<unsigned char>(digits - (leading * 10));
         const bool seventeen = digits >= 10000000000000000u;
