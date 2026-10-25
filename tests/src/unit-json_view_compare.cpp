@@ -99,6 +99,72 @@ TEST_CASE("json_view comparison")
         }
     }
 
+    SECTION("objects with duplicate keys, small and large")
+    {
+        // n members with keys in descending order; with duplicates, some keys
+        // repeat later (the first after unique ones in key order); in reverse,
+        // the members are in ascending key order
+        const auto object = [](int n, bool duplicates, bool reverse, int value)
+        {
+            std::string s = "{";
+            for (int i = 0; i < n; ++i)
+            {
+                const int k = reverse ? i : n - 1 - i;
+                s += (i != 0 ? ",\"k" : "\"k") + std::to_string(100 + k) + "\":" + std::to_string(value + k);
+            }
+            if (duplicates)
+            {
+                for (int k = n / 2; k < n; k += 3)
+                {
+                    s += ",\"k" + std::to_string(100 + k) + "\":" + std::to_string(value + k);
+                }
+            }
+            return s + "}";
+        };
+        std::vector<std::string> texts;
+        for (const int n :
+                {
+                    3, 16, 17, 40
+                })
+        {
+            for (const int flags :
+                    {
+                        0, 1, 2, 3
+                    })
+            {
+                texts.push_back(object(n, (flags & 1) != 0, (flags & 2) != 0, 0));
+            }
+            texts.push_back(object(n, true, false, 1)); // other values
+        }
+        // many objects in one comparison (working memory reused across objects)
+        std::string array = "[";
+        std::string array_other = "[";
+        for (std::size_t i = 0; i < texts.size(); ++i)
+        {
+            array += (i != 0 ? "," : "") + texts[i];
+            array_other += (i != 0 ? "," : "") + texts[texts.size() - 1 - i];
+        }
+        texts.push_back(array + "]");
+        texts.push_back(array_other + "]");
+        for (const std::string& x : texts)
+        {
+            for (const std::string& y : texts)
+            {
+                CAPTURE(x)
+                CAPTURE(y)
+                const ordered_json_document dx = ordered_json_document::parse(x);
+                const ordered_json_document dy = ordered_json_document::parse(y);
+                const ordered_json jx = ordered_json::parse(x);
+                const ordered_json jy = ordered_json::parse(y);
+                CHECK((dx.root() == dy.root()) == (jx == jy));
+                CHECK((dx.root() == jy) == (jx == jy));
+                const json_document ux = json_document::parse(x);
+                const json uy = json::parse(y);
+                CHECK((ux.root() == uy) == (json::parse(x) == uy));
+            }
+        }
+    }
+
     SECTION("numbers, duplicate keys, member order")
     {
         const auto same = [](const char* x, const char* y)

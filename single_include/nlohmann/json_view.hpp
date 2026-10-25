@@ -2877,25 +2877,15 @@ NLOHMANN_VIEW_ALWAYS_INLINE bool key_less(const Key& a, const Key& b) noexcept
     return bytes_less(a.data(), a.size(), b.data(), b.size());
 }
 
-/// The members of an object as parse() keeps them: one per key, the last
-/// value at the position of the first occurrence, in the order of the
-/// comparison (sorted by key, or, if the object type keeps the order, the order
-/// of first occurrence). The members m[0..n) are in document order; this
-/// appends to out the indices of the member of each key that has its value
-/// (its last one), in the order of the comparison. Most objects have unique
-/// keys; small ones are sorted by insertion, which keeps equal keys in order
-/// and needs no memory.
+/// sorts the indices order[0..n) of the members m by key; equal keys stay in
+/// document order (small objects with an insertion sort, which needs no memory)
 template<typename Entry>
-void resolve_indices(const Entry* m, std::size_t n, bool ordered, std::vector<std::uint32_t>& out)
+void sort_by_key(std::uint32_t* order, std::size_t n, const Entry* m)
 {
-    const std::size_t start = out.size();
-    out.resize(start + n);
-    std::uint32_t* const order = out.data() + start;
     for (std::size_t i = 0; i < n; ++i)
     {
         order[i] = static_cast<std::uint32_t>(i);
     }
-    // sorted by key; equal keys stay in document order
     if (n <= 16)
     {
         for (std::size_t i = 1; i < n; ++i)
@@ -2916,6 +2906,23 @@ void resolve_indices(const Entry* m, std::size_t n, bool ordered, std::vector<st
             return key_less(m[x].first, m[y].first);
         });
     }
+}
+
+/// The members of an object as parse() keeps them: one per key, the last
+/// value at the position of the first occurrence, in the order of the
+/// comparison (sorted by key, or, if the object type keeps the order, the order
+/// of first occurrence). The members m[0..n) are in document order; this
+/// appends to out the indices of the member of each key that has its value
+/// (its last one), in the order of the comparison. Most objects have unique
+/// keys. scratch is working memory, kept by the caller so that its capacity
+/// is reused.
+template<typename Entry>
+void resolve_indices(const Entry* m, std::size_t n, bool ordered, std::vector<std::uint32_t>& out, std::vector<std::uint32_t>& scratch)
+{
+    const std::size_t start = out.size();
+    out.resize(start + n);
+    std::uint32_t* const order = out.data() + start;
+    sort_by_key(order, n, m);
     if (!ordered)
     {
         // the last of each run of equal keys
@@ -2935,7 +2942,7 @@ void resolve_indices(const Entry* m, std::size_t n, bool ordered, std::vector<st
     }
     // (document order) the value of the last occurrence at the first occurrence of each key
     constexpr std::uint32_t none = 0xFFFFFFFFu;
-    std::vector<std::uint32_t> value_at(n, none);
+    bool any = false;
     for (std::size_t i = 0; i < n;)
     {
         std::size_t last = i;
@@ -2943,15 +2950,40 @@ void resolve_indices(const Entry* m, std::size_t n, bool ordered, std::vector<st
         {
             ++last;
         }
-        value_at[order[i]] = order[last]; // (stable: order[i] is the first occurrence)
+        if (last != i)
+        {
+            if (!any)
+            {
+                scratch.assign(n, none);
+                for (std::size_t k = 0; k < i; ++k)
+                {
+                    scratch[order[k]] = order[k];
+                }
+                any = true;
+            }
+            scratch[order[i]] = order[last]; // (stable: order[i] is the first occurrence)
+        }
+        else if (any)
+        {
+            scratch[order[i]] = order[i];
+        }
         i = last + 1;
+    }
+    if (!any)
+    {
+        // unique keys: document order
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            order[i] = static_cast<std::uint32_t>(i);
+        }
+        return;
     }
     std::size_t w = 0;
     for (std::size_t i = 0; i < n; ++i)
     {
-        if (value_at[i] != none)
+        if (scratch[i] != none)
         {
-            order[w++] = value_at[i];
+            order[w++] = scratch[i];
         }
     }
     out.resize(start + w);
@@ -2977,26 +3009,22 @@ bool same_keys(const EntryA* a, const EntryB* b, std::size_t n)
 /// members are given in document order, at the end of m (from the position
 /// base on); most objects have unique keys, in which case they are only sorted
 /// (for small objects with an insertion sort, which keeps equal keys in order
-/// and needs no memory).
+/// and needs no memory). scratch is working memory, kept by the caller.
 template<typename Side, typename StringView>
-void resolve_members(std::vector<std::pair<StringView, Side>>& m, std::size_t base, bool ordered)
+void resolve_members(std::vector<std::pair<StringView, Side>>& m, std::size_t base, bool ordered, std::vector<std::uint32_t>& scratch)
 {
     using entry = std::pair<StringView, Side>;
     const std::size_t n = m.size() - base;
     entry* const first = m.data() + base;
     if (ordered)
     {
-        // (document order) later values of a key go to its first occurrence
-        std::vector<std::size_t> order(n);
-        for (std::size_t i = 0; i < n; ++i)
-        {
-            order[i] = i;
-        }
-        std::stable_sort(order.begin(), order.end(), [first](std::size_t x, std::size_t y)
-        {
-            return key_less(first[x].first, first[y].first);
-        });
-        std::vector<bool> drop(n, false);
+        // (document order) later values of a key go to its first occurrence;
+        // scratch holds the order by key, then whether a member is dropped
+        constexpr std::uint32_t dropped = 1;
+        scratch.assign(2 * n, 0);
+        std::uint32_t* const order = scratch.data();
+        std::uint32_t* const drop = order + n;
+        sort_by_key(order, n, first);
         bool any = false;
         for (std::size_t i = 0; i < n;)
         {
@@ -3010,7 +3038,7 @@ void resolve_members(std::vector<std::pair<StringView, Side>>& m, std::size_t ba
                 first[order[i]].second = first[order[last]].second;
                 for (std::size_t k = i + 1; k <= last; ++k)
                 {
-                    drop[order[k]] = true;
+                    drop[order[k]] = dropped;
                 }
                 any = true;
             }
@@ -3021,7 +3049,7 @@ void resolve_members(std::vector<std::pair<StringView, Side>>& m, std::size_t ba
             std::size_t w = 0;
             for (std::size_t i = 0; i < n; ++i)
             {
-                if (!drop[i])
+                if (drop[i] != dropped)
                 {
                     if (w != i)
                     {
@@ -3721,6 +3749,7 @@ bool equal(const A& a0, const B& b0)
     };
     std::vector<frame> stack;
     std::vector<std::uint32_t> indices; // the order of the members of the open objects, where it is not their order in the document
+    std::vector<std::uint32_t> scratch; // working memory of resolve_indices() and resolve_members()
     // the members of the open objects (the ones of an object follow those of the objects around it)
     std::vector<std::pair<string_view_t, A>> members_a;
     std::vector<std::pair<string_view_t, B>> members_b;
@@ -3801,7 +3830,7 @@ bool equal(const A& a0, const B& b0)
                         // the same keys in the same order: one order of the comparison for both
                         f.index_a = indices.size();
                         f.index_b = f.index_a;
-                        resolve_indices(members_a.data() + f.base_a, size_a, ordered, indices);
+                        resolve_indices(members_a.data() + f.base_a, size_a, ordered, indices, scratch);
                         count_a = indices.size() - f.index_a;
                         count_b = count_a;
                     }
@@ -3809,12 +3838,12 @@ bool equal(const A& a0, const B& b0)
                     {
                         if (!sorted_a)
                         {
-                            resolve_members(members_a, f.base_a, ordered);
+                            resolve_members(members_a, f.base_a, ordered, scratch);
                             count_a = members_a.size() - f.base_a;
                         }
                         if (!sorted_b)
                         {
-                            resolve_members(members_b, f.base_b, ordered);
+                            resolve_members(members_b, f.base_b, ordered, scratch);
                             count_b = members_b.size() - f.base_b;
                         }
                     }
