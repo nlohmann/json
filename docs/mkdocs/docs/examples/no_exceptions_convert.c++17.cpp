@@ -32,7 +32,9 @@ int main()
     const json bad = {{"name", "Mary"}, {"age", "forty-two"}};
     const json incomplete = {{"name", "Mary"}};
 
-    for (const json& j : {good, bad, incomplete})
+    const auto inputs = {good, bad, incomplete};
+
+    for (const json& j : inputs)
     {
         if (const auto p = to_person(j))
         {

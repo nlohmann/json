@@ -28,7 +28,8 @@ bool push(const std::string& chunk, json& value)
 int main()
 {
     json value;
-    for (const std::string chunk : {"{\"na", "me\": \"Ma", "ry\", \"l", "ist\": [1, 2", ", 3]}"})
+    const auto chunks = {"{\"na", "me\": \"Ma", "ry\", \"l", "ist\": [1, 2", ", 3]}"};
+    for (const std::string chunk : chunks)
     {
         std::cout << "chunk " << chunk << " -> " << (push(chunk, value) ? "complete" : "incomplete") << '\n';
     }

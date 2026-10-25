@@ -8,7 +8,8 @@ int main()
     json j = json::parse(R"({"name": "Mary", "age": 42})");
 
     // look up the key, then test the type: neither step throws
-    for (const char* key : {"name", "age", "city"})
+    const auto keys = {"name", "age", "city"};
+    for (const char* key : keys)
     {
         const auto it = j.find(key);
         if (it == j.end())
