@@ -108,6 +108,7 @@ is thrown. In any case, the original value is not changed: the patch is applied 
 - Added in version 2.0.0.
 - Added [`out_of_range.411`](../../home/exceptions.md#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's
   target location has a non-object/non-array parent in version 3.13.0.
+  This includes a `null` parent, which was previously silently converted to an object, in version 3.13.0.
 - Added [`out_of_range.413`](../../home/exceptions.md#jsonexceptionout_of_range413) and stopped silently ignoring a "remove" operation whose target
   location has a non-object/non-array parent in version 3.13.0.
 - Added [`out_of_range.414`](../../home/exceptions.md#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper

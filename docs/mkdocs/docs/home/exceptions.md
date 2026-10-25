@@ -1100,6 +1100,8 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 
     This exception was added in version 3.13.0. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
 
+    A `null` parent is rejected as well. Before version 3.13.0, an `add` into a `null` parent silently converted it to an object (e.g., `add` at `/foo/bar` turned `{"foo":null}` into `{"foo":{"bar":1}}`).
+
 ### json.exception.out_of_range.412
 
 BSON stores the length of documents, arrays, strings, and binary values in a signed 32-bit integer, and MessagePack
