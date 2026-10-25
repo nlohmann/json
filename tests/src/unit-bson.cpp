@@ -1248,7 +1248,7 @@ TEST_CASE("BSON document size mismatch")
     SECTION("top-level document with a negative size")
     {
         std::vector<std::uint8_t> const input = {0xFF, 0xFF, 0xFF, 0xFF, 0x00};
-        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size -1 does not match the number of bytes read (5)", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BSON document: document size -1 is less than 5", json::parse_error&);
         CHECK(json::from_bson(input, true, false).is_discarded());
     }
 
@@ -1260,7 +1260,7 @@ TEST_CASE("BSON document size mismatch")
         // enclosing document instead of "d"
         std::vector<std::uint8_t> const input =
         {
-            0x00, 0x00, 0x00, 0x00, // outer size
+            0x14, 0x00, 0x00, 0x00, // outer size
             0x03, 'd', 0x00,        // entry: embedded document "d"
             0xFF, 0xFF, 0xFF, 0x7F, //   embedded size 0x7FFFFFFF
             0x0A, 'a', 0x00,        //   entry: null "a"
@@ -1268,7 +1268,24 @@ TEST_CASE("BSON document size mismatch")
             0x08, 'h', 0x00, 0x01,  // entry: bool "h" = true
             0x00                    // outer end marker
         };
-        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON document: document size 2147483647 does not match the number of bytes read (8)", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 11: syntax error while parsing BSON document: document size 2147483647 exceeds the size of the enclosing document", json::parse_error&);
+        CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+
+    SECTION("embedded document whose size is smaller than its content")
+    {
+        // {"a":null} is 8 bytes, but the length prefix claims 7
+        std::vector<std::uint8_t> const input =
+        {
+            0x14, 0x00, 0x00, 0x00, // outer size
+            0x03, 'd', 0x00,        // entry: embedded document "d"
+            0x07, 0x00, 0x00, 0x00, //   embedded size 7 (real is 8)
+            0x0A, 'a', 0x00,        //   entry: null "a"
+            0x00,                   //   embedded end marker
+            0x08, 'h', 0x00, 0x01,  // entry: bool "h" = true
+            0x00                    // outer end marker
+        };
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON document: document size 7 does not match the number of bytes read (8)", json::parse_error&);
         CHECK(json::from_bson(input, true, false).is_discarded());
     }
 
@@ -1277,15 +1294,157 @@ TEST_CASE("BSON document size mismatch")
         // array [42] is 12 bytes, but the length prefix claims 13
         std::vector<std::uint8_t> const input =
         {
-            0x00, 0x00, 0x00, 0x00, // outer size
+            0x14, 0x00, 0x00, 0x00, // outer size
             0x04, 'a', 0x00,        // entry: array "a"
             0x0D, 0x00, 0x00, 0x00, //   array size 13 (real is 12)
             0x10, '0', 0x00, 0x2A, 0x00, 0x00, 0x00, //   entry: int32 "0" = 42
             0x00,                   //   array end marker
             0x00                    // outer end marker
         };
-        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 19: syntax error while parsing BSON document: document size 13 does not match the number of bytes read (12)", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 11: syntax error while parsing BSON document: document size 13 exceeds the size of the enclosing document", json::parse_error&);
         CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+}
+
+TEST_CASE("BSON declared document size bounds the content")
+{
+    // records the events that a SAX parser receives
+    struct recorder : nlohmann::json_sax<json>
+    {
+        std::string events;
+
+        bool null() override
+        {
+            events += "null ";
+            return true;
+        }
+        bool boolean(bool /*val*/) override
+        {
+            events += "boolean ";
+            return true;
+        }
+        bool number_integer(json::number_integer_t /*val*/) override
+        {
+            events += "integer ";
+            return true;
+        }
+        bool number_unsigned(json::number_unsigned_t /*val*/) override
+        {
+            events += "unsigned ";
+            return true;
+        }
+        bool number_float(json::number_float_t /*val*/, const std::string& /*s*/) override
+        {
+            events += "float ";
+            return true;
+        }
+        bool string(std::string& /*val*/) override
+        {
+            events += "string ";
+            return true;
+        }
+        bool binary(json::binary_t& /*val*/) override
+        {
+            events += "binary ";
+            return true;
+        }
+        bool start_object(std::size_t /*elements*/) override
+        {
+            events += "{ ";
+            return true;
+        }
+        bool key(std::string& /*val*/) override
+        {
+            events += "key ";
+            return true;
+        }
+        bool end_object() override
+        {
+            events += "} ";
+            return true;
+        }
+        bool start_array(std::size_t /*elements*/) override
+        {
+            events += "[ ";
+            return true;
+        }
+        bool end_array() override
+        {
+            events += "] ";
+            return true;
+        }
+        bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& /*ex*/) override
+        {
+            events += "error ";
+            return false;
+        }
+    };
+
+    SECTION("the content of a too small document is not reported")
+    {
+        // {"a":1} is 12 bytes; the length prefix claims 5, so the element
+        // does not fit
+        std::vector<std::uint8_t> const input =
+        {
+            0x05, 0x00, 0x00, 0x00,
+            0x10, 'a', 0x00, 0x01, 0x00, 0x00, 0x00,
+            0x00
+        };
+        recorder rec;
+        CHECK(!json::sax_parse(input, &rec, json::input_format_t::bson));
+        CHECK(rec.events == "{ error ");
+
+        // also without strict mode
+        recorder rec2;
+        CHECK(!json::sax_parse(input, &rec2, json::input_format_t::bson, false));
+        CHECK(rec2.events == "{ error ");
+    }
+
+    SECTION("an embedded document that does not fit its parent is not opened")
+    {
+        // the embedded document ends where the enclosing one does, so there
+        // is no room for the terminator of the enclosing document
+        std::vector<std::uint8_t> const input =
+        {
+            0x0C, 0x00, 0x00, 0x00,
+            0x03, 'd', 0x00,
+            0x05, 0x00, 0x00, 0x00, 0x00,
+            0x00
+        };
+        recorder rec;
+        CHECK(!json::sax_parse(input, &rec, json::input_format_t::bson));
+        CHECK(rec.events == "{ key error ");
+    }
+
+    SECTION("an embedded document that fits exactly")
+    {
+        std::vector<std::uint8_t> const input =
+        {
+            0x0D, 0x00, 0x00, 0x00,
+            0x03, 'd', 0x00,
+            0x05, 0x00, 0x00, 0x00, 0x00,
+            0x00
+        };
+        CHECK(json::from_bson(input) == json({{"d", json::object()}}));
+    }
+
+    SECTION("a document size that is less than 5")
+    {
+        for (const std::int32_t size : {0, 1, 4, -1, (std::numeric_limits<std::int32_t>::min)()})
+        {
+            CAPTURE(size)
+            std::vector<std::uint8_t> input =
+            {
+                0x00, 0x00, 0x00, 0x00, 0x00
+            };
+            input[0] = static_cast<std::uint8_t>(size & 0xFF);
+            input[1] = static_cast<std::uint8_t>((size >> 8) & 0xFF);
+            input[2] = static_cast<std::uint8_t>((size >> 16) & 0xFF);
+            input[3] = static_cast<std::uint8_t>((size >> 24) & 0xFF);
+            json _;
+            CHECK_THROWS_AS(_ = json::from_bson(input), json::parse_error&);
+            CHECK(json::from_bson(input, true, false).is_discarded());
+        }
     }
 }
 
@@ -1993,7 +2152,7 @@ TEST_CASE("Invalid document size handling")
     {
         std::vector<std::uint8_t> const v = {0x04, 0x00, 0x00, 0x00, 0x00};
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 4 does not match the number of bytes read (5)", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BSON document: document size 4 is less than 5", json::parse_error&);
         CHECK(json::from_bson(v, true, false).is_discarded());
     }
 
@@ -2008,7 +2167,7 @@ TEST_CASE("Invalid document size handling")
             0x00
         };
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 16: syntax error while parsing BSON document: document size 5 does not match the number of bytes read (16)", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 5 is too small for its content", json::parse_error&);
         CHECK(json::from_bson(v, true, false).is_discarded());
     }
 
@@ -2039,7 +2198,7 @@ TEST_CASE("Invalid document size handling")
             0x00                                            // object terminator
         };
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 19: syntax error while parsing BSON document: document size 5 does not match the number of bytes read (12)", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 12: syntax error while parsing BSON document: document size 5 is too small for its content", json::parse_error&);
         CHECK(json::from_bson(v, true, false).is_discarded());
     }
 
