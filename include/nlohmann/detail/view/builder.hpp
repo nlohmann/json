@@ -543,7 +543,15 @@ run_found:
     NLOHMANN_VIEW_NOINLINE void arena_grow(std::size_t n)
     {
         const std::size_t used = arena_used();
-        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, used + n + 256));
+        std::size_t wanted = used + n + 256;
+        if (m_doc.arena.empty())
+        {
+            // the first growth: a decoded string is never longer than its source,
+            // so a fraction of the input (capped, as the buffer is zero-filled)
+            // covers the escapes of a typical document without regrowing it
+            wanted = (std::max)(wanted, (std::min)(static_cast<std::size_t>(m_end - m_begin) / 4 + 16, std::size_t{4096}));
+        }
+        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, wanted));
         m_arena_write = m_doc.arena.data() + used;
         m_arena_end = m_doc.arena.data() + m_doc.arena.size();
     }
