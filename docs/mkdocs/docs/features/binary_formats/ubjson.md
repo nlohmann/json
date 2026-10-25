@@ -7,6 +7,39 @@ achieve the generality of JSON, combined with being much easier to process than 
 
     - [UBJSON Website](http://ubjson.org)
 
+## Byte layout
+
+UBJSON is built from just a one-byte, human-readable ASCII *type marker* (for example, `i` for int8, `S` for string, `[` for array) followed by the payload of that type. Strings and the like are prefixed with their length, which is itself a UBJSON integer value including its marker. Numbers are stored in big-endian byte order. Containers can be written in two ways: as an *unoptimized* container that is opened with `[` or `{` and closed with `]` or `}`, or as an *optimized* container that declares an element type (`$`) and/or a count (`#`) after the opening marker, which saves per-element markers and (for a count) the closing marker.
+
+Consider the following JSON value (shown formatted for readability):
+
+```json
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_ubjson` encodes it to 51 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-l">length/count/size</span> <span class="bl bl-d">data</span>.
+
+<div class="byte-layout" markdown="0"><table>
+<thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>{</code></td><td><span class="bl bl-t">7B</span></td><td>object start (<code>{</code>)</td></tr>
+<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-l">69 02</span> <span class="bl bl-d">69 64</span> <span class="bl bl-t">49</span> <span class="bl bl-d">01 2C</span></td><td>key: length 2 as int8 (<code>i</code>), then UTF-8 bytes; value: int16 (<code>I</code>), big-endian</td></tr>
+<tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-l">69 04</span> <span class="bl bl-d">6E 61 6D 65</span> <span class="bl bl-t">53</span> <span class="bl bl-l">69 04</span> <span class="bl bl-d">6A 73 6F 6E</span></td><td>key: length 4; value: string (<code>S</code>), length 4 as int8, UTF-8 bytes</td></tr>
+<tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-l">69 02</span> <span class="bl bl-d">70 69</span> <span class="bl bl-t">44</span> <span class="bl bl-d">40 09 1E B8 51 EB 85 1F</span></td><td>key: length 2; value: float64 (<code>D</code>), big-endian</td></tr>
+<tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-l">69 04</span> <span class="bl bl-d">74 61 67 73</span> <span class="bl bl-t">5B</span></td><td>key: length 4; value: array start (<code>[</code>)</td></tr>
+<tr><td><code>&quot;a&quot;,</code></td><td><span class="bl bl-t">53</span> <span class="bl bl-l">69 01</span> <span class="bl bl-d">61</span></td><td>string, length 1</td></tr>
+<tr><td><code>&quot;b&quot;</code></td><td><span class="bl bl-t">53</span> <span class="bl bl-l">69 01</span> <span class="bl bl-d">62</span></td><td>string, length 1</td></tr>
+<tr><td><code>]</code></td><td><span class="bl bl-t">5D</span></td><td>array end (<code>]</code>)</td></tr>
+<tr><td><code>}</code></td><td><span class="bl bl-t">7D</span></td><td>object end (<code>}</code>)</td></tr>
+</tbody></table></div>
+
 ## Serialization
 
 The library uses the following mapping from JSON values types to UBJSON types according to the UBJSON specification:
@@ -102,41 +135,6 @@ The library uses the following mapping from JSON values types to UBJSON types ac
     ```c
     --8<-- "examples/to_ubjson.output"
     ```
-
-
-
-
-
-### Byte layout
-
-Consider the following JSON value (shown formatted for readability):
-
-```json
-{
-  "id": 300,
-  "name": "json",
-  "pi": 3.14,
-  "tags": [
-    "a",
-    "b"
-  ]
-}
-```
-
-`to_ubjson` encodes it to 51 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-l">length/count/size</span> <span class="bl bl-d">data</span>.
-
-<div class="byte-layout" markdown="0"><table>
-<thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
-<tr><td><code>{</code></td><td><span class="bl bl-t">7B</span></td><td>object start (<code>{</code>)</td></tr>
-<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-l">69 02</span> <span class="bl bl-d">69 64</span> <span class="bl bl-t">49</span> <span class="bl bl-d">01 2C</span></td><td>key: length 2 as int8 (<code>i</code>), then UTF-8 bytes; value: int16 (<code>I</code>), big-endian</td></tr>
-<tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-l">69 04</span> <span class="bl bl-d">6E 61 6D 65</span> <span class="bl bl-t">53</span> <span class="bl bl-l">69 04</span> <span class="bl bl-d">6A 73 6F 6E</span></td><td>key: length 4; value: string (<code>S</code>), length 4 as int8, UTF-8 bytes</td></tr>
-<tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-l">69 02</span> <span class="bl bl-d">70 69</span> <span class="bl bl-t">44</span> <span class="bl bl-d">40 09 1E B8 51 EB 85 1F</span></td><td>key: length 2; value: float64 (<code>D</code>), big-endian</td></tr>
-<tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-l">69 04</span> <span class="bl bl-d">74 61 67 73</span> <span class="bl bl-t">5B</span></td><td>key: length 4; value: array start (<code>[</code>)</td></tr>
-<tr><td><code>&quot;a&quot;,</code></td><td><span class="bl bl-t">53</span> <span class="bl bl-l">69 01</span> <span class="bl bl-d">61</span></td><td>string, length 1</td></tr>
-<tr><td><code>&quot;b&quot;</code></td><td><span class="bl bl-t">53</span> <span class="bl bl-l">69 01</span> <span class="bl bl-d">62</span></td><td>string, length 1</td></tr>
-<tr><td><code>]</code></td><td><span class="bl bl-t">5D</span></td><td>array end (<code>]</code>)</td></tr>
-<tr><td><code>}</code></td><td><span class="bl bl-t">7D</span></td><td>object end (<code>}</code>)</td></tr>
-</tbody></table></div>
 
 ## Deserialization
 
