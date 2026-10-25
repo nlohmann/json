@@ -139,7 +139,7 @@ Output:
 
 Now the exception message contains a JSON Pointer `/address/housenumber` that indicates which value has the wrong type.
 
-See [documentation of `JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) for more information.
+See [documentation of `JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) for more information, and [Debugging](https://json.nlohmann.me/home/debugging/index.md) for the debugger integrations of the library.
 
 ## Parse errors
 

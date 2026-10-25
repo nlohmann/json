@@ -143,7 +143,8 @@ As this global context comes at the price of storing one additional pointer per 
 
     Now the exception message contains a JSON Pointer `/address/housenumber` that indicates which value has the wrong type.
 
-See [documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) for more information.
+See [documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) for more information, and
+[Debugging](debugging.md) for the debugger integrations of the library.
 
 ## Parse errors
 

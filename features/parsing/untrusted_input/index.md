@@ -39,6 +39,7 @@ For the binary formats, an announced size is never trusted outright:
 Invalid UTF-8 is rejected while parsing, not just while serializing:
 
 - In JSON text, an ill-formed UTF-8 byte in a string is a [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101) ("invalid string: ill-formed UTF-8 byte").
+- In UTF-16 or UTF-32 input, an ill-formed sequence is a [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101) as well: a lone surrogate, a high surrogate that is not followed by its low surrogate, and a code point above `U+10FFFF` are all rejected.
 - In a binary format, a string that is not valid UTF-8 is a [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113).
 
 A `'\0'` (NUL) byte *inside* a quoted JSON string is always rejected (it must be escaped as `\u0000`). A NUL byte *outside* of a string is different: by default it is silently treated as the end of the input, so trailing bytes after it -- including further, otherwise well-formed JSON -- are silently ignored rather than rejected. Since untrusted input that happens to embed a NUL is a way to make part of it disappear without a parse error, see the [FAQ entry](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input) and consider defining [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) to `1` to reject a NUL byte like any other unexpected byte instead.

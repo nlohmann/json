@@ -218,6 +218,18 @@ When defined, UTF-8 validation of JSON strings read from contiguous byte input i
 
 See [full documentation of `JSON_USE_SIMDUTF`](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md).
 
+## `JSON_VIEW_NO_SIMD`
+
+When defined, the parser of [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) (`<nlohmann/json_view.hpp>`) uses only portable C++ to scan strings, instead of vector instructions (SSE2 on x86-64, NEON on AArch64). The same input is accepted or rejected either way; only the speed differs. It is not defined by default.
+
+See [full documentation of `JSON_VIEW_NO_SIMD`](https://json.nlohmann.me/api/macros/json_view_no_simd/index.md).
+
+## `JSON_VIEW_USE_SSSE3`
+
+When defined on x86-64, the parser of [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) (`<nlohmann/json_view.hpp>`) validates non-ASCII text in strings with SSSE3 without asking the CPU first. It is not defined by default.
+
+See [full documentation of `JSON_VIEW_USE_SSSE3`](https://json.nlohmann.me/api/macros/json_view_use_ssse3/index.md).
+
 ## `NLOHMANN_DEFINE_TYPE_*(...)`, `NLOHMANN_DEFINE_DERIVED_TYPE_*(...)`
 
 The library defines 12 macros to simplify the serialization/deserialization of types. See the page on [arbitrary type conversion](https://json.nlohmann.me/features/arbitrary_types/#simplify-your-life-with-macros) for a detailed discussion.

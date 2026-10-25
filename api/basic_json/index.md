@@ -42,6 +42,15 @@ The library imposes a number of requirements on these types that are not express
 - [**json**](https://json.nlohmann.me/api/json/index.md) - default specialization
 - [**ordered_json**](https://json.nlohmann.me/api/ordered_json/index.md) - a specialization that maintains the insertion order of object keys
 
+## Documents and views
+
+Besides `basic_json`, the library offers a second way to hold a parsed JSON text: a [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md), which owns or borrows the text and holds a flat index of the values in it, and a [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md), a read-only handle to one value of such a document. Both are defined in the header `<nlohmann/json_view.hpp>`; see [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) for the concept and the trade-offs.
+
+- [**json_document**](https://json.nlohmann.me/api/json_document/index.md) / [**ordered_json_document**](https://json.nlohmann.me/api/ordered_json_document/index.md) - read-only documents of the `basic_json` specialization they belong to
+- [**json_editable_document**](https://json.nlohmann.me/api/json_editable_document/index.md) / [**ordered_json_editable_document**](https://json.nlohmann.me/api/ordered_json_editable_document/index.md) - documents that can be modified in place
+- [**json_view**](https://json.nlohmann.me/api/json_view/index.md) / [**ordered_json_view**](https://json.nlohmann.me/api/ordered_json_view/index.md) - views of a document
+- [**json_editable_view**](https://json.nlohmann.me/api/json_editable_view/index.md) / [**ordered_json_editable_view**](https://json.nlohmann.me/api/ordered_json_editable_view/index.md) - views of an editable document
+
 ## Iterator invalidation
 
 All operations that add values to an **array** ([`push_back`](https://json.nlohmann.me/api/basic_json/push_back/index.md) , [`operator+=`](https://json.nlohmann.me/api/basic_json/operator%2B%3D/index.md), [`emplace_back`](https://json.nlohmann.me/api/basic_json/emplace_back/index.md), [`insert`](https://json.nlohmann.me/api/basic_json/insert/index.md), and [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) for a non-existing index) can yield a reallocation, in which case all iterators (including the [`end()`](https://json.nlohmann.me/api/basic_json/end/index.md) iterator) and all references to the elements are invalidated.
@@ -384,6 +393,8 @@ Output:
 ## See also
 
 - [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format](https://tools.ietf.org/html/rfc8259)
+- [basic_json_document](https://json.nlohmann.me/api/basic_json_document/index.md) / [basic_json_view](https://json.nlohmann.me/api/basic_json_view/index.md) - parse a JSON text into a flat index and read it through a view
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - when to use a document and a view instead of a `basic_json`
 
 ## Version history
 

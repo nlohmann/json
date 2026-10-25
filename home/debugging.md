@@ -1,7 +1,7 @@
 # Debugging
 
-This page collects the library's built-in debugger integrations and other debugging-related features. They are
-not linked from a single place elsewhere in the docs, so are collected here.
+This page collects the library's built-in debugger integrations and other debugging-related features. They are not
+covered by any single page elsewhere in the docs, so they are collected here.
 
 ## Visual Studio (natvis)
 

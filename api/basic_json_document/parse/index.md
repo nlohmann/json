@@ -19,14 +19,14 @@ static basic_json_document parse(IteratorType first, IteratorType last,
 1. Deserialize from a compatible input, borrowing or owning it depending on its value category and type (see Notes).
 1. Deserialize from a pair of input iterators.
 
-Both overloads accept the same JSON text as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md), with the same `ignore_comments`/`ignore_trailing_commas` options, but build a [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) (a flat index into the input) instead of a tree of `BasicJsonType` values. They take the same inputs as `BasicJsonType::parse()`. Byte inputs that stay alive can be borrowed; all others (streams, `FILE*`, wide characters, non-contiguous iterators) are read into a copy that the document owns -- see the Notes. Use [`parse_copy()`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) to get an owned copy of a borrowable input as well.
+Both overloads accept the same JSON text as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md), with the same `ignore_comments`/`ignore_trailing_commas` options, but build a [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) (a flat index into the input) instead of a tree of `BasicJsonType` values. They accept every input `BasicJsonType::parse()` takes, and in addition a pointer to a null-terminated wide string (which `BasicJsonType::parse()` rejects). Contiguous inputs of single-byte characters that stay alive can be borrowed; all others (streams, `FILE*`, wide characters, which must be converted to UTF-8, and non-contiguous iterators) are read into a copy that the document owns -- see the Notes. Use [`parse_copy()`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) to get an owned copy of a borrowable input as well.
 
 ## Template parameters
 
 `InputType` : A compatible input, for instance:
 
 ```
-- a `std::string`, `std::string_view`, or a C-style array of single-byte characters
+- a `std::string`, a `std::string_view` (C++17), or a C-style array of single-byte characters
 - a pointer to a null-terminated string of single-byte characters (`char`, `signed char`,
   `unsigned char`, `std::uint8_t`)
 - a container for which `obj.data()` and `obj.size()` give contiguous single-byte access, e.g.
@@ -39,6 +39,8 @@ Both overloads accept the same JSON text as [`BasicJsonType::parse()`](https://j
 ```
 
 `IteratorType` : an input iterator type, for instance a pair of pointers such as `ptr` and `ptr + len`, or a pair of `std::string::iterator`; the iterators of single-byte characters are borrowed or read like the byte inputs above, those of wide characters are converted to UTF-8
+
+Ill-formed UTF-16 and UTF-32 sequences are rejected: a lone surrogate, a high surrogate that is not followed by its low surrogate, and a code point above `U+10FFFF` all yield a [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101).
 
 ## Parameters
 
@@ -179,3 +181,4 @@ false
 ## Version history
 
 - Added in version 3.13.0 unreleased.
+- Ill-formed UTF-16 and UTF-32 input (a lone surrogate, a high surrogate that is not followed by its low surrogate, or a code point above `U+10FFFF`) is rejected with `parse_error.101`.

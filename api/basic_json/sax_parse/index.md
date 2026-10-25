@@ -30,6 +30,8 @@ Read from input and generate SAX events
 
    The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to the iterator type with `operator!=`.
 
+   Ill-formed UTF-16 and UTF-32 sequences are rejected: a lone surrogate, a high surrogate that is not followed by its low surrogate, and a code point above `U+10FFFF` all yield a [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101).
+
 The SAX event lister must follow the interface of [`json_sax`](https://json.nlohmann.me/api/json_sax/index.md).
 
 ## Template parameters
@@ -41,8 +43,12 @@ The SAX event lister must follow the interface of [`json_sax`](https://json.nloh
 - a `FILE` pointer
 - a C-style array of characters
 - a pointer to a null-terminated string of single byte characters
+- a `std::string` or a `std::string_view` (C++17)
 - a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
   (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
+- wide characters (`wchar_t`, `char16_t`, `char32_t`), which are converted to UTF-8: a wide string object
+  (`std::wstring`, `std::u16string`, `std::u32string`) or an array (e.g. a wide string literal); a pointer to a
+  null-terminated wide string (e.g. `std::u16string::c_str()`) is not supported
 ```
 
 `IteratorType` : a compatible iterator type for overload (2); a pair of character iterators whose `value_type` is an integral type with a size of 1, 2, or 4 bytes (interpreted respectively as UTF-8, UTF-16, and UTF-32)
@@ -298,6 +304,7 @@ result: false
 - `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 unreleased to optionally leave a `std::istream` positioned right after the parsed value when `strict` is `false`.
 - Parsing from an `std::istream` scans the characters in its stream buffer in bulk in version 3.13.0 unreleased ([`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md)).
 - Parsing from a `FILE*` locks the file once instead of once per character in version 3.13.0 unreleased ([`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md)).
+- Ill-formed UTF-16 and UTF-32 input (a lone surrogate, a high surrogate that is not followed by its low surrogate, or a code point above `U+10FFFF`) is rejected with `parse_error.101` in version 3.13.0 unreleased; before that, some such sequences were accepted or ended the input silently.
 
 Deprecation
 

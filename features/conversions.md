@@ -108,6 +108,18 @@ which avoids repeating it:
     
     ```
 
+!!! info "Getting values out of a document or a view"
+
+    A [view](../api/basic_json_view/index.md) offers the same `get<T>()` conversion. For the built-in types (booleans,
+    numbers, strings, `#!cpp std::vector`, `#!cpp std::map`, ...) it reads the value straight from the document's
+    index, without building a `basic_json` value first; user-defined types with a `from_json()` are converted from a
+    `basic_json` value, see the [list](../api/basic_json_view/get.md). Two conversions never copy at all:
+    [`get_string()`](../api/basic_json_view/get_string.md) returns a string as a view into the source text, and
+    [`number_token()`](../api/basic_json_view/number_token.md) returns a number exactly as it was written. Every other
+    type is obtained from a subtree that is built on demand with
+    [`materialize()`](../api/basic_json_view/materialize.md). See
+    [Zero-copy JSON views](json_view.md#getting-values-out-without-copying).
+
 The library already knows how to convert to and from the scalar types and the STL containers (such as
 `#!cpp std::vector`, `#!cpp std::map`, `#!cpp std::array`, `#!cpp std::optional`, and many more). Converting a JSON
 object back to a `#!cpp std::map` or a JSON array back to a `#!cpp std::vector` therefore works without any extra code:
@@ -304,3 +316,4 @@ The conversions above are built in for standard types. To make the same syntax w
 - [`get_ref`](../api/basic_json/get_ref.md) / [`get_ptr`](../api/basic_json/get_ptr.md) - access the stored value without copying
 - [Arbitrary types conversions](arbitrary_types.md) - support your own types
 - [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) - toggle implicit conversions
+- [Zero-copy JSON views](json_view.md) - get values out of a document or a view

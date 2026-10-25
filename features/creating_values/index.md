@@ -1,6 +1,6 @@
 # Creating JSON values
 
-There are several ways to create a JSON value in memory. This page gives an overview; to read a value from JSON text instead, see [parsing](https://json.nlohmann.me/features/parsing/index.md).
+There are several ways to create a JSON value in memory. This page gives an overview; to read a value from JSON text instead, see [parsing](https://json.nlohmann.me/features/parsing/index.md). A JSON text can also be parsed into a [document](https://json.nlohmann.me/api/basic_json_document/index.md) and read through a [view](https://json.nlohmann.me/api/basic_json_view/index.md) instead of into a value; see [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md).
 
 ## From C++ values
 
@@ -105,3 +105,4 @@ Note this **parses** the string, so `"42"_json` is the number `42`, whereas `jso
 - [`operator""_json`](https://json.nlohmann.me/api/operator_literal_json/index.md) - the `_json` literal
 - [Converting values](https://json.nlohmann.me/features/conversions/index.md) - which C++ types can be used
 - [Parsing](https://json.nlohmann.me/features/parsing/index.md) - create a value from JSON text
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - create a document and a view from JSON text instead of a value

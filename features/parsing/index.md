@@ -17,6 +17,7 @@ flowchart LR
 The [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) function reads a JSON value from an input. The input can be
 
 - a string (`std::string`, C string, or string literal),
+- a wide string (`std::u16string`, `std::u32string`, or `std::wstring`, or a wide string literal),
 - a `std::istream` (e.g., an `std::ifstream` reading from a file),
 - a `FILE*` pointer,
 - a pair of iterators over a contiguous range (e.g., a `std::vector<std::uint8_t>`), or
@@ -31,9 +32,11 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
-The input must be encoded in UTF-8; other encodings are not supported. A single input may contain only one JSON value. Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) format.
+The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which is read as UTF-16 or UTF-32 -- depending on the character type -- and converted to UTF-8; see the [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) page for an example. A single input may contain only one JSON value. Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) format.
 
 By default, the library rejects comments and trailing commas. Both can be enabled with parameters of the `parse` function — see [comments](https://json.nlohmann.me/features/comments/index.md) and [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md).
+
+[`basic_json_document::parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) accepts the same inputs with the same options, but keeps the result in a document rather than in a `basic_json` value; see [Documents and views](#documents-and-views) below.
 
 ## Strictness and trailing data
 
@@ -69,6 +72,19 @@ The library offers two parsing models:
 
 You can influence a DOM parse without switching to the SAX interface by passing a [parser callback](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md), which is called during parsing and can, for example, discard parts of the input.
 
+## Documents and views
+
+A third model sits between DOM and SAX: [`basic_json_document::parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) parses the input into a document that keeps the text and a flat index of the values in it, and [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) gives read-only access to the values through that index. The whole input is validated during parsing, but only integers and strings that contain escape sequences are converted right away (the strings into a buffer owned by the document). Floating-point numbers and all other strings stay in the source text and are only converted when they are read, which is faster and uses less memory than building a tree of `basic_json` values when only parts of the document are needed. A document can also be modified in place, and it can be saved and loaded again without parsing it.
+
+```
+#include <nlohmann/json_view.hpp>
+
+json_document doc = json_document::parse(R"({"happy": true, "pi": 3.141})");
+std::cout << doc.root()["happy"].get<bool>() << '\n';
+```
+
+See [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) for the concept and the trade-offs.
+
 ## Exceptions
 
 When the input is not valid JSON, the `parse` function throws an exception by default. If exceptions are undesired or unavailable, the parser can instead return a discarded value, or [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) can be used to only check whether an input is valid JSON. See [parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) for the available options.
@@ -76,6 +92,7 @@ When the input is not valid JSON, the `parse` function throws an exception by de
 ## See also
 
 - [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`basic_json_document::parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize into a document instead of a value
 - [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
 - [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events
 - [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) - parse newline-delimited JSON
@@ -83,3 +100,4 @@ When the input is not valid JSON, the `parse` function throws an exception by de
 - [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - implement a custom SAX handler
 - [parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - control error handling
 - [parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - what to consider when parsing input from untrusted sources
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - parse into a document and read it through a view

@@ -22,6 +22,8 @@ Checks whether the input is valid JSON.
 
    The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to the iterator type with `operator!=`.
 
+   Ill-formed UTF-16 and UTF-32 sequences are rejected: a lone surrogate, a high surrogate that is not followed by its low surrogate, and a code point above `U+10FFFF` all make this function return `false`.
+
 Unlike the [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) function, this function neither throws an exception in case of invalid JSON input (i.e., a parse error) nor creates diagnostic information.
 
 ## Template parameters
@@ -33,9 +35,12 @@ Unlike the [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) f
 - a `FILE` pointer (throws if null)
 - a C-style array of characters
 - a pointer to a null-terminated string of single byte characters (throws if null)
-- a `std::string`
+- a `std::string` or a `std::string_view` (C++17)
 - a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
   (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
+- wide characters (`wchar_t`, `char16_t`, `char32_t`), which are converted to UTF-8: a wide string object
+  (`std::wstring`, `std::u16string`, `std::u32string`) or an array (e.g. a wide string literal); a pointer to a
+  null-terminated wide string (e.g. `std::u16string::c_str()`) is not supported
 ```
 
 `IteratorType` : a compatible iterator type, for instance.
@@ -155,6 +160,37 @@ Output:
 true false
 ```
 
+Example: (3) reading from UTF-16 strings
+
+The encoding is deduced from the character type of the input. String literals like `u"..."`, `U"..."`, and `L"..."` work as well.
+
+```
+#include <iostream>
+#include <string>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+int main()
+{
+    // a valid JSON text, given as UTF-16
+    const std::u16string valid_text = u"{\"name\":\"\u00e9\"}";
+
+    // an invalid JSON text, given as UTF-16
+    const std::u16string invalid_text = u"{\"name\":\"\u00e9\",}";
+
+    std::cout << std::boolalpha
+              << json::accept(valid_text) << ' '
+              << json::accept(invalid_text) << '\n';
+}
+```
+
+Output:
+
+```
+true false
+```
+
 ## See also
 
 - [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
@@ -175,6 +211,7 @@ true false
 - `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 unreleased to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
 - Parsing from an `std::istream` scans the characters in its stream buffer in bulk in version 3.13.0 unreleased ([`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md)).
 - Parsing from a `FILE*` locks the file once instead of once per character in version 3.13.0 unreleased ([`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md)).
+- Ill-formed UTF-16 and UTF-32 input (a lone surrogate, a high surrogate that is not followed by its low surrogate, or a code point above `U+10FFFF`) is rejected in version 3.13.0 unreleased; before that, some such sequences were accepted or ended the input silently.
 
 Deprecation
 

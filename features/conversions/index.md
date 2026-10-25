@@ -100,6 +100,10 @@ number: {"floating-point":17.23,"integer":42}
 string: "Hello, world!"
 ```
 
+Getting values out of a document or a view
+
+A [view](https://json.nlohmann.me/api/basic_json_view/index.md) offers the same `get<T>()` conversion. For the built-in types (booleans, numbers, strings, `std::vector`, `std::map`, ...) it reads the value straight from the document's index, without building a `basic_json` value first; user-defined types with a `from_json()` are converted from a `basic_json` value, see the [list](https://json.nlohmann.me/api/basic_json_view/get/index.md). Two conversions never copy at all: [`get_string()`](https://json.nlohmann.me/api/basic_json_view/get_string/index.md) returns a string as a view into the source text, and [`number_token()`](https://json.nlohmann.me/api/basic_json_view/number_token/index.md) returns a number exactly as it was written. Every other type is obtained from a subtree that is built on demand with [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md). See [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#getting-values-out-without-copying).
+
 The library already knows how to convert to and from the scalar types and the STL containers (such as `std::vector`, `std::map`, `std::array`, `std::optional`, and many more). Converting a JSON object back to a `std::map` or a JSON array back to a `std::vector` therefore works without any extra code:
 
 ```
@@ -246,3 +250,4 @@ The conversions above are built in for standard types. To make the same syntax w
 - [`get_ref`](https://json.nlohmann.me/api/basic_json/get_ref/index.md) / [`get_ptr`](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) - access the stored value without copying
 - [Arbitrary types conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - support your own types
 - [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) - toggle implicit conversions
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - get values out of a document or a view

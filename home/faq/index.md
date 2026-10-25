@@ -78,8 +78,9 @@ Questions
 
 The library supports **Unicode input** as follows:
 
-- Only **UTF-8** encoded input is supported, which is the default encoding for JSON, according to [RFC 8259](https://tools.ietf.org/html/rfc8259.html#section-8.1).
-- `std::u16string` and `std::u32string` can be parsed, assuming UTF-16 and UTF-32 encoding, respectively. These encodings are not supported when reading from files or other input containers.
+- **UTF-8** encoded input is supported, which is the default encoding for JSON, according to [RFC 8259](https://tools.ietf.org/html/rfc8259.html#section-8.1).
+- `std::u16string` and `std::u32string` can be parsed, assuming UTF-16 and UTF-32 encoding, respectively; `std::wstring` works as well and is interpreted as UTF-16 or UTF-32, depending on the width of the platform's `wchar_t`. These encodings cannot be read from a `FILE*` or a `std::istream`, which carry bytes only.
+- Ill-formed UTF-16 or UTF-32 input is rejected: a lone surrogate, a high surrogate that is not followed by its low surrogate, and a code point above `U+10FFFF` all yield a parse error. The same holds for iterators over 2- or 4-byte characters.
 - Other encodings such as Latin-1 or ISO 8859-1 are **not** supported and will yield parse or serialization errors.
 - The library will not replace [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1).
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
@@ -142,7 +143,7 @@ Question
 
 Why are wide strings (e.g., `std::wstring`) dumped as arrays of numbers?
 
-As described [above](#parse-errors-reading-non-ascii-characters), the library assumes UTF-8 as encoding. To store a wide string, you need to change the encoding.
+As described [above](#parse-errors-reading-non-ascii-characters), the library stores its strings as UTF-8. To store a wide string as a string, convert it to a UTF-8 encoded `std::string` first, as in the example below.
 
 Example
 

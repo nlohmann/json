@@ -1,7 +1,9 @@
 # Creating JSON values
 
 There are several ways to create a JSON value in memory. This page gives an overview; to read a value from JSON text
-instead, see [parsing](parsing/index.md).
+instead, see [parsing](parsing/index.md). A JSON text can also be parsed into a
+[document](../api/basic_json_document/index.md) and read through a [view](../api/basic_json_view/index.md) instead of
+into a value; see [Zero-copy JSON views](json_view.md).
 
 ## From C++ values
 
@@ -118,3 +120,4 @@ string `#!json "42"`.
 - [`operator""_json`](../api/operator_literal_json.md) - the `_json` literal
 - [Converting values](conversions.md) - which C++ types can be used
 - [Parsing](parsing/index.md) - create a value from JSON text
+- [Zero-copy JSON views](json_view.md) - create a document and a view from JSON text instead of a value

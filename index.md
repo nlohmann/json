@@ -1,6 +1,6 @@
 # JSON for Modern C++
 
-JSON for Modern C++ is a header-only C++11 library that turns JSON into a first-class C++ data type, using the operator magic of modern C++ so that creating, reading, and modifying JSON values feels as natural as it does in languages like Python. The whole library is available as a single header, `json.hpp`, with no dependencies, no subproject, and no complex build system to set up; a companion header, `json_fwd.hpp`, provides forward declarations to keep compile times down. See [header-only integration](https://json.nlohmann.me/integration/index.md) for details. It is heavily unit-tested with 100% code coverage, checked with Valgrind and the Clang Sanitizers for memory leaks, and continuously fuzz-tested by Google OSS-Fuzz.
+JSON for Modern C++ is a header-only C++11 library that turns JSON into a first-class C++ data type, using the operator magic of modern C++ so that creating, reading, and modifying JSON values feels as natural as it does in languages like Python. The whole library is available as a single header, `json.hpp`, with no dependencies, no subproject, and no complex build system to set up; a companion header, `json_fwd.hpp`, provides forward declarations to keep compile times down, `<nlohmann/json_literals.hpp>` holds the user-defined string literals on their own, and `<nlohmann/json_view.hpp>` adds zero-copy views and editable documents. See [header-only integration](https://json.nlohmann.me/integration/index.md) for details. It is heavily unit-tested with 100% code coverage, checked with Valgrind and the Clang Sanitizers for memory leaks, and continuously fuzz-tested by Google OSS-Fuzz.
 
 ## Quick start
 
@@ -46,7 +46,7 @@ See [Integration](https://json.nlohmann.me/integration/index.md) for CMake in de
 
   ______________________________________________________________________
 
-  Creating, parsing, accessing, and serializing JSON values, JSON Pointer/Patch, binary formats, and more.
+  Creating, parsing, accessing, and serializing JSON values, JSON Pointer/Patch, binary formats, zero-copy views, and more.
 
   [Features](https://json.nlohmann.me/features/index.md)
 
@@ -62,7 +62,7 @@ See [Integration](https://json.nlohmann.me/integration/index.md) for CMake in de
 
   ______________________________________________________________________
 
-  The complete reference for `basic_json` and its member functions, types, and related classes.
+  The complete reference for `basic_json` and its member functions, types, and related classes, as well as for `json_document` and `json_view`.
 
   [API documentation](https://json.nlohmann.me/api/basic_json/index.md)
 

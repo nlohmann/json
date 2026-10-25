@@ -111,6 +111,10 @@ json a = {1, 2, 3, 4};
 a.erase(1);             // [1,3,4]  (erase by index)
 ```
 
+## Editing a document
+
+The operations above work on a `basic_json` value. A JSON text that was parsed into a [document](https://json.nlohmann.me/features/json_view/#editing-a-document) can also be changed in place, without building a `basic_json` tree for the parts that are not touched: [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) replaces a value, adds or replaces an object member, or replaces an array element (also through a JSON pointer), [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) appends to an array, [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md) inserts into an array (unlike `basic_json::insert`, it has no object overload; members are added with `set`), and [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md) removes a member or an element. These functions are available on the editable document types, such as [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md).
+
 ## See also
 
 - [`push_back`](https://json.nlohmann.me/api/basic_json/push_back/index.md) / [`emplace_back`](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) - append to an array
@@ -119,3 +123,4 @@ a.erase(1);             // [1,3,4]  (erase by index)
 - [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - apply an RFC 7396 merge patch
 - [`erase`](https://json.nlohmann.me/api/basic_json/erase/index.md) / [`clear`](https://json.nlohmann.me/api/basic_json/clear/index.md) - remove elements
 - [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md) and [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) - structured modifications
+- [Editing a document](https://json.nlohmann.me/features/json_view/#editing-a-document) - change a parsed document in place
