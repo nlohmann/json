@@ -42,7 +42,9 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value. Bytes that were already written to
+the output adapter are not taken back; for `[1,2,<discarded>]`, three bytes are written before
+[`type_error.321`](../../home/exceptions.md#jsonexceptiontype_error321) is thrown.
 
 ## Exceptions
 
