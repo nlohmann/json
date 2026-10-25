@@ -120,7 +120,7 @@ $(AMALGAMATED_VIEW_FILE): $(SRCS)
 	tools/amalgamate/amalgamate.py -c tools/amalgamate/config_json_view.json -s . --verbose=yes
 
 NATVIS_VENV=tools/generate_natvis/venv
-# extra options for generate_natvis.py, e.g. NATVIS_ARGS="--abi-tags _diag,_dp,_vns --output my.natvis"
+# extra options for generate_natvis.py, e.g. NATVIS_ARGS="--abi-tags _diag,_dp,_ns --output my.natvis"
 NATVIS_ARGS=
 
 # regenerate nlohmann_json.natvis from the ABI tags and version in include/nlohmann/detail/abi_macros.hpp

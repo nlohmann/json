@@ -34,11 +34,11 @@ version other than the one in `abi_macros.hpp`.
 | Option            | Description                                                                                                                                                                                                                                         |
 |-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--list-tags`     | Print every ABI tag (in namespace order) with the macro that enables it and the `NLOHMANN_JSON_ABI_TAG_*` identifier, then exit.                                                                                                                    |
-| `--abi-tags TAGS` | Add the namespaces of one configuration, given as a comma-separated list of ABI tags (`_diag,_dp,_vns`; the leading underscore is optional, and the order does not matter). Can be repeated for several configurations. Unknown tags are an error. |
+| `--abi-tags TAGS` | Add the namespaces of one configuration, given as a comma-separated list of ABI tags (`_diag,_dp,_ns`; the leading underscore is optional, and the order does not matter). Can be repeated for several configurations. Unknown tags are an error. |
 | `--all`           | Generate the namespaces for every combination of ABI tags. The file size doubles with each tag (about 60 MB for 12 tags). Cannot be combined with `--abi-tags`.                                                                                    |
 | `--output FILE`   | Write the Natvis file to `FILE` instead of `nlohmann_json.natvis` in the repository root.                                                                                                                                                           |
 
-Each configuration gets both the versioned (`json_abi_diag_dp_vns_v3_12_0`) and the unversioned (`json_abi_diag_dp_vns`,
+Each configuration gets both the versioned (`json_abi_diag_dp_ns_v3_12_0`) and the unversioned (`json_abi_diag_dp_ns`,
 used with `NLOHMANN_JSON_NAMESPACE_NO_VERSION`) namespace. The default namespaces (up to two ABI tags) are always
 included, so a generated file can replace the checked-in one.
 
@@ -52,10 +52,10 @@ included, so a generated file can replace the checked-in one.
    ```
 
 3. Generate a Natvis file with them, for example for `JSON_DIAGNOSTICS`, `JSON_DIAGNOSTIC_POSITIONS`, and
-   `JSON_VIEW_NO_SIMD`:
+   `JSON_NO_SIMD`:
 
    ```shell
-   make natvis NATVIS_ARGS="--abi-tags _diag,_dp,_vns --output my_nlohmann_json.natvis"
+   make natvis NATVIS_ARGS="--abi-tags _diag,_dp,_ns --output my_nlohmann_json.natvis"
    ```
 
 4. Use `my_nlohmann_json.natvis` instead of the shipped `nlohmann_json.natvis`, for example by adding it to your Visual
