@@ -26,6 +26,7 @@
 #include <nlohmann/detail/view/lookup.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/node.hpp>
+#include <nlohmann/detail/view/scan.hpp>
 #include <nlohmann/detail/view/view_mode.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -46,10 +47,9 @@ struct first_true<false, Conditions...> : std::integral_constant < int, 1 + firs
 /// (type_error.316 with the same message), so that an editable document
 /// only holds valid UTF-8: the error is at the first byte that no
 /// well-formed sequence can continue with (Unicode, Table 3-7).
-inline void check_utf8(const char* s, std::size_t n)
+NLOHMANN_VIEW_ALWAYS_INLINE void check_utf8_bytewise(const unsigned char* p, std::size_t n, std::size_t i)
 {
-    const auto* const p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    for (std::size_t i = 0; i < n;)
+    for (; i < n;)
     {
         const unsigned char c = p[i];
         if (c < 0x80)
@@ -77,6 +77,43 @@ inline void check_utf8(const char* s, std::size_t n)
         }
         i += len;
     }
+}
+
+/// The long-string path of check_utf8(): skips well-formed runs with the
+/// parser's string scan (which stops at a quote, a backslash, or a control
+/// character, all legal here, and at ill-formed UTF-8); the byte-wise check
+/// runs only from where the scan found ill-formed UTF-8, to report it.
+NLOHMANN_VIEW_NOINLINE inline void check_utf8_scan(const unsigned char* p, std::size_t n)
+{
+    const unsigned char* const e = p + n;
+    const unsigned char* q = p;
+    for (;;)
+    {
+        q = scan_string_run<true>(q, e);
+        if (q == e)
+        {
+            return;
+        }
+        if (*q >= 0x80)
+        {
+            check_utf8_bytewise(p, n, static_cast<std::size_t>(q - p));
+            return; // not reached: the scan stopped at ill-formed UTF-8
+        }
+        ++q; // a quote, backslash, or control character
+    }
+}
+
+inline void check_utf8(const char* s, std::size_t n)
+{
+    const auto* const p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    if (NLOHMANN_VIEW_UNLIKELY(n >= 32))
+    {
+        check_utf8_scan(p, n);
+        return;
+    }
+    // short strings: the vector scan costs more than it saves; (the loop is
+    // inlined with a constant start, so this path is the plain byte-wise check)
+    check_utf8_bytewise(p, n, 0);
 }
 
 /*!
