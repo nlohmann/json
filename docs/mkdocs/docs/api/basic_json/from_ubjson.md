@@ -89,7 +89,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [out_of_range.406](../../home/exceptions.md#jsonexceptionout_of_range406) if a high-precision number, or a
   float64 when `number_float_t` is `float`, does not fit into `number_float_t`
 - Throws [out_of_range.408](../../home/exceptions.md#jsonexceptionout_of_range408) if the count of an optimized
-  container exceeds the capacity of the container (or of `std::size_t`), or if an optimized array of `Z`, `T` or `F` has
+  container exceeds the capacity of the container (or of `std::size_t`), or if an optimized array of `Z`, `T`, or `F` has
   more than 1,048,576 elements
 
 ## Complexity

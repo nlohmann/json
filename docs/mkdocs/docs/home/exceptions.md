@@ -1229,7 +1229,7 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 ### json.exception.other_error.502
 
 [`to_ubjson`](../api/basic_json/to_ubjson.md) and [`to_bjdata`](../api/basic_json/to_bjdata.md) were called with
-`use_type = true` but `use_size = false` for a value that contains a non-empty array, object or binary value. UBJSON
+`use_type = true` but `use_size = false` for a value that contains a non-empty array, object, or binary value. UBJSON
 requires a size marker (`#`) after a type marker (`$`); scalars and empty containers do not throw.
 
 !!! failure "Example message"

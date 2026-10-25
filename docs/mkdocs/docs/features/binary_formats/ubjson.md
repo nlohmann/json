@@ -44,29 +44,29 @@ Consider the following JSON value (shown formatted for readability):
 
 The library uses the following mapping from JSON values types to UBJSON types according to the UBJSON specification:
 
-| JSON value type | value/range                               | UBJSON type    | marker |
-|-----------------|-------------------------------------------|----------------|--------|
-| null            | `null`                                    | null           | `Z`    |
-| boolean         | `true`                                    | true           | `T`    |
-| boolean         | `false`                                   | false          | `F`    |
-| number_integer  | -9223372036854775808..-2147483649         | int64          | `L`    |
-| number_integer  | -2147483648..-32769                       | int32          | `l`    |
-| number_integer  | -32768..-129                              | int16          | `I`    |
-| number_integer  | -128..127                                 | int8           | `i`    |
-| number_integer  | 128..255                                  | uint8          | `U`    |
-| number_integer  | 256..32767                                | int16          | `I`    |
-| number_integer  | 32768..2147483647                         | int32          | `l`    |
-| number_integer  | 2147483648..9223372036854775807           | int64          | `L`    |
-| number_unsigned | 0..127                                    | int8           | `i`    |
-| number_unsigned | 128..255                                  | uint8          | `U`    |
-| number_unsigned | 256..32767                                | int16          | `I`    |
-| number_unsigned | 32768..2147483647                         | int32          | `l`    |
-| number_unsigned | 2147483648..9223372036854775807           | int64          | `L`    |
-| number_unsigned | 9223372036854775808..18446744073709551615 | high-precision | `H`    |
+| JSON value type | value/range                               | UBJSON type                                      | marker    |
+|-----------------|-------------------------------------------|--------------------------------------------------|-----------|
+| null            | `null`                                    | null                                             | `Z`       |
+| boolean         | `true`                                    | true                                             | `T`       |
+| boolean         | `false`                                   | false                                            | `F`       |
+| number_integer  | -9223372036854775808..-2147483649         | int64                                            | `L`       |
+| number_integer  | -2147483648..-32769                       | int32                                            | `l`       |
+| number_integer  | -32768..-129                              | int16                                            | `I`       |
+| number_integer  | -128..127                                 | int8                                             | `i`       |
+| number_integer  | 128..255                                  | uint8                                            | `U`       |
+| number_integer  | 256..32767                                | int16                                            | `I`       |
+| number_integer  | 32768..2147483647                         | int32                                            | `l`       |
+| number_integer  | 2147483648..9223372036854775807           | int64                                            | `L`       |
+| number_unsigned | 0..127                                    | int8                                             | `i`       |
+| number_unsigned | 128..255                                  | uint8                                            | `U`       |
+| number_unsigned | 256..32767                                | int16                                            | `I`       |
+| number_unsigned | 32768..2147483647                         | int32                                            | `l`       |
+| number_unsigned | 2147483648..9223372036854775807           | int64                                            | `L`       |
+| number_unsigned | 9223372036854775808..18446744073709551615 | high-precision                                   | `H`       |
 | number_float    | *any value*                               | float64 (float32 if `number_float_t` is `float`) | `D` (`d`) |
-| string          | *with shortest length indicator*          | string         | `S`    |
-| array           | *see notes on optimized format*           | array          | `[`    |
-| object          | *see notes on optimized format*           | object         | `{`    |
+| string          | *with shortest length indicator*          | string                                           | `S`       |
+| array           | *see notes on optimized format*           | array                                            | `[`       |
+| object          | *see notes on optimized format*           | object                                           | `{`       |
 
 !!! success "Complete mapping"
 
@@ -109,10 +109,10 @@ The library uses the following mapping from JSON values types to UBJSON types ac
     have the same type and adds the type marker to the beginning of the container. The `use_type` parameter must only be
     used together with `use_size = true`: combining `use_type` with `use_size = false` throws
     [`other_error.502`](../../home/exceptions.md#jsonexceptionother_error502) if the value contains a non-empty array,
-    object or binary value.
+    object, or binary value.
 
     Two elements have the same type if they are written with the same type marker. For example, `[1, 2]` is written with
-    the type `i`, but `[1, 200]` (`i`, `U`), `[true, false]` (`T`, `F`) and `[1, 2.5]` (`i`, `D`) are not; an empty
+    the type `i`, but `[1, 200]` (`i`, `U`), `[true, false]` (`T`, `F`), and `[1, 2.5]` (`i`, `D`) are not; an empty
     container is never given a `$` annotation of its own (an array of empty arrays is still typed `[`).
 
     Note that `use_size = true` alone may result in larger representations - the benefit of this parameter is that the
@@ -148,30 +148,30 @@ The library uses the following mapping from JSON values types to UBJSON types ac
 
 The library maps UBJSON types to JSON value types as follows:
 
-| UBJSON type | JSON value type                         | marker |
-|-------------|-----------------------------------------|--------|
-| no-op       | *no value, next value is read*          | `N`    |
-| null        | `null`                                  | `Z`    |
-| false       | `false`                                 | `F`    |
-| true        | `true`                                  | `T`    |
-| float32     | number_float                            | `d`    |
-| float64     | number_float                            | `D`    |
-| uint8       | number_unsigned                         | `U`    |
-| int8        | number_integer                          | `i`    |
-| int16       | number_integer                          | `I`    |
-| int32       | number_integer                          | `l`    |
-| int64       | number_integer                          | `L`    |
-| string      | string                                  | `S`    |
-| char        | string                                  | `C`    |
-| high-precision | number_unsigned, number_integer or number_float | `H` |
-| array       | array (optimized values are supported)  | `[`    |
-| object      | object (optimized values are supported) | `{`    |
+| UBJSON type    | JSON value type                                  | marker |
+|----------------|--------------------------------------------------|--------|
+| no-op          | *no value, next value is read*                   | `N`    |
+| null           | `null`                                           | `Z`    |
+| false          | `false`                                          | `F`    |
+| true           | `true`                                           | `T`    |
+| float32        | number_float                                     | `d`    |
+| float64        | number_float                                     | `D`    |
+| uint8          | number_unsigned                                  | `U`    |
+| int8           | number_integer                                   | `i`    |
+| int16          | number_integer                                   | `I`    |
+| int32          | number_integer                                   | `l`    |
+| int64          | number_integer                                   | `L`    |
+| string         | string                                           | `S`    |
+| char           | string                                           | `C`    |
+| high-precision | number_unsigned, number_integer, or number_float | `H`    |
+| array          | array (optimized values are supported)           | `[`    |
+| object         | object (optimized values are supported)          | `{`    |
 
 !!! info "High-precision numbers"
 
     The payload of `H` is a length-prefixed string that is parsed as a JSON number (surrounding whitespace is ignored).
     Integer text in the range of `number_unsigned_t` (non-negative) or `number_integer_t` (negative) is stored as such;
-    any other valid number text (larger or smaller integers, fractions, exponents such as `1e2`) is stored as
+    any other valid number text (larger or smaller integers, fractions, and exponents such as `1e2`) is stored as
     `number_float`, so precision may be lost. Text that is not a valid JSON number raises
     [`parse_error.115`](../../home/exceptions.md#jsonexceptionparse_error115), a number outside the range of
     `number_float_t` (`1e999`) raises [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406).
@@ -180,7 +180,7 @@ The library maps UBJSON types to JSON value types as follows:
 
     Every well-formed UBJSON value can be converted to a JSON value, with these exceptions: a high-precision number
     outside the range of `number_float_t` ([`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406)),
-    an optimized array of `Z`, `T` or `F` with more than 1,048,576 elements, and a count that exceeds the capacity of the
+    an optimized array of `Z`, `T`, or `F` with more than 1,048,576 elements, and a count that exceeds the capacity of the
     container ([`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408)). High-precision numbers that
     do not fit an integer type are stored as floating-point numbers and may lose precision. Ill-formed input is rejected
     with a parse error.
@@ -192,7 +192,7 @@ The library maps UBJSON types to JSON value types as follows:
 
 !!! info "Type marker of optimized containers"
 
-    The type marker after `$` must be one of `Z`, `N`, `T`, `F`, `i`, `U`, `I`, `l`, `L`, `d`, `D`, `H`, `C`, `S`, `[` or
+    The type marker after `$` must be one of `Z`, `N`, `T`, `F`, `i`, `U`, `I`, `l`, `L`, `d`, `D`, `H`, `C`, `S`, `[`, or
     `{`. It is checked even if the count is 0; any other marker raises
     [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112). A counted object typed `N` (`{$N#i1 ...`)
     is not supported.
