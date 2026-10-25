@@ -92,8 +92,10 @@ to choose the alternative.
 
 ## `std::chrono`
 
-A duration is written as its count and read back with the same representation and period. The **unit is not part of
-the JSON value**, so document it, for example in the member name (`timeout_ms`):
+A duration is written as an object with the keys `unit` and `value`, for example `{"unit": "ms", "value": 1500}`, so
+the JSON value is self-describing. The serializer names the unit of the period (`ns`, `us`, `ms`, `s`, `min`, `h`;
+extend the list for other periods), and the deserializer rejects a value whose unit differs from the requested
+duration type instead of silently misreading it:
 
 ??? example "Example: serialize durations and system_clock time points"
 
@@ -107,7 +109,7 @@ the JSON value**, so document it, for example in the member name (`timeout_ms`):
     --8<-- "examples/type_recipes_chrono.output"
     ```
 
-A `system_clock::time_point` with millisecond precision is written as the number of milliseconds since the Unix epoch.
+A `system_clock::time_point` with millisecond precision is written as the duration since the Unix epoch, that is, as an object with `unit` and `value`.
 The time point serializer is limited to `system_clock`,
 because the epoch of other clocks (for example `steady_clock`) has no meaning outside the running program.
 

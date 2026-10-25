@@ -1,4 +1,5 @@
-duration: 1500
+duration: {"unit":"ms","value":1500}
 as milliseconds: 1500
-time point: 1700000000123
+error: unexpected unit "ms"
+time point: {"unit":"ms","value":1700000000123}
 round trip: true
