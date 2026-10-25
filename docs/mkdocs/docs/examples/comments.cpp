@@ -2,7 +2,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -20,7 +20,7 @@ int main()
     }
     catch (json::exception& e)
     {
-        std::cout << e.what() << std::endl;
+        std::cout << e.what() << '\n';
     }
 
     json j = json::parse(s,

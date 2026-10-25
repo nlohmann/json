@@ -35,7 +35,7 @@ See also the documentation on [element access](element_access/index.md).
     ```cpp
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -57,7 +57,7 @@ See also the documentation on [element access](element_access/index.md).
     ```cpp
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -85,7 +85,7 @@ uninitialized iterator is undefined behavior and yields a runtime assertion.
     ```cpp
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -112,7 +112,7 @@ behavior and yields a runtime assertion.
     ```cpp
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -144,7 +144,7 @@ result in undefined behavior. Since version 3.12.0, this library checks for `nul
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

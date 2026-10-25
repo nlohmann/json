@@ -3,7 +3,7 @@
 #define JSON_DIAGNOSTIC_POSITIONS 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

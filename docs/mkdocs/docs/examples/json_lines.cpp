@@ -2,7 +2,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -17,6 +17,6 @@ int main()
     std::string line;
     while (std::getline(input, line))
     {
-        std::cout << json::parse(line) << std::endl;
+        std::cout << json::parse(line) << '\n';
     }
 }

@@ -38,7 +38,7 @@ static int json_throw_user_call_count = 0; // NOLINT(cppcoreguidelines-avoid-non
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
-using json = nlohmann::json;
+using nlohmann::json;
 
 TEST_CASE("JSON_NO_IO")
 {

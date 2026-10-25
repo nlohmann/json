@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 json parse_strict(const std::string& input)
 {

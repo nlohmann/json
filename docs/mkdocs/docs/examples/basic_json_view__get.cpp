@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-using json_document = nlohmann::json_document;
-using json_view = nlohmann::json_view;
+using nlohmann::json_document;
+using nlohmann::json_view;
 
 // address has no direct conversion in get<T>(), so get<address>() falls back
 // to materialize().get<address>() -- a real nlohmann::json value is built

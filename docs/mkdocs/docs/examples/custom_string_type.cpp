@@ -13,6 +13,6 @@ int main()
     j["happy"] = true;
     j["list"] = {1, 2, 3};
 
-    std::cout << j.dump(2) << std::endl;
-    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+    std::cout << j.dump(2) << '\n';
+    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << '\n';
 }

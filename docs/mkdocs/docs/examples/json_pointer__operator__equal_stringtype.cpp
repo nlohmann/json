@@ -2,7 +2,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -20,14 +20,14 @@ int main()
     std::cout << std::boolalpha
               << "\"" << ptr0 << "\" == \"" << str0 << "\": " << (ptr0 == str0) << '\n'
               << "\"" << str0 << "\" == \"" << ptr1 << "\": " << (str0 == ptr1) << '\n'
-              << "\"" << ptr2 << "\" == \"" << str1 << "\": " << (ptr2 == str1) << std::endl;
+              << "\"" << ptr2 << "\" == \"" << str1 << "\": " << (ptr2 == str1) << '\n';
 
     try
     {
-        std::cout << "\"" << str2 << "\" == \"" << ptr2 << "\": " << (str2 == ptr2) << std::endl;
+        std::cout << "\"" << str2 << "\" == \"" << ptr2 << "\": " << (str2 == ptr2) << '\n';
     }
     catch (const json::parse_error& ex)
     {
-        std::cout << ex.what() << std::endl;
+        std::cout << ex.what() << '\n';
     }
 }

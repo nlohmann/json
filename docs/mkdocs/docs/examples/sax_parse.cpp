@@ -3,7 +3,7 @@
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 // a simple event consumer that collects string representations of the passed
 // values; note inheriting from json::json_sax_t is not required, but can
@@ -95,7 +95,7 @@ class sax_event_consumer : public json::json_sax_t
 int main()
 {
     // a JSON text
-    auto text = R"(
+    const auto *text = R"(
     {
         "Image": {
             "Width":  800,
@@ -127,5 +127,5 @@ int main()
     }
 
     // output the result of sax_parse
-    std::cout << "\nresult: " << std::boolalpha << result << std::endl;
+    std::cout << "\nresult: " << std::boolalpha << result << '\n';
 }

@@ -61,7 +61,7 @@ By default, `#!cpp JSON_NO_SIMD` is not defined, and vector instructions are use
     #include <iostream>
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {

@@ -54,7 +54,7 @@ The default value is `0` (disabled, the deprecated functions can still be called
     ```cpp
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {
@@ -72,7 +72,7 @@ The default value is `0` (disabled, the deprecated functions can still be called
     #define JSON_DELETE_DEPRECATED_FUNCTIONS 1
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {
