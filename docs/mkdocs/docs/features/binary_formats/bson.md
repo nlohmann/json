@@ -96,7 +96,8 @@ The library uses the following mapping from JSON values types to BSON types:
     contains only the bytes that follow it. `from_bson()` throws
     [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) if the outer length is less than 4 or the
     inner length is not the outer length minus 4. Versions before 3.13.0 did not write the inner length and returned
-    it as part of the payload.
+    it as part of the payload; BSON data written by those versions with subtype 2 is not readable any more and must be
+    written again.
 
 ??? example "Example: serialize a JSON value to BSON"
 
@@ -167,10 +168,11 @@ The library maps BSON record types to JSON value types as follows:
 
     Every document starts with its size. `from_bson()` rejects a document with
     [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) if the size is less than 5 (the size prefix and the terminator), if an embedded document does not end before the
-    end of the document that contains it, if an element does not fit into the declared size, or if the size does not
+    end of the document that contains it, if the elements do not fit into the declared size, or if the size does not
     match the number of bytes read when the terminating `0x00` byte is reached. A size that is too small is detected
-    before the element that exceeds it is read; a size that is too large only at the terminator, so a SAX handler has
-    received the content of such a document by then. Passing `strict` as `false` skips only the check for bytes after
+    before an element is read whose type byte and name no longer fit; an element that starts inside the declared size
+    but extends past it is read, and reported to a SAX handler, before the mismatch is found at the terminator. A size
+    that is too large is likewise found only at the terminator. Passing `strict` as `false` skips only the check for bytes after
     the end of the document ([`parse_error.110`](../../home/exceptions.md#jsonexceptionparse_error110)), not the
     document size checks.
 
