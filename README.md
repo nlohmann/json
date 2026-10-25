@@ -151,7 +151,7 @@ The `json` class provides an API for manipulating a JSON value. To create a `jso
 ```cpp
 #include <fstream>
 #include <nlohmann/json.hpp>
-using json = nlohmann::json;
+using nlohmann::json;
 
 // ...
 
@@ -164,7 +164,7 @@ If using modules (enabled with `NLOHMANN_JSON_BUILD_MODULES`), this example beco
 import std;
 import nlohmann.json;
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 // ...
 
@@ -842,7 +842,7 @@ assert(p == p2);
 To make this work with one of your types, you only need to provide two functions:
 
 ```cpp
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns {
     void to_json(json& j, const person& p) {
@@ -1257,7 +1257,7 @@ See the page [quality assurance](https://json.nlohmann.me/community/quality_assu
 #include <nlohmann/json.hpp>
 
 // for convenience
-using json = nlohmann::json;
+using nlohmann::json;
 ```
 
 to the files you want to process JSON and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).

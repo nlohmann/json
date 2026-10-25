@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -15,5 +15,5 @@ int main()
     // swap values
     std::swap(j1, j2);
 
-    std::cout << "j1 = " << j1 << " | j2 = " << j2 << std::endl;
+    std::cout << "j1 = " << j1 << " | j2 = " << j2 << '\n';
 }

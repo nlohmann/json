@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 namespace ns
@@ -42,7 +42,7 @@ int main()
 
     // serialization: person -> json
     json j = p;
-    std::cout << "serialization: " << j << std::endl;
+    std::cout << "serialization: " << j << '\n';
 
     // deserialization: json -> person
     json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
@@ -51,5 +51,5 @@ int main()
     // incomplete deserialization:
     json j3 = R"({"address": "742 Evergreen Terrace", "name": "Maggie Simpson"})"_json;
     auto p3 = j3.get<ns::person>();
-    std::cout << "roundtrip: " << json(p3) << std::endl;
+    std::cout << "roundtrip: " << json(p3) << '\n';
 }

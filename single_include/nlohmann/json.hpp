@@ -16434,9 +16434,17 @@ class json_sax_dom_parser : public json_sax_dom_error_state
     /// so that a big object can find the keys it has in a hash table instead of
     /// searching all of them
     template<typename ObjectType, typename StringType>
-    using detect_indexable_keys = decltype(std::declval<ObjectType&>().emplace_new_key(std::declval<const StringType&>(), std::declval<typename ObjectType::mapped_type>()),
-                                           std::hash<StringType>()(std::declval<const StringType&>()));
-    static constexpr bool indexed_keys = is_detected<detect_indexable_keys, object_t, string_t>::value;
+    using detect_emplace_new_key = decltype(std::declval<ObjectType&>().emplace_new_key(std::declval<const StringType&>(), std::declval<typename ObjectType::mapped_type>()));
+    template<typename StringType>
+    using detect_hash = decltype(std::hash<StringType>()(std::declval<const StringType&>()));
+    // std::hash is only named once the object can hold the keys in a vector:
+    // VS 2015 static-asserts on std::hash of a type without one instead of
+    // reporting a substitution failure
+    template<typename ObjectType, typename StringType, bool = is_detected<detect_emplace_new_key, ObjectType, StringType>::value>
+    struct detect_indexable_keys : std::false_type {};
+    template<typename ObjectType, typename StringType>
+    struct detect_indexable_keys<ObjectType, StringType, true> : is_detected<detect_hash, StringType> {};
+    static constexpr bool indexed_keys = detect_indexable_keys<object_t, string_t>::value;
 
     /// what a frame holds for objects that are kept in a vector: the key index
     /// of an object with many keys, and for an object that is collected on the
@@ -16560,7 +16568,10 @@ class json_sax_dom_parser : public json_sax_dom_error_state
             JSON_ASSERT(capacity != 0);
             const std::size_t new_capacity = capacity * 2;
             std::unique_ptr<frame[]> new_heap(new frame[new_capacity]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-            std::copy(data, data + count, new_heap.get());
+            for (std::size_t i = 0; i < count; ++i)
+            {
+                new_heap[i] = data[i];
+            }
             heap = std::move(new_heap);
             data = heap.get();
             capacity = new_capacity;
@@ -16578,7 +16589,10 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         {
             if (other.heap == nullptr)
             {
-                std::copy(other.local.begin(), other.local.begin() + static_cast<std::ptrdiff_t>(other.count), local.begin());
+                for (std::size_t i = 0; i < other.count; ++i)
+                {
+                    local[i] = other.local[i];
+                }
                 data = local.data();
                 capacity = local_capacity;
             }

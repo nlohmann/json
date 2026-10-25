@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -16,6 +16,6 @@ int main()
     {
         // output exception information
         std::cout << "message: " << e.what() << '\n'
-                  << "exception id: " << e.id << std::endl;
+                  << "exception id: " << e.id << '\n';
     }
 }
