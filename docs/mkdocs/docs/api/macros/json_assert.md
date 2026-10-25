@@ -38,7 +38,7 @@ Therefore, assertions can be switched off by defining `NDEBUG`.
     ```cpp
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -64,7 +64,7 @@ Therefore, assertions can be switched off by defining `NDEBUG`.
     
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

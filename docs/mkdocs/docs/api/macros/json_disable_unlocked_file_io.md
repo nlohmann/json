@@ -73,7 +73,7 @@ The default value is `0`: the file is locked once and read with the unlocked std
     #include <cstdio>
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {
@@ -92,7 +92,7 @@ The default value is `0`: the file is locked once and read with the unlocked std
     #include <cstdio>
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {

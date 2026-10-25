@@ -20,7 +20,7 @@ Add the single header to your project and use the library like this:
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

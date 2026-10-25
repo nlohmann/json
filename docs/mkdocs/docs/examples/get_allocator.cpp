@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -11,7 +11,7 @@ int main()
     json* j = traits_t::allocate(alloc, 1);
     traits_t::construct(alloc, j, "Hello, world!");
 
-    std::cout << *j << std::endl;
+    std::cout << *j << '\n';
 
     traits_t::destroy(alloc, j);
     traits_t::deallocate(alloc, j, 1);

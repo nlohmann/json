@@ -1948,7 +1948,7 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
 #ifdef JSON_HAS_CPP_17
 TEST_CASE("operator[] with user-defined std::string_view-convertible types")
 {
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     class TestClass
     {
@@ -2031,7 +2031,7 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
 
     SECTION("nlohmann::json")
     {
-        using json = nlohmann::json;
+        using nlohmann::json;
 
         SECTION("ViewKey")
         {
@@ -2072,7 +2072,7 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
 
     SECTION("nlohmann::ordered_json")
     {
-        using ordered_json = nlohmann::ordered_json;
+        using nlohmann::ordered_json;
 
         SECTION("ViewKey")
         {

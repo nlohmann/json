@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -39,7 +39,7 @@ int main()
     json j_stopped = ns::TS_STOPPED;
     json j_red = ns::Color::red;
     std::cout << "ns::TS_STOPPED -> " << j_stopped
-              << ", ns::Color::red -> " << j_red << std::endl;
+              << ", ns::Color::red -> " << j_red << '\n';
 
     // deserialization
     json j_running = "running";
@@ -47,6 +47,6 @@ int main()
     auto running = j_running.get<ns::TaskState>();
     auto blue = j_blue.get<ns::Color>();
     std::cout << j_running << " -> " << running
-              << ", " << j_blue << " -> " << static_cast<int>(blue) << std::endl;
+              << ", " << j_blue << " -> " << static_cast<int>(blue) << '\n';
 
 }

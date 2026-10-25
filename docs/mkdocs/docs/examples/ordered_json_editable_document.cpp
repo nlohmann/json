@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using ordered_json_editable_document = nlohmann::ordered_json_editable_document;
+using nlohmann::ordered_json_editable_document;
 
 int main()
 {
