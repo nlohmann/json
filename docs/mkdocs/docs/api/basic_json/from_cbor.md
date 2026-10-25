@@ -96,7 +96,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   string), or if a string value or object key (or one chunk of an indefinite-length string) is not valid UTF-8 and
   `error_handler` is `strict`
 - Throws [out_of_range.408](../../home/exceptions.md#jsonexceptionout_of_range408) if an array or map announces
-  more elements than `std::size_t` can hold (for example `9B FF FF FF FF FF FF FF FF`)
+  a length that `std::size_t` cannot hold, or that equals `std::size_t(-1)` (for example `9B FF FF FF FF FF FF FF FF`)
 - Throws [out_of_range.406](../../home/exceptions.md#jsonexceptionout_of_range406) if a floating-point number does not
   fit into `number_float_t`
 

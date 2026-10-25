@@ -248,7 +248,7 @@ string of the same major type, as required by [RFC 8949, Section 3.2.3](https://
     turn a key of another type into a text string.
 
     A map with duplicate keys is well-formed, but invalid under
-    [RFC 8949, Section 5.4](https://www.rfc-editor.org/rfc/rfc8949.html#section-5.4). `from_cbor` accepts it and the
+    [RFC 8949, Section 5.3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-5.3.1). `from_cbor` accepts it and the
     last value wins; the [SAX interface](../parsing/sax_interface.md) reports every occurrence.
 
 !!! warning "Ill-formed UTF-8 in text strings"

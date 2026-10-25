@@ -21661,9 +21661,9 @@ class binary_reader
         // sequence), UBJSON, BJData, or BSON requires a decoder to reject
         // ill-formed UTF-8. Checking (and, with @ref error_handler_t::strict,
         // rejecting, or with `replace`/`ignore`, sanitizing) is opt-in via
-        // @ref error_handler, applied once the whole string (all chunks of
-        // an indefinite-length CBOR string included) has been assembled, by
-        // @ref check_string_utf8 at the call site.
+        // @ref error_handler, applied by @ref check_string_utf8 at the call
+        // site to the whole string or, for an indefinite-length CBOR string,
+        // to each chunk on its own (RFC 8949, Section 3.2.3).
         return get_bytes(len, "string", result);
     }
 
