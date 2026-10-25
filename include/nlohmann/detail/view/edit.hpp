@@ -26,11 +26,9 @@
 #include <nlohmann/detail/view/lookup.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/node.hpp>
+#include <nlohmann/detail/view/view_mode.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-
-template<typename BasicJsonType, bool Editable>
-class basic_json_view;
 
 namespace detail
 {
@@ -120,13 +118,13 @@ class editor
     View set(const View& object, string_view_t key, V&& value)
     {
         node* const o = own(object);
-        if (o->kind != static_cast<std::uint8_t>(value_t::object) && o->kind != static_cast<std::uint8_t>(value_t::null))
+        if (o->kind != node_kind::object && o->kind != node_kind::null)
         {
             throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", object.type_name());
         }
         check_utf8(key.data(), key.size());
         const encoded e = encode(std::forward<V>(value));
-        if (o->kind == static_cast<std::uint8_t>(value_t::null))
+        if (o->kind == node_kind::null)
         {
             become_empty(o, value_t::object);
         }
@@ -171,7 +169,7 @@ class editor
     View set(const View& array, std::size_t idx, V&& value)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        if (a->kind != node_kind::array)
         {
             throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", array.type_name());
         }
@@ -188,12 +186,12 @@ class editor
     View push_back(const View& array, V&& value)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array) && a->kind != static_cast<std::uint8_t>(value_t::null))
+        if (a->kind != node_kind::array && a->kind != node_kind::null)
         {
             throw_type_error(exception_id::push_back_wrong_type, "cannot use push_back() with ", array.type_name());
         }
         const encoded e = encode(std::forward<V>(value));
-        if (a->kind == static_cast<std::uint8_t>(value_t::null))
+        if (a->kind == node_kind::null)
         {
             become_empty(a, value_t::array);
         }
@@ -212,7 +210,7 @@ class editor
     View insert(const View& array, std::size_t idx, V&& value)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        if (a->kind != node_kind::array)
         {
             throw_type_error(exception_id::insert_wrong_type, "cannot use insert() with ", array.type_name());
         }
@@ -232,7 +230,7 @@ class editor
     std::size_t erase(const View& object, string_view_t key)
     {
         node* const o = own(object);
-        if (o->kind != static_cast<std::uint8_t>(value_t::object))
+        if (o->kind != node_kind::object)
         {
             throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", object.type_name());
         }
@@ -250,7 +248,7 @@ class editor
     void erase(const View& array, std::size_t idx)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        if (a->kind != node_kind::array)
         {
             throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", array.type_name());
         }
@@ -328,7 +326,7 @@ class editor
     {
         const std::uint8_t linked = n->flags & node_flags::linked;
         *n = node{};
-        n->kind = static_cast<std::uint8_t>(k);
+        n->kind = static_cast<node_kind>(k);
         n->flags = static_cast<std::uint8_t>(node_flags::is_new | linked);
         n->next = 1;
     }
@@ -405,8 +403,8 @@ class editor
     template<typename T>
     struct is_view : std::false_type {};
 
-    template<typename J, bool E>
-    struct is_view<basic_json_view<J, E>> : std::true_type {};
+    template<typename J, view_mode M>
+    struct is_view<basic_json_view<J, M>> : std::true_type {};
 
     template<typename V>
     encoded encode(V&& v)
@@ -421,8 +419,8 @@ class editor
     }
 
     /// a view of any document (copied; nothing is shared with it)
-    template<typename J, bool E>
-    encoded encode_impl(const basic_json_view<J, E>& v, encode_tag<0> /*view*/)
+    template<typename J, view_mode M>
+    encoded encode_impl(const basic_json_view<J, M>& v, encode_tag<0> /*view*/)
     {
         if (NLOHMANN_VIEW_UNLIKELY(v.m_node == nullptr))
         {
@@ -434,8 +432,8 @@ class editor
             r.scalar = copy_scalar(*v.m_doc, *v.m_node);
             return r;
         }
-        r.region = alloc_nodes(m_doc, count_nodes<E>(*v.m_doc, v.m_node));
-        fill_nodes<E>(*v.m_doc, v.m_node, r.region);
+        r.region = alloc_nodes(m_doc, count_nodes<M == view_mode::editable>(*v.m_doc, v.m_node));
+        fill_nodes<M == view_mode::editable>(*v.m_doc, v.m_node, r.region);
         edit_state_of(m_doc).regions.emplace(r.region, nullptr);
         return r;
     }
@@ -496,7 +494,7 @@ class editor
     static node plain_node(value_t k) noexcept
     {
         node n{};
-        n.kind = static_cast<std::uint8_t>(k);
+        n.kind = static_cast<node_kind>(k);
         n.flags = node_flags::is_new;
         return n;
     }
@@ -681,7 +679,7 @@ class editor
             ++r;
             if (is_container(*n))
             {
-                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object)});
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == node_kind::object});
             }
             // the next value: close finished containers, then step over the key
             for (;;)
@@ -730,7 +728,7 @@ class editor
                 node* const self = out++;
                 *self = plain_node(static_cast<value_t>(n->kind));
                 self->len = n->len;
-                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object), self});
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == node_kind::object, self});
             }
             else
             {

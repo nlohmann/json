@@ -978,7 +978,7 @@ indent_done:
             std::memcpy(reinterpret_cast<unsigned char*>(n), &first, 8);
             std::memcpy(reinterpret_cast<unsigned char*>(n) + 8, &second, 8);
 #else
-            n->kind = static_cast<std::uint8_t>(k);
+            n->kind = static_cast<node_kind>(k);
             n->flags = flags;
             n->extra = extra;
             n->off = static_cast<std::uint32_t>(off);

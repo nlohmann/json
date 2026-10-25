@@ -252,14 +252,14 @@ the stream's `width`/`fill` for indentation.
 ## Editing a document
 
 Everything above is read-only: a `json_document`/`json_view` lets you look at a parsed text without copying it, but
-not change it. [`basic_json_document<BasicJsonType, true>`](../api/basic_json_document/index.md) -- more conveniently
+not change it. [`basic_json_document<BasicJsonType, view_mode::editable>`](../api/basic_json_document/index.md) -- more conveniently
 spelled [`json_editable_document`](../api/json_editable_document.md) or
 [`ordered_json_editable_document`](../api/ordered_json_editable_document.md) -- also lets you
 [`set`](../api/basic_json_document/set.md) a value, [`push_back`](../api/basic_json_document/push_back.md) onto or
 [`insert`](../api/basic_json_document/insert.md) into an array, and [`erase`](../api/basic_json_document/erase.md)
 an object member or an array element, still without ever building a `basic_json` tree for parts you do not touch.
 
-`#!cpp Editable` defaults to `#!cpp false`, so `json_document`/`ordered_json_document` are unaffected -- they carry
+The [mode](../api/view_mode.md) defaults to `#!cpp view_mode::read_only`, so `json_document`/`ordered_json_document` are unaffected -- they carry
 none of the bookkeeping edits need, and calling `set`/`push_back`/`insert`/`erase` on one is a compile error, not a
 runtime one.
 

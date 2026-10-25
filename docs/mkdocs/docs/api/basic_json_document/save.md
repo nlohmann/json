@@ -12,7 +12,7 @@ An edited document is written in its *current* state, with its values in documen
 parser would have produced them for that JSON text: a member [`set`](set.md) added goes at the end, an
 [`erase`](erase.md)d member leaves no trace, and a float that is not finite (NaN or positive/negative infinity)
 becomes null, the same substitution [`dump()`](../basic_json_view/dump.md) makes. The same document always saves to
-the same bytes -- also across `BasicJsonType` and `#!cpp Editable`, since the image reflects document order and
+the same bytes -- also across `BasicJsonType` and the [`view_mode`](../view_mode.md), since the image reflects document order and
 values only, not which specialization produced them.
 
 ## Return value

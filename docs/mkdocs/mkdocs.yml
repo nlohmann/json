@@ -407,6 +407,7 @@ nav:
       - 'ordered_json_editable_view': api/ordered_json_editable_view.md
       - 'ordered_json_view': api/ordered_json_view.md
       - 'ordered_map': api/ordered_map.md
+      - 'view_mode': api/view_mode.md
       - macros:
           - 'Overview': api/macros/index.md
           - 'JSON_ASSERT': api/macros/json_assert.md

@@ -480,7 +480,7 @@ TEST_CASE("json_view images: edited documents")
             {
                 CAPTURE(i)
                 CHECK((node_at(image, i).flags & nlohmann::detail::view::node_flags::linked) == 0);
-                CHECK(node_at(image, i).kind != nlohmann::detail::view::kind_link);
+                CHECK((node_at(image, i).kind != nlohmann::detail::view::node_kind::link));
             }
             for (const image_check check :
                     {
@@ -810,13 +810,13 @@ TEST_CASE("json_view images: check")
         {
             rejected(corrupted(image, 12, [&](node & n)
             {
-                n.kind = kind;
+                n.kind = static_cast<nlohmann::detail::view::node_kind>(kind);
             }), true);
         }
         // a key that is not a string
         rejected(corrupted(image, 1, [](node & n)
         {
-            n.kind = 0;
+            n.kind = nlohmann::detail::view::node_kind::null;
             n.len = 0;
             n.off = 0;
         }), true);
@@ -960,11 +960,11 @@ TEST_CASE("json_view images: check")
         }), true);
         rejected(corrupted(image, 0, [](node & n)
         {
-            n.kind = 2; // an array: the "keys" are values, and the counts do not match
+            n.kind = nlohmann::detail::view::node_kind::array; // an array: the "keys" are values, and the counts do not match
         }), true);
         const std::vector<std::uint8_t> as_array = corrupted(image, 16, [](node & n)
         {
-            n.kind = 2; // {} as []: fine
+            n.kind = nlohmann::detail::view::node_kind::array; // {} as []: fine
         });
         CHECK(load_result(as_array, image_check::full).empty());
         const std::string expected_dump = R"({"s":"x\"y","i":-12,"u":7,"f":1.5e+300,"b":true,"n":null,"a":["t",[]]})";
@@ -1013,13 +1013,13 @@ TEST_CASE("json_view images: check")
         rejected(at_token(u6, 0, '8'), false);      // 8 != 7
         rejected(corrupted(image, 4, [](node & n)
         {
-            n.kind = 6; // "-12" as unsigned: a sign
+            n.kind = nlohmann::detail::view::node_kind::number_unsigned; // "-12" as unsigned: a sign
             n.extra = 3;
         }), false);
         // a non-negative number_integer (as edits write it): fine
         const std::vector<std::uint8_t> positive = corrupted(image, 6, [](node & n)
         {
-            n.kind = 5;
+            n.kind = nlohmann::detail::view::node_kind::number_integer;
             n.extra = 0;
         });
         CHECK(load_result(positive, image_check::full).empty());
@@ -1027,7 +1027,7 @@ TEST_CASE("json_view images: check")
         CHECK(pos.root()["u"].is_number_integer());
         rejected(corrupted(image, 8, [](node & n)
         {
-            n.kind = 6; // a float token as integer
+            n.kind = nlohmann::detail::view::node_kind::number_unsigned; // a float token as integer
             n.extra = 7;
         }), false);
     }
@@ -1197,7 +1197,7 @@ TEST_CASE("json_view images: check")
         {
             std::vector<std::uint8_t> b = img;
             node n = node_at(b, i);
-            n.kind = kind;
+            n.kind = static_cast<nlohmann::detail::view::node_kind>(kind);
             n.extra = extra;
             set_node(b, i, n);
             return load_result(b, image_check::full);

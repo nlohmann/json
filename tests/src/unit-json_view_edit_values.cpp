@@ -26,11 +26,78 @@ using nlohmann::json_editable_view;
 #include <limits>
 #include <map>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 // These tests were split off unit-json_view_edit.cpp, whose object file got too
 // large for the MinGW linker (see json_view_test_helpers.hpp).
+
+namespace
+{
+// the three ways a function can accept views: editable ones, read-only ones, or both
+template<typename BasicJsonType>
+int accepts_editable(nlohmann::basic_json_view<BasicJsonType, nlohmann::view_mode::editable> /*unused*/)
+{
+    return 1;
+}
+
+template<typename BasicJsonType>
+int accepts_read_only(nlohmann::basic_json_view<BasicJsonType, nlohmann::view_mode::read_only> /*unused*/)
+{
+    return 2;
+}
+
+template<typename BasicJsonType, nlohmann::view_mode Mode>
+int accepts_any(nlohmann::basic_json_view<BasicJsonType, Mode> /*unused*/)
+{
+    return Mode == nlohmann::view_mode::editable ? 3 : 4;
+}
+
+template<typename View>
+auto overload(View v) -> decltype(accepts_editable(v))
+{
+    return accepts_editable(v);
+}
+
+template<typename View>
+auto overload(View v) -> decltype(accepts_read_only(v))
+{
+    return accepts_read_only(v);
+}
+} // namespace
+
+TEST_CASE("json_view modes")
+{
+    using nlohmann::basic_json_document;
+    using nlohmann::basic_json_view;
+    using nlohmann::ordered_json;
+    using nlohmann::view_mode;
+
+    SECTION("read-only is the default, and the shortcuts name the modes")
+    {
+        static_assert(std::is_same<basic_json_view<json>, basic_json_view<json, view_mode::read_only>>::value, "default mode");
+        static_assert(std::is_same<basic_json_document<json>, basic_json_document<json, view_mode::read_only>>::value, "default mode");
+        static_assert(std::is_same<nlohmann::json_view, basic_json_view<json, view_mode::read_only>>::value, "json_view");
+        static_assert(std::is_same<json_editable_view, basic_json_view<json, view_mode::editable>>::value, "json_editable_view");
+        static_assert(std::is_same<json_editable_document, basic_json_document<json, view_mode::editable>>::value, "json_editable_document");
+        static_assert(std::is_same<nlohmann::ordered_json_editable_view, basic_json_view<ordered_json, view_mode::editable>>::value, "ordered_json_editable_view");
+        static_assert(std::is_same<json_editable_document::view_type, json_editable_view>::value, "view_type");
+        static_assert(std::is_same<json_document::view_type, nlohmann::json_view>::value, "view_type");
+    }
+
+    SECTION("a function template selects views by their mode")
+    {
+        const json_document d = json_document::parse("[1]");
+        const json_editable_document e = json_editable_document::parse("[1]");
+        const nlohmann::ordered_json_editable_document o = nlohmann::ordered_json_editable_document::parse("[1]");
+        CHECK(overload(e.root()) == 1);
+        CHECK(overload(o.root()) == 1);
+        CHECK(overload(d.root()) == 2);
+        CHECK(accepts_any(e.root()) == 3);
+        CHECK(accepts_any(d.root()) == 4);
+    }
+}
 
 TEST_CASE("json_view edits: views and values")
 {
@@ -100,7 +167,7 @@ TEST_CASE("json_view edits: views and values")
         // doubles have their own path to the output; other float types are
         // written as basic_json writes them, non-finite values as null
         using json_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
-        using document_float = nlohmann::basic_json_document<json_float, true>;
+        using document_float = nlohmann::basic_json_document<json_float, nlohmann::view_mode::editable>;
         document_float d = document_float::parse("[1.5]");
         d.push_back(d.root(), std::numeric_limits<float>::quiet_NaN());
         d.push_back(d.root(), -std::numeric_limits<float>::infinity());
