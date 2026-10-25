@@ -124,6 +124,29 @@ Implicit conversions are convenient but can be surprising (for example, in overl
 be disabled by defining [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) to `#!cpp 0`,
 which forces the explicit `get` form and can catch unintended conversions at compile time.
 
+!!! warning "`auto` copies the JSON value; it does not convert it"
+
+    The type of `#!cpp j["name"]` is `json`, not the C++ type of the value inside. `#!cpp auto` therefore deduces
+    `json`:
+
+    ```cpp
+    json j = {{"name", "Mary"}, {"age", 42}};
+
+    auto name = j["name"];                       // json: a copy of the value; prints as "Mary" (with quotes)
+    std::string s1 = j["name"];                  // std::string: implicit conversion
+    auto s2 = j["name"].get<std::string>();      // std::string: explicit conversion
+    auto& age = j["age"];                        // json&: a reference, no copy
+    age = 43;                                    // changes j
+    ```
+
+    This is also why `#!cpp std::cout << j["name"]` prints the quotes (see
+    [getting a string without quotes](#getting-values-out)), and why a `json` value cannot be passed to `printf`: the
+    argument is not an `int` or a `char*`, and a compiler either rejects passing it through `...` (Clang does) or
+    compiles it and prints garbage. Convert first: `#!cpp std::printf("%d", j["age"].get<int>());`.
+
+    Prefer `get<T>()` over `auto` when you want the C++ value, and `auto&` or `const auto&` when you want to avoid a
+    copy of a large value.
+
 !!! warning "Conversions do not range-check numbers"
 
     Just like C++ itself, the `get` family performs numeric conversions without range checks — retrieving a
