@@ -3134,7 +3134,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v1 = {'[', '#', 'i', 0xF1};
                 std::vector<uint8_t> const v2 = {'[', '$', 'I', '#', 'i', 0xF2};
                 std::vector<uint8_t> const v3 = {'[', '$', 'I', '#', '[', 'i', 0xF4, 'i', 0x02, ']'};
-                std::vector<uint8_t> const v4 = {'[', '$', 0xF6, '#', 'i', 0xF7};
+                std::vector<uint8_t> const v4 = {'[', '$', 'l', '#', 'i', 0xF7};
                 std::vector<uint8_t> const v5 = {'[', '$', 'I', '#', '[', 'i', 0xF5, 'i', 0xF1, ']'};
                 std::vector<uint8_t> const v6 = {'[', '#', '[', 'i', 0xF3, 'i', 0x02, ']'};
 
@@ -3455,7 +3455,7 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(v0, true, false).is_discarded());
 
             std::vector<uint8_t> const vi = {'[', '$', '#'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vi), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x23 is not a permitted optimized array type", json::parse_error&);
             CHECK(json::from_bjdata(vi, true, false).is_discarded());
 
             std::vector<uint8_t> const vU = {'[', '$', 'U'};
@@ -4620,5 +4620,53 @@ TEST_CASE("BJData large strings and binaries (chunked reader)")
             json _;
             CHECK_THROWS_AS(_ = json::from_bjdata(truncated), json::parse_error);
         }
+    }
+}
+
+TEST_CASE("BJData optimized container type marker is validated for count 0")
+{
+    // the '$' type marker must be a legal marker even if no element follows
+    SECTION("invalid marker")
+    {
+        // 'Z', 'T', 'F', 'N', 'S', 'H', '[' and '{' are excluded in BJData
+        for (const char marker : {'x', 'E', 'Z', 'T', 'F', 'N', 'S', 'H', '[', '{'})
+        {
+            for (const char open : {'[', '{'})
+            {
+                for (const std::uint8_t count : {0, 1})
+                {
+                    CAPTURE(marker)
+                    CAPTURE(open)
+                    CAPTURE(count)
+                    const std::vector<std::uint8_t> v = {static_cast<std::uint8_t>(open), '$', static_cast<std::uint8_t>(marker), '#', 'i', count};
+                    json _;
+                    CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
+                    CHECK(json::from_bjdata(v, true, false).is_discarded());
+                }
+            }
+        }
+    }
+
+    SECTION("error message")
+    {
+        const std::vector<std::uint8_t> v = {'[', '$', 'x', '#', 'i', 0};
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x78 is not a permitted optimized array type", json::parse_error&);
+    }
+
+    SECTION("valid marker")
+    {
+        for (const char marker : {'i', 'U', 'I', 'u', 'l', 'm', 'L', 'M', 'h', 'd', 'D', 'C'})
+        {
+            CAPTURE(marker)
+            const std::vector<std::uint8_t> va = {'[', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};
+            const std::vector<std::uint8_t> vo = {'{', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};
+            CHECK(json::from_bjdata(va) == json::array());
+            CHECK(json::from_bjdata(vo) == json::object());
+        }
+
+        // an optimized array of bytes is read as a binary value
+        const std::vector<std::uint8_t> vb = {'[', '$', 'B', '#', 'i', 0};
+        CHECK(json::from_bjdata(vb) == json::binary({}));
     }
 }
