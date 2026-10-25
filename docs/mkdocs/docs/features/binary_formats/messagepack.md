@@ -27,7 +27,7 @@ Consider the following JSON value (shown formatted for readability):
 }
 ```
 
-`to_msgpack` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-l">length/count/size</span> <span class="bl bl-d">data</span>.
+`to_msgpack` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-d">data</span>.
 
 <div class="byte-layout" markdown="0"><table>
 <thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
