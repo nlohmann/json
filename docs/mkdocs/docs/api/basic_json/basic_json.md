@@ -68,6 +68,14 @@ basic_json(basic_json&& other) noexcept;
      `std::unordered_map`, `std::multimap`, and `std::unordered_multimap` with a `key_type` compatible to `string_t`
      and a `value_type` from which a `basic_json` value can be constructed.
     - **strings**: `string_t`, string literals, and all compatible string containers can be used.
+
+    !!! note "Rvalue containers are moved from"
+
+        If `val` is an rvalue of a compatible array-like or object-like container other than `array_t`/`object_t`
+        (e.g., `json j = std::move(vec);` or `json j(std::vector<std::string>{...});`), the elements are moved into
+        the JSON value instead of copied. Afterwards, the elements of the source container are in a valid but
+        unspecified state (**moved-from**). Keys of associative containers are `const` and therefore still copied.
+        Lvalues and `const` rvalues are copied, and the source is left unchanged.
     - **numbers**: [`number_integer_t`](number_integer_t.md), [`number_unsigned_t`](number_unsigned_t.md),
      [`number_float_t`](number_float_t.md), and all convertible number types such as `int`, `size_t`, `int64_t`, `float`
      or `double` can be used.
@@ -236,7 +244,9 @@ basic_json(basic_json&& other) noexcept;
 2. No-throw guarantee: this constructor never throws exceptions.
 3. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
    `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any
-   JSON value.
+   JSON value. **Exception:** when `val` is an rvalue array-like or object-like container, its elements are moved one
+   by one; if an exception is thrown in the middle of the conversion (e.g., an allocation failure), the JSON value is
+   unchanged, but the source container may be left partially moved-from.
 4. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
    `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any
    JSON value.
@@ -472,15 +482,15 @@ basic_json(basic_json&& other) noexcept;
 
 ## Version history
 
-1. Since version 1.0.0.
-2. Since version 1.0.0.
-3. Since version 2.1.0.
-4. Since version 3.2.0. Explicit for different string types if `JSON_USE_IMPLICIT_CONVERSIONS` is `0` since
+1. Added in version 1.0.0.
+2. Added in version 1.0.0.
+3. Added in version 2.1.0.
+4. Added in version 3.1.2. Explicit for different string types if `JSON_USE_IMPLICIT_CONVERSIONS` is `0` since
    version 3.13.0.
-5. Since version 1.0.0.
-6. Since version 1.0.0.
-7. Since version 1.0.0. Fixed in version 3.13.0 to also check the iterator range for binary values; before, a range
+5. Added in version 1.0.0.
+6. Added in version 1.0.0.
+7. Added in version 1.0.0. Fixed in version 3.13.0 to also check the iterator range for binary values; before, a range
    that did not cover the whole value (such as `(end(), end())`) was accepted and the whole binary value was copied,
    unlike the other primitive types.
-8. Since version 1.0.0.
-9. Since version 1.0.0.
+8. Added in version 1.0.0.
+9. Added in version 1.0.0.

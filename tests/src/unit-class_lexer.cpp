@@ -13,15 +13,23 @@
 using nlohmann::json;
 
 #include <array> // array
-#include <cfloat> // FLT_EVAL_METHOD
+#include <cctype> // toupper
 #include <cstdint> // uint32_t, uint64_t
+#include <cstdio> // snprintf
+#include <cmath> // isfinite
 #include <cstdlib> // strtod
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
+#include <initializer_list> // initializer_list
+#include <list> // list
+#include <map> // map
+#include <random> // mt19937
 #include <sstream> // stringstream
 #include <string> // string
 #include <utility> // pair
 #include <vector> // vector
+
+#include "float_hard_cases.hpp"
 
 namespace
 {
@@ -258,7 +266,7 @@ TEST_CASE("lexer number fast path")
             "123456789012345678901234567890",  // huge -> float
             "0.30000000000000004", "2.2250738585072014e-308", "1e308",
             // high-precision / wide-exponent values that exercise the
-            // std::from_chars (Eisel-Lemire) path beyond the Clinger subset
+            // Eisel-Lemire path beyond the Clinger subset
             "1.7976931348623157e308", "1.2345678901234567e-250",
             "9007199254740993", "5e-324", "1e-320"
         };
@@ -280,20 +288,18 @@ TEST_CASE("lexer number fast path")
         }
     }
 
-    SECTION("significant-digit gate for the Clinger fast path")
+    SECTION("significant digits around Clinger's fast path")
     {
-        // Clinger's fast path needs a significand below 2^53, so it cannot
-        // succeed once the mantissa has 17 or more significant digits (the
-        // significand would be at least 10^16). The lexer skips the attempt
-        // there. That is only allowed to save work: every value must still come
-        // out bit-exactly, and both scanners must agree. In particular the gate
-        // must not fire for tokens whose leading zeros merely look like extra
-        // digits - "0.1234567890123456" has 16 significant digits, not 17.
+        // Clinger's fast path needs a significand of at most 2^53, which
+        // tokens with 17 or more significant digits exceed. The conversion
+        // splits the token at the positions the scanners recorded, so leading
+        // zeros must not count as digits - "0.1234567890123456" has 16
+        // significant digits, not 17 - and both scanners must agree.
         const std::vector<std::string> numbers =
         {
             "1234567890123456",                  // 16 significant digits
-            "12345678901234567",                 // 17 -> attempt skipped
-            "123456789012345678",                // 18 -> attempt skipped
+            "12345678901234567",                 // 17
+            "123456789012345678",                // 18
             "0.1234567890123456",                // 16: the leading "0" is not significant
             "0.12345678901234567",               // 17
             "0.00000000000000001",               // 1, in a long token
@@ -328,6 +334,112 @@ TEST_CASE("lexer number fast path")
                 CHECK(b[0].get<double>() == expected);
             }
         }
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    // this section reports parse errors, which abort when exceptions are off
+    SECTION("digits accumulated while scanning")
+    {
+        // The fast path accumulates the digits while it validates them, eight
+        // at a time where possible, and converts tokens with at most 19
+        // digits (floats) or 18 digits (integers) from that value. Every digit
+        // count from 1 to 25, in the integer and in the fraction part, with
+        // and without sign and exponent, must give the byte path's result. A
+        // std::list has no contiguous storage, so parsing it takes the byte
+        // path.
+        // type and value, or the error (values beyond the range of double
+        // are rejected with out_of_range.406 on both paths)
+        const auto outcome = [](const std::string & doc, bool byte_path) -> std::string
+        {
+            JSON_TRY
+            {
+                const std::list<char> chars(doc.begin(), doc.end());
+                const json j = byte_path ? json::parse(chars.begin(), chars.end()) : json::parse(doc);
+                return std::string(j[0].type_name()) + '|' + j.dump();
+            }
+            JSON_CATCH (const json::exception & e)
+            {
+                return e.what();
+            }
+        };
+
+        // the concatenation of @a parts
+        const auto join = [](std::initializer_list<std::string> parts)
+        {
+            std::string result;
+            for (const auto& part : parts)
+            {
+                result += part;
+            }
+            return result;
+        };
+
+        std::vector<std::string> numbers;
+        for (std::size_t digits = 1; digits <= 25; ++digits)
+        {
+            std::string run;
+            for (std::size_t i = 0; i < digits; ++i)
+            {
+                run += static_cast<char>('1' + static_cast<char>((i * 7) % 9));
+            }
+            const std::string nines(digits, '9');
+            for (const char* sign_text :
+                    {"", "-"
+                    })
+            {
+                const std::string sign = sign_text;
+                numbers.push_back(join({sign, run}));
+                numbers.push_back(join({sign, nines}));
+                numbers.push_back(join({sign, "1", std::string(digits - 1, '0')}));
+                numbers.push_back(join({sign, "0.", run}));
+                numbers.push_back(join({sign, "0.", std::string(digits, '0'), "1"}));
+                numbers.push_back(join({sign, run, ".", run}));
+                numbers.push_back(join({sign, run, "e-", std::to_string(digits)}));
+                numbers.push_back(join({sign, "1.", run, "E+", std::to_string(digits * 13)}));
+            }
+        }
+        // exponents beyond every range, and zeros
+        numbers.insert(numbers.end(), {"1e400", "1e-400", "-1e99999999999999999999", "1e-99999999999999999999",
+                                       "0e99999999999999999999", "0.0e-5", "-0.000", "123456789e-0000000000000000000000330"
+                                      });
+
+        for (const auto& n : numbers)
+        {
+            CAPTURE(n)
+            const std::string doc = "[" + n + "]";
+            const std::string a = outcome(doc, false);
+            CHECK(a == outcome(doc, true));
+            const double expected = std::strtod(n.c_str(), nullptr);
+            if (a.compare(0, 6, "number") == 0 && std::isfinite(expected) && n.find_first_of(".eE") != std::string::npos)
+            {
+                CHECK(json::parse(doc)[0].get<double>() == expected);
+            }
+        }
+    }
+#endif
+
+    SECTION("integers that do not fit a narrower type become floats")
+    {
+        // up to 18 digits, the fast path stores the accumulated value without
+        // an overflow check; a narrower number_integer_t/number_unsigned_t
+        // must still see the value rejected and converted as a float
+        using json32 = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint32_t, float>;
+        for (const char* n :
+                {"4294967295", "4294967296", "2147483647", "-2147483648", "-2147483649", "99999999999", "-99999999999"
+                })
+        {
+            CAPTURE(n)
+            const std::string doc = std::string("[") + n + "]";
+            const std::list<char> chars(doc.begin(), doc.end());
+            const json32 a = json32::parse(doc);
+            const json32 b = json32::parse(chars.begin(), chars.end());
+            CHECK(a[0].type() == b[0].type());
+            CHECK(a == b);
+        }
+        CHECK(json32::parse("[4294967295]")[0].is_number_unsigned());
+        CHECK(json32::parse("[4294967296]")[0].is_number_float());
+        CHECK(json32::parse("[-2147483648]")[0].is_number_integer());
+        CHECK(json32::parse("[-2147483649]")[0].is_number_float());
     }
 
     SECTION("token type classification")
@@ -488,6 +600,67 @@ TEST_CASE("lexer number fast path")
 #endif
 }
 
+#if !defined(JSON_NOEXCEPTION)
+// this test case compares the errors of both lexer paths, which abort when
+// exceptions are off
+TEST_CASE("lexer literal fast path")
+{
+    // For contiguous input, the rest of a literal is compared at once, and a
+    // mismatch is left to the byte path, which reports the error at the
+    // character that differs. Every truncation and every wrong character of
+    // each literal, at the end of the input or followed by more text, must
+    // give the byte path's result (a std::list is read one character at a
+    // time).
+    const auto outcome = [](const std::string & doc, bool byte_path) -> std::string
+    {
+        JSON_TRY
+        {
+            const std::list<char> chars(doc.begin(), doc.end());
+            return (byte_path ? json::parse(chars.begin(), chars.end()) : json::parse(doc)).dump();
+        }
+        JSON_CATCH (const json::exception & e)
+        {
+            return e.what();
+        }
+    };
+
+    std::vector<std::string> mismatches;
+    for (const std::string literal :
+            {"true", "false", "null"
+            })
+    {
+        std::vector<std::string> variants;
+        for (std::size_t length = 1; length <= literal.size(); ++length)
+        {
+            variants.push_back(literal.substr(0, length));
+        }
+        for (std::size_t i = 1; i < literal.size(); ++i)
+        {
+            std::string changed = literal;
+            changed[i] = 'X';
+            variants.push_back(changed);
+            changed[i] = static_cast<char>(std::toupper(static_cast<unsigned char>(literal[i])));
+            variants.push_back(changed);
+        }
+        for (const auto& variant : variants)
+        {
+            for (const std::string& doc :
+                    {
+                        variant, "[" + variant + "]", "[" + variant, variant + " ", variant + "1", "{\"k\":" + variant + "}"
+                    })
+            {
+                if (outcome(doc, false) != outcome(doc, true))
+                {
+                    mismatches.push_back(doc);
+                }
+            }
+        }
+    }
+    CAPTURE(mismatches)
+    CHECK(mismatches.empty());
+}
+#endif
+
 TEST_CASE("lexer string fast path")
 {
     // Build a byte string from explicit values: a hex escape in a string
@@ -608,6 +781,73 @@ TEST_CASE("lexer string fast path")
         CAPTURE(mismatches)
         CHECK(mismatches.empty());
     }
+
+    SECTION("special bytes at every offset of the vector blocks")
+    {
+        // With SSE2 or NEON, runs are scanned 16 bytes at a time (after one
+        // SWAR word, or four with NEON), and runs of non-ASCII text are
+        // checked 16 bytes at a time as well. Place every kind of byte that
+        // ends a run at each offset across several blocks, after ASCII and
+        // after CJK text, so sequences also straddle the block boundaries.
+        // The reference is a std::list, which has no contiguous storage and
+        // is therefore read one character at a time.
+        const auto byte_path = [](const std::string & doc) -> std::string
+        {
+            const std::list<char> chars(doc.begin(), doc.end());
+            JSON_TRY
+            {
+                return json::parse(chars.begin(), chars.end()).dump();
+            }
+            JSON_CATCH (const json::exception & e)
+            {
+                return e.what();
+            }
+        };
+        const std::vector<std::string> specials =
+        {
+            "\"", "\\", "\\u00e9", bytes({0x01}), bytes({0x1F}), bytes({0x7F}),
+            bytes({0xC3, 0xA9}), bytes({0xE4, 0xB8, 0xAD}), bytes({0xF0, 0x9F, 0x98, 0x80}),
+            bytes({0xFF}), bytes({0xC3}), bytes({0xE4, 0xB8}), bytes({0xED, 0xA0, 0x80}), bytes({0xC0, 0x80})
+        };
+        const std::string cjk = bytes({0xE4, 0xB8, 0xAD}); // U+4E2D
+
+        std::vector<std::string> mismatches;
+        for (std::size_t offset = 0; offset <= 80; ++offset)
+        {
+            std::string text;
+            while (text.size() < offset)
+            {
+                text += cjk;
+            }
+            for (const auto& prefix :
+                    {
+                        std::string(offset, 'a'), text
+                    })
+            {
+                for (const auto& special : specials)
+                {
+                    // the closing quote right behind, or in a later block
+                    for (const int tail :
+                            {
+                                0, 1, 3, 20
+                            })
+                    {
+                        std::string doc = "[\"";
+                        doc += prefix;
+                        doc += special;
+                        doc.append(static_cast<std::size_t>(tail), 'b');
+                        doc += "\"]";
+                        if (outcome(doc, false) != byte_path(doc))
+                        {
+                            mismatches.push_back(doc);
+                        }
+                    }
+                }
+            }
+        }
+        CAPTURE(mismatches)
+        CHECK(mismatches.empty());
+    }
 #endif
 
     // json::accept() never throws, so the ranges stay covered without exceptions
@@ -664,46 +904,323 @@ TEST_CASE("lexer string fast path")
     }
 }
 
-TEST_CASE("parse_float_fast declines what it cannot convert exactly")
+TEST_CASE("lexer escape fast path")
 {
-    // The lexer only hands well-formed numbers to parse_float_fast, so the
-    // malformed ones below can only be passed to it directly. Declining is
-    // always safe: the caller then falls back to a slower, exact conversion.
-    const auto fast = [](const std::string & s, double & out)
+    // json::accept() never throws, so this section stays covered without
+    // exceptions; it pins which of the cases below are valid/invalid and
+    // checks the contiguous and streaming paths agree on that classification.
+    SECTION("accept() parity")
     {
-        return nlohmann::detail::parse_float_fast(s.data(), s.data() + s.size(), out);
+        const std::vector<std::pair<std::string, bool>> cases =
+        {
+            {"\\u0041", true}, {"\\u00e4", true}, {"\\u00E4", true},
+            {"\\uD83D\\uDE00", true},
+            {"\\u12", false}, {"\\u12G4", false}, {"\\uXYZW", false},
+            {"\\uD800", false}, {"\\uD800A", false}, {"\\uD800\\u0041", false},
+            {"\\uDC00", false}, {"\\u", false}
+        };
+
+        for (const auto& c : cases)
+        {
+            for (const std::size_t offset :
+                    {
+                        std::size_t{0}, std::size_t{9}
+                    })
+            {
+                const std::string doc = "[\"" + std::string(offset, 'a') + c.first + "\"]";
+                CAPTURE(doc)
+                CHECK(json::accept(doc) == c.second);
+                std::stringstream ss(doc);
+                CHECK(json::accept(ss) == c.second);
+            }
+        }
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    // the full outcome of parsing @a doc: the parsed value, or the exact
+    // error message, so a mismatch in either is caught
+    const auto outcome = [](const std::string & doc, bool streaming) -> std::string
+    {
+        try
+        {
+            if (streaming)
+            {
+                std::stringstream ss(doc);
+                const json j = json::parse(ss);
+                return j.dump();
+            }
+            const json j = json::parse(doc);
+            return j.dump();
+        }
+        catch (const json::exception& e)
+        {
+            return {e.what()};
+        }
     };
-    double out = 0;
 
-#if defined(FLT_EVAL_METHOD) && FLT_EVAL_METHOD != 0
-    // without true double precision, the fast path declines everything
-    CHECK_FALSE(fast("1.5", out));
-#else
-    CHECK(fast("1.5", out));
-    CHECK(out == 1.5);
-    CHECK(fast("+2.5e1", out));
-    CHECK(out == 25.0);
-    CHECK(fast("-25E-1", out));
-    CHECK(out == -2.5);
-    CHECK(fast("1e", out));
-    CHECK(out == 1.0);
+    SECTION("contiguous vs streaming parity")
+    {
+        const std::vector<std::string> escapes =
+        {
+            "\\u0041",             // "A"
+            "\\u00e4",             // "ä" (lowercase hex)
+            "\\u00E4",             // "ä" (uppercase hex)
+            "\\uD83D\\uDE00",      // valid surrogate pair (an emoji)
+            "\\u12",               // truncated: only 2 hex digits before the closing quote
+            "\\u12G4",             // invalid hex digit at the 3rd position
+            "\\uXYZW",             // all 4 bytes invalid
+            "\\uD800",             // lone high surrogate, string ends right after
+            "\\uD800A",            // high surrogate not followed by another \u escape
+            "\\uD800\\u0041",      // high surrogate followed by \u, but not a low surrogate
+            "\\uDC00",             // lone low surrogate
+            "\\u",                 // '\u' with nothing after (closing quote right away)
+        };
+
+        // once at the start of the string and once past the first 8-byte SWAR
+        // word of the outer string_bulk_run, so the escape is reached both
+        // right after the opening quote and mid-run
+        for (const auto& escape : escapes)
+        {
+            for (const std::size_t offset :
+                    {
+                        std::size_t{0}, std::size_t{9}
+                    })
+            {
+                const std::string doc = "[\"" + std::string(offset, 'a') + escape + "\"]";
+                CAPTURE(doc)
+                CHECK(outcome(doc, false) == outcome(doc, true));
+            }
+
+            // the escape is the last thing before end of input: no closing
+            // quote at all
+            const std::string truncated_doc = "[\"" + escape;
+            CAPTURE(truncated_doc)
+            CHECK(outcome(truncated_doc, false) == outcome(truncated_doc, true));
+        }
+    }
+
+    SECTION("truncated \\u escape at every distance from the end of input")
+    {
+        // ia.bulk_remaining() must correctly report fewer than 4 bytes for
+        // every possible count of trailing hex-looking bytes (0, 1, 2, or 3)
+        // before end of input, so the fast path declines and the byte path
+        // alone reports the "must be followed by 4 hex digits" error, at the
+        // same position, in every case
+        for (const std::string& tail :
+                {
+                    std::string{}, std::string("1"), std::string("12"), std::string("123")
+                })
+        {
+            const std::string doc = "[\"\\u" + tail;
+            CAPTURE(doc)
+            CHECK(outcome(doc, false) == outcome(doc, true));
+            CHECK(outcome(doc, false).find("must be followed by 4 hex digits") != std::string::npos);
+        }
+    }
+
+    SECTION("invalid hex digit at every position of the 4")
+    {
+        // the fast path must decline for *any* invalid byte among the 4, not
+        // just the first, and the byte path must then stop at exactly that
+        // position - same as it always has
+        for (std::size_t bad_pos = 0; bad_pos < 4; ++bad_pos)
+        {
+            std::string digits = "1234";
+            digits[bad_pos] = 'g'; // not a hex digit
+            const std::string doc = "[\"\\u" + digits + "\"]";
+            CAPTURE(doc)
+            CHECK(outcome(doc, false) == outcome(doc, true));
+            CHECK(outcome(doc, false).find("must be followed by 4 hex digits") != std::string::npos);
+        }
+    }
+
+    SECTION("random escapes")
+    {
+        // A seeded PRNG builds the 4 bytes following `\u` from a mix of hex
+        // digits and non-hex bytes, at varying distances from the start of
+        // the string, to compare the two scanners on many more shapes than
+        // are practical to enumerate by hand.
+        std::mt19937 gen(7654321); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
+        const std::string hex_alphabet = "0123456789AaBbCcDdEeFf";
+        std::uniform_int_distribution<std::size_t> pick_hex(0, hex_alphabet.size() - 1);
+        std::uniform_int_distribution<int> pick_byte(1, 255); // never NUL
+        std::uniform_int_distribution<int> pick_is_hex(0, 4); // 4-in-5 chance of a hex digit
+        std::uniform_int_distribution<std::size_t> pick_offset(0, 12);
+
+        std::vector<std::string> mismatches;
+        for (int iter = 0; iter < 3000; ++iter)
+        {
+            std::string digits;
+            for (int i = 0; i < 4; ++i)
+            {
+                if (pick_is_hex(gen) != 0)
+                {
+                    digits += hex_alphabet[pick_hex(gen)];
+                }
+                else
+                {
+                    char c = static_cast<char>(pick_byte(gen));
+                    if (c == '"' || c == '\\')
+                    {
+                        // keep the string well-formed apart from the escape
+                        // itself, so any mismatch is attributable to the \u
+                        // handling and not to an unrelated quote/escape
+                        c = 'z';
+                    }
+                    digits += c;
+                }
+            }
+            const std::string doc = "[\"" + std::string(pick_offset(gen), 'a') + "\\u" + digits + "\"]";
+            if (outcome(doc, false) != outcome(doc, true))
+            {
+                mismatches.push_back(doc);
+            }
+        }
+        CAPTURE(mismatches)
+        CHECK(mismatches.empty());
+    }
 #endif
+}
 
-    // not a number
-    CHECK_FALSE(fast("", out));
-    CHECK_FALSE(fast("-", out));
-    CHECK_FALSE(fast(".", out));
-    CHECK_FALSE(fast("1.2.3", out));
-    CHECK_FALSE(fast("1x", out));
-    CHECK_FALSE(fast("1e+", out));
-    CHECK_FALSE(fast("1e1x", out));
+namespace
+{
+// the index of the decimal point (or npos) and of the end of the mantissa of a
+// number token, which the lexer records while scanning it
+std::pair<std::size_t, std::size_t> float_token_layout(const std::string& s)
+{
+    std::size_t dot = std::string::npos;
+    std::size_t mantissa_end = s.size();
+    for (std::size_t i = 0; i < s.size(); ++i)
+    {
+        if (s[i] == '.')
+        {
+            dot = i;
+        }
+        else if (s[i] == 'e' || s[i] == 'E')
+        {
+            mantissa_end = i;
+            break;
+        }
+    }
+    return {dot, mantissa_end};
+}
 
-    // numbers that are not represented exactly on the fast path
-    CHECK_FALSE(fast("12345678901234567890", out));
-    CHECK_FALSE(fast("1e10000", out));
-    CHECK_FALSE(fast("9007199254740993", out));
-    CHECK_FALSE(fast("1e23", out));
-    CHECK_FALSE(fast("1e-23", out));
+template<typename FloatType>
+FloatType parse_native(const std::string& s)
+{
+    const auto layout = float_token_layout(s);
+    return nlohmann::detail::parse_float_native<FloatType>(s.data(), s.data() + s.size(), layout.first, layout.second);
+}
+
+std::uint64_t bits_of(double d)
+{
+    std::uint64_t b = 0;
+    std::memcpy(&b, &d, sizeof(b));
+    return b;
+}
+
+std::uint32_t bits_of(float f)
+{
+    std::uint32_t b = 0;
+    std::memcpy(&b, &f, sizeof(b));
+    return b;
+}
+
+std::uint64_t native_bits64(const std::string& s)
+{
+    return bits_of(parse_native<double>(s));
+}
+
+std::uint32_t native_bits32(const std::string& s)
+{
+    return bits_of(parse_native<float>(s));
+}
+} // namespace
+
+TEST_CASE("parse_float_native rounds correctly")
+{
+    SECTION("double")
+    {
+        CHECK(native_bits64("1.5") == 0x3FF8000000000000u);
+        CHECK(native_bits64("0.1") == 0x3FB999999999999Au);
+        CHECK(native_bits64("-0.0") == 0x8000000000000000u);
+        CHECK(native_bits64("0e999999999999999999999") == 0u);
+        // 2^53 + 1 is exactly between two doubles: ties to even, unless more digits follow
+        CHECK(native_bits64("9007199254740993") == 0x4340000000000000u);
+        CHECK(native_bits64("9007199254740993.0000000000000000001") == 0x4340000000000001u);
+        CHECK(native_bits64("9007199254740992.9999999999999999999") == 0x4340000000000000u);
+        // 1 + 2^-53 exactly (a tie), and one unit in the 55th digit around it
+        CHECK(native_bits64("1.00000000000000011102230246251565404236316680908203125") == 0x3FF0000000000000u);
+        CHECK(native_bits64("1.00000000000000011102230246251565404236316680908203126") == 0x3FF0000000000001u);
+        CHECK(native_bits64("1.00000000000000011102230246251565404236316680908203124") == 0x3FF0000000000000u);
+        // subnormal and overflow boundaries
+        CHECK(native_bits64("2.4703282292062327e-324") == 0u);
+        CHECK(native_bits64("2.4703282292062328e-324") == 1u);
+        CHECK(native_bits64("2.2250738585072011e-308") == 0x000FFFFFFFFFFFFFu);
+        CHECK(native_bits64("2.2250738585072012e-308") == 0x0010000000000000u);
+        CHECK(native_bits64("1.7976931348623157e308") == 0x7FEFFFFFFFFFFFFFu);
+        CHECK(native_bits64("1.7976931348623159e308") == 0x7FF0000000000000u);
+        CHECK(native_bits64("-1e400") == 0xFFF0000000000000u);
+        CHECK(native_bits64("-1e-400") == 0x8000000000000000u);
+        // exponents and zeros far beyond the range cancel out
+        CHECK(native_bits64("0." + std::string(1000, '0') + "1e1001") == 0x3FF0000000000000u);
+        CHECK(native_bits64("1" + std::string(1000, '0') + "e-1000") == 0x3FF0000000000000u);
+        CHECK(native_bits64("1e-99999999999999999999999") == 0u);
+        CHECK(native_bits64("1E+99999999999999999999999") == 0x7FF0000000000000u);
+        // more digits than any midpoint has (769): only whether a nonzero digit follows matters
+        const std::string tie = "1.00000000000000011102230246251565404236316680908203125";
+        CHECK(native_bits64(tie + std::string(800, '0')) == 0x3FF0000000000000u);
+        CHECK(native_bits64(tie + std::string(800, '0') + "1") == 0x3FF0000000000001u);
+    }
+
+    SECTION("float")
+    {
+        CHECK(native_bits32("1.5") == 0x3FC00000u);
+        CHECK(native_bits32("0.1") == 0x3DCCCCCDu);
+        CHECK(native_bits32("-0.0") == 0x80000000u);
+        // 2^24 + 1 is exactly between two floats
+        CHECK(native_bits32("16777217") == 0x4B800000u);
+        CHECK(native_bits32("16777217.000000000000000000001") == 0x4B800001u);
+        CHECK(native_bits32("16777218.999999999999999999999") == 0x4B800001u);
+        CHECK(native_bits32("16777219") == 0x4B800002u);
+        // subnormal and overflow boundaries
+        CHECK(native_bits32("3.4028235677973366e38") == 0x7F7FFFFFu);
+        CHECK(native_bits32("3.4028235677973367e38") == 0x7F800000u);
+        CHECK(native_bits32("7.006492321624085e-46") == 0u);
+        CHECK(native_bits32("7.006492321624086e-46") == 1u);
+        CHECK(native_bits32("1.1754942e-38") == 0x007FFFFFu);
+        CHECK(native_bits32("-1.17549435e-38") == 0x80800000u);
+        CHECK(native_bits32("1e39") == 0x7F800000u);
+        CHECK(native_bits32("-1e-50") == 0x80000000u);
+        // not rounded through double: its double would round to another float
+        CHECK(native_bits32("1.00000005960464477539062500000000001") == 0x3F800001u);
+        CHECK(native_bits32("9007199254740993") == 0x5A000000u);
+    }
+
+    SECTION("the conversion shared with other parsers")
+    {
+        // convert_float() gives the lexer's results, for every type
+        const std::vector<std::string> tokens =
+        {
+            "0", "-0.0", "1.5", "0.1", "1e-400", "-2.5E+3", "123456789012345678901234567890",
+            "9007199254740993.0000000000000000001", "4.9406564584124654e-324"
+        };
+        using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+        for (const auto& t : tokens)
+        {
+            CAPTURE(t)
+            const auto layout = float_token_layout(t);
+            const char* const first = t.data();
+            const char* const last = first + t.size();
+            const auto d = nlohmann::detail::convert_float<double>(first, last, layout.first, layout.second);
+            const auto f = nlohmann::detail::convert_float<float>(first, last, layout.first, layout.second);
+            const auto ld = nlohmann::detail::convert_float<long double>(first, last, layout.first, layout.second);
+            CHECK(bits_of(d) == bits_of(json::parse(t).get<double>()));
+            CHECK(bits_of(f) == bits_of(float_json::parse(t).get<float>()));
+            CHECK(ld == long_double_json::parse(t).get<long double>());
+        }
+    }
 }
 
 namespace
@@ -807,40 +1324,6 @@ std::size_t big_bit_length(const big_uint& a)
     }
     return n;
 }
-
-std::uint64_t bits_of(double d)
-{
-    std::uint64_t b = 0;
-    std::memcpy(&b, &d, sizeof(b));
-    return b;
-}
-
-bool eisel_lemire(const std::string& s, double& out)
-{
-    return nlohmann::detail::parse_float_eisel_lemire(s.data(), s.data() + s.size(), out);
-}
-
-// significant digits of a token, without trailing zeros
-std::size_t significant_digits(const std::string& s)
-{
-    std::string digits;
-    for (const char c : s)
-    {
-        if (c == 'e' || c == 'E')
-        {
-            break;
-        }
-        if (c >= '0' && c <= '9' && !(digits.empty() && c == '0'))
-        {
-            digits += c;
-        }
-    }
-    while (!digits.empty() && digits.back() == '0')
-    {
-        digits.pop_back();
-    }
-    return digits.size();
-}
 } // namespace
 
 TEST_CASE("Eisel-Lemire float conversion")
@@ -938,6 +1421,10 @@ TEST_CASE("Eisel-Lemire float conversion")
             const int k = i % 64;
             const std::uint64_t x = (std::uint64_t{1} << k) | (a & ((std::uint64_t{1} << k) - 1));
             CHECK(nlohmann::detail::count_leading_zeros(x) == 63 - k);
+
+            // the mirror image: bit k set, arbitrary bits above it
+            const std::uint64_t y = (std::uint64_t{1} << k) | (k == 63 ? 0 : (a << (k + 1)));
+            CHECK(nlohmann::detail::count_trailing_zeros(y) == k);
         }
     }
 
@@ -1268,26 +1755,33 @@ TEST_CASE("Eisel-Lemire float conversion")
         for (const auto& c : known)
         {
             CAPTURE(c.first)
-            double out = 0;
-            if (eisel_lemire(c.first, out))
-            {
-                CHECK(bits_of(out) == c.second);
-            }
-            else
-            {
-                // only tokens with more than 19 significant digits are left to
-                // strtod: those whose value lies too close to a tie
-                CHECK(significant_digits(c.first) > 19);
-            }
+            CHECK(native_bits64(c.first) == c.second);
         }
+    }
+
+    SECTION("binary32")
+    {
+        using binary32 = nlohmann::detail::ieee_binary_format<24>;
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(0, 1) == 0x3F800000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-1, 1) == 0x3DCCCCCDu);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-1, 15) == 0x3FC00000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(0, 16777217) == 0x4B800000u); // tie, to even
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(0, 16777219) == 0x4B800002u); // tie, to even
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-45, 1) == 0x00000001u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-46, 7) == 0x00000000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-46, 8) == 0x00000001u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-65, 9999999999999999999u) == 0x00000000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(20, 3402823466385288598u) == 0x7F7FFFFFu);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(20, 3402823669209384635u) == 0x7F800000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(39, 1) == 0x7F800000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-5, 0) == 0x00000000u);
     }
 
     SECTION("round trip")
     {
-        // every double written by to_chars and read back, also with trailing
-        // digits that make the token longer than 19 digits
+        // every double written by to_chars and read back, and its 17-digit
+        // form with trailing digits that make the token longer than 19 digits
         std::uint64_t state = 5295;
-        std::size_t declined = 0;
         for (int i = 0; i < 200000; ++i)
         {
             state ^= state << 13u;
@@ -1309,30 +1803,51 @@ TEST_CASE("Eisel-Lemire float conversion")
             const char* end = nlohmann::detail::to_chars(buffer.data(), buffer.data() + buffer.size(), d);
             const std::string token(buffer.data(), static_cast<std::size_t>(end - buffer.data()));
             CAPTURE(token)
-            double out = 0;
-            REQUIRE(eisel_lemire(token, out));
-            CHECK(bits_of(out) == b);
+            CHECK(native_bits64(token) == b);
 
-            // insert digits before the exponent: the value moves by far less
-            // than the distance to the rounding boundary, so it must not change
-            std::string longer = token;
+            // insert digits before the exponent of the 17-digit form: that
+            // form lies strictly inside the rounding interval of the double
+            // (the shortest one may lie on its boundary), and the digits move
+            // it by far less than the distance to the boundary, so the value
+            // must not change
+            std::array<char, 64> digits17{};
+            static_cast<void>(std::snprintf(digits17.data(), digits17.size(), "%.17g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+            std::string longer = digits17.data();
             const std::size_t e = longer.find('e');
             const std::size_t dot = longer.find('.');
             const std::string extra = dot == std::string::npos ? ".000000000000000000001" : "000000000000000000001";
             longer.insert(e == std::string::npos ? longer.size() : e, extra);
             CAPTURE(longer)
-            if (eisel_lemire(longer, out))
-            {
-                CHECK(bits_of(out) == b);
-            }
-            else
-            {
-                // w and w + 1 round differently: only when the value is very
-                // close to a rounding boundary
-                ++declined;
-            }
+            CHECK(native_bits64(longer) == b);
         }
-        CHECK(declined < 1000); // 107 of the 200,000
+    }
+
+    SECTION("round trip, binary32")
+    {
+        std::uint32_t state = 5295;
+        for (int i = 0; i < 100000; ++i)
+        {
+            state ^= state << 13u;
+            state ^= state >> 17u;
+            state ^= state << 5u;
+            std::uint32_t b = state;
+            if ((b & 0x7F800000u) == 0x7F800000u)
+            {
+                continue; // infinity or NaN
+            }
+            if (i % 4 == 0)
+            {
+                b &= 0x807FFFFFu; // subnormals
+            }
+            float f = 0;
+            std::memcpy(&f, &b, sizeof(f));
+
+            std::array<char, 64> buffer{};
+            const char* end = nlohmann::detail::to_chars(buffer.data(), buffer.data() + buffer.size(), f);
+            const std::string token(buffer.data(), static_cast<std::size_t>(end - buffer.data()));
+            CAPTURE(token)
+            CHECK(native_bits32(token) == b);
+        }
     }
 
     SECTION("used by the lexer")
@@ -1344,5 +1859,301 @@ TEST_CASE("Eisel-Lemire float conversion")
         json _;
         CHECK_THROWS_WITH_AS(_ = json::parse("1.7976931348623159e308"),
                              "[json.exception.out_of_range.406] number overflow parsing '1.7976931348623159e308'", json::out_of_range&);
+    }
+}
+
+namespace
+{
+using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+
+// the bits of the float that parse() gives for a token, via both scanners;
+// the value must be the same for both
+template<typename Json, typename Bits>
+void check_parse(const std::string& token, Bits expected, Bits infinity)
+{
+    std::stringstream stream(token);
+    if ((expected & ~(Bits{1} << ((8 * sizeof(Bits)) - 1))) == infinity)
+    {
+        Json _;
+        CHECK_THROWS_WITH_AS(_ = Json::parse(token), ("[json.exception.out_of_range.406] number overflow parsing '" + token + "'").c_str(), typename Json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = Json::parse(stream), ("[json.exception.out_of_range.406] number overflow parsing '" + token + "'").c_str(), typename Json::out_of_range&);
+        return;
+    }
+    const Json contiguous = Json::parse(token);
+    const Json streamed = Json::parse(stream);
+    if (contiguous.is_number_float()) // not an integer that fits
+    {
+        CHECK(bits_of(contiguous.template get<typename Json::number_float_t>()) == expected);
+        CHECK(bits_of(streamed.template get<typename Json::number_float_t>()) == expected);
+    }
+    else
+    {
+        CHECK(streamed.is_number_integer());
+    }
+}
+} // namespace
+
+TEST_CASE("float conversion of hard cases")
+{
+    // see float_hard_cases.hpp
+    for (const auto& c : float_hard_cases::cases())
+    {
+        const std::string token = c.token;
+        CAPTURE(token)
+        CHECK(native_bits64(token) == c.bits64);
+        CHECK(native_bits32(token) == c.bits32);
+        check_parse<json>(token, c.bits64, std::uint64_t{0x7FF0000000000000u});
+        check_parse<float_json>(token, c.bits32, std::uint32_t{0x7F800000u});
+    }
+}
+
+TEST_CASE("float overflow and underflow in the parser")
+{
+    SECTION("double")
+    {
+        check_parse<json>("1.7976931348623157e308", std::uint64_t{0x7FEFFFFFFFFFFFFFu}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("1.7976931348623159e308", std::uint64_t{0x7FF0000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("-1e309", std::uint64_t{0xFFF0000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("1" + std::string(400, '0'), std::uint64_t{0x7FF0000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("1e99999999999999999999", std::uint64_t{0x7FF0000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        // an underflow gives a zero with the sign of the token
+        check_parse<json>("1e-400", std::uint64_t{0}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("-1e-400", std::uint64_t{0x8000000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("-2.4703282292062327e-324", std::uint64_t{0x8000000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("0." + std::string(400, '0') + "1", std::uint64_t{0}, std::uint64_t{0x7FF0000000000000u});
+    }
+
+    SECTION("float")
+    {
+        check_parse<float_json>("3.4028234e38", std::uint32_t{0x7F7FFFFFu}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("3.4028236e38", std::uint32_t{0x7F800000u}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("-1e39", std::uint32_t{0xFF800000u}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("1e-46", std::uint32_t{0}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("-1e-46", std::uint32_t{0x80000000u}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("-7.006492321624085e-46", std::uint32_t{0x80000000u}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("-7.006492321624086e-46", std::uint32_t{0x80000001u}, std::uint32_t{0x7F800000u});
+    }
+}
+
+TEST_CASE("string scanning kernels")
+{
+    // the word-at-a-time kernels must stop exactly where a byte-by-byte scan
+    // stops, for any content, length, and alignment
+    const auto reference_special = [](const unsigned char* data, std::size_t n)
+    {
+        std::size_t i = 0;
+        while (i < n && !nlohmann::detail::is_string_special(data[i]))
+        {
+            ++i;
+        }
+        return i;
+    };
+    const auto reference_copyable = [](const unsigned char* data, std::size_t n)
+    {
+        std::size_t i = 0;
+        while (i < n && nlohmann::detail::is_ascii_copyable(data[i]))
+        {
+            ++i;
+        }
+        return i;
+    };
+    const auto reference_bulk_run = [](const unsigned char* data, std::size_t n)
+    {
+        std::size_t i = 0;
+        while (i < n)
+        {
+            if (data[i] < 0x80u)
+            {
+                if (nlohmann::detail::is_string_special(data[i]))
+                {
+                    break;
+                }
+                ++i;
+                continue;
+            }
+            const std::size_t seq = nlohmann::detail::validate_one_utf8(data + i, n - i);
+            if (seq == 0)
+            {
+                break;
+            }
+            i += seq;
+        }
+        return i;
+    };
+
+    // pieces: ordinary ASCII, stops, DEL, well-formed sequences of every
+    // length, and ill-formed or truncated ones
+    const std::vector<std::string> pieces =
+    {
+        "a", "Z", " ", "~", "0123456789", "\"", "\\", std::string(1, '\0'), "\n", "\x1F", "\x7F",
+        "\xC3\xA4", "\xE2\x82\xAC", "\xE6\x97\xA5\xE6\x9C\xAC", "\xF0\x9F\x98\x80", "\xED\x9F\xBF",
+        "\x80", "\xC0\x80", "\xC3", "\xE2\x82", "\xED\xA0\x80", "\xF4\x90\x80\x80", "\xFF",
+    };
+    std::uint64_t state = 5295;
+    const auto next = [&state]()
+    {
+        state ^= state << 13u;
+        state ^= state >> 7u;
+        state ^= state << 17u;
+        return state;
+    };
+    // the upper half as a 32-bit value: converts to std::size_t implicitly on
+    // every platform (a cast of std::uint64_t is useless where both are the
+    // same type, and required where std::size_t is 32 bits wide)
+    const auto next_small = [&next]()
+    {
+        return static_cast<std::uint32_t>(next() >> 32u);
+    };
+    for (int round = 0; round < 100000; ++round)
+    {
+        // mostly ordinary text, so that runs span several words
+        std::string text(next_small() % 8u, '.');
+        const std::size_t count = next_small() % 12u;
+        for (std::size_t k = 0; k < count; ++k)
+        {
+            const std::size_t p = (next() % 4 == 0) ? next_small() % pieces.size() : 0;
+            text += pieces[p];
+            text += std::string(next_small() % 10u, 'x');
+        }
+        const auto* data = reinterpret_cast<const unsigned char*>(text.data()); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        for (std::size_t offset = 0; offset < 3 && offset <= text.size(); ++offset)
+        {
+            const std::size_t n = text.size() - offset;
+            CAPTURE(text)
+            CAPTURE(offset)
+            CHECK(nlohmann::detail::find_string_special(data + offset, n) == reference_special(data + offset, n));
+            CHECK(nlohmann::detail::find_ascii_copyable_run(data + offset, n) == reference_copyable(data + offset, n));
+            CHECK(nlohmann::detail::scalar_string_bulk_run(data + offset, n) == reference_bulk_run(data + offset, n));
+        }
+    }
+
+    // the trailing-zero count, whichever implementation the compiler gets
+    for (int k = 0; k < 64; ++k)
+    {
+        const std::uint64_t bit = std::uint64_t{1} << k;
+        CHECK(nlohmann::detail::count_trailing_zeros(bit) == k);
+        CHECK(nlohmann::detail::count_trailing_zeros(bit | (bit << 1u) | 0x8000000000000000u) == k);
+    }
+
+    // eight bytes as a little-endian word, at any alignment
+    const std::array<unsigned char, 16> bytes = {{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF}};
+    CHECK(nlohmann::detail::read_eight_bytes(bytes.data()) == 0x0807060504030201u);
+    CHECK(nlohmann::detail::read_eight_bytes(bytes.data() + 1) == 0x0908070605040302u);
+    CHECK(nlohmann::detail::read_eight_bytes(bytes.data() + 8) == 0xFF0F0E0D0C0B0A09u);
+    CHECK(nlohmann::detail::read_eight_bytes(reinterpret_cast<const char*>(bytes.data()) + 3) == 0x0B0A090807060504u);
+}
+
+TEST_CASE("find_ascii_copyable_run agrees with is_ascii_copyable for every byte")
+{
+    // the SWAR mask in find_ascii_copyable_run() encodes the predicate a
+    // second time; check every byte value at every position of a 24-byte buffer
+    // (three words) and for several lengths, with the byte at the end or inside
+    for (unsigned int value = 0; value < 256; ++value)
+    {
+        for (std::size_t position = 0; position < 24; ++position)
+        {
+            std::array<unsigned char, 24> buffer{};
+            buffer.fill(static_cast<unsigned char>('a'));
+            buffer[position] = static_cast<unsigned char>(value);
+            const bool copyable = nlohmann::detail::is_ascii_copyable(static_cast<unsigned char>(value));
+            for (const std::size_t n :
+                    {
+                        position, position + 1, std::size_t{24}
+                    })
+            {
+                if (n > 24)
+                {
+                    continue;
+                }
+                const std::size_t expected = (copyable || n <= position) ? n : position;
+                CAPTURE(value)
+                CAPTURE(position)
+                CAPTURE(n)
+                CHECK(nlohmann::detail::find_ascii_copyable_run(buffer.data(), n) == expected);
+            }
+        }
+    }
+}
+
+TEST_CASE("UTF-8 validators accept the same sequences")
+{
+    // The library checks UTF-8 in several places: detail::decode (serializer),
+    // the per-lead-byte switch of the lexer (json::accept), validate_one_utf8
+    // (bulk string scan), utf8_shape, and the byte path of the BON8 reader.
+    // They must accept exactly the same sequences (RFC 3629, section 4).
+    using nlohmann::json;
+
+    // bytes for the third and fourth position: the first two pairs are checked
+    // against all validators, the others only against the cheap ones
+    const std::array<std::array<unsigned char, 2>, 6> tails =
+    {
+        {
+            {{0x80, 0x80}}, {{0xBF, 0xBF}}, {{0x7F, 0x80}}, {{0xC0, 0x80}}, {{0x80, 0x7F}}, {{0x80, 0xC0}}
+        }
+    };
+
+    for (unsigned lead = 0x80; lead <= 0xFF; ++lead)
+    {
+        const auto shape = nlohmann::detail::utf8_shape(static_cast<std::uint8_t>(lead));
+        for (unsigned second = 0; second <= 0xFF; ++second)
+        {
+            for (std::size_t t = 0; t < tails.size(); ++t)
+            {
+                const std::array<unsigned char, 4> bytes = {{static_cast<unsigned char>(lead), static_cast<unsigned char>(second), tails[t][0], tails[t][1]}};
+
+                // expectation from the shape: the sequence is bytes[0..length)
+                const std::size_t length = shape.length;
+                bool expected = length >= 2 && second >= shape.second_lo && second <= shape.second_hi;
+                for (std::size_t i = 2; expected && i < length; ++i)
+                {
+                    expected = bytes[i] >= 0x80 && bytes[i] <= 0xBF;
+                }
+
+                // the DFA of the serializer
+                bool dfa = length >= 2;
+                if (dfa)
+                {
+                    std::uint8_t state = nlohmann::detail::UTF8_ACCEPT;
+                    std::uint32_t codep = 0;
+                    for (std::size_t i = 0; i < length; ++i)
+                    {
+                        nlohmann::detail::decode(state, codep, bytes[i]);
+                    }
+                    dfa = state == nlohmann::detail::UTF8_ACCEPT;
+                }
+
+                // the bulk path: exactly the sequence, and one byte short
+                const std::size_t bulk = nlohmann::detail::validate_one_utf8(bytes.data(), length);
+                const std::size_t bulk_short = length > 0 ? nlohmann::detail::validate_one_utf8(bytes.data(), length - 1) : 0;
+
+                CAPTURE(lead)
+                CAPTURE(second)
+                CAPTURE(t)
+                CHECK((dfa == expected && bulk == (expected ? length : 0) && bulk_short == 0));
+
+                if (t < 2 && length >= 2)
+                {
+                    // the lexer's byte path
+                    const std::string sequence(reinterpret_cast<const char*>(bytes.data()), length); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                    CHECK(json::accept("\"" + sequence + "\"") == expected);
+
+                    // the byte path of the BON8 reader (a string ends at 0xFF)
+                    if (lead >= 0xC2 && lead <= 0xF7)
+                    {
+                        std::vector<std::uint8_t> packed(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(length));
+                        packed.push_back(0xFF);
+                        const json j = json::from_bon8(packed, true, false);
+                        if (expected)
+                        {
+                            CHECK(j == json(sequence));
+                        }
+                        else
+                        {
+                            CHECK_FALSE((j.is_string() && j.get<std::string>() == sequence));
+                        }
+                    }
+                }
+            }
+        }
     }
 }

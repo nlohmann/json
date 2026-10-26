@@ -6,14 +6,16 @@
 
 When defined, the parser validates the UTF-8 content of JSON strings that come from a **contiguous byte input**
 (`std::string`, `std::vector<char>`/`<std::uint8_t>`, string literals, `const char*` ranges, …) using the
-[simdutf](https://github.com/simdutf/simdutf) library instead of the built-in scalar validator. On text with many
-non-ASCII characters (e.g. CJK or emoji) this can validate several times faster.
+[simdutf](https://github.com/simdutf/simdutf) library instead of the built-in validator (which uses SSSE3 or NEON where
+available, see [`JSON_NO_SIMD`](json_no_simd.md)). On text with many non-ASCII characters (e.g. CJK or emoji) this can
+validate faster, depending on the CPU.
 
 This is an **opt-in external dependency**. The library itself remains header-only and its behavior is unchanged: the
 same input is accepted or rejected either way, and every parse error is reported at the same position with the same
 message (simdutf is only used to fast-path *valid* runs; anything it flags falls back to the scalar path so the exact
-diagnostic is preserved). Streaming inputs (files, `std::istream`, wide strings, user-defined adapters) always use the
-scalar path.
+diagnostic is preserved). A `std::istream` uses simdutf for the characters its stream buffer holds (see
+[`JSON_DISABLE_STREAM_BULK_SCAN`](json_disable_stream_bulk_scan.md)); other streaming inputs (`FILE*`, wide strings,
+user-defined adapters) always use the scalar path.
 
 When `JSON_USE_SIMDUTF` is defined you must make the `simdutf.h` header available on the include path and link the
 simdutf library. When it is not defined, no simdutf header is included and there is no dependency.

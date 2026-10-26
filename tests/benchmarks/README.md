@@ -9,6 +9,7 @@ Micro-benchmarks for parsing, serialization and the binary formats, written with
 | benchmark | what it does |
 |---|---|
 | `ParseFile`, `ParseString` | parse JSON from a file stream or a string |
+| `Accept` | validate JSON from a string (`json::accept`) |
 | `ParseIndented` | parse the large files re-indented by 4 spaces, for the lexer's whitespace handling |
 | `Dump` | serialize, compact (`-`) and indented (`4`) |
 | `ToCbor`, `BinaryToCbor` | write CBOR; `BinaryToCbor` writes binary values of growing size |
@@ -16,6 +17,20 @@ Micro-benchmarks for parsing, serialization and the binary formats, written with
 | `FromBinaryBuffer`, `FromBinaryFile` | read CBOR, MessagePack, UBJSON, BJData and BSON from a buffer or a `FILE*` |
 | `FromBinaryShape` | read deeply nested, container-heavy and scalar-heavy documents in every binary format |
 | `FromCborChunkedString` | read CBOR strings split into indefinite-length chunks |
+| `ViewParse`, `ViewRead` | parse with [`json_document`](https://json.nlohmann.me/features/json_view/) into a new document, or into one that is reused; compare with `ParseString` |
+| `ViewParseIndented` | as `ParseIndented`, with a reused `json_document` |
+| `ViewAccept` | validate with `json_document::accept`; compare with `Accept` |
+| `ViewMaterialize` | convert a parsed `json_document` into a `json` value |
+| `ViewDump` | serialize a parsed `json_document`; compare with `Dump` |
+| `SaxParse` | parse with a SAX handler that only counts events, so no values are built |
+| `Copy`, `CopyAssign`, `CopyRing` | copy a parsed document and destroy a copy, both timed: a temporary copy, an assignment over an earlier copy, and replacing the oldest of eight live copies |
+| `CopyOnly`, `DestroyOnly` | only the copy or only the destruction, the other half untimed; a fast destructor can leave work to the next allocations, so these tell the halves apart but do not compare versions |
+| `Equal`, `Iterate` | compare a parsed document with a copy, or visit every value with range-based `for` loops |
+| `Flatten`, `FlattenOrdered`, `Unflatten` | `flatten()` for `json` and `ordered_json`, and `unflatten()` |
+| `Diff`, `Patch` | `diff()` against the document with every eighth scalar changed, and applying that patch |
+| `JsonPointerParse`, `JsonPointerToString`, `JsonPointerAt`, `JsonPointerContains` | the JSON pointers of every scalar in a document: parse them from strings, turn them back into strings, look them up with `at()` and `contains()` |
+| `GetVectorInt`, `GetVectorDouble`, `GetMap` | `get<std::vector<std::int64_t>>()`, `get<std::vector<double>>()` and `get<std::map<std::string, json>>()` on large arrays and a large flat object |
+| `ToJsonStrings` | create a `json` array from a `std::vector` of 100,000 strings, copied or moved, and destroy it again |
 
 The input files are those of [nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark) (`canada`,
 `citm_catalog`, `twitter`), a large `jeopardy` file, and number-heavy files (`floats`, `signed_ints`, ...).
@@ -27,8 +42,11 @@ The input files are those of [nativejson-benchmark](https://github.com/miloyip/n
 - Network access on the first configure: CMake downloads Google Benchmark and the
   [test data](https://github.com/nlohmann/json_test_data) into the build directory. To reuse a download of the test
   data, pass `-DJSON_TestDataDirectory=<build directory>/test_files`.
-- Google Benchmark is pinned to a release (1.9.5), so that results from different days stay comparable. To update it,
-  change `JSON_GOOGLE_BENCHMARK_VERSION` and the archive's `URL_HASH` in `CMakeLists.txt` together.
+- Google Benchmark is fetched as a fixed release with a checksum, so that every build uses the same
+  code and a download cannot change under you. It is updated like any other dependency when a new release comes out:
+  change `JSON_GOOGLE_BENCHMARK_VERSION` and the archive's `URL_HASH` in `CMakeLists.txt` together. Results are kept
+  comparable by building both sides of a comparison with the same version, not by keeping that version forever (see
+  [Comparing two versions](#comparing-two-versions)).
 - The benchmarks include `single_include/nlohmann/json.hpp`, so run `make amalgamate` after changing anything in
   `include/`.
 
@@ -110,13 +128,20 @@ Python, unpinned versions work as well. In its output:
 - `OVERALL_GEOMEAN` summarizes all benchmarks;
 - `-a` shows only the aggregates, not every repetition.
 
-The header you compare with must support everything the benchmarks use. The current benchmarks build against 3.12.0.
+Both builds use the same Google Benchmark, the one `CMakeLists.txt` names, so only the header differs. For the same
+reason, do not compare against result files from an earlier checkout: a different Google Benchmark, compiler or
+machine state can shift the numbers as much as the change under test. Rerun the baseline instead.
+
+The header you compare with must support everything the benchmarks use. The current benchmarks build against 3.12.0;
+the `View*` benchmarks (in `src/benchmarks_view.cpp`) are only built if the directory also holds
+`nlohmann/json_view.hpp`.
 Only benchmarks present in both result files are compared, so for older releases, either filter the benchmarks or
 build that release's own `tests/benchmarks` against its own header.
 
 ## Getting stable numbers
 
-- Build and run both versions on the same machine, one right after the other.
+- Build and run both versions on the same machine with the same compiler and Google Benchmark, one right after the
+  other.
 - Keep the machine otherwise idle: no builds, no browser, and a laptop plugged in.
 - On Linux, set the CPU frequency governor to `performance`, e.g. `sudo cpupower frequency-set --governor performance`.
   Google Benchmark prints a warning when frequency scaling is enabled. Pinning the process to a core

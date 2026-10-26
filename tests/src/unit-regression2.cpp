@@ -33,8 +33,8 @@
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
+using nlohmann::json;
+using nlohmann::ordered_json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif

@@ -8,6 +8,13 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_DISABLE_ENUM_SERIALIZATION was enabled on the command
+// line before including json.hpp, which #undefs it; std::byte is an enum, so
+// converting std::vector<std::byte> needs enum serialization
+#if defined(JSON_DISABLE_ENUM_SERIALIZATION) && (JSON_DISABLE_ENUM_SERIALIZATION == 1)
+    #define SKIP_TESTS_FOR_ENUM_SERIALIZATION
+#endif
+
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
@@ -26,15 +33,11 @@ namespace
 
 // a BinaryType whose value type is signed: the elements must still be
 // processed as the numbers 0..255
-using char_binary_json = nlohmann::basic_json <
-                         std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
-                         double, std::allocator, nlohmann::adl_serializer, std::vector<char>, void >;
+using char_binary_json = nlohmann::json::with_binary_t<std::vector<char>>;
 
 #ifdef JSON_HAS_CPP_17
     // a BinaryType whose value type is not an integer type at all
-    using byte_binary_json = nlohmann::basic_json <
-    std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
-    double, std::allocator, nlohmann::adl_serializer, std::vector<std::byte>, void >;
+    using byte_binary_json = nlohmann::json::with_binary_t<std::vector<std::byte>>;
 #endif
 
 } // namespace
@@ -89,3 +92,53 @@ TEST_CASE("binary type whose value type is not std::uint8_t")
     }
 #endif
 }
+
+#ifdef JSON_HAS_CPP_17
+// moved from unit-regression3.cpp, so that file does not instantiate a second
+// basic_json specialization (MinGW section limit, see windows.yml)
+TEST_CASE("std::vector<std::byte> as binary type")
+{
+    SECTION("issue #4804: from_cbor incompatible with std::vector<std::byte> as binary_t")
+    {
+        const std::vector<std::uint8_t> data = {0x80};
+        const auto decoded = byte_binary_json::from_cbor(data);
+        CHECK((decoded == byte_binary_json::array()));
+    }
+
+#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
+    SECTION("discussion #4209 - custom BinaryType direct assignment and round-tripping")
+    {
+        // Test that assigning a custom BinaryType directly creates a binary value, not an array
+        const std::vector<std::byte> original{std::byte{1}, std::byte{2}, std::byte{3}};
+        const byte_binary_json j = original;
+        CHECK(j.is_binary());
+        CHECK(!j.is_array());
+
+        // Test round-tripping: extracting the binary value back as the custom container type
+        const auto extracted = j.get<std::vector<std::byte>>();
+        CHECK(extracted == original);
+
+        // Test that the default json alias behavior is unchanged: std::vector<uint8_t> -> array
+        const nlohmann::json default_json = std::vector<std::uint8_t> {1, 2, 3};
+        CHECK(default_json.is_array());
+        CHECK(!default_json.is_binary());
+    }
+
+    SECTION("discussion #4209 - custom BinaryType extraction from parsed array")
+    {
+        // Test that extracting a custom BinaryType from a parsed JSON array still works
+        // (not just from a binary-typed node)
+        const auto j = byte_binary_json::parse("[1,2,3]");
+        CHECK(j.is_array());
+        CHECK(!j.is_binary());
+
+        // Extracting as custom BinaryType should work from arrays
+        const auto extracted = j.get<std::vector<std::byte>>();
+        CHECK(extracted.size() == 3);
+        CHECK(extracted[0] == std::byte{1});
+        CHECK(extracted[1] == std::byte{2});
+        CHECK(extracted[2] == std::byte{3});
+    }
+#endif
+}
+#endif

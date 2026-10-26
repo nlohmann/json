@@ -17,49 +17,38 @@ array data, it performs the following steps:
 - j2 = from_msgpack(vec)
 - assert(to_msgpack(j2) == vec)
 
+Finally, it reads the data from a stream, a non-contiguous iterator range, and
+a FILE*, which read byte by byte, and checks that each gives the same value or
+error (id, message, byte position) as the pointer range, which takes the bulk
+fast paths (see check_input_adapters()).
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <cassert>
-#include <nlohmann/json.hpp>
+#include "fuzzer_common.hpp"
 
-// the round-trip checks below are assertions; NDEBUG would compile them away
-#ifdef NDEBUG
-    #error "the fuzzer drivers must be built without NDEBUG"
-#endif
-
-using json = nlohmann::json;
-
-// compares dumps rather than values, because NaN != NaN; keep writes strings
-// byte for byte, so ill-formed UTF-8 that a binary reader accepts cannot throw
-static bool same_value(const json& lhs, const json& rhs)
+namespace
 {
-    return lhs.dump(-1, ' ', false, json::error_handler_t::keep) == rhs.dump(-1, ' ', false, json::error_handler_t::keep);
-}
+// json::from_msgpack for check_input_adapters()
+struct read_msgpack
+{
+    template<typename... Args>
+    json operator()(Args&& ... args) const
+    {
+        return json::from_msgpack(std::forward<Args>(args)...);
+    }
+};
+} // namespace
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     std::vector<uint8_t> const vec1(data, data + size);
 
-    // step 0: parse input without exceptions; a parse error must then be
-    // reported as a discarded value, never thrown
-    json j_noexcept;
+    // step 0: parse input without exceptions
     bool noexcept_threw = false;
-    try
-    {
-        j_noexcept = json::from_msgpack(vec1, true, false);
-    }
-    catch (const json::parse_error&)
-    {
-        assert(false);
-    }
-    catch (const json::exception&)
-    {
-        // type and out-of-range errors are not parse errors and still throw
-        noexcept_threw = true;
-    }
+    json const j_noexcept = parse_without_exceptions([&] { return json::from_msgpack(vec1, true, false); }, noexcept_threw);
     // whether step 1 succeeded; if not, the catch blocks below check that
     // step 0 failed, too
     bool parsed = false;
@@ -105,6 +94,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         // out of range errors may happen if provided sizes are excessive
         assert(parsed || noexcept_threw || j_noexcept.is_discarded());
     }
+
+    // step 3: the other input adapters must read the data alike
+    check_input_adapters(data, size, read_msgpack());
 
     // return 0 - non-zero return values are reserved for future use
     return 0;

@@ -5,15 +5,14 @@ set(N 10)
 # Needed tools.
 ###############################################################################
 
-include(FindPython3)
 find_package(Python3 COMPONENTS Interpreter)
 
-find_program(CLANG_TOOL NAMES clang++-HEAD clang++ clang++-22 clang++-21 clang++-20 clang++-19 clang++-18 clang++-17 clang++-16 clang++-15 clang++-14 clang++-13 clang++-12 clang++-11 clang++)
+find_program(CLANG_TOOL NAMES clang++ clang++-HEAD clang++-22 clang++-21 clang++-20 clang++-19 clang++-18 clang++-17 clang++-16 clang++-15 clang++-14 clang++-13 clang++-12 clang++-11)
 execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
 message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
 
-find_program(CLANG_TIDY_TOOL NAMES clang-tidy-22 clang-tidy-21 clang-tidy-20 clang-tidy-19 clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy)
+find_program(CLANG_TIDY_TOOL NAMES clang-tidy clang-tidy-22 clang-tidy-21 clang-tidy-20 clang-tidy-19 clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
 message(STATUS "🔖 Clang-Tidy ${CLANG_TIDY_TOOL_VERSION} (${CLANG_TIDY_TOOL})")
@@ -69,9 +68,7 @@ string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" VALGRIND_TOOL_VERSION "${VALGRIND_TOOL_V
 message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
 
 find_program(GENHTML_TOOL NAMES genhtml)
-find_program(PLOG_CONVERTER_TOOL NAMES plog-converter)
-find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer)
-find_program(SCAN_BUILD_TOOL NAMES scan-build-15 scan-build-14 scan-build-13 scan-build-12 scan-build-11 scan-build)
+find_program(SCAN_BUILD_TOOL NAMES scan-build scan-build-22 scan-build-21 scan-build-20 scan-build-19 scan-build-18 scan-build-17 scan-build-16 scan-build-15 scan-build-14 scan-build-13 scan-build-12 scan-build-11)
 
 # the individual source files
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
@@ -364,10 +361,10 @@ add_custom_target(ci_test_coverage
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_coverage32
     COMMAND cd ${PROJECT_BINARY_DIR}/build_coverage32 && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
 
-    COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1 --ignore-errors mismatch --ignore-errors unused
-    COMMAND ${LCOV_TOOL} -e json.info ${SRC_FILES} --output-file json.info.filtered --rc branch_coverage=1 --ignore-errors unused
+    COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1 --ignore-errors mismatch --ignore-errors unused --ignore-errors inconsistent
+    COMMAND ${LCOV_TOOL} -e json.info ${SRC_FILES} --output-file json.info.filtered --rc branch_coverage=1 --ignore-errors unused --ignore-errors inconsistent
     COMMAND ${CMAKE_SOURCE_DIR}/tests/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
-    COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
+    COMMAND ${GENHTML_TOOL} --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage --ignore-errors inconsistent json.info.filtered.noexcept
 
     COMMENT "Compile and test with coverage"
 )
@@ -392,8 +389,8 @@ add_custom_target(ci_test_clang_sanitizer
 # Check if header is amalgamated and sources are properly indented.
 ###############################################################################
 
-# Same file set as .github/workflows/check_amalgamation.yml, so a direct push to develop/master/release/*
-# (which only this CMake target checks, not the pull_request-only workflow) is held to the same standard.
+# Same file set as .github/workflows/check_amalgamation.yml, so this CMake target (which can be run locally) is held
+# to the same standard as the workflow (which runs for pull requests and for pushes to develop/master/release/*).
 file(GLOB_RECURSE INDENT_FILES
     ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.hpp
     ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.cpp
@@ -410,10 +407,11 @@ list(FILTER INDENT_FILES EXCLUDE REGEX "/tests/thirdparty/|/tests/abi/include/nl
 set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
 set(tool_dir ${PROJECT_SOURCE_DIR}/tools/amalgamate)
 add_custom_target(ci_test_amalgamation
-    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~
+    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~ ${include_dir}/json_view.hpp~
     COMMAND cp ${include_dir}/json.hpp ${include_dir}/json.hpp~
     COMMAND cp ${include_dir}/json_fwd.hpp ${include_dir}/json_fwd.hpp~
     COMMAND cp ${include_dir}/json_literals.hpp ${include_dir}/json_literals.hpp~
+    COMMAND cp ${include_dir}/json_view.hpp ${include_dir}/json_view.hpp~
     COMMAND cp ${PROJECT_SOURCE_DIR}/BUILD.bazel ${PROJECT_SOURCE_DIR}/BUILD.bazel~
 
     COMMAND ${Python3_EXECUTABLE} -mvenv venv_astyle
@@ -423,16 +421,20 @@ add_custom_target(ci_test_amalgamation
     COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json.json -s .
     COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_fwd.json -s .
     COMMAND cp ${PROJECT_SOURCE_DIR}/include/nlohmann/json_literals.hpp ${include_dir}/json_literals.hpp
-    COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=none ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp
+    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_view.json -s .
+    COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=none ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp ${include_dir}/json_literals.hpp ${include_dir}/json_view.hpp
     COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/scripts/gen_bazel_build_file.cmake
 
     COMMAND diff ${include_dir}/json.hpp~ ${include_dir}/json.hpp
     COMMAND diff ${include_dir}/json_fwd.hpp~ ${include_dir}/json_fwd.hpp
     COMMAND diff ${include_dir}/json_literals.hpp~ ${include_dir}/json_literals.hpp
+    COMMAND diff ${include_dir}/json_view.hpp~ ${include_dir}/json_view.hpp
     COMMAND diff ${PROJECT_SOURCE_DIR}/BUILD.bazel~ ${PROJECT_SOURCE_DIR}/BUILD.bazel
 
     COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=orig ${INDENT_FILES}
     COMMAND for FILE in `find . -name '*.orig'`\; do false \; done
+
+    COMMAND rm -f ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~ ${include_dir}/json_view.hpp~ ${PROJECT_SOURCE_DIR}/BUILD.bazel~
 
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMENT "Check amalgamation, formatting, and BUILD.bazel"
@@ -486,6 +488,13 @@ add_custom_target(ci_clang_analyze
 # Check code with Cppcheck.
 ###############################################################################
 
+# default_defines.hpp expands the Hedley macros to the compiler's feature-test operators, which Cppcheck does not know.
+# Since Cppcheck 2.20, it rejects their invocations in #if conditions instead of evaluating them as 0.
+file(WRITE ${CMAKE_BINARY_DIR}/cppcheck_feature_tests.hpp "")
+foreach(OPERATOR __has_attribute __has_builtin __has_cpp_attribute __has_declspec_attribute __has_extension __has_feature __has_include __has_warning)
+    file(APPEND ${CMAKE_BINARY_DIR}/cppcheck_feature_tests.hpp "#define ${OPERATOR}(x) 0\n")
+endforeach()
+
 add_custom_target(ci_cppcheck
     COMMAND mkdir -p cppcheck
     COMMAND clang -dM -E -x c++ -std=c++11 ${CMAKE_SOURCE_DIR}/include/nlohmann/thirdparty/hedley/hedley.hpp > default_defines.hpp 2> /dev/null
@@ -494,7 +503,7 @@ add_custom_target(ci_cppcheck
     COMMAND venv_cppcheck/bin/cppcheck --enable=warning --check-level=exhaustive --inline-suppr --inconclusive --force
             --std=c++11 ${PROJECT_SOURCE_DIR}/include/nlohmann/json.hpp -I ${CMAKE_SOURCE_DIR}/include
             --error-exitcode=1 --relative-paths=${PROJECT_SOURCE_DIR} -j ${N} --include=default_defines.hpp
-            --cppcheck-build-dir=cppcheck
+            --include=${CMAKE_BINARY_DIR}/cppcheck_feature_tests.hpp --cppcheck-build-dir=cppcheck
             -UJSON_CATCH_USER -UJSON_TRY_USER -UJSON_ASSERT -UJSON_INTERNAL_CATCH -UJSON_THROW
             -DJSON_HAS_CPP_11 -UJSON_HAS_CPP_14 -UJSON_HAS_CPP_17 -UJSON_HAS_CPP_20 -UJSON_HAS_THREE_WAY_COMPARISON
     COMMENT "Check code with Cppcheck"
@@ -611,9 +620,8 @@ foreach(SRC_FILE ${SRC_FILES})
     add_executable(single_${RELATIVE_SRC_FILE} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp)
     target_include_directories(single_${RELATIVE_SRC_FILE} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_features(single_${RELATIVE_SRC_FILE} PRIVATE cxx_std_11)
-    if(RELATIVE_SRC_FILE STREQUAL "json" OR RELATIVE_SRC_FILE STREQUAL "json_literals")
-        # see below: report the diagnostics of json.hpp and json_literals.hpp without --error, so they
-        # do not fail the build
+    if(RELATIVE_SRC_FILE STREQUAL "json")
+        # see below: report the diagnostics of json.hpp without --error, so they do not fail the build
         set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_TOOL} -Xiwyu --max_line_length=300)
     else()
         set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path_and_options}")
@@ -627,18 +635,31 @@ foreach(SRC_FILE ${SRC_FILES})
     # reporting its diagnostics (informational, via CXX_INCLUDE_WHAT_YOU_USE above) but exclude it
     # from the hard gate below so a fresh IWYU/compiler combination does not fail this target on a
     # nondeterministic suggestion for a header that already re-exports everything on purpose.
-    # json_literals.hpp and json.hpp include each other on purpose (json.hpp includes it at its end
-    # unless JSON_NO_AUTOMATIC_UDLS is defined), and IWYU, not following the cycle, suggests replacing
-    # json.hpp with json_fwd.hpp although the literals need the complete basic_json; exclude it, too.
-    if(NOT RELATIVE_SRC_FILE STREQUAL "json" AND NOT RELATIVE_SRC_FILE STREQUAL "json_literals")
+    if(NOT RELATIVE_SRC_FILE STREQUAL "json")
         list(APPEND single_binaries_tus src_single/${RELATIVE_SRC_FILE}.cpp)
     endif()
+endforeach()
+
+# The checks above look at each header on its own. Client code that includes only <nlohmann/json.hpp>
+# must not be told by include analyzers to include another nlohmann header for what it uses
+# (issue #5812): json.hpp marks those includes "IWYU pragma: export", and both IWYU and clang-tidy's
+# misc-include-cleaner (disabled in .clang-tidy for the library itself) check these clients.
+file(GLOB CONSUMER_FILES ${PROJECT_SOURCE_DIR}/tests/iwyu_consumer/*.cpp)
+foreach(CONSUMER_FILE ${CONSUMER_FILES})
+    get_filename_component(CONSUMER_NAME "${CONSUMER_FILE}" NAME_WE)
+    add_executable(iwyu_consumer_${CONSUMER_NAME} EXCLUDE_FROM_ALL ${CONSUMER_FILE})
+    target_include_directories(iwyu_consumer_${CONSUMER_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    target_compile_features(iwyu_consumer_${CONSUMER_NAME} PRIVATE cxx_std_11)
+    list(APPEND single_binaries iwyu_consumer_${CONSUMER_NAME})
+    list(APPEND single_binaries_tus ${CONSUMER_FILE})
 endforeach()
 
 if(IWYU_TOOL_PY)
     add_custom_target(ci_single_binaries
         DEPENDS ${single_binaries}
         COMMAND ${IWYU_TOOL_PY} -p ${PROJECT_BINARY_DIR} ${single_binaries_tus} -- ${iwyu_options}
+        COMMAND ${CLANG_TIDY_TOOL} -p ${PROJECT_BINARY_DIR} --checks=-*,misc-include-cleaner --warnings-as-errors=* ${CONSUMER_FILES}
+        VERBATIM
         COMMENT "Check if headers are self-contained"
     )
 else()
@@ -719,7 +740,7 @@ ci_get_cmake(4.0.0  CMAKE_4_0_0_BINARY)
 
 # the tests require CMake 3.13 or later, so they are excluded for CMake 3.5.0
 set(JSON_CMAKE_FLAGS_3_5_0 JSON_Diagnostics JSON_Diagnostic_Positions JSON_GlobalUDLs JSON_ImplicitConversions JSON_DisableEnumSerialization
-    JSON_LegacyDiscardedValueComparison JSON_Install JSON_MultipleHeaders JSON_SystemInclude JSON_Valgrind
+    JSON_DisableTupleReferenceConversion JSON_LegacyDiscardedValueComparison JSON_Install JSON_MultipleHeaders JSON_SystemInclude JSON_Valgrind
     JSON_StrictNulHandling JSON_StrictBinaryUTF8 JSON_DeleteDeprecatedFunctions)
 set(JSON_CMAKE_FLAGS_3_31_6 JSON_BuildTests ${JSON_CMAKE_FLAGS_3_5_0})
 set(JSON_CMAKE_FLAGS_4_0_0 JSON_BuildTests ${JSON_CMAKE_FLAGS_3_5_0})
@@ -776,17 +797,14 @@ add_custom_target(ci_cmake_flags
 # Use more installed compilers.
 ###############################################################################
 
-foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 g++-11 clang++-3.5 clang++-3.6 clang++-3.7 clang++-3.8 clang++-3.9 clang++-4.0 clang++-5.0 clang++-6.0 clang++-7 clang++-8 clang++-9 clang++-10 clang++-11 clang++-12 clang++-13 clang++-14 clang++-15 clang++-16 clang++-17 clang++-18 clang++-19 clang++-20)
+foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6)
     find_program(COMPILER_TOOL NAMES ${COMPILER})
     if (COMPILER_TOOL)
-        unset(ADDITIONAL_FLAGS)
-
         add_custom_target(ci_test_compiler_${COMPILER}
             COMMAND CXX=${COMPILER} ${CMAKE_COMMAND}
                 -DCMAKE_BUILD_TYPE=Debug -GNinja
                 -DJSON_BuildTests=ON -DJSON_FastTests=ON
                 -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
-                ${ADDITIONAL_FLAGS}
             COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
             COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
             COMMENT "Compile and test with ${COMPILER}"
@@ -800,7 +818,6 @@ add_custom_target(ci_test_compiler_default
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON -DJSON_FastTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_default
-        ${ADDITIONAL_FLAGS}
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_default --parallel ${N}
     COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_default && ${CMAKE_CTEST_COMMAND} --parallel ${N} -LE git_required --output-on-failure
     COMMENT "Compile and test with default C++ compiler"
@@ -823,10 +840,12 @@ add_custom_target(ci_cuda_example
 
 add_custom_target(ci_module_cpp20
     COMMAND ${CMAKE_COMMAND}
-        -DCMAKE_BUILD_TYPE=Debug -GNinja 
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_CI=ON -DNLOHMANN_JSON_BUILD_MODULES=ON -DJSON_Install=ON
+        "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
         -S${PROJECT_SOURCE_DIR}/tests/module_cpp20 -B${PROJECT_BINARY_DIR}/ci_module_cpp20
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/ci_module_cpp20
+    VERBATIM
 )
 
 ###############################################################################

@@ -45,6 +45,88 @@ namespace detail
 // exceptions //
 ////////////////
 
+/*!
+@brief the ids of the exceptions thrown by the library
+@note The values are part of the public API: they are the `id` member of the
+      exceptions and appear in their `what()` messages.
+@sa https://json.nlohmann.me/home/exceptions/
+*/
+enum class exception_id : int
+{
+    // parse_error
+    syntax_error = 101, ///< unexpected token or invalid literal while parsing JSON
+    patch_not_an_array = 104, ///< a JSON Patch document is not an array of objects
+    patch_invalid_operation = 105, ///< a JSON Patch operation is malformed
+    pointer_index_leading_zero = 106, ///< a JSON Pointer array index has a leading zero
+    pointer_missing_slash = 107, ///< a JSON Pointer does not start with '/'
+    pointer_invalid_escape = 108, ///< a JSON Pointer contains an escape other than ~0 and ~1
+    pointer_index_not_a_number = 109, ///< a JSON Pointer array index is not a number
+    unexpected_end_of_input = 110, ///< a binary input ends early, or has bytes left at its end
+    unexpected_byte = 112, ///< a binary input contains an unexpected byte or invalid length
+    invalid_string_or_size = 113, ///< a binary input contains an invalid string or size specification
+    bson_unsupported_type = 114, ///< a BSON record type is not supported
+    invalid_high_precision_number = 115, ///< a UBJSON/BJData high-precision number cannot be parsed
+    invalid_document_image = 116, ///< json_document::load() rejects an image
+    // invalid_iterator
+    iterators_incompatible = 201, ///< the iterators of a range belong to different values
+    iterator_from_other_value = 202, ///< an iterator does not belong to the value it is used with
+    iterator_range_from_other_value = 203, ///< an iterator range does not belong to the value it is used with
+    iterator_range_out_of_range = 204, ///< an iterator range of a primitive value is not [begin, end)
+    iterator_out_of_range = 205, ///< an iterator of a primitive value is not begin()
+    iterator_range_of_null = 206, ///< an iterator range belongs to a null value
+    iterator_key_not_object = 207, ///< key() is called on an iterator of a non-object
+    iterator_subscript_on_object = 208, ///< operator[] is called on an iterator of an object
+    iterator_arithmetic_on_object = 209, ///< an offset operator is used on an iterator of an object
+    insert_range_incompatible = 210, ///< the iterators of an inserted range belong to different values
+    insert_range_into_itself = 211, ///< an inserted range belongs to the value it is inserted into
+    iterators_compare_different_values = 212, ///< iterators of different values are compared
+    iterator_order_on_object = 213, ///< iterators of an object are compared by order
+    iterator_value_unavailable = 214, ///< an iterator does not refer to a value
+    // type_error
+    object_from_non_pairs = 301, ///< an object is created from an initializer list that is not a list of pairs
+    type_mismatch = 302, ///< a value has the wrong type for a conversion
+    incompatible_reference_type = 303, ///< get_ref() is called with a reference type that does not match the value
+    at_wrong_type = 304, ///< at() is called on a value of the wrong type
+    subscript_wrong_type = 305, ///< operator[] is called on a value of the wrong type
+    value_wrong_type = 306, ///< value() is called on a value of the wrong type
+    erase_wrong_type = 307, ///< erase() is called on a value of the wrong type
+    push_back_wrong_type = 308, ///< push_back() or operator+= is called on a value of the wrong type
+    insert_wrong_type = 309, ///< insert() is called on a value of the wrong type
+    swap_wrong_type = 310, ///< swap() is called on a value of the wrong type
+    emplace_wrong_type = 311, ///< emplace() or emplace_back() is called on a value of the wrong type
+    update_wrong_type = 312, ///< update() is called on a value of the wrong type
+    unflatten_invalid_value = 313, ///< unflatten() finds conflicting paths
+    unflatten_not_object = 314, ///< unflatten() is called on a non-object
+    unflatten_value_not_primitive = 315, ///< unflatten() is called on an object with non-primitive values
+    invalid_utf8 = 316, ///< dump() finds a string that is not valid UTF-8
+    type_not_serializable = 317, ///< a value cannot be serialized to the requested binary format
+    enum_key_duplicate = 318, ///< an enum-keyed map has two keys that serialize to the same string
+    document_binary_value = 319, ///< a binary value is stored in a json_document
+    document_image_unsupported = 320, ///< a json_document image cannot be saved or loaded (discarded document, big-endian target)
+    discarded_value_used = 321, ///< a discarded value is used
+    // out_of_range
+    array_index_out_of_range = 401, ///< an array index is out of range
+    pointer_past_the_end_index = 402, ///< a JSON Pointer uses the array index '-'
+    key_not_found = 403, ///< an object key is not found
+    pointer_unresolved = 404, ///< a JSON Pointer reference token cannot be resolved
+    patch_on_root = 405, ///< the root of a value has no parent, e.g. for a JSON Patch 'remove' or 'add' at the root
+    number_overflow = 406, ///< a number cannot be stored without overflowing to NaN or INF
+    integer_too_large = 407, ///< an integer cannot be represented in the binary format
+    container_too_large = 408, ///< the size of a container in a binary input exceeds the maximal capacity
+    bson_key_with_null = 409, ///< a BSON key contains U+0000
+    value_out_of_range = 410, ///< an enum value is undefined, or a JSON Pointer array index exceeds size_type
+    patch_add_parent_not_container = 411, ///< the parent of a JSON Patch 'add' target is not a container
+    length_too_large = 412, ///< a length does not fit into the length field of a binary format
+    patch_remove_parent_not_container = 413, ///< the parent of a JSON Patch 'remove' target is not a container
+    patch_move_into_child = 414, ///< a JSON Patch 'move' moves a value into one of its children
+    subtype_out_of_range = 415, ///< a binary subtype does not fit into one byte
+    document_too_large = 416, ///< a json_document input, its edit storage, or an image reaches the 32-bit (4 GiB) limit
+    // other_error
+    internal_error = 500, ///< unreachable code was reached
+    patch_test_failed = 501, ///< a JSON Patch 'test' operation failed
+    size_marker_required = 502  ///< UBJSON/BJData output with type markers requires size markers
+};
+
 /// @brief general exception of the @ref basic_json class
 /// @sa https://json.nlohmann.me/api/basic_json/exception/
 class exception : public std::exception
@@ -68,6 +150,13 @@ class exception : public std::exception
         return concat("[json.exception.", ename, '.', std::to_string(id_), "] ");
     }
 
+    /// build the message "[json.exception.<ename>.<id>] <diagnostics><what_arg>"
+    template<typename BasicJsonContext>
+    static std::string what_impl(const std::string& ename, int id_, const std::string& what_arg, BasicJsonContext context)
+    {
+        return concat(name(ename, id_), diagnostics(context), what_arg);
+    }
+
     static std::string diagnostics(std::nullptr_t /*leaf_element*/)
     {
         return "";
@@ -80,48 +169,33 @@ class exception : public std::exception
         std::vector<std::string> tokens;
         for (const auto* current = leaf_element; current != nullptr && current->m_parent != nullptr; current = current->m_parent)
         {
-            switch (current->m_parent->type())
+            const auto* parent = current->m_parent;
+            if (parent->is_array())
             {
-                case value_t::array:
+                for (std::size_t i = 0; i < parent->m_data.m_value.array->size(); ++i)
                 {
-                    for (std::size_t i = 0; i < current->m_parent->m_data.m_value.array->size(); ++i)
+                    if (&parent->m_data.m_value.array->operator[](i) == current)
                     {
-                        if (&current->m_parent->m_data.m_value.array->operator[](i) == current)
-                        {
-                            tokens.emplace_back(std::to_string(i));
-                            break;
-                        }
+                        tokens.emplace_back(std::to_string(i));
+                        break;
                     }
-                    break;
                 }
-
-                case value_t::object:
-                {
-                    for (const auto& element : *current->m_parent->m_data.m_value.object)
-                    {
-                        if (&element.second == current)
-                        {
-                            // data() is null-terminated, so a key containing
-                            // a null byte is cut short here rather than
-                            // truncating the whole message at what()
-                            tokens.emplace_back(element.first.data());
-                            break;
-                        }
-                    }
-                    break;
-                }
-
-                case value_t::null: // LCOV_EXCL_LINE
-                case value_t::string: // LCOV_EXCL_LINE
-                case value_t::boolean: // LCOV_EXCL_LINE
-                case value_t::number_integer: // LCOV_EXCL_LINE
-                case value_t::number_unsigned: // LCOV_EXCL_LINE
-                case value_t::number_float: // LCOV_EXCL_LINE
-                case value_t::binary: // LCOV_EXCL_LINE
-                case value_t::discarded: // LCOV_EXCL_LINE
-                default:   // LCOV_EXCL_LINE
-                    break; // LCOV_EXCL_LINE
             }
+            else if (parent->is_object())
+            {
+                for (const auto& element : *parent->m_data.m_value.object)
+                {
+                    if (&element.second == current)
+                    {
+                        // data() is null-terminated, so a key containing
+                        // a null byte is cut short here rather than
+                        // truncating the whole message at what()
+                        tokens.emplace_back(element.first.data());
+                        break;
+                    }
+                }
+            }
+            // all other parent types (primitives) contribute no token
         }
 
         if (tokens.empty())
@@ -195,6 +269,18 @@ class parse_error : public exception
         return {id_, byte_, w.c_str()};
     }
 
+    template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
+    static parse_error create(exception_id id_, const position_t& pos, const std::string& what_arg, BasicJsonContext context)
+    {
+        return create(static_cast<int>(id_), pos, what_arg, context);
+    }
+
+    template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
+    static parse_error create(exception_id id_, std::size_t byte_, const std::string& what_arg, BasicJsonContext context)
+    {
+        return create(static_cast<int>(id_), byte_, what_arg, context);
+    }
+
     /*!
     @brief byte index of the parse error
 
@@ -225,8 +311,14 @@ class invalid_iterator : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static invalid_iterator create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("invalid_iterator", id_), exception::diagnostics(context), what_arg);
+        const std::string w = exception::what_impl("invalid_iterator", id_, what_arg, context);
         return {id_, w.c_str()};
+    }
+
+    template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
+    static invalid_iterator create(exception_id id_, const std::string& what_arg, BasicJsonContext context)
+    {
+        return create(static_cast<int>(id_), what_arg, context);
     }
 
   private:
@@ -243,8 +335,14 @@ class type_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static type_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("type_error", id_), exception::diagnostics(context), what_arg);
+        const std::string w = exception::what_impl("type_error", id_, what_arg, context);
         return {id_, w.c_str()};
+    }
+
+    template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
+    static type_error create(exception_id id_, const std::string& what_arg, BasicJsonContext context)
+    {
+        return create(static_cast<int>(id_), what_arg, context);
     }
 
   private:
@@ -260,8 +358,14 @@ class out_of_range : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static out_of_range create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("out_of_range", id_), exception::diagnostics(context), what_arg);
+        const std::string w = exception::what_impl("out_of_range", id_, what_arg, context);
         return {id_, w.c_str()};
+    }
+
+    template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
+    static out_of_range create(exception_id id_, const std::string& what_arg, BasicJsonContext context)
+    {
+        return create(static_cast<int>(id_), what_arg, context);
     }
 
   private:
@@ -277,8 +381,14 @@ class other_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static other_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("other_error", id_), exception::diagnostics(context), what_arg);
+        const std::string w = exception::what_impl("other_error", id_, what_arg, context);
         return {id_, w.c_str()};
+    }
+
+    template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
+    static other_error create(exception_id id_, const std::string& what_arg, BasicJsonContext context)
+    {
+        return create(static_cast<int>(id_), what_arg, context);
     }
 
   private:
@@ -305,6 +415,106 @@ void templated_json_throw(ExceptionType exception)
     // exceptions are disabled) - the cast below avoids an unused-parameter
     // warning with -Werror in that case
     (void)exception;
+}
+
+/*!
+@brief throws because @a j does not have the type a conversion expects
+@param[in] expected  the expected type(s), e.g. "array" or "binary or array"
+@param[in] j         the value with the wrong type
+@throw type_error.302 always
+*/
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_type_must_be(const char* expected, const BasicJsonType& j)
+{
+    static_cast<void>(expected); // unused when JSON_NOEXCEPTION is defined
+    static_cast<void>(j);
+    JSON_THROW(type_error::create(exception_id::type_mismatch, concat("type must be ", expected, ", but is ", j.type_name()), &j));
+}
+
+/*!
+@brief throws because an operation is not supported for the type of @a j
+@param[in] id_        the id of the type_error exception (at_wrong_type..update_wrong_type)
+@param[in] operation  the operation, e.g. "erase()"
+@param[in] j          the value the operation was called on
+@throw type_error always
+*/
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_cannot_use_with(const exception_id id_, const char* operation, const BasicJsonType& j)
+{
+    static_cast<void>(id_); // unused when JSON_NOEXCEPTION is defined
+    static_cast<void>(operation);
+    static_cast<void>(j);
+    JSON_THROW(type_error::create(id_, concat("cannot use ", operation, " with ", j.type_name()), &j));
+}
+
+/*!
+@brief throws ExceptionType with a fixed message; kept out of line so that callers do not carry the exception construction
+*/
+template<typename ExceptionType, typename BasicJsonContext>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_literal(const exception_id id_, const char* what_arg, BasicJsonContext context)
+{
+    static_cast<void>(id_); // unused when JSON_NOEXCEPTION is defined
+    static_cast<void>(what_arg);
+    static_cast<void>(context);
+    JSON_THROW(ExceptionType::create(id_, what_arg, context));
+}
+
+// JSON Patch errors; constructed out of line so that patch_inplace() does not carry them
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_add_parent(const BasicJsonType& parent)
+{
+    static_cast<void>(parent);
+    JSON_THROW(out_of_range::create(exception_id::patch_add_parent_not_container, concat("cannot add value: the JSON Patch 'add' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+}
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_remove_parent(const BasicJsonType& parent)
+{
+    static_cast<void>(parent);
+    JSON_THROW(out_of_range::create(exception_id::patch_remove_parent_not_container, concat("cannot remove value: the JSON Patch 'remove' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+}
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_not_an_array(const BasicJsonType& j)
+{
+    static_cast<void>(j);
+    JSON_THROW(parse_error::create(exception_id::patch_not_an_array, 0, "JSON patch must be an array of objects", &j));
+}
+
+template<typename StringType, typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_missing_member(const StringType& op, const StringType& member, const bool string_type, const BasicJsonType& val)
+{
+    static_cast<void>(op);
+    static_cast<void>(member);
+    static_cast<void>(string_type);
+    static_cast<void>(val);
+    // context-sensitive error message
+    JSON_THROW(parse_error::create(exception_id::patch_invalid_operation, 0, concat((op == "op") ? std::string("operation") : concat("operation '", op, '\''), string_type ? " must have string member '" : " must have member '", member, "'"), &val));
+}
+
+template<typename StringType, typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_move_into_child(const StringType& from_path, const StringType& path, const BasicJsonType& result)
+{
+    static_cast<void>(from_path);
+    static_cast<void>(path);
+    static_cast<void>(result);
+    JSON_THROW(out_of_range::create(exception_id::patch_move_into_child, concat("cannot move value: 'from' path '", from_path, "' is a proper prefix of 'path' '", path, "'"), &result));
+}
+
+template<typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_test_failed(const BasicJsonType& val)
+{
+    static_cast<void>(val);
+    JSON_THROW(other_error::create(exception_id::patch_test_failed, concat("unsuccessful: ", val.dump()), &val));
+}
+
+template<typename StringType, typename BasicJsonType>
+JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_patch_invalid_operation(const StringType& op, const BasicJsonType& val)
+{
+    static_cast<void>(op);
+    static_cast<void>(val);
+    JSON_THROW(parse_error::create(exception_id::patch_invalid_operation, 0, concat("operation value '", op, "' is invalid"), &val));
 }
 
 }  // namespace detail

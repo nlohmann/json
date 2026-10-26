@@ -72,8 +72,9 @@ Depends on the `json_serializer<ValueType>::from_json()` implementation.
 - [get_ref](get_ref.md) get a reference to the stored value
 - [get_ptr](get_ptr.md) get a pointer to the stored value
 - [Converting values](../../features/conversions.md) - the type conversions article
+- [basic_json_view::get_to](../basic_json_view/get_to.md) - the same conversion on a zero-copy view
 
 ## Version history
 
-- Since version 3.3.0.
+- Added in version 3.3.0.
 - Added a `static_assert` with a clear message for `const` arguments in version 3.13.0.

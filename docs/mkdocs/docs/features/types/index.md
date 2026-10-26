@@ -120,7 +120,7 @@ requirements are collected in [Template Parameter Requirements](template_paramet
 
 ### Default type
 
-With the default values for *ObjectType* (`std::map`), *StringType* (`std::string`), and *AllocatorType* (`std::allocator`), the default value for `object_t` is:
+With the default values for *ObjectType* (`std::map`), *StringType* (`std::string`), and *AllocatorType* (`std::allocator`), the default type for `object_t` is:
 
 ```cpp
 std::map<
@@ -177,7 +177,7 @@ json j = m;
 
 ### Default type
 
-With the default values for *ArrayType* (`std::vector`) and *AllocatorType* (`std::allocator`), the default value for `array_t` is:
+With the default values for *ArrayType* (`std::vector`) and *AllocatorType* (`std::allocator`), the default type for `array_t` is:
 
 ```cpp
 std::vector<
@@ -209,7 +209,7 @@ Unicode values are split by the JSON class into byte-sized characters during des
 
 ### Default type
 
-With the default values for *StringType* (`std::string`), the default value for `string_t` is `#!cpp std::string`.
+With the default values for *StringType* (`std::string`), the default type for `string_t` is `#!cpp std::string`.
 
 ### Encoding
 
@@ -234,7 +234,7 @@ String values are stored as pointers in a `basic_json` type. That is, for any ac
 
 ### Default type
 
-With the default values for *BooleanType* (`#!cpp bool`), the default value for `boolean_t` is `#!cpp bool`.
+With the default values for *BooleanType* (`#!cpp bool`), the default type for `boolean_t` is `#!cpp bool`.
 
 ### Storage
 
@@ -252,9 +252,9 @@ This description includes both integer and floating-point numbers. However, C++ 
 
 ### Default types
 
-With the default values for *NumberIntegerType* (`std::int64_t`), the default value for `number_integer_t` is `std::int64_t`.
-With the default values for *NumberUnsignedType* (`std::uint64_t`), the default value for `number_unsigned_t` is `std::uint64_t`.
-With the default values for *NumberFloatType* (`#!cpp double`), the default value for `number_float_t` is `#!cpp double`.
+With the default values for *NumberIntegerType* (`std::int64_t`), the default type for `number_integer_t` is `std::int64_t`.
+With the default values for *NumberUnsignedType* (`std::uint64_t`), the default type for `number_unsigned_t` is `std::uint64_t`.
+With the default values for *NumberFloatType* (`#!cpp double`), the default type for `number_float_t` is `#!cpp double`.
 
 ### Default behavior
 
@@ -281,8 +281,17 @@ As this range is a subrange of the exactly supported range [`INT64_MIN`, `INT64_
 
 > This specification allows implementations to set limits on the range and precision of numbers accepted. Since software that implements IEEE 754-2008 binary64 (double precision) numbers is generally available and widely used, good interoperability can be achieved by implementations that expect no more precision or range than these provide, in the sense that implementations will approximate JSON numbers within the expected precision.
 
-This implementation does exactly follow this approach, as it uses double precision floating-point numbers. Note values smaller than `#!c -1.79769313486232e+308` and values greater than `#!c 1.79769313486232e+308` will be stored as NaN internally and be serialized to `#!json null`.
+This implementation does exactly follow this approach, as it uses double precision floating-point numbers by default (see *NumberFloatType* above). Note that with the default `#!cpp double`, numbers smaller than `#!c -1.79769313486232e+308` or greater than `#!c 1.79769313486232e+308` are rejected during parsing with [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406). Non-finite values (NaN and infinity) can only be stored by assigning them directly and are serialized to `#!json null`.
 
 ### Storage
 
 Integer number values, unsigned integer number values, and floating-point number values are stored directly inside a `basic_json` type.
+
+## See also
+
+- [Number handling](number_handling.md) - how numbers are stored and converted
+- [Template parameter requirements](template_parameters.md)
+- [**basic_json**](../../api/basic_json/index.md) - the class template and its member types
+- [**type**](../../api/basic_json/type.md) and [**value_t**](../../api/basic_json/value_t.md) - query the type of a value
+- [**object_t**](../../api/basic_json/object_t.md), [**array_t**](../../api/basic_json/array_t.md), [**string_t**](../../api/basic_json/string_t.md), [**number_integer_t**](../../api/basic_json/number_integer_t.md), [**number_float_t**](../../api/basic_json/number_float_t.md) - the underlying types
+- [Object order](../object_order.md)

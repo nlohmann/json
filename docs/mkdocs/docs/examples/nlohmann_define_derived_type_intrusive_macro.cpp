@@ -33,5 +33,5 @@ int main()
     B example(23, 42, 3.142, 1.777);
     json example_json = example;
 
-    std::cout << std::setw(4) << example_json << std::endl;
+    std::cout << std::setw(4) << example_json << '\n';
 }

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -19,25 +19,9 @@ int main()
               << j.contains("/array/1"_json_pointer) << '\n'
               << j.contains("/array/-"_json_pointer) << '\n'
               << j.contains("/array/4"_json_pointer) << '\n'
-              << j.contains("/baz"_json_pointer) << std::endl;
-
-    try
-    {
-        // try to use an array index with leading '0'
-        j.contains("/array/01"_json_pointer);
-    }
-    catch (const json::parse_error& e)
-    {
-        std::cout << e.what() << '\n';
-    }
-
-    try
-    {
-        // try to use an array index that is not a number
-        j.contains("/array/one"_json_pointer);
-    }
-    catch (const json::parse_error& e)
-    {
-        std::cout << e.what() << '\n';
-    }
+              << j.contains("/baz"_json_pointer) << '\n'
+              // an array index with a leading '0' is not found
+              << j.contains("/array/01"_json_pointer) << '\n'
+              // an array index that is not a number is not found
+              << j.contains("/array/one"_json_pointer) << '\n';
 }

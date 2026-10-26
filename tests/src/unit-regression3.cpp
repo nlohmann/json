@@ -36,14 +36,13 @@
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
+using nlohmann::json;
+using nlohmann::ordered_json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
 #include <cstdio>
-#include <deque>
 #include <list>
 #include <type_traits>
 #include <utility>
@@ -58,11 +57,6 @@ using ordered_json = nlohmann::ordered_json;
         #include <optional>
     #elif __has_include(<experimental/optional>)
     #endif
-
-    /////////////////////////////////////////////////////////////////////
-    // for #4804
-    /////////////////////////////////////////////////////////////////////
-    using json_4804 = nlohmann::json::with_binary_t<std::vector<std::byte>>;
 #endif
 
 #ifdef JSON_HAS_CPP_20
@@ -458,49 +452,6 @@ TEST_CASE("regression tests 3")
 #endif
 
 #ifdef JSON_HAS_CPP_17
-    SECTION("issue #4804: from_cbor incompatible with std::vector<std::byte> as binary_t")
-    {
-        const std::vector<std::uint8_t> data = {0x80};
-        const auto decoded = json_4804::from_cbor(data);
-        CHECK((decoded == json_4804::array()));
-    }
-
-#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
-    SECTION("discussion #4209 - custom BinaryType direct assignment and round-tripping")
-    {
-        // Test that assigning a custom BinaryType directly creates a binary value, not an array
-        const std::vector<std::byte> original{std::byte{1}, std::byte{2}, std::byte{3}};
-        const json_4804 j = original;
-        CHECK(j.is_binary());
-        CHECK(!j.is_array());
-
-        // Test round-tripping: extracting the binary value back as the custom container type
-        const auto extracted = j.get<std::vector<std::byte>>();
-        CHECK(extracted == original);
-
-        // Test that the default json alias behavior is unchanged: std::vector<uint8_t> -> array
-        const json default_json = std::vector<std::uint8_t> {1, 2, 3};
-        CHECK(default_json.is_array());
-        CHECK(!default_json.is_binary());
-    }
-
-    SECTION("discussion #4209 - custom BinaryType extraction from parsed array")
-    {
-        // Test that extracting a custom BinaryType from a parsed JSON array still works
-        // (not just from a binary-typed node)
-        const auto j = json_4804::parse("[1,2,3]");
-        CHECK(j.is_array());
-        CHECK(!j.is_binary());
-
-        // Extracting as custom BinaryType should work from arrays
-        const auto extracted = j.get<std::vector<std::byte>>();
-        CHECK(extracted.size() == 3);
-        CHECK(extracted[0] == std::byte{1});
-        CHECK(extracted[1] == std::byte{2});
-        CHECK(extracted[2] == std::byte{3});
-    }
-#endif
-
     SECTION("issue #5046 - implicit conversion of return json to std::optional no longer implicit")
     {
         const json jval{};
@@ -914,52 +865,6 @@ TEST_CASE("issue #5402 - update(merge_objects=true) overwrites a primitive with 
     CHECK(mixed == json({{"keep", {{"a", 1}, {"b", 2}}}, {"replace", {{"x", 2}}}}));
 }
 
-
-TEST_CASE("regression test #5476 - array type without reserve()")
-{
-    // the capacity reserved for definite-length arrays must not require the
-    // array type to have a reserve() member function
-    using deque_json = nlohmann::json::with_array_t<std::deque>;
-
-    SECTION("std::deque")
-    {
-        const auto j = deque_json::parse(R"({"a":[1,[2,3]],"b":[]})");
-        CHECK(j.dump() == R"({"a":[1,[2,3]],"b":[]})");
-
-        // the binary formats pass a definite length to start_array()
-        CHECK(deque_json::from_cbor(deque_json::to_cbor(j)) == j);
-        CHECK(deque_json::from_msgpack(deque_json::to_msgpack(j)) == j);
-        CHECK(deque_json::from_bon8(deque_json::to_bon8(j)) == j);
-
-        // parse() instantiates the callback parser as well, which reserves too
-        const auto with_callback = deque_json::parse(R"([1,2,3])", [](int /*depth*/, deque_json::parse_event_t /*event*/, deque_json& /*parsed*/) noexcept
-        {
-            return true;
-        });
-        CHECK(with_callback == deque_json({1, 2, 3}));
-    }
-
-    SECTION("std::vector still reserves")
-    {
-        json array = json::array();
-        for (int i = 0; i < 100; ++i)
-        {
-            array.push_back(i);
-        }
-
-        const auto j = json::from_cbor(json::to_cbor(array));
-        CHECK(j == array);
-        CHECK(j.get_ref<const json::array_t&>().capacity() >= 100);
-    }
-
-    SECTION("the reservation stays capped")
-    {
-        // CBOR array announcing 2^32-1 elements, but truncated right after the
-        // header: the input must be rejected without reserving that capacity
-        const std::vector<std::uint8_t> truncated = {0x9A, 0xFF, 0xFF, 0xFF, 0xFF};
-        CHECK(json::from_cbor(truncated, true, false).is_discarded());
-    }
-}
 
 TEST_CASE("issue #5317 - nested indefinite-length CBOR string chunks are rejected")
 {

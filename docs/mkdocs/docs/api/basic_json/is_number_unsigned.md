@@ -6,6 +6,9 @@ constexpr bool is_number_unsigned() const noexcept;
 
 This function returns `#!cpp true` if and only if the JSON value is an unsigned integer number. This excludes
 floating-point and signed integer values.
+
+If [`number_unsigned_t`](number_unsigned_t.md) is the same type as [`number_integer_t`](number_integer_t.md), every
+integer is stored as `number_integer_t`, and this function always returns `#!cpp false`.
     
 ## Return value
 
@@ -40,6 +43,7 @@ Constant.
 - [is_number()](is_number.md) check if the value is a number
 - [is_number_integer()](is_number_integer.md) check if the value is an integer or unsigned integer number
 - [is_number_float()](is_number_float.md) check if the value is a floating-point number
+- [basic_json_view::is_number_unsigned](../basic_json_view/is_number_unsigned.md) - the same check on a zero-copy view
 
 ## Version history
 

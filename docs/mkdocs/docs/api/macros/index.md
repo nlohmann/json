@@ -16,6 +16,10 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Parsing
 
+- [**JSON_DISABLE_STREAM_BULK_SCAN**](json_disable_stream_bulk_scan.md) - read a `std::istream` one character at a time
+  instead of scanning its stream buffer in bulk
+- [**JSON_DISABLE_UNLOCKED_FILE_IO**](json_disable_unlocked_file_io.md) - read a `FILE*` with `std::fgetc` instead of
+  locking it once and using the unlocked stdio functions
 - [**JSON_PRECISE_STREAM_POSITION**](json_precise_stream_position.md) - opt in to leaving an input stream positioned
   right after a parsed number
 - [**JSON_STRICT_BINARY_UTF8**](json_strict_binary_utf8.md) - opt in to checking strings for valid UTF-8 in the CBOR,
@@ -27,16 +31,20 @@ header. See also the [macro overview page](../../features/macros.md).
 
 - [**JSON_HAS_CPP_11**<br>**JSON_HAS_CPP_14**<br>**JSON_HAS_CPP_17**<br>**JSON_HAS_CPP_20**](json_has_cpp_11.md) - set supported C++ standard
 - [**JSON_HAS_FILESYSTEM**<br>**JSON_HAS_EXPERIMENTAL_FILESYSTEM**](json_has_filesystem.md) - control `std::filesystem` support
+- [**JSON_HAS_RANGE_VIEW_CONVERSION**](json_has_range_view_conversion.md) - control construction from `std::ranges` views
 - [**JSON_HAS_RANGES**](json_has_ranges.md) - control `std::ranges` support
 - [**JSON_HAS_STATIC_RTTI**](json_has_static_rtti.md) - control RTTI (run time type information) support
 - [**JSON_HAS_STD_FORMAT**](json_has_std_format.md) - control `std::format`/`std::formatter` support
 - [**JSON_HAS_THREE_WAY_COMPARISON**](json_has_three_way_comparison.md) - control 3-way comparison support
 - [**JSON_NO_AUTOMATIC_UDLS**](json_no_automatic_udls.md) - do not include the user-defined string literals (UDLs) automatically
 - [**JSON_NO_IO**](json_no_io.md) - switch off functions relying on certain C++ I/O headers
+- [**JSON_NO_SIMD**](json_no_simd.md) - use only portable code instead of vector instructions (SSE2, SSSE3, NEON)
 - [**JSON_NO_THREAD_LOCAL**](json_no_thread_local.md) - switch off the use of `thread_local` storage
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
 - [**JSON_USE_GLOBAL_UDLS**](json_use_global_udls.md) - place user-defined string literals (UDLs) into the global namespace
 - [**JSON_USE_SIMDUTF**](json_use_simdutf.md) - use the simdutf library to accelerate UTF-8 validation
+- [**JSON_VIEW_NO_SIMD**](json_view_no_simd.md) - use only portable code in the parser of `json_view.hpp`
+- [**JSON_VIEW_USE_SSSE3**](json_view_use_ssse3.md) - validate non-ASCII strings with SSSE3 in the parser of `json_view.hpp`
 
 ## Library version
 
@@ -130,3 +138,12 @@ header. See also the [macro overview page](../../features/macros.md).
   a derived class; uses default values; uses custom names
 - [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a derived
   class; uses custom names
+
+## See also
+
+- [Macros](../../features/macros.md) - guide to the supported macros
+- [Runtime assertions](../../features/assertions.md)
+- [Arbitrary type conversions](../../features/arbitrary_types.md) - using the `NLOHMANN_DEFINE_TYPE_*` macros
+- [Enum conversion](../../features/enum_conversion.md) - using `NLOHMANN_JSON_SERIALIZE_ENUM`
+- [The `nlohmann` namespace](../../features/namespace.md)
+- [CMake integration](../../integration/cmake.md) - setting macros from the build system

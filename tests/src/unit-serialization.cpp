@@ -20,8 +20,11 @@
 using nlohmann::json;
 
 #include <array>
+#include <cstdint>
 #include <sstream>
 #include <iomanip>
+#include <string>
+#include <vector>
 
 #include "test_utils.hpp"
 
@@ -923,66 +926,68 @@ TEST_CASE("serialization boundary values for the string buffer")
     // mid-string once fewer than 13 bytes remain (`string_buffer.size() - bytes
     // < 13`), 13 being one more than the most a single code point can ever
     // write at once (a surrogate pair: two back-to-back "\uXXXX" escapes, 12
-    // bytes). Every write into string_buffer that this check protects happens
-    // in steps of 2 (a simple "\\x" escape) or 6 (one "\uXXXX" unit), so
-    // `bytes` only ever takes even values at the point the check runs - the
-    // tightest values actually reachable are therefore 498 (512 - 498 == 14,
-    // one simple escape away from the threshold) and 500 (512 - 500 == 12,
-    // where the flush fires immediately and resets bytes to 0).
+    // bytes). Characters below 0x60 (control characters, '"' and '\\') are
+    // escaped straight into the write buffer and never reach string_buffer, so
+    // under ensure_ascii it fills in steps of 6 (one "\uXXXX" unit for a
+    // character below U+10000) or 12 (a surrogate pair). With 2-byte characters
+    // such as U+00E4, `bytes` takes multiples of 6 at the point the check runs;
+    // the tightest values reachable are therefore 498 (512 - 498 == 14, after
+    // 83 characters) and 504 (512 - 504 == 8, after 84 characters, where the
+    // flush fires immediately and resets bytes to 0).
 
-    SECTION("a run of 2-byte escapes lands bytes on, and one step past, the flush threshold")
+    SECTION("a run of 6-byte escapes lands bytes on, and one step past, the flush threshold")
     {
         for (const int count :
                 {
-                    249, 250, 251
+                    83, 84, 85
                 })
         {
             CAPTURE(count)
-            const json j = std::string(static_cast<std::size_t>(count), '\n');
+            std::string umlauts;
             std::string expected = "\"";
             for (int i = 0; i < count; ++i)
             {
-                expected += "\\n";
+                umlauts += "\xC3\xA4";
+                expected += "\\u00e4";
             }
             expected += '"';
-            CHECK(j.dump() == expected);
+            CHECK(json(umlauts).dump(-1, ' ', true) == expected);
         }
     }
 
-    SECTION("an ASCII prefix leaves the tightest reachable margin before a 12-byte surrogate pair")
+    SECTION("a prefix leaves the tightest reachable margin before a 12-byte surrogate pair")
     {
         // U+1F600 (the "\xF0\x9F\x98\x80" UTF-8 bytes) is dumped under
         // ensure_ascii as the 12-byte surrogate pair "\ud83d\ude00"; that
         // write happens in a single step with no intermediate flush check, so
         // it is the write most exposed by an off-by-one in the "< 13" guard.
-        // A prefix of 249 newlines leaves exactly 14 bytes of headroom
+        // A prefix of 83 U+00E4 characters leaves exactly 14 bytes of headroom
         // (512 - 498), the smallest margin the guard ever actually allows
-        // into a new code point; 250 newlines instead trigger the guard's own
+        // into a new code point; 84 characters instead trigger the guard's own
         // flush first, so the emoji starts from a freshly emptied (512-byte)
-        // buffer, and 251 repeats that with one more escape already past the
+        // buffer, and 85 repeats that with one more escape already past the
         // reset. Together they cover the margin the guard allows landing on,
         // one step before, and one step after - all must still produce the
         // identical, correct escapes.
         for (const int prefix_count :
                 {
-                    249, 250, 251
+                    83, 84, 85
                 })
         {
             CAPTURE(prefix_count)
-            const std::string prefix(static_cast<std::size_t>(prefix_count), '\n');
-            const std::string emoji = "\xF0\x9F\x98\x80";
-            const json j = prefix + emoji;
-
+            std::string prefix;
             std::string expected_prefix;
             for (int i = 0; i < prefix_count; ++i)
             {
-                expected_prefix += "\\n";
+                prefix += "\xC3\xA4";
+                expected_prefix += "\\u00e4";
             }
+            const std::string emoji = "\xF0\x9F\x98\x80";
+            const json j = prefix + emoji;
 
-            // newline escaping does not depend on ensure_ascii: only the
-            // emoji differs (raw UTF-8 bytes vs. a \u-escaped surrogate pair)
+            // without ensure_ascii, the whole string is copied unchanged
             std::string expected_raw = "\"";
-            expected_raw += expected_prefix;
+            expected_raw += prefix;
             expected_raw += emoji;
             expected_raw += '"';
             std::string expected_ascii = "\"";
@@ -1023,6 +1028,645 @@ TEST_CASE("serialization boundary values for the string buffer")
             {
                 const json j = prefix + "\xC3\xA9"; // prefix + 'é'
                 CHECK(j.dump(-1, ' ', true) == '"' + prefix + "\\u00e9" + '"');
+            }
+        }
+    }
+}
+
+namespace
+{
+// appends the escaped form of the ASCII character c to out; written
+// independently of the table in serializer::ascii_escapes()
+void append_escaped_ascii(std::string& out, const char c, const bool ensure_ascii)
+{
+    const auto byte = static_cast<unsigned char>(c);
+    switch (byte)
+    {
+        case '\b':
+            out += "\\b";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\f':
+            out += "\\f";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        case '"':
+            out += "\\\"";
+            break;
+        case '\\':
+            out += "\\\\";
+            break;
+        default:
+            if (byte < 0x20 || (ensure_ascii && byte == 0x7F))
+            {
+                // byte < 0x80, so the first two hex digits are 0
+                const char* const hex = "0123456789abcdef";
+                out += "\\u00";
+                out += hex[byte >> 4U];
+                out += hex[byte & 0x0FU];
+            }
+            else
+            {
+                out += c;
+            }
+            break;
+    }
+}
+
+// reference escaper for ASCII strings
+std::string reference_escape_ascii(const std::string& s, const bool ensure_ascii)
+{
+    std::string result = "\"";
+    for (const char c : s)
+    {
+        append_escaped_ascii(result, c, ensure_ascii);
+    }
+    result += '"';
+    return result;
+}
+} // namespace
+
+TEST_CASE("characters below 0x60 are escaped from a table straight into the write buffer")
+{
+    SECTION("every ASCII character at every position")
+    {
+        // lengths up to 17 cover the 8-byte strides of the bulk scanner on
+        // both sides of the character, so the scanner stops at it from every
+        // offset
+        for (std::size_t length = 1; length <= 17; ++length)
+        {
+            for (std::size_t pos = 0; pos < length; ++pos)
+            {
+                for (unsigned int c = 0; c < 0x80; ++c)
+                {
+                    std::string s(length, 'a');
+                    s[pos] = static_cast<char>(c);
+                    CAPTURE(length)
+                    CAPTURE(pos)
+                    CAPTURE(c)
+                    const json j = s;
+                    CHECK(j.dump(-1, ' ', false) == reference_escape_ascii(s, false));
+                    CHECK(j.dump(-1, ' ', true) == reference_escape_ascii(s, true));
+                }
+            }
+        }
+    }
+
+    SECTION("runs of escaped characters")
+    {
+        std::string s;
+        for (unsigned int c = 0; c < 0x20; ++c)
+        {
+            s += static_cast<char>(c);
+        }
+        s += R"("\"\)";
+        CHECK(json(s).dump() == reference_escape_ascii(s, false));
+        CHECK(json(s).dump(-1, ' ', true) == reference_escape_ascii(s, true));
+    }
+
+    SECTION("escapes straddle the end of the write buffer")
+    {
+        // the 8-byte store of a table entry needs room for all 8 bytes, even
+        // when the escape itself is shorter; a prefix of k plain characters
+        // shifts the 6-byte escapes across every offset of the 1024-byte
+        // write buffer
+        for (std::size_t k = 0; k < 8; ++k)
+        {
+            CAPTURE(k)
+            const std::string s = std::string(k, 'a') + std::string(400, '\x01');
+            CHECK(json(s).dump() == reference_escape_ascii(s, false));
+            CHECK(json::array({s, s}).dump() == "[" + reference_escape_ascii(s, false) + "," + reference_escape_ascii(s, false) + "]");
+        }
+    }
+
+    SECTION("pending \\u escapes of non-ASCII characters are written first")
+    {
+        // under ensure_ascii, U+00E4 is \u-escaped into the string buffer;
+        // a following escape from the table must not overtake it
+        const json j = "\xC3\xA4\n\xC3\xA4\"\xF0\x9F\x98\x80\\";
+        CHECK(j.dump(-1, ' ', true) == "\"\\u00e4\\n\\u00e4\\\"\\ud83d\\ude00\\\\\"");
+        CHECK(j.dump(-1, ' ', false) == "\"\xC3\xA4\\n\xC3\xA4\\\"\xF0\x9F\x98\x80\\\\\"");
+    }
+
+    SECTION("escapes after invalid UTF-8 for every error handler")
+    {
+        const json j = "a\xFF\n\xC3\"";
+        CHECK_THROWS_WITH_AS(utils::ignore_return_value(j.dump()), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0xFF", json::type_error&);
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"a\\n\\\"\"");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::ignore) == "\"a\\n\\\"\"");
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"a\xEF\xBF\xBD\\n\xEF\xBF\xBD\\\"\"");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"a\\ufffd\\n\\ufffd\\\"\"");
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::keep) == "\"a\xFF\\n\xC3\\\"\"");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::keep) == "\"a\xFF\\n\xC3\\\"\"");
+    }
+}
+
+namespace
+{
+// expected result of dumping a string: the output, or (with
+// error_handler_t::strict) the message of the type_error.316 exception
+struct expected_dump
+{
+    bool throws = false;
+    std::string text{}; // NOLINT(readability-redundant-member-init)
+};
+
+std::string upper_hex_byte(const unsigned char byte)
+{
+    const char* const hex = "0123456789ABCDEF";
+    return std::string(1, hex[byte >> 4U]) + hex[byte & 0x0FU];
+}
+
+void append_u_escape(std::string& out, const std::uint32_t code_unit)
+{
+    const char* const hex = "0123456789abcdef";
+    out += "\\u";
+    for (int shift = 12; shift >= 0; shift -= 4)
+    {
+        out += hex[(code_unit >> static_cast<unsigned int>(shift)) & 0x0FU];
+    }
+}
+
+void append_replacement_character(std::string& out, const bool ensure_ascii)
+{
+    out += ensure_ascii ? "\\ufffd" : "\xEF\xBF\xBD";
+}
+
+// reference serializer for arbitrary byte strings, written from the documented
+// behavior of dump() and independently of serializer::dump_escaped(): UTF-8 is
+// decoded strictly (well-formed sequences as in Table 3-7 of the Unicode
+// Standard), and each ill-formed sequence is handled as the error handler says
+expected_dump reference_dump_string(const std::string& s, const bool ensure_ascii, const json::error_handler_t error_handler)
+{
+    expected_dump result;
+    std::string& out = result.text;
+    out = "\"";
+
+    // handle the ill-formed bytes s[begin, end), of which s[index] is the byte
+    // that could not be decoded; returns false if an exception is expected
+    const auto ill_formed = [&](const std::size_t begin, const std::size_t end, const std::size_t index)
+    {
+        switch (error_handler)
+        {
+            case json::error_handler_t::strict:
+                result.throws = true;
+                out = "[json.exception.type_error.316] invalid UTF-8 byte at index " + std::to_string(index) + ": 0x" + upper_hex_byte(static_cast<unsigned char>(s[index]));
+                return false;
+            case json::error_handler_t::ignore:
+                break;
+            case json::error_handler_t::replace:
+                append_replacement_character(out, ensure_ascii);
+                break;
+            case json::error_handler_t::keep:
+            default:
+                // kept as is, even with ensure_ascii
+                out.append(s, begin, end - begin);
+                break;
+        }
+        return true;
+    };
+
+    std::size_t i = 0;
+    while (i < s.size())
+    {
+        const auto lead = static_cast<unsigned char>(s[i]);
+        if (lead < 0x80)
+        {
+            append_escaped_ascii(out, s[i], ensure_ascii);
+            ++i;
+            continue;
+        }
+
+        // number of bytes of the sequence and the range of its second byte
+        std::size_t length = 0;
+        std::uint32_t code_point = 0;
+        unsigned char lower = 0x80;
+        unsigned char upper = 0xBF;
+        if (lead >= 0xC2 && lead <= 0xDF)
+        {
+            length = 2;
+            code_point = lead & 0x1FU;
+        }
+        else if (lead >= 0xE0 && lead <= 0xEF)
+        {
+            length = 3;
+            code_point = lead & 0x0FU;
+            lower = (lead == 0xE0) ? 0xA0 : 0x80; // no overlong encodings
+            upper = (lead == 0xED) ? 0x9F : 0xBF; // no surrogates
+        }
+        else if (lead >= 0xF0 && lead <= 0xF4)
+        {
+            length = 4;
+            code_point = lead & 0x07U;
+            lower = (lead == 0xF0) ? 0x90 : 0x80; // no overlong encodings
+            upper = (lead == 0xF4) ? 0x8F : 0xBF; // nothing above U+10FFFF
+        }
+        else
+        {
+            // a byte that cannot start a sequence is consumed
+            if (!ill_formed(i, i + 1, i))
+            {
+                return result;
+            }
+            ++i;
+            continue;
+        }
+
+        std::size_t j = i + 1;
+        for (; j < i + length; ++j)
+        {
+            if (j == s.size())
+            {
+                // the string ends in the middle of the sequence
+                switch (error_handler)
+                {
+                    case json::error_handler_t::strict:
+                        result.throws = true;
+                        out = "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0x" + upper_hex_byte(static_cast<unsigned char>(s.back()));
+                        return result;
+                    case json::error_handler_t::ignore:
+                        break;
+                    case json::error_handler_t::replace:
+                        append_replacement_character(out, ensure_ascii);
+                        break;
+                    case json::error_handler_t::keep:
+                    default:
+                        out.append(s, i, s.size() - i);
+                        break;
+                }
+                out += '"';
+                return result;
+            }
+
+            const auto byte = static_cast<unsigned char>(s[j]);
+            if (byte < lower || byte > upper)
+            {
+                break;
+            }
+            code_point = (code_point << 6U) | (byte & 0x3FU);
+            lower = 0x80;
+            upper = 0xBF;
+        }
+
+        if (j < i + length)
+        {
+            // the sequence was abandoned at s[j]; that byte is read again as
+            // the start of a new character
+            if (!ill_formed(i, j, j))
+            {
+                return result;
+            }
+            i = j;
+            continue;
+        }
+
+        if (!ensure_ascii)
+        {
+            out.append(s, i, length);
+        }
+        else if (code_point <= 0xFFFF)
+        {
+            append_u_escape(out, code_point);
+        }
+        else
+        {
+            append_u_escape(out, 0xD800U + ((code_point - 0x10000U) >> 10U));
+            append_u_escape(out, 0xDC00U + ((code_point - 0x10000U) & 0x3FFU));
+        }
+        i = j;
+    }
+
+    out += '"';
+    return result;
+}
+
+std::string hex_dump(const std::string& s)
+{
+    std::string result;
+    for (const char c : s)
+    {
+        result += upper_hex_byte(static_cast<unsigned char>(c));
+        result += ' ';
+    }
+    return result;
+}
+
+// compares dump() of s with the reference for every error handler, with
+// ensure_ascii on and off; CHECKs only on a mismatch to keep the sweep fast;
+// error_handler_t::strict can be skipped where the position of the string
+// buffer does not matter, as throwing is slow on some platforms
+void check_dump_against_reference(const std::string& s, const bool with_strict = true)
+{
+    const json j = s;
+    const std::array<json::error_handler_t, 4> error_handlers =
+    {
+        {
+            json::error_handler_t::strict, json::error_handler_t::ignore,
+            json::error_handler_t::replace, json::error_handler_t::keep
+        }
+    };
+    for (const auto error_handler : error_handlers)
+    {
+#if defined(JSON_NOEXCEPTION)
+        // a strict dump of invalid UTF-8 calls std::abort() instead of throwing
+        static_cast<void>(with_strict);
+        if (error_handler == json::error_handler_t::strict)
+#else
+        if (!with_strict && error_handler == json::error_handler_t::strict)
+#endif
+        {
+            continue;
+        }
+        for (const bool ensure_ascii :
+                {
+                    false, true
+                })
+        {
+            const expected_dump expected = reference_dump_string(s, ensure_ascii, error_handler);
+            expected_dump actual;
+            int id = 0;
+            try
+            {
+                actual.text = j.dump(-1, ' ', ensure_ascii, error_handler);
+            }
+            catch (const json::exception& e)
+            {
+                actual.throws = true;
+                actual.text = e.what();
+                id = e.id;
+            }
+            if (actual.throws != expected.throws || actual.text != expected.text || (actual.throws && id != 316))
+            {
+                const std::string input = hex_dump(s);
+                CAPTURE(input)
+                CAPTURE(ensure_ascii)
+                CAPTURE(static_cast<int>(error_handler))
+                CHECK(actual.throws == expected.throws);
+                CHECK(actual.text == expected.text);
+                CHECK((!actual.throws || id == 316));
+            }
+        }
+    }
+}
+} // namespace
+
+TEST_CASE("every ASCII character at every position of a short string is written like the reference")
+{
+    // dump_escaped() copies strings of up to 32 bytes of printable ASCII after
+    // a table lookup per byte, and hands everything else to the scanners; put
+    // each ASCII character and a 2-byte character at every position of
+    // strings of up to 40 bytes to cover both sides of that bound
+    for (std::size_t length = 1; length <= 40; ++length)
+    {
+        for (std::size_t pos = 0; pos < length; ++pos)
+        {
+            for (int c = 0; c < 0x80; ++c)
+            {
+                std::string s(length, 'a');
+                s[pos] = static_cast<char>(c);
+                check_dump_against_reference(s);
+            }
+            check_dump_against_reference(std::string(pos, 'a') + "\xC3\xA4" + std::string(length - pos - 1, 'a'));
+        }
+    }
+}
+
+TEST_CASE("invalid UTF-8 at every position is handled like the reference")
+{
+    // ill-formed byte sequences; those that end in a truncated sequence are
+    // also cut short by the filler that follows, or by the end of the string
+    const std::vector<std::string> patterns =
+    {
+        // stray continuation bytes
+        "\x80", "\xBF",
+        // bytes that cannot start a sequence
+        "\xC0", "\xC1", "\xF5", "\xF6", "\xF7", "\xF8", "\xF9", "\xFA", "\xFB", "\xFC", "\xFD", "\xFE", "\xFF",
+        // overlong encodings
+        "\xC0\xAF", "\xE0\x80\x80", "\xF0\x80\x80\x80",
+        // UTF-16 surrogates
+        "\xED\xA0\x80", "\xED\xBF\xBF",
+        // a code point above U+10FFFF
+        "\xF4\x90\x80\x80",
+        // sequences cut short by ASCII, a control character, a quote, a
+        // backslash, DEL, or the lead byte of a well-formed character
+        "\xC3" "a", "\xE2\x82" "\n", "\xE2\x82\"", "\xF0\x9F\x98\\", "\xC3\x7F", "\xC3\xC3\xA4", "\xE2\xF0\x9F\x98\x80", // NOLINT(bugprone-suspicious-missing-comma): "\xC3" "a" ends the hex escape
+        // truncated sequences
+        "\xC3", "\xE2\x82", "\xF0\x9F\x98"
+    };
+
+    // well-formed characters of 1, 2, 3, and 4 bytes
+    const std::vector<std::string> fillers = {"a", "\xC3\xA4", "\xE2\x82\xAC", "\xF0\x9F\x98\x80"};
+
+    const auto make_string = [](const std::string & filler, const std::size_t before, const std::string & pattern, const std::size_t after)
+    {
+        std::string s;
+        for (std::size_t k = 0; k < before; ++k)
+        {
+            s += filler;
+        }
+        s += pattern;
+        for (std::size_t k = 0; k < after; ++k)
+        {
+            s += filler;
+        }
+        return s;
+    };
+
+    SECTION("the reference")
+    {
+        // the reference itself, against hand-written results
+        const std::string s = "a\xFF\n\xC3\"\xE0\x80\xF0\x9F\x98\x80\xE2\x82";
+        CHECK(reference_dump_string(s, false, json::error_handler_t::strict).text == "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0xFF");
+        CHECK(reference_dump_string(s.substr(2), false, json::error_handler_t::strict).text == "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0x22");
+        CHECK(reference_dump_string("\xF0\x9F\x98\x80\xE2\x82", true, json::error_handler_t::strict).text == "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0x82");
+        CHECK(reference_dump_string(s, false, json::error_handler_t::ignore).text == "\"a\\n\\\"\xF0\x9F\x98\x80\"");
+        CHECK(reference_dump_string(s, true, json::error_handler_t::ignore).text == "\"a\\n\\\"\\ud83d\\ude00\"");
+        CHECK(reference_dump_string(s, false, json::error_handler_t::replace).text == "\"a\xEF\xBF\xBD\\n\xEF\xBF\xBD\\\"\xEF\xBF\xBD\xEF\xBF\xBD\xF0\x9F\x98\x80\xEF\xBF\xBD\"");
+        CHECK(reference_dump_string(s, true, json::error_handler_t::replace).text == "\"a\\ufffd\\n\\ufffd\\\"\\ufffd\\ufffd\\ud83d\\ude00\\ufffd\"");
+        CHECK(reference_dump_string(s, false, json::error_handler_t::keep).text == "\"" + std::string("a\xFF\\n\xC3\\\"\xE0\x80\xF0\x9F\x98\x80\xE2\x82") + "\"");
+        CHECK(reference_dump_string(s, true, json::error_handler_t::keep).text == "\"" + std::string("a\xFF\\n\xC3\\\"\xE0\x80\\ud83d\\ude00\xE2\x82") + "\"");
+        check_dump_against_reference(s);
+    }
+
+    SECTION("short strings")
+    {
+        // strings of up to 17 bytes put the pattern at every offset of an
+        // 8-byte stride of the bulk scanners, with whole strides on both
+        // sides; lengths around 24, 32, and 40 bytes cross the 16- and 32-byte
+        // strides; error_handler_t::strict is checked for up to 17 bytes of
+        // ASCII and 8 bytes of other characters only, as throwing is slow on
+        // some platforms
+        for (const auto& filler : fillers)
+        {
+            for (std::size_t length = 0; length * filler.size() <= 40; ++length)
+            {
+                const std::size_t bytes = length * filler.size();
+                if (filler.size() == 1 && bytes > 17 && (bytes + 1) % 8 > 2)
+                {
+                    continue;
+                }
+                for (std::size_t pos = 0; pos <= length; ++pos)
+                {
+                    for (const auto& pattern : patterns)
+                    {
+                        check_dump_against_reference(make_string(filler, pos, pattern, length - pos), bytes <= (filler.size() == 1 ? 17u : 8u));
+                    }
+                }
+            }
+        }
+    }
+
+    SECTION("strings crossing the end of the string buffer")
+    {
+        // characters that are not copied in bulk go through a 512-byte string
+        // buffer that is written out once fewer than 13 bytes are left; with
+        // ensure_ascii, each 2-byte character takes 6 bytes of it and each
+        // 4-byte character 12, so the pattern meets the end of the buffer after
+        // about 84 or 42 characters (3-byte characters behave like 2-byte
+        // ones); plain ASCII, copied in bulk, is checked around 512 bytes;
+        // positions further away are sampled; error_handler_t::strict throws
+        // at the first ill-formed byte, regardless of the string buffer, and is
+        // covered above
+        for (const auto& filler : fillers)
+        {
+            if (filler.size() == 3)
+            {
+                continue;
+            }
+            const std::size_t escaped_size = filler.size() == 1 ? 1 : filler.size() * 3;
+            const std::size_t middle = 506 / escaped_size;
+            const std::size_t window = filler.size() == 1 ? 8 : 16;
+            for (std::size_t pos = 0; pos <= middle + window; pos += (pos + window >= middle) ? 1 : 29)
+            {
+                for (const std::size_t after :
+                        {
+                            std::size_t{0}, std::size_t{12}
+                        })
+                {
+                    for (const auto& pattern : patterns)
+                    {
+                        check_dump_against_reference(make_string(filler, pos, pattern, after), false);
+                    }
+                }
+            }
+        }
+    }
+
+    SECTION("repeated invalid sequences at every offset of the string buffer")
+    {
+        // ill-formed sequences that are kept or replaced fill the string
+        // buffer without a bulk copy in between; a prefix of 0 to 12 bytes
+        // 0xFF (kept as 1 byte, replaced by 3 or 6) shifts them across every
+        // offset of the end of the buffer
+        for (const auto& pattern : patterns)
+        {
+            for (std::size_t shift = 0; shift <= 12; ++shift)
+            {
+                std::string s(shift, '\xFF');
+                while (s.size() < 600)
+                {
+                    s += pattern;
+                }
+                check_dump_against_reference(s, shift == 0);
+                check_dump_against_reference(s + "\xF0\x9F\x98\x80", false);
+            }
+        }
+    }
+}
+
+TEST_CASE("short strings are written like the reference, as values and as keys")
+{
+    // strings of up to 16 characters (32 with vector instructions) that need no
+    // escaping are written as a whole (together with the quotes and, for a key,
+    // the colon); everything else, including a string that is merely short,
+    // takes the general path.
+    // Every length around the edges of the size classes of the fast path is
+    // combined with each kind of byte that must send a string to the general
+    // path, at each position, and compared with the reference for values and,
+    // via the value, for keys.
+    const std::vector<std::string> specials =
+    {
+        "\"", "\\", "\n", "\x1f", "\x7f", "\xc3\xa9", "\xe2\x82\xac", "\xf0\x9f\x98\x80", "\xff", "\x80", "\xc3"
+    };
+
+    for (std::size_t length = 0; length <= 36; ++length)
+    {
+        const std::string plain(length, 'k');
+        check_dump_against_reference(plain, false);
+
+        for (const auto& special : specials)
+        {
+            for (std::size_t pos = 0; pos <= length; ++pos)
+            {
+                std::string s = plain;
+                s.insert(pos, special);
+                check_dump_against_reference(s, false);
+
+                for (const bool ensure_ascii :
+                        {
+                            false, true
+                        })
+                {
+                    // a key and a value are written alike, in compact and
+                    // in pretty-printed form
+                    const json value = s;
+                    const json object = json::object({{s, 1}});
+                    for (const auto error_handler :
+                            {
+                                json::error_handler_t::replace, json::error_handler_t::keep
+                            })
+                    {
+                        const std::string quoted = value.dump(-1, ' ', ensure_ascii, error_handler);
+                        CHECK(object.dump(-1, ' ', ensure_ascii, error_handler) == "{" + quoted + ":1}");
+                        CHECK(object.dump(2, ' ', ensure_ascii, error_handler) == "{\n  " + quoted + ": 1\n}");
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("runs of multi-byte characters are escaped like the reference under ensure_ascii")
+{
+    // a run of well-formed multi-byte characters is escaped straight into the
+    // write buffer; it has to flush that mid-run, stop at an ASCII character or
+    // an ill-formed sequence and leave those to the general path, and pick up
+    // behind what the general path has pending
+    const std::vector<std::string> characters =
+    {
+        "\xc2\x80", "\xdf\xbf", "\xe0\xa0\x80", "\xe2\x82\xac", "\xed\x9f\xbf", "\xef\xbf\xbf",
+        "\xf0\x90\x80\x80", "\xf0\x9f\x98\x80", "\xf4\x8f\xbf\xbf"
+    };
+    const std::vector<std::string> interruptions =
+    {
+        "", "a", "\n", "\"", "\x7f", "\xff", "\x80", "\xc3", "\xe2\x82", "\xf0\x9f\x98", "\xed\xa0\x80"
+    };
+
+    for (std::size_t shift = 0; shift <= 13; ++shift)
+    {
+        for (const auto& interruption : interruptions)
+        {
+            for (const std::size_t count :
+                    {
+                        std::size_t{1}, std::size_t{2}, std::size_t{85}, std::size_t{200}
+                    })
+            {
+                std::string s(shift, 'x');
+                for (std::size_t i = 0; i < count; ++i)
+                {
+                    s += characters[(i + shift) % characters.size()];
+                }
+                s += interruption;
+                s += characters[shift % characters.size()];
+                s += characters[(shift + 3) % characters.size()];
+                check_dump_against_reference(s, shift < 2);
             }
         }
     }

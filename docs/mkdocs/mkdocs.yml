@@ -51,7 +51,53 @@ nav:
       - home/license.md
       - "FAQ": home/faq.md
       - home/exceptions.md
-      - home/releases.md
+      - Releases:
+          - 'Overview': home/releases/index.md
+          - 'Unreleased': home/releases/unreleased.md
+          - 'v3.12.0': home/releases/v3.12.0.md
+          - 'v3.11.3': home/releases/v3.11.3.md
+          - 'v3.11.2': home/releases/v3.11.2.md
+          - 'v3.11.1': home/releases/v3.11.1.md
+          - 'v3.11.0': home/releases/v3.11.0.md
+          - 'v3.10.5': home/releases/v3.10.5.md
+          - 'v3.10.4': home/releases/v3.10.4.md
+          - 'v3.10.3': home/releases/v3.10.3.md
+          - 'v3.10.2': home/releases/v3.10.2.md
+          - 'v3.10.1': home/releases/v3.10.1.md
+          - 'v3.10.0': home/releases/v3.10.0.md
+          - 'v3.9.1': home/releases/v3.9.1.md
+          - 'v3.9.0': home/releases/v3.9.0.md
+          - 'v3.8.0': home/releases/v3.8.0.md
+          - 'v3.7.3': home/releases/v3.7.3.md
+          - 'v3.7.2': home/releases/v3.7.2.md
+          - 'v3.7.1': home/releases/v3.7.1.md
+          - 'v3.7.0': home/releases/v3.7.0.md
+          - 'v3.6.1': home/releases/v3.6.1.md
+          - 'v3.6.0': home/releases/v3.6.0.md
+          - 'v3.5.0': home/releases/v3.5.0.md
+          - 'v3.4.0': home/releases/v3.4.0.md
+          - 'v3.3.0': home/releases/v3.3.0.md
+          - 'v3.2.0': home/releases/v3.2.0.md
+          - 'v3.1.2': home/releases/v3.1.2.md
+          - 'v3.1.1': home/releases/v3.1.1.md
+          - 'v3.1.0': home/releases/v3.1.0.md
+          - 'v3.0.1': home/releases/v3.0.1.md
+          - 'v3.0.0': home/releases/v3.0.0.md
+          - 'v2.1.1': home/releases/v2.1.1.md
+          - 'v2.1.0': home/releases/v2.1.0.md
+          - 'v2.0.10': home/releases/v2.0.10.md
+          - 'v2.0.9': home/releases/v2.0.9.md
+          - 'v2.0.8': home/releases/v2.0.8.md
+          - 'v2.0.7': home/releases/v2.0.7.md
+          - 'v2.0.6': home/releases/v2.0.6.md
+          - 'v2.0.5': home/releases/v2.0.5.md
+          - 'v2.0.4': home/releases/v2.0.4.md
+          - 'v2.0.3': home/releases/v2.0.3.md
+          - 'v2.0.2': home/releases/v2.0.2.md
+          - 'v2.0.1': home/releases/v2.0.1.md
+          - 'v2.0.0': home/releases/v2.0.0.md
+          - 'v1.1.0': home/releases/v1.1.0.md
+          - 'v1.0.0': home/releases/v1.0.0.md
       - home/design_goals.md
       - home/architecture.md
       - home/customers.md
@@ -60,6 +106,7 @@ nav:
   - Features:
       - features/index.md
       - features/arbitrary_types.md
+      - features/type_recipes.md
       - Binary Formats:
           - features/binary_formats/index.md
           - features/binary_formats/bjdata.md
@@ -84,11 +131,13 @@ nav:
       - features/modifying_values.md
       - features/modules.md
       - 'nlohmann Namespace': features/namespace.md
+      - features/no_exceptions.md
       - features/object_order.md
       - features/performance.md
       - Parsing:
           - features/parsing/index.md
           - features/parsing/json_lines.md
+          - features/parsing/large_and_partial_input.md
           - features/parsing/parse_exceptions.md
           - features/parsing/parser_callbacks.md
           - features/parsing/sax_interface.md
@@ -102,6 +151,7 @@ nav:
           - features/types/index.md
           - features/types/number_handling.md
           - features/types/template_parameters.md
+      - features/json_view.md
   - Integration:
       - integration/index.md
       - integration/migration_guide.md
@@ -182,6 +232,7 @@ nav:
           - 'json_serializer': api/basic_json/json_serializer.md
           - 'max_size': api/basic_json/max_size.md
           - 'meta': api/basic_json/meta.md
+          - 'merge_diff': api/basic_json/merge_diff.md
           - 'merge_patch': api/basic_json/merge_patch.md
           - 'number_float_t': api/basic_json/number_float_t.md
           - 'number_integer_t': api/basic_json/number_integer_t.md
@@ -233,6 +284,70 @@ nav:
           - 'value': api/basic_json/value.md
           - 'value_t': api/basic_json/value_t.md
           - 'with_t': api/basic_json/with_t.md
+      - basic_json_document:
+          - 'Overview': api/basic_json_document/index.md
+          - '(Constructor)': api/basic_json_document/basic_json_document.md
+          - 'accept': api/basic_json_document/accept.md
+          - 'erase': api/basic_json_document/erase.md
+          - 'insert': api/basic_json_document/insert.md
+          - 'is_discarded': api/basic_json_document/is_discarded.md
+          - 'load': api/basic_json_document/load.md
+          - 'memory_usage': api/basic_json_document/memory_usage.md
+          - 'node_count': api/basic_json_document/node_count.md
+          - 'owns_source': api/basic_json_document/owns_source.md
+          - 'parse': api/basic_json_document/parse.md
+          - 'parse_copy': api/basic_json_document/parse_copy.md
+          - 'push_back': api/basic_json_document/push_back.md
+          - 'read': api/basic_json_document/read.md
+          - 'root': api/basic_json_document/root.md
+          - 'save': api/basic_json_document/save.md
+          - 'set': api/basic_json_document/set.md
+          - 'shrink_to_fit': api/basic_json_document/shrink_to_fit.md
+          - 'source': api/basic_json_document/source.md
+      - basic_json_view:
+          - 'Overview': api/basic_json_view/index.md
+          - '(Constructor)': api/basic_json_view/basic_json_view.md
+          - 'at': api/basic_json_view/at.md
+          - 'back': api/basic_json_view/back.md
+          - 'begin': api/basic_json_view/begin.md
+          - 'cbegin': api/basic_json_view/cbegin.md
+          - 'cend': api/basic_json_view/cend.md
+          - 'contains': api/basic_json_view/contains.md
+          - 'count': api/basic_json_view/count.md
+          - 'dump': api/basic_json_view/dump.md
+          - 'empty': api/basic_json_view/empty.md
+          - 'end': api/basic_json_view/end.md
+          - 'find': api/basic_json_view/find.md
+          - 'front': api/basic_json_view/front.md
+          - 'get': api/basic_json_view/get.md
+          - 'get_string': api/basic_json_view/get_string.md
+          - 'get_to': api/basic_json_view/get_to.md
+          - 'is_array': api/basic_json_view/is_array.md
+          - 'is_binary': api/basic_json_view/is_binary.md
+          - 'is_boolean': api/basic_json_view/is_boolean.md
+          - 'is_discarded': api/basic_json_view/is_discarded.md
+          - 'is_null': api/basic_json_view/is_null.md
+          - 'is_number': api/basic_json_view/is_number.md
+          - 'is_number_float': api/basic_json_view/is_number_float.md
+          - 'is_number_integer': api/basic_json_view/is_number_integer.md
+          - 'is_number_unsigned': api/basic_json_view/is_number_unsigned.md
+          - 'is_object': api/basic_json_view/is_object.md
+          - 'is_primitive': api/basic_json_view/is_primitive.md
+          - 'is_string': api/basic_json_view/is_string.md
+          - 'is_structured': api/basic_json_view/is_structured.md
+          - 'items': api/basic_json_view/items.md
+          - 'materialize': api/basic_json_view/materialize.md
+          - 'number_format': api/basic_json_view/number_format.md
+          - 'number_token': api/basic_json_view/number_token.md
+          - 'operator<<': api/basic_json_view/operator_ltlt.md
+          - 'operator[]': api/basic_json_view/operator[].md
+          - 'operator==': api/basic_json_view/operator_eq.md
+          - 'operator!=': api/basic_json_view/operator_ne.md
+          - 'size': api/basic_json_view/size.md
+          - 'source_offset': api/basic_json_view/source_offset.md
+          - 'type': api/basic_json_view/type.md
+          - 'type_name': api/basic_json_view/type_name.md
+          - 'value': api/basic_json_view/value.md
       - byte_container_with_subtype:
           - 'Overview': api/byte_container_with_subtype/index.md
           - '(constructor)': api/byte_container_with_subtype/byte_container_with_subtype.md
@@ -247,6 +362,9 @@ nav:
           - 'from_json': api/adl_serializer/from_json.md
           - 'to_json': api/adl_serializer/to_json.md
       - 'json': api/json.md
+      - 'json_document': api/json_document.md
+      - 'json_editable_document': api/json_editable_document.md
+      - 'json_editable_view': api/json_editable_view.md
       - json_pointer:
           - 'Overview': api/json_pointer/index.md
           - '(Constructor)': api/json_pointer/json_pointer.md
@@ -281,11 +399,16 @@ nav:
           - 'start_array': api/json_sax/start_array.md
           - 'start_object': api/json_sax/start_object.md
           - 'string': api/json_sax/string.md
+      - 'json_view': api/json_view.md
       - 'operator<<(basic_json), operator<<(json_pointer)': api/operator_ltlt.md
       - 'operator>>(basic_json)': api/operator_gtgt.md
       - 'operator""_json': api/operator_literal_json.md
       - 'operator""_json_pointer': api/operator_literal_json_pointer.md
       - 'ordered_json': api/ordered_json.md
+      - 'ordered_json_document': api/ordered_json_document.md
+      - 'ordered_json_editable_document': api/ordered_json_editable_document.md
+      - 'ordered_json_editable_view': api/ordered_json_editable_view.md
+      - 'ordered_json_view': api/ordered_json_view.md
       - 'ordered_map': api/ordered_map.md
       - macros:
           - 'Overview': api/macros/index.md
@@ -296,9 +419,12 @@ nav:
           - 'JSON_DELETE_DEPRECATED_FUNCTIONS': api/macros/json_delete_deprecated_functions.md
           - 'JSON_DIAGNOSTIC_POSITIONS': api/macros/json_diagnostic_positions.md
           - 'JSON_DISABLE_ENUM_SERIALIZATION': api/macros/json_disable_enum_serialization.md
+          - 'JSON_DISABLE_STREAM_BULK_SCAN': api/macros/json_disable_stream_bulk_scan.md
           - 'JSON_DISABLE_TUPLE_REFERENCE_CONVERSION': api/macros/json_disable_tuple_reference_conversion.md
+          - 'JSON_DISABLE_UNLOCKED_FILE_IO': api/macros/json_disable_unlocked_file_io.md
           - 'JSON_HAS_CPP_11, JSON_HAS_CPP_14, JSON_HAS_CPP_17, JSON_HAS_CPP_20, JSON_HAS_CPP_23, JSON_HAS_CPP_26': api/macros/json_has_cpp_11.md
           - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM, JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
+          - 'JSON_HAS_RANGE_VIEW_CONVERSION': api/macros/json_has_range_view_conversion.md
           - 'JSON_HAS_RANGES': api/macros/json_has_ranges.md
           - 'JSON_HAS_STATIC_RTTI': api/macros/json_has_static_rtti.md
           - 'JSON_HAS_STD_FORMAT': api/macros/json_has_std_format.md
@@ -306,6 +432,7 @@ nav:
           - 'JSON_NO_AUTOMATIC_UDLS': api/macros/json_no_automatic_udls.md
           - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
           - 'JSON_NO_IO': api/macros/json_no_io.md
+          - 'JSON_NO_SIMD': api/macros/json_no_simd.md
           - 'JSON_NO_THREAD_LOCAL': api/macros/json_no_thread_local.md
           - 'JSON_PRECISE_STREAM_POSITION': api/macros/json_precise_stream_position.md
           - 'JSON_SKIP_LIBRARY_VERSION_CHECK': api/macros/json_skip_library_version_check.md
@@ -317,6 +444,8 @@ nav:
           - 'JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON': api/macros/json_use_legacy_discarded_value_comparison.md
           - 'JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS': api/macros/json_use_objects_for_enum_keyed_maps.md
           - 'JSON_USE_SIMDUTF': api/macros/json_use_simdutf.md
+          - 'JSON_VIEW_NO_SIMD': api/macros/json_view_no_simd.md
+          - 'JSON_VIEW_USE_SSSE3': api/macros/json_view_use_ssse3.md
           - 'NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_derived_type.md
           - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_intrusive.md
           - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_non_intrusive.md
@@ -404,6 +533,7 @@ validation:
     unrecognized_links: warn
 
 hooks:
+  - hooks/api_changes.py
   - hooks/copy_markdown_source.py
   - hooks/unreleased_versions.py
 
@@ -451,8 +581,12 @@ plugins:
       # package badges (the fetch fails, then reading the missing cache entry
       # raises FileNotFoundError). Readers' browsers are served normally, so
       # leave these badges as external references instead of self-hosting them.
+      # The same goes for img.shields.io, whose version badges time out from
+      # time to time (strict mode turns the failed download into an error) and
+      # would go stale between builds if they were self-hosted anyway.
       assets_exclude:
         - repology.org/*
+        - img.shields.io/*
   - llmstxt:
       markdown_description: >
         JSON for Modern C++ is a C++11 header-only library implementing a JSON
@@ -473,6 +607,8 @@ plugins:
         API Documentation:
           - api/*.md
           - api/basic_json/*.md
+          - api/basic_json_document/*.md
+          - api/basic_json_view/*.md
           - api/adl_serializer/*.md
           - api/byte_container_with_subtype/*.md
           - api/json_pointer/*.md

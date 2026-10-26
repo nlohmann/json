@@ -51,8 +51,10 @@ Constant.
 ## See also
 
 - [back](back.md) to access the last element
+- [basic_json_view::front](../basic_json_view/front.md) - the same access on a zero-copy view (document order, not
+  sorted; duplicate keys are visited)
 
 ## Version history
 
 - Added in version 1.0.0.
-- Adjusted code to return reference to binary values in version 3.8.0.
+- Binary values are supported since version 3.8.0.

@@ -10,6 +10,39 @@ representation of data types that are not part of the JSON spec. For example, BS
     - [BSON Specification](http://bsonspec.org/spec.html) - the specification
    
 
+## Byte layout
+
+A BSON document is a length-prefixed sequence of *elements*. The first four bytes hold the total size of the document (little-endian int32), followed by the elements, and a final `0x00` byte ends the document. Each element starts with a one-byte type, followed by its key as a NUL-terminated string and the value, whose encoding depends on the type. Arrays are documents whose keys are the decimal indices `"0"`, `"1"`, ...; nesting is expressed by embedding documents. Because every document announces its size, a reader can skip over it without parsing its content. The top level of a BSON value is always a document, which is why only JSON objects can be serialized.
+
+Consider the following JSON value (shown formatted for readability):
+
+```json
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_bson` encodes it to 69 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-l">length/count/size</span> <span class="bl bl-d">data</span>.
+
+<div class="byte-layout" markdown="0"><table>
+<thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>{</code></td><td><span class="bl bl-l">45 00 00 00</span></td><td>document size: 69 bytes (int32, little-endian)</td></tr>
+<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-t">10</span> <span class="bl bl-d">69 64 00</span> <span class="bl bl-d">2C 01 00 00</span></td><td>int32 element; key as NUL-terminated string; value (little-endian)</td></tr>
+<tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-t">02</span> <span class="bl bl-d">6E 61 6D 65 00</span> <span class="bl bl-l">05 00 00 00</span> <span class="bl bl-d">6A 73 6F 6E 00</span></td><td>string element; key; length incl. NUL (int32); NUL-terminated UTF-8 bytes</td></tr>
+<tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-t">01</span> <span class="bl bl-d">70 69 00</span> <span class="bl bl-d">1F 85 EB 51 B8 1E 09 40</span></td><td>double element; key; value (little-endian)</td></tr>
+<tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-t">04</span> <span class="bl bl-d">74 61 67 73 00</span> <span class="bl bl-l">17 00 00 00</span></td><td>array element; key; embedded document of 23 bytes (keys are the indices)</td></tr>
+<tr><td><code>&quot;a&quot;,</code></td><td><span class="bl bl-t">02</span> <span class="bl bl-d">30 00</span> <span class="bl bl-l">02 00 00 00</span> <span class="bl bl-d">61 00</span></td><td>string element; key <code>&quot;0&quot;</code>; length 2; <code>a</code> + NUL</td></tr>
+<tr><td><code>&quot;b&quot;</code></td><td><span class="bl bl-t">02</span> <span class="bl bl-d">31 00</span> <span class="bl bl-l">02 00 00 00</span> <span class="bl bl-d">62 00</span></td><td>string element; key <code>&quot;1&quot;</code>; length 2; <code>b</code> + NUL</td></tr>
+<tr><td><code>]</code></td><td><span class="bl bl-t">00</span></td><td>end of the array document</td></tr>
+<tr><td><code>}</code></td><td><span class="bl bl-t">00</span></td><td>end of the document</td></tr>
+</tbody></table></div>
+
 ## Serialization
 
 The library uses the following mapping from JSON values types to BSON types:
@@ -59,7 +92,6 @@ The library uses the following mapping from JSON values types to BSON types:
     ```c
     --8<-- "examples/to_bson.output"
     ```
-
 
 ## Deserialization
 

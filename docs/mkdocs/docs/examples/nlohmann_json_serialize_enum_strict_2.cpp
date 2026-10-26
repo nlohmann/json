@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -22,12 +22,12 @@ int main()
 {
     // serialization
     json j_red = ns::Color::red;
-    std::cout << static_cast<int>(ns::Color::red) << " -> " << j_red << std::endl;
+    std::cout << static_cast<int>(ns::Color::red) << " -> " << j_red << '\n';
 
     // deserialization
     json j_rot = "rot";
     auto rot = j_rot.get<ns::Color>();
     auto red = j_red.get<ns::Color>();
-    std::cout << j_rot << " -> " << static_cast<int>(rot) << std::endl;
-    std::cout << j_red << " -> " << static_cast<int>(red) << std::endl;
+    std::cout << j_rot << " -> " << static_cast<int>(rot) << '\n';
+    std::cout << j_red << " -> " << static_cast<int>(red) << '\n';
 }

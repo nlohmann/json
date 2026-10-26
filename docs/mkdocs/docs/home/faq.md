@@ -58,6 +58,208 @@ json j{obj};   // -> {"key":"value"}  (copy, not array)
 
 Without the macro (default behavior), `json j{obj}` creates `[{"key":"value"}]`. This opt-in macro fixes issue #5074 while preserving backwards compatibility for existing code.
 
+## Getting started
+
+### Which file do I need?
+
+!!! question
+
+    Do I have to clone the repository or build the library?
+
+No. The library is header-only: the single file [`json.hpp`](https://github.com/nlohmann/json/releases) from the
+releases page is all you need, including the `_json` literals. Put it in a directory `nlohmann` on your include path.
+Companion headers (`json_fwd.hpp`, `json_view.hpp`, `json_literals.hpp`) are only needed if you use them. See
+[Integration](../integration/index.md#header-only).
+
+### Using CMake or a package manager
+
+!!! question
+
+    How do I add the library with CMake, Conan, vcpkg, Homebrew, or another tool?
+
+See [CMake](../integration/cmake.md) for `find_package`, `add_subdirectory`, and `FetchContent`, and
+[Package managers](../integration/package_managers.md) for the list of supported package managers.
+
+### The IDE cannot open the header
+
+!!! question
+
+    The compiler finds `nlohmann/json.hpp`, but my IDE reports "cannot open source file". Why?
+
+The compiler's include path is set correctly, but the IDE's is not. Add the same directory to the include paths of the
+IDE (or of its language server); the build itself is not affected.
+
+### Compile times
+
+!!! question
+
+    Including the library slows down my build. What can I do?
+
+Include [`json_fwd.hpp`](../integration/compile_times.md#include-json_fwdhpp-in-headers) in headers and `json.hpp` only
+in the source files that need it, instantiate `basic_json` once, and consider precompiled headers or
+[C++20 modules](../features/modules.md). See [Compile times](../integration/compile_times.md).
+
+## Parsing
+
+### Parsing a file fails with "unexpected end of input"
+
+!!! question
+
+    `json::parse(file)` throws `parse_error.101` at line 1, column 1 for a file that is valid JSON. Why?
+
+The parser did not see any character: the file was most likely not opened. A relative path is resolved against the
+working directory of the running program, which is often the build directory of your IDE, not the source directory.
+Check `is_open()` and try an absolute path. Other causes are an empty file and a stream that was already read. See
+[`parse_error.101`](exceptions.md#jsonexceptionparse_error101).
+
+### Input that arrives in chunks
+
+!!! question
+
+    My data comes from a socket in pieces. How do I parse it?
+
+The parser cannot be resumed. Frame the messages (one value per line, a length prefix) and parse each complete frame, or
+buffer the chunks until the value is complete; a `parse_error` at the end of the buffer means the input ended
+prematurely. See [Large, streamed, and partial input](../features/parsing/large_and_partial_input.md#input-arriving-in-chunks).
+
+### Several values in one stream
+
+!!! question
+
+    How do I read concatenated JSON values or one value per line?
+
+Read newline-delimited input line by line ([JSON Lines](../features/parsing/json_lines.md)). For concatenated values, use
+`operator>>` and check for the end of the stream before each read, as shown in
+[Several values in one stream](../features/parsing/large_and_partial_input.md#several-values-in-one-stream).
+
+### Files that are too large for memory
+
+!!! question
+
+    How do I process a huge JSON file?
+
+Handle and discard the records of a large array with a [parser callback](../features/parsing/parser_callbacks.md), stop
+early with the [SAX interface](../features/parsing/sax_interface.md), or read parts of the text through a
+[`json_document`](../features/json_view.md) (added in version 3.13.0). See
+[Input too large for memory](../features/parsing/large_and_partial_input.md#input-too-large-for-memory).
+
+### Position of a parse error
+
+!!! question
+
+    How do I get the line and column of a parse error?
+
+The message contains them. The exception stores the byte index in `byte`, from which you can compute both; see
+[Where did the error occur?](../features/parsing/parse_exceptions.md#where-did-the-error-occur). To locate a value that
+causes a *later* error, such as a `type_error`, use
+[`JSON_DIAGNOSTIC_POSITIONS`](../features/parsing/parse_exceptions.md#where-is-the-value-that-caused-a-later-error).
+
+### Comments and trailing commas
+
+!!! question
+
+    Can the parser read JSON with comments or trailing commas?
+
+Yes, when asked to: see [Comments](../features/comments.md) and [Trailing commas](../features/trailing_commas.md). Both
+are rejected by default.
+
+## Accessing and creating values
+
+### Reading a value into a variable
+
+!!! question
+
+    How do I get a C++ value out of a `json` value?
+
+Use [`get<T>()`](../api/basic_json/get.md), for example `#!cpp int age = j["age"].get<int>();`, or an implicit conversion.
+`#!cpp auto x = j["age"];` is **not** a conversion: it copies the `json` value. See
+[Converting values](../features/conversions.md).
+
+### Strings are printed with quotes
+
+!!! question
+
+    `std::cout << j["name"]` prints `"Mary"` with quotes. How do I get the string?
+
+The value is a `json`, and printing it produces JSON text. Convert it first: `#!cpp j["name"].get<std::string>()`. See
+[Getting a string without quotes](../features/conversions.md#getting-values-out).
+
+### Testing whether a key exists
+
+!!! question
+
+    How do I check if a key exists, without changing the object?
+
+Use `contains` or `find`. Do not test with the non-const `operator[]`: like `std::map::operator[]`, it inserts a `null`
+value for a missing key. See [Does this key exist?](../features/element_access/index.md#does-this-key-exist).
+
+### Reading a value with a fallback
+
+!!! question
+
+    How do I read a value that may be missing?
+
+Use [`value`](../features/element_access/default_value.md), which returns a default for a missing key. It still throws if
+the key exists with a different type; see [Working without exceptions](../features/no_exceptions.md).
+
+### Iterating and nested values
+
+!!! question
+
+    How do I loop over an array or object, or reach a nested value?
+
+See [Iterators](../features/iterators.md) and [`items()`](../api/basic_json/items.md) for loops, and
+[JSON Pointer](../features/json_pointer.md) to address or test a nested value by path.
+
+### Unexpected arrays when creating values
+
+!!! question
+
+    Why does `json j{x}` or `{{"a", 1}, {"b"}}` produce an array instead of what I expected?
+
+Braces create arrays and objects based on their content, and single-element braces create a one-element array. See
+[Brace initialization yields arrays](#brace-initialization-yields-arrays) and the table in
+[Creating values](../features/creating_values.md#what-does-this-produce).
+
+### Keeping the order of object keys
+
+!!! question
+
+    The keys of my object come out sorted. How do I keep the insertion order?
+
+Use `ordered_json`, and call `ordered_json::parse` when reading. See [Object order](../features/object_order.md).
+
+## Converting your own types
+
+### Structs, enums, and optional fields
+
+!!! question
+
+    How do I convert my own types to and from JSON?
+
+Write `to_json`/`from_json` functions or use the `NLOHMANN_DEFINE_TYPE_*` macros; see
+[Arbitrary type conversions](../features/arbitrary_types.md). Enums can be mapped to strings
+([Enum conversion](../features/enum_conversion.md)), and an empty `std::optional` can be omitted
+([Omitting a field](../features/conversions.md#omitting-a-field-when-serializing-stdoptional)).
+
+### Smart pointers, variants, chrono, and class hierarchies
+
+!!! question
+
+    Why can't I convert `std::shared_ptr`, `std::variant`, `std::chrono` types, or a pointer to a base class?
+
+There is more than one sensible JSON representation for them, so the library leaves the choice to you.
+[Recipes for common types](../features/type_recipes.md) shows one for each.
+
+### My `to_json` is not found
+
+!!! question
+
+    I wrote `to_json`/`from_json`, but the compiler does not find them. Why?
+
+Typical causes are a type alias of a standard type, a function in the wrong namespace, or a declaration that comes too
+late. See [Why isn't my `to_json` found?](../features/arbitrary_types.md#why-isnt-my-to_json-or-from_json-found).
+
 ## Limitations
 
 ### Relaxed parsing
@@ -66,7 +268,9 @@ Without the macro (default behavior), `json j{obj}` creates `[{"key":"value"}]`.
 
     Can you add an option to ignore trailing commas?
 
-This library does not support any feature that would jeopardize interoperability.
+Yes, trailing commas in arrays and objects can be allowed by setting parameter `ignore_trailing_commas` of
+[`parse`](../api/basic_json/parse.md) to `#!cpp true`; see [trailing commas](../features/trailing_commas.md). They are
+rejected by default, and the library never adds them when serializing.
 
 
 ### Parse errors reading non-ASCII characters
@@ -79,8 +283,9 @@ This library does not support any feature that would jeopardize interoperability
 
 The library supports **Unicode input** as follows:
 
-- Only **UTF-8** encoded input is supported, which is the default encoding for JSON, according to [RFC 8259](https://tools.ietf.org/html/rfc8259.html#section-8.1).
-- `std::u16string` and `std::u32string` can be parsed, assuming UTF-16 and UTF-32 encoding, respectively. These encodings are not supported when reading from files or other input containers.
+- **UTF-8** encoded input is supported, which is the default encoding for JSON, according to [RFC 8259](https://tools.ietf.org/html/rfc8259.html#section-8.1).
+- `std::u16string` and `std::u32string` can be parsed, assuming UTF-16 and UTF-32 encoding, respectively; `std::wstring` works as well and is interpreted as UTF-16 or UTF-32, depending on the width of the platform's `wchar_t`. These encodings cannot be read from a `FILE*` or a `std::istream`, which carry bytes only.
+- Ill-formed UTF-16 or UTF-32 input is rejected: a lone surrogate, a high surrogate that is not followed by its low surrogate, and a code point above `U+10FFFF` all yield a parse error. The same holds for iterators over 2- or 4-byte characters.
 - Other encodings such as Latin-1 or ISO 8859-1 are **not** supported and will yield parse or serialization errors.
 - The library will not replace [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1).
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
@@ -144,7 +349,7 @@ json::parse(std::string("\"") + '\0' + "\""); // throws parse_error.101: control
 
     Why are wide strings (e.g., `std::wstring`) dumped as arrays of numbers?
 
-As described [above](#parse-errors-reading-non-ascii-characters), the library assumes UTF-8 as encoding.  To store a wide string, you need to change the encoding.
+As described [above](#parse-errors-reading-non-ascii-characters), the library stores its strings as UTF-8. To store a wide string as a string, convert it to a UTF-8 encoded `std::string` first, as in the example below.
 
 !!! example
 
@@ -200,6 +405,36 @@ Not directly, but the companion project [json-schema-validator](https://github.c
 builds JSON Schema (draft 7; draft 4 in its older, now-superseded 1.x releases) validation on top of this library
 and is a common recommendation for this use case.
 
+### Memory use
+
+!!! question
+
+    Does the library leak memory? My process stays large after I free a `json` value.
+
+Destroying a value frees everything it owns. Freed memory is returned to the allocator, which does not necessarily give
+it back to the operating system, so a high resident size alone is not a leak. Copies are deep, and `clear()` keeps the
+capacity of an array. See [Memory](../features/performance.md#memory), and use Valgrind or the sanitizers to tell a leak
+from retained memory.
+
+### Reproducible builds
+
+!!! question
+
+    The header path ends up in my binary. How do I get path-independent builds?
+
+The runtime assertions embed `__FILE__`. Define `NDEBUG` (the default for release builds) or map the path prefix; see
+[Notes for builds and distribution](../integration/index.md#notes-for-builds-and-distribution).
+
+### Slow debug builds
+
+!!! question
+
+    Parsing a large file is very slow in my debug build. Can I compile the library with optimizations?
+
+The library is header-only, so there is no separate source file. Keep the code that uses `json` in its own source file and
+compile that file with optimizations; see
+[Notes for builds and distribution](../integration/index.md#notes-for-builds-and-distribution).
+
 ## Exceptions
 
 ### Parsing without exceptions
@@ -208,7 +443,8 @@ and is a common recommendation for this use case.
 
     Is it possible to indicate a parse error without throwing an exception?
 
-Yes, see [Parsing and exceptions](../features/parsing/parse_exceptions.md).
+Yes, see [Parsing and exceptions](../features/parsing/parse_exceptions.md) and
+[Working without exceptions](../features/no_exceptions.md).
 
 
 ### Key name in exceptions
@@ -230,11 +466,11 @@ Yes, you can. Please define the symbol [`JSON_DIAGNOSTICS`](../api/macros/json_d
     - It seems that precision is lost when serializing a double.
     - Can I change the precision for floating-point serialization?
 
-The library uses `std::numeric_limits<number_float_t>::digits10` (15 for IEEE `double`s) digits for serialization. This value is sufficient to guarantee roundtripping. If one uses more than this number of digits of precision, then string -> value -> string is not guaranteed to round-trip.
+The library serializes floating-point numbers with the shortest representation that parses back to the same value, using at most `std::numeric_limits<number_float_t>::max_digits10` (17 for IEEE `double`s) significant digits. This guarantees that value -> string -> value round-trips. The reverse direction, string -> value -> string, is only guaranteed for numbers with at most `std::numeric_limits<number_float_t>::digits10` (15 for IEEE `double`s) significant digits; a number with more digits may not be representable exactly and is then serialized as the closest `double`.
 
-!!! quote "[cppreference.com](https://en.cppreference.com/w/cpp/types/numeric_limits/digits10)"
+!!! quote "[cppreference.com](https://en.cppreference.com/w/cpp/types/numeric_limits/max_digits10)"
 
-    The value of `std::numeric_limits<T>::digits10` is the number of base-10 digits that can be represented by the type T without change, that is, any number with this many significant decimal digits can be converted to a value of type T and back to decimal form, without change due to rounding or overflow. 
+    The value of `std::numeric_limits<T>::max_digits10` is the number of base-10 digits that are necessary to uniquely represent all distinct values of the type T, such as necessary for serialization/deserialization to text.
 
 !!! tip
 

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -11,5 +11,5 @@ int main()
 
     // call empty()
     std::cout << "last reference token of \"" << ptr1 << "\" is \"" << ptr1.back() << "\"\n"
-              << "last reference token of \"" << ptr2 << "\" is \"" << ptr2.back() << "\"" << std::endl;
+              << "last reference token of \"" << ptr2 << "\" is \"" << ptr2.back() << "\"" << '\n';
 }

@@ -1,0 +1,1682 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+/****************************************************************************\
+ * Zero-copy view of a parsed JSON text.                                     *
+ *                                                                           *
+ * json_document::parse() builds a flat index of the values of a JSON text   *
+ * (16 bytes per value) instead of a tree of basic_json values. Strings and  *
+ * numbers stay in the source text; only strings with escapes are decoded,   *
+ * into one buffer. json_view is a handle to one value of the document, with *
+ * the read-only part of the basic_json interface; materialize() turns a     *
+ * subtree into the basic_json value that parse() would produce. An editable *
+ * document (json_editable_document) also has set(), push_back(), insert(),  *
+ * and erase(): edits never write to the source text, and views stay valid.  *
+ *                                                                           *
+ * The source text must outlive a document that borrows it (lvalue byte      *
+ * containers, C strings); rvalue strings, streams, and other inputs are     *
+ * owned by the document.                                                    *
+\****************************************************************************/
+
+#ifndef INCLUDE_NLOHMANN_JSON_VIEW_HPP_
+#define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
+
+#include <algorithm> // all_of, min
+#include <array> // array
+#include <cstddef> // nullptr_t, size_t // IWYU pragma: keep
+#include <cstdint> // uint8_t, uint32_t
+#include <cstdio> // FILE
+#include <cstring> // memcpy, strlen
+#include <istream> // istream // IWYU pragma: keep
+#include <iterator> // distance, input_iterator_tag, iterator_traits
+#include <map> // map
+#include <memory> // unique_ptr
+#ifndef JSON_NO_IO
+    #include <ostream> // ostream // IWYU pragma: keep
+#endif
+#include <string> // string
+#include <tuple> // tuple_element, tuple_size // IWYU pragma: keep
+#include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_base_of, is_integral, is_same, remove_cv, remove_extent
+#include <unordered_map> // unordered_map
+#include <utility> // forward, move
+#include <vector> // vector
+
+#include <nlohmann/json.hpp> // IWYU pragma: export
+
+// json.hpp provides the library's types and macros used below (it includes
+// the headers that define them); json_view.hpp must not include them again,
+// because the amalgamated json_view.hpp only includes json.hpp
+// IWYU pragma: no_include <version>
+// IWYU pragma: no_include "nlohmann/detail/abi_config.hpp"
+// IWYU pragma: no_include "nlohmann/detail/abi_macros.hpp"
+// IWYU pragma: no_include "nlohmann/detail/input/input_adapters.hpp"
+// IWYU pragma: no_include "nlohmann/detail/json_pointer.hpp"
+// IWYU pragma: no_include "nlohmann/detail/meta/cpp_future.hpp"
+// IWYU pragma: no_include "nlohmann/detail/string_concat.hpp"
+// IWYU pragma: no_include "nlohmann/detail/value_t.hpp"
+// IWYU pragma: no_include "nlohmann/json.hpp"
+// IWYU pragma: no_include "nlohmann/json_fwd.hpp"
+
+// the view builds on internals of the library: both must be the same version
+#if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 12 || NLOHMANN_JSON_VERSION_PATCH != 0
+    #error "json_view.hpp requires json.hpp of the same version (3.12.0)"
+#endif
+
+#include <nlohmann/detail/view/builder.hpp>
+#include <nlohmann/detail/view/compare.hpp>
+#include <nlohmann/detail/view/document_data.hpp>
+#include <nlohmann/detail/view/edit.hpp>
+#include <nlohmann/detail/view/errors.hpp>
+#include <nlohmann/detail/view/image.hpp>
+#include <nlohmann/detail/view/input.hpp>
+#include <nlohmann/detail/view/iterator.hpp>
+#include <nlohmann/detail/view/lookup.hpp>
+#include <nlohmann/detail/view/macro_scope.hpp>
+#include <nlohmann/detail/view/materialize.hpp>
+#include <nlohmann/detail/view/node.hpp>
+#include <nlohmann/detail/view/object_index.hpp>
+#include <nlohmann/detail/view/pointer.hpp>
+#include <nlohmann/detail/view/serializer.hpp>
+#include <nlohmann/detail/view/string_ref.hpp>
+#include <nlohmann/detail/view/value.hpp>
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+
+/*!
+@brief read-only handle to one value of a basic_json_document
+
+Trivially copyable (two pointers). Valid as long as the document is alive and
+has not been re-parsed, and as long as a borrowed source text is alive.
+*/
+template<typename BasicJsonType, bool Editable = false>
+class basic_json_view
+{
+    using node = detail::view::node;
+    using document_data = detail::view::document_data;
+    /// how the index is walked (with edits only for editable documents)
+    using navigation = detail::view::navigation<Editable>;
+
+  public:
+    using value_t = detail::value_t;
+    using string_t = typename BasicJsonType::string_t;
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using json_pointer = typename BasicJsonType::json_pointer;
+    using size_type = std::size_t;
+    /// std::string_view from C++17 on
+    using string_view_t = detail::view::string_ref;
+    /// forward iterator over elements (arrays) or member values (objects)
+    using iterator = detail::view::view_iterator<basic_json_view>;
+    using const_iterator = iterator;
+    /// a (key, value) item of items()
+    using item = detail::view::view_item<basic_json_view>;
+
+    /// an invalid view (type() == value_t::discarded)
+    basic_json_view() noexcept = default;
+
+    //////////
+    // type //
+    //////////
+
+    NLOHMANN_VIEW_ALWAYS_INLINE value_t type() const noexcept
+    {
+        return m_node != nullptr ? static_cast<value_t>(m_node->kind) : value_t::discarded;
+    }
+
+    bool is_null() const noexcept
+    {
+        return type() == value_t::null;
+    }
+
+    bool is_boolean() const noexcept
+    {
+        return type() == value_t::boolean;
+    }
+
+    bool is_number() const noexcept
+    {
+        return is_number_integer() || is_number_float();
+    }
+
+    bool is_number_integer() const noexcept
+    {
+        return type() == value_t::number_integer || type() == value_t::number_unsigned;
+    }
+
+    bool is_number_unsigned() const noexcept
+    {
+        return type() == value_t::number_unsigned;
+    }
+
+    bool is_number_float() const noexcept
+    {
+        return type() == value_t::number_float;
+    }
+
+    bool is_string() const noexcept
+    {
+        return type() == value_t::string;
+    }
+
+    bool is_array() const noexcept
+    {
+        return type() == value_t::array;
+    }
+
+    bool is_object() const noexcept
+    {
+        return type() == value_t::object;
+    }
+
+    /// always false: JSON text has no binary values
+    bool is_binary() const noexcept
+    {
+        return false;
+    }
+
+    bool is_primitive() const noexcept
+    {
+        return is_null() || is_string() || is_boolean() || is_number();
+    }
+
+    bool is_structured() const noexcept
+    {
+        return is_array() || is_object();
+    }
+
+    /// the root of a failed parse with allow_exceptions == false, or a
+    /// default-constructed view
+    bool is_discarded() const noexcept
+    {
+        return type() == value_t::discarded;
+    }
+
+    /// the name of the type, as basic_json::type_name()
+    const char* type_name() const noexcept
+    {
+        return detail::value_type_name(type());
+    }
+
+    //////////////
+    // capacity //
+    //////////////
+
+    /// the number of elements (arrays, objects), 0 for null and discarded,
+    /// 1 otherwise, as basic_json::size()
+    size_type size() const noexcept
+    {
+        switch (type())
+        {
+            case value_t::null:
+            case value_t::discarded:
+                return 0;
+            case value_t::array:
+            case value_t::object:
+                return m_node->len;
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            default:
+                return 1;
+        }
+    }
+
+    /// as basic_json::empty()
+    bool empty() const noexcept
+    {
+        switch (type())
+        {
+            case value_t::null:
+            case value_t::discarded:
+                return true;
+            case value_t::array:
+            case value_t::object:
+                return m_node->len == 0;
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            default:
+                return false;
+        }
+    }
+
+    ////////////////////
+    // element access //
+    ////////////////////
+
+    /// the value of the member with this key (the first one, should the key
+    /// occur more than once); a discarded view if there is none, or if this
+    /// is a discarded view (so that v["a"]["b"] is safe). Throws type_error.305
+    /// if this is any other value but an object.
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view operator[](string_view_t key) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            if (is_discarded())
+            {
+                return {};
+            }
+            detail::view::throw_type_error(detail::exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", type_name());
+        }
+        return lookup(key);
+    }
+
+    basic_json_view operator[](const char* key) const
+    {
+        return operator[](string_view_t(key));
+    }
+
+    basic_json_view operator[](const string_t& key) const
+    {
+        return operator[](string_view_t(key.data(), key.size()));
+    }
+
+    /// the element at this index; a discarded view if the index is out of
+    /// range, or if this is a discarded view. Throws type_error.305 if this is
+    /// any other value but an array.
+    basic_json_view operator[](size_type idx) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
+        {
+            if (is_discarded())
+            {
+                return {};
+            }
+            detail::view::throw_type_error(detail::exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", type_name());
+        }
+        return idx < m_node->len ? element(idx) : basic_json_view();
+    }
+
+    /// any other integer type (int, unsigned, long, std::int64_t, ...; a
+    /// single overload for size_type alone would be ambiguous for all of them
+    /// and for const char*); negative values are out of range
+    template < typename IntegerType, typename std::enable_if < detail::view::is_index_type<IntegerType>::value, int >::type = 0 >
+    basic_json_view operator[](IntegerType idx) const
+    {
+        return operator[](detail::view::to_index<size_type>(idx));
+    }
+
+    /// the value a JSON pointer refers to; a discarded view if a key is
+    /// missing or an index is out of range, or if this is a discarded view.
+    /// Other errors throw what const basic_json::operator[] throws.
+    basic_json_view operator[](const json_pointer& ptr) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(is_discarded()))
+        {
+            return {};
+        }
+        return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
+    }
+
+    /// the value of the member with this key (the first one, should the key
+    /// occur more than once). Throws type_error.304 if this is not an object,
+    /// and out_of_range.403 if there is no such member.
+    basic_json_view at(string_view_t key) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
+        }
+        const basic_json_view r = lookup(key);
+        if (NLOHMANN_VIEW_UNLIKELY(r.is_discarded()))
+        {
+            detail::view::throw_key_not_found(std::string(key.data(), key.size()));
+        }
+        return r;
+    }
+
+    basic_json_view at(const char* key) const
+    {
+        return at(string_view_t(key));
+    }
+
+    basic_json_view at(const string_t& key) const
+    {
+        return at(string_view_t(key.data(), key.size()));
+    }
+
+    /// the element at this index. Throws type_error.304 if this is not an
+    /// array, and out_of_range.401 if the index is out of range.
+    basic_json_view at(size_type idx) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
+        {
+            detail::view::throw_type_error(detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
+        }
+        if (NLOHMANN_VIEW_UNLIKELY(idx >= m_node->len))
+        {
+            detail::view::throw_array_index_out_of_range(idx);
+        }
+        return element(idx);
+    }
+
+    /// any other integer type, see operator[]; negative values are out of
+    /// range
+    template < typename IntegerType, typename std::enable_if < detail::view::is_index_type<IntegerType>::value, int >::type = 0 >
+    basic_json_view at(IntegerType idx) const
+    {
+        return at(detail::view::to_index<size_type>(idx));
+    }
+
+    /// the value a JSON pointer refers to; throws what basic_json::at()
+    /// throws if it cannot be resolved
+    basic_json_view at(const json_pointer& ptr) const
+    {
+        return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::checked);
+    }
+
+    /// the member with this key converted to T, or the default value if there
+    /// is no such member (the first one, should the key occur more than
+    /// once). Throws type_error.306 if this is not an object.
+    template<typename T, typename std::enable_if<detail::view::is_non_c_string_default<T>::value, int>::type = 0>
+    T value(string_view_t key, const T& default_value) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = lookup(key);
+        return r.is_discarded() ? default_value : r.template get<T>();
+    }
+
+    string_t value(string_view_t key, const char* default_value) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
+        }
+        // (the default is made only if there is no such member)
+        const basic_json_view r = lookup(key);
+        return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
+    }
+
+    /// the value a JSON pointer refers to converted to T, or the default
+    /// value if the pointer cannot be resolved. Throws type_error.306 if this
+    /// is neither an object nor an array.
+    template<typename T, typename std::enable_if<detail::view::is_non_c_string_default<T>::value, int>::type = 0>
+    T value(const json_pointer& ptr, const T& default_value) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
+        {
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
+        return r.is_discarded() ? default_value : r.template get<T>();
+    }
+
+    string_t value(const json_pointer& ptr, const char* default_value) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
+        {
+            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
+        return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
+    }
+
+    /// the first element or member value; a primitive value itself. Throws
+    /// invalid_iterator.214 for null, discarded views, and empty containers.
+    basic_json_view front() const
+    {
+        const iterator it = begin();
+        if (NLOHMANN_VIEW_UNLIKELY(it == end()))
+        {
+            detail::view::throw_invalid_iterator(detail::exception_id::iterator_value_unavailable, "cannot get value");
+        }
+        return *it;
+    }
+
+    /// the last element or member value (linear in the size); a primitive
+    /// value itself. Throws invalid_iterator.214 for null, discarded views,
+    /// and empty containers.
+    basic_json_view back() const
+    {
+        if (is_structured() && m_node->len != 0)
+        {
+            return unedited() ? basic_json_view(m_doc, detail::view::last_child<false>(*m_doc, m_node) + (is_object() ? 1 : 0))
+                   : basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
+        }
+        return front();
+    }
+
+    ////////////
+    // lookup //
+    ////////////
+
+    /// an iterator to the member with this key (the first one, should the
+    /// key occur more than once), or end(); end() also for non-objects
+    iterator find(string_view_t key) const
+    {
+        if (!is_object())
+        {
+            return end();
+        }
+        const node* const k = find_key(key);
+        return k != nullptr ? iterator(m_doc, k, true) : end();
+    }
+
+    iterator find(const char* key) const
+    {
+        return find(string_view_t(key));
+    }
+
+    iterator find(const string_t& key) const
+    {
+        return find(string_view_t(key.data(), key.size()));
+    }
+
+    /// whether this is an object with a member with this key
+    bool contains(string_view_t key) const
+    {
+        return is_object() && find_key(key) != nullptr;
+    }
+
+    bool contains(const char* key) const
+    {
+        return contains(string_view_t(key));
+    }
+
+    bool contains(const string_t& key) const
+    {
+        return contains(string_view_t(key.data(), key.size()));
+    }
+
+    /// whether a JSON pointer can be resolved (never throws, as
+    /// basic_json::contains())
+    bool contains(const json_pointer& ptr) const
+    {
+        return !detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains).is_discarded();
+    }
+
+    /// the number of members with this key (more than 1 if the key occurs
+    /// more than once); 0 if this is not an object
+    size_type count(string_view_t key) const
+    {
+        return is_object() ? detail::view::count_members<Editable>(*m_doc, m_node, key.data(), key.size()) : 0;
+    }
+
+    size_type count(const char* key) const
+    {
+        return count(string_view_t(key));
+    }
+
+    size_type count(const string_t& key) const
+    {
+        return count(string_view_t(key.data(), key.size()));
+    }
+
+    ///////////////
+    // iteration //
+    ///////////////
+
+    /// the first element or member value, in document order; a primitive
+    /// value is a range of one element (itself), null an empty range
+    NLOHMANN_VIEW_ALWAYS_INLINE iterator begin() const noexcept
+    {
+        if (NLOHMANN_VIEW_LIKELY(is_structured()))
+        {
+            return iterator(m_doc, navigation::first(*m_doc, m_node), is_object());
+        }
+        return iterator(m_doc, m_node, false);
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE iterator end() const noexcept
+    {
+        if (NLOHMANN_VIEW_LIKELY(is_structured()))
+        {
+            return iterator(m_doc, navigation::end(*m_doc, m_node), is_object());
+        }
+        return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false);
+    }
+
+    iterator cbegin() const noexcept
+    {
+        return begin();
+    }
+
+    iterator cend() const noexcept
+    {
+        return end();
+    }
+
+    /// (key, value) items; the key of an array element is its index
+    detail::view::view_items<basic_json_view> items() const noexcept
+    {
+        return detail::view::view_items<basic_json_view>(*this);
+    }
+
+    ////////////////
+    // conversion //
+    ////////////////
+
+    /// the value converted to T, as BasicJsonType::get<T>(): arithmetic types,
+    /// strings (string_view_t without a copy), std::nullptr_t, std::vector,
+    /// maps with string keys, and views are converted directly; other types
+    /// through materialize().get<T>()
+    template<typename T>
+    NLOHMANN_VIEW_ALWAYS_INLINE T get() const
+    {
+        return get_impl(detail::view::value_tag<T> {}, detail::priority_tag<2> {});
+    }
+
+    /// as BasicJsonType::get_to(): the types get<T>() converts directly are
+    /// assigned, all others are passed to from_json with v as it is
+    template<typename T>
+    T& get_to(T& v) const
+    {
+        get_to_impl(v, detail::view::is_direct_value<T, BasicJsonType, basic_json_view> {});
+        return v;
+    }
+
+    /// the string, without a copy; valid as long as the view is. Throws
+    /// type_error.302 for other types.
+    string_view_t get_string() const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_string()))
+        {
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be string, but is ", type_name());
+        }
+        return {m_doc->str(*m_node), m_node->len};
+    }
+
+    /// the text of a number as it appears in the source (e.g. "1.50", "1E2",
+    /// or an integer with more digits than any number type holds). Throws
+    /// type_error.302 for other types.
+    string_view_t number_token() const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_number()))
+        {
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
+        }
+        return {m_doc->str(*m_node), detail::view::number_length(*m_node)};
+    }
+
+    ///////////////////
+    // serialization //
+    ///////////////////
+
+    /// how dump() writes numbers
+    enum class number_format
+    {
+        /// as basic_json::dump(): integers canonically, floats with the
+        /// library's shortest round-trip digits ("1.5", "100.0", "1e+100")
+        shortest,
+        /// the number text of the source as it is ("1.50", "1E2", "-0", all
+        /// digits of a long integer)
+        source,
+    };
+
+    /// the text of this value; with number_format::shortest, the output of
+    /// ordered_json::parse(text).dump() with the same arguments (members in
+    /// document order, all of them should a key occur more than once)
+    string_t dump(const int indent = -1, const char indent_char = ' ', const bool ensure_ascii = false,
+                  const number_format numbers = number_format::shortest) const
+    {
+        string_t out;
+        if (m_node == nullptr)
+        {
+            out = "<discarded>"; // as basic_json::dump() of a discarded value
+            return out;
+        }
+        detail::view::dump_style style;
+        style.pretty = indent >= 0;
+        style.indent = indent >= 0 ? static_cast<std::size_t>(indent) : 0;
+        style.indent_char = indent_char;
+        style.ensure_ascii = ensure_ascii;
+        style.source_numbers = numbers == number_format::source;
+        // the compact text is about as long as the source text of the value;
+        // the compact writer keeps 64 bytes of slack, so that it does not grow
+        // the buffer just before the end
+        const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 160;
+        if (unedited())
+        {
+            detail::view::view_serializer<BasicJsonType, false>(*m_doc, out, estimate, style).dump(m_node);
+        }
+        else
+        {
+            detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
+        }
+        return out;
+    }
+
+#ifndef JSON_NO_IO
+    /// as operator<< of basic_json: a stream width > 0 is the indentation,
+    /// the fill character the indentation character
+    friend std::ostream& operator<<(std::ostream& o, const basic_json_view& v)
+    {
+        const bool pretty = o.width() > 0;
+        const auto indentation = pretty ? o.width() : 0;
+        o.width(0);
+        const string_t s = v.dump(pretty ? static_cast<int>(indentation) : -1, o.fill());
+        return o.write(s.data(), static_cast<std::streamsize>(s.size()));
+    }
+#endif
+
+    ////////////////
+    // comparison //
+    ////////////////
+
+    /// whether the values parse() would produce for two views are equal, as
+    /// by BasicJsonType's operator== (numbers by value, objects by their
+    /// members with duplicate keys resolved as parse() resolves them)
+    friend bool operator==(const basic_json_view& a, const basic_json_view& b)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), side(b));
+    }
+
+    friend bool operator!=(const basic_json_view& a, const basic_json_view& b)
+    {
+        return !(a == b);
+    }
+
+    /// a view of an editable document compares with one of a read-only document
+    template < bool E, typename std::enable_if < E != Editable, int >::type = 0 >
+    friend bool operator==(const basic_json_view& a, const basic_json_view<BasicJsonType, E>& b)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), detail::view::view_side<BasicJsonType, basic_json_view<BasicJsonType, E>>(b));
+    }
+
+    template < bool E, typename std::enable_if < E != Editable, int >::type = 0 >
+    friend bool operator!=(const basic_json_view& a, const basic_json_view<BasicJsonType, E>& b)
+    {
+        return !(a == b);
+    }
+
+    /// whether the value parse() would produce for a view equals a value
+    friend bool operator==(const basic_json_view& a, const BasicJsonType& j)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), json_side_t(j));
+    }
+
+    friend bool operator==(const BasicJsonType& j, const basic_json_view& a)
+    {
+        return a == j;
+    }
+
+    friend bool operator!=(const basic_json_view& a, const BasicJsonType& j)
+    {
+        return !(a == j);
+    }
+
+    friend bool operator!=(const BasicJsonType& j, const basic_json_view& a)
+    {
+        return !(a == j);
+    }
+
+    /////////////////
+    // materialize //
+    /////////////////
+
+    /// the basic_json value of this subtree, as parse() would produce it
+    /// (a discarded value for a discarded view)
+    BasicJsonType materialize() const
+    {
+        if (m_node == nullptr)
+        {
+            return BasicJsonType(value_t::discarded);
+        }
+        return unedited() ? detail::view::materialize<BasicJsonType, false>(*m_doc, m_node) : detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
+    }
+
+    /// byte offset of this value in the source text (for strings: of the
+    /// first byte after the opening quote); static_cast<std::size_t>(-1) for
+    /// a discarded view and for strings with escapes, which are decoded
+    std::size_t source_offset() const noexcept
+    {
+        return m_node != nullptr && (m_node->flags & (detail::view::node_flags::storage | detail::view::node_flags::moved | detail::view::node_flags::is_new)) == 0
+               ? m_node->off : static_cast<std::size_t>(-1);
+    }
+
+  private:
+    template<typename, bool> friend class basic_json_document;
+    template<typename, bool> friend class basic_json_view;
+    template<typename, typename> friend class detail::view::editor;
+    friend iterator;
+
+    basic_json_view(const document_data* d, const node* n) noexcept
+        : m_doc(d), m_node(n)
+    {}
+
+    using json_side_t = detail::view::json_side<BasicJsonType, string_view_t>;
+
+    static detail::view::view_side<BasicJsonType, basic_json_view> side(const basic_json_view& v) noexcept
+    {
+        return detail::view::view_side<BasicJsonType, basic_json_view>(v);
+    }
+
+    /// the template argument as a runtime condition: testing it directly in
+    /// `Editable && ...` makes the condition constant, which MSVC reports as
+    /// C4127
+    static bool editable() noexcept
+    {
+        return Editable;
+    }
+
+    /// the number of source bytes of this value (estimated for values with
+    /// decoded strings); the estimate sizes the output buffer of dump()
+    std::size_t source_extent() const noexcept
+    {
+        if (editable() && m_doc->edits != nullptr)
+        {
+            // positions of moved and new values are not source offsets; the root
+            // (the first node) spans the source text and every edit
+            const bool is_root = m_node == m_doc->nodes;
+            return is_root ? m_doc->size + m_doc->edits->text_used : 64;
+        }
+        const node* const end = m_doc->nodes + m_doc->node_count;
+        if ((m_node->flags & detail::view::node_flags::storage) != 0)
+        {
+            return m_node->len;
+        }
+        // the value ends where the next node in the source begins; nodes
+        // with decoded strings (their offset is in the arena) are skipped,
+        // but only a few of them, to keep the walk short
+        const node* next = document_data::after(m_node);
+        for (int skipped = 0; next != end && skipped < 16; ++skipped, ++next)
+        {
+            if ((next->flags & detail::view::node_flags::storage) == 0)
+            {
+                return next->off >= m_node->off ? next->off - m_node->off : 0;
+            }
+        }
+        if (next == end)
+        {
+            return m_doc->size - m_node->off;
+        }
+        // the end is unknown: assume a few bytes per node, the output buffer
+        // grows should the value be larger
+        const auto nodes = static_cast<std::size_t>(document_data::after(m_node) - m_node);
+        return (std::min)(m_doc->size - m_node->off, static_cast<std::size_t>(1024) + (nodes * 16));
+    }
+
+    /// the value of the first member with this key, or a discarded view
+    /// (object required)
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
+    {
+        if (unedited())
+        {
+            const node* const k = detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
+            return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+        }
+        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        return k != nullptr ? basic_json_view(m_doc, navigation::value(k + 1)) : basic_json_view();
+    }
+
+    /// whether the document has not been edited yet: until the first edit, its index is walked like that of a
+    /// read-only document (nothing is moved or linked), which is cheaper
+    NLOHMANN_VIEW_ALWAYS_INLINE bool unedited() const noexcept
+    {
+        return !navigation::editable() || m_doc->edits == nullptr;
+    }
+
+    /// the member of this object with @a key (the last one if the key occurs more than once), or nullptr
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key) const
+    {
+        return find_key(key, std::integral_constant<bool, Editable> {});
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::true_type /*editable*/) const
+    {
+        // (an editable document without edits is looked up as one that cannot be edited)
+        return unedited() ? detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size())
+               : detail::view::find_member<true>(*m_doc, m_node, key.data(), key.size());
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::false_type /*editable*/) const
+    {
+        return detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
+    }
+
+    /// the element of an array at an index below its size
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view element(size_type idx) const
+    {
+        if (unedited())
+        {
+            return basic_json_view(m_doc, detail::view::element_at<false>(*m_doc, m_node, idx));
+        }
+        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
+    }
+
+    // --- get() dispatch ---
+
+    bool get_impl(detail::view::value_tag<bool> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_boolean()))
+        {
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be boolean, but is ", type_name());
+        }
+        return (m_node->flags & detail::view::node_flags::is_true) != 0;
+    }
+
+    template<typename T, typename std::enable_if<detail::view::is_non_bool_arithmetic<T>::value, int>::type = 0>
+    NLOHMANN_VIEW_ALWAYS_INLINE T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(m_node == nullptr))
+        {
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
+        }
+        return detail::view::arithmetic_value<T, BasicJsonType>(*m_doc, *m_node);
+    }
+
+    std::nullptr_t get_impl(detail::view::value_tag<std::nullptr_t> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_null()))
+        {
+            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be null, but is ", type_name());
+        }
+        return nullptr;
+    }
+
+    string_view_t get_impl(detail::view::value_tag<string_view_t> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return get_string();
+    }
+
+    template<typename Traits, typename Alloc>
+    std::basic_string<char, Traits, Alloc> get_impl(detail::view::value_tag<std::basic_string<char, Traits, Alloc>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        const string_view_t s = get_string();
+        return std::basic_string<char, Traits, Alloc>(s.data(), s.size());
+    }
+
+    BasicJsonType get_impl(detail::view::value_tag<BasicJsonType> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return materialize();
+    }
+
+    basic_json_view get_impl(detail::view::value_tag<basic_json_view> /*unused*/, detail::priority_tag<2> /*unused*/) const noexcept
+    {
+        return *this;
+    }
+
+    template<typename U, typename A>
+    std::vector<U, A> get_impl(detail::view::value_tag<std::vector<U, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return detail::view::vector_value<basic_json_view, U, A>(*this);
+    }
+
+    template<typename K, typename V, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::map<K, V, C, A> get_impl(detail::view::value_tag<std::map<K, V, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return detail::view::map_value<std::map<K, V, C, A>>(*this);
+    }
+
+    template<typename K, typename V, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::unordered_map<K, V, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, V, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return detail::view::map_value<std::unordered_map<K, V, H, E, A>>(*this);
+    }
+
+    /// everything else through the BasicJsonType value (from_json included)
+    template<typename T>
+    T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<0> /*unused*/) const
+    {
+        return materialize().template get<T>();
+    }
+
+    // --- get_to() dispatch ---
+
+    template<typename T>
+    void get_to_impl(T& v, std::true_type /*direct*/) const
+    {
+        v = get<T>();
+    }
+
+    /// from_json may keep parts of v (members a JSON object lacks, say)
+    template<typename T>
+    void get_to_impl(T& v, std::false_type /*direct*/) const
+    {
+        materialize().get_to(v);
+    }
+
+    const document_data* m_doc = nullptr;
+    const node* m_node = nullptr;
+};
+
+/*!
+@brief a parsed JSON text: owns the node index (and, optionally, the text)
+
+Borrowed parses keep a pointer to the caller's text, which must outlive the
+document. Owned parses (parse_copy, rvalue std::string, streams, and inputs
+that are not contiguous byte ranges) keep their own copy.
+*/
+template<typename BasicJsonType, bool Editable = false>
+class basic_json_document
+{
+    using document_data = detail::view::document_data;
+
+    static_assert(sizeof(typename BasicJsonType::number_integer_t) == 8 && sizeof(typename BasicJsonType::number_unsigned_t) == 8,
+                  "json_view supports 64-bit integer types only");
+
+  public:
+    using view_type = basic_json_view<BasicJsonType, Editable>;
+    using value_t = detail::value_t;
+
+    /// an empty (discarded) document
+    basic_json_document() = default;
+    basic_json_document(basic_json_document&&) noexcept = default;
+    basic_json_document& operator=(basic_json_document&&) noexcept = default;
+    basic_json_document(const basic_json_document&) = delete;
+    basic_json_document& operator=(const basic_json_document&) = delete;
+    ~basic_json_document() = default;
+
+    /////////////
+    // parsing //
+    /////////////
+
+    /// parse a JSON text; contiguous byte inputs are borrowed, everything else
+    /// (and rvalue std::string) is owned
+    template<typename InputType>
+    NLOHMANN_VIEW_NODISCARD
+    static basic_json_document parse(InputType&& input,
+                                     const bool allow_exceptions = true,
+                                     const bool ignore_comments = false,
+                                     const bool ignore_trailing_commas = false)
+    {
+        basic_json_document d;
+        d.read(std::forward<InputType>(input), allow_exceptions, ignore_comments, ignore_trailing_commas);
+        return d;
+    }
+
+    /// parse(ptr, len) does not compile: len would convert to allow_exceptions
+    /// and ptr be read as a C string (as for the overloads of parse_copy,
+    /// accept, and read below)
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
+    /// parse [first, last)
+    template<typename IteratorType, typename std::enable_if<
+                 std::is_base_of<std::input_iterator_tag, typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
+    NLOHMANN_VIEW_NODISCARD
+    static basic_json_document parse(IteratorType first, IteratorType last,
+                                     const bool allow_exceptions = true,
+                                     const bool ignore_comments = false,
+                                     const bool ignore_trailing_commas = false)
+    {
+        basic_json_document d;
+        d.read_range(first, last, allow_exceptions, ignore_comments, ignore_trailing_commas);
+        return d;
+    }
+
+    /// parse a copy of the input; the document does not depend on it afterwards
+    template<typename InputType>
+    NLOHMANN_VIEW_NODISCARD
+    static basic_json_document parse_copy(InputType&& input,
+                                          const bool allow_exceptions = true,
+                                          const bool ignore_comments = false,
+                                          const bool ignore_trailing_commas = false)
+    {
+        basic_json_document d;
+        std::string buf;
+        append_input(buf, std::forward<InputType>(input));
+        d.build_owned(std::move(buf), allow_exceptions, ignore_comments, ignore_trailing_commas);
+        return d;
+    }
+
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, basic_json_document>::type
+    parse_copy(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
+    /// check whether the input is valid JSON (the result of basic_json::accept)
+    template<typename InputType>
+    static bool accept(InputType&& input, const bool ignore_comments = false, const bool ignore_trailing_commas = false)
+    {
+        basic_json_document d;
+        d.read(std::forward<InputType>(input), false, ignore_comments, ignore_trailing_commas);
+        return !d.is_discarded();
+    }
+
+    template<typename InputType, typename IntegerType, typename... Flags>
+    static typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, bool>::type
+    accept(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
+    /// parse into this document, reusing its memory
+    template<typename InputType>
+    // flawfinder: ignore (a member function, not POSIX read())
+    void read(InputType&& input,
+              const bool allow_exceptions = true,
+              const bool ignore_comments = false,
+              const bool ignore_trailing_commas = false)
+    {
+        read_kind(std::forward<InputType>(input), allow_exceptions, ignore_comments, ignore_trailing_commas,
+                  std::integral_constant<detail::view::input_kind, detail::view::classify_input<InputType>::value> {});
+    }
+
+    template<typename InputType, typename IntegerType, typename... Flags>
+    typename std::enable_if<detail::view::is_integer_not_bool<IntegerType>::value, void>::type
+    // flawfinder: ignore (a member function, not POSIX read())
+    read(InputType&& input, IntegerType value, Flags&&... flags) = delete;
+
+    ////////////
+    // access //
+    ////////////
+
+    /// the root value (discarded if parsing failed without exceptions)
+    view_type root() const& noexcept
+    {
+        if (!m_data || m_data->discarded)
+        {
+            return view_type();
+        }
+        return view_type(m_data.get(), m_data->nodes);
+    }
+
+    /// deleted: the view of a temporary document would dangle
+    view_type root() const&& = delete;
+
+    bool is_discarded() const noexcept
+    {
+        return !m_data || m_data->discarded;
+    }
+
+    /// the parsed text
+    typename view_type::string_view_t source() const noexcept
+    {
+        return m_data ? typename view_type::string_view_t(m_data->src, m_data->size) : typename view_type::string_view_t();
+    }
+
+    /// whether the document holds its own copy of the text
+    bool owns_source() const noexcept
+    {
+        return m_data && ((!m_data->owned.empty() && m_data->src == m_data->owned.data()) || !m_data->owned_image.empty());
+    }
+
+    /// number of index nodes (values plus object keys)
+    std::size_t node_count() const noexcept
+    {
+        return m_data ? m_data->node_count : 0;
+    }
+
+    /// bytes held by the document (index, decoded strings, and owned text or image)
+    std::size_t memory_usage() const noexcept
+    {
+        if (!m_data)
+        {
+            return 0;
+        }
+        return sizeof(document_data) + (m_data->inline_capacity * sizeof(detail::view::node))
+               + (m_data->nodes != m_data->inline_nodes ? m_data->node_capacity * sizeof(detail::view::node) : 0)
+               + m_data->arena.capacity() + m_data->owned.capacity() + m_data->owned_image.capacity()
+               + (m_data->indexes.capacity() * sizeof(document_data::object_index)) + (m_data->index_slots.capacity() * sizeof(std::uint32_t))
+               + (m_data->large_objects.capacity() * sizeof(std::uint32_t))
+               + (m_data->edits != nullptr ? m_data->edits->bytes : 0);
+    }
+
+    /// release unused capacity of the index and the decoded strings; like
+    /// std::vector::shrink_to_fit, this invalidates the views of the document
+    /// (take new ones from root())
+    void shrink_to_fit()
+    {
+        if (!m_data)
+        {
+            return;
+        }
+        using detail::view::node;
+        document_data& d = *m_data;
+
+        // allocate everything first, so that an exception leaves the document
+        // unchanged
+        // (the decoded strings of a loaded image stay in the image)
+        const bool arena_in_use = d.base[1] == d.arena.data();
+        const bool shrink_arena = d.arena.capacity() > d.arena.size();
+        std::vector<char> arena(shrink_arena && arena_in_use ? d.arena : std::vector<char>());
+        // (edits link to the nodes of the index, which then stays in place)
+        const bool shrink_nodes = d.nodes != d.inline_nodes && d.node_count != d.node_capacity && d.edits == nullptr;
+        const bool into_header = d.node_count <= d.inline_capacity;
+        std::vector<document_data::object_index> indexes(d.indexes.capacity() > d.indexes.size() ? d.indexes : std::vector<document_data::object_index>());
+        std::vector<std::uint32_t> index_slots(d.index_slots.capacity() > d.index_slots.size() ? d.index_slots : std::vector<std::uint32_t>());
+        node* fresh = (shrink_nodes && !into_header) ? static_cast<node*>(::operator new (d.node_count * sizeof(node))) : d.inline_nodes;
+
+        if (shrink_nodes)
+        {
+            if (d.node_count != 0)
+            {
+                std::memcpy(fresh, d.nodes, d.node_count * sizeof(node));
+            }
+            ::operator delete (d.nodes);
+            d.nodes = fresh;
+            d.node_capacity = into_header ? d.inline_capacity : d.node_count;
+        }
+        if (shrink_arena)
+        {
+            d.arena.swap(arena);
+            if (arena_in_use)
+            {
+                d.base[1] = d.arena.data();
+            }
+        }
+        if (d.indexes.capacity() > d.indexes.size())
+        {
+            d.indexes.swap(indexes);
+        }
+        if (d.index_slots.capacity() > d.index_slots.size())
+        {
+            d.index_slots.swap(index_slots);
+        }
+    }
+
+    ////////////
+    // images //
+    ////////////
+
+    /// how load() checks an image (full, bounds, or none)
+    using image_check = detail::view::image_check;
+
+    /// The document as an image that load() reads without parsing: the node
+    /// index, the text, and the decoded strings. An edited document is
+    /// written in its current state (floats that are not finite become null,
+    /// as in dump()).
+    std::vector<std::uint8_t> save() const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
+        {
+            detail::view::throw_type_error(detail::exception_id::document_image_unsupported, "cannot save a discarded json_document");
+        }
+        return detail::view::save_image(*m_data);
+    }
+
+    /// Read an image written by save(). The image is borrowed: it must stay
+    /// alive and unchanged while the document is used.
+    NLOHMANN_VIEW_NODISCARD
+    static basic_json_document load(const std::uint8_t* image, std::size_t size, const image_check check = image_check::full)
+    {
+        basic_json_document d;
+        d.ensure_data(nullptr, 0);
+        detail::view::load_image(*d.m_data, image, size, check);
+        return d;
+    }
+
+    /// read an image (borrowed)
+    NLOHMANN_VIEW_NODISCARD
+    static basic_json_document load(const std::vector<std::uint8_t>& image, const image_check check = image_check::full)
+    {
+        return load(image.data(), image.size(), check);
+    }
+
+    /// read an image and keep it (no copy)
+    NLOHMANN_VIEW_NODISCARD
+    static basic_json_document load(std::vector<std::uint8_t>&& image, const image_check check = image_check::full)
+    {
+        basic_json_document d;
+        d.ensure_data(nullptr, 0);
+        d.m_data->owned_image = std::move(image);
+        detail::view::load_image(*d.m_data, d.m_data->owned_image.data(), d.m_data->owned_image.size(), check);
+        return d;
+    }
+
+    ///////////
+    // edits //
+    ///////////
+
+    // The source text is never written; new values go to storage owned by
+    // the document. A view keeps referring to the same value: after an
+    // assignment it sees the new value, and edits elsewhere do not affect it.
+    // A view of an erased value keeps its last value. An edit of an
+    // array/object invalidates the iterators over it. Values are accepted as
+    // views (of any document), BasicJsonType values, and everything
+    // BasicJsonType can be constructed from.
+
+    using string_view_t = typename view_type::string_view_t;
+    using json_pointer = typename BasicJsonType::json_pointer;
+
+    /// replace a value (a view of this document); returns a view of it
+    template<typename V>
+    view_type set(view_type target, V&& value)
+    {
+        return editor().set(target, std::forward<V>(value));
+    }
+
+    /// set a member (added if missing; a null value becomes an object);
+    /// returns a view of the member value
+    template<typename V>
+    view_type set(view_type object, string_view_t key, V&& value)
+    {
+        return editor().set(object, key, std::forward<V>(value));
+    }
+
+    /// assign an existing array element; returns a view of it
+    template<typename I, typename V, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
+    view_type set(view_type array, I idx, V && value)
+    {
+        return editor().set(array, index(idx), std::forward<V>(value));
+    }
+
+    /// set the value at a JSON pointer: its parent must exist; an object
+    /// member is set (added if missing), an array element assigned, and "-"
+    /// or the size of the array appends. A null parent becomes what
+    /// basic_json's operator[](json_pointer) makes of it: an array for "-"
+    /// and for digits (padded with nulls up to the index), an object otherwise.
+    template<typename V>
+    view_type set(const json_pointer& ptr, V&& value)
+    {
+        if (ptr.empty())
+        {
+            return set(root(), std::forward<V>(value));
+        }
+        const view_type parent = root().at(ptr.parent_pointer());
+        const auto& token = ptr.back();
+        if (parent.is_null())
+        {
+            if (token == "-")
+            {
+                return push_back(parent, std::forward<V>(value));
+            }
+            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            {
+                return c >= '0' && c <= '9';
+            });
+            if (digits)
+            {
+                // (an invalid index is an error before the parent changes)
+                const std::size_t idx = pointer_index(token);
+                if (idx >= 0xFFFFFFFFu)
+                {
+                    detail::view::throw_array_index_out_of_range(idx);
+                }
+                for (std::size_t i = 0; i < idx; ++i)
+                {
+                    push_back(parent, nullptr);
+                }
+                return push_back(parent, std::forward<V>(value));
+            }
+        }
+        if (parent.is_array())
+        {
+            const std::size_t idx = token == "-" ? parent.size() : pointer_index(token);
+            if (idx == parent.size())
+            {
+                return push_back(parent, std::forward<V>(value));
+            }
+            return set(parent, idx, std::forward<V>(value));
+        }
+        return set(parent, string_view_t(token.data(), token.size()), std::forward<V>(value));
+    }
+
+    /// append to an array (a null value becomes an array); returns a view of
+    /// the new element
+    template<typename V>
+    view_type push_back(view_type array, V&& value)
+    {
+        return editor().push_back(array, std::forward<V>(value));
+    }
+
+    /// insert into an array before position idx (idx <= size()); returns a
+    /// view of the new element
+    template<typename I, typename V, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
+    view_type insert(view_type array, I idx, V && value)
+    {
+        return editor().insert(array, index(idx), std::forward<V>(value));
+    }
+
+    /// remove all members with this key; returns their number
+    std::size_t erase(view_type object, string_view_t key)
+    {
+        return editor().erase(object, key);
+    }
+
+    /// remove an array element
+    template<typename I, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
+    void erase(view_type array, I idx)
+    {
+        editor().erase(array, index(idx));
+    }
+
+    /// remove the value at a JSON pointer; returns the number of removed
+    /// values
+    std::size_t erase(const json_pointer& ptr)
+    {
+        if (ptr.empty())
+        {
+            detail::view::throw_out_of_range(detail::exception_id::patch_on_root, "JSON pointer has no parent");
+        }
+        const view_type parent = root().at(ptr.parent_pointer());
+        const auto& token = ptr.back();
+        if (parent.is_array())
+        {
+            erase(parent, pointer_index(token));
+            return 1;
+        }
+        return erase(parent, string_view_t(token.data(), token.size()));
+    }
+
+  private:
+    using input_kind = detail::view::input_kind;
+
+    detail::view::editor<BasicJsonType, view_type> editor()
+    {
+        static_assert(Editable, "only an editable document can be edited: use basic_json_document<BasicJsonType, true> (json_editable_document)");
+        if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
+        {
+            detail::view::throw_invalid_iterator(detail::exception_id::iterator_from_other_value, "view does not belong to this document");
+        }
+        return detail::view::editor<BasicJsonType, view_type>(*m_data);
+    }
+
+    /// an index (out_of_range.401 if negative)
+    template<typename I>
+    static std::size_t index(I idx)
+    {
+        return index(idx, std::is_signed<I> {});
+    }
+
+    template<typename I>
+    static std::size_t index(I idx, std::true_type /*signed*/)
+    {
+        if (idx < 0)
+        {
+            detail::view::throw_array_index_out_of_range(idx);
+        }
+        return static_cast<std::size_t>(idx);
+    }
+
+    template<typename I>
+    static std::size_t index(I idx, std::false_type /*unsigned*/)
+    {
+        return static_cast<std::size_t>(idx);
+    }
+
+    /// the array index of a JSON pointer token (json_pointer's rules)
+    template<typename StringType>
+    static std::size_t pointer_index(const StringType& token)
+    {
+        std::size_t idx = 0;
+        const detail::view::index_status status = detail::view::array_index(token, idx);
+        if (status != detail::view::index_status::ok)
+        {
+            detail::view::throw_array_index_error(status, token);
+        }
+        return idx;
+    }
+
+    /// create the storage (sized for the input) on first use
+    void ensure_data(const char* src, std::size_t size)
+    {
+        if (!m_data)
+        {
+            m_data.reset(document_data::create(detail::view::estimate_nodes(src, size)));
+        }
+    }
+
+    /// parse a buffer the document takes ownership of (it replaces the
+    /// previous owned copy)
+    void build_owned(std::string&& buf, bool allow_exceptions, bool comments, bool trailing_commas)
+    {
+        ensure_data(buf.data(), buf.size());
+        m_data->owned = std::move(buf);
+        build(m_data->owned.data(), m_data->owned.size(), allow_exceptions, comments, trailing_commas, true, true);
+    }
+
+    /// parse a copy of the input; the copy is appended to the cleared owned
+    /// buffer, so that its capacity is reused
+    template<typename T>
+    void build_copy(T&& input, bool allow_exceptions, bool comments, bool trailing_commas)
+    {
+        if (!m_data)
+        {
+            std::string buf;
+            append_input(buf, std::forward<T>(input));
+            build_owned(std::move(buf), allow_exceptions, comments, trailing_commas);
+            return;
+        }
+        document_data& d = *m_data;
+        // (the previous text is gone from here on: should reading the input
+        // throw, the document is discarded)
+        d.discarded = true;
+        d.src = "";
+        d.size = 0;
+        d.owned.clear();
+        append_input(d.owned, std::forward<T>(input));
+        build(d.owned.data(), d.owned.size(), allow_exceptions, comments, trailing_commas, true, true);
+    }
+
+    /// sentinel: src[size] is readable and 0 (std::string, C strings)
+    void build(const char* src, std::size_t size, bool allow_exceptions, bool comments, bool trailing_commas, bool owned, bool sentinel)
+    {
+        ensure_data(src, size);
+        document_data& d = *m_data;
+        if (!owned)
+        {
+            d.owned.clear();
+        }
+        d.owned_image.clear();
+        d.src = src;
+        d.size = size;
+        d.node_count = 0;
+        d.edits.reset(); // (views of the previous text end here anyway)
+        d.base[2] = nullptr;
+        d.arena.clear();
+        d.indexes.clear();
+        d.index_slots.clear();
+        d.large_objects.clear();
+        d.discarded = true;
+        detail::view::parse_failure failure;
+        bool ok = false;
+        if (NLOHMANN_VIEW_UNLIKELY(size > detail::view::max_input_size()))
+        {
+            failure.code = detail::view::error_code::input_too_large;
+        }
+        else
+        {
+            ok = detail::view::build < typename BasicJsonType::number_float_t, !detail::abi_config::strict_nul_handling > (d, src, size, comments, trailing_commas, sentinel, failure);
+        }
+        if (NLOHMANN_VIEW_LIKELY(ok))
+        {
+            d.base[0] = d.src;
+            d.base[1] = d.arena.data();
+            d.arena_size = d.arena.size();
+            detail::view::build_object_indexes(d);
+            std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while parsing)
+            d.discarded = false;
+            return;
+        }
+        std::vector<std::uint32_t>().swap(d.large_objects);
+        if (allow_exceptions)
+        {
+            detail::view::throw_parse_failure<BasicJsonType>(failure, src, size, comments, trailing_commas);
+        }
+    }
+
+    // --- input dispatch (see detail::view::input_kind) ---
+
+    void read_kind(std::string&& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::move_string> /*unused*/)
+    {
+        build_owned(std::move(s), ae, c, tc);
+    }
+
+    template<typename CharT>
+    void read_kind(CharT* s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::c_string> /*unused*/)
+    {
+        if (s == nullptr)
+        {
+            build("", 0, ae, c, tc, false, true);
+            return;
+        }
+        const char* cs = reinterpret_cast<const char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        // C strings are null-terminated, as for json::parse(const char*)
+        // flawfinder: ignore
+        build(cs, std::strlen(cs), ae, c, tc, false, true);
+    }
+
+    template<typename Array>
+    void read_kind(Array& a, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::char_array> /*unused*/)
+    {
+        using CharT = typename std::remove_cv<typename std::remove_extent<Array>::type>::type;
+        const std::size_t n = std::extent<Array>::value;
+        // a trailing NUL (string literals) is not part of the text, as for
+        // parse(), and serves as sentinel
+        const bool terminated = n > 0 && a[n - 1] == 0 && (!detail::abi_config::strict_nul_handling || std::is_same<CharT, char>::value);
+        build(reinterpret_cast<const char*>(&a[0]), terminated ? n - 1 : n, ae, c, tc, false, terminated); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    }
+
+    template<typename T>
+    void read_kind(const T& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::borrow_range> /*unused*/)
+    {
+        // std::basic_string guarantees data()[size()] == 0: use it as sentinel
+        const auto size = static_cast<std::size_t>(s.size());
+        build(size == 0 ? "" : reinterpret_cast<const char*>(s.data()), size, ae, c, tc, false, // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+              detail::view::is_std_string<T>::value || size == 0);
+    }
+
+    template<typename T>
+    void read_kind(const T& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
+    {
+        build_copy(s, ae, c, tc);
+    }
+
+    template<typename CharT>
+    void read_kind(CharT* s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::wide_c_string> /*unused*/)
+    {
+        if (s == nullptr)
+        {
+            build("", 0, ae, c, tc, false, true);
+            return;
+        }
+        // NUL-terminated, as for the single-byte C strings
+        build_copy(detail::view::make_adapter_input(detail::input_adapter(s, s + std::char_traits<typename std::remove_cv<CharT>::type>::length(s))), ae, c, tc);
+    }
+
+    template<typename T>
+    void read_kind(T&& input, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::adapter> /*unused*/)
+    {
+        build_copy(std::forward<T>(input), ae, c, tc);
+    }
+
+    template<typename IteratorType>
+    void read_range(IteratorType first, IteratorType last, bool ae, bool c, bool tc)
+    {
+        using value_type = typename std::remove_cv<typename std::iterator_traits<IteratorType>::value_type>::type;
+        // borrow the range where the library's input adapter scans it as one
+        // block: pointers and, in C++20, contiguous iterators (std::vector,
+        // std::string, ...) over single bytes
+        read_range_impl(first, last, ae, c, tc, std::integral_constant < bool, std::is_integral<value_type>::value
+                        && detail::iterator_input_adapter<IteratorType>::supports_bulk_scan > {});
+    }
+
+    template<typename IteratorType>
+    void read_range_impl(IteratorType first, IteratorType last, bool ae, bool c, bool tc, std::true_type /*contiguous bytes*/)
+    {
+        const auto size = static_cast<std::size_t>(std::distance(first, last));
+        build(size == 0 ? "" : reinterpret_cast<const char*>(&*first), size, ae, c, tc, false, size == 0); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    }
+
+    template<typename IteratorType>
+    void read_range_impl(IteratorType first, IteratorType last, bool ae, bool c, bool tc, std::false_type /*other*/)
+    {
+        build_copy(detail::view::make_adapter_input(detail::input_adapter(first, last)), ae, c, tc);
+    }
+
+    /// append the text of an input to buf: a contiguous byte input as one
+    /// block, a stream in blocks, an input adapter (made here for any other
+    /// input) character by character
+    template<typename T>
+    static void append_input(std::string& buf, T&& input)
+    {
+        using D = typename std::decay<T>::type;
+        // NOLINTBEGIN(readability-avoid-nested-conditional-operator): a constant expression of C++11
+        append_input_impl(buf, std::forward<T>(input), std::integral_constant < int, detail::is_contiguous_byte_container<D>::value ? 0
+                          : std::is_base_of<std::istream, D>::value ? 1
+                          : detail::view::is_adapter_input<D>::value ? 2
+                          : detail::view::is_c_stream<D>::value ? 4 : 3 > {});
+        // NOLINTEND(readability-avoid-nested-conditional-operator)
+    }
+
+    template<typename T>
+    static void append_input_impl(std::string& buf, const T& s, std::integral_constant<int, 0> /*contiguous bytes*/)
+    {
+        buf.append(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    }
+
+    template<typename Stream>
+    static void append_input_impl(std::string& buf, Stream&& is, std::integral_constant<int, 1> /*stream*/) // NOLINT(cppcoreguidelines-missing-std-forward): read in place, as by the library's stream adapter
+    {
+        detail::view::append_stream(buf, is);
+    }
+
+    template<typename Adapter>
+    static void append_input_impl(std::string& buf, detail::view::adapter_input<Adapter>&& input, std::integral_constant<int, 2> /*input adapter*/)
+    {
+        detail::view::append_adapter(buf, std::move(input.ia));
+    }
+
+#ifndef JSON_NO_IO
+    static void append_input_impl(std::string& buf, std::FILE* file, std::integral_constant<int, 4> /*C stream*/)
+    {
+        if (file == nullptr)
+        {
+            // (as before: the library's adapter decides what a null stream yields)
+            detail::view::append_adapter(buf, detail::input_adapter(file));
+            return;
+        }
+        detail::view::append_file(buf, file);
+    }
+#endif
+
+    template<typename T>
+    static void append_input_impl(std::string& buf, T&& input, std::integral_constant<int, 3> /*other*/)
+    {
+        detail::view::append_adapter(buf, detail::input_adapter(std::forward<T>(input)));
+    }
+
+    std::unique_ptr<document_data, document_data::deleter> m_data{}; // NOLINT(readability-redundant-member-init)
+};
+
+/// a parsed JSON text for json
+using json_document = basic_json_document<json>;
+/// a value of a json_document
+using json_view = basic_json_view<json>;
+/// a parsed JSON text for ordered_json
+using ordered_json_document = basic_json_document<ordered_json>;
+/// a value of an ordered_json_document
+using ordered_json_view = basic_json_view<ordered_json>;
+/// an editable parsed JSON text for json
+using json_editable_document = basic_json_document<json, true>;
+/// a value of a json_editable_document
+using json_editable_view = basic_json_view<json, true>;
+/// an editable parsed JSON text for ordered_json
+using ordered_json_editable_document = basic_json_document<ordered_json, true>;
+/// a value of an ordered_json_editable_document
+using ordered_json_editable_view = basic_json_view<ordered_json, true>;
+
+NLOHMANN_JSON_NAMESPACE_END
+
+// tuple protocol for the items of basic_json_view::items() (structured bindings)
+namespace std // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
+{
+
+#if defined(__clang__)
+    // Fix: https://github.com/nlohmann/json/issues/1401
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+template<typename View>
+class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
+    : public std::integral_constant<std::size_t, 2> {};
+
+template<std::size_t N, typename View>
+class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
+{
+  public:
+    using type = decltype(std::declval<::nlohmann::detail::view::view_item<View>>().template get<N>());
+};
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
+
+}  // namespace std
+
+#include <nlohmann/detail/view/macro_unscope.hpp> // IWYU pragma: keep
+
+#endif  // INCLUDE_NLOHMANN_JSON_VIEW_HPP_

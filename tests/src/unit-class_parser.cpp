@@ -30,201 +30,24 @@ using nlohmann::json;
 #include <valarray>
 #include <algorithm>
 #include <cstdio>
+#include <cstdint>
 #include <fstream>
+#include <iterator>
 #include <list>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "sax_countdown.hpp"
+#include "sax_event_loggers.hpp"
 #include "test_utils.hpp"
+
+using utils::SaxCountdown;
+using utils::SaxEventLogger;
 
 namespace
 {
-class SaxEventLogger
-{
-  public:
-    bool null()
-    {
-        events.emplace_back("null()");
-        return true;
-    }
-
-    bool boolean(bool val)
-    {
-        events.emplace_back(val ? "boolean(true)" : "boolean(false)");
-        return true;
-    }
-
-    bool number_integer(json::number_integer_t val)
-    {
-        events.push_back("number_integer(" + std::to_string(val) + ")");
-        return true;
-    }
-
-    bool number_unsigned(json::number_unsigned_t val)
-    {
-        events.push_back("number_unsigned(" + std::to_string(val) + ")");
-        return true;
-    }
-
-    bool number_float(json::number_float_t /*unused*/, const std::string& s)
-    {
-        events.push_back("number_float(" + s + ")");
-        return true;
-    }
-
-    bool string(std::string& val)
-    {
-        events.push_back("string(" + val + ")");
-        return true;
-    }
-
-    bool binary(json::binary_t& val)
-    {
-        std::string binary_contents = "binary(";
-        std::string comma_space;
-        for (auto b : val)
-        {
-            binary_contents.append(comma_space);
-            binary_contents.append(std::to_string(static_cast<int>(b)));
-            comma_space = ", ";
-        }
-        binary_contents.append(")");
-        events.push_back(binary_contents);
-        return true;
-    }
-
-    bool start_object(std::size_t elements)
-    {
-        if (elements == (std::numeric_limits<std::size_t>::max)())
-        {
-            events.emplace_back("start_object()");
-        }
-        else
-        {
-            events.push_back("start_object(" + std::to_string(elements) + ")");
-        }
-        return true;
-    }
-
-    bool key(std::string& val)
-    {
-        events.push_back("key(" + val + ")");
-        return true;
-    }
-
-    bool end_object()
-    {
-        events.emplace_back("end_object()");
-        return true;
-    }
-
-    bool start_array(std::size_t elements)
-    {
-        if (elements == (std::numeric_limits<std::size_t>::max)())
-        {
-            events.emplace_back("start_array()");
-        }
-        else
-        {
-            events.push_back("start_array(" + std::to_string(elements) + ")");
-        }
-        return true;
-    }
-
-    bool end_array()
-    {
-        events.emplace_back("end_array()");
-        return true;
-    }
-
-    bool parse_error(std::size_t position, const std::string& /*unused*/, const json::exception& /*unused*/)
-    {
-        errored = true;
-        events.push_back("parse_error(" + std::to_string(position) + ")");
-        return false;
-    }
-
-    std::vector<std::string> events {}; // NOLINT(readability-redundant-member-init)
-    bool errored = false;
-};
-
-class SaxCountdown : public nlohmann::json::json_sax_t
-{
-  public:
-    explicit SaxCountdown(const int count) : events_left(count)
-    {}
-
-    bool null() override
-    {
-        return events_left-- > 0;
-    }
-
-    bool boolean(bool /*val*/) override
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_integer(json::number_integer_t /*val*/) override
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_unsigned(json::number_unsigned_t /*val*/) override
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_float(json::number_float_t /*val*/, const std::string& /*s*/) override
-    {
-        return events_left-- > 0;
-    }
-
-    bool string(std::string& /*val*/) override
-    {
-        return events_left-- > 0;
-    }
-
-    bool binary(json::binary_t& /*val*/) override
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_object(std::size_t /*elements*/) override
-    {
-        return events_left-- > 0;
-    }
-
-    bool key(std::string& /*val*/) override
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_object() override
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_array(std::size_t /*elements*/) override
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_array() override
-    {
-        return events_left-- > 0;
-    }
-
-    bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& /*ex*/) override
-    {
-        return false;
-    }
-
-  private:
-    int events_left = 0;
-};
-
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
 void comments_helper(const std::string& s);
@@ -2629,6 +2452,109 @@ std::string parse_error_message_range(IteratorType first, IteratorType last)
 }
 } // namespace
 
+TEST_CASE("object keys are moved into the value")
+{
+    // json_sax_dom_parser::key() moves the key out of the lexer's buffer into
+    // the object, and the lexer starts the next token with an empty buffer.
+    // Keys of every length (inline and allocated strings), keys with escapes,
+    // and duplicate keys must give the same objects as reading the input one
+    // character at a time, and as ordered_json, whose map copies the key.
+    const std::string long_key(100, 'k');
+    const std::string doc = R"({"a": 1, ")" + long_key + R"(": {"b": [2, 3], "sixteen_chars_xx": 4}, )"
+                            R"("esc\"apedé": 5, "a": 6, ")" + long_key + R"(x": 7, "": 8, "dup": 9, "dup": 10})";
+
+    const json j = json::parse(doc);
+    const std::list<char> chars(doc.begin(), doc.end());
+    CHECK(j == json::parse(chars.begin(), chars.end()));
+
+    CHECK(j.size() == 6);
+    CHECK(j["a"] == 6);
+    CHECK(j[long_key]["b"] == json({2, 3}));
+    CHECK(j[long_key]["sixteen_chars_xx"] == 4);
+    CHECK(j["esc\"aped\xc3\xa9"] == 5);
+    CHECK(j[long_key + "x"] == 7);
+    CHECK(j[""] == 8);
+    CHECK(j["dup"] == 10);
+
+    const auto o = nlohmann::ordered_json::parse(doc);
+    CHECK(o.size() == 6);
+    CHECK(o[long_key + "x"] == 7);
+    CHECK(json(o) == j);
+}
+
+TEST_CASE("text of float tokens")
+{
+    // For contiguous input, the lexer copies the text of a float token into
+    // its buffer only when a SAX handler asks for it (the library's own
+    // handlers do not). A user handler must still see the exact text, for
+    // every input adapter and in every position of a document.
+    const std::string doc = R"([1.5, -0.0, 0.1, 1e5, -2.5E-4, 12345678901234567890.5, 0.12345678901234567890123,
+                              {"a": 3.25, "b": [6.02e23, 1]}, "x", true, 7e-1])";
+    const std::vector<std::string> expected_floats =
+    {
+        "number_float(1.5)", "number_float(-0.0)", "number_float(0.1)", "number_float(1e5)", "number_float(-2.5E-4)",
+        "number_float(12345678901234567890.5)", "number_float(0.12345678901234567890123)", "number_float(3.25)",
+        "number_float(6.02e23)", "number_float(7e-1)"
+    };
+
+    const auto floats = [](const std::vector<std::string>& events)
+    {
+        std::vector<std::string> result;
+        std::copy_if(events.begin(), events.end(), std::back_inserter(result), [](const std::string & e)
+        {
+            return e.compare(0, 13, "number_float(") == 0;
+        });
+        return result;
+    };
+
+    SECTION("contiguous input")
+    {
+        SaxEventLogger l;
+        CHECK(json::sax_parse(doc, &l));
+        CHECK(floats(l.events) == expected_floats);
+    }
+
+    SECTION("byte input")
+    {
+        const std::vector<std::uint8_t> bytes(doc.begin(), doc.end());
+        SaxEventLogger l;
+        CHECK(json::sax_parse(bytes, &l));
+        CHECK(floats(l.events) == expected_floats);
+    }
+
+    SECTION("stream input")
+    {
+        std::istringstream is(doc);
+        SaxEventLogger l;
+        CHECK(json::sax_parse(is, &l));
+        CHECK(floats(l.events) == expected_floats);
+    }
+
+    SECTION("non-contiguous iterators")
+    {
+        const std::list<char> chars(doc.begin(), doc.end());
+        SaxEventLogger l;
+        CHECK(json::sax_parse(chars.begin(), chars.end(), &l));
+        CHECK(floats(l.events) == expected_floats);
+    }
+
+    SECTION("the library's own handlers do not need the text")
+    {
+        using lexer_adapter = nlohmann::detail::iterator_input_adapter<const char*>;
+        CHECK(nlohmann::detail::sax_ignores_number_text<nlohmann::detail::json_sax_dom_parser<json, lexer_adapter>>::value);
+        CHECK(nlohmann::detail::sax_ignores_number_text<nlohmann::detail::json_sax_dom_callback_parser<json, lexer_adapter>>::value);
+        CHECK(nlohmann::detail::sax_ignores_number_text<nlohmann::detail::json_sax_acceptor<json>>::value);
+        CHECK_FALSE(nlohmann::detail::sax_ignores_number_text<SaxEventLogger>::value);
+
+        // and the values are the same as when the text is read
+        const json j = json::parse(doc);
+        CHECK(j[0] == 1.5);
+        CHECK(j[5].get<double>() == 12345678901234567890.5);
+        CHECK(j[7]["b"][0] == 6.02e23);
+        CHECK(json::accept(doc));
+    }
+}
+
 TEST_CASE("last-read diagnostics are identical across input adapters")
 {
     // The lexer reconstructs the "last read" token lazily for seekable adapters
@@ -3026,3 +2952,81 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
     }
 }
 #endif
+
+TEST_CASE("accept() agrees with parse() on floats around the overflow limit")
+{
+    // accept() does not convert a float that cannot overflow; the tokens
+    // around the limit (and beyond it) must still be rejected exactly as
+    // parse() rejects them
+    const std::vector<const char*> numbers =
+    {
+        "1e0", "123.456e-5", "1e-400", "-1e-400", "1e307", "1e308", "1e309", "-1e309",
+        "10e307", "100e307", "0.1e309", "0.1e310", "1E+308", "1E+309",
+        "1.7976931348623157e308", "1.7976931348623159e308", "1.8e308", "-1.7976931348623157e308",
+        "12345678901234567e291", "12345678901234567e292", "123456789012345678e290", "123456789012345678e291",
+        "1234567890123456789e289", "1234567890123456789e290", "9999999999999999999e289", "9999999999999999999e290",
+        "0.00000000000000000001e328", "0.00000000000000000001e329"
+    };
+
+    for (const char* number : numbers)
+    {
+        for (const std::string& text :
+                {
+                    std::string(number), "[" + std::string(number) + "]", "{\"a\":" + std::string(number) + "}"
+                })
+        {
+            INFO(text);
+            const bool parses = !json::parse(text, nullptr, false).is_discarded();
+            CHECK(json::accept(text) == parses);
+        }
+    }
+}
+
+namespace
+{
+// a DOM parser that reports parse errors without throwing, as in the sax_no_exception example
+template<typename BasicJsonType>
+class quiet_dom_parser : public nlohmann::detail::json_sax_dom_parser<BasicJsonType, nlohmann::detail::string_input_adapter_type>
+{
+  public:
+    explicit quiet_dom_parser(BasicJsonType& j)
+        : nlohmann::detail::json_sax_dom_parser<BasicJsonType, nlohmann::detail::string_input_adapter_type>(j, false)
+    {}
+
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const nlohmann::detail::exception& /*unused*/)
+    {
+        return false;
+    }
+};
+
+template<typename BasicJsonType>
+std::string read_before_error(const std::string& text)
+{
+    BasicJsonType j;
+    quiet_dom_parser<BasicJsonType> sax(j);
+    CHECK(!BasicJsonType::sax_parse(text, &sax));
+    return j.dump();
+}
+} // namespace
+
+TEST_CASE("a json_sax_dom_parser keeps the values read before a parse error")
+{
+    // a json_sax_dom_parser that a user constructs stores every value in place, so a
+    // handler that does not throw on a parse error sees what was read before it
+    const std::vector<std::pair<std::string, std::string>> cases =
+    {
+        {"[1,2,3,]", "[1,2,3]"},
+        {"[[1,[2,3],4],[5,", "[[1,[2,3],4],[5]]"},
+        {R"({"a":1,"b":[1,2,{"c":)", R"({"a":1,"b":[1,2,{"c":null}]})"},
+        {R"({"a":1,"a":)", R"({"a":1})"},
+        {"[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,]", "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]"},
+        {R"({"k0":0,"k1":1,"k2":{"x":[true,)", R"({"k0":0,"k1":1,"k2":{"x":[true]}})"},
+        {R"([{},[],{"a":[]},x)", R"([{},[],{"a":[]}])"},
+    };
+    for (const auto& c : cases)
+    {
+        CAPTURE(c.first)
+        CHECK(read_before_error<json>(c.first) == c.second);
+        CHECK(read_before_error<nlohmann::ordered_json>(c.first) == c.second);
+    }
+}

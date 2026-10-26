@@ -54,7 +54,7 @@ assert(p == p2);
 To make this work with one of your types, you only need to provide two functions:
 
 ```cpp
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns {
     void to_json(json& j, const person& p) {
@@ -347,6 +347,13 @@ struct adl_serializer<boost::optional<T>> {
 NLOHMANN_JSON_NAMESPACE_END
 ```
 
+!!! tip "`std::optional` needs no serializer"
+
+    Since version 3.12.0, `std::optional<T>` is supported out of the box when compiling with C++17
+    (`std::nullopt` is converted to and from `null`). Do not write an `adl_serializer` for it; this pattern is only
+    needed for types such as `boost::optional` or for custom semantics. See [Conversions](conversions.md) and
+    [Omitting a field when serializing `std::optional`](conversions.md#omitting-a-field-when-serializing-stdoptional).
+
 !!! note "ABI compatibility"
 
     Use [`NLOHMANN_JSON_NAMESPACE_BEGIN`](../api/macros/nlohmann_json_namespace_begin.md) and `NLOHMANN_JSON_NAMESPACE_END`
@@ -401,6 +408,32 @@ namespace nlohmann {
     };
 }
 ```
+
+## Why isn't my `to_json` or `from_json` found?
+
+The library calls `to_json` and `from_json` without qualification, so the compiler finds them by
+[argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl) in the namespace of the type, or in the
+namespaces of its template arguments. The usual reasons for a function that is "not found" are:
+
+- **The type is an alias of a standard type.** After `#!cpp using Hash = std::array<std::uint8_t, 6>;` the type
+  *is* `std::array<std::uint8_t, 6>`, which lives in namespace `std`. A `to_json(json&, const Hash&)` in your namespace
+  is never selected. Either give the type its own identity, for example `#!cpp struct Hash : std::array<std::uint8_t, 6> {};`
+  (the function is then found in `Hash`'s namespace), or specialize
+  [`adl_serializer<Hash>`](#how-do-i-convert-third-party-types).
+- **The function is in the wrong namespace.** It must be in the namespace of the type (a global type needs a global
+  function), not in the namespace of the code that calls the conversion. Specializations of `adl_serializer` belong in
+  namespace `nlohmann`.
+- **It is declared too late.** A conversion can only use what has been declared when it is instantiated. If
+  `#!cpp json j = std::vector<third_party::string>{...};` appears before the `adl_serializer` specialization, the
+  compiler reports an error such as "explicit specialization of `adl_serializer<...>` after instantiation". Put the
+  specialization in a small header that every file includes **before** it uses the type with `json`.
+- **It is a template.** For `template <class T> struct box`, write `template <class T> void to_json(json&, const box<T>&)`,
+  not an overload for one `T`.
+- **It worked by accident.** Some versions found `to_json` overloads in `nlohmann::detail` through argument-dependent
+  lookup of the base class of `basic_json`. Do not rely on this; it is not part of the interface.
+
+For smart pointers, class hierarchies, `std::variant`, and `std::chrono`, see
+[Recipes for common types](type_recipes.md).
 
 ## Why can't I convert to/from `std::any`?
 
@@ -498,6 +531,7 @@ struct bad_serializer
 
 ## See also
 
+- [Recipes for common types](type_recipes.md) - smart pointers, class hierarchies, `std::variant`, and `std::chrono`
 - [Converting values](conversions.md) - the general overview of `get`/`get_to` and implicit conversions
 - [Specializing enum conversion](enum_conversion.md) - map enums to JSON strings instead of integers
 - [Supported macros](macros.md) - reference for `NLOHMANN_DEFINE_TYPE_*` and related macros

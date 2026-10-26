@@ -12,7 +12,7 @@ violations will result in a failed build.
 
 Note: C++20 modules support may hit compiler-specific issues not covered by the general compiler matrix below. See [Modules](../features/modules.md#known-issues) for known issues and workarounds.
 
-Note: Some modern features (like C++20 ranges or filesystem support) may be disabled on specific broken or incomplete toolchains even when standard feature-test macros indicate support. See [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md) and [`JSON_HAS_FILESYSTEM`](../api/macros/json_has_filesystem.md) for details on known exclusions.
+Note: Some modern features (like C++20 ranges or filesystem support) may be disabled on specific broken or incomplete toolchains even when standard feature-test macros indicate support. See [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md), [`JSON_HAS_RANGE_VIEW_CONVERSION`](../api/macros/json_has_range_view_conversion.md), and [`JSON_HAS_FILESYSTEM`](../api/macros/json_has_filesystem.md) for details on known exclusions.
 
 - [x] The library is compiled with 50+ different C++ compilers with different operating systems and platforms,
   including the oldest versions known to compile the library.
@@ -107,7 +107,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The library is compiled with all C++ language revisions (C++11, C++14, C++17, C++20, C++23, and C++26) to detect
   and fix language deprecations early.
 - [x] The library is checked for compiler warnings:
-  - On Clang, `-Weverything` is used with 8 exceptions.
+  - On Clang, `-Weverything` is used with 7 exceptions.
 
     ??? abstract "Clang warnings"
 
@@ -135,6 +135,9 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
   headers are included.
 - [x] On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs (see
   [`unit-windows_h.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-windows_h.cpp)).
+- [x] The library is compiled with Qt's keyword macros (`slots`, `signals`, `emit`, `foreach`, `forever`) being defined
+  to make sure it does not use them as identifiers (see
+  [`unit-qt_keywords.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-qt_keywords.cpp)).
 - [x] The library is compiled with exceptions disabled to support alternative means of error handling.
 
 ## Stable public API
@@ -185,10 +188,13 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         ```
 
 - [x] The code is checked with the latest [Cppcheck](https://cppcheck.sourceforge.io) with all warnings enabled.
-- [x] The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) with 89 enabled
-  rules.
+- [x] The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) with 52 enabled
+  checkers.
 - [x] The code is checked with [Infer](https://fbinfer.com).
 - [x] The code is checked with [Codacy](https://app.codacy.com/gh/nlohmann/json/dashboard).
+- [x] The code is scanned with [CodeQL](https://codeql.github.com), [Semgrep](https://semgrep.dev), and
+  [Flawfinder](https://dwheeler.com/flawfinder/) on every push and pull request and on a schedule; the findings are
+  reported to GitHub's code scanning.
 
 ## Dynamic analysis
 
@@ -201,6 +207,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The test suite is executed with [Valgrind](https://valgrind.org) (Memcheck) to detect memory leaks.
 - [x] The test suite is executed with [Sanitizers](https://github.com/google/sanitizers) (address sanitizer, undefined
   behavior sanitizer, integer overflow detection, nullability violations).
+- [x] The fuzz targets are run with [CIFuzz](https://google.github.io/oss-fuzz/getting-started/continuous-integration/)
+  on every pull request to catch regressions before they are merged.
 
 ## Dependencies
 
@@ -220,6 +228,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
   No release is made while such an alert is open.
 - [x] Third-party code included in the repository for testing, such as [doctest](https://github.com/doctest/doctest),
   is updated manually.
+- [x] The repository is evaluated with the [OpenSSF Scorecard](https://securityscorecards.dev) on a schedule and on
+  every push to the default branch, and the results are reported to GitHub's code scanning.
 
 ## Style check
 
@@ -255,4 +265,21 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The library is tested against relevant CMake versions:
   - CMake 3.5 (the earliest supported)
   - CMake 3.31.6 (the latest 3.x release)
-  - CMake 4.0.0 (a very recent release)
+  - CMake 4.0.0 (the first 4.x release)
+!!! success "Requirement: Other build systems"
+
+    The library can be used with build systems and package managers other than CMake.
+
+- [x] The library can be consumed with [Meson](https://json.nlohmann.me/integration/package_managers/) and the Swift
+  Package Manager; the installation with Meson and the resolution of `Package.swift` are tested in the CI.
+
+!!! success "Requirement: Reproducible and verifiable builds"
+
+    The library can be built and tested without network access or a Git checkout, and its licensing is machine-readable.
+
+- [x] The test suite is executed from an exported source tree without the `.git` directory and with the test data
+  being available offline.
+- [x] The test suite is executed without the tests that change installed files to check that builds are reproducible.
+- [x] The repository is checked for compliance with the [REUSE specification](https://reuse.software) so that the
+  license and copyright of every file is machine-readable.
+- [x] The documentation is built with warnings treated as errors, and its links are checked regularly.

@@ -535,6 +535,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     // Test malformed index (non-numeric) throws parse_error
                     CHECK_THROWS_WITH_AS(j_array.value("/foo"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'foo' is not a number", typename Json::parse_error&);
                     CHECK_THROWS_WITH_AS(j_array_const.value("/foo"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'foo' is not a number", typename Json::parse_error&);
+                    CHECK_THROWS_WITH_AS(j_array.value("/x"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'x' is not a number", typename Json::parse_error&);
+                    CHECK_THROWS_WITH_AS(j_array_const.value("/x"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'x' is not a number", typename Json::parse_error&);
 
                     // Test leading-zero index throws parse_error
                     CHECK_THROWS_WITH_AS(j_array.value("/01"_json_pointer, 1), "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", typename Json::parse_error&);
@@ -1946,7 +1948,7 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
 #ifdef JSON_HAS_CPP_17
 TEST_CASE("operator[] with user-defined std::string_view-convertible types")
 {
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     class TestClass
     {
@@ -2029,7 +2031,7 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
 
     SECTION("nlohmann::json")
     {
-        using json = nlohmann::json;
+        using nlohmann::json;
 
         SECTION("ViewKey")
         {
@@ -2070,7 +2072,7 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
 
     SECTION("nlohmann::ordered_json")
     {
-        using ordered_json = nlohmann::ordered_json;
+        using nlohmann::ordered_json;
 
         SECTION("ViewKey")
         {

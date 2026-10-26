@@ -267,9 +267,10 @@ unsigned 8-bit integer. If no subtype is given, the generic binary subtype 0x00 
 
 ### CBOR
 
-[CBOR](binary_formats/cbor.md) supports binary values, but no subtypes. Subtypes will be serialized as tags. Any binary
-value will be serialized as byte strings. The library will choose the smallest representation using the length of the
-byte array.
+[CBOR](binary_formats/cbor.md) supports binary values and subtypes. Any binary value will be serialized as a byte
+string; a subtype is serialized as a tag preceding it. When parsing, tags are only read back as subtypes with
+`cbor_tag_handler_t::store` (see [`from_cbor`](../api/basic_json/from_cbor.md)). The library will choose the smallest
+representation using the length of the byte array.
 
 ??? example "Example: serialize a binary value to CBOR"
 

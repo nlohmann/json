@@ -17,8 +17,15 @@ module;
 // 3. Or upgrade to a newer GCC version with better modules support.
 // See: https://github.com/nlohmann/json/issues/5103
 
+// GCC ignores the target attribute in modules ("'target' attribute currently
+// unsupported in modules") and then rejects the SSSE3 intrinsics of json_view.
+#if defined(__GNUC__) && !defined(__clang__)
+    #define NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE
+#endif
+
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_literals.hpp>
+#include <nlohmann/json_view.hpp>
 
 export module nlohmann.json;
 
@@ -27,9 +34,15 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 
 using NLOHMANN_JSON_NAMESPACE::adl_serializer;
 using NLOHMANN_JSON_NAMESPACE::basic_json;
+using NLOHMANN_JSON_NAMESPACE::basic_json_document;
+using NLOHMANN_JSON_NAMESPACE::basic_json_view;
 using NLOHMANN_JSON_NAMESPACE::json;
+using NLOHMANN_JSON_NAMESPACE::json_document;
 using NLOHMANN_JSON_NAMESPACE::json_pointer;
+using NLOHMANN_JSON_NAMESPACE::json_view;
 using NLOHMANN_JSON_NAMESPACE::ordered_json;
+using NLOHMANN_JSON_NAMESPACE::ordered_json_document;
+using NLOHMANN_JSON_NAMESPACE::ordered_json_view;
 using NLOHMANN_JSON_NAMESPACE::ordered_map;
 using NLOHMANN_JSON_NAMESPACE::to_string;
 
@@ -47,6 +60,7 @@ inline namespace json_literals
 namespace detail
 {
     using NLOHMANN_JSON_NAMESPACE::detail::json_sax_dom_callback_parser;
+    using NLOHMANN_JSON_NAMESPACE::detail::json_sax_dom_parser;
     using NLOHMANN_JSON_NAMESPACE::detail::unknown_size;
 } // namespace detail
 

@@ -62,6 +62,9 @@ Linear.
 
 ## Notes
 
+Floating-point numbers are written with the fewest digits that read back as the same value (for `#!cpp double`; see
+[number handling](../../features/types/number_handling.md#number-serialization)).
+
 Binary values are serialized as an object containing two keys:
 
 - "bytes": an array of bytes as integers
@@ -88,6 +91,8 @@ Binary values are serialized as an object containing two keys:
 
 - [to_string](to_string.md) returns a string representation of a JSON value
 - [operator<<](../operator_ltlt.md) serialize to stream
+- [`basic_json_view::dump`](../basic_json_view/dump.md) the corresponding function of `basic_json_view`, serializing
+  directly from a flat index without building a `basic_json` value
 - [Serialization](../../features/serialization.md) - the serialization article
 
 ## Version history
@@ -97,3 +102,5 @@ Binary values are serialized as an object containing two keys:
 - Error handlers added in version 3.4.0.
 - Serialization of binary values added in version 3.8.0.
 - Error handler `keep` added in version 3.13.0.
+- Doubles are written with the shortest digits (Żmij instead of Grisu2) since version 3.13.0; about 0.1% of doubles are
+  written differently, most of them with fewer digits.

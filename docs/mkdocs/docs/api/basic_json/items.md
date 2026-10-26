@@ -99,11 +99,13 @@ When iterating over an array, `key()` will return the index of the element as st
 
 - [begin](begin.md) returns an iterator to the first element
 - [end](end.md) returns an iterator to one past the last element
+- [basic_json_view::items](../basic_json_view/items.md) - the same range on a zero-copy view (`#!cpp const auto`,
+  not `#!cpp const auto&`: items are produced on the fly; document order, not sorted; duplicate keys are visited)
 
 ## Version history
 
-- Added `iterator_wrapper` in version 3.0.0.
-- Added `items` and deprecated `iterator_wrapper` in version 3.1.0.
+- Added in version 3.1.0 as the replacement of the static function `iterator_wrapper`, which was available since
+  version 1.0.0 and is deprecated since version 3.1.0.
 - Added structured binding support in version 3.5.0.
 
 !!! warning "Deprecation"

@@ -38,6 +38,18 @@ which avoids repeating it:
     --8<-- "examples/get_to.output"
     ```
 
+!!! info "Getting values out of a document or a view"
+
+    A [view](../api/basic_json_view/index.md) offers the same `get<T>()` conversion. For the built-in types (booleans,
+    numbers, strings, `#!cpp std::vector`, `#!cpp std::map`, ...) it reads the value straight from the document's
+    index, without building a `basic_json` value first; user-defined types with a `from_json()` are converted from a
+    `basic_json` value, see the [list](../api/basic_json_view/get.md). Two conversions never copy at all:
+    [`get_string()`](../api/basic_json_view/get_string.md) returns a string as a view into the source text, and
+    [`number_token()`](../api/basic_json_view/number_token.md) returns a number exactly as it was written. Every other
+    type is obtained from a subtree that is built on demand with
+    [`materialize()`](../api/basic_json_view/materialize.md). See
+    [Zero-copy JSON views](json_view.md#getting-values-out-without-copying).
+
 The library already knows how to convert to and from the scalar types and the STL containers (such as
 `#!cpp std::vector`, `#!cpp std::map`, `#!cpp std::array`, `#!cpp std::optional`, and many more). Converting a JSON
 object back to a `#!cpp std::map` or a JSON array back to a `#!cpp std::vector` therefore works without any extra code:
@@ -111,6 +123,29 @@ std::string s = j;   // implicit conversion, same as j.get<std::string>()
 Implicit conversions are convenient but can be surprising (for example, in overload resolution or with `auto`). They can
 be disabled by defining [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) to `#!cpp 0`,
 which forces the explicit `get` form and can catch unintended conversions at compile time.
+
+!!! warning "`auto` copies the JSON value; it does not convert it"
+
+    The type of `#!cpp j["name"]` is `json`, not the C++ type of the value inside. `#!cpp auto` therefore deduces
+    `json`:
+
+    ```cpp
+    json j = {{"name", "Mary"}, {"age", 42}};
+
+    auto name = j["name"];                       // json: a copy of the value; prints as "Mary" (with quotes)
+    std::string s1 = j["name"];                  // std::string: implicit conversion
+    auto s2 = j["name"].get<std::string>();      // std::string: explicit conversion
+    auto& age = j["age"];                        // json&: a reference, no copy
+    age = 43;                                    // changes j
+    ```
+
+    This is also why `#!cpp std::cout << j["name"]` prints the quotes (see
+    [getting a string without quotes](#getting-values-out)), and why a `json` value cannot be passed to `printf`: the
+    argument is not an `int` or a `char*`, and a compiler either rejects passing it through `...` (Clang does) or
+    compiles it and prints garbage. Convert first: `#!cpp std::printf("%d", j["age"].get<int>());`.
+
+    Prefer `get<T>()` over `auto` when you want the C++ value, and `auto&` or `const auto&` when you want to avoid a
+    copy of a large value.
 
 !!! warning "Conversions do not range-check numbers"
 
@@ -217,7 +252,8 @@ json j = numbers;   // [1,2,3]
     ```
 
     This requires [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md) to be enabled and is unavailable on MinGW due
-    to incomplete C++20 ranges support there.
+    to incomplete C++20 ranges support there; see
+    [`JSON_HAS_RANGE_VIEW_CONVERSION`](../api/macros/json_has_range_view_conversion.md).
 
 ## Your own types
 
@@ -233,3 +269,4 @@ The conversions above are built in for standard types. To make the same syntax w
 - [`get_ref`](../api/basic_json/get_ref.md) / [`get_ptr`](../api/basic_json/get_ptr.md) - access the stored value without copying
 - [Arbitrary types conversions](arbitrary_types.md) - support your own types
 - [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) - toggle implicit conversions
+- [Zero-copy JSON views](json_view.md) - get values out of a document or a view

@@ -1713,6 +1713,21 @@ TEST_CASE("JSON patch - move where 'from' is a proper prefix of 'path' (regressi
         CHECK(doc.patch(patch) == R"({"b": 1})"_json);
     }
 
+    SECTION("array index tokens that are not a number")
+    {
+        json const doc = R"({"a": [1, 2]})"_json;
+
+        // "-" cannot be removed and is reported as unresolved
+        json const patch_dash = {{{"op", "remove"}, {"path", "/a/-"}}};
+        CHECK_THROWS_WITH_AS(doc.patch(patch_dash), "[json.exception.out_of_range.404] unresolved reference token '-'", json::out_of_range&);
+
+        // a single character is reported like a longer token
+        json const patch_x = {{{"op", "remove"}, {"path", "/a/x"}}};
+        CHECK_THROWS_WITH_AS(doc.patch(patch_x), "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+        json const patch_xy = {{{"op", "remove"}, {"path", "/a/xy"}}};
+        CHECK_THROWS_WITH_AS(doc.patch(patch_xy), "[json.exception.parse_error.109] parse error: array index 'xy' is not a number", json::parse_error&);
+    }
+
     SECTION("the array-append token '-' is an ordinary child token")
     {
         // "-" (append-to-array) addresses a location *inside* the array,
@@ -2049,5 +2064,42 @@ TEST_CASE("JSON patch - every operation on ordered_json")
             CAPTURE(target.dump())
             CHECK(source.patch(ordered_json::diff(source, target)) == target);
         }
+    }
+}
+
+TEST_CASE_TEMPLATE("JSON patch - diff round trip on hand-made documents", Json, nlohmann::json, nlohmann::ordered_json)
+{
+    const auto roundtrip = [](const Json & a, const Json & b)
+    {
+        CAPTURE(a.dump())
+        CAPTURE(b.dump())
+        const Json p = Json::diff(a, b);
+        CHECK(a.patch(p) == b);
+        CHECK(Json::diff(b, b).empty());
+    };
+
+    SECTION("reordered keys")
+    {
+        const Json a = Json::parse(R"({"x":1,"y":2,"z":{"p":1,"q":2}})");
+        const Json b = Json::parse(R"({"z":{"q":2,"p":1},"y":2,"x":1})");
+        roundtrip(a, b);
+        roundtrip(b, a);
+    }
+
+    SECTION("nested add, remove and replace")
+    {
+        const Json a = Json::parse(R"({"a":[1,2,{"k":"v","gone":true}],"b":{"c":{"d":1}},"e":"s"})");
+        const Json b = Json::parse(R"({"a":[1,3,{"k":"w","new":[]}],"b":{"c":{"d":[1,2]}},"f":null})");
+        roundtrip(a, b);
+        roundtrip(b, a);
+    }
+
+    SECTION("arrays of different length and type changes")
+    {
+        roundtrip(Json::parse("[1,2,3,4,5]"), Json::parse("[1,3]"));
+        roundtrip(Json::parse("[1]"), Json::parse("[1,[2],{\"a\":3}]"));
+        roundtrip(Json::parse("[]"), Json::parse("{}"));
+        roundtrip(Json::parse("{\"a\":[]}"), Json::parse("{\"a\":{}}"));
+        roundtrip(Json(1), Json::parse("[1]"));
     }
 }

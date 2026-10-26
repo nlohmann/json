@@ -64,18 +64,7 @@ values of that type directly to a `basic_json` instance, and they will automatic
 rather than arrays:
 
 ```cpp
-using custom_json = nlohmann::basic_json<
-    nlohmann::ordered_map,  // ObjectType
-    std::vector,            // ArrayType
-    std::string,            // StringType
-    bool,                   // BooleanType
-    std::int64_t,           // NumberIntegerType
-    std::uint64_t,          // NumberUnsignedType
-    double,                 // NumberFloatType
-    std::allocator,         // AllocatorType
-    nlohmann::adl_serializer,
-    std::vector<std::byte>  // Custom BinaryType
->;
+using custom_json = nlohmann::ordered_json::with_binary_t<std::vector<std::byte>>;
 
 std::vector<std::byte> data{std::byte{1}, std::byte{2}, std::byte{3}};
 custom_json j = data;  // Creates a binary value, not an array

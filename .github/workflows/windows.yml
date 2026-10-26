@@ -90,7 +90,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
       - name: Set extra CXX_FLAGS for latest std_version
         # /wd5285 silences C5285 emitted by the bundled third-party doctest.h, which
         # specializes std::tuple (newly diagnosed by the VS2026 v145 toolset)
@@ -166,12 +166,21 @@ jobs:
       # link, but the binaries clang 11.0.1 and clang 18.1.8 then produce crash
       # before doctest prints its first line - 39 of 102 tests on clang 18.
       # Keep the objects small by splitting the test files instead.
+      # The tests link with LLD: GNU ld fails on objects with more than 32767
+      # sections with "relocation truncated to fit: IMAGE_REL_AMD64_REL32
+      # against `.rdata'", as it stores the section an associative COMDAT
+      # section belongs to in 16 bits (x_associated in binutils'
+      # include/coff/internal.h) and so discards the jump tables of inline
+      # functions together with the wrong function. Each basic_json
+      # specialization and input type a test file instantiates adds many
+      # sections, so unit-msgpack.cpp and unit-regression2.cpp kept crossing
+      # that limit as the library grew.
       - name: Run CMake
         run: cmake -S . -B build ^
              -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
              -DCMAKE_CXX_FLAGS="--target=x86_64-w64-mingw32 -stdlib=libstdc++ -pthread" ^
              -DCMAKE_CXX_FLAGS_DEBUG="-g0" ^
-             -DCMAKE_EXE_LINKER_FLAGS="-lwinpthread" ^
+             -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld -lwinpthread" ^
              -G"MinGW Makefiles" ^
              -DCMAKE_BUILD_TYPE=Debug ^
              -DJSON_BuildTests=On
@@ -180,7 +189,7 @@ jobs:
       - name: Test
         run: cd build ; ctest -j 10 -C Debug --output-on-failure
 
-  clang-cl-12:
+  clang-cl:
     runs-on: windows-2022
     strategy:
       matrix:
@@ -207,11 +216,13 @@ jobs:
       # import-std support. Its opt-in token is CMake-version-specific, so pin
       # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
       - name: Get pinned CMake and ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
         with:
           cmakeVersion: 4.3.4
+      # CMAKE_CXX_FLAGS replaces CMake's MSVC defaults (which include /EHsc), and
+      # ci_module_cpp20 forwards it to the module build, so list /EHsc explicitly
       - name: Run CMake (Debug)
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_CI=ON -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /W4 /WX"
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_CI=ON -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /EHsc /W4 /WX"
       - name: Build
         run: cmake --build build --config Debug --target ci_module_cpp20
         

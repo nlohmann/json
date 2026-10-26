@@ -46,9 +46,7 @@ class huge_binary_t : public std::vector<std::uint8_t>
     }
 };
 
-using huge_binary_json = nlohmann::basic_json <
-                         std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
-                         double, std::allocator, nlohmann::adl_serializer, huge_binary_t, void >;
+using huge_binary_json = nlohmann::json::with_binary_t<huge_binary_t>;
 
 // a string type that can be made to report a size beyond INT32_MAX without
 // allocating that much memory, so BSON length overflow can be tested for
@@ -96,9 +94,7 @@ class huge_string_t : public std::string
     bool pretend_huge = false;
 };
 
-using huge_string_json = nlohmann::basic_json <
-                         std::map, std::vector, huge_string_t, bool, std::int64_t, std::uint64_t,
-                         double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
+using huge_string_json = nlohmann::json::with_string_t<huge_string_t>;
 } // namespace
 
 TEST_CASE("BSON")

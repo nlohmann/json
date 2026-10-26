@@ -21,7 +21,12 @@ foreach(test default noversion)
     target_compile_definitions(abi_config_${test}_all_tags PRIVATE
         JSON_DIAGNOSTICS=1
         JSON_DIAGNOSTIC_POSITIONS=1
-        JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1)
+        JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1
+        JSON_DISABLE_STREAM_BULK_SCAN=1
+        JSON_DISABLE_UNLOCKED_FILE_IO=1
+        JSON_NO_SIMD
+        JSON_VIEW_NO_SIMD
+        JSON_VIEW_USE_SSSE3)
     target_link_libraries(abi_config_${test}_all_tags PRIVATE abi_compat_main)
     add_test(
         NAME test-abi_config_${test}_all_tags

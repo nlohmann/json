@@ -38,4 +38,7 @@ the library.
 
 ## Version history
 
-- Added in version 3.11.0. Changed inline namespace name in version 3.11.2.
+- Added in version 3.11.0. Changed inline namespace name in version 3.11.2. Added the ABI tag `_dp` in
+  version 3.12.0, and the ABI tags `_bics`, `_psp`, `_snul`, `_sbu8`, `_ekmo`, `_dsbs`, `_dufio`, `_ns`, `_vns`,
+  and `_vssse3` in version 3.13.0; see
+  [`nlohmann` Namespace](../../features/namespace.md#structure).

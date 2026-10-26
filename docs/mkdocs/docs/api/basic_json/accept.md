@@ -23,6 +23,9 @@ Checks whether the input is valid JSON.
     respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to
     the iterator type with `operator!=`.
     
+    Ill-formed UTF-16 and UTF-32 sequences are rejected: a lone surrogate, a high surrogate that is not followed by its
+    low surrogate, and a code point above `U+10FFFF` all make this function return `false`.
+
 Unlike the [`parse()`](parse.md) function, this function neither throws an exception in case of invalid JSON input
 (i.e., a parse error) nor creates diagnostic information.
 
@@ -35,9 +38,12 @@ Unlike the [`parse()`](parse.md) function, this function neither throws an excep
     - a `#!c FILE` pointer (throws if null)
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters (throws if null)
-    - a `std::string`
+    - a `std::string` or a `std::string_view` (C++17)
     - a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
       (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
+    - wide characters (`wchar_t`, `char16_t`, `char32_t`), which are converted to UTF-8: a wide string object
+      (`std::wstring`, `std::u16string`, `std::u32string`) or an array (e.g. a wide string literal); a pointer to a
+      null-terminated wide string (e.g. `std::u16string::c_str()`) is not supported
 
 `IteratorType`
 :   a compatible iterator type, for instance.
@@ -125,6 +131,21 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/accept__iterator_pair.output"
     ```
 
+??? example "Example: (3) reading from UTF-16 strings"
+
+    The encoding is deduced from the character type of the input. String literals like `u"..."`, `U"..."`, and
+    `L"..."` work as well.
+
+    ```cpp
+    --8<-- "examples/accept__wide_string.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/accept__wide_string.output"
+    ```
+
 ## See also
 
 - [parse](parse.md) - deserialize from a compatible input
@@ -132,6 +153,10 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 - [operator>>](../operator_gtgt.md) - deserialize from stream
 - [`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
   instead of treating it as end of input
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md) - read a `std::istream` one character
+  at a time
+- [`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md) - read a `FILE*` with the locking stdio
+  functions
 
 ## Version history
 
@@ -143,6 +168,13 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 - `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating
   it as end of input; planned to become the default in version 4.0.0.
+- Parsing from an `std::istream` scans the characters in its stream buffer in bulk in version 3.13.0
+  ([`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md)).
+- Parsing from a `FILE*` locks the file once instead of once per character in version 3.13.0
+  ([`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md)).
+- Ill-formed UTF-16 and UTF-32 input (a lone surrogate, a high surrogate that is not followed by its low surrogate, or
+  a code point above `U+10FFFF`) is rejected in version 3.13.0; before that, some such sequences were accepted or
+  ended the input silently.
 
 !!! warning "Deprecation"
 

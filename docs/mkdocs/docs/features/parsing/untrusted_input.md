@@ -26,9 +26,11 @@ several alternatives; see [Parsing and exceptions](parse_exceptions.md) for the 
   [example](parse_exceptions.md#user-defined-sax-interface) that overrides it to print instead of throw.
 
 If exceptions are unavailable entirely (`-fno-exceptions`, or [`JSON_NOEXCEPTION`](../../api/macros/json_noexception.md)
-defined), every `#!cpp throw` in the library becomes a call to `std::abort()` -- there is no way to recover from a
-parse error of untrusted input in that configuration; see
-[Switch off exceptions](../../home/exceptions.md#switch-off-exceptions) for the details and for overriding this with
+defined), every `#!cpp throw` in the library becomes a call to `std::abort()`. The alternatives above do not throw, so
+`parse()` with `allow_exceptions` set to `#!cpp false` (and likewise `accept()` and the `from_*` functions with
+`allow_exceptions` set to `#!cpp false`) can still reject invalid input in that configuration; a plain `parse()` call
+aborts on invalid input. See [Working without exceptions](../no_exceptions.md) and
+[Switch off exceptions](../../home/exceptions.md#switch-off-exceptions) for the details and for overriding the abort with
 `JSON_THROW_USER`.
 
 ## Nesting depth
@@ -50,18 +52,12 @@ stack, however deeply it is nested.
 
 Once a value has been parsed, operations that walk it recursively -- serializing it with
 [`dump`](../../api/basic_json/dump.md), hashing it, copying it, comparing two values with `#!cpp ==`, `#!cpp <`, or (in
-C++20) `#!cpp <=>`, merging with [`update`](../../api/basic_json/update.md), and applying a
-[`merge_patch`](../../api/basic_json/merge_patch.md) -- descend at most 128 levels on the call stack and continue
+C++20) `#!cpp <=>`, merging with [`update`](../../api/basic_json/update.md), applying a
+[`merge_patch`](../../api/basic_json/merge_patch.md), creating a patch with [`diff`](../../api/basic_json/diff.md) or
+[`merge_diff`](../../api/basic_json/merge_diff.md), [`flatten`](../../api/basic_json/flatten.md), and the binary
+writers (`to_cbor`, `to_msgpack`, ...) -- descend at most 128 levels on the call stack and continue
 below that with an explicit stack instead, so none of them can exhaust the stack either, however deeply the value is
 nested. Destroying a value (its destructor) never recurses at all, regardless of nesting depth, for the same reason.
-
-!!! note "Not every operation is bounded yet"
-
-    [`diff`](../../api/basic_json/diff.md), [`flatten`](../../api/basic_json/flatten.md), and the binary writers
-    (`to_cbor`, `to_msgpack`, ...) still recurse once per nesting level; this is called out as work in progress in the
-    [assurance case](../../community/assurance_case.md#secure-design). A value deep enough to matter for these
-    operations would typically first have to survive parsing without hitting a self-imposed depth limit, as described
-    above.
 
 ## Input size
 
@@ -87,6 +83,9 @@ Invalid UTF-8 is rejected while parsing, not just while serializing:
 
 - In JSON text, an ill-formed UTF-8 byte in a string is a
   [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) ("invalid string: ill-formed UTF-8 byte").
+- In UTF-16 or UTF-32 input, an ill-formed sequence is a
+  [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) as well: a lone surrogate, a high surrogate
+  that is not followed by its low surrogate, and a code point above `U+10FFFF` are all rejected.
 - In a binary format, a string that is not valid UTF-8 is a
   [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113).
 

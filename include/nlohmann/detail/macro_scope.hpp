@@ -187,6 +187,22 @@
     #endif
 #endif
 
+// the byte order of the target where the compiler tells it (std::endian is
+// C++20 and cannot select code in #if): JSON_LITTLE_ENDIAN_TARGET or
+// JSON_BIG_ENDIAN_TARGET is 1, or both are 0 where it is unknown (code then
+// handles the bytes one at a time); MSVC and x86 targets are little-endian
+#if defined(_MSC_VER) || defined(__x86_64__) || defined(__i386__) \
+    || (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    #define JSON_LITTLE_ENDIAN_TARGET 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_BIG_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    #define JSON_LITTLE_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_BIG_ENDIAN_TARGET 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#else
+    #define JSON_LITTLE_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_BIG_ENDIAN_TARGET 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#endif
+
 #ifdef JSON_HAS_CPP_17
     #define JSON_INLINE_VARIABLE inline
 #else
@@ -312,7 +328,7 @@
             return ej_pair.first == e;                                                          \
         });                                                                                     \
         if (it != std::end(m)) j = it->second;                                                  \
-        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410,"enum value out of range for " #ENUM_TYPE, nullptr)); \
+        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(nlohmann::detail::exception_id::value_out_of_range,"enum value out of range for " #ENUM_TYPE, nullptr)); \
     }                                                                                           \
     template<typename BasicJsonType>                                                            \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
@@ -327,7 +343,7 @@
             return ej_pair.second == j;                                                         \
         });                                                                                     \
         if (it != std::end(m)) e = it->first;                                                   \
-        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", j.dump(-1, ' ', false, nlohmann::detail::error_handler_t::replace)), &j)); \
+        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(nlohmann::detail::exception_id::value_out_of_range, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", j.dump(-1, ' ', false, nlohmann::detail::error_handler_t::replace)), &j)); \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They

@@ -23,6 +23,13 @@ The complete default namespace name is derived as follows:
     - [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) defined non-zero appends `_sbu8`.
     - [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md) defined non-zero
       appends `_ekmo`.
+    - [`JSON_DISABLE_STREAM_BULK_SCAN`](../api/macros/json_disable_stream_bulk_scan.md) defined non-zero appends
+      `_dsbs`.
+    - [`JSON_DISABLE_UNLOCKED_FILE_IO`](../api/macros/json_disable_unlocked_file_io.md) defined non-zero appends
+      `_dufio`.
+    - [`JSON_NO_SIMD`](../api/macros/json_no_simd.md) defined appends `_ns`.
+    - [`JSON_VIEW_NO_SIMD`](../api/macros/json_view_no_simd.md) defined appends `_vns`.
+    - [`JSON_VIEW_USE_SSSE3`](../api/macros/json_view_use_ssse3.md) defined appends `_vssse3`.
 - The inline namespace ends with the suffix `_v` followed by the 3 components of the version number separated by
   underscores. To omit the version component, see [Disabling the version component](#disabling-the-version-component)
   below.
@@ -101,3 +108,14 @@ follows:
 
 - Introduced inline namespace (`json_v3_11_0[_abi-tag]*`) in version 3.11.0.
 - Changed structure of inline namespace in version 3.11.2.
+- Added ABI tag `_dp` ([`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md)) in version 3.12.0.
+- Added ABI tags `_bics` ([`JSON_BRACE_INIT_COPY_SEMANTICS`](../api/macros/json_brace_init_copy_semantics.md)), `_psp`
+  ([`JSON_PRECISE_STREAM_POSITION`](../api/macros/json_precise_stream_position.md)), `_snul`
+  ([`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md)), `_sbu8`
+  ([`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md)), `_ekmo`
+  ([`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md)), `_dsbs`
+  ([`JSON_DISABLE_STREAM_BULK_SCAN`](../api/macros/json_disable_stream_bulk_scan.md)), `_dufio`
+  ([`JSON_DISABLE_UNLOCKED_FILE_IO`](../api/macros/json_disable_unlocked_file_io.md)), `_ns`
+  ([`JSON_NO_SIMD`](../api/macros/json_no_simd.md)), `_vns`
+  ([`JSON_VIEW_NO_SIMD`](../api/macros/json_view_no_simd.md)), and `_vssse3`
+  ([`JSON_VIEW_USE_SSSE3`](../api/macros/json_view_use_ssse3.md)) in version 3.13.0.

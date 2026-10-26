@@ -2,7 +2,7 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 // translate a parse_event_t to a human-readable name
 std::string event_name(json::parse_event_t event)
@@ -29,7 +29,7 @@ std::string event_name(json::parse_event_t event)
 int main()
 {
     // a small JSON text
-    auto text = R"({"pi": 3.141, "numbers": [1, 2]})";
+    const auto* text = R"({"pi": 3.141, "numbers": [1, 2]})";
 
     // parse the text and report every event together with its depth;
     // returning true keeps every value unchanged

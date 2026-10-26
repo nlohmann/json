@@ -29,6 +29,14 @@ specific naming scheme in order to override the binary type.
 - [**has_subtype**](has_subtype.md) - return whether the value has a subtype
 - [**clear_subtype**](clear_subtype.md) - clears the binary subtype
 
+## See also
+
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [**binary**](../basic_json/binary.md) - create a binary array value
+- [**get_binary**](../basic_json/get_binary.md) - get a reference to the stored binary value
+- [**binary_t**](../basic_json/binary_t.md) - type for binary arrays
+- [Binary formats](../../features/binary_formats/index.md) - formats that can store binary values
+
 ## Version history
 
 - Added in version 3.8.0.

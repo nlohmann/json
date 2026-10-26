@@ -23,8 +23,14 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <cerrno>
+#include <cstdlib>
+#include <limits>
 #include <map>
+#include <random>
 #include <sstream>
+#include <string>
+#include <vector>
 
 TEST_CASE("JSON pointers")
 {
@@ -420,6 +426,27 @@ TEST_CASE("JSON pointers")
 
             CHECK_THROWS_WITH_AS(json({{"/list/0", 1}, {"/list/1", 2}, {"/list/three", 3}}).unflatten(),
             "[json.exception.parse_error.109] parse error: array index 'three' is not a number", json::parse_error&);
+
+            // a single-character token that is not a digit is reported like a
+            // longer one (parse_error.109), not as unresolved (out_of_range.404)
+            CHECK_THROWS_WITH_AS(j["/x"_json_pointer] = 1,
+                                 "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j_const["/x"_json_pointer] == 1,
+                                 "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j.at("/x"_json_pointer) = 1,
+                                 "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j_const.at("/x"_json_pointer) == 1,
+                                 "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j.at("/+"_json_pointer),
+                                 "[json.exception.parse_error.109] parse error: array index '+' is not a number", json::parse_error&);
+            CHECK(!j.contains("/x"_json_pointer));
+            CHECK(!j_const.contains("/x"_json_pointer));
+            CHECK_THROWS_WITH_AS(json({{"/list/0", 1}, {"/list/x", 2}}).unflatten(),
+            "[json.exception.parse_error.109] parse error: array index 'x' is not a number", json::parse_error&);
+
+            // "-" is a valid reference token, so it is still reported as unresolved
+            CHECK_THROWS_WITH_AS(json({{"/list/0", 1}, {"/list/-", 2}}).unflatten(),
+            "[json.exception.out_of_range.404] unresolved reference token '-'", json::out_of_range&);
 
             // assign to "-"
             j["/-"_json_pointer] = 99;
@@ -1004,4 +1031,354 @@ TEST_CASE("unescaping keeps a '~' that does not start an escape sequence")
     s = "~0~1~";
     nlohmann::detail::unescape(s);
     CHECK(s == "~/~");
+}
+
+TEST_CASE("flatten of structured values")
+{
+    SECTION("values nested too deeply for the call stack (#5393)")
+    {
+        // flatten() used to recurse once per nesting level
+        const std::size_t depth = 100000;
+        for (const bool objects :
+                {
+                    false, true
+                })
+        {
+            CAPTURE(objects)
+            std::string text;
+            std::string path;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += objects ? "{\"a\":" : "[";
+                path += objects ? "/a" : "/0";
+            }
+            text += "0";
+            text += std::string(depth, objects ? '}' : ']');
+            const auto value = json::parse(text);
+
+            const auto flat = value.flatten();
+            REQUIRE(flat.size() == 1);
+            REQUIRE(flat.begin().key().size() == path.size());
+            CHECK(flat.begin().key() == path);
+            CHECK(flat.begin().value() == 0);
+
+            // unflatten() is linear in the depth, so the value roundtrips
+            CHECK(flat.unflatten() == value);
+        }
+    }
+
+    SECTION("unflatten of a deeply nested pointer")
+    {
+        const std::size_t depth = 100000;
+        for (const bool objects :
+                {
+                    false, true
+                })
+        {
+            CAPTURE(objects)
+            std::string path;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                path += objects ? "/a" : "/0";
+            }
+
+            json flat = json::object();
+            flat[path] = 1;
+            const json value = flat.unflatten();
+
+            // walk down iteratively
+            std::size_t levels = 0;
+            const json* current = &value;
+            while (objects ? current->is_object() : current->is_array())
+            {
+                REQUIRE(current->size() == 1);
+                current = objects ? &current->at("a") : &current->at(0);
+                ++levels;
+            }
+            CHECK(levels == depth);
+            CHECK(*current == 1);
+        }
+    }
+
+    SECTION("unflatten does not depend on the iteration order")
+    {
+        // the "0" key comes after its sibling in iteration order
+        const nlohmann::ordered_json flat_array = nlohmann::ordered_json::parse(R"({"/a/1": 2, "/a/0": 1})");
+        CHECK(flat_array.unflatten() == nlohmann::ordered_json::parse(R"({"a": [1, 2]})"));
+
+        const nlohmann::ordered_json flat_object = nlohmann::ordered_json::parse(R"({"/b/1": 2})");
+        CHECK(flat_object.unflatten() == nlohmann::ordered_json::parse(R"({"b": {"1": 2}})"));
+    }
+
+    SECTION("objects and arrays interleaved")
+    {
+        const json value =
+        {
+            {"a", {1, {{"b", json::array()}, {"c", json::object()}}, json::array({{{"x~/", {true, nullptr}}}})}},
+            {"a/b", {{"~", 1}}},
+            {"z", "s"}
+        };
+
+        const json expected =
+        {
+            {"/a/0", 1},
+            {"/a/1/b", nullptr},
+            {"/a/1/c", nullptr},
+            {"/a/2/0/x~0~1/0", true},
+            {"/a/2/0/x~0~1/1", nullptr},
+            {"/a~1b/~0", 1},
+            {"/z", "s"}
+        };
+
+        CHECK(value.flatten() == expected);
+    }
+
+    SECTION("order of the entries of an ordered_json")
+    {
+        const auto value = nlohmann::ordered_json::parse(
+                               R"({"z":"s","a/b":{"~":1,"k":[]},"a":[1,{"c":{},"b":[]},[{"x~/":[true,null],"w":2}]]})");
+
+        const auto flat = value.flatten();
+        CHECK(flat.dump() ==
+              R"({"/z":"s","/a~1b/~0":1,"/a~1b/k":null,"/a/0":1,"/a/1/c":null,"/a/1/b":null,"/a/2/0/x~0~1/0":true,"/a/2/0/x~0~1/1":null,"/a/2/0/w":2})");
+    }
+}
+
+TEST_CASE("flatten of ordered_json")
+{
+    using nlohmann::ordered_json;
+
+    SECTION("keeps the document order of the leaves")
+    {
+        const ordered_json j = ordered_json::parse(R"({
+            "z": 1, "a": {"y": [true, null, {}], "b": "x", "": []},
+            "m~n": 2.5, "o/p": {"k": {}}, "0": [[1], [2, 3]]
+        })");
+
+        const ordered_json flat = j.flatten();
+        std::vector<std::string> keys;
+        for (const auto& el : flat.items())
+        {
+            keys.push_back(el.key());
+        }
+        const std::vector<std::string> expected =
+        {
+            "/z", "/a/y/0", "/a/y/1", "/a/y/2", "/a/b", "/a/", "/m~0n", "/o~1p/k", "/0/0/0", "/0/1/0", "/0/1/1"
+        };
+        CHECK(keys == expected);
+        CHECK(flat.size() == expected.size());
+        CHECK(flat["/m~0n"] == 2.5);
+        CHECK(flat["/a/y/2"].is_null());
+    }
+
+    SECTION("round-trips and agrees with json")
+    {
+        ordered_json j;
+        for (int i = 0; i < 200; ++i)
+        {
+            j["k" + std::to_string(i)] = {{"v", i}, {"l", {i, i + 1, "s"}}};
+        }
+        const ordered_json flat = j.flatten();
+        CHECK(flat.size() == 800);
+        CHECK(flat.unflatten() == j);
+
+        // same entries as for a sorted object
+        const nlohmann::json plain = nlohmann::json::parse(j.dump());
+        CHECK(nlohmann::json::parse(flat.dump()) == plain.flatten());
+    }
+
+    SECTION("primitive and empty root")
+    {
+        CHECK(ordered_json(1).flatten() == ordered_json({{"", 1}}));
+        CHECK(ordered_json::array().flatten() == ordered_json({{"", nullptr}}));
+    }
+}
+namespace
+{
+// reference implementation of the array index rules (RFC 6901, Sect. 4) based on strtoull
+enum class index_class
+{
+    ok,
+    leading_zero,
+    not_a_number,
+    unresolved,
+    exceeds_size_type
+};
+
+index_class classify_index(const std::string& s, std::size_t& idx)
+{
+    if (s.size() > 1 && s[0] == '0')
+    {
+        return index_class::leading_zero;
+    }
+    if (!s.empty() && s != "-" && !(s[0] >= '0' && s[0] <= '9'))
+    {
+        return index_class::not_a_number;
+    }
+    char* end = nullptr;
+    errno = 0;
+    const unsigned long long res = std::strtoull(s.c_str(), &end, 10); // NOLINT(runtime/int)
+    if (end == s.c_str() || errno == ERANGE || static_cast<std::size_t>(end - s.c_str()) != s.size())
+    {
+        return index_class::unresolved;
+    }
+    if (res >= static_cast<unsigned long long>((std::numeric_limits<std::size_t>::max)())) // NOLINT(runtime/int)
+    {
+        return index_class::exceeds_size_type;
+    }
+    idx = static_cast<std::size_t>(res);
+    return index_class::ok;
+}
+
+// the observable behavior of json_pointer::at() and contains() for an array index token
+void check_index_token(const std::string& token)
+{
+    const json array = {10, 20, 30};
+    const json::json_pointer ptr("/" + token);
+
+    std::size_t idx = 0;
+    const auto cls = classify_index(token, idx);
+    const bool exists = cls == index_class::ok && idx < array.size();
+
+    CAPTURE(token)
+    CHECK(array.contains(ptr) == (exists && token != "-"));
+
+    if (token == "-")
+    {
+        CHECK_THROWS_AS(array.at(ptr), json::out_of_range&);
+        return;
+    }
+
+    switch (cls)
+    {
+        case index_class::leading_zero:
+            CHECK_THROWS_AS(array.at(ptr), json::parse_error&);
+            break;
+        case index_class::not_a_number:
+            CHECK_THROWS_AS(array.at(ptr), json::parse_error&);
+            break;
+        case index_class::unresolved:
+        case index_class::exceeds_size_type:
+            CHECK_THROWS_AS(array.at(ptr), json::out_of_range&);
+            break;
+        case index_class::ok:
+        default:
+            if (exists)
+            {
+                CHECK(array.at(ptr) == array[idx]);
+            }
+            else
+            {
+                CHECK_THROWS_AS(array.at(ptr), json::out_of_range&);
+            }
+            break;
+    }
+}
+} // namespace
+
+TEST_CASE("JSON pointer array index tokens match strtoull semantics")
+{
+    SECTION("boundary values")
+    {
+        const std::string max_digits = std::to_string((std::numeric_limits<std::size_t>::max)());
+        const std::vector<std::string> tokens =
+        {
+            "", "-", "0", "1", "2", "3", "00", "01", "007", "+1", "-1", " 1", "1 ", "1a", "a1", "0x1", "1e1", "1.0",
+            "999999999", "1000000000", "99999999999999999", "999999999999999999", "1000000000000000000",
+            "9999999999999999999", "18446744073709551614", max_digits, "18446744073709551616",
+            "99999999999999999999999", "000000000000000000000"
+        };
+        for (const auto& token : tokens)
+        {
+            check_index_token(token);
+        }
+    }
+
+    SECTION("random tokens")
+    {
+        std::mt19937 gen(42); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+        const std::string alphabet = "0123456789012345678901234567890123456789-+ ex";
+        for (int i = 0; i < 5000; ++i)
+        {
+            std::string token(gen() % 23, '0');
+            for (auto& c : token)
+            {
+                c = alphabet[gen() % alphabet.size()];
+            }
+            check_index_token(token);
+        }
+    }
+}
+
+TEST_CASE("JSON pointer operations on pointers with escaped tokens")
+{
+    const std::vector<std::string> strings =
+    {
+        "", "/", "//", "/a", "/a/b", "/a~1b", "/~0", "/~01", "/~10", "/a~0~1/b/", "/0/1/2", "/ ", "/a/", "/~1/~0"
+    };
+
+    for (const auto& str : strings)
+    {
+        CAPTURE(str)
+        const json::json_pointer ptr(str);
+        CHECK(ptr.to_string() == str);
+        CHECK(ptr / "x" / "y" / std::size_t{3} == json::json_pointer(str + "/x/y/3"));
+        CHECK(ptr.parent_pointer() == (str.empty() ? ptr : json::json_pointer(str.substr(0, str.rfind('/')))));
+
+        // comparison with a string, in place, and with every other pointer
+#if !defined(JSON_TEST_DEPRECATED_FUNCTIONS_DELETED)
+        for (const auto& other : strings)
+        {
+            CAPTURE(other)
+            CHECK((ptr == other) == (str == other));
+            CHECK((other == ptr) == (str == other));
+            CHECK((ptr != other) == (str != other));
+        }
+        CHECK_THROWS_AS(ptr == "x", json::parse_error&);
+        CHECK_THROWS_AS(ptr == "/~", json::parse_error&);
+        CHECK_THROWS_AS(ptr == "/b/~2", json::parse_error&);
+#endif
+    }
+}
+
+TEST_CASE("JSON pointer lookups")
+{
+    json j = {{"a", {{"b", {1, 2, 3}}}}, {"", 7}, {"~/", {{"x", nullptr}}}};
+    const json& cj = j;
+
+    CHECK(cj[json::json_pointer("/a/b/2")] == 3);
+    CHECK(cj.at(json::json_pointer("/a/b/1")) == 2);
+    CHECK(cj.at(json::json_pointer("/")) == 7);
+    CHECK(cj.contains(json::json_pointer("/~0~1/x")));
+    CHECK(!cj.contains(json::json_pointer("/a/c")));
+    CHECK(cj.value(json::json_pointer("/a/b/0"), 5) == 1);
+    CHECK(cj.value(json::json_pointer("/a/b/3"), 5) == 5);
+    CHECK(cj.value(json::json_pointer("/a/zz"), 5) == 5);
+
+    CHECK_THROWS_AS(cj.at(json::json_pointer("/a/c")), json::out_of_range&);
+    CHECK_THROWS_AS(cj.at(json::json_pointer("/a/b/3")), json::out_of_range&);
+
+    // non-const access reuses existing entries and creates missing ones
+    j[json::json_pointer("/a/b/1")] = 20;
+    j[json::json_pointer("/n/m")] = 1;
+    CHECK(j["a"]["b"] == json({1, 20, 3}));
+    CHECK(j["n"]["m"] == 1);
+}
+
+TEST_CASE("JSON patch with moves and copies")
+{
+    json doc = {{"a", {{"b", {1, 2, 3}}}}, {"c", {{"d", "x"}}}};
+
+    CHECK(doc.patch(json::parse(R"([{"op":"move","from":"/a/b","path":"/c/e"}])")) ==
+          json::parse(R"({"a":{},"c":{"d":"x","e":[1,2,3]}})"));
+    CHECK(doc.patch(json::parse(R"([{"op":"copy","from":"/a/b","path":"/c/e"}])")) ==
+          json::parse(R"({"a":{"b":[1,2,3]},"c":{"d":"x","e":[1,2,3]}})"));
+    CHECK(doc.patch(json::parse(R"([{"op":"move","from":"/a/b/0","path":"/a/b/2"}])")) ==
+          json::parse(R"({"a":{"b":[2,3,1]},"c":{"d":"x"}})"));
+
+    // a failing move leaves a copy-patched document untouched
+    CHECK_THROWS_AS(doc.patch(json::parse(R"([{"op":"move","from":"","path":""}])")), json::out_of_range&);
+    json inplace = doc;
+    CHECK_THROWS_AS(inplace.patch_inplace(json::parse(R"([{"op":"move","from":"","path":""}])")), json::out_of_range&);
+    CHECK(inplace == doc);
 }
