@@ -262,7 +262,7 @@ void f(basic_json_view<BasicJsonType, view_mode::editable> v);
 template<typename BasicJsonType>
 void f(basic_json_view<BasicJsonType, view_mode::read_only> v);
 
-// either
+// views of either document type
 template<typename BasicJsonType, view_mode Mode>
 void f(basic_json_view<BasicJsonType, Mode> v);
 ```
