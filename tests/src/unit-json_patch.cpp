@@ -1515,6 +1515,24 @@ TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
 #endif
     }
 
+    SECTION("null parent")
+    {
+        json const doc = {{"foo", nullptr}};
+        json const patch = {{{"op", "add"}, {"path", "/foo/bar"}, {"value", 1}}};
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.411] (/foo) cannot add value: the JSON Patch 'add' target's parent is of type null, but must be an object or array", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type null, but must be an object or array", json::out_of_range&);
+#endif
+    }
+
+    SECTION("null document")
+    {
+        json const doc = nullptr;
+        json const patch = {{{"op", "add"}, {"path", "/-"}, {"value", 1}}};
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type null, but must be an object or array", json::out_of_range&);
+    }
+
     SECTION("number parent")
     {
         json const doc = {{"foo", 1}};
