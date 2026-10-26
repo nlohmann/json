@@ -1311,7 +1311,7 @@ TEST_CASE("BSON declared document size bounds the content")
     // records the events that a SAX parser receives
     struct recorder : nlohmann::json_sax<json>
     {
-        std::string events {};
+        std::string events;
 
         bool null() override
         {
