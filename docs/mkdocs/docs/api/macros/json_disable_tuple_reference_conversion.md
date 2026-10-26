@@ -72,7 +72,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     ```cpp
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {
@@ -89,7 +89,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     #define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 1
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {

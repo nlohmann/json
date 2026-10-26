@@ -6,7 +6,9 @@ JSON for Modern C++ is a header-only C++11 library that turns JSON into a first-
 magic of modern C++ so that creating, reading, and modifying JSON values feels as natural as it does in languages like
 Python. The whole library is available as a single header, `json.hpp`, with no dependencies, no subproject, and no
 complex build system to set up; a companion header, `json_fwd.hpp`, provides forward declarations to keep compile times
-down. See [header-only integration](integration/index.md) for details. It is heavily unit-tested with 100% code
+down, `<nlohmann/json_literals.hpp>` holds the user-defined string literals on their own, and
+`<nlohmann/json_view.hpp>` adds zero-copy views and editable documents. See
+[header-only integration](integration/index.md) for details. It is heavily unit-tested with 100% code
 coverage, checked with Valgrind and the Clang Sanitizers for memory leaks, and continuously fuzz-tested by Google
 OSS-Fuzz.
 
@@ -18,7 +20,7 @@ Add the single header to your project and use the library like this:
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -28,6 +30,10 @@ int main()
     // access and modify values
     j["name"] = "Niels";
     j["list"] = {1, 0, 2};
+
+    // read a value into a C++ variable and use it
+    double pi = j["pi"].get<double>();
+    std::cout << "2 * pi = " << 2 * pi << '\n';
 
     // serialize with an indent of 4 spaces
     std::cout << j.dump(4) << '\n';
@@ -58,7 +64,8 @@ Conda, and more), and pkg-config.
 
     ---
 
-    Creating, parsing, accessing, and serializing JSON values, JSON Pointer/Patch, binary formats, and more.
+    Creating, parsing, accessing, and serializing JSON values, JSON Pointer/Patch, binary formats, zero-copy views,
+    and more.
 
     [:octicons-arrow-right-24: Features](features/index.md)
 
@@ -74,7 +81,8 @@ Conda, and more), and pkg-config.
 
     ---
 
-    The complete reference for `basic_json` and its member functions, types, and related classes.
+    The complete reference for `basic_json` and its member functions, types, and related classes, as well as for
+    `json_document` and `json_view`.
 
     [:octicons-arrow-right-24: API documentation](api/basic_json/index.md)
 
@@ -92,7 +100,7 @@ Conda, and more), and pkg-config.
 
     What changed in each release, with links to the relevant documentation.
 
-    [:octicons-arrow-right-24: Releases](home/releases.md)
+    [:octicons-arrow-right-24: Releases](home/releases/index.md)
 
 -   :octicons-people-24:{ .lg .middle } __Community__
 
@@ -108,7 +116,7 @@ Conda, and more), and pkg-config.
 
     This documentation is built from the `develop` branch and may describe changes that are not part of a release
     yet. Their version numbers are followed by an <span class="unreleased-version">unreleased</span> badge; see
-    [Releases](home/releases.md) for what shipped in each version.
+    [Releases](home/releases/index.md) for what shipped in each version.
 
 The library is licensed under the [MIT License](home/license.md). The source code, issue tracker, and discussions
 are on [GitHub](https://github.com/nlohmann/json).

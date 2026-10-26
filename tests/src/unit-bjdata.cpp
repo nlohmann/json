@@ -19,7 +19,7 @@
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
+using nlohmann::ordered_json;
 
 #include <algorithm>
 #include <climits>

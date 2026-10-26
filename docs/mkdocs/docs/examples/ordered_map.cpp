@@ -10,7 +10,7 @@ void output(const char* prefix, const Map& m)
     {
         std::cout << element.first << ":" << element.second << ' ';
     }
-    std::cout << "}" << std::endl;
+    std::cout << "}" << '\n';
 }
 
 int main()

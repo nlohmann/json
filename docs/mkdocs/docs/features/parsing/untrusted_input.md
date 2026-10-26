@@ -26,9 +26,11 @@ several alternatives; see [Parsing and exceptions](parse_exceptions.md) for the 
   [example](parse_exceptions.md#user-defined-sax-interface) that overrides it to print instead of throw.
 
 If exceptions are unavailable entirely (`-fno-exceptions`, or [`JSON_NOEXCEPTION`](../../api/macros/json_noexception.md)
-defined), every `#!cpp throw` in the library becomes a call to `std::abort()` -- there is no way to recover from a
-parse error of untrusted input in that configuration; see
-[Switch off exceptions](../../home/exceptions.md#switch-off-exceptions) for the details and for overriding this with
+defined), every `#!cpp throw` in the library becomes a call to `std::abort()`. The alternatives above do not throw, so
+`parse()` with `allow_exceptions` set to `#!cpp false` (and likewise `accept()` and the `from_*` functions with
+`allow_exceptions` set to `#!cpp false`) can still reject invalid input in that configuration; a plain `parse()` call
+aborts on invalid input. See [Working without exceptions](../no_exceptions.md) and
+[Switch off exceptions](../../home/exceptions.md#switch-off-exceptions) for the details and for overriding the abort with
 `JSON_THROW_USER`.
 
 ## Nesting depth
@@ -81,6 +83,9 @@ Invalid UTF-8 is rejected while parsing, not just while serializing:
 
 - In JSON text, an ill-formed UTF-8 byte in a string is a
   [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) ("invalid string: ill-formed UTF-8 byte").
+- In UTF-16 or UTF-32 input, an ill-formed sequence is a
+  [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) as well: a lone surrogate, a high surrogate
+  that is not followed by its low surrogate, and a code point above `U+10FFFF` are all rejected.
 - In a binary format, a string that is not valid UTF-8 is a
   [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113).
 

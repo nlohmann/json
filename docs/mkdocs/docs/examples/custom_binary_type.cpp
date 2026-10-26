@@ -10,6 +10,6 @@ int main()
 {
     const auto j = custom_json::binary({0x01, 0x02, 0x03});
 
-    std::cout << j.dump() << std::endl;
-    std::cout << std::boolalpha << (custom_json::from_cbor(custom_json::to_cbor(j)) == j) << std::endl;
+    std::cout << j.dump() << '\n';
+    std::cout << std::boolalpha << (custom_json::from_cbor(custom_json::to_cbor(j)) == j) << '\n';
 }

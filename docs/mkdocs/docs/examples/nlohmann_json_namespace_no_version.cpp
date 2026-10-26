@@ -9,5 +9,5 @@
 
 int main()
 {
-    std::cout << QUOTE(NLOHMANN_JSON_NAMESPACE) << std::endl;
+    std::cout << QUOTE(NLOHMANN_JSON_NAMESPACE) << '\n';
 }

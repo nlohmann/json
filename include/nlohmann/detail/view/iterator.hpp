@@ -110,7 +110,7 @@ class view_iterator
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_value_offset == 0))
         {
-            throw_invalid_iterator(207, "cannot use key() for non-object iterators");
+            throw_invalid_iterator(exception_id::iterator_key_not_object, "cannot use key() for non-object iterators");
         }
         return string_view_t(m_doc->str(*m_pos), m_pos->len);
     }

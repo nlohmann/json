@@ -1,9 +1,9 @@
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
-using ordered_json_document = nlohmann::ordered_json_document;
-using json = nlohmann::json;
+using nlohmann::json_document;
+using nlohmann::ordered_json_document;
+using nlohmann::json;
 
 int main()
 {

@@ -1,9 +1,9 @@
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_editable_document = nlohmann::json_editable_document;
-using json_editable_view = nlohmann::json_editable_view;
+using nlohmann::json;
+using nlohmann::json_editable_document;
+using nlohmann::json_editable_view;
 
 int main()
 {

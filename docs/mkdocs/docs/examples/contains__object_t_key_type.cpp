@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -14,5 +14,5 @@ int main()
     std::cout << std::boolalpha <<
               "j_object contains 'key': " << j_object.contains("key") << '\n' <<
               "j_object contains 'another': " << j_object.contains("another") << '\n' <<
-              "j_array contains 'key': " << j_array.contains("key") << std::endl;
+              "j_array contains 'key': " << j_array.contains("key") << '\n';
 }

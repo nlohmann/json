@@ -64,7 +64,7 @@ The default value is `0` (disabled, the behavior of version 3.12.0 and earlier i
     ```cpp
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {
@@ -81,7 +81,7 @@ The default value is `0` (disabled, the behavior of version 3.12.0 and earlier i
     #define JSON_STRICT_BINARY_UTF8 1
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {

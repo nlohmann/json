@@ -44,4 +44,4 @@ Constant.
 
 ## Version history
 
-Since version 3.8.0.
+Added in version 3.8.0.

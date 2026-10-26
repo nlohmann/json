@@ -16,6 +16,18 @@
    version="1.1"
    inkscape:version="0.48.4 r9939"
    sodipodi:docname="range-begin-end.svg">
+  <style type="text/css">
+    @media (prefers-color-scheme: dark) {
+      [style*="stroke:#000000"] { stroke: #e6e6e6 !important; }
+      [style*="fill:#000000"] { fill: #e6e6e6 !important; }
+      [style*="fill:#ffffff"] { fill: #1e1e1e !important; }
+      [style*="fill:#0000ff"] { fill: #7aa2ff !important; }
+      marker path { fill: #e6e6e6 !important; stroke: #e6e6e6 !important; }
+      stop[style*="#c1b1b1"] { stop-color: #5a5a5a !important; }
+      stop[style*="#b6b6b6"] { stop-color: #4a4a4a !important; }
+      stop[style*="#e3e3e3"] { stop-color: #2a2a2a !important; }
+    }
+  </style>
   <defs
      id="defs4">
     <marker

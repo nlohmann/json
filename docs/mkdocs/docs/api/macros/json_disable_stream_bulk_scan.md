@@ -92,7 +92,7 @@ The default value is `0`: streams are scanned in bulk.
     #include <sstream>
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {
@@ -115,7 +115,7 @@ The default value is `0`: streams are scanned in bulk.
     #include <sstream>
     #include <nlohmann/json.hpp>
 
-    using json = nlohmann::json;
+    using nlohmann::json;
 
     int main()
     {

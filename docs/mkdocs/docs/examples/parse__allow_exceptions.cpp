@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -19,7 +19,7 @@ int main()
     }
     catch (const json::parse_error& e)
     {
-        std::cout << e.what() << std::endl;
+        std::cout << e.what() << '\n';
     }
 
     // parse without exceptions
@@ -27,10 +27,10 @@ int main()
 
     if (j.is_discarded())
     {
-        std::cout << "the input is invalid JSON" << std::endl;
+        std::cout << "the input is invalid JSON" << '\n';
     }
     else
     {
-        std::cout << "the input is valid JSON: " << j << std::endl;
+        std::cout << "the input is valid JSON: " << j << '\n';
     }
 }

@@ -1,7 +1,9 @@
 # Creating JSON values
 
 There are several ways to create a JSON value in memory. This page gives an overview; to read a value from JSON text
-instead, see [parsing](parsing/index.md).
+instead, see [parsing](parsing/index.md). A JSON text can also be parsed into a
+[document](../api/basic_json_document/index.md) and read through a [view](../api/basic_json_view/index.md) instead of
+into a value; see [Zero-copy JSON views](json_view.md).
 
 ## From C++ values
 
@@ -59,6 +61,25 @@ with a string as the first element is treated as an object, everything else as a
     [FAQ](../home/faq.md#brace-initialization-yields-arrays) for details and the opt-in
     [`JSON_BRACE_INIT_COPY_SEMANTICS`](../api/macros/json_brace_init_copy_semantics.md) macro.
 
+### What does this produce?
+
+The following table shows how some common spellings are interpreted. When in doubt, use `#!cpp json::array()`,
+`#!cpp json::object()`, or the `#!cpp json(value)` form with parentheses.
+
+| code                                            | result                       | note                                         |
+|-------------------------------------------------|------------------------------|----------------------------------------------|
+| `#!cpp json j = {};` / `#!cpp json j{};`        | `#!json null`                | use `json::object()` or `json::array()`      |
+| `#!cpp json j = json::object();`                | `#!json {}`                  |                                              |
+| `#!cpp json j = json::array();`                 | `#!json []`                  |                                              |
+| `#!cpp json j(true);`                           | `#!json true`                | parentheses create the value itself          |
+| `#!cpp json j = {true};`                        | `#!json [true]`              | braces create a one-element array (`#!cpp json j{true};` depends on the compiler, see the [FAQ](../home/faq.md#brace-initialization-yields-arrays)) |
+| `#!cpp json j = {{"a", 1}};`                    | `#!json {"a":1}`             | all elements are `[string, value]` pairs: object |
+| `#!cpp json j = {{"a", 1}, {"b"}};`             | `#!json [["a",1],["b"]]`     | one element is not a pair: array             |
+| `#!cpp json j = {{"a", 1}, 2};`                 | `#!json [["a",1],2]`         | a plain value among pairs: array             |
+| `#!cpp json j = {{"a", 1, 2}};`                 | `#!json [["a",1,2]]`         | a three-element list is not a pair: array    |
+| `#!cpp json j = "{\"a\":1}";`                   | `#!json "{\"a\":1}"`           | a string **value**; it is not parsed         |
+| `#!cpp json j = json::parse("{\"a\":1}");`      | `#!json {"a":1}`             | parse text with `parse` or `_json`           |
+
 ## Building incrementally
 
 A value can also be built up piece by piece. Accessing a non-existing object key or array index with
@@ -101,3 +122,4 @@ string `#!json "42"`.
 - [`operator""_json`](../api/operator_literal_json.md) - the `_json` literal
 - [Converting values](conversions.md) - which C++ types can be used
 - [Parsing](parsing/index.md) - create a value from JSON text
+- [Zero-copy JSON views](json_view.md) - create a document and a view from JSON text instead of a value
