@@ -94,7 +94,9 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
     If the **non-const** version throws, the value is left unchanged: values it created for earlier reference tokens
     of `ptr` are removed again. This also holds for exceptions such as `#!cpp std::bad_alloc` or
-    `#!cpp std::length_error` thrown while padding an array up to a very large index.
+    `#!cpp std::length_error` thrown while padding an array up to a very large index. With custom
+    [template parameters](../../features/types/template_parameters.md), this requires that `erase()` of the object and
+    array types and the move operations of the custom base class do not throw.
 
 ## Complexity
 

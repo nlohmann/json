@@ -23585,7 +23585,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // all_of, copy
+#include <algorithm> // copy
 #include <array> // array
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
@@ -23597,6 +23597,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO
+#include <iterator> // next
 #include <limits> // max
 #include <string> // string
 #include <utility> // move
@@ -24318,15 +24319,32 @@ class json_pointer
     removes everything created after it, so the value is left as it was
     (strong exception safety). The guard needs no try/catch and therefore also
     compiles with JSON_NOEXCEPTION.
+
+    Reverting the change must not throw, as it happens in a destructor. It
+    erases the inserted member by its iterator (no key is converted or
+    compared, nothing is allocated), erases the added elements at the end of
+    the array, or swaps the null value back. This holds for std::map,
+    std::vector, ordered_map, and every object_t, array_t, and
+    json_base_class_t whose erase() and move operations do not throw.
+    Between recording and reverting, nothing is inserted into or erased from
+    the object or array, so the iterator stays valid.
     */
     template<typename BasicJsonType>
     class get_unchecked_rollback
     {
       public:
-        /// record the change that resolving the reference token @a token makes to @a value
-        get_unchecked_rollback(BasicJsonType* value, const string_t* token)
+        using object_iterator = typename BasicJsonType::object_t::iterator;
+
+        /// record that @a member was inserted into the object @a value
+        get_unchecked_rollback(BasicJsonType* value, const object_iterator& member)
             : m_value(value)
-            , m_key(token)
+            , m_member(member)
+            , m_change(change::key_inserted)
+        {}
+
+        /// record the change that the next reference token makes to the null value or array @a value
+        explicit get_unchecked_rollback(BasicJsonType* value)
+            : m_value(value)
         {
             if (value->is_null())
             {
@@ -24335,10 +24353,6 @@ class json_pointer
                 // assigning an array or object to it would have left there
                 m_saved_null.swap(*value);
                 m_change = change::null_converted;
-            }
-            else if (value->is_object())
-            {
-                m_change = change::key_inserted;
             }
             else
             {
@@ -24377,11 +24391,14 @@ class json_pointer
                     m_value->swap(m_saved_null);
                     break;
                 case change::key_inserted:
-                    m_value->m_data.m_value.object->erase(*m_key);
+                    m_value->m_data.m_value.object->erase(m_member);
                     break;
                 case change::array_grown:
-                    m_value->m_data.m_value.array->resize(m_old_size);
+                {
+                    auto& elements = *m_value->m_data.m_value.array;
+                    elements.erase(std::next(elements.begin(), static_cast<typename BasicJsonType::difference_type>(m_old_size)), elements.end());
                     break;
+                }
                 case change::none:
                 default:
                     break;
@@ -24397,7 +24414,7 @@ class json_pointer
         };
 
         BasicJsonType* m_value;
-        const string_t* m_key;
+        object_iterator m_member {};
         typename BasicJsonType::size_type m_old_size = 0;
         change m_change = change::none;
         BasicJsonType m_saved_null {};
@@ -24792,9 +24809,13 @@ class json_pointer
     array is strongly exception safe by itself; any other change is made by
     @ref get_unchecked_create, which undoes it if a later step throws.
 
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.404  if the JSON pointer can not be resolved
+    @throw parse_error.106   if an array index of an existing array begins with '0'
+    @throw parse_error.109   if an array index of an existing array was not a number
+    @throw out_of_range.404  if the JSON pointer can not be resolved, or if an
+                             array index is too large for strtoull
+    @throw out_of_range.410  if an array index exceeds size_type
+    @throw std::length_error if padding an array exceeds its maximal size
+    @throw std::bad_alloc    if an allocation fails
     */
     template<typename BasicJsonType>
     BasicJsonType& get_unchecked(BasicJsonType* ptr) const
@@ -24885,24 +24906,104 @@ class json_pointer
     @ref get_unchecked_rollback); all later tokens only change values created
     here.
 
+    If the emplace() of the object type finds a member that the lookup in @ref
+    get_unchecked did not find (the two disagree, e.g. for fifo_map), nothing
+    is inserted, and the walk continues with that member as in @ref
+    get_unchecked, which is what basic_json::operator[] does.
+
     @param[in] ptr    the value the reference token @a first is applied to
     @param[in] first  the first reference token to resolve (an element of
                       @ref reference_tokens)
     @param[in] end    the end of @ref reference_tokens
 
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
+    @throw parse_error.106   if an array index of an existing array begins with
+                             '0' (only after emplace() found a member, see above)
+    @throw parse_error.109   if an array index of an existing array was not a
+                             number (only after emplace() found a member)
+    @throw out_of_range.404  if an array index is too large for strtoull, or (only
+                             after emplace() found a member) if the JSON pointer
+                             can not be resolved
+    @throw out_of_range.410  if an array index exceeds size_type
+    @throw std::length_error if padding an array exceeds its maximal size
+    @throw std::bad_alloc    if an allocation fails
     */
     template<typename BasicJsonType>
     JSON_HEDLEY_NEVER_INLINE static BasicJsonType& get_unchecked_create(BasicJsonType* ptr, const string_t* first, const string_t* end)
     {
-        get_unchecked_rollback<BasicJsonType> rollback(ptr, first);
-        BasicJsonType& result = create_values(ptr, first, end);
+        const auto* token = first;
+        while (ptr->is_object())
+        {
+            const auto old_capacity = ptr->container_capacity();
+            const auto inserted = ptr->m_data.m_value.object->emplace(*token, nullptr);
+            if (JSON_HEDLEY_LIKELY(inserted.second))
+            {
+                get_unchecked_rollback<BasicJsonType> rollback(ptr, inserted.first);
+                BasicJsonType& result = create_values(&ptr->set_parent_after_insert(inserted.first->second, old_capacity), token + 1, end);
+                rollback.commit();
+                return result;
+            }
+
+            // nothing was inserted: walk existing values from the member
+            // emplace() found on, like get_unchecked
+            ptr = &inserted.first->second;
+            while (++token != end)
+            {
+                if (ptr->is_object())
+                {
+                    auto& members = *ptr->m_data.m_value.object;
+                    const auto it = object_search(members, *token);
+                    if (!object_search_found(members, it, *token))
+                    {
+                        break;
+                    }
+                    ptr = &it->second;
+                }
+                else if (ptr->is_array())
+                {
+                    if (is_dash(*token))
+                    {
+                        break;
+                    }
+                    const auto idx = array_index<BasicJsonType>(*token);
+                    if (idx >= ptr->m_data.m_value.array->size())
+                    {
+                        break;
+                    }
+                    ptr = &(*ptr->m_data.m_value.array)[idx];
+                }
+                else if (ptr->is_null())
+                {
+                    break;
+                }
+                else
+                {
+                    // primitive value with a reference token left
+                    throw_unresolved(*token, ptr);
+                }
+            }
+            if (token == end)
+            {
+                return *ptr;
+            }
+        }
+
+        get_unchecked_rollback<BasicJsonType> rollback(ptr);
+        BasicJsonType& result = create_values(ptr, token, end);
         rollback.commit();
         return result;
     }
 
-    /// the loop of @ref get_unchecked_create
+    /*!
+    @brief the loop of @ref get_unchecked_create
+
+    @a ptr is a null value or an array. Every value created here is a fresh
+    one, so every object a key is added to is empty.
+
+    @throw out_of_range.404  if an array index is too large for strtoull
+    @throw out_of_range.410  if an array index exceeds size_type
+    @throw std::length_error if padding an array exceeds its maximal size
+    @throw std::bad_alloc    if an allocation fails
+    */
     template<typename BasicJsonType>
     static BasicJsonType& create_values(BasicJsonType* ptr, const string_t* first, const string_t* end)
     {
@@ -24913,23 +25014,11 @@ class json_pointer
             // convert null values to arrays or objects before continuing
             if (ptr->is_null())
             {
-                // check if the reference token is a valid array index, that is
-                // a nonempty sequence of digits without a leading '0'
-                // (cf. RFC 6901, Sect. 4); tokens that could never be a valid
-                // array index (such as "01" or "") are treated as object keys
-                const bool nums = !reference_token.empty()
-                                  && (reference_token.size() == 1 || reference_token[0] != '0')
-                                  && std::all_of(reference_token.begin(), reference_token.end(),
-                                                 [](const unsigned char x)
-                {
-                    return std::isdigit(x);
-                });
-
                 // change value to an array for array indices or "-" or to an
                 // object otherwise; every null value here is a fresh one (see
                 // get_unchecked_rollback), so converting it in place leaves
                 // the same value as assigning an array or object to it
-                if (nums || is_dash(reference_token))
+                if (is_array_index_token(reference_token) || is_dash(reference_token))
                 {
                     ptr->template convert_null_to<typename BasicJsonType::array_t>();
                 }
@@ -24941,14 +25030,13 @@ class json_pointer
 
             if (ptr->is_object())
             {
-                // the key is missing: the object is new, or get_unchecked did
-                // not find the key
+                // the object is new and empty
                 ptr = &object_add(*ptr, reference_token);
             }
             else
             {
-                // only the first value is not created here, and it is no
-                // primitive value (see get_unchecked)
+                // only the first value is not created here, and it is a null
+                // value or an array (see get_unchecked_create)
                 JSON_ASSERT(ptr->is_array());
                 if (is_dash(reference_token))
                 {
@@ -24964,6 +25052,26 @@ class json_pointer
         }
 
         return *ptr;
+    }
+
+    /// whether @a s is a valid array index, that is a nonempty sequence of
+    /// digits without a leading '0' (cf. RFC 6901, Sect. 4); tokens that could
+    /// never be a valid array index (such as "01" or "") are object keys
+    static bool is_array_index_token(const string_t& s)
+    {
+        const std::size_t size = s.size();
+        if (size == 0 || (size > 1 && s[0] == '0'))
+        {
+            return false;
+        }
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            if (std::isdigit(static_cast<unsigned char>(s[i])) == 0)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     /*!
