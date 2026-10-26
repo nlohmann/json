@@ -55,7 +55,7 @@ Logarithmic in the size of the container, O(log(`size()`)).
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

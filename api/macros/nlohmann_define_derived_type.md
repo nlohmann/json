@@ -147,6 +147,13 @@ void to_json(BasicJsonType& j, const B& b) {
     See Implementation limits for [NLOHMANN_DEFINE_TYPE_INTRUSIVE](nlohmann_define_type_intrusive.md) and
     [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE](nlohmann_define_type_non_intrusive.md), respectively.
 
+!!! info "Views"
+
+    The generated `from_json()` also reads the views of [`json_document`](../json_document.md)s
+    (`<nlohmann/json_view.hpp>`): [`get<T>()`](../basic_json_view/get.md) on a view looks the members up in the
+    view, without building a `json` value first. The base part is read from the view as well if the base's
+    `from_json()` accepts views, and from [`materialize()`](../basic_json_view/materialize.md) otherwise.
+
 ## Examples
 
 ??? example "Example: (1) NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE"
@@ -189,7 +196,7 @@ void to_json(BasicJsonType& j, const B& b) {
         B example(23, 42, 3.142, 1.777);
         json example_json = example;
     
-        std::cout << std::setw(4) << example_json << std::endl;
+        std::cout << std::setw(4) << example_json << '\n';
     }
     ```
     
@@ -234,3 +241,5 @@ void to_json(BasicJsonType& j, const B& b) {
 6. Added in version 3.12.0.
 
 All six macros were changed to allow an empty member list in version 3.13.0.
+
+The generated `from_json()` reads the views of `json_document`s since version 3.13.0.

@@ -81,6 +81,12 @@ See the examples below for the concrete generated code.
       that serializes a struct's members positionally into a JSON array; for that, write `to_json`/`from_json` by
       hand, building/reading a `json::array()` of the members in order.
 
+!!! info "Views"
+
+    The generated `from_json()` also reads the views of [`json_document`](../json_document.md)s
+    (`<nlohmann/json_view.hpp>`): [`get<T>()`](../basic_json_view/get.md) on a view looks the members up in the
+    view, without building a `json` value first.
+
 ## Examples
 
 ??? example "Example: (1) NLOHMANN_DEFINE_TYPE_INTRUSIVE"
@@ -91,7 +97,7 @@ See the examples below for the concrete generated code.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     namespace ns
@@ -119,7 +125,7 @@ See the examples below for the concrete generated code.
     
         // serialization: person -> json
         json j = p;
-        std::cout << "serialization: " << j << std::endl;
+        std::cout << "serialization: " << j << '\n';
     
         // deserialization: json -> person
         json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
@@ -133,7 +139,7 @@ See the examples below for the concrete generated code.
         }
         catch (const json::exception& e)
         {
-            std::cout << "deserialization failed: " << e.what() << std::endl;
+            std::cout << "deserialization failed: " << e.what() << '\n';
         }
     }
     
@@ -162,7 +168,7 @@ See the examples below for the concrete generated code.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     namespace ns
@@ -204,7 +210,7 @@ See the examples below for the concrete generated code.
     
         // serialization: person -> json
         json j = p;
-        std::cout << "serialization: " << j << std::endl;
+        std::cout << "serialization: " << j << '\n';
     
         // deserialization: json -> person
         json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
@@ -218,7 +224,7 @@ See the examples below for the concrete generated code.
         }
         catch (const json::exception& e)
         {
-            std::cout << "deserialization failed: " << e.what() << std::endl;
+            std::cout << "deserialization failed: " << e.what() << '\n';
         }
     }
     
@@ -232,7 +238,7 @@ See the examples below for the concrete generated code.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     namespace ns
@@ -260,7 +266,7 @@ See the examples below for the concrete generated code.
     
         // serialization: person -> json
         json j = p;
-        std::cout << "serialization: " << j << std::endl;
+        std::cout << "serialization: " << j << '\n';
     
         // deserialization: json -> person
         json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
@@ -269,7 +275,7 @@ See the examples below for the concrete generated code.
         // incomplete deserialization:
         json j3 = R"({"address": "742 Evergreen Terrace", "name": "Maggie Simpson"})"_json;
         auto p3 = j3.get<ns::person>();
-        std::cout << "roundtrip: " << json(p3) << std::endl;
+        std::cout << "roundtrip: " << json(p3) << '\n';
     }
     
     ```
@@ -296,7 +302,7 @@ See the examples below for the concrete generated code.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     namespace ns
@@ -339,7 +345,7 @@ See the examples below for the concrete generated code.
     
         // serialization: person -> json
         json j = p;
-        std::cout << "serialization: " << j << std::endl;
+        std::cout << "serialization: " << j << '\n';
     
         // deserialization: json -> person
         json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
@@ -348,7 +354,7 @@ See the examples below for the concrete generated code.
         // incomplete deserialization:
         json j3 = R"({"address": "742 Evergreen Terrace", "name": "Maggie Simpson"})"_json;
         auto p3 = j3.get<ns::person>();
-        std::cout << "roundtrip: " << json(p3) << std::endl;
+        std::cout << "roundtrip: " << json(p3) << '\n';
     }
     
     ```
@@ -362,7 +368,7 @@ See the examples below for the concrete generated code.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     namespace ns
@@ -390,7 +396,7 @@ See the examples below for the concrete generated code.
     
         // serialization: person -> json
         json j = p;
-        std::cout << "serialization: " << j << std::endl;
+        std::cout << "serialization: " << j << '\n';
     }
     
     ```
@@ -416,7 +422,7 @@ See the examples below for the concrete generated code.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     namespace ns
@@ -450,7 +456,7 @@ See the examples below for the concrete generated code.
     
         // serialization: person -> json
         json j = p;
-        std::cout << "serialization: " << j << std::endl;
+        std::cout << "serialization: " << j << '\n';
     }
     
     ```
@@ -475,3 +481,5 @@ See the examples below for the concrete generated code.
 
 All three macros were changed to work with any `basic_json` specialization (not only `nlohmann::json`) in version 3.12.0,
 and to allow an empty member list in version 3.13.0.
+
+The generated `from_json()` reads the views of `json_document`s since version 3.13.0.

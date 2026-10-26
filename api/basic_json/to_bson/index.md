@@ -12,7 +12,7 @@ static void to_bson(const basic_json& j, detail::output_adapter<char> o,
                     const error_handler_t error_handler = error_handler_t::keep);
 ```
 
-BSON (Binary JSON) is a binary format in which zero or more ordered key/value pairs are stored as a single entity (a so-called document).
+BSON (Binary JSON) is a binary format in which zero or more ordered key/value pairs are stored as a single entity (a so-called document). The members of an object are written in the order in which iteration visits them.
 
 1. Returns a byte vector containing the BSON serialization.
 1. Writes the BSON serialization to an output adapter.
@@ -61,7 +61,7 @@ The example shows the serialization of a JSON value to a byte vector in BSON for
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -75,9 +75,9 @@ int main()
     // print the vector content
     for (auto& byte : v)
     {
-        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 }
 ```
 
@@ -95,7 +95,7 @@ The example shows how serializing a JSON object whose key contains a null byte (
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

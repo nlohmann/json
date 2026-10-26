@@ -35,7 +35,7 @@ to observe the effect of [`shrink_to_fit()`](shrink_to_fit.md).
     #include <string>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

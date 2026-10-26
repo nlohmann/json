@@ -42,7 +42,7 @@ The example below scans a batch of events for those that carry an optional `user
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

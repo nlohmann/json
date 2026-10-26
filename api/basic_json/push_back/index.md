@@ -66,7 +66,7 @@ The example shows how `push_back()` and `+=` can be used to add elements to a JS
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -107,7 +107,7 @@ The example shows how `push_back()` and `+=` can be used to add elements to a JS
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -148,7 +148,7 @@ The example shows how initializer lists are treated as objects when possible.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

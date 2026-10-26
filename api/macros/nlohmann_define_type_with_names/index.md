@@ -41,7 +41,7 @@ Consider the following complete example:
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 namespace ns
@@ -62,7 +62,7 @@ int main()
 
     // serialization: person -> json
     json j = p;
-    std::cout << "serialization: " << j << std::endl;
+    std::cout << "serialization: " << j << '\n';
 
     // deserialization: json -> person
     json j2 = R"({"json_address": "742 Evergreen Terrace", "json_age": 40, "json_name": "Homer Simpson"})"_json;
@@ -76,7 +76,7 @@ int main()
     }
     catch (const json::exception& e)
     {
-        std::cout << "deserialization failed: " << e.what() << std::endl;
+        std::cout << "deserialization failed: " << e.what() << '\n';
     }
 }
 ```
@@ -101,7 +101,7 @@ The macro is equivalent to:
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 namespace ns
@@ -136,7 +136,7 @@ int main()
 
     // serialization: person -> json
     json j = p;
-    std::cout << "serialization: " << j << std::endl;
+    std::cout << "serialization: " << j << '\n';
 
     // deserialization: json -> person
     json j2 = R"({"json_address": "742 Evergreen Terrace", "json_age": 40, "json_name": "Homer Simpson"})"_json;
@@ -150,7 +150,7 @@ int main()
     }
     catch (const json::exception& e)
     {
-        std::cout << "deserialization failed: " << e.what() << std::endl;
+        std::cout << "deserialization failed: " << e.what() << '\n';
     }
 }
 ```

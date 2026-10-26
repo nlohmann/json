@@ -26,7 +26,7 @@ the stream `o`
 ## Exceptions
 
 1. Throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string stored inside the JSON value is not UTF-8 encoded. Note that unlike the [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) member functions, no `error_handler` can be set.
-1. None.
+1. Throws no library exceptions. As the string representation is built with [`to_string`](https://json.nlohmann.me/api/json_pointer/to_string/index.md), `std::bad_alloc` is possible.
 
 ## Complexity
 
@@ -51,7 +51,7 @@ The example below shows the serialization with different parameters to `width` t
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -104,7 +104,7 @@ The example below shows how to write a JSON pointer to a stream.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -112,7 +112,7 @@ int main()
     json::json_pointer ptr("/foo/bar/baz");
 
     // write string representation to stream
-    std::cout << ptr << std::endl;
+    std::cout << ptr << '\n';
 }
 ```
 

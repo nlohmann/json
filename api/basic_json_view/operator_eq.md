@@ -92,8 +92,8 @@ the way to get a `BasicJsonType` value that supports it.
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
-    using json = nlohmann::json;
+    using nlohmann::json_document;
+    using nlohmann::json;
     
     int main()
     {

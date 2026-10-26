@@ -6,7 +6,7 @@ std::vector<std::uint8_t> save() const;
 
 Writes the document as an *image*: a byte buffer that [`load`](https://json.nlohmann.me/api/basic_json_document/load/index.md) reads back without parsing. The image holds the node index, the source text (plus, for an edited document, the number tokens edits wrote), and the decoded strings (plus the strings edits wrote) -- everything [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) needs, with nothing left to parse.
 
-An edited document is written in its *current* state, with its values in document order, the way the library's own parser would have produced them for that JSON text: a member [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) added goes at the end, an [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md)d member leaves no trace, and a float that is not finite (NaN or positive/negative infinity) becomes null, the same substitution [`dump()`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) makes. The same document always saves to the same bytes -- also across `BasicJsonType` and `Editable`, since the image reflects document order and values only, not which specialization produced them.
+An edited document is written in its *current* state, with its values in document order, the way the library's own parser would have produced them for that JSON text: a member [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) added goes at the end, an [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md)d member leaves no trace, and a float that is not finite (NaN or positive/negative infinity) becomes null, the same substitution [`dump()`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) makes. The same document always saves to the same bytes -- also across `BasicJsonType` and the [`view_mode`](https://json.nlohmann.me/api/view_mode/index.md), since the image reflects document order and values only, not which specialization produced them.
 
 ## Return value
 
@@ -20,18 +20,12 @@ Strong guarantee: `save()` does not modify `*this` (it is `const`), so if it thr
 
 Throws [`type_error.320`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error320) if the document is [discarded](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) -- a default-constructed document, or one a failed [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md)/ [`read()`](https://json.nlohmann.me/api/basic_json_document/read/index.md) with `allow_exceptions == false` left discarded.
 
-On a big-endian target, throws `type_error.320` with a different message instead: the image format is little-endian only (see [Notes](#notes)).
-
 Throws [`out_of_range.416`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range416) if the node count, the text, or the decoded strings of the image would individually reach 4 GiB -- the same 32-bit offsets [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/#exceptions) and, for edits, [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md)/[`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) are already limited to.
 
 Example messages
 
 ```
 [json.exception.type_error.320] cannot save a discarded json_document
-```
-
-```
-[json.exception.type_error.320] json_document images need a little-endian target
 ```
 
 ```
@@ -50,7 +44,7 @@ Experimental
 
 The image format is versioned but not yet stable: it may change in an incompatible way before it is declared stable. Use images to cache a document within one build of the library, or to hand one to another process running the *same* build on the *same* (little-endian) machine -- not as a long-term storage format. Keep the original JSON text if you need to read a saved document back with a future library version.
 
-**Little-endian only.** The image is written as raw little-endian bytes, with no byte-swapping. `save()` (and [`load`](https://json.nlohmann.me/api/basic_json_document/load/index.md)) throw `type_error.320` on a big-endian target rather than silently produce bytes a big-endian reader could not interpret correctly.
+**Little-endian targets only.** The image is written as raw little-endian bytes, with no byte-swapping. On a big-endian target, `save()` and [`load`](https://json.nlohmann.me/api/basic_json_document/load/index.md) do not exist: a call fails to compile rather than produce bytes a big-endian reader could not interpret correctly.
 
 ## Examples
 
@@ -65,7 +59,7 @@ The example below saves a parsed configuration as an image -- the way a service 
 #include <vector>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

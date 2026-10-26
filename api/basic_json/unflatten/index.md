@@ -29,7 +29,7 @@ The function can throw the following exceptions:
 - Throws [`parse_error.107`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error107) if a key is not empty and does not begin with a slash (`/`); example: `"JSON pointer must be empty or begin with '/' - was: 'a'"`
 - Throws [`parse_error.108`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error108) if a tilde (`~`) in a key is not followed by `0` or `1`; example: `"escape character '~' must be followed with '0' or '1'"`
 - Throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) if an array index in a key is not a number; example: `"array index 'one' is not a number"`
-- Throws [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) if a level becomes an array (because one of its keys is `0`) and another key at that level begins with a digit but is not a valid array index (such as `1a`), or is `-`; example: `"unresolved reference token '-'"`
+- Throws [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) if a level becomes an array (because one of its keys is `0`) and another key at that level is empty (as in `/a/`), is `-`, or begins with a digit but is not a valid array index (such as `1a`); examples: `"unresolved reference token '-'"`, `"unresolved reference token ''"`
 
 ## Complexity
 
@@ -37,11 +37,13 @@ Linear in the size of the JSON value.
 
 ## Notes
 
-Empty objects and arrays are flattened by [`flatten()`](https://json.nlohmann.me/api/basic_json/flatten/index.md) to `null` values and cannot unflattened to their original type.
+Empty objects and arrays are flattened by [`flatten()`](https://json.nlohmann.me/api/basic_json/flatten/index.md) to `null` values and cannot be unflattened to their original type.
 
 A flattened array and a flattened object whose keys are array indices are indistinguishable, because both are described by the same JSON pointers. A value is therefore restored as an array if and only if one of its keys is the reference token `0`, and as an object otherwise: `{"2": 1}` is restored unchanged, whereas `{"0": 1}` is restored as `[1]`. This decision does not depend on the order in which the flattened object is iterated.
 
-Apart from these two cases, for a JSON value `j`, the following is always true: `j == j.flatten().unflatten()`.
+A third case is an object that has the key `0` next to a key that is not a valid array index: `{"0": 1, "b": 2}` is flattened to `{"/0": 1, "/b": 2}`, and unflatten treats the level as an array and throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) because `b` is not a number. (For the keys `-`, `1a`, or the empty key instead of `b`, it throws [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404).)
+
+Apart from these three cases, for a JSON value `j`, the following is always true: `j == j.flatten().unflatten()`.
 
 ## Examples
 
@@ -54,7 +56,7 @@ The following code shows how a flattened JSON object is unflattened into the ori
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

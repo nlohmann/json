@@ -29,8 +29,8 @@ The example below checks that every record of a batch is an object with `std::al
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
-using json_view = nlohmann::json_view;
+using nlohmann::json_document;
+using nlohmann::json_view;
 
 int main()
 {

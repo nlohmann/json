@@ -52,6 +52,24 @@ json array_of_objects = json::array({{"key", "value"}}); // [{"key":"value"}]
 
 Related to this, single-element brace initialization such as `json j{value};` wraps the element in a single-element **array** by default, and its behavior even differs between compilers. See the [FAQ](https://json.nlohmann.me/home/faq/#brace-initialization-yields-arrays) for details and the opt-in [`JSON_BRACE_INIT_COPY_SEMANTICS`](https://json.nlohmann.me/api/macros/json_brace_init_copy_semantics/index.md) macro.
 
+### What does this produce?
+
+The following table shows how some common spellings are interpreted. When in doubt, use `json::array()`, `json::object()`, or the `json(value)` form with parentheses.
+
+| code                                 | result            | note                                                                                                                                                              |
+| ------------------------------------ | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `json j = {};` / `json j{};`         | `null`            | use `json::object()` or `json::array()`                                                                                                                           |
+| `json j = json::object();`           | `{}`              |                                                                                                                                                                   |
+| `json j = json::array();`            | `[]`              |                                                                                                                                                                   |
+| `json j(true);`                      | `true`            | parentheses create the value itself                                                                                                                               |
+| `json j = {true};`                   | `[true]`          | braces create a one-element array (`json j{true};` depends on the compiler, see the [FAQ](https://json.nlohmann.me/home/faq/#brace-initialization-yields-arrays)) |
+| `json j = {{"a", 1}};`               | `{"a":1}`         | all elements are `[string, value]` pairs: object                                                                                                                  |
+| `json j = {{"a", 1}, {"b"}};`        | `[["a",1],["b"]]` | one element is not a pair: array                                                                                                                                  |
+| `json j = {{"a", 1}, 2};`            | `[["a",1],2]`     | a plain value among pairs: array                                                                                                                                  |
+| `json j = {{"a", 1, 2}};`            | `[["a",1,2]]`     | a three-element list is not a pair: array                                                                                                                         |
+| `json j = "{\"a\":1}";`              | `"{\"a\":1}"`     | a string **value**; it is not parsed                                                                                                                              |
+| `json j = json::parse("{\"a\":1}");` | `{"a":1}`         | parse text with `parse` or `_json`                                                                                                                                |
+
 ## Building incrementally
 
 A value can also be built up piece by piece. Accessing a non-existing object key or array index with [`operator[]`](https://json.nlohmann.me/features/element_access/unchecked_access/index.md) creates the element on the fly:
@@ -76,7 +94,7 @@ Example
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()

@@ -50,7 +50,7 @@ returned view is valid under the same conditions as any other view of the docume
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

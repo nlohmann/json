@@ -66,7 +66,7 @@ Without the macro, single-element brace initialization wraps the value in an arr
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -85,7 +85,7 @@ With the macro, single-element brace initialization copies/moves the value:
 #define JSON_BRACE_INIT_COPY_SEMANTICS 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

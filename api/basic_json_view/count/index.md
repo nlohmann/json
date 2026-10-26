@@ -40,7 +40,7 @@ The example below validates that every transaction of a batch carries exactly on
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

@@ -24,13 +24,13 @@ No guarantees, value may be corrupted by an unsuccessful patch operation.
 - Throws [`parse_error.108`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error108) if a tilde (`~`) in a "path" or "from" member is not followed by `0` or `1`; example: `"escape character '~' must be followed with '0' or '1'"`.
 - Throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) if an array index in a "path" or "from" member is not a number; example: `"array index 'foo' is not a number"`.
 - Throws [`out_of_range.402`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range402) if the array index `-` is used where an existing element is required (the "path" of "replace", the "from" of "move" and "copy"); example: `"array index '-' (3) is out of range"`.
-- Throws [`out_of_range.403`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range403) if a JSON pointer inside the patch could not be resolved successfully in the current JSON value; example: `"key baz not found"`.
+- Throws [`out_of_range.403`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range403) if a JSON pointer inside the patch could not be resolved successfully in the current JSON value; example: `"key 'baz' not found"`.
 - Throws [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) if a reference token of a JSON pointer inside the patch cannot be resolved, e.g., `-` in a "remove" operation or `1a` for an array; example: `"unresolved reference token '-'"`.
 - Throws [`out_of_range.405`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range405) if JSON pointer has no parent ("remove", "move")
 - Throws [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) if an "add" operation's target location has a parent that is neither an object nor an array.
 - Throws [`out_of_range.413`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range413) if a "remove" operation's target location has a parent that is neither an object nor an array.
 - Throws [`out_of_range.414`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range414) if a "move" operation's "from" location is a proper prefix of its "path" location.
-- Throws [`other_error.501`](https://json.nlohmann.me/home/exceptions/#jsonexceptionother_error501) if "test" operation was unsuccessful.
+- Throws [`other_error.501`](https://json.nlohmann.me/home/exceptions/#jsonexceptionother_error501) if "test" operation was unsuccessful. A "test" operation whose "path" does not exist is unsuccessful, too: the failed lookup is reported as a failed test, even if the operation has no "value" member (which would otherwise be [`parse_error.105`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error105)). Which of the two errors is reported for this combination depends on the order in which the operands of a comparison are evaluated, so do not rely on it.
 
 ## Complexity
 
@@ -39,6 +39,8 @@ Linear in the size of the JSON value and the length of the JSON patch. As usuall
 ## Notes
 
 Unlike [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md), `patch_inplace` applies the operation "in place" and no copy of the JSON value is created. That makes it faster for large documents by avoiding the copy. However, the JSON value might be corrupted if the function throws an exception.
+
+Duplicate member names inside an operation object are resolved by the parser before the patch is applied (the last one is kept, see [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/#behavior)), so `{"op": "add", "op": "remove", "path": "/a"}` is a `remove` operation.
 
 ## Examples
 
@@ -51,7 +53,7 @@ The following code shows how a JSON patch is applied to a value.
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -74,13 +76,13 @@ int main()
     )"_json;
 
     // output original document
-    std::cout << "Before\n" << std::setw(4) << doc << std::endl;
+    std::cout << "Before\n" << std::setw(4) << doc << '\n';
 
     // apply the patch
     doc.patch_inplace(patch);
 
     // output patched document
-    std::cout << "\nAfter\n" << std::setw(4) << doc << std::endl;
+    std::cout << "\nAfter\n" << std::setw(4) << doc << '\n';
 }
 ```
 
@@ -111,7 +113,7 @@ The following code shows a patch whose first operation succeeds and whose second
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -143,7 +145,7 @@ int main()
     }
 
     // the first operation has already been applied to doc
-    std::cout << std::setw(4) << doc << std::endl;
+    std::cout << std::setw(4) << doc << '\n';
 }
 ```
 
@@ -167,7 +169,7 @@ Output:
 ## Version history
 
 - Added in version 3.11.0.
-- Added [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's target location has a non-object/non-array parent in version 3.13.0 unreleased.
+- Added [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's target location has a non-object/non-array parent in version 3.13.0 unreleased. This includes a `null` parent, which was previously silently converted to an object, in version 3.13.0 unreleased.
 - Added [`out_of_range.413`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range413) and stopped silently ignoring a "remove" operation whose target location has a non-object/non-array parent in version 3.13.0 unreleased.
 - Added [`out_of_range.414`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper prefix of its "path" location instead of silently producing a corrupted result in version 3.13.0 unreleased.
 - Throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) instead of [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) for a one-character array index that is not a digit (e.g., `/x`) in version 3.13.0 unreleased, as it already did for longer ones.

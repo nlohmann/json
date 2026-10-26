@@ -49,12 +49,12 @@ The example below demonstrates the `parse()` function with and without callback 
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
     // a JSON text
-    auto text = R"(
+    const auto* text = R"(
     {
         "Image": {
             "Width":  800,
@@ -142,12 +142,12 @@ The example below shows where discarded values are removed. The array and the nu
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
     // a JSON text with an array and a number inside an object
-    auto text = R"({"IDs": [116, 943], "Width": 800})";
+    const auto* text = R"({"IDs": [116, 943], "Width": 800})";
 
     // discard the array when the parser reads its opening bracket
     json j_array_start = json::parse(text, [](int /*depth*/, json::parse_event_t event, json& /*parsed*/)

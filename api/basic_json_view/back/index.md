@@ -38,7 +38,7 @@ The example below reads only the final status of a build log with `back()`. Even
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

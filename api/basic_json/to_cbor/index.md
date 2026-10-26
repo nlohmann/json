@@ -34,7 +34,7 @@ The exact mapping and its limitations are described on a [dedicated page](https:
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value. Bytes that were already written to the output adapter are not taken back.
 
 ## Exceptions
 
@@ -57,7 +57,7 @@ The example shows the serialization of a JSON value to a byte vector in CBOR for
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -71,9 +71,9 @@ int main()
     // print the vector content
     for (auto& byte : v)
     {
-        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 }
 ```
 

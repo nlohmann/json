@@ -2,7 +2,7 @@
 #include <iostream>
 #include <iomanip>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

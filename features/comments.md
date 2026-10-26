@@ -34,7 +34,7 @@ For more information, see [JSON With Commas and Comments (JWCC)](https://nigelta
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -52,7 +52,7 @@ For more information, see [JSON With Commas and Comments (JWCC)](https://nigelta
         }
         catch (json::exception& e)
         {
-            std::cout << e.what() << std::endl;
+            std::cout << e.what() << '\n';
         }
     
         json j = json::parse(s,

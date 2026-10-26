@@ -43,7 +43,8 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 `#!cpp false` by default.
 
 `version` (in)
-:   which version of BJData to use (see note on "Binary values" on [BJData](../../features/binary_formats/bjdata.md));
+:   which version of BJData to use, see [`bjdata_version_t`](bjdata_version_t.md) and the note on "Binary values" on
+[BJData](../../features/binary_formats/bjdata.md);
 optional, `#!cpp bjdata_version_t::draft2` by default.
 
 `error_handler` (in)
@@ -64,7 +65,9 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [`other_error.502`](../../home/exceptions.md#jsonexceptionother_error502) if `use_type` is true and `use_size`
-  is false, and `j` contains a non-empty array, object, or binary value.
+  is false, and `j` contains a non-empty array or object, or a non-empty binary value (with
+  `version = bjdata_version_t::draft3`, any binary value, including an empty one).
+  Scalars, empty arrays, and empty objects do not throw.
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key in `j` is
   not valid UTF-8 and `error_handler` is `strict` (the default only if
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled)
@@ -86,7 +89,7 @@ Linear in the size of the JSON value `j`.
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     // function to print BJData's diagnostic format
@@ -94,11 +97,11 @@ Linear in the size of the JSON value `j`.
     {
         if (32 < byte and byte < 128)
         {
-            std::cout << (char)byte;
+            std::cout << static_cast<char>(byte);
         }
         else
         {
-            std::cout << (int)byte;
+            std::cout << static_cast<int>(byte);
         }
     }
     
@@ -115,7 +118,7 @@ Linear in the size of the JSON value `j`.
         {
             print_byte(byte);
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     
         // create an array of numbers
         json array = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -132,19 +135,19 @@ Linear in the size of the JSON value `j`.
         {
             print_byte(byte);
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     
         for (auto& byte : v_array_size)
         {
             print_byte(byte);
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     
         for (auto& byte : v_array_size_and_type)
         {
             print_byte(byte);
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }
     
     ```
@@ -168,7 +171,7 @@ Linear in the size of the JSON value `j`.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

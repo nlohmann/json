@@ -308,14 +308,14 @@ int main()
     j["happy"] = true;
     j["list"] = {1, 2, 3};
 
-    std::cout << j.dump(2) << std::endl;
-    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+    std::cout << j.dump(2) << '\n';
+    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << '\n';
 
     // custom_object_type has no key_compare member, so object_comparator_t
     // falls back to its default
     std::cout << std::boolalpha
               << std::is_same<custom_json::object_comparator_t, custom_json::default_object_comparator_t>::value
-              << std::endl;
+              << '\n';
 }
 ```
 
@@ -568,8 +568,8 @@ int main()
     j.push_back(2);
     j.push_back(3);
 
-    std::cout << j.dump() << std::endl;
-    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+    std::cout << j.dump() << '\n';
+    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << '\n';
 }
 ```
 
@@ -612,7 +612,7 @@ true
 - Constructors: default, copy, move, from `const char*` (which must not be `explicit`), from `(const char*, size_type)`, and from `(size_type, char)`; and copy or move assignment.
 - Member functions `size()`, `clear()`, `resize(n, c)`, `data()`, `push_back(char)`, and `operator[]` (const and non-const, returning references). `c_str()` and `back()` are **not** required.
 - `data()` must return a pointer to a contiguous, **null-terminated** buffer. `float`, `double`, and a `long double` that is IEEE 754 binary64 are converted by the library itself and do not depend on this. For any other `NumberFloatType` (a `long double` of another format), the parser falls back to `std::strtold` when `std::from_chars` is not available or declines the token, and `std::strtold` reads up to the null character. A type whose `data()` is not null-terminated does not fail to compile; with such a `NumberFloatType` it can silently misparse floating-point numbers.
-- `append(const char*, size_type)`, used by [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), and `append(const StringType&)`, used by the CBOR reader for indefinite-length strings. The library's internal string concatenation additionally has to append a `char` and a `const char*`; for each it selects between `append(arg)`, `operator+=`, `append(first, last)`, and `append(data, size)`.
+- `append(const char*, size_type)`, used by [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) and by the binary readers. The library's internal string concatenation additionally has to append a `char` and a `const char*`; for each it selects between `append(arg)`, `operator+=`, `append(first, last)`, and `append(data, size)`.
 - The comparison operator `==` against another `StringType`, and `<` for use as a key of the chosen [`ObjectType`](#objecttype) (with the default comparator, `std::less<>` must be able to compare two `StringType` values, and a `StringType` with the key types used for lookup). `!=` is never applied to a `StringType`, and `==` against `const char*` is resolved by the implicit `const char*` constructor.
 
 ### Required for the binary formats
@@ -624,6 +624,7 @@ true
 
 - A static member `npos` and the member function `find_first_of(char, size_type)` -- together with `data()`, `reserve(n)`, and `append(const char*, size_type)` they implement the escaping and unescaping of reference tokens described in RFC 6901. Neither `find(const StringType&, size_type)`, nor `substr(pos, count)`, nor `replace(pos, count, const StringType&)` is required.
 - `empty()`.
+- `resize(n)` (one argument) -- used by `to_string` to size the result before the reference tokens are copied into it.
 - `begin()` and `end()` -- used by [`operator[](const json_pointer&)`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) to decide whether a reference token denotes an array index.
 
 ### Required for other functionality
@@ -842,8 +843,8 @@ int main()
     j["happy"] = true;
     j["list"] = {1, 2, 3};
 
-    std::cout << j.dump(2) << std::endl;
-    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+    std::cout << j.dump(2) << '\n';
+    std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << '\n';
 }
 ```
 
@@ -1003,7 +1004,7 @@ using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
 - A member type `value_type` that is **exactly one byte** wide (e.g., `std::uint8_t`, `char`, or `std::byte`). Readers and writers reinterpret the container's storage as raw bytes, so a wider `value_type` is rejected with a `static_assert`.
 - Contiguous storage: the binary readers `std::memcpy` into `&binary[n]`, the writers `reinterpret_cast` `data()`. `data() + n` would do for the readers too, but they share one helper with [`StringType`](#stringtype), whose non-`const` `data()` is C++17 and later only.
 - Default-constructible, copy-constructible, and move-constructible.
-- Member functions `size()`, `empty()`, `data()`, `resize()`, `operator[]`, `back()`, `begin()`, `end()`, `cbegin()`, and `cend()` with random-access iterators, and `insert(pos, first, last)`, which the CBOR reader uses to join the chunks of an indefinite-length byte string. `push_back()` is **not** required.
+- Member functions `size()`, `empty()`, `data()`, `resize()`, `operator[]`, `back()`, `begin()`, `end()`, `cbegin()`, and `cend()` with random-access iterators. `push_back()` is **not** required.
 - Comparison operators: `==` is used by [`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md), the relational operators by [`basic_json`'s comparison operators](https://json.nlohmann.me/api/basic_json/operator_le/index.md).
 
 ### Required for individual functions
@@ -1148,8 +1149,8 @@ int main()
 {
     const auto j = custom_json::binary({0x01, 0x02, 0x03});
 
-    std::cout << j.dump() << std::endl;
-    std::cout << std::boolalpha << (custom_json::from_cbor(custom_json::to_cbor(j)) == j) << std::endl;
+    std::cout << j.dump() << '\n';
+    std::cout << std::boolalpha << (custom_json::from_cbor(custom_json::to_cbor(j)) == j) << '\n';
 }
 ```
 

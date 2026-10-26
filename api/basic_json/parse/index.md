@@ -117,7 +117,7 @@ The example below demonstrates the `parse()` function reading from an array.
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -178,12 +178,12 @@ The example below demonstrates the `parse()` function with and without callback 
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
     // a JSON text
-    auto text = R"(
+    const auto* text = R"(
     {
         "Image": {
             "Width":  800,
@@ -273,12 +273,12 @@ The example below demonstrates the `parse()` function with and without callback 
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
     // a JSON text
-    auto text = R"(
+    const auto* text = R"(
     {
         "Image": {
             "Width":  800,
@@ -375,7 +375,7 @@ The example below demonstrates the `parse()` function reading from a contiguous 
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -407,7 +407,7 @@ The example below demonstrates the `parse()` function reading from a string that
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -439,7 +439,7 @@ The example below demonstrates the `parse()` function reading from an iterator p
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -470,7 +470,7 @@ The example below demonstrates the effect of the `allow_exceptions` parameter in
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -488,7 +488,7 @@ int main()
     }
     catch (const json::parse_error& e)
     {
-        std::cout << e.what() << std::endl;
+        std::cout << e.what() << '\n';
     }
 
     // parse without exceptions
@@ -496,11 +496,11 @@ int main()
 
     if (j.is_discarded())
     {
-        std::cout << "the input is invalid JSON" << std::endl;
+        std::cout << "the input is invalid JSON" << '\n';
     }
     else
     {
-        std::cout << "the input is valid JSON: " << j << std::endl;
+        std::cout << "the input is valid JSON: " << j << '\n';
     }
 }
 ```
@@ -520,7 +520,7 @@ The example below demonstrates the effect of the `ignore_comments` parameter in 
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -538,7 +538,7 @@ int main()
     }
     catch (json::exception& e)
     {
-        std::cout << e.what() << std::endl;
+        std::cout << e.what() << '\n';
     }
 
     json j = json::parse(s,
@@ -574,7 +574,7 @@ The example below demonstrates the effect of the `ignore_trailing_commas` parame
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -598,7 +598,7 @@ int main()
     }
     catch (json::exception& e)
     {
-        std::cout << e.what() << std::endl;
+        std::cout << e.what() << '\n';
     }
 
     json j = json::parse(s,
@@ -636,7 +636,7 @@ The encoding is deduced from the character type of the input; `std::u16string` a
 #include <string>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

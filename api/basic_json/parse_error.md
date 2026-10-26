@@ -67,7 +67,7 @@ or the end of file. This also holds true when reading a byte vector for binary f
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -81,7 +81,7 @@ or the end of file. This also holds true when reading a byte vector for binary f
             // output exception information
             std::cout << "message: " << e.what() << '\n'
                       << "exception id: " << e.id << '\n'
-                      << "byte position of error: " << e.byte << std::endl;
+                      << "byte position of error: " << e.byte << '\n';
         }
     }
     

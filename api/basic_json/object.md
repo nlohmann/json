@@ -47,7 +47,7 @@ the initializer list constructor `basic_json(initializer_list_t, bool, value_t)`
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

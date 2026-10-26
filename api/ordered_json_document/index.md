@@ -3,7 +3,7 @@
 Defined in header `<nlohmann/json_view.hpp>`
 
 ```
-using ordered_json_document = basic_json_document<ordered_json>;
+using ordered_json_document = basic_json_document<ordered_json, view_mode::read_only>;
 ```
 
 This type is a [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) of the [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) specialization: [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) on one of its views preserves the insertion order of object keys, instead of sorting them like [`json_document`](https://json.nlohmann.me/api/json_document/index.md) does.
@@ -18,7 +18,7 @@ The example below demonstrates how `ordered_json_document` preserves the inserti
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using ordered_json_document = nlohmann::ordered_json_document;
+using nlohmann::ordered_json_document;
 
 int main()
 {

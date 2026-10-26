@@ -40,7 +40,7 @@ The following code shows an example for the `object` function.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

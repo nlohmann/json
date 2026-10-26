@@ -49,7 +49,7 @@ When the macro is not defined, the library will define it to its default value.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -86,7 +86,7 @@ When the macro is not defined, the library will define it to its default value.
     # define JSON_DIAGNOSTICS 1
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -123,7 +123,7 @@ When the macro is not defined, the library will define it to its default value.
     #define JSON_DIAGNOSTIC_POSITIONS 1
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     /* Demonstration of type error exception with diagnostic positions support enabled */
     int main()

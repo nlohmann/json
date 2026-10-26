@@ -29,7 +29,7 @@ The example shows how to format JSON values with `std::format`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

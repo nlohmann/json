@@ -35,7 +35,7 @@ The following code will trigger an assertion at runtime:
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -61,7 +61,7 @@ The assertion reporting can be changed by defining `JSON_ASSERT(x)` differently.
 
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

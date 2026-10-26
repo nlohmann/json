@@ -122,7 +122,7 @@ The following code shows how the library's `format_as()` function integrates wit
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -133,7 +133,7 @@ int main()
     // fmt::format/fmt::print would find it
     auto j_str = format_as(j);
 
-    std::cout << j_str << std::endl;
+    std::cout << j_str << '\n';
 }
 ```
 

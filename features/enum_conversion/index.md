@@ -48,7 +48,7 @@ Example: serializing/deserializing enums, including a second enum type
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -86,7 +86,7 @@ int main()
     json j_stopped = ns::TS_STOPPED;
     json j_red = ns::Color::red;
     std::cout << "ns::TS_STOPPED -> " << j_stopped
-              << ", ns::Color::red -> " << j_red << std::endl;
+              << ", ns::Color::red -> " << j_red << '\n';
 
     // deserialization
     json j_running = "running";
@@ -94,7 +94,7 @@ int main()
     auto running = j_running.get<ns::TaskState>();
     auto blue = j_blue.get<ns::Color>();
     std::cout << j_running << " -> " << running
-              << ", " << j_blue << " -> " << static_cast<int>(blue) << std::endl;
+              << ", " << j_blue << " -> " << static_cast<int>(blue) << '\n';
 
     // deserializing undefined JSON value to enum
     // (where the first map entry above is the default)
@@ -102,7 +102,7 @@ int main()
     auto invalid = j_pi.get<ns::TaskState>();
     auto unknown = j_pi.get<ns::Color>();
     std::cout << j_pi << " -> " << invalid << ", "
-              << j_pi << " -> " << static_cast<int>(unknown) << std::endl;
+              << j_pi << " -> " << static_cast<int>(unknown) << '\n';
 }
 ```
 
@@ -147,7 +147,7 @@ Example: `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT` throwing on unrecognized values
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -180,7 +180,7 @@ int main()
     }
     catch (const json::exception e)
     {
-        std::cout << "deserialization failed: " << e.what() << std::endl;
+        std::cout << "deserialization failed: " << e.what() << '\n';
     }
 
     // invalid deserialization
@@ -192,7 +192,7 @@ int main()
     }
     catch (const json::exception e)
     {
-        std::cout << "deserialization failed: " << e.what() << std::endl;
+        std::cout << "deserialization failed: " << e.what() << '\n';
     }
 
     return 0;

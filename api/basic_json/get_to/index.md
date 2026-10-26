@@ -54,7 +54,7 @@ The example below shows several conversions from JSON values to other types. The
 #include <map>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -104,7 +104,7 @@ int main()
     }
     std::cout << "\n\n";
 
-    for (auto i : v8)
+    for (const auto& i : v8)
     {
         std::cout << i.first << ": " << i.second << '\n';
     }

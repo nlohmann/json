@@ -29,7 +29,7 @@ JSON Lines input with more than one value is treated as invalid JSON by the [`pa
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -44,7 +44,7 @@ JSON Lines input with more than one value is treated as invalid JSON by the [`pa
         std::string line;
         while (std::getline(input, line))
         {
-            std::cout << json::parse(line) << std::endl;
+            std::cout << json::parse(line) << '\n';
         }
     }
     

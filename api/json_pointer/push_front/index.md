@@ -30,7 +30,7 @@ The example shows the result of `push_front` for different JSON Pointers.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

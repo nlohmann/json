@@ -51,7 +51,7 @@ The following code uses `empty()` to check if a JSON object contains any element
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

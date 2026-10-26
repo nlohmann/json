@@ -42,7 +42,7 @@ The example below uses [`size()`](https://json.nlohmann.me/api/basic_json_view/s
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

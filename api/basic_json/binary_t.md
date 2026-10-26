@@ -90,8 +90,9 @@ type `#!cpp binary_t*` must be dereferenced.
 
 - MessagePack
     - If a subtype is given and the binary array contains exactly 1, 2, 4, 8, or 16 elements, the fixext family (fixext1,
-      fixext2, fixext4, fixext8) is used. For other sizes, the ext family (ext8, ext16, ext32) is used. The subtype is
-      then added as a signed 8-bit integer.
+      fixext2, fixext4, fixext8, fixext16) is used. For other sizes, the ext family (ext8, ext16, ext32) is used. The
+      subtype is then written as the signed 8-bit ext type: subtypes 128 to 255 map to the negative (reserved) ext
+      types, and on reading the ext type is exposed as an unsigned subtype from 0 to 255.
     - If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
 - BSON
@@ -110,11 +111,11 @@ type `#!cpp binary_t*` must be dereferenced.
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
-        std::cout << std::boolalpha << std::is_same<nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>>, json::binary_t>::value << std::endl;
+        std::cout << std::boolalpha << std::is_same<nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>>, json::binary_t>::value << '\n';
     }
     
     ```

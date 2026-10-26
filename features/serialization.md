@@ -34,7 +34,7 @@ By default, `dump` produces the most compact representation without any superflu
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -66,11 +66,11 @@ By default, `dump` produces the most compact representation without any superflu
         json j_invalid = "ä\xA9ü";
         try
         {
-            std::cout << j_invalid.dump() << std::endl;
+            std::cout << j_invalid.dump() << '\n';
         }
         catch (const json::type_error& e)
         {
-            std::cout << e.what() << std::endl;
+            std::cout << e.what() << '\n';
         }
     
         std::cout << "string with replaced invalid characters: "
@@ -175,7 +175,7 @@ serialization fails by default. The fourth argument of `dump` selects an
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -183,11 +183,11 @@ serialization fails by default. The fourth argument of `dump` selects an
         json j_invalid = "ä\xA9ü";
         try
         {
-            std::cout << j_invalid.dump() << std::endl;
+            std::cout << j_invalid.dump() << '\n';
         }
         catch (const json::type_error& e)
         {
-            std::cout << e.what() << std::endl;
+            std::cout << e.what() << '\n';
         }
     
         std::cout << "string with replaced invalid characters: "

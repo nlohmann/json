@@ -89,7 +89,7 @@ The example below shows how a JSON value is constructed by reading a serializati
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

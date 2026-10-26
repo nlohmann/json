@@ -147,7 +147,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -211,12 +211,12 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
         // a JSON text
-        auto text = R"(
+        const auto* text = R"(
         {
             "Image": {
                 "Width":  800,
@@ -308,12 +308,12 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <sstream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
         // a JSON text
-        auto text = R"(
+        const auto* text = R"(
         {
             "Image": {
                 "Width":  800,
@@ -411,7 +411,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -446,7 +446,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -481,7 +481,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -515,7 +515,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -533,7 +533,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
         }
         catch (const json::parse_error& e)
         {
-            std::cout << e.what() << std::endl;
+            std::cout << e.what() << '\n';
         }
     
         // parse without exceptions
@@ -541,11 +541,11 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     
         if (j.is_discarded())
         {
-            std::cout << "the input is invalid JSON" << std::endl;
+            std::cout << "the input is invalid JSON" << '\n';
         }
         else
         {
-            std::cout << "the input is valid JSON: " << j << std::endl;
+            std::cout << "the input is valid JSON: " << j << '\n';
         }
     }
     
@@ -568,7 +568,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -586,7 +586,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
         }
         catch (json::exception& e)
         {
-            std::cout << e.what() << std::endl;
+            std::cout << e.what() << '\n';
         }
     
         json j = json::parse(s,
@@ -624,7 +624,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -648,7 +648,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
         }
         catch (json::exception& e)
         {
-            std::cout << e.what() << std::endl;
+            std::cout << e.what() << '\n';
         }
     
         json j = json::parse(s,
@@ -690,7 +690,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     #include <string>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

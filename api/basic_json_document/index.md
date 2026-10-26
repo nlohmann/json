@@ -3,7 +3,7 @@
 Defined in header `<nlohmann/json_view.hpp>`
 
 ```
-template<typename BasicJsonType, bool Editable = false>
+template<typename BasicJsonType, view_mode Mode = view_mode::read_only>
 class basic_json_document;
 ```
 
@@ -11,13 +11,13 @@ A parsed JSON text, held as a flat index of its values ([16 bytes per value](htt
 
 A document may **borrow** the text it was parsed from (the caller's buffer must then outlive the document) or **own** it (a copy, or an rvalue `std::string` that was moved in); see [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md). `basic_json_document` is move-only: a copy would duplicate the whole index, the decoded-string buffer, and the owned text, and a move is enough in every use we know of. The index, the decoded strings, and the owned text live in one heap block that the document holds through a `std::unique_ptr`; this is also why views survive a move of the document.
 
-With `Editable == true`, the document also offers [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md), and [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md) to change values in place, see [Edits](#edits) below. The source text itself is never written; a read-only document (`Editable == false`, the default) does not carry any of the bookkeeping edits need, and calling any of them on one fails to compile (`static_assert`).
+With `Mode == view_mode::editable`, the document also offers [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md), and [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md) to change values in place, see [Edits](#edits) below. The source text itself is never written; a read-only document (`view_mode::read_only`, the default) does not carry any of the bookkeeping edits need, and calling any of them on one fails to compile (`static_assert`).
 
 ## Template parameters
 
 `BasicJsonType` : a specialization of [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md), for instance [`json`](https://json.nlohmann.me/api/json/index.md) or [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md). Only 64-bit `number_integer_t`/`number_unsigned_t` types are supported; this is checked with a `static_assert`.
 
-`Editable` : whether the document supports [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md), and [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md) (optional, `false` by default). See [Edits](#edits) below.
+`Mode` : a [`view_mode`](https://json.nlohmann.me/api/view_mode/index.md): `view_mode::editable` if the document supports [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md), and [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md) (optional, `view_mode::read_only` by default). See [Edits](#edits) below.
 
 ## Specializations
 
@@ -28,7 +28,7 @@ With `Editable == true`, the document also offers [`set`](https://json.nlohmann.
 
 ## Member types
 
-- **view_type** - the type of view returned by [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) (`basic_json_view<BasicJsonType, Editable>`)
+- **view_type** - the type of view returned by [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) (`basic_json_view<BasicJsonType, Mode>`)
 - **value_t** - the JSON type enumeration, see [`basic_json::value_t`](https://json.nlohmann.me/api/basic_json/value_t/index.md)
 - **image_check** - how [`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) validates an image (`full`, `bounds`, `none`), see [`image_check`](https://json.nlohmann.me/api/basic_json_document/load/#image_check)
 
@@ -60,14 +60,14 @@ With `Editable == true`, the document also offers [`set`](https://json.nlohmann.
 
 ### Edits
 
-- [**set**](https://json.nlohmann.me/api/basic_json_document/set/index.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to (`Editable` documents only)
-- [**push_back**](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) - append to an array (`Editable` documents only)
-- [**insert**](https://json.nlohmann.me/api/basic_json_document/insert/index.md) - insert an element into an array before a given position (`Editable` documents only)
-- [**erase**](https://json.nlohmann.me/api/basic_json_document/erase/index.md) - remove an object member, an array element, or the value a JSON pointer refers to (`Editable` documents only)
+- [**set**](https://json.nlohmann.me/api/basic_json_document/set/index.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to (editable documents only)
+- [**push_back**](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) - append to an array (editable documents only)
+- [**insert**](https://json.nlohmann.me/api/basic_json_document/insert/index.md) - insert an element into an array before a given position (editable documents only)
+- [**erase**](https://json.nlohmann.me/api/basic_json_document/erase/index.md) - remove an object member, an array element, or the value a JSON pointer refers to (editable documents only)
 
 ## Edits
 
-An editable document (`Editable == true`) can be changed after parsing, with [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md), and [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md); [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md) and [`ordered_json_editable_document`](https://json.nlohmann.me/api/ordered_json_editable_document/index.md) are the corresponding specializations. A few points apply to every edit:
+An editable document (`view_mode::editable`) can be changed after parsing, with [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md), and [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md); [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md) and [`ordered_json_editable_document`](https://json.nlohmann.me/api/ordered_json_editable_document/index.md) are the corresponding specializations. A few points apply to every edit:
 
 - **The source text is never written**, and the parsed index never moves: every value keeps the node it was parsed into, so [views](https://json.nlohmann.me/api/basic_json_view/index.md) taken before an edit stay valid, including [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md). New values (and the element sequences of an edited array/object) go to storage owned by the document, allocated on demand.
 - **A view keeps referring to the same value.** After [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) replaces the value a view refers to, that view sees the new value; a view of a value that a later edit replaces or drops keeps showing what it last held. An edit of an array or object, however, **invalidates the iterators taken over it** (its members may now live in a different sequence), and a string obtained with [`get_string()`](https://json.nlohmann.me/api/basic_json_view/get_string/index.md) stays valid even as further edits happen (earlier buffers of edited text are kept alive, not overwritten).

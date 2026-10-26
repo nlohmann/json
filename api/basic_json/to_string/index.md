@@ -47,7 +47,7 @@ The following code shows how the library's `to_string()` function integrates wit
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using std::to_string;
 
 int main()
@@ -62,7 +62,7 @@ int main()
 
     // serialize without indentation
     std::cout << j_str << "\n\n"
-              << i_str << std::endl;
+              << i_str << '\n';
 }
 ```
 

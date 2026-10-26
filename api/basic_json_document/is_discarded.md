@@ -33,7 +33,7 @@ When the document is discarded, [`root()`](root.md) returns a discarded view (it
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

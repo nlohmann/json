@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -28,5 +28,5 @@ int main()
 
     json j = p;
 
-    std::cout << j << std::endl;
+    std::cout << j << '\n';
 }

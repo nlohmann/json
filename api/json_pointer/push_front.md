@@ -32,7 +32,7 @@ Linear in the number of reference tokens in the `json_pointer`.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

@@ -271,7 +271,7 @@ The following code shows the constructor for different `value_t` values.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -315,7 +315,7 @@ The following code shows the constructor with and without a null pointer paramet
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -352,7 +352,7 @@ The following code shows the constructor with several compatible types.
 #include <valarray>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -612,8 +612,8 @@ The example below shows how a `json` value is converted to an `ordered_json` val
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
+using nlohmann::json;
+using nlohmann::ordered_json;
 
 int main()
 {
@@ -649,7 +649,7 @@ The example below shows how JSON values are created from initializer lists.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -687,7 +687,7 @@ The following code shows examples for creating arrays with several copies of a g
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -720,7 +720,7 @@ The example below shows several ways to create JSON values by specifying a subra
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -768,7 +768,7 @@ The following code shows an example for the copy constructor.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -799,7 +799,7 @@ The code below shows the move constructor explicitly called via `std::move`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

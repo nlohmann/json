@@ -3,7 +3,7 @@
 Defined in header `<nlohmann/json_view.hpp>`
 
 ```
-using ordered_json_editable_document = basic_json_document<ordered_json, true>;
+using ordered_json_editable_document = basic_json_document<ordered_json, view_mode::editable>;
 ```
 
 This type is an **editable** [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) of the [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) specialization: [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) change values after parsing, as for [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md), and [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) preserves the document order of object members -- including members [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) added -- instead of sorting them like [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md) does.
@@ -18,11 +18,11 @@ The example below edits a document with `set`, then shows that `materialize()` k
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using ordered_json_editable_document = nlohmann::ordered_json_editable_document;
+using nlohmann::ordered_json_editable_document;
 
 int main()
 {
-    // ordered_json_editable_document is basic_json_document<nlohmann::ordered_json, true>
+    // ordered_json_editable_document is basic_json_document<nlohmann::ordered_json, nlohmann::view_mode::editable>
     ordered_json_editable_document doc = ordered_json_editable_document::parse(R"({"z": 1, "a": 2, "m": 3})");
     doc.set(doc.root(), "b", 4); // set() always appends a new member at the end
 

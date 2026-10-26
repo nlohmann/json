@@ -65,7 +65,7 @@ The following code shows how a `parse_error` exception can be caught.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -79,7 +79,7 @@ int main()
         // output exception information
         std::cout << "message: " << e.what() << '\n'
                   << "exception id: " << e.id << '\n'
-                  << "byte position of error: " << e.byte << std::endl;
+                  << "byte position of error: " << e.byte << '\n';
     }
 }
 ```

@@ -129,6 +129,10 @@ Implementation limits
 
 See Implementation limits for [NLOHMANN_DEFINE_TYPE_INTRUSIVE](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md) and [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md), respectively.
 
+Views
+
+The generated `from_json()` also reads the views of [`json_document`](https://json.nlohmann.me/api/json_document/index.md)s (`<nlohmann/json_view.hpp>`): [`get<T>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) on a view looks the members up in the view, without building a `json` value first. The base part is read from the view as well if the base's `from_json()` accepts views, and from [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) otherwise.
+
 ## Examples
 
 Example: (1) NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE
@@ -171,7 +175,7 @@ int main()
     B example(23, 42, 3.142, 1.777);
     json example_json = example;
 
-    std::cout << std::setw(4) << example_json << std::endl;
+    std::cout << std::setw(4) << example_json << '\n';
 }
 ```
 
@@ -209,3 +213,5 @@ Notes:
 1. Added in version 3.12.0.
 
 All six macros were changed to allow an empty member list in version 3.13.0 unreleased.
+
+The generated `from_json()` reads the views of `json_document`s since version 3.13.0 unreleased.

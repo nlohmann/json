@@ -112,7 +112,7 @@ int main()
     j["b"] = 3;
 
     // keys are sorted, because std::map is used to store the object
-    std::cout << j.dump() << std::endl;
+    std::cout << j.dump() << '\n';
 }
 ```
 

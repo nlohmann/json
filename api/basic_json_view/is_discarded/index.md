@@ -34,7 +34,7 @@ The example below classifies several parsed documents by the type of their root 
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

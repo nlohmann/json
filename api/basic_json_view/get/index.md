@@ -16,10 +16,16 @@ For the types below, the conversion works directly on the flat index -- no `Basi
 - [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types) -- **no copy**: the returned view points into the document's [`source()`](https://json.nlohmann.me/api/basic_json_document/source/index.md) text, or, for a string that contains escape sequences, into the document's own buffer of decoded strings (see [`get_string()`](https://json.nlohmann.me/api/basic_json_view/get_string/index.md))
 - `BasicJsonType` -- equivalent to [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md)
 - `basic_json_view` -- returns `*this`
-- `std::vector<U, A>` -- from an array, element by element, each converted with `get<U>()`; `std::vector<basic_json_view>` keeps a view of every element instead of a value
-- `std::map<K, V, C, A>` and `std::unordered_map<K, V, H, E, A>`, if `K` is constructible from a `(const char*, std::size_t)` pair -- from an object, member by member, each value converted with `get<V>()`; with a repeated key, the *last* value is kept, as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) (and [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md)) does; `std::map<std::string, basic_json_view>` keeps views of the members instead of values
+- `std::vector<U, A>` of the types above -- from an array, element by element, each converted with `get<U>()`; `std::vector<basic_json_view>` keeps a view of every element instead of a value
+- `std::map<K, basic_json_view, C, A>` and `std::unordered_map<K, basic_json_view, H, E, A>`, if `K` is constructible from a `(const char*, std::size_t)` pair -- views of the members of an object; with a repeated key, the view of the *last* member is kept, as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) keeps its value
 
-Every other `T` -- `std::list`, `std::pair`, `std::array`, enumerations, user types with a `from_json()`, ... -- is converted by `materialize().get<T>()`: the subtree is built into a real `BasicJsonType` value first (as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) would), and converted from there exactly as [`BasicJsonType::get<T>()`](https://json.nlohmann.me/api/basic_json/get/index.md) would convert it.
+A default-constructible `T` whose `from_json()` accepts views reads the view directly as well, without building a `BasicJsonType` value. This covers the library's own conversions of the standard library types -- all other `std::vector`s, `std::map`/`std::unordered_map` (also with other key types), `std::list`, `std::deque`, `std::set`, `std::forward_list`, `std::valarray`, `std::array`, C arrays, `std::pair`, `std::tuple`, `std::optional`, enumerations, `std::filesystem::path`, ... -- which give the same values as `materialize().get<T>()` (from an object, a repeated key keeps the *last* value, as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) does), as well as the types of the [`NLOHMANN_DEFINE_TYPE_*`](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md) and [`NLOHMANN_DEFINE_DERIVED_TYPE_*`](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md) macros and the enumerations of [`NLOHMANN_JSON_SERIALIZE_ENUM`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/index.md), and any `from_json()` constrained to accept views, e.g. with [`is_json_view`](https://json.nlohmann.me/api/is_json_view/index.md). A `from_json()` that also accepts types that are no JSON values at all, such as the unconstrained `template<typename BasicJsonType> void from_json(const BasicJsonType&,T&)` of [arbitrary type conversions](https://json.nlohmann.me/features/arbitrary_types/index.md), is not called with a view: it may use `BasicJsonType` functions a view does not have. See [Writing generic code](https://json.nlohmann.me/features/json_view/#writing-generic-code).
+
+Duplicate keys
+
+Such a `from_json()` looks members up in the view, where a repeated key finds the **first** member, while `materialize().get<T>()` sees the **last** one, as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) keeps it: for `{"x":1,"x":2}`, `get<point>()` reads `x == 1`. See [Duplicate keys](https://json.nlohmann.me/features/json_view/#duplicate-keys).
+
+Every other `T` -- user types whose `from_json()` is written for `BasicJsonType` only, types without a default constructor, `std::tuple`s holding references, ... -- is converted by `materialize().get<T>()`: the subtree is built into a real `BasicJsonType` value first (as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) would), and converted from there exactly as [`BasicJsonType::get<T>()`](https://json.nlohmann.me/api/basic_json/get/index.md) would convert it.
 
 ## Template parameters
 
@@ -37,10 +43,11 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 
 - For the directly-converted types listed above (other than `BasicJsonType` and `basic_json_view`, which never throw): throws [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302) if the value's type does not match `T` -- the same exception, with the same message, that [`BasicJsonType::get<T>()`](https://json.nlohmann.me/api/basic_json/get/index.md) throws for the same JSON type and `T`.
 - For `std::vector<U, A>`: throws `type_error.302` if the value is not an array; otherwise, whatever converting an element to `U` throws.
-- For `std::map`/`std::unordered_map`: throws `type_error.302` if the value is not an object; otherwise, whatever converting a member to the mapped type throws.
+- For `std::map`/`std::unordered_map` of views: throws `type_error.302` if the value is not an object.
+- For a `T` whose `from_json()` reads the view: whatever that `from_json()` throws; for the library's conversions and the macros, the same exceptions with the same messages as [`BasicJsonType::get<T>()`](https://json.nlohmann.me/api/basic_json/get/index.md) of the same value.
 - For every other `T`: whatever [`materialize().get<T>()`](https://json.nlohmann.me/api/basic_json/get/index.md) throws -- typically `type_error.302`, or whatever a user-provided `from_json()` throws.
 
-None of the exceptions thrown directly by this function (the first three bullets above) carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) path: the view has no `BasicJsonType` value to point at. An exception thrown while converting through `materialize()` (the last bullet) is different: it is thrown by a real `BasicJsonType` value, so it **does** carry a `JSON_DIAGNOSTICS` path if `BasicJsonType` was built with it enabled. That path is relative to the root of the view's subtree, because `materialize()` builds only the subtree (with parent pointers): it is empty if the failing value is the subtree's root itself, and it never is the path within the whole document.
+None of the exceptions thrown directly by this function or by a `from_json()` that reads the view (the first four bullets above) carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) path: the view has no `BasicJsonType` value to point at. An exception thrown while converting through `materialize()` (the last bullet) is different: it is thrown by a real `BasicJsonType` value, so it **does** carry a `JSON_DIAGNOSTICS` path if `BasicJsonType` was built with it enabled. That path is relative to the root of the view's subtree, because `materialize()` builds only the subtree (with parent pointers): it is empty if the failing value is the subtree's root itself, and it never is the path within the whole document.
 
 ## Complexity
 
@@ -49,6 +56,7 @@ None of the exceptions thrown directly by this function (the first three bullets
 - `BasicJsonType`: linear in the size of the subtree, see [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md).
 - `std::vector<U, A>`: linear in the number of elements, times the complexity of converting one element to `U`.
 - `std::map`/`std::unordered_map`: linear in the number of members for walking them, plus the container's own insertion cost per member (logarithmic for `std::map`, amortized constant for `std::unordered_map`), times the complexity of converting one member to the mapped type.
+- a `T` whose `from_json()` reads the view: the cost of that `from_json()`; for the macros, linear in the number of members times the cost of a lookup, plus the cost of converting the members.
 - every other `T`: the cost of [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) and of destroying the `BasicJsonType` value afterwards, plus that of [`BasicJsonType::get<T>()`](https://json.nlohmann.me/api/basic_json/get/index.md).
 
 ## Notes
@@ -77,8 +85,8 @@ The example below reads typed fields straight into C++ variables, collects a vie
 #include <string>
 #include <vector>
 
-using json_document = nlohmann::json_document;
-using json_view = nlohmann::json_view;
+using nlohmann::json_document;
+using nlohmann::json_view;
 
 // address has no direct conversion in get<T>(), so get<address>() falls back
 // to materialize().get<address>() -- a real nlohmann::json value is built

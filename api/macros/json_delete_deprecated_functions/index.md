@@ -41,7 +41,7 @@ Without the macro, the deprecated overload is called, and the compiler warns abo
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -59,7 +59,7 @@ With the macro, the call does not compile:
 #define JSON_DELETE_DEPRECATED_FUNCTIONS 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

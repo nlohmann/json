@@ -58,7 +58,7 @@ classDiagram
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -82,7 +82,7 @@ classDiagram
         {
             // output exception information
             std::cout << "message: " << e.what() << '\n'
-                      << "exception id: " << e.id << std::endl;
+                      << "exception id: " << e.id << '\n';
         }
     }
     

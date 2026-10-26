@@ -67,7 +67,7 @@ Linear.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     const char* to_string(const std::partial_ordering& po)
     {
@@ -125,7 +125,7 @@ Linear.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     const char* to_string(const std::partial_ordering& po)
     {

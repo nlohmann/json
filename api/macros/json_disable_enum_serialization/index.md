@@ -34,7 +34,7 @@ The code below forces the library **not** to create default serialization/deseri
 #define JSON_DISABLE_ENUM_SERIALIZATION 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 enum class Choice
 {
@@ -60,7 +60,7 @@ The code below forces the library **not** to create default serialization/deseri
 #define JSON_DISABLE_ENUM_SERIALIZATION 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 enum class Choice
 {
@@ -92,7 +92,7 @@ The code below forces the library **not** to create default serialization/deseri
 #define JSON_DISABLE_ENUM_SERIALIZATION 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 enum class Choice
 {

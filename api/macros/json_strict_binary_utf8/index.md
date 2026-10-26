@@ -44,7 +44,7 @@ Without the macro, the bytes are written unchanged:
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -61,7 +61,7 @@ With the macro, ill-formed UTF-8 is rejected:
 #define JSON_STRICT_BINARY_UTF8 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

@@ -40,7 +40,7 @@ The example below shows how a `from_json` function can be implemented for a user
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -72,7 +72,7 @@ int main()
 
     auto p = j.get<ns::person>();
 
-    std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
+    std::cout << p.name << " (" << p.age << ") lives in " << p.address << '\n';
 }
 ```
 
@@ -90,7 +90,7 @@ The example below shows how a `from_json` is implemented as part of a specializa
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -138,7 +138,7 @@ int main()
 
     auto p = j.get<ns::person>();
 
-    std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
+    std::cout << p.name << " (" << p.age << ") lives in " << p.address << '\n';
 }
 ```
 

@@ -33,7 +33,7 @@ The following code shows how a JSON object is flattened to an object whose keys 
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -89,7 +89,7 @@ The following code shows that an empty object and an empty array are both flatte
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

@@ -52,7 +52,7 @@ The example shows the serialization of a JSON value to a byte vector in BON8 for
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -66,9 +66,9 @@ int main()
     // print the vector content
     for (auto& byte : v)
     {
-        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 }
 ```
 
@@ -86,7 +86,7 @@ The example shows how serializing a string that is not valid UTF-8 throws an exc
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

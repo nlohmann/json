@@ -49,7 +49,7 @@ The example demonstrates 3-way comparing JSON pointers.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 const char* to_string(const std::strong_ordering& so)
 {

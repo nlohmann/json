@@ -34,7 +34,7 @@ The example shows how to use `NLOHMANN_JSON_NAMESPACE_NO_VERSION` to disable the
 
 int main()
 {
-    std::cout << QUOTE(NLOHMANN_JSON_NAMESPACE) << std::endl;
+    std::cout << QUOTE(NLOHMANN_JSON_NAMESPACE) << '\n';
 }
 ```
 

@@ -36,11 +36,17 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
 
 ## Complexity
 
-Linear in the lengths of `apply_patch`.
+Linear in the total number of values (including nested ones) in `apply_patch`, times the cost of a key-based object operation (looking up, adding, or erasing a member): logarithmic for [`json`](https://json.nlohmann.me/api/json/index.md), and linear for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) (see [`ordered_map` complexity](https://json.nlohmann.me/api/ordered_map/#complexity)). For `ordered_json`, patching an object that has `n` members with a patch that has `m` members therefore takes O(n·m). The cost also includes one copy of `apply_patch` (see the notes below).
 
 ## Notes
 
-`apply_patch` may be `*this` itself or refer to a value contained in `*this` (for example, a subobject returned by `(*this)[key]`); it is read as it was when `merge_patch()` was called, before any modification of `*this`.
+- `apply_patch` may be `*this` itself or refer to a value contained in `*this` (for example, a subobject returned by `(*this)[key]`); it is read as it was when `merge_patch()` was called, before any modification of `*this`. To make this possible, the function copies `apply_patch` before it modifies `*this`, so the cost includes one copy of the patch.
+- A merge patch uses `null` to remove a member, so it cannot set a member to `null`: applying `{"a":null}` to `{"a":1}` gives `{}`.
+- Arrays are not merged: an array in the patch replaces the target value as a whole, and a `null` inside an array is kept as an element. `null` members of the target that the patch does not mention are preserved.
+- A `null` in the patch only removes a member; it does not prevent the creation of the enclosing objects. Applying `{"a":{"b":null}}` to `{}` gives `{"a":{}}` (see example 15 in Appendix A of the RFC).
+- If `apply_patch` is not an object, it replaces the target as a whole. In particular, a `null` patch turns the target into `null`. If `apply_patch` is an object and the target is not, the target is first replaced by an empty object, so applying `{}` to `1` gives `{}`.
+- A merge patch cannot express every change; for example, it cannot reorder array elements or remove a specific array element. Use [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md) ([RFC 6902](https://tools.ietf.org/html/rfc6902)) for that. [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md) has a matching limitation, see its notes.
+- A [discarded](https://json.nlohmann.me/api/basic_json/is_discarded/index.md) value is treated like any other non-object value: a discarded `apply_patch` turns the target into a discarded value, and an object patch replaces a discarded target by an object as described above.
 
 ## Examples
 
@@ -53,7 +59,7 @@ The following code shows how a JSON Merge Patch is applied to a JSON document.
 #include <nlohmann/json.hpp>
 #include <iomanip> // for std::setw
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -88,7 +94,7 @@ int main()
     document.merge_patch(patch);
 
     // output original and patched document
-    std::cout << std::setw(4) << document << std::endl;
+    std::cout << std::setw(4) << document << '\n';
 }
 ```
 

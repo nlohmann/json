@@ -57,11 +57,11 @@ The following code shows that `number_unsigned_t` is by default, a typedef to `s
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
-    std::cout << std::boolalpha << std::is_same<std::uint64_t, json::number_unsigned_t>::value << std::endl;
+    std::cout << std::boolalpha << std::is_same<std::uint64_t, json::number_unsigned_t>::value << '\n';
 }
 ```
 

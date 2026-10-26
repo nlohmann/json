@@ -46,7 +46,7 @@ The following code shows an example for `back()`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

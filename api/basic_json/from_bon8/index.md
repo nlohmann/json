@@ -67,6 +67,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [parse_error.110](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error110) if the given input ends prematurely or the end of the file was not reached when `strict` was set to true
 - Throws [parse_error.112](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error112) if a parse error occurs, for instance an invalid byte, a string that is not valid UTF-8, or an object key that is not a string
 
+The UTF-8 validity of strings is always checked, independent of [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md), because the end of a BON8 string is determined from its encoding. Duplicate object keys are accepted; the last value wins (see [BON8](https://json.nlohmann.me/features/binary_formats/bon8/index.md)).
+
 ## Complexity
 
 Linear in the size of the input.
@@ -82,7 +84,7 @@ The example shows the deserialization of a byte vector in BON8 format to a JSON 
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -97,7 +99,7 @@ int main()
     json j = json::from_bon8(v);
 
     // print the deserialized JSON value
-    std::cout << std::setw(2) << j << std::endl;
+    std::cout << std::setw(2) << j << '\n';
 }
 ```
 

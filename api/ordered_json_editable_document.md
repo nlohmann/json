@@ -3,7 +3,7 @@
 <small>Defined in header `<nlohmann/json_view.hpp>`</small>
 
 ```cpp
-using ordered_json_editable_document = basic_json_document<ordered_json, true>;
+using ordered_json_editable_document = basic_json_document<ordered_json, view_mode::editable>;
 ```
 
 This type is an **editable** [`basic_json_document`](basic_json_document/index.md) of the
@@ -26,11 +26,11 @@ members [`set`](basic_json_document/set.md) added -- instead of sorting them lik
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using ordered_json_editable_document = nlohmann::ordered_json_editable_document;
+    using nlohmann::ordered_json_editable_document;
     
     int main()
     {
-        // ordered_json_editable_document is basic_json_document<nlohmann::ordered_json, true>
+        // ordered_json_editable_document is basic_json_document<nlohmann::ordered_json, nlohmann::view_mode::editable>
         ordered_json_editable_document doc = ordered_json_editable_document::parse(R"({"z": 1, "a": 2, "m": 3})");
         doc.set(doc.root(), "b", 4); // set() always appends a new member at the end
     

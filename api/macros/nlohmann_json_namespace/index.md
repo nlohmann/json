@@ -23,7 +23,7 @@ The example shows how to use `NLOHMANN_JSON_NAMESPACE` instead of just `nlohmann
 #include <nlohmann/json.hpp>
 
 // possible use case: use NLOHMANN_JSON_NAMESPACE instead of nlohmann
-using json = NLOHMANN_JSON_NAMESPACE::json;
+using NLOHMANN_JSON_NAMESPACE::json;
 
 // macro needed to output the NLOHMANN_JSON_NAMESPACE as string literal
 #define Q(x) #x
@@ -31,7 +31,7 @@ using json = NLOHMANN_JSON_NAMESPACE::json;
 
 int main()
 {
-    std::cout << QUOTE(NLOHMANN_JSON_NAMESPACE) << std::endl;
+    std::cout << QUOTE(NLOHMANN_JSON_NAMESPACE) << '\n';
 }
 ```
 
@@ -48,4 +48,4 @@ nlohmann::json_abi_v3_12_0
 
 ## Version history
 
-- Added in version 3.11.0. Changed inline namespace name in version 3.11.2. Added the ABI tag `_dp` in version 3.12.0, and the ABI tags `_bics`, `_psp`, `_snul`, `_sbu8`, `_ekmo`, `_dsbs`, `_dufio`, `_ns`, `_vns`, and `_vssse3` in version 3.13.0 unreleased; see [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/#structure).
+- Added in version 3.11.0. Changed inline namespace name in version 3.11.2. Added the ABI tag `_dp` in version 3.12.0, and the ABI tags `_bics`, `_psp`, `_snul`, `_sbu8`, `_ekmo`, `_dsbs`, `_dufio`, and `_ns` in version 3.13.0 unreleased; see [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/#structure).

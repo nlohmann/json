@@ -40,7 +40,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [`out_of_range.407`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range407) if `j` contains an integer outside [-2^63, 2^64-1], which is only possible with a number type wider than 64 bits; example: `"integer number 18446744073709551616 cannot be represented by MessagePack as it does not fit [-2^63, 2^64-1]"`
 - Throws [`out_of_range.412`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range412) if the length of a string, binary value, array, or object exceeds 4294967295, the maximum MessagePack can store; example: `"MessagePack length 4294967296 exceeds maximum of 4294967295"`
-- Throws [`out_of_range.415`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range415) if the subtype of a binary value exceeds 255, the maximum of the MessagePack ext type; example: `"subtype 70000 is too large for the MessagePack ext type (max 255)"`
+- Throws [`out_of_range.415`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range415) if the subtype of a binary value exceeds 255, the largest value the library can store in the one-byte MessagePack ext type; example: `"subtype 70000 is too large for the MessagePack ext type (max 255)"`
 - Throws [type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string or object key in `j` is not valid UTF-8 and `error_handler` is `strict`
 - Throws [type_error.321](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error321) if `j` or a value nested in it is discarded; example: `"cannot serialize discarded value to MessagePack"`
 
@@ -59,7 +59,7 @@ The example shows the serialization of a JSON value to a byte vector in MessageP
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -73,9 +73,9 @@ int main()
     // print the vector content
     for (auto& byte : v)
     {
-        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 }
 ```
 
@@ -93,7 +93,7 @@ The example shows how serializing a binary value whose subtype exceeds 255 throw
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

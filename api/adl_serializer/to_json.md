@@ -28,7 +28,7 @@ This function is usually called by the constructors of the [basic_json](../basic
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     namespace ns
     {
@@ -55,7 +55,7 @@ This function is usually called by the constructors of the [basic_json](../basic
     
         json j = p;
     
-        std::cout << j << std::endl;
+        std::cout << j << '\n';
     }
     
     ```

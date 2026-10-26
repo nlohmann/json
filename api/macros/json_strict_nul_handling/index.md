@@ -63,7 +63,7 @@ Without the macro, a NUL byte silently ends parsing at that point:
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -80,7 +80,7 @@ With the macro, a NUL byte is rejected like any other unexpected byte:
 #define JSON_STRICT_NUL_HANDLING 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

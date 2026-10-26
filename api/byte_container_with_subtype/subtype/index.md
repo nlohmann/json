@@ -42,7 +42,7 @@ int main()
     auto c2 = byte_container_with_subtype(bytes, 42);
 
     std::cout << "c1.subtype() = " << c1.subtype()
-              << "\nc2.subtype() = " << c2.subtype() << std::endl;
+              << "\nc2.subtype() = " << c2.subtype() << '\n';
 
     // in case no subtype is set, return special value
     assert(c1.subtype() == static_cast<byte_container_with_subtype::subtype_type>(-1));

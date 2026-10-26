@@ -37,6 +37,10 @@ Important notes
 - If an enum or JSON value is specified in multiple conversions, the first matching conversion from the top of the list will be returned when converting to or from JSON. See example 2 below.
 - Maps with enum keys (e.g., `std::map<ENUM_TYPE, T>`) are stored as arrays of `[key, value]` pairs by default. Define [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md) to store them as objects with the converted keys. Such maps can be read from both forms.
 
+Views
+
+The generated `from_json()` also reads the views of [`json_document`](https://json.nlohmann.me/api/json_document/index.md)s (`<nlohmann/json_view.hpp>`), comparing the view with the entries of the mapping, without building a `json` value first.
+
 ## Examples
 
 Example: Basic usage
@@ -47,7 +51,7 @@ The example shows how `NLOHMANN_JSON_SERIALIZE_ENUM` can be used to serialize/de
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -85,7 +89,7 @@ int main()
     json j_stopped = ns::TS_STOPPED;
     json j_red = ns::Color::red;
     std::cout << "ns::TS_STOPPED -> " << j_stopped
-              << ", ns::Color::red -> " << j_red << std::endl;
+              << ", ns::Color::red -> " << j_red << '\n';
 
     // deserialization
     json j_running = "running";
@@ -93,7 +97,7 @@ int main()
     auto running = j_running.get<ns::TaskState>();
     auto blue = j_blue.get<ns::Color>();
     std::cout << j_running << " -> " << running
-              << ", " << j_blue << " -> " << static_cast<int>(blue) << std::endl;
+              << ", " << j_blue << " -> " << static_cast<int>(blue) << '\n';
 
     // deserializing undefined JSON value to enum
     // (where the first map entry above is the default)
@@ -101,7 +105,7 @@ int main()
     auto invalid = j_pi.get<ns::TaskState>();
     auto unknown = j_pi.get<ns::Color>();
     std::cout << j_pi << " -> " << invalid << ", "
-              << j_pi << " -> " << static_cast<int>(unknown) << std::endl;
+              << j_pi << " -> " << static_cast<int>(unknown) << '\n';
 }
 ```
 
@@ -121,7 +125,7 @@ The example shows how to use multiple conversions for a single enumerator. In th
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -142,14 +146,14 @@ int main()
 {
     // serialization
     json j_red = ns::Color::red;
-    std::cout << static_cast<int>(ns::Color::red) << " -> " << j_red << std::endl;
+    std::cout << static_cast<int>(ns::Color::red) << " -> " << j_red << '\n';
 
     // deserialization
     json j_rot = "rot";
     auto rot = j_rot.get<ns::Color>();
     auto red = j_red.get<ns::Color>();
-    std::cout << j_rot << " -> " << static_cast<int>(rot) << std::endl;
-    std::cout << j_red << " -> " << static_cast<int>(red) << std::endl;
+    std::cout << j_rot << " -> " << static_cast<int>(rot) << '\n';
+    std::cout << j_red << " -> " << static_cast<int>(red) << '\n';
 }
 ```
 
@@ -171,3 +175,5 @@ Output:
 ## Version history
 
 Added in version 3.4.0.
+
+The generated `from_json()` reads the views of `json_document`s since version 3.13.0 unreleased.

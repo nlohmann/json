@@ -40,7 +40,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   where an existing element is required (the "path" of "replace", the "from" of "move" and "copy"); example:
   `"array index '-' (3) is out of range"`.
 - Throws [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if a JSON pointer inside the patch
-  could not be resolved successfully in the current JSON value; example: `"key baz not found"`.
+  could not be resolved successfully in the current JSON value; example: `"key 'baz' not found"`.
 - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if a reference token of a JSON
   pointer inside the patch cannot be resolved, e.g., `-` in a "remove" operation or `1a` for an array; example:
   `"unresolved reference token '-'"`.
@@ -53,7 +53,10 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [`out_of_range.414`](../../home/exceptions.md#jsonexceptionout_of_range414) if a "move" operation's "from"
   location is a proper prefix of its "path" location.
 - Throws [`other_error.501`](../../home/exceptions.md#jsonexceptionother_error501) if "test" operation was
-  unsuccessful.
+  unsuccessful. A "test" operation whose "path" does not exist is unsuccessful, too: the failed lookup is reported as a
+  failed test, even if the operation has no "value" member (which would otherwise be
+  [`parse_error.105`](../../home/exceptions.md#jsonexceptionparse_error105)). Which of the two errors is reported for
+  this combination depends on the order in which the operands of a comparison are evaluated, so do not rely on it.
 
 ## Complexity
 
@@ -64,6 +67,10 @@ the JSON value, the complexity can usually be neglected.
 
 The application of a patch is atomic: Either all operations succeed and the patched document is returned or an exception
 is thrown. In any case, the original value is not changed: the patch is applied to a copy of the value.
+
+Duplicate member names inside an operation object are resolved by the parser before the patch is applied (the last one
+is kept, see [`object_t`](object_t.md#behavior)), so `#!json {"op": "add", "op": "remove", "path": "/a"}` is a
+`remove` operation.
 
 ## Examples
 
@@ -76,7 +83,7 @@ is thrown. In any case, the original value is not changed: the patch is applied 
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -103,7 +110,7 @@ is thrown. In any case, the original value is not changed: the patch is applied 
     
         // output original and patched document
         std::cout << std::setw(4) << doc << "\n\n"
-                  << std::setw(4) << patched_doc << std::endl;
+                  << std::setw(4) << patched_doc << '\n';
     }
     
     ```
@@ -135,7 +142,7 @@ is thrown. In any case, the original value is not changed: the patch is applied 
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -165,7 +172,7 @@ is thrown. In any case, the original value is not changed: the patch is applied 
         }
     
         // the original document is unchanged
-        std::cout << std::setw(4) << doc << std::endl;
+        std::cout << std::setw(4) << doc << '\n';
     }
     
     ```
@@ -194,6 +201,7 @@ is thrown. In any case, the original value is not changed: the patch is applied 
 - Added in version 2.0.0.
 - Added [`out_of_range.411`](../../home/exceptions.md#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's
   target location has a non-object/non-array parent in version 3.13.0.
+  This includes a `null` parent, which was previously silently converted to an object, in version 3.13.0.
 - Added [`out_of_range.413`](../../home/exceptions.md#jsonexceptionout_of_range413) and stopped silently ignoring a "remove" operation whose target
   location has a non-object/non-array parent in version 3.13.0.
 - Added [`out_of_range.414`](../../home/exceptions.md#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper

@@ -45,7 +45,7 @@ The example shows how `emplace_back()` can be used to add elements to a JSON arr
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

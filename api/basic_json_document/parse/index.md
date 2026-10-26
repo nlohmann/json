@@ -97,7 +97,7 @@ Example: (1) borrowed vs. owned input, and errors identical to `BasicJsonType::p
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {
@@ -142,7 +142,7 @@ Example: (2) parse an iterator range (no NUL terminator required)
 #include <vector>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

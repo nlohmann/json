@@ -15,7 +15,7 @@ Throughout this page, we will describe how to compile the example file `example.
 #include <iostream>
 #include <iomanip>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -78,7 +78,7 @@ Example: Raw compilation
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -109,7 +109,7 @@ Example: CMake
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -199,7 +199,7 @@ Example: Wrap
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -260,7 +260,7 @@ Example: Bazel module with `bazel_dep`
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -322,7 +322,7 @@ Example: CMake with the Conan toolchain
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -386,7 +386,7 @@ Example: CMake with a Spack-installed package
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -463,7 +463,7 @@ Example: CMake with HunterGate
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -527,7 +527,7 @@ Example: CMake with the vcpkg toolchain
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -590,7 +590,7 @@ Example: CMake with the cget toolchain
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -678,7 +678,7 @@ Example: a minimal executable package
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -755,7 +755,7 @@ Example: Raw compilation
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -805,7 +805,7 @@ Example: Raw compilation
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -855,7 +855,7 @@ Example: Raw compilation
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -886,7 +886,7 @@ Example: CMake
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -1058,7 +1058,7 @@ Example: from scratch, using `build2`'s [`bdep new` command](https://build2.org/
      #include <iostream>
      #include <iomanip>
 
-     using json = nlohmann::json;
+     using nlohmann::json;
 
      int main()
      {
@@ -1137,7 +1137,7 @@ Example: CMake with `CPMAddPackage`
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {
@@ -1195,7 +1195,7 @@ Example: xmake project
    #include <iostream>
    #include <iomanip>
 
-   using json = nlohmann::json;
+   using nlohmann::json;
 
    int main()
    {

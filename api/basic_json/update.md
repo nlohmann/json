@@ -76,7 +76,7 @@ contained in `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -131,7 +131,7 @@ contained in `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()

@@ -19,13 +19,13 @@ and [`default_object_comparator_t`](default_object_comparator_t.md) otherwise.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
         std::cout << std::boolalpha
                   << "json::object_comparator_t(\"one\", \"two\") = " << json::object_comparator_t{}("one", "two") << "\n"
-                  << "json::object_comparator_t(\"three\", \"four\") = " << json::object_comparator_t{}("three", "four") << std::endl;
+                  << "json::object_comparator_t(\"three\", \"four\") = " << json::object_comparator_t{}("three", "four") << '\n';
     }
     
     ```

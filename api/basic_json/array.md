@@ -44,7 +44,7 @@ This function is only needed to express two edge cases that cannot be realized w
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

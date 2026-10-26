@@ -58,7 +58,7 @@ The file is locked once while it is parsed:
 #include <cstdio>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -77,7 +77,7 @@ With the macro, every character is read with `std::fgetc`, with the same result:
 #include <cstdio>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

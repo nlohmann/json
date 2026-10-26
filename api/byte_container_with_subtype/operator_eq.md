@@ -49,7 +49,7 @@ Linear in the size of the compared containers.
                   << "c1 == c2: " << (c1 == c2) << '\n'
                   << "c1 == c3: " << (c1 == c3) << '\n'
                   << "c3 == c4: " << (c3 == c4) << '\n'
-                  << "c3 == c5: " << (c3 == c5) << std::endl;
+                  << "c3 == c5: " << (c3 == c5) << '\n';
     }
     
     ```

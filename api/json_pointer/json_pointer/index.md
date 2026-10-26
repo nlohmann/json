@@ -33,7 +33,7 @@ The example shows the construction several valid JSON pointers as well as the ex
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

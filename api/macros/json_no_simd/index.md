@@ -4,7 +4,7 @@
 #define JSON_NO_SIMD
 ```
 
-When defined, the library uses only portable C++ code where it would otherwise use vector instructions: when scanning strings during parsing, and when writing floating-point numbers during serialization.
+When defined, the library uses only portable C++ code where it would otherwise use vector instructions: when scanning strings during parsing, and when writing floating-point numbers during serialization. This includes the parser of [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) (`<nlohmann/json_view.hpp>`).
 
 The macro is an escape hatch, for example for toolchains that cannot compile the vector code, for sanitizers or analyzers that do not understand it, or to compare the speed of both variants. It does not change any result: values, exceptions, and error positions are the same either way. Only the speed differs.
 
@@ -45,7 +45,7 @@ The program parses and serializes the same values with and without the macro:
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -61,6 +61,7 @@ int main()
 - [**JSON_USE_SIMDUTF**](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md) - use the simdutf library to accelerate UTF-8 validation
 - [**JSON_DISABLE_STREAM_BULK_SCAN**](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time
 - [Parsing: input sources and performance](https://json.nlohmann.me/features/parsing/#input-sources-and-performance)
+- [json_view](https://json.nlohmann.me/features/json_view/index.md) - the zero-copy view, whose parser the macro also affects
 
 ## Version history
 

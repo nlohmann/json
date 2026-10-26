@@ -57,7 +57,7 @@ Linear in the number of reference tokens.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     const char* to_string(const std::strong_ordering& so)
     {

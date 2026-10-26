@@ -55,7 +55,7 @@ json_pointer& operator/=(std::size_t array_idx)
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -73,7 +73,7 @@ json_pointer& operator/=(std::size_t array_idx)
     
         // append an array index
         ptr /= 42;
-        std::cout << "\"" << ptr << "\"" << std::endl;
+        std::cout << "\"" << ptr << "\"" << '\n';
     }
     
     ```

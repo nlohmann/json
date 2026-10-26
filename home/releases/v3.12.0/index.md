@@ -14,9 +14,9 @@ Fixes bugs found in 3.11.3 and adds several features. No public API was removed 
 
 ## API changes
 
-**Added (4 pages):**
+**Added (5 pages):**
 
-- `basic_json`: [`end_pos`](https://json.nlohmann.me/api/basic_json/end_pos/index.md), [`start_pos`](https://json.nlohmann.me/api/basic_json/start_pos/index.md)
+- `basic_json`: [`bjdata_version_t`](https://json.nlohmann.me/api/basic_json/bjdata_version_t/index.md), [`end_pos`](https://json.nlohmann.me/api/basic_json/end_pos/index.md), [`start_pos`](https://json.nlohmann.me/api/basic_json/start_pos/index.md)
 - `macros`: [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md), [`nlohmann_define_derived_type`](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)
 
 **Changed:**
@@ -25,4 +25,4 @@ Fixes bugs found in 3.11.3 and adds several features. No public API was removed 
 - [`basic_json::parse`](https://json.nlohmann.me/api/basic_json/parse/index.md): Changed [runtime assertion](https://json.nlohmann.me/features/assertions/index.md) in case of `FILE*` null pointers to exception in version 3.12.0.
 - [`basic_json::to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md): BJData version parameter (for draft3 binary encoding) added in version 3.12.0.
 - [`JSON_HAS_CPP_11, JSON_HAS_CPP_14, JSON_HAS_CPP_17, JSON_HAS_CPP_20, JSON_HAS_CPP_23, JSON_HAS_CPP_26`](https://json.nlohmann.me/api/macros/json_has_cpp_11/index.md): Added `JSON_HAS_CPP_23` in version 3.12.0.
-- [`NLOHMANN_JSON_NAMESPACE`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace/index.md): Added the ABI tag `_dp` in version 3.12.0, and the ABI tags `_bics`, `_psp`, `_snul`, `_sbu8`, `_ekmo`, `_dsbs`, `_dufio`, `_ns`, `_vns`, and `_vssse3` in version 3.13.0 unreleased; see [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/#structure).
+- [`NLOHMANN_JSON_NAMESPACE`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace/index.md): Added the ABI tag `_dp` in version 3.12.0, and the ABI tags `_bics`, `_psp`, `_snul`, `_sbu8`, `_ekmo`, `_dsbs`, `_dufio`, and `_ns` in version 3.13.0 unreleased; see [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/#structure).

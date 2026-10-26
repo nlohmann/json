@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -29,5 +29,5 @@ int main()
 
     // output original and patched document
     std::cout << std::setw(4) << doc << "\n\n"
-              << std::setw(4) << patched_doc << std::endl;
+              << std::setw(4) << patched_doc << '\n';
 }

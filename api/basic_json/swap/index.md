@@ -87,7 +87,7 @@ The example below shows how JSON values can be swapped with `swap()`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -119,7 +119,7 @@ The example below shows how arrays can be swapped with `swap()`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -153,7 +153,7 @@ The example below shows how objects can be swapped with `swap()`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -187,7 +187,7 @@ The example below shows how strings can be swapped with `swap()`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -221,7 +221,7 @@ The example below shows how binary values can be swapped with `swap()`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

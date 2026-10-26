@@ -8,6 +8,38 @@ References
 - [CBOR Playground](http://cbor.me) - an interactive webpage to translate between JSON and CBOR
 - [RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html) - the CBOR specification
 
+## Byte layout
+
+CBOR encodes every data item as a *head* followed by optional content. The first byte of the head holds the *major type* in its upper three bits (unsigned integer, negative integer, byte string, text string, array, map, tag, or simple/float) and an *additional information* value in its lower five bits. Additional information below 24 is the argument itself (for example, a small integer or a short length); the values 24 to 27 announce that the argument follows in 1, 2, 4, or 8 big-endian bytes. Strings, arrays, and maps are prefixed with their length (or count of elements/pairs), and content follows directly. A reader of definite-length items knows how many items to expect without a terminator; indefinite-length items (additional information 31) are instead closed by the "break" byte 0xFF, which `from_cbor` reads but `to_cbor` never writes.
+
+Consider the following JSON value (shown formatted for readability):
+
+```
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_cbor` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: type/marker data.
+
+| JSON              | Bytes                               | Meaning                                                                                                  |
+| ----------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `{`               | A4                                  | map with 4 key/value pairs                                                                               |
+| `"id": 300,`      | 62 69 64 19 01 2C                   | key: text string of length 2, then its UTF-8 bytes; value: unsigned integer, 2 bytes follow (big-endian) |
+| `"name": "json",` | 64 6E 61 6D 65 64 6A 73 6F 6E       | key: text string of length 4; value: text string of length 4                                             |
+| `"pi": 3.14,`     | 62 70 69 FB 40 09 1E B8 51 EB 85 1F | key: text string of length 2; value: double-precision float (IEEE 754, big-endian)                       |
+| `"tags": [`       | 64 74 61 67 73 82                   | key: text string of length 4; value: array with 2 elements                                               |
+| `"a",`            | 61 61                               | text string of length 1                                                                                  |
+| `"b"`             | 61 62                               | text string of length 1                                                                                  |
+| `]`               |                                     | no end marker: the element count was given up front                                                      |
+| `}`               |                                     | no end marker: the member count was given up front                                                       |
+
 ## Serialization
 
 The library uses the following mapping from JSON values types to CBOR types according to the CBOR specification ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html)):
@@ -17,16 +49,16 @@ The library uses the following mapping from JSON values types to CBOR types acco
 | null            | `null`                                     | Null                              | 0xF6       |
 | boolean         | `true`                                     | True                              | 0xF5       |
 | boolean         | `false`                                    | False                             | 0xF4       |
-| number_integer  | -9223372036854775808..-2147483649          | Negative integer (8 bytes follow) | 0x3B       |
-| number_integer  | -2147483648..-32769                        | Negative integer (4 bytes follow) | 0x3A       |
-| number_integer  | -32768..-129                               | Negative integer (2 bytes follow) | 0x39       |
-| number_integer  | -128..-25                                  | Negative integer (1 byte follow)  | 0x38       |
+| number_integer  | -9223372036854775808..-4294967297          | Negative integer (8 bytes follow) | 0x3B       |
+| number_integer  | -4294967296..-65537                        | Negative integer (4 bytes follow) | 0x3A       |
+| number_integer  | -65536..-257                               | Negative integer (2 bytes follow) | 0x39       |
+| number_integer  | -256..-25                                  | Negative integer (1 byte follow)  | 0x38       |
 | number_integer  | -24..-1                                    | Negative integer                  | 0x20..0x37 |
 | number_integer  | 0..23                                      | Integer                           | 0x00..0x17 |
 | number_integer  | 24..255                                    | Unsigned integer (1 byte follow)  | 0x18       |
 | number_integer  | 256..65535                                 | Unsigned integer (2 bytes follow) | 0x19       |
 | number_integer  | 65536..4294967295                          | Unsigned integer (4 bytes follow) | 0x1A       |
-| number_integer  | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow) | 0x1B       |
+| number_integer  | 4294967296..9223372036854775807            | Unsigned integer (8 bytes follow) | 0x1B       |
 | number_unsigned | 0..23                                      | Integer                           | 0x00..0x17 |
 | number_unsigned | 24..255                                    | Unsigned integer (1 byte follow)  | 0x18       |
 | number_unsigned | 256..65535                                 | Unsigned integer (2 bytes follow) | 0x19       |
@@ -59,7 +91,17 @@ Binary values with subtype are mapped to tagged values (0xD8..0xDB) depending on
 
 Complete mapping
 
-The mapping is **complete** in the sense that any JSON value type can be converted to a CBOR value.
+The mapping is **complete** in the sense that any JSON value type can be converted to a CBOR value, with one exception: an integer outside the range of CBOR integers (only possible with a number type wider than 64 bits) throws [`out_of_range.407`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range407).
+
+Not a deterministic encoding
+
+`to_cbor` does not produce the deterministic encoding of [RFC 8949, Section 4.2.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-4.2.1), and not always the preferred serialization of Section 4.1:
+
+- floating-point numbers are written as single precision (0xFA) when that is exact and as double precision (0xFB) otherwise; half precision (0xF9) is used only for `NaN` and `Infinity`/`-Infinity` (`1.0` is `fa 3f 80 00 00`);
+- a binary subtype 0..23 is written as `d8 xx` instead of the one-byte tag 0xC0..0xD7 (`d8 01 41 01`);
+- object members are written in the order of `object_t` (for the default `std::map`: sorted by the key string, not by the encoded key bytes).
+
+Integers and lengths use the shortest form, and indefinite-length items are never written. Decoders must accept all of this; the RFC does not require the preferred serialization.
 
 NaN/infinity handling
 
@@ -67,7 +109,7 @@ NaN/infinity handling
 
 Note
 
-Prior to version 3.13.0 unreleased, NaN and Infinity were instead serialized as a CBOR double-precision float (type 0xFB, 9 bytes total), because the check used to select a smaller encoding compared magnitudes with NaN, which is always `false` and caused the intended half-precision path to be skipped.
+Prior to version 3.8.0, NaN and Infinity were instead serialized as a CBOR double-precision float (type 0xFB, 9 bytes total).
 
 Unused CBOR types
 
@@ -84,7 +126,6 @@ The following CBOR types are not used in the conversion:
 - expected conversions (0xD5..0xD7)
 - simple values (0xE0..0xF3, 0xF8)
 - undefined (0xF7)
-- half-precision floats (0xF9)
 - break (0xFF)
 
 Tagged items
@@ -98,7 +139,7 @@ Example: serialize a JSON value to CBOR
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -112,9 +153,9 @@ int main()
     // print the vector content
     for (auto& byte : v)
     {
-        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 }
 ```
 
@@ -123,36 +164,6 @@ Output:
 ```
 0xa2 0x67 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xf5 0x66 0x73 0x63 0x68 0x65 0x6d 0x61 0x00
 ```
-
-### Byte layout
-
-Consider the following JSON value (shown formatted for readability):
-
-```
-{
-  "id": 300,
-  "name": "json",
-  "pi": 3.14,
-  "tags": [
-    "a",
-    "b"
-  ]
-}
-```
-
-`to_cbor` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: type/marker length/count/size data.
-
-| JSON              | Bytes                               | Meaning                                                                                                  |
-| ----------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `{`               | A4                                  | map with 4 key/value pairs                                                                               |
-| `"id": 300,`      | 62 69 64 19 01 2C                   | key: text string of length 2, then its UTF-8 bytes; value: unsigned integer, 2 bytes follow (big-endian) |
-| `"name": "json",` | 64 6E 61 6D 65 64 6A 73 6F 6E       | key: text string of length 4; value: text string of length 4                                             |
-| `"pi": 3.14,`     | 62 70 69 FB 40 09 1E B8 51 EB 85 1F | key: text string of length 2; value: double-precision float (IEEE 754, big-endian)                       |
-| `"tags": [`       | 64 74 61 67 73 82                   | key: text string of length 4; value: array with 2 elements                                               |
-| `"a",`            | 61 61                               | text string of length 1                                                                                  |
-| `"b"`             | 61 62                               | text string of length 1                                                                                  |
-| `]`               |                                     | no end marker: the element count was given up front                                                      |
-| `}`               |                                     | no end marker: the member count was given up front                                                       |
 
 ## Deserialization
 
@@ -226,13 +237,19 @@ CBOR allows map keys of any type, whereas JSON only allows strings as keys in ob
 
 This applies to the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) as well, as the key is read before it is passed on. This is a deliberate restriction of the library's JSON value model, not an oversight: formats built on CBOR maps with integer keys, such as COSE ([RFC 9052](https://www.rfc-editor.org/rfc/rfc9052.html)) or CWT ([RFC 8392](https://www.rfc-editor.org/rfc/rfc8392.html)), cannot be read with this library and need a general-purpose CBOR library instead.
 
+A tag in front of a text string key is handled like a tag in front of a value: it is skipped with `cbor_tag_handler_t::ignore` or `cbor_tag_handler_t::store` and rejected with the default `error`. A tag does not turn a key of another type into a text string.
+
+A map with duplicate keys is well-formed, but invalid under [RFC 8949, Section 5.3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-5.3.1). `from_cbor` accepts it and the last value wins; the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) reports every occurrence.
+
 Ill-formed UTF-8 in text strings
 
-[RFC 8949, Section 3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) requires CBOR text strings (major type 3) to be valid UTF-8, but leaves it up to the decoder whether to enforce this, so checking is opt-in: with the [`error_handler`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) parameter left at `keep` (the default), `from_cbor()` accepts a text string (object keys included) whose bytes are not valid UTF-8 and hands them back unchanged. Passing `error_handler_t::strict` makes `from_cbor()` check and throw [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) for ill-formed UTF-8, and `replace`/`ignore` sanitize the string instead of keeping it. However, [`dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) still requires valid UTF-8 and throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) for a value read with the default `keep` handler, unless an error handler is passed that replaces or ignores the ill-formed bytes. `to_cbor()`'s own [`error_handler`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) parameter defaults to `keep`, so such a value is written back unchanged; with `strict` (the default if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled), it throws the same exception instead. Byte strings (major type 2) are unaffected, since they are not required to hold text.
+[RFC 8949, Section 3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) requires CBOR text strings (major type 3) to be valid UTF-8 (a string with ill-formed UTF-8 is "well-formed but invalid"), and [Section 5.3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-5.3.1) leaves it up to the decoder whether to verify this, so checking is opt-in: with the [`error_handler`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) parameter left at `keep` (the default), `from_cbor()` accepts a text string (object keys included) whose bytes are not valid UTF-8 and hands them back unchanged. Passing `error_handler_t::strict` makes `from_cbor()` check and throw [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) for ill-formed UTF-8, and `replace`/`ignore` sanitize the string instead of keeping it. However, [`dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) still requires valid UTF-8 and throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) for a value read with the default `keep` handler, unless an error handler is passed that replaces or ignores the ill-formed bytes. `to_cbor()`'s own [`error_handler`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) parameter defaults to `keep`, so such a value is written back unchanged; with `strict` (the default if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled), it throws the same exception instead. Byte strings (major type 2) are unaffected, since they are not required to hold text.
+
+The chunks of an indefinite-length text string are checked one by one, as required by [RFC 8949, Section 3.2.3](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.2.3): a code point cannot be spread over two chunks. With `error_handler_t::strict` such a string throws `parse_error.113`; `replace` and `ignore` sanitize each chunk on its own.
 
 Tagged items
 
-Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. Passing `cbor_tag_handler_t::store` to function `from_cbor` stores tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.
+Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. Passing `cbor_tag_handler_t::store` to function `from_cbor` stores tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the tag directly in front of it is stored, and only when it has the form 0xD8..0xDB (a tag 0..23 written as 0xC0..0xD7 is skipped); for example, `D8 05 C1 41 AA` yields subtype `null`, whereas `C1 D8 05 41 AA` yields 5. Tags in front of a text string map key are skipped as well. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.
 
 Example: deserialize a JSON value from CBOR
 
@@ -241,7 +258,7 @@ Example: deserialize a JSON value from CBOR
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -255,7 +272,7 @@ int main()
     json j = json::from_cbor(v);
 
     // print the deserialized JSON value
-    std::cout << std::setw(2) << j << std::endl;
+    std::cout << std::setw(2) << j << '\n';
 }
 ```
 

@@ -45,7 +45,7 @@ The following code exemplifies `is_primitive()` for all JSON types.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

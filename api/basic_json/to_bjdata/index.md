@@ -36,7 +36,7 @@ The exact mapping and its limitations are described on a [dedicated page](https:
 
 `use_type` (in) : whether to add type annotations to container types (must be combined with `use_size = true`); optional, `false` by default.
 
-`version` (in) : which version of BJData to use (see note on "Binary values" on [BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md)); optional, `bjdata_version_t::draft2` by default.
+`version` (in) : which version of BJData to use, see [`bjdata_version_t`](https://json.nlohmann.me/api/basic_json/bjdata_version_t/index.md) and the note on "Binary values" on [BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md); optional, `bjdata_version_t::draft2` by default.
 
 `error_handler` (in) : how to treat a string or object key in `j` that is not valid UTF-8; see [`error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md). The default, `keep`, writes the ill-formed bytes to the output as is, as every version of `to_bjdata` did before this parameter was added; `strict` throws; `replace`/`ignore` sanitize it the same way [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) would. If [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled, the default is `strict` instead.
 
@@ -51,7 +51,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
-- Throws [`other_error.502`](https://json.nlohmann.me/home/exceptions/#jsonexceptionother_error502) if `use_type` is true and `use_size` is false, and `j` contains a non-empty array, object, or binary value.
+- Throws [`other_error.502`](https://json.nlohmann.me/home/exceptions/#jsonexceptionother_error502) if `use_type` is true and `use_size` is false, and `j` contains a non-empty array or object, or a non-empty binary value (with `version = bjdata_version_t::draft3`, any binary value, including an empty one). Scalars, empty arrays, and empty objects do not throw.
 - Throws [type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string or object key in `j` is not valid UTF-8 and `error_handler` is `strict` (the default only if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled)
 - Throws [type_error.321](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error321) if `j` or a value nested in it is discarded; example: `"cannot serialize discarded value to BJData"`
 
@@ -70,7 +70,7 @@ The example shows the serialization of a JSON value to a byte vector in BJData f
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 // function to print BJData's diagnostic format
@@ -78,11 +78,11 @@ void print_byte(uint8_t byte)
 {
     if (32 < byte and byte < 128)
     {
-        std::cout << (char)byte;
+        std::cout << static_cast<char>(byte);
     }
     else
     {
-        std::cout << (int)byte;
+        std::cout << static_cast<int>(byte);
     }
 }
 
@@ -99,7 +99,7 @@ int main()
     {
         print_byte(byte);
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 
     // create an array of numbers
     json array = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -116,19 +116,19 @@ int main()
     {
         print_byte(byte);
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 
     for (auto& byte : v_array_size)
     {
         print_byte(byte);
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 
     for (auto& byte : v_array_size_and_type)
     {
         print_byte(byte);
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 }
 ```
 
@@ -149,7 +149,7 @@ The example shows how requesting type annotations (`use_type`) without size anno
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

@@ -70,7 +70,7 @@ and [`contains`](contains.md), which resolve to the *first* member with a given 
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

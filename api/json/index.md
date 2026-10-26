@@ -17,7 +17,7 @@ The example below demonstrates how to use the type `nlohmann::json`.
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

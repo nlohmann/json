@@ -133,7 +133,7 @@ buffer of a given length, pass a pair of pointers: `#!cpp parse(ptr, ptr + len)`
     #include <nlohmann/json.hpp>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {
@@ -180,7 +180,7 @@ buffer of a given length, pass a pair of pointers: `#!cpp parse(ptr, ptr + len)`
     #include <vector>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

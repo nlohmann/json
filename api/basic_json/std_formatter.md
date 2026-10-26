@@ -40,7 +40,7 @@ provides `<format>`, controlled by the [`JSON_HAS_STD_FORMAT`](../macros/json_ha
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

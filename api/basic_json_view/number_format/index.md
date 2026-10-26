@@ -23,8 +23,8 @@ The example below writes back a price list received from a supplier: with `numbe
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
-using json_view = nlohmann::json_view;
+using nlohmann::json_document;
+using nlohmann::json_view;
 
 int main()
 {

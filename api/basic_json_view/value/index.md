@@ -75,8 +75,8 @@ The example below reads a couple of optional configuration fields with a default
 #include <nlohmann/json_view.hpp>
 #include <string>
 
-using json_document = nlohmann::json_document;
-using json_view = nlohmann::json_view;
+using nlohmann::json_document;
+using nlohmann::json_view;
 
 int main()
 {
@@ -118,8 +118,8 @@ The example below reads an optional, nested configuration value with a default, 
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
-using json_view = nlohmann::json_view;
+using nlohmann::json_document;
+using nlohmann::json_view;
 using json_pointer = nlohmann::json::json_pointer;
 
 int main()

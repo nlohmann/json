@@ -3,7 +3,7 @@
 Defined in header `<nlohmann/json_view.hpp>`
 
 ```
-using ordered_json_editable_view = basic_json_view<ordered_json, true>;
+using ordered_json_editable_view = basic_json_view<ordered_json, view_mode::editable>;
 ```
 
 This type is a [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) of a value of an [`ordered_json_editable_document`](https://json.nlohmann.me/api/ordered_json_editable_document/index.md), the corresponding view for [`ordered_json_view`](https://json.nlohmann.me/api/ordered_json_view/index.md) the way [`json_editable_view`](https://json.nlohmann.me/api/json_editable_view/index.md) is for [`json_view`](https://json.nlohmann.me/api/json_view/index.md).
@@ -18,11 +18,11 @@ The example below is the same as [`ordered_json_editable_document`'s](https://js
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using ordered_json_editable_document = nlohmann::ordered_json_editable_document;
+using nlohmann::ordered_json_editable_document;
 
 int main()
 {
-    // ordered_json_editable_document is basic_json_document<nlohmann::ordered_json, true>
+    // ordered_json_editable_document is basic_json_document<nlohmann::ordered_json, nlohmann::view_mode::editable>
     ordered_json_editable_document doc = ordered_json_editable_document::parse(R"({"z": 1, "a": 2, "m": 3})");
     doc.set(doc.root(), "b", 4); // set() always appends a new member at the end
 

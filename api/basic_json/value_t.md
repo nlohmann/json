@@ -78,7 +78,7 @@ functions [`is_null`](is_null.md), [`is_object`](is_object.md), [`is_array`](is_
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

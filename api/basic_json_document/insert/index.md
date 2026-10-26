@@ -5,7 +5,7 @@ template<typename I, typename V>
 view_type insert(view_type array, I idx, V&& value);
 ```
 
-Only an **editable** document (`Editable == true`, e.g. [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md)) has `insert`; calling it on a read-only `basic_json_document` fails to compile (`static_assert`).
+Only an **editable** document (`view_mode::editable`, e.g. [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md)) has `insert`; calling it on a read-only `basic_json_document` fails to compile (`static_assert`).
 
 Inserts `value` into `array` as a new element before position `idx`, which must not be past the end (`idx <= array.size()`; `idx == array.size()` appends, like [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md)). Unlike [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), a [null](https://json.nlohmann.me/api/basic_json_view/is_null/index.md) `array` does *not* first become an empty array: `array` must already be an array.
 
@@ -55,9 +55,9 @@ The example below inserts a step into the middle of a deployment plan, without t
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_editable_document = nlohmann::json_editable_document;
-using json_editable_view = nlohmann::json_editable_view;
+using nlohmann::json;
+using nlohmann::json_editable_document;
+using nlohmann::json_editable_view;
 
 int main()
 {

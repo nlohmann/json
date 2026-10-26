@@ -81,7 +81,7 @@ The example below reads a couple of fields out of a batch of user records withou
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {
@@ -139,7 +139,7 @@ The example below reaches straight into one deeply nested field of a large docum
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 using json_pointer = nlohmann::json::json_pointer;
 
 int main()

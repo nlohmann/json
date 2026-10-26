@@ -59,7 +59,7 @@ The example below counts how many of a batch of records carry an optional `retry
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {
@@ -102,7 +102,7 @@ The example below checks an optional, nested field with a JSON pointer, and show
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 using json_pointer = nlohmann::json::json_pointer;
 
 int main()

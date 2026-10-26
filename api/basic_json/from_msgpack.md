@@ -100,7 +100,7 @@ Linear in the size of the input.
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -114,7 +114,7 @@ Linear in the size of the input.
         json j = json::from_msgpack(v);
     
         // print the deserialized JSON value
-        std::cout << std::setw(2) << j << std::endl;
+        std::cout << std::setw(2) << j << '\n';
     }
     
     ```

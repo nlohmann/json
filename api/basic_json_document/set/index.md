@@ -18,7 +18,7 @@ template<typename V>
 view_type set(const json_pointer& ptr, V&& value);
 ```
 
-Only an **editable** document (`Editable == true`, e.g. [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md)) has `set`; calling it on a read-only `basic_json_document` fails to compile (`static_assert`).
+Only an **editable** document (`view_mode::editable`, e.g. [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md)) has `set`; calling it on a read-only `basic_json_document` fails to compile (`static_assert`).
 
 1. Replaces the value `target` refers to with `value`.
 1. Sets the member `key` of the object `object` to `value`: assigns it if `object` already has a member with this key -- the first one, should the key occur more than once, and the later duplicates are then dropped (see the [Notes](#notes) below) -- or appends a new member at the end otherwise. A [null](https://json.nlohmann.me/api/basic_json_view/is_null/index.md) `object` first becomes an empty object.
@@ -96,9 +96,9 @@ The example below edits a small configuration document -- replacing a value, add
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_editable_document = nlohmann::json_editable_document;
-using json_editable_view = nlohmann::json_editable_view;
+using nlohmann::json;
+using nlohmann::json_editable_document;
+using nlohmann::json_editable_view;
 
 int main()
 {

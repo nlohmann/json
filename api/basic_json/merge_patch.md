@@ -39,13 +39,33 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
 
 ## Complexity
 
-Linear in the lengths of `apply_patch`.
+Linear in the total number of values (including nested ones) in `apply_patch`, times the cost of a key-based object
+operation (looking up, adding, or erasing a member): logarithmic for [`json`](../json.md), and linear for
+[`ordered_json`](../ordered_json.md) (see [`ordered_map` complexity](../ordered_map.md#complexity)). For
+`ordered_json`, patching an object that has `n` members with a patch that has `m` members therefore takes O(n·m). The
+cost also includes one copy of `apply_patch` (see the notes below).
 
 ## Notes
 
-`apply_patch` may be `#!cpp *this` itself or refer to a value contained in `#!cpp *this` (for example, a subobject
-returned by `#!cpp (*this)[key]`); it is read as it was when `merge_patch()` was called, before any modification of
-`#!cpp *this`.
+- `apply_patch` may be `#!cpp *this` itself or refer to a value contained in `#!cpp *this` (for example, a subobject
+  returned by `#!cpp (*this)[key]`); it is read as it was when `merge_patch()` was called, before any modification of
+  `#!cpp *this`. To make this possible, the function copies `apply_patch` before it modifies `#!cpp *this`, so the cost
+  includes one copy of the patch.
+- A merge patch uses `#!json null` to remove a member, so it cannot set a member to `#!json null`: applying
+  `#!json {"a":null}` to `#!json {"a":1}` gives `#!json {}`.
+- Arrays are not merged: an array in the patch replaces the target value as a whole, and a `#!json null` inside an
+  array is kept as an element. `#!json null` members of the target that the patch does not mention are preserved.
+- A `#!json null` in the patch only removes a member; it does not prevent the creation of the enclosing objects.
+  Applying `#!json {"a":{"b":null}}` to `#!json {}` gives `#!json {"a":{}}` (see example 15 in Appendix A of the RFC).
+- If `apply_patch` is not an object, it replaces the target as a whole. In particular, a `#!json null` patch turns the
+  target into `#!json null`. If `apply_patch` is an object and the target is not, the target is first replaced by an
+  empty object, so applying `#!json {}` to `#!json 1` gives `#!json {}`.
+- A merge patch cannot express every change; for example, it cannot reorder array elements or remove a specific array
+  element. Use [JSON Patch](../../features/json_patch.md) ([RFC 6902](https://tools.ietf.org/html/rfc6902)) for that.
+  [`merge_diff`](merge_diff.md) has a matching limitation, see its notes.
+- A [discarded](is_discarded.md) value is treated like any other non-object value: a discarded
+  `apply_patch` turns the target into a discarded value, and an object patch replaces a discarded target by an object
+  as described above.
 
 ## Examples
 
@@ -58,7 +78,7 @@ returned by `#!cpp (*this)[key]`); it is read as it was when `merge_patch()` was
     #include <nlohmann/json.hpp>
     #include <iomanip> // for std::setw
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -93,7 +113,7 @@ returned by `#!cpp (*this)[key]`); it is read as it was when `merge_patch()` was
         document.merge_patch(patch);
     
         // output original and patched document
-        std::cout << std::setw(4) << document << std::endl;
+        std::cout << std::setw(4) << document << '\n';
     }
     
     ```

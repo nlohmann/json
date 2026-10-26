@@ -141,7 +141,7 @@ use the same file with stdio functions, but it must not wait for another thread 
     #include <sstream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     // a simple event consumer that collects string representations of the passed
     // values; note inheriting from json::json_sax_t is not required, but can
@@ -233,7 +233,7 @@ use the same file with stdio functions, but it must not wait for another thread 
     int main()
     {
         // a JSON text
-        auto text = R"(
+        const auto* text = R"(
         {
             "Image": {
                 "Width":  800,
@@ -265,7 +265,7 @@ use the same file with stdio functions, but it must not wait for another thread 
         }
     
         // output the result of sax_parse
-        std::cout << "\nresult: " << std::boolalpha << result << std::endl;
+        std::cout << "\nresult: " << std::boolalpha << result << '\n';
     }
     
     ```

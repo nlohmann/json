@@ -3,7 +3,7 @@
 Defined in header `<nlohmann/json_view.hpp>`
 
 ```
-using json_editable_document = basic_json_document<json, true>;
+using json_editable_document = basic_json_document<json, view_mode::editable>;
 ```
 
 This type is an **editable** [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) of the default [`json`](https://json.nlohmann.me/api/json/index.md) specialization: in addition to everything [`json_document`](https://json.nlohmann.me/api/json_document/index.md) offers, [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) change values after parsing, without ever rewriting the source text -- see [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) and [Editing a document](https://json.nlohmann.me/features/json_view/#editing-a-document).
@@ -18,9 +18,9 @@ The example below patches two fields of a small configuration document -- changi
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_editable_document = nlohmann::json_editable_document;
-using json_editable_view = nlohmann::json_editable_view;
+using nlohmann::json;
+using nlohmann::json_editable_document;
+using nlohmann::json_editable_view;
 
 int main()
 {

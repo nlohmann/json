@@ -9,6 +9,39 @@ extra byte in addition to the strings themselves.
     - [MessagePack website](https://msgpack.org)
     - [MessagePack specification](https://github.com/msgpack/msgpack/blob/master/spec.md)
 
+## Byte layout
+
+MessagePack encodes each value as a one-byte *format marker*, optionally followed by a length or the payload. The marker range is partitioned to keep common values small: small non-negative integers (0 to 127) and small negative integers (-32 to -1) are the marker byte itself; short strings, arrays, and maps (up to 31 bytes for strings and up to 15 elements for arrays and maps) hide their length in the marker's lower bits. Larger values use dedicated markers that announce the width (8, 16, 32, or 64 bits) of the length or number that follows, in big-endian byte order. Like CBOR, containers are length-prefixed, so no terminator is needed.
+
+Consider the following JSON value (shown formatted for readability):
+
+```json
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_msgpack` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-d">data</span>.
+
+<div class="byte-layout" markdown="0"><table>
+<thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>{</code></td><td><span class="bl bl-t">84</span></td><td>map with 4 key/value pairs</td></tr>
+<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-t">A2</span> <span class="bl bl-d">69 64</span> <span class="bl bl-t">CD</span> <span class="bl bl-d">01 2C</span></td><td>key: fixstr of length 2, then its UTF-8 bytes; value: uint 16 (big-endian)</td></tr>
+<tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-t">A4</span> <span class="bl bl-d">6E 61 6D 65</span> <span class="bl bl-t">A4</span> <span class="bl bl-d">6A 73 6F 6E</span></td><td>key: fixstr of length 4; value: fixstr of length 4</td></tr>
+<tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-t">A2</span> <span class="bl bl-d">70 69</span> <span class="bl bl-t">CB</span> <span class="bl bl-d">40 09 1E B8 51 EB 85 1F</span></td><td>key: fixstr of length 2; value: float 64 (IEEE 754, big-endian)</td></tr>
+<tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-t">A4</span> <span class="bl bl-d">74 61 67 73</span> <span class="bl bl-t">92</span></td><td>key: fixstr of length 4; value: fixarray with 2 elements</td></tr>
+<tr><td><code>&quot;a&quot;,</code></td><td><span class="bl bl-t">A1</span> <span class="bl bl-d">61</span></td><td>fixstr of length 1</td></tr>
+<tr><td><code>&quot;b&quot;</code></td><td><span class="bl bl-t">A1</span> <span class="bl bl-d">62</span></td><td>fixstr of length 1</td></tr>
+<tr><td><code>]</code></td><td></td><td>no end marker: the element count was given up front</td></tr>
+<tr><td><code>}</code></td><td></td><td>no end marker: the member count was given up front</td></tr>
+</tbody></table></div>
+
 ## Serialization
 
 The library uses the following mapping from JSON values types to MessagePack types according to the MessagePack
@@ -76,8 +109,9 @@ specification:
 !!! note
 
     Prior to version 3.13.0, NaN and Infinity were instead serialized as a MessagePack float 64 (type 0xCB, 9 bytes
-    total), because the check used to select the smaller float 32 encoding compared magnitudes with NaN, which is
-    always `false` and caused the float 32 path to be skipped.
+    total), because the check used to select the smaller float 32 encoding failed for NaN (all comparisons are `false`)
+    and for Infinity and -Infinity (outside the float range checked against `std::numeric_limits<float>::lowest()` and
+    `max()`), so the float 32 path was skipped.
 
 ??? example "Example: serialize a JSON value to MessagePack"
 
@@ -86,7 +120,7 @@ specification:
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -100,9 +134,9 @@ specification:
         // print the vector content
         for (auto& byte : v)
         {
-            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }
     
     ```
@@ -113,41 +147,6 @@ specification:
     0x82 0xa7 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xc3 0xa6 0x73 0x63 0x68 0x65 0x6d 0x61 0x00 
     
     ```
-
-
-
-
-
-### Byte layout
-
-Consider the following JSON value (shown formatted for readability):
-
-```json
-{
-  "id": 300,
-  "name": "json",
-  "pi": 3.14,
-  "tags": [
-    "a",
-    "b"
-  ]
-}
-```
-
-`to_msgpack` encodes it to 39 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: <span class="bl bl-t">type/marker</span> <span class="bl bl-l">length/count/size</span> <span class="bl bl-d">data</span>.
-
-<div class="byte-layout" markdown="0"><table>
-<thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
-<tr><td><code>{</code></td><td><span class="bl bl-t">84</span></td><td>map with 4 key/value pairs</td></tr>
-<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-t">A2</span> <span class="bl bl-d">69 64</span> <span class="bl bl-t">CD</span> <span class="bl bl-d">01 2C</span></td><td>key: fixstr of length 2, then its UTF-8 bytes; value: uint 16 (big-endian)</td></tr>
-<tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-t">A4</span> <span class="bl bl-d">6E 61 6D 65</span> <span class="bl bl-t">A4</span> <span class="bl bl-d">6A 73 6F 6E</span></td><td>key: fixstr of length 4; value: fixstr of length 4</td></tr>
-<tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-t">A2</span> <span class="bl bl-d">70 69</span> <span class="bl bl-t">CB</span> <span class="bl bl-d">40 09 1E B8 51 EB 85 1F</span></td><td>key: fixstr of length 2; value: float 64 (IEEE 754, big-endian)</td></tr>
-<tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-t">A4</span> <span class="bl bl-d">74 61 67 73</span> <span class="bl bl-t">92</span></td><td>key: fixstr of length 4; value: fixarray with 2 elements</td></tr>
-<tr><td><code>&quot;a&quot;,</code></td><td><span class="bl bl-t">A1</span> <span class="bl bl-d">61</span></td><td>fixstr of length 1</td></tr>
-<tr><td><code>&quot;b&quot;</code></td><td><span class="bl bl-t">A1</span> <span class="bl bl-d">62</span></td><td>fixstr of length 1</td></tr>
-<tr><td><code>]</code></td><td></td><td>no end marker: the element count was given up front</td></tr>
-<tr><td><code>}</code></td><td></td><td>no end marker: the member count was given up front</td></tr>
-</tbody></table></div>
 
 ## Deserialization
 
@@ -160,6 +159,7 @@ The library maps MessagePack types to JSON value types as follows:
 | fixarray         | array           | 0x90..0x9F |
 | fixstr           | string          | 0xA0..0xBF |
 | nil              | `null`          | 0xC0       |
+| (never used)     | –               | 0xC1       |
 | false            | `false`         | 0xC2       |
 | true             | `true`          | 0xC3       |
 | float 32         | number_float    | 0xCA       |
@@ -192,6 +192,30 @@ The library maps MessagePack types to JSON value types as follows:
 | fixext 16        | binary          | 0xD8       |
 | negative fixint  | number_integer  | 0xE0-0xFF  |
 
+The byte 0xC1 is reserved as "never used" by the specification. As a value it is rejected with
+[`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) (`invalid byte: 0xC1`); as a map key it is
+rejected with [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) and the generic "expected length
+specification" message, because the key is read as a string.
+
+Duplicate keys in a map are accepted; the last value wins.
+
+### Extension types (ext, fixext)
+
+MessagePack ext and fixext values are read as binary values, and the ext type byte is stored as the binary subtype.
+Although the specification defines the type as a signed 8-bit integer (0 to 127 for applications, -128 to -1 reserved,
+with -1 being the Timestamp extension), the library reads it as an unsigned byte: a negative ext type `n` becomes
+subtype `256+n`, so ext type -1 is read as subtype 255 and -128 as subtype 128. The Timestamp extension is not
+interpreted; it is returned as binary with subtype 255. Use
+[`has_subtype()`](../../api/byte_container_with_subtype/has_subtype.md) to tell a `bin` value (no subtype) from an ext
+value (subtype, even if it is 0).
+
+When serializing, a binary value with a subtype is always written as fixext (1, 2, 4, 8, or 16 bytes) or ext, even
+for subtype 0 (`d6 00 01 02 03 04`); a binary value without a subtype is written as bin. Subtypes 128 to 255 are
+written as the reserved negative ext types (255 as -1), so `json::binary({1,2,3,4}, 255)` becomes
+`d6 ff 01 02 03 04`, which other MessagePack libraries decode as a 32-bit timestamp. A subtype above 255 throws
+[`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415). The payload length is limited to
+4294967295 bytes like all other lengths.
+
 !!! info
 
     Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
@@ -202,7 +226,8 @@ The library maps MessagePack types to JSON value types as follows:
     JSON-compatible [profile](https://github.com/msgpack/msgpack/blob/master/spec.md#profile) sketched in the
     MessagePack specification, this library restricts map keys to `str` values. Maps with keys of any other type are
     rejected with a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with
-    `allow_exceptions` set to `false`, a discarded value) naming the type of the key that was found, for instance:
+    `allow_exceptions` set to `false`, a discarded value). For most key types the message names the type that was
+    found, for instance:
 
     ```
     [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack object key: only string keys are supported, but found nil; last byte: 0xC0
@@ -214,7 +239,7 @@ The library maps MessagePack types to JSON value types as follows:
 !!! warning "Ill-formed UTF-8 in string values"
 
     The MessagePack specification explicitly allows a `str` value (`fixstr`, `str 8`, `str 16`, `str 32`) to contain
-    a byte sequence that is not valid UTF-8, and expects a deserializer to hand the original bytes back unchanged.
+    a byte sequence that is not valid UTF-8, and recommends that a deserializer provide a way to obtain the original bytes.
     This library follows that by default: with its
     [`error_handler`](../../api/basic_json/from_msgpack.md) parameter left at `keep` (the default),
     `from_msgpack()` reads `str` bytes (object keys included) as-is, without validating them, so such a value
@@ -236,7 +261,7 @@ The library maps MessagePack types to JSON value types as follows:
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -250,7 +275,7 @@ The library maps MessagePack types to JSON value types as follows:
         json j = json::from_msgpack(v);
     
         // print the deserialized JSON value
-        std::cout << std::setw(2) << j << std::endl;
+        std::cout << std::setw(2) << j << '\n';
     }
     
     ```

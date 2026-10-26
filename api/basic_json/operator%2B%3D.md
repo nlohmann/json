@@ -86,7 +86,7 @@ interpreted as `object_t::value_type` or `std::initializer_list<basic_json>`, se
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -130,7 +130,7 @@ interpreted as `object_t::value_type` or `std::initializer_list<basic_json>`, se
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -173,7 +173,7 @@ interpreted as `object_t::value_type` or `std::initializer_list<basic_json>`, se
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

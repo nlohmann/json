@@ -79,8 +79,8 @@ The example below reads required fields out of a service configuration with `at`
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
-using json_view = nlohmann::json_view;
+using nlohmann::json_document;
+using nlohmann::json_view;
 
 int main()
 {
@@ -130,7 +130,7 @@ The example below shows that `at` with a JSON pointer throws exactly the excepti
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 using json_pointer = nlohmann::json::json_pointer;
 
 int main()

@@ -38,7 +38,7 @@ The example below shows the default constructor and demonstrates that `basic_jso
 #include <utility>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

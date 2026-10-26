@@ -34,7 +34,7 @@ The code below shows and example for the copy assignment. It creates a copy of v
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

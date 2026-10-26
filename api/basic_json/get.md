@@ -142,7 +142,7 @@ overload (3).
     #include <map>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -183,7 +183,7 @@ overload (3).
         }
         std::cout << "\n\n";
     
-        for (auto i : v8)
+        for (const auto& i : v8)
         {
             std::cout << i.first << ": " << i.second << '\n';
         }
@@ -216,8 +216,8 @@ overload (3).
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
-    using ordered_json = nlohmann::ordered_json;
+    using nlohmann::json;
+    using nlohmann::ordered_json;
     
     int main()
     {
@@ -250,7 +250,7 @@ overload (3).
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -258,11 +258,11 @@ overload (3).
         json value = 17;
     
         // explicitly getting pointers
-        auto p1 = value.get<const json::number_integer_t*>();
-        auto p2 = value.get<json::number_integer_t*>();
-        auto p3 = value.get<json::number_integer_t* const>();
-        auto p4 = value.get<const json::number_integer_t* const>();
-        auto p5 = value.get<json::number_float_t*>();
+        const auto* p1 = value.get<const json::number_integer_t*>();
+        auto* p2 = value.get<json::number_integer_t*>();
+        auto* p3 = value.get<json::number_integer_t* const>();
+        const auto* p4 = value.get<const json::number_integer_t* const>();
+        auto* p5 = value.get<json::number_float_t*>();
     
         // print the pointees
         std::cout << *p1 << ' ' << *p2 << ' ' << *p3 << ' ' << *p4 << '\n';

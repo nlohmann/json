@@ -45,7 +45,7 @@ is `#!cpp false` for any string, regardless of its length.
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

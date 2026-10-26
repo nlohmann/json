@@ -3,7 +3,7 @@
 Defined in header `<nlohmann/json_view.hpp>`
 
 ```
-using json_view = basic_json_view<json>;
+using json_view = basic_json_view<json, view_mode::read_only>;
 ```
 
 This type is a [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) of a value of a [`json_document`](https://json.nlohmann.me/api/json_document/index.md).

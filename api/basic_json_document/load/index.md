@@ -40,9 +40,7 @@ Overload 3 moves `image` into the document *before* validating it, so that a goo
 
 ## Exceptions
 
-On a big-endian target, throws [`type_error.320`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error320) -- the same exception [`save()`](https://json.nlohmann.me/api/basic_json_document/save/#exceptions) throws there, since the image format is little-endian only.
-
-Otherwise throws [`parse_error.116`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error116) if `image` is not one `save()` could have written, or fails the requested `check`:
+Throws [`parse_error.116`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error116) if `image` is not one `save()` could have written, or fails the requested `check`:
 
 | message              | when                                                                                                                                                             |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -76,6 +74,8 @@ Linear in the number of nodes, which are always copied into the document. `image
 With `image_check::full`, linear in the size of the image (the nodes, the text, and the decoded strings), plus sorting the ranges of the strings and of the float tokens (at most one per node): the contents of each distinct range are checked once, however many nodes refer to it.
 
 ## Notes
+
+**Little-endian targets only.** On a big-endian target, `load()` does not exist, just like [`save()`](https://json.nlohmann.me/api/basic_json_document/save/#notes): the image format is little-endian, so a call fails to compile.
 
 ### `image_check`
 
@@ -117,8 +117,8 @@ The example below saves a parsed document as an image, checks that `load()` repr
 #include <vector>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_document = nlohmann::json_document;
+using nlohmann::json;
+using nlohmann::json_document;
 using image_check = json_document::image_check;
 
 int main()

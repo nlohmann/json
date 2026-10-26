@@ -7,7 +7,9 @@ detect bugs in client code.
 ## Switch off runtime assertions
 
 Runtime assertions can be switched off by defining the preprocessor macro `NDEBUG` (see the
-[documentation of assert](https://en.cppreference.com/w/cpp/error/assert)) which is the default for release builds.
+[documentation of assert](https://en.cppreference.com/w/cpp/error/assert)) which is the default for release builds. Without `NDEBUG`, the assertions are compiled in and contain the name of the source
+file (`__FILE__`); see [notes for builds and distribution](../integration/index.md#notes-for-builds-and-distribution)
+if that path must not end up in your binaries.
 
 ## Change assertion behavior
 
@@ -35,7 +37,7 @@ See also the documentation on [element access](element_access/index.md).
     ```cpp
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -57,7 +59,7 @@ See also the documentation on [element access](element_access/index.md).
     ```cpp
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -85,7 +87,7 @@ uninitialized iterator is undefined behavior and yields a runtime assertion.
     ```cpp
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -112,7 +114,7 @@ behavior and yields a runtime assertion.
     ```cpp
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -144,7 +146,7 @@ result in undefined behavior. Since version 3.12.0, this library checks for `nul
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

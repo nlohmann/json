@@ -24,7 +24,7 @@ The example below demonstrates how `ordered_json` preserves the insertion order 
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using ordered_json = nlohmann::ordered_json;
+using nlohmann::ordered_json;
 
 int main()
 {

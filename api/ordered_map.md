@@ -127,7 +127,7 @@ This differs from `#!cpp std::map`, where the same operations are O(log n).
         {
             std::cout << element.first << ":" << element.second << ' ';
         }
-        std::cout << "}" << std::endl;
+        std::cout << "}" << '\n';
     }
     
     int main()

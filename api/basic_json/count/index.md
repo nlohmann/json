@@ -52,7 +52,7 @@ The example shows how `count()` is used.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -86,7 +86,7 @@ The example shows how `count()` is used.
 #include <nlohmann/json.hpp>
 
 using namespace std::string_view_literals;
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

@@ -45,6 +45,8 @@ This is equivalent to Python's `dict.get(key, default)`.
    }
    ```
 
+   with one exception: if the JSON value is neither an array nor an object, the function throws [`type_error.306`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error306) before looking at `ptr`, even for the empty pointer, whereas `at` returns the value itself for the empty pointer.
+
 Differences to `at` and `operator[]`
 
 - Unlike [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), this function does not throw if the given `key`/`ptr` was not found.
@@ -112,7 +114,7 @@ To address this issue, either provide a correctly typed default value or use the
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -120,7 +122,7 @@ int main()
 
     std::cout << "operator[]:                " << j["uint64"] << '\n'
               << "default value (int):       " << j.value("uint64", 0) << '\n'
-              << "default value (uint64_t):  " << j.value("uint64", std::uint64_t(0)) << '\n'
+              << "default value (uint64_t):  " << j.value("uint64", static_cast<std::uint64_t>(0)) << '\n'
               << "explicit return value type: " << j.value<std::uint64_t>("uint64", 0) << '\n';
 }
 ```
@@ -152,7 +154,7 @@ The example below shows how object elements can be queried with a default value.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -197,7 +199,7 @@ The example below shows how object elements can be queried with a default value.
 #include <nlohmann/json.hpp>
 
 using namespace std::string_view_literals;
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -240,7 +242,7 @@ The example below shows how object elements can be queried with a default value.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -284,7 +286,7 @@ The example below shows how `value()` throws `type_error.302` when the default v
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

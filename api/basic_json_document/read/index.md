@@ -54,7 +54,7 @@ The example below parses a sequence of messages into the same document, reusing 
 #include <vector>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

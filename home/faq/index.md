@@ -58,6 +58,174 @@ json j{obj};   // -> {"key":"value"}  (copy, not array)
 
 Without the macro (default behavior), `json j{obj}` creates `[{"key":"value"}]`. This opt-in macro fixes issue #5074 while preserving backwards compatibility for existing code.
 
+## Getting started
+
+### Which file do I need?
+
+Question
+
+Do I have to clone the repository or build the library?
+
+No. The library is header-only: the single file [`json.hpp`](https://github.com/nlohmann/json/releases) from the releases page is all you need, including the `_json` literals. Put it in a directory `nlohmann` on your include path. Companion headers (`json_fwd.hpp`, `json_view.hpp`, `json_literals.hpp`) are only needed if you use them. See [Integration](https://json.nlohmann.me/integration/#header-only).
+
+### Using CMake or a package manager
+
+Question
+
+How do I add the library with CMake, Conan, vcpkg, Homebrew, or another tool?
+
+See [CMake](https://json.nlohmann.me/integration/cmake/index.md) for `find_package`, `add_subdirectory`, and `FetchContent`, and [Package managers](https://json.nlohmann.me/integration/package_managers/index.md) for the list of supported package managers.
+
+### The IDE cannot open the header
+
+Question
+
+The compiler finds `nlohmann/json.hpp`, but my IDE reports "cannot open source file". Why?
+
+The compiler's include path is set correctly, but the IDE's is not. Add the same directory to the include paths of the IDE (or of its language server); the build itself is not affected.
+
+### Compile times
+
+Question
+
+Including the library slows down my build. What can I do?
+
+Include [`json_fwd.hpp`](https://json.nlohmann.me/integration/compile_times/#include-json_fwdhpp-in-headers) in headers and `json.hpp` only in the source files that need it, instantiate `basic_json` once, and consider precompiled headers or [C++20 modules](https://json.nlohmann.me/features/modules/index.md). See [Compile times](https://json.nlohmann.me/integration/compile_times/index.md).
+
+## Parsing
+
+### Parsing a file fails with "unexpected end of input"
+
+Question
+
+`json::parse(file)` throws `parse_error.101` at line 1, column 1 for a file that is valid JSON. Why?
+
+The parser did not see any character: the file was most likely not opened. A relative path is resolved against the working directory of the running program, which is often the build directory of your IDE, not the source directory. Check `is_open()` and try an absolute path. Other causes are an empty file and a stream that was already read. See [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101).
+
+### Input that arrives in chunks
+
+Question
+
+My data comes from a socket in pieces. How do I parse it?
+
+The parser cannot be resumed. Frame the messages (one value per line, a length prefix) and parse each complete frame, or buffer the chunks until the value is complete; a `parse_error` at the end of the buffer means the input ended prematurely. See [Large, streamed, and partial input](https://json.nlohmann.me/features/parsing/large_and_partial_input/#input-arriving-in-chunks).
+
+### Several values in one stream
+
+Question
+
+How do I read concatenated JSON values or one value per line?
+
+Read newline-delimited input line by line ([JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md)). For concatenated values, use `operator>>` and check for the end of the stream before each read, as shown in [Several values in one stream](https://json.nlohmann.me/features/parsing/large_and_partial_input/#several-values-in-one-stream).
+
+### Files that are too large for memory
+
+Question
+
+How do I process a huge JSON file?
+
+Handle and discard the records of a large array with a [parser callback](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md), stop early with the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md), or read parts of the text through a [`json_document`](https://json.nlohmann.me/features/json_view/index.md) (added in version 3.13.0 unreleased). See [Input too large for memory](https://json.nlohmann.me/features/parsing/large_and_partial_input/#input-too-large-for-memory).
+
+### Position of a parse error
+
+Question
+
+How do I get the line and column of a parse error?
+
+The message contains them. The exception stores the byte index in `byte`, from which you can compute both; see [Where did the error occur?](https://json.nlohmann.me/features/parsing/parse_exceptions/#where-did-the-error-occur). To locate a value that causes a *later* error, such as a `type_error`, use [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/features/parsing/parse_exceptions/#where-is-the-value-that-caused-a-later-error).
+
+### Comments and trailing commas
+
+Question
+
+Can the parser read JSON with comments or trailing commas?
+
+Yes, when asked to: see [Comments](https://json.nlohmann.me/features/comments/index.md) and [Trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md). Both are rejected by default.
+
+## Accessing and creating values
+
+### Reading a value into a variable
+
+Question
+
+How do I get a C++ value out of a `json` value?
+
+Use [`get<T>()`](https://json.nlohmann.me/api/basic_json/get/index.md), for example `int age = j["age"].get<int>();`, or an implicit conversion. `auto x = j["age"];` is **not** a conversion: it copies the `json` value. See [Converting values](https://json.nlohmann.me/features/conversions/index.md).
+
+### Strings are printed with quotes
+
+Question
+
+`std::cout << j["name"]` prints `"Mary"` with quotes. How do I get the string?
+
+The value is a `json`, and printing it produces JSON text. Convert it first: `j["name"].get<std::string>()`. See [Getting a string without quotes](https://json.nlohmann.me/features/conversions/#getting-values-out).
+
+### Testing whether a key exists
+
+Question
+
+How do I check if a key exists, without changing the object?
+
+Use `contains` or `find`. Do not test with the non-const `operator[]`: like `std::map::operator[]`, it inserts a `null` value for a missing key. See [Does this key exist?](https://json.nlohmann.me/features/element_access/#does-this-key-exist).
+
+### Reading a value with a fallback
+
+Question
+
+How do I read a value that may be missing?
+
+Use [`value`](https://json.nlohmann.me/features/element_access/default_value/index.md), which returns a default for a missing key. It still throws if the key exists with a different type; see [Working without exceptions](https://json.nlohmann.me/features/no_exceptions/index.md).
+
+### Iterating and nested values
+
+Question
+
+How do I loop over an array or object, or reach a nested value?
+
+See [Iterators](https://json.nlohmann.me/features/iterators/index.md) and [`items()`](https://json.nlohmann.me/api/basic_json/items/index.md) for loops, and [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) to address or test a nested value by path.
+
+### Unexpected arrays when creating values
+
+Question
+
+Why does `json j{x}` or `{{"a", 1}, {"b"}}` produce an array instead of what I expected?
+
+Braces create arrays and objects based on their content, and single-element braces create a one-element array. See [Brace initialization yields arrays](#brace-initialization-yields-arrays) and the table in [Creating values](https://json.nlohmann.me/features/creating_values/#what-does-this-produce).
+
+### Keeping the order of object keys
+
+Question
+
+The keys of my object come out sorted. How do I keep the insertion order?
+
+Use `ordered_json`, and call `ordered_json::parse` when reading. See [Object order](https://json.nlohmann.me/features/object_order/index.md).
+
+## Converting your own types
+
+### Structs, enums, and optional fields
+
+Question
+
+How do I convert my own types to and from JSON?
+
+Write `to_json`/`from_json` functions or use the `NLOHMANN_DEFINE_TYPE_*` macros; see [Arbitrary type conversions](https://json.nlohmann.me/features/arbitrary_types/index.md). Enums can be mapped to strings ([Enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md)), and an empty `std::optional` can be omitted ([Omitting a field](https://json.nlohmann.me/features/conversions/#omitting-a-field-when-serializing-stdoptional)).
+
+### Smart pointers, variants, chrono, and class hierarchies
+
+Question
+
+Why can't I convert `std::shared_ptr`, `std::variant`, `std::chrono` types, or a pointer to a base class?
+
+There is more than one sensible JSON representation for them, so the library leaves the choice to you. [Recipes for common types](https://json.nlohmann.me/features/type_recipes/index.md) shows one for each.
+
+### My `to_json` is not found
+
+Question
+
+I wrote `to_json`/`from_json`, but the compiler does not find them. Why?
+
+Typical causes are a type alias of a standard type, a function in the wrong namespace, or a declaration that comes too late. See [Why isn't my `to_json` found?](https://json.nlohmann.me/features/arbitrary_types/#why-isnt-my-to_json-or-from_json-found).
+
 ## Limitations
 
 ### Relaxed parsing
@@ -194,6 +362,30 @@ Does this library support JSON Schema validation?
 
 Not directly, but the companion project [json-schema-validator](https://github.com/pboettch/json-schema-validator) builds JSON Schema (draft 7; draft 4 in its older, now-superseded 1.x releases) validation on top of this library and is a common recommendation for this use case.
 
+### Memory use
+
+Question
+
+Does the library leak memory? My process stays large after I free a `json` value.
+
+Destroying a value frees everything it owns. Freed memory is returned to the allocator, which does not necessarily give it back to the operating system, so a high resident size alone is not a leak. Copies are deep, and `clear()` keeps the capacity of an array. See [Memory](https://json.nlohmann.me/features/performance/#memory), and use Valgrind or the sanitizers to tell a leak from retained memory.
+
+### Reproducible builds
+
+Question
+
+The header path ends up in my binary. How do I get path-independent builds?
+
+The runtime assertions embed `__FILE__`. Define `NDEBUG` (the default for release builds) or map the path prefix; see [Notes for builds and distribution](https://json.nlohmann.me/integration/#notes-for-builds-and-distribution).
+
+### Slow debug builds
+
+Question
+
+Parsing a large file is very slow in my debug build. Can I compile the library with optimizations?
+
+The library is header-only, so there is no separate source file. Keep the code that uses `json` in its own source file and compile that file with optimizations; see [Notes for builds and distribution](https://json.nlohmann.me/integration/#notes-for-builds-and-distribution).
+
 ## Exceptions
 
 ### Parsing without exceptions
@@ -202,7 +394,7 @@ Question
 
 Is it possible to indicate a parse error without throwing an exception?
 
-Yes, see [Parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md).
+Yes, see [Parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) and [Working without exceptions](https://json.nlohmann.me/features/no_exceptions/index.md).
 
 ### Key name in exceptions
 

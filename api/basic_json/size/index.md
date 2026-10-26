@@ -42,7 +42,7 @@ The following code calls `size()` on the different value types.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

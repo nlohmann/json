@@ -44,7 +44,7 @@ class (either explicitly or via the conversion operators).
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     namespace ns
     {
@@ -76,7 +76,7 @@ class (either explicitly or via the conversion operators).
     
         auto p = j.get<ns::person>();
     
-        std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
+        std::cout << p.name << " (" << p.age << ") lives in " << p.address << '\n';
     }
     
     ```
@@ -97,7 +97,7 @@ class (either explicitly or via the conversion operators).
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     namespace ns
     {
@@ -145,7 +145,7 @@ class (either explicitly or via the conversion operators).
     
         auto p = j.get<ns::person>();
     
-        std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
+        std::cout << p.name << " (" << p.age << ") lives in " << p.address << '\n';
     }
     
     ```

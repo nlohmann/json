@@ -22,7 +22,7 @@ Example: parse a document, inspect its root, and materialize it
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {
@@ -73,7 +73,7 @@ Example: borrowed and owned documents, and when views become invalid
 #include <utility>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {
@@ -141,6 +141,8 @@ If an object in the source text repeats a key, [`operator[]`](https://json.nlohm
 
 **Why the first?** A lookup can stop as soon as it finds a match. Returning the last member would force every lookup to scan all members of the object, even when the key is found at the very first one: this made lookups in small objects 1.6 to 3.4 times slower. The hash index of the keys of objects with 128 members or more leads to the first member of a key as well. Other zero-copy parsers that index the source text, such as yyjson and simdjson, also return the first member. RFC 8259 only says that names within an object SHOULD be unique and that the behavior of a receiver that sees duplicates is unpredictable, so neither choice is wrong.
 
+The same holds for [`get<T>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) of a type whose `from_json()` reads the view, such as the types of the `NLOHMANN_DEFINE_TYPE_*` macros: their members are looked up, so `get<point>()` of `{"x":1,"x":2}` reads `x == 1`, while `materialize().get<point>()` reads `2`.
+
 **What stays the same as `parse()`?** [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) and [`get<std::map<...>>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) replay every member in order, so they keep the *last* value exactly like `basic_json::parse()` (at the position of the first occurrence of the key, for an [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md)).
 
 **How do I get the value `parse()` would give?** Either call `view.materialize()` and look the key up in the result, or iterate the members and keep the last match:
@@ -161,7 +163,7 @@ If you cannot trust the source text to have unique keys, check [`size()`](https:
 
 ## Getting values out without copying
 
-[`get<T>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) converts many `T` directly from the flat index, without ever building a `basic_json` value for the conversion: `bool`, arithmetic types, `std::nullptr_t`, `std::string`/other `std::basic_string`s (copied once), `basic_json`/`ordered_json` (via [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md)), `basic_json_view` itself, `std::vector<U>`, and `std::map`/`std::unordered_map` with string-like keys. Every other type -- `std::list`, `std::pair`, `std::array`, enumerations, user types with a `from_json()` -- goes through [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md)`.get<T>()` instead: the subtree is built into a real `basic_json` value first, exactly as [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) would, and converted from there.
+[`get<T>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) converts most `T` directly from the flat index, without ever building a `basic_json` value for the conversion: `bool`, arithmetic types, `std::nullptr_t`, `std::string`/other `std::basic_string`s (copied once), `basic_json_view` itself, the standard containers and other types the library converts (`std::vector`, `std::map`, `std::list`, `std::array`, `std::pair`, `std::tuple`, `std::optional`, ...), and the types of the `NLOHMANN_DEFINE_TYPE_*` and `NLOHMANN_JSON_SERIALIZE_ENUM` macros. Types whose `from_json()` is written for `basic_json` only go through [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md)`.get<T>()` instead: the subtree is built into a real `basic_json` value first, exactly as [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) would, and converted from there. See [Writing generic code](#writing-generic-code) for how to write a `from_json()` that reads views.
 
 Two conversions never copy at all:
 
@@ -169,6 +171,62 @@ Two conversions never copy at all:
 - [`number_token()`](https://json.nlohmann.me/api/basic_json_view/number_token/index.md) returns a number exactly as it was written in the source, e.g. `"1.50"`, `"1E2"`, or an integer with more digits than any number type holds, instead of rounding it into a `double`/`int64_t` the way `get<T>()` (and [`basic_json::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md)) would.
 
 Both results are only valid as long as the view -- and, for a string with no escapes, the borrowed source text -- is.
+
+## Writing generic code
+
+A view's type names its `BasicJsonType` and its [`view_mode`](https://json.nlohmann.me/api/view_mode/index.md): [`json_view`](https://json.nlohmann.me/api/json_view/index.md) is `basic_json_view<json, view_mode::read_only>`, and [`json_editable_view`](https://json.nlohmann.me/api/json_editable_view/index.md) is `basic_json_view<json, view_mode::editable>`. These are different types. The only conversion between them turns a view of a read-only document into a view of an editable document of the same `BasicJsonType`, so a function written for one shortcut accepts few other views:
+
+```
+void print_names(json_view v);           // accepts neither an ordered_json_view nor a json_editable_view
+void print_names(json_editable_view v);  // also accepts a json_view, but no ordered_json_view
+```
+
+This is the same pitfall as a `to_json`/`from_json` written for `json` instead of any `BasicJsonType`, which then does not work for `ordered_json`. The shortcuts are for declaring documents and views; a function that takes a view names the views it accepts with a template:
+
+```
+// views of editable documents only
+template<typename BasicJsonType>
+void f(basic_json_view<BasicJsonType, view_mode::editable> v);
+
+// views of read-only documents only
+template<typename BasicJsonType>
+void f(basic_json_view<BasicJsonType, view_mode::read_only> v);
+
+// views of either document type
+template<typename BasicJsonType, view_mode Mode>
+void f(basic_json_view<BasicJsonType, Mode> v);
+```
+
+Views are passed by value: they are two pointers, cheap to copy, like a `std::string_view`. A `const&` works as well, but a non-`const` reference does not bind to the views that [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md), [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), and [`at()`](https://json.nlohmann.me/api/basic_json_view/at/index.md) return, so `f(doc.root())` would not compile.
+
+There is no conversion from an editable view to a read-only one, by design: the mode decides how a view walks the index. A read-only view reads a container in place, while a view of an editable document follows the links that edits leave behind, so a read-only view of an edited document would read stale values. The other direction is safe: a read-only document has no edits, so a view of it [converts](https://json.nlohmann.me/api/basic_json_view/basic_json_view/index.md) to an editable view, which reads it like an editable document before its first edit. A template deduces the mode without conversions, so the template forms above still accept only the modes they name. Views of both modes compare with [`operator==`](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md).
+
+[`is_json_view<T>`](https://json.nlohmann.me/api/is_json_view/index.md) tells views from other types, for constraints that cannot be written as a `basic_json_view<...>` parameter.
+
+### A `from_json()` that reads views
+
+[`get<T>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) on a view calls `T`'s `from_json()` with the view itself if that `from_json()` accepts views, and with [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) otherwise. The `from_json()` functions of the [`NLOHMANN_DEFINE_TYPE_*`](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md), [`NLOHMANN_DEFINE_DERIVED_TYPE_*`](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md), and [`NLOHMANN_JSON_SERIALIZE_ENUM`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/index.md) macros, and those of the library for the standard types, accept views, so these types need nothing else. For decoding the statuses of twitter.json into structs, reading the view is about 5 times faster than `materialize().get<T>()`.
+
+A hand-written `from_json()` reads views if it is constrained to `json` values and views:
+
+```
+template < typename J, typename std::enable_if <
+               nlohmann::is_json_view<J>::value || std::is_same<J, nlohmann::json>::value, int >::type = 0 >
+void from_json(const J& j, person& p)
+{
+    p.name = j.at("name").template get<std::string>();
+    p.age = j.at("age").template get<int>();
+}
+```
+
+Its body may only use what views and `basic_json` have in common: the type checks, `at()`, `operator[]`, `contains()`, `value()`, `size()`, iteration and `items()`, and `get<T>()`/`get_to()`. An unconstrained `template<typename BasicJsonType> void from_json(const BasicJsonType& j, person& p)`, as in [arbitrary type conversions](https://json.nlohmann.me/features/arbitrary_types/index.md), is never called with a view, as it might use `basic_json` functions a view does not have; such a type is converted through `materialize()`. A `from_json()` for `json` only is converted through `materialize()` as well.
+
+Two things differ when a `from_json()` reads the view:
+
+- **Duplicate keys.** Members looked up by name (`at()`, `value()`, ... and thus the macros) find the **first** member with a repeated key, see [Duplicate keys](#duplicate-keys); `materialize().get<T>()` would see the last one. Containers built from an object, such as `std::map`, keep the **last** value either way, as [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) does.
+- **[`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md).** Exceptions thrown by the view carry no path to the value.
+
+`to_json()` is unaffected: it writes `basic_json` values, never views.
 
 ## Writing a view back
 
@@ -180,9 +238,9 @@ By default, numbers are written the way [`basic_json::dump()`](https://json.nloh
 
 ## Editing a document
 
-Everything above is read-only: a `json_document`/`json_view` lets you look at a parsed text without copying it, but not change it. [`basic_json_document<BasicJsonType, true>`](https://json.nlohmann.me/api/basic_json_document/index.md) -- more conveniently spelled [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md) or [`ordered_json_editable_document`](https://json.nlohmann.me/api/ordered_json_editable_document/index.md) -- also lets you [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) a value, [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) onto or [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md) into an array, and [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md) an object member or an array element, still without ever building a `basic_json` tree for parts you do not touch.
+Everything above is read-only: a `json_document`/`json_view` lets you look at a parsed text without copying it, but not change it. [`basic_json_document<BasicJsonType, view_mode::editable>`](https://json.nlohmann.me/api/basic_json_document/index.md) -- more conveniently spelled [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md) or [`ordered_json_editable_document`](https://json.nlohmann.me/api/ordered_json_editable_document/index.md) -- also lets you [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) a value, [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) onto or [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md) into an array, and [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md) an object member or an array element, still without ever building a `basic_json` tree for parts you do not touch.
 
-`Editable` defaults to `false`, so `json_document`/`ordered_json_document` are unaffected -- they carry none of the bookkeeping edits need, and calling `set`/`push_back`/`insert`/`erase` on one is a compile error, not a runtime one.
+The [mode](https://json.nlohmann.me/api/view_mode/index.md) defaults to `view_mode::read_only`, so `json_document`/`ordered_json_document` are unaffected -- they carry none of the bookkeeping edits need, and calling `set`/`push_back`/`insert`/`erase` on one is a compile error, not a runtime one.
 
 ### Why: editing without reformatting
 
@@ -199,9 +257,9 @@ Example: patch a configuration, keeping member order and number spellings
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_editable_document = nlohmann::json_editable_document;
-using json_editable_view = nlohmann::json_editable_view;
+using nlohmann::json;
+using nlohmann::json_editable_document;
+using nlohmann::json_editable_view;
 
 int main()
 {
@@ -258,7 +316,7 @@ Example: cache a parsed configuration as an image
 #include <vector>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {
@@ -294,7 +352,7 @@ true
 
 Experimental
 
-The image format is versioned but not yet stable, and may change in an incompatible way before it is declared stable. It is little-endian only, and tied to the library build that wrote it -- use it to cache a document or to hand one to another process running the *same* build, not as a long-term storage format; keep the original JSON text if a saved document needs to be readable by a future library version.
+The image format is versioned but not yet stable, and may change in an incompatible way before it is declared stable. It is little-endian only (on big-endian targets, `save()` and `load()` do not exist), and tied to the library build that wrote it -- use it to cache a document or to hand one to another process running the *same* build, not as a long-term storage format; keep the original JSON text if a saved document needs to be readable by a future library version.
 
 The idea of a document you can read without parsing comes from zero-copy formats such as [FlatBuffers](https://github.com/google/flatbuffers) and [YaFF](https://github.com/yandex/yaff); the check [`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) runs follows the idea of FlatBuffers' Verifier. No code is taken from either.
 

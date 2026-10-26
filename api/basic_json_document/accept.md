@@ -62,7 +62,7 @@ compile; see [`parse`](parse.md#notes).
     #include <nlohmann/json.hpp>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

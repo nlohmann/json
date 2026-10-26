@@ -52,7 +52,7 @@ The example below returns a document from a function whose local buffer would ot
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 json_document parse_from_temporary_buffer()
 {

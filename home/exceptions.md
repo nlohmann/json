@@ -39,6 +39,8 @@ classDiagram
 
 Exceptions are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md). In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `#!cpp throw`), `JSON_TRY_USER` (overriding `#!cpp try`), and `JSON_CATCH_USER` (overriding `#!cpp catch`).
 
+See [Working without exceptions](../features/no_exceptions.md) for the functions that report errors without throwing.
+
 Note that [`JSON_THROW_USER`](../api/macros/json_throw_user.md) should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
 
 ??? example "Example: switch off exceptions and log errors before aborting"
@@ -73,7 +75,7 @@ Exceptions in the library are thrown in the local context of the JSON value they
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -114,7 +116,7 @@ As this global context comes at the price of storing one additional pointer per 
     # define JSON_DIAGNOSTICS 1
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -171,7 +173,7 @@ Exceptions have ids 1xx.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -185,7 +187,7 @@ Exceptions have ids 1xx.
             // output exception information
             std::cout << "message: " << e.what() << '\n'
                       << "exception id: " << e.id << '\n'
-                      << "byte position of error: " << e.byte << std::endl;
+                      << "byte position of error: " << e.byte << '\n';
         }
     }
     
@@ -259,6 +261,34 @@ This error indicates a syntax error while deserializing a JSON text. The error m
 
     - Make sure the input is correctly read. Try to write the input to standard output to check if, for instance, the input file was successfully opened.
     - Paste the input to a JSON validator like <https://jsonlint.com> or a tool like [jq](https://jqlang.github.io/jq/).
+
+??? info "Parsing a file fails at line 1, column 1 (unexpected end of input)"
+
+    The messages `attempting to parse an empty input` (since version 3.11.3) and `unexpected end of input` (also the message of
+    earlier versions for an empty input) at the very start of the input mean
+    that the parser did not see a single character. The library only reads from the stream it is given: it does not
+    open files and cannot tell a missing file from an empty one. The usual causes are:
+
+    - **The file was not opened.** A relative path is resolved against the *working directory of the running program*,
+      not against the source file or the project. IDEs and build tools often start the program in a build directory
+      (for example `build/` or `cmake-build-debug/`), so `"example.json"` may need to be `"../example.json"`. Use an
+      absolute path to rule this out.
+    - **The file is empty**, or a previous run truncated it (for example when it was opened for writing).
+    - **The stream was already read.** A stream whose content has been consumed (by printing it with
+      `std::cout << file.rdbuf()`, or by an earlier `accept`/`parse`/`>>`) is at its end. Parse it once, or rewind it
+      with `seekg(0)` after clearing the state with `clear()`.
+
+    Check the stream before parsing it:
+
+    ```cpp
+    std::ifstream f("example.json");
+    if (!f.is_open())
+    {
+        std::cerr << "cannot open example.json\n";
+        return 1;
+    }
+    json data = json::parse(f);
+    ```
 
 ### json.exception.parse_error.102
 
@@ -367,7 +397,7 @@ where they cannot be resolved.
 ### json.exception.parse_error.110
 
 When parsing a [binary format](../features/binary_formats/index.md), the byte vector ends before the complete value has
-been read.
+been read, or (with `strict = true`) further bytes follow the value.
 
 !!! failure "Example messages"
 
@@ -383,7 +413,7 @@ been read.
 
 ### json.exception.parse_error.112
 
-An unexpected byte was read in a [binary format](../features/binary_formats/index.md) or length information is invalid ([BSON](../features/binary_formats/bson.md)).
+An unexpected byte was read in a [binary format](../features/binary_formats/index.md) or length information is invalid ([BSON](../features/binary_formats/bson.md)). In [BON8](../features/binary_formats/bon8.md), this exception is also thrown for a key that is not a string and for ill-formed UTF-8.
 
 !!! failure "Example messages"
 
@@ -408,15 +438,21 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
     ```
     [json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)
     ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 2: syntax error while parsing BON8 string: invalid UTF-8 byte: 0x80
+    ```
 
 ### json.exception.parse_error.113
 
 A string could not be read from a [binary format](../features/binary_formats/index.md): either a value that is not a
 string was read where one was required (for instance as a map key), the string's length specification is invalid, or
 the string's bytes are not valid UTF-8 and the `error_handler` parameter of the corresponding `from_*` function is
-set to `strict`. By default (`error_handler_t::keep`), the bytes of a string are not checked for valid UTF-8 on read;
-see the ill-formed UTF-8 notes on the individual [binary format](../features/binary_formats/index.md) pages for how
+set to `strict`. By default (`error_handler_t::keep`), the bytes of a string are not checked for valid UTF-8 on read.
+This applies to the `from_*` functions that have an `error_handler` parameter; `from_bon8` does not have one.
+See the ill-formed UTF-8 notes on the individual [binary format](../features/binary_formats/index.md) pages for how
 such a string is handled depending on `error_handler`.
+[`from_bon8()`](../api/basic_json/from_bon8.md) never throws this exception: BON8 non-string keys and ill-formed UTF-8
+are reported as [parse_error.112](#jsonexceptionparse_error112).
 
 CBOR and MessagePack allow map keys of any type, but JSON object keys are always strings. Maps with keys of any other
 type (for instance integers or `null`) are therefore not supported; see the notes on
@@ -455,12 +491,15 @@ The parsing of the corresponding BSON record type is not implemented (yet).
 
 ### json.exception.parse_error.115
 
-A UBJSON high-precision number could not be parsed.
+A UBJSON or BJData high-precision number could not be parsed.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A
+    ```
+    ```
+    [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1A
     ```
 
 ### json.exception.parse_error.116
@@ -495,7 +534,7 @@ Exceptions have ids 2xx.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -510,7 +549,7 @@ Exceptions have ids 2xx.
         {
             // output exception information
             std::cout << "message: " << e.what() << '\n'
-                      << "exception id: " << e.id << std::endl;
+                      << "exception id: " << e.id << '\n';
         }
     }
     
@@ -682,7 +721,7 @@ Exceptions have ids 3xx.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -696,7 +735,7 @@ Exceptions have ids 3xx.
         {
             // output exception information
             std::cout << "message: " << e.what() << '\n'
-                      << "exception id: " << e.id << std::endl;
+                      << "exception id: " << e.id << '\n';
         }
     }
     
@@ -894,6 +933,9 @@ The binary writers [`to_cbor()`](../api/basic_json/to_cbor.md), [`to_ubjson()`](
 as well for a string value or object key that is not valid UTF-8 if their `error_handler` is `strict` (the default if
 [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) is enabled). So does
 [`to_msgpack()`](../api/basic_json/to_msgpack.md) if `error_handler_t::strict` is passed.
+[`to_bon8()`](../api/basic_json/to_bon8.md) always throws this exception for such a string or key, regardless of
+[`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md), because the end of a BON8 string is determined
+from its UTF-8 encoding.
 
 !!! failure "Example message"
 
@@ -965,16 +1007,11 @@ from JSON text.
 
 [`basic_json_document::save()`](../api/basic_json_document/save.md) cannot write an
 [image](../features/json_view.md#images) of a [discarded](../api/basic_json_document/is_discarded.md) document.
-[`save()`](../api/basic_json_document/save.md) and [`load()`](../api/basic_json_document/load.md) also throw this
-exception on a big-endian target, since the image format is little-endian only.
 
 !!! failure "Example messages"
 
     ```
     [json.exception.type_error.320] cannot save a discarded json_document
-    ```
-    ```
-    [json.exception.type_error.320] json_document images need a little-endian target
     ```
 
 !!! note
@@ -1009,7 +1046,7 @@ Exceptions have ids 4xx.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -1023,7 +1060,7 @@ Exceptions have ids 4xx.
         {
             // output exception information
             std::cout << "message: " << e.what() << '\n'
-                      << "exception id: " << e.id << std::endl;
+                      << "exception id: " << e.id << '\n';
         }
     }
     
@@ -1110,7 +1147,8 @@ double-precision number when `number_float_t` is `#!cpp float`.
 An integer number cannot be represented by the binary format it is serialized to:
 
 - [BON8](../features/binary_formats/bon8.md) only stores integers that fit into int64, so
-  [`to_bon8`](../api/basic_json/to_bon8.md) throws for unsigned integers greater than 9223372036854775807.
+  [`to_bon8`](../api/basic_json/to_bon8.md) throws for unsigned integers greater than 9223372036854775807 and, with a
+  number type wider than 64 bits, for any integer outside the int64 range.
 - [CBOR](../features/binary_formats/cbor.md), [MessagePack](../features/binary_formats/messagepack.md), and
   [BSON](../features/binary_formats/bson.md) store integers in at most 64 bits. With the default number types, every
   integer fits, but a [`number_integer_t`](../api/basic_json/number_integer_t.md) or
@@ -1129,7 +1167,7 @@ exception, because they serialize integers beyond 64 bits as high-precision numb
     - Since version 3.12.0, integer numbers beyond int64 are serialized as uint64 BSON numbers.
 
     Before version 3.13.0, CBOR, MessagePack, and BSON silently truncated integers wider than 64 bits, and BJData
-    truncated unsigned integers wider than 64 bits.
+    truncated unsigned integers wider than 64 bits that were elements of ND-arrays with `"_ArrayType_": "uint64"`.
 
 !!! failure "Example messages"
 
@@ -1149,8 +1187,8 @@ or the encoded length for [CBOR](../features/binary_formats/cbor.md).
 The exception is also thrown for a [UBJSON](../features/binary_formats/ubjson.md) array of a type that is encoded by its
 marker alone (`Z`, `T` or `F`) whose declared count exceeds 1,048,576 (`1 << 20`). Such an array has no payload, so its
 count alone decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values.
-[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the size and type annotation,
-so any value it produces can still be read back.
+[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the `$` type annotation (the `#`
+count and one marker per element are kept), so any value it produces can still be read back.
 
 !!! failure "Example messages"
 
@@ -1187,8 +1225,13 @@ a JSON pointer exceeds the range of `size_type` (e.g., on 32-bit platforms).
 
     ```
     enum value out of range
-    array index 18446744073709551616 exceeds size_type
+    array index 18446744073709551615 exceeds size_type
     ```
+
+    The second message is thrown, for instance, by `#!cpp json::parse("[1, 2]").at("/18446744073709551615"_json_pointer)`
+    on a 64-bit platform, where `size_type` is `#!cpp std::size_t` and this index is `SIZE_MAX`. An index that does not
+    fit into 64 bits (such as `18446744073709551616`) is not reported as 410 but as
+    [`out_of_range.404`](#jsonexceptionout_of_range404).
 
 ### json.exception.out_of_range.411
 
@@ -1203,6 +1246,8 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 !!! note
 
     This exception was added in version 3.13.0. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
+
+    A `null` parent is rejected as well. Before version 3.13.0, an `add` into a `null` parent silently converted it to an object (e.g., `add` at `/foo/bar` turned `{"foo":null}` into `{"foo":{"bar":1}}`).
 
 ### json.exception.out_of_range.412
 
@@ -1257,12 +1302,16 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 ### json.exception.out_of_range.415
 
 MessagePack's ext type and BSON's binary subtype are each stored in a single byte. This exception is thrown when serializing a
-[`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255.
+[`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255, the largest value the library can store in that byte.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.out_of_range.415] subtype 70000 is too large for the MessagePack ext type (max 255)
+    ```
+
+    ```
+    [json.exception.out_of_range.415] subtype 70000 is too large for the BSON binary subtype (max 255)
     ```
 
 !!! note
@@ -1312,7 +1361,7 @@ Exceptions have ids 5xx.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -1336,7 +1385,7 @@ Exceptions have ids 5xx.
         {
             // output exception information
             std::cout << "message: " << e.what() << '\n'
-                      << "exception id: " << e.id << std::endl;
+                      << "exception id: " << e.id << '\n';
         }
     }
     
@@ -1365,7 +1414,9 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 ### json.exception.other_error.502
 
 [`to_ubjson`](../api/basic_json/to_ubjson.md) and [`to_bjdata`](../api/basic_json/to_bjdata.md) were called with
-`use_type = true` but `use_size = false`. UBJSON requires a size marker (`#`) after a type marker (`$`).
+`use_type = true` but `use_size = false`, and the value contains a non-empty array or object (or, with BJData Draft 3,
+any binary value). UBJSON requires a size marker (`#`) after a type marker (`$`); scalars and empty arrays or objects
+do not throw.
 
 !!! failure "Example message"
 

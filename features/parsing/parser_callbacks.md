@@ -86,12 +86,12 @@ was called:
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
         // a JSON text
-        auto text = R"(
+        const auto* text = R"(
         {
             "Image": {
                 "Width":  800,
@@ -191,7 +191,7 @@ can detect them while the object is still being read, before that ambiguity ever
     #include <unordered_set>
     #include <vector>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     json parse_strict(const std::string& input)
     {

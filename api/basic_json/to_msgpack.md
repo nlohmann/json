@@ -53,7 +53,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   value, array, or object exceeds 4294967295, the maximum MessagePack can store; example:
   `"MessagePack length 4294967296 exceeds maximum of 4294967295"`
 - Throws [`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415) if the subtype of a binary value
-  exceeds 255, the maximum of the MessagePack ext type; example:
+  exceeds 255, the largest value the library can store in the one-byte MessagePack ext type; example:
   `"subtype 70000 is too large for the MessagePack ext type (max 255)"`
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key in `j` is
   not valid UTF-8 and `error_handler` is `strict`
@@ -75,7 +75,7 @@ Linear in the size of the JSON value `j`.
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -89,9 +89,9 @@ Linear in the size of the JSON value `j`.
         // print the vector content
         for (auto& byte : v)
         {
-            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }
     
     ```
@@ -112,7 +112,7 @@ Linear in the size of the JSON value `j`.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

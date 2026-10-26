@@ -31,7 +31,7 @@ The example below demonstrates how a subtype can be set with `set_subtype`.
 // define a byte container based on std::vector
 using byte_container_with_subtype = nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>>;
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

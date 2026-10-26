@@ -3,7 +3,7 @@
 Defined in header `<nlohmann/json_view.hpp>`
 
 ```
-template<typename BasicJsonType, bool Editable = false>
+template<typename BasicJsonType, view_mode Mode = view_mode::read_only>
 class basic_json_view;
 ```
 
@@ -26,13 +26,13 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 
 [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md), [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md), and [`value`](https://json.nlohmann.me/api/basic_json_view/value/index.md) also accept a [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md). Unlike `basic_json`, there are no implicit conversion operators (no `operator ValueType()`), and no `get_ptr()` or `get_ref()`; see [`get`](https://json.nlohmann.me/api/basic_json_view/get/index.md).
 
-`basic_json_view` itself is always read-only -- it never has a `set` or `push_back` of its own. A view of an **editable** document (`Editable == true`) sees every edit made through [`basic_json_document::set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`basic_json_document::push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md): once a value is changed, every view that still refers to it -- including ones taken before the change -- reads the new value. See [Edits](https://json.nlohmann.me/api/basic_json_document/#edits).
+`basic_json_view` itself is always read-only -- it never has a `set` or `push_back` of its own. A view of an **editable** document (`view_mode::editable`) sees every edit made through [`basic_json_document::set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`basic_json_document::push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md): once a value is changed, every view that still refers to it -- including ones taken before the change -- reads the new value. See [Edits](https://json.nlohmann.me/api/basic_json_document/#edits).
 
 ## Template parameters
 
 `BasicJsonType` : a specialization of [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md), matching the [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) the view was taken from.
 
-`Editable` : whether the view is of an editable document, matching the [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) it was taken from (optional, `false` by default). See [Edits](https://json.nlohmann.me/api/basic_json_document/#edits).
+`Mode` : a [`view_mode`](https://json.nlohmann.me/api/view_mode/index.md): whether the view is of an editable document, matching the [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) it was taken from (optional, `view_mode::read_only` by default). See [Edits](https://json.nlohmann.me/api/basic_json_document/#edits).
 
 ## Specializations
 
@@ -43,6 +43,7 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 
 ## Member types
 
+- **basic_json_type** - `BasicJsonType` (it also marks the class for [`is_json_view`](https://json.nlohmann.me/api/is_json_view/index.md))
 - **value_t** - the JSON type enumeration, see [`basic_json::value_t`](https://json.nlohmann.me/api/basic_json/value_t/index.md)
 - **string_t**, **number_integer_t**, **number_unsigned_t**, **number_float_t**, **json_pointer** - the corresponding member types of `BasicJsonType`
 - **size_type** - `std::size_t`

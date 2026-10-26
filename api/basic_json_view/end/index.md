@@ -32,7 +32,7 @@ The example below scans a (possibly large) array of readings for the first one o
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

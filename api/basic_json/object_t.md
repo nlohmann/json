@@ -118,11 +118,11 @@ the object is silently converted as an array of key-value pairs, which is incorr
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
-        std::cout << std::boolalpha << std::is_same<std::map<json::string_t, json>, json::object_t>::value << std::endl;
+        std::cout << std::boolalpha << std::is_same<std::map<json::string_t, json>, json::object_t>::value << '\n';
     }
     
     ```

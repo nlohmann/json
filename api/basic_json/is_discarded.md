@@ -63,7 +63,7 @@ with `allow_exceptions` set to `#!cpp false`: a parse error then yields a discar
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -118,7 +118,7 @@ with `allow_exceptions` set to `#!cpp false`: a parse error then yields a discar
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

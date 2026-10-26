@@ -49,7 +49,7 @@ To merge one object into another, [`update`](../api/basic_json/update.md) copies
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()

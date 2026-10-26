@@ -28,7 +28,7 @@ The example shows the usage of `pop_back`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

@@ -77,7 +77,7 @@ Without the macro, the character after a number is consumed:
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -98,7 +98,7 @@ With the macro, the stream is positioned right after the number:
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

@@ -61,7 +61,7 @@ Depends on the `json_serializer<ValueType>::from_json()` implementation.
     #include <map>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -111,7 +111,7 @@ Depends on the `json_serializer<ValueType>::from_json()` implementation.
         }
         std::cout << "\n\n";
     
-        for (auto i : v8)
+        for (const auto& i : v8)
         {
             std::cout << i.first << ": " << i.second << '\n';
         }

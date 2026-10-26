@@ -28,7 +28,7 @@ The example shows the result of `empty` for different JSON Pointers.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -43,7 +43,7 @@ int main()
               << "\"" << ptr0 << "\": " << ptr0.empty() << '\n'
               << "\"" << ptr1 << "\": " << ptr1.empty() << '\n'
               << "\"" << ptr2 << "\": " << ptr2.empty() << '\n'
-              << "\"" << ptr3 << "\": " << ptr3.empty() << std::endl;
+              << "\"" << ptr3 << "\": " << ptr3.empty() << '\n';
 }
 ```
 

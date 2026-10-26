@@ -36,7 +36,7 @@ way to reach the last element by stepping back from `end()`. Use [`back()`](back
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

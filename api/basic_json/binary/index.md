@@ -49,7 +49,7 @@ The following code shows how to create a binary value.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -60,7 +60,7 @@ int main()
     json j = json::binary(vec, 42);
 
     // output type and subtype
-    std::cout << "type: " << j.type_name() << ", subtype: " << j.get_binary().subtype() << std::endl;
+    std::cout << "type: " << j.type_name() << ", subtype: " << j.get_binary().subtype() << '\n';
 }
 ```
 

@@ -26,7 +26,7 @@ Throughout this page, we will describe how to compile the example file `example.
 #include <iostream>
 #include <iomanip>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -92,7 +92,7 @@ The header can be used directly in your code or via CMake.
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -122,7 +122,7 @@ The header can be used directly in your code or via CMake.
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -223,7 +223,7 @@ The resulting compile definitions are part of the Meson dependency, the pkg-conf
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -282,7 +282,7 @@ repository can be referenced within a `MODULE.bazel` by rules such as `archive_o
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -345,7 +345,7 @@ requires, where `x.y.z` is the release version you want to use.
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -410,7 +410,7 @@ Please see the [Spack project](https://github.com/spack/spack) for any issues re
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -487,7 +487,7 @@ Please see the Hunter project for any issues regarding the packaging.
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -551,7 +551,7 @@ and follow the then displayed descriptions. Please see the vcpkg project for any
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -613,7 +613,7 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -703,7 +703,7 @@ The library's own [`Package.swift`](https://github.com/nlohmann/json/blob/develo
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -801,7 +801,7 @@ conda install -c conda-forge nlohmann_json
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -852,7 +852,7 @@ package; type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -902,7 +902,7 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -932,7 +932,7 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -1099,7 +1099,7 @@ To use this package in an existing [`build2`](https://build2.org) project, the g
             #include <iostream>
             #include <iomanip>
             
-            using json = nlohmann::json;
+            using nlohmann::json;
             
             int main()
             {
@@ -1182,7 +1182,7 @@ CPMAddPackage("gh:nlohmann/json@3.12.0")
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {
@@ -1238,7 +1238,7 @@ CPMAddPackage("gh:nlohmann/json@3.12.0")
         #include <iostream>
         #include <iomanip>
         
-        using json = nlohmann::json;
+        using nlohmann::json;
         
         int main()
         {

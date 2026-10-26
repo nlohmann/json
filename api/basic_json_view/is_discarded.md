@@ -42,7 +42,7 @@ A `basic_json_view` is not convertible to `#!cpp bool`: such a conversion would 
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

@@ -31,7 +31,7 @@ The example below shows how a conversion of a non-default-constructible type is 
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 namespace ns
 {
@@ -79,7 +79,7 @@ int main()
 
     auto p = j.get<ns::person>();
 
-    std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
+    std::cout << p.name << " (" << p.age << ") lives in " << p.address << '\n';
 }
 ```
 

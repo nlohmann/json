@@ -51,11 +51,14 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Complexity
 
-Logarithmic in the size of the JSON object.
+1. Logarithmic in the size of the JSON object.
+1. Logarithmic in the size of the JSON object.
+1. At most one lookup per reference token of `ptr`, each logarithmic in the size of the container at that level: O(*n* log *m*) for *n* reference tokens and containers of size at most *m*.
+1. Deleted; a call with an integral argument does not compile.
 
 ## Notes
 
-- This method always returns `false` when executed on a JSON type that is not an object.
+- Overloads (1) and (2) always return `false` when executed on a JSON type that is not an object. Overload (3) also works on arrays and on primitive values: the empty JSON pointer resolves in every JSON value (so `json(1).contains(""_json_pointer)` returns `true`), and `json({1, 2}).contains("/1"_json_pointer)` returns `true`.
 - This method can be executed on any JSON value type.
 - Calling this function with an integer argument (for example, `contains(0)`) does not compile: such an argument would otherwise implicitly convert to a null `const char*` and, from there, cause undefined behavior when constructing a `std::string` for the object key. To check for an array element instead, use [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), or compare against [`size`](https://json.nlohmann.me/api/basic_json/size/index.md).
 
@@ -81,7 +84,7 @@ The example shows how `contains()` is used.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -94,7 +97,7 @@ int main()
     std::cout << std::boolalpha <<
               "j_object contains 'key': " << j_object.contains("key") << '\n' <<
               "j_object contains 'another': " << j_object.contains("another") << '\n' <<
-              "j_array contains 'key': " << j_array.contains("key") << std::endl;
+              "j_array contains 'key': " << j_array.contains("key") << '\n';
 }
 ```
 
@@ -116,7 +119,7 @@ The example shows how `contains()` is used.
 #include <nlohmann/json.hpp>
 
 using namespace std::string_view_literals;
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -129,7 +132,7 @@ int main()
     std::cout << std::boolalpha <<
               "j_object contains 'key': " << j_object.contains("key"sv) << '\n' <<
               "j_object contains 'another': " << j_object.contains("another"sv) << '\n' <<
-              "j_array contains 'key': " << j_array.contains("key"sv) << std::endl;
+              "j_array contains 'key': " << j_array.contains("key"sv) << '\n';
 }
 ```
 
@@ -149,7 +152,7 @@ The example shows how `contains()` is used.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -171,7 +174,7 @@ int main()
               // an array index with a leading '0' is not found
               << j.contains("/array/01"_json_pointer) << '\n'
               // an array index that is not a number is not found
-              << j.contains("/array/one"_json_pointer) << std::endl;
+              << j.contains("/array/one"_json_pointer) << '\n';
 }
 ```
 

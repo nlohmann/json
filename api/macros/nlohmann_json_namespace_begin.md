@@ -72,7 +72,7 @@ When these macros are not defined, the library will define them to their default
         NLOHMANN_JSON_NAMESPACE::json j;
         j.push_back(o1);
         j.push_back(o2);
-        std::cout << j << std::endl;
+        std::cout << j << '\n';
     }
     
     ```

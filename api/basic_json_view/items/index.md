@@ -56,7 +56,7 @@ The example below shows a settings object whose source text records every update
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

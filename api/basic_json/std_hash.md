@@ -27,7 +27,7 @@ large integers that convert to the same `number_float_t`.
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -41,7 +41,7 @@ large integers that convert to the same `number_float_t`.
                   << "hash({}) = " << std::hash<json> {}(json::object()) << '\n'
                   << "hash([]) = " << std::hash<json> {}(json::array()) << '\n'
                   << "hash({\"hello\": \"world\"}) = " << std::hash<json> {}("{\"hello\": \"world\"}"_json)
-                  << std::endl;
+                  << '\n';
     }
     
     ```

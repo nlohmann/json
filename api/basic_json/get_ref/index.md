@@ -46,7 +46,7 @@ The example shows several calls to `get_ref()`.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

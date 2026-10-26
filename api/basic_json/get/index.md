@@ -113,7 +113,7 @@ The example below shows several conversions from JSON values to other types. The
 #include <map>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -154,7 +154,7 @@ int main()
     }
     std::cout << "\n\n";
 
-    for (auto i : v8)
+    for (const auto& i : v8)
     {
         std::cout << i.first << ": " << i.second << '\n';
     }
@@ -185,8 +185,8 @@ The example below shows how a `json` value is converted to an `ordered_json` val
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
+using nlohmann::json;
+using nlohmann::ordered_json;
 
 int main()
 {
@@ -216,7 +216,7 @@ The example below shows how pointers to internal values of a JSON value can be r
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -224,11 +224,11 @@ int main()
     json value = 17;
 
     // explicitly getting pointers
-    auto p1 = value.get<const json::number_integer_t*>();
-    auto p2 = value.get<json::number_integer_t*>();
-    auto p3 = value.get<json::number_integer_t* const>();
-    auto p4 = value.get<const json::number_integer_t* const>();
-    auto p5 = value.get<json::number_float_t*>();
+    const auto* p1 = value.get<const json::number_integer_t*>();
+    auto* p2 = value.get<json::number_integer_t*>();
+    auto* p3 = value.get<json::number_integer_t* const>();
+    const auto* p4 = value.get<const json::number_integer_t* const>();
+    auto* p5 = value.get<json::number_float_t*>();
 
     // print the pointees
     std::cout << *p1 << ' ' << *p2 << ' ' << *p3 << ' ' << *p4 << '\n';

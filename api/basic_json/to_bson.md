@@ -13,7 +13,7 @@ static void to_bson(const basic_json& j, detail::output_adapter<char> o,
 ```
 
 BSON (Binary JSON) is a binary format in which zero or more ordered key/value pairs are stored as a single entity (a
-so-called document).
+so-called document). The members of an object are written in the order in which iteration visits them.
 
 1. Returns a byte vector containing the BSON serialization.
 2. Writes the BSON serialization to an output adapter.
@@ -82,7 +82,7 @@ pass before anything is written.
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -96,9 +96,9 @@ pass before anything is written.
         // print the vector content
         for (auto& byte : v)
         {
-            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+            std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }
     
     ```
@@ -119,7 +119,7 @@ pass before anything is written.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

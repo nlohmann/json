@@ -71,7 +71,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [parse_error.110](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error110) if the given input ends prematurely or the end of the file was not reached when `strict` was set to true
 - Throws [parse_error.112](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error112) if a parse error occurs
 - Throws [parse_error.113](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) if a string could not be parsed successfully, or if a string value or object key is not valid UTF-8 and `error_handler` is `strict`
-- Throws [out_of_range.408](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range408) if the size of an optimized container or n-dimensional array cannot be represented by `std::size_t`
+- Throws [parse_error.115](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error115) if the text of a high-precision number (`H`) is not a valid number
+- Throws [out_of_range.408](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range408) if the size of an optimized container cannot be represented by `std::size_t` or exceeds the container's `max_size()`, or if the product of the dimensions of an n-dimensional array overflows
 
 ## Complexity
 
@@ -88,7 +89,7 @@ The example shows the deserialization of a byte vector in BJData format to a JSO
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -102,7 +103,7 @@ int main()
     json j = json::from_bjdata(v);
 
     // print the deserialized JSON value
-    std::cout << std::setw(2) << j << std::endl;
+    std::cout << std::setw(2) << j << '\n';
 }
 ```
 

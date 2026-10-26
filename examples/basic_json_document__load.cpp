@@ -4,8 +4,8 @@
 #include <vector>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_document = nlohmann::json_document;
+using nlohmann::json;
+using nlohmann::json_document;
 using image_check = json_document::image_check;
 
 int main()

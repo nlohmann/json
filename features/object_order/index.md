@@ -12,7 +12,7 @@ Example: `json` sorts object keys
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -45,7 +45,7 @@ Example: `ordered_json` preserves insertion order
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using ordered_json = nlohmann::ordered_json;
+using nlohmann::ordered_json;
 
 int main()
 {

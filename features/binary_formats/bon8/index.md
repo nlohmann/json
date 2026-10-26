@@ -1,11 +1,43 @@
 # BON8
 
-BON8 (Binary Object Notation 8) is a compact binary serialization format for JSON values. It uses the byte values that cannot begin a UTF-8 character as type markers, so strings are stored as plain UTF-8 without a length prefix: a string ends at the first byte that cannot continue it. Integers from -10 to 39, `true`, `false`, `null`, and the floating-point values -1.0, 0.0, and 1.0 take a single byte, and arrays and objects with up to four elements need no terminator.
+BON8 (Binary Object Notation 8) is a compact binary serialization format for JSON values. It uses byte values that cannot begin a UTF-8 character as type markers, so strings are stored as plain UTF-8 without a length prefix: a string ends at the first byte that cannot continue it. Integers from -10 to 39, `true`, `false`, `null`, and the floating-point values -1.0, 0.0, and 1.0 take a single byte, and arrays and objects with up to four elements need no terminator.
 
 References
 
 - [BON8 specification](https://github.com/hikoworks/hikogui/blob/main/docs/BON8.md)
 - [Reference implementation](https://github.com/hikoworks/hikogui/blob/main/src/hikogui/codec/BON8.hpp) in HikoGUI
+
+## Byte layout
+
+BON8 exploits the fact that some byte values can never start a UTF-8 character. These bytes serve as *type markers*, so strings can be stored as plain UTF-8 without a length prefix: a string ends at the first byte that cannot continue it: a marker byte, or a lead byte 0xC2..0xF7 followed by a byte outside 0x80..0xBF. The ending byte is often the marker of the next value. Small integers, `true`, `false`, `null`, and a few common floats are a single byte. Arrays and objects are introduced by a marker; those with up to four elements encode their size in the marker and need no terminator, while larger ones are closed by the end marker `0xFE`.
+
+Consider the following JSON value (shown formatted for readability):
+
+```
+{
+  "id": 300,
+  "name": "json",
+  "pi": 3.14,
+  "tags": [
+    "a",
+    "b"
+  ]
+}
+```
+
+`to_bon8` encodes it to 35 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: type/marker length/count/size data.
+
+| JSON              | Bytes                            | Meaning                                                                                                                                                                                                     |
+| ----------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{`               | 8A                               | object with 4 members                                                                                                                                                                                       |
+| `"id": 300,`      | 69 64 C4 04                      | key: UTF-8 bytes; the string ends at 0xC4, because the byte after it (0x04) is not a UTF-8 continuation byte, so 0xC4 starts an integer; value: 2-byte positive integer (lead byte, then a byte below 0x80) |
+| `"name": "json",` | 6E 61 6D 65 FF 6A 73 6F 6E FF    | key: UTF-8 bytes; 0xFF terminates the string as another string follows; value: UTF-8 bytes; terminated as a string key follows                                                                              |
+| `"pi": 3.14,`     | 70 69 8F 40 09 1E B8 51 EB 85 1F | key: UTF-8 bytes; value: binary64 (IEEE 754, big-endian); its marker also ends `"pi"`                                                                                                                       |
+| `"tags": [`       | 74 61 67 73 82                   | key: UTF-8 bytes; value: array with 2 elements; its marker also ends `"tags"`                                                                                                                               |
+| `"a",`            | 61 FF                            | UTF-8 bytes; terminated as a string follows                                                                                                                                                                 |
+| `"b"`             | 62 FF                            | UTF-8 bytes; terminated as nothing follows                                                                                                                                                                  |
+| `]`               |                                  | no end marker: the element count was given up front                                                                                                                                                         |
+| `}`               |                                  | no end marker: the member count was given up front                                                                                                                                                          |
 
 ## Serialization
 
@@ -60,7 +92,7 @@ Unsupported values
 
 The following values can **not** be converted to a BON8 value:
 
-- unsigned integers above 9223372036854775807, because BON8 has no unsigned 64-bit integer type ([out_of_range.407](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range407))
+- integers outside the int64 range (unsigned integers above 9223372036854775807 and, for number types wider than 64 bits, any larger or smaller integer), because BON8 integers are limited to int64 ([out_of_range.407](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range407))
 - strings that are not valid UTF-8, because the end of a string is determined from its encoding ([type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316))
 
 NaN/infinity handling
@@ -85,7 +117,7 @@ Example: serialize a JSON value to BON8
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -99,9 +131,9 @@ int main()
     // print the vector content
     for (auto& byte : v)
     {
-        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)byte << " ";
+        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
     }
-    std::cout << std::endl;
+    std::cout << '\n';
 }
 ```
 
@@ -110,36 +142,6 @@ Output:
 ```
 0x89 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xf9 0x66 0x6f 0x72 0x6d 0x61 0x74 0xff 0x42 0x4f 0x4e 0x38 0xff 0x73 0x63 0x68 0x65 0x6d 0x61 0x90
 ```
-
-### Byte layout
-
-Consider the following JSON value (shown formatted for readability):
-
-```
-{
-  "id": 300,
-  "name": "json",
-  "pi": 3.14,
-  "tags": [
-    "a",
-    "b"
-  ]
-}
-```
-
-`to_bon8` encodes it to 35 bytes (shown in hexadecimal; the encoding contains no whitespace). The colors mark the role of each byte: type/marker length/count/size data.
-
-| JSON              | Bytes                            | Meaning                                                                                                                                                         |
-| ----------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{`               | 8A                               | object with 4 members                                                                                                                                           |
-| `"id": 300,`      | 69 64 C4 04                      | key: UTF-8 bytes; the string ends at the next byte, which cannot continue a UTF-8 character; value: 2-byte positive integer (lead byte, then a byte below 0x80) |
-| `"name": "json",` | 6E 61 6D 65 FF 6A 73 6F 6E FF    | key: UTF-8 bytes; 0xFF terminates the string as another string follows; value: UTF-8 bytes; terminated as a string key follows                                  |
-| `"pi": 3.14,`     | 70 69 8F 40 09 1E B8 51 EB 85 1F | key: UTF-8 bytes; value: binary64 (IEEE 754, big-endian); its marker also ends `"pi"`                                                                           |
-| `"tags": [`       | 74 61 67 73 82                   | key: UTF-8 bytes; value: array with 2 elements; its marker also ends `"tags"`                                                                                   |
-| `"a",`            | 61 FF                            | UTF-8 bytes; terminated as a string follows                                                                                                                     |
-| `"b"`             | 62 FF                            | UTF-8 bytes; terminated as nothing follows                                                                                                                      |
-| `]`               |                                  | no end marker: the element count was given up front                                                                                                             |
-| `}`               |                                  | no end marker: the member count was given up front                                                                                                              |
 
 ## Deserialization
 
@@ -171,13 +173,17 @@ The library maps BON8 types to JSON value types as follows:
 
 Non-negative integers are read as number_unsigned, negative integers as number_integer.
 
-Info
+A byte 0xF5..0xF7 followed by 0x80..0xBF is neither a string nor an integer and is rejected with [parse_error.112](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error112) (invalid UTF-8 byte). The same error is reported for any other invalid byte (such as a stray 0xFE), for ill-formed UTF-8, and for an object key that is not a string. Input that ends prematurely, trailing data after the value, and a missing final 0xFF after a string at the end of the message are reported as [parse_error.110](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error110).
+
+Non-canonical input
 
 Values that do not use the canonical representation, such as integers with a longer encoding than necessary, arrays and objects with up to four elements that are terminated by 0xFE, unsorted object keys, or a 0xFF after a string that would also end without it, are accepted. A second 0xFF is not a terminator but an empty string.
 
 Strings must be valid UTF-8, and a string at the very end of a message must be terminated by 0xFF.
 
-Info
+Duplicate object keys are accepted; the last value wins (`ordered_json` keeps the position of the first occurrence). The specification does not say how to treat them; the HikoGUI reference decoder keeps the first value.
+
+Round trips
 
 Any BON8 output created by `to_bon8` can be successfully parsed by `from_bon8`.
 
@@ -188,7 +194,7 @@ Example: deserialize a JSON value from BON8
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -203,7 +209,7 @@ int main()
     json j = json::from_bon8(v);
 
     // print the deserialized JSON value
-    std::cout << std::setw(2) << j << std::endl;
+    std::cout << std::setw(2) << j << '\n';
 }
 ```
 

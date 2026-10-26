@@ -381,14 +381,14 @@ The library does not sort or de-duplicate keys itself; the behavior described in
         j["happy"] = true;
         j["list"] = {1, 2, 3};
     
-        std::cout << j.dump(2) << std::endl;
-        std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+        std::cout << j.dump(2) << '\n';
+        std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << '\n';
     
         // custom_object_type has no key_compare member, so object_comparator_t
         // falls back to its default
         std::cout << std::boolalpha
                   << std::is_same<custom_json::object_comparator_t, custom_json::default_object_comparator_t>::value
-                  << std::endl;
+                  << '\n';
     }
     
     ```
@@ -661,8 +661,8 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
         j.push_back(2);
         j.push_back(3);
     
-        std::cout << j.dump() << std::endl;
-        std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+        std::cout << j.dump() << '\n';
+        std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << '\n';
     }
     
     ```
@@ -720,8 +720,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
   `#!cpp std::from_chars` is not available or declines the token, and `std::strtold` reads up to the null character. A type whose `data()`
   is not null-terminated does not fail to compile; with such a `NumberFloatType` it can silently misparse
   floating-point numbers.
-- `append(const char*, size_type)`, used by [`dump`](../../api/basic_json/dump.md), and `append(const StringType&)`,
-  used by the CBOR reader for indefinite-length strings. The library's internal string concatenation additionally has
+- `append(const char*, size_type)`, used by [`dump`](../../api/basic_json/dump.md) and by the binary readers. The library's internal string concatenation additionally has
   to append a `#!cpp char` and a `#!cpp const char*`; for each it selects between `append(arg)`, `#!cpp operator+=`,
   `append(first, last)`, and `append(data, size)`.
 - The comparison operator `==` against another `StringType`, and `<` for use as a key of the chosen
@@ -742,6 +741,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
   described in RFC 6901. Neither `find(const StringType&, size_type)`, nor `substr(pos, count)`, nor
   `replace(pos, count, const StringType&)` is required.
 - `empty()`.
+- `resize(n)` (one argument) -- used by `to_string` to size the result before the reference tokens are copied into it.
 - `begin()` and `end()` -- used by
   [`operator[](const json_pointer&)`](../../api/basic_json/operator%5B%5D.md) to decide whether a reference token
   denotes an array index.
@@ -975,8 +975,8 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
         j["happy"] = true;
         j["list"] = {1, 2, 3};
     
-        std::cout << j.dump(2) << std::endl;
-        std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << std::endl;
+        std::cout << j.dump(2) << '\n';
+        std::cout << std::boolalpha << (custom_json::parse(j.dump()) == j) << '\n';
     }
     
     ```
@@ -1204,8 +1204,7 @@ using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
   [`StringType`](#stringtype), whose non-`#!cpp const` `data()` is C++17 and later only.
 - Default-constructible, copy-constructible, and move-constructible.
 - Member functions `size()`, `empty()`, `data()`, `resize()`, `operator[]`, `back()`, `begin()`, `end()`, `cbegin()`,
-  and `cend()` with random-access iterators, and `insert(pos, first, last)`, which the CBOR reader uses to join the
-  chunks of an indefinite-length byte string. `push_back()` is **not** required.
+  and `cend()` with random-access iterators. `push_back()` is **not** required.
 - Comparison operators: `==` is used by
   [`byte_container_with_subtype`](../../api/byte_container_with_subtype/index.md), the relational operators by
   [`basic_json`'s comparison operators](../../api/basic_json/operator_le.md).
@@ -1355,8 +1354,8 @@ such a container to a `basic_json` value.
     {
         const auto j = custom_json::binary({0x01, 0x02, 0x03});
     
-        std::cout << j.dump() << std::endl;
-        std::cout << std::boolalpha << (custom_json::from_cbor(custom_json::to_cbor(j)) == j) << std::endl;
+        std::cout << j.dump() << '\n';
+        std::cout << std::boolalpha << (custom_json::from_cbor(custom_json::to_cbor(j)) == j) << '\n';
     }
     
     ```

@@ -48,7 +48,7 @@ This library extends primitive types to binary types, because binary types are r
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

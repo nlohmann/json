@@ -65,7 +65,7 @@ The stream is scanned in bulk, and the values are read one after the other:
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -88,7 +88,7 @@ With the macro, the same program reads the stream one character at a time, with 
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

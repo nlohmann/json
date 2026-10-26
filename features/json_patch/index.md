@@ -8,6 +8,10 @@ Applying a patch without copying
 
 [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) leaves the original value unchanged and returns the patched result as a copy. If the document is large and the original value is no longer needed, [`patch_inplace`](https://json.nlohmann.me/api/basic_json/patch_inplace/index.md) applies the same operations in place instead.
 
+Duplicate member names
+
+Duplicate member names inside an operation object are resolved by the parser before the patch is applied (the last one is kept, see [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/#behavior)), so `{"op": "add", "op": "remove", "path": "/a"}` is a `remove` operation.
+
 Example: apply a JSON Patch
 
 The following code shows how a JSON patch is applied to a value.
@@ -17,7 +21,7 @@ The following code shows how a JSON patch is applied to a value.
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -44,7 +48,7 @@ int main()
 
     // output original and patched document
     std::cout << std::setw(4) << doc << "\n\n"
-              << std::setw(4) << patched_doc << std::endl;
+              << std::setw(4) << patched_doc << '\n';
 }
 ```
 
@@ -77,11 +81,17 @@ flowchart LR
 
 Invariant
 
-For two JSON values *source* and *target*, the following code yields always true:
+For two JSON values *source* and *target*, the following code yields true:
 
 ```
 source.patch(diff(source, target)) == target;
 ```
+
+The equality holds up to [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md), with these exceptions:
+
+- `NaN` and [discarded](https://json.nlohmann.me/api/basic_json/is_discarded/index.md) values are not equal to themselves, so the invariant cannot hold for them. `diff` emits a `replace` operation for such a value, and a `NaN` in a patch is serialized as `null`.
+- Numbers that compare equal produce no operation even if their types differ: `diff(1, 1.0)`, `diff(1u, 1)`, and `diff(0.0, -0.0)` return `[]`, so the patched value keeps the number type of *source*.
+- A [binary value](https://json.nlohmann.me/features/binary_values/index.md) in a patch is serialized as an object (`{"bytes":[...],"subtype":null}`), so a patch that was dumped and parsed again no longer holds a binary value.
 
 Example: create a JSON Patch from the difference of two values
 
@@ -92,7 +102,7 @@ The following code shows how a JSON patch is created as a diff for two JSON valu
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -123,7 +133,7 @@ int main()
 
     // output patch and roundtrip result
     std::cout << std::setw(4) << patch << "\n\n"
-              << std::setw(4) << patched_source << std::endl;
+              << std::setw(4) << patched_source << '\n';
 }
 ```
 

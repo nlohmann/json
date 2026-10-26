@@ -12,7 +12,7 @@ Parent of this JSON pointer; in case this JSON pointer is the root, the root its
 
 ## Exception safety
 
-No-throw guarantee: this function never throws exceptions.
+Strong exception safety: if an exception occurs, the original value stays intact. The function is not `noexcept` and allocates a new JSON pointer, so it can throw `std::bad_alloc`; it throws no library exceptions.
 
 ## Complexity
 
@@ -28,7 +28,7 @@ The example shows the result of `parent_pointer` for different JSON Pointers.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -41,7 +41,7 @@ int main()
     std::cout << std::boolalpha
               << "parent of \"" << ptr1 << "\" is \"" << ptr1.parent_pointer() << "\"\n"
               << "parent of \"" << ptr2 << "\" is \"" << ptr2.parent_pointer() << "\"\n"
-              << "parent of \"" << ptr3 << "\" is \"" << ptr3.parent_pointer() << "\"" << std::endl;
+              << "parent of \"" << ptr3 << "\" is \"" << ptr3.parent_pointer() << "\"" << '\n';
 }
 ```
 

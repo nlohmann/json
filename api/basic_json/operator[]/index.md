@@ -112,7 +112,7 @@ The following cases apply to the **const** overloads; the non-const overloads in
 
    Creating intermediate levels that don't exist yet
 
-   When the JSON pointer traverses intermediate levels that don't exist at all yet (not just a missing leaf), each missing level is created as an array or an object depending on whether the corresponding pointer token parses as a non-negative integer: a numeric token creates an array, a non-numeric token creates an object. For example, on an initially `null` value, `/foo/0/0/0` creates nested arrays, while `/foo/one/one/one` creates nested objects. This is not specified by the JSON Pointer RFC; it is this library's own, intentional disambiguation rule. See also [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md).
+   When the JSON pointer traverses intermediate levels that don't exist at all yet (not just a missing leaf), each missing level is created as an array or an object depending on whether the corresponding pointer token is a valid array index: the token `0`, a sequence of digits that does not begin with `0`, or the token `-` creates an array, and every other token creates an object. For example, on an initially `null` value, `/foo/0/0/0` creates nested arrays, while `/foo/one/one/one` creates nested objects. Tokens such as `01` or the empty token cannot be array indices (cf. RFC 6901, Sect. 4) and therefore create objects, just as they would if the level already existed as an object. This is not specified by the JSON Pointer RFC; it is this library's own, intentional disambiguation rule. See also [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md).
 
 Deprecation
 
@@ -132,7 +132,7 @@ The example below shows how array elements can be read and written using `[]` op
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -172,7 +172,7 @@ The example below shows how array elements can be read using the `[]` operator.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -199,7 +199,7 @@ The example below shows how object elements can be read and written using the `[
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -261,7 +261,7 @@ The example below shows how object elements can be read using the `[]` operator.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -293,7 +293,7 @@ The example below shows how object elements can be read using the `[]` operator.
 #include <nlohmann/json.hpp>
 
 using namespace std::string_view_literals;
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -357,7 +357,7 @@ The example below shows how object elements can be read using the `[]` operator.
 #include <nlohmann/json.hpp>
 
 using namespace std::string_view_literals;
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -386,7 +386,7 @@ The example below shows how values can be read and written using JSON Pointers.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -455,7 +455,7 @@ The example below shows how values can be read using JSON Pointers.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()

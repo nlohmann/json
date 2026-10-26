@@ -40,7 +40,7 @@ string, whose token length is not the same as its decoded [`size()`](size.md).
     #include <string>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

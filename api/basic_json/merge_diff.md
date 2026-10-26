@@ -63,7 +63,7 @@ object operation (looking up a key, or adding one to the patch): logarithmic for
     #include <iomanip>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -108,7 +108,7 @@ object operation (looking up a key, or adding one to the patch): logarithmic for
     
         // output patch and roundtrip result
         std::cout << std::setw(4) << patch << "\n\n"
-                  << std::setw(4) << patched_source << std::endl;
+                  << std::setw(4) << patched_source << '\n';
     }
     
     ```

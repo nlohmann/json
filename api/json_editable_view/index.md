@@ -3,7 +3,7 @@
 Defined in header `<nlohmann/json_view.hpp>`
 
 ```
-using json_editable_view = basic_json_view<json, true>;
+using json_editable_view = basic_json_view<json, view_mode::editable>;
 ```
 
 This type is a [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) of a value of a [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md). It offers the same read-only interface as [`json_view`](https://json.nlohmann.me/api/json_view/index.md); what is different is what it can be a view *of* -- a value that [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) can change, with every view still referring to it seeing the change, see [Edits](https://json.nlohmann.me/api/basic_json_document/#edits).
@@ -18,9 +18,9 @@ The example below is the same as [`json_editable_document`'s](https://json.nlohm
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_editable_document = nlohmann::json_editable_document;
-using json_editable_view = nlohmann::json_editable_view;
+using nlohmann::json;
+using nlohmann::json_editable_document;
+using nlohmann::json_editable_view;
 
 int main()
 {

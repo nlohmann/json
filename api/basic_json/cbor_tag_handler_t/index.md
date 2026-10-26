@@ -13,9 +13,9 @@ This enumeration is used in [`from_cbor`](https://json.nlohmann.me/api/basic_jso
 
 error : report a parse error in case of a tag (the `from_cbor` overloads throw a `parse_error` exception by default)
 
-ignore : ignore tags
+ignore : ignore tags (also in front of a text string map key)
 
-store : store tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored.
+store : store tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the tag directly in front of it is stored, and only when it has the form 0xd8..0xdb (a tag 0..23 written as 0xc0..0xd7 is skipped). Tags in front of a text string map key are skipped.
 
 ## Examples
 
@@ -27,7 +27,7 @@ The example below shows how the different values of the `cbor_tag_handler_t` inf
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -41,16 +41,16 @@ int main()
     }
     catch (const json::parse_error& e)
     {
-        std::cout << e.what() << std::endl;
+        std::cout << e.what() << '\n';
     }
 
     // cbor_tag_handler_t::ignore ignores the tag
     auto b_ignore_tag = json::from_cbor(vec, true, true, json::cbor_tag_handler_t::ignore);
-    std::cout << b_ignore_tag << std::endl;
+    std::cout << b_ignore_tag << '\n';
 
     // cbor_tag_handler_t::store stores the tag as binary subtype
     auto b_store_tag = json::from_cbor(vec, true, true, json::cbor_tag_handler_t::store);
-    std::cout << b_store_tag << std::endl;
+    std::cout << b_store_tag << '\n';
 }
 ```
 

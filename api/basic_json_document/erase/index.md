@@ -12,7 +12,7 @@ void erase(view_type array, I idx);
 std::size_t erase(const json_pointer& ptr);
 ```
 
-Only an **editable** document (`Editable == true`, e.g. [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md)) has `erase`; calling it on a read-only `basic_json_document` fails to compile (`static_assert`).
+Only an **editable** document (`view_mode::editable`, e.g. [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md)) has `erase`; calling it on a read-only `basic_json_document` fails to compile (`static_assert`).
 
 1. Removes every member of `object` whose key is `key` (see [Notes](#notes) on duplicate keys) and returns how many were removed; `0` if `object` has no member with this key.
 1. Removes the element at index `idx` of `array`, which must already exist (`idx < array.size()`).
@@ -72,9 +72,9 @@ The example below drops a deprecated field and a decommissioned entry from a con
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_editable_document = nlohmann::json_editable_document;
-using json_editable_view = nlohmann::json_editable_view;
+using nlohmann::json;
+using nlohmann::json_editable_document;
+using nlohmann::json_editable_view;
 
 int main()
 {

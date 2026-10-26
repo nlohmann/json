@@ -1,0 +1,3 @@
+person: Mary, 42
+not a person: {"age":"forty-two","name":"Mary"}
+not a person: {"name":"Mary"}

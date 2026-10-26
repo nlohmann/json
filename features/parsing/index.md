@@ -32,7 +32,7 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
-The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which is read as UTF-16 or UTF-32 -- depending on the character type -- and converted to UTF-8; see the [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) page for an example. A single input may contain only one JSON value. Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) format.
+The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which is read as UTF-16 or UTF-32 -- depending on the character type -- and converted to UTF-8; see the [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) page for an example. A single input may contain only one JSON value. Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) format; input that arrives in chunks or contains several values is covered in [Large, streamed, and partial input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md).
 
 By default, the library rejects comments and trailing commas. Both can be enabled with parameters of the `parse` function — see [comments](https://json.nlohmann.me/features/comments/index.md) and [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md).
 
@@ -65,10 +65,11 @@ Where the target has them, strings are scanned with vector instructions: SSE2 on
 
 ## SAX vs. DOM parsing
 
-The library offers two parsing models:
+The library offers two parsing models, and a third, read-only alternative:
 
 - **DOM parsing** (the default): the complete input is read and stored as an in-memory `basic_json` value that can be traversed and modified freely. This is what [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) does, and it is the right choice for most use cases.
 - **SAX parsing**: instead of building a value, the parser reports events (such as "a string was read" or "an object started") to a handler that you implement. This avoids building the full value in memory and is useful for very large inputs or when you only need to extract parts of the input. See the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) for details and [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) for the API.
+- **Document and views** (`<nlohmann/json_view.hpp>`, added in version 3.13.0 unreleased): [`json_document::parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) reads the same JSON grammar but builds a flat, read-only index of the values instead of a `basic_json` tree. Strings and floating-point numbers are read from the text on demand, and only the parts you [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) become `basic_json` values. This avoids most of the work when you need only a few values from a large or frequently parsed text; see [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md). It is read-only, so use `parse` when you need to modify the value.
 
 You can influence a DOM parse without switching to the SAX interface by passing a [parser callback](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md), which is called during parsing and can, for example, discard parts of the input.
 
@@ -96,8 +97,10 @@ When the input is not valid JSON, the `parse` function throws an exception by de
 - [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
 - [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events
 - [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) - parse newline-delimited JSON
+- [Large, streamed, and partial input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md) - chunked, concatenated, and very large input
 - [parser callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md) - influence the parsing by a callback function
 - [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - implement a custom SAX handler
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - parse into a read-only document and read it through views
 - [parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - control error handling
 - [parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - what to consider when parsing input from untrusted sources
 - [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - parse into a document and read it through a view

@@ -12,7 +12,7 @@ The default type `nlohmann::json` uses a `std::map` to store JSON objects, and t
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -45,7 +45,7 @@ If you do want to preserve the **insertion order**, you can use the type [`nlohm
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using ordered_json = nlohmann::ordered_json;
+    using nlohmann::ordered_json;
     
     int main()
     {

@@ -60,8 +60,8 @@ since floating-point values and unescaped strings are read from the source lazil
     #include <nlohmann/json_view.hpp>
     #include <string>
     
-    using json_document = nlohmann::json_document;
-    using json_view = nlohmann::json_view;
+    using nlohmann::json_document;
+    using nlohmann::json_view;
     
     int main()
     {

@@ -570,6 +570,36 @@ The code is checked with state-of-the-art static code analysis tools.
   Clang-Tidy configuration (.clang-tidy)
 
   ```
+  # Style or vendor rule sets that do not fit a header-only library:
+  #   altera-*, fuchsia-*, llvmlibc-*, android-cloexec-fopen, boost-use-ranges, llvm-header-guard,
+  #   llvm-include-order, llvm-prefer-static-over-anonymous-namespace, llvm-use-ranges,
+  #   misc-use-anonymous-namespace, google-runtime-float, google-runtime-int, hicpp-signed-bitwise,
+  #   bugprone-signed-bitwise, hicpp-explicit-conversions, google-explicit-constructor,
+  #   cppcoreguidelines-explicit-constructor, misc-explicit-constructor (implicit conversions are the
+  #   API), readability-trailing-comma,
+  #   hicpp-avoid-goto / cppcoreguidelines-avoid-goto, hicpp-no-array-decay,
+  #   hicpp-uppercase-literal-suffix, readability-uppercase-literal-suffix, modernize-use-trailing-return-type.
+  # Constructs the library needs on purpose (the library supports C++11 and legacy compilers):
+  #   cppcoreguidelines-macro-usage, cppcoreguidelines-avoid-do-while (macros),
+  #   cppcoreguidelines-pro-bounds-*, cppcoreguidelines-pro-type-reinterpret-cast,
+  #   cppcoreguidelines-pro-type-union-access (parsers, serializers, basic_json's value union),
+  #   cppcoreguidelines-avoid-const-or-ref-data-members, cppcoreguidelines-rvalue-reference-param-not-moved,
+  #   cppcoreguidelines-avoid-non-const-global-variables, misc-non-private-member-variables-in-classes,
+  #   misc-no-recursion (value walks are recursive, bounded by detail::recursion_depth_limit()),
+  #   modernize-type-traits, modernize-use-constraints, modernize-use-ranges, modernize-use-std-numbers,
+  #   modernize-use-designated-initializers, modernize-use-nodiscard, modernize-concat-nested-namespaces,
+  #   readability-redundant-typename, readability-redundant-parentheses,
+  #   readability-redundant-access-specifiers, readability-simplify-boolean-expr,
+  #   readability-use-concise-preprocessor-directives, modernize-use-string-view,
+  #   modernize-use-integer-sign-comparison (needs std::cmp_less; the flagged
+  #   static_cast<std::size_t>(end - pos) < n comparisons are deliberate)
+  #   (all need a newer standard or compiler than C++11, or would change macro-generated or
+  #   deliberately explicit code).
+  # Too noisy to be useful (numeric parsing/formatting code, doctest, tests):
+  #   bugprone-easily-swappable-parameters, cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers,
+  #   readability-identifier-length, readability-function-cognitive-complexity, performance-enum-size,
+  #   concurrency-mt-unsafe, misc-confusable-identifiers, misc-include-cleaner (run on its own for
+  #   the consumer headers in cmake/ci.cmake).
   # portability-avoid-pragma-once: kept disabled on purpose. #pragma once is accepted
   # by every supported compiler, and tools/amalgamate/amalgamate.py strips it from
   # single_include, so there is nothing left to fix here.
@@ -582,14 +612,14 @@ The code is checked with state-of-the-art static code analysis tools.
            -android-cloexec-fopen,
            -boost-use-ranges,
            -bugprone-easily-swappable-parameters,
-           -cert-err58-cpp,
-           -clang-analyzer-webkit.NoUncountedMemberChecker,
+           -bugprone-signed-bitwise,
            -concurrency-mt-unsafe,
            -cppcoreguidelines-avoid-const-or-ref-data-members,
            -cppcoreguidelines-avoid-do-while,
            -cppcoreguidelines-avoid-goto,
            -cppcoreguidelines-avoid-magic-numbers,
            -cppcoreguidelines-avoid-non-const-global-variables,
+           -cppcoreguidelines-explicit-constructor,
            -cppcoreguidelines-macro-usage,
            -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
            -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
@@ -598,19 +628,15 @@ The code is checked with state-of-the-art static code analysis tools.
            -cppcoreguidelines-pro-type-reinterpret-cast,
            -cppcoreguidelines-pro-type-union-access,
            -cppcoreguidelines-rvalue-reference-param-not-moved,
-           -cppcoreguidelines-virtual-class-destructor,
            -fuchsia-default-arguments-calls,
            -fuchsia-default-arguments-declarations,
            -fuchsia-overloaded-operator,
            -google-explicit-constructor,
-           -google-readability-function-size,
            -google-runtime-float,
            -google-runtime-int,
            -hicpp-avoid-goto,
            -hicpp-explicit-conversions,
-           -hicpp-function-size,
            -hicpp-no-array-decay,
-           -hicpp-no-assembler,
            -hicpp-signed-bitwise,
            -hicpp-uppercase-literal-suffix,
            -llvm-header-guard,
@@ -620,6 +646,7 @@ The code is checked with state-of-the-art static code analysis tools.
            -llvmlibc-*,
            -misc-use-anonymous-namespace,
            -misc-confusable-identifiers,
+           -misc-explicit-constructor,
            -misc-include-cleaner,
            -misc-no-recursion,
            -misc-non-private-member-variables-in-classes,
@@ -627,20 +654,22 @@ The code is checked with state-of-the-art static code analysis tools.
            -modernize-type-traits,
            -modernize-use-constraints,
            -modernize-use-designated-initializers,
+           -modernize-use-integer-sign-comparison,
            -modernize-use-nodiscard,
            -modernize-use-ranges,
+           -modernize-use-string-view,
            -modernize-use-std-numbers,
            -modernize-use-trailing-return-type,
            -performance-enum-size,
            -portability-avoid-pragma-once,
            -readability-function-cognitive-complexity,
-           -readability-function-size,
            -readability-identifier-length,
            -readability-magic-numbers,
            -readability-redundant-access-specifiers,
            -readability-redundant-parentheses,
            -readability-redundant-typename,
            -readability-simplify-boolean-expr,
+           -readability-trailing-comma,
            -readability-uppercase-literal-suffix,
            -readability-use-concise-preprocessor-directives'
 
@@ -659,11 +688,13 @@ The code is checked with state-of-the-art static code analysis tools.
 
 - The code is checked with the latest [Cppcheck](https://cppcheck.sourceforge.io) with all warnings enabled.
 
-- The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) with 89 enabled rules.
+- The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) with 52 enabled checkers.
 
 - The code is checked with [Infer](https://fbinfer.com).
 
 - The code is checked with [Codacy](https://app.codacy.com/gh/nlohmann/json/dashboard).
+
+- The code is scanned with [CodeQL](https://codeql.github.com), [Semgrep](https://semgrep.dev), and [Flawfinder](https://dwheeler.com/flawfinder/) on every push and pull request and on a schedule; the findings are reported to GitHub's code scanning.
 
 ## Dynamic analysis
 
@@ -674,6 +705,7 @@ The library is checked for memory correctness and absence of undefined behavior.
 - The test suite is executed with enabled [runtime assertions](https://json.nlohmann.me/features/assertions/) to check invariants and preconditions of functions to detect undefined behavior.
 - The test suite is executed with [Valgrind](https://valgrind.org) (Memcheck) to detect memory leaks.
 - The test suite is executed with [Sanitizers](https://github.com/google/sanitizers) (address sanitizer, undefined behavior sanitizer, integer overflow detection, nullability violations).
+- The fuzz targets are run with [CIFuzz](https://google.github.io/oss-fuzz/getting-started/continuous-integration/) on every pull request to catch regressions before they are merged.
 
 ## Dependencies
 
@@ -686,6 +718,7 @@ The library has no dependencies besides the C++ standard library. The tools used
 - Every pull request is checked with the [dependency review action](https://github.com/actions/dependency-review-action). A pull request that adds a dependency with a known vulnerability of any severity fails this check and is not merged.
 - Vulnerability alerts for dependencies are fixed or dismissed with a documented reason before the next release. No release is made while such an alert is open.
 - Third-party code included in the repository for testing, such as [doctest](https://github.com/doctest/doctest), is updated manually.
+- The repository is evaluated with the [OpenSSF Scorecard](https://securityscorecards.dev) on a schedule and on every push to the default branch, and the results are reported to GitHub's code scanning.
 
 ## Style check
 
@@ -799,4 +832,19 @@ All library functions are exposed and usable by CMake.
 - The library is tested against relevant CMake versions:
 - CMake 3.5 (the earliest supported)
 - CMake 3.31.6 (the latest 3.x release)
-- CMake 4.0.0 (a very recent release)
+- CMake 4.0.0 (the first 4.x release)
+
+Requirement: Other build systems
+
+The library can be used with build systems and package managers other than CMake.
+
+- The library can be consumed with [Meson](https://json.nlohmann.me/integration/package_managers/) and the Swift Package Manager; the installation with Meson and the resolution of `Package.swift` are tested in the CI.
+
+Requirement: Reproducible and verifiable builds
+
+The library can be built and tested without network access or a Git checkout, and its licensing is machine-readable.
+
+- The test suite is executed from an exported source tree without the `.git` directory and with the test data being available offline.
+- The test suite is executed without the tests that change installed files to check that builds are reproducible.
+- The repository is checked for compliance with the [REUSE specification](https://reuse.software) so that the license and copyright of every file is machine-readable.
+- The documentation is built with warnings treated as errors, and its links are checked regularly.

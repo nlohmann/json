@@ -12,7 +12,7 @@ void erase(view_type array, I idx);
 std::size_t erase(const json_pointer& ptr);
 ```
 
-Only an **editable** document (`#!cpp Editable == true`, e.g. [`json_editable_document`](../json_editable_document.md))
+Only an **editable** document (`#!cpp view_mode::editable`, e.g. [`json_editable_document`](../json_editable_document.md))
 has `erase`; calling it on a read-only `basic_json_document` fails to compile (`#!cpp static_assert`).
 
 1. Removes every member of `object` whose key is `key` (see [Notes](#notes) on duplicate keys) and returns how many
@@ -109,9 +109,9 @@ by an erase, not only those at or after the removed element, since the container
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json = nlohmann::json;
-    using json_editable_document = nlohmann::json_editable_document;
-    using json_editable_view = nlohmann::json_editable_view;
+    using nlohmann::json;
+    using nlohmann::json_editable_document;
+    using nlohmann::json_editable_view;
     
     int main()
     {

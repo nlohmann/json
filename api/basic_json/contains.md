@@ -61,11 +61,18 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Complexity
 
-Logarithmic in the size of the JSON object.
+1. Logarithmic in the size of the JSON object.
+2. Logarithmic in the size of the JSON object.
+3. At most one lookup per reference token of `ptr`, each logarithmic in the size of the container at that level:
+   O(*n* log *m*) for *n* reference tokens and containers of size at most *m*.
+4. Deleted; a call with an integral argument does not compile.
 
 ## Notes
 
-- This method always returns `#!cpp false` when executed on a JSON type that is not an object.
+- Overloads (1) and (2) always return `#!cpp false` when executed on a JSON type that is not an object. Overload (3)
+  also works on arrays and on primitive values: the empty JSON pointer resolves in every JSON value (so
+  `#!cpp json(1).contains(""_json_pointer)` returns `#!cpp true`), and `#!cpp json({1, 2}).contains("/1"_json_pointer)`
+  returns `#!cpp true`.
 - This method can be executed on any JSON value type.
 - Calling this function with an integer argument (for example, `#!cpp contains(0)`) does not compile: such an argument
   would otherwise implicitly convert to a null `#!cpp const char*` and, from there, cause undefined behavior when
@@ -98,7 +105,7 @@ Logarithmic in the size of the JSON object.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -111,7 +118,7 @@ Logarithmic in the size of the JSON object.
         std::cout << std::boolalpha <<
                   "j_object contains 'key': " << j_object.contains("key") << '\n' <<
                   "j_object contains 'another': " << j_object.contains("another") << '\n' <<
-                  "j_array contains 'key': " << j_array.contains("key") << std::endl;
+                  "j_array contains 'key': " << j_array.contains("key") << '\n';
     }
     
     ```
@@ -135,7 +142,7 @@ Logarithmic in the size of the JSON object.
     #include <nlohmann/json.hpp>
     
     using namespace std::string_view_literals;
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -148,7 +155,7 @@ Logarithmic in the size of the JSON object.
         std::cout << std::boolalpha <<
                   "j_object contains 'key': " << j_object.contains("key"sv) << '\n' <<
                   "j_object contains 'another': " << j_object.contains("another"sv) << '\n' <<
-                  "j_array contains 'key': " << j_array.contains("key"sv) << std::endl;
+                  "j_array contains 'key': " << j_array.contains("key"sv) << '\n';
     }
     
     ```
@@ -170,7 +177,7 @@ Logarithmic in the size of the JSON object.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using namespace nlohmann::literals;
     
     int main()
@@ -192,7 +199,7 @@ Logarithmic in the size of the JSON object.
                   // an array index with a leading '0' is not found
                   << j.contains("/array/01"_json_pointer) << '\n'
                   // an array index that is not a number is not found
-                  << j.contains("/array/one"_json_pointer) << std::endl;
+                  << j.contains("/array/one"_json_pointer) << '\n';
     }
     
     ```

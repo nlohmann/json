@@ -29,7 +29,7 @@ parsing an object of `n` keys costs O(n²) rather than O(n log n). See
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using ordered_json = nlohmann::ordered_json;
+    using nlohmann::ordered_json;
     
     int main()
     {

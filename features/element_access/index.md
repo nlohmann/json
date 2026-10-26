@@ -20,6 +20,42 @@ flowchart TD
     F -->|"yes"| G["contains() / find()"]
 ```
 
+## Does this key exist?
+
+Use [`contains`](https://json.nlohmann.me/api/basic_json/contains/index.md) to test for a key; it does not modify the value and does not throw:
+
+```
+json j = {{"name", "Mary"}, {"address", {{"city", "Berlin"}}}};
+
+j.contains("name");                   // true
+j.contains("age");                    // false
+j.contains("city");                   // false: contains() only looks at the top level
+j["address"].contains("city");        // true
+j.contains(json::json_pointer("/address/city"));  // true: a JSON pointer tests a nested path in one call
+```
+
+If the value is needed afterwards, [`find`](https://json.nlohmann.me/api/basic_json/find/index.md) tests and accesses with a single lookup:
+
+```
+if (auto it = j.find("name"); it != j.end())
+{
+    std::cout << *it << '\n';
+}
+```
+
+`contains` also returns `true` for a key whose value is `null`; use `j.contains("k") && !j["k"].is_null()` if a `null` should count as missing. To read a value with a fallback instead, see [`value`](https://json.nlohmann.me/features/element_access/default_value/index.md).
+
+`operator[]` inserts missing keys
+
+Like `std::map::operator[]`, the non-const [`operator[]`](https://json.nlohmann.me/features/element_access/unchecked_access/index.md) adds a `null` value if the key is missing. Testing a key with it therefore *changes the object*:
+
+```
+json j = {{"foo", 1}};
+bool absent = j["bar"].is_null();   // true, but j is now {"bar": null, "foo": 1}
+```
+
+Use `contains`/`find` to test, and [`at`](https://json.nlohmann.me/features/element_access/checked_access/index.md) to access a value that must exist (it throws an [`out_of_range`](https://json.nlohmann.me/home/exceptions/#out-of-range) exception otherwise).
+
 ## See also
 
 - [**operator[]**](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) - unchecked access

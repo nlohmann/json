@@ -4,7 +4,7 @@ The code contains numerous debug assertions to ensure class invariants are valid
 
 ## Switch off runtime assertions
 
-Runtime assertions can be switched off by defining the preprocessor macro `NDEBUG` (see the [documentation of assert](https://en.cppreference.com/w/cpp/error/assert)) which is the default for release builds.
+Runtime assertions can be switched off by defining the preprocessor macro `NDEBUG` (see the [documentation of assert](https://en.cppreference.com/w/cpp/error/assert)) which is the default for release builds. Without `NDEBUG`, the assertions are compiled in and contain the name of the source file (`__FILE__`); see [notes for builds and distribution](https://json.nlohmann.me/integration/#notes-for-builds-and-distribution) if that path must not end up in your binaries.
 
 ## Change assertion behavior
 
@@ -27,7 +27,7 @@ The following code will trigger an assertion at runtime:
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -49,7 +49,7 @@ The following code will trigger an assertion at runtime:
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 using namespace nlohmann::literals;
 
 int main()
@@ -76,7 +76,7 @@ The following code will trigger an assertion at runtime:
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -102,7 +102,7 @@ The following code will trigger an assertion at runtime:
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -131,7 +131,7 @@ The following code will trigger an assertion at runtime:
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

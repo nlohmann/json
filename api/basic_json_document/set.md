@@ -18,7 +18,7 @@ template<typename V>
 view_type set(const json_pointer& ptr, V&& value);
 ```
 
-Only an **editable** document (`#!cpp Editable == true`, e.g. [`json_editable_document`](../json_editable_document.md))
+Only an **editable** document (`#!cpp view_mode::editable`, e.g. [`json_editable_document`](../json_editable_document.md))
 has `set`; calling it on a read-only `basic_json_document` fails to compile (`#!cpp static_assert`).
 
 1. Replaces the value `target` refers to with `value`.
@@ -180,9 +180,9 @@ one-node scalar.
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json = nlohmann::json;
-    using json_editable_document = nlohmann::json_editable_document;
-    using json_editable_view = nlohmann::json_editable_view;
+    using nlohmann::json;
+    using nlohmann::json_editable_document;
+    using nlohmann::json_editable_view;
     
     int main()
     {

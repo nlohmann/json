@@ -55,7 +55,7 @@ also does so for a [discarded](is_discarded.md) view -- there is no separate "in
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

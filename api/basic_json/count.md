@@ -63,7 +63,7 @@ Logarithmic in the size of the JSON object.
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -99,7 +99,7 @@ Logarithmic in the size of the JSON object.
     #include <nlohmann/json.hpp>
     
     using namespace std::string_view_literals;
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {

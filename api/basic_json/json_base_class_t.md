@@ -72,7 +72,7 @@ same name. Hidden members remain accessible via [`as_base_class`](as_base_class.
     template <class Ptr, class Fnc>
     void visitor_adaptor_with_metadata::do_visit(const Ptr& ptr, const Fnc& fnc) const
     {
-        using value_t = nlohmann::detail::value_t;
+        using nlohmann::detail::value_t;
         const json& j = *static_cast<const json*>(this);
         switch (j.type())
         {

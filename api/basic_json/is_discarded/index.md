@@ -55,7 +55,7 @@ The following code exemplifies `is_discarded()` for all JSON types.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -106,7 +106,7 @@ The following code shows the two situations in which a discarded value can be ob
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

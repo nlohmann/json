@@ -113,7 +113,7 @@ The example shows the effect of `erase()` for different JSON types using an iter
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -162,7 +162,7 @@ The example shows the effect of `erase()` for different JSON types using an iter
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -211,7 +211,7 @@ The example shows the effect of `erase()` for different JSON types using an obje
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -245,7 +245,7 @@ The example shows the effect of `erase()` for different JSON types using an obje
 #include <nlohmann/json.hpp>
 
 using namespace std::string_view_literals;
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -277,7 +277,7 @@ The example shows the effect of `erase()` using an array index.
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

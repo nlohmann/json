@@ -43,8 +43,8 @@ The example below writes one record out of a larger batch straight to a log stre
 #include <iomanip>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
-using json_view = nlohmann::json_view;
+using nlohmann::json_document;
+using nlohmann::json_view;
 
 int main()
 {

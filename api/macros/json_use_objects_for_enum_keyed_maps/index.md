@@ -60,7 +60,7 @@ Without the macro, a map with enum keys is stored as an array of pairs:
 #include <map>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 enum TaskState { TS_STOPPED, TS_RUNNING, TS_COMPLETED };
 
@@ -88,7 +88,7 @@ With the macro, the same map is stored as an object:
 #include <map>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 enum TaskState { TS_STOPPED, TS_RUNNING, TS_COMPLETED };
 

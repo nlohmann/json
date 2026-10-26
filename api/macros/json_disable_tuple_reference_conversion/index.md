@@ -62,7 +62,7 @@ Example: default behavior (macro not defined)
 ```
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -79,7 +79,7 @@ Example: conversion disabled (macro defined to 1)
 #define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

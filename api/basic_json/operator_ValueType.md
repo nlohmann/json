@@ -77,7 +77,7 @@ Linear in the size of the JSON value.
     #include <map>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     int main()
     {
@@ -118,7 +118,7 @@ Linear in the size of the JSON value.
         }
         std::cout << "\n\n";
     
-        for (auto i : v8)
+        for (const auto& i : v8)
         {
             std::cout << i.first << ": " << i.second << '\n';
         }

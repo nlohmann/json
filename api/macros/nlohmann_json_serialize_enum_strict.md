@@ -48,6 +48,12 @@ inline void from_json(const BasicJsonType& j, type& e);
       Define [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](json_use_objects_for_enum_keyed_maps.md) to store them as objects
       with the converted keys. Such maps can be read from both forms.
 
+!!! info "Views"
+
+    The generated `from_json()` also reads the views of [`json_document`](../json_document.md)s
+    (`<nlohmann/json_view.hpp>`), comparing the view with the entries of the mapping, without building a `json` value
+    first.
+
 ## Examples
 
 ??? example "Example: Basic usage"
@@ -59,7 +65,7 @@ inline void from_json(const BasicJsonType& j, type& e);
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     namespace ns
     {
@@ -97,7 +103,7 @@ inline void from_json(const BasicJsonType& j, type& e);
         json j_stopped = ns::TS_STOPPED;
         json j_red = ns::Color::red;
         std::cout << "ns::TS_STOPPED -> " << j_stopped
-                  << ", ns::Color::red -> " << j_red << std::endl;
+                  << ", ns::Color::red -> " << j_red << '\n';
     
         // deserialization
         json j_running = "running";
@@ -105,7 +111,7 @@ inline void from_json(const BasicJsonType& j, type& e);
         auto running = j_running.get<ns::TaskState>();
         auto blue = j_blue.get<ns::Color>();
         std::cout << j_running << " -> " << running
-                  << ", " << j_blue << " -> " << static_cast<int>(blue) << std::endl;
+                  << ", " << j_blue << " -> " << static_cast<int>(blue) << '\n';
     
     }
     
@@ -129,7 +135,7 @@ inline void from_json(const BasicJsonType& j, type& e);
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     namespace ns
     {
@@ -150,14 +156,14 @@ inline void from_json(const BasicJsonType& j, type& e);
     {
         // serialization
         json j_red = ns::Color::red;
-        std::cout << static_cast<int>(ns::Color::red) << " -> " << j_red << std::endl;
+        std::cout << static_cast<int>(ns::Color::red) << " -> " << j_red << '\n';
     
         // deserialization
         json j_rot = "rot";
         auto rot = j_rot.get<ns::Color>();
         auto red = j_red.get<ns::Color>();
-        std::cout << j_rot << " -> " << static_cast<int>(rot) << std::endl;
-        std::cout << j_red << " -> " << static_cast<int>(red) << std::endl;
+        std::cout << j_rot << " -> " << static_cast<int>(rot) << '\n';
+        std::cout << j_red << " -> " << static_cast<int>(red) << '\n';
     }
     
     ```
@@ -182,7 +188,7 @@ inline void from_json(const BasicJsonType& j, type& e);
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     
     namespace ns
     {
@@ -215,7 +221,7 @@ inline void from_json(const BasicJsonType& j, type& e);
         }
         catch (const json::exception e)
         {
-            std::cout << "deserialization failed: " << e.what() << std::endl;
+            std::cout << "deserialization failed: " << e.what() << '\n';
         }
     
         // invalid deserialization
@@ -227,7 +233,7 @@ inline void from_json(const BasicJsonType& j, type& e);
         }
         catch (const json::exception e)
         {
-            std::cout << "deserialization failed: " << e.what() << std::endl;
+            std::cout << "deserialization failed: " << e.what() << '\n';
         }
     
         return 0;

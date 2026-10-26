@@ -36,7 +36,7 @@ JSON text has no binary values, so `type()` only distinguishes the eight ordinar
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

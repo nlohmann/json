@@ -35,6 +35,8 @@ Then every value inside the JSON document can be identified as follows:
 
 Note `/` does not identify the root (i.e., the whole document), but an object entry with empty key `""`. See [RFC 6901](https://tools.ietf.org/html/rfc6901) for more information.
 
+[RFC 6901, section 4](https://tools.ietf.org/html/rfc6901#section-4) states that evaluation fails if an object has non-unique member names. A `basic_json` object holds one value per key (see [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md) for how duplicate keys are handled while parsing), so evaluating a JSON Pointer never encounters duplicates.
+
 ## JSON Pointer creation
 
 JSON Pointers can be created from a string:
@@ -50,6 +52,10 @@ auto p = "/nested/one"_json_pointer;
 ```
 
 The escaping rules of [RFC 6901](https://tools.ietf.org/html/rfc6901) are implemented. See the [constructor documentation](https://json.nlohmann.me/api/json_pointer/json_pointer/index.md) for more information.
+
+URI fragment representation
+
+[RFC 6901, section 6](https://tools.ietf.org/html/rfc6901#section-6) also defines a URI fragment identifier representation (`#/a%20b`). It is not supported: `json::json_pointer("#/a")` throws [`parse_error.107`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error107). Strip the leading `#` and percent-decode the remainder before creating the JSON pointer.
 
 ## Value access
 

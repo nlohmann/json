@@ -69,9 +69,11 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [parse_error.110](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error110) if the given input ends prematurely or the end of the file was not reached when `strict` was set to true
-- Throws [parse_error.112](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error112) if a parse error occurs
-- Throws [parse_error.113](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) if a string could not be parsed successfully, or if a string value or object key is not valid UTF-8 and `error_handler` is `strict`
-- Throws [out_of_range.408](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range408) if the size of an optimized container or n-dimensional array cannot be represented by `std::size_t`
+- Throws [parse_error.112](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error112) if an invalid type marker is read (including a type marker after `$` of an optimized container, even if its count is 0), or if `$` is not followed by `#`
+- Throws [parse_error.113](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) if a string could not be parsed successfully (negative or non-integer length, `C` followed by a byte above 0x7F), if the count of an optimized container is negative, or if a string value or object key is not valid UTF-8 and `error_handler` is `strict`
+- Throws [parse_error.115](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error115) if the text of a high-precision number (`H`) is not a valid JSON number
+- Throws [out_of_range.406](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range406) if a high-precision number, or a float64 when `number_float_t` is `float`, does not fit into `number_float_t`
+- Throws [out_of_range.408](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range408) if the count of an optimized container exceeds the capacity of the container (or of `std::size_t`), or if an optimized array of `Z`, `T`, or `F` has more than 1,048,576 elements
 
 ## Complexity
 
@@ -88,7 +90,7 @@ The example shows the deserialization of a byte vector in UBJSON format to a JSO
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -102,7 +104,7 @@ int main()
     json j = json::from_ubjson(v);
 
     // print the deserialized JSON value
-    std::cout << std::setw(2) << j << std::endl;
+    std::cout << std::setw(2) << j << '\n';
 }
 ```
 

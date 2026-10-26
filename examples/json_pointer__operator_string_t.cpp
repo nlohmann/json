@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -15,5 +15,5 @@ int main()
     s += "\n";
     s += ptr2;
 
-    std::cout << s << std::endl;
+    std::cout << s << '\n';
 }

@@ -41,7 +41,7 @@ The example below skips messages that are not useful -- a discarded value, or an
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json_document = nlohmann::json_document;
+using nlohmann::json_document;
 
 int main()
 {

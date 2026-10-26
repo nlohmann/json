@@ -51,7 +51,7 @@ std::string to_string(const BasicJsonType& j)
     #include <iostream>
     #include <nlohmann/json.hpp>
     
-    using json = nlohmann::json;
+    using nlohmann::json;
     using std::to_string;
     
     int main()
@@ -66,7 +66,7 @@ std::string to_string(const BasicJsonType& j)
     
         // serialize without indentation
         std::cout << j_str << "\n\n"
-                  << i_str << std::endl;
+                  << i_str << '\n';
     }
     
     ```

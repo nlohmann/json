@@ -57,7 +57,7 @@ Example: retrieving positions
 #define JSON_DIAGNOSTIC_POSITIONS 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {
@@ -169,7 +169,7 @@ Example: using only diagnostic positions in exceptions
 #define JSON_DIAGNOSTIC_POSITIONS 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 /* Demonstration of type error exception with diagnostic positions support enabled */
 int main()
@@ -215,7 +215,7 @@ Example: using extended diagnostics with positions enabled in exceptions
 #define JSON_DIAGNOSTIC_POSITIONS 1
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 /* Demonstration of type error exception with diagnostic positions support enabled */
 int main()

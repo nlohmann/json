@@ -38,7 +38,7 @@ The following code shows an example output of the `meta()` function.
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using nlohmann::json;
 
 int main()
 {

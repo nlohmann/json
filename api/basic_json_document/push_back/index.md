@@ -9,7 +9,7 @@ Appends `value` as a new last element of `array`. A [null](https://json.nlohmann
 
 `value` is accepted three ways: a [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) of *any* document -- read-only or editable, and it does not have to be `array`'s own document -- which is copied so that nothing is shared with the source document afterward; a `BasicJsonType` value; or anything `BasicJsonType` can be constructed from (numbers, strings, `bool`, `nullptr`, containers, ...).
 
-Only an **editable** document (`Editable == true`, e.g. [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md)) has `push_back`; calling it on a read-only `basic_json_document` fails to compile (`static_assert`).
+Only an **editable** document (`view_mode::editable`, e.g. [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md)) has `push_back`; calling it on a read-only `basic_json_document` fails to compile (`static_assert`).
 
 ## Template parameters
 
@@ -51,8 +51,8 @@ The example below appends records to an array one at a time, as they might arriv
 #include <iostream>
 #include <nlohmann/json_view.hpp>
 
-using json = nlohmann::json;
-using json_editable_document = nlohmann::json_editable_document;
+using nlohmann::json;
+using nlohmann::json_editable_document;
 
 int main()
 {

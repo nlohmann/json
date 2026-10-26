@@ -54,7 +54,7 @@ If the source text repeats a key, `count()` returns more than `#!cpp 1` for it, 
     #include <iostream>
     #include <nlohmann/json_view.hpp>
     
-    using json_document = nlohmann::json_document;
+    using nlohmann::json_document;
     
     int main()
     {

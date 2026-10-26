@@ -16,10 +16,10 @@ The checked-in visualizers cover namespace variants with zero, one, or two ABI t
    make natvis NATVIS_ARGS="--list-tags"
    ```
 
-1. Generate a Natvis file with the tags of your configuration, for example for `JSON_DIAGNOSTICS`, `JSON_DIAGNOSTIC_POSITIONS`, and `JSON_VIEW_NO_SIMD`:
+1. Generate a Natvis file with the tags of your configuration, for example for `JSON_DIAGNOSTICS`, `JSON_DIAGNOSTIC_POSITIONS`, and `JSON_NO_SIMD`:
 
    ```
-   make natvis NATVIS_ARGS="--abi-tags _diag,_dp,_vns --output my_nlohmann_json.natvis"
+   make natvis NATVIS_ARGS="--abi-tags _diag,_dp,_ns --output my_nlohmann_json.natvis"
    ```
 
 1. Use the generated file instead of `nlohmann_json.natvis`.
