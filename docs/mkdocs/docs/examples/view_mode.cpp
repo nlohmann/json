@@ -18,6 +18,12 @@ bool is_edited(basic_json_view<BasicJsonType, view_mode::editable> v)
     return v.is_string() && v.get_string() == "edited";
 }
 
+// a function (no template) taking a json_editable_view also accepts the view of a read-only document
+std::size_t size_of(nlohmann::json_editable_view v)
+{
+    return v.size();
+}
+
 int main()
 {
     const nlohmann::json_document doc = nlohmann::json_document::parse(R"({"a": 1, "b": 2})");
@@ -26,4 +32,5 @@ int main()
 
     std::cout << count_members(doc.root()) << ' ' << count_members(edoc.root()) << '\n';
     std::cout << std::boolalpha << is_edited(edoc.root()["a"]) << '\n';
+    std::cout << size_of(doc.root()) << ' ' << size_of(edoc.root()) << '\n';
 }

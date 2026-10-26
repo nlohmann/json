@@ -65,6 +65,17 @@ auto overload(View v) -> decltype(accepts_read_only(v))
 {
     return accepts_read_only(v);
 }
+
+// a function (no template) that takes an editable view also accepts a read-only one
+std::size_t sum_of(json_editable_view v)
+{
+    std::size_t sum = 0;
+    for (const json_editable_view x : v.at("values"))
+    {
+        sum += x.get<std::size_t>();
+    }
+    return sum;
+}
 } // namespace
 
 TEST_CASE("json_view modes")
@@ -96,6 +107,35 @@ TEST_CASE("json_view modes")
         CHECK(overload(d.root()) == 2);
         CHECK(accepts_any(e.root()) == 3);
         CHECK(accepts_any(d.root()) == 4);
+    }
+
+    SECTION("a view of a read-only document converts to an editable view, not the other way")
+    {
+        static_assert(std::is_convertible<nlohmann::json_view, json_editable_view>::value, "read-only to editable");
+        static_assert(!std::is_convertible<json_editable_view, nlohmann::json_view>::value, "not editable to read-only");
+        static_assert(!std::is_convertible<nlohmann::json_view, nlohmann::ordered_json_editable_view>::value, "same BasicJsonType only");
+
+        const json_document d = json_document::parse(R"({"values": [1, 2, 3], "name": "a"})");
+        json_editable_document e = json_editable_document::parse(R"({"values": [1, 2, 3], "name": "a"})");
+        CHECK(sum_of(d.root()) == 6);
+        CHECK(sum_of(e.root()) == 6);
+
+        const json_editable_view v = d.root();
+        CHECK(v.size() == 2);
+        CHECK(v.at("name").get<std::string>() == "a");
+        CHECK(v.source_offset() == d.root().source_offset());
+        CHECK((v == e.root()));
+        CHECK((v == d.root()));
+
+        e.push_back(e.root().at("values"), 4);
+        CHECK(sum_of(e.root()) == 10);
+        CHECK((v != e.root()));
+
+#if !defined(JSON_NOEXCEPTION)
+        // the converted view still belongs to the read-only document
+        CHECK_THROWS_WITH_AS(e.push_back(v.at("values"), 5), "[json.exception.invalid_iterator.202] view does not belong to this document", json::invalid_iterator&);
+#endif
+        CHECK(sum_of(d.root()) == 6);
     }
 }
 

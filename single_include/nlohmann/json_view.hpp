@@ -3739,6 +3739,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <cstdint> // uint8_t
+#include <type_traits> // false_type, true_type
 
 // #include <nlohmann/json.hpp>
 
@@ -3753,6 +3754,30 @@ enum class view_mode : std::uint8_t
 
 template<typename BasicJsonType, view_mode Mode>
 class basic_json_view;
+
+namespace detail
+{
+namespace view
+{
+
+/// whether two view modes differ
+template<view_mode A, view_mode B>
+struct is_other_mode : std::true_type {};
+
+template<view_mode A>
+struct is_other_mode<A, A> : std::false_type {};
+
+/// whether a view of mode From converts implicitly to one of mode To: a
+/// read-only document has no edits, so a view of it is read correctly as a
+/// view of an editable document that has not been edited yet
+template<view_mode From, view_mode To>
+struct is_widening_mode : std::false_type {};
+
+template<>
+struct is_widening_mode<view_mode::read_only, view_mode::editable> : std::true_type {};
+
+}  // namespace view
+}  // namespace detail
 
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -7853,6 +7878,15 @@ class basic_json_view
     /// an invalid view (type() == value_t::discarded)
     basic_json_view() noexcept = default;
 
+    /// a view of a read-only document as a view of an editable one, so that a
+    /// function taking an editable view accepts both (a read-only document has
+    /// no edits; the view reads it as an editable document before its first
+    /// edit, at the cost of one check per access)
+    template<view_mode M, detail::enable_if_t<detail::view::is_widening_mode<M, Mode>::value, int> = 0>
+    basic_json_view(const basic_json_view<BasicJsonType, M>& other) noexcept // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+        : m_doc(other.m_doc), m_node(other.m_node)
+    {}
+
     //////////
     // type //
     //////////
@@ -8415,13 +8449,13 @@ class basic_json_view
     }
 
     /// a view of an editable document compares with one of a read-only document
-    template < view_mode M, typename std::enable_if < M != Mode, int >::type = 0 >
+    template<view_mode M, detail::enable_if_t<detail::view::is_other_mode<M, Mode>::value, int> = 0>
     friend bool operator==(const basic_json_view& a, const basic_json_view<BasicJsonType, M>& b)
     {
         return detail::view::equal<BasicJsonType>(side(a), detail::view::view_side<BasicJsonType, basic_json_view<BasicJsonType, M>>(b));
     }
 
-    template < view_mode M, typename std::enable_if < M != Mode, int >::type = 0 >
+    template<view_mode M, detail::enable_if_t<detail::view::is_other_mode<M, Mode>::value, int> = 0>
     friend bool operator!=(const basic_json_view& a, const basic_json_view<BasicJsonType, M>& b)
     {
         return !(a == b);

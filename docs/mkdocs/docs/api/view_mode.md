@@ -30,9 +30,16 @@ The shortcuts name both modes: [`json_document`](json_document.md) and [`json_vi
 
 ## Notes
 
-The mode is a compile-time property of the document's and the view's type, not a setting of a call, and there is no conversion between the two modes: a read-only view reads a
-container in place, while a view of an editable document follows the links that edits leave behind. A function that
-accepts views therefore names the modes it accepts in its signature:
+The mode is a compile-time property of the document's and the view's type, not a setting of a call. A read-only view
+reads a container in place, while a view of an editable document follows the links that edits leave behind. A view of
+a read-only document converts implicitly to a view of an editable document of the same `BasicJsonType`: a read-only
+document has no edits, so the converted view reads it like an editable document before its first edit (at the cost of
+one check per access). There is no conversion the other way, because a read-only view of an editable document would
+read wrong values after the next edit.
+
+A function that takes a [`json_editable_view`](json_editable_view.md) therefore accepts the views of both modes. A
+function template deduces the mode from its argument instead, without conversions, so it names the modes it accepts in
+its signature:
 
 ```cpp
 // views of editable documents only
@@ -49,15 +56,15 @@ void f(basic_json_view<BasicJsonType, Mode> v);
 ```
 
 A function that takes a [`json_view`](json_view.md) accepts neither an [`ordered_json_view`](ordered_json_view.md)
-nor a [`json_editable_view`](json_editable_view.md). Views of the two modes still compare with
+nor a [`json_editable_view`](json_editable_view.md). Views of the two modes compare with
 [`operator==`](basic_json_view/operator_eq.md).
 
 ## Examples
 
 ??? example
 
-    The example below shows a function template that accepts the views of both modes, and one that accepts only
-    views of editable documents.
+    The example below shows a function template that accepts the views of both modes, one that accepts only views of
+    editable documents, and a function taking a `json_editable_view` that also accepts a view of a read-only document.
 
     ```cpp
     --8<-- "examples/view_mode.cpp"
@@ -74,6 +81,7 @@ nor a [`json_editable_view`](json_editable_view.md). Views of the two modes stil
 - [basic_json_document](basic_json_document/index.md) - a parsed JSON text
 - [basic_json_view](basic_json_view/index.md) - a handle to one value of a document
 - [json_editable_document](json_editable_document.md) - an editable document of `json`
+- [(constructor)](basic_json_view/basic_json_view.md) - the conversion from a read-only to an editable view
 
 ## Version history
 

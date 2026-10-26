@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint> // uint8_t
+#include <type_traits> // false_type, true_type
 
 #include <nlohmann/json.hpp>
 
@@ -23,5 +24,29 @@ enum class view_mode : std::uint8_t
 
 template<typename BasicJsonType, view_mode Mode>
 class basic_json_view;
+
+namespace detail
+{
+namespace view
+{
+
+/// whether two view modes differ
+template<view_mode A, view_mode B>
+struct is_other_mode : std::true_type {};
+
+template<view_mode A>
+struct is_other_mode<A, A> : std::false_type {};
+
+/// whether a view of mode From converts implicitly to one of mode To: a
+/// read-only document has no edits, so a view of it is read correctly as a
+/// view of an editable document that has not been edited yet
+template<view_mode From, view_mode To>
+struct is_widening_mode : std::false_type {};
+
+template<>
+struct is_widening_mode<view_mode::read_only, view_mode::editable> : std::true_type {};
+
+}  // namespace view
+}  // namespace detail
 
 NLOHMANN_JSON_NAMESPACE_END

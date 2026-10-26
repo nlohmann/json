@@ -124,6 +124,15 @@ class basic_json_view
     /// an invalid view (type() == value_t::discarded)
     basic_json_view() noexcept = default;
 
+    /// a view of a read-only document as a view of an editable one, so that a
+    /// function taking an editable view accepts both (a read-only document has
+    /// no edits; the view reads it as an editable document before its first
+    /// edit, at the cost of one check per access)
+    template<view_mode M, detail::enable_if_t<detail::view::is_widening_mode<M, Mode>::value, int> = 0>
+    basic_json_view(const basic_json_view<BasicJsonType, M>& other) noexcept // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+        : m_doc(other.m_doc), m_node(other.m_node)
+    {}
+
     //////////
     // type //
     //////////
@@ -686,13 +695,13 @@ class basic_json_view
     }
 
     /// a view of an editable document compares with one of a read-only document
-    template < view_mode M, typename std::enable_if < M != Mode, int >::type = 0 >
+    template<view_mode M, detail::enable_if_t<detail::view::is_other_mode<M, Mode>::value, int> = 0>
     friend bool operator==(const basic_json_view& a, const basic_json_view<BasicJsonType, M>& b)
     {
         return detail::view::equal<BasicJsonType>(side(a), detail::view::view_side<BasicJsonType, basic_json_view<BasicJsonType, M>>(b));
     }
 
-    template < view_mode M, typename std::enable_if < M != Mode, int >::type = 0 >
+    template<view_mode M, detail::enable_if_t<detail::view::is_other_mode<M, Mode>::value, int> = 0>
     friend bool operator!=(const basic_json_view& a, const basic_json_view<BasicJsonType, M>& b)
     {
         return !(a == b);
