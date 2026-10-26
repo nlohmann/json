@@ -28,10 +28,24 @@ using nlohmann::detail::view::node;
 #include <random>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include <test_data.hpp>
+
+namespace json_view_image_test
+{
+// whether a document type has save() and load() (only on little-endian targets)
+template<typename T, typename = void>
+struct has_save : std::false_type {};
+template<typename T>
+struct has_save<T, decltype(static_cast<void>(std::declval<const T&>().save()))> : std::true_type {};
+template<typename T, typename = void>
+struct has_load : std::false_type {};
+template<typename T>
+struct has_load<T, decltype(static_cast<void>(T::load(std::declval<const std::vector<std::uint8_t>&>())))> : std::true_type {};
+} // namespace json_view_image_test
 
 #if !(defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 
@@ -171,6 +185,9 @@ std::uint32_t rng()
 
 TEST_CASE("json_view images: round trips")
 {
+    static_assert(json_view_image_test::has_save<json_document>::value && json_view_image_test::has_load<json_document>::value, "save() and load() on a little-endian target");
+    static_assert(json_view_image_test::has_save<ordered_json_editable_document>::value && json_view_image_test::has_load<ordered_json_editable_document>::value, "save() and load() on a little-endian target");
+
     SECTION("small documents")
     {
         for (const char* text :
@@ -1275,8 +1292,12 @@ TEST_CASE("json_view images: damaged images")
 
 TEST_CASE("json_view images: big-endian targets")
 {
+    // the image format is little-endian: save() and load() do not exist here
+    static_assert(!json_view_image_test::has_save<json_document>::value, "no save() on a big-endian target");
+    static_assert(!json_view_image_test::has_load<json_document>::value, "no load() on a big-endian target");
+    static_assert(!json_view_image_test::has_save<json_editable_document>::value, "no save() on a big-endian target");
     const json_document d = json_document::parse("[1]");
-    CHECK_THROWS_WITH_AS(d.save(), "[json.exception.type_error.320] json_document images need a little-endian target", json::type_error&);
+    CHECK(d.root().size() == 1);
 }
 
 #endif

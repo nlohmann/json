@@ -354,9 +354,10 @@ validation entirely, for an image trusted as much as the process's own memory. S
 !!! warning "Experimental"
 
     The image format is versioned but not yet stable, and may change in an incompatible way before it is declared
-    stable. It is little-endian only, and tied to the library build that wrote it -- use it to cache a document or to
-    hand one to another process running the *same* build, not as a long-term storage format; keep the original JSON
-    text if a saved document needs to be readable by a future library version.
+    stable. It is little-endian only (on big-endian targets, `save()` and `load()` do not exist), and tied to the
+    library build that wrote it -- use it to cache a document or to hand one to another process running the *same*
+    build, not as a long-term storage format; keep the original JSON text if a saved document needs to be readable by
+    a future library version.
 
 The idea of a document you can read without parsing comes from zero-copy formats such as
 [FlatBuffers](https://github.com/google/flatbuffers) and [YaFF](https://github.com/yandex/yaff); the check
