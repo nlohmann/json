@@ -796,17 +796,22 @@ class iterator_input_adapter
         return get_consumed_count() + eof_reads;
     }
 
-    // number of newlines in the consumed range [0, last_index); @a line_start
-    // is set to the index after the last of them (0 if there is none); only
-    // valid when supports_seek
-    std::size_t count_consumed_lines(std::size_t last_index, std::size_t& line_start) const
+    // number of newlines in the consumed range [first_index, last_index); if
+    // there is one, @a line_start is set to the index after the last of them,
+    // otherwise it is left unchanged; only valid when supports_seek
+    std::size_t count_consumed_lines(std::size_t first_index, std::size_t last_index, std::size_t& line_start) const
     {
-        const auto to = std::next(begin, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(last_index));
+        using difference_type = typename std::iterator_traits<IteratorType>::difference_type;
+        const auto from = std::next(begin, static_cast<difference_type>(first_index));
+        const auto to = std::next(from, static_cast<difference_type>(last_index - first_index));
         const auto newline = char_traits<char_type>::to_char_type('\n');
         using reverse_it = std::reverse_iterator<IteratorType>;
-        const auto last_newline = std::find(reverse_it(to), reverse_it(begin), newline);
-        line_start = static_cast<std::size_t>(std::distance(begin, last_newline.base()));
-        return static_cast<std::size_t>(std::count(begin, last_newline.base(), newline));
+        const auto last_newline = std::find(reverse_it(to), reverse_it(from), newline);
+        if (last_newline.base() != from)
+        {
+            line_start = static_cast<std::size_t>(std::distance(begin, last_newline.base()));
+        }
+        return static_cast<std::size_t>(std::count(from, last_newline.base(), newline));
     }
 
     // append the already-consumed characters in the half-open range

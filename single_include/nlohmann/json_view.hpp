@@ -2938,11 +2938,21 @@ struct throwing_sax
 
     /// (a template, as in json_sax_dom_parser: the parser passes the concrete
     /// exception type, which is thrown as is)
+    ///
+    /// It is not [[noreturn]]: sax_parse() recovers from an error if
+    /// parse_error() returns true, and MSVC reports that code as unreachable
+    /// (C4702) for a handler that never returns. The flag hides that from it.
     template<class Exception>
-    [[noreturn]] bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const Exception& ex)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const Exception& ex)
     {
-        NLOHMANN_VIEW_THROW(ex);
+        if (throwing)
+        {
+            NLOHMANN_VIEW_THROW(ex);
+        }
+        return false; // LCOV_EXCL_LINE
     }
+
+    bool throwing = true;
 };
 
 /*!

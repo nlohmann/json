@@ -10,7 +10,7 @@
 
 #include <array> // array
 #include <cstddef> // size_t
-#include <cstdint> // uint32_t
+#include <cstdint> // uint8_t, uint32_t
 #include <cstdio> // snprintf
 #include <cstring> // memcmp
 #include <initializer_list> // initializer_list
@@ -381,6 +381,20 @@ class lexer : public lexer_base<BasicJsonType>
         return codepoint;
     }
 
+    /// the code point of the surrogate pair @a high (U+D800..U+DBFF) and @a low (U+DC00..U+DFFF)
+    static constexpr int combine_surrogates(const int high, const int low) noexcept
+    {
+        return static_cast<int>(
+                   // high surrogate occupies the most significant 22 bits
+                   (static_cast<unsigned int>(high) << 10u)
+                   // low surrogate occupies the least significant 15 bits
+                   + static_cast<unsigned int>(low)
+                   // there is still the 0xD800, 0xDC00, and 0x10000 noise
+                   // in the result, so we have to subtract with:
+                   // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
+                   - 0x35FDC00u);
+    }
+
     /*!
     @brief check if the next byte(s) are inside a given range
 
@@ -411,6 +425,7 @@ class lexer : public lexer_base<BasicJsonType>
             else
             {
                 error_message = "invalid string: ill-formed UTF-8 byte";
+                error_cause = error_kind::string_ill_formed_utf8;
                 return false;
             }
         }
@@ -526,6 +541,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case char_traits<char_type>::eof():
                 {
                     error_message = "invalid string: missing closing quote";
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
@@ -582,6 +598,7 @@ class lexer : public lexer_base<BasicJsonType>
                             if (JSON_HEDLEY_UNLIKELY(codepoint1 == -1))
                             {
                                 error_message = "invalid string: '\\u' must be followed by 4 hex digits";
+                                error_cause = error_kind::string_invalid_escape;
                                 return token_type::parse_error;
                             }
 
@@ -589,13 +606,23 @@ class lexer : public lexer_base<BasicJsonType>
                             if (0xD800 <= codepoint1 && codepoint1 <= 0xDBFF)
                             {
                                 // expect next \uxxxx entry
-                                if (JSON_HEDLEY_LIKELY(get() == '\\' && get() == 'u'))
+                                if (JSON_HEDLEY_LIKELY(get() == '\\'))
                                 {
+                                    if (JSON_HEDLEY_UNLIKELY(get() != 'u'))
+                                    {
+                                        // current is the character escaped by the backslash
+                                        error_message = "invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF";
+                                        error_cause = error_kind::string_invalid_escape;
+                                        string_error_resume = resume_kind::escaped_character;
+                                        return token_type::parse_error;
+                                    }
+
                                     const int codepoint2 = get_codepoint();
 
                                     if (JSON_HEDLEY_UNLIKELY(codepoint2 == -1))
                                     {
                                         error_message = "invalid string: '\\u' must be followed by 4 hex digits";
+                                        error_cause = error_kind::string_invalid_escape;
                                         return token_type::parse_error;
                                     }
 
@@ -603,25 +630,23 @@ class lexer : public lexer_base<BasicJsonType>
                                     if (JSON_HEDLEY_LIKELY(0xDC00 <= codepoint2 && codepoint2 <= 0xDFFF))
                                     {
                                         // overwrite codepoint
-                                        codepoint = static_cast<int>(
-                                                        // high surrogate occupies the most significant 22 bits
-                                                        (static_cast<unsigned int>(codepoint1) << 10u)
-                                                        // low surrogate occupies the least significant 15 bits
-                                                        + static_cast<unsigned int>(codepoint2)
-                                                        // there is still the 0xD800, 0xDC00, and 0x10000 noise
-                                                        // in the result, so we have to subtract with:
-                                                        // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
-                                                        - 0x35FDC00u);
+                                        codepoint = combine_surrogates(codepoint1, codepoint2);
                                     }
                                     else
                                     {
+                                        // the second escape was read completely and is a
+                                        // code point of its own
                                         error_message = "invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF";
+                                        error_cause = error_kind::string_invalid_escape;
+                                        string_error_resume = resume_kind::after_escape;
+                                        string_error_codepoint = codepoint2;
                                         return token_type::parse_error;
                                     }
                                 }
                                 else
                                 {
                                     error_message = "invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF";
+                                    error_cause = error_kind::string_invalid_escape;
                                     return token_type::parse_error;
                                 }
                             }
@@ -629,7 +654,10 @@ class lexer : public lexer_base<BasicJsonType>
                             {
                                 if (JSON_HEDLEY_UNLIKELY(0xDC00 <= codepoint1 && codepoint1 <= 0xDFFF))
                                 {
+                                    // the escape was read completely
                                     error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
+                                    error_cause = error_kind::string_invalid_escape;
+                                    string_error_resume = resume_kind::after_escape;
                                     return token_type::parse_error;
                                 }
                             }
@@ -638,10 +666,7 @@ class lexer : public lexer_base<BasicJsonType>
                             JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
-                            encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
-                            {
-                                add(static_cast<char_int_type>(byte));
-                            });
+                            add_codepoint(codepoint);
 
                             break;
                         }
@@ -649,6 +674,7 @@ class lexer : public lexer_base<BasicJsonType>
                         // other characters after escape
                         default:
                             error_message = "invalid string: forbidden character after backslash";
+                            error_cause = error_kind::string;
                             return token_type::parse_error;
                     }
 
@@ -725,6 +751,7 @@ class lexer : public lexer_base<BasicJsonType>
                         }
                     };
                     error_message = control_character_messages[static_cast<std::size_t>(current)];
+                    error_cause = error_kind::string;
                     return token_type::parse_error;
                 }
 
@@ -947,6 +974,7 @@ class lexer : public lexer_base<BasicJsonType>
                 default:
                 {
                     error_message = "invalid string: ill-formed UTF-8 byte";
+                    error_cause = error_kind::string_ill_formed_utf8;
                     return token_type::parse_error;
                 }
             }
@@ -1002,6 +1030,7 @@ class lexer : public lexer_base<BasicJsonType>
                         case char_traits<char_type>::eof():
                         {
                             error_message = "invalid comment; missing closing '*/'";
+                            error_cause = error_kind::unclosed_comment;
                             return false;
                         }
 
@@ -1032,6 +1061,7 @@ class lexer : public lexer_base<BasicJsonType>
             default:
             {
                 error_message = "invalid comment; expecting '/' or '*' after '/'";
+                error_cause = error_kind::other;
                 return false;
             }
         }
@@ -1157,6 +1187,7 @@ scan_number_minus:
             default:
             {
                 error_message = "invalid number; expected digit after '-'";
+                error_cause = error_kind::number;
                 return token_type::parse_error;
             }
         }
@@ -1243,6 +1274,7 @@ scan_number_decimal1:
             default:
             {
                 error_message = "invalid number; expected digit after '.'";
+                error_cause = error_kind::number;
                 return token_type::parse_error;
             }
         }
@@ -1311,6 +1343,7 @@ scan_number_exponent:
             {
                 error_message =
                     "invalid number; expected '+', '-', or digit after exponent";
+                error_cause = error_kind::number;
                 return token_type::parse_error;
             }
         }
@@ -1337,6 +1370,7 @@ scan_number_sign:
             default:
             {
                 error_message = "invalid number; expected digit after exponent sign";
+                error_cause = error_kind::number;
                 return token_type::parse_error;
             }
         }
@@ -1764,6 +1798,7 @@ scan_number_done:
             if (JSON_HEDLEY_UNLIKELY(char_traits<char_type>::to_char_type(get()) != static_cast<char_type>(rest[i])))
             {
                 error_message = "invalid literal";
+                error_cause = error_kind::other;
                 return token_type::parse_error;
             }
         }
@@ -2154,17 +2189,25 @@ scan_number_done:
         return position.chars_read_total;
     }
 
-    /// seekable adapter: count the lines in the consumed input; O(input read
-    /// so far), but only called on errors
+    /// seekable adapter: count the lines in the consumed input. Only the
+    /// input consumed since the previous call is scanned, so a parse that
+    /// reports many errors (a SAX parser recovering from them) stays linear
+    /// in the input instead of rescanning it for every error.
     position_t get_position_impl(std::true_type /*lazy*/) const
     {
         position_t result;
         result.chars_read_total = get_chars_read_total();
         // reads at EOF count as characters but are not part of the input
         const std::size_t consumed = (std::min)(result.chars_read_total, ia.get_consumed_count());
-        std::size_t line_start = 0;
-        result.lines_read = ia.count_consumed_lines(consumed, line_start);
-        result.chars_read_current_line = result.chars_read_total - line_start;
+        if (JSON_HEDLEY_UNLIKELY(consumed < position_cache.consumed))
+        {
+            // the consumed input never shrinks; recount from the start if it did
+            position_cache = {};
+        }
+        position_cache.lines += ia.count_consumed_lines(position_cache.consumed, consumed, position_cache.line_start);
+        position_cache.consumed = consumed;
+        result.lines_read = position_cache.lines;
+        result.chars_read_current_line = result.chars_read_total - position_cache.line_start;
         return result;
     }
 
@@ -2348,6 +2391,7 @@ scan_number_done:
         if (get_chars_read_total() == 0 && !skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
+            error_cause = error_kind::other;
             return token_type::parse_error;
         }
 
@@ -2455,7 +2499,580 @@ scan_number_done:
             // error
             default:
                 error_message = "invalid literal";
+                error_cause = error_kind::other;
                 return token_type::parse_error;
+        }
+    }
+
+  public:
+    /////////////////////
+    // error recovery
+    /////////////////////
+
+    /*!
+    @brief make the best of the token that scan() rejected
+
+    Called by the parser after scan() returned token_type::parse_error and the
+    SAX parser asked to recover from the error (see #3989). Keeps what can be
+    read of the token and skips the rest:
+
+    - A string keeps its characters. An unknown escape stands for the escaped
+      character itself (as in JavaScript), an invalid Unicode escape and ill-formed
+      UTF-8 become U+FFFD, and a control character is kept. A line break or the
+      end of the input ends a string that lacks its closing quote.
+    - A number keeps its longest valid prefix, e.g. `1` for `1.` or `1e+`.
+    - A block comment that is not closed runs to the end of the input.
+    - Anything else is skipped.
+
+    The rest of an invalid token is skipped up to the next delimiter
+    (whitespace, a structural character, or a quote). A delimiter that the
+    invalid token consumed is returned to the input, so that the next scan()
+    reads it.
+
+    @return token_type::value_string or a number token type if a string or a
+            number could be read, token_type::end_of_input for a block comment
+            that is not closed, token_type::uninitialized otherwise
+    */
+    token_type recover_token()
+    {
+        const resume_kind resume = string_error_resume;
+        const int codepoint = string_error_codepoint;
+        string_error_resume = resume_kind::character;
+        string_error_codepoint = -1;
+
+        const error_kind cause = error_cause;
+        error_cause = error_kind::other;
+
+        switch (cause)
+        {
+            case error_kind::string:
+            case error_kind::string_invalid_escape:
+            case error_kind::string_ill_formed_utf8:
+                return recover_string(cause, resume, codepoint);
+
+            case error_kind::number:
+                return recover_number();
+
+            case error_kind::unclosed_comment:
+                // the comment runs to the end of the input
+                return token_type::end_of_input;
+
+            case error_kind::other:
+            default:
+                skip_to_delimiter();
+                return token_type::uninitialized;
+        }
+    }
+
+    /*!
+    @brief return the token that scan() read last to the input, so that the
+           next scan() reads it again
+
+    Called by the parser when recovering from an error. The token must be a
+    single character (',', ':', '[', ']', '{', or '}') or the end of the
+    input, and scan() must have read it last.
+    */
+    void unget_token()
+    {
+        JSON_ASSERT(!next_unget);
+        unget();
+    }
+
+    /*!
+    @brief let the token string for the next error begin at the current character
+
+    The token string of an error reaches back to the beginning of the last
+    string or number. After an error, the parser calls this function so that
+    the next error does not report (and, with many errors, copy) everything
+    read since then.
+    */
+    void restart_token_string()
+    {
+        restart_token_string_impl(std::integral_constant<bool, lazy_token_string> {});
+    }
+
+  private:
+    /// how recover_string() continues after the error scan_string() reported
+    enum class resume_kind : std::uint8_t
+    {
+        /// current is the next character of the string (or the end of input)
+        character,
+        /// current is the character escaped by the preceding backslash
+        escaped_character,
+        /// current is the last character of a complete escape
+        after_escape
+    };
+
+    /// what kind of token scan() rejected, which decides how recover_token() repairs it
+    enum class error_kind : std::uint8_t
+    {
+        /// anything not listed below; skipped up to the next delimiter
+        other,
+        /// a string
+        string,
+        /// a string with an invalid Unicode escape, which becomes U+FFFD
+        string_invalid_escape,
+        /// a string with ill-formed UTF-8, which becomes U+FFFD
+        string_ill_formed_utf8,
+        /// a number
+        number,
+        /// a block comment that is not closed
+        unclosed_comment
+    };
+
+    /// whether current ends an invalid token (see recover_token())
+    bool current_is_delimiter() const noexcept
+    {
+        switch (current)
+        {
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\r':
+            case '[':
+            case ']':
+            case '{':
+            case '}':
+            case ',':
+            case ':':
+            case '\"':
+#if !JSON_STRICT_NUL_HANDLING
+            case '\0':
+#endif
+            case char_traits<char_type>::eof():
+                return true;
+
+            case '/':
+                return ignore_comments;
+
+            default:
+                return false;
+        }
+    }
+
+    /// skip the rest of an invalid token and return its delimiter to the input
+    void skip_to_delimiter()
+    {
+        while (!current_is_delimiter())
+        {
+            get();
+        }
+
+        if (current != char_traits<char_type>::eof())
+        {
+            unget();
+        }
+    }
+
+    /// append U+FFFD REPLACEMENT CHARACTER to token_buffer
+    void add_replacement_character()
+    {
+        add_codepoint(0xFFFD);
+    }
+
+    /// append the UTF-8 encoding of @a codepoint (not a surrogate) to token_buffer
+    void add_codepoint(const int codepoint)
+    {
+        JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
+        encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
+        {
+            add(static_cast<char_int_type>(byte));
+        });
+    }
+
+    /// append a code point read from a Unicode escape; a surrogate becomes U+FFFD
+    void add_escaped_codepoint(const int codepoint)
+    {
+        if (0xD800 <= codepoint && codepoint <= 0xDFFF)
+        {
+            add_replacement_character();
+        }
+        else
+        {
+            add_codepoint(codepoint);
+        }
+    }
+
+    /*!
+    @brief remove an incomplete UTF-8 sequence from the end of token_buffer
+
+    next_byte_in_range() adds the bytes of a sequence as it checks them, so
+    when it rejects a byte, the beginning of the sequence is already in
+    token_buffer, which otherwise holds only complete sequences.
+
+    @return whether an incomplete sequence was removed
+    */
+    bool remove_incomplete_utf8_sequence()
+    {
+        std::size_t lead = token_buffer.size();
+        std::size_t continuation_bytes = 0;
+        while (lead > 0 && continuation_bytes < 3
+                && (static_cast<unsigned char>(token_buffer[lead - 1]) & 0xC0u) == 0x80u)
+        {
+            --lead;
+            ++continuation_bytes;
+        }
+        if (lead == 0)
+        {
+            return false;
+        }
+
+        const auto lead_byte = static_cast<unsigned char>(token_buffer[lead - 1]);
+        std::size_t expected = 0;
+        if (lead_byte >= 0xF0)
+        {
+            expected = 3;
+        }
+        else if (lead_byte >= 0xE0)
+        {
+            expected = 2;
+        }
+        else if (lead_byte >= 0xC0)
+        {
+            expected = 1;
+        }
+        if (continuation_bytes >= expected)
+        {
+            return false;
+        }
+
+        token_buffer.resize(lead - 1);
+        return true;
+    }
+
+    /*!
+    @brief read the UTF-8 sequence that begins with current, which is not ASCII
+    @return whether the next character must be read; false if current still
+            needs to be handled, because it does not belong to the sequence
+    */
+    bool recover_utf8_sequence()
+    {
+        // the number of continuation bytes and the range of the first one;
+        // see the ranges in scan_string()
+        std::size_t count = 0;
+        char_int_type low = 0x80;
+        char_int_type high = 0xBF;
+        if (current >= 0xC2 && current <= 0xDF)
+        {
+            count = 1;
+        }
+        else if (current >= 0xE0 && current <= 0xEF)
+        {
+            count = 2;
+            low = (current == 0xE0) ? 0xA0 : 0x80;
+            high = (current == 0xED) ? 0x9F : 0xBF;
+        }
+        else if (current >= 0xF0 && current <= 0xF4)
+        {
+            count = 3;
+            low = (current == 0xF0) ? 0x90 : 0x80;
+            high = (current == 0xF4) ? 0x8F : 0xBF;
+        }
+        else
+        {
+            // an ill-formed byte
+            add_replacement_character();
+            return true;
+        }
+
+        const std::size_t start = token_buffer.size();
+        add(current);
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            get();
+            if (current < low || current > high)
+            {
+                token_buffer.resize(start);
+                add_replacement_character();
+                return false;
+            }
+            add(current);
+            low = 0x80;
+            high = 0xBF;
+        }
+        return true;
+    }
+
+    /*!
+    @brief read the low surrogate that must follow the high surrogate @a high
+    @return whether the next character must be read; false if current still
+            needs to be handled
+    */
+    bool recover_low_surrogate(int high)
+    {
+        while (true)
+        {
+            if (get() != '\\')
+            {
+                add_replacement_character();
+                return false;
+            }
+            if (get() != 'u')
+            {
+                add_replacement_character();
+                // not 'u', so this does not come back here
+                return recover_escape();
+            }
+
+            const int low = get_codepoint();
+            if (low == -1)
+            {
+                add_replacement_character();
+                return false;
+            }
+            if (0xDC00 <= low && low <= 0xDFFF)
+            {
+                add_codepoint(combine_surrogates(high, low));
+                return true;
+            }
+
+            // high has no low surrogate
+            add_replacement_character();
+            if (low < 0xD800 || low > 0xDBFF)
+            {
+                add_codepoint(low);
+                return true;
+            }
+            // another high surrogate
+            high = low;
+        }
+    }
+
+    /*!
+    @brief read the escape whose backslash was read; current is the escaped character
+    @return whether the next character must be read; false if current still
+            needs to be handled
+    */
+    bool recover_escape()
+    {
+        switch (current)
+        {
+            case '\"':
+                add('\"');
+                return true;
+            case '\\':
+                add('\\');
+                return true;
+            case '/':
+                add('/');
+                return true;
+            case 'b':
+                add('\b');
+                return true;
+            case 'f':
+                add('\f');
+                return true;
+            case 'n':
+                add('\n');
+                return true;
+            case 'r':
+                add('\r');
+                return true;
+            case 't':
+                add('\t');
+                return true;
+
+            case 'u':
+            {
+                const int codepoint = get_codepoint();
+                if (codepoint == -1)
+                {
+                    add_replacement_character();
+                    return false;
+                }
+                if (0xD800 <= codepoint && codepoint <= 0xDBFF)
+                {
+                    return recover_low_surrogate(codepoint);
+                }
+                add_escaped_codepoint(codepoint);
+                return true;
+            }
+
+            // an unknown escape stands for the escaped character
+            default:
+                return false;
+        }
+    }
+
+    /*!
+    @brief read the rest of a string after scan_string() rejected it
+
+    token_buffer holds what scan_string() read before the error. See
+    recover_token() for how errors are repaired.
+
+    @param[in] cause      the kind of error scan_string() reported
+    @param[in] resume     how to continue, see resume_kind
+    @param[in] codepoint  for a high surrogate followed by an escape of another
+                          code point: that code point; -1 otherwise
+    */
+    token_type recover_string(const error_kind cause, const resume_kind resume, const int codepoint)
+    {
+        // whether the next character must be read before it can be handled
+        bool fetch = false;
+
+        if (cause == error_kind::string_invalid_escape
+                || (cause == error_kind::string_ill_formed_utf8 && remove_incomplete_utf8_sequence()))
+        {
+            add_replacement_character();
+        }
+
+        switch (resume)
+        {
+            case resume_kind::escaped_character:
+                fetch = recover_escape();
+                break;
+            case resume_kind::after_escape:
+                if (0xD800 <= codepoint && codepoint <= 0xDBFF)
+                {
+                    fetch = recover_low_surrogate(codepoint);
+                }
+                else
+                {
+                    if (codepoint != -1)
+                    {
+                        add_escaped_codepoint(codepoint);
+                    }
+                    fetch = true;
+                }
+                break;
+            case resume_kind::character:
+            default:
+                break;
+        }
+
+        while (true)
+        {
+            if (fetch)
+            {
+                get();
+            }
+            fetch = true;
+
+            switch (current)
+            {
+                case '\"':
+                // a line break or the end of the input ends a string that
+                // lacks its closing quote
+                case '\n':
+                case '\r':
+                case char_traits<char_type>::eof():
+                    return token_type::value_string;
+
+#if !JSON_STRICT_NUL_HANDLING
+                case '\0':
+                    // the end of the input, see scan()
+                    unget();
+                    return token_type::value_string;
+#endif
+
+                case '\\':
+                    get();
+                    fetch = recover_escape();
+                    break;
+
+                default:
+                    if (current < 0x80)
+                    {
+                        // including control characters
+                        add(current);
+                    }
+                    else
+                    {
+                        fetch = recover_utf8_sequence();
+                    }
+                    break;
+            }
+        }
+    }
+
+    /*!
+    @brief keep the longest valid prefix of a number that scan_number() rejected
+
+    token_buffer holds the characters scan_number() accepted before the error,
+    so the prefix ends at its last digit.
+    */
+    token_type recover_number()
+    {
+        // only size(), operator[], and resize() are used, which every string
+        // type the library supports provides
+        std::size_t length = token_buffer.size();
+        while (length != 0 && (token_buffer[length - 1] < '0' || token_buffer[length - 1] > '9'))
+        {
+            --length;
+        }
+        token_buffer.resize(length);
+
+        if (length == 0)
+        {
+            skip_to_delimiter();
+            return token_type::uninitialized;
+        }
+
+        if (decimal_point_position >= length)
+        {
+            decimal_point_position = std::string::npos;
+        }
+
+        std::size_t exponent = std::string::npos;
+        for (std::size_t i = 0; i < length; ++i)
+        {
+            if (token_buffer[i] == 'e' || token_buffer[i] == 'E')
+            {
+                exponent = i;
+                break;
+            }
+        }
+        const std::size_t mantissa_end = (exponent == std::string::npos) ? length : exponent;
+        token_type number_type = token_type::value_unsigned;
+        if (decimal_point_position != std::string::npos || exponent != std::string::npos)
+        {
+            number_type = token_type::value_float;
+        }
+        else if (token_buffer[0] == '-')
+        {
+            number_type = token_type::value_integer;
+        }
+
+        const token_type result = convert_number(number_type, mantissa_end);
+        skip_to_delimiter();
+        return result;
+    }
+
+    /// seekable or token-tracking adapter: the token string begins at current
+    void restart_token_string_impl(std::true_type /*lazy*/)
+    {
+        restart_token_string_lazy(std::integral_constant<bool, adapter_token> {});
+    }
+
+    /// seekable adapter: the token string begins at current, which was consumed
+    void restart_token_string_lazy(std::false_type /*adapter_token*/) noexcept
+    {
+        const std::size_t consumed = ia.get_consumed_count();
+        token_string_start = (consumed > 0 && current != char_traits<char_type>::eof()) ? consumed - 1 : consumed;
+    }
+
+    /// token-tracking adapter: the token begins with current, or with the next
+    /// character if current was put back or is the end of input
+    void restart_token_string_lazy(std::true_type /*adapter_token*/)
+    {
+        if (!next_unget && current != char_traits<char_type>::eof())
+        {
+            ia.mark_token_start(current);
+        }
+        else
+        {
+            ia.begin_token();
+        }
+    }
+
+    /// streaming adapter: the token string begins at current; a character
+    /// that was put back is copied again when it is read again
+    void restart_token_string_impl(std::false_type /*lazy*/)
+    {
+        token_string.clear();
+        if (!next_unget && current != char_traits<char_type>::eof())
+        {
+            token_string.push_back(char_traits<char_type>::to_char_type(current));
         }
     }
 
@@ -2483,6 +3100,19 @@ scan_number_done:
     /// that unget() can restore the column instead of leaving it at 0
     std::size_t chars_read_before_newline = 0;
 
+    /// seekable adapter: what get_position() counted last, so that the next
+    /// call only scans the input consumed since
+    struct position_cache_t
+    {
+        /// consumed characters scanned so far
+        std::size_t consumed = 0;
+        /// newlines among them
+        std::size_t lines = 0;
+        /// index after the last of these newlines
+        std::size_t line_start = 0;
+    };
+    mutable position_cache_t position_cache {};
+
     /// raw input token string for error messages; only populated for streaming
     /// adapters (seekable adapters reconstruct it lazily via token_string_start)
     std::vector<char_type> token_string {};
@@ -2502,6 +3132,15 @@ scan_number_done:
 
     /// a description of occurred lexer errors
     const char* error_message = "";
+
+    /// what kind of token scan() rejected; set together with error_message
+    error_kind error_cause = error_kind::other;
+    /// how recover_token() continues a string that scan_string() rejected;
+    /// set only on the error paths that need more than error_message
+    resume_kind string_error_resume = resume_kind::character;
+    /// the code point of the second escape when a high surrogate is followed
+    /// by an escape that is not a low surrogate; -1 otherwise
+    int string_error_codepoint = -1;
 
     // number values
     number_integer_t value_integer = 0;

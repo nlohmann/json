@@ -139,7 +139,7 @@ See [Zero-copy JSON views](../json_view.md) for the concept and the trade-offs.
 When the input is not valid JSON, the `parse` function throws an exception by default. If exceptions are undesired or
 unavailable, the parser can instead return a discarded value, or [`accept`](../../api/basic_json/accept.md) can be used
 to only check whether an input is valid JSON. See [parsing and exceptions](parse_exceptions.md) for the available
-options.
+options. To get as much as possible out of malformed input, a SAX parser can [recover from errors](error_recovery.md).
 
 ## See also
 
@@ -153,5 +153,6 @@ options.
 - [SAX interface](sax_interface.md) - implement a custom SAX handler
 - [Zero-copy JSON views](../json_view.md) - parse into a read-only document and read it through views
 - [parsing and exceptions](parse_exceptions.md) - control error handling
+- [error recovery](error_recovery.md) - get as much as possible out of malformed input
 - [parsing untrusted input](untrusted_input.md) - what to consider when parsing input from untrusted sources
 - [Zero-copy JSON views](../json_view.md) - parse into a document and read it through a view

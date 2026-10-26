@@ -138,7 +138,9 @@ struct json_sax
     @param[in] position    the position in the input where the error occurs
     @param[in] last_token  the last read token
     @param[in] ex          an exception object describing the error
-    @return whether parsing should proceed (must return false)
+    @return whether to recover from the error: false stops parsing; true
+            repairs the error and continues, or, if that is not possible,
+            stops after completing the value read so far
     */
     virtual bool parse_error(std::size_t position,
                              const std::string& last_token,
@@ -469,12 +471,15 @@ constructor contains the parsed value. Without @a Collect, every value is
 stored in place as it arrives, so after a parse error the value holds what was
 read up to it.
 
-@tparam BasicJsonType  the JSON type
-@tparam Collect  whether to collect the values of containers of unknown size on
-                 a stack (only for a caller that does not use the value after a
-                 parse error)
+@tparam BasicJsonType     the JSON type
+@tparam InputAdapterType  the input adapter of the lexer that can be passed to
+                          the constructor to record diagnostic positions; it
+                          does not matter if no lexer is passed
+@tparam Collect           whether to collect the values of containers of
+                          unknown size on a stack (only for a caller that does
+                          not use the value after a parse error)
 */
-template<typename BasicJsonType, typename InputAdapterType, bool Collect = false>
+template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type, bool Collect = false>
 class json_sax_dom_parser : public json_sax_dom_error_state
 {
   public:
@@ -780,6 +785,8 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         JSON_HEDLEY_NEVER_INLINE
         void grow()
         {
+            // the stack starts with local_capacity frames and only grows
+            JSON_ASSERT(capacity != 0);
             const std::size_t new_capacity = capacity * 2;
             std::unique_ptr<frame[]> new_heap(new frame[new_capacity]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             for (std::size_t i = 0; i < count; ++i)
@@ -1595,7 +1602,7 @@ class json_sax_dom_binary_parser : public json_sax_dom_error_state
     lexer_t* m_lexer_ref = nullptr;
 };
 
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type>
 class json_sax_dom_callback_parser : public json_sax_dom_error_state
 {
   public:

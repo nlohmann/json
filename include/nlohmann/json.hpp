@@ -157,7 +157,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType, typename OutputSinkType>
     friend class ::nlohmann::detail::binary_writer;
-    template<typename BasicJsonType, typename InputType, typename SAX>
+    template<typename BasicJsonType, typename InputType, typename SAX, bool AllowRecovery>
     friend class ::nlohmann::detail::binary_reader;
     template<typename BasicJsonType, typename InputAdapterType, bool Collect>
     friend class ::nlohmann::detail::json_sax_dom_parser;
@@ -3133,7 +3133,8 @@ public:
         {
             return parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict);
         }
-        return detail::binary_reader<basic_json, InputAdapterType, SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
+        // the SAX parser may recover from errors (see parse_error())
+        return detail::binary_reader<basic_json, InputAdapterType, SAX, true>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
     }
 
     /// serialize @a j into a new vector; @a write receives the vector-backed writer

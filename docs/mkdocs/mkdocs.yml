@@ -136,6 +136,7 @@ nav:
       - features/performance.md
       - Parsing:
           - features/parsing/index.md
+          - features/parsing/error_recovery.md
           - features/parsing/json_lines.md
           - features/parsing/large_and_partial_input.md
           - features/parsing/parse_exceptions.md

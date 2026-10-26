@@ -13,6 +13,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
 #include <string> // string, to_string
+#include <utility> // move
 
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
