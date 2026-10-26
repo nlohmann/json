@@ -27,7 +27,7 @@
 // live in chunks that never move; strings and number tokens written by edits
 // live in the edit arena. An array/object whose elements change gets
 // node_flags::moved: its elements then live in a separate sequence (a header
-// node, then the entries), whose entries link to the values (kind_link).
+// node, then the entries), whose entries link to the values (node_kind::link).
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -185,7 +185,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         return nh;
     }
     reserve_moved(d); // (so that set_moved() below cannot throw: the links are marked before)
-    const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
+    const bool object = n->kind == node_kind::object;
     const std::size_t used = 1 + (static_cast<std::size_t>(n->len) * (object ? 2 : 1));
     const std::size_t cap = used + extra;
     node* const h = alloc_nodes(d, cap);
@@ -251,7 +251,7 @@ inline node* find_parent(const document_data& d, const node* target)
         {
             return nullptr; // LCOV_EXCL_LINE (the value is inside c)
         }
-        const bool object = c->kind == static_cast<std::uint8_t>(value_t::object);
+        const bool object = c->kind == node_kind::object;
         const node* down = nullptr;
         for (const node* p = d.first_child_edited(c), *e = d.child_end_edited(c); p != e;)
         {

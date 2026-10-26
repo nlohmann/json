@@ -43,8 +43,8 @@ jobs:
       - name: flawfinder_scan
         uses: david-a-wheeler/flawfinder@c4216b74cf2639ffa98503768bd6e4299b5440c9 # v2.0.20
         with:
-          # single_include/ is omitted: it is generated from include/ and would report every finding twice
-          arguments: '--sarif ./cmake ./docs ./include ./src ./tests ./tools'
+          # single_include/ is generated from include/ and would report every finding twice
+          arguments: "--sarif --exclude '*/single_include/*' ./"
           output: 'flawfinder_results.sarif'
 
       - name: Upload analysis results to GitHub Security tab

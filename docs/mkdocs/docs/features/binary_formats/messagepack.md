@@ -11,7 +11,7 @@ extra byte in addition to the strings themselves.
 
 ## Byte layout
 
-MessagePack encodes each value as a one-byte *format marker*, optionally followed by a length or the payload. The marker range is partitioned to keep common values small: small non-negative integers (0 to 127) and small negative integers (-32 to -1) are the marker byte itself; short strings, arrays, and maps (up to 31 or 15 elements) hide their length in the marker's lower bits. Larger values use dedicated markers that announce the width (8, 16, 32, or 64 bits) of the length or number that follows, in big-endian byte order. Like CBOR, containers are length-prefixed, so no terminator is needed.
+MessagePack encodes each value as a one-byte *format marker*, optionally followed by a length or the payload. The marker range is partitioned to keep common values small: small non-negative integers (0 to 127) and small negative integers (-32 to -1) are the marker byte itself; short strings, arrays, and maps (up to 31 bytes for strings and up to 15 elements for arrays and maps) hide their length in the marker's lower bits. Larger values use dedicated markers that announce the width (8, 16, 32, or 64 bits) of the length or number that follows, in big-endian byte order. Like CBOR, containers are length-prefixed, so no terminator is needed.
 
 Consider the following JSON value (shown formatted for readability):
 
@@ -109,8 +109,9 @@ specification:
 !!! note
 
     Prior to version 3.13.0, NaN and Infinity were instead serialized as a MessagePack float 64 (type 0xCB, 9 bytes
-    total), because the check used to select the smaller float 32 encoding compared magnitudes with NaN, which is
-    always `false` and caused the float 32 path to be skipped.
+    total), because the check used to select the smaller float 32 encoding failed for NaN (all comparisons are `false`)
+    and for Infinity and -Infinity (outside the float range checked against `std::numeric_limits<float>::lowest()` and
+    `max()`), so the float 32 path was skipped.
 
 ??? example "Example: serialize a JSON value to MessagePack"
 
@@ -135,6 +136,7 @@ The library maps MessagePack types to JSON value types as follows:
 | fixarray         | array           | 0x90..0x9F |
 | fixstr           | string          | 0xA0..0xBF |
 | nil              | `null`          | 0xC0       |
+| (never used)     | –               | 0xC1       |
 | false            | `false`         | 0xC2       |
 | true             | `true`          | 0xC3       |
 | float 32         | number_float    | 0xCA       |
@@ -167,6 +169,30 @@ The library maps MessagePack types to JSON value types as follows:
 | fixext 16        | binary          | 0xD8       |
 | negative fixint  | number_integer  | 0xE0-0xFF  |
 
+The byte 0xC1 is reserved as "never used" by the specification. As a value it is rejected with
+[`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) (`invalid byte: 0xC1`); as a map key it is
+rejected with [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) and the generic "expected length
+specification" message, because the key is read as a string.
+
+Duplicate keys in a map are accepted; the last value wins.
+
+### Extension types (ext, fixext)
+
+MessagePack ext and fixext values are read as binary values, and the ext type byte is stored as the binary subtype.
+Although the specification defines the type as a signed 8-bit integer (0 to 127 for applications, -128 to -1 reserved,
+with -1 being the Timestamp extension), the library reads it as an unsigned byte: a negative ext type `n` becomes
+subtype `256+n`, so ext type -1 is read as subtype 255 and -128 as subtype 128. The Timestamp extension is not
+interpreted; it is returned as binary with subtype 255. Use
+[`has_subtype()`](../../api/byte_container_with_subtype/has_subtype.md) to tell a `bin` value (no subtype) from an ext
+value (subtype, even if it is 0).
+
+When serializing, a binary value with a subtype is always written as fixext (1, 2, 4, 8, or 16 bytes) or ext, even
+for subtype 0 (`d6 00 01 02 03 04`); a binary value without a subtype is written as bin. Subtypes 128 to 255 are
+written as the reserved negative ext types (255 as -1), so `json::binary({1,2,3,4}, 255)` becomes
+`d6 ff 01 02 03 04`, which other MessagePack libraries decode as a 32-bit timestamp. A subtype above 255 throws
+[`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415). The payload length is limited to
+4294967295 bytes like all other lengths.
+
 !!! info
 
     Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
@@ -177,7 +203,8 @@ The library maps MessagePack types to JSON value types as follows:
     JSON-compatible [profile](https://github.com/msgpack/msgpack/blob/master/spec.md#profile) sketched in the
     MessagePack specification, this library restricts map keys to `str` values. Maps with keys of any other type are
     rejected with a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with
-    `allow_exceptions` set to `false`, a discarded value) naming the type of the key that was found, for instance:
+    `allow_exceptions` set to `false`, a discarded value). For most key types the message names the type that was
+    found, for instance:
 
     ```
     [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack object key: only string keys are supported, but found nil; last byte: 0xC0
@@ -189,7 +216,7 @@ The library maps MessagePack types to JSON value types as follows:
 !!! warning "Ill-formed UTF-8 in string values"
 
     The MessagePack specification explicitly allows a `str` value (`fixstr`, `str 8`, `str 16`, `str 32`) to contain
-    a byte sequence that is not valid UTF-8, and expects a deserializer to hand the original bytes back unchanged.
+    a byte sequence that is not valid UTF-8, and recommends that a deserializer provide a way to obtain the original bytes.
     This library follows that by default: with its
     [`error_handler`](../../api/basic_json/from_msgpack.md) parameter left at `keep` (the default),
     `from_msgpack()` reads `str` bytes (object keys included) as-is, without validating them, so such a value

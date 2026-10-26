@@ -64,6 +64,12 @@ An editable `json_document` edits in place; yyjson copies its immutable document
 (`yyjson_doc_mut_copy`); Boost.JSON and `json::parse` build mutable DOMs; simdjson cannot edit a document. All
 outputs are checked to describe the same value.
 
+`bench_decode.cpp` measures decoding into structs whose `from_json()` comes from the `NLOHMANN_DEFINE_TYPE_*` macros
+(twitter statuses, citm_catalog performances, and 20,000 synthetic records): `get<T>()` on a view, which reads the
+view directly, against `materialize().get<T>()`, `json::parse` plus `get<T>()`, and `get<T>()` on an already parsed
+`json` value. Only nlohmann/json takes part, as the other libraries have no comparable mapping; all engines are
+checked to decode the same values.
+
 Before anything is timed, all engines must accept each document and agree on the traversal: the number of values, the
 bytes of all strings and keys, and the sum of all numbers. All engines run interleaved in every round, and the best
 round is reported, as time and as a factor of the `json_view` time (below 1 means faster than `json_view`). Each timed

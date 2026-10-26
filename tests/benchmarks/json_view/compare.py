@@ -9,7 +9,7 @@
 
 """Compare json_view with yyjson, simdjson, Boost.JSON, and json::parse.
 
-Builds bench_view.cpp, bench_corpus.cpp, and bench_edit.cpp against the include/ directory of
+Builds bench_view.cpp, bench_corpus.cpp, bench_edit.cpp, and bench_decode.cpp against the include/ directory of
 this checkout, runs them, and writes the results with everything needed to
 reproduce them (date, commit, CPU, OS, compiler, library versions, flags) to
 results/<date>-<host>.md and .csv next to this script.
@@ -300,7 +300,7 @@ def main():
     for label, build_dir, extra in variants:
         os.makedirs(build_dir, exist_ok=True)
         binaries = {}
-        for bench in ['bench_view', 'bench_corpus', 'bench_edit']:
+        for bench in ['bench_view', 'bench_corpus', 'bench_edit', 'bench_decode']:
             exe = os.path.join(build_dir, bench)
             run(cxx + flags + extra + include + [os.path.join(HERE, bench + '.cpp')] + objects + link + ['-o', exe])
             binaries[bench] = exe
@@ -313,6 +313,8 @@ def main():
                                       capture_output=True, text=True).stdout
         outputs['bench_edit'] = run([binaries['bench_edit'], args.data, str(max(1, args.rounds // 2))], cwd=build_dir,
                                     capture_output=True, text=True).stdout
+        outputs['bench_decode'] = run([binaries['bench_decode'], args.data, str(max(1, args.rounds // 2))],
+                                      cwd=build_dir, capture_output=True, text=True).stdout
         for name, text in outputs.items():
             print(text)
         all_outputs[label] = outputs
@@ -351,7 +353,7 @@ def main():
     with open(stem + '.csv', 'w', encoding='utf-8') as out:
         out.write(''.join(f'# {key}: {value}\n' for key, value in meta))
         for label, build_dir, _ in variants:
-            for name in ['bench_view', 'bench_corpus', 'bench_edit']:
+            for name in ['bench_view', 'bench_corpus', 'bench_edit', 'bench_decode']:
                 path = os.path.join(build_dir, name + '.csv')
                 if os.path.isfile(path):
                     with open(path, encoding='utf-8') as f:
