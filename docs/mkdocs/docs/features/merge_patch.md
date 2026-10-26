@@ -2,7 +2,7 @@
 
 The library supports JSON Merge Patch ([RFC 7396](https://tools.ietf.org/html/rfc7396)) as a patch format.
 The merge patch format is primarily intended for use with the HTTP PATCH method as a means of describing a set of
-modifications to a target resource's content. This function applies a merge patch to the current JSON value.
+modifications to a target resource's content. Applying a merge patch changes the JSON value the patch is applied to.
 
 Instead of using [JSON Pointer](json_pointer.md) to specify values to be manipulated, it describes the changes using a
 syntax that closely mimics the document being modified. Unlike [JSON Patch](json_patch.md), a JSON Merge Patch cannot
@@ -18,6 +18,18 @@ another.
     To merge two objects recursively (e.g., defaults and user settings), use
     [`update`](../api/basic_json/update.md) with `merge_objects` set to `#!cpp true`; see
     [Merging objects](modifying_values.md#merging-objects).
+
+!!! note "Limitations of RFC 7396"
+
+    - A patch cannot set a member to `#!json null`, because `#!json null` removes the member:
+      `#!json {"a":1}` patched with `#!json {"a":null}` gives `#!json {}`.
+    - Arrays are replaced as a whole, never merged, and a `#!json null` inside an array is kept.
+    - `#!json null` members of the target that the patch does not mention are preserved.
+    - A `#!json null` that would remove a member of a not yet existing object still creates that object:
+      `#!json {}` patched with `#!json {"a":{"b":null}}` gives `#!json {"a":{}}`.
+    - A patch that is not an object replaces the whole target (a `#!json null` patch makes the target
+      `#!json null`); an object patch applied to a non-object target starts from an empty object.
+    - [`merge_diff`](../api/basic_json/merge_diff.md#notes) has a matching limitation for `#!json null` members.
 
 ??? example
 
