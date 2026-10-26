@@ -18,6 +18,40 @@ Consider the following JSON document
 }
 ```
 
+Select a pointer (or a node of the tree) to walk it through this document; each segment of the pointer goes one level
+deeper. The table below lists the same pointers.
+
+<div class="nj-pointer-walk" data-nj-pointer-walk data-doc="{&quot;array&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;],&quot;nested&quot;:{&quot;one&quot;:1,&quot;two&quot;:2,&quot;three&quot;:[true,false]}}" role="group" aria-label="Pointer walker for the example document">
+<p class="nj-pointer-static">Highlighted: the path of the pointer <code>/nested/three/1</code>, which identifies <code>false</code>.</p>
+<ul class="nj-pointer-tree">
+<li data-p="" class="is-on"><span class="nj-pointer-n"><span class="nj-pointer-k">root</span> <span class="nj-pointer-t">object</span></span>
+    <ul>
+        <li data-p="/array" class="is-pass"><span class="nj-pointer-n"><span class="nj-pointer-k">&quot;array&quot;</span> <span class="nj-pointer-t">array</span></span>
+            <ul>
+                <li data-p="/array/0"><span class="nj-pointer-n"><span class="nj-pointer-k">0</span>: <span class="nj-pointer-v nj-pointer-v--s">&quot;A&quot;</span></span></li>
+                <li data-p="/array/1"><span class="nj-pointer-n"><span class="nj-pointer-k">1</span>: <span class="nj-pointer-v nj-pointer-v--s">&quot;B&quot;</span></span></li>
+                <li data-p="/array/2"><span class="nj-pointer-n"><span class="nj-pointer-k">2</span>: <span class="nj-pointer-v nj-pointer-v--s">&quot;C&quot;</span></span></li>
+            </ul>
+        </li>
+        <li data-p="/nested" class="is-on"><span class="nj-pointer-n"><span class="nj-pointer-k">&quot;nested&quot;</span> <span class="nj-pointer-t">object</span></span>
+            <ul>
+                <li data-p="/nested/one" class="is-pass"><span class="nj-pointer-n"><span class="nj-pointer-k">&quot;one&quot;</span>: <span class="nj-pointer-v nj-pointer-v--n">1</span></span></li>
+                <li data-p="/nested/two" class="is-pass"><span class="nj-pointer-n"><span class="nj-pointer-k">&quot;two&quot;</span>: <span class="nj-pointer-v nj-pointer-v--n">2</span></span></li>
+                <li data-p="/nested/three" class="is-on"><span class="nj-pointer-n"><span class="nj-pointer-k">&quot;three&quot;</span> <span class="nj-pointer-t">array</span></span>
+                    <ul>
+                        <li data-p="/nested/three/0" class="is-pass"><span class="nj-pointer-n"><span class="nj-pointer-k">0</span>: <span class="nj-pointer-v nj-pointer-v--b">true</span></span></li>
+                        <li data-p="/nested/three/1" class="is-on is-target"><span class="nj-pointer-n"><span class="nj-pointer-k">1</span>: <span class="nj-pointer-v nj-pointer-v--b">false</span></span></li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</li>
+</ul>
+</div>
+
+<p class="nj-caption" markdown>The highlighted nodes are the path from the root to the selected level, and the line below the tree shows the value the pointer resolves to. Select a segment in the pointer bar to stop at a shallower level, or a node of the tree to select its pointer.</p>
+
 Then every value inside the JSON document can be identified as follows:
 
 | JSON Pointer      | JSON value                                                                       |
@@ -126,6 +160,14 @@ The reverse function, [`unflatten`](../api/basic_json/unflatten.md) recreates th
 ```cpp
 auto j_original = j_flat.unflatten();
 ```
+
+Each leaf of the document becomes one key of the flat object, and `unflatten()` reverses the mapping:
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/json_pointer_flatten.svg"
+</div>
+
+<p class="nj-caption" markdown>Left: the example document as a tree; right: the flat object it becomes. `flatten()` converts from left to right, `unflatten()` from right to left.</p>
 
 ## See also
 

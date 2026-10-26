@@ -17,6 +17,8 @@ flowchart TD
     H -->|"yes"| I["stop early with SAX, or read through a view"]
 ```
 
+<p class="nj-caption" markdown>Questions about the input and the approach this page describes for each; an input can match more than one question.</p>
+
 ## Several values in one stream
 
 For newline-delimited input, read line by line and parse each line, as described in [JSON Lines](json_lines.md). For
@@ -80,6 +82,14 @@ exception is one past the buffer size in the first case:
 The example feeds a document in five chunks. The first four are reported as incomplete, and a syntax error is reported as
 such, not as missing data.
 
+The chunks of the example, and the bytes each attempt parses again:
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/chunk_buffering.svg"
+</div>
+
+<p class="nj-caption" markdown>Each row is one parse attempt on the growing buffer: an error at the byte after the end of the buffer means the value is incomplete, an error before the end is a real syntax error. The last line adds up the bytes parsed over all attempts.</p>
+
 !!! warning "Limits of buffering"
 
     - The buffer must contain exactly one value. Data that belongs to the next value is a syntax error. Use framing if
@@ -92,6 +102,14 @@ such, not as missing data.
 ## Input too large for memory
 
 The input does not have to become one huge `json` value. The two tools below process it piece by piece.
+
+How the memory use develops while a large array of records is parsed (illustrative, not a measurement):
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/memory_over_time.svg"
+</div>
+
+<p class="nj-caption" markdown>Memory use over the number of records parsed: `parse()` keeps the whole tree, `json_document` the text plus its index, a discarding callback one record at a time, and SAX only what the handler keeps.</p>
 
 ### Handle and discard elements with a callback
 

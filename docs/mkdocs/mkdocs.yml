@@ -572,12 +572,18 @@ plugins:
         -1:                            # connection errors
           - 'https://repology.org/*'   # repology.org is suspended since 2026-09
           - 'http://2ak5ape.257.cz/'   # customers.md: kept although unreachable
-        401: ['https://fossies.org/*'] # answers the plugin's user agent with 401, browsers and curl with 200
+        400: ['https://www.meta.com/*'] # customers.md: answers the plugin's user agent with 400, browsers with 200
+        401:
+          - 'https://fossies.org/*'    # answers the plugin's user agent with 401, browsers and curl with 200
+          - 'https://mysupport.razer.com/*' # customers.md: same, browsers answer 200
+        419: ['https://news.ycombinator.com/*'] # answers the plugin's user agent with 419, browsers with 200
         404:
           - 'https://gitlab.b-data.ch/*' # answers the plugin's user agent with 404, browsers with 200
           # customers.md: kept although dead
           - 'https://www.cisco.com/c/dam/en_us/about/doing_business/open_source/docs/CiscoWebexDeskCamera-23-1622100417.pdf'
           - 'https://docs.cyberark.com/Downloads/Legal/Privileged%20Session%20Manager%20for%20SSH%20Third-Party%20Notices.pdf'
+          - 'https://docs.citrix.com/en-us/provisioning/2203-ltsr/downloads/pvs-third-party-notices-2203.pdf'
+          - 'https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/2305/downloads/third-party-notices-apps-and-desktops.pdf'
         500: ['https://marne.io/licenses'] # customers.md: kept although dead
       ignore_urls:
         - mailto:*
@@ -626,6 +632,20 @@ plugins:
 extra_css:
   - css/custom.css
   - css/brand.css
+  - css/fig-sax.css
+  - css/fig-jsonview.css
+  - css/fig-exceptions.css
+  - css/fig-pointer.css
+  - css/fig-charts.css
+  - css/fig-integration.css
+  - css/fig-macros.css
 
 extra_javascript:
   - js/mermaid-brand.js
+  - js/fig-sax.js
+  - js/fig-jsonview.js
+  - js/fig-exceptions.js
+  - js/fig-pointer.js
+  - js/fig-charts.js
+  - js/fig-integration.js
+  - js/fig-macros.js

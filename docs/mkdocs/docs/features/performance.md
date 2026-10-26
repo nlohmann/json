@@ -96,6 +96,17 @@ comparison for text-heavy documents (63.5%-87.5%), at the cost of an
 whether it is worth the loss of human readability at all -- depends on the actual data; see the
 [comparison tables](binary_formats/index.md#comparison) before choosing one.
 
+<div class="nj-charts-grid-wrap" markdown>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_canada.svg"
+</div>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_jeopardy.svg"
+</div>
+</div>
+<p class="nj-charts-caption" markdown>Two of the four panels from the [size comparison](binary_formats/index.md#sizes);
+the smallest format per file is drawn in a stronger colour than the others.</p>
+
 ## Object type: `json` vs. `ordered_json`
 
 The default [`json`](../api/json.md) type stores object keys in a `#!cpp std::map`, giving logarithmic-time lookup,
@@ -107,6 +118,13 @@ this applies equally to inserting keys one by one and to parsing an object, sinc
 read. The [measurements on the `ordered_map` page](../api/ordered_map.md#complexity) show this is
 negligible at typical object sizes (2000 keys: 0.7 ms for `json` vs. 3.6 ms for `ordered_json`, a 5x factor) but grows
 steeply for large, machine-generated objects (16 000 keys: 3.3 ms vs. 181.6 ms, a 54x factor).
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/ordered_json_scaling.svg"
+</div>
+<p class="nj-charts-caption" markdown>Parsing a flat object of `n` keys, measured with `-O2 -DNDEBUG`; all
+four sizes from the [table on the `ordered_map` page](../api/ordered_map.md#complexity), both
+axes logarithmic.</p>
 
 If insertion order matters *and* an object routinely has many thousands of keys, `ordered_json`'s quadratic build cost
 may not be acceptable. The library's [`ObjectType` template parameter](types/template_parameters.md#objecttype) can be

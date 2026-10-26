@@ -1,0 +1,107 @@
+/* figures: jsonview (features/json_view.md; SVGs from scripts/figures/json_view_layout.py, stepper in js/fig-jsonview.js) */
+
+/* one colour per concept, the same in every figure: structure (object/array, views) blue, keys navy, strings green,
+   numbers orange, decoded strings purple, owned edit storage teal, dangling/invalid red */
+.nj-jsonview, .nj-jsonview-cmp {
+    --jv-struct: var(--nj-blue);
+    --jv-key: var(--nj-hl-key);
+    --jv-str: var(--nj-hl-string);
+    --jv-num: var(--nj-hl-number);
+    --jv-dec: var(--nj-hl-function);
+    --jv-own: var(--nj-hl-type);
+    --jv-bad: var(--nj-red);
+    --jv-line: color-mix(in srgb, currentColor 55%, var(--md-default-bg-color));
+}
+.md-typeset svg.nj-jsonview { min-width: 34rem; max-width: 42rem; }
+.nj-jsonview .nj-jsonview-c-struct { --c: var(--jv-struct); }
+.nj-jsonview .nj-jsonview-c-key { --c: var(--jv-key); }
+.nj-jsonview .nj-jsonview-c-str { --c: var(--jv-str); }
+.nj-jsonview .nj-jsonview-c-num { --c: var(--jv-num); }
+.nj-jsonview .nj-jsonview-c-dec { --c: var(--jv-dec); }
+.nj-jsonview .nj-jsonview-c-own { --c: var(--jv-own); }
+.nj-jsonview .nj-jsonview-c-bad { --c: var(--jv-bad); }
+.nj-jsonview .nj-jsonview-c-line { --c: var(--jv-line); }
+
+.nj-jsonview text { fill: currentColor; font-size: 13px; }
+.nj-jsonview text[class*="nj-jsonview-c-"] { fill: var(--c); }
+.nj-jsonview .nj-jsonview-h { font-size: 15px; font-weight: 600; fill-opacity: .85; }
+.nj-jsonview .nj-jsonview-sm2 { font-size: 14px; }
+.nj-jsonview .nj-jsonview-note { font-size: 13px; fill-opacity: .75; }
+.nj-jsonview .nj-jsonview-strong { font-weight: 600; fill-opacity: 1; }
+.nj-jsonview .nj-jsonview-tiny { font-size: 10.5px; fill-opacity: .7; }
+.nj-jsonview .nj-jsonview-mono { font-family: var(--md-code-font-family), monospace; font-size: 13px; }
+.nj-jsonview .nj-jsonview-sm { font-size: 12px; }
+.nj-jsonview .nj-jsonview-xs { font-size: 11px; }
+.nj-jsonview .nj-jsonview-muted { fill-opacity: .75; }
+.nj-jsonview .nj-jsonview-byte { font-size: 12px; }
+.nj-jsonview .nj-jsonview-kind { font-size: 12.5px; font-weight: 700; }
+
+.nj-jsonview .nj-jsonview-box { fill: var(--md-default-bg-color); stroke: var(--jv-line); stroke-width: 1.5; }
+.nj-jsonview .nj-jsonview-heap { fill: color-mix(in srgb, currentColor 7%, var(--md-default-bg-color)); stroke: var(--jv-line); stroke-width: 1.5; stroke-dasharray: 5 3; }
+.nj-jsonview .nj-jsonview-ribbon { fill: color-mix(in srgb, currentColor 4%, var(--md-default-bg-color)); stroke: var(--jv-line); stroke-width: 1.2; }
+.nj-jsonview .nj-jsonview-span { fill: color-mix(in srgb, var(--c) 18%, var(--md-default-bg-color)); }
+.nj-jsonview .nj-jsonview-frame { fill: none; stroke: var(--jv-line); stroke-width: 1.2; stroke-dasharray: 6 4; }
+.nj-jsonview .nj-jsonview-store { fill: color-mix(in srgb, var(--jv-own) 6%, var(--md-default-bg-color)); stroke: color-mix(in srgb, var(--jv-own) 55%, var(--md-default-bg-color)); stroke-width: 1.2; stroke-dasharray: 6 4; }
+.nj-jsonview .nj-jsonview-node { fill: color-mix(in srgb, var(--c) 12%, var(--md-default-bg-color)); stroke: var(--c); stroke-width: 1.5; }
+.nj-jsonview .nj-jsonview-node.nj-jsonview-hot { stroke-width: 3; }
+.nj-jsonview .nj-jsonview-node.nj-jsonview-gap { fill: var(--md-default-bg-color); stroke: var(--jv-bad); stroke-dasharray: 4 3; }
+.nj-jsonview .nj-jsonview-node.nj-jsonview-free { fill: none; stroke-dasharray: 3 3; }
+.nj-jsonview .nj-jsonview-sep { stroke: var(--jv-line); stroke-width: 1; fill: none; }
+.nj-jsonview .nj-jsonview-arr { stroke: var(--c); stroke-width: 1.5; fill: none; }
+.nj-jsonview .nj-jsonview-dash { stroke-dasharray: 4 3; }
+.nj-jsonview .nj-jsonview-head { fill: var(--c); }
+.nj-jsonview .nj-jsonview-bar { fill: color-mix(in srgb, var(--jv-struct) 30%, var(--md-default-bg-color)); stroke: var(--jv-struct); stroke-width: 1.2; }
+.nj-jsonview .nj-jsonview-bad {
+    fill: color-mix(in srgb, var(--jv-bad) 20%, var(--md-default-bg-color));
+    stroke: var(--jv-bad); stroke-width: 1.2; stroke-dasharray: 4 2;
+}
+.nj-jsonview .nj-jsonview-evt { stroke: var(--jv-bad); stroke-width: 2; fill: none; }
+.nj-jsonview .nj-jsonview-evt--ok { stroke: var(--jv-struct); stroke-dasharray: 4 3; }
+.nj-jsonview .nj-jsonview-onbad, .nj-jsonview .nj-jsonview-onok { font-size: 11.5px; fill-opacity: 1; }
+
+/* the edit stepper: without JS all frames are shown one below the other */
+.nj-jsonview-steps { margin: 1.5rem 0; }
+.md-typeset .nj-jsonview-step { display: block; width: 100%; max-width: none; margin: 0 0 1.5rem; }
+.nj-jsonview-step > figcaption {
+    margin: .25rem 0 0; font-size: .75rem; color: var(--md-default-fg-color--light); text-align: left;
+    max-width: none;
+}
+.nj-jsonview-step > figcaption code { font-size: .95em; }
+.nj-jsonview-step .nj-jsonview-scroll { overflow-x: auto; }
+.md-typeset .nj-jsonview-steps.is-enhanced .nj-jsonview-step { display: none; margin: 0; }
+.md-typeset .nj-jsonview-steps.is-enhanced .nj-jsonview-step.is-current { display: block; }
+.nj-jsonview-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0 0 .6rem; }
+.nj-jsonview-controls button {
+    min-height: 2.2rem; min-width: 2.2rem; padding: 0 .8rem;
+    font: inherit; font-size: .7rem; font-weight: 600; cursor: pointer;
+    color: var(--md-typeset-a-color); background: var(--md-default-bg-color);
+    border: 1.5px solid var(--md-typeset-a-color); border-radius: .4rem;
+}
+.nj-jsonview-controls button:hover:not(:disabled) { background: color-mix(in srgb, var(--md-typeset-a-color) 10%, var(--md-default-bg-color)); }
+.nj-jsonview-controls button:focus-visible { outline: 2px solid var(--md-accent-fg-color); outline-offset: 2px; }
+.nj-jsonview-controls button:disabled { opacity: .45; cursor: default; }
+.nj-jsonview-controls button[aria-current="step"], .nj-jsonview-controls button[aria-current="step"]:hover { color: var(--md-default-bg-color); background: var(--md-typeset-a-color); }
+.nj-jsonview-controls .nj-jsonview-status { font-size: .7rem; color: var(--md-default-fg-color--light); margin-left: .25rem; }
+@media (max-width: 44.9375em) {
+    .nj-jsonview-controls button { min-height: 44px; min-width: 44px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .nj-jsonview-steps.is-enhanced .nj-jsonview-step.is-current { animation: nj-jsonview-fade .25s ease-out; }
+}
+@keyframes nj-jsonview-fade { from { opacity: .3; } to { opacity: 1; } }
+
+/* json vs ordered_json vs editable document */
+.nj-jsonview-cmp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; margin: 1.2rem 0; }
+.nj-jsonview-cmp > div {
+    border: 1px solid var(--md-default-fg-color--lightest); border-radius: .4rem; padding: .5rem .6rem .6rem;
+    background: var(--md-code-bg-color); min-width: 0;
+}
+.nj-jsonview-cmp > div.nj-jsonview-cmp--best { border-color: var(--jv-struct); }
+.nj-jsonview-cmp .nj-jsonview-cmp-h { font-size: .7rem; font-weight: 600; margin: 0 0 .1rem; }
+.nj-jsonview-cmp .nj-jsonview-cmp-v { font-size: .64rem; color: var(--md-default-fg-color--light); margin: 0 0 .4rem; }
+.md-typeset .nj-jsonview-cmp pre { margin: 0; font-family: var(--md-code-font-family), monospace; font-size: .68rem; line-height: 1.5; white-space: pre; overflow-x: auto; background: none; color: var(--md-code-fg-color); }
+.nj-jsonview-cmp .nj-jsonview-bad { color: var(--jv-bad); font-weight: 600; text-decoration: underline wavy; text-underline-offset: 3px; }
+.nj-jsonview-cmp .nj-jsonview-ok { color: var(--jv-own); font-weight: 600; }
+@media (max-width: 44.9375em) {
+    .nj-jsonview-cmp { grid-template-columns: minmax(0, 1fr); }
+}

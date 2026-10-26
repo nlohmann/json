@@ -41,6 +41,9 @@ classDiagram
     style json_out_of_range fill:#CCCCFF
 ```
 
+<p class="nj-caption" markdown>Class hierarchy of the library's exceptions; arrows point from a derived class to its
+base class, and the highlighted box is `basic_json::out_of_range`.</p>
+
 ## Member functions
 
 - **what** - returns explanatory string

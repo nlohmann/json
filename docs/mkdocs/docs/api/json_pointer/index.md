@@ -36,6 +36,9 @@ flowchart LR
     parent["parent_pointer() returns /a/b"] -.-> B
 ```
 
+<p class="nj-caption" markdown>Boxes are the reference tokens in order; dotted arrows show which token each member
+function reads, removes, or adds to.</p>
+
 The diagram shows the reference tokens of the JSON pointer `/a/b/c`.
 
 ## Member types

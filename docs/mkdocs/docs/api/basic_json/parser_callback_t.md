@@ -27,6 +27,9 @@ table describes the values of the parameters `depth`, `event`, and `parsed`.
 --8<-- "images/callback_events.svg"
 </div>
 
+<p class="nj-caption" markdown>Parse events for a small JSON text: each coloured dot marks the position at which the
+parser calls the callback, and the legend on the right names the event per colour.</p>
+
 Discarding a value (i.e., returning `#!cpp false`) has different effects depending on the context in which function was
 called:
 

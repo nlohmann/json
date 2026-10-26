@@ -737,3 +737,46 @@ body:has(.nj-hero) .md-content {
         font-size: .68rem;
     }
 }
+
+/* figure captions: "Figure N." in bold, close to the figure, set in from the text column; figures and tables are
+   numbered per page, each with its own counter */
+.md-content__inner { counter-reset: nj-figure nj-table; }
+.md-typeset :is(.nj-caption, .nj-charts-caption) {
+    max-width: none;
+    margin: .3rem 2rem 1.5rem;
+    font-size: .75rem;
+    line-height: 1.5;
+    text-align: left;
+    color: var(--md-default-fg-color--light);
+}
+.md-typeset :is(.nj-fig-wrap, .railroad-wrap, .nj-charts-grid-wrap) + :is(.nj-caption, .nj-charts-caption) { margin-top: -1.1rem; }
+.md-typeset .nj-charts-grid-wrap + :is(.nj-caption, .nj-charts-caption) { margin-top: .3rem; }
+.md-typeset :is(.nj-caption, .nj-charts-caption)::before {
+    counter-increment: nj-figure;
+    content: "Figure " counter(nj-figure) ". ";
+    font-weight: 700;
+    color: var(--md-default-fg-color);
+}
+@media screen and (max-width: 44.9375em) {
+    .md-typeset :is(.nj-caption, .nj-charts-caption) { margin-inline: 1rem; }
+}
+
+/* table captions: "Table N." in bold, directly below the table, in the figure caption style */
+.md-typeset .nj-table-caption {
+    max-width: none;
+    margin: .3rem 2rem 1.5rem;
+    font-size: .75rem;
+    line-height: 1.5;
+    text-align: left;
+    color: var(--md-default-fg-color--light);
+}
+.md-typeset :is(.md-typeset__scrollwrap, .md-typeset__table) + .nj-table-caption { margin-top: -.4rem; }
+.md-typeset .nj-table-caption::before {
+    counter-increment: nj-table;
+    content: "Table " counter(nj-table) ". ";
+    font-weight: 700;
+    color: var(--md-default-fg-color);
+}
+@media screen and (max-width: 44.9375em) {
+    .md-typeset .nj-table-caption { margin-inline: 1rem; }
+}

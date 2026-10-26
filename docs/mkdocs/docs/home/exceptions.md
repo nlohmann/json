@@ -6,34 +6,34 @@
 
 All exceptions inherit from class `json::exception` (which in turn inherits from `std::exception`). It is used as the base class for all exceptions thrown by the `basic_json` class. This class can hence be used as "wildcard" to catch exceptions.
 
-``` mermaid
-classDiagram
-  direction LR
-    class `std::exception` {
-        <<interface>>
-    }
+The map shows the class tree and every exception id documented on this page; click an id to jump to its section.
 
-    class `json::exception` {
-        +const int id
-        +const char* what() const
-    }
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/exception_map.svg"
+</div>
 
-    class `json::parse_error` {
-        +const std::size_t byte
-    }
+<p class="nj-caption" markdown>The exception classes from `std::exception` down to the five families, each with the ids it can throw. Every id chip links to the section that describes it.</p>
 
-    class `json::invalid_iterator`
-    class `json::type_error`
-    class `json::out_of_range`
-    class `json::other_error`
+Which exception an element access throws depends on the function and on the type of the value:
 
-    `std::exception` <|-- `json::exception`
-    `json::exception` <|-- `json::parse_error`
-    `json::exception` <|-- `json::invalid_iterator`
-    `json::exception` <|-- `json::type_error`
-    `json::exception` <|-- `json::out_of_range`
-    `json::exception` <|-- `json::other_error`
+```mermaid
+flowchart LR
+    S{{"which call?"}} -->|"at(key)"| A{{"j is"}}
+    A -->|"object, key missing"| A1["out_of_range.403"]
+    A -->|"array or null"| A2["type_error.304"]
+    S -->|"at(index)"| B{{"j is"}}
+    B -->|"array, index >= size()"| B1["out_of_range.401"]
+    B -->|"object or null"| B2["type_error.304"]
+    S -->|"non-const operator[](key)"| C{{"j is"}}
+    C -->|"object or null"| C1["no exception: a missing key is inserted as null"]
+    C -->|"array"| C2["type_error.305"]
+    S -->|"value(key, default)"| D{{"j is"}}
+    D -->|"object, key missing"| D1["no exception: returns the default"]
+    D -->|"object, incompatible value type"| D2["type_error.302"]
+    D -->|"array or null"| D3["type_error.306"]
 ```
+
+<p class="nj-caption" markdown>Exceptions thrown by element access. Start at the call on the left, follow the edge that matches the type of `j`, and read the exception id (or "no exception") in the box at the end.</p>
 
 ### Switch off exceptions
 

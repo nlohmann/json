@@ -25,6 +25,8 @@ class vector ["std::vector<uint8_t>"]
 vector <|-- binary_t
 ```
 
+<p class="nj-caption" markdown>Class diagram of `json::binary_t`: it derives from `std::vector<uint8_t>` and adds functions to set, clear, query, and test an optional subtype.</p>
+
 By default, binary values are stored as `std::vector<std::uint8_t>`. This type can be changed by providing a template
 parameter to the `basic_json` type. To store binary subtypes, the storage type is extended and exposed as
 [`json::binary_t`](../api/basic_json/binary_t.md):

@@ -40,6 +40,9 @@ classDiagram
     style json_exception fill:#CCCCFF
 ```
 
+<p class="nj-caption" markdown>Class hierarchy of the library's exceptions; arrows point from a derived class to its
+base class, and the highlighted box is `basic_json::exception`.</p>
+
 Subclasses:
 
 - [`parse_error`](parse_error.md) for exceptions indicating a parse error

@@ -33,6 +33,14 @@ index. It gives you the read-only, type-inspection part of the `basic_json` inte
 actual `basic_json` value for a subtree, [`materialize()`](../api/basic_json_view/materialize.md) builds exactly the
 one [`parse()`](../api/basic_json/parse.md) would have produced for it.
 
+The same small text, parsed both ways:
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/json_view_layout.svg"
+</div>
+
+<p class="nj-caption" markdown>Top: the tree of separate heap allocations that `basic_json::parse()` builds. Bottom: `json_document::parse()` keeps the source text and builds one flat index of 16-byte nodes that point back into it, plus a buffer of decoded strings.</p>
+
 ## How to use it
 
 Include `<nlohmann/json_view.hpp>` in addition to (or instead of) `<nlohmann/json.hpp>`. Parse into a
@@ -83,6 +91,12 @@ A view is valid only while all of the following hold:
 Moving the `basic_json_document<>` itself is fine and does **not** invalidate its views: the index is a separate heap
 allocation that keeps its address across the move. Take a fresh view from [`root()`](../api/basic_json_document/root.md)
 whenever any of the other conditions above was not met.
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/json_view_lifetime.svg"
+</div>
+
+<p class="nj-caption" markdown>Four timelines of a document and its views, each bar showing when an object is alive or valid and when it dangles. Destroying the borrowed text, re-parsing, or shrinking the document invalidates the views taken before; moving the document does not.</p>
 
 A view can dangle, exactly like a `#!cpp std::string_view`: nothing stops you from using it after its document is
 gone. This is deliberate. A view is two pointers and trivially copyable; making it safe (a `#!cpp std::shared_ptr` in
@@ -274,6 +288,26 @@ or `ordered_json` value in place lossy. Say you parse a configuration file, patc
 - **`ordered_json`** keeps the key order, but still rewrites every number the same way: parsing has already reduced
   it to a `#!cpp double`/`#!cpp int64_t`, and there is no way back to how it was spelled in the source text.
 
+The patch of the example below (set `"host"`, add `"retries"`) written back by each of them:
+
+<div class="nj-jsonview-cmp" role="group" aria-label="The same patch written back by json, ordered_json, and json_editable_document">
+<div><p class="nj-jsonview-cmp-h"><code>json</code></p><p class="nj-jsonview-cmp-v">keys sorted, numbers rewritten</p><pre>{<span class="nj-jsonview-bad">"host"</span>:"db2",
+ "name":"cache",
+ "port":6379,
+ "price":<span class="nj-jsonview-bad">19.9</span>,
+ "retries":3}</pre></div>
+<div><p class="nj-jsonview-cmp-h"><code>ordered_json</code></p><p class="nj-jsonview-cmp-v">key order kept, numbers rewritten</p><pre>{"name":"cache",
+ "host":"db2",
+ "port":6379,
+ "price":<span class="nj-jsonview-bad">19.9</span>,
+ "retries":3}</pre></div>
+<div class="nj-jsonview-cmp--best"><p class="nj-jsonview-cmp-h"><code>json_editable_document</code></p><p class="nj-jsonview-cmp-v">order and spelling kept</p><pre>{"name":"cache",
+ "host":"db2",
+ "port":6379,
+ "price":<span class="nj-jsonview-ok">19.90</span>,
+ "retries":3}</pre></div>
+</div>
+
 An editable document keeps both. [`dump()`](../api/basic_json_view/dump.md) of an edited document writes members in
 document order -- a member [`set`](../api/basic_json_document/set.md) added goes at the end, exactly where it was
 inserted, and an [`erase`](../api/basic_json_document/erase.md)d member simply leaves a gap: everything around it
@@ -301,8 +335,8 @@ parsed into for as long as it is not itself replaced. So every [view](../api/bas
 an edit, including a previously obtained [`root()`](../api/basic_json_document/root.md), stays valid and, if it
 still refers to the edited value, sees the edit; a view of a value a later edit drops or replaces just keeps showing
 what it last held. New values go to storage the document allocates and owns on demand. The one thing an edit does
-invalidate is the **iterators** taken over an edited array or object: the first time one of its elements is set,
-appended to, inserted into, or erased, its elements move from the parsed, fixed layout to a growable block of links
+invalidate is the **iterators** taken over an edited array or object: the first time an element is added to it,
+inserted into it, erased from it, or replaced by a value that spans a different number of nodes, its elements move from the parsed, fixed layout to a growable block of links
 so that [`push_back`](../api/basic_json_document/push_back.md) can later grow it in amortized constant time --
 existing elements are not touched, but an iterator that was walking the old layout no longer matches. A string
 obtained with
@@ -311,6 +345,43 @@ edits. See [`basic_json_document`'s Edits](../api/basic_json_document/index.md#e
 [`set`'s Exception safety](../api/basic_json_document/set.md#exception-safety) for what an edit guarantees if it
 throws (the *basic* guarantee, not the strong one `dump()` and the read-only functions provide). How edits are kept in
 the index is described in the [architecture overview](../home/architecture.md#node-index-of-json-views).
+
+Step through the edits of a small document (the node fields follow the [architecture overview](../home/architecture.md#node-index-of-json-views)):
+
+<div class="nj-jsonview-steps" data-nj-jsonview-steps>
+<figure class="nj-jsonview-step" data-label="After parsing">
+<div class="nj-jsonview-scroll">
+--8<-- "images/json_view_edit_0.svg"
+</div>
+<figcaption>Step 1 of 5. After parsing: nine nodes in the parsed index, no owned storage yet.</figcaption>
+</figure>
+<figure class="nj-jsonview-step" data-label="set an existing member">
+<div class="nj-jsonview-scroll">
+--8<-- "images/json_view_edit_1.svg"
+</div>
+<figcaption>Step 2 of 5. <code>doc.set(doc.root(), "port", 6380)</code> overwrites the node of the integer in place; no member is added or removed, so the object keeps its parsed layout.</figcaption>
+</figure>
+<figure class="nj-jsonview-step" data-label="erase an array element">
+<div class="nj-jsonview-scroll">
+--8<-- "images/json_view_edit_2.svg"
+</div>
+<figcaption>Step 3 of 5. <code>doc.erase(doc.root()["tags"], 0)</code>: the array is edited for the first time, so its elements move to a block of links in owned storage. The node of <code>"eu"</code> stays in the index, but nothing refers to it any more; iterators over the array taken before are invalid.</figcaption>
+</figure>
+<figure class="nj-jsonview-step" data-label="push_back onto the array">
+<div class="nj-jsonview-scroll">
+--8<-- "images/json_view_edit_3.svg"
+</div>
+<figcaption>Step 4 of 5. <code>doc.push_back(doc.root()["tags"], "new")</code>: the new string gets its own node, its text goes to the buffer of edited text, and a link to it is appended to the block of the array.</figcaption>
+</figure>
+<figure class="nj-jsonview-step" data-label="set a new member">
+<div class="nj-jsonview-scroll">
+--8<-- "images/json_view_edit_4.svg"
+</div>
+<figcaption>Step 5 of 5. <code>doc.set(doc.root(), "retries", 3)</code>: a new member, so the object moves to a block too: copies of its keys, links to the values it already had, then the new key and a link to the new integer.</figcaption>
+</figure>
+</div>
+
+<p class="nj-caption" markdown>The node index and the owned storage of the document after each of five edits. Use *Back*, *Next*, or the numbered buttons to switch between the steps; without JavaScript all steps are shown one below the other.</p>
 
 ## Images
 
@@ -372,6 +443,8 @@ either.
 | **What you get** | a full tree you can read, write, and keep as long as you like | a sequence of callbacks; whatever your handler builds from them | a flat index plus, on demand, [`materialize()`](../api/basic_json_view/materialize.md)d `json`/`ordered_json` values for the parts you actually use | the same, plus [`dump()`](../api/basic_json_view/dump.md) of an edited document that keeps the member order and, with [`number_format::source`](../api/basic_json_view/number_format.md), the spelling of every untouched number |
 | **Typical use** | general-purpose JSON handling: config, request/response bodies you build or modify, anything you hold onto | validating or projecting a text into your own data structure without ever holding the whole thing as JSON | large or high-volume input where you only need part of it, or need it repeatedly, and can keep the source text (or a copy) alive for as long as the document lives | a document you read, patch a few fields of, and write back -- a configuration file, for instance -- where the rest of it should come back exactly as it was |
 | **Caching/reload** | not applicable -- re-parse, or roll your own serialization | not applicable | [`save()`](../api/basic_json_document/save.md)/[`load()`](../api/basic_json_document/load.md): cache the parsed index as an image and reload it without parsing | same, saving the document's current -- possibly edited -- state |
+
+<p class="nj-table-caption" markdown>Each column is one way to work with JSON in this library, and each row compares one property of them.</p>
 
 ## Version history
 

@@ -14,6 +14,14 @@ changed in it. The API overview is generated from the "Version history" section 
 [API pages](../../api/basic_json/index.md); it is not a change log, but helps to see whether a feature is available in
 the version you use.
 
+All releases at a glance (hover a marker for its version and date):
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/release_timeline.svg"
+</div>
+
+<p class="nj-caption" markdown>Releases from 1.0.0 to the latest one, on a time axis by year. Filled dots with a version label are minor or major releases, rings are patch releases.</p>
+
 ## Unreleased
 
 | Release | Date | Summary |

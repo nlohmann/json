@@ -126,6 +126,9 @@ basic_json(basic_json&& other) noexcept;
         F -->|"object"| ERR["throw type_error.301"]
     ```
 
+    <p class="nj-caption" markdown>Decision flow for an initializer list: hexagons are checks, edge labels are their
+    outcomes, and rectangles are the resulting value or exception.</p>
+
     The rules aim to create the best fit between a C++ initializer list and JSON values. The rationale is as follows:
     
     1. The empty initializer list is written as `#!cpp {}` which is exactly an empty JSON object.

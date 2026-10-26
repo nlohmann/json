@@ -53,7 +53,25 @@ See [binary values](../binary_values.md) for more information.
 | UBJSON (size)      | 58.6 %      | 92.3 %       | 86.8 %            | 97.4 %        |
 | UBJSON (size+type) | 55.9 %      | 92.3 %       | 85.0 %            | 95.0 %        |
 
-Sizes compared to minified JSON value; the smallest size per file is printed in bold.
+<p class="nj-table-caption" markdown>Size of each test file in each format, in percent of the minified JSON value; the smallest size per file is printed in bold. The (size) and (size+type) rows are written with the `use_size` and `use_type` options of [`to_bjdata`](../../api/basic_json/to_bjdata.md) and [`to_ubjson`](../../api/basic_json/to_ubjson.md).</p>
+
+<div class="nj-charts-grid-wrap" markdown>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_canada.svg"
+</div>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_twitter.svg"
+</div>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_citm_catalog.svg"
+</div>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_jeopardy.svg"
+</div>
+</div>
+<p class="nj-charts-caption" markdown>The table above as charts: size per base format relative to minified JSON (vertical line at
+100 %); the smallest format per file is drawn in a stronger colour than the others. The size and size+type variants of BJData and UBJSON are
+omitted here; see the table.</p>
 
 ## See also
 

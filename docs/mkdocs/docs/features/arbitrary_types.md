@@ -144,6 +144,8 @@ flowchart TD
     M -->|"no"| O["done"]
 ```
 
+<p class="nj-caption" markdown>Decision tree for choosing a `NLOHMANN_DEFINE_*` macro: answer the questions from top to bottom; each answer picks one part of the macro name, and the parts are combined in this order. The table below lists the resulting macros.</p>
+
 | Need access to private members                                   | Need only serialization                                           | Allow missing values when de-serializing                         | macro                                                                                                        |
 |------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
 | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | [**NLOHMANN_DEFINE_TYPE_INTRUSIVE**](../api/macros/nlohmann_define_type_intrusive.md)                        |
@@ -152,6 +154,8 @@ flowchart TD
 | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE**](../api/macros/nlohmann_define_type_non_intrusive.md)                |
 | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: green;">:octicons-check-circle-fill-24:</div> | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](../api/macros/nlohmann_define_type_non_intrusive.md)   |
 | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: grey;">:octicons-skip-fill-24:</div>          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](../api/macros/nlohmann_define_type_non_intrusive.md) |
+
+<p class="nj-table-caption" markdown>Macros for classes and structs without a base class. A green check means yes, a red cross means no, and a grey skip sign means the column does not apply, as a macro that only serializes never reads values.</p>
 
 For _derived_ classes and structs, use the following macros
 
@@ -164,11 +168,32 @@ For _derived_ classes and structs, use the following macros
 | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: green;">:octicons-check-circle-fill-24:</div> | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](../api/macros/nlohmann_define_derived_type.md)   |
 | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: grey;">:octicons-skip-fill-24:</div>          | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](../api/macros/nlohmann_define_derived_type.md) |
 
+<p class="nj-table-caption" markdown>Macros for derived classes and structs, read as Table 1.</p>
+
 !!! info "Implementation limits"
 
     - The current macro implementations are limited to at most 63 member variables. If you want to serialize/deserialize
       types with more than 63 member variables, you need to define the `to_json`/`from_json` functions manually.
     - For the `WITH_NAMES` variants the limit is halved to 31 member variables.
+
+To pick the macro for your own type and get code to start from, answer the questions below.
+
+<div class="nj-macro-chooser" data-variant="full" markdown>
+<div class="nj-mc-fallback" markdown>
+
+- Members are private: use an `INTRUSIVE` macro inside the class ([reference](../api/macros/nlohmann_define_type_intrusive.md){ data-nj-mc="intrusive" }).
+- All members are public, or you cannot edit the class: use a `NON_INTRUSIVE` macro in the class's namespace ([reference](../api/macros/nlohmann_define_type_non_intrusive.md){ data-nj-mc="non_intrusive" }).
+- The class adds members to a serializable base class: use a `DERIVED_TYPE` macro with the base class as second argument ([reference](../api/macros/nlohmann_define_derived_type.md){ data-nj-mc="derived" }).
+- Missing keys should keep their default values: append `_WITH_DEFAULT`; otherwise a missing key throws.
+- You only convert to JSON: append `_ONLY_SERIALIZE` instead.
+- JSON keys differ from the member names: append `_WITH_NAMES` and write `"key", member` pairs ([reference](../api/macros/nlohmann_define_type_with_names.md){ data-nj-mc="with_names" }).
+- Private members of a class you cannot edit: no macro works; write the conversion by hand ([third-party types](#how-do-i-convert-third-party-types){ data-nj-mc="third_party" }).
+- The type is not default constructible: only `_ONLY_SERIALIZE` works ([non-default-constructible types](#how-can-i-use-get-for-non-default-constructiblenon-copyable-types){ data-nj-mc="non_default" }).
+
+</div>
+</div>
+
+<p class="nj-caption" markdown>Macro chooser: each answer selects one part of the macro name; the generated program defines the type, calls the macro and converts a value to JSON and back. Combinations that no macro supports show the alternative instead of code.</p>
 
 ??? example "Example: using the `NLOHMANN_DEFINE_TYPE_*` macros"
 
@@ -298,6 +323,8 @@ flowchart LR
     C -->|"unqualified call, found via ADL"| D["free to_json(j, t) / from_json(j, t) in T's namespace"]
     B -->|"user specialization replaces the default"| E["user's adl_serializer specialization for T"]
 ```
+
+<p class="nj-caption" markdown>How a conversion between `json` and a type `T` is dispatched: the default `adl_serializer` calls the free `to_json`/`from_json` functions found by argument-dependent lookup, while a user specialization of `adl_serializer` replaces this path.</p>
 
 The library uses **JSON Serializers** to convert types to JSON.
 The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](https://en.cppreference.com/w/cpp/language/adl)).

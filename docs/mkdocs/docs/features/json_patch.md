@@ -7,6 +7,24 @@ of operations to apply to a JSON document. Operations address locations in the d
 [JSON Pointer](json_pointer.md) paths. With the [`patch`](../api/basic_json/patch.md) function, a JSON Patch is applied
 to the current JSON value by executing all operations from the patch, yielding the patched document as a new value.
 
+The following steps through one operation of each kind. The first three operations are those of the example below; the
+other three continue on its result.
+
+<div class="nj-patch" data-nj-patch markdown>
+
+| Operation                                                   | Before                                         | After                                           |
+|-------------------------------------------------------------|------------------------------------------------|-------------------------------------------------|
+| `{"op": "replace", "path": "/baz", "value": "boo"}`         | `{"baz": "qux", "foo": "bar"}`                 | `{"baz": "boo", "foo": "bar"}`                  |
+| `{"op": "add", "path": "/hello", "value": ["world"]}`       | `{"baz": "boo", "foo": "bar"}`                 | `{"baz": "boo", "foo": "bar", "hello": ["world"]}` |
+| `{"op": "remove", "path": "/foo"}`                          | `{"baz": "boo", "foo": "bar", "hello": ["world"]}` | `{"baz": "boo", "hello": ["world"]}`        |
+| `{"op": "move", "from": "/baz", "path": "/hello/1"}`        | `{"baz": "boo", "hello": ["world"]}`           | `{"hello": ["world", "boo"]}`                   |
+| `{"op": "copy", "from": "/hello/0", "path": "/greeting"}`   | `{"hello": ["world", "boo"]}`                  | `{"greeting": "world", "hello": ["world", "boo"]}` |
+| `{"op": "test", "path": "/greeting", "value": "world"}`     | `{"greeting": "world", "hello": ["world", "boo"]}` | unchanged (a failed test throws)            |
+
+</div>
+
+<p class="nj-caption" markdown>Stepper through the six operations: *Next* applies the next operation, *Back* undoes it, and *Reset* returns to the original document. The current operation is highlighted in the patch list, and the lines it changes are marked in the document.</p>
+
 !!! tip "Applying a patch without copying"
 
     [`patch`](../api/basic_json/patch.md) leaves the original value unchanged and returns the patched result as a copy.
@@ -38,6 +56,8 @@ flowchart LR
     S -->|"source.patch(patch)"| T["target"]
     P -.->|"applied to source, yields"| T
 ```
+
+<p class="nj-caption" markdown>How `diff` and `patch` relate: `diff(source, target)` yields a patch, and applying that patch to the source yields the target.</p>
 
 !!! success "Invariant"
 

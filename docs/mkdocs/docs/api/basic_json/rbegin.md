@@ -11,6 +11,10 @@ Returns an iterator to the reverse-beginning; that is, the last element.
 --8<-- "images/range-rbegin-rend.svg"
 </div>
 
+<p class="nj-caption" markdown>`rbegin()` points to the last element and `rend()` to the position before the first
+element. The upper row is the reversed sequence and the lower row the forward sequence; dashed arrows link each reverse
+iterator to the forward iterator it stores, and dashed cells are past-the-last positions.</p>
+
 ## Return value
 
 reverse iterator to the last element

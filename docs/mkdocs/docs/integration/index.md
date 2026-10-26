@@ -5,24 +5,31 @@ pick one:
 
 ```mermaid
 flowchart TD
-    A[Add the library to a C++ project] --> B{{Already using CMake?}}
-    B -- no --> C{{Using pkg-config or plain Makefiles?}}
-    C -- yes --> D[pkg-config]
-    C -- no --> E[Copy the single header]
-    B -- yes --> F{{Library installed system-wide?}}
-    F -- yes --> G["find_package()"]
-    F -- no --> H{{Use a package manager?}}
-    H -- yes --> I[Package manager]
-    H -- no --> J["add_subdirectory() or FetchContent"]
+    A[Add the library to a C++ project] --> B{{Using CMake?}}
+    B -- no --> C{{Package manager available?}}
+    C -- yes --> D["<b>Use a package manager</b><br>see Package Managers"]
+    C -- no --> E["<b>Copy the single header</b><br>see Header only"]
+    B -- yes --> F{{Already installed?}}
+    F -- yes --> G["<b>find_package</b><br>see CMake, External"]
+    F -- no --> H{{CMake 3.14 or later?}}
+    H -- yes --> I["<b>FetchContent</b><br>see CMake, FetchContent"]
+    H -- no --> J["<b>add_subdirectory</b><br>see CMake, Embedded"]
+    G --> T["<code>nlohmann_json::nlohmann_json</code>"]
+    I --> T
+    J --> T
 ```
 
-- **Copy the single header**, as described [below](#header-only) — no build-system integration required.
-- **CMake**: use [`find_package()`](cmake.md#external) if the library is already installed,
-  [`add_subdirectory()`](cmake.md#embedded) to embed the source tree, or [`FetchContent`](cmake.md#fetchcontent) to
-  download it at configure time; see [CMake](cmake.md).
-- **Package managers**: install the library with a package manager such as Homebrew, Conan, or vcpkg; see
-  [Package Managers](package_managers.md).
-- **pkg-config**: if you use bare Makefiles instead of CMake, [pkg-config](pkg-config.md) can supply the include flags
+<p class="nj-caption" markdown>Choosing an integration method: answer the questions in the hexagons from top to bottom to reach a method. All CMake methods end at the same target, `nlohmann_json::nlohmann_json`; the list below links to each method.</p>
+
+- **Single header**: copy [`json.hpp`](#header-only) into your project; no build-system integration required.
+- **CMake**, see [CMake](cmake.md):
+    - [`find_package()`](cmake.md#external) if the library is already installed;
+    - [`FetchContent`](cmake.md#fetchcontent) to download it at configure time (CMake 3.14 or later);
+    - [`add_subdirectory()`](cmake.md#embedded) to embed a vendored copy of the source tree;
+    - or [support both](cmake.md#supporting-both) with an option that selects installed or vendored.
+- **Package managers**: install the library with Homebrew, Conan, vcpkg, or one of the many others; see
+  [Package Managers](package_managers.md) for the full list.
+- **pkg-config**: if you use bare Makefiles instead of CMake, [pkg-config](pkg-config.md) supplies the include flags
   for an already-installed library.
 
 Once the library is integrated, see the [Migration Guide](migration_guide.md) for how to keep your code future-proof

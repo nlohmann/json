@@ -26,6 +26,9 @@ The parser callback distinguishes the following events:
 --8<-- "images/callback_events.svg"
 </div>
 
+<p class="nj-caption" markdown>Each coloured dot marks where the parser reports a `parse_event_t` event while reading
+the JSON text on the left; the legend on the right names the event per colour.</p>
+
 ??? example
 
     The following code parses a small JSON text with a parser callback that reports every event together with its

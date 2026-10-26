@@ -40,6 +40,22 @@ For example, the namespace name for version 3.11.2 with `JSON_DIAGNOSTICS` defin
 nlohmann::json_abi_diag_v3_11_2
 ```
 
+The name is assembled from these segments; pick a version and macros to see the resulting name:
+
+<figure class="nj-integration-ns" data-nj-integration-ns aria-label="How the inline namespace name is assembled from its segments">
+<div class="nj-integration-ns__strip" aria-live="polite">
+<span class="nj-integration-ns__seg nj-integration-ns__seg--root"><code>nlohmann</code><small>root namespace</small></span>
+<span class="nj-integration-ns__seg nj-integration-ns__seg--sep"><code>::</code><small>&nbsp;</small></span>
+<span class="nj-integration-ns__seg nj-integration-ns__seg--abi"><code>json_abi</code><small>always</small></span>
+<span class="nj-integration-ns__seg nj-integration-ns__seg--tag"><code>_diag</code><small>JSON_DIAGNOSTICS=1</small></span>
+<span class="nj-integration-ns__seg nj-integration-ns__seg--ver"><code>_v3_11_2</code><small>version 3.11.2</small></span>
+</div>
+<figcaption>Version 3.11.2 with <code>JSON_DIAGNOSTICS</code> defined to <code>1</code>. ABI tags are appended in the order of the
+list above, the version suffix comes last.</figcaption>
+</figure>
+
+<p class="nj-caption" markdown>The name of the inline namespace, assembled from its segments. Select a version and macros to see which ABI tags appear; a tag the chosen version does not have is disabled.</p>
+
 ## Purpose
 
 Several incompatibilities have been observed. Amongst the most common ones is linking code compiled with different
@@ -56,6 +72,8 @@ graph
     app --> json_diag
     app --> library
 ```
+
+<p class="nj-caption" markdown>The application uses the library with `JSON_DIAGNOSTICS=1` and links `some library`, which uses the same library version with `JSON_DIAGNOSTICS=0`. Arrows point from a component to what it uses.</p>
 
 In releases prior to 3.11.0, mixing any version of the JSON library with different `JSON_DIAGNOSTICS` settings would
 result in a crashing application. If `some_library` never passes instances of JSON library types to the application,

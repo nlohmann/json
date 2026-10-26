@@ -11,6 +11,9 @@ Returns an iterator to one past the last element.
 --8<-- "images/range-begin-end.svg"
 </div>
 
+<p class="nj-caption" markdown>`end()` points to the position after the last element and `begin()` to the first element;
+the dashed cell is the past-the-last position, which must not be dereferenced.</p>
+
 ## Return value
 
 iterator one past the last element

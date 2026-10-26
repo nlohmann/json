@@ -8,6 +8,19 @@ to point to the appropriate include directories and [`INTERFACE_COMPILE_FEATURES
 for the necessary C++11 flags. Most [package managers](package_managers.md) that provide a CMake package configuration
 for this library expose this same target.
 
+All ways of adding the library described below end at this one target:
+
+```mermaid
+flowchart LR
+    FP["<b>find_package()</b><br>installed package"] --> T
+    AS["<b>add_subdirectory()</b><br>embedded source tree"] --> T
+    FC["<b>FetchContent</b><br>downloaded at configure time"] --> T
+    PM["<b>Package manager</b><br>its CMake package"] --> T
+    T["<b>nlohmann_json::nlohmann_json</b><br>one INTERFACE target"] --> L["<b>target_link_libraries()</b><br>link it PRIVATE"]
+```
+
+<p class="nj-caption" markdown>The four ways to add the library in CMake all lead to the same `nlohmann_json::nlohmann_json` interface target, which a project links with `target_link_libraries`. The CMake options below apply to `add_subdirectory()` and `FetchContent`; installed packages have their options fixed at install time.</p>
+
 ### External
 
 To use this library from a CMake project, you can locate it directly with [`find_package()`](https://cmake.org/cmake/help/latest/command/find_package.html)

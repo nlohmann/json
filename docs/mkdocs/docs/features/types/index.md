@@ -64,6 +64,8 @@ basic_json .. json_value
 basic_json .. value_t
 ```
 
+<p class="nj-caption" markdown>Storage of a `basic_json` value: the enumeration `value_t` holds the type, and the union `json_value` holds the value, as a pointer for objects, arrays, strings, and binary values and directly for booleans and numbers.</p>
+
 ## Template arguments
 
 The data types to store a JSON value are derived from the template arguments passed to class `basic_json`:

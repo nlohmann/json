@@ -13,6 +13,8 @@ flowchart LR
     A --> V["bool: is the input valid JSON?"]
 ```
 
+<p class="nj-caption" markdown>The three entry points for parsing: `parse()` builds a `basic_json` value, optionally filtered by a parser callback, `sax_parse()` delivers events to a SAX handler, and `accept()` only checks whether the input is valid.</p>
+
 ## Input
 
 The [`parse`](../../api/basic_json/parse.md) function reads a JSON value from an input. The input can be

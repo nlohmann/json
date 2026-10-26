@@ -10,6 +10,9 @@ Returns an iterator to the first element.
 --8<-- "images/range-begin-end.svg"
 </div>
 
+<p class="nj-caption" markdown>`cbegin()` points to the first element, like `begin()`, and `end()` to the position after
+the last element; the dashed cell is the past-the-last position, which must not be dereferenced.</p>
+
 ## Return value
 
 iterator to the first element

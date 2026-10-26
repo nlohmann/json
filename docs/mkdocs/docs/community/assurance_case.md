@@ -41,6 +41,8 @@ flowchart LR
     E --> F[Trusted caller]
 ```
 
+<p class="nj-caption" markdown>The trust boundary: untrusted input enters on the left through the parser, the SAX interface, or the binary readers, and only a value tree reaches the trusted caller on the right.</p>
+
 ## Secure design
 
 - **Strict parsing.** The parser accepts exactly the JSON grammar of [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259).

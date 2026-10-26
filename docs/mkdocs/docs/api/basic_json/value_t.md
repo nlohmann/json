@@ -48,6 +48,9 @@ functions [`is_null`](is_null.md), [`is_object`](is_object.md), [`is_array`](is_
         F --> G[binary]
     ```
 
+    <p class="nj-caption" markdown>Arrows point from a type to the next greater type in the ordering used by
+    `operator<`.</p>
+
 !!! note "Types of numbers"
 
     There are three enumerators for numbers (`number_integer`, `number_unsigned`, and `number_float`) to distinguish

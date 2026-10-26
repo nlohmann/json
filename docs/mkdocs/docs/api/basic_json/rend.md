@@ -12,6 +12,10 @@ attempting to access it results in undefined behavior.
 --8<-- "images/range-rbegin-rend.svg"
 </div>
 
+<p class="nj-caption" markdown>`rend()` points to the position before the first element and `rbegin()` to the last
+element. The upper row is the reversed sequence and the lower row the forward sequence; dashed arrows link each reverse
+iterator to the forward iterator it stores, and dashed cells are past-the-last positions.</p>
+
 ## Return value
 
 reverse iterator to the element following the last element

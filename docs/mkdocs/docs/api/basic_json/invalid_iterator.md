@@ -40,6 +40,9 @@ classDiagram
     style json_invalid_iterator fill:#CCCCFF
 ```
 
+<p class="nj-caption" markdown>Class hierarchy of the library's exceptions; arrows point from a derived class to its
+base class, and the highlighted box is `basic_json::invalid_iterator`.</p>
+
 ## Member functions
 
 - **what** - returns explanatory string

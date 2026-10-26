@@ -13,6 +13,8 @@ placeholder and cannot be dereferenced. In case of null values, empty arrays, or
 --8<-- "images/range-begin-end.svg"
 </div>
 
+<p class="nj-caption" markdown>The range of `begin()` and `end()`: `begin()` refers to the first element, `end()` to the position after the last element, which must not be dereferenced.</p>
+
 ### Iteration order for objects
 
 When iterating over objects, values are ordered with respect to the `object_comparator_t` type which defaults to `std::less`. See the [types documentation](types/index.md#key-order) for more information.
@@ -117,6 +119,8 @@ sequence.
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/range-rbegin-rend.svg"
 </div>
+
+<p class="nj-caption" markdown>The range of `rbegin()` and `rend()` over the same elements: `rbegin()` refers to the last element and `rend()` to the position before the first one. Each reverse iterator stores an iterator to the element after the one it refers to.</p>
 
 ??? example "Example: reverse iteration with `rbegin()` and `rend()`"
 

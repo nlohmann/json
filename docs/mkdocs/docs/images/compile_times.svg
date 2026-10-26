@@ -1,0 +1,60 @@
+<svg class="nj-fig nj-charts nj-charts--compile" viewBox="0 0 470 516" role="img" aria-labelledby="nj-charts-ct nj-charts-ct-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-charts-ct">Change in compile time against the default configuration at -O0, Apple clang and G&#8203;CC 16</title>
+<desc id="nj-charts-ct-d">Grouped horizontal bars, negative is faster. json_fwd.hpp instead of json.hpp on a header-only translation unit: Apple clang -62 %, G&#8203;CC 16 -82 %; extern template on a parsing translation unit: Apple clang -7 %, G&#8203;CC 16 -21 %; JSON_NO_AUTOMATIC_UDLS on a model translation unit: Apple clang -11 %, G&#8203;CC 16 -11 %; JSON_NO_AUTOMATIC_UDLS on a parsing translation unit: Apple clang -1 %, G&#8203;CC 16 -2 %; JSON_HAS_FILESYSTEM=0 + JSON_NO_IO on a model translation unit: Apple clang -8 %, G&#8203;CC 16 -11 %; JSON_HAS_FILESYSTEM=0 on a model translation unit: Apple clang -5 %, G&#8203;CC 16 -9 %; JSON_NO_IO on a model translation unit: Apple clang -2 %, G&#8203;CC 16 -2 %; JSON_USE_GLOBAL_UDLS=0 on a model translation unit: Apple clang 0 %, G&#8203;CC 16 -1 %.</desc>
+<rect class="nj-charts-clang" x="8" y="10" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="26" y="20.5">Apple clang</text>
+<rect class="nj-charts-gcc" x="126" y="10" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="144" y="20.5">G&#8203;CC 16</text>
+<line class="nj-charts-grid" x1="47.4" y1="58" x2="47.4" y2="472"/>
+<text class="nj-charts-tick" x="47.4" y="488">&#8722;80 %</text>
+<line class="nj-charts-grid" x1="126.2" y1="58" x2="126.2" y2="472"/>
+<text class="nj-charts-tick" x="126.2" y="488">&#8722;60 %</text>
+<line class="nj-charts-grid" x1="205" y1="58" x2="205" y2="472"/>
+<text class="nj-charts-tick" x="205" y="488">&#8722;40 %</text>
+<line class="nj-charts-grid" x1="283.8" y1="58" x2="283.8" y2="472"/>
+<text class="nj-charts-tick" x="283.8" y="488">&#8722;20 %</text>
+<text class="nj-charts-tick" x="362.6" y="488">0 %</text>
+<text class="nj-charts-tick nj-charts-tick--l" x="8" y="506">&#8592; faster</text>
+<text class="nj-charts-tick nj-charts-tick--r" x="462" y="506">slower &#8594;</text>
+<text class="nj-charts-rowlabel" x="8" y="62"><tspan class="nj-charts-code">json_fwd.hpp instead of json.hpp</tspan><tspan class="nj-charts-sub"> &#183; header-only TU</tspan></text>
+<path class="nj-charts-clang" d="M362.6 70 H122.32 Q118.32 70 118.32 74 V78 Q118.32 82 122.32 82 H362.6 Z"><title>json_fwd.hpp instead of json.hpp, header-only TU (Apple clang): &#8722;62 %</title></path>
+<text class="nj-charts-val" x="367.6" y="80.5">&#8722;62 %</text>
+<path class="nj-charts-gcc" d="M362.6 84 H43.52 Q39.52 84 39.52 88 V92 Q39.52 96 43.52 96 H362.6 Z"><title>json_fwd.hpp instead of json.hpp, header-only TU (G&#8203;CC 16): &#8722;82 %</title></path>
+<text class="nj-charts-val" x="367.6" y="94.5">&#8722;82 %</text>
+<text class="nj-charts-rowlabel" x="8" y="114"><tspan class="nj-charts-code">extern template</tspan><tspan class="nj-charts-sub"> &#183; parsing TU</tspan></text>
+<path class="nj-charts-clang" d="M362.6 122 H339.02 Q335.02 122 335.02 126 V130 Q335.02 134 339.02 134 H362.6 Z"><title>extern template, parsing TU (Apple clang): &#8722;7 %</title></path>
+<text class="nj-charts-val" x="367.6" y="132.5">&#8722;7 %</text>
+<path class="nj-charts-gcc" d="M362.6 136 H283.86 Q279.86 136 279.86 140 V144 Q279.86 148 283.86 148 H362.6 Z"><title>extern template, parsing TU (G&#8203;CC 16): &#8722;21 %</title></path>
+<text class="nj-charts-val" x="367.6" y="146.5">&#8722;21 %</text>
+<text class="nj-charts-rowlabel" x="8" y="166"><tspan class="nj-charts-code">JSON_NO_AUTOMATIC_UDLS</tspan><tspan class="nj-charts-sub"> &#183; model TU</tspan></text>
+<path class="nj-charts-clang" d="M362.6 174 H323.26 Q319.26 174 319.26 178 V182 Q319.26 186 323.26 186 H362.6 Z"><title>JSON_NO_AUTOMATIC_UDLS, model TU (Apple clang): &#8722;11 %</title></path>
+<text class="nj-charts-val" x="367.6" y="184.5">&#8722;11 %</text>
+<path class="nj-charts-gcc" d="M362.6 188 H323.26 Q319.26 188 319.26 192 V196 Q319.26 200 323.26 200 H362.6 Z"><title>JSON_NO_AUTOMATIC_UDLS, model TU (G&#8203;CC 16): &#8722;11 %</title></path>
+<text class="nj-charts-val" x="367.6" y="198.5">&#8722;11 %</text>
+<text class="nj-charts-rowlabel" x="8" y="218"><tspan class="nj-charts-code">JSON_NO_AUTOMATIC_UDLS</tspan><tspan class="nj-charts-sub"> &#183; parsing TU</tspan></text>
+<path class="nj-charts-clang" d="M362.6 226 H362.6 Q358.66 226 358.66 229.94 V234.06 Q358.66 238 362.6 238 H362.6 Z"><title>JSON_NO_AUTOMATIC_UDLS, parsing TU (Apple clang): &#8722;1 %</title></path>
+<text class="nj-charts-val" x="367.6" y="236.5">&#8722;1 %</text>
+<path class="nj-charts-gcc" d="M362.6 240 H358.72 Q354.72 240 354.72 244 V248 Q354.72 252 358.72 252 H362.6 Z"><title>JSON_NO_AUTOMATIC_UDLS, parsing TU (G&#8203;CC 16): &#8722;2 %</title></path>
+<text class="nj-charts-val" x="367.6" y="250.5">&#8722;2 %</text>
+<text class="nj-charts-rowlabel" x="8" y="270"><tspan class="nj-charts-code">JSON_HAS_FILESYSTEM=0 + JSON_NO_IO</tspan><tspan class="nj-charts-sub"> &#183; model TU</tspan></text>
+<path class="nj-charts-clang" d="M362.6 278 H335.08 Q331.08 278 331.08 282 V286 Q331.08 290 335.08 290 H362.6 Z"><title>JSON_HAS_FILESYSTEM=0 + JSON_NO_IO, model TU (Apple clang): &#8722;8 %</title></path>
+<text class="nj-charts-val" x="367.6" y="288.5">&#8722;8 %</text>
+<path class="nj-charts-gcc" d="M362.6 292 H323.26 Q319.26 292 319.26 296 V300 Q319.26 304 323.26 304 H362.6 Z"><title>JSON_HAS_FILESYSTEM=0 + JSON_NO_IO, model TU (G&#8203;CC 16): &#8722;11 %</title></path>
+<text class="nj-charts-val" x="367.6" y="302.5">&#8722;11 %</text>
+<text class="nj-charts-rowlabel" x="8" y="322"><tspan class="nj-charts-code">JSON_HAS_FILESYSTEM=0</tspan><tspan class="nj-charts-sub"> &#183; model TU</tspan></text>
+<path class="nj-charts-clang" d="M362.6 330 H346.9 Q342.9 330 342.9 334 V338 Q342.9 342 346.9 342 H362.6 Z"><title>JSON_HAS_FILESYSTEM=0, model TU (Apple clang): &#8722;5 %</title></path>
+<text class="nj-charts-val" x="367.6" y="340.5">&#8722;5 %</text>
+<path class="nj-charts-gcc" d="M362.6 344 H331.14 Q327.14 344 327.14 348 V352 Q327.14 356 331.14 356 H362.6 Z"><title>JSON_HAS_FILESYSTEM=0, model TU (G&#8203;CC 16): &#8722;9 %</title></path>
+<text class="nj-charts-val" x="367.6" y="354.5">&#8722;9 %</text>
+<text class="nj-charts-rowlabel" x="8" y="374"><tspan class="nj-charts-code">JSON_NO_IO</tspan><tspan class="nj-charts-sub"> &#183; model TU*</tspan></text>
+<path class="nj-charts-clang" d="M362.6 382 H358.72 Q354.72 382 354.72 386 V390 Q354.72 394 358.72 394 H362.6 Z"><title>JSON_NO_IO, model TU (Apple clang): &#8722;2 %</title></path>
+<text class="nj-charts-val" x="367.6" y="392.5">&#8722;2 %</text>
+<path class="nj-charts-gcc" d="M362.6 396 H358.72 Q354.72 396 354.72 400 V404 Q354.72 408 358.72 408 H362.6 Z"><title>JSON_NO_IO, model TU (G&#8203;CC 16): &#8722;2 %</title></path>
+<text class="nj-charts-val" x="367.6" y="406.5">&#8722;2 %</text>
+<text class="nj-charts-rowlabel" x="8" y="426"><tspan class="nj-charts-code">JSON_USE_GLOBAL_UDLS=0</tspan><tspan class="nj-charts-sub"> &#183; model TU*</tspan></text>
+<path class="nj-charts-clang" d="M362.6 434 h0.5 v12 h-0.5 Z"><title>JSON_USE_GLOBAL_UDLS=0, model TU (Apple clang): 0 %</title></path>
+<text class="nj-charts-val" x="367.6" y="444.5">0 %</text>
+<path class="nj-charts-gcc" d="M362.6 448 H362.6 Q358.66 448 358.66 451.94 V456.06 Q358.66 460 362.6 460 H362.6 Z"><title>JSON_USE_GLOBAL_UDLS=0, model TU (G&#8203;CC 16): &#8722;1 %</title></path>
+<text class="nj-charts-val" x="367.6" y="458.5">&#8722;1 %</text>
+<line class="nj-charts-zero" x1="362.6" y1="58" x2="362.6" y2="472"/>
+</svg>

@@ -125,3 +125,5 @@ for (int i = 0; i < 1000; ++i) {
 | access to valid array index       | reference to existing value is returned                                                                                                              | const reference to existing value is returned                               |
 | access to non-existing object key | reference to newly inserted `#!json null` value is returned                                                                                          | **undefined behavior**; [runtime assertion](../assertions.md) in debug mode |
 | access to invalid array index     | reference to newly inserted `#!json null` value is returned; any index between previous maximal index and passed index are filled with `#!json null` | **undefined behavior**; [runtime assertion](../assertions.md) in debug mode |
+
+<p class="nj-table-caption" markdown>Result of [`operator[]`](../../api/basic_json/operator%5B%5D.md) in each scenario, for a non-const and a const value.</p>

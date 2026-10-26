@@ -4,6 +4,8 @@ This library has experimental support for C++ modules, introduced in C++20. The 
 
 Please be aware that the module is experimental and a full test is outstanding, and the exported symbols are subject to change.
 
+Importing the module instead of including the header reduces the compile time of every translation unit that uses the library, at the price of building the module once. The [Compile times](../integration/compile_times.md#use-c20-modules) page has measurements and the one-off cost.
+
 ## Requirements
 The `nlohmann.json` module requires that the build system is configured to build and resolve modules when imported. Obviously, as modules were introduced in C++20, this feature can only be used in C++20 and subsequent versions.
 

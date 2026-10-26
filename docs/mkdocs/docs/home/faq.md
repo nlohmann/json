@@ -192,6 +192,8 @@ The value is a `json`, and printing it produces JSON text. Convert it first: `#!
 
 Use `contains` or `find`. Do not test with the non-const `operator[]`: like `std::map::operator[]`, it inserts a `null`
 value for a missing key. See [Does this key exist?](../features/element_access/index.md#does-this-key-exist).
+For choosing between `value`, `contains`/`find`, `at`, `operator[]`, and JSON Pointer, see the decision flow in
+[Element access](../features/element_access/index.md).
 
 ### Reading a value with a fallback
 
