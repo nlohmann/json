@@ -324,8 +324,9 @@ representation using the length of the byte array.
 ### MessagePack
 
 [MessagePack](binary_formats/messagepack.md) supports binary values and subtypes. If a subtype is given, the ext family
-is used. The library will choose the smallest representation among fixext1, fixext2, fixext4, fixext8, ext8, ext16, and
-ext32. The subtype is then added as a signed 8-bit integer.
+is used. The library will choose the smallest representation among fixext1, fixext2, fixext4, fixext8, fixext16, ext8,
+ext16, and ext32. The subtype is then written as the signed 8-bit ext type: subtypes 128 to 255 map to the negative
+(reserved) ext types, and on reading the ext type is exposed as an unsigned subtype from 0 to 255.
 
 If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
