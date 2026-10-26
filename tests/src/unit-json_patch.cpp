@@ -15,6 +15,7 @@ using nlohmann::json;
 #endif
 
 #include <fstream>
+#include <limits>
 #include <string>
 #include <vector>
 #include "make_test_data_available.hpp"
@@ -490,7 +491,9 @@ TEST_CASE("JSON patch")
         }
 
         // A.13. Invalid JSON Patch Document
-        // not applicable
+        // not applicable: the library cannot tell the duplicate "op" members
+        // apart, because the parser resolves them (the last one is kept); see
+        // "duplicate member names in an operation" below
 
         SECTION("A.14. Escape Ordering")
         {
@@ -2119,5 +2122,206 @@ TEST_CASE_TEMPLATE("JSON patch - diff round trip on hand-made documents", Json, 
         roundtrip(Json::parse("[]"), Json::parse("{}"));
         roundtrip(Json::parse("{\"a\":[]}"), Json::parse("{\"a\":{}}"));
         roundtrip(Json(1), Json::parse("[1]"));
+    }
+}
+
+TEST_CASE("JSON patch - behavior documented in the API reference")
+{
+    SECTION("duplicate member names in an operation")
+    {
+        // RFC 6902, A.13: the parser resolves the duplicates (the last one
+        // is kept), so this is a "remove" and not an "add"
+        const json patch = json::parse(R"([{"op": "add", "op": "remove", "path": "/a"}])");
+        CHECK(patch == json::parse(R"([{"op": "remove", "path": "/a"}])"));
+        CHECK(json({{"a", 1}, {"b", 2}}).patch(patch) == json({{"b", 2}}));
+    }
+
+    SECTION("add with a leading zero in an array index")
+    {
+        const json patch = R"([{"op": "add", "path": "/01", "value": 1}])"_json;
+        json doc = json::array();
+#if !defined(JSON_NOEXCEPTION)
+        CHECK_THROWS_AS(doc.patch(patch), json::parse_error&);
+        CHECK_THROWS_AS(doc.patch_inplace(patch), json::parse_error&);
+#endif
+        CHECK(doc == json::array());
+    }
+
+    SECTION("test compares numbers by value")
+    {
+        const json doc = R"({"a": 1, "b": 0, "c": 1.5})"_json;
+        CHECK(doc.patch(R"([{"op": "test", "path": "/a", "value": 1.0}])"_json) == doc);
+        CHECK(doc.patch(R"([{"op": "test", "path": "/b", "value": -0.0}])"_json) == doc);
+        CHECK(doc.patch(R"([{"op": "test", "path": "/c", "value": 1.5}])"_json) == doc);
+        CHECK_THROWS_AS(doc.patch(R"([{"op": "test", "path": "/a", "value": 2}])"_json), json::other_error&);
+        CHECK_THROWS_AS(doc.patch(R"([{"op": "test", "path": "/a", "value": "1"}])"_json), json::other_error&);
+    }
+
+    SECTION("test ignores the order of object members, but not the order of array elements")
+    {
+        const json doc = R"({"o": {"x": 1, "y": 2}, "a": [1, 2]})"_json;
+        CHECK(doc.patch(R"([{"op": "test", "path": "/o", "value": {"y": 2, "x": 1}}])"_json) == doc);
+        CHECK(doc.patch(R"([{"op": "test", "path": "/a", "value": [1, 2]}])"_json) == doc);
+        CHECK_THROWS_AS(doc.patch(R"([{"op": "test", "path": "/a", "value": [2, 1]}])"_json), json::other_error&);
+    }
+
+    SECTION("test on a path that does not exist")
+    {
+        const json doc = R"({"a": 1})"_json;
+        // with a "value" member, the failed lookup is a failed test
+        CHECK_THROWS_AS(doc.patch(R"([{"op": "test", "path": "/b", "value": 1}])"_json), json::other_error&);
+        CHECK_THROWS_AS(doc.patch(R"([{"op": "test", "path": "/b", "value": null}])"_json), json::other_error&);
+        // without it, an exception is thrown, too; which one depends on the
+        // order of evaluation of the operands of ==, so it is not checked
+        CHECK_THROWS(doc.patch(R"([{"op": "test", "path": "/b"}])"_json));
+    }
+
+    SECTION("patch() has the strong guarantee")
+    {
+        const json doc = R"({"a": [1, 2], "o": {"k": "v"}})"_json;
+        const json before = doc;
+
+        const std::vector<json> failing =
+        {
+            // remove of a member that does not exist
+            R"([{"op": "add", "path": "/n", "value": 1}, {"op": "remove", "path": "/missing"}])"_json,
+            // replace of a member that does not exist
+            R"([{"op": "remove", "path": "/a/0"}, {"op": "replace", "path": "/missing", "value": 1}])"_json,
+            // move from a member that does not exist
+            R"([{"op": "add", "path": "/n", "value": 1}, {"op": "move", "from": "/missing", "path": "/m"}])"_json,
+            // copy from a member that does not exist
+            R"([{"op": "add", "path": "/n", "value": 1}, {"op": "copy", "from": "/missing", "path": "/m"}])"_json,
+            // out-of-range array index
+            R"([{"op": "add", "path": "/n", "value": 1}, {"op": "add", "path": "/a/5", "value": 1}])"_json,
+            // failing test after a successful operation
+            R"([{"op": "remove", "path": "/o"}, {"op": "test", "path": "/a", "value": []}])"_json,
+        };
+        for (const auto& patch : failing)
+        {
+            CAPTURE(patch.dump())
+            CHECK_THROWS_AS(doc.patch(patch), json::exception&);
+            CHECK(doc == before);
+
+            json copy = doc;
+            CHECK_THROWS_AS(copy.patch(patch), json::exception&);
+            CHECK(copy == before);
+        }
+    }
+}
+
+TEST_CASE("JSON patch - diff behavior documented in the API reference")
+{
+    SECTION("path is a verbatim prefix")
+    {
+        // not escaped and not validated
+        CHECK(json::diff(1, 2) == R"([{"op": "replace", "path": "", "value": 2}])"_json);
+        CHECK(json::diff(1, 2, "abc") == R"([{"op": "replace", "path": "abc", "value": 2}])"_json);
+        CHECK(json::diff(1, 2, "/root") == R"([{"op": "replace", "path": "/root", "value": 2}])"_json);
+        // an escaped token in a non-root prefix is kept as given
+        CHECK(json::diff(R"({"a": 1})"_json, R"({"a": 2})"_json, "/x~1y/~0")
+              == R"([{"op": "replace", "path": "/x~1y/~0/a", "value": 2}])"_json);
+        CHECK(json::diff(R"({"a": 1})"_json, R"({"a": 2})"_json, "/p")
+              == R"([{"op": "replace", "path": "/p/a", "value": 2}])"_json);
+    }
+
+    SECTION("keys are escaped in the paths")
+    {
+        const json source = json::object();
+        const json target =
+        {
+            {"", 0}, {"/", 1}, {"~", 2}, {"~1", 3}, {"~01", 4}
+        };
+        const json patch = json::diff(source, target);
+        REQUIRE(patch.size() == 5);
+
+        // the order of the operations is not checked
+        json paths = json::object();
+        for (const auto& op : patch)
+        {
+            CHECK(op["op"] == "add");
+            paths[op["path"].get<std::string>()] = op["value"];
+        }
+        CHECK(paths == json({{"/", 0}, {"/~1", 1}, {"/~0", 2}, {"/~01", 3}, {"/~001", 4}}));
+        CHECK(source.patch(patch) == target);
+    }
+
+    SECTION("NaN is not equal to itself")
+    {
+        const json nan = std::numeric_limits<json::number_float_t>::quiet_NaN();
+        const json patch = json::diff(nan, nan);
+        CHECK(patch.size() == 1);
+        CHECK(patch[0]["op"] == "replace");
+        CHECK(patch[0]["path"] == "");
+        CHECK(patch[0]["value"].is_number_float());
+        CHECK(nan.patch(patch) != nan);
+
+        // a NaN in a patch is serialized as null
+        CHECK(json::parse(patch.dump())[0]["value"].is_null());
+
+        const json nested = {{"a", {1, nan}}};
+        const json nested_patch = json::diff(nested, nested);
+        CHECK(nested_patch.size() == 1);
+        CHECK(nested_patch[0]["path"] == "/a/1");
+
+        // infinity is equal to itself
+        const json inf = std::numeric_limits<json::number_float_t>::infinity();
+        CHECK(json::diff(inf, inf).empty());
+    }
+
+    SECTION("discarded values are not equal to themselves")
+    {
+        const json discarded(json::value_t::discarded);
+        const json patch = json::diff(discarded, discarded);
+        CHECK(patch.size() == 1);
+        CHECK(patch[0]["op"] == "replace");
+        CHECK(patch[0]["path"] == "");
+        CHECK(patch[0]["value"].is_discarded());
+        CHECK(discarded.patch(patch) != discarded);
+    }
+
+    SECTION("numbers that compare equal produce no operation")
+    {
+        CHECK(json::diff(json(1), json(1.0)).empty());
+        CHECK(json::diff(json(1.0), json(1)).empty());
+        CHECK(json::diff(json(1U), json(1)).empty());
+        CHECK(json::diff(json(1), json(1U)).empty());
+        CHECK(json::diff(json(0.0), json(-0.0)).empty());
+
+        // the patched value keeps the number type of the source
+        const json source = 1;
+        const json patched = source.patch(json::diff(source, json(1.0)));
+        CHECK(patched.is_number_integer());
+        CHECK(patched == json(1.0));
+
+        // different values are replaced
+        CHECK(json::diff(json(1), json(2.0)) == R"([{"op": "replace", "path": "", "value": 2.0}])"_json);
+        CHECK(json::diff(json(1), json(-1)) == R"([{"op": "replace", "path": "", "value": -1}])"_json);
+        CHECK(json::diff(json(1.0), json(1.5)) == R"([{"op": "replace", "path": "", "value": 1.5}])"_json);
+        CHECK(json::diff(json(1), json("1")) == R"([{"op": "replace", "path": "", "value": "1"}])"_json);
+    }
+
+    SECTION("binary values")
+    {
+        const json a = json::binary({1, 2});
+        const json b = json::binary({1, 3});
+        CHECK(json::diff(a, a).empty());
+
+        const json patch = json::diff(a, b);
+        CHECK(patch.size() == 1);
+        CHECK(patch[0]["op"] == "replace");
+        CHECK(patch[0]["path"] == "");
+        CHECK(patch[0]["value"].is_binary());
+        CHECK(a.patch(patch) == b);
+
+        // serialized, the binary value is an object
+        const json parsed = json::parse(patch.dump());
+        CHECK(parsed[0]["value"].is_object());
+        CHECK(parsed[0]["value"] == R"({"bytes": [1, 3], "subtype": null})"_json);
+    }
+
+    SECTION("a difference as a whole is a replace of the root")
+    {
+        CHECK(json::diff(json::array({1}), json::object()) == R"([{"op": "replace", "path": "", "value": {}}])"_json);
+        CHECK(json::diff(json(nullptr), json::array()) == R"([{"op": "replace", "path": "", "value": []}])"_json);
     }
 }
