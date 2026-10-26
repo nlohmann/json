@@ -23593,6 +23593,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstdint> // uint64_t
 #include <cstdlib> // strtoull
 #include <cstring> // memchr, memcmp, memcpy
+#include <functional> // less
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO
@@ -23608,6 +23609,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
+
+// #include <nlohmann/detail/meta/void_t.hpp>
 
 // #include <nlohmann/detail/string_concat.hpp>
 
@@ -23718,6 +23721,26 @@ JSON_HEDLEY_ALWAYS_INLINE array_index_status parse_array_index(const StringType&
     idx = static_cast<SizeType>(res);
     return array_index_status::ok;
 }
+
+/// whether two keys of type @a StringType are equivalent under @a Compare
+/// exactly if they are equal: std::less<StringType> and std::less<>
+template<typename Compare, typename StringType>
+struct is_less_comparator : std::false_type {};
+
+template<typename StringType>
+struct is_less_comparator<std::less<StringType>, StringType> : std::true_type {};
+
+template<typename StringType>
+struct is_less_comparator<std::less<void>, StringType> : std::true_type {};
+
+/// whether the objects of type @a ObjectType find a key of type @a StringType
+/// exactly if it equals a stored key
+template<typename ObjectType, typename StringType, typename = void>
+struct finds_equal_keys : std::false_type {};
+
+template<typename ObjectType, typename StringType>
+struct finds_equal_keys<ObjectType, StringType, void_t<typename ObjectType::key_compare, typename ObjectType::key_type>>
+    : conjunction<is_less_comparator<typename ObjectType::key_compare, StringType>, std::is_same<typename ObjectType::key_type, StringType>> {};
 
 }  // namespace detail
 
@@ -24174,49 +24197,157 @@ class json_pointer
         return object_member_impl(object, key, detail::priority_tag<1> {});
     }
 
-    /// @brief look up @a key in @a members without inserting it
-    ///
-    /// Uses the same search as @ref object_member, so that both compile to the
-    /// same code for std::map.
+    /// @brief append a null value to @a array, like operator[] with the size of @a array
+    template<typename BasicJsonType>
+    static BasicJsonType& array_append(BasicJsonType& array)
+    {
+        auto& elements = *array.m_data.m_value.array;
+        const auto old_capacity = array.container_capacity();
+        elements.emplace_back();
+        return array.set_parent_after_insert(elements.back(), old_capacity);
+    }
+
+    /// @brief add @a key, which is missing, to @a object
+    template<typename BasicJsonType>
+    static auto object_add_impl(BasicJsonType& object, const string_t& key, detail::priority_tag<1> /*unused*/)
+    -> decltype(object.m_data.m_value.object->emplace(key, nullptr), std::declval<BasicJsonType&>())
+    {
+        const auto old_capacity = object.container_capacity();
+        const auto it = object.m_data.m_value.object->emplace(key, nullptr).first;
+        return object.set_parent_after_insert(it->second, old_capacity);
+    }
+
+    template<typename BasicJsonType>
+    static BasicJsonType& object_add_impl(BasicJsonType& object, const string_t& key, detail::priority_tag<0> /*unused*/)
+    {
+        return object.operator[](key);
+    }
+
+    template<typename BasicJsonType>
+    static BasicJsonType& object_add(BasicJsonType& object, const string_t& key)
+    {
+        return object_add_impl(object, key, detail::priority_tag<1> {});
+    }
+
+    /// @brief search @a key in @a members: the result is where the key is or,
+    /// for objects that can insert at a position (std::map), where it belongs
     template<typename ObjectType>
-    static auto object_find_impl(ObjectType& members, const string_t& key, detail::priority_tag<1> /*unused*/)
+    static auto object_search_impl(ObjectType& members, const string_t& key, detail::priority_tag<1> /*unused*/)
     -> decltype(members.key_comp()(key, members.lower_bound(key)->first), members.lower_bound(key))
     {
-        const auto it = members.lower_bound(key);
-        return (it != members.end() && !members.key_comp()(key, it->first)) ? it : members.end();
+        return members.lower_bound(key);
     }
 
     template<typename ObjectType>
-    static auto object_find_impl(ObjectType& members, const string_t& key, detail::priority_tag<0> /*unused*/)
+    static auto object_search_impl(ObjectType& members, const string_t& key, detail::priority_tag<0> /*unused*/)
     -> decltype(members.find(key))
     {
         return members.find(key);
     }
 
     template<typename ObjectType>
-    static auto object_find(ObjectType& members, const string_t& key)
-    -> decltype(object_find_impl(members, key, detail::priority_tag<1> {}))
+    static auto object_search(ObjectType& members, const string_t& key)
+    -> decltype(object_search_impl(members, key, detail::priority_tag<1> {}))
     {
-        return object_find_impl(members, key, detail::priority_tag<1> {});
+        return object_search_impl(members, key, detail::priority_tag<1> {});
+    }
+
+    /// @brief whether @a it, the result of @ref object_search for @a key, points to @a key
+    ///
+    /// With std::less, the key at the lower bound is equivalent to @a key
+    /// exactly if it is equal to it, and comparing for equality is cheaper.
+    template<typename ObjectType, typename Iterator,
+             detail::enable_if_t<detail::finds_equal_keys<ObjectType, string_t>::value, int> = 0>
+    static auto object_search_found_impl(ObjectType& members, const Iterator& it, const string_t& key, detail::priority_tag<2> /*unused*/)
+    -> decltype(members.lower_bound(key), it->first == key)
+    {
+        return it != members.end() && it->first == key;
+    }
+
+    template<typename ObjectType, typename Iterator>
+    static auto object_search_found_impl(ObjectType& members, const Iterator& it, const string_t& key, detail::priority_tag<1> /*unused*/)
+    -> decltype(members.key_comp()(key, it->first), members.lower_bound(key), bool())
+    {
+        return it != members.end() && !members.key_comp()(key, it->first);
+    }
+
+    template<typename ObjectType, typename Iterator>
+    static bool object_search_found_impl(ObjectType& members, const Iterator& it, const string_t& /*key*/, detail::priority_tag<0> /*unused*/)
+    {
+        return it != members.end();
+    }
+
+    template<typename ObjectType, typename Iterator>
+    static bool object_search_found(ObjectType& members, const Iterator& it, const string_t& key)
+    {
+        return object_search_found_impl(members, it, key, detail::priority_tag<2> {});
+    }
+
+    /// @brief insert @a key, which is missing, into @a object at @a it, the
+    /// result of @ref object_search for @a key
+    template<typename BasicJsonType, typename Iterator>
+    static auto object_insert_impl(BasicJsonType& object, const Iterator& it, const string_t& key, detail::priority_tag<1> /*unused*/)
+    -> decltype(object.m_data.m_value.object->emplace_hint(it, key, nullptr), std::declval<BasicJsonType&>())
+    {
+        const auto old_capacity = object.container_capacity();
+        const auto pos = object.m_data.m_value.object->emplace_hint(it, key, nullptr);
+        return object.set_parent_after_insert(pos->second, old_capacity);
+    }
+
+    template<typename BasicJsonType, typename Iterator>
+    static BasicJsonType& object_insert_impl(BasicJsonType& object, const Iterator& /*it*/, const string_t& key, detail::priority_tag<0> /*unused*/)
+    {
+        return object_add(object, key);
+    }
+
+    template<typename BasicJsonType, typename Iterator>
+    static BasicJsonType& object_insert(BasicJsonType& object, const Iterator& it, const string_t& key)
+    {
+        return object_insert_impl(object, it, key, detail::priority_tag<1> {});
     }
 
     /*!
     @brief undoes the change @ref get_unchecked_create made to an existing value
 
     @ref get_unchecked walks existing values without changing them. At the
-    first reference token it cannot resolve, @ref get_unchecked_create makes
-    exactly one change to an existing value: it converts a null value, inserts
-    a key into an object, or appends to an array. Everything it creates
-    afterwards lies below that change. If a later step throws, the destructor
-    of this guard reverts that one change, which removes everything created
-    after it, so the value is left as it was (strong exception safety). The
-    guard needs no try/catch and therefore also compiles with JSON_NOEXCEPTION.
+    first reference token that does not select an existing value, @ref
+    get_unchecked_create makes exactly one change to an existing value: it
+    converts a null value, inserts a key into an object, or grows an array.
+    Everything it creates afterwards lies below that change. If a later step
+    throws, the destructor of this guard reverts that one change, which
+    removes everything created after it, so the value is left as it was
+    (strong exception safety). The guard needs no try/catch and therefore also
+    compiles with JSON_NOEXCEPTION.
     */
     template<typename BasicJsonType>
     class get_unchecked_rollback
     {
       public:
-        get_unchecked_rollback() = default;
+        /// record the change that resolving the reference token @a token makes to @a value
+        get_unchecked_rollback(BasicJsonType* value, const string_t* token)
+            : m_value(value)
+            , m_key(token)
+        {
+            if (value->is_null())
+            {
+                // keep the null value (with its base class and positions) and
+                // continue with a fresh null value in its place, which is what
+                // assigning an array or object to it would have left there
+                m_saved_null.swap(*value);
+                m_change = change::null_converted;
+            }
+            else if (value->is_object())
+            {
+                m_change = change::key_inserted;
+            }
+            else
+            {
+                JSON_ASSERT(value->is_array());
+                m_old_size = value->m_data.m_value.array->size();
+                m_change = change::array_grown;
+            }
+        }
+
         get_unchecked_rollback(const get_unchecked_rollback&) = delete;
         get_unchecked_rollback(get_unchecked_rollback&&) = delete;
         get_unchecked_rollback& operator=(const get_unchecked_rollback&) = delete;
@@ -24224,12 +24355,26 @@ class json_pointer
 
         ~get_unchecked_rollback()
         {
+            if (JSON_HEDLEY_UNLIKELY(m_change != change::none))
+            {
+                undo();
+            }
+        }
+
+        /// keep the change
+        void commit() noexcept
+        {
+            m_change = change::none;
+        }
+
+      private:
+        JSON_HEDLEY_NEVER_INLINE void undo() noexcept
+        {
             switch (m_change)
             {
                 case change::null_converted:
-                    // the copy of the null value also brings back its base
-                    // class and its positions
-                    *m_value = std::move(*m_saved_null);
+                    // the values created since go away with m_saved_null
+                    m_value->swap(m_saved_null);
                     break;
                 case change::key_inserted:
                     m_value->m_data.m_value.object->erase(*m_key);
@@ -24243,37 +24388,6 @@ class json_pointer
             }
         }
 
-        /// record that the null value @a value, of which @a saved is a copy, is about to be converted
-        void null_converted(BasicJsonType* value, BasicJsonType* saved) noexcept
-        {
-            m_value = value;
-            m_saved_null = saved;
-            m_change = change::null_converted;
-        }
-
-        /// record that @a key, a missing key, is about to be inserted into the object @a value
-        void key_inserted(BasicJsonType* value, const string_t* key) noexcept
-        {
-            m_value = value;
-            m_key = key;
-            m_change = change::key_inserted;
-        }
-
-        /// record that the array @a value is about to grow from @a old_size elements
-        void array_grown(BasicJsonType* value, typename BasicJsonType::size_type old_size) noexcept
-        {
-            m_value = value;
-            m_old_size = old_size;
-            m_change = change::array_grown;
-        }
-
-        /// keep all changes
-        void commit() noexcept
-        {
-            m_change = change::none;
-        }
-
-      private:
         enum class change
         {
             none,
@@ -24282,11 +24396,11 @@ class json_pointer
             array_grown
         };
 
-        change m_change = change::none;
-        BasicJsonType* m_value = nullptr;
-        const string_t* m_key = nullptr;
+        BasicJsonType* m_value;
+        const string_t* m_key;
         typename BasicJsonType::size_type m_old_size = 0;
-        BasicJsonType* m_saved_null = nullptr;
+        change m_change = change::none;
+        BasicJsonType m_saved_null {};
     };
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -24672,11 +24786,11 @@ class json_pointer
 
     Complexity: Linear in the length of the JSON pointer.
 
-    Exception safety: Strong guarantee. This function only walks existing
-    values up to the last reference token. Inserting a key into an object or
-    growing an array for the last reference token is strongly exception safe
-    by itself; any other change is made by @ref get_unchecked_create, which
-    undoes it if it throws.
+    Exception safety: Strong guarantee. This function walks existing values
+    until the first reference token that does not select one. If that is the
+    last reference token, inserting the key into the object or growing the
+    array is strongly exception safe by itself; any other change is made by
+    @ref get_unchecked_create, which undoes it if a later step throws.
 
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
@@ -24685,28 +24799,31 @@ class json_pointer
     template<typename BasicJsonType>
     BasicJsonType& get_unchecked(BasicJsonType* ptr) const
     {
-        if (reference_tokens.empty())
+        const auto* token = reference_tokens.data();
+        const auto* const end = token + reference_tokens.size();
+        if (token == end)
         {
             return *ptr;
         }
         if (ptr->is_null())
         {
             // the null value is converted to an array or an object
-            return get_unchecked_create(ptr, reference_tokens.data());
+            return get_unchecked_create(ptr, token, end);
         }
 
-        // all reference tokens but the last one: walk existing values only
-        const auto& last_token = reference_tokens.back();
-        for (const auto* token = reference_tokens.data(); token != &last_token; ++token)
+        // walk existing values; the walk itself inserts nothing, which keeps
+        // the loop fast (insertions are done below or in get_unchecked_create)
+        typename BasicJsonType::object_t::iterator it;
+        do
         {
             if (ptr->is_object())
             {
                 auto& members = *ptr->m_data.m_value.object;
-                const auto it = object_find(members, *token);
-                if (it == members.end())
+                it = object_search(members, *token);
+                if (!object_search_found(members, it, *token))
                 {
-                    // the key is inserted
-                    return get_unchecked_create(ptr, token);
+                    // the key is inserted below or in get_unchecked_create
+                    break;
                 }
                 ptr = &it->second;
             }
@@ -24714,21 +24831,31 @@ class json_pointer
             {
                 if (is_dash(*token))
                 {
-                    // an element is appended
-                    return get_unchecked_create(ptr, token);
+                    if (token + 1 == end)
+                    {
+                        // explicitly treat "-" as index beyond the end
+                        return array_append(*ptr);
+                    }
+                    // an element is appended in get_unchecked_create
+                    break;
+                }
+                if (token + 1 == end)
+                {
+                    // convert array index to number; unchecked access
+                    return ptr->operator[](array_index<BasicJsonType>(*token));
                 }
                 const auto idx = array_index<BasicJsonType>(*token);
                 if (idx >= ptr->m_data.m_value.array->size())
                 {
-                    // the array is padded with null values
-                    return get_unchecked_create(ptr, token);
+                    // the array is padded in get_unchecked_create
+                    break;
                 }
                 ptr = &(*ptr->m_data.m_value.array)[idx];
             }
             else if (ptr->is_null())
             {
-                // the null value is converted to an array or an object
-                return get_unchecked_create(ptr, token);
+                // the null value is converted in get_unchecked_create
+                break;
             }
             else
             {
@@ -24736,82 +24863,49 @@ class json_pointer
                 throw_unresolved(*token, ptr);
             }
         }
+        while (++token != end);
 
-        // the last reference token: insert a missing key or grow the array
-        if (ptr->is_object())
+        if (token == end)
         {
-            // use unchecked object access
-            return object_member(*ptr, last_token);
+            return *ptr;
         }
-        if (ptr->is_array())
+        if (token + 1 == end && ptr->is_object())
         {
-            // explicitly treat "-" as index beyond the end; otherwise convert
-            // array index to number; unchecked access
-            const auto idx = is_dash(last_token)
-                             ? ptr->m_data.m_value.array->size()
-                             : array_index<BasicJsonType>(last_token);
-            return ptr->operator[](idx);
+            // insert the missing key where the walk found it belongs
+            return object_insert(*ptr, it, *token);
         }
-        if (ptr->is_null())
-        {
-            // the null value is converted to an array or an object
-            return get_unchecked_create(ptr, &last_token);
-        }
-        // primitive value with a reference token left
-        throw_unresolved(last_token, ptr);
+        return get_unchecked_create(ptr, token, end);
     }
 
     /*!
     @brief create the values for the reference tokens from @a first on
 
     Continues @ref get_unchecked at the first reference token that does not
-    select an existing value. That token changes @a ptr, an existing value
-    (see @ref get_unchecked_rollback); all later tokens only change values
-    created here.
+    select an existing value. That token changes @a ptr, an existing value (see
+    @ref get_unchecked_rollback); all later tokens only change values created
+    here.
 
     @param[in] ptr    the value the reference token @a first is applied to
     @param[in] first  the first reference token to resolve (an element of
                       @ref reference_tokens)
+    @param[in] end    the end of @ref reference_tokens
 
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.404  if the JSON pointer can not be resolved
     */
     template<typename BasicJsonType>
-    JSON_HEDLEY_NEVER_INLINE BasicJsonType& get_unchecked_create(BasicJsonType* ptr, const string_t* first) const
+    JSON_HEDLEY_NEVER_INLINE static BasicJsonType& get_unchecked_create(BasicJsonType* ptr, const string_t* first, const string_t* end)
     {
-        if (ptr->is_null())
-        {
-            // the copy keeps the base class and the positions of the null
-            // value; it must outlive the guard
-            BasicJsonType saved_null = *ptr;
-            get_unchecked_rollback<BasicJsonType> rollback;
-            rollback.null_converted(ptr, &saved_null);
-            BasicJsonType& result = create_values(ptr, first);
-            rollback.commit();
-            return result;
-        }
-
-        get_unchecked_rollback<BasicJsonType> rollback;
-        if (ptr->is_object())
-        {
-            rollback.key_inserted(ptr, first);
-        }
-        else
-        {
-            JSON_ASSERT(ptr->is_array());
-            rollback.array_grown(ptr, ptr->m_data.m_value.array->size());
-        }
-        BasicJsonType& result = create_values(ptr, first);
+        get_unchecked_rollback<BasicJsonType> rollback(ptr, first);
+        BasicJsonType& result = create_values(ptr, first, end);
         rollback.commit();
         return result;
     }
 
     /// the loop of @ref get_unchecked_create
     template<typename BasicJsonType>
-    BasicJsonType& create_values(BasicJsonType* ptr, const string_t* first) const
+    static BasicJsonType& create_values(BasicJsonType* ptr, const string_t* first, const string_t* end)
     {
-        const auto* const end = reference_tokens.data() + reference_tokens.size();
         for (const auto* token = first; token != end; ++token)
         {
             const auto& reference_token = *token;
@@ -24831,16 +24925,25 @@ class json_pointer
                     return std::isdigit(x);
                 });
 
-                // change value to an array for array indices or "-" or to object otherwise
-                *ptr = (nums || reference_token == "-")
-                       ? detail::value_t::array
-                       : detail::value_t::object;
+                // change value to an array for array indices or "-" or to an
+                // object otherwise; every null value here is a fresh one (see
+                // get_unchecked_rollback), so converting it in place leaves
+                // the same value as assigning an array or object to it
+                if (nums || is_dash(reference_token))
+                {
+                    ptr->template convert_null_to<typename BasicJsonType::array_t>();
+                }
+                else
+                {
+                    ptr->template convert_null_to<typename BasicJsonType::object_t>();
+                }
             }
 
             if (ptr->is_object())
             {
-                // use unchecked object access
-                ptr = &object_member(*ptr, reference_token);
+                // the key is missing: the object is new, or get_unchecked did
+                // not find the key
+                ptr = &object_add(*ptr, reference_token);
             }
             else
             {
@@ -24850,7 +24953,7 @@ class json_pointer
                 if (is_dash(reference_token))
                 {
                     // explicitly treat "-" as index beyond the end
-                    ptr = &ptr->operator[](ptr->m_data.m_value.array->size());
+                    ptr = &array_append(*ptr);
                 }
                 else
                 {
