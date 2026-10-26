@@ -6179,7 +6179,7 @@ template<typename T>
 using enable_if_not_view_t = enable_if_t<negation<is_json_view<T>>::value, int>;
 
 // the boolean of j, a boolean
-template < typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0 >
+template<typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0>
 typename BasicJsonType::boolean_t boolean_value(const BasicJsonType& j)
 {
     return *j.template get_ptr<const typename BasicJsonType::boolean_t*>();
@@ -6192,7 +6192,7 @@ bool boolean_value(const View& v)
 }
 
 // the string of j, a string
-template < typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0 >
+template<typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0>
 const typename BasicJsonType::string_t& string_value(const BasicJsonType& j)
 {
     return *j.template get_ptr<const typename BasicJsonType::string_t*>();
@@ -6207,7 +6207,7 @@ typename View::string_t string_value(const View& v)
 
 // the binary value of j, a binary value (never a view: a view of a JSON text
 // holds no binary values)
-template < typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0 >
+template<typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0>
 const typename BasicJsonType::binary_t& binary_value(const BasicJsonType& j)
 {
     return *j.template get_ptr<const typename BasicJsonType::binary_t*>();
@@ -6220,7 +6220,7 @@ typename View::basic_json_type::binary_t binary_value(const View& /*unused*/)
 }
 
 // the elements of j, an array, for a range-based for loop
-template < typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0 >
+template<typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0>
 const typename BasicJsonType::array_t& array_elements(const BasicJsonType& j)
 {
     return *j.template get_ptr<const typename BasicJsonType::array_t*>();
@@ -6260,7 +6260,7 @@ void from_json(const BasicJsonType& j, std::optional<T>& opt)
 
 // read a number value of any of the three number types into val;
 // returns false (leaving val untouched) if j is not a number
-template < typename BasicJsonType, typename ArithmeticType, enable_if_not_view_t<BasicJsonType> = 0 >
+template<typename BasicJsonType, typename ArithmeticType, enable_if_not_view_t<BasicJsonType> = 0>
 bool get_number_value(const BasicJsonType& j, ArithmeticType& val)
 {
     switch (static_cast<value_t>(j))
@@ -6452,7 +6452,7 @@ auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines
 }
 
 // (for a view, array_t is read element by element below)
-template < typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0 >
+template<typename BasicJsonType, enable_if_not_view_t<BasicJsonType> = 0>
 inline void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType::array_t& arr, priority_tag<3> /*unused*/)
 {
     arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
@@ -6461,7 +6461,7 @@ inline void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType:
 // fill a std::array from the JSON array j: the size is checked once and the
 // elements are read in order, so a short array converts the elements it has and
 // then throws the out_of_range error at() would throw for the first missing one
-template < typename BasicJsonType, typename T, std::size_t N, enable_if_not_view_t<BasicJsonType> = 0 >
+template<typename BasicJsonType, typename T, std::size_t N, enable_if_not_view_t<BasicJsonType> = 0>
 void from_json_std_array(const BasicJsonType& j, std::array<T, N>& arr)
 {
     const auto& inner_array = *j.template get_ptr<const typename BasicJsonType::array_t*>();
@@ -6684,7 +6684,7 @@ void from_json_object_assign(ConstructibleObjectType& obj, Key&& key, Value&& va
     obj.emplace(std::forward<Key>(key), std::forward<Value>(value));
 }
 
-template < typename BasicJsonType, typename ConstructibleObjectType, enable_if_not_view_t<BasicJsonType> = 0 >
+template<typename BasicJsonType, typename ConstructibleObjectType, enable_if_not_view_t<BasicJsonType> = 0>
 void from_json_object_impl(const BasicJsonType& j, ConstructibleObjectType& ret)
 {
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
@@ -6843,7 +6843,7 @@ void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
 // read a map with enum keys from an object, using the enum's own from_json for
 // the keys (e.g., from NLOHMANN_JSON_SERIALIZE_ENUM); this is the form written
 // with JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
-template < typename BasicJsonType, typename Map, enable_if_not_view_t<BasicJsonType> = 0 >
+template<typename BasicJsonType, typename Map, enable_if_not_view_t<BasicJsonType> = 0>
 inline bool from_json_enum_keyed_object(const BasicJsonType& j, Map& m, std::true_type /*key is enum*/)
 {
     if (!j.is_object())
@@ -6966,8 +6966,8 @@ struct is_adl_only_from_json_source : std::is_same<T, from_json_adl::probe> {};
 
 struct from_json_fn
 {
-    template < typename BasicJsonType, typename T,
-               enable_if_t < !is_adl_only_from_json_source<BasicJsonType>::value, int > = 0 >
+    template<typename BasicJsonType, typename T,
+             enable_if_t<negation<is_adl_only_from_json_source<BasicJsonType>>::value, int> = 0>
     auto operator()(const BasicJsonType& j, T && val) const
     noexcept(noexcept(from_json(j, std::forward<T>(val))))
     -> decltype(from_json(j, std::forward<T>(val)))
@@ -6975,8 +6975,8 @@ struct from_json_fn
         return from_json(j, std::forward<T>(val));
     }
 
-    template < typename SourceType, typename T,
-               enable_if_t < is_adl_only_from_json_source<SourceType>::value, int > = 0 >
+    template<typename SourceType, typename T,
+             enable_if_t<is_adl_only_from_json_source<SourceType>::value, int> = 0>
     auto operator()(const SourceType& j, T && val) const
     noexcept(noexcept(from_json_adl::fn {}(j, std::forward<T>(val))))
     -> decltype(from_json_adl::fn {}(j, std::forward<T>(val)))

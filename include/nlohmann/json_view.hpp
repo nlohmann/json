@@ -922,7 +922,7 @@ class basic_json_view
     /// vectors of the types converted directly (faster than the library's
     /// from_json()) and containers of views (no from_json() reads them: a view
     /// is no value of BasicJsonType); other containers are read by from_json()
-    template < typename U, typename A, typename std::enable_if < detail::view::is_direct_value<U, BasicJsonType, basic_json_view>::value, int >::type = 0 >
+    template<typename U, typename A, detail::enable_if_t<detail::view::is_direct_value<U, BasicJsonType, basic_json_view>::value, int> = 0>
     std::vector<U, A> get_impl(detail::view::value_tag<std::vector<U, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
         return detail::view::vector_value<basic_json_view, U, A>(*this);
@@ -952,7 +952,7 @@ class basic_json_view
                         ? 2 : static_cast<int>(reads_view<T>::value) >;
 
     /// types whose from_json() reads views, without materialize()
-    template < typename T, typename std::enable_if < reads_view<T>::value && std::is_default_constructible<T>::value, int >::type = 0 >
+    template<typename T, detail::enable_if_t<detail::conjunction<reads_view<T>, std::is_default_constructible<T>>::value, int> = 0>
     T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<1> /*unused*/) const
     {
         auto v = T();
