@@ -17849,7 +17849,7 @@ class binary_reader
 
         // the declared size bounds where the document ends: an embedded
         // document must end before the terminator of the document that contains it
-        const std::size_t unsigned_size = static_cast<std::size_t>(document_size);
+        const auto unsigned_size = static_cast<std::size_t>(document_size);
         const std::size_t document_end = unsigned_size > (std::numeric_limits<std::size_t>::max)() - document_start
                                          ? (std::numeric_limits<std::size_t>::max)()
                                          : document_start + unsigned_size;
