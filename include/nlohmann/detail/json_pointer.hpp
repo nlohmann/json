@@ -243,6 +243,13 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(const json_pointer& ptr)
     {
+        // insert() must not be given iterators into the vector it inserts
+        // into: append a copy when a pointer is appended to itself
+        if (JSON_HEDLEY_UNLIKELY(&ptr == this))
+        {
+            return *this /= json_pointer(ptr);
+        }
+
         reference_tokens.insert(reference_tokens.end(),
                                 ptr.reference_tokens.begin(),
                                 ptr.reference_tokens.end());

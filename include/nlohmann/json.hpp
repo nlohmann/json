@@ -6950,6 +6950,15 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/patch/
     void patch_inplace(const basic_json& json_patch)
     {
+        // the operations below change *this while iterating json_patch: apply
+        // a copy when a value is applied as patch to itself
+        if (JSON_HEDLEY_UNLIKELY(&json_patch == this))
+        {
+            const basic_json json_patch_copy = json_patch;
+            patch_inplace(json_patch_copy);
+            return;
+        }
+
         basic_json& result = *this;
         // the valid JSON Patch operations
         enum class patch_operations {add, remove, replace, move, copy, test, invalid};
