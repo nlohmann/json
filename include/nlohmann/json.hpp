@@ -7012,7 +7012,6 @@ public:
 
             switch (parent.m_data.m_type)
             {
-                case value_t::null:
                 case value_t::object:
                 {
                     // use operator[] to add value
@@ -7044,6 +7043,7 @@ public:
 
                 // the parent of an "add" target must be an object or array
                 // (see #4292)
+                case value_t::null:
                 case value_t::string:
                 case value_t::boolean:
                 case value_t::number_integer:

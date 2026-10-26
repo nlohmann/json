@@ -235,6 +235,9 @@ class binary_reader
         /// UBJSON/BJData: the type marker of an optimized container, so that
         /// its elements are read without one of their own; 0 otherwise
         char_int_type type_marker;
+        /// BSON: the position right after this document, according to the
+        /// size it declares
+        std::size_t end_position = 0;
         /// BSON: the size this document declares, in bytes
         std::int32_t declared_size = 0;
         /// whether to close this container with end_object() or end_array()
@@ -371,6 +374,23 @@ class binary_reader
             return false;
         }
 
+        // the smallest document is the size prefix and the terminator
+        if (JSON_HEDLEY_UNLIKELY(document_size < 5))
+        {
+            return bson_document_size_error("document size ", document_size, " is less than 5");
+        }
+
+        // the declared size bounds where the document ends: an embedded
+        // document must end before the terminator of the document that contains it
+        const auto unsigned_size = static_cast<std::size_t>(document_size);
+        const std::size_t document_end = unsigned_size > (std::numeric_limits<std::size_t>::max)() - document_start
+                                         ? (std::numeric_limits<std::size_t>::max)()
+                                         : document_start + unsigned_size;
+        if (JSON_HEDLEY_UNLIKELY(!container_stack.empty() && document_end >= container_stack.back().end_position))
+        {
+            return bson_document_size_error("document size ", document_size, " exceeds the size of the enclosing document");
+        }
+
         if (JSON_HEDLEY_UNLIKELY(!enter_container(is_object, detail::unknown_size())))
         {
             return false;
@@ -378,6 +398,7 @@ class binary_reader
 
         container_frame& frame = container_stack.back();
         frame.start_position = document_start;
+        frame.end_position = document_end;
         frame.declared_size = document_size;
         return true;
     }
@@ -434,6 +455,13 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("element list")))
             {
                 return false;
+            }
+
+            // an element needs at least its name's terminator, and the
+            // document its own terminator, within the declared size
+            if (JSON_HEDLEY_UNLIKELY(chars_read + 2 > container_stack.back().end_position))
+            {
+                return bson_document_size_error("document size ", container_stack.back().declared_size, " is too small for its content");
             }
 
             const std::size_t element_type_parse_position = chars_read;
@@ -584,7 +612,44 @@ class binary_reader
         }
         result.set_subtype(subtype);
 
+        // the "old binary" subtype 0x02 starts with an int32 that repeats the
+        // size of the payload following it; the payload does not include it
+        if (subtype == 0x02)
+        {
+            return get_bson_old_binary(len, result);
+        }
+
         return get_binary(len, result);
+    }
+
+    /*!
+    @brief Parses the payload of a BSON binary value with subtype 0x02.
+    @param[in] len  The length of the binary value, including the inner int32.
+    @param[in,out] result  A reference to the binary variable where the payload
+                           (without the inner int32) is to be stored.
+    @pre len >= 0
+    @return `true` if the inner length was present and matches @a len
+    */
+    template<typename NumberType>
+    bool get_bson_old_binary(const NumberType len, binary_t& result)
+    {
+        if (JSON_HEDLEY_UNLIKELY(len < 4))
+        {
+            return bson_length_error("length of binary subtype 0x02 must be at least 4, is ", len, "binary");
+        }
+
+        std::int32_t inner_length{};
+        if (JSON_HEDLEY_UNLIKELY((!get_number<std::int32_t, true>(inner_length))))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(static_cast<std::int64_t>(inner_length) != static_cast<std::int64_t>(len) - 4))
+        {
+            return bson_length_error("inner length of binary subtype 0x02 does not match the payload size; inner length is ", inner_length, "binary");
+        }
+
+        return get_binary(inner_length, result);
     }
 
     /*!
@@ -1218,6 +1283,10 @@ class binary_reader
         // level as required by RFC 8949, Section 3.2.3
         bool indefinite = false;
 
+        // the chunk currently being validated; only used for the chunks of an
+        // indefinite-length string when the UTF-8 check can do something
+        string_t chunk;
+
         while (true)
         {
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("string")))
@@ -1237,24 +1306,80 @@ class binary_reader
             }
 
             // a break marker closes the indefinite-length string; outside
-            // of one it falls through to the error below
+            // of one it falls through to the error below. Every chunk has
+            // been checked on its own, so there is nothing left to check.
             if (indefinite && current == 0xFF)
             {
-                return check_string_utf8(result, context);
-            }
-
-            if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(result, indefinite)))
-            {
-                return false;
+                return true;
             }
 
             if (!indefinite)
             {
-                return check_string_utf8(result, context);
+                return get_cbor_string_chunk(result, false) && check_string_utf8(result, context);
+            }
+
+            if (error_handler == error_handler_t::keep)
+            {
+                // nothing to check: read the chunk directly into the result
+                if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(result, true)))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                // RFC 8949, Section 3.2.3: each chunk is a text string of its
+                // own and must be valid UTF-8 by itself, i.e., a code point
+                // cannot be spread over two chunks
+                chunk.clear();
+                if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(chunk, true) || !check_string_utf8(chunk, context)))
+                {
+                    return false;
+                }
+                result.append(chunk.data(), chunk.size());
             }
 
             get();
         }
+    }
+
+    /*!
+    @brief skips the tags in front of a CBOR object key
+
+    A tag may wrap any data item, so it may also wrap a key. Like in front of a
+    value, the tags are skipped for the handlers ignore and store; with the
+    handler error they are left to @ref get_cbor_object_key, which rejects the
+    key. The tag loop is iterative, so the number of tags is not limited by the
+    recursion depth.
+
+    @param[in] tag_handler  how CBOR tags should be treated
+
+    @return whether the tags could be skipped (false on EOF in a tag argument)
+
+    @pre @a current is the first byte of the key
+    */
+    bool skip_cbor_key_tags(const cbor_tag_handler_t tag_handler)
+    {
+        if (tag_handler == cbor_tag_handler_t::error)
+        {
+            return true;
+        }
+
+        // 0xC0..0xDB: tag with the tag number in the head (0xC0..0xD7) or in
+        // the 1, 2, 4, or 8 bytes that follow (0xD8..0xDB)
+        while (current >= 0xC0 && current <= 0xDB)
+        {
+            if (current >= 0xD8)
+            {
+                std::uint64_t tag_to_ignore{};
+                if (JSON_HEDLEY_UNLIKELY(!get_cbor_argument(tag_to_ignore)))
+                {
+                    return false;
+                }
+            }
+            get();
+        }
+        return true;
     }
 
     /*!
@@ -1623,6 +1748,10 @@ class binary_reader
 
                 if (top.is_object)
                 {
+                    if (JSON_HEDLEY_UNLIKELY(!skip_cbor_key_tags(tag_handler)))
+                    {
+                        return false;
+                    }
                     if (JSON_HEDLEY_UNLIKELY(!read_object_key<&binary_reader::get_cbor_object_key>(key)))
                     {
                         return false;
@@ -2936,6 +3065,14 @@ class binary_reader
                 return false;
             }
 
+            // validate the type marker up front: otherwise it would only be
+            // checked when an element is read, and a container with count 0
+            // would accept any marker
+            if (JSON_HEDLEY_UNLIKELY(!is_valid_optimized_type(result.second)))
+            {
+                return optimized_type_error();
+            }
+
             get_ignore_noop();
             if (JSON_HEDLEY_UNLIKELY(current != '#'))
             {
@@ -3140,6 +3277,8 @@ class binary_reader
             // get_ubjson_size_value() (the type marker is known before the dimension vector
             // that determines size_and_type.first is read, so it is emitted first there to
             // match the documented _ArrayType_, _ArraySize_, _ArrayData_ key order)
+            // 'C' elements are read as unsigned bytes, but BJData limits a char to 0..127
+            const bool nd_is_char = size_and_type.second == 'C';
             if (size_and_type.second == 'C' || size_and_type.second == 'B')
             {
                 size_and_type.second = 'U';
@@ -3153,6 +3292,24 @@ class binary_reader
 
             for (std::size_t i = 0; i < size_and_type.first; ++i)
             {
+                if (nd_is_char)
+                {
+                    get();
+                    if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("char")))
+                    {
+                        return false;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(current > 127))
+                    {
+                        return last_byte_error(exception_id::invalid_string_or_size, "byte after 'C' must be in range 0x00..0x7F", "char", "");
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(current))))
+                    {
+                        return false;
+                    }
+                    continue;
+                }
+
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
                 {
                     return false;
@@ -4130,9 +4287,9 @@ class binary_reader
         // sequence), UBJSON, BJData, or BSON requires a decoder to reject
         // ill-formed UTF-8. Checking (and, with @ref error_handler_t::strict,
         // rejecting, or with `replace`/`ignore`, sanitizing) is opt-in via
-        // @ref error_handler, applied once the whole string (all chunks of
-        // an indefinite-length CBOR string included) has been assembled, by
-        // @ref check_string_utf8 at the call site.
+        // @ref error_handler, applied by @ref check_string_utf8 at the call
+        // site to the whole string or, for an indefinite-length CBOR string,
+        // to each chunk on its own (RFC 8949, Section 3.2.3).
         return get_bytes(len, "string", result);
     }
 
@@ -4328,6 +4485,12 @@ class binary_reader
     }
 
     JSON_HEDLEY_NEVER_INLINE
+    bool bson_document_size_error(const char* prefix, const std::int32_t document_size, const char* suffix) const
+    {
+        return last_byte_error(exception_id::unexpected_byte, concat(prefix, std::to_string(document_size), suffix), "document");
+    }
+
+    JSON_HEDLEY_NEVER_INLINE
     bool bson_unsupported_type_error(const std::size_t position, const char_int_type element_type) const
     {
         const std::string cr_str = hex_byte(static_cast<std::uint8_t>(element_type));
@@ -4433,6 +4596,44 @@ class binary_reader
 
   JSON_PRIVATE_UNLESS_TESTED:
     /*!
+    @brief check whether @a marker is a type marker that may follow '$'
+    UBJSON: Z N T F i U I l L d D H C S [ {; BJData: the numeric markers and C
+    (BJData's excluded markers are rejected separately).
+    */
+    bool is_valid_optimized_type(const char_int_type marker) const noexcept
+    {
+        switch (marker)
+        {
+            case 'i':
+            case 'U':
+            case 'I':
+            case 'l':
+            case 'L':
+            case 'd':
+            case 'D':
+            case 'C':
+                return true;
+            case 'Z':
+            case 'N':
+            case 'T':
+            case 'F':
+            case 'H':
+            case 'S':
+            case '[':
+            case '{':
+                return input_format != input_format_t::bjdata;
+            case 'B':
+            case 'u':
+            case 'm':
+            case 'M':
+            case 'h':
+                return input_format == input_format_t::bjdata;
+            default:
+                return false;
+        }
+    }
+
+    /*!
     @brief whether @a marker is excluded from BJData's optimized ND-array types
     @return whether @a marker is one of 'F', 'H', 'N', 'S', 'T', 'Z', '[', '{'
 
@@ -4474,6 +4675,8 @@ class binary_reader
                 return "uint8";
             case 'd':
                 return "single";
+            case 'h':
+                return "half";
             case 'i':
                 return "int8";
             case 'l':

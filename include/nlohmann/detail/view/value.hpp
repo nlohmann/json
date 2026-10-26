@@ -130,14 +130,16 @@ struct is_direct_value : std::integral_constant < bool,
 template<typename Traits, typename Alloc, typename BasicJsonType, typename View>
 struct is_direct_value<std::basic_string<char, Traits, Alloc>, BasicJsonType, View> : std::true_type {};
 
+// (vectors of these, which are faster than through from_json(), and containers
+// of views; other containers are read by the library's from_json())
 template<typename U, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : std::true_type {};
+struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : is_direct_value<U, BasicJsonType, View> {};
 
-template<typename K, typename V, typename C, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::map<K, V, C, A>, BasicJsonType, View> : is_string_key<K> {};
+template<typename K, typename C, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::map<K, View, C, A>, BasicJsonType, View> : is_string_key<K> {};
 
-template<typename K, typename V, typename H, typename E, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::unordered_map<K, V, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
+template<typename K, typename H, typename E, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::unordered_map<K, View, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
 
 }  // namespace view
 }  // namespace detail

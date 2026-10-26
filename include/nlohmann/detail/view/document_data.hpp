@@ -232,7 +232,7 @@ struct document_data
     /// following loads.
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* deref(const node* n) noexcept
     {
-        return NLOHMANN_VIEW_LIKELY(n->kind != kind_link) ? n : follow_link(n);
+        return NLOHMANN_VIEW_LIKELY(n->kind != node_kind::link) ? n : follow_link(n);
     }
 
     static NLOHMANN_VIEW_NOINLINE const node* follow_link(const node* n) noexcept

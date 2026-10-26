@@ -239,9 +239,22 @@ struct node_flags
     static constexpr std::uint8_t linked = 32; ///< an entry of a moved sequence links to this value (editable documents): its extent in the parsed layout no longer matters
 };
 
-/// kind of an entry of an edited sequence that stands for a value stored
-/// elsewhere (the address of the value's node is kept in the len/next bytes)
-constexpr std::uint8_t kind_link = 10;
+/// the kind of a node: the value_t of its value, or link
+enum class node_kind : std::uint8_t
+{
+    null = static_cast<std::uint8_t>(value_t::null),
+    object = static_cast<std::uint8_t>(value_t::object),
+    array = static_cast<std::uint8_t>(value_t::array),
+    string = static_cast<std::uint8_t>(value_t::string), // NOLINT(build/include_what_you_use): an enumerator, not std::string
+    boolean = static_cast<std::uint8_t>(value_t::boolean),
+    number_integer = static_cast<std::uint8_t>(value_t::number_integer),
+    number_unsigned = static_cast<std::uint8_t>(value_t::number_unsigned),
+    number_float = static_cast<std::uint8_t>(value_t::number_float),
+    /// an entry of an edited sequence that stands for a value stored elsewhere
+    /// (the address of the value's node is kept in the len/next bytes); placed
+    /// after value_t::discarded, which no node ever has
+    link = static_cast<std::uint8_t>(value_t::discarded) + 1,
+};
 
 /// One entry of the flat index, in document order. An object's members are
 /// stored as key node followed by the value's subtree. Integers keep their
@@ -249,7 +262,7 @@ constexpr std::uint8_t kind_link = 10;
 /// always the next one, and the token length follows from `extra`).
 struct node
 {
-    std::uint8_t kind;   ///< value_t, or kind_link
+    node_kind kind;      ///< the kind of the value, or link
     std::uint8_t flags;  ///< node_flags
     std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the object's key hash index (1-based, 0 = none); otherwise 0
     std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
@@ -258,13 +271,13 @@ struct node
 };
 static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 
-// the node kinds are value_t values; the test below (object and array are 1
-// and 2) and those of the number kinds depend on this numbering
-static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::uint8_t>(value_t::object) == 1
-              && static_cast<std::uint8_t>(value_t::array) == 2 && static_cast<std::uint8_t>(value_t::string) == 3
-              && static_cast<std::uint8_t>(value_t::boolean) == 4 && static_cast<std::uint8_t>(value_t::number_integer) == 5
-              && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
-              "the node format depends on the numbering of value_t");
+// images store the node kinds as bytes, and the test below (object and array
+// are 1 and 2) and those of the number kinds depend on this numbering
+static_assert(static_cast<std::uint8_t>(node_kind::null) == 0 && static_cast<std::uint8_t>(node_kind::object) == 1
+              && static_cast<std::uint8_t>(node_kind::array) == 2 && static_cast<std::uint8_t>(node_kind::string) == 3
+              && static_cast<std::uint8_t>(node_kind::boolean) == 4 && static_cast<std::uint8_t>(node_kind::number_integer) == 5
+              && static_cast<std::uint8_t>(node_kind::number_unsigned) == 6 && static_cast<std::uint8_t>(node_kind::number_float) == 7,
+              "the node format depends on the numbering of node_kind");
 
 NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 {
@@ -284,7 +297,7 @@ inline void make_link(node& n, node* target) noexcept
 {
     target->flags = static_cast<std::uint8_t>(target->flags | node_flags::linked);
     n = node{};
-    n.kind = kind_link;
+    n.kind = node_kind::link;
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, static_cast<const void*>(&target), sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
@@ -314,8 +327,8 @@ NLOHMANN_VIEW_ALWAYS_INLINE void set_integer_bits(node& n, std::uint64_t v) noex
 /// token length of a number node
 NLOHMANN_VIEW_ALWAYS_INLINE std::uint32_t number_length(const node& n) noexcept
 {
-    return n.kind == static_cast<std::uint8_t>(value_t::number_float) ? n.len
-           : (n.extra & 0xFFu) + (n.kind == static_cast<std::uint8_t>(value_t::number_integer) ? 1u : 0u);
+    return n.kind == node_kind::number_float ? n.len
+           : (n.extra & 0xFFu) + (n.kind == node_kind::number_integer ? 1u : 0u);
 }
 
 /// estimated number of nodes for an input of `size` bytes (one node per ~12
@@ -547,7 +560,7 @@ struct document_data
     /// following loads.
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* deref(const node* n) noexcept
     {
-        return NLOHMANN_VIEW_LIKELY(n->kind != kind_link) ? n : follow_link(n);
+        return NLOHMANN_VIEW_LIKELY(n->kind != node_kind::link) ? n : follow_link(n);
     }
 
     static NLOHMANN_VIEW_NOINLINE const node* follow_link(const node* n) noexcept
@@ -665,25 +678,25 @@ NLOHMANN_JSON_NAMESPACE_END
 // with different flags would have different definitions of the same inline
 // functions): the check is compiled for SSSE3 with a function attribute and
 // used where the CPU has SSSE3 (all x86-64 CPUs since about 2011), else the
-// portable check. JSON_VIEW_USE_SSSE3 skips the CPU check (for code compiled
-// for SSSE3 anyway); JSON_VIEW_NO_SIMD selects the portable code.
+// portable check. Code compiled for SSSE3 anyway (-mssse3 or more) skips the
+// CPU check. JSON_NO_SIMD selects the portable code, as in the lexer.
 // NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE (set by the GCC module interface, where GCC
 // ignores the target attribute and then rejects the SSSE3 intrinsics) keeps the
 // check portable without disabling the SSE2 code.
-#if !defined(JSON_VIEW_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && NLOHMANN_VIEW_LITTLE_ENDIAN
+#if !defined(JSON_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && NLOHMANN_VIEW_LITTLE_ENDIAN
     #include <arm_neon.h>
     #define NLOHMANN_VIEW_NEON 1
 #else
     #define NLOHMANN_VIEW_NEON 0
 #endif
 // (x86 only: other targets can define __SSE2__ as well, e.g., WebAssembly with -msse2, but have no <cpuid.h>)
-#if !defined(JSON_VIEW_NO_SIMD) && !NLOHMANN_VIEW_NEON && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
+#if !defined(JSON_NO_SIMD) && !NLOHMANN_VIEW_NEON && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
     #include <emmintrin.h>
     #define NLOHMANN_VIEW_SSE2 1
 #else
     #define NLOHMANN_VIEW_SSE2 0
 #endif
-#if NLOHMANN_VIEW_SSE2 && defined(JSON_VIEW_USE_SSSE3)
+#if NLOHMANN_VIEW_SSE2 && defined(__SSSE3__)
     #include <tmmintrin.h>
     #define NLOHMANN_VIEW_SSSE3 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #else
@@ -1830,11 +1843,11 @@ run_found:
             switch (cur())
             {
                 case '{':
-                    open(value_t::object);
+                    open(node_kind::object);
                     ++p;
                     goto obj_first;
                 case '[':
-                    open(value_t::array);
+                    open(node_kind::array);
                     ++p;
                     goto arr_first;
                 default:
@@ -1856,11 +1869,11 @@ run_found:
             if (NLOHMANN_VIEW_UNLIKELY(!string<true>())) { return false; }      \
             break;                                                              \
         case '{':                                                               \
-            open(value_t::object);                                              \
+            open(node_kind::object);                                              \
             ++p;                                                                \
             goto obj_first;                                                     \
         case '[':                                                               \
-            open(value_t::array);                                               \
+            open(node_kind::array);                                               \
             ++p;                                                                \
             goto arr_first;                                                     \
         case '-':                                                               \
@@ -2077,17 +2090,17 @@ root_done:
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_true()
         {
-            return literal("true", value_t::boolean, node_flags::is_true);
+            return literal("true", node_kind::boolean, node_flags::is_true);
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_false()
         {
-            return literal("false", value_t::boolean, 0);
+            return literal("false", node_kind::boolean, 0);
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_null()
         {
-            return literal("null", value_t::null, 0);
+            return literal("null", node_kind::null, 0);
         }
 
         /// skip whitespace (and comments); false on a malformed comment
@@ -2153,7 +2166,7 @@ indent_done:
 
         /// append a node: (kind, flags, extra, off) and the second word (len, or
         /// an integer's value); two stores on little-endian targets
-        NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(value_t k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
+        NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(node_kind k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
         {
             if (NLOHMANN_VIEW_UNLIKELY(out == cap))
             {
@@ -2169,7 +2182,7 @@ indent_done:
             std::memcpy(reinterpret_cast<unsigned char*>(n), &first, 8);
             std::memcpy(reinterpret_cast<unsigned char*>(n) + 8, &second, 8);
 #else
-            n->kind = static_cast<std::uint8_t>(k);
+            n->kind = k;
             n->flags = flags;
             n->extra = extra;
             n->off = static_cast<std::uint32_t>(off);
@@ -2181,7 +2194,7 @@ indent_done:
             return n;
         }
 
-        NLOHMANN_VIEW_ALWAYS_INLINE void open(value_t k)
+        NLOHMANN_VIEW_ALWAYS_INLINE void open(node_kind k)
         {
             // (base is read after push_node(), which moves the node array when it
             // grows; in one expression the order of the two is unspecified)
@@ -2208,7 +2221,7 @@ indent_done:
             max_depth = (std::max)(max_depth, depth);
             cur_idx = idx;
             cur_count = 0;
-            cur_is_object = k == value_t::object;
+            cur_is_object = k == node_kind::object;
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE void close()
@@ -2238,7 +2251,7 @@ indent_done:
 
         /// the literal `text` at p (N counts the terminating NUL)
         template<std::size_t N>
-        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], value_t k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], node_kind k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
         {
             const std::size_t n = N - 1;
             if (NLOHMANN_VIEW_UNLIKELY(e - p < static_cast<std::ptrdiff_t>(n) || std::memcmp(p, text, n) != 0))
@@ -2317,23 +2330,23 @@ indent_done:
                 is_float = true;
             }
 
-            value_t kind = value_t::number_float;
+            node_kind kind = node_kind::number_float;
             if (!is_float)
             {
                 // integers that do not fit become floats, as in parse()
                 if (negative)
                 {
-                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? value_t::number_float : value_t::number_integer;
+                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? node_kind::number_float : node_kind::number_integer;
                 }
                 else
                 {
-                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? value_t::number_float : value_t::number_unsigned;
+                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? node_kind::number_float : node_kind::number_unsigned;
                 }
             }
             // parse() rejects floats that overflow; only numbers whose magnitude
             // could reach the largest FloatType (1e308 for double, 1e38 for
             // float) need the conversion
-            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::int64_t>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == value_t::number_float))
+            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::int64_t>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == node_kind::number_float))
             {
                 if (builder::float_overflows(s, p))
                 {
@@ -2343,7 +2356,7 @@ indent_done:
             }
             const auto layout = static_cast<std::uint16_t>((int_digits < 255 ? int_digits : 255) | ((frac_digits < 255 ? frac_digits : 255) << 8));
             auto second = static_cast<std::uint64_t>(p - s);
-            if (kind != value_t::number_float)
+            if (kind != node_kind::number_float)
             {
                 // integers are converted now, while their digits are in cache
                 const std::uint64_t m = int_digits <= 19 ? parse_upto19(int_start, static_cast<unsigned>(int_digits), e)
@@ -2366,7 +2379,7 @@ indent_done:
             p = scan_string_run<Value>(p, e);
             if (NLOHMANN_VIEW_LIKELY(cur() == '"'))
             {
-                push_node(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
+                push_node(node_kind::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
                 ++p;
                 return true;
             }
@@ -2376,7 +2389,7 @@ indent_done:
                 return false;
             }
             p = r.p;
-            push_node(value_t::string, node_flags::escaped, 0, r.start, r.len);
+            push_node(node_kind::string, node_flags::escaped, 0, r.start, r.len);
             return true;
         }
     };
@@ -3001,7 +3014,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // live in chunks that never move; strings and number tokens written by edits
 // live in the edit arena. An array/object whose elements change gets
 // node_flags::moved: its elements then live in a separate sequence (a header
-// node, then the entries), whose entries link to the values (kind_link).
+// node, then the entries), whose entries link to the values (node_kind::link).
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -3159,7 +3172,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         return nh;
     }
     reserve_moved(d); // (so that set_moved() below cannot throw: the links are marked before)
-    const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
+    const bool object = n->kind == node_kind::object;
     const std::size_t used = 1 + (static_cast<std::size_t>(n->len) * (object ? 2 : 1));
     const std::size_t cap = used + extra;
     node* const h = alloc_nodes(d, cap);
@@ -3225,7 +3238,7 @@ inline node* find_parent(const document_data& d, const node* target)
         {
             return nullptr; // LCOV_EXCL_LINE (the value is inside c)
         }
-        const bool object = c->kind == static_cast<std::uint8_t>(value_t::object);
+        const bool object = c->kind == node_kind::object;
         const node* down = nullptr;
         for (const node* p = d.first_child_edited(c), *e = d.child_end_edited(c); p != e;)
         {
@@ -3692,7 +3705,7 @@ const node* element_at(const document_data& d, const node* array, std::size_t id
 template<bool Editable>
 const node* last_child(const document_data& d, const node* container) noexcept
 {
-    const std::size_t value_offset = container->kind == static_cast<std::uint8_t>(value_t::object) ? 1 : 0;
+    const std::size_t value_offset = container->kind == node_kind::object ? 1 : 0;
     const node* const end = navigation<Editable>::end(d, container);
     const node* last = navigation<Editable>::first(d, container);
     if (value_offset == 0 && container->next == container->len + 1u && (!navigation<Editable>::editable() || (container->flags & node_flags::moved) == 0))
@@ -3714,11 +3727,62 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/node.hpp>
 
+// #include <nlohmann/detail/view/view_mode.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstdint> // uint8_t
+#include <type_traits> // false_type, true_type
+
+// #include <nlohmann/json.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-template<typename BasicJsonType, bool Editable>
+/// whether a basic_json_document and its views can be edited
+enum class view_mode : std::uint8_t
+{
+    read_only, ///< parsed once, then only read (the default)
+    editable,  ///< also has set(), push_back(), insert(), and erase()
+};
+
+template<typename BasicJsonType, view_mode Mode>
 class basic_json_view;
+
+namespace detail
+{
+namespace view
+{
+
+/// whether two view modes differ
+template<view_mode A, view_mode B>
+struct is_other_mode : std::true_type {};
+
+template<view_mode A>
+struct is_other_mode<A, A> : std::false_type {};
+
+/// whether a view of mode From converts implicitly to one of mode To: a
+/// read-only document has no edits, so a view of it is read correctly as a
+/// view of an editable document that has not been edited yet
+template<view_mode From, view_mode To>
+struct is_widening_mode : std::false_type {};
+
+template<>
+struct is_widening_mode<view_mode::read_only, view_mode::editable> : std::true_type {};
+
+}  // namespace view
+}  // namespace detail
+
+NLOHMANN_JSON_NAMESPACE_END
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 namespace detail
 {
@@ -3808,15 +3872,15 @@ class editor
     View set(const View& object, string_view_t key, V&& value)
     {
         node* const o = own(object);
-        if (o->kind != static_cast<std::uint8_t>(value_t::object) && o->kind != static_cast<std::uint8_t>(value_t::null))
+        if (o->kind != node_kind::object && o->kind != node_kind::null)
         {
             throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", object.type_name());
         }
         check_utf8(key.data(), key.size());
         const encoded e = encode(std::forward<V>(value));
-        if (o->kind == static_cast<std::uint8_t>(value_t::null))
+        if (o->kind == node_kind::null)
         {
-            become_empty(o, value_t::object);
+            become_empty(o, node_kind::object);
         }
         // an existing member: assign it (and drop later duplicates, so that
         // lookups, iteration, and materialize() agree)
@@ -3859,7 +3923,7 @@ class editor
     View set(const View& array, std::size_t idx, V&& value)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        if (a->kind != node_kind::array)
         {
             throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", array.type_name());
         }
@@ -3876,14 +3940,14 @@ class editor
     View push_back(const View& array, V&& value)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array) && a->kind != static_cast<std::uint8_t>(value_t::null))
+        if (a->kind != node_kind::array && a->kind != node_kind::null)
         {
             throw_type_error(exception_id::push_back_wrong_type, "cannot use push_back() with ", array.type_name());
         }
         const encoded e = encode(std::forward<V>(value));
-        if (a->kind == static_cast<std::uint8_t>(value_t::null))
+        if (a->kind == node_kind::null)
         {
-            become_empty(a, value_t::array);
+            become_empty(a, node_kind::array);
         }
         node* const slot = new_slot(e);
         node* const h = block_of(m_doc, a, 1);
@@ -3900,7 +3964,7 @@ class editor
     View insert(const View& array, std::size_t idx, V&& value)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        if (a->kind != node_kind::array)
         {
             throw_type_error(exception_id::insert_wrong_type, "cannot use insert() with ", array.type_name());
         }
@@ -3920,7 +3984,7 @@ class editor
     std::size_t erase(const View& object, string_view_t key)
     {
         node* const o = own(object);
-        if (o->kind != static_cast<std::uint8_t>(value_t::object))
+        if (o->kind != node_kind::object)
         {
             throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", object.type_name());
         }
@@ -3938,7 +4002,7 @@ class editor
     void erase(const View& array, std::size_t idx)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        if (a->kind != node_kind::array)
         {
             throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", array.type_name());
         }
@@ -4012,11 +4076,11 @@ class editor
     }
 
     /// turn a null into an empty array/object in place
-    static void become_empty(node* n, value_t k) noexcept
+    static void become_empty(node* n, node_kind k) noexcept
     {
         const std::uint8_t linked = n->flags & node_flags::linked;
         *n = node{};
-        n->kind = static_cast<std::uint8_t>(k);
+        n->kind = k;
         n->flags = static_cast<std::uint8_t>(node_flags::is_new | linked);
         n->next = 1;
     }
@@ -4093,8 +4157,8 @@ class editor
     template<typename T>
     struct is_view : std::false_type {};
 
-    template<typename J, bool E>
-    struct is_view<basic_json_view<J, E>> : std::true_type {};
+    template<typename J, view_mode M>
+    struct is_view<basic_json_view<J, M>> : std::true_type {};
 
     template<typename V>
     encoded encode(V&& v)
@@ -4109,8 +4173,8 @@ class editor
     }
 
     /// a view of any document (copied; nothing is shared with it)
-    template<typename J, bool E>
-    encoded encode_impl(const basic_json_view<J, E>& v, encode_tag<0> /*view*/)
+    template<typename J, view_mode M>
+    encoded encode_impl(const basic_json_view<J, M>& v, encode_tag<0> /*view*/)
     {
         if (NLOHMANN_VIEW_UNLIKELY(v.m_node == nullptr))
         {
@@ -4122,8 +4186,8 @@ class editor
             r.scalar = copy_scalar(*v.m_doc, *v.m_node);
             return r;
         }
-        r.region = alloc_nodes(m_doc, count_nodes<E>(*v.m_doc, v.m_node));
-        fill_nodes<E>(*v.m_doc, v.m_node, r.region);
+        r.region = alloc_nodes(m_doc, count_nodes<M == view_mode::editable>(*v.m_doc, v.m_node));
+        fill_nodes<M == view_mode::editable>(*v.m_doc, v.m_node, r.region);
         edit_state_of(m_doc).regions.emplace(r.region, nullptr);
         return r;
     }
@@ -4145,14 +4209,14 @@ class editor
     encoded encode_impl(std::nullptr_t /*unused*/, encode_tag<2> /*null*/)
     {
         encoded r;
-        r.scalar = plain_node(value_t::null);
+        r.scalar = plain_node(node_kind::null);
         return r;
     }
 
     encoded encode_impl(bool b, encode_tag<3> /*boolean*/)
     {
         encoded r;
-        r.scalar = plain_node(value_t::boolean);
+        r.scalar = plain_node(node_kind::boolean);
         r.scalar.flags = static_cast<std::uint8_t>(r.scalar.flags | (b ? node_flags::is_true : 0));
         return r;
     }
@@ -4181,10 +4245,10 @@ class editor
         return encode_impl(BasicJsonType(std::forward<T>(x)), encode_tag<1> {});
     }
 
-    static node plain_node(value_t k) noexcept
+    static node plain_node(node_kind k) noexcept
     {
         node n{};
-        n.kind = static_cast<std::uint8_t>(k);
+        n.kind = k;
         n.flags = node_flags::is_new;
         return n;
     }
@@ -4198,19 +4262,19 @@ class editor
     template<typename T>
     node number_node(T x, std::integral_constant<int, 1> /*signed*/)
     {
-        return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(x)), value_t::number_integer);
+        return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(x)), node_kind::number_integer);
     }
 
     template<typename T>
     node number_node(T x, std::integral_constant<int, 2> /*unsigned*/)
     {
-        return integer_node(static_cast<std::uint64_t>(x), value_t::number_unsigned);
+        return integer_node(static_cast<std::uint64_t>(x), node_kind::number_unsigned);
     }
 
     /// an integer with its canonical token in the edit arena
-    node integer_node(std::uint64_t bits, value_t k)
+    node integer_node(std::uint64_t bits, node_kind k)
     {
-        const bool negative = k == value_t::number_integer && static_cast<std::int64_t>(bits) < 0;
+        const bool negative = k == node_kind::number_integer && static_cast<std::int64_t>(bits) < 0;
         std::uint64_t magnitude = negative ? 0 - bits : bits;
         std::array<char, 24> buf{};
         char* p = buf.data() + buf.size(); // NOLINT(misc-const-correctness): digits are written through p
@@ -4229,7 +4293,7 @@ class editor
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
         n.off = append_text(m_doc, p, len);
         // number_length() adds one for the sign of number_integer nodes
-        n.extra = static_cast<std::uint16_t>(k == value_t::number_integer ? len - 1 : len);
+        n.extra = static_cast<std::uint16_t>(k == node_kind::number_integer ? len - 1 : len);
         set_integer_bits(n, bits);
         return n;
     }
@@ -4251,7 +4315,7 @@ class editor
         {
             text = BasicJsonType(x).dump();
         }
-        node n = plain_node(value_t::number_float);
+        node n = plain_node(node_kind::number_float);
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
         n.extra = 0xFFFFu; // (the digit layout is not recorded)
         n.off = append_text(m_doc, text.data(), text.size());
@@ -4266,7 +4330,7 @@ class editor
         {
             throw_out_of_range(exception_id::document_too_large, "strings of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE
         }
-        node n = plain_node(value_t::string);
+        node n = plain_node(node_kind::string);
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
         n.off = append_text(m_doc, s, len);
         n.len = static_cast<std::uint32_t>(len);
@@ -4288,10 +4352,10 @@ class editor
                 return string_node(from.str(n), n.len);
             case value_t::number_integer:
             case value_t::number_unsigned:
-                return integer_node(integer_bits(n), static_cast<value_t>(n.kind));
+                return integer_node(integer_bits(n), n.kind);
             case value_t::number_float:
             {
-                node r = plain_node(value_t::number_float);
+                node r = plain_node(node_kind::number_float);
                 r.flags = static_cast<std::uint8_t>(r.flags | node_flags::edited);
                 r.off = append_text(m_doc, from.str(n), n.len);
                 r.len = n.len;
@@ -4300,7 +4364,7 @@ class editor
             }
             case value_t::boolean:
             {
-                node r = plain_node(value_t::boolean);
+                node r = plain_node(node_kind::boolean);
                 r.flags = static_cast<std::uint8_t>(r.flags | (n.flags & node_flags::is_true));
                 return r;
             }
@@ -4310,7 +4374,7 @@ class editor
             case value_t::binary:
             case value_t::discarded:
             default:
-                return plain_node(value_t::null);
+                return plain_node(node_kind::null);
         }
     }
 
@@ -4319,17 +4383,17 @@ class editor
         switch (j.type())
         {
             case value_t::null:
-                return plain_node(value_t::null);
+                return plain_node(node_kind::null);
             case value_t::boolean:
             {
-                node r = plain_node(value_t::boolean);
+                node r = plain_node(node_kind::boolean);
                 r.flags = static_cast<std::uint8_t>(r.flags | (j.template get<bool>() ? node_flags::is_true : 0));
                 return r;
             }
             case value_t::number_integer:
-                return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(j.template get<number_integer_t>())), value_t::number_integer);
+                return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(j.template get<number_integer_t>())), node_kind::number_integer);
             case value_t::number_unsigned:
-                return integer_node(static_cast<std::uint64_t>(j.template get<number_unsigned_t>()), value_t::number_unsigned);
+                return integer_node(static_cast<std::uint64_t>(j.template get<number_unsigned_t>()), node_kind::number_unsigned);
             case value_t::number_float:
                 return float_node(j.template get<number_float_t>());
             case value_t::string:
@@ -4369,7 +4433,7 @@ class editor
             ++r;
             if (is_container(*n))
             {
-                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object)});
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == node_kind::object});
             }
             // the next value: close finished containers, then step over the key
             for (;;)
@@ -4416,9 +4480,9 @@ class editor
             if (is_container(*n))
             {
                 node* const self = out++;
-                *self = plain_node(static_cast<value_t>(n->kind));
+                *self = plain_node(n->kind);
                 self->len = n->len;
-                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object), self});
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == node_kind::object, self});
             }
             else
             {
@@ -4507,7 +4571,7 @@ class editor
             if (n->is_structured())
             {
                 node* const self = out++;
-                *self = plain_node(n->type());
+                *self = plain_node(static_cast<node_kind>(n->type()));
                 self->len = static_cast<std::uint32_t>(n->size());
                 open.push_back(frame{n->cbegin(), n->cend(), n->is_object(), self});
             }
@@ -4903,7 +4967,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                 r.off = (v->flags & (node_flags::moved | node_flags::is_new)) != 0 ? 0 : v->off;
                 r.len = 0;  // counted below
                 r.next = 0; // set when the container is complete
-                stack.push_back(frame{d.first_child_edited(v), d.child_end_edited(v), out.size(), 0, v->kind == static_cast<std::uint8_t>(value_t::object)});
+                stack.push_back(frame{d.first_child_edited(v), d.child_end_edited(v), out.size(), 0, v->kind == node_kind::object});
                 break;
             case value_t::string:
                 r = string_node(*v);
@@ -4924,7 +4988,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                     if (t[0] == 'n' || t[0] == 'i' || (v->len > 1 && t[1] == 'i'))
                     {
                         r = node{}; // nan and infinity: null, as dump() writes them
-                        r.kind = static_cast<std::uint8_t>(value_t::null);
+                        r.kind = node_kind::null;
                         break;
                     }
                     r.off = static_cast<std::uint32_t>(d.size + text_tail.size());
@@ -4968,12 +5032,10 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
     }
 }
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN // (the image format is little-endian: no save() elsewhere)
 /// the document as an image
 inline std::vector<std::uint8_t> save_image(const document_data& d)
 {
-#if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
-#endif
     const std::size_t arena_size = d.arena_size;
     std::vector<node> compacted;
     std::string text_tail;
@@ -5007,7 +5069,7 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     // extra of an object, and the same document saves to the same bytes
     for (std::size_t i = 0; i < count; ++i)
     {
-        if (nodes[i].kind == static_cast<std::uint8_t>(value_t::object) && nodes[i].extra != 0)
+        if (nodes[i].kind == node_kind::object && nodes[i].extra != 0)
         {
             std::memset(o + (i * sizeof(node)) + offsetof(node, extra), 0, sizeof(nodes[i].extra));
         }
@@ -5029,6 +5091,7 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     *o = 0;
     return image;
 }
+#endif
 
 /// the parts of a number token that the checks need
 struct number_token
@@ -5123,7 +5186,7 @@ inline bool float_token_finite(const unsigned char* s, std::size_t len, const nu
     if (static_cast<std::int64_t>(t.int_digits) + t.exponent > 300)
     {
         node n{};
-        n.kind = static_cast<std::uint8_t>(value_t::number_float);
+        n.kind = node_kind::number_float;
         n.len = static_cast<std::uint32_t>(len);
         const auto v = float_value<double>(reinterpret_cast<const char*>(s), n); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         return v <= (std::numeric_limits<double>::max)() && v >= -(std::numeric_limits<double>::max)();
@@ -5144,7 +5207,7 @@ inline bool check_integer(const node& n, const unsigned char* text)
     }
     // the token's value is the stored one; number_integer nodes of edits can
     // be non-negative (as basic_json keeps the type of a value)
-    const bool integer = n.kind == static_cast<std::uint8_t>(value_t::number_integer);
+    const bool integer = n.kind == node_kind::number_integer;
     if (t.is_float || t.int_digits > 20 || (t.negative && !integer))
     {
         return false;
@@ -5326,7 +5389,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         {
             return false;
         }
-        if (n.kind != static_cast<std::uint8_t>(value_t::number_float))
+        if (n.kind != node_kind::number_float)
         {
             return (n.extra >> 8u) == 0;
         }
@@ -5367,7 +5430,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         const node& n = nodes[i];
         if (!stack.empty() && stack.back().object && stack.back().expect_key)
         {
-            if (n.kind != static_cast<std::uint8_t>(value_t::string) || !check_string(n))
+            if (n.kind != node_kind::string || !check_string(n))
             {
                 return false;
             }
@@ -5408,7 +5471,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
                 {
                     // (the contents of float tokens are checked later; the token of an
                     // integer has at most 256 characters)
-                    if (n.kind == static_cast<std::uint8_t>(value_t::number_float))
+                    if (n.kind == node_kind::number_float)
                     {
                         floats.push_back(float_range{n.off, n.len, n.extra});
                     }
@@ -5426,7 +5489,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
                 {
                     return false;
                 }
-                stack.push_back(frame{i + n.next, n.len, 0, n.kind == static_cast<std::uint8_t>(value_t::object), true});
+                stack.push_back(frame{i + n.next, n.len, 0, n.kind == node_kind::object, true});
                 complete = false;
                 break;
             }
@@ -5449,13 +5512,11 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
     throw_parse_error(exception_id::invalid_document_image, concat("invalid json_document image: ", what));
 }
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN // (the image format is little-endian: no load() elsewhere)
 /// Read an image into d. The text and the decoded strings stay in the image;
 /// the nodes are copied (so that they are aligned, and edits can change them).
 inline void load_image(document_data& d, const std::uint8_t* image, std::size_t size, image_check check)
 {
-#if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
-#endif
     if (image == nullptr || size < sizeof(image_header))
     {
         throw_invalid_image("too short");
@@ -5515,7 +5576,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     for (std::size_t i = 0; i < count; ++i)
     {
         const node& n = d.nodes[i];
-        if (n.kind == static_cast<std::uint8_t>(value_t::object) && n.len >= document_data::index_min_members)
+        if (n.kind == node_kind::object && n.len >= document_data::index_min_members)
         {
             d.large_objects.push_back(static_cast<std::uint32_t>(i));
         }
@@ -5524,6 +5585,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while building)
     d.discarded = false;
 }
+#endif
 
 }  // namespace view
 }  // namespace detail
@@ -6108,7 +6170,7 @@ BasicJsonType materialize(const document_data& d, const node* n)
             case value_t::object:
             case value_t::array:
             {
-                const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
+                const bool object = n->kind == node_kind::object;
                 if (object)
                 {
                     sax.start_object(n->len);
@@ -7222,7 +7284,7 @@ class view_serializer
                 case value_t::object:
                 case value_t::array:
                 {
-                    const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
+                    const bool object = n->kind == node_kind::object;
                     room(8);
                     if (n->len == 0)
                     {
@@ -7760,18 +7822,22 @@ struct is_direct_value : std::integral_constant < bool,
 template<typename Traits, typename Alloc, typename BasicJsonType, typename View>
 struct is_direct_value<std::basic_string<char, Traits, Alloc>, BasicJsonType, View> : std::true_type {};
 
+// (vectors of these, which are faster than through from_json(), and containers
+// of views; other containers are read by the library's from_json())
 template<typename U, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : std::true_type {};
+struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : is_direct_value<U, BasicJsonType, View> {};
 
-template<typename K, typename V, typename C, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::map<K, V, C, A>, BasicJsonType, View> : is_string_key<K> {};
+template<typename K, typename C, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::map<K, View, C, A>, BasicJsonType, View> : is_string_key<K> {};
 
-template<typename K, typename V, typename H, typename E, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::unordered_map<K, V, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
+template<typename K, typename H, typename E, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::unordered_map<K, View, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
 
 }  // namespace view
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+// #include <nlohmann/detail/view/view_mode.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -7782,15 +7848,20 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 Trivially copyable (two pointers). Valid as long as the document is alive and
 has not been re-parsed, and as long as a borrowed source text is alive.
 */
-template<typename BasicJsonType, bool Editable = false>
+template<typename BasicJsonType, view_mode Mode = view_mode::read_only>
 class basic_json_view
 {
+    /// whether this is a view of an editable document
+    static constexpr bool is_editable = Mode == view_mode::editable;
+
     using node = detail::view::node;
     using document_data = detail::view::document_data;
     /// how the index is walked (with edits only for editable documents)
-    using navigation = detail::view::navigation<Editable>;
+    using navigation = detail::view::navigation<is_editable>;
 
   public:
+    /// the basic_json type of the document (it also marks views for is_json_view)
+    using basic_json_type = BasicJsonType;
     using value_t = detail::value_t;
     using string_t = typename BasicJsonType::string_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -7808,6 +7879,15 @@ class basic_json_view
 
     /// an invalid view (type() == value_t::discarded)
     basic_json_view() noexcept = default;
+
+    /// a view of a read-only document as a view of an editable one, so that a
+    /// function taking an editable view accepts both (a read-only document has
+    /// no edits; the view reads it as an editable document before its first
+    /// edit, at the cost of one check per access)
+    template<view_mode M, detail::enable_if_t<detail::view::is_widening_mode<M, Mode>::value, int> = 0>
+    basic_json_view(const basic_json_view<BasicJsonType, M>& other) noexcept // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+        : m_doc(other.m_doc), m_node(other.m_node)
+    {}
 
     //////////
     // type //
@@ -8135,7 +8215,7 @@ class basic_json_view
         if (is_structured() && m_node->len != 0)
         {
             return unedited() ? basic_json_view(m_doc, detail::view::last_child<false>(*m_doc, m_node) + (is_object() ? 1 : 0))
-                   : basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
+                   : basic_json_view(m_doc, navigation::value(detail::view::last_child<is_editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
         }
         return front();
     }
@@ -8193,7 +8273,7 @@ class basic_json_view
     /// more than once); 0 if this is not an object
     size_type count(string_view_t key) const
     {
-        return is_object() ? detail::view::count_members<Editable>(*m_doc, m_node, key.data(), key.size()) : 0;
+        return is_object() ? detail::view::count_members<is_editable>(*m_doc, m_node, key.data(), key.size()) : 0;
     }
 
     size_type count(const char* key) const
@@ -8252,8 +8332,10 @@ class basic_json_view
 
     /// the value converted to T, as BasicJsonType::get<T>(): arithmetic types,
     /// strings (string_view_t without a copy), std::nullptr_t, std::vector,
-    /// maps with string keys, and views are converted directly; other types
-    /// through materialize().get<T>()
+    /// maps with string keys, and views are converted directly; types whose
+    /// from_json() accepts views (those of the NLOHMANN_DEFINE_TYPE_* and
+    /// NLOHMANN_JSON_SERIALIZE_ENUM macros, say) read the view; other types
+    /// go through materialize().get<T>()
     template<typename T>
     NLOHMANN_VIEW_ALWAYS_INLINE T get() const
     {
@@ -8261,11 +8343,12 @@ class basic_json_view
     }
 
     /// as BasicJsonType::get_to(): the types get<T>() converts directly are
-    /// assigned, all others are passed to from_json with v as it is
+    /// assigned, all others are passed to from_json with v as it is (with
+    /// the view if from_json() accepts views, else with materialize())
     template<typename T>
     T& get_to(T& v) const
     {
-        get_to_impl(v, detail::view::is_direct_value<T, BasicJsonType, basic_json_view> {});
+        get_to_impl(v, get_to_kind<T> {});
         return v;
     }
 
@@ -8335,7 +8418,7 @@ class basic_json_view
         }
         else
         {
-            detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
+            detail::view::view_serializer<BasicJsonType, is_editable>(*m_doc, out, estimate, style).dump(m_node);
         }
         return out;
     }
@@ -8371,14 +8454,14 @@ class basic_json_view
     }
 
     /// a view of an editable document compares with one of a read-only document
-    template < bool E, typename std::enable_if < E != Editable, int >::type = 0 >
-    friend bool operator==(const basic_json_view& a, const basic_json_view<BasicJsonType, E>& b)
+    template<view_mode M, detail::enable_if_t<detail::view::is_other_mode<M, Mode>::value, int> = 0>
+    friend bool operator==(const basic_json_view& a, const basic_json_view<BasicJsonType, M>& b)
     {
-        return detail::view::equal<BasicJsonType>(side(a), detail::view::view_side<BasicJsonType, basic_json_view<BasicJsonType, E>>(b));
+        return detail::view::equal<BasicJsonType>(side(a), detail::view::view_side<BasicJsonType, basic_json_view<BasicJsonType, M>>(b));
     }
 
-    template < bool E, typename std::enable_if < E != Editable, int >::type = 0 >
-    friend bool operator!=(const basic_json_view& a, const basic_json_view<BasicJsonType, E>& b)
+    template<view_mode M, detail::enable_if_t<detail::view::is_other_mode<M, Mode>::value, int> = 0>
+    friend bool operator!=(const basic_json_view& a, const basic_json_view<BasicJsonType, M>& b)
     {
         return !(a == b);
     }
@@ -8416,7 +8499,7 @@ class basic_json_view
         {
             return BasicJsonType(value_t::discarded);
         }
-        return unedited() ? detail::view::materialize<BasicJsonType, false>(*m_doc, m_node) : detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
+        return unedited() ? detail::view::materialize<BasicJsonType, false>(*m_doc, m_node) : detail::view::materialize<BasicJsonType, is_editable>(*m_doc, m_node);
     }
 
     /// byte offset of this value in the source text (for strings: of the
@@ -8429,8 +8512,8 @@ class basic_json_view
     }
 
   private:
-    template<typename, bool> friend class basic_json_document;
-    template<typename, bool> friend class basic_json_view;
+    template<typename, view_mode> friend class basic_json_document;
+    template<typename, view_mode> friend class basic_json_view;
     template<typename, typename> friend class detail::view::editor;
     friend iterator;
 
@@ -8446,11 +8529,11 @@ class basic_json_view
     }
 
     /// the template argument as a runtime condition: testing it directly in
-    /// `Editable && ...` makes the condition constant, which MSVC reports as
+    /// `is_editable && ...` makes the condition constant, which MSVC reports as
     /// C4127
     static bool editable() noexcept
     {
-        return Editable;
+        return is_editable;
     }
 
     /// the number of source bytes of this value (estimated for values with
@@ -8499,7 +8582,7 @@ class basic_json_view
             const node* const k = detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
             return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
         }
-        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        const node* const k = detail::view::find_member<is_editable>(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? basic_json_view(m_doc, navigation::value(k + 1)) : basic_json_view();
     }
 
@@ -8513,7 +8596,7 @@ class basic_json_view
     /// the member of this object with @a key (the last one if the key occurs more than once), or nullptr
     NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key) const
     {
-        return find_key(key, std::integral_constant<bool, Editable> {});
+        return find_key(key, std::integral_constant<bool, is_editable> {});
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::true_type /*editable*/) const
@@ -8535,7 +8618,7 @@ class basic_json_view
         {
             return basic_json_view(m_doc, detail::view::element_at<false>(*m_doc, m_node, idx));
         }
-        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
+        return basic_json_view(m_doc, navigation::value(detail::view::element_at<is_editable>(*m_doc, m_node, idx)));
     }
 
     // --- get() dispatch ---
@@ -8590,22 +8673,45 @@ class basic_json_view
         return *this;
     }
 
-    template<typename U, typename A>
+    /// vectors of the types converted directly (faster than the library's
+    /// from_json()) and containers of views (no from_json() reads them: a view
+    /// is no value of BasicJsonType); other containers are read by from_json()
+    template<typename U, typename A, detail::enable_if_t<detail::view::is_direct_value<U, BasicJsonType, basic_json_view>::value, int> = 0>
     std::vector<U, A> get_impl(detail::view::value_tag<std::vector<U, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
         return detail::view::vector_value<basic_json_view, U, A>(*this);
     }
 
-    template<typename K, typename V, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
-    std::map<K, V, C, A> get_impl(detail::view::value_tag<std::map<K, V, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    template<typename K, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::map<K, basic_json_view, C, A> get_impl(detail::view::value_tag<std::map<K, basic_json_view, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
-        return detail::view::map_value<std::map<K, V, C, A>>(*this);
+        return detail::view::map_value<std::map<K, basic_json_view, C, A>>(*this);
     }
 
-    template<typename K, typename V, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
-    std::unordered_map<K, V, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, V, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    template<typename K, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::unordered_map<K, basic_json_view, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, basic_json_view, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
-        return detail::view::map_value<std::unordered_map<K, V, H, E, A>>(*this);
+        return detail::view::map_value<std::unordered_map<K, basic_json_view, H, E, A>>(*this);
+    }
+
+    /// whether the from_json() of T's serializer reads views (see
+    /// detail::has_view_from_json)
+    template<typename T>
+    using reads_view = detail::has_view_from_json<typename BasicJsonType::template json_serializer<T, void>, basic_json_view, T>;
+
+    /// how get_to() converts: 2 directly, 1 with a from_json() that reads
+    /// views, 0 through materialize()
+    template<typename T>
+    using get_to_kind = std::integral_constant < int, detail::view::is_direct_value<T, BasicJsonType, basic_json_view>::value
+                        ? 2 : static_cast<int>(reads_view<T>::value) >;
+
+    /// types whose from_json() reads views, without materialize()
+    template<typename T, detail::enable_if_t<detail::conjunction<reads_view<T>, std::is_default_constructible<T>>::value, int> = 0>
+    T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<1> /*unused*/) const
+    {
+        auto v = T();
+        BasicJsonType::template json_serializer<T, void>::from_json(*this, v);
+        return v;
     }
 
     /// everything else through the BasicJsonType value (from_json included)
@@ -8618,14 +8724,20 @@ class basic_json_view
     // --- get_to() dispatch ---
 
     template<typename T>
-    void get_to_impl(T& v, std::true_type /*direct*/) const
+    void get_to_impl(T& v, std::integral_constant<int, 2> /*direct*/) const
     {
         v = get<T>();
     }
 
     /// from_json may keep parts of v (members a JSON object lacks, say)
     template<typename T>
-    void get_to_impl(T& v, std::false_type /*direct*/) const
+    void get_to_impl(T& v, std::integral_constant<int, 1> /*from_json reads views*/) const
+    {
+        BasicJsonType::template json_serializer<T, void>::from_json(*this, v);
+    }
+
+    template<typename T>
+    void get_to_impl(T& v, std::integral_constant<int, 0> /*through materialize()*/) const
     {
         materialize().get_to(v);
     }
@@ -8641,16 +8753,19 @@ Borrowed parses keep a pointer to the caller's text, which must outlive the
 document. Owned parses (parse_copy, rvalue std::string, streams, and inputs
 that are not contiguous byte ranges) keep their own copy.
 */
-template<typename BasicJsonType, bool Editable = false>
+template<typename BasicJsonType, view_mode Mode = view_mode::read_only>
 class basic_json_document
 {
+    /// whether the document can be edited
+    static constexpr bool is_editable = Mode == view_mode::editable;
+
     using document_data = detail::view::document_data;
 
     static_assert(sizeof(typename BasicJsonType::number_integer_t) == 8 && sizeof(typename BasicJsonType::number_unsigned_t) == 8,
                   "json_view supports 64-bit integer types only");
 
   public:
-    using view_type = basic_json_view<BasicJsonType, Editable>;
+    using view_type = basic_json_view<BasicJsonType, Mode>;
     using value_t = detail::value_t;
 
     /// an empty (discarded) document
@@ -8864,6 +8979,10 @@ class basic_json_document
     /// how load() checks an image (full, bounds, or none)
     using image_check = detail::view::image_check;
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
+    // (the image format is little-endian: big-endian targets have no save()
+    // and load(), so that a call fails to compile instead of always throwing)
+
     /// The document as an image that load() reads without parsing: the node
     /// index, the text, and the decoded strings. An edited document is
     /// written in its current state (floats that are not finite become null,
@@ -8905,6 +9024,7 @@ class basic_json_document
         detail::view::load_image(*d.m_data, d.m_data->owned_image.data(), d.m_data->owned_image.size(), check);
         return d;
     }
+#endif
 
     ///////////
     // edits //
@@ -9046,7 +9166,7 @@ class basic_json_document
 
     detail::view::editor<BasicJsonType, view_type> editor()
     {
-        static_assert(Editable, "only an editable document can be edited: use basic_json_document<BasicJsonType, true> (json_editable_document)");
+        static_assert(is_editable, "only an editable document can be edited: use basic_json_document<BasicJsonType, view_mode::editable> (json_editable_document)");
         if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
         {
             detail::view::throw_invalid_iterator(detail::exception_id::iterator_from_other_value, "view does not belong to this document");
@@ -9322,22 +9442,31 @@ class basic_json_document
     std::unique_ptr<document_data, document_data::deleter> m_data{}; // NOLINT(readability-redundant-member-init)
 };
 
+/*!
+@brief whether T is a basic_json_view (of any BasicJsonType and view_mode)
+
+For constraining templates that accept views, e.g. a from_json() written for
+both basic_json values and views.
+*/
+template<typename T>
+struct is_json_view : detail::is_json_view<T> {};
+
 /// a parsed JSON text for json
-using json_document = basic_json_document<json>;
+using json_document = basic_json_document<json, view_mode::read_only>;
 /// a value of a json_document
-using json_view = basic_json_view<json>;
+using json_view = basic_json_view<json, view_mode::read_only>;
 /// a parsed JSON text for ordered_json
-using ordered_json_document = basic_json_document<ordered_json>;
+using ordered_json_document = basic_json_document<ordered_json, view_mode::read_only>;
 /// a value of an ordered_json_document
-using ordered_json_view = basic_json_view<ordered_json>;
+using ordered_json_view = basic_json_view<ordered_json, view_mode::read_only>;
 /// an editable parsed JSON text for json
-using json_editable_document = basic_json_document<json, true>;
+using json_editable_document = basic_json_document<json, view_mode::editable>;
 /// a value of a json_editable_document
-using json_editable_view = basic_json_view<json, true>;
+using json_editable_view = basic_json_view<json, view_mode::editable>;
 /// an editable parsed JSON text for ordered_json
-using ordered_json_editable_document = basic_json_document<ordered_json, true>;
+using ordered_json_editable_document = basic_json_document<ordered_json, view_mode::editable>;
 /// a value of an ordered_json_editable_document
-using ordered_json_editable_view = basic_json_view<ordered_json, true>;
+using ordered_json_editable_view = basic_json_view<ordered_json, view_mode::editable>;
 
 NLOHMANN_JSON_NAMESPACE_END
 
