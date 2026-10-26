@@ -1162,10 +1162,14 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 MessagePack's ext type and BSON's binary subtype are each stored in a single byte. This exception is thrown when serializing a
 [`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255, the largest value the library can store in that byte.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.out_of_range.415] subtype 70000 is too large for the MessagePack ext type (max 255)
+    ```
+
+    ```
+    [json.exception.out_of_range.415] subtype 70000 is too large for the BSON binary subtype (max 255)
     ```
 
 !!! note
