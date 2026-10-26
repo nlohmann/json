@@ -3000,6 +3000,14 @@ class binary_reader
                 return false;
             }
 
+            // validate the type marker up front: otherwise it would only be
+            // checked when an element is read, and a container with count 0
+            // would accept any marker
+            if (JSON_HEDLEY_UNLIKELY(!is_valid_optimized_type(result.second)))
+            {
+                return optimized_type_error();
+            }
+
             get_ignore_noop();
             if (JSON_HEDLEY_UNLIKELY(current != '#'))
             {
@@ -4496,6 +4504,44 @@ class binary_reader
     std::size_t bon8_pushback_size = 0;
 
   JSON_PRIVATE_UNLESS_TESTED:
+    /*!
+    @brief check whether @a marker is a type marker that may follow '$'
+    UBJSON: Z N T F i U I l L d D H C S [ {; BJData: the numeric markers and C
+    (BJData's excluded markers are rejected separately).
+    */
+    bool is_valid_optimized_type(const char_int_type marker) const noexcept
+    {
+        switch (marker)
+        {
+            case 'i':
+            case 'U':
+            case 'I':
+            case 'l':
+            case 'L':
+            case 'd':
+            case 'D':
+            case 'C':
+                return true;
+            case 'Z':
+            case 'N':
+            case 'T':
+            case 'F':
+            case 'H':
+            case 'S':
+            case '[':
+            case '{':
+                return input_format != input_format_t::bjdata;
+            case 'B':
+            case 'u':
+            case 'm':
+            case 'M':
+            case 'h':
+                return input_format == input_format_t::bjdata;
+            default:
+                return false;
+        }
+    }
+
     /*!
     @brief whether @a marker is excluded from BJData's optimized ND-array types
     @return whether @a marker is one of 'F', 'H', 'N', 'S', 'T', 'Z', '[', '{'

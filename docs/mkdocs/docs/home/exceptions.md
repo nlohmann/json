@@ -330,7 +330,7 @@ where they cannot be resolved.
 ### json.exception.parse_error.110
 
 When parsing a [binary format](../features/binary_formats/index.md), the byte vector ends before the complete value has
-been read.
+been read, or (with `strict = true`) further bytes follow the value.
 
 !!! failure "Example messages"
 
@@ -1045,8 +1045,8 @@ or the encoded length for [CBOR](../features/binary_formats/cbor.md).
 The exception is also thrown for a [UBJSON](../features/binary_formats/ubjson.md) array of a type that is encoded by its
 marker alone (`Z`, `T` or `F`) whose declared count exceeds 1,048,576 (`1 << 20`). Such an array has no payload, so its
 count alone decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values.
-[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the size and type annotation,
-so any value it produces can still be read back.
+[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the `$` type annotation (the `#`
+count and one marker per element are kept), so any value it produces can still be read back.
 
 !!! failure "Example messages"
 
@@ -1236,7 +1236,8 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 ### json.exception.other_error.502
 
 [`to_ubjson`](../api/basic_json/to_ubjson.md) and [`to_bjdata`](../api/basic_json/to_bjdata.md) were called with
-`use_type = true` but `use_size = false`. UBJSON requires a size marker (`#`) after a type marker (`$`).
+`use_type = true` but `use_size = false` for a value that contains a non-empty array, object, or binary value. UBJSON
+requires a size marker (`#`) after a type marker (`$`); scalars and empty containers do not throw.
 
 !!! failure "Example message"
 
