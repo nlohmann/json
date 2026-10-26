@@ -29,8 +29,63 @@ using nlohmann::json;
 #include <map>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+namespace
+{
+// the non-const operator[] must throw for pointer and leave the value parsed
+// from init unchanged (strong exception safety)
+template<typename Json>
+void check_strong_guarantee(const char* init, const std::string& pointer, const char* message)
+{
+    CAPTURE(init)
+    CAPTURE(pointer)
+    Json j = Json::parse(init);
+    const Json before = Json::parse(init);
+    const typename Json::json_pointer ptr(pointer);
+    CHECK_THROWS_WITH_AS(j[ptr], message, typename Json::exception&);
+    CHECK(j == before);
+}
+
+// as above, for an index that fits into size_type, but not into an array
+template<typename Json>
+void check_strong_guarantee_length_error(const char* init, const std::string& pointer)
+{
+    CAPTURE(init)
+    CAPTURE(pointer)
+    Json j = Json::parse(init);
+    const Json before = Json::parse(init);
+    const typename Json::json_pointer ptr(pointer);
+    CHECK_THROWS_AS(j[ptr], std::length_error&);
+    CHECK(j == before);
+}
+
+template<typename Json>
+void check_strong_guarantee_cases()
+{
+    const char* const unresolved = "[json.exception.out_of_range.404] unresolved reference token '99999999999999999999999'";
+
+    // the first change converts a null value
+    check_strong_guarantee<Json>("null", "/99999999999999999999999", unresolved);
+    check_strong_guarantee<Json>("null", "/a/99999999999999999999999", unresolved);
+    check_strong_guarantee<Json>(R"({"a":null})", "/a/b/-/99999999999999999999999", unresolved);
+    // the first change inserts a key into an object
+    check_strong_guarantee<Json>("{}", "/a/99999999999999999999999", unresolved);
+    check_strong_guarantee<Json>(R"({"a":{"b":1}})", "/a/c/d/99999999999999999999999", unresolved);
+    // the first change pads or appends to an array
+    check_strong_guarantee<Json>(R"({"a":[1]})", "/a/5/99999999999999999999999", unresolved);
+    check_strong_guarantee<Json>(R"({"a":[1]})", "/a/-/x/1/99999999999999999999999", unresolved);
+    // an index that does not fit into size_type
+    check_strong_guarantee<Json>("null", "/x/18446744073709551615",
+                                 "[json.exception.out_of_range.410] array index 18446744073709551615 exceeds size_type");
+    // an index that fits into size_type, but not into an array
+    const auto too_large = std::to_string((std::numeric_limits<typename Json::size_type>::max)() - 1);
+    check_strong_guarantee_length_error<Json>("null", "/" + too_large);
+    check_strong_guarantee_length_error<Json>(R"({"a":[[1]]})", "/a/0/3/" + too_large);
+}
+} // namespace
 
 TEST_CASE("JSON pointers")
 {
@@ -556,6 +611,23 @@ TEST_CASE("JSON pointers")
                                  "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
             CHECK_THROWS_WITH_AS(j.at("/01"_json_pointer),
                                  "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
+        }
+
+        SECTION("a failing access leaves the value unchanged")
+        {
+            check_strong_guarantee_cases<json>();
+            check_strong_guarantee_cases<nlohmann::ordered_json>();
+        }
+
+        SECTION("a successful access still creates the same values")
+        {
+            json j = {{"a", {1}}};
+            j["/a/3/x/-/y"_json_pointer] = 1;
+            CHECK(j == json::parse(R"({"a":[1,null,null,{"x":[{"y":1}]}]})"));
+            j["/a/-"_json_pointer] = 2;
+            j["/a/0"_json_pointer] = 3;
+            j["/b"_json_pointer] = 4;
+            CHECK(j == json::parse(R"({"a":[3,null,null,{"x":[{"y":1}]},2],"b":4})"));
         }
     }
 
