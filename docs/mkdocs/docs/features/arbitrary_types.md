@@ -188,7 +188,7 @@ To pick the macro for your own type and get code to start from, answer the quest
 - You only convert to JSON: append `_ONLY_SERIALIZE` instead.
 - JSON keys differ from the member names: append `_WITH_NAMES` and write `"key", member` pairs ([reference](../api/macros/nlohmann_define_type_with_names.md){ data-nj-mc="with_names" }).
 - Private members of a class you cannot edit: no macro works; write the conversion by hand ([third-party types](#how-do-i-convert-third-party-types){ data-nj-mc="third_party" }).
-- The type is not default constructible: only `_ONLY_SERIALIZE` works ([non-default-constructible types](#how-can-i-use-get-for-non-default-constructiblenon-copyable-types){ data-nj-mc="non_default" }).
+- The type is not default constructible and is converted in both directions: no macro works; specialize `adl_serializer` with a `from_json` that returns the value, or append `_ONLY_SERIALIZE` if you only convert to JSON ([non-default-constructible types](#how-can-i-use-get-for-non-default-constructiblenon-copyable-types){ data-nj-mc="non_default" }).
 
 </div>
 </div>

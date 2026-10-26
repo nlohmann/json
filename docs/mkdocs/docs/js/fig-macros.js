@@ -5,7 +5,8 @@
    intrusive, non_intrusive, derived, with_names, third_party, non_default.
    The rules follow include/nlohmann/detail/macro_scope.hpp: WITH_NAMES takes "key", member pairs and no empty
    member list; WITH_DEFAULT and the plain variants default-construct the type in from_json/get; ONLY_SERIALIZE
-   generates to_json only; DERIVED_TYPE calls the base type's to_json/from_json first; at most 63 members (31 with
+   generates to_json only; a type that is not default constructible and converts both ways gets no macro but an
+   adl_serializer specialization whose from_json returns the value; DERIVED_TYPE calls the base type's to_json/from_json first; at most 63 members (31 with
    WITH_NAMES). The generated programs were compiled and run with clang++ -std=c++11 against include/. */
 (function () {
     "use strict";
@@ -91,14 +92,12 @@
         if (st.edit === "no" && st.access === "private") {
             res.errors.push({ text: "No macro can reach private members from outside the class. Write to_json/from_json by hand using the public interface, for example in a specialization of adl_serializer.", link: "third_party", linkText: "How do I convert third-party types?" });
         }
-        if (st.dir === "both" && st.ctor === "no") {
-            res.errors.push({ text: "Every macro that generates from_json default-constructs the type. Use Only to JSON, or write the conversion by hand.", link: "non_default", linkText: "Non-default-constructible types" });
-        }
-        if (names && n === 0) {
+        var adl = st.dir === "both" && st.ctor === "no";
+        if (!adl && names && n === 0) {
             res.errors.push({ text: "The WITH_NAMES macros need at least one key and member pair. Without members there is nothing to rename: choose Member names." });
         }
         var limit = names ? 31 : 63;
-        if (n > limit) {
+        if (!adl && n > limit) {
             res.errors.push({ text: "The macros support at most " + limit + " members" + (names ? " with custom names" : "") + ". Write to_json/from_json by hand for larger types." });
         }
 
@@ -121,6 +120,16 @@
         });
 
         if (st.edit === "no" && st.access === "private") return res;
+
+        if (adl) {
+            res.adl = true;
+            res.intrusive = st.access === "private";
+            res.ref = "non_default";
+            res.reason = "Every macro that generates from_json default-constructs the type, so none fits. A specialization of adl_serializer returns the value from from_json instead" +
+                (st.access === "private" ? "; the class befriends it to reach the private members" : "") + ".";
+            res.place = "Write the specialization in namespace nlohmann, after the class.";
+            return res;
+        }
 
         var intrusive = st.access === "private";
         var parts = ["NLOHMANN_DEFINE", st.base === "yes" ? "DERIVED_TYPE" : "TYPE", intrusive ? "INTRUSIVE" : "NON_INTRUSIVE"];
@@ -171,7 +180,8 @@
         var priv = res.intrusive;
         var names = st.keys === "custom";
         var suffix = st.dir === "to" ? "_ONLY_SERIALIZE" : (st.missing === "default" ? "_WITH_DEFAULT" : "");
-        var noCtor = st.ctor === "no" && st.members.length > 0;
+        var adl = !!res.adl;
+        var noCtor = st.ctor === "no" && (st.members.length > 0 || st.base === "yes");
         var L = [];
         L.push("#include <iostream>");
         L.push("#include <nlohmann/json.hpp>");
@@ -218,14 +228,55 @@
             if (priv) L.push("  public:");
         }
         if (noCtor) {
-            var params = st.members.map(function (mb) { return mb.mtype.trim() + " " + mb.name + "_"; }).join(", ");
-            var inits = st.members.map(function (mb) { return mb.name + "(" + mb.name + "_)"; }).join(", ");
-            L.push("    " + T + "(" + params + ")");
-            L.push("        : " + inits);
+            var plist = st.members.map(function (mb) { return mb.mtype.trim() + " " + mb.name + "_"; });
+            var ilist = st.members.map(function (mb) { return mb.name + "(" + mb.name + "_)"; });
+            if (st.base === "yes") {
+                plist.unshift(B + " base_");
+                ilist.unshift(B + "(base_)");
+            }
+            L.push("    " + T + "(" + plist.join(", ") + ")");
+            L.push("        : " + ilist.join(", "));
             L.push("    {}");
             if (priv) L.push("");
         }
-        if (priv) {
+        if (adl) {
+            if (priv) {
+                L.push("    friend struct nlohmann::adl_serializer<" + T + ">;");
+            }
+            L.push("};");
+            L.push("} // namespace " + ns);
+            L.push("");
+            L.push("namespace nlohmann");
+            L.push("{");
+            L.push("template <>");
+            L.push("struct adl_serializer<" + ns + "::" + T + ">");
+            L.push("{");
+            L.push("    // note: the return type is the value, not void, and there is no default construction");
+            L.push("    static " + ns + "::" + T + " from_json(const json& j)");
+            L.push("    {");
+            var args = st.members.map(function (mb) {
+                var key = names ? cppString(mb.key) : cppString(mb.name);
+                var ty = mb.mtype.trim();
+                return st.missing === "default"
+                    ? "j.value(" + key + ", " + ty + "{})"
+                    : "j.at(" + key + ").get<" + ty + ">()";
+            });
+            if (st.base === "yes") args.unshift("j.get<" + ns + "::" + B + ">()");
+            L.push("        return " + ns + "::" + T + "{" + args.join(", ") + "};");
+            L.push("    }");
+            L.push("");
+            L.push("    // you must provide to_json as well: the specialization replaces the default one");
+            L.push("    static void to_json(json& j, const " + ns + "::" + T + "& t)");
+            L.push("    {");
+            if (st.base === "yes") L.push("        j = static_cast<const " + ns + "::" + B + "&>(t);");
+            else L.push("        j = json::object();");
+            st.members.forEach(function (mb) {
+                L.push("        j[" + (names ? cppString(mb.key) : cppString(mb.name)) + "] = t." + mb.name + ";");
+            });
+            L.push("    }");
+            L.push("};");
+            L.push("} // namespace nlohmann");
+        } else if (priv) {
             L.push(macroCall(res.macro, head, pairs, "    "));
             L.push("};");
         } else {
@@ -233,13 +284,15 @@
             L.push("");
             L.push(macroCall(res.macro, head, pairs, ""));
         }
-        L.push("} // namespace " + ns);
+        if (!adl) L.push("} // namespace " + ns);
         L.push("");
         L.push("int main()");
         L.push("{");
         var Q = ns + "::" + T;
         if (noCtor) {
-            L.push("    " + Q + " p{" + st.members.map(function (mb) { return mb.mtype.trim() + "{}"; }).join(", ") + "};");
+            var init = st.members.map(function (mb) { return mb.mtype.trim() + "{}"; });
+            if (st.base === "yes") init.unshift(ns + "::" + B + "{}");
+            L.push("    " + Q + " p{" + init.join(", ") + "};");
         } else {
             L.push("    " + Q + " p{};");
         }
@@ -475,7 +528,7 @@
             groups.missing.classList.toggle("nj-mc-off", dirTo);
             setNote("missing", dirTo ? "Not applicable: ONLY_SERIALIZE generates no from_json." : "");
             setNote("access", st.edit === "no" && st.access === "private" ? "Private members of a class you cannot edit are out of reach for every macro." : "");
-            setNote("ctor", st.ctor === "no" && !dirTo ? "Parsing needs a default constructor; only Only to JSON works." : "");
+            setNote("ctor", st.ctor === "no" && !dirTo ? "The macros default-construct the type when parsing: this gives an adl_serializer specialization instead." : "");
             baseField.hidden = st.base !== "yes";
             mtable.classList.toggle("nj-mc-custom", st.keys === "custom");
             keyHead.hidden = st.keys !== "custom";
@@ -483,18 +536,18 @@
             var res = decide(st);
             result.textContent = "";
             hints.textContent = "";
-            if (res.macro && !res.errors.length) {
+            if ((res.macro || res.adl) && !res.errors.length) {
                 result.className = "nj-mc-result";
-                result.appendChild(el("p", { "class": "nj-mc-label" }, "Recommended macro"));
+                result.appendChild(el("p", { "class": "nj-mc-label" }, res.adl ? "No macro fits, write a serializer" : "Recommended macro"));
                 var name = el("p", { "class": "nj-mc-macro" });
-                name.appendChild(el("code", null, res.macro));
+                name.appendChild(el("code", null, res.adl ? "adl_serializer<" + st.type + ">" : res.macro));
                 result.appendChild(name);
                 var why = el("p", { "class": "nj-mc-why" }, res.reason + " " + res.place);
-                addLink(why, res.ref, "Reference");
+                addLink(why, res.ref, res.adl ? "Details" : "Reference");
                 result.appendChild(why);
             } else {
                 result.className = "nj-mc-result nj-mc-bad";
-                result.appendChild(el("p", { "class": "nj-mc-label" }, res.macro ? "Cannot generate this macro yet" : "No macro fits"));
+                result.appendChild(el("p", { "class": "nj-mc-label" }, (res.macro || res.adl) ? "Cannot generate this code yet" : "No macro fits"));
                 res.errors.forEach(function (e) {
                     var p = el("p", { "class": "nj-mc-why" }, e.text);
                     addLink(p, e.link, e.linkText);
@@ -504,13 +557,13 @@
             res.warnings.forEach(function (w) { hints.appendChild(el("li", null, w)); });
             hints.hidden = !res.warnings.length;
 
-            var ok = res.macro && !res.errors.length;
+            var ok = (res.macro || res.adl) && !res.errors.length;
             codeWrap.hidden = !ok;
             if (ok) {
                 currentCode = generate(st, res);
                 code.innerHTML = highlight(currentCode);
             }
-            root.setAttribute("data-nj-mc-macro", ok ? res.macro : "");
+            root.setAttribute("data-nj-mc-macro", ok ? (res.macro || "adl_serializer") : "");
         }
         update();
     }
