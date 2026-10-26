@@ -309,7 +309,7 @@ The "Check amalgamation" workflow fails if the file is out of date.
 
 The file covers the namespace variants with up to two ABI tags. A Natvis file for other configurations can be
 generated with the `--abi-tags` or `--all` options, for example
-`make natvis NATVIS_ARGS="--abi-tags _diag,_dp,_vns --output my_nlohmann_json.natvis"`; see
+`make natvis NATVIS_ARGS="--abi-tags _diag,_dp,_ns --output my_nlohmann_json.natvis"`; see
 [`tools/generate_natvis`](tools/generate_natvis/README.md). With MSVC, CMake adds the file to the `nlohmann_json`
 target and installs it.
 
