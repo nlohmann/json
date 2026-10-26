@@ -272,6 +272,7 @@
 
 #include <algorithm> // min, transform
 #include <array> // array
+#include <cstddef> // nullptr_t
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
 #include <map> // map
@@ -2663,15 +2664,17 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         });                                                                                     \
         j = ((it != std::end(m)) ? it : std::begin(m))->second;                                 \
     }                                                                                           \
-    template<typename BasicJsonType>                                                            \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json_or_view<BasicJsonType>::value, int> = 0> \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
+        /* (for a view, the table holds basic_json values, which compare with the view) */      \
+        using nlohmann_json_value_t = nlohmann::detail::json_type_of_t<BasicJsonType>;          \
         /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
-        static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
+        static const std::pair<ENUM_TYPE, nlohmann_json_value_t> m[] = __VA_ARGS__;             \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
-                               [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
+                               [&j](const std::pair<ENUM_TYPE, nlohmann_json_value_t>& ej_pair) -> bool \
         {                                                                                       \
             return ej_pair.second == j;                                                         \
         });                                                                                     \
@@ -2702,20 +2705,22 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         if (it != std::end(m)) j = it->second;                                                  \
         else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(nlohmann::detail::exception_id::value_out_of_range,"enum value out of range for " #ENUM_TYPE, nullptr)); \
     }                                                                                           \
-    template<typename BasicJsonType>                                                            \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json_or_view<BasicJsonType>::value, int> = 0> \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
+        /* (for a view, the table holds basic_json values, which compare with the view) */      \
+        using nlohmann_json_value_t = nlohmann::detail::json_type_of_t<BasicJsonType>;          \
         /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
-        static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
+        static const std::pair<ENUM_TYPE, nlohmann_json_value_t> m[] = __VA_ARGS__;             \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
-                               [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
+                               [&j](const std::pair<ENUM_TYPE, nlohmann_json_value_t>& ej_pair) -> bool \
         {                                                                                       \
             return ej_pair.second == j;                                                         \
         });                                                                                     \
         if (it != std::end(m)) e = it->first;                                                   \
-        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(nlohmann::detail::exception_id::value_out_of_range, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", j.dump(-1, ' ', false, nlohmann::detail::error_handler_t::replace)), &j)); \
+        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(nlohmann::detail::exception_id::value_out_of_range, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", nlohmann::detail::from_json_dump(j)), nlohmann::detail::from_json_context(j))); \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
@@ -2975,6 +2980,8 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #define NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME(v1, v2) nlohmann_json_t.v2 = !nlohmann_json_j.is_null() ? nlohmann_json_j.value(v1, nlohmann_json_default_obj.v2) : nlohmann_json_default_obj.v2;
 
 #define NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(...) template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> __VA_ARGS__
+// from_json() also reads from the views of <nlohmann/json_view.hpp>
+#define NLOHMANN_JSON_FROM_TYPE_TEMPLATE(...) template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json_or_view<BasicJsonType>::value, int> = 0> __VA_ARGS__
 
 // Helpers used to dispatch the NLOHMANN_DEFINE_TYPE_*/NLOHMANN_DEFINE_DERIVED_TYPE_*
 // macros below between a zero-member and a one-or-more-member implementation
@@ -3027,18 +3034,18 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 */
 #define NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_MEMBERS(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) })
 
 #define NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_EMPTY(Type)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); }) \
     /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type is used as a declarator type, not in an expression */ \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType&, Type&) noexcept { })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType&, Type&) noexcept { })
 
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_TYPE_BODY(NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_, __VA_ARGS__)(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) })
 
 /*!
 @brief macro
@@ -3048,7 +3055,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 */
 #define NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_MEMBERS(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) })
 
 // identical to NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_EMPTY: with no members there is nothing to default
 #define NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_EMPTY(Type) NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_EMPTY(Type)
@@ -3057,7 +3064,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) })
 
 /*!
 @brief macro
@@ -3084,18 +3091,18 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 */
 #define NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_MEMBERS(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) })
 
 #define NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_EMPTY(Type)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); }) \
     /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type is used as a declarator type, not in an expression */ \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType&, Type&) noexcept { })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType&, Type&) noexcept { })
 
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_TYPE_BODY(NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_, __VA_ARGS__)(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) })
 
 /*!
 @brief macro
@@ -3105,7 +3112,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 */
 #define NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_MEMBERS(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) })
 
 // identical to NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_EMPTY: with no members there is nothing to default
 #define NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_EMPTY(Type) NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_EMPTY(Type)
@@ -3114,7 +3121,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) })
 
 /*!
 @brief macro
@@ -3141,18 +3148,18 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 */
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_MEMBERS(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) })
 
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_EMPTY(Type, BaseType)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); }) \
     /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type/BaseType are used as declarator types, not in expressions */ \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); })
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DERIVED_TYPE_BODY(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_, __VA_ARGS__)(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) })
 
 /*!
 @brief macro
@@ -3162,7 +3169,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 */
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_MEMBERS(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) })
 
 // identical to NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_EMPTY: with no members there is nothing to default
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_EMPTY(Type, BaseType) NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_EMPTY(Type, BaseType)
@@ -3171,7 +3178,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) })
 
 /*!
 @brief macro
@@ -3199,18 +3206,18 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 */
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_MEMBERS(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) })
 
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_EMPTY(Type, BaseType)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); }) \
     /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type/BaseType are used as declarator types, not in expressions */ \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); })
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DERIVED_TYPE_BODY(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_, __VA_ARGS__)(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) })
 
 /*!
 @brief macro
@@ -3220,7 +3227,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 */
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_MEMBERS(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) })
 
 // identical to NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_EMPTY: with no members there is nothing to default
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_EMPTY(Type, BaseType) NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_EMPTY(Type, BaseType)
@@ -3229,7 +3236,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) })
+    NLOHMANN_JSON_FROM_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { ::nlohmann::detail::from_json_base(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) })
 
 /*!
 @brief macro
@@ -4515,6 +4522,47 @@ struct disjunction<B, Bn...>
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
 
 #endif
+
+///////////////////////
+// json_view helpers //
+///////////////////////
+
+template<typename T>
+using basic_json_type_t = typename T::basic_json_type;
+
+template<typename T>
+using materialize_function_t = decltype(std::declval<const T&>().materialize());
+
+// a basic_json_view of <nlohmann/json_view.hpp> (detected by its member type
+// basic_json_type, a basic_json, and materialize() returning that type, so that
+// json.hpp needs no declaration of the view)
+template<typename T, typename = void>
+struct is_json_view : std::false_type {};
+
+template<typename T>
+struct is_json_view<T, enable_if_t<is_basic_json<detected_t<basic_json_type_t, T>>::value>>
+    : std::is_same<detected_t<materialize_function_t, T>, basic_json_type_t<T>> {};
+
+// the types from_json() functions of the NLOHMANN_DEFINE_TYPE_* and
+// NLOHMANN_JSON_SERIALIZE_ENUM macros read from
+template<typename T>
+struct is_basic_json_or_view : disjunction<is_basic_json<T>, is_json_view<T>> {};
+
+// the basic_json type of a basic_json value or of a view
+template<typename T, typename = void>
+struct json_type_of
+{
+    using type = T;
+};
+
+template<typename T>
+struct json_type_of<T, enable_if_t<is_json_view<T>::value>>
+{
+    using type = typename T::basic_json_type;
+};
+
+template<typename T>
+using json_type_of_t = typename json_type_of<T>::type;
 
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
@@ -6035,6 +6083,59 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
+// #include <nlohmann/detail/output/error_handler.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+/// how to treat decoding errors
+///
+/// @ref basic_json::dump uses this to decide what to do with ill-formed
+/// UTF-8 while escaping a string, and the binary writers (@ref
+/// basic_json::to_cbor, @ref basic_json::to_ubjson, @ref
+/// basic_json::to_bjdata, @ref basic_json::to_bson) use it the same way for
+/// string values and object keys. The binary readers (@ref
+/// basic_json::from_cbor, @ref basic_json::from_msgpack, @ref
+/// basic_json::from_ubjson, @ref basic_json::from_bjdata, @ref
+/// basic_json::from_bson) use it to decide whether to check text strings
+/// and object keys for well-formed UTF-8 at all, since none of those
+/// formats requires a decoder to do so.
+enum class error_handler_t
+{
+    strict,  ///< throw a type_error/parse_error exception in case of invalid UTF-8
+    replace, ///< replace invalid UTF-8 sequences with U+FFFD
+    ignore,  ///< ignore invalid UTF-8 sequences
+    keep     ///< keep invalid UTF-8 sequences unchanged
+};
+
+/// the default error handler of the CBOR, UBJSON, BJData, and BSON writers:
+/// error_handler_t::strict if JSON_STRICT_BINARY_UTF8 is enabled, otherwise
+/// error_handler_t::keep (the behavior before version 3.13.0)
+constexpr error_handler_t binary_writer_default_error_handler() noexcept
+{
+#if JSON_STRICT_BINARY_UTF8
+    return error_handler_t::strict;
+#else
+    return error_handler_t::keep;
+#endif
+}
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/string_concat.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
@@ -6675,16 +6776,114 @@ inline void from_json(const BasicJsonType& j, std_fs::path& p)
 }
 #endif
 
-struct from_json_fn
+namespace from_json_adl
 {
-    template<typename BasicJsonType, typename T>
-    auto operator()(const BasicJsonType& j, T&& val) const
+// hides the library's from_json() overloads above (and the from_json object):
+// a call from this namespace finds only the from_json() functions of the
+// arguments' own namespaces and classes (ADL); the declaration is never viable
+// and never defined (not "= delete", which GCC before 6 reports as a use)
+struct hidden;
+void from_json(const hidden&);
+
+// a type no from_json() written for JSON values accepts: a from_json() that
+// accepts it is not constrained to them (see has_view_from_json; it lives
+// here, so that ADL finds no other from_json() for it)
+struct probe
+{};
+
+struct fn
+{
+    template<typename SourceType, typename T>
+    auto operator()(const SourceType& j, T&& val) const
     noexcept(noexcept(from_json(j, std::forward<T>(val))))
     -> decltype(from_json(j, std::forward<T>(val)))
     {
         return from_json(j, std::forward<T>(val));
     }
 };
+}  // namespace from_json_adl
+
+// the sources whose from_json() is only looked up by ADL: views (the library's
+// overloads are written for basic_json) and the probe
+template<typename T>
+struct is_adl_only_from_json_source : disjunction<is_json_view<T>, std::is_same<T, from_json_adl::probe>> {};
+
+struct from_json_fn
+{
+    template < typename BasicJsonType, typename T,
+               enable_if_t < !is_adl_only_from_json_source<BasicJsonType>::value, int > = 0 >
+    auto operator()(const BasicJsonType& j, T && val) const
+    noexcept(noexcept(from_json(j, std::forward<T>(val))))
+    -> decltype(from_json(j, std::forward<T>(val)))
+    {
+        return from_json(j, std::forward<T>(val));
+    }
+
+    template < typename SourceType, typename T,
+               enable_if_t < is_adl_only_from_json_source<SourceType>::value, int > = 0 >
+    auto operator()(const SourceType& j, T && val) const
+    noexcept(noexcept(from_json_adl::fn {}(j, std::forward<T>(val))))
+    -> decltype(from_json_adl::fn {}(j, std::forward<T>(val)))
+    {
+        return from_json_adl::fn {}(j, std::forward<T>(val));
+    }
+};
+
+// Whether JSONSerializer::from_json(view, T&) reads T from a view (of
+// <nlohmann/json_view.hpp>) directly: it must accept the view but not the
+// probe. An unconstrained from_json() template (written for basic_json, but
+// accepting anything) is thus not called with a view, nor are the library's
+// own conversions; the view converts such types through materialize().
+template<typename Serializer, typename SourceType, typename T>
+using serializer_from_json_t = decltype(Serializer::from_json(std::declval<const SourceType&>(), std::declval<T&>()));
+
+template<typename Serializer, typename View, typename T>
+struct has_view_from_json
+    : conjunction < is_detected<serializer_from_json_t, Serializer, View, T>,
+      negation<is_detected<serializer_from_json_t, Serializer, from_json_adl::probe, T>>> {};
+
+// the base part of a type of the NLOHMANN_DEFINE_DERIVED_TYPE_* macros: from a
+// view through its get_to(), which reads the base from the view where the
+// base's from_json() accepts views, and from materialize() otherwise
+template<typename BasicJsonType, typename T, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+void from_json_base(const BasicJsonType& j, T& base)
+{
+    from_json_fn {}(j, base);
+}
+
+template<typename View, typename T, enable_if_t<is_json_view<View>::value, int> = 0>
+void from_json_base(const View& v, T& base)
+{
+    v.get_to(base);
+}
+
+// the context of an exception thrown by a from_json() of the macros: the value
+// itself for basic_json (for JSON_DIAGNOSTICS), none for a view
+template<typename BasicJsonType, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+const BasicJsonType * from_json_context(const BasicJsonType& j) noexcept
+{
+    return &j;
+}
+
+template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
+std::nullptr_t from_json_context(const View& /*unused*/) noexcept
+{
+    return nullptr;
+}
+
+// a value as an exception message shows it (invalid UTF-8 replaced; the
+// strings of a view are always valid UTF-8)
+template<typename BasicJsonType, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+typename BasicJsonType::string_t from_json_dump(const BasicJsonType& j)
+{
+    return j.dump(-1, ' ', false, error_handler_t::replace);
+}
+
+template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
+typename View::string_t from_json_dump(const View& v)
+{
+    return v.dump();
+}
 
 }  // namespace detail
 
@@ -6779,57 +6978,6 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/output/error_handler.hpp>
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.12.0
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-
-
-// #include <nlohmann/detail/abi_macros.hpp>
-
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-
-/// how to treat decoding errors
-///
-/// @ref basic_json::dump uses this to decide what to do with ill-formed
-/// UTF-8 while escaping a string, and the binary writers (@ref
-/// basic_json::to_cbor, @ref basic_json::to_ubjson, @ref
-/// basic_json::to_bjdata, @ref basic_json::to_bson) use it the same way for
-/// string values and object keys. The binary readers (@ref
-/// basic_json::from_cbor, @ref basic_json::from_msgpack, @ref
-/// basic_json::from_ubjson, @ref basic_json::from_bjdata, @ref
-/// basic_json::from_bson) use it to decide whether to check text strings
-/// and object keys for well-formed UTF-8 at all, since none of those
-/// formats requires a decoder to do so.
-enum class error_handler_t
-{
-    strict,  ///< throw a type_error/parse_error exception in case of invalid UTF-8
-    replace, ///< replace invalid UTF-8 sequences with U+FFFD
-    ignore,  ///< ignore invalid UTF-8 sequences
-    keep     ///< keep invalid UTF-8 sequences unchanged
-};
-
-/// the default error handler of the CBOR, UBJSON, BJData, and BSON writers:
-/// error_handler_t::strict if JSON_STRICT_BINARY_UTF8 is enabled, otherwise
-/// error_handler_t::keep (the behavior before version 3.13.0)
-constexpr error_handler_t binary_writer_default_error_handler() noexcept
-{
-#if JSON_STRICT_BINARY_UTF8
-    return error_handler_t::strict;
-#else
-    return error_handler_t::keep;
-#endif
-}
-
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN

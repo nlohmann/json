@@ -7858,6 +7858,8 @@ class basic_json_view
     using navigation = detail::view::navigation<is_editable>;
 
   public:
+    /// the basic_json type of the document (it also marks views for is_json_view)
+    using basic_json_type = BasicJsonType;
     using value_t = detail::value_t;
     using string_t = typename BasicJsonType::string_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -8328,8 +8330,10 @@ class basic_json_view
 
     /// the value converted to T, as BasicJsonType::get<T>(): arithmetic types,
     /// strings (string_view_t without a copy), std::nullptr_t, std::vector,
-    /// maps with string keys, and views are converted directly; other types
-    /// through materialize().get<T>()
+    /// maps with string keys, and views are converted directly; types whose
+    /// from_json() accepts views (those of the NLOHMANN_DEFINE_TYPE_* and
+    /// NLOHMANN_JSON_SERIALIZE_ENUM macros, say) read the view; other types
+    /// go through materialize().get<T>()
     template<typename T>
     NLOHMANN_VIEW_ALWAYS_INLINE T get() const
     {
@@ -8337,11 +8341,12 @@ class basic_json_view
     }
 
     /// as BasicJsonType::get_to(): the types get<T>() converts directly are
-    /// assigned, all others are passed to from_json with v as it is
+    /// assigned, all others are passed to from_json with v as it is (with
+    /// the view if from_json() accepts views, else with materialize())
     template<typename T>
     T& get_to(T& v) const
     {
-        get_to_impl(v, detail::view::is_direct_value<T, BasicJsonType, basic_json_view> {});
+        get_to_impl(v, get_to_kind<T> {});
         return v;
     }
 
@@ -8684,6 +8689,26 @@ class basic_json_view
         return detail::view::map_value<std::unordered_map<K, V, H, E, A>>(*this);
     }
 
+    /// whether the from_json() of T's serializer reads views (see
+    /// detail::has_view_from_json)
+    template<typename T>
+    using reads_view = detail::has_view_from_json<typename BasicJsonType::template json_serializer<T, void>, basic_json_view, T>;
+
+    /// how get_to() converts: 2 directly, 1 with a from_json() that reads
+    /// views, 0 through materialize()
+    template<typename T>
+    using get_to_kind = std::integral_constant < int, detail::view::is_direct_value<T, BasicJsonType, basic_json_view>::value
+                        ? 2 : static_cast<int>(reads_view<T>::value) >;
+
+    /// types whose from_json() reads views, without materialize()
+    template < typename T, typename std::enable_if < reads_view<T>::value && std::is_default_constructible<T>::value, int >::type = 0 >
+    T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<1> /*unused*/) const
+    {
+        auto v = T();
+        BasicJsonType::template json_serializer<T, void>::from_json(*this, v);
+        return v;
+    }
+
     /// everything else through the BasicJsonType value (from_json included)
     template<typename T>
     T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<0> /*unused*/) const
@@ -8694,14 +8719,20 @@ class basic_json_view
     // --- get_to() dispatch ---
 
     template<typename T>
-    void get_to_impl(T& v, std::true_type /*direct*/) const
+    void get_to_impl(T& v, std::integral_constant<int, 2> /*direct*/) const
     {
         v = get<T>();
     }
 
     /// from_json may keep parts of v (members a JSON object lacks, say)
     template<typename T>
-    void get_to_impl(T& v, std::false_type /*direct*/) const
+    void get_to_impl(T& v, std::integral_constant<int, 1> /*from_json reads views*/) const
+    {
+        BasicJsonType::template json_serializer<T, void>::from_json(*this, v);
+    }
+
+    template<typename T>
+    void get_to_impl(T& v, std::integral_constant<int, 0> /*through materialize()*/) const
     {
         materialize().get_to(v);
     }
@@ -9405,6 +9436,15 @@ class basic_json_document
 
     std::unique_ptr<document_data, document_data::deleter> m_data{}; // NOLINT(readability-redundant-member-init)
 };
+
+/*!
+@brief whether T is a basic_json_view (of any BasicJsonType and view_mode)
+
+For constraining templates that accept views, e.g. a from_json() written for
+both basic_json values and views.
+*/
+template<typename T>
+struct is_json_view : detail::is_json_view<T> {};
 
 /// a parsed JSON text for json
 using json_document = basic_json_document<json, view_mode::read_only>;
