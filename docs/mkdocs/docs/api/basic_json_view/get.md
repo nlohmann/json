@@ -38,7 +38,7 @@ as [`BasicJsonType::parse()`](../basic_json/parse.md) does), as well as the type
 accept views, e.g. with [`is_json_view`](../is_json_view.md). A `from_json()` that also accepts types that are no JSON
 values at all, such as the unconstrained `#!cpp template<typename BasicJsonType> void from_json(const BasicJsonType&,
 T&)` of [arbitrary type conversions](../../features/arbitrary_types.md), is not called with a view: it may use
-`BasicJsonType` functions a view does not have. See [json_view](../../features/json_view.md).
+`BasicJsonType` functions a view does not have. See [Writing generic code](../../features/json_view.md#writing-generic-code).
 
 !!! warning "Duplicate keys"
 
