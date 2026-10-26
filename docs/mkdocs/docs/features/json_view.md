@@ -242,11 +242,12 @@ Both results are only valid as long as the view -- and, for a string with no esc
 A view's type names its `BasicJsonType` and its [`view_mode`](../api/view_mode.md):
 [`json_view`](../api/json_view.md) is `#!cpp basic_json_view<json, view_mode::read_only>`, and
 [`json_editable_view`](../api/json_editable_view.md) is `#!cpp basic_json_view<json, view_mode::editable>`. These are
-different types, and there is no conversion between them, so a function written for one shortcut accepts no other
-view:
+different types. The only conversion between them turns a view of a read-only document into a view of an editable
+document of the same `BasicJsonType`, so a function written for one shortcut accepts few other views:
 
 ```cpp
-void print_names(json_view v);  // accepts neither an ordered_json_view nor a json_editable_view
+void print_names(json_view v);           // accepts neither an ordered_json_view nor a json_editable_view
+void print_names(json_editable_view v);  // also accepts a json_view, but no ordered_json_view
 ```
 
 This is the same pitfall as a `to_json`/`from_json` written for `json` instead of any `BasicJsonType`, which then does
@@ -274,7 +275,10 @@ well, but a non-`const` reference does not bind to the views that [`root()`](../
 
 There is no conversion from an editable view to a read-only one, by design: the mode decides how a view walks the
 index. A read-only view reads a container in place, while a view of an editable document follows the links that edits
-leave behind, so a read-only view of an edited document would read stale values. Views of both modes compare with
+leave behind, so a read-only view of an edited document would read stale values. The other direction is safe: a
+read-only document has no edits, so a view of it [converts](../api/basic_json_view/basic_json_view.md) to an
+editable view, which reads it like an editable document before its first edit. A template deduces the mode without
+conversions, so the template forms above still accept only the modes they name. Views of both modes compare with
 [`operator==`](../api/basic_json_view/operator_eq.md).
 
 [`is_json_view<T>`](../api/is_json_view.md) tells views from other types, for constraints that cannot be written as a
