@@ -52,6 +52,11 @@ struct point
     int x = 0;
     int y = 0;
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(point, x, y)
+
+    friend bool operator==(const point& a, const point& b)
+    {
+        return a.x == b.x && a.y == b.y;
+    }
 };
 
 struct shape
@@ -184,6 +189,13 @@ namespace
 {
 template<typename T, typename View = json_view>
 struct reads_view : nlohmann::detail::has_view_from_json<nlohmann::adl_serializer<T, void>, View, T> {};
+
+// whether a member converts to the same T from the view and from the materialized value
+template<typename T>
+bool same(const json_view& v, const json& j, const char* key)
+{
+    return v[key].get<T>() == j[key].get<T>();
+}
 }  // namespace
 
 TEST_CASE("json_view from_json")
@@ -215,38 +227,118 @@ TEST_CASE("json_view from_json")
         static_assert(!nlohmann::is_json_view<int>::value, "is_json_view");
     }
 
-    SECTION("the library's own conversions are not called with a view (and the probe compiles for them)")
+    SECTION("the library's own conversions read views")
     {
-        // these go through materialize() (vectors, maps with string keys,
-        // strings, and numbers are converted by the view itself)
-        static_assert(!reads_view<std::list<int>>::value, "std types");
-        static_assert(!reads_view<std::deque<point>>::value, "std types");
-        static_assert(!reads_view<std::set<std::string>>::value, "std types");
-        static_assert(!reads_view<std::unordered_set<int>>::value, "std types");
-        static_assert(!reads_view<std::forward_list<int>>::value, "std types");
-        static_assert(!reads_view<std::valarray<double>>::value, "std types");
-        static_assert(!reads_view<std::array<int, 3>>::value, "std types");
-        static_assert(!reads_view<std::pair<int, std::string>>::value, "std types");
-        static_assert(!reads_view<std::tuple<int, bool, point>>::value, "std types");
-        static_assert(!reads_view<std::map<int, int>>::value, "std types");
-        static_assert(!reads_view<std::unordered_map<int, point>>::value, "std types");
-        static_assert(!reads_view<std::map<color, int>>::value, "std types");
-        static_assert(!reads_view<std::map<std::string, int>>::value, "std types");
-        static_assert(!reads_view<std::vector<point>>::value, "std types");
-        static_assert(!reads_view<std::vector<bool>>::value, "std types");
-        static_assert(!reads_view<std::vector<std::uint8_t>>::value, "std types");
-        static_assert(!reads_view<std::string>::value, "std types");
-        static_assert(!reads_view<int>::value, "std types");
-        static_assert(!reads_view<bool>::value, "std types");
-        static_assert(!reads_view<double>::value, "std types");
-        static_assert(!reads_view<std::nullptr_t>::value, "std types");
-        static_assert(!reads_view<json>::value, "std types");
-        static_assert(!reads_view<json::binary_t>::value, "std types");
+        static_assert(reads_view<std::list<int>>::value, "std types");
+        static_assert(reads_view<std::deque<point>>::value, "std types");
+        static_assert(reads_view<std::set<std::string>>::value, "std types");
+        static_assert(reads_view<std::unordered_set<int>>::value, "std types");
+        static_assert(reads_view<std::forward_list<int>>::value, "std types");
+        static_assert(reads_view<std::valarray<double>>::value, "std types");
+        static_assert(reads_view<std::array<int, 3>>::value, "std types");
+        static_assert(reads_view<std::pair<int, std::string>>::value, "std types");
+        static_assert(reads_view<std::tuple<int, bool, point>>::value, "std types");
+        static_assert(reads_view<std::map<int, int>>::value, "std types");
+        static_assert(reads_view<std::unordered_map<int, point>>::value, "std types");
+        static_assert(reads_view<std::map<color, int>>::value, "std types");
+        static_assert(reads_view<std::map<std::string, int>>::value, "std types");
+        static_assert(reads_view<std::vector<point>>::value, "std types");
+        static_assert(reads_view<std::vector<bool>>::value, "std types");
+        static_assert(reads_view<std::vector<std::uint8_t>>::value, "std types");
+        static_assert(reads_view<std::string>::value, "std types");
+        static_assert(reads_view<int>::value, "std types");
+        static_assert(reads_view<bool>::value, "std types");
+        static_assert(reads_view<double>::value, "std types");
+        static_assert(reads_view<std::nullptr_t>::value, "std types");
+        static_assert(!reads_view<json>::value, "get<BasicJsonType>() is materialize()");
+        static_assert(reads_view<json::binary_t>::value, "std types");
 #ifdef JSON_HAS_CPP_17
-        static_assert(!reads_view<std::optional<point>>::value, "std types");
+        static_assert(reads_view<std::optional<point>>::value, "std types");
 #endif
         CHECK(true);
     }
+
+    SECTION("std types: the same values as from the materialized value")
+    {
+        const json_document d = json_document::parse(R"({"ints": [3, 1, 2, 1], "strings": ["b", "a", "b"], "pairs": [[1, "x"], [2, "y"]],
+            "points": [{"x": 1, "y": 2}, {"x": 3, "y": 4}], "object": {"b": 1, "a": 2}, "triple": [1, true, {"x": 5, "y": 6}],
+            "colors": {"green": 1, "red": 2}, "bytes": [1, 2, 255], "nested": [[1, 2], [3]], "number": 1.5, "flag": true,
+            "text": "hello", "nothing": null, "mixed": [1, 2.5, -3, 4], "flags": [true, false, true]})");
+        const json j = d.root().materialize();
+        const json_view v = d.root();
+        CHECK(same<std::list<int>>(v, j, "ints"));
+        CHECK(same<std::deque<int>>(v, j, "ints"));
+        CHECK(same<std::set<int>>(v, j, "ints"));
+        CHECK(same<std::multiset<int>>(v, j, "ints"));
+        CHECK(same<std::unordered_set<std::string>>(v, j, "strings"));
+        CHECK(same<std::forward_list<int>>(v, j, "ints"));
+        CHECK(same<std::array<int, 4>>(v, j, "ints"));
+        CHECK(same<std::array<double, 4>>(v, j, "mixed"));
+        CHECK((v["pairs"][0].get<std::pair<int, std::string>>() == j["pairs"][0].get<std::pair<int, std::string>>()));
+        CHECK(same<std::vector<std::pair<int, std::string>>>(v, j, "pairs"));
+        CHECK(same<std::tuple<int, bool, point>>(v, j, "triple"));
+        CHECK(same<std::map<int, std::string>>(v, j, "pairs"));
+        CHECK(same<std::unordered_map<int, std::string>>(v, j, "pairs"));
+        CHECK(same<std::map<std::string, int>>(v, j, "object"));
+        CHECK(same<std::unordered_map<std::string, int>>(v, j, "object"));
+        CHECK(same<std::map<color, int>>(v, j, "colors"));
+        CHECK(same<std::vector<point>>(v, j, "points"));
+        CHECK(same<std::vector<int>>(v, j, "ints"));
+        CHECK(same<std::vector<bool>>(v, j, "flags"));
+        CHECK(same<std::vector<std::uint8_t>>(v, j, "bytes"));
+        CHECK(same<std::vector<std::vector<int>>>(v, j, "nested"));
+        CHECK(same<std::vector<json>>(v, j, "mixed"));
+        CHECK(same<double>(v, j, "number"));
+        CHECK(same<bool>(v, j, "flag"));
+        CHECK(same<std::string>(v, j, "text"));
+        CHECK(same<std::nullptr_t>(v, j, "nothing"));
+        CHECK(same<json>(v, j, "object"));
+        const std::valarray<int> va = v["ints"].get<std::valarray<int>>();
+        CHECK(va.size() == 4);
+        CHECK(va[0] == 3);
+        int c_array[2][2] = {{0, 0}, {0, 0}}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): the conversion to C arrays
+        v["nested"][0].get_to(c_array[0]);
+        CHECK(c_array[0][1] == 2);
+#ifdef JSON_HAS_CPP_17
+        CHECK(v["points"][0].get<std::optional<point>>()->y == 2);
+        CHECK(!v["nothing"].get<std::optional<point>>().has_value());
+#endif
+        // containers of views keep views of the elements
+        const std::vector<json_view> views = v["points"].get<std::vector<json_view>>();
+        CHECK(views.size() == 2);
+        CHECK(views[1]["x"].get<int>() == 3);
+        CHECK(v["object"].get<std::map<std::string, json_view>>().at("a").get<int>() == 2);
+    }
+
+    SECTION("std types: duplicate keys keep the last value, as from the materialized value")
+    {
+        const json_document d = json_document::parse(R"({"a": 1, "b": 2, "a": 3})");
+        CHECK((d.root().get<std::map<std::string, int>>() == d.root().materialize().get<std::map<std::string, int>>()));
+        CHECK(d.root().get<std::map<std::string, int>>().at("a") == 3);
+        CHECK(d.root().get<std::unordered_map<std::string, int>>().at("a") == 3);
+    }
+
+#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS
+    SECTION("std types: the same errors as from the materialized value")
+    {
+        const json_document d = json_document::parse(R"([[1, "x"], {"a": 1}, "text", [1], 5, null])");
+        const json j = d.root().materialize();
+        for (std::size_t i = 0; i < 6; ++i)
+        {
+            CAPTURE(i)
+            const json_view v = d.root()[i];
+            CHECK(exception_of_call([&] { static_cast<void>(v.get<std::list<int>>()); }) == exception_of_call([&] { static_cast<void>(j[i].get<std::list<int>>()); }));
+            CHECK(exception_of_call([&] { static_cast<void>(v.get<std::forward_list<int>>()); }) == exception_of_call([&] { static_cast<void>(j[i].get<std::forward_list<int>>()); }));
+            CHECK(exception_of_call([&] { static_cast<void>(v.get<std::array<int, 2>>()); }) == exception_of_call([&] { static_cast<void>(j[i].get<std::array<int, 2>>()); }));
+            CHECK(exception_of_call([&] { static_cast<void>(v.get<std::pair<int, std::string>>()); }) == exception_of_call([&] { static_cast<void>(j[i].get<std::pair<int, std::string>>()); }));
+            CHECK(exception_of_call([&] { static_cast<void>(v.get<std::map<std::string, int>>()); }) == exception_of_call([&] { static_cast<void>(j[i].get<std::map<std::string, int>>()); }));
+            CHECK(exception_of_call([&] { static_cast<void>(v.get<std::map<int, int>>()); }) == exception_of_call([&] { static_cast<void>(j[i].get<std::map<int, int>>()); }));
+            CHECK(exception_of_call([&] { static_cast<void>(v.get<std::vector<std::uint8_t>>()); }) == exception_of_call([&] { static_cast<void>(j[i].get<std::vector<std::uint8_t>>()); }));
+            CHECK(exception_of_call([&] { static_cast<void>(v.get<json::binary_t>()); }) == exception_of_call([&] { static_cast<void>(j[i].get<json::binary_t>()); }));
+            CHECK(exception_of_call([&] { static_cast<void>(v.get<std::valarray<int>>()); }) == exception_of_call([&] { static_cast<void>(j[i].get<std::valarray<int>>()); }));
+        }
+    }
+#endif
 
     SECTION("macro types")
     {

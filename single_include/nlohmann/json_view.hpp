@@ -7822,14 +7822,16 @@ struct is_direct_value : std::integral_constant < bool,
 template<typename Traits, typename Alloc, typename BasicJsonType, typename View>
 struct is_direct_value<std::basic_string<char, Traits, Alloc>, BasicJsonType, View> : std::true_type {};
 
+// (vectors of these, which are faster than through from_json(), and containers
+// of views; other containers are read by the library's from_json())
 template<typename U, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : std::true_type {};
+struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : is_direct_value<U, BasicJsonType, View> {};
 
-template<typename K, typename V, typename C, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::map<K, V, C, A>, BasicJsonType, View> : is_string_key<K> {};
+template<typename K, typename C, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::map<K, View, C, A>, BasicJsonType, View> : is_string_key<K> {};
 
-template<typename K, typename V, typename H, typename E, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::unordered_map<K, V, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
+template<typename K, typename H, typename E, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::unordered_map<K, View, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
 
 }  // namespace view
 }  // namespace detail
@@ -8671,22 +8673,25 @@ class basic_json_view
         return *this;
     }
 
-    template<typename U, typename A>
+    /// vectors of the types converted directly (faster than the library's
+    /// from_json()) and containers of views (no from_json() reads them: a view
+    /// is no value of BasicJsonType); other containers are read by from_json()
+    template<typename U, typename A, detail::enable_if_t<detail::view::is_direct_value<U, BasicJsonType, basic_json_view>::value, int> = 0>
     std::vector<U, A> get_impl(detail::view::value_tag<std::vector<U, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
         return detail::view::vector_value<basic_json_view, U, A>(*this);
     }
 
-    template<typename K, typename V, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
-    std::map<K, V, C, A> get_impl(detail::view::value_tag<std::map<K, V, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    template<typename K, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::map<K, basic_json_view, C, A> get_impl(detail::view::value_tag<std::map<K, basic_json_view, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
-        return detail::view::map_value<std::map<K, V, C, A>>(*this);
+        return detail::view::map_value<std::map<K, basic_json_view, C, A>>(*this);
     }
 
-    template<typename K, typename V, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
-    std::unordered_map<K, V, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, V, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    template<typename K, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::unordered_map<K, basic_json_view, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, basic_json_view, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
-        return detail::view::map_value<std::unordered_map<K, V, H, E, A>>(*this);
+        return detail::view::map_value<std::unordered_map<K, basic_json_view, H, E, A>>(*this);
     }
 
     /// whether the from_json() of T's serializer reads views (see
@@ -8701,7 +8706,7 @@ class basic_json_view
                         ? 2 : static_cast<int>(reads_view<T>::value) >;
 
     /// types whose from_json() reads views, without materialize()
-    template < typename T, typename std::enable_if < reads_view<T>::value && std::is_default_constructible<T>::value, int >::type = 0 >
+    template<typename T, detail::enable_if_t<detail::conjunction<reads_view<T>, std::is_default_constructible<T>>::value, int> = 0>
     T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<1> /*unused*/) const
     {
         auto v = T();
