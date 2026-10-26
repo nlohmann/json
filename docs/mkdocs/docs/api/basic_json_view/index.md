@@ -3,7 +3,7 @@
 <small>Defined in header `<nlohmann/json_view.hpp>`</small>
 
 ```cpp
-template<typename BasicJsonType, bool Editable = false>
+template<typename BasicJsonType, view_mode Mode = view_mode::read_only>
 class basic_json_view;
 ```
 
@@ -37,7 +37,7 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 `#!cpp operator ValueType()`), and no `#!cpp get_ptr()` or `#!cpp get_ref()`; see [`get`](get.md).
 
 `basic_json_view` itself is always read-only -- it never has a `set` or `push_back` of its own. A view of an
-**editable** document (`#!cpp Editable == true`) sees every edit made through
+**editable** document (`#!cpp view_mode::editable`) sees every edit made through
 [`basic_json_document::set`](../basic_json_document/set.md) and
 [`basic_json_document::push_back`](../basic_json_document/push_back.md): once a value is changed, every view that
 still refers to it -- including ones taken before the change -- reads the new value. See
@@ -49,9 +49,10 @@ still refers to it -- including ones taken before the change -- reads the new va
 :   a specialization of [`basic_json`](../basic_json/index.md), matching the
     [`basic_json_document`](../basic_json_document/index.md) the view was taken from.
 
-`Editable`
-:   whether the view is of an editable document, matching the [`basic_json_document`](../basic_json_document/index.md)
-    it was taken from (optional, `#!cpp false` by default). See [Edits](../basic_json_document/index.md#edits).
+`Mode`
+:   a [`view_mode`](../view_mode.md): whether the view is of an editable document, matching the
+    [`basic_json_document`](../basic_json_document/index.md) it was taken from (optional, `#!cpp view_mode::read_only` by
+    default). See [Edits](../basic_json_document/index.md#edits).
 
 ## Specializations
 

@@ -3,7 +3,7 @@
 <small>Defined in header `<nlohmann/json_view.hpp>`</small>
 
 ```cpp
-using json_editable_document = basic_json_document<json, true>;
+using json_editable_document = basic_json_document<json, view_mode::editable>;
 ```
 
 This type is an **editable** [`basic_json_document`](basic_json_document/index.md) of the default

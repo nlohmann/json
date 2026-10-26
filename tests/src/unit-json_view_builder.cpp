@@ -592,7 +592,7 @@ TEST_CASE("json_view node integer bits")
                 })
         {
             CAPTURE(v)
-            n.kind = 0x5A;
+            n.kind = static_cast<nlohmann::detail::view::node_kind>(0x5A);
             n.flags = 0xA5;
             n.extra = 0x1234;
             n.off = 0x89ABCDEFu;
@@ -601,7 +601,7 @@ TEST_CASE("json_view node integer bits")
             CHECK(n.len == static_cast<std::uint32_t>(v));
             CHECK(n.next == static_cast<std::uint32_t>(v >> 32));
             // the other fields are untouched
-            CHECK(n.kind == 0x5A);
+            CHECK(static_cast<std::uint8_t>(n.kind) == 0x5A);
             CHECK(n.flags == 0xA5);
             CHECK(n.extra == 0x1234);
             CHECK(n.off == 0x89ABCDEFu);
