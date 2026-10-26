@@ -301,11 +301,22 @@ representation using the length of the byte array.
     [`json::from_cbor`](../api/basic_json/from_cbor.md) (see
     [`cbor_tag_handler_t`](../api/basic_json/cbor_tag_handler_t.md)).
 
+    With `ignore`, the subtype is dropped (`"subtype": null`); with `store`, the tag is kept (`"subtype": 42`):
+
     ```json
     {
       "binary": {
         "bytes": [202, 254, 186, 190],
         "subtype": null
+      }
+    }
+    ```
+
+    ```json
+    {
+      "binary": {
+        "bytes": [202, 254, 186, 190],
+        "subtype": 42
       }
     }
     ```
