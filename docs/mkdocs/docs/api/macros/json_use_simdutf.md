@@ -73,6 +73,8 @@ By default, `#!cpp JSON_USE_SIMDUTF` is not defined and the portable C++11 scala
 
 - [:simple-cmake: JSON_TestSimdutf](../../integration/cmake.md#json_testsimdutf) - CMake option to build the unit
   tests against the simdutf backend
+- [Parsing](../../features/parsing/index.md) - overview of the parsing functions
+- [Serialization](../../features/serialization.md) - pretty-printing, UTF-8 handling, and number output
 
 ## Version history
 

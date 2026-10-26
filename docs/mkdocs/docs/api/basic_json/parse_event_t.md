@@ -46,8 +46,9 @@ the JSON text on the left; the legend on the right names the event per colour.</
 
 ## See also
 
-- [parser_callback_t](parser_callback_t.md) callback function type for the parser
-- [parse](parse.md) deserialize from a compatible input
+- [`parser_callback_t`](parser_callback_t.md) - callback function type for the parser
+- [`parse`](parse.md) - deserialize from a compatible input
+- [Parser Callbacks](../../features/parsing/parser_callbacks.md) - filter or inspect values while parsing
 
 ## Version history
 

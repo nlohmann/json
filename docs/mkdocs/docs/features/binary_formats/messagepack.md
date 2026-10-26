@@ -215,3 +215,12 @@ The library maps MessagePack types to JSON value types as follows:
     ```json
     --8<-- "examples/from_msgpack.output"
     ```
+
+## See also
+
+- [Binary formats](index.md) - overview and comparison of the supported binary formats
+- [Binary values](../binary_values.md) - how binary values and subtypes map to MessagePack
+- [`to_msgpack`](../../api/basic_json/to_msgpack.md) - serialize a JSON value to MessagePack
+- [`from_msgpack`](../../api/basic_json/from_msgpack.md) - parse a JSON value from MessagePack
+- [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) - reject ill-formed UTF-8 in strings
+- [SAX interface](../parsing/sax_interface.md) - decode binary formats without building a value

@@ -41,9 +41,10 @@ Whether parsing should proceed (**must return `#!cpp false`**).
 
 ## See also
 
-- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [`sax_parse`](../basic_json/sax_parse.md) - SAX parser
 - [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - the article on handling parse errors without
   exceptions
+- [SAX Interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
 
 ## Version history
 

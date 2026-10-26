@@ -122,11 +122,12 @@ document.
 
 ## See also
 
-- [get_to](get_to.md) - convert and write into a passed value
-- [get_string](get_string.md) - the string, without a copy
-- [number_token](number_token.md) - a number's token text, without a copy
-- [materialize](materialize.md) - build the `BasicJsonType` value of this subtree
+- [`get_to`](get_to.md) - convert and write into a passed value
+- [`get_string`](get_string.md) - the string, without a copy
+- [`number_token`](number_token.md) - a number's token text, without a copy
+- [`materialize`](materialize.md) - build the `BasicJsonType` value of this subtree
 - [`BasicJsonType::get`](../basic_json/get.md) - the corresponding function of `basic_json`
+- [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - which conversions avoid building a basic_json value
 
 ## Version history
 

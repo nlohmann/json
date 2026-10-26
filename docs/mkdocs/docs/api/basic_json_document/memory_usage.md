@@ -42,8 +42,9 @@ to observe the effect of [`shrink_to_fit()`](shrink_to_fit.md).
 
 ## See also
 
-- [node_count](node_count.md) - the number of index entries
-- [shrink_to_fit](shrink_to_fit.md) - release unused index capacity
+- [`node_count`](node_count.md) - the number of index entries
+- [`shrink_to_fit`](shrink_to_fit.md) - release unused index capacity
+- [Zero-copy JSON views](../../features/json_view.md#the-idea) - the flat node index and its memory
 
 ## Version history
 

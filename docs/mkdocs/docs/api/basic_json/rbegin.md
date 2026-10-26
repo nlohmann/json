@@ -45,9 +45,9 @@ Constant.
 
 ## See also
 
-- [rend](rend.md) returns a reverse iterator to one before the first element
-- [crbegin](crbegin.md) returns a const reverse iterator to the last element
-- [begin](begin.md) returns an iterator to the first element
+- [`rend`](rend.md) - returns a reverse iterator to one before the first element
+- [`crbegin`](crbegin.md) - returns a const reverse iterator to the last element
+- [`begin`](begin.md) - returns an iterator to the first element
 - [Iterators](../../features/iterators.md) - the article on iterators
 
 ## Version history

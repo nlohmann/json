@@ -88,3 +88,6 @@ flowchart LR
 - [`patch`](../api/basic_json/patch.md) - apply a JSON Patch, returning the result as a copy
 - [`patch_inplace`](../api/basic_json/patch_inplace.md) - apply a JSON Patch without copying
 - [`diff`](../api/basic_json/diff.md) - compute a JSON Patch from two values
+- [`json_pointer`](../api/json_pointer/index.md) - type to represent JSON Pointers
+- [`merge_diff`](../api/basic_json/merge_diff.md) - compute a JSON Merge Patch from two values
+- [Modifying values](modifying_values.md) - simple in-place modifications

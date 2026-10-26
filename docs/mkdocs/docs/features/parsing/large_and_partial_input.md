@@ -170,3 +170,8 @@ and gives read-only [views](../../api/basic_json_view/index.md) of the parts you
 - [SAX interface](sax_interface.md) - event-based parsing
 - [Zero-copy JSON views](../json_view.md) - read parts of a large document without building a tree
 - [Untrusted input](untrusted_input.md) - limits for input you do not control
+- [`operator>>`](../../api/operator_gtgt.md) - deserialize from stream
+- [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input
+- [`sax_parse`](../../api/basic_json/sax_parse.md) - generate SAX events
+- [`JSON_PRECISE_STREAM_POSITION`](../../api/macros/json_precise_stream_position.md) - leave the stream positioned right after a parsed number
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](../../api/macros/json_disable_stream_bulk_scan.md) - read a `std::istream` one character at a time

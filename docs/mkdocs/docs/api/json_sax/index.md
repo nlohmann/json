@@ -65,9 +65,9 @@ leading `-` sign.
 ## See also
 
 - [SAX interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
-- [**sax_parse**](../basic_json/sax_parse.md) - generate SAX events from an input
-- [**parse**](../basic_json/parse.md) - DOM parsing, with optional [parser callbacks](../../features/parsing/parser_callbacks.md)
-- [Parse exceptions](../../features/parsing/parse_exceptions.md)
+- [`sax_parse`](../basic_json/sax_parse.md) - generate SAX events from an input
+- [`parse`](../basic_json/parse.md) - DOM parsing, with optional [parser callbacks](../../features/parsing/parser_callbacks.md)
+- [Parse exceptions](../../features/parsing/parse_exceptions.md) - how parse errors are reported
 
 ## Version history
 

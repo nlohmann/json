@@ -52,3 +52,10 @@ where in a large document a runtime error occurred. This only applies to excepti
 exists (e.g. during element access); parse errors, which happen before any value exists to point at, are not
 covered by this mechanism -- see [Parsing and exceptions](../features/parsing/parse_exceptions.md) for how parse
 errors report their own location instead.
+
+## See also
+
+- [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) - extended exception messages with the path of the failing value
+- [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) - record byte positions of values for error messages
+- [Exceptions](exceptions.md) - all exceptions and their error codes
+- [`exception`](../api/basic_json/exception.md) - base class of all exceptions thrown by the library

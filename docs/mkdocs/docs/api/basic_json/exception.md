@@ -83,7 +83,11 @@ constructor.
 
 ## See also
 
-[List of exceptions](../../home/exceptions.md)
+- [List of exceptions](../../home/exceptions.md) - overview of all exceptions thrown by the library
+- [Working Without Exceptions](../../features/no_exceptions.md) - using the library without exceptions
+- [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) - extended exception messages with the path of the failing value
+- [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - parsing alternatives that do not throw
+- [Debugging](../../home/debugging.md) - debugging aids
 
 ## Version history
 

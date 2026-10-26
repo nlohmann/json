@@ -414,3 +414,13 @@ as an array of uint8 values. The library implements this translation.
       "binary": [202, 254, 186, 190]
     }
     ```
+
+## See also
+
+- [Binary formats](binary_formats/index.md) - the formats that can store binary values
+- [`binary_t`](../api/basic_json/binary_t.md) - type for binary values
+- [`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) - container for binary values with subtype
+- [`binary`](../api/basic_json/binary.md) - create a binary value
+- [`get_binary`](../api/basic_json/get_binary.md) - access the stored binary value
+- [`is_binary`](../api/basic_json/is_binary.md) - check whether a value is binary
+- [`cbor_tag_handler_t`](../api/basic_json/cbor_tag_handler_t.md) - store or ignore CBOR tags when parsing

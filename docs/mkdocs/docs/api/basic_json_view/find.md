@@ -63,8 +63,8 @@ also does so for a [discarded](is_discarded.md) view -- there is no separate "in
 
 ## See also
 
-- [count](count.md) - returns the number of occurrences of a key
-- [contains](contains.md) - checks whether a key exists
+- [`count`](count.md) - returns the number of occurrences of a key
+- [`contains`](contains.md) - checks whether a key exists
 - [`BasicJsonType::find`](../basic_json/find.md) - the corresponding function of `basic_json`
 
 ## Version history

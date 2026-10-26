@@ -78,9 +78,10 @@ compile; see [`parse`](parse.md#notes).
 
 ## See also
 
-- [parse](parse.md) - deserialize from a compatible input
-- [root](root.md) - the view of the root value
-- [load](load.md) - read a document from an image instead of parsing JSON text
+- [`parse`](parse.md) - deserialize from a compatible input
+- [`root`](root.md) - the view of the root value
+- [`load`](load.md) - read a document from an image instead of parsing JSON text
+- [Zero-copy JSON views](../../features/json_view.md#ownership-and-lifetime) - reusing a document and what it invalidates
 
 ## Version history
 

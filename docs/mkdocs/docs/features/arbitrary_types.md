@@ -563,3 +563,12 @@ struct bad_serializer
 - [Specializing enum conversion](enum_conversion.md) - map enums to JSON strings instead of integers
 - [Supported macros](macros.md) - reference for `NLOHMANN_DEFINE_TYPE_*` and related macros
 - [`adl_serializer`](../api/adl_serializer/index.md) - the default `JSONSerializer` used in the conversion dispatch
+- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](../api/macros/nlohmann_define_type_intrusive.md) - generate the conversion functions inside the type
+- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](../api/macros/nlohmann_define_type_non_intrusive.md) - generate the conversion functions outside the type
+- [`NLOHMANN_DEFINE_TYPE_WITH_NAMES`](../api/macros/nlohmann_define_type_with_names.md) - use JSON keys that differ from the member names
+- [`NLOHMANN_DEFINE_DERIVED_TYPE`](../api/macros/nlohmann_define_derived_type.md) - generate the conversion functions for derived classes
+- [`NLOHMANN_JSON_SERIALIZE_ENUM`](../api/macros/nlohmann_json_serialize_enum.md) - map enum values to JSON values
+- [`get`](../api/basic_json/get.md) - convert a JSON value to a C++ type
+- [`get_to`](../api/basic_json/get_to.md) - convert a JSON value into an existing variable
+- [`json_serializer`](../api/basic_json/json_serializer.md) - the `JSONSerializer` template parameter
+

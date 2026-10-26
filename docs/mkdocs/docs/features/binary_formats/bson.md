@@ -168,3 +168,12 @@ The library maps BSON record types to JSON value types as follows:
     ```json
     --8<-- "examples/from_bson.output"
     ```
+
+## See also
+
+- [Binary formats](index.md) - overview and comparison of the supported binary formats
+- [Binary values](../binary_values.md) - how binary values and subtypes map to BSON
+- [`to_bson`](../../api/basic_json/to_bson.md) - serialize a JSON value to BSON
+- [`from_bson`](../../api/basic_json/from_bson.md) - parse a JSON value from BSON
+- [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) - reject ill-formed UTF-8 in strings
+- [SAX interface](../parsing/sax_interface.md) - decode binary formats without building a value

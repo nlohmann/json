@@ -266,7 +266,12 @@ The conversions above are built in for standard types. To make the same syntax w
 
 - [`get`](../api/basic_json/get.md) - get a copy converted to a given type
 - [`get_to`](../api/basic_json/get_to.md) - convert into an existing variable
-- [`get_ref`](../api/basic_json/get_ref.md) / [`get_ptr`](../api/basic_json/get_ptr.md) - access the stored value without copying
+- [`get_ref`](../api/basic_json/get_ref.md) - / [`get_ptr`](../api/basic_json/get_ptr.md) - access the stored value without copying
 - [Arbitrary types conversions](arbitrary_types.md) - support your own types
 - [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) - toggle implicit conversions
 - [Zero-copy JSON views](json_view.md) - get values out of a document or a view
+- [`adl_serializer`](../api/adl_serializer/index.md) - the default serializer behind the conversions
+- [`type`](../api/basic_json/type.md) - query the type of a value
+- [`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md) - toggle conversion to tuples of references
+- [`JSON_HAS_RANGE_VIEW_CONVERSION`](../api/macros/json_has_range_view_conversion.md) - toggle conversion from ranges
+

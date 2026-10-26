@@ -46,9 +46,9 @@ Constant.
 
 ## See also
 
-- [rbegin](rbegin.md) returns a reverse iterator to the last element
-- [crend](crend.md) returns a const reverse iterator to one before the first element
-- [end](end.md) returns an iterator to one past the last element
+- [`rbegin`](rbegin.md) - returns a reverse iterator to the last element
+- [`crend`](crend.md) - returns a const reverse iterator to one before the first element
+- [`end`](end.md) - returns an iterator to one past the last element
 - [Iterators](../../features/iterators.md) - the article on iterators
 
 ## Version history

@@ -63,11 +63,12 @@ buffer -- and is valid exactly as long as that text is, see the [validity rules]
 
 ## See also
 
-- [get](get.md) - convert the value to a given type
-- [get_string](get_string.md) - the string, without a copy
+- [`get`](get.md) - convert the value to a given type
+- [`get_string`](get_string.md) - the string, without a copy
 - [`BasicJsonType::number_integer_t`](../basic_json/number_integer_t.md),
   [`number_unsigned_t`](../basic_json/number_unsigned_t.md), [`number_float_t`](../basic_json/number_float_t.md) - the
   number types `#!cpp get<T>()` and `materialize()` convert into
+- [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - reading a number exactly as written
 
 ## Version history
 

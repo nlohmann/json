@@ -39,9 +39,10 @@ Linear in the size of the compared containers.
 
 ## See also
 
-- [operator!=](operator_ne.md) comparison: not equal
-- [has_subtype](has_subtype.md) return whether the value has a subtype
-- [subtype](subtype.md) return the binary subtype
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [`operator!=`](operator_ne.md) - comparison: not equal
+- [`has_subtype`](has_subtype.md) - return whether the value has a subtype
+- [`subtype`](subtype.md) - return the binary subtype
 
 ## Version history
 

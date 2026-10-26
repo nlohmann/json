@@ -100,8 +100,8 @@ the way to get a `BasicJsonType` value that supports it.
 
 ## See also
 
-- [operator!=](operator_ne.md) - compare for inequality
-- [materialize](materialize.md) - build a `BasicJsonType` value, e.g. to keep comparing after the document is gone
+- [`operator!=`](operator_ne.md) - compare for inequality
+- [`materialize`](materialize.md) - build a `BasicJsonType` value, e.g. to keep comparing after the document is gone
 - [`BasicJsonType::operator==`](../basic_json/operator_eq.md) - the corresponding function of `basic_json`
 
 ## Version history

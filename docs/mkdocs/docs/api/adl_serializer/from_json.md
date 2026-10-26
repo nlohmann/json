@@ -67,7 +67,9 @@ class (either explicitly or via the conversion operators).
 
 ## See also
 
-- [to_json](to_json.md)
+- [`to_json`](to_json.md) - convert a C++ value to JSON
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) - write your own `from_json` and `to_json` functions
+- [Converting values](../../features/conversions.md) - overview of `get`, `get_to` and implicit conversions
 
 ## Version history
 

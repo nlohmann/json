@@ -1241,3 +1241,15 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 
     This exception was added in version 3.13.0. Before that, debug builds aborted on an assertion and release builds
     wrote a `$` marker without `#`, which [`from_ubjson`](../api/basic_json/from_ubjson.md) then rejected.
+
+## See also
+
+- [`exception`](../api/basic_json/exception.md) - base class of all exceptions thrown by the library
+- [`parse_error`](../api/basic_json/parse_error.md) - exceptions indicating a parse error
+- [`invalid_iterator`](../api/basic_json/invalid_iterator.md) - exceptions indicating errors with iterators
+- [`type_error`](../api/basic_json/type_error.md) - exceptions indicating a wrong type
+- [`out_of_range`](../api/basic_json/out_of_range.md) - exceptions indicating access out of range
+- [`other_error`](../api/basic_json/other_error.md) - exceptions indicating other library errors
+- [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md) - switch off exceptions
+- [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) - extended exception messages with the path of the failing value
+- [Working Without Exceptions](../features/no_exceptions.md) - use the library without exceptions

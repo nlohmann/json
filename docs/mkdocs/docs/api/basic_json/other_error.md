@@ -69,12 +69,14 @@ base class, and the highlighted box is `basic_json::other_error`.</p>
 
 ## See also
 
-- [`exception`](exception.md) for the base class of all exceptions thrown by the library
-- [List of other errors](../../home/exceptions.md#further-exceptions)
-- [`parse_error`](parse_error.md) for exceptions indicating a parse error
-- [`invalid_iterator`](invalid_iterator.md) for exceptions indicating errors with iterators
-- [`type_error`](type_error.md) for exceptions indicating executing a member function with a wrong type
-- [`out_of_range`](out_of_range.md) for exceptions indicating access out of the defined range
+- [`exception`](exception.md) - the base class of all exceptions thrown by the library
+- [List of other errors](../../home/exceptions.md#further-exceptions) - overview of further errors (`other_error`)
+- [`parse_error`](parse_error.md) - exceptions indicating a parse error
+- [`invalid_iterator`](invalid_iterator.md) - exceptions indicating errors with iterators
+- [`type_error`](type_error.md) - exceptions indicating executing a member function with a wrong type
+- [`out_of_range`](out_of_range.md) - exceptions indicating access out of the defined range
+- [Exceptions](../../home/exceptions.md) - all exceptions and their error codes
+- [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) - extended exception messages with the path of the failing value
 
 ## Version history
 

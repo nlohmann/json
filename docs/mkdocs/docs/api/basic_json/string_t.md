@@ -82,9 +82,11 @@ and an example.
 
 ## See also
 
-- [object_t](object_t.md) the type used to store JSON objects (and their keys, which are also `string_t`)
-- [binary_t](binary_t.md) the type used to store binary values
-- [get_ptr](get_ptr.md) returns a pointer to the stored string value
+- [`object_t`](object_t.md) - the type used to store JSON objects (and their keys, which are also `string_t`)
+- [`binary_t`](binary_t.md) - the type used to store binary values
+- [`get_ptr`](get_ptr.md) - returns a pointer to the stored string value
+- [Types](../../features/types/index.md) - how strings are stored
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the `StringType` template parameter
 
 ## Version history
 

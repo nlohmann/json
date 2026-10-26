@@ -779,7 +779,15 @@ See [issue #3425](https://github.com/nlohmann/json/issues/3425), [`string_t`](..
 
 ## See also
 
-- [Types](index.md) -- overview of how JSON values are stored
-- [Number Handling](number_handling.md) -- how the number types affect parsing and serialization
-- [Object Order](../object_order.md) -- using an insertion-ordered `ObjectType`
-- [`basic_json`](../../api/basic_json/index.md) -- API documentation of the class template
+- [Types](index.md) - overview of how JSON values are stored
+- [Number Handling](number_handling.md) - how the number types affect parsing and serialization
+- [Object Order](../object_order.md) - using an insertion-ordered `ObjectType`
+- [`basic_json`](../../api/basic_json/index.md) - API documentation of the class template
+- [`object_t`](../../api/basic_json/object_t.md) - the `ObjectType` in use
+- [`array_t`](../../api/basic_json/array_t.md) - the `ArrayType` in use
+- [`string_t`](../../api/basic_json/string_t.md) - the `StringType` in use
+- [`json_serializer`](../../api/basic_json/json_serializer.md) - the `JSONSerializer` in use
+- [`json_base_class_t`](../../api/basic_json/json_base_class_t.md) - the `CustomBaseClass` in use
+- [`with_t`](../../api/basic_json/with_t.md) - derive a specialization with one parameter replaced
+- [`get_allocator`](../../api/basic_json/get_allocator.md) - the allocator in use
+

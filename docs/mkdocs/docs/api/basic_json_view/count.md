@@ -62,8 +62,8 @@ If the source text repeats a key, `count()` returns more than `#!cpp 1` for it, 
 
 ## See also
 
-- [find](find.md) - find a value in an object
-- [contains](contains.md) - checks whether a key exists
+- [`find`](find.md) - find a value in an object
+- [`contains`](contains.md) - checks whether a key exists
 - [`BasicJsonType::count`](../basic_json/count.md) - the corresponding function of `basic_json`
 
 ## Version history

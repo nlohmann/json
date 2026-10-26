@@ -53,7 +53,7 @@ is `#!cpp false` for any string, regardless of its length.
 
 ## See also
 
-- [size](size.md) - return the number of elements
+- [`size`](size.md) - return the number of elements
 - [`BasicJsonType::empty`](../basic_json/empty.md) - the corresponding function of `basic_json`
 
 ## Version history

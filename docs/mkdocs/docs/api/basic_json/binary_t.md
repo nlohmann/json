@@ -117,7 +117,9 @@ type `#!cpp binary_t*` must be dereferenced.
 
 ## See also
 
-- [byte_container_with_subtype](../byte_container_with_subtype/index.md)
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [Binary formats](../../features/binary_formats/index.md) - formats that can store binary values
+- [`byte_container_with_subtype`](../byte_container_with_subtype/index.md) - container type used by binary values
 
 ## Version history
 

@@ -67,9 +67,10 @@ since floating-point values and unescaped strings are read from the source lazil
 
 ## See also
 
-- [get](get.md) - convert the value to a given type (`#!cpp get<string_view_t>()` is equivalent to this function)
-- [number_token](number_token.md) - a number's token text, without a copy
+- [`get`](get.md) - convert the value to a given type (`#!cpp get<string_view_t>()` is equivalent to this function)
+- [`number_token`](number_token.md) - a number's token text, without a copy
 - [`BasicJsonType::get_ref`](../basic_json/get_ref.md) - the closest counterpart of `basic_json`
+- [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - borrowing strings instead of copying them
 
 ## Version history
 

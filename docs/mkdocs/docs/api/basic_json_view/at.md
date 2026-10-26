@@ -135,8 +135,8 @@ for a missing key or an out-of-range index, `at` throws for those too (`out_of_r
 
 ## See also
 
-- [operator[]](operator[].md) - access specified element (returns a discarded view instead of throwing)
-- [front](front.md), [back](back.md) - access the first or last element
+- [`operator[]`](operator[].md) - access specified element (returns a discarded view instead of throwing)
+- [`front`](front.md), [`back`](back.md) - access the first or last element
 - [`BasicJsonType::at`](../basic_json/at.md) - the corresponding function of `basic_json`
 - [`json_pointer`](../json_pointer/index.md) - JSON pointer type used by overload 3
 

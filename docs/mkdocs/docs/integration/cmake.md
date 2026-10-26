@@ -268,3 +268,10 @@ add_executable(myproject main.cpp)
 target_link_libraries(myproject PRIVATE nlohmann_json_modules)
 target_compile_definitions(myproject PRIVATE NLOHMANN_JSON_BUILD_MODULES)
 ```
+
+## See also
+
+- [Macros](../api/macros/index.md) - reference of all macros
+- [Supported Macros](../features/macros.md) - the macros that the CMake options set
+- [Modules](../features/modules.md) - C++20 module support
+- [`nlohmann` Namespace](../features/namespace.md) - namespace options set by CMake

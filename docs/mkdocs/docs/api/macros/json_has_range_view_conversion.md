@@ -35,7 +35,7 @@ When the macro is not defined, the library will define it to its default value.
 
 ## See also
 
-- [JSON_HAS_RANGES](json_has_ranges.md) - control `std::ranges` support
+- [`JSON_HAS_RANGES`](json_has_ranges.md) - control `std::ranges` support
 - [Constructing from a C++20 range view](../../features/conversions.md#putting-values-in) - usage of the feature
 
 ## Version history

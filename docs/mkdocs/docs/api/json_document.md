@@ -27,8 +27,9 @@ specialization.
 
 ## See also
 
-- [json_view](json_view.md) - a view of a value of a `json_document`
-- [ordered_json_document](ordered_json_document.md) - the corresponding document for `ordered_json`
+- [`json_view`](json_view.md) - a view of a value of a `json_document`
+- [`ordered_json_document`](ordered_json_document.md) - the corresponding document for `ordered_json`
+- [Zero-copy JSON views](../features/json_view.md) - how to parse, inspect and edit a document without building a tree
 
 ## Version history
 

@@ -66,6 +66,7 @@ flowchart LR
 
 - [JSON Patch and Diff](json_patch.md) - a more expressive alternative that describes a sequence of operations
 - [JSON Pointer](json_pointer.md) - the addressing scheme used by JSON Patch
-- Function [`merge_patch`](../api/basic_json/merge_patch.md)
-- Function [`merge_diff`](../api/basic_json/merge_diff.md)
+- [`merge_patch`](../api/basic_json/merge_patch.md) - apply a JSON Merge Patch to a value
+- [`merge_diff`](../api/basic_json/merge_diff.md) - create a JSON Merge Patch from two values
 - Function [`update`](../api/basic_json/update.md) - merge objects, optionally recursively
+- [Modifying values](modifying_values.md) - simple in-place modifications

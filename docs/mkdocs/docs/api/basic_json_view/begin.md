@@ -55,9 +55,9 @@ the duplicates.
 
 ## See also
 
-- [end](end.md) - returns an iterator to one past the last element
-- [cbegin](cbegin.md) - returns a const iterator to the first element
-- [items](items.md) - access iterator member functions in range-based for
+- [`end`](end.md) - returns an iterator to one past the last element
+- [`cbegin`](cbegin.md) - returns a const iterator to the first element
+- [`items`](items.md) - access iterator member functions in range-based for
 - [`BasicJsonType::begin`](../basic_json/begin.md) - the corresponding function of `basic_json`
 
 ## Version history

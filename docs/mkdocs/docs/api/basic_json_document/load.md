@@ -169,9 +169,9 @@ returned document, and any [view](../basic_json_view/index.md) taken from it, is
 
 ## See also
 
-- [save](save.md) - write the document as an image
-- [owns_source](owns_source.md) - return whether the document holds its own copy of the text
-- [parse](parse.md) - deserialize from JSON text instead of an image
+- [`save`](save.md) - write the document as an image
+- [`owns_source`](owns_source.md) - return whether the document holds its own copy of the text
+- [`parse`](parse.md) - deserialize from JSON text instead of an image
 - [Images](../../features/json_view.md#images) - why and when to use images
 
 ## Version history

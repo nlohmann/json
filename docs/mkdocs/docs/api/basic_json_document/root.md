@@ -58,8 +58,8 @@ returned view is valid under the same conditions as any other view of the docume
 
 ## See also
 
-- [is_discarded](is_discarded.md) - return whether the last parse failed
-- [materialize](../basic_json_view/materialize.md) - build the `BasicJsonType` value of a subtree
+- [`is_discarded`](is_discarded.md) - return whether the last parse failed
+- [`materialize`](../basic_json_view/materialize.md) - build the `BasicJsonType` value of a subtree
 
 ## Version history
 

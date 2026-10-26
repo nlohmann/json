@@ -40,8 +40,8 @@ Constant.
 
 ## See also
 
-- [end](end.md) - returns an iterator to one past the last element
-- [cbegin](cbegin.md) - returns a const iterator to the first element
+- [`end`](end.md) - returns an iterator to one past the last element
+- [`cbegin`](cbegin.md) - returns a const iterator to the first element
 - [`BasicJsonType::cend`](../basic_json/cend.md) - the corresponding function of `basic_json`
 
 ## Version history

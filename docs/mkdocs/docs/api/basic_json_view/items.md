@@ -78,7 +78,7 @@ and [`contains`](contains.md), which resolve to the *first* member with a given 
 
 ## See also
 
-- [begin](begin.md), [end](end.md) - the iterators `items()` is built on
+- [`begin`](begin.md), [`end`](end.md) - the iterators `items()` is built on
 - [`BasicJsonType::items`](../basic_json/items.md) - the corresponding function of `basic_json`
 
 ## Version history

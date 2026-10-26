@@ -32,9 +32,9 @@ parsing, without ever rewriting the source text -- see [Edits](basic_json_docume
 
 ## See also
 
-- [json_editable_view](json_editable_view.md) - a view of a value of a `json_editable_document`
-- [json_document](json_document.md) - the read-only document this type adds edits to
-- [ordered_json_editable_document](ordered_json_editable_document.md) - the corresponding editable document for
+- [`json_editable_view`](json_editable_view.md) - a view of a value of a `json_editable_document`
+- [`json_document`](json_document.md) - the read-only document this type adds edits to
+- [`ordered_json_editable_document`](ordered_json_editable_document.md) - the corresponding editable document for
   `ordered_json`
 - [Edits](basic_json_document/index.md#edits) - what an edit guarantees
 

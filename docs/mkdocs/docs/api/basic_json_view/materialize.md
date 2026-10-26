@@ -60,10 +60,11 @@ never caches the result.
 
 ## See also
 
-- [root](../basic_json_document/root.md) - the view of a document's root value
+- [`root`](../basic_json_document/root.md) - the view of a document's root value
 - [`BasicJsonType::parse`](../basic_json/parse.md) - build a `BasicJsonType` value directly from a JSON text
 - [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) - source positions on parsed values (not
   produced by `materialize()`)
+- [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - when to build a basic_json value from a view
 
 ## Version history
 

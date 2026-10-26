@@ -117,12 +117,13 @@ by an erase, not only those at or after the removed element, since the container
 
 ## See also
 
-- [insert](insert.md) - insert an element into an array
-- [set](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
-- [push_back](push_back.md) - append to an array
-- [root](root.md) - the view of the root value, the starting point of overload 3
+- [`insert`](insert.md) - insert an element into an array
+- [`set`](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
+- [`push_back`](push_back.md) - append to an array
+- [`root`](root.md) - the view of the root value, the starting point of overload 3
 - [`BasicJsonType::erase`](../basic_json/erase.md) - the corresponding function of `basic_json`
 - [Edits](index.md#edits) - what an edit guarantees, for every overload
+- [Zero-copy JSON views](../../features/json_view.md#editing-a-document) - what an edit guarantees and costs
 
 ## Version history
 

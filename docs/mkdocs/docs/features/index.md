@@ -65,5 +65,15 @@ C++ types, and finally serialize it again.
 - [API documentation](../api/basic_json/index.md) - reference of all classes and functions
 - [FAQ](../home/faq.md) - answers to common questions
 - [Exceptions](../home/exceptions.md) - all exceptions and their error codes
-- [Design goals](../home/design_goals.md)
+- [Design goals](../home/design_goals.md) - the goals behind the library
 - [Integration](../integration/index.md) - how to add the library to a project
+- [Macros](../api/macros/index.md) - reference of all macros
+- [`json_pointer`](../api/json_pointer/index.md) - the JSON Pointer class
+- [`adl_serializer`](../api/adl_serializer/index.md) - customization point for type conversions
+- [`json_sax`](../api/json_sax/index.md) - interface of the SAX parser events
+- [`json_document`](../api/json_document.md) - an immutable document with a flat index
+- [`json_view`](../api/json_view.md) - a non-owning view of a value in a document
+- [`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) - binary values with a subtype
+- [`ordered_json`](../api/ordered_json.md) - a JSON type preserving insertion order
+- [Supported Macros](macros.md) - all supported macros
+- [`nlohmann` Namespace](namespace.md) - the library namespace

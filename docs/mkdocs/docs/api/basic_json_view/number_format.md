@@ -41,10 +41,11 @@ source
 
 ## See also
 
-- [dump](dump.md) - serialize to a JSON-formatted string
-- [number_token](number_token.md) - get a single number's token text without dumping the whole value
+- [`dump`](dump.md) - serialize to a JSON-formatted string
+- [`number_token`](number_token.md) - get a single number's token text without dumping the whole value
 - [`BasicJsonType::error_handler_t`](../basic_json/error_handler_t.md) - the analogous enumeration for
   `BasicJsonType::dump`'s decoding-error behavior
+- [Zero-copy JSON views](../../features/json_view.md#writing-a-view-back) - writing numbers as they appeared in the source
 
 ## Version history
 

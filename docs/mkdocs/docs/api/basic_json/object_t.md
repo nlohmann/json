@@ -125,10 +125,12 @@ the object is silently converted as an array of key-value pairs, which is incorr
 
 ## See also
 
-- [array_t](array_t.md) the type used to store JSON arrays
-- [string_t](string_t.md) the type used to store JSON strings
-- [object_comparator_t](object_comparator_t.md) the comparator used to order object keys
+- [`array_t`](array_t.md) - the type used to store JSON arrays
+- [`string_t`](string_t.md) - the type used to store JSON strings
+- [`object_comparator_t`](object_comparator_t.md) - the comparator used to order object keys
 - [Object Order](../../features/object_order.md) - the article on object key ordering
+- [Types](../../features/types/index.md) - how objects are stored
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the `ObjectType` template parameter
 
 ## Version history
 

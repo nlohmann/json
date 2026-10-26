@@ -131,8 +131,8 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 
 ## See also
 
-- [at](at.md) - access specified element with bounds checking (throws instead of returning a default value)
-- [operator[]](operator[].md) - access specified element (returns a discarded view instead of a default value)
+- [`at`](at.md) - access specified element with bounds checking (throws instead of returning a default value)
+- [`operator[]`](operator[].md) - access specified element (returns a discarded view instead of a default value)
 - [`BasicJsonType::value`](../basic_json/value.md) - the corresponding function of `basic_json`
 
 ## Version history

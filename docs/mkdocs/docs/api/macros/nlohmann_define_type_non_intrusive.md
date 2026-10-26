@@ -170,15 +170,15 @@ See the examples below for the concrete generated code.
 
 ## See also
 
-- [NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT,
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE](nlohmann_define_type_intrusive.md)
-  for a similar macro that can be defined _inside_ the type.
-- [NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT,
-  NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE,
-  NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT,
-  NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE](nlohmann_define_derived_type.md) for similar macros for
+- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE` / `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT` /
+  `NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE`](nlohmann_define_type_intrusive.md) - a similar macro that can be
+  defined _inside_ the type
+- [`NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE` / `NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT` /
+  `NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE` / `NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE` /
+  `NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT` /
+  `NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE`](nlohmann_define_derived_type.md) - similar macros for
   derived types
-- [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) - overview of the supported conversions
 
 ## Version history
 

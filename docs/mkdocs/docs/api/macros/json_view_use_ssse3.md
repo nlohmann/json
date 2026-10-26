@@ -45,8 +45,9 @@ By default, `#!cpp JSON_VIEW_USE_SSSE3` is not defined.
 
 ## See also
 
-- [JSON_VIEW_NO_SIMD](json_view_no_simd.md) - use only portable code in the view's parser
-- [JSON_USE_SIMDUTF](json_use_simdutf.md) - validate UTF-8 with simdutf in `basic_json`'s parser
+- [`JSON_VIEW_NO_SIMD`](json_view_no_simd.md) - use only portable code in the view's parser
+- [`JSON_USE_SIMDUTF`](json_use_simdutf.md) - validate UTF-8 with simdutf in `basic_json`'s parser
+- [Zero-copy JSON views](../../features/json_view.md) - how to parse, inspect and edit a document without building a tree
 
 ## Version history
 

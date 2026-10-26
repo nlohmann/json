@@ -37,10 +37,12 @@ Constant.
 
 ## See also
 
-- [is_number()](is_number.md) check if the value is a number
-- [is_number_integer()](is_number_integer.md) check if the value is an integer or unsigned integer number
-- [is_number_unsigned()](is_number_unsigned.md) check if the value is an unsigned integer number
-- [basic_json_view::is_number_float](../basic_json_view/is_number_float.md) - the same check on a zero-copy view
+- [`is_number()`](is_number.md) - check if the value is a number
+- [`is_number_integer()`](is_number_integer.md) - check if the value is an integer or unsigned integer number
+- [`is_number_unsigned()`](is_number_unsigned.md) - check if the value is an unsigned integer number
+- [`basic_json_view::is_number_float`](../basic_json_view/is_number_float.md) - the same check on a zero-copy view
+- [Types](../../features/types/index.md) - the JSON value types and how they are stored
+- [Number Handling](../../features/types/number_handling.md) - how numbers are stored and converted
 
 ## Version history
 

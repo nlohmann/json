@@ -126,7 +126,8 @@ This differs from `#!cpp std::map`, where the same operations are O(log n).
 
 ## See also
 
-- [ordered_json](ordered_json.md)
+- [`ordered_json`](ordered_json.md) - JSON specialization preserving insertion order
+- [Object Order](../features/object_order.md) - the article on object key order
 
 ## Version history
 

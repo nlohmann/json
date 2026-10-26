@@ -55,7 +55,7 @@ Constant.
 
 ## See also
 
-- [type](type.md) - return the type of the value
+- [`type`](type.md) - return the type of the value
 - [`BasicJsonType::type_name`](../basic_json/type_name.md) - the corresponding function of `basic_json`
 
 ## Version history

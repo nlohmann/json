@@ -101,9 +101,9 @@ view.
 
 ## See also
 
-- [find](find.md) - find a value in an object
-- [count](count.md) - returns the number of occurrences of a key
-- [at](at.md), [operator[]](operator[].md) - resolve a JSON pointer and throw, or return a discarded view
+- [`find`](find.md) - find a value in an object
+- [`count`](count.md) - returns the number of occurrences of a key
+- [`at`](at.md), [`operator[]`](operator[].md) - resolve a JSON pointer and throw, or return a discarded view
 - [`BasicJsonType::contains`](../basic_json/contains.md) - the corresponding function of `basic_json`
 
 ## Version history

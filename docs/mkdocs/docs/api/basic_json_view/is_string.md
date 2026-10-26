@@ -37,7 +37,7 @@ Constant.
 
 ## See also
 
-- [source_offset](source_offset.md) - byte offset of this value in the source text, which differs for strings: an
+- [`source_offset`](source_offset.md) - byte offset of this value in the source text, which differs for strings: an
   escaped string has none
 - [`BasicJsonType::is_string`](../basic_json/is_string.md) - the corresponding function of `basic_json`
 

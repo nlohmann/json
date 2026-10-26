@@ -109,5 +109,10 @@ With exceptions off, you can replace the `abort()` by your own code, for example
 
 - [Exceptions](../home/exceptions.md) - all exceptions and their ids
 - [Parsing and exceptions](parsing/parse_exceptions.md) - the parsing alternatives in detail
-- [Parsing untrusted input](parsing/untrusted_input.md)
-- [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md)
+- [Parsing untrusted input](parsing/untrusted_input.md) - harden an application that parses data it does not control
+- [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md) - disable exceptions in the library
+- [`exception`](../api/basic_json/exception.md) - base class of all exceptions thrown by the library
+- [`JSON_THROW_USER`](../api/macros/json_throw_user.md) - replace the throw statements of the library
+- [`parse`](../api/basic_json/parse.md) - deserialize from a compatible input
+- [`accept`](../api/basic_json/accept.md) - check whether the input is valid JSON
+- [Supported Macros](macros.md) - all supported macros

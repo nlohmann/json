@@ -42,11 +42,12 @@ When the macro is not defined, the library will define it to its default value.
 
 ## See also
 
-- [JSON_HAS_CPP_11 / JSON_HAS_CPP_14 / JSON_HAS_CPP_17 / JSON_HAS_CPP_20 / JSON_HAS_CPP_23 /
-  JSON_HAS_CPP_26](json_has_cpp_11.md) - set supported C++ standard
-- [JSON_HAS_RANGE_VIEW_CONVERSION](json_has_range_view_conversion.md) - control construction from `std::ranges` views
-- [JSON_HAS_STD_FORMAT](json_has_std_format.md) - a similar feature-detection macro, for `std::format`/`std::formatter`
+- [`JSON_HAS_CPP_11` / `JSON_HAS_CPP_14` / `JSON_HAS_CPP_17` / `JSON_HAS_CPP_20` / `JSON_HAS_CPP_23` /
+  `JSON_HAS_CPP_26`](json_has_cpp_11.md) - set supported C++ standard
+- [`JSON_HAS_RANGE_VIEW_CONVERSION`](json_has_range_view_conversion.md) - control construction from `std::ranges` views
+- [`JSON_HAS_STD_FORMAT`](json_has_std_format.md) - a similar feature-detection macro, for `std::format`/`std::formatter`
   support
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
 
 ## Version history
 

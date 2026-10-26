@@ -476,12 +476,13 @@ basic_json(basic_json&& other) noexcept;
 
 ## See also
 
-- [array](array.md) create a JSON array value, forcing array creation from an initializer list even when it looks like
+- [`array`](array.md) - create a JSON array value, forcing array creation from an initializer list even when it looks like
   an object
-- [object](object.md) create a JSON object value, forcing object creation from an initializer list
-- [binary](binary.md) create a JSON binary array value
-- [operator=](operator=.md) copy assignment operator
+- [`object`](object.md) - create a JSON object value, forcing object creation from an initializer list
+- [`binary`](binary.md) - create a JSON binary array value
+- [`operator=`](operator=.md) - copy assignment operator
 - [Creating JSON values](../../features/creating_values.md) - the article on creating JSON values
+- [Converting values](../../features/conversions.md) - which C++ types can be converted
 
 ## Version history
 

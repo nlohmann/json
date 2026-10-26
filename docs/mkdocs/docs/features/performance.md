@@ -270,3 +270,9 @@ those headers are then never processed by the compiler at all.
 - [Object Order](object_order.md) - `json` vs. `ordered_json` and other `ObjectType` choices
 - [Template Parameter Requirements](types/template_parameters.md) - custom container and allocator types
 - [Supported macros](macros.md) - overview of all configuration macros, including the diagnostics ones above
+- [`JSON_NO_SIMD`](../api/macros/json_no_simd.md) - disable SIMD acceleration
+- [`JSON_USE_SIMDUTF`](../api/macros/json_use_simdutf.md) - use simdutf for UTF-8 validation
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](../api/macros/json_disable_stream_bulk_scan.md) - disable the stream bulk scan
+- [`parse`](../api/basic_json/parse.md) - deserialize from a compatible input
+- [`sax_parse`](../api/basic_json/sax_parse.md) - parse with a SAX interface
+- [`json_view`](../api/json_view.md) - a non-owning view of a value in a document

@@ -108,12 +108,15 @@ Linear in the size of the JSON value `j`.
 
 ## See also
 
-- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
-- [to_cbor](to_cbor.md) create a CBOR serialization of a JSON value
-- [to_msgpack](to_msgpack.md) create a MessagePack serialization of a JSON value
-- [to_bson](to_bson.md) create a BSON serialization of a JSON value
-- [to_ubjson](to_ubjson.md) create a UBJSON serialization of a JSON value
-- [to_bon8](to_bon8.md) create a BON8 serialization of a JSON value
+- [BJData](../../features/binary_formats/bjdata.md) - the format, its byte layout and how values are mapped
+- [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [`from_bjdata`](from_bjdata.md) - create a JSON value from an input in BJData format
+- [`to_cbor`](to_cbor.md) - create a CBOR serialization of a JSON value
+- [`to_msgpack`](to_msgpack.md) - create a MessagePack serialization of a JSON value
+- [`to_bson`](to_bson.md) - create a BSON serialization of a JSON value
+- [`to_ubjson`](to_ubjson.md) - create a UBJSON serialization of a JSON value
+- [`to_bon8`](to_bon8.md) - create a BON8 serialization of a JSON value
 
 ## Version history
 

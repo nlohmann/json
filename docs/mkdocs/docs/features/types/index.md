@@ -292,8 +292,16 @@ Integer number values, unsigned integer number values, and floating-point number
 ## See also
 
 - [Number handling](number_handling.md) - how numbers are stored and converted
-- [Template parameter requirements](template_parameters.md)
-- [**basic_json**](../../api/basic_json/index.md) - the class template and its member types
-- [**type**](../../api/basic_json/type.md) and [**value_t**](../../api/basic_json/value_t.md) - query the type of a value
-- [**object_t**](../../api/basic_json/object_t.md), [**array_t**](../../api/basic_json/array_t.md), [**string_t**](../../api/basic_json/string_t.md), [**number_integer_t**](../../api/basic_json/number_integer_t.md), [**number_float_t**](../../api/basic_json/number_float_t.md) - the underlying types
-- [Object order](../object_order.md)
+- [Template parameter requirements](template_parameters.md) - what the template parameters of `basic_json` must provide
+- [`basic_json`](../../api/basic_json/index.md) - the class template and its member types
+- [`type`](../../api/basic_json/type.md) - and [`value_t`](../../api/basic_json/value_t.md) - query the type of a value
+- [`object_t`](../../api/basic_json/object_t.md), [`array_t`](../../api/basic_json/array_t.md), [`string_t`](../../api/basic_json/string_t.md), [`number_integer_t`](../../api/basic_json/number_integer_t.md), [`number_float_t`](../../api/basic_json/number_float_t.md) - the underlying types
+- [Object order](../object_order.md) - how object keys are ordered
+- [`json`](../../api/json.md) - the default JSON type
+- [`boolean_t`](../../api/basic_json/boolean_t.md) - the underlying boolean type
+- [`number_unsigned_t`](../../api/basic_json/number_unsigned_t.md) - the underlying unsigned integer type
+- [`is_primitive`](../../api/basic_json/is_primitive.md) - and the other `is_*` functions query the type
+- [`is_structured`](../../api/basic_json/is_structured.md) - true for objects and arrays
+- [Converting values](../conversions.md) - convert JSON values to and from C++ types
+- [Creating JSON values](../creating_values.md) - build JSON values
+

@@ -160,3 +160,9 @@ report a security issue in the library itself, follow the [security policy](../.
 - [Number handling](../types/number_handling.md) - number ranges and overflow behavior
 - [Assurance case](../../community/assurance_case.md) - the library's threat model and countermeasures
 - [Security policy](../../community/security_policy.md) - how to report a vulnerability
+- [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input
+- [`accept`](../../api/basic_json/accept.md) - check if the input is valid JSON
+- [`sax_parse`](../../api/basic_json/sax_parse.md) - generate SAX events
+- [`parser_callback_t`](../../api/basic_json/parser_callback_t.md) - callback function type for the parser
+- [`JSON_STRICT_NUL_HANDLING`](../../api/macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
+- [`JSON_DIAGNOSTIC_POSITIONS`](../../api/macros/json_diagnostic_positions.md) - record start and end positions of parsed values

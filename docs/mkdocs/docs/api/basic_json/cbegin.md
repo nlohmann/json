@@ -43,11 +43,11 @@ Constant.
 
 ## See also
 
-- [begin](begin.md) returns an iterator to the first element
-- [cend](cend.md) returns a const iterator to one past the last element
-- [crbegin](crbegin.md) returns a const reverse iterator to the last element
+- [`begin`](begin.md) - returns an iterator to the first element
+- [`cend`](cend.md) - returns a const iterator to one past the last element
+- [`crbegin`](crbegin.md) - returns a const reverse iterator to the last element
 - [Iterators](../../features/iterators.md) - the article on iterators
-- [basic_json_view::cbegin](../basic_json_view/cbegin.md) - the same iteration on a zero-copy view
+- [`basic_json_view::cbegin`](../basic_json_view/cbegin.md) - the same iteration on a zero-copy view
 
 ## Version history
 

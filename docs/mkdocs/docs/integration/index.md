@@ -98,8 +98,13 @@ Visual Studio Code, but not with debuggers that wrap LLDB, such as `codelldb`; s
 ## See also
 
 - [CMake](cmake.md) - integrate the library into a CMake project
-- [Package managers](package_managers.md)
-- [pkg-config](pkg-config.md)
+- [Package managers](package_managers.md) - install the library with a package manager
+- [pkg-config](pkg-config.md) - generate include flags for plain Makefiles
 - [Compile times](compile_times.md) - reduce the compile time overhead
 - [Migration guide](migration_guide.md) - upgrade from an earlier version
-- [Releases](../home/releases/index.md)
+- [Releases](../home/releases/index.md) - release notes of all versions
+- [`basic_json`](../api/basic_json/index.md) - the main class and all its member functions
+- [Macros](../api/macros/index.md) - reference of all macros
+- [Supported Macros](../features/macros.md) - configure the library with macros
+- [Modules](../features/modules.md) - C++20 module support
+- [`NLOHMANN_JSON_VERSION_MAJOR`](../api/macros/nlohmann_json_version_major.md) - library version macros

@@ -44,7 +44,7 @@ By default, `#!cpp JSON_VIEW_NO_SIMD` is not defined, and the vector code is use
 
 ## See also
 
-- [JSON_VIEW_USE_SSSE3](json_view_use_ssse3.md) - validate non-ASCII strings with SSSE3 on x86-64
+- [`JSON_VIEW_USE_SSSE3`](json_view_use_ssse3.md) - validate non-ASCII strings with SSSE3 on x86-64
 - [json_view](../../features/json_view.md) - the zero-copy view
 
 ## Version history

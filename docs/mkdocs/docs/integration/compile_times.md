@@ -347,3 +347,7 @@ and −2% / 0% (GCC). To get a saving, combine it with
   literals automatically
 - [Modules](../features/modules.md) - C++20 module support
 - [Header only](index.md) - including the library
+- [Macros](../api/macros/index.md) - reference of all macros
+- [Supported Macros](../features/macros.md) - overview of all configuration macros
+- [Performance](../features/performance.md) - run-time performance
+- [`JSON_NO_IO`](../api/macros/json_no_io.md) - remove all stream and file I/O

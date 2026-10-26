@@ -58,7 +58,7 @@ members there are.
 
 ## See also
 
-- [empty](empty.md) - return whether the value has no elements
+- [`empty`](empty.md) - return whether the value has no elements
 - [`BasicJsonType::size`](../basic_json/size.md) - the corresponding function of `basic_json`
 
 ## Version history

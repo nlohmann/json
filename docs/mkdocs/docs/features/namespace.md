@@ -122,6 +122,15 @@ follows:
     Overriding the namespace and mixing ABI-incompatible versions will result in crashes or incorrect behavior. You
     have been warned!
 
+## See also
+
+- [`NLOHMANN_JSON_NAMESPACE`](../api/macros/nlohmann_json_namespace.md) - the library namespace as macro
+- [`NLOHMANN_JSON_NAMESPACE_BEGIN`, `NLOHMANN_JSON_NAMESPACE_END`](../api/macros/nlohmann_json_namespace_begin.md) - open and close the library namespace
+- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](../api/macros/nlohmann_json_namespace_no_version.md) - disable the version component
+- [Supported Macros](macros.md) - all supported macros
+- [Migration Guide](../integration/migration_guide.md) - do not hard-code the library namespace
+- [`basic_json`](../api/basic_json/index.md) - the main class and all its member functions
+
 ## Version history
 
 - Introduced inline namespace (`json_v3_11_0[_abi-tag]*`) in version 3.11.0.

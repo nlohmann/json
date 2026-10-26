@@ -47,8 +47,9 @@ string, whose token length is not the same as its decoded [`size()`](size.md).
 
 ## See also
 
-- [source](../basic_json_document/source.md) - the parsed text
-- [is_string](is_string.md) - return whether the value is a string
+- [`source`](../basic_json_document/source.md) - the parsed text
+- [`is_string`](is_string.md) - return whether the value is a string
+- [Zero-copy JSON views](../../features/json_view.md#images) - images and the source text
 
 ## Version history
 

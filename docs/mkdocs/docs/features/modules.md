@@ -68,3 +68,12 @@ C++20 modules support is exercised in CI against current GCC and Clang on Ubuntu
     - **MSVC** could fail with `C2039: 'json_sax_dom_callback_parser' is not a member of ... detail`; fixed by exporting the required internal symbols from `json.cppm` (see [Exported symbols](#exported-symbols) above). ([issue #3970](https://github.com/nlohmann/json/issues/3970))
 
     If you hit a different module-related build failure, search [existing issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+modules) before filing a new one.
+
+## See also
+
+- [Supported Macros](macros.md) - macros are not exported by modules
+- [Macros](../api/macros/index.md) - reference of all macros
+- [`nlohmann` Namespace](namespace.md) - the library namespace
+- [CMake](../integration/cmake.md) - enable the module build in CMake
+- [Compile times](../integration/compile_times.md) - reduce compile times
+- [`basic_json`](../api/basic_json/index.md) - the main class and all its member functions

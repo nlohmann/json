@@ -396,3 +396,12 @@ The number types can be changed with template parameters.
 
     Note values should then be parsed with `json_ld::parse` rather than `json::parse` as the latter would parse
     floating-point values to `#!c double` before then converting them to `#!c long double`.
+
+## See also
+
+- [Types](index.md) - how all value types are stored
+- [Converting values](../conversions.md) - convert numbers to C++ types
+- [`number_integer_t`](../../api/basic_json/number_integer_t.md) - the signed integer type
+- [`number_unsigned_t`](../../api/basic_json/number_unsigned_t.md) - the unsigned integer type
+- [`number_float_t`](../../api/basic_json/number_float_t.md) - the floating-point type
+- [`is_number`](../../api/basic_json/is_number.md) - check for a number of any kind

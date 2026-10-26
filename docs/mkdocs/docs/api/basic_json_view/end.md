@@ -44,8 +44,8 @@ way to reach the last element by stepping back from `end()`. Use [`back()`](back
 
 ## See also
 
-- [begin](begin.md) - returns an iterator to the first element
-- [cend](cend.md) - returns a const iterator to one past the last element
+- [`begin`](begin.md) - returns an iterator to the first element
+- [`cend`](cend.md) - returns a const iterator to one past the last element
 - [`BasicJsonType::end`](../basic_json/end.md) - the corresponding function of `basic_json`
 
 ## Version history

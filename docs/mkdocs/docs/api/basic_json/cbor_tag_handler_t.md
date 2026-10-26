@@ -40,9 +40,10 @@ store
 
 ## See also
 
-- [from_cbor](from_cbor.md) deserializes a JSON value from CBOR
-- [input_format_t](input_format_t.md) the enumeration of supported input formats
-- [CBOR](../../features/binary_formats/cbor.md) - the article on the CBOR format
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [`from_cbor`](from_cbor.md) - deserializes a JSON value from CBOR
+- [`input_format_t`](input_format_t.md) - the enumeration of supported input formats
+- [`CBOR`](../../features/binary_formats/cbor.md) - the article on the CBOR format
 
 ## Version history
 

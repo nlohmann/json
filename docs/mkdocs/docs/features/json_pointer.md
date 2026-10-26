@@ -171,10 +171,12 @@ Each leaf of the document becomes one key of the flat object, and `unflatten()` 
 
 ## See also
 
-- Class [`json_pointer`](../api/json_pointer/index.md)
-- Functions [`value`](../api/basic_json/value.md), [`contains`](../api/basic_json/contains.md), and
-  [`at`](../api/basic_json/at.md) accept JSON Pointers; see [Nested values](element_access/default_value.md#nested-values)
-- Function [`flatten`](../api/basic_json/flatten.md)
-- Function [`unflatten`](../api/basic_json/unflatten.md)
+- [`json_pointer`](../api/json_pointer/index.md) - the JSON Pointer class
+- [Nested values](element_access/default_value.md#nested-values) - [`value`](../api/basic_json/value.md),
+  [`contains`](../api/basic_json/contains.md), and [`at`](../api/basic_json/at.md) accept JSON Pointers
+- [`flatten`](../api/basic_json/flatten.md) - convert a value to an object of JSON Pointers and primitive values
+- [`unflatten`](../api/basic_json/unflatten.md) - restore a value from a flattened object
 - [JSON Patch](json_patch.md) - paths inside a patch are JSON Pointers
 - [JSON Merge Patch](merge_patch.md) - an alternative patch format that does not use JSON Pointer
+- [`operator""_json_pointer`](../api/operator_literal_json_pointer.md) - user-defined literal to create a JSON pointer
+- [Element Access](element_access/index.md) - other ways to access elements
