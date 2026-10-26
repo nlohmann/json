@@ -117,7 +117,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                 r.off = (v->flags & (node_flags::moved | node_flags::is_new)) != 0 ? 0 : v->off;
                 r.len = 0;  // counted below
                 r.next = 0; // set when the container is complete
-                stack.push_back(frame{d.first_child_edited(v), d.child_end_edited(v), out.size(), 0, v->kind == static_cast<std::uint8_t>(value_t::object)});
+                stack.push_back(frame{d.first_child_edited(v), d.child_end_edited(v), out.size(), 0, v->kind == node_kind::object});
                 break;
             case value_t::string:
                 r = string_node(*v);
@@ -138,7 +138,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                     if (t[0] == 'n' || t[0] == 'i' || (v->len > 1 && t[1] == 'i'))
                     {
                         r = node{}; // nan and infinity: null, as dump() writes them
-                        r.kind = static_cast<std::uint8_t>(value_t::null);
+                        r.kind = node_kind::null;
                         break;
                     }
                     r.off = static_cast<std::uint32_t>(d.size + text_tail.size());
@@ -182,12 +182,10 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
     }
 }
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN // (the image format is little-endian: no save() elsewhere)
 /// the document as an image
 inline std::vector<std::uint8_t> save_image(const document_data& d)
 {
-#if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
-#endif
     const std::size_t arena_size = d.arena_size;
     std::vector<node> compacted;
     std::string text_tail;
@@ -221,7 +219,7 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     // extra of an object, and the same document saves to the same bytes
     for (std::size_t i = 0; i < count; ++i)
     {
-        if (nodes[i].kind == static_cast<std::uint8_t>(value_t::object) && nodes[i].extra != 0)
+        if (nodes[i].kind == node_kind::object && nodes[i].extra != 0)
         {
             std::memset(o + (i * sizeof(node)) + offsetof(node, extra), 0, sizeof(nodes[i].extra));
         }
@@ -243,6 +241,7 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     *o = 0;
     return image;
 }
+#endif
 
 /// the parts of a number token that the checks need
 struct number_token
@@ -337,7 +336,7 @@ inline bool float_token_finite(const unsigned char* s, std::size_t len, const nu
     if (static_cast<std::int64_t>(t.int_digits) + t.exponent > 300)
     {
         node n{};
-        n.kind = static_cast<std::uint8_t>(value_t::number_float);
+        n.kind = node_kind::number_float;
         n.len = static_cast<std::uint32_t>(len);
         const auto v = float_value<double>(reinterpret_cast<const char*>(s), n); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         return v <= (std::numeric_limits<double>::max)() && v >= -(std::numeric_limits<double>::max)();
@@ -358,7 +357,7 @@ inline bool check_integer(const node& n, const unsigned char* text)
     }
     // the token's value is the stored one; number_integer nodes of edits can
     // be non-negative (as basic_json keeps the type of a value)
-    const bool integer = n.kind == static_cast<std::uint8_t>(value_t::number_integer);
+    const bool integer = n.kind == node_kind::number_integer;
     if (t.is_float || t.int_digits > 20 || (t.negative && !integer))
     {
         return false;
@@ -540,7 +539,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         {
             return false;
         }
-        if (n.kind != static_cast<std::uint8_t>(value_t::number_float))
+        if (n.kind != node_kind::number_float)
         {
             return (n.extra >> 8u) == 0;
         }
@@ -581,7 +580,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         const node& n = nodes[i];
         if (!stack.empty() && stack.back().object && stack.back().expect_key)
         {
-            if (n.kind != static_cast<std::uint8_t>(value_t::string) || !check_string(n))
+            if (n.kind != node_kind::string || !check_string(n))
             {
                 return false;
             }
@@ -622,7 +621,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
                 {
                     // (the contents of float tokens are checked later; the token of an
                     // integer has at most 256 characters)
-                    if (n.kind == static_cast<std::uint8_t>(value_t::number_float))
+                    if (n.kind == node_kind::number_float)
                     {
                         floats.push_back(float_range{n.off, n.len, n.extra});
                     }
@@ -640,7 +639,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
                 {
                     return false;
                 }
-                stack.push_back(frame{i + n.next, n.len, 0, n.kind == static_cast<std::uint8_t>(value_t::object), true});
+                stack.push_back(frame{i + n.next, n.len, 0, n.kind == node_kind::object, true});
                 complete = false;
                 break;
             }
@@ -663,13 +662,11 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
     throw_parse_error(exception_id::invalid_document_image, concat("invalid json_document image: ", what));
 }
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN // (the image format is little-endian: no load() elsewhere)
 /// Read an image into d. The text and the decoded strings stay in the image;
 /// the nodes are copied (so that they are aligned, and edits can change them).
 inline void load_image(document_data& d, const std::uint8_t* image, std::size_t size, image_check check)
 {
-#if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
-#endif
     if (image == nullptr || size < sizeof(image_header))
     {
         throw_invalid_image("too short");
@@ -729,7 +726,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     for (std::size_t i = 0; i < count; ++i)
     {
         const node& n = d.nodes[i];
-        if (n.kind == static_cast<std::uint8_t>(value_t::object) && n.len >= document_data::index_min_members)
+        if (n.kind == node_kind::object && n.len >= document_data::index_min_members)
         {
             d.large_objects.push_back(static_cast<std::uint32_t>(i));
         }
@@ -738,6 +735,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while building)
     d.discarded = false;
 }
+#endif
 
 }  // namespace view
 }  // namespace detail

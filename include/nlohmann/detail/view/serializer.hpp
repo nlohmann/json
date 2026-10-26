@@ -998,11 +998,11 @@ class view_serializer
                 case value_t::object:
                 case value_t::array:
                 {
-                    const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
+                    const bool object = n->kind == node_kind::object;
                     // (read-only documents, compact output) a pair of floats,
                     // like the coordinates of GeoJSON, without a frame
                     if (enabled(!Editable && !Pretty && !SourceNumbers && fast_double::value) && n->next == 3 && n->len == 2
-                            && n[1].kind == static_cast<std::uint8_t>(value_t::number_float) && n[2].kind == static_cast<std::uint8_t>(value_t::number_float))
+                            && n[1].kind == node_kind::number_float && n[2].kind == node_kind::number_float)
                     {
                         room(2 * 64);
                         *w++ = '[';
@@ -1242,7 +1242,7 @@ class view_serializer
             const unsigned frac_digits = p->extra >> 8u;
             const unsigned int_digits = p->extra & 0xFFu;
             const unsigned count = int_digits + frac_digits;
-            if (p->kind == static_cast<std::uint8_t>(value_t::number_float) && (p->flags & node_flags::storage) == 0
+            if (p->kind == node_kind::number_float && (p->flags & node_flags::storage) == 0
                     && count - 16u <= 1u && frac_digits >= 8 && src_end - (src + p->off) >= 33)
             {
                 const auto* const token = reinterpret_cast<const unsigned char*>(src + p->off); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)

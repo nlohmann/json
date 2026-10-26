@@ -1,6 +1,6 @@
 # BON8
 
-BON8 (Binary Object Notation 8) is a compact binary serialization format for JSON values. It uses the byte values that
+BON8 (Binary Object Notation 8) is a compact binary serialization format for JSON values. It uses byte values that
 cannot begin a UTF-8 character as type markers, so strings are stored as plain UTF-8 without a length prefix: a string
 ends at the first byte that cannot continue it. Integers from -10 to 39, `true`, `false`, `null`, and the floating-point
 values -1.0, 0.0, and 1.0 take a single byte, and arrays and objects with up to four elements need no terminator.
@@ -12,7 +12,7 @@ values -1.0, 0.0, and 1.0 take a single byte, and arrays and objects with up to 
 
 ## Byte layout
 
-BON8 exploits the fact that some byte values can never start a UTF-8 character. These bytes serve as *type markers*, so strings can be stored as plain UTF-8 without a length prefix: a string ends at the first byte that cannot continue it (often the marker of the next value). Small integers, `true`, `false`, `null`, and a few common floats are a single byte. Arrays and objects are introduced by a marker; those with up to four elements encode their size in the marker and need no terminator, while larger ones are closed by the end marker `0xFE`.
+BON8 exploits the fact that some byte values can never start a UTF-8 character. These bytes serve as *type markers*, so strings can be stored as plain UTF-8 without a length prefix: a string ends at the first byte that cannot continue it: a marker byte, or a lead byte 0xC2..0xF7 followed by a byte outside 0x80..0xBF. The ending byte is often the marker of the next value. Small integers, `true`, `false`, `null`, and a few common floats are a single byte. Arrays and objects are introduced by a marker; those with up to four elements encode their size in the marker and need no terminator, while larger ones are closed by the end marker `0xFE`.
 
 Consider the following JSON value (shown formatted for readability):
 
@@ -33,7 +33,7 @@ Consider the following JSON value (shown formatted for readability):
 <div class="byte-layout" markdown="0"><table>
 <thead><tr><th>JSON</th><th>Bytes</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>{</code></td><td><span class="bl bl-t">8A</span></td><td>object with 4 members</td></tr>
-<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-d">69 64</span> <span class="bl bl-t">C4</span> <span class="bl bl-d">04</span></td><td>key: UTF-8 bytes; the string ends at the next byte, which cannot continue a UTF-8 character; value: 2-byte positive integer (lead byte, then a byte below 0x80)</td></tr>
+<tr><td><code>&quot;id&quot;: 300,</code></td><td><span class="bl bl-d">69 64</span> <span class="bl bl-t">C4</span> <span class="bl bl-d">04</span></td><td>key: UTF-8 bytes; the string ends at 0xC4, because the byte after it (0x04) is not a UTF-8 continuation byte, so 0xC4 starts an integer; value: 2-byte positive integer (lead byte, then a byte below 0x80)</td></tr>
 <tr><td><code>&quot;name&quot;: &quot;json&quot;,</code></td><td><span class="bl bl-d">6E 61 6D 65</span> <span class="bl bl-l">FF</span> <span class="bl bl-d">6A 73 6F 6E</span> <span class="bl bl-l">FF</span></td><td>key: UTF-8 bytes; 0xFF terminates the string as another string follows; value: UTF-8 bytes; terminated as a string key follows</td></tr>
 <tr><td><code>&quot;pi&quot;: 3.14,</code></td><td><span class="bl bl-d">70 69</span> <span class="bl bl-t">8F</span> <span class="bl bl-d">40 09 1E B8 51 EB 85 1F</span></td><td>key: UTF-8 bytes; value: binary64 (IEEE 754, big-endian); its marker also ends <code>&quot;pi&quot;</code></td></tr>
 <tr><td><code>&quot;tags&quot;: [</code></td><td><span class="bl bl-d">74 61 67 73</span> <span class="bl bl-t">82</span></td><td>key: UTF-8 bytes; value: array with 2 elements; its marker also ends <code>&quot;tags&quot;</code></td></tr>
@@ -100,7 +100,8 @@ serialized as 0x81 0x65 0xFF, but `[1,2,3,4,"e"]` as 0x85 0x91 0x92 0x93 0x94 0x
 
     The following values can **not** be converted to a BON8 value:
 
-      - unsigned integers above 9223372036854775807, because BON8 has no unsigned 64-bit integer type
+      - integers outside the int64 range (unsigned integers above 9223372036854775807 and, for number types wider than
+        64 bits, any larger or smaller integer), because BON8 integers are limited to int64
         ([out_of_range.407](../../home/exceptions.md#jsonexceptionout_of_range407))
       - strings that are not valid UTF-8, because the end of a string is determined from its encoding
         ([type_error.316](../../home/exceptions.md#jsonexceptiontype_error316))
@@ -168,7 +169,13 @@ The library maps BON8 types to JSON value types as follows:
 
 Non-negative integers are read as number_unsigned, negative integers as number_integer.
 
-!!! info
+A byte 0xF5..0xF7 followed by 0x80..0xBF is neither a string nor an integer and is rejected with
+[parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) (invalid UTF-8 byte). The same error is
+reported for any other invalid byte (such as a stray 0xFE), for ill-formed UTF-8, and for an object key that is not a
+string. Input that ends prematurely, trailing data after the value, and a missing final 0xFF after a string at the end
+of the message are reported as [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110).
+
+!!! info "Non-canonical input"
 
     Values that do not use the canonical representation, such as integers with a longer encoding than necessary,
     arrays and objects with up to four elements that are terminated by 0xFE, unsorted object keys, or a 0xFF after a
@@ -176,7 +183,10 @@ Non-negative integers are read as number_unsigned, negative integers as number_i
 
     Strings must be valid UTF-8, and a string at the very end of a message must be terminated by 0xFF.
 
-!!! info
+    Duplicate object keys are accepted; the last value wins (`ordered_json` keeps the position of the first occurrence).
+    The specification does not say how to treat them; the HikoGUI reference decoder keeps the first value.
+
+!!! info "Round trips"
 
     Any BON8 output created by `to_bon8` can be successfully parsed by `from_bon8`.
 

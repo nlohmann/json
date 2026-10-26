@@ -368,8 +368,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
   `#!cpp std::from_chars` is not available or declines the token, and `std::strtold` reads up to the null character. A type whose `data()`
   is not null-terminated does not fail to compile; with such a `NumberFloatType` it can silently misparse
   floating-point numbers.
-- `append(const char*, size_type)`, used by [`dump`](../../api/basic_json/dump.md), and `append(const StringType&)`,
-  used by the CBOR reader for indefinite-length strings. The library's internal string concatenation additionally has
+- `append(const char*, size_type)`, used by [`dump`](../../api/basic_json/dump.md) and by the binary readers. The library's internal string concatenation additionally has
   to append a `#!cpp char` and a `#!cpp const char*`; for each it selects between `append(arg)`, `#!cpp operator+=`,
   `append(first, last)`, and `append(data, size)`.
 - The comparison operator `==` against another `StringType`, and `<` for use as a key of the chosen
@@ -390,6 +389,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
   described in RFC 6901. Neither `find(const StringType&, size_type)`, nor `substr(pos, count)`, nor
   `replace(pos, count, const StringType&)` is required.
 - `empty()`.
+- `resize(n)` (one argument) -- used by `to_string` to size the result before the reference tokens are copied into it.
 - `begin()` and `end()` -- used by
   [`operator[](const json_pointer&)`](../../api/basic_json/operator%5B%5D.md) to decide whether a reference token
   denotes an array index.
@@ -678,8 +678,7 @@ using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
   [`StringType`](#stringtype), whose non-`#!cpp const` `data()` is C++17 and later only.
 - Default-constructible, copy-constructible, and move-constructible.
 - Member functions `size()`, `empty()`, `data()`, `resize()`, `operator[]`, `back()`, `begin()`, `end()`, `cbegin()`,
-  and `cend()` with random-access iterators, and `insert(pos, first, last)`, which the CBOR reader uses to join the
-  chunks of an indefinite-length byte string. `push_back()` is **not** required.
+  and `cend()` with random-access iterators. `push_back()` is **not** required.
 - Comparison operators: `==` is used by
   [`byte_container_with_subtype`](../../api/byte_container_with_subtype/index.md), the relational operators by
   [`basic_json`'s comparison operators](../../api/basic_json/operator_le.md).
