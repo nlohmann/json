@@ -9067,7 +9067,7 @@ class basic_json_document
     /// member is set (added if missing), an array element assigned, and "-"
     /// or the size of the array appends. A null parent becomes what
     /// basic_json's operator[](json_pointer) makes of it: an array for "-"
-    /// and for digits (padded with nulls up to the index), an object otherwise.
+    /// and for array indices (padded with nulls up to the index), an object otherwise.
     template<typename V>
     view_type set(const json_pointer& ptr, V&& value)
     {
@@ -9083,7 +9083,11 @@ class basic_json_document
             {
                 return push_back(parent, std::forward<V>(value));
             }
-            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            // (a token that cannot be an array index, such as "01" or "", names an
+            // object member, as in basic_json)
+            const bool digits = !token.empty()
+                                && (token.size() == 1 || token[0] != '0')
+                                && std::all_of(token.begin(), token.end(), [](const char c)
             {
                 return c >= '0' && c <= '9';
             });
