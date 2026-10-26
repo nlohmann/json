@@ -82,7 +82,7 @@ Linear in the size of the JSON value `j`.
 
 ## See also
 
-- [`BON8`](../../features/binary_formats/bon8.md) - the format, its byte layout and how values are mapped
+- [BON8](../../features/binary_formats/bon8.md) - the format, its byte layout and how values are mapped
 - [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
 - [`from_bon8`](from_bon8.md) - create a JSON value from an input in BON8 format
 - [`to_cbor`](to_cbor.md) - create a CBOR serialization of a JSON value

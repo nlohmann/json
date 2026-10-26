@@ -7,9 +7,9 @@ T& get_to(T& v) const;
 
 Converts the value to `T` and stores it in `v`, in one of two ways:
 
-- For the types that [`get<T>()`](get.md) converts directly -- arithmetic types, `#!cpp bool`,
+- For the types that [`get<T>()`](get.md) converts directly — arithmetic types, `#!cpp bool`,
   `#!cpp std::nullptr_t`, [`string_view_t`](index.md#member-types), `#!cpp std::basic_string`, `BasicJsonType`,
-  `basic_json_view`, `#!cpp std::vector`, and `#!cpp std::map`/`#!cpp std::unordered_map` with string keys -- `v` is
+  `basic_json_view`, `#!cpp std::vector`, and `#!cpp std::map`/`#!cpp std::unordered_map` with string keys — `v` is
   assigned: `#!cpp v = get<T>()`.
 - For every other type, the subtree is built into a `BasicJsonType` value and `#!cpp materialize().get_to(v)` is
   called, i.e. `from_json()` is invoked with the existing `v`, exactly as

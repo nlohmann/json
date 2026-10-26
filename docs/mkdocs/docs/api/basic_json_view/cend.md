@@ -25,7 +25,7 @@ Constant.
 ??? example
 
     The example below checks that every record of a batch is an object with `std::all_of`, using
-    [`cbegin()`](cbegin.md)/`cend()` as the range -- the same way it would for any standard container -- before
+    [`cbegin()`](cbegin.md)/`cend()` as the range — the same way it would for any standard container — before
     materializing any record of the batch.
 
     ```cpp

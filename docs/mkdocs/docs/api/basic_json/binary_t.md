@@ -41,7 +41,7 @@ represent a byte array in modern C++.
     [`byte_container_with_subtype`](../byte_container_with_subtype/index.md) derives directly from it. Its
     `value_type` must additionally be exactly one byte wide (e.g., `std::uint8_t`/`char`/`std::byte`): the binary
     serializers (CBOR, MessagePack, BSON, UBJSON) read and write the container's raw bytes via
-    `reinterpret_cast`, which is only correct for byte-sized elements -- a container like
+    `reinterpret_cast`, which is only correct for byte-sized elements — a container like
     `#!cpp std::vector<std::intptr_t>` will not work as `BinaryType`. The elements must be stored contiguously, and
     the binary readers additionally require `resize()` and `operator[]`. See
     [Template Parameter Requirements](../../features/types/template_parameters.md#binarytype) for the full list.

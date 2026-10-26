@@ -5,7 +5,7 @@ so after adding a release to the page, run `python3 scripts/figures/release_time
 the regenerated docs/images/release_timeline.svg. The page includes the SVG text with
 `--8<-- "images/release_timeline.svg"`, so it follows the light/dark toggle (see the `nj-fig` rules in
 docs/css/brand.css and the `nj-int-*` rules in docs/css/fig-integration.css). Every marker has a <title> tooltip.
-Rows without a date (the "Unreleased" row) are skipped; any other release row that cannot be parsed stops the script.
+The timeline also marks the first commit of the repository (FIRST_COMMIT) as a diamond. Rows without a date (the "Unreleased" row) are skipped; any other release row that cannot be parsed stops the script.
 """
 import datetime
 import re
@@ -19,6 +19,7 @@ PAGE = DOCS / "home" / "releases" / "index.md"
 ROW = re.compile(r"^\|\s*\[v(\d+)\.(\d+)\.(\d+)\]\([^)]*\)\s*\|\s*([^|]*?)\s*\|")
 W, LEFT, RIGHT = 880, 24, 856
 LABEL_ROW, CHAR_W = 17, 7.0
+FIRST_COMMIT = datetime.date(2013, 7, 4)  # "- initial commit" of the repository
 
 
 def parse(markdown):
@@ -46,7 +47,7 @@ def name(version):
 
 
 def draw(releases):
-    first, last = releases[0][1], releases[-1][1]
+    first, last = FIRST_COMMIT, releases[-1][1]
     start, end = datetime.date(first.year, 1, 1), datetime.date(last.year + 1, 1, 1)
     span = (end - start).days
 
@@ -55,10 +56,10 @@ def draw(releases):
 
     # minor labels, placed greedily into the lowest free row above the axis
     rows_end, labels = [], []
-    for version, date in releases:
-        if version[2] != 0:
+    for version, date in [(None, FIRST_COMMIT)] + releases:
+        if version is not None and version[2] != 0:
             continue
-        text = "%d.%d" % version[:2]
+        text = "first commit" if version is None else "%d.%d" % version[:2]
         x, half = xof(date), len(text) * CHAR_W / 2 + 2
         row = next((i for i, e in enumerate(rows_end) if e < x - half), None)
         if row is None:
@@ -73,10 +74,11 @@ def draw(releases):
     s = ['<svg class="nj-fig nj-fig--timeline" viewBox="0 0 %d %d" role="img" aria-labelledby="nj-int-tl-title" '
          'xmlns="http://www.w3.org/2000/svg">' % (W, height)]
     minors = sum(1 for v, _ in releases if v[2] == 0)
-    s.append('<title id="nj-int-tl-title">Timeline of the %d releases from %s (%s) to %s (%s): %d minor or major '
-             'releases, drawn as filled dots with their version above the axis, and %d patch releases, drawn as '
-             'rings.</title>' % (len(releases), name(releases[0][0]), first.isoformat(), name(releases[-1][0]),
-                                 last.isoformat(), minors, len(releases) - minors))
+    s.append('<title id="nj-int-tl-title">Timeline from the first commit (%s) and the %d releases from %s (%s) to %s '
+             '(%s): %d minor or major releases, drawn as filled dots with their version above the axis, and %d patch '
+             'releases, drawn as rings. The first commit is drawn as a diamond.</title>'
+             % (first.isoformat(), len(releases), name(releases[0][0]), releases[0][1].isoformat(),
+                name(releases[-1][0]), last.isoformat(), minors, len(releases) - minors))
     # year grid
     for year in range(start.year, end.year + 1):
         x = xof(datetime.date(year, 1, 1))
@@ -100,7 +102,11 @@ def draw(releases):
         y = top - row * LABEL_ROW
         s.append('<line class="nj-int-leader" x1="%.1f" y1="%d" x2="%.1f" y2="%d"/>' % (x, y + 3, x, axis - 7))
         s.append('<text class="nj-int-label" x="%.1f" y="%d">%s</text>' % (x, y, text))
-    # markers: one per date, patch rings first so that minor dots stay on top
+    # markers: the first commit, then one per date, patch rings first so that minor dots stay on top
+    x = xof(FIRST_COMMIT)
+    s.append('<g><title>First commit %s</title><circle class="nj-int-hit" cx="%.1f" cy="%d" r="9"/>'
+             '<path class="nj-int-minor" d="M%.1f %d l7 -7 l7 7 l-7 7z" transform="translate(-7 0)"/></g>'
+             % (FIRST_COMMIT.isoformat(), x, axis, x, axis))
     by_date = {}
     for version, date in releases:
         by_date.setdefault(date, []).append(version)

@@ -4,7 +4,7 @@
 /* unspecified */ items() const noexcept;
 ```
 
-Returns a range of items -- (key, value) pairs -- for use in range-based for loops. An item's `#!cpp key()` is a
+Returns a range of items — (key, value) pairs — for use in range-based for loops. An item's `#!cpp key()` is a
 `#!cpp string_view_t` (for an array element, its index converted to a string, as for
 [`BasicJsonType::items()`](../basic_json/items.md)), and its `#!cpp value()` is a `basic_json_view` of the element.
 
@@ -47,7 +47,7 @@ Constant.
 ## Notes
 
 As for [`begin()`](begin.md)/[`end()`](end.md), `items()` visits **every** member of an object, including all
-occurrences of a duplicate key -- unlike [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md),
+occurrences of a duplicate key — unlike [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md),
 and [`contains`](contains.md), which resolve to the *first* member with a given key. See the
 [Notes on duplicate keys](operator[].md#notes) of `operator[]`.
 
@@ -63,8 +63,8 @@ and [`contains`](contains.md), which resolve to the *first* member with a given 
 
     The example below shows a settings object whose source text records every update to a key as a duplicate
     member, in the order they happened. `items()` walks all of them, so the update history is visible, while
-    [`operator[]`](operator[].md) only ever sees the *first* one and [`materialize()`](materialize.md) -- like
-    [`BasicJsonType::parse()`](../basic_json/parse.md) -- keeps only the *last*.
+    [`operator[]`](operator[].md) only ever sees the *first* one and [`materialize()`](materialize.md) — like
+    [`BasicJsonType::parse()`](../basic_json/parse.md) — keeps only the *last*.
 
     ```cpp
     --8<-- "examples/basic_json_view__items.cpp"

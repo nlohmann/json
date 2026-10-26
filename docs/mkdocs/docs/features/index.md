@@ -10,7 +10,8 @@ C++ types, and finally serialize it again.
   understand the `#!cpp {}` vs. `#!cpp []` ambiguity.
 - [Parsing](parsing/index.md) — read a JSON value from a string, file, or stream, including
   [JSON Lines](parsing/json_lines.md), [callbacks](parsing/parser_callbacks.md), the
-  [SAX interface](parsing/sax_interface.md), [error handling](parsing/parse_exceptions.md), and
+  [SAX interface](parsing/sax_interface.md), [error handling](parsing/parse_exceptions.md),
+  [large and partial input](parsing/large_and_partial_input.md), and
   [parsing untrusted input](parsing/untrusted_input.md).
 - [Zero-copy JSON views](json_view.md) — read a JSON text through a flat index instead of building a `json` tree;
   strings and numbers stay in the input and are only decoded when needed.
@@ -33,6 +34,8 @@ C++ types, and finally serialize it again.
 - [Converting values](conversions.md) — get values out with [`get`](../api/basic_json/get.md)/[`get_to`](../api/basic_json/get_to.md),
   and understand implicit conversions.
 - [Arbitrary types conversions](arbitrary_types.md) — teach the library about your own structs and classes.
+- [Recipes for common types](type_recipes.md) — convert smart pointers, `std::variant`, `std::chrono` types, and class
+  hierarchies, which the library deliberately leaves to you.
 - [Specializing enum conversion](enum_conversion.md) — map enums to strings instead of integers.
 
 ## Serializing values
@@ -52,6 +55,7 @@ C++ types, and finally serialize it again.
   template parameters has to provide.
 - [Object order](object_order.md) — keep insertion order with [`ordered_json`](../api/ordered_json.md).
 - [Performance](performance.md) — practical advice on parsing, memory use, serialization, and compile times.
+- [Working without exceptions](no_exceptions.md) — what to use when exceptions are unwanted or unavailable.
 - [Runtime assertions](assertions.md), [supported macros](macros.md), the [`nlohmann` namespace](namespace.md), and
   [C++ modules](modules.md) — build-time and runtime configuration.
 

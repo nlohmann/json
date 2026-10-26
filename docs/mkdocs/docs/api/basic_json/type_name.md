@@ -4,7 +4,7 @@
 const char* type_name() const noexcept;
 ```
 
-Returns the type name as string to be used in error messages -- usually to indicate that a function was called on a
+Returns the type name as string to be used in error messages — usually to indicate that a function was called on a
 wrong JSON type.
     
 ## Return value

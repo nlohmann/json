@@ -43,7 +43,7 @@ Linear in the length of the input.
 
 ## Notes
 
-Every view taken from `#!cpp *this` before the call -- including the previous [`root()`](root.md) -- is invalidated,
+Every view taken from `#!cpp *this` before the call — including the previous [`root()`](root.md) — is invalidated,
 whether or not the new parse succeeds; take fresh views from [`root()`](root.md) afterward.
 
 `input` is borrowed or owned by the same rules as [`parse()`](parse.md#notes); a document can borrow on one call and

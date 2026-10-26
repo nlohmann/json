@@ -41,8 +41,8 @@ counterpart, except that it returns a view instead of a reference to a value tha
 document, the returned [`string_view_t`](index.md#member-types) is valid as long as the caller's buffer; for an owned
 one, as long as the document.
 
-The returned [`string_view_t`](index.md#member-types) is valid exactly as long as the view that produced it -- see the
-[validity rules](index.md) of `basic_json_view` -- and, for a string with no escapes, for as long as the document's
+The returned [`string_view_t`](index.md#member-types) is valid exactly as long as the view that produced it — see the
+[validity rules](index.md) of `basic_json_view` — and, for a string with no escapes, for as long as the document's
 source text, which for a borrowed document must remain valid **and unmodified** for as long as the document exists,
 since floating-point values and unescaped strings are read from the source lazily.
 
@@ -52,8 +52,8 @@ since floating-point values and unescaped strings are read from the source lazil
 
     The example below pulls one field out of a JSON text that stands in for a large API response, and shows that no
     `#!cpp std::string` was allocated for it: the returned view still points inside the original buffer. A field that
-    contains an escape sequence cannot point into the original text -- it was decoded once into the document's own
-    buffer instead -- but still avoids a per-field allocation.
+    contains an escape sequence cannot point into the original text — it was decoded once into the document's own
+    buffer instead — but still avoids a per-field allocation.
 
     ```cpp
     --8<-- "examples/basic_json_view__get_string.cpp"

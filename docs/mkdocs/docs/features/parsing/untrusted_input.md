@@ -1,7 +1,7 @@
 # Parsing Untrusted Input
 
-This page is for applications that parse JSON -- or one of the supported [binary formats](../binary_formats/index.md)
-(BJData, BON8, BSON, CBOR, MessagePack, UBJSON) -- from a source they do not fully control, such as a network
+This page is for applications that parse JSON — or one of the supported [binary formats](../binary_formats/index.md)
+(BJData, BON8, BSON, CBOR, MessagePack, UBJSON) — from a source they do not fully control, such as a network
 connection, an uploaded file, or another process. It summarizes what the library already does for such input and what
 remains the caller's responsibility, linking to the pages that cover each aspect in detail rather than repeating them.
 
@@ -50,12 +50,12 @@ stack, however deeply it is nested.
     [SAX handler](sax_interface.md) (for the JSON parser or a binary format alike) and throwing once your limit is
     exceeded.
 
-Once a value has been parsed, operations that walk it recursively -- serializing it with
+Once a value has been parsed, operations that walk it recursively — serializing it with
 [`dump`](../../api/basic_json/dump.md), hashing it, copying it, comparing two values with `#!cpp ==`, `#!cpp <`, or (in
 C++20) `#!cpp <=>`, merging with [`update`](../../api/basic_json/update.md), applying a
 [`merge_patch`](../../api/basic_json/merge_patch.md), creating a patch with [`diff`](../../api/basic_json/diff.md) or
 [`merge_diff`](../../api/basic_json/merge_diff.md), [`flatten`](../../api/basic_json/flatten.md), and the binary
-writers (`to_cbor`, `to_msgpack`, ...) -- descend at most 128 levels on the call stack and continue
+writers (`to_cbor`, `to_msgpack`, ...) — descend at most 128 levels on the call stack and continue
 below that with an explicit stack instead, so none of them can exhaust the stack either, however deeply the value is
 nested. Destroying a value (its destructor) never recurses at all, regardless of nesting depth, for the same reason.
 
@@ -63,12 +63,12 @@ nested. Destroying a value (its destructor) never recurses at all, regardless of
 
 The library does not limit the overall size of a JSON text; a value nested or wide enough will use memory
 proportional to the input. If you parse untrusted input of unbounded size, check the size of the file or stream
-yourself before -- or while -- handing it to `parse()`.
+yourself before — or while — handing it to `parse()`.
 
 For the binary formats, an announced size is never trusted outright:
 
 - Reading a string or binary value copies the input in bounded 4096-byte chunks and grows the result as bytes are
-  actually consumed, rather than allocating the announced length up front -- a truncated input runs out of bytes
+  actually consumed, rather than allocating the announced length up front — a truncated input runs out of bytes
   (reported as a parse error) instead of triggering an oversized allocation.
 - When an array announces its number of elements and the array container supports `reserve()` (as `#!cpp std::vector`,
   the default, does), the library reserves storage for at most 16384 of them upfront, regardless of how large the
@@ -91,7 +91,7 @@ Invalid UTF-8 is rejected while parsing, not just while serializing:
 
 A `#!cpp '\0'` (NUL) byte *inside* a quoted JSON string is always rejected (it must be escaped as `\u0000`). A NUL byte
 *outside* of a string is different: by default it is silently treated as the end of the input, so trailing bytes after
-it -- including further, otherwise well-formed JSON -- are silently ignored rather than rejected. Since untrusted input
+it — including further, otherwise well-formed JSON — are silently ignored rather than rejected. Since untrusted input
 that happens to embed a NUL is a way to make part of it disappear without a parse error, see the
 [FAQ entry](../../home/faq.md#nul-bytes-in-the-input) and consider defining
 [`JSON_STRICT_NUL_HANDLING`](../../api/macros/json_strict_nul_handling.md) to `1` to reject a NUL byte like any other
@@ -116,7 +116,7 @@ silently resolving them one way or another, see the
 
 ## Numbers
 
-A number whose value cannot be represented -- for instance `1E1000`, which overflows `double` -- is rejected while
+A number whose value cannot be represented — for instance `1E1000`, which overflows `double` — is rejected while
 parsing as [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406) rather than silently becoming
 infinity. An integer that is syntactically valid but does not fit the 64-bit integer types is not rejected; it is
 instead stored as a `double`, which may lose precision for very large values. See
@@ -139,7 +139,7 @@ conforming JSON consumers is exactly what the default rejects.
   [SAX handler](sax_interface.md); the library bounds the call stack but not memory use.
 - Bound the size of the input itself before parsing, independent of the library's own bounded allocations for binary
   format lengths.
-- Decide up front how you want a string with invalid UTF-8 -- from any source, not only parsing -- to be serialized
+- Decide up front how you want a string with invalid UTF-8 — from any source, not only parsing — to be serialized
   (`strict`, `replace`, or `ignore`), rather than discovering it from an uncaught `type_error.316`.
 - If a stray NUL byte silently truncating trailing input is a problem for your input format, define
   `JSON_STRICT_NUL_HANDLING`.

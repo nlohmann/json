@@ -8,7 +8,7 @@ using json_editable_view = basic_json_view<json, true>;
 
 This type is a [`basic_json_view`](basic_json_view/index.md) of a value of a
 [`json_editable_document`](json_editable_document.md). It offers the same read-only interface as
-[`json_view`](json_view.md); what is different is what it can be a view *of* -- a value that
+[`json_view`](json_view.md); what is different is what it can be a view *of* — a value that
 [`set`](basic_json_document/set.md) and [`push_back`](basic_json_document/push_back.md) can change, with every view
 still referring to it seeing the change, see [Edits](basic_json_document/index.md#edits).
 
@@ -17,7 +17,7 @@ still referring to it seeing the change, see [Edits](basic_json_document/index.m
 ??? example
 
     The example below is the same as [`json_editable_document`'s](json_editable_document.md): every view read back
-    out of the document -- `#!cpp doc.root()` and the views nested under it -- sees the edits made through `set`.
+    out of the document — `#!cpp doc.root()` and the views nested under it — sees the edits made through `set`.
 
     ```cpp
     --8<-- "examples/json_editable_document.cpp"

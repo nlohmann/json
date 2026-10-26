@@ -5,7 +5,7 @@ bool operator==(const byte_container_with_subtype& rhs) const;
 ```
 
 Compares two byte containers for equality by comparing (1) the underlying binary data (the `BinaryType` base, compared
-with `BinaryType`'s own `operator==`) and (2) the subtype information -- both containers must either have no subtype,
+with `BinaryType`'s own `operator==`) and (2) the subtype information — both containers must either have no subtype,
 or have a subtype and the same subtype value.
 
 ## Parameters

@@ -7,19 +7,19 @@ T get() const;
 
 Converts the value to `T`.
 
-For the types below, the conversion works directly on the flat index -- no `BasicJsonType` value is built for it:
+For the types below, the conversion works directly on the flat index — no `BasicJsonType` value is built for it:
 
 - `#!cpp bool`
 - arithmetic types other than `#!cpp bool` (for a boolean, `#!cpp 0`/`#!cpp 1`, exactly as for
   [`BasicJsonType::get<T>()`](../basic_json/get.md))
 - `#!cpp std::nullptr_t`
-- `#!cpp std::basic_string<char, Traits, Alloc>` (including `string_t`) -- a copy of the string
-- [`string_view_t`](index.md#member-types) -- **no copy**: the returned view points into the document's
+- `#!cpp std::basic_string<char, Traits, Alloc>` (including `string_t`) — a copy of the string
+- [`string_view_t`](index.md#member-types) — **no copy**: the returned view points into the document's
   [`source()`](../basic_json_document/source.md) text, or, for a string that contains escape sequences, into the
   document's own buffer of decoded strings (see [`get_string()`](get_string.md))
-- `BasicJsonType` -- equivalent to [`materialize()`](materialize.md)
-- `basic_json_view` -- returns `#!cpp *this`
-- `#!cpp std::vector<U, A>` -- from an array, element by element, each converted with `#!cpp get<U>()`; `#!cpp
+- `BasicJsonType` — equivalent to [`materialize()`](materialize.md)
+- `basic_json_view` — returns `#!cpp *this`
+- `#!cpp std::vector<U, A>` — from an array, element by element, each converted with `#!cpp get<U>()`; `#!cpp
   std::vector<basic_json_view>` keeps a view of every element instead of a value
 - `#!cpp std::map<K, V, C, A>` and `#!cpp std::unordered_map<K, V, H, E, A>`, if `K` is constructible from a `#!cpp
   (const char*, std::size_t)` pair -- from an object, member by member, each value converted with `#!cpp get<V>()`; with a repeated
@@ -27,8 +27,8 @@ For the types below, the conversion works directly on the flat index -- no `Basi
   [`materialize()`](materialize.md)) does; `#!cpp std::map<std::string, basic_json_view>` keeps views of the members
   instead of values
 
-Every other `T` -- `#!cpp std::list`, `#!cpp std::pair`, `#!cpp std::array`, enumerations, user types with a
-`from_json()`, ... -- is converted by `#!cpp materialize().get<T>()`: the subtree is built into a real `BasicJsonType`
+Every other `T` — `#!cpp std::list`, `#!cpp std::pair`, `#!cpp std::array`, enumerations, user types with a
+`from_json()`, ... — is converted by `#!cpp materialize().get<T>()`: the subtree is built into a real `BasicJsonType`
 value first (as [`BasicJsonType::parse()`](../basic_json/parse.md) would), and converted from there exactly as
 [`BasicJsonType::get<T>()`](../basic_json/get.md) would convert it.
 
@@ -49,13 +49,13 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 
 - For the directly-converted types listed above (other than `BasicJsonType` and `basic_json_view`, which never
   throw): throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if the value's type does not
-  match `T` -- the same exception, with the same message, that [`BasicJsonType::get<T>()`](../basic_json/get.md)
+  match `T` — the same exception, with the same message, that [`BasicJsonType::get<T>()`](../basic_json/get.md)
   throws for the same JSON type and `T`.
 - For `#!cpp std::vector<U, A>`: throws `type_error.302` if the value is not an array; otherwise, whatever converting
   an element to `U` throws.
 - For `#!cpp std::map`/`#!cpp std::unordered_map`: throws `type_error.302` if the value is not an object; otherwise,
   whatever converting a member to the mapped type throws.
-- For every other `T`: whatever [`materialize().get<T>()`](../basic_json/get.md) throws -- typically `type_error.302`,
+- For every other `T`: whatever [`materialize().get<T>()`](../basic_json/get.md) throws — typically `type_error.302`,
   or whatever a user-provided `from_json()` throws.
 
 None of the exceptions thrown directly by this function (the first three bullets above) carry a
@@ -107,7 +107,7 @@ document.
 
     The example below reads typed fields straight into C++ variables, collects a view of every array element with
     `#!cpp get<std::vector<basic_json_view>>()` instead of a value, and converts a nested object into a user type
-    through its `from_json()` -- which runs on a `BasicJsonType` value `materialize()` builds for just that one
+    through its `from_json()` — which runs on a `BasicJsonType` value `materialize()` builds for just that one
     member.
 
     ```cpp

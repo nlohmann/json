@@ -10,8 +10,8 @@ This type is an **editable** [`basic_json_document`](basic_json_document/index.m
 [`ordered_json`](ordered_json.md) specialization: [`set`](basic_json_document/set.md) and
 [`push_back`](basic_json_document/push_back.md) change values after parsing, as for
 [`json_editable_document`](json_editable_document.md), and
-[`materialize()`](basic_json_view/materialize.md) preserves the document order of object members -- including
-members [`set`](basic_json_document/set.md) added -- instead of sorting them like
+[`materialize()`](basic_json_view/materialize.md) preserves the document order of object members — including
+members [`set`](basic_json_document/set.md) added — instead of sorting them like
 [`json_editable_document`](json_editable_document.md) does.
 
 ## Examples

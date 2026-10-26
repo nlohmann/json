@@ -12,8 +12,8 @@ hide:
 
     ---
 
-    Creating, parsing, accessing, and serializing JSON values, JSON Pointer/Patch, binary formats, zero-copy views,
-    and more.
+    Creating, parsing, accessing, and serializing JSON values, converting your own C++ types, JSON Pointer/Patch/Merge
+    Patch, binary formats, zero-copy views, and more.
 
     [:octicons-arrow-right-24: Features](features/index.md)
 

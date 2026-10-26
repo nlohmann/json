@@ -642,6 +642,7 @@ extra_css:
 
 extra_javascript:
   - js/mermaid-brand.js
+  - js/external-links.js
   - js/fig-sax.js
   - js/fig-jsonview.js
   - js/fig-exceptions.js

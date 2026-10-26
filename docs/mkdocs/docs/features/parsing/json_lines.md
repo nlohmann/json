@@ -61,7 +61,7 @@ JSON Lines input with more than one value is treated as invalid JSON by the [`pa
     }
     ```
 
-    A value that is a number must be followed by whitespace -- see the [notes](../../api/operator_gtgt.md#notes) of
+    A value that is a number must be followed by whitespace — see the [notes](../../api/operator_gtgt.md#notes) of
     `operator>>` for details.
 
 ## See also

@@ -6,7 +6,7 @@ bool is_discarded() const noexcept;
 
 Returns whether this view is invalid, i.e. does not refer to a value. This is the case for a default-constructed
 view (see [(constructor)](basic_json_view.md)), and for [`root()`](../basic_json_document/root.md) of a document
-that is itself [discarded](../basic_json_document/is_discarded.md) -- in particular, the root of a failed
+that is itself [discarded](../basic_json_document/is_discarded.md) — in particular, the root of a failed
 [`parse()`](../basic_json_document/parse.md) with `allow_exceptions` set to `#!cpp false`.
 
 A discarded view is also what [`operator[]`](operator[].md) returns for a missing key, an index out of range, or a

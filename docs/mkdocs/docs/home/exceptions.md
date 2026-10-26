@@ -230,7 +230,7 @@ JSON uses the `\uxxxx` format to describe Unicode characters. Code points above 
 !!! failure "Example message"
 
     ```
-    parse error at 14: missing or wrong low surrogate
+    [json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate
     ```
 
 !!! note
@@ -244,7 +244,7 @@ Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are inva
 !!! failure "Example message"
 
     ```
-    parse error: code points above 0x10FFFF are invalid
+    [json.exception.parse_error.103] parse error: code points above 0x10FFFF are invalid
     ```
 
 !!! note
@@ -940,7 +940,7 @@ The provided array index `i` is larger than `size-1`.
 !!! failure "Example message"
 
     ```
-    array index 3 is out of range
+    [json.exception.out_of_range.401] array index 3 is out of range
     ```
 
 ### json.exception.out_of_range.402
@@ -950,7 +950,7 @@ The special array index `-` in a JSON Pointer never describes a valid element of
 !!! failure "Example message"
 
     ```
-    array index '-' (3) is out of range
+    [json.exception.out_of_range.402] array index '-' (3) is out of range
     ```
 
 ### json.exception.out_of_range.403
@@ -960,7 +960,7 @@ The provided key was not found in the JSON object.
 !!! failure "Example message"
 
     ```
-    key 'foo' not found
+    [json.exception.out_of_range.403] key 'foo' not found
     ```
 
 ### json.exception.out_of_range.404
@@ -971,7 +971,7 @@ contains other characters (e.g., `1a`), or `-` where it cannot be used.
 !!! failure "Example message"
 
     ```
-    unresolved reference token 'foo'
+    [json.exception.out_of_range.404] unresolved reference token 'foo'
     ```
 
 ### json.exception.out_of_range.405
@@ -983,7 +983,7 @@ also thrown when the parent or a reference token of an empty JSON Pointer is req
 !!! failure "Example message"
 
     ```
-    JSON pointer has no parent
+    [json.exception.out_of_range.405] JSON pointer has no parent
     ```
 
 ### json.exception.out_of_range.406
@@ -995,7 +995,7 @@ double-precision number when `number_float_t` is `#!cpp float`.
 !!! failure "Example messages"
 
     ```
-    number overflow parsing '10E1000'
+    [json.exception.out_of_range.406] number overflow parsing '10E1000'
     ```
     ```
     [json.exception.out_of_range.406] syntax error while parsing CBOR value: number overflow
@@ -1030,10 +1030,10 @@ exception, because they serialize integers beyond 64 bits as high-precision numb
 !!! failure "Example messages"
 
     ```
-    integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
+    [json.exception.out_of_range.407] integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
     ```
     ```
-    integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
+    [json.exception.out_of_range.407] integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
     ```
 
 ### json.exception.out_of_range.408
@@ -1051,7 +1051,7 @@ so any value it produces can still be read back.
 !!! failure "Example messages"
 
     ```
-    excessive array size: 8658170730974374167
+    [json.exception.out_of_range.408] excessive array size: 8658170730974374167
     ```
     ```
     [json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size
@@ -1070,7 +1070,7 @@ Key identifiers to be serialized to BSON cannot contain code point U+0000, since
 !!! failure "Example message"
 
     ```
-    BSON key cannot contain code point U+0000 (at byte 2)
+    [json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)
     ```
 
 ### json.exception.out_of_range.410
@@ -1082,8 +1082,8 @@ a JSON pointer exceeds the range of `size_type` (e.g., on 32-bit platforms).
 !!! failure "Example message"
 
     ```
-    enum value out of range
-    array index 18446744073709551615 exceeds size_type
+    [json.exception.out_of_range.410] enum value out of range
+    [json.exception.out_of_range.410] array index 18446744073709551615 exceeds size_type
     ```
 
     The second message is thrown, for instance, by `#!cpp json::parse("[1, 2]").at("/18446744073709551615"_json_pointer)`
@@ -1098,7 +1098,7 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 !!! failure "Example message"
 
     ```
-    cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
+    [json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
     ```
 
 !!! note
@@ -1116,10 +1116,10 @@ is thrown when a value is too large to be described by such a length field.
 !!! failure "Example messages"
 
     ```
-    BSON length 2147483661 exceeds maximum of 2147483647
+    [json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647
     ```
     ```
-    MessagePack length 4294967296 exceeds maximum of 4294967295
+    [json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295
     ```
 
 !!! note
@@ -1136,7 +1136,7 @@ A JSON Patch `remove` operation cannot be applied because the target location's 
 !!! failure "Example message"
 
     ```
-    cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
+    [json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
     ```
 
 !!! note
@@ -1150,7 +1150,7 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 !!! failure "Example message"
 
     ```
-    cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
+    [json.exception.out_of_range.414] cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
     ```
 
 !!! note

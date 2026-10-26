@@ -107,7 +107,7 @@ Linear in the size of the input.
 
 ## See also
 
-- [`UBJSON`](../../features/binary_formats/ubjson.md) - the format, its byte layout and how values are mapped
+- [UBJSON](../../features/binary_formats/ubjson.md) - the format, its byte layout and how values are mapped
 - [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
 - [Parsing untrusted input](../../features/parsing/untrusted_input.md) - limits and safe handling of hostile data
 - [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled

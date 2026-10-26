@@ -102,7 +102,7 @@ was called:
 
 The JSON specification leaves the handling of objects with repeated keys up to the implementation. As described in
 [`object_t`](../../api/basic_json/object_t.md#behavior), it is unspecified which value for a repeated key ends up in
-the resulting `#!c json` value -- once parsing has produced that value, the duplicate is already gone, because object
+the resulting `#!c json` value — once parsing has produced that value, the duplicate is already gone, because object
 storage maps each key to a single value. If duplicate keys should instead be treated as an error, a parser callback
 can detect them while the object is still being read, before that ambiguity ever applies.
 
@@ -129,7 +129,7 @@ This approach has three limitations:
   maintaining a stack of the enclosing keys and array indices in the callback as well.
 
 A [SAX interface](sax_interface.md) does not lift the position limitation: its `key` function receives no position
-either -- only `parse_error` is passed the byte position.
+either — only `parse_error` is passed the byte position.
 
 ## Recipe: streaming a large homogeneous array
 

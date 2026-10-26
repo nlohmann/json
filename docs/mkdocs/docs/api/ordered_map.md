@@ -105,7 +105,7 @@ This differs from `#!cpp std::map`, where the same operations are O(log n).
 
     If key order matters for objects of that size, consider a container with a lookup index, such as
     [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map)
-    ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)), as the object type -- see
+    ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)), as the object type — see
     [object order](../features/object_order.md).
 
 ## Examples

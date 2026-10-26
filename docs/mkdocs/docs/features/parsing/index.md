@@ -36,7 +36,7 @@ json data = json::parse(f);
 ```
 
 The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which
-is read as UTF-16 or UTF-32 -- depending on the character type -- and converted to UTF-8; see the
+is read as UTF-16 or UTF-32 — depending on the character type — and converted to UTF-8; see the
 [`parse`](../../api/basic_json/parse.md) page for an example. A single input may contain only one JSON value.
 Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](json_lines.md) format; input
 that arrives in chunks or contains several values is covered in

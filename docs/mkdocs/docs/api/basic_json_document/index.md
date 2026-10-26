@@ -108,7 +108,7 @@ points apply to every edit:
   anything `BasicJsonType` can be constructed from (numbers, strings, `#!cpp bool`, `#!cpp nullptr`, containers, ...).
 - [`dump()`](../basic_json_view/dump.md) writes an edited document with members in document order, new members at
   the end, and, with [`number_format::source`](../basic_json_view/number_format.md), keeps the spelling of every
-  number that was not itself edited -- see [Editing a document](../../features/json_view.md#editing-a-document) for
+  number that was not itself edited — see [Editing a document](../../features/json_view.md#editing-a-document) for
   why this matters.
 - [`read()`](read.md) discards all edits, [`shrink_to_fit()`](shrink_to_fit.md) does not move the node index once
   there are edits, and [`memory_usage()`](memory_usage.md) includes the memory edits use.

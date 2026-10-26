@@ -54,7 +54,7 @@ using element_type = decltype(*j_object.items().begin());
 ```
 
 The per-element type (`iteration_proxy_value`) lives in the library's internal `detail` namespace and is
-intentionally unspecified as a stable, named type -- `decltype` is the supported way to obtain it, but its exact
+intentionally unspecified as a stable, named type — `decltype` is the supported way to obtain it, but its exact
 name/definition may change between versions.
 
 ## Return value

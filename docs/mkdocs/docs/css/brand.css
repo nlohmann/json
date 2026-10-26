@@ -512,6 +512,27 @@ body:has(.nj-hero) .md-content {
 .md-typeset .mermaid {
     overflow-x: auto;
 }
+/* ... and one that is narrower than the column sits in the middle of it */
+.md-typeset .mermaid {
+    text-align: center;
+}
+
+/* external links (marked by js/external-links.js) get a small "open in new window" icon (Font Awesome
+   "external-link-alt") in front of them */
+.md-typeset a.nj-external::before {
+    content: "";
+    display: inline-block;
+    width: .72em;
+    height: .72em;
+    margin-right: .3em;
+    background-color: currentColor;
+    opacity: .65;
+    -webkit-mask: var(--nj-external-icon) no-repeat center / contain;
+    mask: var(--nj-external-icon) no-repeat center / contain;
+}
+:root {
+    --nj-external-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M432 320h-32a16 16 0 0 0-16 16v112H64V128h144a16 16 0 0 0 16-16V80a16 16 0 0 0-16-16H48A48 48 0 0 0 0 112v352a48 48 0 0 0 48 48h352a48 48 0 0 0 48-48V336a16 16 0 0 0-16-16zM488 0H360c-21.37 0-32.05 25.91-17 41l35.73 35.73L135 320.37a24 24 0 0 0 0 34L157.67 377a24 24 0 0 0 34 0l243.61-243.68L471 169c15 15 41 4.5 41-17V24a24 24 0 0 0-24-24z"/></svg>');
+}
 
 
 /* ---- polish pass ---- */

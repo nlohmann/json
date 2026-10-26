@@ -275,7 +275,7 @@ To pick the macro for your own type and get code to start from, answer the quest
 
     The `NLOHMANN_DEFINE_TYPE_*`/`NLOHMANN_DEFINE_DERIVED_TYPE_*` macros are generic over any `basic_json`
     specialization, including `nlohmann::ordered_json`. Simply use `ordered_json` as the target type and members
-    are serialized in declaration order -- no separate macro or extra code is needed.
+    are serialized in declaration order — no separate macro or extra code is needed.
 
     ```cpp
     namespace ns {
@@ -308,7 +308,7 @@ To pick the macro for your own type and get code to start from, answer the quest
 
     There is currently no `NLOHMANN_DEFINE_TYPE_*`-style macro for types that are not
     [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). This is not an
-    intentional omission of documentation -- no such macro exists yet; see
+    intentional omission of documentation — no such macro exists yet; see
     [How can I use `get()` for non-default constructible/non-copyable types?](#how-can-i-use-get-for-non-default-constructiblenon-copyable-types)
     for the manual pattern to use instead.
 
@@ -465,7 +465,7 @@ For smart pointers, class hierarchies, `std::variant`, and `std::chrono`, see
 ## Why can't I convert to/from `std::any`?
 
 `std::any` is intentionally excluded from `get<T>()`/generic conversion support, so `get<std::any>()` and
-containers like `std::map<std::string, std::any>` fail to compile by design -- there is no way to know, from a
+containers like `std::map<std::string, std::any>` fail to compile by design — there is no way to know, from a
 `json` value alone, which concrete type to store inside the `std::any`. To work with heterogeneous JSON values,
 dispatch on the value's type manually and construct the `std::any` (or extract from it) yourself:
 
@@ -497,7 +497,7 @@ what the library does instead.
 
 ## Why does `std::wstring` convert or dump incorrectly?
 
-The library assumes UTF-8 encoding internally, so `std::wstring` is not supported out of the box -- see the FAQ
+The library assumes UTF-8 encoding internally, so `std::wstring` is not supported out of the box — see the FAQ
 entry on [wide string handling](../home/faq.md#wide-string-handling) for why, and for a UTF-8 conversion recipe.
 
 ## Can I write my own serializer? (Advanced use)

@@ -5,7 +5,7 @@ value_t type() const noexcept;
 ```
 
 Returns the type of the value this view refers to, as a value from the [`value_t`](../basic_json/value_t.md)
-enumeration -- the same enumeration [`BasicJsonType::type()`](../basic_json/type.md) uses.
+enumeration — the same enumeration [`BasicJsonType::type()`](../basic_json/type.md) uses.
 
 ## Return value
 

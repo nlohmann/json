@@ -52,7 +52,7 @@ basic_json(basic_json&& other) noexcept;
     The postcondition of this constructor can be restored by calling [`clear()`](clear.md).
 
 2. Create a `#!json null` JSON value. It either takes a null pointer as parameter (explicitly creating `#!json null`)
-   or no parameter (implicitly creating `#!json null`). The passed null pointer itself is not read -- it is only used to
+   or no parameter (implicitly creating `#!json null`). The passed null pointer itself is not read — it is only used to
    choose the right constructor.
 
 3. This is a "catch all" constructor for all compatible JSON types; that is, types for which a `to_json()` method

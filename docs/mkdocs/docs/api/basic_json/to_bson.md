@@ -104,7 +104,7 @@ pass before anything is written.
 
 ## See also
 
-- [`BSON`](../../features/binary_formats/bson.md) - the format, its byte layout and how values are mapped
+- [BSON](../../features/binary_formats/bson.md) - the format, its byte layout and how values are mapped
 - [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
 - [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
 - [`from_bson`](from_bson.md) - create a JSON value from an input in BSON format

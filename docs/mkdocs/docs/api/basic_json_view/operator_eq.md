@@ -17,7 +17,7 @@ bool operator==(const BasicJsonType& lhs, const basic_json_view& rhs);
 
 Neither overload builds a `BasicJsonType` value for a view to do the comparison (see [Notes](#notes) below). Numbers
 compare by value across their types (`#!cpp 1 == 1.0`), and an object compares by its members, with duplicate keys
-resolved exactly as `parse()` resolves them -- the last value, at the position of the first occurrence of the key.
+resolved exactly as `parse()` resolves them — the last value, at the position of the first occurrence of the key.
 This is not what [`operator[]`](operator[].md) and the other lookups return for a duplicate key: they find the *first*
 member (see [Duplicate keys](../../features/json_view.md#duplicate-keys)).
 
@@ -55,7 +55,7 @@ compared. Two arrays of different [`size()`](size.md) are rejected without visit
 ## Notes
 
 Only a single number, boolean, or `#!cpp null` value is ever materialized into a `BasicJsonType`, to reuse its
-`operator==` -- for numbers, so that values written differently in the source text but equal in value (e.g. an
+`operator==` — for numbers, so that values written differently in the source text but equal in value (e.g. an
 integer and a floating-point literal) still compare equal, following the same rules `BasicJsonType` does for special
 values such as `#!cpp NaN`. Constructing one of these scalars never allocates. Strings are compared directly, without
 allocating, either from the source text on both sides or, for overload 2, against `BasicJsonType`'s own string.
@@ -85,7 +85,7 @@ the way to get a `BasicJsonType` value that supports it.
 ??? example
 
     The example below checks whether a newly received configuration differs from the previous one, and whether a
-    received document matches what a test expects -- directly on views, without ever materializing a `BasicJsonType`
+    received document matches what a test expects — directly on views, without ever materializing a `BasicJsonType`
     value for either side.
 
     ```cpp

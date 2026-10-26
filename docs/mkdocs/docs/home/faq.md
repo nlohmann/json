@@ -20,7 +20,7 @@
 
     yield different results (`#!json [true]` vs. `#!json true`)?
 
-This is a known issue, and -- even worse -- the behavior differs between GCC and Clang. The "culprit" for this is the library's constructor overloads for initializer lists to allow syntax like
+This is a known issue, and — even worse — the behavior differs between GCC and Clang. The "culprit" for this is the library's constructor overloads for initializer lists to allow syntax like
 
 ```cpp
 json array = {1, 2, 3, 4};
@@ -394,8 +394,8 @@ As described [above](#parse-errors-reading-non-ascii-characters), the library st
 
 No. `basic_json` provides no built-in synchronization, the same as `std::map` or `std::vector`. Concurrent reads of
 the same value from multiple threads are safe, as are concurrent (non-overlapping) accesses to independent `json`
-objects. However, any concurrent write to a `json` object -- or a concurrent read while another thread writes to the
-same object -- is a data race and requires external synchronization (e.g., a `std::mutex`) by the caller.
+objects. However, any concurrent write to a `json` object — or a concurrent read while another thread writes to the
+same object — is a data race and requires external synchronization (e.g., a `std::mutex`) by the caller.
 
 ### Schema validation
 

@@ -27,13 +27,13 @@ No-throw guarantee: this function never throws exceptions.
 
 Linear in the number of members: unlike the lookup functions, `count()` does not stop at the first match, because it
 has to count every member with the key. Members are compared one after another, in document order. Each comparison
-first checks the key's length -- already known from the index, without reading the key bytes -- before comparing its
+first checks the key's length — already known from the index, without reading the key bytes — before comparing its
 content. The hash index of the keys of objects with 128 or more members does not help here, since every member
 is visited.
 
 ## Notes
 
-This method always returns `#!cpp 0` when the value is not an object -- including a [discarded](is_discarded.md)
+This method always returns `#!cpp 0` when the value is not an object — including a [discarded](is_discarded.md)
 view.
 
 If the source text repeats a key, `count()` returns more than `#!cpp 1` for it, even though the

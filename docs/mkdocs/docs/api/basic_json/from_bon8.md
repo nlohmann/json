@@ -96,7 +96,7 @@ Linear in the size of the input.
 
 ## See also
 
-- [`BON8`](../../features/binary_formats/bon8.md) - the format, its byte layout and how values are mapped
+- [BON8](../../features/binary_formats/bon8.md) - the format, its byte layout and how values are mapped
 - [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
 - [Parsing untrusted input](../../features/parsing/untrusted_input.md) - limits and safe handling of hostile data
 - [`to_bon8`](to_bon8.md) - create a BON8 serialization of a JSON value

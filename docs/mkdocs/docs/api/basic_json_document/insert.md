@@ -13,8 +13,8 @@ Inserts `value` into `array` as a new element before position `idx`, which must 
 [`push_back`](push_back.md), a [null](../basic_json_view/is_null.md) `array` does *not* first become an empty array:
 `array` must already be an array.
 
-`value` is accepted three ways: a [`basic_json_view`](../basic_json_view/index.md) of *any* document -- read-only or
-editable, and it does not have to be `array`'s own document -- which is copied so that nothing is shared with the
+`value` is accepted three ways: a [`basic_json_view`](../basic_json_view/index.md) of *any* document — read-only or
+editable, and it does not have to be `array`'s own document — which is copied so that nothing is shared with the
 source document afterward; a `BasicJsonType` value; or anything `BasicJsonType` can be constructed from (numbers,
 strings, `#!cpp bool`, `#!cpp nullptr`, containers, ...).
 
@@ -44,16 +44,16 @@ a view of the new element, now holding `value`
 
 ## Exception safety
 
-Basic exception safety: `value` is fully encoded -- including the checks below -- into storage owned by the document
+Basic exception safety: `value` is fully encoded — including the checks below — into storage owned by the document
 before anything already reachable from [`root()`](root.md) is touched, so a failure while encoding `value` (an
 invalid argument, or `#!cpp std::bad_alloc`) leaves the document completely unchanged, other than memory allocated
-for the encoding that is not reclaimed. A failure of a later allocation -- while `array` switches from its parsed
-layout to a growable block, or while that block grows, see [Notes](#notes) -- can still leave `array` already
+for the encoding that is not reclaimed. A failure of a later allocation — while `array` switches from its parsed
+layout to a growable block, or while that block grows, see [Notes](#notes) — can still leave `array` already
 switched to that layout even though `value` itself was not inserted.
 
 ## Exceptions
 
-Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if `array` is not an array -- the same
+Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if `array` is not an array — the same
 message [`BasicJsonType::insert`](../basic_json/insert.md) throws for the same type; a null `array` throws this too
 (see above). Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if `idx` is negative,
 or if `#!cpp idx > array.size()`. Throws
@@ -62,7 +62,7 @@ document") if `array` is a [discarded](../basic_json_view/is_discarded.md) view 
 Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `value` is a
 [discarded](../basic_json_view/is_discarded.md) view or a [discarded](../basic_json/is_discarded.md) `BasicJsonType`
 value, and [`type_error.319`](../../home/exceptions.md#jsonexceptiontype_error319) if `value` is (or contains) a
-binary value -- `BasicJsonType` can hold one, but a `json_document` cannot. Throws
+binary value — `BasicJsonType` can hold one, but a `json_document` cannot. Throws
 [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) if `value` is (or contains) a string that is
 not valid UTF-8, with the same message [`BasicJsonType::dump()`](../basic_json/dump.md) gives for that string.
 
@@ -76,8 +76,8 @@ grows in amortized constant time; inserting before the end within that block sti
 
 ## Notes
 
-Like [`set`](set.md) on a member or an element, `insert` never moves an existing *element's value* -- only where
-`array`'s *links* to its elements live -- so a view of an existing element of `array` stays valid across an
+Like [`set`](set.md) on a member or an element, `insert` never moves an existing *element's value* — only where
+`array`'s *links* to its elements live — so a view of an existing element of `array` stays valid across an
 `insert`, and keeps referring to the same element even though its index shifts. Any iterator already taken over
 `array` is invalidated, since it was walking the old layout. See [Edits](index.md#edits) for what stays valid across
 an edit in general.
@@ -88,7 +88,7 @@ an edit in general.
 
     The example below inserts a step into the middle of a deployment plan, without touching the steps that come
     after it, and shows that a view taken before the insert keeps referring to the same element even though its
-    index shifts -- something a plain `json`/`ordered_json` array, or its `std::vector`-based storage, has no
+    index shifts — something a plain `json`/`ordered_json` array, or its `std::vector`-based storage, has no
     equivalent for.
 
     ```cpp

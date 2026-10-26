@@ -25,7 +25,7 @@ Constant.
 ??? example
 
     The example below sums many measurements with `std::accumulate`, using `cbegin()`/[`cend()`](cend.md) as the
-    range -- the same way it would for any standard container -- without ever materializing the whole array into a
+    range — the same way it would for any standard container — without ever materializing the whole array into a
     `BasicJsonType` value.
 
     ```cpp

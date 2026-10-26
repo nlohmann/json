@@ -12,18 +12,61 @@ easier to read and write for object-shaped documents.
 The function [`merge_diff`](../api/basic_json/merge_diff.md) creates a merge patch that changes one JSON value into
 another.
 
-The example below shows every rule in one patch, member by member:
+The example below applies one patch to one document. Here is the document before:
+
+```json
+{
+    "title": "Goodbye!",
+    "author": {
+        "givenName": "John",
+        "familyName": "Doe"
+    },
+    "tags": ["example", "sample"],
+    "content": "This will be unchanged"
+}
+```
+
+This is the patch:
+
+```json
+{
+    "title": "Hello!",
+    "phoneNumber": "+01-123-456-7890",
+    "author": {
+        "familyName": null
+    },
+    "tags": ["example"]
+}
+```
+
+And this is the document after applying it:
+
+```json
+{
+    "title": "Hello!",
+    "author": {
+        "givenName": "John"
+    },
+    "tags": ["example"],
+    "content": "This will be unchanged",
+    "phoneNumber": "+01-123-456-7890"
+}
+```
+
+The table goes through the members one by one. "Member" is the name of an object member in the patch (and in the
+document); it is not a [JSON Pointer](json_pointer.md) and nothing of it is passed to the function: the whole patch is
+passed to [`merge_patch`](../api/basic_json/merge_patch.md).
 
 <div class="nj-pointer-mpt" markdown>
 
-| Rule | Key | Target | Patch | Result |
-|------|-----|--------|-------|--------|
+| Rule | Member | Before | Patch | After |
+|------|--------|--------|-------|-------|
 | <span class="nj-pointer-mp nj-pointer-mp--set">change value</span> | `title` | `#!json "Goodbye!"` | `#!json "Hello!"` | `#!json "Hello!"` |
-| <span class="nj-pointer-mp nj-pointer-mp--add">add key</span> | `phoneNumber` | <span class="nj-pointer-mp-none">(no key)</span> | `#!json "+01-123-456-7890"` | `#!json "+01-123-456-7890"` |
-| <span class="nj-pointer-mp nj-pointer-mp--del">null removes key</span> | `author.familyName` | `#!json "Doe"` | `#!json null` | <span class="nj-pointer-mp-none">(removed)</span> |
+| <span class="nj-pointer-mp nj-pointer-mp--add">add key</span> | `phoneNumber` | <span class="nj-pointer-mp-none">(no member)</span> | `#!json "+01-123-456-7890"` | `#!json "+01-123-456-7890"` |
 | <span class="nj-pointer-mp nj-pointer-mp--rec">object merges recursively</span> | `author` | `#!json {"givenName": "John", "familyName": "Doe"}` | `#!json {"familyName": null}` | `#!json {"givenName": "John"}` |
+| <span class="nj-pointer-mp nj-pointer-mp--del">null removes key</span> | `familyName` inside `author` | `#!json "Doe"` | `#!json null` | <span class="nj-pointer-mp-none">(removed)</span> |
 | <span class="nj-pointer-mp nj-pointer-mp--arr">array replaced whole</span> | `tags` | `#!json ["example", "sample"]` | `#!json ["example"]` | `#!json ["example"]` |
-| <span class="nj-pointer-mp nj-pointer-mp--keep">unchanged key</span> | `content` | `#!json "This will be unchanged"` | <span class="nj-pointer-mp-none">(no key)</span> | `#!json "This will be unchanged"` |
+| <span class="nj-pointer-mp nj-pointer-mp--keep">unchanged key</span> | `content` | `#!json "This will be unchanged"` | <span class="nj-pointer-mp-none">(no member)</span> | `#!json "This will be unchanged"` |
 
 </div>
 

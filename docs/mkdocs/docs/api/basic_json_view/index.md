@@ -36,11 +36,11 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 [`json_pointer`](../json_pointer/index.md). Unlike `basic_json`, there are no implicit conversion operators (no
 `#!cpp operator ValueType()`), and no `#!cpp get_ptr()` or `#!cpp get_ref()`; see [`get`](get.md).
 
-`basic_json_view` itself is always read-only -- it never has a `set` or `push_back` of its own. A view of an
+`basic_json_view` itself is always read-only — it never has a `set` or `push_back` of its own. A view of an
 **editable** document (`#!cpp Editable == true`) sees every edit made through
 [`basic_json_document::set`](../basic_json_document/set.md) and
 [`basic_json_document::push_back`](../basic_json_document/push_back.md): once a value is changed, every view that
-still refers to it -- including ones taken before the change -- reads the new value. See
+still refers to it — including ones taken before the change — reads the new value. See
 [Edits](../basic_json_document/index.md#edits).
 
 ## Template parameters

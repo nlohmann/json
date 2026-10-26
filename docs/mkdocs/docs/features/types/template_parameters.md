@@ -1,7 +1,7 @@
 # Template Parameter Requirements
 
 Class [`basic_json`](../../api/basic_json/index.md) is configurable through eleven template parameters. The library
-never formally states what a type passed for one of these parameters has to provide -- the requirements are implied by
+never formally states what a type passed for one of these parameters has to provide — the requirements are implied by
 the way the library uses the resulting [`object_t`](../../api/basic_json/object_t.md),
 [`array_t`](../../api/basic_json/array_t.md), [`string_t`](../../api/basic_json/string_t.md), etc. This page collects
 these requirements so they do not have to be discovered by trial and error. Each section lists the concrete types
@@ -16,9 +16,9 @@ To change a single template parameter and keep the others, use the member alias 
 
 Requirements are split into two groups:
 
-- **Always required** -- needed to instantiate `basic_json` at all, or needed by functions that virtually every program
+- **Always required** — needed to instantiate `basic_json` at all, or needed by functions that virtually every program
   uses (construction, element access, [`dump`](../../api/basic_json/dump.md)).
-- **Required for ...** -- only needed when a particular part of the API is instantiated. Member function templates are
+- **Required for ...** — only needed when a particular part of the API is instantiated. Member function templates are
   only instantiated when they are used, so a type may be perfectly usable even though it does not satisfy these
   requirements, as long as the corresponding functions are never called.
 
@@ -56,8 +56,8 @@ Requirements are split into two groups:
 
 !!! warning "Third-party containers and incomplete types"
 
-    `object_t` is instantiated inside the definition of `basic_json` -- it is probed for a `key_compare` member to
-    form [`object_comparator_t`](../../api/basic_json/object_comparator_t.md) -- i.e. while `basic_json` is still an
+    `object_t` is instantiated inside the definition of `basic_json` — it is probed for a `key_compare` member to
+    form [`object_comparator_t`](../../api/basic_json/object_comparator_t.md) — i.e. while `basic_json` is still an
     incomplete type. `#!cpp std::map` is required by the standard to support incomplete mapped types; most
     third-party maps are not, and inspecting the mapped type at class scope (for instance with
     `#!cpp std::is_trivially_move_assignable`) makes them unusable as `ObjectType`, no matter how their template
@@ -65,7 +65,7 @@ Requirements are split into two groups:
     `robin_hood::unordered_node_map`, `folly::F14FastMap`, and `eastl::hash_map`.
 
     `array_t` is only *named* in the class definition and is not instantiated until `basic_json` is complete, so an
-    `ArrayType` that inspects its value type at class scope is generally fine -- `boost::container::small_vector` and
+    `ArrayType` that inspects its value type at class scope is generally fine — `boost::container::small_vector` and
     `static_vector` both reject incomplete value types yet work here. `absl::InlinedVector` is the exception: the
     `#!cpp std::is_trivially_move_assignable<basic_json>` it evaluates while instantiating itself re-enters the
     library's own trait machinery mid-instantiation.
@@ -93,7 +93,7 @@ i.e., the template arguments follow the order and meaning of `std::map`.
 
 - The template must be usable with **four** type arguments in the order shown above. The third argument is a
   **comparator**; containers that expect something else in this position (e.g., a hash function) need an alias template
-  or wrapper -- see [Notes](#notes).
+  or wrapper — see [Notes](#notes).
 - An optional member type `key_compare`. If it is present it becomes
   [`object_comparator_t`](../../api/basic_json/object_comparator_t.md); otherwise
   [`default_object_comparator_t`](../../api/basic_json/default_object_comparator_t.md) is used.
@@ -116,7 +116,7 @@ i.e., the template arguments follow the order and meaning of `std::map`.
   semantics; multimaps cannot be used.
 - The type must be swappable (via `std::swap` or an ADL `swap`).
 - The comparison operators `==` and `<`; `!=`, `<=`, `>`, and `>=` are derived from them. Where the library uses
-  three-way comparison (C++20), `==` and `<=>` are required **instead** -- the six two-way operators do not satisfy
+  three-way comparison (C++20), `==` and `<=>` are required **instead** — the six two-way operators do not satisfy
   it. They implement [`basic_json`'s comparison operators](../../api/basic_json/operator_eq.md).
 
 ### Required for heterogeneous key lookup
@@ -200,7 +200,7 @@ object keys are serialized by [`dump`](../../api/basic_json/dump.md) and visited
 With [`JSON_DIAGNOSTICS`](../../api/macros/json_diagnostics.md) enabled, the library detects insertion-ordered maps by
 probing for a `capacity()` member function (`nlohmann::ordered_map` inherits it from `std::vector`) and refreshes all
 parent pointers after every insertion. An `ObjectType` that happens to have a `capacity()` member is therefore treated
-conservatively -- this is correct, but slower.
+conservatively — this is correct, but slower.
 
 #### Key order and duplicate keys
 
@@ -211,7 +211,7 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 
     `docs/mkdocs/docs/examples/custom_object_type.hpp` wraps a private `#!cpp std::map` and satisfies every
     requirement above. It does not define `key_compare`, so `object_comparator_t` falls back to
-    [`default_object_comparator_t`](../../api/basic_json/default_object_comparator_t.md) -- a good starting point for
+    [`default_object_comparator_t`](../../api/basic_json/default_object_comparator_t.md) — a good starting point for
     a custom `ObjectType`.
 
     ```cpp
@@ -305,7 +305,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 !!! tip "Reference implementation"
 
     `docs/mkdocs/docs/examples/custom_array_type.hpp` wraps a private `#!cpp std::vector` and satisfies every
-    requirement above -- a good starting point for a custom `ArrayType`.
+    requirement above — a good starting point for a custom `ArrayType`.
 
     ```cpp
     --8<-- "examples/custom_array_type.hpp"
@@ -385,13 +385,13 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
 ### Required for JSON Pointer, `flatten`, and `diff`
 
-- A static member `npos` and the member function `find_first_of(char, size_type)` -- together with `data()`,
+- A static member `npos` and the member function `find_first_of(char, size_type)` — together with `data()`,
   `reserve(n)`, and `append(const char*, size_type)` they implement the escaping and unescaping of reference tokens
   described in RFC 6901. Neither `find(const StringType&, size_type)`, nor `substr(pos, count)`, nor
   `replace(pos, count, const StringType&)` is required.
 - `empty()`.
-- `resize(n)` (one argument) -- used by `to_string` to size the result before the reference tokens are copied into it.
-- `begin()` and `end()` -- used by
+- `resize(n)` (one argument) — used by `to_string` to size the result before the reference tokens are copied into it.
+- `begin()` and `end()` — used by
   [`operator[](const json_pointer&)`](../../api/basic_json/operator%5B%5D.md) to decide whether a reference token
   denotes an array index.
 
@@ -417,7 +417,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | `#!cpp std::pmr::string`                                        | see the warning below before relying on the memory resource                                                                                                                                                                                   |
 | `boost::container::string`                                      | needs a user-supplied `#!cpp std::hash` specialization (Boost provides `boost::hash` instead)                                                                                                                                                 |
 | `folly::fbstring`                                               | requires C++20, see the note above                                                                                                                                                                                                            |
-| `eastl::string`                                                 | needs a user-supplied `#!cpp std::hash` and an ADL `int_to_string` (it is not assignable from a `#!cpp std::string`); [`parse`](../../api/basic_json/parse.md) does not accept it directly -- pass a character range or a `#!cpp std::string` |
+| `eastl::string`                                                 | needs a user-supplied `#!cpp std::hash` and an ADL `int_to_string` (it is not assignable from a `#!cpp std::string`); [`parse`](../../api/basic_json/parse.md) does not accept it directly — pass a character range or a `#!cpp std::string` |
 | a custom string class in a user-defined namespace               | if the requirements above are met                                                                                                                                                                                                             |
 
 ### Types that cannot be used
@@ -435,13 +435,13 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
     allocation and has to be stateless (see [`AllocatorType`](#allocatortype)), and string values the library creates
     are constructed with their own default allocator. So:
 
-    - Every string the library itself produces -- from [`parse`](../../api/basic_json/parse.md), from
-      [`dump`](../../api/basic_json/dump.md), or by default construction -- allocates from
+    - Every string the library itself produces — from [`parse`](../../api/basic_json/parse.md), from
+      [`dump`](../../api/basic_json/dump.md), or by default construction — allocates from
       `#!cpp std::pmr::get_default_resource()`.
     - **Copying** an arena-backed string into a value silently drops its memory resource: the copy lands on the
       default resource, because `#!cpp std::pmr::polymorphic_allocator` does not propagate on copy construction.
       Nothing warns about this.
-    - **Moving** one in does keep it, and later growth still allocates from that arena -- but it does not survive a
+    - **Moving** one in does keep it, and later growth still allocates from that arena — but it does not survive a
       copy of the enclosing `basic_json`.
     - Passing `#!cpp std::pmr::polymorphic_allocator` as `AllocatorType` does not work around any of this; it does
       not compile.
@@ -452,7 +452,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 !!! tip "Reference implementation"
 
     `docs/mkdocs/docs/examples/custom_string_type.hpp` wraps a private `#!cpp std::string` and satisfies every
-    requirement above -- a good starting point for a custom `StringType`. The unit test
+    requirement above — a good starting point for a custom `StringType`. The unit test
     `tests/src/unit-alt-string.cpp` contains a more thorough variant, `alt_string`, exercised against a larger part
     of the API.
 
@@ -480,8 +480,8 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
 - A literal type that is trivially default-constructible, trivially copyable, and trivially destructible; otherwise the
   union's special member functions are deleted.
-- **Implicitly** convertible from `#!cpp bool` -- an `#!cpp explicit` constructor is not enough, because the
-  `to_json` overload for a custom `BooleanType` is constrained on `#!cpp std::is_convertible` -- and contextually
+- **Implicitly** convertible from `#!cpp bool` — an `#!cpp explicit` constructor is not enough, because the
+  `to_json` overload for a custom `BooleanType` is constrained on `#!cpp std::is_convertible` — and contextually
   convertible to `#!cpp bool` (here an `#!cpp explicit operator bool` is fine).
 - Comparison operators `==`, `!=`, `<`, `<=`, `>`, `>=` (or `<=>`).
 - Convertible from and to `#!cpp bool` through the serializer, because
@@ -492,7 +492,7 @@ There is little reason to use anything other than `#!cpp bool` here.
 ### Compatible types
 
 `#!cpp bool` is the only usable choice. Another trivially copyable type that is implicitly convertible to and from
-`#!cpp bool` -- `#!cpp std::uint8_t`, say -- does compile, and JSON booleans still round-trip, but the type then
+`#!cpp bool` — `#!cpp std::uint8_t`, say — does compile, and JSON booleans still round-trip, but the type then
 serves as both `boolean_t` and an ordinary integer: `basic_json` can no longer be constructed or assigned from a
 `#!cpp std::uint8_t` at all (the boolean and unsigned-integer `to_json` overloads become ambiguous), and
 [`get<std::uint8_t>()`](../../api/basic_json/get.md) on a number throws
@@ -506,7 +506,7 @@ Both types are stored **directly** inside `basic_json`'s union.
 
 - `#!cpp std::is_integral` must be satisfied: `NumberIntegerType` must be a **signed** integer type,
   `NumberUnsignedType` an **unsigned** integer type or the same type as `NumberIntegerType` (see
-  [below](#same-type-for-both)). Class types are not supported -- among others, the constructors taking integer values
+  [below](#same-type-for-both)). Class types are not supported — among others, the constructors taking integer values
   are constrained on `#!cpp std::is_integral`.
 - Trivially default-constructible, trivially copyable, and trivially destructible (union member).
 - `#!cpp std::numeric_limits` must be specialized for both types.
@@ -636,7 +636,7 @@ process deeply nested values without recursion.
 
 ### Always required
 
-- The template must accept **two** type arguments. It does not have to give the second one a default -- `basic_json`
+- The template must accept **two** type arguments. It does not have to give the second one a default — `basic_json`
   declares the parameter as `#!cpp template<typename T, typename SFINAE = void> class JSONSerializer`, so uses such as
   `#!cpp JSONSerializer<T>` inside the library supply `#!cpp void` themselves. The second parameter exists so that
   partial specializations can be constrained by SFINAE.
@@ -669,7 +669,7 @@ using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
 
 ### Always required
 
-- A non-`final` class type -- [`byte_container_with_subtype`](../../api/byte_container_with_subtype/index.md) derives
+- A non-`final` class type — [`byte_container_with_subtype`](../../api/byte_container_with_subtype/index.md) derives
   from it publicly.
 - A member type `value_type` that is **exactly one byte** wide (e.g., `#!cpp std::uint8_t`, `#!cpp char`, or
   `#!cpp std::byte`). Readers and writers reinterpret the container's storage as raw bytes, so a wider `value_type` is
@@ -697,7 +697,7 @@ such a container to a `basic_json` value.
 !!! tip "Reference implementation"
 
     `docs/mkdocs/docs/examples/custom_binary_type.hpp` wraps a private `#!cpp std::vector<std::uint8_t>` and satisfies
-    every requirement above -- a good starting point for a custom `BinaryType`.
+    every requirement above — a good starting point for a custom `BinaryType`.
 
     ```cpp
     --8<-- "examples/custom_binary_type.hpp"
@@ -733,7 +733,7 @@ such a container to a `basic_json` value.
 | `QByteArray`                                         | no `empty()` (it spells that `isEmpty()`); its `insert` takes an index rather than an iterator; and it converts to `string_t`, which makes `to_json` ambiguous between a string and a binary value |
 | `#!cpp std::string`                                  | `binary_t::container_type` and `string_t` would be the same type, so the two [`swap`](../../api/basic_json/swap.md) overloads collide and `basic_json` cannot be instantiated at all               |
 | `#!cpp std::deque<std::uint8_t>`                     | storage is not contiguous, so there is no `data()`                                                                                                                                                 |
-| containers whose `value_type` is wider than one byte | see above -- accepted by the compiler, wrong at runtime                                                                                                                                            |
+| containers whose `value_type` is wider than one byte | see above — accepted by the compiler, wrong at runtime                                                                                                                                            |
 
 ## `CustomBaseClass`
 

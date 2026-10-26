@@ -81,7 +81,7 @@ input >> j2;  // parses the next value
     needed. This is tracked in [#5340](https://github.com/nlohmann/json/issues/5340).
 
 Note that reading concatenated values does **not** work for [JSON Lines](../features/parsing/json_lines.md)
-(newline-delimited JSON) input -- see that page for why and for the recommended alternative.
+(newline-delimited JSON) input — see that page for why and for the recommended alternative.
 
 By default, a `'\0'` (NUL) byte encountered while reading a value is treated as end of input, rather than as an
 ordinary (and, outside of a string, invalid) byte; see the [FAQ entry](../home/faq.md#nul-bytes-in-the-input) for
