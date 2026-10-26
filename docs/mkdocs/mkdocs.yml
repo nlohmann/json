@@ -173,6 +173,7 @@ nav:
           - 'begin': api/basic_json/begin.md
           - 'binary': api/basic_json/binary.md
           - 'binary_t': api/basic_json/binary_t.md
+          - 'bjdata_version_t': api/basic_json/bjdata_version_t.md
           - 'boolean_t': api/basic_json/boolean_t.md
           - 'cbegin': api/basic_json/cbegin.md
           - 'cbor_tag_handler_t': api/basic_json/cbor_tag_handler_t.md

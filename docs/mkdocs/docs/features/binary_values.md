@@ -132,8 +132,11 @@ is an integer or `null`.
 
 ### BJData
 
-[BJData](binary_formats/bjdata.md) neither supports binary values nor subtypes and proposes to serialize binary values
-as an array of uint8 values. The library implements this translation.
+[BJData](binary_formats/bjdata.md) Draft 3 supports binary values as optimized arrays of `B` (byte) elements, but no
+subtypes. With `version = bjdata_version_t::draft3` and both `use_size` and `use_type` set, `to_bjdata` writes a binary
+value as `[$B#...`, and `from_bjdata` reads it back as a binary value (without subtype). In all other cases, including
+the default Draft 2 mode, the library follows the Draft 2 proposal and writes an array of integers (`U` in Draft 2, `B`
+in Draft 3), which is read back as an array.
 
 ??? example "Example: serialize a binary value to BJData"
 
@@ -171,7 +174,7 @@ as an array of uint8 values. The library implements this translation.
 
     ```c
     0x7B                                // '{'
-        0x23 0x69 0x01                  // '#' 'i' type of the array elements: unsigned integers
+        0x23 0x69 0x01                  // '#' 'i' 1 number of object members
         0x69 0x06                       // i 6 (length of the key)
         0x62 0x69 0x6E 0x61 0x72 0x79   // "binary"
         0x5B                            // '[' array
@@ -180,7 +183,7 @@ as an array of uint8 values. The library implements this translation.
             0xCA 0xFE 0xBA 0xBE         // content
     ```
 
-    Note that subtype (42) is **not** serialized and that BJData has **no binary type**, and deserializing `v` would
+    Note that subtype (42) is **not** serialized and that, in Draft 2 mode, BJData has **no binary type**, and deserializing `v` would
     yield the following value:
 
     ```json

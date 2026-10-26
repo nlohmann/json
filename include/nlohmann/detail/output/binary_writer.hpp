@@ -3848,7 +3848,7 @@ class binary_writer
     A C++11 `constexpr` function cannot contain a `switch`, so this is a plain
     comparison chain instead; it is only reached once per ND-array candidate
     object. Keep in sync with binary_reader's `bjd_type_name()`, which maps
-    the other way.
+    the other way (it also reads "half", which is never written).
     */
     static CharType bjdata_ndarray_type_marker(const string_t& name)
     {
@@ -4056,9 +4056,12 @@ class binary_writer
             switch (dtype)
             {
                 case 'U':
-                case 'C':
                 case 'B':
                     ok = write_bjdata_ndarray_element<std::uint8_t>(el, dry_run);
+                    break;
+                case 'C':
+                    // BJData limits a char to 0..127 (the intersection of the int8 and uint8 ranges)
+                    ok = bjdata_ndarray_value_in_range<std::int8_t>(el) && bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'i':
                     ok = write_bjdata_ndarray_element<std::int8_t>(el, dry_run);
