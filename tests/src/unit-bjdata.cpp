@@ -4637,7 +4637,7 @@ TEST_CASE("BJData optimized container type marker is validated for count 0")
                     {'[', '{'
                     })
             {
-                for (const std::uint8_t count :
+                for (const int count :
                         {
                             0, 1
                         })
@@ -4645,7 +4645,7 @@ TEST_CASE("BJData optimized container type marker is validated for count 0")
                     CAPTURE(marker)
                     CAPTURE(open)
                     CAPTURE(count)
-                    const std::vector<std::uint8_t> v = {static_cast<std::uint8_t>(open), '$', static_cast<std::uint8_t>(marker), '#', 'i', count};
+                    const std::vector<std::uint8_t> v = {static_cast<std::uint8_t>(open), '$', static_cast<std::uint8_t>(marker), '#', 'i', static_cast<std::uint8_t>(count)};
                     json _;
                     CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
                     CHECK(json::from_bjdata(v, true, false).is_discarded());
