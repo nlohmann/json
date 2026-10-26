@@ -423,3 +423,86 @@ TEST_CASE("merge_patch() with an argument that aliases *this (#5641)")
         }
     }
 }
+
+TEST_CASE("JSON Merge Patch on non-object, discarded, and binary values")
+{
+    SECTION("an empty object patch turns a non-object target into an empty object")
+    {
+        json target = 1;
+        target.merge_patch(json::object());
+        CHECK(target == json::object());
+
+        json from_null;
+        from_null.merge_patch(json::object());
+        CHECK(from_null == json::object());
+    }
+
+    SECTION("a non-object patch replaces a deeply nested target")
+    {
+        // checked by type, since == recurses
+        SECTION("number")
+        {
+            json target = json::parse(nested_objects(1000, 0));
+            target.merge_patch(json(42));
+            CHECK(target.is_number_integer());
+            CHECK(target.get<int>() == 42);
+        }
+
+        SECTION("array")
+        {
+            json target = json::parse(nested_objects(1000, 0));
+            target.merge_patch(json({1, nullptr}));
+            CHECK(target.is_array());
+            CHECK(target.size() == 2);
+            CHECK(target[1].is_null());
+        }
+
+        SECTION("null")
+        {
+            json target = json::parse(nested_objects(1000, 0));
+            target.merge_patch(json(nullptr));
+            CHECK(target.is_null());
+        }
+    }
+
+    SECTION("discarded values")
+    {
+        const json discarded(json::value_t::discarded);
+
+        // a discarded patch is not an object and replaces the target
+        json target = {{"a", 1}};
+        target.merge_patch(discarded);
+        CHECK(target.is_discarded());
+
+        // a discarded target is replaced by an empty object first
+        json discarded_target(json::value_t::discarded);
+        discarded_target.merge_patch(json({{"a", 1}}));
+        CHECK(discarded_target == json({{"a", 1}}));
+
+        json both(json::value_t::discarded);
+        both.merge_patch(discarded);
+        CHECK(both.is_discarded());
+    }
+
+    SECTION("binary values")
+    {
+        const json bin = json::binary({1, 2, 3}, 7);
+
+        // a binary patch is not an object and replaces the target
+        json target = {{"a", 1}};
+        target.merge_patch(bin);
+        CHECK(target.is_binary());
+        CHECK(target.get_binary() == bin.get_binary());
+
+        // a binary target is replaced by an object
+        json binary_target = bin;
+        binary_target.merge_patch(json({{"a", 1}}));
+        CHECK(binary_target == json({{"a", 1}}));
+
+        // binary values nested in the patch are kept
+        json nested = json::object();
+        nested.merge_patch(json({{"a", bin}}));
+        CHECK(nested["a"].is_binary());
+        CHECK(nested["a"].get_binary() == bin.get_binary());
+    }
+}
