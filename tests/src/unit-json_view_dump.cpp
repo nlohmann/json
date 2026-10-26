@@ -179,7 +179,24 @@ TEST_CASE("json_view dump")
                 digits.back() = static_cast<char>('0' + draw(10));
                 const std::size_t point = 1 + draw(9);
                 const std::string token = (draw(2) == 0 ? "-" : "") + digits.substr(0, point) + "." + digits.substr(point);
-                coordinates += (i != 0 ? "," : "") + (draw(8) == 0 ? "{\"x\":" + token + ",\"s\":\"a\"}" : "[" + token + "," + token + "]");
+                if (i != 0)
+                {
+                    coordinates += ',';
+                }
+                if (draw(8) == 0)
+                {
+                    coordinates += R"({"x":)";
+                    coordinates += token;
+                    coordinates += R"(,"s":"a"})";
+                }
+                else
+                {
+                    coordinates += '[';
+                    coordinates += token;
+                    coordinates += ',';
+                    coordinates += token;
+                    coordinates += ']';
+                }
             }
             coordinates += ",-65.613616999999977]";
             const json_document parsed = json_document::parse(coordinates);
@@ -194,7 +211,7 @@ TEST_CASE("json_view dump")
             {
                 const ordered_json& e = j[i++];
                 CHECK(v.dump() == e.dump());
-                if (v.is_array() && v.size() != 0 && v[0].is_number())
+                if (v.is_array() && !v.empty() && v[0].is_number())
                 {
                     CHECK(v[0].get<double>() == e[0].get<double>());
                 }

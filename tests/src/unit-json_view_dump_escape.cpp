@@ -17,10 +17,6 @@ using nlohmann::json_view;
 using nlohmann::ordered_json_document;
 using nlohmann::ordered_json_view;
 
-#include "json_view_test_helpers.hpp"
-using json_view_test::generator;
-using json_view_test::has_duplicate_keys;
-
 #include <algorithm>
 #include <array>
 #include <cmath>
