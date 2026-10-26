@@ -1083,8 +1083,13 @@ a JSON pointer exceeds the range of `size_type` (e.g., on 32-bit platforms).
 
     ```
     enum value out of range
-    array index 18446744073709551616 exceeds size_type
+    array index 18446744073709551615 exceeds size_type
     ```
+
+    The second message is thrown, for instance, by `#!cpp json::parse("[1, 2]").at("/18446744073709551615"_json_pointer)`
+    on a 64-bit platform, where `size_type` is `#!cpp std::size_t` and this index is `SIZE_MAX`. An index that does not
+    fit into 64 bits (such as `18446744073709551616`) is not reported as 410 but as
+    [`out_of_range.404`](#jsonexceptionout_of_range404).
 
 ### json.exception.out_of_range.411
 
@@ -1099,6 +1104,8 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 !!! note
 
     This exception was added in version 3.13.0. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
+
+    A `null` parent is rejected as well. Before version 3.13.0, an `add` into a `null` parent silently converted it to an object (e.g., `add` at `/foo/bar` turned `{"foo":null}` into `{"foo":{"bar":1}}`).
 
 ### json.exception.out_of_range.412
 

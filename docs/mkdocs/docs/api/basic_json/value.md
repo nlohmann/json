@@ -45,6 +45,9 @@ This is equivalent to Python's `dict.get(key, default)`.
        return default_value;
     }
     ```
+    with one exception: if the JSON value is neither an array nor an object, the function throws
+    [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) before looking at `ptr`, even for the empty
+    pointer, whereas `at` returns the value itself for the empty pointer.
 
 !!! note "Differences to `at` and `operator[]`"
 

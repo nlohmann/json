@@ -24569,15 +24569,19 @@ class json_pointer
             // convert null values to arrays or objects before continuing
             if (ptr->is_null())
             {
-                // check if the reference token is a number
-                const bool nums =
-                    std::all_of(reference_token.begin(), reference_token.end(),
-                                [](const unsigned char x)
+                // check if the reference token is a valid array index, that is
+                // a nonempty sequence of digits without a leading '0'
+                // (cf. RFC 6901, Sect. 4); tokens that could never be a valid
+                // array index (such as "01" or "") are treated as object keys
+                const bool nums = !reference_token.empty()
+                                  && (reference_token.size() == 1 || reference_token[0] != '0')
+                                  && std::all_of(reference_token.begin(), reference_token.end(),
+                                                 [](const unsigned char x)
                 {
                     return std::isdigit(x);
                 });
 
-                // change value to an array for numbers or "-" or to object otherwise
+                // change value to an array for array indices or "-" or to object otherwise
                 *ptr = (nums || reference_token == "-")
                        ? detail::value_t::array
                        : detail::value_t::object;
@@ -42793,7 +42797,6 @@ public:
 
             switch (parent.m_data.m_type)
             {
-                case value_t::null:
                 case value_t::object:
                 {
                     // use operator[] to add value
@@ -42825,6 +42828,7 @@ public:
 
                 // the parent of an "add" target must be an object or array
                 // (see #4292)
+                case value_t::null:
                 case value_t::string:
                 case value_t::boolean:
                 case value_t::number_integer:

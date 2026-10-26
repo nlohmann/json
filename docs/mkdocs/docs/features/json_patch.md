@@ -31,6 +31,12 @@ other three continue on its result.
     If the document is large and the original value is no longer needed,
     [`patch_inplace`](../api/basic_json/patch_inplace.md) applies the same operations in place instead.
 
+!!! note "Duplicate member names"
+
+    Duplicate member names inside an operation object are resolved by the parser before the patch is applied (the last
+    one is kept, see [`object_t`](../api/basic_json/object_t.md#behavior)), so
+    `#!json {"op": "add", "op": "remove", "path": "/a"}` is a `remove` operation.
+
 ??? example "Example: apply a JSON Patch"
 
     The following code shows how a JSON patch is applied to a value.
@@ -61,11 +67,22 @@ flowchart LR
 
 !!! success "Invariant"
 
-    For two JSON values *source* and *target*, the following code yields always true:
+    For two JSON values *source* and *target*, the following code yields true:
 
     ```cpp
     source.patch(diff(source, target)) == target;
     ```
+
+    The equality holds up to [`operator==`](../api/basic_json/operator_eq.md), with these exceptions:
+
+    - `NaN` and [discarded](../api/basic_json/is_discarded.md) values are not equal to themselves, so the invariant
+      cannot hold for them. `diff` emits a `replace` operation for such a value, and a `NaN` in a patch is serialized
+      as `#!json null`.
+    - Numbers that compare equal produce no operation even if their types differ: `diff(1, 1.0)`, `diff(1u, 1)`, and
+      `diff(0.0, -0.0)` return `#!json []`, so the patched value keeps the number type of *source*.
+    - A [binary value](binary_values.md) in a patch is serialized as an object
+      (`#!json {"bytes":[...],"subtype":null}`), so a patch that was dumped and parsed again no longer holds a binary
+      value.
 
 ??? example "Example: create a JSON Patch from the difference of two values"
 

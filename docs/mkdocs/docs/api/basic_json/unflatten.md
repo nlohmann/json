@@ -36,9 +36,9 @@ The function can throw the following exceptions:
 - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in a key is not a
   number; example: `"array index 'one' is not a number"`
 - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if a level becomes an array
-  (because one of its keys is `0`) and another key at that level begins with a digit but is not a valid array index
-  (such as `1a`), or is `-`; example:
-  `"unresolved reference token '-'"`
+  (because one of its keys is `0`) and another key at that level is empty (as in `/a/`), is `-`, or begins with a digit
+  but is not a valid array index (such as `1a`); examples: `"unresolved reference token '-'"`,
+  `"unresolved reference token ''"`
 
 ## Complexity
 
@@ -46,7 +46,7 @@ Linear in the size of the JSON value.
 
 ## Notes
 
-Empty objects and arrays are flattened by [`flatten()`](flatten.md) to `#!json null` values and cannot unflattened to
+Empty objects and arrays are flattened by [`flatten()`](flatten.md) to `#!json null` values and cannot be unflattened to
 their original type.
 
 A flattened array and a flattened object whose keys are array indices are indistinguishable, because both are
@@ -54,7 +54,12 @@ described by the same JSON pointers. A value is therefore restored as an array i
 reference token `0`, and as an object otherwise: `#!json {"2": 1}` is restored unchanged, whereas `#!json {"0": 1}` is
 restored as `#!json [1]`. This decision does not depend on the order in which the flattened object is iterated.
 
-Apart from these two cases, for a JSON value `j`, the following is always true:
+A third case is an object that has the key `0` next to a key that is not a valid array index: `#!json {"0": 1, "b": 2}`
+is flattened to `#!json {"/0": 1, "/b": 2}`, and unflatten treats the level as an array and throws
+[`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) because `b` is not a number. (For the keys
+`-`, `1a`, or the empty key instead of `b`, it throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404).)
+
+Apart from these three cases, for a JSON value `j`, the following is always true:
 `#!cpp j == j.flatten().unflatten()`.
 
 ## Examples

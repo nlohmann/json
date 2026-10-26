@@ -390,6 +390,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
   described in RFC 6901. Neither `find(const StringType&, size_type)`, nor `substr(pos, count)`, nor
   `replace(pos, count, const StringType&)` is required.
 - `empty()`.
+- `resize(n)` (one argument) -- used by `to_string` to size the result before the reference tokens are copied into it.
 - `begin()` and `end()` -- used by
   [`operator[](const json_pointer&)`](../../api/basic_json/operator%5B%5D.md) to decide whether a reference token
   denotes an array index.

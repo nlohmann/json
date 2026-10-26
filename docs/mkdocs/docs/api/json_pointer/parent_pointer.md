@@ -12,7 +12,8 @@ Parent of this JSON pointer; in case this JSON pointer is the root, the root its
 
 ## Exception safety
 
-No-throw guarantee: this function never throws exceptions.
+Strong exception safety: if an exception occurs, the original value stays intact. The function is not `#!cpp noexcept`
+and allocates a new JSON pointer, so it can throw `#!cpp std::bad_alloc`; it throws no library exceptions.
 
 ## Complexity
 
