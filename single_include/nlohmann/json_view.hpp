@@ -251,7 +251,8 @@ enum class node_kind : std::uint8_t
     number_unsigned = static_cast<std::uint8_t>(value_t::number_unsigned),
     number_float = static_cast<std::uint8_t>(value_t::number_float),
     /// an entry of an edited sequence that stands for a value stored elsewhere
-    /// (the address of the value's node is kept in the len/next bytes)
+    /// (the address of the value's node is kept in the len/next bytes); placed
+    /// after value_t::discarded, which no node ever has
     link = static_cast<std::uint8_t>(value_t::discarded) + 1,
 };
 
@@ -261,7 +262,7 @@ enum class node_kind : std::uint8_t
 /// always the next one, and the token length follows from `extra`).
 struct node
 {
-    node_kind kind;      ///< value_t, or link
+    node_kind kind;      ///< the kind of the value, or link
     std::uint8_t flags;  ///< node_flags
     std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the object's key hash index (1-based, 0 = none); otherwise 0
     std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
@@ -270,14 +271,13 @@ struct node
 };
 static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 
-// the node kinds are value_t values, and images store them as bytes; the test
-// below (object and array are 1 and 2) and those of the number kinds depend
-// on this numbering
-static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::uint8_t>(value_t::object) == 1
-              && static_cast<std::uint8_t>(value_t::array) == 2 && static_cast<std::uint8_t>(value_t::string) == 3
-              && static_cast<std::uint8_t>(value_t::boolean) == 4 && static_cast<std::uint8_t>(value_t::number_integer) == 5
-              && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
-              "the node format depends on the numbering of value_t");
+// images store the node kinds as bytes, and the test below (object and array
+// are 1 and 2) and those of the number kinds depend on this numbering
+static_assert(static_cast<std::uint8_t>(node_kind::null) == 0 && static_cast<std::uint8_t>(node_kind::object) == 1
+              && static_cast<std::uint8_t>(node_kind::array) == 2 && static_cast<std::uint8_t>(node_kind::string) == 3
+              && static_cast<std::uint8_t>(node_kind::boolean) == 4 && static_cast<std::uint8_t>(node_kind::number_integer) == 5
+              && static_cast<std::uint8_t>(node_kind::number_unsigned) == 6 && static_cast<std::uint8_t>(node_kind::number_float) == 7,
+              "the node format depends on the numbering of node_kind");
 
 NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 {
@@ -1843,11 +1843,11 @@ run_found:
             switch (cur())
             {
                 case '{':
-                    open(value_t::object);
+                    open(node_kind::object);
                     ++p;
                     goto obj_first;
                 case '[':
-                    open(value_t::array);
+                    open(node_kind::array);
                     ++p;
                     goto arr_first;
                 default:
@@ -1869,11 +1869,11 @@ run_found:
             if (NLOHMANN_VIEW_UNLIKELY(!string<true>())) { return false; }      \
             break;                                                              \
         case '{':                                                               \
-            open(value_t::object);                                              \
+            open(node_kind::object);                                              \
             ++p;                                                                \
             goto obj_first;                                                     \
         case '[':                                                               \
-            open(value_t::array);                                               \
+            open(node_kind::array);                                               \
             ++p;                                                                \
             goto arr_first;                                                     \
         case '-':                                                               \
@@ -2090,17 +2090,17 @@ root_done:
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_true()
         {
-            return literal("true", value_t::boolean, node_flags::is_true);
+            return literal("true", node_kind::boolean, node_flags::is_true);
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_false()
         {
-            return literal("false", value_t::boolean, 0);
+            return literal("false", node_kind::boolean, 0);
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_null()
         {
-            return literal("null", value_t::null, 0);
+            return literal("null", node_kind::null, 0);
         }
 
         /// skip whitespace (and comments); false on a malformed comment
@@ -2166,7 +2166,7 @@ indent_done:
 
         /// append a node: (kind, flags, extra, off) and the second word (len, or
         /// an integer's value); two stores on little-endian targets
-        NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(value_t k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
+        NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(node_kind k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
         {
             if (NLOHMANN_VIEW_UNLIKELY(out == cap))
             {
@@ -2182,7 +2182,7 @@ indent_done:
             std::memcpy(reinterpret_cast<unsigned char*>(n), &first, 8);
             std::memcpy(reinterpret_cast<unsigned char*>(n) + 8, &second, 8);
 #else
-            n->kind = static_cast<node_kind>(k);
+            n->kind = k;
             n->flags = flags;
             n->extra = extra;
             n->off = static_cast<std::uint32_t>(off);
@@ -2194,7 +2194,7 @@ indent_done:
             return n;
         }
 
-        NLOHMANN_VIEW_ALWAYS_INLINE void open(value_t k)
+        NLOHMANN_VIEW_ALWAYS_INLINE void open(node_kind k)
         {
             // (base is read after push_node(), which moves the node array when it
             // grows; in one expression the order of the two is unspecified)
@@ -2221,7 +2221,7 @@ indent_done:
             max_depth = (std::max)(max_depth, depth);
             cur_idx = idx;
             cur_count = 0;
-            cur_is_object = k == value_t::object;
+            cur_is_object = k == node_kind::object;
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE void close()
@@ -2251,7 +2251,7 @@ indent_done:
 
         /// the literal `text` at p (N counts the terminating NUL)
         template<std::size_t N>
-        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], value_t k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], node_kind k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
         {
             const std::size_t n = N - 1;
             if (NLOHMANN_VIEW_UNLIKELY(e - p < static_cast<std::ptrdiff_t>(n) || std::memcmp(p, text, n) != 0))
@@ -2330,23 +2330,23 @@ indent_done:
                 is_float = true;
             }
 
-            value_t kind = value_t::number_float;
+            node_kind kind = node_kind::number_float;
             if (!is_float)
             {
                 // integers that do not fit become floats, as in parse()
                 if (negative)
                 {
-                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? value_t::number_float : value_t::number_integer;
+                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? node_kind::number_float : node_kind::number_integer;
                 }
                 else
                 {
-                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? value_t::number_float : value_t::number_unsigned;
+                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? node_kind::number_float : node_kind::number_unsigned;
                 }
             }
             // parse() rejects floats that overflow; only numbers whose magnitude
             // could reach the largest FloatType (1e308 for double, 1e38 for
             // float) need the conversion
-            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::int64_t>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == value_t::number_float))
+            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::int64_t>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == node_kind::number_float))
             {
                 if (builder::float_overflows(s, p))
                 {
@@ -2356,7 +2356,7 @@ indent_done:
             }
             const auto layout = static_cast<std::uint16_t>((int_digits < 255 ? int_digits : 255) | ((frac_digits < 255 ? frac_digits : 255) << 8));
             auto second = static_cast<std::uint64_t>(p - s);
-            if (kind != value_t::number_float)
+            if (kind != node_kind::number_float)
             {
                 // integers are converted now, while their digits are in cache
                 const std::uint64_t m = int_digits <= 19 ? parse_upto19(int_start, static_cast<unsigned>(int_digits), e)
@@ -2379,7 +2379,7 @@ indent_done:
             p = scan_string_run<Value>(p, e);
             if (NLOHMANN_VIEW_LIKELY(cur() == '"'))
             {
-                push_node(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
+                push_node(node_kind::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
                 ++p;
                 return true;
             }
@@ -2389,7 +2389,7 @@ indent_done:
                 return false;
             }
             p = r.p;
-            push_node(value_t::string, node_flags::escaped, 0, r.start, r.len);
+            push_node(node_kind::string, node_flags::escaped, 0, r.start, r.len);
             return true;
         }
     };
@@ -3855,7 +3855,7 @@ class editor
         const encoded e = encode(std::forward<V>(value));
         if (o->kind == node_kind::null)
         {
-            become_empty(o, value_t::object);
+            become_empty(o, node_kind::object);
         }
         // an existing member: assign it (and drop later duplicates, so that
         // lookups, iteration, and materialize() agree)
@@ -3922,7 +3922,7 @@ class editor
         const encoded e = encode(std::forward<V>(value));
         if (a->kind == node_kind::null)
         {
-            become_empty(a, value_t::array);
+            become_empty(a, node_kind::array);
         }
         node* const slot = new_slot(e);
         node* const h = block_of(m_doc, a, 1);
@@ -4051,11 +4051,11 @@ class editor
     }
 
     /// turn a null into an empty array/object in place
-    static void become_empty(node* n, value_t k) noexcept
+    static void become_empty(node* n, node_kind k) noexcept
     {
         const std::uint8_t linked = n->flags & node_flags::linked;
         *n = node{};
-        n->kind = static_cast<node_kind>(k);
+        n->kind = k;
         n->flags = static_cast<std::uint8_t>(node_flags::is_new | linked);
         n->next = 1;
     }
@@ -4184,14 +4184,14 @@ class editor
     encoded encode_impl(std::nullptr_t /*unused*/, encode_tag<2> /*null*/)
     {
         encoded r;
-        r.scalar = plain_node(value_t::null);
+        r.scalar = plain_node(node_kind::null);
         return r;
     }
 
     encoded encode_impl(bool b, encode_tag<3> /*boolean*/)
     {
         encoded r;
-        r.scalar = plain_node(value_t::boolean);
+        r.scalar = plain_node(node_kind::boolean);
         r.scalar.flags = static_cast<std::uint8_t>(r.scalar.flags | (b ? node_flags::is_true : 0));
         return r;
     }
@@ -4220,10 +4220,10 @@ class editor
         return encode_impl(BasicJsonType(std::forward<T>(x)), encode_tag<1> {});
     }
 
-    static node plain_node(value_t k) noexcept
+    static node plain_node(node_kind k) noexcept
     {
         node n{};
-        n.kind = static_cast<node_kind>(k);
+        n.kind = k;
         n.flags = node_flags::is_new;
         return n;
     }
@@ -4237,19 +4237,19 @@ class editor
     template<typename T>
     node number_node(T x, std::integral_constant<int, 1> /*signed*/)
     {
-        return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(x)), value_t::number_integer);
+        return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(x)), node_kind::number_integer);
     }
 
     template<typename T>
     node number_node(T x, std::integral_constant<int, 2> /*unsigned*/)
     {
-        return integer_node(static_cast<std::uint64_t>(x), value_t::number_unsigned);
+        return integer_node(static_cast<std::uint64_t>(x), node_kind::number_unsigned);
     }
 
     /// an integer with its canonical token in the edit arena
-    node integer_node(std::uint64_t bits, value_t k)
+    node integer_node(std::uint64_t bits, node_kind k)
     {
-        const bool negative = k == value_t::number_integer && static_cast<std::int64_t>(bits) < 0;
+        const bool negative = k == node_kind::number_integer && static_cast<std::int64_t>(bits) < 0;
         std::uint64_t magnitude = negative ? 0 - bits : bits;
         std::array<char, 24> buf{};
         char* p = buf.data() + buf.size(); // NOLINT(misc-const-correctness): digits are written through p
@@ -4268,7 +4268,7 @@ class editor
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
         n.off = append_text(m_doc, p, len);
         // number_length() adds one for the sign of number_integer nodes
-        n.extra = static_cast<std::uint16_t>(k == value_t::number_integer ? len - 1 : len);
+        n.extra = static_cast<std::uint16_t>(k == node_kind::number_integer ? len - 1 : len);
         set_integer_bits(n, bits);
         return n;
     }
@@ -4290,7 +4290,7 @@ class editor
         {
             text = BasicJsonType(x).dump();
         }
-        node n = plain_node(value_t::number_float);
+        node n = plain_node(node_kind::number_float);
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
         n.extra = 0xFFFFu; // (the digit layout is not recorded)
         n.off = append_text(m_doc, text.data(), text.size());
@@ -4305,7 +4305,7 @@ class editor
         {
             throw_out_of_range(exception_id::document_too_large, "strings of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE
         }
-        node n = plain_node(value_t::string);
+        node n = plain_node(node_kind::string);
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
         n.off = append_text(m_doc, s, len);
         n.len = static_cast<std::uint32_t>(len);
@@ -4327,10 +4327,10 @@ class editor
                 return string_node(from.str(n), n.len);
             case value_t::number_integer:
             case value_t::number_unsigned:
-                return integer_node(integer_bits(n), static_cast<value_t>(n.kind));
+                return integer_node(integer_bits(n), n.kind);
             case value_t::number_float:
             {
-                node r = plain_node(value_t::number_float);
+                node r = plain_node(node_kind::number_float);
                 r.flags = static_cast<std::uint8_t>(r.flags | node_flags::edited);
                 r.off = append_text(m_doc, from.str(n), n.len);
                 r.len = n.len;
@@ -4339,7 +4339,7 @@ class editor
             }
             case value_t::boolean:
             {
-                node r = plain_node(value_t::boolean);
+                node r = plain_node(node_kind::boolean);
                 r.flags = static_cast<std::uint8_t>(r.flags | (n.flags & node_flags::is_true));
                 return r;
             }
@@ -4349,7 +4349,7 @@ class editor
             case value_t::binary:
             case value_t::discarded:
             default:
-                return plain_node(value_t::null);
+                return plain_node(node_kind::null);
         }
     }
 
@@ -4358,17 +4358,17 @@ class editor
         switch (j.type())
         {
             case value_t::null:
-                return plain_node(value_t::null);
+                return plain_node(node_kind::null);
             case value_t::boolean:
             {
-                node r = plain_node(value_t::boolean);
+                node r = plain_node(node_kind::boolean);
                 r.flags = static_cast<std::uint8_t>(r.flags | (j.template get<bool>() ? node_flags::is_true : 0));
                 return r;
             }
             case value_t::number_integer:
-                return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(j.template get<number_integer_t>())), value_t::number_integer);
+                return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(j.template get<number_integer_t>())), node_kind::number_integer);
             case value_t::number_unsigned:
-                return integer_node(static_cast<std::uint64_t>(j.template get<number_unsigned_t>()), value_t::number_unsigned);
+                return integer_node(static_cast<std::uint64_t>(j.template get<number_unsigned_t>()), node_kind::number_unsigned);
             case value_t::number_float:
                 return float_node(j.template get<number_float_t>());
             case value_t::string:
@@ -4455,7 +4455,7 @@ class editor
             if (is_container(*n))
             {
                 node* const self = out++;
-                *self = plain_node(static_cast<value_t>(n->kind));
+                *self = plain_node(n->kind);
                 self->len = n->len;
                 open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == node_kind::object, self});
             }
@@ -4546,7 +4546,7 @@ class editor
             if (n->is_structured())
             {
                 node* const self = out++;
-                *self = plain_node(n->type());
+                *self = plain_node(static_cast<node_kind>(n->type()));
                 self->len = static_cast<std::uint32_t>(n->size());
                 open.push_back(frame{n->cbegin(), n->cend(), n->is_object(), self});
             }
@@ -9370,13 +9370,13 @@ class basic_json_document
 };
 
 /// a parsed JSON text for json
-using json_document = basic_json_document<json>;
+using json_document = basic_json_document<json, view_mode::read_only>;
 /// a value of a json_document
-using json_view = basic_json_view<json>;
+using json_view = basic_json_view<json, view_mode::read_only>;
 /// a parsed JSON text for ordered_json
-using ordered_json_document = basic_json_document<ordered_json>;
+using ordered_json_document = basic_json_document<ordered_json, view_mode::read_only>;
 /// a value of an ordered_json_document
-using ordered_json_view = basic_json_view<ordered_json>;
+using ordered_json_view = basic_json_view<ordered_json, view_mode::read_only>;
 /// an editable parsed JSON text for json
 using json_editable_document = basic_json_document<json, view_mode::editable>;
 /// a value of a json_editable_document

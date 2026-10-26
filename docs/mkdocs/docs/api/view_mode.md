@@ -30,7 +30,7 @@ The shortcuts name both modes: [`json_document`](json_document.md) and [`json_vi
 
 ## Notes
 
-The mode is part of the view's type, and there is no conversion between the two modes: a read-only view reads a
+The mode is a compile-time property of the document's and the view's type, not a setting of a call, and there is no conversion between the two modes: a read-only view reads a
 container in place, while a view of an editable document follows the links that edits leave behind. A function that
 accepts views therefore names the modes it accepts in its signature:
 

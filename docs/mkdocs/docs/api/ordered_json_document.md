@@ -3,7 +3,7 @@
 <small>Defined in header `<nlohmann/json_view.hpp>`</small>
 
 ```cpp
-using ordered_json_document = basic_json_document<ordered_json>;
+using ordered_json_document = basic_json_document<ordered_json, view_mode::read_only>;
 ```
 
 This type is a [`basic_json_document`](basic_json_document/index.md) of the [`ordered_json`](ordered_json.md)

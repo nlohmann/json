@@ -53,7 +53,8 @@ enum class node_kind : std::uint8_t
     number_unsigned = static_cast<std::uint8_t>(value_t::number_unsigned),
     number_float = static_cast<std::uint8_t>(value_t::number_float),
     /// an entry of an edited sequence that stands for a value stored elsewhere
-    /// (the address of the value's node is kept in the len/next bytes)
+    /// (the address of the value's node is kept in the len/next bytes); placed
+    /// after value_t::discarded, which no node ever has
     link = static_cast<std::uint8_t>(value_t::discarded) + 1,
 };
 
@@ -63,7 +64,7 @@ enum class node_kind : std::uint8_t
 /// always the next one, and the token length follows from `extra`).
 struct node
 {
-    node_kind kind;      ///< value_t, or link
+    node_kind kind;      ///< the kind of the value, or link
     std::uint8_t flags;  ///< node_flags
     std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the object's key hash index (1-based, 0 = none); otherwise 0
     std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
@@ -72,14 +73,13 @@ struct node
 };
 static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 
-// the node kinds are value_t values, and images store them as bytes; the test
-// below (object and array are 1 and 2) and those of the number kinds depend
-// on this numbering
-static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::uint8_t>(value_t::object) == 1
-              && static_cast<std::uint8_t>(value_t::array) == 2 && static_cast<std::uint8_t>(value_t::string) == 3
-              && static_cast<std::uint8_t>(value_t::boolean) == 4 && static_cast<std::uint8_t>(value_t::number_integer) == 5
-              && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
-              "the node format depends on the numbering of value_t");
+// images store the node kinds as bytes, and the test below (object and array
+// are 1 and 2) and those of the number kinds depend on this numbering
+static_assert(static_cast<std::uint8_t>(node_kind::null) == 0 && static_cast<std::uint8_t>(node_kind::object) == 1
+              && static_cast<std::uint8_t>(node_kind::array) == 2 && static_cast<std::uint8_t>(node_kind::string) == 3
+              && static_cast<std::uint8_t>(node_kind::boolean) == 4 && static_cast<std::uint8_t>(node_kind::number_integer) == 5
+              && static_cast<std::uint8_t>(node_kind::number_unsigned) == 6 && static_cast<std::uint8_t>(node_kind::number_float) == 7,
+              "the node format depends on the numbering of node_kind");
 
 NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 {

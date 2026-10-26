@@ -1641,13 +1641,13 @@ class basic_json_document
 };
 
 /// a parsed JSON text for json
-using json_document = basic_json_document<json>;
+using json_document = basic_json_document<json, view_mode::read_only>;
 /// a value of a json_document
-using json_view = basic_json_view<json>;
+using json_view = basic_json_view<json, view_mode::read_only>;
 /// a parsed JSON text for ordered_json
-using ordered_json_document = basic_json_document<ordered_json>;
+using ordered_json_document = basic_json_document<ordered_json, view_mode::read_only>;
 /// a value of an ordered_json_document
-using ordered_json_view = basic_json_view<ordered_json>;
+using ordered_json_view = basic_json_view<ordered_json, view_mode::read_only>;
 /// an editable parsed JSON text for json
 using json_editable_document = basic_json_document<json, view_mode::editable>;
 /// a value of a json_editable_document
