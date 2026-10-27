@@ -2301,8 +2301,13 @@ TEST_CASE("JSON patch - behavior documented in the API reference")
 
     SECTION("patch() has the strong guarantee")
     {
-        const json doc = R"({"a": [1, 2], "o": {"k": "v"}})"_json;
-        const json before = doc;
+        // independent values, so that the comparison below checks the untouched document
+        const auto make_doc = []
+        {
+            return R"({"a": [1, 2], "o": {"k": "v"}})"_json;
+        };
+        const json doc = make_doc();
+        const json before = make_doc();
 
         const std::vector<json> failing =
         {
@@ -2325,7 +2330,7 @@ TEST_CASE("JSON patch - behavior documented in the API reference")
             CHECK_THROWS_AS(doc.patch(patch), json::exception&);
             CHECK(doc == before);
 
-            json copy = doc;
+            json copy = make_doc();
             CHECK_THROWS_AS(copy.patch(patch), json::exception&);
             CHECK(copy == before);
         }
