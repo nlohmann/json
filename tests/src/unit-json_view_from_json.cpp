@@ -326,7 +326,7 @@ TEST_CASE("json_view from_json")
         CHECK(d.root().get<std::unordered_map<std::string, int>>().at("a") == 3);
     }
 
-// (the exceptions of views have neither the path nor the byte range of the value)
+    // (the exceptions of views have neither the path nor the byte range of the value)
 #if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS && !JSON_DIAGNOSTIC_POSITIONS
     SECTION("std types: the same errors as from the materialized value")
     {
