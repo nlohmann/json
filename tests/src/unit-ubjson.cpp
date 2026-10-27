@@ -2023,7 +2023,7 @@ TEST_CASE("UBJSON")
             CHECK(json::from_ubjson(v0, true, false).is_discarded());
 
             std::vector<uint8_t> const vi = {'[', '$', '#'};
-            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vi), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing UBJSON type: marker 0x23 is not a permitted optimized array type", json::parse_error&);
             CHECK(json::from_ubjson(vi, true, false).is_discarded());
 
             std::vector<uint8_t> const vT = {'[', '$', 'T'};
@@ -3345,6 +3345,58 @@ TEST_CASE("UBJSON large strings (chunked reader)")
             truncated.resize(truncated.size() - 8);
             json _;
             CHECK_THROWS_AS(_ = json::from_ubjson(truncated), json::parse_error);
+        }
+    }
+}
+
+TEST_CASE("UBJSON optimized container type marker is validated for count 0")
+{
+    // the '$' type marker must be a legal marker even if no element follows
+    SECTION("invalid marker")
+    {
+        for (const char marker :
+                {'x', 'E', 'B', 'u', 'm', 'M', 'h'
+                })
+        {
+            for (const char open :
+                    {'[', '{'
+                    })
+            {
+                for (const int count :
+                        {
+                            0, 1
+                        })
+                {
+                    CAPTURE(marker)
+                    CAPTURE(open)
+                    CAPTURE(count)
+                    const std::vector<std::uint8_t> v = {static_cast<std::uint8_t>(open), '$', static_cast<std::uint8_t>(marker), '#', 'i', static_cast<std::uint8_t>(count)};
+                    json _;
+                    CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
+                    CHECK(json::from_ubjson(v, true, false).is_discarded());
+                }
+            }
+        }
+    }
+
+    SECTION("error message")
+    {
+        const std::vector<std::uint8_t> v = {'[', '$', 'x', '#', 'i', 0};
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing UBJSON type: marker 0x78 is not a permitted optimized array type", json::parse_error&);
+    }
+
+    SECTION("valid marker")
+    {
+        for (const char marker :
+                {'Z', 'N', 'T', 'F', 'i', 'U', 'I', 'l', 'L', 'd', 'D', 'H', 'C', 'S', '[', '{'
+                })
+        {
+            CAPTURE(marker)
+            const std::vector<std::uint8_t> va = {'[', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};
+            const std::vector<std::uint8_t> vo = {'{', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};
+            CHECK(json::from_ubjson(va) == json::array());
+            CHECK(json::from_ubjson(vo) == json::object());
         }
     }
 }

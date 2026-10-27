@@ -121,6 +121,7 @@ The class satisfies the following concept requirements:
 - [**json_pointer**](../json_pointer/index.md) - JSON Pointer implementation
 - [**json_serializer**](json_serializer.md) - type of the serializer to for conversions from/to JSON
 - [**error_handler_t**](error_handler_t.md) - type to choose behavior on decoding errors
+- [**bjdata_version_t**](bjdata_version_t.md) - type to choose the BJData version to write
 - [**cbor_tag_handler_t**](cbor_tag_handler_t.md) - type to choose how to handle CBOR tags
 - **initializer_list_t** - type for initializer lists of `basic_json` values
 - [**input_format_t**](input_format_t.md) - type to choose the format to parse

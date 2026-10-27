@@ -55,10 +55,7 @@ validate with overload 2 first, if the original vector must survive a failed loa
 
 ## Exceptions
 
-On a big-endian target, throws [`type_error.320`](../../home/exceptions.md#jsonexceptiontype_error320) — the same
-exception [`save()`](save.md#exceptions) throws there, since the image format is little-endian only.
-
-Otherwise throws [`parse_error.116`](../../home/exceptions.md#jsonexceptionparse_error116) if `image` is not one
+Throws [`parse_error.116`](../../home/exceptions.md#jsonexceptionparse_error116) if `image` is not one
 `save()` could have written, or fails the requested `check`:
 
 | message               | when                                                                                                |
@@ -94,6 +91,9 @@ sorting the ranges of the strings and of the float tokens (at most one per node)
 are checked once, however many nodes refer to it.
 
 ## Notes
+
+**Little-endian targets only.** On a big-endian target, `load()` does not exist, just like
+[`save()`](save.md#notes): the image format is little-endian, so a call fails to compile.
 
 ### `image_check` { #image_check }
 

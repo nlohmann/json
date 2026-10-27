@@ -15,11 +15,13 @@ error
 :   report a parse error in case of a tag (the `from_cbor` overloads throw a `parse_error` exception by default)
 
 ignore
-:   ignore tags
+:   ignore tags (also in front of a text string map key)
 
 store
 :   store tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are
-    read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored.
+    read as if the tag were ignored. If several tags precede a byte string, only the tag directly in front of it is
+    stored, and only when it has the form 0xd8..0xdb (a tag 0..23 written as 0xc0..0xd7 is skipped). Tags in front of a
+    text string map key are skipped.
 
 ## Examples
 

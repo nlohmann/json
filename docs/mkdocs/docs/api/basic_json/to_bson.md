@@ -13,7 +13,7 @@ static void to_bson(const basic_json& j, detail::output_adapter<char> o,
 ```
 
 BSON (Binary JSON) is a binary format in which zero or more ordered key/value pairs are stored as a single entity (a
-so-called document).
+so-called document). The members of an object are written in the order in which iteration visits them.
 
 1. Returns a byte vector containing the BSON serialization.
 2. Writes the BSON serialization to an output adapter.

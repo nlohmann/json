@@ -134,8 +134,11 @@ is an integer or `null`.
 
 ### BJData
 
-[BJData](binary_formats/bjdata.md) neither supports binary values nor subtypes and proposes to serialize binary values
-as an array of uint8 values. The library implements this translation.
+[BJData](binary_formats/bjdata.md) Draft 3 supports binary values as optimized arrays of `B` (byte) elements, but no
+subtypes. With `version = bjdata_version_t::draft3` and both `use_size` and `use_type` set, `to_bjdata` writes a binary
+value as `[$B#...`, and `from_bjdata` reads it back as a binary value (without subtype). In all other cases, including
+the default Draft 2 mode, the library follows the Draft 2 proposal and writes an array of integers (`U` in Draft 2, `B`
+in Draft 3), which is read back as an array.
 
 ??? example "Example: serialize a binary value to BJData"
 
@@ -173,7 +176,7 @@ as an array of uint8 values. The library implements this translation.
 
     ```c
     0x7B                                // '{'
-        0x23 0x69 0x01                  // '#' 'i' type of the array elements: unsigned integers
+        0x23 0x69 0x01                  // '#' 'i' 1 number of object members
         0x69 0x06                       // i 6 (length of the key)
         0x62 0x69 0x6E 0x61 0x72 0x79   // "binary"
         0x5B                            // '[' array
@@ -182,7 +185,7 @@ as an array of uint8 values. The library implements this translation.
             0xCA 0xFE 0xBA 0xBE         // content
     ```
 
-    Note that subtype (42) is **not** serialized and that BJData has **no binary type**, and deserializing `v` would
+    Note that subtype (42) is **not** serialized and that, in Draft 2 mode, BJData has **no binary type**, and deserializing `v` would
     yield the following value:
 
     ```json
@@ -215,7 +218,7 @@ array of integers.
     0x87                                     // object with 1 member
         0x62 0x69 0x6E 0x61 0x72 0x79        // "binary"
         0x84                                 // array with 4 elements
-            0xC3 0x22 0xC3 0x56 0xC3 0x12 0xC3 0x16  // content (each byte as a 2-byte integer)
+            0xC3 0x22 0xC3 0x56 0xC3 0x12 0xC3 0x16  // content (each byte, here all above 39, as a 2-byte integer)
     ```
 
     Note that the subtype is lost, and deserializing `v` would yield the following value:
@@ -229,7 +232,10 @@ array of integers.
 ### BSON
 
 [BSON](binary_formats/bson.md) supports binary values and subtypes. If a subtype is given, it is used and added as an
-unsigned 8-bit integer. If no subtype is given, the generic binary subtype 0x00 is used.
+unsigned 8-bit integer; a subtype above 255 throws
+[`out_of_range.415`](../home/exceptions.md#jsonexceptionout_of_range415). If no subtype is given, the generic binary
+subtype 0x00 is used. The payload of the "old binary" subtype 0x02 is preceded by a second length, which the library
+writes and removes again when reading; it is not part of the payload.
 
 ??? example "Example: serialize a binary value to BSON"
 
@@ -303,6 +309,8 @@ representation using the length of the byte array.
     [`json::from_cbor`](../api/basic_json/from_cbor.md) (see
     [`cbor_tag_handler_t`](../api/basic_json/cbor_tag_handler_t.md)).
 
+    With `ignore`, the subtype is dropped (`"subtype": null`); with `store`, the tag is kept (`"subtype": 42`):
+
     ```json
     {
       "binary": {
@@ -312,11 +320,21 @@ representation using the length of the byte array.
     }
     ```
 
+    ```json
+    {
+      "binary": {
+        "bytes": [202, 254, 186, 190],
+        "subtype": 42
+      }
+    }
+    ```
+
 ### MessagePack
 
 [MessagePack](binary_formats/messagepack.md) supports binary values and subtypes. If a subtype is given, the ext family
-is used. The library will choose the smallest representation among fixext1, fixext2, fixext4, fixext8, ext8, ext16, and
-ext32. The subtype is then added as a signed 8-bit integer.
+is used. The library will choose the smallest representation among fixext1, fixext2, fixext4, fixext8, fixext16, ext8,
+ext16, and ext32. The subtype is then written as the signed 8-bit ext type: subtypes 128 to 255 map to the negative
+(reserved) ext types, and on reading the ext type is exposed as an unsigned subtype from 0 to 255.
 
 If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 

@@ -19,16 +19,36 @@ For the types below, the conversion works directly on the flat index — no `Bas
   document's own buffer of decoded strings (see [`get_string()`](get_string.md))
 - `BasicJsonType` — equivalent to [`materialize()`](materialize.md)
 - `basic_json_view` — returns `#!cpp *this`
-- `#!cpp std::vector<U, A>` — from an array, element by element, each converted with `#!cpp get<U>()`; `#!cpp
-  std::vector<basic_json_view>` keeps a view of every element instead of a value
-- `#!cpp std::map<K, V, C, A>` and `#!cpp std::unordered_map<K, V, H, E, A>`, if `K` is constructible from a `#!cpp
-  (const char*, std::size_t)` pair -- from an object, member by member, each value converted with `#!cpp get<V>()`; with a repeated
-  key, the *last* value is kept, as [`BasicJsonType::parse()`](../basic_json/parse.md) (and
-  [`materialize()`](materialize.md)) does; `#!cpp std::map<std::string, basic_json_view>` keeps views of the members
-  instead of values
+- `#!cpp std::vector<U, A>` of the types above — from an array, element by element, each converted with
+  `#!cpp get<U>()`; `#!cpp std::vector<basic_json_view>` keeps a view of every element instead of a value
+- `#!cpp std::map<K, basic_json_view, C, A>` and `#!cpp std::unordered_map<K, basic_json_view, H, E, A>`, if `K` is
+  constructible from a `#!cpp (const char*, std::size_t)` pair — views of the members of an object; with a repeated
+  key, the view of the *last* member is kept, as [`BasicJsonType::parse()`](../basic_json/parse.md) keeps its value
 
-Every other `T` — `#!cpp std::list`, `#!cpp std::pair`, `#!cpp std::array`, enumerations, user types with a
-`from_json()`, ... — is converted by `#!cpp materialize().get<T>()`: the subtree is built into a real `BasicJsonType`
+A default-constructible `T` whose `from_json()` accepts views reads the view directly as well, without building a
+`BasicJsonType` value. This covers the library's own conversions of the standard library types — all other
+`#!cpp std::vector`s, `#!cpp std::map`/`#!cpp std::unordered_map` (also with other key types), `#!cpp std::list`,
+`#!cpp std::deque`, `#!cpp std::set`, `#!cpp std::forward_list`, `#!cpp std::valarray`, `#!cpp std::array`, C arrays,
+`#!cpp std::pair`, `#!cpp std::tuple`, `#!cpp std::optional`, enumerations, `#!cpp std::filesystem::path`, ... --
+which give the same values as `#!cpp materialize().get<T>()` (from an object, a repeated key keeps the *last* value,
+as [`BasicJsonType::parse()`](../basic_json/parse.md) does), as well as the types of the
+[`NLOHMANN_DEFINE_TYPE_*`](../macros/nlohmann_define_type_intrusive.md) and
+[`NLOHMANN_DEFINE_DERIVED_TYPE_*`](../macros/nlohmann_define_derived_type.md) macros and the enumerations of
+[`NLOHMANN_JSON_SERIALIZE_ENUM`](../macros/nlohmann_json_serialize_enum.md), and any `from_json()` constrained to
+accept views, e.g. with [`is_json_view`](../is_json_view.md). A `from_json()` that also accepts types that are no JSON
+values at all, such as the unconstrained `#!cpp template<typename BasicJsonType> void from_json(const BasicJsonType&,
+T&)` of [arbitrary type conversions](../../features/arbitrary_types.md), is not called with a view: it may use
+`BasicJsonType` functions a view does not have. See [Writing generic code](../../features/json_view.md#writing-generic-code).
+
+!!! warning "Duplicate keys"
+
+    Such a `from_json()` looks members up in the view, where a repeated key finds the **first** member, while
+    `#!cpp materialize().get<T>()` sees the **last** one, as [`BasicJsonType::parse()`](../basic_json/parse.md)
+    keeps it: for `#!cpp {"x":1,"x":2}`, `#!cpp get<point>()` reads `#!cpp x == 1`. See
+    [Duplicate keys](../../features/json_view.md#duplicate-keys).
+
+Every other `T` — user types whose `from_json()` is written for `BasicJsonType` only, types without a default
+constructor, `#!cpp std::tuple`s holding references, ... — is converted by `#!cpp materialize().get<T>()`: the subtree is built into a real `BasicJsonType`
 value first (as [`BasicJsonType::parse()`](../basic_json/parse.md) would), and converted from there exactly as
 [`BasicJsonType::get<T>()`](../basic_json/get.md) would convert it.
 
@@ -53,12 +73,15 @@ Strong guarantee: there are no changes to the view or the document it refers to.
   throws for the same JSON type and `T`.
 - For `#!cpp std::vector<U, A>`: throws `type_error.302` if the value is not an array; otherwise, whatever converting
   an element to `U` throws.
-- For `#!cpp std::map`/`#!cpp std::unordered_map`: throws `type_error.302` if the value is not an object; otherwise,
-  whatever converting a member to the mapped type throws.
+- For `#!cpp std::map`/`#!cpp std::unordered_map` of views: throws `type_error.302` if the value is not an object.
+- For a `T` whose `from_json()` reads the view: whatever that `from_json()` throws; for the library's conversions and
+  the macros, the same exceptions with the same messages as [`BasicJsonType::get<T>()`](../basic_json/get.md) of the
+  same value.
 - For every other `T`: whatever [`materialize().get<T>()`](../basic_json/get.md) throws — typically `type_error.302`,
   or whatever a user-provided `from_json()` throws.
 
-None of the exceptions thrown directly by this function (the first three bullets above) carry a
+None of the exceptions thrown directly by this function or by a `from_json()` that reads the view (the first four
+bullets above) carry a
 [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) path: the view has no `BasicJsonType` value to point at. An
 exception thrown while converting through `materialize()` (the last bullet) is different: it is thrown by a real
 `BasicJsonType` value, so it **does** carry a `JSON_DIAGNOSTICS` path if `BasicJsonType` was built with it enabled.
@@ -76,6 +99,8 @@ document.
 - `#!cpp std::map`/`#!cpp std::unordered_map`: linear in the number of members for walking them, plus the container's
   own insertion cost per member (logarithmic for `#!cpp std::map`, amortized constant for `#!cpp
   std::unordered_map`), times the complexity of converting one member to the mapped type.
+- a `T` whose `from_json()` reads the view: the cost of that `from_json()`; for the macros, linear in the number of
+  members times the cost of a lookup, plus the cost of converting the members.
 - every other `T`: the cost of [`materialize()`](materialize.md) and of destroying the `BasicJsonType` value
   afterwards, plus that of [`BasicJsonType::get<T>()`](../basic_json/get.md).
 

@@ -3,7 +3,7 @@
 <small>Defined in header `<nlohmann/json_view.hpp>`</small>
 
 ```cpp
-using json_document = basic_json_document<json>;
+using json_document = basic_json_document<json, view_mode::read_only>;
 ```
 
 This type is a [`basic_json_document`](basic_json_document/index.md) of the default [`json`](json.md)

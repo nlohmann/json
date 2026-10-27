@@ -16,25 +16,25 @@ to efficiently encode JSON values to byte vectors and to decode such vectors.
 
 ### Completeness
 
-| Format      | Serialization                                 | Deserialization                              |
-|-------------|-----------------------------------------------|----------------------------------------------|
-| BJData      | complete                                      | complete                                     |
-| BON8        | incomplete: no unsigned integers above int64  | complete                                     |
-| BSON        | incomplete: top-level value must be an object | incomplete, but all JSON types are supported |
-| CBOR        | complete                                      | incomplete, but all JSON types are supported |
-| MessagePack | complete                                      | complete                                     |
-| UBJSON      | complete                                      | complete                                     |
+| Format      | Serialization                                 | Deserialization                                                       |
+|-------------|-----------------------------------------------|-----------------------------------------------------------------------|
+| BJData      | complete                                      | incomplete: no column-major ND-arrays, no Draft 4 SoA/extension types |
+| BON8        | incomplete: no unsigned integers above int64  | complete                                                              |
+| BSON        | incomplete: top-level value must be an object | incomplete, but all JSON types are supported                          |
+| CBOR        | complete                                      | incomplete, but all JSON types are supported                          |
+| MessagePack | complete                                      | incomplete, but all JSON types are supported                          |
+| UBJSON      | complete                                      | complete                                                              |
 
 ### Binary values
 
-| Format      | Binary values | Binary subtypes |
-|-------------|---------------|-----------------|
-| BJData      | not supported | not supported   |
-| BON8        | not supported | not supported   |
-| BSON        | supported     | supported       |
-| CBOR        | supported     | supported       |
-| MessagePack | supported     | supported       |
-| UBJSON      | not supported | not supported   |
+| Format      | Binary values            | Binary subtypes |
+|-------------|--------------------------|-----------------|
+| BJData      | supported (Draft 3 only) | not supported   |
+| BON8        | not supported            | not supported   |
+| BSON        | supported                | supported       |
+| CBOR        | supported                | supported       |
+| MessagePack | supported                | supported       |
+| UBJSON      | not supported            | not supported   |
 
 See [binary values](../binary_values.md) for more information.
 

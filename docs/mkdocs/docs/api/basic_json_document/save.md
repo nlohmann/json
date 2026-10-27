@@ -12,7 +12,7 @@ An edited document is written in its *current* state, with its values in documen
 parser would have produced them for that JSON text: a member [`set`](set.md) added goes at the end, an
 [`erase`](erase.md)d member leaves no trace, and a float that is not finite (NaN or positive/negative infinity)
 becomes null, the same substitution [`dump()`](../basic_json_view/dump.md) makes. The same document always saves to
-the same bytes — also across `BasicJsonType` and `#!cpp Editable`, since the image reflects document order and
+the same bytes — also across `BasicJsonType` and the [`view_mode`](../view_mode.md), since the image reflects document order and
 values only, not which specialization produced them.
 
 ## Return value
@@ -31,9 +31,6 @@ Throws [`type_error.320`](../../home/exceptions.md#jsonexceptiontype_error320) i
 [discarded](is_discarded.md) — a default-constructed document, or one a failed [`parse()`](parse.md)/
 [`read()`](read.md) with `allow_exceptions == false` left discarded.
 
-On a big-endian target, throws `type_error.320` with a different message instead: the image format is little-endian
-only (see [Notes](#notes)).
-
 Throws [`out_of_range.416`](../../home/exceptions.md#jsonexceptionout_of_range416) if the node count, the text, or
 the decoded strings of the image would individually reach 4 GiB — the same 32-bit offsets
 [`parse()`](parse.md#exceptions) and, for edits, [`set`](set.md)/[`push_back`](push_back.md) are already limited to.
@@ -42,9 +39,6 @@ the decoded strings of the image would individually reach 4 GiB — the same 32-
 
     ```
     [json.exception.type_error.320] cannot save a discarded json_document
-    ```
-    ```
-    [json.exception.type_error.320] json_document images need a little-endian target
     ```
     ```
     [json.exception.out_of_range.416] images of 4 GiB or more are not supported by json_document
@@ -70,9 +64,9 @@ else — see [`load`'s Exceptions](load.md#exceptions).
     the *same* build on the *same* (little-endian) machine — not as a long-term storage format. Keep the original
     JSON text if you need to read a saved document back with a future library version.
 
-**Little-endian only.** The image is written as raw little-endian bytes, with no byte-swapping. `save()` (and
-[`load`](load.md)) throw `type_error.320` on a big-endian target rather than silently produce bytes a big-endian
-reader could not interpret correctly.
+**Little-endian targets only.** The image is written as raw little-endian bytes, with no byte-swapping. On a
+big-endian target, `save()` and [`load`](load.md) do not exist: a call fails to compile rather than produce bytes a
+big-endian reader could not interpret correctly.
 
 ## Examples
 

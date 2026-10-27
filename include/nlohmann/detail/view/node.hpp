@@ -41,9 +41,22 @@ struct node_flags
     static constexpr std::uint8_t linked = 32; ///< an entry of a moved sequence links to this value (editable documents): its extent in the parsed layout no longer matters
 };
 
-/// kind of an entry of an edited sequence that stands for a value stored
-/// elsewhere (the address of the value's node is kept in the len/next bytes)
-constexpr std::uint8_t kind_link = 10;
+/// the kind of a node: the value_t of its value, or link
+enum class node_kind : std::uint8_t
+{
+    null = static_cast<std::uint8_t>(value_t::null),
+    object = static_cast<std::uint8_t>(value_t::object),
+    array = static_cast<std::uint8_t>(value_t::array),
+    string = static_cast<std::uint8_t>(value_t::string), // NOLINT(build/include_what_you_use): an enumerator, not std::string
+    boolean = static_cast<std::uint8_t>(value_t::boolean),
+    number_integer = static_cast<std::uint8_t>(value_t::number_integer),
+    number_unsigned = static_cast<std::uint8_t>(value_t::number_unsigned),
+    number_float = static_cast<std::uint8_t>(value_t::number_float),
+    /// an entry of an edited sequence that stands for a value stored elsewhere
+    /// (the address of the value's node is kept in the len/next bytes); placed
+    /// after value_t::discarded, which no node ever has
+    link = static_cast<std::uint8_t>(value_t::discarded) + 1,
+};
 
 /// One entry of the flat index, in document order. An object's members are
 /// stored as key node followed by the value's subtree. Integers keep their
@@ -51,7 +64,7 @@ constexpr std::uint8_t kind_link = 10;
 /// always the next one, and the token length follows from `extra`).
 struct node
 {
-    std::uint8_t kind;   ///< value_t, or kind_link
+    node_kind kind;      ///< the kind of the value, or link
     std::uint8_t flags;  ///< node_flags
     std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the object's key hash index (1-based, 0 = none); otherwise 0
     std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
@@ -60,13 +73,13 @@ struct node
 };
 static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 
-// the node kinds are value_t values; the test below (object and array are 1
-// and 2) and those of the number kinds depend on this numbering
-static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::uint8_t>(value_t::object) == 1
-              && static_cast<std::uint8_t>(value_t::array) == 2 && static_cast<std::uint8_t>(value_t::string) == 3
-              && static_cast<std::uint8_t>(value_t::boolean) == 4 && static_cast<std::uint8_t>(value_t::number_integer) == 5
-              && static_cast<std::uint8_t>(value_t::number_unsigned) == 6 && static_cast<std::uint8_t>(value_t::number_float) == 7,
-              "the node format depends on the numbering of value_t");
+// images store the node kinds as bytes, and the test below (object and array
+// are 1 and 2) and those of the number kinds depend on this numbering
+static_assert(static_cast<std::uint8_t>(node_kind::null) == 0 && static_cast<std::uint8_t>(node_kind::object) == 1
+              && static_cast<std::uint8_t>(node_kind::array) == 2 && static_cast<std::uint8_t>(node_kind::string) == 3
+              && static_cast<std::uint8_t>(node_kind::boolean) == 4 && static_cast<std::uint8_t>(node_kind::number_integer) == 5
+              && static_cast<std::uint8_t>(node_kind::number_unsigned) == 6 && static_cast<std::uint8_t>(node_kind::number_float) == 7,
+              "the node format depends on the numbering of node_kind");
 
 NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 {
@@ -86,7 +99,7 @@ inline void make_link(node& n, node* target) noexcept
 {
     target->flags = static_cast<std::uint8_t>(target->flags | node_flags::linked);
     n = node{};
-    n.kind = kind_link;
+    n.kind = node_kind::link;
     std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, static_cast<const void*>(&target), sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
@@ -116,8 +129,8 @@ NLOHMANN_VIEW_ALWAYS_INLINE void set_integer_bits(node& n, std::uint64_t v) noex
 /// token length of a number node
 NLOHMANN_VIEW_ALWAYS_INLINE std::uint32_t number_length(const node& n) noexcept
 {
-    return n.kind == static_cast<std::uint8_t>(value_t::number_float) ? n.len
-           : (n.extra & 0xFFu) + (n.kind == static_cast<std::uint8_t>(value_t::number_integer) ? 1u : 0u);
+    return n.kind == node_kind::number_float ? n.len
+           : (n.extra & 0xFFu) + (n.kind == node_kind::number_integer ? 1u : 0u);
 }
 
 /// estimated number of nodes for an input of `size` bytes (one node per ~12

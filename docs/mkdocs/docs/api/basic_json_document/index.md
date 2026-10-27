@@ -3,7 +3,7 @@
 <small>Defined in header `<nlohmann/json_view.hpp>`</small>
 
 ```cpp
-template<typename BasicJsonType, bool Editable = false>
+template<typename BasicJsonType, view_mode Mode = view_mode::read_only>
 class basic_json_document;
 ```
 
@@ -20,9 +20,9 @@ is move-only: a copy would duplicate the whole index, the decoded-string buffer,
 enough in every use we know of. The index, the decoded strings, and the owned text live in one heap block that the
 document holds through a `#!cpp std::unique_ptr`; this is also why views survive a move of the document.
 
-With `#!cpp Editable == true`, the document also offers [`set`](set.md), [`push_back`](push_back.md),
+With `#!cpp Mode == view_mode::editable`, the document also offers [`set`](set.md), [`push_back`](push_back.md),
 [`insert`](insert.md), and [`erase`](erase.md) to change values in place, see [Edits](#edits) below. The source text
-itself is never written; a read-only document (`#!cpp Editable == false`, the default) does not carry any of the
+itself is never written; a read-only document (`#!cpp view_mode::read_only`, the default) does not carry any of the
 bookkeeping edits need, and calling any of them on one fails to compile (`#!cpp static_assert`).
 
 ## Template parameters
@@ -32,9 +32,10 @@ bookkeeping edits need, and calling any of them on one fails to compile (`#!cpp 
     [`ordered_json`](../ordered_json.md). Only 64-bit `number_integer_t`/`number_unsigned_t` types are supported; this
     is checked with a `static_assert`.
 
-`Editable`
-:   whether the document supports [`set`](set.md), [`push_back`](push_back.md), [`insert`](insert.md), and
-    [`erase`](erase.md) (optional, `#!cpp false` by default). See [Edits](#edits) below.
+`Mode`
+:   a [`view_mode`](../view_mode.md): `#!cpp view_mode::editable` if the document supports [`set`](set.md),
+    [`push_back`](push_back.md), [`insert`](insert.md), and [`erase`](erase.md) (optional, `#!cpp view_mode::read_only`
+    by default). See [Edits](#edits) below.
 
 ## Specializations
 
@@ -47,7 +48,7 @@ bookkeeping edits need, and calling any of them on one fails to compile (`#!cpp 
 
 ## Member types
 
-- **view_type** - the type of view returned by [`root()`](root.md) (`#!cpp basic_json_view<BasicJsonType, Editable>`)
+- **view_type** - the type of view returned by [`root()`](root.md) (`#!cpp basic_json_view<BasicJsonType, Mode>`)
 - **value_t** - the JSON type enumeration, see [`basic_json::value_t`](../basic_json/value_t.md)
 - **image_check** - how [`load()`](load.md) validates an image (`full`, `bounds`, `none`), see [`image_check`](load.md#image_check)
 
@@ -80,15 +81,15 @@ bookkeeping edits need, and calling any of them on one fails to compile (`#!cpp 
 ### Edits
 
 - [**set**](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers
-  to (`#!cpp Editable` documents only)
-- [**push_back**](push_back.md) - append to an array (`#!cpp Editable` documents only)
-- [**insert**](insert.md) - insert an element into an array before a given position (`#!cpp Editable` documents only)
+  to (editable documents only)
+- [**push_back**](push_back.md) - append to an array (editable documents only)
+- [**insert**](insert.md) - insert an element into an array before a given position (editable documents only)
 - [**erase**](erase.md) - remove an object member, an array element, or the value a JSON pointer refers to
-  (`#!cpp Editable` documents only)
+  (editable documents only)
 
 ## Edits
 
-An editable document (`#!cpp Editable == true`) can be changed after parsing, with [`set`](set.md),
+An editable document (`#!cpp view_mode::editable`) can be changed after parsing, with [`set`](set.md),
 [`push_back`](push_back.md), [`insert`](insert.md), and [`erase`](erase.md);
 [`json_editable_document`](../json_editable_document.md) and
 [`ordered_json_editable_document`](../ordered_json_editable_document.md) are the corresponding specializations. A few

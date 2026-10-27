@@ -45,6 +45,12 @@ inline void from_json(const BasicJsonType& j, type& e);
       Define [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](json_use_objects_for_enum_keyed_maps.md) to store them as objects
       with the converted keys. Such maps can be read from both forms.
 
+!!! info "Views"
+
+    The generated `from_json()` also reads the views of [`json_document`](../json_document.md)s
+    (`<nlohmann/json_view.hpp>`), comparing the view with the entries of the mapping, without building a `json` value
+    first.
+
 ## Examples
 
 ??? example "Example: Basic usage"
@@ -90,3 +96,5 @@ inline void from_json(const BasicJsonType& j, type& e);
 ## Version history
 
 Added in version 3.4.0.
+
+The generated `from_json()` reads the views of `json_document`s since version 3.13.0.

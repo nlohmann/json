@@ -543,7 +543,15 @@ run_found:
     NLOHMANN_VIEW_NOINLINE void arena_grow(std::size_t n)
     {
         const std::size_t used = arena_used();
-        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, used + n + 256));
+        std::size_t wanted = used + n + 256;
+        if (m_doc.arena.empty())
+        {
+            // the first growth: a decoded string is never longer than its source,
+            // so a fraction of the input (capped, as the buffer is zero-filled)
+            // covers the escapes of a typical document without regrowing it
+            wanted = (std::max)(wanted, (std::min)((static_cast<std::size_t>(m_end - m_begin) / 4) + 16, std::size_t{4096}));
+        }
+        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, wanted));
         m_arena_write = m_doc.arena.data() + used;
         m_arena_end = m_doc.arena.data() + m_doc.arena.size();
     }
@@ -639,11 +647,11 @@ run_found:
             switch (cur())
             {
                 case '{':
-                    open(value_t::object);
+                    open(node_kind::object);
                     ++p;
                     goto obj_first;
                 case '[':
-                    open(value_t::array);
+                    open(node_kind::array);
                     ++p;
                     goto arr_first;
                 default:
@@ -665,11 +673,11 @@ run_found:
             if (NLOHMANN_VIEW_UNLIKELY(!string<true>())) { return false; }      \
             break;                                                              \
         case '{':                                                               \
-            open(value_t::object);                                              \
+            open(node_kind::object);                                              \
             ++p;                                                                \
             goto obj_first;                                                     \
         case '[':                                                               \
-            open(value_t::array);                                               \
+            open(node_kind::array);                                               \
             ++p;                                                                \
             goto arr_first;                                                     \
         case '-':                                                               \
@@ -886,17 +894,17 @@ root_done:
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_true()
         {
-            return literal("true", value_t::boolean, node_flags::is_true);
+            return literal("true", node_kind::boolean, node_flags::is_true);
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_false()
         {
-            return literal("false", value_t::boolean, 0);
+            return literal("false", node_kind::boolean, 0);
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_null()
         {
-            return literal("null", value_t::null, 0);
+            return literal("null", node_kind::null, 0);
         }
 
         /// skip whitespace (and comments); false on a malformed comment
@@ -962,7 +970,7 @@ indent_done:
 
         /// append a node: (kind, flags, extra, off) and the second word (len, or
         /// an integer's value); two stores on little-endian targets
-        NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(value_t k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
+        NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(node_kind k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
         {
             if (NLOHMANN_VIEW_UNLIKELY(out == cap))
             {
@@ -978,7 +986,7 @@ indent_done:
             std::memcpy(reinterpret_cast<unsigned char*>(n), &first, 8);
             std::memcpy(reinterpret_cast<unsigned char*>(n) + 8, &second, 8);
 #else
-            n->kind = static_cast<std::uint8_t>(k);
+            n->kind = k;
             n->flags = flags;
             n->extra = extra;
             n->off = static_cast<std::uint32_t>(off);
@@ -990,7 +998,7 @@ indent_done:
             return n;
         }
 
-        NLOHMANN_VIEW_ALWAYS_INLINE void open(value_t k)
+        NLOHMANN_VIEW_ALWAYS_INLINE void open(node_kind k)
         {
             // (base is read after push_node(), which moves the node array when it
             // grows; in one expression the order of the two is unspecified)
@@ -1017,7 +1025,7 @@ indent_done:
             max_depth = (std::max)(max_depth, depth);
             cur_idx = idx;
             cur_count = 0;
-            cur_is_object = k == value_t::object;
+            cur_is_object = k == node_kind::object;
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE void close()
@@ -1047,7 +1055,7 @@ indent_done:
 
         /// the literal `text` at p (N counts the terminating NUL)
         template<std::size_t N>
-        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], value_t k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], node_kind k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
         {
             const std::size_t n = N - 1;
             if (NLOHMANN_VIEW_UNLIKELY(e - p < static_cast<std::ptrdiff_t>(n) || std::memcmp(p, text, n) != 0))
@@ -1126,23 +1134,23 @@ indent_done:
                 is_float = true;
             }
 
-            value_t kind = value_t::number_float;
+            node_kind kind = node_kind::number_float;
             if (!is_float)
             {
                 // integers that do not fit become floats, as in parse()
                 if (negative)
                 {
-                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? value_t::number_float : value_t::number_integer;
+                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? node_kind::number_float : node_kind::number_integer;
                 }
                 else
                 {
-                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? value_t::number_float : value_t::number_unsigned;
+                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? node_kind::number_float : node_kind::number_unsigned;
                 }
             }
             // parse() rejects floats that overflow; only numbers whose magnitude
             // could reach the largest FloatType (1e308 for double, 1e38 for
             // float) need the conversion
-            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::int64_t>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == value_t::number_float))
+            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::int64_t>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == node_kind::number_float))
             {
                 if (builder::float_overflows(s, p))
                 {
@@ -1152,7 +1160,7 @@ indent_done:
             }
             const auto layout = static_cast<std::uint16_t>((int_digits < 255 ? int_digits : 255) | ((frac_digits < 255 ? frac_digits : 255) << 8));
             auto second = static_cast<std::uint64_t>(p - s);
-            if (kind != value_t::number_float)
+            if (kind != node_kind::number_float)
             {
                 // integers are converted now, while their digits are in cache
                 const std::uint64_t m = int_digits <= 19 ? parse_upto19(int_start, static_cast<unsigned>(int_digits), e)
@@ -1175,7 +1183,7 @@ indent_done:
             p = scan_string_run<Value>(p, e);
             if (NLOHMANN_VIEW_LIKELY(cur() == '"'))
             {
-                push_node(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
+                push_node(node_kind::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
                 ++p;
                 return true;
             }
@@ -1185,7 +1193,7 @@ indent_done:
                 return false;
             }
             p = r.p;
-            push_node(value_t::string, node_flags::escaped, 0, r.start, r.len);
+            push_node(node_kind::string, node_flags::escaped, 0, r.start, r.len);
             return true;
         }
     };

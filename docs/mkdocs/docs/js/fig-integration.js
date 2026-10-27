@@ -21,9 +21,7 @@
         ["JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS", "_ekmo", "3.13.0"],
         ["JSON_DISABLE_STREAM_BULK_SCAN", "_dsbs", "3.13.0"],
         ["JSON_DISABLE_UNLOCKED_FILE_IO", "_dufio", "3.13.0"],
-        ["JSON_NO_SIMD", "_ns", "3.13.0", true],
-        ["JSON_VIEW_NO_SIMD", "_vns", "3.13.0", true],
-        ["JSON_VIEW_USE_SSSE3", "_vssse3", "3.13.0", true]
+        ["JSON_NO_SIMD", "_ns", "3.13.0", true]
     ];
     var NO_VERSION = "NLOHMANN_JSON_NAMESPACE_NO_VERSION";
 

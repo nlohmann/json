@@ -5,7 +5,8 @@
 ```
 
 When defined, the library uses only portable C++ code where it would otherwise use vector instructions: when scanning
-strings during parsing, and when writing floating-point numbers during serialization.
+strings during parsing, and when writing floating-point numbers during serialization. This includes the parser of
+[`basic_json_document`](../basic_json_document/index.md) (`<nlohmann/json_view.hpp>`).
 
 The macro is an escape hatch, for example for toolchains that cannot compile the vector code, for sanitizers or
 analyzers that do not understand it, or to compare the speed of both variants. It does not change any result: values,
@@ -79,6 +80,7 @@ By default, `#!cpp JSON_NO_SIMD` is not defined, and vector instructions are use
 - [Parsing: input sources and performance](../../features/parsing/index.md#input-sources-and-performance) - how input
   sources affect parsing performance
 - [Serialization](../../features/serialization.md) - pretty-printing, UTF-8 handling, and number output
+- [Zero-copy JSON views](../../features/json_view.md) - the zero-copy view, whose parser the macro also affects
 
 ## Version history
 

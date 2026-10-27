@@ -21,10 +21,10 @@ ABI tags are not covered and may show raw internal fields instead. To generate a
     ```
 
 3. Generate a Natvis file with the tags of your configuration, for example for `JSON_DIAGNOSTICS`,
-    `JSON_DIAGNOSTIC_POSITIONS`, and `JSON_VIEW_NO_SIMD`:
+    `JSON_DIAGNOSTIC_POSITIONS`, and `JSON_NO_SIMD`:
 
     ```shell
-    make natvis NATVIS_ARGS="--abi-tags _diag,_dp,_vns --output my_nlohmann_json.natvis"
+    make natvis NATVIS_ARGS="--abi-tags _diag,_dp,_ns --output my_nlohmann_json.natvis"
     ```
 
 4. Use the generated file instead of `nlohmann_json.natvis`.

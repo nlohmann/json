@@ -179,6 +179,7 @@ nav:
           - 'begin': api/basic_json/begin.md
           - 'binary': api/basic_json/binary.md
           - 'binary_t': api/basic_json/binary_t.md
+          - 'bjdata_version_t': api/basic_json/bjdata_version_t.md
           - 'boolean_t': api/basic_json/boolean_t.md
           - 'cbegin': api/basic_json/cbegin.md
           - 'cbor_tag_handler_t': api/basic_json/cbor_tag_handler_t.md
@@ -367,6 +368,7 @@ nav:
           - 'Overview': api/adl_serializer/index.md
           - 'from_json': api/adl_serializer/from_json.md
           - 'to_json': api/adl_serializer/to_json.md
+      - 'is_json_view': api/is_json_view.md
       - 'json': api/json.md
       - 'json_document': api/json_document.md
       - 'json_editable_document': api/json_editable_document.md
@@ -416,6 +418,7 @@ nav:
       - 'ordered_json_editable_view': api/ordered_json_editable_view.md
       - 'ordered_json_view': api/ordered_json_view.md
       - 'ordered_map': api/ordered_map.md
+      - 'view_mode': api/view_mode.md
       - macros:
           - 'Overview': api/macros/index.md
           - 'JSON_ASSERT': api/macros/json_assert.md
@@ -450,8 +453,6 @@ nav:
           - 'JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON': api/macros/json_use_legacy_discarded_value_comparison.md
           - 'JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS': api/macros/json_use_objects_for_enum_keyed_maps.md
           - 'JSON_USE_SIMDUTF': api/macros/json_use_simdutf.md
-          - 'JSON_VIEW_NO_SIMD': api/macros/json_view_no_simd.md
-          - 'JSON_VIEW_USE_SSSE3': api/macros/json_view_use_ssse3.md
           - 'NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_derived_type.md
           - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_intrusive.md
           - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_non_intrusive.md

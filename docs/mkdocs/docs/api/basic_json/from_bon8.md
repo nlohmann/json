@@ -74,6 +74,11 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs, for instance
   an invalid byte, a string that is not valid UTF-8, or an object key that is not a string
 
+The UTF-8 validity of strings is always checked, independent of
+[`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md), because the end of a BON8 string is determined from
+its encoding. Duplicate object keys are accepted; the last value wins (see
+[BON8](../../features/binary_formats/bon8.md)).
+
 ## Complexity
 
 Linear in the size of the input.
