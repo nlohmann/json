@@ -43711,6 +43711,7 @@ public:
         // the operations below change *this while iterating json_patch: apply
         // a copy when a value is applied as patch to itself or, with
         // JSON_DIAGNOSTICS, to a value stored inside it
+        // NOLINTNEXTLINE(misc-const-correctness): only the JSON_DIAGNOSTICS build modifies it
         bool patch_aliases_this = (&json_patch == this);
 #if JSON_DIAGNOSTICS
         for (const basic_json* p = json_patch.m_parent; !patch_aliases_this && p != nullptr; p = p->m_parent)
