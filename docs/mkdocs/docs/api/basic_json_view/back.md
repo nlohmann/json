@@ -56,7 +56,7 @@ Unlike [`BasicJsonType::back()`](../basic_json/back.md), which has undefined beh
 
 ## See also
 
-- [front](front.md) - access the first element
+- [`front`](front.md) - access the first element
 - [`BasicJsonType::back`](../basic_json/back.md) - the corresponding function of `basic_json`
 
 ## Version history

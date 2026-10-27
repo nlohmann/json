@@ -20,7 +20,7 @@ To store objects in C++, a type is defined by the template parameters described 
 `ObjectType`
 :   the container to store objects. Its template parameters must have the same order and meaning as those of
     `std::map`; in particular, the third parameter is a comparator. `#!cpp std::unordered_map`, whose third parameter
-    is a hash function, therefore needs an adapter -- see
+    is a hash function, therefore needs an adapter — see
     [Template Parameter Requirements](../../features/types/template_parameters.md#objecttype) for the full list of
     requirements, an adapter example, and the containers that are known to work.
 
@@ -125,10 +125,12 @@ the object is silently converted as an array of key-value pairs, which is incorr
 
 ## See also
 
-- [array_t](array_t.md) the type used to store JSON arrays
-- [string_t](string_t.md) the type used to store JSON strings
-- [object_comparator_t](object_comparator_t.md) the comparator used to order object keys
+- [`array_t`](array_t.md) - the type used to store JSON arrays
+- [`string_t`](string_t.md) - the type used to store JSON strings
+- [`object_comparator_t`](object_comparator_t.md) - the comparator used to order object keys
 - [Object Order](../../features/object_order.md) - the article on object key ordering
+- [Types](../../features/types/index.md) - how objects are stored
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the `ObjectType` template parameter
 
 ## Version history
 

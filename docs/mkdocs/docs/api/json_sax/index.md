@@ -25,6 +25,9 @@ sequenceDiagram
     P->>H: end_object()
 ```
 
+<p class="nj-caption" markdown>Each arrow is one call from the parser to the SAX handler, from top to bottom in the
+order the calls happen.</p>
+
 Note `elements` is passed as `#!cpp std::numeric_limits<std::size_t>::max()` (i.e., "unknown") for JSON text input;
 only binary formats such as CBOR or MessagePack may report the actual number of elements in `start_object`/
 `start_array`. Also note that `1` is reported via `number_unsigned` rather than `number_integer` because it has no
@@ -62,9 +65,9 @@ leading `-` sign.
 ## See also
 
 - [SAX interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
-- [**sax_parse**](../basic_json/sax_parse.md) - generate SAX events from an input
-- [**parse**](../basic_json/parse.md) - DOM parsing, with optional [parser callbacks](../../features/parsing/parser_callbacks.md)
-- [Parse exceptions](../../features/parsing/parse_exceptions.md)
+- [`sax_parse`](../basic_json/sax_parse.md) - generate SAX events from an input
+- [`parse`](../basic_json/parse.md) - DOM parsing, with optional [parser callbacks](../../features/parsing/parser_callbacks.md)
+- [Parse exceptions](../../features/parsing/parse_exceptions.md) - how parse errors are reported
 
 ## Version history
 

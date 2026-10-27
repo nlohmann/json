@@ -1,0 +1,142 @@
+/* figures: charts (docs/images/compile_times.svg, binary_sizes_*.svg, ordered_json_scaling.svg from
+   scripts/figures/charts.py) and the number literal explorer on features/types/number_handling.md */
+
+/* series colours: categorical slots validated for CVD separation on the light and the slate surface */
+.nj-charts, .nj-charts-key {
+    --nj-charts-c1: #2a78d6;
+    --nj-charts-c2: #eb6834;
+    --nj-charts-c3: #1baf7a;
+    --nj-charts-c4: #eda100;
+    --nj-charts-c5: #e87ba4;
+    --nj-charts-c6: #008300;
+    --nj-charts-ink2: var(--md-default-fg-color--light);
+    --nj-charts-grid: color-mix(in srgb, currentColor 12%, var(--md-default-bg-color));
+    --nj-charts-base: color-mix(in srgb, currentColor 35%, var(--md-default-bg-color));
+}
+[data-md-color-scheme="slate"] :is(.nj-charts, .nj-charts-key) {
+    --nj-charts-c1: #3987e5;
+    --nj-charts-c2: #d95926;
+    --nj-charts-c3: #199e70;
+    --nj-charts-c4: #c98500;
+    --nj-charts-c5: #d55181;
+    --nj-charts-c6: #008300;
+}
+/* concepts: two compilers, two object types */
+.nj-charts { --nj-charts-clang-c: var(--nj-charts-c1); --nj-charts-gcc-c: var(--nj-charts-c2);
+             --nj-charts-json-c: var(--nj-charts-c1); --nj-charts-ojson-c: var(--nj-charts-c2); }
+
+.md-typeset svg.nj-charts--compile, .md-typeset svg.nj-charts--scaling { max-width: 26rem; }
+.md-typeset svg.nj-charts--sizes { max-width: 26rem; }
+
+.nj-charts text { fill: currentColor; font-size: 13px; }
+.nj-charts .nj-charts-leg { font-size: 13.5px; }
+.nj-charts .nj-charts-rowlabel { font-size: 13.5px; font-weight: 500; }
+.nj-charts .nj-charts-code { font-family: var(--md-code-font-family), monospace; font-size: 12.5px; }
+.nj-charts .nj-charts-sub { fill: var(--nj-charts-ink2); font-weight: 400; }
+.nj-charts .nj-charts-fmt { text-anchor: end; font-weight: 400; }
+.nj-charts .nj-charts-best { font-weight: 700; }
+.nj-charts .nj-charts-panel { font-family: var(--md-code-font-family), monospace; font-size: 14px; font-weight: 600; }
+.nj-charts .nj-charts-tick { fill: var(--nj-charts-ink2); font-size: 12px; text-anchor: middle; font-variant-numeric: tabular-nums; }
+.nj-charts .nj-charts-tick--l { text-anchor: start; }
+.nj-charts .nj-charts-tick--r { text-anchor: end; }
+.nj-charts .nj-charts-val { font-size: 12px; font-variant-numeric: tabular-nums;
+    paint-order: stroke; stroke: var(--md-default-bg-color); stroke-width: 4px; stroke-linejoin: round; }
+.nj-charts .nj-charts-factor { fill: var(--nj-charts-ink2); font-size: 12px; font-weight: 600; text-anchor: middle; }
+.nj-charts .nj-charts-note { fill: var(--nj-charts-ink2); font-size: 12px; }
+
+.nj-charts .nj-charts-grid { stroke: var(--nj-charts-grid); stroke-width: 1; }
+.nj-charts .nj-charts-zero, .nj-charts .nj-charts-axis { stroke: var(--nj-charts-base); stroke-width: 1.5; }
+.nj-charts .nj-charts-ref { stroke: currentColor; stroke-width: 1.5; }
+
+.nj-charts .nj-charts-c1 { fill: var(--nj-charts-c1); }
+.nj-charts .nj-charts-c2 { fill: var(--nj-charts-c2); }
+.nj-charts .nj-charts-c3 { fill: var(--nj-charts-c3); }
+.nj-charts .nj-charts-c4 { fill: var(--nj-charts-c4); }
+.nj-charts .nj-charts-c5 { fill: var(--nj-charts-c5); }
+.nj-charts .nj-charts-c6 { fill: var(--nj-charts-c6); }
+.nj-charts .nj-charts-dim { fill-opacity: .45; }
+.nj-charts .nj-charts-clang { fill: var(--nj-charts-clang-c); }
+.nj-charts .nj-charts-gcc { fill: var(--nj-charts-gcc-c); }
+.nj-charts polyline.nj-charts-json, .nj-charts line.nj-charts-json { stroke: var(--nj-charts-json-c); stroke-width: 2; fill: none; }
+.nj-charts polyline.nj-charts-ojson, .nj-charts line.nj-charts-ojson { stroke: var(--nj-charts-ojson-c); stroke-width: 2; fill: none; }
+.nj-charts .nj-charts-json-dot { fill: var(--nj-charts-json-c); stroke: var(--md-default-bg-color); stroke-width: 2; }
+.nj-charts .nj-charts-ojson-dot { fill: var(--nj-charts-ojson-c); stroke: var(--md-default-bg-color); stroke-width: 2; }
+
+/* single wide charts: larger text on phones, where the SVG is scaled down */
+@media screen and (max-width: 44.9375em) {
+    svg.nj-charts.nj-charts--compile text, svg.nj-charts.nj-charts--scaling text { font-size: 15px; }
+    svg.nj-charts.nj-charts--compile .nj-charts-code { font-size: 14px; }
+    svg.nj-charts:is(.nj-charts--compile, .nj-charts--scaling) :is(.nj-charts-tick, .nj-charts-val, .nj-charts-factor, .nj-charts-note) { font-size: 14px; }
+}
+
+/* small multiples: two panels per row, one on narrow screens */
+.md-typeset .nj-charts-grid-wrap {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem 2rem;
+    margin: 1.5rem 0 .5rem;
+}
+.md-typeset .nj-charts-grid-wrap > .nj-fig-wrap { margin: 0; }
+
+/* number literal explorer */
+.md-typeset .nj-charts-num-ui {
+    margin: 1rem 0 .75rem;
+    padding: .8rem;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 8px;
+}
+.md-typeset .nj-charts-num-ui label { display: block; font-weight: 600; font-size: .75rem; margin-bottom: .3rem; }
+.md-typeset .nj-charts-num-input {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: .4rem .6rem;
+    font-family: var(--md-code-font-family), monospace;
+    font-size: .8rem;
+    color: var(--md-default-fg-color);
+    background: var(--md-code-bg-color);
+    border: 1px solid var(--md-default-fg-color--lighter);
+    border-radius: 6px;
+}
+.md-typeset .nj-charts-num-input:focus-visible, .md-typeset .nj-charts-num-chip:focus-visible {
+    outline: 2px solid var(--md-typeset-a-color);
+    outline-offset: 2px;
+}
+.md-typeset .nj-charts-num-ui ul.nj-charts-num-chips:not([hidden]) { display: flex; flex-wrap: wrap; gap: .35rem; margin: .6rem 0; padding: 0; list-style: none; }
+.md-typeset .nj-charts-num-ui ul.nj-charts-num-chips > li { margin: 0; padding: 0; list-style: none; }
+.md-typeset .nj-charts-num-ui ul.nj-charts-num-chips > li::before, .md-typeset .nj-charts-num-ui ul.nj-charts-num-chips > li::marker { content: none; }
+.md-typeset .nj-charts-num-chip {
+    min-height: 44px;
+    max-width: 100%;
+    padding: .25rem .6rem;
+    overflow-wrap: anywhere;
+    font-family: var(--md-code-font-family), monospace;
+    font-size: .7rem;
+    color: var(--md-typeset-a-color);
+    background: color-mix(in srgb, var(--md-typeset-a-color) 8%, var(--md-default-bg-color));
+    border: 1px solid color-mix(in srgb, var(--md-typeset-a-color) 35%, var(--md-default-bg-color));
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+}
+.md-typeset .nj-charts-num-chip[aria-pressed="true"] {
+    color: var(--md-default-bg-color);
+    background: var(--md-typeset-a-color);
+    border-color: var(--md-typeset-a-color);
+}
+.md-typeset .nj-charts-num-out {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .2rem .8rem;
+    margin: 0;
+    font-size: .75rem;
+    overflow-wrap: anywhere;
+}
+.md-typeset .nj-charts-num-out dt { color: var(--md-default-fg-color--light); margin: 0; }
+.md-typeset .nj-charts-num-out dd { margin: 0; }
+.md-typeset .nj-charts-num-miss { font-size: .75rem; color: var(--md-default-fg-color--light); margin: 0; }
+.md-typeset .nj-charts-num tr.nj-charts-num-hit td { background: var(--md-accent-fg-color--transparent); }
+
+/* direct line labels replace the legend */
+.nj-charts .nj-charts-name-json { fill: var(--nj-charts-json-c); font-weight: 600; }
+.nj-charts .nj-charts-name-ojson { fill: var(--nj-charts-ojson-c); font-weight: 600; }

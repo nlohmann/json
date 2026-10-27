@@ -9,7 +9,7 @@ Returns the number exactly as it appears in the source text, without parsing or 
 ## Return value
 
 The number's token text, as a [`string_view_t`](index.md#member-types) into the document's
-[`source()`](../basic_json_document/source.md) text -- for example `#!cpp "1.50"`, `#!cpp "1E2"`, `#!cpp "-0"`, or an
+[`source()`](../basic_json_document/source.md) text — for example `#!cpp "1.50"`, `#!cpp "1E2"`, `#!cpp "-0"`, or an
 integer literal with more digits than any number type holds (such as a 30-digit integer, which [`get<T>()`](get.md)
 and [`materialize()`](materialize.md) can only represent approximately, as a `number_float_t`).
 
@@ -35,12 +35,12 @@ Constant.
 `BasicJsonType` has no counterpart to this function: once a number is parsed into `number_integer_t`,
 `number_unsigned_t`, or `number_float_t`, its original textual form (leading zeros aside, which are already rejected
 by the grammar; trailing zeros in the fraction; the case and sign of the exponent; ...) is gone. `number_token()` is
-useful precisely where that form must survive -- a price or an identifier that must be reproduced exactly, or a
+useful precisely where that form must survive — a price or an identifier that must be reproduced exactly, or a
 number too large for any of `BasicJsonType`'s number types to hold without loss.
 
 The returned [`string_view_t`](index.md#member-types) always points into the document's
-[`source()`](../basic_json_document/source.md) text -- numbers are never decoded into the document's separate string
-buffer -- and is valid exactly as long as that text is, see the [validity rules](index.md) of `basic_json_view`.
+[`source()`](../basic_json_document/source.md) text — numbers are never decoded into the document's separate string
+buffer — and is valid exactly as long as that text is, see the [validity rules](index.md) of `basic_json_view`.
 
 ## Examples
 
@@ -48,7 +48,7 @@ buffer -- and is valid exactly as long as that text is, see the [validity rules]
 
     The example below keeps a price and an order ID exactly as they were written in an incoming order, where
     converting them with [`get<T>()`](get.md) would lose information: the price picks up floating-point rounding, and
-    the order ID -- more digits than a 64-bit integer holds -- can only be approximated as a `#!cpp double` once
+    the order ID — more digits than a 64-bit integer holds — can only be approximated as a `#!cpp double` once
     `#!cpp materialize()`d.
 
     ```cpp
@@ -63,11 +63,12 @@ buffer -- and is valid exactly as long as that text is, see the [validity rules]
 
 ## See also
 
-- [get](get.md) - convert the value to a given type
-- [get_string](get_string.md) - the string, without a copy
+- [`get`](get.md) - convert the value to a given type
+- [`get_string`](get_string.md) - the string, without a copy
 - [`BasicJsonType::number_integer_t`](../basic_json/number_integer_t.md),
   [`number_unsigned_t`](../basic_json/number_unsigned_t.md), [`number_float_t`](../basic_json/number_float_t.md) - the
   number types `#!cpp get<T>()` and `materialize()` convert into
+- [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - reading a number exactly as written
 
 ## Version history
 

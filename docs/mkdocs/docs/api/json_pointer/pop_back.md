@@ -36,9 +36,9 @@ Constant.
 
 ## See also
 
-- [back](back.md) return last reference token
-- [push_back](push_back.md) append an unescaped token at the end of the pointer
-- [parent_pointer](parent_pointer.md) returns the parent of this JSON pointer
+- [`back`](back.md) - return last reference token
+- [`push_back`](push_back.md) - append an unescaped token at the end of the pointer
+- [`parent_pointer`](parent_pointer.md) - returns the parent of this JSON pointer
 
 ## Version history
 

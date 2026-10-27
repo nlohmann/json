@@ -176,9 +176,9 @@ Constant.
 
 ## See also
 
-- [std::swap<basic_json\>](std_swap.md)
-- [operator=](operator=.md) copy assignment
-- [basic_json](basic_json.md) create a JSON value
+- [`std::swap<basic_json\>`](std_swap.md) - specialization of `std::swap` for JSON values
+- [`operator=`](operator=.md) - copy assignment
+- [`basic_json`](basic_json.md) - create a JSON value
 
 ## Version history
 

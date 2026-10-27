@@ -6,34 +6,34 @@
 
 All exceptions inherit from class `json::exception` (which in turn inherits from `std::exception`). It is used as the base class for all exceptions thrown by the `basic_json` class. This class can hence be used as "wildcard" to catch exceptions.
 
-``` mermaid
-classDiagram
-  direction LR
-    class `std::exception` {
-        <<interface>>
-    }
+The map shows the class tree and every exception id documented on this page; click an id to jump to its section.
 
-    class `json::exception` {
-        +const int id
-        +const char* what() const
-    }
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/exception_map.svg"
+</div>
 
-    class `json::parse_error` {
-        +const std::size_t byte
-    }
+<p class="nj-caption" markdown>The exception classes from `std::exception` down to the five families, each with the ids it can throw. Every id chip links to the section that describes it.</p>
 
-    class `json::invalid_iterator`
-    class `json::type_error`
-    class `json::out_of_range`
-    class `json::other_error`
+Which exception an element access throws depends on the function and on the type of the value:
 
-    `std::exception` <|-- `json::exception`
-    `json::exception` <|-- `json::parse_error`
-    `json::exception` <|-- `json::invalid_iterator`
-    `json::exception` <|-- `json::type_error`
-    `json::exception` <|-- `json::out_of_range`
-    `json::exception` <|-- `json::other_error`
+```mermaid
+flowchart LR
+    S{{"which call?"}} -->|"at(key)"| A{{"j is"}}
+    A -->|"object, key missing"| A1["out_of_range.403"]
+    A -->|"array or null"| A2["type_error.304"]
+    S -->|"at(index)"| B{{"j is"}}
+    B -->|"array, index >= size()"| B1["out_of_range.401"]
+    B -->|"object or null"| B2["type_error.304"]
+    S -->|"non-const operator[](key)"| C{{"j is"}}
+    C -->|"object or null"| C1["no exception: a missing key is inserted as null"]
+    C -->|"array"| C2["type_error.305"]
+    S -->|"value(key, default)"| D{{"j is"}}
+    D -->|"object, key missing"| D1["no exception: returns the default"]
+    D -->|"object, incompatible value type"| D2["type_error.302"]
+    D -->|"array or null"| D3["type_error.306"]
 ```
+
+<p class="nj-caption" markdown>Exceptions thrown by element access. Start at the call on the left, follow the edge that matches the type of `j`, and read the exception id (or "no exception") in the box at the end.</p>
 
 ### Switch off exceptions
 
@@ -230,7 +230,7 @@ JSON uses the `\uxxxx` format to describe Unicode characters. Code points above 
 !!! failure "Example message"
 
     ```
-    parse error at 14: missing or wrong low surrogate
+    [json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate
     ```
 
 !!! note
@@ -244,7 +244,7 @@ Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are inva
 !!! failure "Example message"
 
     ```
-    parse error: code points above 0x10FFFF are invalid
+    [json.exception.parse_error.103] parse error: code points above 0x10FFFF are invalid
     ```
 
 !!! note
@@ -947,7 +947,7 @@ The provided array index `i` is larger than `size-1`.
 !!! failure "Example message"
 
     ```
-    array index 3 is out of range
+    [json.exception.out_of_range.401] array index 3 is out of range
     ```
 
 ### json.exception.out_of_range.402
@@ -957,7 +957,7 @@ The special array index `-` in a JSON Pointer never describes a valid element of
 !!! failure "Example message"
 
     ```
-    array index '-' (3) is out of range
+    [json.exception.out_of_range.402] array index '-' (3) is out of range
     ```
 
 ### json.exception.out_of_range.403
@@ -967,7 +967,7 @@ The provided key was not found in the JSON object.
 !!! failure "Example message"
 
     ```
-    key 'foo' not found
+    [json.exception.out_of_range.403] key 'foo' not found
     ```
 
 ### json.exception.out_of_range.404
@@ -978,7 +978,7 @@ contains other characters (e.g., `1a`), or `-` where it cannot be used.
 !!! failure "Example message"
 
     ```
-    unresolved reference token 'foo'
+    [json.exception.out_of_range.404] unresolved reference token 'foo'
     ```
 
 ### json.exception.out_of_range.405
@@ -990,7 +990,7 @@ also thrown when the parent or a reference token of an empty JSON Pointer is req
 !!! failure "Example message"
 
     ```
-    JSON pointer has no parent
+    [json.exception.out_of_range.405] JSON pointer has no parent
     ```
 
 ### json.exception.out_of_range.406
@@ -1002,7 +1002,7 @@ double-precision number when `number_float_t` is `#!cpp float`.
 !!! failure "Example messages"
 
     ```
-    number overflow parsing '10E1000'
+    [json.exception.out_of_range.406] number overflow parsing '10E1000'
     ```
     ```
     [json.exception.out_of_range.406] syntax error while parsing CBOR value: number overflow
@@ -1038,10 +1038,10 @@ exception, because they serialize integers beyond 64 bits as high-precision numb
 !!! failure "Example messages"
 
     ```
-    integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
+    [json.exception.out_of_range.407] integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
     ```
     ```
-    integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
+    [json.exception.out_of_range.407] integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
     ```
 
 ### json.exception.out_of_range.408
@@ -1059,7 +1059,7 @@ count and one marker per element are kept), so any value it produces can still b
 !!! failure "Example messages"
 
     ```
-    excessive array size: 8658170730974374167
+    [json.exception.out_of_range.408] excessive array size: 8658170730974374167
     ```
     ```
     [json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size
@@ -1078,7 +1078,7 @@ Key identifiers to be serialized to BSON cannot contain code point U+0000, since
 !!! failure "Example message"
 
     ```
-    BSON key cannot contain code point U+0000 (at byte 2)
+    [json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)
     ```
 
 ### json.exception.out_of_range.410
@@ -1090,8 +1090,8 @@ a JSON pointer exceeds the range of `size_type` (e.g., on 32-bit platforms).
 !!! failure "Example message"
 
     ```
-    enum value out of range
-    array index 18446744073709551615 exceeds size_type
+    [json.exception.out_of_range.410] enum value out of range
+    [json.exception.out_of_range.410] array index 18446744073709551615 exceeds size_type
     ```
 
     The second message is thrown, for instance, by `#!cpp json::parse("[1, 2]").at("/18446744073709551615"_json_pointer)`
@@ -1106,7 +1106,7 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 !!! failure "Example message"
 
     ```
-    cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
+    [json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
     ```
 
 !!! note
@@ -1124,10 +1124,10 @@ is thrown when a value is too large to be described by such a length field.
 !!! failure "Example messages"
 
     ```
-    BSON length 2147483661 exceeds maximum of 2147483647
+    [json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647
     ```
     ```
-    MessagePack length 4294967296 exceeds maximum of 4294967295
+    [json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295
     ```
 
 !!! note
@@ -1144,7 +1144,7 @@ A JSON Patch `remove` operation cannot be applied because the target location's 
 !!! failure "Example message"
 
     ```
-    cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
+    [json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
     ```
 
 !!! note
@@ -1158,7 +1158,7 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 !!! failure "Example message"
 
     ```
-    cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
+    [json.exception.out_of_range.414] cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
     ```
 
 !!! note
@@ -1262,3 +1262,15 @@ do not throw.
 
     This exception was added in version 3.13.0. Before that, debug builds aborted on an assertion and release builds
     wrote a `$` marker without `#`, which [`from_ubjson`](../api/basic_json/from_ubjson.md) then rejected.
+
+## See also
+
+- [`exception`](../api/basic_json/exception.md) - base class of all exceptions thrown by the library
+- [`parse_error`](../api/basic_json/parse_error.md) - exceptions indicating a parse error
+- [`invalid_iterator`](../api/basic_json/invalid_iterator.md) - exceptions indicating errors with iterators
+- [`type_error`](../api/basic_json/type_error.md) - exceptions indicating a wrong type
+- [`out_of_range`](../api/basic_json/out_of_range.md) - exceptions indicating access out of range
+- [`other_error`](../api/basic_json/other_error.md) - exceptions indicating other library errors
+- [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md) - switch off exceptions
+- [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) - extended exception messages with the path of the failing value
+- [Working Without Exceptions](../features/no_exceptions.md) - use the library without exceptions

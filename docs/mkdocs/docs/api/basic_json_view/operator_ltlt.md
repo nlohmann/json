@@ -6,7 +6,7 @@ std::ostream& operator<<(std::ostream& o, const basic_json_view& v);
 
 Not available when [`JSON_NO_IO`](../macros/json_no_io.md) is defined.
 
-Serializes the given view `v` to the output stream `o`, using [`dump`](dump.md) -- exactly as
+Serializes the given view `v` to the output stream `o`, using [`dump`](dump.md) — exactly as
 `#!cpp operator<<(std::ostream&, const basic_json&)` does for a `basic_json` value.
 
 - The indentation of the output can be controlled with the member variable `width` of the output stream `o`. For
@@ -38,7 +38,7 @@ the stream `o`
 
 May throw `#!cpp std::bad_alloc`, propagated from [`dump`](dump.md#exceptions). Unlike
 `#!cpp operator<<(std::ostream&, const basic_json&)`, there is no UTF-8 decoding step that could throw
-[`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316), and no `error_handler` to choose between --
+[`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316), and no `error_handler` to choose between —
 see the [Exceptions](dump.md#exceptions) of `dump`.
 
 ## Complexity
@@ -49,8 +49,8 @@ Linear, as [`dump`](dump.md#complexity).
 
 ??? example
 
-    The example below writes one record out of a larger batch straight to a log stream -- compact for a one-line
-    entry, and pretty-printed with `std::setw`/`std::setfill` for a readable dump -- without ever building a
+    The example below writes one record out of a larger batch straight to a log stream — compact for a one-line
+    entry, and pretty-printed with `std::setw`/`std::setfill` for a readable dump — without ever building a
     `BasicJsonType` value for the record, or for the rest of the batch.
 
     ```cpp
@@ -65,9 +65,10 @@ Linear, as [`dump`](dump.md#complexity).
 
 ## See also
 
-- [dump](dump.md) - serialize to a JSON-formatted string
+- [`dump`](dump.md) - serialize to a JSON-formatted string
 - [`operator<<(std::ostream&)`](../operator_ltlt.md) - the corresponding operator for `basic_json`
 - [`JSON_NO_IO`](../macros/json_no_io.md) - switch off functions relying on certain C++ I/O headers
+- [Zero-copy JSON views](../../features/json_view.md#writing-a-view-back) - writing a view back without building a tree
 
 ## Version history
 

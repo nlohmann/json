@@ -44,10 +44,11 @@ deserializes. See [Template Parameter Requirements](../../features/types/templat
 
 ## See also
 
-- [adl_serializer](../adl_serializer/index.md) the default `json_serializer`
-- [get](get.md) explicit type conversion using the `json_serializer`'s `from_json()` method
-- [get_to](get_to.md) explicit type conversion into a variable using the `json_serializer`'s `from_json()` method
+- [`adl_serializer`](../adl_serializer/index.md) - the default `json_serializer`
+- [`get`](get.md) - explicit type conversion using the `json_serializer`'s `from_json()` method
+- [`get_to`](get_to.md) - explicit type conversion into a variable using the `json_serializer`'s `from_json()` method
 - [Arbitrary Type Conversions](../../features/arbitrary_types.md) - the article on converting between JSON values and arbitrary types
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the `JSONSerializer` template parameter
 
 ## Version history
 
