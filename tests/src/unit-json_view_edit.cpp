@@ -977,7 +977,7 @@ TEST_CASE("json_view edits: check_utf8 agrees with the byte-wise check")
             INFO("fast: " << a << ", byte-wise: " << b << ", length " << s.size());
             CHECK(a == b);
         }
-        errors += b != "ok" ? 1 : 0;
+        errors += b != "ok" ? 1u : 0u;
     };
 
     const std::vector<std::string> pieces =
