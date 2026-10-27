@@ -20,6 +20,8 @@ Linear in [`node_count()`](https://json.nlohmann.me/api/basic_json_document/node
 
 ## Notes
 
+The node index of a small document (an estimate of up to 1024 nodes, which is up to about 4 KiB of minified text) is allocated together with the document's header, so that parsing needs one allocation. That part cannot be released separately: `shrink_to_fit()` only trims a node index that has its own allocation, and the decoded strings.
+
 Invalidates views
 
 Unlike moving the document, `shrink_to_fit()` **invalidates every view taken from this document before the call**, including a previously obtained [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md): the node index is moved into a new, smaller allocation, and the old one is freed. Take a fresh view from [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) after calling this function.
