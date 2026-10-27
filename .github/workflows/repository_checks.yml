@@ -1,0 +1,78 @@
+name: Repository checks
+
+# Checks that concern files the compiler workflows (ubuntu.yml, macos.yml,
+# windows.yml) skip with their path filter: the documentation, the license
+# information, and the path filter itself. This workflow has no path filter.
+on:
+  push:
+    branches:
+      - develop
+      - master
+      - release/*
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  check_path_filters:
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the path filters of the compiler workflows
+        run: python3 tools/check_path_filters/check_path_filters.py
+
+  ci_reuse_compliance:
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_reuse_compliance
+
+  ci_test_documentation:
+    runs-on: ubuntu-26.04
+    strategy:
+      matrix:
+        target: [ci_test_examples, ci_test_build_documentation, ci_test_documentation_mermaid]
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # the git-revision-date-localized plugin needs the history; a shallow clone makes the strict build fail
+          fetch-depth: ${{ matrix.target == 'ci_test_build_documentation' && '0' || '1' }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: matrix.target == 'ci_test_documentation_mermaid'
+        with:
+          node-version: 24
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ${{ matrix.target }}
