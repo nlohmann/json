@@ -666,6 +666,61 @@ TEST_CASE("json_view")
         CHECK(small.root().materialize() == json::parse("[1,[2,3],{\"a\":\"b\\n\"}]"));
     }
 
+    SECTION("block sizes")
+    {
+        // documents whose node estimate lies around the size that is allocated
+        // with the header, and whose decoded strings need the first growth of
+        // the buffer, in all sizes around the points where the policies change
+        for (const int count :
+                {
+                    1, 2, 10, 50, 100, 255, 256, 257, 500, 1000, 1023, 1024, 1025, 2000, 5000
+                })
+        {
+            // strings with escapes (decoded text, minified)
+            std::string escaped = "[";
+            for (int i = 0; i < count; ++i)
+            {
+                escaped += (i != 0 ? ",\"a\\n" : "\"a\\n") + std::to_string(i) + "\\u00e4\"";
+            }
+            escaped += ']';
+            json_document e = json_document::parse(escaped);
+            CHECK(e.root().materialize() == json::parse(escaped));
+            e.shrink_to_fit();
+            CHECK(e.root().materialize() == json::parse(escaped));
+
+            // dense numbers (more nodes per byte than the estimate expects)
+            std::string dense = "[";
+            for (int i = 0; i < count; ++i)
+            {
+                dense += (i != 0 ? ",1" : "1");
+            }
+            dense += ']';
+            json_document n = json_document::parse(dense);
+            CHECK(n.node_count() == static_cast<std::size_t>(count) + 1);
+            CHECK(n.root().materialize() == json::parse(dense));
+            n.shrink_to_fit();
+            CHECK(n.root().size() == static_cast<std::size_t>(count));
+
+            // the same documents, pretty-printed
+            const std::string pretty = json::parse(escaped).dump(2);
+            json_document p = json_document::parse(pretty);
+            CHECK(p.root().materialize() == json::parse(escaped));
+        }
+
+        // a large document with a single escape does not need a buffer of the
+        // size of its input
+        std::string large = R"(["a\n")";
+        for (int i = 0; i < 100000; ++i)
+        {
+            large += ",1";
+        }
+        large += ']';
+        const json_document l = json_document::parse(large);
+        CHECK(l.root().size() == 100001);
+        CHECK(l.root()[0].get_string() == "a\n");
+        CHECK(l.root()[100000].get<int>() == 1);
+    }
+
     SECTION("source offsets")
     {
         const std::string text = R"(  {"key": "value", "escaped": "a\nb", "n": 42})";

@@ -54,9 +54,11 @@
 // IWYU pragma: no_include <version>
 // IWYU pragma: no_include "nlohmann/detail/abi_config.hpp"
 // IWYU pragma: no_include "nlohmann/detail/abi_macros.hpp"
+// IWYU pragma: no_include "nlohmann/detail/conversions/from_json.hpp"
 // IWYU pragma: no_include "nlohmann/detail/input/input_adapters.hpp"
 // IWYU pragma: no_include "nlohmann/detail/json_pointer.hpp"
 // IWYU pragma: no_include "nlohmann/detail/meta/cpp_future.hpp"
+// IWYU pragma: no_include "nlohmann/detail/meta/type_traits.hpp"
 // IWYU pragma: no_include "nlohmann/detail/string_concat.hpp"
 // IWYU pragma: no_include "nlohmann/detail/value_t.hpp"
 // IWYU pragma: no_include "nlohmann/json.hpp"
@@ -410,14 +412,17 @@ struct document_data
     };
     std::unique_ptr<edit_state> edits; ///< created by the first edit
 
+    /// the most nodes that are allocated together with the header (16 KiB)
+    static constexpr std::size_t max_inline_nodes = 1024;
+
     /// One allocation for the header and room for `count` nodes, so that a
     /// small document needs one allocation instead of two. Large documents get
     /// a separate node array instead (so it can be trimmed). When a document
-    /// outgrows the inline array, that array stays unused: at most 256 nodes
-    /// (4 KiB), and only for documents whose estimate was too small.
+    /// outgrows the inline array, that array stays unused: at most 1024 nodes
+    /// (16 KiB), and only for documents whose estimate was too small.
     static document_data* create(std::size_t count)
     {
-        count = count <= 256 ? count : 0;
+        count = count <= max_inline_nodes ? count : 0;
         void* mem = ::operator new (sizeof(document_data) + (count * sizeof(node)));
         auto* d = new (mem) document_data(); // NOLINT(cppcoreguidelines-owning-memory): owned by the returned pointer, freed by deleter
         // (aligned: sizeof is a multiple of the alignment; through void*, as GCC's -Wcast-align wants)
@@ -1747,7 +1752,15 @@ run_found:
     NLOHMANN_VIEW_NOINLINE void arena_grow(std::size_t n)
     {
         const std::size_t used = arena_used();
-        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, used + n + 256));
+        std::size_t wanted = used + n + 256;
+        if (m_doc.arena.empty())
+        {
+            // the first growth: a decoded string is never longer than its source,
+            // so a fraction of the input (capped, as the buffer is zero-filled)
+            // covers the escapes of a typical document without regrowing it
+            wanted = (std::max)(wanted, (std::min)((static_cast<std::size_t>(m_end - m_begin) / 4) + 16, std::size_t{4096}));
+        }
+        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, wanted));
         m_arena_write = m_doc.arena.data() + used;
         m_arena_end = m_doc.arena.data() + m_doc.arena.size();
     }
@@ -9609,7 +9622,7 @@ class basic_json_document
     /// member is set (added if missing), an array element assigned, and "-"
     /// or the size of the array appends. A null parent becomes what
     /// basic_json's operator[](json_pointer) makes of it: an array for "-"
-    /// and for digits (padded with nulls up to the index), an object otherwise.
+    /// and for array indices (padded with nulls up to the index), an object otherwise.
     template<typename V>
     view_type set(const json_pointer& ptr, V&& value)
     {
@@ -9625,7 +9638,11 @@ class basic_json_document
             {
                 return push_back(parent, std::forward<V>(value));
             }
-            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            // (a token that cannot be an array index, such as "01" or "", names an
+            // object member, as in basic_json)
+            const bool digits = !token.empty()
+                                && (token.size() == 1 || token[0] != '0')
+                                && std::all_of(token.begin(), token.end(), [](const char c)
             {
                 return c >= '0' && c <= '9';
             });
