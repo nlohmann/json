@@ -24848,10 +24848,7 @@ class json_pointer
 
         ~get_unchecked_rollback()
         {
-            if (JSON_HEDLEY_UNLIKELY(m_change != change::none))
-            {
-                undo();
-            }
+            undo();
         }
 
         /// keep the change
@@ -24861,7 +24858,7 @@ class json_pointer
         }
 
       private:
-        JSON_HEDLEY_NEVER_INLINE void undo() noexcept
+        void undo() noexcept
         {
             switch (m_change)
             {
