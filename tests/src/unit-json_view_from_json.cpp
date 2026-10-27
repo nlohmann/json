@@ -326,7 +326,8 @@ TEST_CASE("json_view from_json")
         CHECK(d.root().get<std::unordered_map<std::string, int>>().at("a") == 3);
     }
 
-#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS
+// (the exceptions of views have neither the path nor the byte range of the value)
+#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS && !JSON_DIAGNOSTIC_POSITIONS
     SECTION("std types: the same errors as from the materialized value")
     {
         const json_document d = json_document::parse(R"([[1, "x"], {"a": 1}, "text", [1], 5, null])");
@@ -392,7 +393,7 @@ TEST_CASE("json_view from_json")
 #if !defined(JSON_NOEXCEPTION)
         const json j = d.root().materialize();
         CHECK(exception_of_call([&] { static_cast<void>(d.root()[2].get<strict_color>()); }) == "[json.exception.out_of_range.410] enum value out of range for strict_color: \"purple\"");
-#if !JSON_DIAGNOSTICS
+#if !JSON_DIAGNOSTICS && !JSON_DIAGNOSTIC_POSITIONS
         CHECK(exception_of_call([&] { static_cast<void>(d.root()[2].get<strict_color>()); }) == exception_of_call([&] { static_cast<void>(j[2].get<strict_color>()); }));
 #endif
 #endif
@@ -440,10 +441,11 @@ TEST_CASE("json_view from_json")
         CHECK(o.root().get<shape>().center.y == 2);
     }
 
-#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS
+#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS && !JSON_DIAGNOSTIC_POSITIONS
     SECTION("errors are those of the same conversion of a json value")
     {
-        // (with JSON_DIAGNOSTICS, those of json name the path of the value)
+        // (with JSON_DIAGNOSTICS, those of json name the path of the value,
+        // and with JSON_DIAGNOSTIC_POSITIONS its bytes)
         const json_document d = json_document::parse(R"([{"x": 1}, {"x": "1", "y": 2}, [1, 2], {"id": "7", "c": "red"}])");
         const json j = d.root().materialize();
         for (std::size_t i = 0; i < 3; ++i)

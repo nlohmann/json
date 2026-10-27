@@ -269,7 +269,7 @@ struct node
     std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the object's key hash index (1-based, 0 = none); otherwise 0
     std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
     std::uint32_t len;   ///< string: decoded bytes; float: token bytes; array/object: element count
-    std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence)
+    std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence); escaped string: source offset of the opening quote plus one (JSON_DIAGNOSTIC_POSITIONS; 0: unknown)
 };
 static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 
@@ -2402,7 +2402,13 @@ indent_done:
                 return false;
             }
             p = r.p;
+#if JSON_DIAGNOSTIC_POSITIONS
+            // the decoded string is in the arena: next keeps the source offset
+            // of the opening quote plus one (0: unknown) for materialize()
+            push_node(node_kind::string, node_flags::escaped, 0, r.start, static_cast<std::uint64_t>(r.len) | (static_cast<std::uint64_t>(s - b) << 32));
+#else
             push_node(node_kind::string, node_flags::escaped, 0, r.start, r.len);
+#endif
             return true;
         }
     };
@@ -4943,7 +4949,8 @@ constexpr std::uint64_t image_limit = 0xFFFFFFF0u;
 /// Copy the current structure of an edited document into nodes in document
 /// order, as the parser would have written them. Text written by edits is
 /// appended to text_tail (number tokens) and arena_tail (strings); floats that
-/// are not finite become null, as dump() writes them.
+/// are not finite become null, as dump() writes them. Nodes keep the flag
+/// is_new: they have no source position (JSON_DIAGNOSTIC_POSITIONS).
 inline void compact_nodes(const document_data& d, std::size_t arena_size, std::vector<node>& out, std::string& text_tail, std::string& arena_tail)
 {
     struct frame
@@ -4966,16 +4973,18 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
             arena_tail.append(d.str(s), s.len);
             r.flags = node_flags::escaped;
         }
+        r.flags = static_cast<std::uint8_t>(r.flags | (s.flags & node_flags::is_new));
         return r;
     };
     const auto copy_node = [&](const node * v)
     {
         node r = *v;
+        const auto is_new = static_cast<std::uint8_t>(v->flags & node_flags::is_new);
         switch (static_cast<value_t>(v->kind))
         {
             case value_t::object:
             case value_t::array:
-                r.flags = 0;
+                r.flags = is_new;
                 r.extra = 0;
                 r.off = (v->flags & (node_flags::moved | node_flags::is_new)) != 0 ? 0 : v->off;
                 r.len = 0;  // counted below
@@ -4992,7 +5001,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                     r.off = static_cast<std::uint32_t>(d.size + text_tail.size());
                     text_tail.append(d.str(*v), number_length(*v));
                 }
-                r.flags = 0;
+                r.flags = is_new;
                 break;
             case value_t::number_float:
                 if ((v->flags & node_flags::storage) == node_flags::edited)
@@ -5002,22 +5011,23 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                     {
                         r = node{}; // nan and infinity: null, as dump() writes them
                         r.kind = node_kind::null;
+                        r.flags = is_new;
                         break;
                     }
                     r.off = static_cast<std::uint32_t>(d.size + text_tail.size());
                     text_tail.append(t, v->len);
                     r.extra = 0xFFFFu; // the digit layout is not recorded
                 }
-                r.flags = 0;
+                r.flags = is_new;
                 break;
             case value_t::boolean:
-                r.flags = static_cast<std::uint8_t>(v->flags & node_flags::is_true);
+                r.flags = static_cast<std::uint8_t>(v->flags & (node_flags::is_true | node_flags::is_new));
                 break;
             case value_t::null:
             case value_t::binary:
             case value_t::discarded:
             default:
-                r.flags = 0;
+                r.flags = is_new;
                 break;
         }
         out.push_back(r);
@@ -5378,13 +5388,15 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
     std::vector<float_range> floats;
     const auto check_string = [&](const node & n) -> bool
     {
-        if ((n.flags & ~node_flags::escaped) != 0 || n.extra != 0)
+        if ((n.flags & ~(node_flags::escaped | node_flags::is_new)) != 0 || n.extra != 0)
         {
             return false;
         }
         const bool decoded = (n.flags & node_flags::escaped) != 0;
         const std::size_t limit = decoded ? arena_size : text_size;
-        if (n.off > limit || n.len > limit - n.off)
+        // (next: the source offset of a decoded string's opening quote plus
+        // one, or 0; see node)
+        if (n.off > limit || n.len > limit - n.off || n.next > text_size)
         {
             return false;
         }
@@ -5456,13 +5468,13 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         {
             case value_t::null:
                 // (the offset of a literal is read to size the output of dump())
-                if (n.flags != 0 || n.extra != 0 || n.off > text_size)
+                if ((n.flags & ~node_flags::is_new) != 0 || n.extra != 0 || n.off > text_size)
                 {
                     return false;
                 }
                 break;
             case value_t::boolean:
-                if ((n.flags & ~node_flags::is_true) != 0 || n.extra != 0 || n.off > text_size)
+                if ((n.flags & ~(node_flags::is_true | node_flags::is_new)) != 0 || n.extra != 0 || n.off > text_size)
                 {
                     return false;
                 }
@@ -5476,7 +5488,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             case value_t::number_integer:
             case value_t::number_unsigned:
             case value_t::number_float:
-                if (n.flags != 0 || !number_in_bounds(n))
+                if ((n.flags & ~node_flags::is_new) != 0 || !number_in_bounds(n))
                 {
                     return false;
                 }
@@ -5498,7 +5510,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             case value_t::object:
             {
                 const std::size_t limit = stack.empty() ? count : stack.back().end;
-                if (n.flags != 0 || n.extra != 0 || n.next == 0 || n.next > limit - i || n.off > text_size)
+                if ((n.flags & ~node_flags::is_new) != 0 || n.extra != 0 || n.next == 0 || n.next > limit - i || n.off > text_size)
                 {
                     return false;
                 }
@@ -6108,6 +6120,176 @@ namespace detail
 namespace view
 {
 
+#if JSON_DIAGNOSTIC_POSITIONS
+/*!
+@brief the source positions of the values materialize() replays
+
+Stands in for the lexer of json_sax_dom_parser, which reads the positions of
+the values it stores from these three functions (diagnostic_positions). npos
+is a value without a source position.
+*/
+struct position_source
+{
+    /// the token, of which diagnostic_positions only reads the length
+    struct token
+    {
+        std::size_t length;
+        std::size_t size() const noexcept
+        {
+            return length;
+        }
+    };
+
+    std::size_t start = std::string::npos; ///< the first byte of the next value
+    std::size_t end = std::string::npos;   ///< one past the next value (start_object/start_array: one past the bracket)
+
+    std::size_t get_chars_read_total() const noexcept
+    {
+        return end;
+    }
+    std::size_t get_token_start_position() const noexcept
+    {
+        return start;
+    }
+    token get_string() const noexcept
+    {
+        return token{end - start};
+    }
+
+    /// the range [first, last), or none if either is npos
+    void set(std::size_t first, std::size_t last) noexcept
+    {
+        const bool known = first != std::string::npos && last != std::string::npos;
+        start = known ? first : std::string::npos;
+        end = known ? last : std::string::npos;
+    }
+
+    /// one past the closing quote of the string whose opening quote is at
+    /// src[quote], or npos (the scan is bounded by size, as images can be
+    /// loaded without a check)
+    static std::size_t string_end(const char* src, std::size_t size, std::size_t quote) noexcept
+    {
+        for (std::size_t i = quote + 1; i < size; ++i)
+        {
+            if (src[i] == '\\')
+            {
+                ++i;
+            }
+            else if (src[i] == '"')
+            {
+                return i + 1;
+            }
+        }
+        return std::string::npos;
+    }
+
+    /// one past the closing bracket of the array or object whose last element
+    /// ends at src[pos] (or whose opening bracket is at src[pos - 1]), or npos;
+    /// in between, there can only be whitespace, comments, and a trailing comma
+    /// (the source was validated when it was parsed)
+    static std::size_t container_end(const char* src, std::size_t size, std::size_t pos) noexcept
+    {
+        while (pos < size)
+        {
+            switch (src[pos])
+            {
+                case ' ':
+                case '\t':
+                case '\n':
+                case '\r':
+                case ',':
+                    ++pos;
+                    break;
+                case ']':
+                case '}':
+                    return pos + 1;
+                case '/':
+                    if (pos + 1 < size && src[pos + 1] == '/')
+                    {
+                        pos += 2;
+                        while (pos < size && src[pos] != '\n' && src[pos] != '\r')
+                        {
+                            ++pos;
+                        }
+                        break;
+                    }
+                    if (pos + 1 < size && src[pos + 1] == '*')
+                    {
+                        pos += 2;
+                        while (pos < size && !(src[pos] == '*' && pos + 1 < size && src[pos + 1] == '/'))
+                        {
+                            ++pos;
+                        }
+                        pos += 2;
+                        break;
+                    }
+                    return std::string::npos;
+                default:
+                    return std::string::npos;
+            }
+        }
+        return std::string::npos;
+    }
+
+    /// the range of the scalar n of document d
+    void set_scalar(const document_data& d, const node& n) noexcept
+    {
+        const std::size_t size = d.size;
+        const std::size_t off = n.off;
+        std::size_t first = std::string::npos;
+        std::size_t last = std::string::npos;
+        if ((n.flags & node_flags::is_new) == 0)
+        {
+            switch (static_cast<value_t>(n.kind))
+            {
+                case value_t::string:
+                    if ((n.flags & node_flags::storage) == 0)
+                    {
+                        // off is the first byte after the opening quote
+                        if (off != 0)
+                        {
+                            first = off - 1;
+                            last = off + std::size_t{n.len} + 1;
+                        }
+                    }
+                    else if ((n.flags & node_flags::storage) == node_flags::escaped && n.next != 0)
+                    {
+                        // next is the offset of the opening quote plus one
+                        first = n.next - 1;
+                        last = string_end(d.base[0], size, first);
+                    }
+                    break;
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                    if ((n.flags & node_flags::storage) == 0)
+                    {
+                        first = off;
+                        last = off + number_length(n);
+                    }
+                    break;
+                case value_t::boolean:
+                    first = off;
+                    last = off + ((n.flags & node_flags::is_true) != 0 ? 4u : 5u);
+                    break;
+                case value_t::null:
+                    first = off;
+                    last = off + 4u;
+                    break;
+                case value_t::object:
+                case value_t::array:
+                case value_t::binary:
+                case value_t::discarded:
+                default:
+                    break;
+            }
+        }
+        // (a crafted image can point past the text)
+        set(first, last != std::string::npos && last <= size ? last : std::string::npos);
+    }
+};
+#endif
+
 /*!
 @brief the basic_json value of the subtree at n
 
@@ -6115,14 +6297,22 @@ The subtree is replayed into the SAX handler that parse() uses to build its
 values, so the result is the value parse() would produce: duplicate keys keep
 the last value, and with JSON_DIAGNOSTICS the parent pointers are set. It is
 iterative, so the nesting depth is limited by memory only, as for parse().
-Without a lexer the handler records no source positions
-(JSON_DIAGNOSTIC_POSITIONS).
+
+With JSON_DIAGNOSTIC_POSITIONS, the values get their source positions as with
+parse(): position_source stands in for the lexer. Values written by edits have
+none (npos), and neither has an array or object whose elements changed, or
+whose last element has none (the end of its closing bracket is found by
+scanning from the end of the last element).
 */
 template<typename BasicJsonType, bool Editable>
 BasicJsonType materialize(const document_data& d, const node* n)
 {
     using string_t = typename BasicJsonType::string_t;
+#if JSON_DIAGNOSTIC_POSITIONS
+    using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>, true, position_source>;
+#else
     using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>, true>;
+#endif
     using nav = navigation<Editable>;
 
     // the open containers: their next element (or key of the next member),
@@ -6134,9 +6324,15 @@ BasicJsonType materialize(const document_data& d, const node* n)
         const node* pos;
         const node* end;
         bool object;
+#if JSON_DIAGNOSTIC_POSITIONS
+        std::size_t start;    ///< the opening bracket (npos: unknown)
+        std::size_t last_end; ///< the end of the last element read (npos: unknown)
+#endif
     };
 
+#if !JSON_DIAGNOSTIC_POSITIONS
     // a scalar needs neither the handler nor the stack of open containers
+    // (with positions, it goes through the handler, which sets them)
     switch (static_cast<value_t>(n->kind))
     {
         case value_t::string:
@@ -6158,10 +6354,16 @@ BasicJsonType materialize(const document_data& d, const node* n)
         default:
             break;
     }
+#endif
 
     BasicJsonType result;
+#if JSON_DIAGNOSTIC_POSITIONS
+    position_source positions;
+    sax_t sax(result, true, &positions);
+#else
     sax_t sax(result, true);
-    const string_t no_token{};
+#endif
+    const string_t no_token {};
     // (shallow subtrees on the stack: a call for a small value then allocates only for the value)
     std::array<frame, 16> shallow; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): filled as containers open
     std::vector<frame> deep{};
@@ -6176,6 +6378,16 @@ BasicJsonType materialize(const document_data& d, const node* n)
     std::size_t depth = 0;
     for (;;)
     {
+#if JSON_DIAGNOSTIC_POSITIONS
+        if (!is_container(*n))
+        {
+            positions.set_scalar(d, *n);
+            if (depth != 0)
+            {
+                open[depth - 1].last_end = positions.end;
+            }
+        }
+#endif
         // false positive: n comes from nav::value(), which never returns null for a valid index
         // @infer-ignore NULLPTR_DEREFERENCE
         switch (static_cast<value_t>(n->kind))
@@ -6184,6 +6396,12 @@ BasicJsonType materialize(const document_data& d, const node* n)
             case value_t::array:
             {
                 const bool object = n->kind == node_kind::object;
+#if JSON_DIAGNOSTIC_POSITIONS
+                // (moved containers are also new)
+                const std::size_t start = (n->flags & node_flags::is_new) == 0 && n->off < d.size ? std::size_t{n->off} :
+                                          std::string::npos;
+                positions.set(start, start + 1);
+#endif
                 if (object)
                 {
                     sax.start_object(n->len);
@@ -6200,8 +6418,14 @@ BasicJsonType materialize(const document_data& d, const node* n)
                     open = deep.data();
                     capacity = deep.size();
                 }
-                open[depth++] = frame{nav::first(d, n), nav::end(d, n), object};
+#if JSON_DIAGNOSTIC_POSITIONS
+                // (until an element is read, the container's own bracket is the last thing read)
+                open[depth++] = frame{nav::first(d, n), nav::end(d, n), object, start, positions.end};
                 break;
+#else
+                open[depth++] = frame {nav::first(d, n), nav::end(d, n), object};
+                break;
+#endif
             }
             case value_t::string:
             {
@@ -6241,6 +6465,15 @@ BasicJsonType materialize(const document_data& d, const node* n)
             frame& f = open[depth - 1];
             if (f.pos == f.end)
             {
+#if JSON_DIAGNOSTIC_POSITIONS
+                const std::size_t end = f.start == std::string::npos || f.last_end == std::string::npos ? std::string::npos : position_source::container_end(d.base[0], d.size, f.last_end);
+                // (an end of npos clears the start, see diagnostic_positions)
+                positions.set(end == std::string::npos ? end : end - 1, end);
+                if (depth > 1)
+                {
+                    open[depth - 2].last_end = end;
+                }
+#endif
                 if (f.object)
                 {
                     sax.end_object();

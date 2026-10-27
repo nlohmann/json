@@ -203,7 +203,7 @@ packet-beta
 | 2-3   | `extra` | `uint16_t` | numbers: the number of integer digits (low byte) and fraction digits (high byte), 255 for more; objects: the number of their key hash index (1-based), or 0; otherwise 0 |
 | 4-7   | `off`   | `uint32_t` | where the value starts: the first byte after a string's opening quote (or its position in the buffer of decoded strings), the first byte of a number or literal, the bracket of an array or object |
 | 8-11  | `len`   | `uint32_t` | strings: the length after decoding; floats and literals: the length of the token; arrays and objects: the number of elements |
-| 12-15 | `next`  | `uint32_t` | arrays and objects: the number of nodes of the subtree, including the node itself                                              |
+| 12-15 | `next`  | `uint32_t` | arrays and objects: the number of nodes of the subtree, including the node itself; strings with escapes: the position of the opening quote in the source plus one, or 0 (only with [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md)) |
 
 <p class="nj-table-caption" markdown>Fields of a node, by their byte offset within the 16-byte node. Integers use bytes 8-15 differently, see below.</p>
 
@@ -218,6 +218,11 @@ packet-beta
   step from element to element this way and skip whole subtrees in constant time.
 - **Offsets** are 32 bits wide, so a document is limited to 4294967279 bytes, 4 GiB minus 16 bytes (a margin below
   2^32 for positions one scanner step past the end of the text; `out_of_range.416`).
+- **Source positions** ([`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md)) are derived by
+  [`materialize()`](../api/basic_json_view/materialize.md) and cost nothing while parsing: a scalar's range follows
+  from `off` and its length, a string with escapes is scanned from its opening quote (`next`) to the closing one,
+  and the end of an array or object is found by scanning from the end of its last element over whitespace, comments,
+  and a trailing comma. `materialize()` hands these positions to the SAX builder of `parse()` in place of its lexer.
 - **Large objects** (128 members or more) get a hash index for their keys after parsing
   ([`detail/view/object_index.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/object_index.hpp)):
   an open-addressing table whose slots hold the distance from the object's node to a key's node, so that a lookup does
@@ -277,7 +282,7 @@ Images ([`save`](../api/basic_json_document/save.md) and [`load`](../api/basic_j
 the nodes as they are: a 64-byte header (the magic bytes `NJVI`, a format version, the sizes, and reserved bytes that
 must be zero), the nodes, the text, and the decoded strings. An edited document is first written in document order, as
 the parser would have written it (without links), and the numbers of the hash indexes are cleared, since `load`
-rebuilds the indexes. So a change of the node layout is a change of the image format: it must raise `image_version`,
+rebuilds the indexes. The flag *new* is kept, as these values have no position in the text. So a change of the node layout is a change of the image format: it must raise `image_version`,
 and `load` then rejects images of other versions (`parse_error.116`) instead of misreading them.
 
 ## Input adapters
