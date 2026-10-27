@@ -183,7 +183,8 @@ def known(path, mention):
     return any(path == file and mention == known_mention for file, known_mention, _ in KNOWN_REFERENCES)
 
 
-def check(root):
+def check_workflows(root):
+    """Return the errors in the filters of the workflows and in the targets they run."""
     errors = []
     for workflow in WORKFLOWS:
         expected = [p.replace('{workflow}', workflow) for p in PATHS]
@@ -193,40 +194,53 @@ def check(root):
                           '  expected: {}\n  actual:   {}'.format(workflow, expected, actual))
         with open(os.path.join(root, workflow), encoding='utf-8') as f:
             text = f.read()
-        for target in UNFILTERED_TARGETS:
-            if re.search(r'\b' + target + r'\b', text):
-                errors.append('{}: runs {}, which reads excluded files; run it in repository_checks.yml'.format(workflow, target))
+        errors += ['{}: runs {}, which reads excluded files; run it in repository_checks.yml'.format(workflow, target)
+                   for target in UNFILTERED_TARGETS if re.search(r'\b' + target + r'\b', text)]
+    return errors
 
-    files = git_files(root)
-    union = [compile_filter(PATHS, w) for w in WORKFLOWS]
-    def is_excluded(path):
-        return not any(included(c, path) for c in union)
 
-    excluded = {f for f in files if is_excluded(f)}
-    finder = Mentions(files, excluded, is_excluded)
+def scanned_text(root, path):
+    """Return the text of a kept file without comment lines and without the filter itself, or None to skip it."""
+    # third-party code and Markdown files read nothing; this script lists the excluded files
+    if path.startswith('tests/thirdparty/') or path.endswith('.md') or path == SELF:
+        return None
+    try:
+        with open(os.path.join(root, path), encoding='utf-8') as f:
+            # a mention in a comment line reads nothing; keep the line numbers
+            text = COMMENT_LINE.sub('', f.read())
+    except (UnicodeDecodeError, OSError):
+        return None
+    if path in WORKFLOWS:
+        # the filter itself lists the excluded files
+        for p in PATHS:
+            text = text.replace("      - '{}'".format(p.replace('{workflow}', path)), '')
+    return text
 
+
+def check_mentions(root, files, excluded, finder):
+    """Return an error for every mention of an excluded file in a kept file that KNOWN_REFERENCES does not list."""
+    errors = []
     for path in sorted(set(files) - excluded):
-        # third-party code and Markdown files read nothing; this script lists the excluded files
-        if path.startswith('tests/thirdparty/') or path.endswith('.md') or path == SELF:
-            continue
-        try:
-            with open(os.path.join(root, path), encoding='utf-8') as f:
-                # a mention in a comment line reads nothing; keep the line numbers
-                text = COMMENT_LINE.sub('', f.read())
-        except (UnicodeDecodeError, OSError):
-            continue
-        if path in WORKFLOWS:
-            # the filter itself lists the excluded files
-            for p in PATHS:
-                text = text.replace("      - '{}'".format(p.replace('{workflow}', path)), '')
+        text = scanned_text(root, path)
         reported = set()
-        for offset, mention in finder.find(text):
+        for offset, mention in finder.find(text or ''):
             if mention not in reported and not known(path, mention):
                 reported.add(mention)
                 line = text.count('\n', 0, offset) + 1
                 errors.append('{}:{}: mentions excluded {}; include it in PATHS if a compiler job reads it, '
                               'or add it to KNOWN_REFERENCES'.format(path, line, mention))
+    return errors
 
+
+def check(root):
+    files = git_files(root)
+    union = [compile_filter(PATHS, w) for w in WORKFLOWS]
+
+    def is_excluded(path):
+        return not any(included(c, path) for c in union)
+
+    excluded = {f for f in files if is_excluded(f)}
+    errors = check_workflows(root) + check_mentions(root, files, excluded, Mentions(files, excluded, is_excluded))
     for e in errors:
         print(e)
     if not errors:
