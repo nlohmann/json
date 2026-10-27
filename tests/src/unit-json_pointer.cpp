@@ -1160,17 +1160,17 @@ TEST_CASE("flatten of structured values")
 
         // the same for other keys that are not valid array indices
         CHECK_THROWS_WITH_AS(json({{"/a/0", 1}, {"/a/1a", 2}}).unflatten(),
-                             "[json.exception.out_of_range.404] unresolved reference token '1a'", json::out_of_range&);
+        "[json.exception.out_of_range.404] unresolved reference token '1a'", json::out_of_range&);
         CHECK_THROWS_WITH_AS(json({{"/a/0", 1}, {"/a/-", 2}}).unflatten(),
-                             "[json.exception.out_of_range.404] unresolved reference token '-'", json::out_of_range&);
+        "[json.exception.out_of_range.404] unresolved reference token '-'", json::out_of_range&);
     }
 
     SECTION("unflatten with the empty token among array indices")
     {
         CHECK_THROWS_WITH_AS(json({{"/a/0", 1}, {"/a/", 2}}).unflatten(),
-                             "[json.exception.out_of_range.404] unresolved reference token ''", json::out_of_range&);
+        "[json.exception.out_of_range.404] unresolved reference token ''", json::out_of_range&);
         CHECK_THROWS_WITH_AS(json({{"/a/0", 1}, {"/a/1", 2}, {"/a/", 3}}).unflatten(),
-                             "[json.exception.out_of_range.404] unresolved reference token ''", json::out_of_range&);
+        "[json.exception.out_of_range.404] unresolved reference token ''", json::out_of_range&);
 
         // without an index "0", the empty token is an ordinary object key
         CHECK(json({{"/a/", 2}}).unflatten() == json({{"a", {{"", 2}}}}));
