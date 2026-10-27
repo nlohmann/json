@@ -847,8 +847,8 @@ TEST_CASE("JSON patch")
 
             SECTION("copy operations without spare capacity")
             {
+                // a copy has exactly as much capacity as elements
                 json doc = copy_ops;
-                doc.get_ref<json::array_t&>().shrink_to_fit();
                 CHECK(doc.patch(doc) == expected_copies);
 
                 doc.patch_inplace(doc);
@@ -857,8 +857,15 @@ TEST_CASE("JSON patch")
 
             SECTION("copy operations with spare capacity")
             {
-                json doc = copy_ops;
+                // reserve while the array is empty: reallocating non-empty
+                // elements behind the library's back leaves stale parent
+                // pointers with JSON_DIAGNOSTICS
+                json doc = json::array();
                 doc.get_ref<json::array_t&>().reserve(100);
+                for (int i = 0; i < 5; ++i)
+                {
+                    doc.push_back(copy_op);
+                }
                 CHECK(doc.patch(doc) == expected_copies);
 
                 doc.patch_inplace(doc);

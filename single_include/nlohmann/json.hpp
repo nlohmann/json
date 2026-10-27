@@ -43256,6 +43256,7 @@ public:
         // a copy when a value is applied as patch to itself
         if (JSON_HEDLEY_UNLIKELY(&json_patch == this))
         {
+            // NOLINTNEXTLINE(performance-unnecessary-copy-initialization): *this is modified below
             const basic_json json_patch_copy = json_patch;
             patch_inplace(json_patch_copy);
             return;
