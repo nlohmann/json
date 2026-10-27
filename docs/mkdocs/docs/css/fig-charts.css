@@ -27,6 +27,10 @@
 
 .md-typeset svg.nj-charts--compile, .md-typeset svg.nj-charts--scaling { max-width: 26rem; }
 .md-typeset svg.nj-charts--sizes { max-width: 26rem; }
+/* home/blog/how_3_13_0_got_faster.md (scripts/figures/perf_blog.py) */
+.md-typeset svg.nj-charts--blog { max-width: 34rem; }
+.md-typeset svg.nj-charts--swar { max-width: 34rem; }
+.md-typeset svg.nj-charts--timeline { max-width: 22rem; }
 
 .nj-charts text { fill: currentColor; font-size: 13px; }
 .nj-charts .nj-charts-leg { font-size: 13.5px; }
