@@ -385,9 +385,9 @@ TEST_CASE("alternative string type")
         CHECK(j.dump() == R"({"a":{"b":[1,null,null,{"x":[{"y":1}]},4],"z":2},"c":[{"q":3}]})");
 
         // a failing access leaves the value unchanged
-        alt_json k = before;
-        CHECK_THROWS_AS(k[alt_json::json_pointer("/a/n/99999999999999999999999")], alt_json::out_of_range&);
-        CHECK(k == before);
+        j = before;
+        CHECK_THROWS_AS(j[alt_json::json_pointer("/a/n/99999999999999999999999")], alt_json::out_of_range&);
+        CHECK(j == before);
     }
 
     SECTION("operator/(std::size_t)")

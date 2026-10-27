@@ -810,7 +810,7 @@ class json_pointer
                 case change::array_grown:
                 {
                     auto& elements = *m_value->m_data.m_value.array;
-                    elements.erase(std::next(elements.begin(), static_cast<typename BasicJsonType::difference_type>(m_old_size)), elements.end());
+                    elements.resize(m_old_size);
                     break;
                 }
                 case change::none:
@@ -1271,7 +1271,7 @@ class json_pointer
                         // explicitly treat "-" as index beyond the end
                         return array_append(*ptr);
                     }
-                    // an element is appended in get_unchecked_create
+                    // an element will be appended in get_unchecked_create
                     break;
                 }
                 if (token + 1 == end)
@@ -1282,14 +1282,14 @@ class json_pointer
                 const auto idx = array_index<BasicJsonType>(*token);
                 if (idx >= ptr->m_data.m_value.array->size())
                 {
-                    // the array is padded in get_unchecked_create
+                    // the array will be padded in get_unchecked_create
                     break;
                 }
                 ptr = &(*ptr->m_data.m_value.array)[idx];
             }
             else if (ptr->is_null())
             {
-                // the null value is converted in get_unchecked_create
+                // the null value will be converted in get_unchecked_create
                 break;
             }
             else

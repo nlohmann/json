@@ -613,13 +613,13 @@ TEST_CASE("JSON pointers")
                                  "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
         }
 
-        SECTION("a failing access leaves the value unchanged")
+        SECTION("a failing operator[] leaves the value unchanged")
         {
             check_strong_guarantee_cases<json>();
             check_strong_guarantee_cases<nlohmann::ordered_json>();
         }
 
-        SECTION("a successful access still creates the same values")
+        SECTION("a successful operator[] still creates the same values")
         {
             json j = {{"a", {1}}};
             j["/a/3/x/-/y"_json_pointer] = 1;
