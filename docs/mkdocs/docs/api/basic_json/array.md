@@ -29,9 +29,9 @@ Linear in the size of `init`.
 This function is only needed to express two edge cases that cannot be realized with the initializer list constructor
 ([`basic_json(initializer_list_t, bool, value_t)`](basic_json.md)). These cases are:
 
-1. creating an array whose elements are all pairs whose first element is a string -- in this case, the initializer list
+1. creating an array whose elements are all pairs whose first element is a string — in this case, the initializer list
    constructor would create an object, taking the first elements as keys
-2. creating an empty array -- passing the empty initializer list to the initializer list constructor yields an empty
+2. creating an empty array — passing the empty initializer list to the initializer list constructor yields an empty
    object
 
 ## Examples

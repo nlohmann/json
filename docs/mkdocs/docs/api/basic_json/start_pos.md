@@ -60,8 +60,9 @@ Constant.
 
 ## See also
 
-- [end_pos](end_pos.md) to access the end position
-- [JSON_DIAGNOSTIC_POSITIONS](../macros/json_diagnostic_positions.md) for an overview of the diagnostic positions
+- [`end_pos`](end_pos.md) - to access the end position
+- [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) - overview of the supported conversions
+- [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - handling parse errors and locating them in the input
 
 ## Version history
 

@@ -52,9 +52,10 @@ When these macros are not defined, the library will define them to their default
 
 ## See also
 
-- [`nlohmann` Namespace](../../features/namespace.md)
-- [NLOHMANN_JSON_NAMESPACE](nlohmann_json_namespace.md)
-- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](nlohmann_json_namespace_no_version.md)
+- [`nlohmann` Namespace](../../features/namespace.md) - how the library's namespace is defined and versioned
+- [`NLOHMANN_JSON_NAMESPACE`](nlohmann_json_namespace.md) - macro expanding to the library namespace
+- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](nlohmann_json_namespace_no_version.md) - disable the inline versioned namespace
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
 
 ## Version history
 

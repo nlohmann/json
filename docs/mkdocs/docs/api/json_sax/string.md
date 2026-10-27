@@ -37,7 +37,7 @@ It is safe to move the passed string value.
 
 ## See also
 
-- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [`sax_parse`](../basic_json/sax_parse.md) - SAX parser
 - [SAX Interface](../../features/parsing/sax_interface.md) - the SAX interface article
 
 ## Version history

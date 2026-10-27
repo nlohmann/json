@@ -13,6 +13,8 @@ flowchart LR
     A --> V["bool: is the input valid JSON?"]
 ```
 
+<p class="nj-caption" markdown>The three entry points for parsing: `parse()` builds a `basic_json` value, optionally filtered by a parser callback, `sax_parse()` delivers events to a SAX handler, and `accept()` only checks whether the input is valid.</p>
+
 ## Input
 
 The [`parse`](../../api/basic_json/parse.md) function reads a JSON value from an input. The input can be
@@ -34,7 +36,7 @@ json data = json::parse(f);
 ```
 
 The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which
-is read as UTF-16 or UTF-32 -- depending on the character type -- and converted to UTF-8; see the
+is read as UTF-16 or UTF-32 — depending on the character type — and converted to UTF-8; see the
 [`parse`](../../api/basic_json/parse.md) page for an example. A single input may contain only one JSON value.
 Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](json_lines.md) format; input
 that arrives in chunks or contains several values is covered in
@@ -154,4 +156,11 @@ options.
 - [Zero-copy JSON views](../json_view.md) - parse into a read-only document and read it through views
 - [parsing and exceptions](parse_exceptions.md) - control error handling
 - [parsing untrusted input](untrusted_input.md) - what to consider when parsing input from untrusted sources
-- [Zero-copy JSON views](../json_view.md) - parse into a document and read it through a view
+- [`operator>>`](../../api/operator_gtgt.md) - deserialize from stream
+- [`json_sax`](../../api/json_sax/index.md) - documentation of the SAX interface
+- [`parse_error`](../../api/basic_json/parse_error.md) - exception thrown on a parse error
+- [Comments](../comments.md) - ignore `//` and `/* */` comments while parsing
+- [Trailing Commas](../trailing_commas.md) - accept trailing commas in arrays and objects
+- [Serialization](../serialization.md) - pretty-printing, UTF-8 handling, and number output
+- [Working Without Exceptions](../no_exceptions.md) - error handling when exceptions are disabled
+- [Exceptions](../../home/exceptions.md) - list of exceptions and error codes

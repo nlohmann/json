@@ -37,8 +37,8 @@ Linear in the length of the JSON pointer.
 
 ## See also
 
-- [pop_back](pop_back.md) remove the last reference token
-- [back](back.md) return the last reference token
+- [`pop_back`](pop_back.md) - remove the last reference token
+- [`back`](back.md) - return the last reference token
 
 ## Version history
 

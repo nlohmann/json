@@ -18,8 +18,8 @@ Linear.
 
 ## See also
 
-- [basic_json](basic_json.md) constructs a JSON value
-- [clear](clear.md) clears the content of a JSON value without destroying it
+- [`basic_json`](basic_json.md) - constructs a JSON value
+- [`clear`](clear.md) - clears the content of a JSON value without destroying it
 
 ## Version history
 

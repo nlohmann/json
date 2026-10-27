@@ -1,0 +1,50 @@
+<svg class="nj-fig nj-fig--sax-buf" viewBox="0 0 700 442" role="img" aria-labelledby="fig-sax-buf-title fig-sax-buf-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-sax-buf-title">Buffering chunks until the value is complete: five chunks of {&quot;name&quot;: &quot;Mary&quot;, &quot;list&quot;: [1, 2, 3]} appended to a buffer.</title>
+<desc id="fig-sax-buf-desc">After chunks 1 to 4 the buffer has 4, 12, 19, and 30 bytes, and parsing it fails at byte 5, 13, 20, and 31: one past the end, so the input is incomplete and the program waits for more. After chunk 5 the buffer of 35 bytes parses as one complete value. For the input [1, ] of 5 bytes the error is at byte 5, before the end, so it is a real syntax error. Every attempt parses the buffer from byte 1, so 4 + 12 + 19 + 30 + 35 = 100 bytes are parsed for a 35-byte value, and the work grows quadratically.</desc>
+<text class="fg-h" x="16" y="24">chunk</text>
+<text class="fg-h" x="96" y="24">buffer, parsed from byte 1 each time</text>
+<text class="fg-h" x="420" y="24">result</text>
+<text class="fg-note fg-note--l" x="16" y="67">chunk 1</text>
+<rect class="nj-sax-new" x="96" y="50" width="36.6" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="67" xml:space="preserve">{&quot;na</text>
+<path class="nj-sax-caret nj-sax-s-wait" d="M133.8 76 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-wait" x="420" y="61">error at byte 5 = size + 1</text>
+<text class="fg-note fg-note--l" x="420" y="77">incomplete: wait for more</text>
+<text class="fg-note fg-note--l" x="16" y="117">chunk 2</text>
+<rect class="nj-sax-old" x="93" y="100" width="36.6" height="24" rx="4"/>
+<rect class="nj-sax-new" x="129.6" y="100" width="70.2" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="117" xml:space="preserve">{&quot;name&quot;: &quot;Ma</text>
+<path class="nj-sax-caret nj-sax-s-wait" d="M201 126 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-wait" x="420" y="111">error at byte 13 = size + 1</text>
+<text class="fg-note fg-note--l" x="420" y="127">incomplete: wait for more</text>
+<text class="fg-note fg-note--l" x="16" y="167">chunk 3</text>
+<rect class="nj-sax-old" x="93" y="150" width="103.8" height="24" rx="4"/>
+<rect class="nj-sax-new" x="196.8" y="150" width="61.8" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="167" xml:space="preserve">{&quot;name&quot;: &quot;Mary&quot;, &quot;l</text>
+<path class="nj-sax-caret nj-sax-s-wait" d="M259.8 176 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-wait" x="420" y="161">error at byte 20 = size + 1</text>
+<text class="fg-note fg-note--l" x="420" y="177">incomplete: wait for more</text>
+<text class="fg-note fg-note--l" x="16" y="217">chunk 4</text>
+<rect class="nj-sax-old" x="93" y="200" width="162.6" height="24" rx="4"/>
+<rect class="nj-sax-new" x="255.6" y="200" width="95.4" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="217" xml:space="preserve">{&quot;name&quot;: &quot;Mary&quot;, &quot;list&quot;: [1, 2</text>
+<path class="nj-sax-caret nj-sax-s-wait" d="M352.2 226 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-wait" x="420" y="211">error at byte 31 = size + 1</text>
+<text class="fg-note fg-note--l" x="420" y="227">incomplete: wait for more</text>
+<text class="fg-note fg-note--l" x="16" y="267">chunk 5</text>
+<rect class="nj-sax-old" x="93" y="250" width="255" height="24" rx="4"/>
+<rect class="nj-sax-new" x="348" y="250" width="45" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="267" xml:space="preserve">{&quot;name&quot;: &quot;Mary&quot;, &quot;list&quot;: [1, 2, 3]}</text>
+<text class="nj-sax-status nj-sax-s-ok" x="420" y="261">parsed, size 35</text>
+<text class="fg-note fg-note--l" x="420" y="277">complete: one value</text>
+<path class="nj-sax-sep" d="M16 290 H684"/>
+<text class="fg-note fg-note--l" x="16" y="325">other input</text>
+<rect class="nj-sax-new" x="96" y="308" width="45" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="325" xml:space="preserve">[1, ]</text>
+<path class="nj-sax-caret nj-sax-s-err" d="M133.8 334 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-err" x="420" y="319">error at byte 5, size 5</text>
+<text class="fg-note fg-note--l" x="420" y="335">before the end: a real error</text>
+<text class="fg-note fg-note--l" x="16" y="366">Bytes parsed: 4 + 12 + 19 + 30 + 35 = 100 for a value of 35 bytes.</text>
+<text class="fg-note fg-note--l" x="16" y="386">Every attempt starts again at byte 1, so the total work grows</text>
+<text class="fg-note fg-note--l" x="16" y="406">quadratically with the size of the value.</text>
+</svg>

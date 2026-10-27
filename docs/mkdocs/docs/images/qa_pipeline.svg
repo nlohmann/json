@@ -1,0 +1,240 @@
+<svg class="nj-fig nj-exceptions-qa nj-exceptions-qa--wide" viewBox="0 0 760 808" role="img" aria-labelledby="nj-qa-title-w nj-qa-desc-w" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-qa-title-w">Quality assurance pipeline</title>
+<desc id="nj-qa-desc-w">Every push or pull request starts these checks in parallel: Build matrix (every push / PR): 50+ compilers: G&#8203;CC, Clang, M&#8203;SVC, AppleClang, Intel, NVIDIA, ... C++11, 14, 17, 20, 23, and 26 libc++ and libstdc++ warnings: Clang -Weverything, G&#8203;CC 300+ warnings; Unit tests (doctest) (every push / PR): every public A&#8203;PI function every exception id and message all Unicode code points single header and split headers custom number, string, array, and object types; Coverage (every push / PR): unit tests cover all lines of the code base; Static analysis (every push / PR, scheduled): Clang-Tidy, Cppcheck, Infer Clang Static Analyzer (52 checkers), I&#8203;WYU, Codacy CodeQL, Semgrep, Flawfinder (also scheduled); Dynamic analysis (every push / PR): runtime assertions Valgrind (Memcheck) address and undefined behavior sanitizers, integer overflow, nullability violations; Fuzzing (every PR, continuous): CIFuzz on every pull request OSS-Fuzz: billions of inputs every crash fixed with a reproducing unit test; Style (every push / PR): Artistic Style (astyle), enforced in the C&#8203;I cpplint with 61 rules; Docs and examples (every push / PR, scheduled): every documentation example is tested; changed output fails site built with warnings as errors; links checked regularly (scheduled); Integration, supply chain (every push / PR, scheduled): CMake 3.5, 3.31.6, and 4.0.0 Meson, Swift Package Manager dependency review on every PR Dependabot daily, OpenSSF Scorecard, R&#8203;EUSE. When they pass, the change is merged into develop; a release is made only when no vulnerability alert is open.</desc>
+<defs><marker id="nj-qa-arrow-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="fg-head" d="M0 1 L10 5 L0 9 z"/></marker></defs>
+<rect class="nj-exceptions-groupbox" x="12" y="70" width="736" height="594" rx="12"/>
+<rect class="nj-exceptions-stage" x="265" y="8" width="230" height="34" rx="17"/>
+<text class="nj-exceptions-stagetext" x="380" y="30">push or pull request</text>
+<line class="nj-exceptions-edge" x1="380" y1="42" x2="380" y2="68" marker-end="url(#nj-qa-arrow-w)"/>
+<text class="nj-exceptions-group" x="26" y="94">checks, run in parallel on GitHub Actions and AppVeyor</text>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="110" width="228" height="184" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="135">Build matrix</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="146" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="160">every push / PR</text>
+<text class="nj-exceptions-line" x="40" y="188">50+ compilers: G&#8203;CC, Clang, M&#8203;SVC,</text>
+<text class="nj-exceptions-line" x="40" y="206">AppleClang, Intel, NVIDIA, ...</text>
+<text class="nj-exceptions-line" x="40" y="224">C++11, 14, 17, 20, 23, and 26</text>
+<text class="nj-exceptions-line" x="40" y="242">libc++ and libstdc++</text>
+<text class="nj-exceptions-line" x="40" y="260">warnings: Clang -Weverything,</text>
+<text class="nj-exceptions-line" x="40" y="278">G&#8203;CC 300+ warnings</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="266" y="110" width="228" height="184" rx="8"/>
+<text class="nj-exceptions-ctitle" x="280" y="135">Unit tests (doctest)</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="280" y="146" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="335.25" y="160">every push / PR</text>
+<text class="nj-exceptions-line" x="280" y="188">every public A&#8203;PI function</text>
+<text class="nj-exceptions-line" x="280" y="206">every exception id and message</text>
+<text class="nj-exceptions-line" x="280" y="224">all Unicode code points</text>
+<text class="nj-exceptions-line" x="280" y="242">single header and split headers</text>
+<text class="nj-exceptions-line" x="280" y="260">custom number, string, array,</text>
+<text class="nj-exceptions-line" x="280" y="278">and object types</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="506" y="110" width="228" height="184" rx="8"/>
+<text class="nj-exceptions-ctitle" x="520" y="135">Coverage</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="520" y="146" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="575.25" y="160">every push / PR</text>
+<text class="nj-exceptions-line" x="520" y="188">unit tests cover all lines</text>
+<text class="nj-exceptions-line" x="520" y="206">of the code base</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="306" width="228" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="331">Static analysis</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="342" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="356">every push / PR</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--sched" x="156.5" y="342" width="72.7" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--sched" x="192.85" y="356">scheduled</text>
+<text class="nj-exceptions-line" x="40" y="384">Clang-Tidy, Cppcheck, Infer</text>
+<text class="nj-exceptions-line" x="40" y="402">Clang Static Analyzer (52</text>
+<text class="nj-exceptions-line" x="40" y="420">checkers), I&#8203;WYU, Codacy</text>
+<text class="nj-exceptions-line" x="40" y="438">CodeQL, Semgrep, Flawfinder</text>
+<text class="nj-exceptions-line" x="40" y="456">(also scheduled)</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="266" y="306" width="228" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="280" y="331">Dynamic analysis</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="280" y="342" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="335.25" y="356">every push / PR</text>
+<text class="nj-exceptions-line" x="280" y="384">runtime assertions</text>
+<text class="nj-exceptions-line" x="280" y="402">Valgrind (Memcheck)</text>
+<text class="nj-exceptions-line" x="280" y="420">address and undefined behavior</text>
+<text class="nj-exceptions-line" x="280" y="438">sanitizers, integer overflow,</text>
+<text class="nj-exceptions-line" x="280" y="456">nullability violations</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="506" y="306" width="228" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="520" y="331">Fuzzing</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="520" y="342" width="66.4" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="553.2" y="356">every PR</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--cont" x="592.4" y="342" width="79" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--cont" x="631.9" y="356">continuous</text>
+<text class="nj-exceptions-line" x="520" y="384">CIFuzz on every pull request</text>
+<text class="nj-exceptions-line" x="520" y="402">OSS-Fuzz: billions of inputs</text>
+<text class="nj-exceptions-line" x="520" y="420">every crash fixed with a</text>
+<text class="nj-exceptions-line" x="520" y="438">reproducing unit test</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="484" width="228" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="509">Style</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="520" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="534">every push / PR</text>
+<text class="nj-exceptions-line" x="40" y="562">Artistic Style (astyle),</text>
+<text class="nj-exceptions-line" x="40" y="580">enforced in the C&#8203;I</text>
+<text class="nj-exceptions-line" x="40" y="598">cpplint with 61 rules</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="266" y="484" width="228" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="280" y="509">Docs and examples</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="280" y="520" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="335.25" y="534">every push / PR</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--sched" x="396.5" y="520" width="72.7" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--sched" x="432.85" y="534">scheduled</text>
+<text class="nj-exceptions-line" x="280" y="562">every documentation example is</text>
+<text class="nj-exceptions-line" x="280" y="580">tested; changed output fails</text>
+<text class="nj-exceptions-line" x="280" y="598">site built with warnings</text>
+<text class="nj-exceptions-line" x="280" y="616">as errors; links checked</text>
+<text class="nj-exceptions-line" x="280" y="634">regularly (scheduled)</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="506" y="484" width="228" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="520" y="509">Integration, supply chain</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="520" y="520" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="575.25" y="534">every push / PR</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--sched" x="636.5" y="520" width="72.7" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--sched" x="672.85" y="534">scheduled</text>
+<text class="nj-exceptions-line" x="520" y="562">CMake 3.5, 3.31.6, and 4.0.0</text>
+<text class="nj-exceptions-line" x="520" y="580">Meson, Swift Package Manager</text>
+<text class="nj-exceptions-line" x="520" y="598">dependency review on every PR</text>
+<text class="nj-exceptions-line" x="520" y="616">Dependabot daily, OpenSSF</text>
+<text class="nj-exceptions-line" x="520" y="634">Scorecard, R&#8203;EUSE</text>
+</g>
+<line class="nj-exceptions-edge" x1="380" y1="664" x2="380" y2="690" marker-end="url(#nj-qa-arrow-w)"/>
+<rect class="nj-exceptions-stage nj-exceptions-stage--merge" x="265" y="692" width="230" height="34" rx="17"/>
+<text class="nj-exceptions-stagetext" x="380" y="714">merge into develop</text>
+<line class="nj-exceptions-edge" x1="380" y1="726" x2="380" y2="752" marker-end="url(#nj-qa-arrow-w)"/>
+<rect class="nj-exceptions-stage nj-exceptions-stage--merge" x="230" y="754" width="300" height="46" rx="23"/>
+<text class="nj-exceptions-stagetext" x="380" y="776">release</text>
+<text class="nj-exceptions-stagesub" x="380" y="792">no open vulnerability alert</text>
+</svg>
+<svg class="nj-fig nj-exceptions-qa nj-exceptions-qa--narrow" viewBox="0 0 360 1786" role="img" aria-labelledby="nj-qa-title-n nj-qa-desc-n" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-qa-title-n">Quality assurance pipeline</title>
+<desc id="nj-qa-desc-n">Every push or pull request starts these checks in parallel: Build matrix (every push / PR): 50+ compilers: G&#8203;CC, Clang, M&#8203;SVC, AppleClang, Intel, NVIDIA, ... C++11, 14, 17, 20, 23, and 26 libc++ and libstdc++ warnings: Clang -Weverything, G&#8203;CC 300+ warnings; Unit tests (doctest) (every push / PR): every public A&#8203;PI function every exception id and message all Unicode code points single header and split headers custom number, string, array, and object types; Coverage (every push / PR): unit tests cover all lines of the code base; Static analysis (every push / PR, scheduled): Clang-Tidy, Cppcheck, Infer Clang Static Analyzer (52 checkers), I&#8203;WYU, Codacy CodeQL, Semgrep, Flawfinder (also scheduled); Dynamic analysis (every push / PR): runtime assertions Valgrind (Memcheck) address and undefined behavior sanitizers, integer overflow, nullability violations; Fuzzing (every PR, continuous): CIFuzz on every pull request OSS-Fuzz: billions of inputs every crash fixed with a reproducing unit test; Style (every push / PR): Artistic Style (astyle), enforced in the C&#8203;I cpplint with 61 rules; Docs and examples (every push / PR, scheduled): every documentation example is tested; changed output fails site built with warnings as errors; links checked regularly (scheduled); Integration, supply chain (every push / PR, scheduled): CMake 3.5, 3.31.6, and 4.0.0 Meson, Swift Package Manager dependency review on every PR Dependabot daily, OpenSSF Scorecard, R&#8203;EUSE. When they pass, the change is merged into develop; a release is made only when no vulnerability alert is open.</desc>
+<defs><marker id="nj-qa-arrow-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="fg-head" d="M0 1 L10 5 L0 9 z"/></marker></defs>
+<rect class="nj-exceptions-groupbox" x="12" y="70" width="336" height="1572" rx="12"/>
+<rect class="nj-exceptions-stage" x="65" y="8" width="230" height="34" rx="17"/>
+<text class="nj-exceptions-stagetext" x="180" y="30">push or pull request</text>
+<line class="nj-exceptions-edge" x1="180" y1="42" x2="180" y2="68" marker-end="url(#nj-qa-arrow-n)"/>
+<text class="nj-exceptions-group" x="26" y="94">checks, run in parallel</text>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="110" width="308" height="184" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="135">Build matrix</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="146" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="160">every push / PR</text>
+<text class="nj-exceptions-line" x="40" y="188">50+ compilers: G&#8203;CC, Clang, M&#8203;SVC,</text>
+<text class="nj-exceptions-line" x="40" y="206">AppleClang, Intel, NVIDIA, ...</text>
+<text class="nj-exceptions-line" x="40" y="224">C++11, 14, 17, 20, 23, and 26</text>
+<text class="nj-exceptions-line" x="40" y="242">libc++ and libstdc++</text>
+<text class="nj-exceptions-line" x="40" y="260">warnings: Clang -Weverything,</text>
+<text class="nj-exceptions-line" x="40" y="278">G&#8203;CC 300+ warnings</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="306" width="308" height="184" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="331">Unit tests (doctest)</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="342" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="356">every push / PR</text>
+<text class="nj-exceptions-line" x="40" y="384">every public A&#8203;PI function</text>
+<text class="nj-exceptions-line" x="40" y="402">every exception id and message</text>
+<text class="nj-exceptions-line" x="40" y="420">all Unicode code points</text>
+<text class="nj-exceptions-line" x="40" y="438">single header and split headers</text>
+<text class="nj-exceptions-line" x="40" y="456">custom number, string, array,</text>
+<text class="nj-exceptions-line" x="40" y="474">and object types</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="502" width="308" height="112" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="527">Coverage</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="538" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="552">every push / PR</text>
+<text class="nj-exceptions-line" x="40" y="580">unit tests cover all lines</text>
+<text class="nj-exceptions-line" x="40" y="598">of the code base</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="626" width="308" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="651">Static analysis</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="662" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="676">every push / PR</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--sched" x="156.5" y="662" width="72.7" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--sched" x="192.85" y="676">scheduled</text>
+<text class="nj-exceptions-line" x="40" y="704">Clang-Tidy, Cppcheck, Infer</text>
+<text class="nj-exceptions-line" x="40" y="722">Clang Static Analyzer (52</text>
+<text class="nj-exceptions-line" x="40" y="740">checkers), I&#8203;WYU, Codacy</text>
+<text class="nj-exceptions-line" x="40" y="758">CodeQL, Semgrep, Flawfinder</text>
+<text class="nj-exceptions-line" x="40" y="776">(also scheduled)</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="804" width="308" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="829">Dynamic analysis</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="840" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="854">every push / PR</text>
+<text class="nj-exceptions-line" x="40" y="882">runtime assertions</text>
+<text class="nj-exceptions-line" x="40" y="900">Valgrind (Memcheck)</text>
+<text class="nj-exceptions-line" x="40" y="918">address and undefined behavior</text>
+<text class="nj-exceptions-line" x="40" y="936">sanitizers, integer overflow,</text>
+<text class="nj-exceptions-line" x="40" y="954">nullability violations</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="982" width="308" height="148" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="1007">Fuzzing</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="1018" width="66.4" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="73.2" y="1032">every PR</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--cont" x="112.4" y="1018" width="79" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--cont" x="151.9" y="1032">continuous</text>
+<text class="nj-exceptions-line" x="40" y="1060">CIFuzz on every pull request</text>
+<text class="nj-exceptions-line" x="40" y="1078">OSS-Fuzz: billions of inputs</text>
+<text class="nj-exceptions-line" x="40" y="1096">every crash fixed with a</text>
+<text class="nj-exceptions-line" x="40" y="1114">reproducing unit test</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="1142" width="308" height="130" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="1167">Style</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="1178" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="1192">every push / PR</text>
+<text class="nj-exceptions-line" x="40" y="1220">Artistic Style (astyle),</text>
+<text class="nj-exceptions-line" x="40" y="1238">enforced in the C&#8203;I</text>
+<text class="nj-exceptions-line" x="40" y="1256">cpplint with 61 rules</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="1284" width="308" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="1309">Docs and examples</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="1320" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="1334">every push / PR</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--sched" x="156.5" y="1320" width="72.7" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--sched" x="192.85" y="1334">scheduled</text>
+<text class="nj-exceptions-line" x="40" y="1362">every documentation example is</text>
+<text class="nj-exceptions-line" x="40" y="1380">tested; changed output fails</text>
+<text class="nj-exceptions-line" x="40" y="1398">site built with warnings</text>
+<text class="nj-exceptions-line" x="40" y="1416">as errors; links checked</text>
+<text class="nj-exceptions-line" x="40" y="1434">regularly (scheduled)</text>
+</g>
+<g class="nj-exceptions-card">
+<rect class="nj-exceptions-box" x="26" y="1462" width="308" height="166" rx="8"/>
+<text class="nj-exceptions-ctitle" x="40" y="1487">Integration, supply chain</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--push" x="40" y="1498" width="110.5" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--push" x="95.25" y="1512">every push / PR</text>
+<rect class="nj-exceptions-badge nj-exceptions-badge--sched" x="156.5" y="1498" width="72.7" height="20" rx="10"/>
+<text class="nj-exceptions-badgetext nj-exceptions-badgetext--sched" x="192.85" y="1512">scheduled</text>
+<text class="nj-exceptions-line" x="40" y="1540">CMake 3.5, 3.31.6, and 4.0.0</text>
+<text class="nj-exceptions-line" x="40" y="1558">Meson, Swift Package Manager</text>
+<text class="nj-exceptions-line" x="40" y="1576">dependency review on every PR</text>
+<text class="nj-exceptions-line" x="40" y="1594">Dependabot daily, OpenSSF</text>
+<text class="nj-exceptions-line" x="40" y="1612">Scorecard, R&#8203;EUSE</text>
+</g>
+<line class="nj-exceptions-edge" x1="180" y1="1642" x2="180" y2="1668" marker-end="url(#nj-qa-arrow-n)"/>
+<rect class="nj-exceptions-stage nj-exceptions-stage--merge" x="65" y="1670" width="230" height="34" rx="17"/>
+<text class="nj-exceptions-stagetext" x="180" y="1692">merge into develop</text>
+<line class="nj-exceptions-edge" x1="180" y1="1704" x2="180" y2="1730" marker-end="url(#nj-qa-arrow-n)"/>
+<rect class="nj-exceptions-stage nj-exceptions-stage--merge" x="30" y="1732" width="300" height="46" rx="23"/>
+<text class="nj-exceptions-stagetext" x="180" y="1754">release</text>
+<text class="nj-exceptions-stagesub" x="180" y="1770">no open vulnerability alert</text>
+</svg>

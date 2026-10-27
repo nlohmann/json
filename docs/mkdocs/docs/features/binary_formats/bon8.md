@@ -201,3 +201,12 @@ of the message are reported as [parse_error.110](../../home/exceptions.md#jsonex
     ```json
     --8<-- "examples/from_bon8.output"
     ```
+
+## See also
+
+- [Binary formats](index.md) - overview and comparison of the supported binary formats
+- [Binary values](../binary_values.md) - how binary values and subtypes map to BON8
+- [`to_bon8`](../../api/basic_json/to_bon8.md) - serialize a JSON value to BON8
+- [`from_bon8`](../../api/basic_json/from_bon8.md) - parse a JSON value from BON8
+- [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) - reject ill-formed UTF-8 in strings
+- [SAX interface](../parsing/sax_interface.md) - decode binary formats without building a value

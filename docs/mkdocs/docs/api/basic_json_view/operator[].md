@@ -15,8 +15,8 @@ basic_json_view operator[](IntegerType idx) const;
 basic_json_view operator[](const json_pointer& ptr) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see
-   the [Notes](#notes) below) -- or a [discarded](is_discarded.md) view if there is no such member.
+1. Returns the value of the object member with key `key` — the first one, should the key occur more than once (see
+   the [Notes](#notes) below) — or a [discarded](is_discarded.md) view if there is no such member.
 2. Returns the array element at index `idx`, or a [discarded](is_discarded.md) view if `idx` is out of range. The
    template accepts every integer type except `#!cpp bool` and `#!cpp std::size_t` (`#!cpp int`, `#!cpp unsigned`,
    `#!cpp long`, `#!cpp std::int64_t`, ...) and forwards to the `size_type` overload, so that an integer argument is
@@ -55,11 +55,11 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 ## Exceptions
 
 1. Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the value is not an object and
-   not [discarded](is_discarded.md) --
+   not [discarded](is_discarded.md) —
    the same exception, with the same message, that the **const** overload of
    [`BasicJsonType::operator[]`](../basic_json/operator%5B%5D.md) throws for a string argument on a non-object value.
 2. Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the value is not an array and
-   not [discarded](is_discarded.md) --
+   not [discarded](is_discarded.md) —
    the same exception, with the same message, that the **const** overload of
    [`BasicJsonType::operator[]`](../basic_json/operator%5B%5D.md) throws for a numeric argument on a non-array value.
 3. Throws the same exceptions, with the same messages, that the **const** overload of
@@ -81,7 +81,7 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 
 1. Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after
    another, in document order, stopping at the first match. Each comparison first checks the
-   key's length -- already known from the index, without reading the key bytes -- before comparing its content, so a
+   key's length — already known from the index, without reading the key bytes — before comparing its content, so a
    key of a different length than `key` is rejected without touching the source text.
    Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes
    constant time on average.
@@ -97,7 +97,7 @@ Unlike `BasicJsonType::operator[]`, which is undefined behavior (guarded by a
 [runtime assertion](../../features/assertions.md)) for a missing key on a **const** value, this operator returns a
 safe, testable result for a missing key or an index out of range: a [discarded](is_discarded.md) view, which is
 tested with [`is_discarded`](is_discarded.md).
-There is also no non-const overload that inserts a missing key or extends an array -- a view never modifies the
+There is also no non-const overload that inserts a missing key or extends an array — a view never modifies the
 document.
 
 !!! info "Chained access"
@@ -126,8 +126,8 @@ document.
 
     Overload 3 walks `ptr` one reference token at a time, starting at this value, the same way [`at`](at.md) and
     [`contains`](contains.md) do. It only ever returns a discarded view where the **const** overload of
-    `BasicJsonType::operator[]` would be undefined behavior for the same pointer -- a missing object member or an
-    out-of-range array index -- and still throws for every other way `ptr` can fail to resolve. See
+    `BasicJsonType::operator[]` would be undefined behavior for the same pointer — a missing object member or an
+    out-of-range array index — and still throws for every other way `ptr` can fail to resolve. See
     [`at`](at.md#exceptions) for the checked version, which throws in every case instead, and
     [`contains`](contains.md) for a version that never throws.
 
@@ -137,7 +137,7 @@ document.
 
     The example below reads a couple of fields out of a batch of user records without ever materializing a full
     `BasicJsonType` value for the batch. `operator[]` is used both to look up an optional object member and to index
-    into an array -- in both cases, a missing value comes back as a discarded view that can be tested with a plain
+    into an array — in both cases, a missing value comes back as a discarded view that can be tested with a plain
     `#!cpp if`, instead of relying on undefined behavior.
 
     ```cpp
@@ -168,9 +168,9 @@ document.
 
 ## See also
 
-- [at](at.md) - access specified element with bounds checking (throws instead of returning a discarded view)
-- [front](front.md), [back](back.md) - access the first or last element
-- [find](find.md), [contains](contains.md) - look up a member without throwing
+- [`at`](at.md) - access specified element with bounds checking (throws instead of returning a discarded view)
+- [`front`](front.md), [`back`](back.md) - access the first or last element
+- [`find`](find.md), [`contains`](contains.md) - look up a member without throwing
 - [`BasicJsonType::operator[]`](../basic_json/operator%5B%5D.md) - the corresponding function of `basic_json`
 - [`json_pointer`](../json_pointer/index.md) - JSON pointer type used by overload 3
 
