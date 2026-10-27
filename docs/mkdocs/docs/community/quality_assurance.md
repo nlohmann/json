@@ -4,6 +4,15 @@ Ensuring quality is paramount for this project, particularly because [numerous o
 depend on it. Each commit to the library undergoes rigorous checks against the following requirements, and any
 violations will result in a failed build.
 
+The overview shows the checks a change passes on its way from a push or pull request to a release; the sections below
+describe each of them.
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/qa_pipeline.svg"
+</div>
+
+<p class="nj-caption" markdown>The checks grouped by the stage at which they run, from push or pull request through the merge into develop to a release. The badge on each card says whether the check runs on every push or PR, on a schedule, or continuously.</p>
+
 ## C++ language compliance and compiler compatibility
 
 !!! success "Requirement: Compiler support"

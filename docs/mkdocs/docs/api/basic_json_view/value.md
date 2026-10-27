@@ -12,8 +12,8 @@ T value(const json_pointer& ptr, const T& default_value) const;
 string_t value(const json_pointer& ptr, const char* default_value) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see
-   [Notes on duplicate keys](operator[].md#notes)) -- converted to `T`, or `default_value` if there is no such member.
+1. Returns the value of the object member with key `key` — the first one, should the key occur more than once (see
+   [Notes on duplicate keys](operator[].md#notes)) — converted to `T`, or `default_value` if there is no such member.
 2. Returns the value a JSON pointer `ptr` refers to, starting at this value, converted to `T`, or `default_value` if
    `ptr` cannot be resolved.
 
@@ -48,16 +48,16 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 
 ## Exceptions
 
-1. Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the value is not an object --
+1. Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the value is not an object —
    the same exception, with the same message, that [`BasicJsonType::value`](../basic_json/value.md) throws for the
    same call. If a member with key `key` is found, throws whatever converting it to `T` throws (typically
    [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302), with the same message
    [`BasicJsonType::value`](../basic_json/value.md) throws for the same mismatch); a missing member never throws.
-2. Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if this value -- not the value `ptr`
-   resolves to -- is neither an object nor an array. Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106)
+2. Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if this value — not the value `ptr`
+   resolves to — is neither an object nor an array. Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106)
    or [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if `ptr` contains a malformed array
    index. If `ptr` resolves to a value, throws whatever converting it to `T` throws. Every other way `ptr` can fail to
-   resolve -- a missing key, an out-of-range or "`-`" array index, an unresolvable token on a primitive -- yields
+   resolve — a missing key, an out-of-range or "`-`" array index, an unresolvable token on a primitive — yields
    `default_value` instead of throwing, exactly as [`BasicJsonType::value`](../basic_json/value.md) catches
    `out_of_range` and returns `default_value`.
 
@@ -73,7 +73,7 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
    Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes
    constant time on average.
 2. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at
-   that level or the index into the array -- as for the [`operator[]`](operator[].md#complexity) and
+   that level or the index into the array — as for the [`operator[]`](operator[].md#complexity) and
    [`at`](at.md#complexity) overloads that take a JSON pointer. Plus the complexity of converting the resolved value
    to `T`.
 
@@ -89,7 +89,7 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 !!! info "Differences to `at` and `operator[]`"
 
     Unlike [`at`](at.md), this function does not throw if `key`/`ptr` resolves to no value. Unlike
-    [`operator[]`](operator[].md), it never returns a [discarded](is_discarded.md) view -- it always returns a `T` --
+    [`operator[]`](operator[].md), it never returns a [discarded](is_discarded.md) view — it always returns a `T` —
     and it is available on any view, since it never needs to insert a missing element the way the non-const
     `BasicJsonType::operator[]` would.
 
@@ -131,8 +131,8 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 
 ## See also
 
-- [at](at.md) - access specified element with bounds checking (throws instead of returning a default value)
-- [operator[]](operator[].md) - access specified element (returns a discarded view instead of a default value)
+- [`at`](at.md) - access specified element with bounds checking (throws instead of returning a default value)
+- [`operator[]`](operator[].md) - access specified element (returns a discarded view instead of a default value)
 - [`BasicJsonType::value`](../basic_json/value.md) - the corresponding function of `basic_json`
 
 ## Version history

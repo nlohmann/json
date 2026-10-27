@@ -89,3 +89,13 @@ non-existing, an exception is thrown.
 | access to valid array index       | reference to existing value is returned        | const reference to existing value is returned  |
 | access to non-existing object key | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |
 | access to invalid array index     | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |
+
+<p class="nj-table-caption" markdown>Result of [`at`](../../api/basic_json/at.md) in each scenario, for a non-const and a const value.</p>
+
+## See also
+
+- [Element Access](index.md) - overview of all ways to access elements
+- [Unchecked access: operator[]](unchecked_access.md) - access without range checking
+- [Access with default value: value](default_value.md) - fall back to a default instead of throwing
+- [`at`](../../api/basic_json/at.md) - checked access by reference
+- [JSON Pointer](../json_pointer.md) - access nested values with `at` and a pointer

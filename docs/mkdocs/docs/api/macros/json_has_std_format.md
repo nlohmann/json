@@ -39,6 +39,8 @@ When the macro is not defined, the library will define it to its default value.
 ## See also
 
 - [`std::formatter<basic_json>`](../basic_json/std_formatter.md) - format JSON values with `std::format`
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
+- [Serialization](../../features/serialization.md) - serialize values to text
 
 ## Version history
 

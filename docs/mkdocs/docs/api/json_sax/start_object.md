@@ -37,9 +37,10 @@ Binary formats may report the number of elements.
 
 ## See also
 
-- [end_object](end_object.md) - the end of an object was read
-- [key](key.md) - an object key was read
-- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [`end_object`](end_object.md) - the end of an object was read
+- [`key`](key.md) - an object key was read
+- [`sax_parse`](../basic_json/sax_parse.md) - SAX parser
+- [SAX Interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
 
 ## Version history
 

@@ -70,9 +70,10 @@ object operation (looking up a key, or adding one to the patch): logarithmic for
 
 ## See also
 
-- [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396)
-- [merge_patch](merge_patch.md) applies a JSON Merge Patch
-- [diff](diff.md) creates a diff as a JSON Patch
+- [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396) - specification of JSON Merge Patch
+- [`merge_patch`](merge_patch.md) - applies a JSON Merge Patch
+- [`diff`](diff.md) - creates a diff as a JSON Patch
+- [JSON Merge Patch](../../features/merge_patch.md) - the article on JSON Merge Patch
 
 ## Version history
 

@@ -43,7 +43,7 @@ Linear in the length of the input.
 
 ## Notes
 
-Every view taken from `#!cpp *this` before the call -- including the previous [`root()`](root.md) -- is invalidated,
+Every view taken from `#!cpp *this` before the call — including the previous [`root()`](root.md) — is invalidated,
 whether or not the new parse succeeds; take fresh views from [`root()`](root.md) afterward.
 
 `input` is borrowed or owned by the same rules as [`parse()`](parse.md#notes); a document can borrow on one call and
@@ -78,9 +78,10 @@ compile; see [`parse`](parse.md#notes).
 
 ## See also
 
-- [parse](parse.md) - deserialize from a compatible input
-- [root](root.md) - the view of the root value
-- [load](load.md) - read a document from an image instead of parsing JSON text
+- [`parse`](parse.md) - deserialize from a compatible input
+- [`root`](root.md) - the view of the root value
+- [`load`](load.md) - read a document from an image instead of parsing JSON text
+- [Zero-copy JSON views](../../features/json_view.md#ownership-and-lifetime) - reusing a document and what it invalidates
 
 ## Version history
 

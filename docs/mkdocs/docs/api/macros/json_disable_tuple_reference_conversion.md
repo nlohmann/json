@@ -105,9 +105,11 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## See also
 
-- [**basic_json(CompatibleType&&)**](../basic_json/basic_json.md) - the affected constructor
+- [`basic_json(CompatibleType&&)`](../basic_json/basic_json.md) - the affected constructor
 - [:simple-cmake: JSON_DisableTupleReferenceConversion](../../integration/cmake.md#json_disabletuplereferenceconversion) -
   CMake option to control the macro
+- [Converting values](../../features/conversions.md) - getting values out
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) - converting your own types
 
 ## Version history
 

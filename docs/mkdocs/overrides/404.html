@@ -1,0 +1,15 @@
+{#- 404 page: say what happened and offer the three useful ways out -#}
+{% extends "main.html" %}
+
+{% block content %}
+  <div class="nj-404">
+    <p class="nj-404__code">// error 404</p>
+    <h1>This page does not exist</h1>
+    <p>The page may have moved or been renamed. Try the search in the header, or start from one of these pages.</p>
+    <p>
+      <a href="{{ '' | url }}" class="md-button md-button--primary">Home</a>
+      <a href="{{ 'features/' | url }}" class="md-button">Features</a>
+      <a href="{{ 'api/basic_json/' | url }}" class="md-button">API documentation</a>
+    </p>
+  </div>
+{% endblock %}

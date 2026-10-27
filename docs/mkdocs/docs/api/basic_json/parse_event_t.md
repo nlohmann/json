@@ -22,7 +22,12 @@ The parser callback distinguishes the following events:
 
 ## Examples
 
-![Example when certain parse events are triggered](../../images/callback_events.png)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/callback_events.svg"
+</div>
+
+<p class="nj-caption" markdown>Each coloured dot marks where the parser reports a `parse_event_t` event while reading
+the JSON text on the left; the legend on the right names the event per colour.</p>
 
 ??? example
 
@@ -41,8 +46,9 @@ The parser callback distinguishes the following events:
 
 ## See also
 
-- [parser_callback_t](parser_callback_t.md) callback function type for the parser
-- [parse](parse.md) deserialize from a compatible input
+- [`parser_callback_t`](parser_callback_t.md) - callback function type for the parser
+- [`parse`](parse.md) - deserialize from a compatible input
+- [Parser Callbacks](../../features/parsing/parser_callbacks.md) - filter or inspect values while parsing
 
 ## Version history
 

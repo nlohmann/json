@@ -58,7 +58,8 @@ Empty objects and arrays are flattened to `#!json null` and will not be reconstr
 
 ## See also
 
-- [unflatten](unflatten.md) the reverse function
+- [`unflatten`](unflatten.md) - the reverse function
+- [JSON Pointer](../../features/json_pointer.md#flatten-unflatten) - the article on JSON Pointer and flattening
 
 ## Version history
 
