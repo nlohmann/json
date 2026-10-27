@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """List and check the jobs of the compiler workflows and the set each job belongs to.
 
-The jobs of a tiered workflow (ubuntu.yml) belong to one of three sets, chosen
-by the job's `if:` condition:
+The jobs of the compiler workflows belong to one of three sets, chosen by the
+job's `if:` condition:
 
 - PR set: every pull request push and every push,
 - full set: after the PR set passed, on pushes and on pull requests with the
@@ -10,11 +10,9 @@ by the job's `if:` condition:
 - nightly set: nightly on develop, on pushes to master and release/*, and when
   started by hand.
 
-The jobs of the other workflows run on every push and pull request.
-
-The script checks that every job of a tiered workflow belongs to exactly one
-set, that the full set waits for the whole PR set, that the nightly report
-waits for the whole nightly set, and that the job table in
+The script checks that every job belongs to exactly one set, that the full set
+of a workflow waits for its whole PR set, that the nightly report waits for the
+whole nightly set, and that the job table in
 docs/mkdocs/docs/community/quality_assurance.md is up to date.
 
   --markdown       print the job table for the documentation
@@ -37,7 +35,7 @@ DOCS = 'docs/mkdocs/docs/community/quality_assurance.md'
 BEGIN, END = '<!-- ci_jobs: begin -->', '<!-- ci_jobs: end -->'
 
 WORKFLOWS = ['.github/workflows/ubuntu.yml', '.github/workflows/macos.yml', '.github/workflows/windows.yml']
-TIERED = ['.github/workflows/ubuntu.yml']
+TIERED = WORKFLOWS
 # --compare also counts the jobs of these workflows, so a job moved between workflows is not a removed one
 COMPARED = WORKFLOWS + ['.github/workflows/repository_checks.yml', '.github/workflows/check_amalgamation.yml']
 
@@ -80,7 +78,10 @@ def expand(matrix):
     if not matrix:
         return [{}]
     keys = [k for k in matrix if k not in ('include', 'exclude')]
-    combos = [dict(zip(keys, values)) for values in itertools.product(*(matrix[k] for k in keys))] if keys else []
+    if not keys:
+        # a matrix of only include entries runs each entry
+        return [dict(inc) for inc in matrix.get('include') or []]
+    combos = [dict(zip(keys, values)) for values in itertools.product(*(matrix[k] for k in keys))]
     for ex in matrix.get('exclude') or []:
         combos = [c for c in combos if any(c.get(k) != v for k, v in ex.items())]
     for inc in matrix.get('include') or []:

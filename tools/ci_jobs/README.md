@@ -1,6 +1,8 @@
 # ci_jobs
 
-The compiler jobs of [`ubuntu.yml`](../../.github/workflows/ubuntu.yml) are split into three sets, chosen by each job's
+The jobs of the compiler workflows [`ubuntu.yml`](../../.github/workflows/ubuntu.yml),
+[`macos.yml`](../../.github/workflows/macos.yml), and [`windows.yml`](../../.github/workflows/windows.yml) are split into
+three sets, chosen by each job's
 `if:` condition (see [How CI runs](https://json.nlohmann.me/community/quality_assurance/#how-ci-runs)):
 
 - **PR set**: every push to a pull request, and every push to `develop`, `master`, and `release/*`;
@@ -12,8 +14,9 @@ A matrix whose entries belong to different sets is split into one job per set: t
 
 [`ci_jobs.py`](ci_jobs.py) checks that
 
-- every job of `ubuntu.yml` has the `if:` condition of exactly one set (the conditions are in `SETS`),
-- every full-set job waits for (`needs:`) exactly the PR set, and `nightly_report` for exactly the nightly set, and
+- every job has the `if:` condition of exactly one set (the conditions are in `SETS`),
+- every full-set job waits for (`needs:`) exactly the PR set of its workflow, and `nightly_report` for exactly the
+  nightly set, and
 - the job table in [`quality_assurance.md`](../../docs/mkdocs/docs/community/quality_assurance.md) is up to date.
 
 ```shell

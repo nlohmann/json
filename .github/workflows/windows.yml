@@ -7,6 +7,8 @@ on:
       - master
       - release/*
   pull_request:
+    # labeled: the "🚀 ready to merge" label starts the full set (see below)
+    types: [opened, synchronize, reopened, labeled]
     # Skip pull requests that change only files no job here reads. The list is checked by
     # tools/check_path_filters/check_path_filters.py (repository_checks.yml); change both together.
     paths:
@@ -26,23 +28,41 @@ on:
       # built by the swiftpm job (macos.yml)
       - 'docs/mkdocs/docs/integration/swift/**'
       - '.github/workflows/windows.yml'
+  schedule:
+    # the nightly set (see below), on develop
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# A run triggered by any other label gets a group of its own, so it does not
+# cancel the run of the last push; its jobs are skipped.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'schedule' && 'nightly' || github.ref || github.run_id }}${{ github.event.action == 'labeled' && github.event.label.name != '🚀 ready to merge' && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
+
+# The jobs are split into three sets like in ubuntu.yml (see "How CI runs" in
+# docs/mkdocs/docs/community/quality_assurance.md): the PR set runs on every
+# push; the full set after the PR set passed, on pushes and on pull requests
+# with the "🚀 ready to merge" label; the nightly set nightly on develop, on
+# pushes to master and release/*, and when started by hand. tools/ci_jobs
+# checks that every job belongs to exactly one set.
+
 jobs:
+  ###########################################################################
+  # PR set
+  ###########################################################################
+
   mingw:
+    if: &pr_set ${{ github.event_name != 'schedule' && (github.event.action != 'labeled' || github.event.label.name == '🚀 ready to merge') }}
     runs-on: windows-2022
     strategy:
       matrix:
-        architecture: [x64, x86]
+        architecture: [x86]
 
-    steps:
+    steps: &mingw_steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -59,15 +79,26 @@ jobs:
         run: cd build ; ctest -j 10 -C Debug --output-on-failure
 
   msvc:
+    if: *pr_set
     strategy:
       matrix:
-        build_type: [Debug, Release]
-        architecture: [Win32, x64]
-        std_version: [default, latest]
+        include:
+          - build_type: Debug
+            architecture: x64
+            std_version: default
+          - build_type: Release
+            architecture: x64
+            std_version: default
+          - build_type: Debug
+            architecture: Win32
+            std_version: default
+          - build_type: Release
+            architecture: Win32
+            std_version: latest
 
     runs-on: windows-2022
 
-    steps:
+    steps: &msvc_steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -96,15 +127,20 @@ jobs:
   # Visual Studio 2026 (v145 toolset) on the windows-2025 image. The "Visual Studio
   # 18 2026" generator requires CMake 4.2+, so a recent CMake is fetched explicitly.
   msvc-vs2026:
+    if: *pr_set
     strategy:
       matrix:
-        build_type: [Debug, Release]
-        architecture: [Win32, x64]
-        std_version: [default, latest]
+        include:
+          - build_type: Debug
+            architecture: x64
+            std_version: latest
+          - build_type: Release
+            architecture: Win32
+            std_version: default
 
     runs-on: windows-2025
 
-    steps:
+    steps: &msvc_vs2026_steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -136,13 +172,14 @@ jobs:
   # Native ARM64 Windows runner with the MSVC ARM64 toolset. The windows-11-arm
   # label is only available for public repositories.
   msvc-arm64:
+    if: *pr_set
     strategy:
       matrix:
-        build_type: [Debug, Release]
+        build_type: [Debug]
 
     runs-on: windows-11-arm
 
-    steps:
+    steps: &msvc_arm64_steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -160,12 +197,13 @@ jobs:
         run: cd build ; ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
 
   clang:
+    if: *pr_set
     runs-on: windows-2022
     strategy:
       matrix:
-        version: [11.0.1, 12.0.1, 13.0.1, 14.0.6, 15.0.7, 16.0.6, 18.1.8, 19.1.7, 20.1.8]
+        version: [20.1.8]
 
-    steps:
+    steps: &clang_steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -208,24 +246,8 @@ jobs:
       - name: Test
         run: cd build ; ctest -j 10 -C Debug --output-on-failure
 
-  clang-cl:
-    runs-on: windows-2022
-    strategy:
-      matrix:
-        architecture: [Win32, x64]
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Run CMake
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -T ClangCL -DJSON_BuildTests=On
-      - name: Build
-        run: cmake --build build --config Debug --parallel 10
-      - name: Test
-        run: cd build ; ctest -j 10 -C Debug --output-on-failure
-
   ci_module_cpp20:
+    if: *pr_set
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -245,3 +267,144 @@ jobs:
       - name: Build
         run: cmake --build build --config Debug --target ci_module_cpp20
         
+
+
+  ###########################################################################
+  # full set: starts after the PR set passed
+  ###########################################################################
+
+  msvc_full:
+    needs: &pr_set_jobs [mingw, msvc, msvc-vs2026, msvc-arm64, clang, ci_module_cpp20]
+    if: &full_set ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, '🚀 ready to merge') }}
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        architecture: [Win32, x64]
+        std_version: [default, latest]
+        exclude:
+          # in the PR set
+          - build_type: Debug
+            architecture: x64
+            std_version: default
+          - build_type: Release
+            architecture: x64
+            std_version: default
+          - build_type: Debug
+            architecture: Win32
+            std_version: default
+          - build_type: Release
+            architecture: Win32
+            std_version: latest
+
+    runs-on: windows-2022
+
+    steps: *msvc_steps
+
+  # Visual Studio 2026 (v145 toolset) on the windows-2025 image. The "Visual Studio
+  # 18 2026" generator requires CMake 4.2+, so a recent CMake is fetched explicitly.
+  msvc-vs2026_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        architecture: [Win32, x64]
+        std_version: [default, latest]
+        exclude:
+          # in the PR set
+          - build_type: Debug
+            architecture: x64
+            std_version: latest
+          - build_type: Release
+            architecture: Win32
+            std_version: default
+
+    runs-on: windows-2025
+
+    steps: *msvc_vs2026_steps
+
+  # Native ARM64 Windows runner with the MSVC ARM64 toolset. The windows-11-arm
+  # label is only available for public repositories.
+  msvc-arm64_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    strategy:
+      matrix:
+        build_type: [Release]
+
+    runs-on: windows-11-arm
+
+    steps: *msvc_arm64_steps
+
+  clang_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        version: [11.0.1, 12.0.1, 13.0.1, 14.0.6, 15.0.7, 16.0.6, 18.1.8, 19.1.7]
+
+    steps: *clang_steps
+
+  clang-cl_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        architecture: [Win32, x64]
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run CMake
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -T ClangCL -DJSON_BuildTests=On
+      - name: Build
+        run: cmake --build build --config Debug --parallel 10
+      - name: Test
+        run: cd build ; ctest -j 10 -C Debug --output-on-failure
+
+
+  ###########################################################################
+  # nightly set
+  ###########################################################################
+
+  mingw_nightly:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref != 'refs/heads/develop') }}
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        architecture: [x64]
+
+    steps: *mingw_steps
+
+  # A failure of a scheduled run opens an issue, or comments on the open one.
+  nightly_report:
+    needs: [mingw_nightly]
+    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-26.04
+    permissions:
+      issues: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Open or update the nightly failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WORKFLOW: ${{ github.workflow }}
+          SHA: ${{ github.sha }}
+        run: |
+          title="Nightly CI failure (${WORKFLOW})"
+          body="The nightly run of ${WORKFLOW} on ${SHA:0:10} failed: ${RUN_URL}"
+          number=$(gh issue list --state open --search "in:title \"${title}\"" --json number,title --jq "map(select(.title == \"${title}\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi

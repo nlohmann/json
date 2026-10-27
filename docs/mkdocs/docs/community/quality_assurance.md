@@ -15,17 +15,17 @@ describe each of them.
 
 ## How CI runs
 
-Not every job runs for every change. The compiler jobs on Ubuntu are split into three sets, so a pull request gets fast
-feedback and the long jobs run when they matter:
+Not every job runs for every change. The compiler jobs on Ubuntu, macOS, and Windows are split into three sets, so a
+pull request gets fast feedback and the long jobs run when they matter:
 
 | Set         | When it runs                                                                                                      | What it contains                                                                                                                                                                       |
 |-------------|-------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| PR set      | every push to a pull request, and every push to `develop`, `master`, and `release/*`                              | GCC and Clang with all warnings, Clang-Tidy, sanitizers, IWYU, cpplint, the oldest and newest GCC and Clang, common CMake options, Meson, Emscripten; with the checks that always run, they would have caught at least 92 % of the failing commits of September and October 2026 |
+| PR set      | every push to a pull request, and every push to `develop`, `master`, and `release/*`                              | GCC and Clang with all warnings, Clang-Tidy, sanitizers, IWYU, cpplint, the oldest and newest GCC and Clang, common CMake options, Meson, Emscripten, four Visual Studio 2022 and two Visual Studio 2026 configurations, MinGW, Clang on Windows, ARM64 Windows, five Xcode versions, Swift Package Manager; with the checks that always run, they would have caught at least 92 % of the failing commits of September and October 2026 |
 | full set    | after the PR set passed: on pull requests with the label :rocket: ready to merge, and on every push                | every other compiler, version, C++ standard, and CMake option, the Clang Static Analyzer, Cppcheck, and the C++20 module tests                                                         |
-| nightly set | every night on `develop`, on every push to `master` and `release/*`, and when started by hand                      | Infer, Valgrind, coverage, the Intel and NVIDIA compilers, CUDA, and ARM64; a failure opens an issue                                                                                    |
+| nightly set | every night on `develop`, on every push to `master` and `release/*`, and when started by hand                      | Infer, Valgrind, coverage, the Intel and NVIDIA compilers, CUDA, ARM64 Linux, and 64-bit MinGW; a failure opens an issue                                                                                    |
 
-The jobs on macOS and Windows, the documentation and license checks, and the amalgamation check run on every push and
-pull request. A pull request that changes only the documentation, Markdown files, GitHub metadata, or license files
+The documentation and license checks and the amalgamation check run on every push and pull request; AppVeyor (Visual
+Studio 2015, 2017, and 2019) has its own schedule. A pull request that changes only the documentation, Markdown files, GitHub metadata, or license files
 skips the compiler workflows (see [`tools/check_path_filters`](https://github.com/nlohmann/json/tree/develop/tools/check_path_filters)).
 
 A maintainer adds the label :rocket: ready to merge when a pull request is ready; the full set then runs, and again on
@@ -39,6 +39,10 @@ every later push to that pull request. A pull request is merged only when the fu
     <!-- ci_jobs: begin -->
     | Set | Workflow | Job | Configurations |
     |-----|----------|-----|----------------|
+    | PR set | macos.yml | `macos-15` | 16.0; 16.4; 26.3 |
+    | PR set | macos.yml | `macos-26` | 26.6 |
+    | PR set | macos.yml | `xcode_standards` | 14 |
+    | PR set | macos.yml | `swiftpm` | - |
     | PR set | ubuntu.yml | `ci_test_gcc` | - |
     | PR set | ubuntu.yml | `ci_meson_install` | - |
     | PR set | ubuntu.yml | `ci_static_analysis_ubuntu` | ci_cpplint |
@@ -49,6 +53,15 @@ every later push to that pull request. A pull request is merged only when the fu
     | PR set | ubuntu.yml | `ci_test_standards_gcc` | 26 |
     | PR set | ubuntu.yml | `ci_test_standards_clang` | 26, libcxx |
     | PR set | ubuntu.yml | `ci_emscripten` | - |
+    | PR set | windows.yml | `mingw` | x86 |
+    | PR set | windows.yml | `msvc` | Debug, x64, default; Release, x64, default; Debug, Win32, default; Release, Win32, latest |
+    | PR set | windows.yml | `msvc-vs2026` | Debug, x64, latest; Release, Win32, default |
+    | PR set | windows.yml | `msvc-arm64` | Debug |
+    | PR set | windows.yml | `clang` | 20.1.8 |
+    | PR set | windows.yml | `ci_module_cpp20` | - |
+    | full set | macos.yml | `macos-15_full` | 16.1; 16.2; 16.3; 26.0.1; 26.1.1; 26.2 |
+    | full set | macos.yml | `macos-26_full` | 26.4.1; 26.5 |
+    | full set | macos.yml | `xcode_standards_full` | 11; 17; 20; 23; 26 |
     | full set | ubuntu.yml | `ci_static_analysis_ubuntu_full` | ci_test_single_header; ci_cppcheck; ci_reproducible_tests; ci_non_git_tests; ci_offline_testdata |
     | full set | ubuntu.yml | `ci_static_analysis_clang_full` | ci_clang_analyze |
     | full set | ubuntu.yml | `ci_cmake_options_full` | ci_cmake_flags; ci_test_noimplicitconversions; ci_test_legacycomparison; ci_test_disableenumserialization; ci_test_disabletuplereferenceconversion; ci_test_skiplibraryversioncheck; ci_test_simdutf; ci_test_strict_nul_handling; ci_test_delete_deprecated_functions; ci_test_no_thread_local |
@@ -58,6 +71,11 @@ every later push to that pull request. A pull request is merged only when the fu
     | full set | ubuntu.yml | `ci_test_standards_gcc_full` | 11; 14; 17; 20; 23 |
     | full set | ubuntu.yml | `ci_test_standards_clang_full` | 11, libcxx; 11, libstdcxx; 14, libcxx; 14, libstdcxx; 17, libcxx; 17, libstdcxx; 20, libcxx; 20, libstdcxx; 23, libcxx; 23, libstdcxx; 26, libstdcxx |
     | full set | ubuntu.yml | `ci_module_cpp20` | gcc:latest; silkeh/clang:latest |
+    | full set | windows.yml | `msvc_full` | Debug, Win32, latest; Debug, x64, latest; Release, Win32, default; Release, x64, latest |
+    | full set | windows.yml | `msvc-vs2026_full` | Debug, Win32, default; Debug, Win32, latest; Debug, x64, default; Release, Win32, latest; Release, x64, default; Release, x64, latest |
+    | full set | windows.yml | `msvc-arm64_full` | Release |
+    | full set | windows.yml | `clang_full` | 11.0.1; 12.0.1; 13.0.1; 14.0.6; 15.0.7; 16.0.6; 18.1.8; 19.1.7 |
+    | full set | windows.yml | `clang-cl_full` | Win32; x64 |
     | nightly set | ubuntu.yml | `ci_infer` | - |
     | nightly set | ubuntu.yml | `ci_static_analysis_ubuntu_nightly` | ci_test_valgrind |
     | nightly set | ubuntu.yml | `ci_test_coverage` | - |
@@ -66,17 +84,7 @@ every later push to that pull request. A pull request is merged only when the fu
     | nightly set | ubuntu.yml | `ci_icpx` | - |
     | nightly set | ubuntu.yml | `ci_nvhpc` | - |
     | nightly set | ubuntu.yml | `ci_test_arm64` | - |
-    | every push and PR | macos.yml | `macos-15` | 16.0; 16.1; 16.2; 16.3; 16.4; 26.0.1; 26.1.1; 26.2; 26.3 |
-    | every push and PR | macos.yml | `macos-26` | 26.4.1; 26.5; 26.6 |
-    | every push and PR | macos.yml | `xcode_standards` | 11; 14; 17; 20; 23; 26 |
-    | every push and PR | macos.yml | `swiftpm` | - |
-    | every push and PR | windows.yml | `mingw` | x64; x86 |
-    | every push and PR | windows.yml | `msvc` | Debug, Win32, default; Debug, Win32, latest; Debug, x64, default; Debug, x64, latest; Release, Win32, default; Release, Win32, latest; Release, x64, default; Release, x64, latest |
-    | every push and PR | windows.yml | `msvc-vs2026` | Debug, Win32, default; Debug, Win32, latest; Debug, x64, default; Debug, x64, latest; Release, Win32, default; Release, Win32, latest; Release, x64, default; Release, x64, latest |
-    | every push and PR | windows.yml | `msvc-arm64` | Debug; Release |
-    | every push and PR | windows.yml | `clang` | 11.0.1; 12.0.1; 13.0.1; 14.0.6; 15.0.7; 16.0.6; 18.1.8; 19.1.7; 20.1.8 |
-    | every push and PR | windows.yml | `clang-cl` | Win32; x64 |
-    | every push and PR | windows.yml | `ci_module_cpp20` | - |
+    | nightly set | windows.yml | `mingw_nightly` | x64 |
     <!-- ci_jobs: end -->
 
 ## C++ language compliance and compiler compatibility
