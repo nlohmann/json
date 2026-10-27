@@ -101,7 +101,7 @@ BasicJsonType materialize(const document_data& d, const node* n)
             case value_t::object:
             case value_t::array:
             {
-                const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
+                const bool object = n->kind == node_kind::object;
                 if (object)
                 {
                     sax.start_object(n->len);

@@ -54,9 +54,11 @@
 // IWYU pragma: no_include <version>
 // IWYU pragma: no_include "nlohmann/detail/abi_config.hpp"
 // IWYU pragma: no_include "nlohmann/detail/abi_macros.hpp"
+// IWYU pragma: no_include "nlohmann/detail/conversions/from_json.hpp"
 // IWYU pragma: no_include "nlohmann/detail/input/input_adapters.hpp"
 // IWYU pragma: no_include "nlohmann/detail/json_pointer.hpp"
 // IWYU pragma: no_include "nlohmann/detail/meta/cpp_future.hpp"
+// IWYU pragma: no_include "nlohmann/detail/meta/type_traits.hpp"
 // IWYU pragma: no_include "nlohmann/detail/string_concat.hpp"
 // IWYU pragma: no_include "nlohmann/detail/value_t.hpp"
 // IWYU pragma: no_include "nlohmann/json.hpp"
@@ -84,6 +86,7 @@
 #include <nlohmann/detail/view/serializer.hpp>
 #include <nlohmann/detail/view/string_ref.hpp>
 #include <nlohmann/detail/view/value.hpp>
+#include <nlohmann/detail/view/view_mode.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
@@ -93,15 +96,20 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 Trivially copyable (two pointers). Valid as long as the document is alive and
 has not been re-parsed, and as long as a borrowed source text is alive.
 */
-template<typename BasicJsonType, bool Editable = false>
+template<typename BasicJsonType, view_mode Mode = view_mode::read_only>
 class basic_json_view
 {
+    /// whether this is a view of an editable document
+    static constexpr bool is_editable = Mode == view_mode::editable;
+
     using node = detail::view::node;
     using document_data = detail::view::document_data;
     /// how the index is walked (with edits only for editable documents)
-    using navigation = detail::view::navigation<Editable>;
+    using navigation = detail::view::navigation<is_editable>;
 
   public:
+    /// the basic_json type of the document (it also marks views for is_json_view)
+    using basic_json_type = BasicJsonType;
     using value_t = detail::value_t;
     using string_t = typename BasicJsonType::string_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -119,6 +127,15 @@ class basic_json_view
 
     /// an invalid view (type() == value_t::discarded)
     basic_json_view() noexcept = default;
+
+    /// a view of a read-only document as a view of an editable one, so that a
+    /// function taking an editable view accepts both (a read-only document has
+    /// no edits; the view reads it as an editable document before its first
+    /// edit, at the cost of one check per access)
+    template<view_mode M, detail::enable_if_t<detail::view::is_widening_mode<M, Mode>::value, int> = 0>
+    basic_json_view(const basic_json_view<BasicJsonType, M>& other) noexcept // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+        : m_doc(other.m_doc), m_node(other.m_node)
+    {}
 
     //////////
     // type //
@@ -446,7 +463,7 @@ class basic_json_view
         if (is_structured() && m_node->len != 0)
         {
             return unedited() ? basic_json_view(m_doc, detail::view::last_child<false>(*m_doc, m_node) + (is_object() ? 1 : 0))
-                   : basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
+                   : basic_json_view(m_doc, navigation::value(detail::view::last_child<is_editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
         }
         return front();
     }
@@ -504,7 +521,7 @@ class basic_json_view
     /// more than once); 0 if this is not an object
     size_type count(string_view_t key) const
     {
-        return is_object() ? detail::view::count_members<Editable>(*m_doc, m_node, key.data(), key.size()) : 0;
+        return is_object() ? detail::view::count_members<is_editable>(*m_doc, m_node, key.data(), key.size()) : 0;
     }
 
     size_type count(const char* key) const
@@ -563,8 +580,10 @@ class basic_json_view
 
     /// the value converted to T, as BasicJsonType::get<T>(): arithmetic types,
     /// strings (string_view_t without a copy), std::nullptr_t, std::vector,
-    /// maps with string keys, and views are converted directly; other types
-    /// through materialize().get<T>()
+    /// maps with string keys, and views are converted directly; types whose
+    /// from_json() accepts views (those of the NLOHMANN_DEFINE_TYPE_* and
+    /// NLOHMANN_JSON_SERIALIZE_ENUM macros, say) read the view; other types
+    /// go through materialize().get<T>()
     template<typename T>
     NLOHMANN_VIEW_ALWAYS_INLINE T get() const
     {
@@ -572,11 +591,12 @@ class basic_json_view
     }
 
     /// as BasicJsonType::get_to(): the types get<T>() converts directly are
-    /// assigned, all others are passed to from_json with v as it is
+    /// assigned, all others are passed to from_json with v as it is (with
+    /// the view if from_json() accepts views, else with materialize())
     template<typename T>
     T& get_to(T& v) const
     {
-        get_to_impl(v, detail::view::is_direct_value<T, BasicJsonType, basic_json_view> {});
+        get_to_impl(v, get_to_kind<T> {});
         return v;
     }
 
@@ -646,7 +666,7 @@ class basic_json_view
         }
         else
         {
-            detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
+            detail::view::view_serializer<BasicJsonType, is_editable>(*m_doc, out, estimate, style).dump(m_node);
         }
         return out;
     }
@@ -682,14 +702,14 @@ class basic_json_view
     }
 
     /// a view of an editable document compares with one of a read-only document
-    template < bool E, typename std::enable_if < E != Editable, int >::type = 0 >
-    friend bool operator==(const basic_json_view& a, const basic_json_view<BasicJsonType, E>& b)
+    template<view_mode M, detail::enable_if_t<detail::view::is_other_mode<M, Mode>::value, int> = 0>
+    friend bool operator==(const basic_json_view& a, const basic_json_view<BasicJsonType, M>& b)
     {
-        return detail::view::equal<BasicJsonType>(side(a), detail::view::view_side<BasicJsonType, basic_json_view<BasicJsonType, E>>(b));
+        return detail::view::equal<BasicJsonType>(side(a), detail::view::view_side<BasicJsonType, basic_json_view<BasicJsonType, M>>(b));
     }
 
-    template < bool E, typename std::enable_if < E != Editable, int >::type = 0 >
-    friend bool operator!=(const basic_json_view& a, const basic_json_view<BasicJsonType, E>& b)
+    template<view_mode M, detail::enable_if_t<detail::view::is_other_mode<M, Mode>::value, int> = 0>
+    friend bool operator!=(const basic_json_view& a, const basic_json_view<BasicJsonType, M>& b)
     {
         return !(a == b);
     }
@@ -727,7 +747,7 @@ class basic_json_view
         {
             return BasicJsonType(value_t::discarded);
         }
-        return unedited() ? detail::view::materialize<BasicJsonType, false>(*m_doc, m_node) : detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
+        return unedited() ? detail::view::materialize<BasicJsonType, false>(*m_doc, m_node) : detail::view::materialize<BasicJsonType, is_editable>(*m_doc, m_node);
     }
 
     /// byte offset of this value in the source text (for strings: of the
@@ -740,8 +760,8 @@ class basic_json_view
     }
 
   private:
-    template<typename, bool> friend class basic_json_document;
-    template<typename, bool> friend class basic_json_view;
+    template<typename, view_mode> friend class basic_json_document;
+    template<typename, view_mode> friend class basic_json_view;
     template<typename, typename> friend class detail::view::editor;
     friend iterator;
 
@@ -757,11 +777,11 @@ class basic_json_view
     }
 
     /// the template argument as a runtime condition: testing it directly in
-    /// `Editable && ...` makes the condition constant, which MSVC reports as
+    /// `is_editable && ...` makes the condition constant, which MSVC reports as
     /// C4127
     static bool editable() noexcept
     {
-        return Editable;
+        return is_editable;
     }
 
     /// the number of source bytes of this value (estimated for values with
@@ -810,7 +830,7 @@ class basic_json_view
             const node* const k = detail::view::find_member<false>(*m_doc, m_node, key.data(), key.size());
             return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
         }
-        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        const node* const k = detail::view::find_member<is_editable>(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? basic_json_view(m_doc, navigation::value(k + 1)) : basic_json_view();
     }
 
@@ -824,7 +844,7 @@ class basic_json_view
     /// the member of this object with @a key (the last one if the key occurs more than once), or nullptr
     NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key) const
     {
-        return find_key(key, std::integral_constant<bool, Editable> {});
+        return find_key(key, std::integral_constant<bool, is_editable> {});
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key, std::true_type /*editable*/) const
@@ -846,7 +866,7 @@ class basic_json_view
         {
             return basic_json_view(m_doc, detail::view::element_at<false>(*m_doc, m_node, idx));
         }
-        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
+        return basic_json_view(m_doc, navigation::value(detail::view::element_at<is_editable>(*m_doc, m_node, idx)));
     }
 
     // --- get() dispatch ---
@@ -901,22 +921,45 @@ class basic_json_view
         return *this;
     }
 
-    template<typename U, typename A>
+    /// vectors of the types converted directly (faster than the library's
+    /// from_json()) and containers of views (no from_json() reads them: a view
+    /// is no value of BasicJsonType); other containers are read by from_json()
+    template<typename U, typename A, detail::enable_if_t<detail::view::is_direct_value<U, BasicJsonType, basic_json_view>::value, int> = 0>
     std::vector<U, A> get_impl(detail::view::value_tag<std::vector<U, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
         return detail::view::vector_value<basic_json_view, U, A>(*this);
     }
 
-    template<typename K, typename V, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
-    std::map<K, V, C, A> get_impl(detail::view::value_tag<std::map<K, V, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    template<typename K, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::map<K, basic_json_view, C, A> get_impl(detail::view::value_tag<std::map<K, basic_json_view, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
-        return detail::view::map_value<std::map<K, V, C, A>>(*this);
+        return detail::view::map_value<std::map<K, basic_json_view, C, A>>(*this);
     }
 
-    template<typename K, typename V, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
-    std::unordered_map<K, V, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, V, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    template<typename K, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::unordered_map<K, basic_json_view, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, basic_json_view, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
-        return detail::view::map_value<std::unordered_map<K, V, H, E, A>>(*this);
+        return detail::view::map_value<std::unordered_map<K, basic_json_view, H, E, A>>(*this);
+    }
+
+    /// whether the from_json() of T's serializer reads views (see
+    /// detail::has_view_from_json)
+    template<typename T>
+    using reads_view = detail::has_view_from_json<typename BasicJsonType::template json_serializer<T, void>, basic_json_view, T>;
+
+    /// how get_to() converts: 2 directly, 1 with a from_json() that reads
+    /// views, 0 through materialize()
+    template<typename T>
+    using get_to_kind = std::integral_constant < int, detail::view::is_direct_value<T, BasicJsonType, basic_json_view>::value
+                        ? 2 : static_cast<int>(reads_view<T>::value) >;
+
+    /// types whose from_json() reads views, without materialize()
+    template<typename T, detail::enable_if_t<detail::conjunction<reads_view<T>, std::is_default_constructible<T>>::value, int> = 0>
+    T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<1> /*unused*/) const
+    {
+        auto v = T();
+        BasicJsonType::template json_serializer<T, void>::from_json(*this, v);
+        return v;
     }
 
     /// everything else through the BasicJsonType value (from_json included)
@@ -929,14 +972,20 @@ class basic_json_view
     // --- get_to() dispatch ---
 
     template<typename T>
-    void get_to_impl(T& v, std::true_type /*direct*/) const
+    void get_to_impl(T& v, std::integral_constant<int, 2> /*direct*/) const
     {
         v = get<T>();
     }
 
     /// from_json may keep parts of v (members a JSON object lacks, say)
     template<typename T>
-    void get_to_impl(T& v, std::false_type /*direct*/) const
+    void get_to_impl(T& v, std::integral_constant<int, 1> /*from_json reads views*/) const
+    {
+        BasicJsonType::template json_serializer<T, void>::from_json(*this, v);
+    }
+
+    template<typename T>
+    void get_to_impl(T& v, std::integral_constant<int, 0> /*through materialize()*/) const
     {
         materialize().get_to(v);
     }
@@ -952,16 +1001,19 @@ Borrowed parses keep a pointer to the caller's text, which must outlive the
 document. Owned parses (parse_copy, rvalue std::string, streams, and inputs
 that are not contiguous byte ranges) keep their own copy.
 */
-template<typename BasicJsonType, bool Editable = false>
+template<typename BasicJsonType, view_mode Mode = view_mode::read_only>
 class basic_json_document
 {
+    /// whether the document can be edited
+    static constexpr bool is_editable = Mode == view_mode::editable;
+
     using document_data = detail::view::document_data;
 
     static_assert(sizeof(typename BasicJsonType::number_integer_t) == 8 && sizeof(typename BasicJsonType::number_unsigned_t) == 8,
                   "json_view supports 64-bit integer types only");
 
   public:
-    using view_type = basic_json_view<BasicJsonType, Editable>;
+    using view_type = basic_json_view<BasicJsonType, Mode>;
     using value_t = detail::value_t;
 
     /// an empty (discarded) document
@@ -1175,6 +1227,10 @@ class basic_json_document
     /// how load() checks an image (full, bounds, or none)
     using image_check = detail::view::image_check;
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN
+    // (the image format is little-endian: big-endian targets have no save()
+    // and load(), so that a call fails to compile instead of always throwing)
+
     /// The document as an image that load() reads without parsing: the node
     /// index, the text, and the decoded strings. An edited document is
     /// written in its current state (floats that are not finite become null,
@@ -1216,6 +1272,7 @@ class basic_json_document
         detail::view::load_image(*d.m_data, d.m_data->owned_image.data(), d.m_data->owned_image.size(), check);
         return d;
     }
+#endif
 
     ///////////
     // edits //
@@ -1258,7 +1315,7 @@ class basic_json_document
     /// member is set (added if missing), an array element assigned, and "-"
     /// or the size of the array appends. A null parent becomes what
     /// basic_json's operator[](json_pointer) makes of it: an array for "-"
-    /// and for digits (padded with nulls up to the index), an object otherwise.
+    /// and for array indices (padded with nulls up to the index), an object otherwise.
     template<typename V>
     view_type set(const json_pointer& ptr, V&& value)
     {
@@ -1274,7 +1331,11 @@ class basic_json_document
             {
                 return push_back(parent, std::forward<V>(value));
             }
-            const bool digits = std::all_of(token.begin(), token.end(), [](const char c)
+            // (a token that cannot be an array index, such as "01" or "", names an
+            // object member, as in basic_json)
+            const bool digits = !token.empty()
+                                && (token.size() == 1 || token[0] != '0')
+                                && std::all_of(token.begin(), token.end(), [](const char c)
             {
                 return c >= '0' && c <= '9';
             });
@@ -1357,7 +1418,7 @@ class basic_json_document
 
     detail::view::editor<BasicJsonType, view_type> editor()
     {
-        static_assert(Editable, "only an editable document can be edited: use basic_json_document<BasicJsonType, true> (json_editable_document)");
+        static_assert(is_editable, "only an editable document can be edited: use basic_json_document<BasicJsonType, view_mode::editable> (json_editable_document)");
         if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
         {
             detail::view::throw_invalid_iterator(detail::exception_id::iterator_from_other_value, "view does not belong to this document");
@@ -1633,22 +1694,31 @@ class basic_json_document
     std::unique_ptr<document_data, document_data::deleter> m_data{}; // NOLINT(readability-redundant-member-init)
 };
 
+/*!
+@brief whether T is a basic_json_view (of any BasicJsonType and view_mode)
+
+For constraining templates that accept views, e.g. a from_json() written for
+both basic_json values and views.
+*/
+template<typename T>
+struct is_json_view : detail::is_json_view<T> {};
+
 /// a parsed JSON text for json
-using json_document = basic_json_document<json>;
+using json_document = basic_json_document<json, view_mode::read_only>;
 /// a value of a json_document
-using json_view = basic_json_view<json>;
+using json_view = basic_json_view<json, view_mode::read_only>;
 /// a parsed JSON text for ordered_json
-using ordered_json_document = basic_json_document<ordered_json>;
+using ordered_json_document = basic_json_document<ordered_json, view_mode::read_only>;
 /// a value of an ordered_json_document
-using ordered_json_view = basic_json_view<ordered_json>;
+using ordered_json_view = basic_json_view<ordered_json, view_mode::read_only>;
 /// an editable parsed JSON text for json
-using json_editable_document = basic_json_document<json, true>;
+using json_editable_document = basic_json_document<json, view_mode::editable>;
 /// a value of a json_editable_document
-using json_editable_view = basic_json_view<json, true>;
+using json_editable_view = basic_json_view<json, view_mode::editable>;
 /// an editable parsed JSON text for ordered_json
-using ordered_json_editable_document = basic_json_document<ordered_json, true>;
+using ordered_json_editable_document = basic_json_document<ordered_json, view_mode::editable>;
 /// a value of an ordered_json_editable_document
-using ordered_json_editable_view = basic_json_view<ordered_json, true>;
+using ordered_json_editable_view = basic_json_view<ordered_json, view_mode::editable>;
 
 NLOHMANN_JSON_NAMESPACE_END
 

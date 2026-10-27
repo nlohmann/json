@@ -874,7 +874,7 @@ class view_serializer
                 case value_t::object:
                 case value_t::array:
                 {
-                    const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
+                    const bool object = n->kind == node_kind::object;
                     room(8);
                     if (n->len == 0)
                     {
