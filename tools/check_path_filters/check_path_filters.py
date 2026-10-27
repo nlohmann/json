@@ -28,6 +28,7 @@ import subprocess  # nosec B404
 import sys
 
 REPO_ROOT = os.path.normpath(os.path.join(sys.path[0], '..', '..'))
+SELF = 'tools/check_path_filters/check_path_filters.py'
 
 WORKFLOWS = ['.github/workflows/ubuntu.yml', '.github/workflows/macos.yml', '.github/workflows/windows.yml']
 
@@ -77,8 +78,9 @@ UNFILTERED_TARGETS = ['ci_test_examples', 'ci_test_build_documentation', 'ci_tes
 
 
 def git_files(root):
-    # fixed command, no user input
-    out = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root)  # nosec B603, B607
+    # fixed command, no user input; includes new files not yet added, so a local run
+    # sees what CI sees after the commit
+    out = subprocess.check_output(['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], cwd=root)  # nosec B603, B607
     return [f for f in out.decode('utf-8').split('\0') if f]
 
 
@@ -204,8 +206,8 @@ def check(root):
     finder = Mentions(files, excluded, is_excluded)
 
     for path in sorted(set(files) - excluded):
-        # third-party code and Markdown files read nothing
-        if path.startswith('tests/thirdparty/') or path.endswith('.md'):
+        # third-party code and Markdown files read nothing; this script lists the excluded files
+        if path.startswith('tests/thirdparty/') or path.endswith('.md') or path == SELF:
             continue
         try:
             with open(os.path.join(root, path), encoding='utf-8') as f:
