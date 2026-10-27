@@ -36,9 +36,11 @@ When the macro is not defined, the library will define it to its default value.
 
 ## See also
 
-- [`nlohmann` Namespace](../../features/namespace.md)
-- [`NLOHMANN_JSON_NAMESPACE`](nlohmann_json_namespace.md)
-- [`NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END`](nlohmann_json_namespace_begin.md)
+- [`nlohmann` Namespace](../../features/namespace.md) - how the library's namespace is defined and versioned
+- [`NLOHMANN_JSON_NAMESPACE`](nlohmann_json_namespace.md) - macro expanding to the library namespace
+- [`NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END`](nlohmann_json_namespace_begin.md) - macros to open and
+  close the library namespace
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
 
 ## Version history
 

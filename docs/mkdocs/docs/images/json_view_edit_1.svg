@@ -1,0 +1,57 @@
+<svg class="nj-fig nj-jsonview nj-jsonview-editfig" viewBox="0 0 840 372" role="img" aria-labelledby="fig-jve1-title fig-jve1-title-d" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-jve1-title">Step 2 of 5: doc.set(doc.root(), &quot;port&quot;, 6380)</title>
+<desc id="fig-jve1-title-d">set: the node of the integer is overwritten in place. The dump with number_format::source is {&quot;port&quot;:6380,&quot;price&quot;:19.90,&quot;tags&quot;:[&quot;eu&quot;,&quot;a\&quot;b&quot;]}.</desc>
+<defs>
+<marker id="jve1-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="nj-jsonview-c-line nj-jsonview-head" d="M0 1 L10 5 L0 9 z"/></marker>
+<marker id="jve1-own" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="nj-jsonview-c-own nj-jsonview-head" d="M0 1 L10 5 L0 9 z"/></marker>
+<marker id="jve1-struct" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="nj-jsonview-c-struct nj-jsonview-head" d="M0 1 L10 5 L0 9 z"/></marker>
+<marker id="jve1-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="nj-jsonview-c-bad nj-jsonview-head" d="M0 1 L10 5 L0 9 z"/></marker>
+</defs>
+<text class="nj-jsonview-note nj-jsonview-strong" x="16" y="22" xml:space="preserve">parsed index: fixed, never moves</text>
+<text class="nj-jsonview-note" x="824" y="22" text-anchor="end" xml:space="preserve">the source text is never written</text>
+<rect class="nj-jsonview-node nj-jsonview-c-struct" x="36" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="42" y="47" xml:space="preserve">0</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-struct" x="78" y="61" text-anchor="middle" xml:space="preserve">object</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="78" y="77" text-anchor="middle" xml:space="preserve">{ } 3</text>
+<rect class="nj-jsonview-node nj-jsonview-c-key" x="124" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="130" y="47" xml:space="preserve">1</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="166" y="61" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="166" y="77" text-anchor="middle" xml:space="preserve">port</text>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-num" x="212" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="218" y="47" xml:space="preserve">2</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-num" x="254" y="61" text-anchor="middle" xml:space="preserve">uint</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="254" y="77" text-anchor="middle" xml:space="preserve">6380</text>
+<rect class="nj-jsonview-node nj-jsonview-c-key" x="300" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="306" y="47" xml:space="preserve">3</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="342" y="61" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="342" y="77" text-anchor="middle" xml:space="preserve">price</text>
+<rect class="nj-jsonview-node nj-jsonview-c-num" x="388" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="394" y="47" xml:space="preserve">4</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-num" x="430" y="61" text-anchor="middle" xml:space="preserve">float</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="430" y="77" text-anchor="middle" xml:space="preserve">19.90</text>
+<rect class="nj-jsonview-node nj-jsonview-c-key" x="476" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="482" y="47" xml:space="preserve">5</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="518" y="61" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="518" y="77" text-anchor="middle" xml:space="preserve">tags</text>
+<rect class="nj-jsonview-node nj-jsonview-c-struct" x="564" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="570" y="47" xml:space="preserve">6</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-struct" x="606" y="61" text-anchor="middle" xml:space="preserve">array</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="606" y="77" text-anchor="middle" xml:space="preserve">[ ] 2</text>
+<rect class="nj-jsonview-node nj-jsonview-c-str" x="652" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="658" y="47" xml:space="preserve">7</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-str" x="694" y="61" text-anchor="middle" xml:space="preserve">string</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="694" y="77" text-anchor="middle" xml:space="preserve">&quot;eu&quot;</text>
+<rect class="nj-jsonview-node nj-jsonview-c-dec" x="740" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="746" y="47" xml:space="preserve">8</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-dec" x="782" y="61" text-anchor="middle" xml:space="preserve">string</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="782" y="77" text-anchor="middle" xml:space="preserve">a&quot;b</text>
+<text class="nj-jsonview-note nj-jsonview-strong nj-jsonview-c-own" x="16" y="288" xml:space="preserve">owned storage: allocated on demand, never moves</text>
+<rect class="nj-jsonview-store" x="10" y="192" width="820" height="54" rx="8"/>
+<text class="nj-jsonview-note" x="26" y="224" xml:space="preserve">empty: a read-only json_document has none of this</text>
+<path class="nj-jsonview-sep" d="M16 300 H824"/>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="16" y="318" xml:space="preserve">view v = root()[&quot;tags&quot;] (taken after parse):</text>
+<text class="nj-jsonview-note nj-jsonview-c-struct nj-jsonview-strong" x="320" y="318" xml:space="preserve">valid, sees every edit</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="16" y="338" xml:space="preserve">iterator over tags (taken after parse):</text>
+<text class="nj-jsonview-note nj-jsonview-c-struct nj-jsonview-strong" x="320" y="338" xml:space="preserve">valid</text>
+<text class="nj-jsonview-mono nj-jsonview-xs nj-jsonview-muted" x="16" y="360" xml:space="preserve">dump(): {&quot;port&quot;:6380,&quot;price&quot;:19.90,&quot;tags&quot;:[&quot;eu&quot;,&quot;a\&quot;b&quot;]}</text>
+</svg>

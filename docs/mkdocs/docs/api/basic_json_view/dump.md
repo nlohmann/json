@@ -11,7 +11,7 @@ Serializes this value (and its subtree) directly from the flat index, without ev
 first. With the default `#!cpp numbers == number_format::shortest`, the result is the same string
 [`BasicJsonType::dump`](../basic_json/dump.md) would produce for the value
 [`BasicJsonType::parse()`](../basic_json/parse.md) builds from the same source text, called with the same `indent`,
-`indent_char`, and `ensure_ascii` -- except that members of an object appear in document order rather than sorted by
+`indent_char`, and `ensure_ascii` — except that members of an object appear in document order rather than sorted by
 key, and *every* occurrence of a repeated key is written rather than only the last one (see
 [Notes on duplicate keys](operator[].md#notes)). For a `json_view` (whose `BasicJsonType` is not ordered), this means
 `dump()` can print an object's members in a different order than [`materialize()`](materialize.md)`.dump()` of the
@@ -58,19 +58,19 @@ Linear in the size of the output text.
 ## Notes
 
 The walk over the subtree is iterative, so the nesting depth it can write is limited by available memory only, not by
-the call stack -- as for [`materialize()`](materialize.md).
+the call stack — as for [`materialize()`](materialize.md).
 
 Strings are escaped by the same rules as [`BasicJsonType::dump`](../basic_json/dump.md).
 
 With `#!cpp numbers == number_format::shortest`, floats are written with the library's shortest round-trip conversion,
 exactly as [`BasicJsonType::dump`](../basic_json/dump.md) would (e.g. `#!cpp 1.5`, `#!cpp 100.0`, `#!cpp 1e+100`), and
-integers are copied from the source text -- already canonical in JSON, so this matches their shortest form too --
+integers are copied from the source text — already canonical in JSON, so this matches their shortest form too —
 except that `#!cpp -0` is written as `#!cpp 0`, the way [`BasicJsonType::parse()`](../basic_json/parse.md) reads it.
 
 `#!cpp number_format::source` copies every number exactly as written in the source text instead, with no exception
-for `#!cpp -0` -- `#!cpp 1.50`, `#!cpp 1E2`, `#!cpp -0.0`, `#!cpp -0`, or all digits of an integer literal with more
+for `#!cpp -0` — `#!cpp 1.50`, `#!cpp 1E2`, `#!cpp -0.0`, `#!cpp -0`, or all digits of an integer literal with more
 digits than any number type holds (such a literal is itself classified as a float, see
-[What is different](../../features/json_view.md#what-is-different)) -- something `BasicJsonType` cannot do, since
+[What is different](../../features/json_view.md#what-is-different)) — something `BasicJsonType` cannot do, since
 parsing already reduces every number to its parsed value.
 
 ## Examples
@@ -95,9 +95,10 @@ parsing already reduces every number to its parsed value.
 ## See also
 
 - [`number_format`](number_format.md) - how `dump()` writes numbers
-- [operator<<](operator_ltlt.md) - serialize this value to a stream
-- [materialize](materialize.md) - build a `BasicJsonType` value, e.g. to use `BasicJsonType::dump`'s `error_handler`
+- [`operator<<`](operator_ltlt.md) - serialize this value to a stream
+- [`materialize`](materialize.md) - build a `BasicJsonType` value, e.g. to use `BasicJsonType::dump`'s `error_handler`
 - [`BasicJsonType::dump`](../basic_json/dump.md) - the corresponding function of `basic_json`
+- [Zero-copy JSON views](../../features/json_view.md#writing-a-view-back) - writing a view back without building a tree
 
 ## Version history
 

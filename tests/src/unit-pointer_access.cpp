@@ -291,6 +291,7 @@ TEST_CASE("pointer access")
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
+        // @infer-ignore NULLPTR_DEREFERENCE
         CHECK(*p1 == value.get<test_type>());
 
         const test_type* p2 = value.get_ptr<const test_type*>();
@@ -320,6 +321,7 @@ TEST_CASE("pointer access")
         // check if pointers are returned correctly
         const test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
+        // @infer-ignore NULLPTR_DEREFERENCE
         CHECK(*p1 == value.get<test_type>());
 
         const test_type* p2 = value.get_ptr<const test_type*>();
@@ -349,6 +351,7 @@ TEST_CASE("pointer access")
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
+        // @infer-ignore NULLPTR_DEREFERENCE
         CHECK(*p1 == value.get<test_type>());
 
         const test_type* p2 = value.get_ptr<const test_type*>();
@@ -378,6 +381,7 @@ TEST_CASE("pointer access")
         // check if pointers are returned correctly
         const test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
+        // @infer-ignore NULLPTR_DEREFERENCE
         CHECK(*p1 == Approx(value.get<test_type>()));
 
         const test_type* p2 = value.get_ptr<const test_type*>();
@@ -407,6 +411,7 @@ TEST_CASE("pointer access")
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
+        // @infer-ignore NULLPTR_DEREFERENCE
         CHECK(*p1 == Approx(value.get<test_type>()));
 
         const test_type* p2 = value.get_ptr<const test_type*>();

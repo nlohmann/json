@@ -64,8 +64,9 @@ json_pointer& operator/=(std::size_t array_idx)
 
 ## See also
 
-- [operator/](operator_slash.md) create JSON Pointer by appending
-- [push_back](push_back.md) append an unescaped token at the end of the pointer
+- [`operator/`](operator_slash.md) - create JSON Pointer by appending
+- [`push_back`](push_back.md) - append an unescaped token at the end of the pointer
+- [JSON Pointer](../../features/json_pointer.md) - the article on JSON Pointer support
 
 ## Version history
 

@@ -113,10 +113,11 @@ the patch made before the first operation is applied, so the result is the same 
 
 ## See also
 
-- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
-- [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
-- [patch](patch.md) applies a JSON Patch
-- [merge_patch](merge_patch.md) applies a JSON Merge Patch
+- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902) - specification of JSON Patch
+- [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901) - specification of JSON Pointer
+- [`patch`](patch.md) - applies a JSON Patch
+- [`merge_patch`](merge_patch.md) - applies a JSON Merge Patch
+- [JSON Patch and Diff](../../features/json_patch.md) - the article on JSON Patch
 
 ## Version history
 

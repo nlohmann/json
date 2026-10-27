@@ -29,8 +29,8 @@ When the macro is not defined, the library will define it to its default value.
 
 ## See also
 
-- [**operator<=>**](../basic_json/operator_spaceship.md) - 3-way compare JSON values
-- [**operator==**](../json_pointer/operator_eq.md) - compare JSON pointers for equality
+- [`operator<=>`](../basic_json/operator_spaceship.md) - 3-way compare JSON values
+- [`operator==`](../json_pointer/operator_eq.md) - compare JSON pointers for equality
 
 ## Version history
 

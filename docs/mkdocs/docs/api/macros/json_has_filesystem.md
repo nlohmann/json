@@ -54,8 +54,10 @@ The default value is detected based on the preprocessor macros `#!cpp __cpp_lib_
 
 ## See also
 
-- [JSON_HAS_CPP_11 / JSON_HAS_CPP_14 / JSON_HAS_CPP_17 / JSON_HAS_CPP_20 / JSON_HAS_CPP_23 /
-  JSON_HAS_CPP_26](json_has_cpp_11.md) - set supported C++ standard
+- [`JSON_HAS_CPP_11` / `JSON_HAS_CPP_14` / `JSON_HAS_CPP_17` / `JSON_HAS_CPP_20` / `JSON_HAS_CPP_23` /
+  `JSON_HAS_CPP_26`](json_has_cpp_11.md) - set supported C++ standard
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
+- [Converting values](../../features/conversions.md) - conversions of values
 
 ## Version history
 

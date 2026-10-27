@@ -20,7 +20,7 @@
 
     yield different results (`#!json [true]` vs. `#!json true`)?
 
-This is a known issue, and -- even worse -- the behavior differs between GCC and Clang. The "culprit" for this is the library's constructor overloads for initializer lists to allow syntax like
+This is a known issue, and — even worse — the behavior differs between GCC and Clang. The "culprit" for this is the library's constructor overloads for initializer lists to allow syntax like
 
 ```cpp
 json array = {1, 2, 3, 4};
@@ -192,6 +192,8 @@ The value is a `json`, and printing it produces JSON text. Convert it first: `#!
 
 Use `contains` or `find`. Do not test with the non-const `operator[]`: like `std::map::operator[]`, it inserts a `null`
 value for a missing key. See [Does this key exist?](../features/element_access/index.md#does-this-key-exist).
+For choosing between `value`, `contains`/`find`, `at`, `operator[]`, and JSON Pointer, see the decision flow in
+[Element access](../features/element_access/index.md).
 
 ### Reading a value with a fallback
 
@@ -392,8 +394,8 @@ As described [above](#parse-errors-reading-non-ascii-characters), the library st
 
 No. `basic_json` provides no built-in synchronization, the same as `std::map` or `std::vector`. Concurrent reads of
 the same value from multiple threads are safe, as are concurrent (non-overlapping) accesses to independent `json`
-objects. However, any concurrent write to a `json` object -- or a concurrent read while another thread writes to the
-same object -- is a data race and requires external synchronization (e.g., a `std::mutex`) by the caller.
+objects. However, any concurrent write to a `json` object — or a concurrent read while another thread writes to the
+same object — is a data race and requires external synchronization (e.g., a `std::mutex`) by the caller.
 
 ### Schema validation
 
@@ -596,3 +598,10 @@ well. See [#3669](https://github.com/nlohmann/json/issues/3669) for details.
 This is not an issue with the code, but rather with the compiler itself. On Android, use a current NDK (see above).
 For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and
 [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug.
+
+## See also
+
+- [`basic_json`](../api/basic_json/index.md) - the main class and all its member functions
+- [Macros](../api/macros/index.md) - reference of all macros
+- [Exceptions](exceptions.md) - all exceptions and their error codes
+- [Features](../features/index.md) - overview of all features

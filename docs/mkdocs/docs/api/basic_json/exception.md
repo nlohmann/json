@@ -40,6 +40,9 @@ classDiagram
     style json_exception fill:#CCCCFF
 ```
 
+<p class="nj-caption" markdown>Class hierarchy of the library's exceptions; arrows point from a derived class to its
+base class, and the highlighted box is `basic_json::exception`.</p>
+
 Subclasses:
 
 - [`parse_error`](parse_error.md) for exceptions indicating a parse error
@@ -80,7 +83,11 @@ constructor.
 
 ## See also
 
-[List of exceptions](../../home/exceptions.md)
+- [List of exceptions](../../home/exceptions.md) - overview of all exceptions thrown by the library
+- [Working Without Exceptions](../../features/no_exceptions.md) - using the library without exceptions
+- [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) - extended exception messages with the path of the failing value
+- [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - parsing alternatives that do not throw
+- [Debugging](../../home/debugging.md) - debugging aids
 
 ## Version history
 
