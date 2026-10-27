@@ -6,7 +6,13 @@ const_reverse_iterator crbegin() const noexcept;
 
 Returns an iterator to the reverse-beginning; that is, the last element.
 
-![Illustration from cppreference.com](../../images/range-rbegin-rend.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-rbegin-rend.svg"
+</div>
+
+<p class="nj-caption" markdown>`crbegin()` points to the last element, like `rbegin()`, and `rend()` to the position
+before the first element. The upper row is the reversed sequence and the lower row the forward sequence; dashed arrows
+link each reverse iterator to the forward iterator it stores, and dashed cells are past-the-last positions.</p>
 
 ## Return value
 
@@ -38,9 +44,9 @@ Constant.
 
 ## See also
 
-- [crend](crend.md) returns a const reverse iterator to one before the first element
-- [rbegin](rbegin.md) returns a reverse iterator to the last element
-- [cbegin](cbegin.md) returns a const iterator to the first element
+- [`crend`](crend.md) - returns a const reverse iterator to one before the first element
+- [`rbegin`](rbegin.md) - returns a reverse iterator to the last element
+- [`cbegin`](cbegin.md) - returns a const iterator to the first element
 - [Iterators](../../features/iterators.md) - the article on iterators
 
 ## Version history

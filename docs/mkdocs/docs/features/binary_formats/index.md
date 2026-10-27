@@ -53,11 +53,32 @@ See [binary values](../binary_values.md) for more information.
 | UBJSON (size)      | 58.6 %      | 92.3 %       | 86.8 %            | 97.4 %        |
 | UBJSON (size+type) | 55.9 %      | 92.3 %       | 85.0 %            | 95.0 %        |
 
-Sizes compared to minified JSON value; the smallest size per file is printed in bold.
+<p class="nj-table-caption" markdown>Size of each test file in each format, in percent of the minified JSON value; the smallest size per file is printed in bold. The (size) and (size+type) rows are written with the `use_size` and `use_type` options of [`to_bjdata`](../../api/basic_json/to_bjdata.md) and [`to_ubjson`](../../api/basic_json/to_ubjson.md).</p>
+
+<div class="nj-charts-grid-wrap" markdown>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_canada.svg"
+</div>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_twitter.svg"
+</div>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_citm_catalog.svg"
+</div>
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/binary_sizes_jeopardy.svg"
+</div>
+</div>
+<p class="nj-charts-caption" markdown>The table above as charts: size per base format relative to minified JSON (vertical line at
+100 %); the smallest format per file is drawn in a stronger colour than the others. The size and size+type variants of BJData and UBJSON are
+omitted here; see the table.</p>
 
 ## See also
 
+- [`cbor_tag_handler_t`](../../api/basic_json/cbor_tag_handler_t.md) - how CBOR tags are handled when parsing
+- [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) - reject ill-formed UTF-8 in strings
 - [Binary values](../binary_values.md) - binary values and subtypes
-- [**to_cbor**](../../api/basic_json/to_cbor.md) / [**from_cbor**](../../api/basic_json/from_cbor.md), [**to_msgpack**](../../api/basic_json/to_msgpack.md) / [**from_msgpack**](../../api/basic_json/from_msgpack.md), [**to_bson**](../../api/basic_json/to_bson.md) / [**from_bson**](../../api/basic_json/from_bson.md), [**to_ubjson**](../../api/basic_json/to_ubjson.md) / [**from_ubjson**](../../api/basic_json/from_ubjson.md), [**to_bjdata**](../../api/basic_json/to_bjdata.md) / [**from_bjdata**](../../api/basic_json/from_bjdata.md), [**to_bon8**](../../api/basic_json/to_bon8.md) / [**from_bon8**](../../api/basic_json/from_bon8.md) - the conversion functions
-- [Parsing untrusted input](../parsing/untrusted_input.md)
+- [`to_cbor`](../../api/basic_json/to_cbor.md) - / [`from_cbor`](../../api/basic_json/from_cbor.md), [`to_msgpack`](../../api/basic_json/to_msgpack.md) / [`from_msgpack`](../../api/basic_json/from_msgpack.md), [`to_bson`](../../api/basic_json/to_bson.md) / [`from_bson`](../../api/basic_json/from_bson.md), [`to_ubjson`](../../api/basic_json/to_ubjson.md) / [`from_ubjson`](../../api/basic_json/from_ubjson.md), [`to_bjdata`](../../api/basic_json/to_bjdata.md) / [`from_bjdata`](../../api/basic_json/from_bjdata.md), [`to_bon8`](../../api/basic_json/to_bon8.md) / [`from_bon8`](../../api/basic_json/from_bon8.md) - the conversion functions
+- [Parsing untrusted input](../parsing/untrusted_input.md) - harden an application that parses untrusted binary data
 - [SAX interface](../parsing/sax_interface.md) - decode binary formats without building a value
+

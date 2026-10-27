@@ -33,9 +33,10 @@ Whether parsing should proceed.
 
 ## See also
 
-- [number_integer](number_integer.md) - an integer number was read
-- [number_float](number_float.md) - a floating-point number was read
-- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [`number_integer`](number_integer.md) - an integer number was read
+- [`number_float`](number_float.md) - a floating-point number was read
+- [`sax_parse`](../basic_json/sax_parse.md) - SAX parser
+- [SAX Interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
 
 ## Version history
 

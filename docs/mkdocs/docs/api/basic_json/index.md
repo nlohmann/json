@@ -189,7 +189,7 @@ The class satisfies the following concept requirements:
 Functions to inspect the type of a JSON value.
 
 - [**type**](type.md) - return the type of the JSON value
-- [**operator value_t**](operator_value_t.md) - return the type of the JSON value
+- [`operator value_t`](operator_value_t.md) - return the type of the JSON value
 - [**type_name**](type_name.md) - return the type as string
 - [**is_primitive**](is_primitive.md) - return whether the type is primitive
 - [**is_structured**](is_structured.md) - return whether the type is structured
@@ -218,7 +218,7 @@ Direct access to the stored value of a JSON value.
 - [**get_to**](get_to.md) - get a value and write it to a destination
 - [**get_ptr**](get_ptr.md) - get a pointer value
 - [**get_ref**](get_ref.md) - get a reference value
-- [**operator ValueType**](operator_ValueType.md) - get a value
+- [`operator ValueType`](operator_ValueType.md) - get a value
 - [**get_binary**](get_binary.md) - get a binary value
 - [**as_base_class**](as_base_class.md) - access the custom base class
 
@@ -359,10 +359,15 @@ Access to the JSON value
 
 ## See also
 
-- [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format](https://tools.ietf.org/html/rfc8259)
-- [basic_json_document](../basic_json_document/index.md) / [basic_json_view](../basic_json_view/index.md) - parse a JSON
+- [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format](https://tools.ietf.org/html/rfc8259) -
+  specification of the JSON data interchange format
+- [`basic_json_document`](../basic_json_document/index.md) - / [`basic_json_view`](../basic_json_view/index.md) - parse a JSON
   text into a flat index and read it through a view
 - [Zero-copy JSON views](../../features/json_view.md) - when to use a document and a view instead of a `basic_json`
+- [Types](../../features/types/index.md) - how JSON values are stored and which types exist
+- [Converting values](../../features/conversions.md) - get values out of a JSON value and put values in
+- [Creating JSON values](../../features/creating_values.md) - all the ways to build a JSON value
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) - convert your own types to and from JSON
 
 ## Version history
 

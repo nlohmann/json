@@ -50,5 +50,12 @@ Defining [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) before includin
 `type_error`/`out_of_range`-style exceptions with a JSON Pointer to the offending value, which can help pinpoint
 where in a large document a runtime error occurred. This only applies to exceptions thrown *after* a value
 exists (e.g. during element access); parse errors, which happen before any value exists to point at, are not
-covered by this mechanism -- see [Parsing and exceptions](../features/parsing/parse_exceptions.md) for how parse
+covered by this mechanism — see [Parsing and exceptions](../features/parsing/parse_exceptions.md) for how parse
 errors report their own location instead.
+
+## See also
+
+- [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) - extended exception messages with the path of the failing value
+- [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) - record byte positions of values for error messages
+- [Exceptions](exceptions.md) - all exceptions and their error codes
+- [`exception`](../api/basic_json/exception.md) - base class of all exceptions thrown by the library

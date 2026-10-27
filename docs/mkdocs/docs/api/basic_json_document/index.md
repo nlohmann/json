@@ -109,7 +109,7 @@ points apply to every edit:
   anything `BasicJsonType` can be constructed from (numbers, strings, `#!cpp bool`, `#!cpp nullptr`, containers, ...).
 - [`dump()`](../basic_json_view/dump.md) writes an edited document with members in document order, new members at
   the end, and, with [`number_format::source`](../basic_json_view/number_format.md), keeps the spelling of every
-  number that was not itself edited -- see [Editing a document](../../features/json_view.md#editing-a-document) for
+  number that was not itself edited — see [Editing a document](../../features/json_view.md#editing-a-document) for
   why this matters.
 - [`read()`](read.md) discards all edits, [`shrink_to_fit()`](shrink_to_fit.md) does not move the node index once
   there are edits, and [`memory_usage()`](memory_usage.md) includes the memory edits use.
@@ -119,9 +119,9 @@ points apply to every edit:
 ## See also
 
 - [Zero-copy JSON views](../../features/json_view.md) - guide to documents and views
-- [**basic_json_view**](../basic_json_view/index.md) - the non-owning handle to a value in a document
-- [**json_document**](../json_document.md) and [**json_editable_document**](../json_editable_document.md) - the default specializations
-- [**materialize**](../basic_json_view/materialize.md) - build a `basic_json` value from a view
+- [`basic_json_view`](../basic_json_view/index.md) - the non-owning handle to a value in a document
+- [`json_document`](../json_document.md) - and [`json_editable_document`](../json_editable_document.md) - the default specializations
+- [`materialize`](../basic_json_view/materialize.md) - build a `basic_json` value from a view
 
 ## Version history
 

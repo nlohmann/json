@@ -42,8 +42,8 @@ values; use [`is_number_unsigned`](is_number_unsigned.md) to test for those spec
 
 ## See also
 
-- [is_number](is_number.md) - return whether the value is a number
-- [is_number_unsigned](is_number_unsigned.md) - return whether the value is an unsigned integer number
+- [`is_number`](is_number.md) - return whether the value is a number
+- [`is_number_unsigned`](is_number_unsigned.md) - return whether the value is an unsigned integer number
 - [`BasicJsonType::is_number_integer`](../basic_json/is_number_integer.md) - the corresponding function of `basic_json`
 
 ## Version history

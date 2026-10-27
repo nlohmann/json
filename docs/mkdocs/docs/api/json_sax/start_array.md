@@ -37,8 +37,9 @@ Binary formats may report the number of elements.
 
 ## See also
 
-- [end_array](end_array.md) - the end of an array was read
-- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [`end_array`](end_array.md) - the end of an array was read
+- [`sax_parse`](../basic_json/sax_parse.md) - SAX parser
+- [SAX Interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
 
 ## Version history
 

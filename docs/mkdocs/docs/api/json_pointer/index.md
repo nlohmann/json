@@ -36,6 +36,9 @@ flowchart LR
     parent["parent_pointer() returns /a/b"] -.-> B
 ```
 
+<p class="nj-caption" markdown>Boxes are the reference tokens in order; dotted arrows show which token each member
+function reads, removes, or adds to.</p>
+
 The diagram shows the reference tokens of the JSON pointer `/a/b/c`.
 
 ## Member types
@@ -46,7 +49,7 @@ The diagram shows the reference tokens of the JSON pointer `/a/b/c`.
 
 - [(constructor)](json_pointer.md)
 - [**to_string**](to_string.md) - return a string representation of the JSON pointer
-- [**operator string_t**](operator_string_t.md) - return a string representation of the JSON pointer (deprecated)
+- [`operator string_t`](operator_string_t.md) - return a string representation of the JSON pointer (deprecated)
 - [**operator==**](operator_eq.md) - compare: equal
 - [**operator!=**](operator_ne.md) - compare: not equal
 - [**operator<=>**](operator_spaceship.md) - compare: 3-way (C++20)
@@ -67,7 +70,9 @@ The diagram shows the reference tokens of the JSON pointer `/a/b/c`.
 
 ## See also
 
-- [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901)
+- [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901) - specification of JSON Pointer
+- [JSON Pointer](../../features/json_pointer.md) - the article on JSON Pointer support
+- [JSON Patch and Diff](../../features/json_patch.md) - patch paths are JSON pointers
 
 ## Version history
 

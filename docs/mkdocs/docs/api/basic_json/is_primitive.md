@@ -56,13 +56,14 @@ This library extends primitive types to binary types, because binary types are r
 
 ## See also
 
-- [is_structured()](is_structured.md) returns whether the JSON value is structured
-- [is_null()](is_null.md) returns whether the JSON value is `null`
-- [is_string()](is_string.md) returns whether the JSON value is a string
-- [is_boolean()](is_boolean.md) returns whether the JSON value is a boolean
-- [is_number()](is_number.md) returns whether the JSON value is a number
-- [is_binary()](is_binary.md) returns whether the JSON value is a binary array
-- [basic_json_view::is_primitive](../basic_json_view/is_primitive.md) - the same check on a zero-copy view
+- [`is_structured()`](is_structured.md) - returns whether the JSON value is structured
+- [`is_null()`](is_null.md) - returns whether the JSON value is `null`
+- [`is_string()`](is_string.md) - returns whether the JSON value is a string
+- [`is_boolean()`](is_boolean.md) - returns whether the JSON value is a boolean
+- [`is_number()`](is_number.md) - returns whether the JSON value is a number
+- [`is_binary()`](is_binary.md) - returns whether the JSON value is a binary array
+- [`basic_json_view::is_primitive`](../basic_json_view/is_primitive.md) - the same check on a zero-copy view
+- [Types](../../features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

@@ -59,10 +59,11 @@ By default, `#!cpp JSON_NO_AUTOMATIC_UDLS` is not defined, and `<nlohmann/json.h
 
 ## See also
 
-- [`operator""_json`](../operator_literal_json.md)
-- [`operator""_json_pointer`](../operator_literal_json_pointer.md)
+- [`operator""_json`](../operator_literal_json.md) - user-defined string literal for JSON values
+- [`operator""_json_pointer`](../operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 - [`JSON_USE_GLOBAL_UDLS`](json_use_global_udls.md) - place user-defined string literals (UDLs) into the global namespace
 - [Compile times](../../integration/compile_times.md) - options to reduce compile times
+- [Creating JSON values](../../features/creating_values.md) - the article on creating JSON values
 
 ## Version history
 

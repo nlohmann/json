@@ -73,12 +73,14 @@ By default, `#!cpp JSON_NO_SIMD` is not defined, and vector instructions are use
 
 ## See also
 
-- [**parse**](../basic_json/parse.md) - deserialize from a compatible input
-- [**dump**](../basic_json/dump.md) - serialization
-- [**JSON_USE_SIMDUTF**](json_use_simdutf.md) - use the simdutf library to accelerate UTF-8 validation
-- [**JSON_DISABLE_STREAM_BULK_SCAN**](json_disable_stream_bulk_scan.md) - read a `std::istream` one character at a time
-- [Parsing: input sources and performance](../../features/parsing/index.md#input-sources-and-performance)
-- [json_view](../../features/json_view.md) - the zero-copy view, whose parser the macro also affects
+- [`parse`](../basic_json/parse.md) - deserialize from a compatible input
+- [`dump`](../basic_json/dump.md) - serialization
+- [`JSON_USE_SIMDUTF`](json_use_simdutf.md) - use the simdutf library to accelerate UTF-8 validation
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](json_disable_stream_bulk_scan.md) - read a `std::istream` one character at a time
+- [Parsing: input sources and performance](../../features/parsing/index.md#input-sources-and-performance) - how input
+  sources affect parsing performance
+- [Serialization](../../features/serialization.md) - pretty-printing, UTF-8 handling, and number output
+- [Zero-copy JSON views](../../features/json_view.md) - the zero-copy view, whose parser the macro also affects
 
 ## Version history
 

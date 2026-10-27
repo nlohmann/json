@@ -41,7 +41,7 @@ bool empty() const noexcept
 
 ## Notes
 
-This function does not return whether a string stored as JSON value is empty -- it returns whether the JSON container
+This function does not return whether a string stored as JSON value is empty — it returns whether the JSON container
 itself is empty which is `#!cpp false` in the case of a string.
 
 ## Examples
@@ -62,9 +62,9 @@ itself is empty which is `#!cpp false` in the case of a string.
 
 ## See also
 
-- [size](size.md) returns the number of elements
-- [clear](clear.md) clears the content and resets the value to the default value
-- [basic_json_view::empty](../basic_json_view/empty.md) - the same check on a zero-copy view
+- [`size`](size.md) - returns the number of elements
+- [`clear`](clear.md) - clears the content and resets the value to the default value
+- [`basic_json_view::empty`](../basic_json_view/empty.md) - the same check on a zero-copy view
 
 ## Version history
 

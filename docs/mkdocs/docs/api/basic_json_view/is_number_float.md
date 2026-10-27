@@ -43,7 +43,7 @@ integer-looking token in the source text.
 
 ## See also
 
-- [is_number](is_number.md) - return whether the value is a number
+- [`is_number`](is_number.md) - return whether the value is a number
 - [`BasicJsonType::is_number_float`](../basic_json/is_number_float.md) - the corresponding function of `basic_json`
 
 ## Version history

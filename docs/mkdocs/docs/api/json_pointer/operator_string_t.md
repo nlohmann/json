@@ -46,8 +46,8 @@ operator string_t() const
 
 ## See also
 
-- [to_string](to_string.md) return a string representation of the JSON pointer
-- [string_t](../basic_json/string_t.md) - type for strings
+- [`to_string`](to_string.md) - return a string representation of the JSON pointer
+- [`string_t`](../basic_json/string_t.md) - type for strings
 
 ## Version history
 

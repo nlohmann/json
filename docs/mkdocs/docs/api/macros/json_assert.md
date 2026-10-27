@@ -82,6 +82,7 @@ Therefore, assertions can be switched off by defining `NDEBUG`.
 ## See also
 
 - [Runtime Assertions](../../features/assertions.md) - overview documentation
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
 
 ## Version history
 
