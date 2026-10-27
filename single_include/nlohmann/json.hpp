@@ -43253,8 +43253,16 @@ public:
     void patch_inplace(const basic_json& json_patch)
     {
         // the operations below change *this while iterating json_patch: apply
-        // a copy when a value is applied as patch to itself
-        if (JSON_HEDLEY_UNLIKELY(&json_patch == this))
+        // a copy when a value is applied as patch to itself or, with
+        // JSON_DIAGNOSTICS, to a value stored inside it
+        bool patch_aliases_this = (&json_patch == this);
+#if JSON_DIAGNOSTICS
+        for (const basic_json* p = json_patch.m_parent; !patch_aliases_this && p != nullptr; p = p->m_parent)
+        {
+            patch_aliases_this = (p == this);
+        }
+#endif
+        if (JSON_HEDLEY_UNLIKELY(patch_aliases_this))
         {
             // NOLINTNEXTLINE(performance-unnecessary-copy-initialization): *this is modified below
             const basic_json json_patch_copy = json_patch;

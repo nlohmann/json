@@ -855,6 +855,19 @@ TEST_CASE("JSON patch")
                 CHECK(doc == expected_copies);
             }
 
+#if JSON_DIAGNOSTICS
+            SECTION("patch stored inside the patched value")
+            {
+                // the parent pointers of JSON_DIAGNOSTICS make the aliasing detectable
+                const json op = {{"op", "replace"}, {"path", "/patch"}, {"value", 1}};
+                json doc = {{"a", 1}, {"patch", json::array({op})}};
+                const json expected = doc.patch(doc["patch"]);
+
+                doc.patch_inplace(doc["patch"]);
+                CHECK(doc == expected);
+            }
+#endif
+
             SECTION("copy operations with spare capacity")
             {
                 // reserve while the array is empty: reallocating non-empty
