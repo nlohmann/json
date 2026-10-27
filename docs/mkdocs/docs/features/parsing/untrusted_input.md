@@ -130,6 +130,17 @@ parameters of [`parse()`](../../api/basic_json/parse.md) or [`accept()`](../../a
 enable either for input whose conformance you cannot otherwise control, since interoperability with strictly
 conforming JSON consumers is exactly what the default rejects.
 
+## JSON Pointers and flattened keys
+
+A [JSON Pointer](../json_pointer.md) can come from untrusted input as well, for instance as a path in a request or as a
+key of a flattened object. The non-const [`operator[]`](../../api/basic_json/operator%5B%5D.md) with a JSON Pointer and
+[`unflatten`](../../api/basic_json/unflatten.md) create missing values, and when an array index lies beyond the end of
+an array, they fill the array with `#!json null` values up to that index. The memory used therefore grows with the
+index, not with the size of the pointer: on a 64-bit platform, the index `10000000` allocates about 160 MB, the index
+`100000000` about 1.6 GB. The library does not limit the index. For pointers from untrusted input, check the array
+indices (or the pointer as a whole) before using them, or use [`at`](../../api/basic_json/at.md) or
+[`contains`](../../api/basic_json/contains.md), which never add values.
+
 ## Checklist
 
 - Wrap parsing in a `#!cpp try`/`#!cpp catch` block, or use `allow_exceptions=false`/`accept()` if your environment
@@ -145,6 +156,8 @@ conforming JSON consumers is exactly what the default rejects.
   `JSON_STRICT_NUL_HANDLING`.
 - Decide whether duplicate object keys should be an error for your application, and add a callback if so.
 - Do not enable `ignore_comments` or `ignore_trailing_commas` for input that must be strictly conforming JSON.
+- Check the array indices of untrusted JSON Pointers and flattened keys before passing them to the non-const
+  `operator[]` or `unflatten()`, which fill arrays with `#!json null` values up to the index.
 
 For the broader design rationale and how it is tested (fuzzing, sanitizers, static analysis), see the
 [assurance case](../../community/assurance_case.md) and [quality assurance](../../community/quality_assurance.md). To

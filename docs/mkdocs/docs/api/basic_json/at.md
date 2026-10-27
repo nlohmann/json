@@ -90,7 +90,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. Constant.
 2. Logarithmic in the size of the container.
 3. Logarithmic in the size of the container.
-4. Logarithmic in the size of the container.
+4. Linear in the number of reference tokens of `ptr`; for each of them, logarithmic in the size of the object, or
+   constant for an array.
 
 ## Notes
 
