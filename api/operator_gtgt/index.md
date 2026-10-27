@@ -67,7 +67,7 @@ Only numbers are affected. Values ending in a self-delimiting character do not r
 
 Define [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) to `1` to leave the terminating character in the stream instead, so that the stream is positioned right after the value for every value type and no separator is needed. This is tracked in [#5340](https://github.com/nlohmann/json/issues/5340).
 
-Note that reading concatenated values does **not** work for [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) (newline-delimited JSON) input -- see that page for why and for the recommended alternative.
+Note that reading concatenated values does **not** work for [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) (newline-delimited JSON) input — see that page for why and for the recommended alternative.
 
 By default, a `'\0'` (NUL) byte encountered while reading a value is treated as end of input, rather than as an ordinary (and, outside of a string, invalid) byte; see the [FAQ entry](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input) for details and the [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) macro to opt into rejecting it instead. Because `operator>>` only parses a single value and does not require the rest of the stream to be consumed, a NUL byte *after* a complete value has no effect on `operator>>` either way; it only matters while a value is still being read.
 
@@ -132,11 +132,14 @@ Output:
 
 ## See also
 
-- [accept](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
-- [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
 - [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input instead of treating it as end of input
 - [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) - opt in to leaving the stream positioned right after a number
 - [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read the stream one character at a time
+- [Parsing](https://json.nlohmann.me/features/parsing/index.md) - overview of the parsing functions
+- [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) - newline-delimited JSON
+- [Large, Streamed, and Partial Input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md) - chunked, concatenated, and very large input
 
 ## Version history
 

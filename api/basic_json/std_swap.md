@@ -72,7 +72,7 @@ void swap(nlohmann::basic_json& j1, nlohmann::basic_json& j2)
 
 ## See also
 
-- [swap](swap.md)
+- [`swap`](swap.md) - exchange the contents of two JSON values
 
 ## Version history
 

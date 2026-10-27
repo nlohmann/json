@@ -446,5 +446,8 @@ If you prefer a text representation such as ISO 8601 (`2023-11-14T22:13:20Z`), w
 ## See also
 
 - [Arbitrary type conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - the conversion mechanism and macros
-- [Why isn't my `to_json` found?](https://json.nlohmann.me/features/arbitrary_types/#why-isnt-my-to_json-or-from_json-found)
+- [Why isn't my `to_json` found?](https://json.nlohmann.me/features/arbitrary_types/#why-isnt-my-to_json-or-from_json-found) - troubleshoot conversion functions that are not picked up
 - [Converting values](https://json.nlohmann.me/features/conversions/index.md) - `get`, implicit conversions, and `std::optional`
+- [`NLOHMANN_DEFINE_DERIVED_TYPE`](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md) - conversion functions for derived classes
+- [`adl_serializer`](https://json.nlohmann.me/api/adl_serializer/index.md) - customize conversions for third-party types
+- [`get`](https://json.nlohmann.me/api/basic_json/get/index.md) - convert a JSON value to a C++ type

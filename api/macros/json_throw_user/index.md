@@ -59,8 +59,11 @@ The code below switches off exceptions and creates a log entry with a detailed e
 
 ## See also
 
-- [Switch off exceptions](https://json.nlohmann.me/home/exceptions/#switch-off-exceptions) for more information how to switch off exceptions
-- [JSON_NOEXCEPTION](https://json.nlohmann.me/api/macros/json_noexception/index.md) - switch off exceptions
+- [Switch off exceptions](https://json.nlohmann.me/home/exceptions/#switch-off-exceptions) - more information how to switch off exceptions
+- [`JSON_NOEXCEPTION`](https://json.nlohmann.me/api/macros/json_noexception/index.md) - switch off exceptions
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - using the library without exceptions
+- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) - base class of all exceptions thrown by the library
 
 ## Version history
 

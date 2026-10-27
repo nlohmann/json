@@ -23,7 +23,51 @@ table describes the values of the parameters `depth`, `event`, and `parsed`.
 | `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
 | `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
-![Example when certain parse events are triggered](../../images/callback_events.png)
+<div class="nj-fig-wrap" markdown>
+<svg class="nj-fig nj-fig--cb" viewBox="0 0 480 262" role="img" aria-labelledby="fig-cb-title" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-cb-title">Example of the parse events a callback sees for the J&#8203;SON text {&quot;name&quot;: &quot;Berlin&quot;, &quot;location&quot;: [52.519444, 13.406667]}: object_start after the opening brace, key after each key, array_start after the opening bracket, value after each value, array_end after the closing bracket, and object_end after the closing brace. Every array and object also produces a value event when it is complete.</title>
+<text class="fg-h" x="16" y="28">J&#8203;SON to parse</text>
+<text class="fg-h" x="320" y="28">callback events</text>
+<text class="fg-code" x="16" y="74" xml:space="preserve">{</text>
+<circle class="cb-os" cx="35.6" cy="69" r="5.5"/>
+<text class="fg-code" x="35.2" y="102" xml:space="preserve">&quot;name&quot;</text>
+<circle class="cb-k" cx="102.8" cy="97" r="5.5"/>
+<text class="fg-code" x="112.8" y="102" xml:space="preserve">: &quot;Berlin&quot;</text>
+<circle class="cb-v" cx="218.8" cy="97" r="5.5"/>
+<text class="fg-code" x="228.8" y="102" xml:space="preserve">,</text>
+<text class="fg-code" x="35.2" y="130" xml:space="preserve">&quot;location&quot;</text>
+<circle class="cb-k" cx="141.2" cy="125" r="5.5"/>
+<text class="fg-code" x="151.2" y="130" xml:space="preserve">: [</text>
+<circle class="cb-as" cx="190" cy="125" r="5.5"/>
+<text class="fg-code" x="54.4" y="158" xml:space="preserve">52.519444</text>
+<circle class="cb-v" cx="150.8" cy="153" r="5.5"/>
+<text class="fg-code" x="160.8" y="158" xml:space="preserve">,</text>
+<text class="fg-code" x="54.4" y="186" xml:space="preserve">13.406667</text>
+<circle class="cb-v" cx="150.8" cy="181" r="5.5"/>
+<text class="fg-code" x="35.2" y="214" xml:space="preserve">]</text>
+<circle class="cb-ae" cx="54.8" cy="209" r="5.5"/>
+<circle class="cb-v" cx="74.8" cy="209" r="5.5"/>
+<text class="fg-code" x="16" y="242" xml:space="preserve">}</text>
+<circle class="cb-oe" cx="35.6" cy="237" r="5.5"/>
+<circle class="cb-v" cx="55.6" cy="237" r="5.5"/>
+<circle class="cb-os" cx="327" cy="69" r="6"/>
+<text class="fg-code fg-leg" x="344" y="74">object_start</text>
+<circle class="cb-k" cx="327" cy="99" r="6"/>
+<text class="fg-code fg-leg" x="344" y="104">key</text>
+<circle class="cb-oe" cx="327" cy="129" r="6"/>
+<text class="fg-code fg-leg" x="344" y="134">object_end</text>
+<circle class="cb-as" cx="327" cy="159" r="6"/>
+<text class="fg-code fg-leg" x="344" y="164">array_start</text>
+<circle class="cb-ae" cx="327" cy="189" r="6"/>
+<text class="fg-code fg-leg" x="344" y="194">array_end</text>
+<circle class="cb-v" cx="327" cy="219" r="6"/>
+<text class="fg-code fg-leg" x="344" y="224">value</text>
+</svg>
+
+</div>
+
+<p class="nj-caption" markdown>Parse events for a small JSON text: each coloured dot marks the position at which the
+parser calls the callback, and the legend on the right names the event per colour.</p>
 
 Discarding a value (i.e., returning `#!cpp false`) has different effects depending on the context in which function was
 called:
@@ -226,8 +270,9 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
 
 ## See also
 
-- [parse](parse.md) deserialize from a compatible input
-- [parse_event_t](parse_event_t.md) enumeration of parser events
+- [`parse`](parse.md) - deserialize from a compatible input
+- [`parse_event_t`](parse_event_t.md) - enumeration of parser events
+- [Parser Callbacks](../../features/parsing/parser_callbacks.md) - filter or inspect values while parsing
 
 ## Version history
 

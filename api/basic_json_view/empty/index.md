@@ -30,7 +30,7 @@ Constant.
 
 ## Notes
 
-As for [`BasicJsonType::empty()`](https://json.nlohmann.me/api/basic_json/empty/index.md), this does not return whether a string value is empty -- it is `false` for any string, regardless of its length.
+As for [`BasicJsonType::empty()`](https://json.nlohmann.me/api/basic_json/empty/index.md), this does not return whether a string value is empty — it is `false` for any string, regardless of its length.
 
 ## Examples
 
@@ -73,7 +73,7 @@ true 0
 
 ## See also
 
-- [size](https://json.nlohmann.me/api/basic_json_view/size/index.md) - return the number of elements
+- [`size`](https://json.nlohmann.me/api/basic_json_view/size/index.md) - return the number of elements
 - [`BasicJsonType::empty`](https://json.nlohmann.me/api/basic_json/empty/index.md) - the corresponding function of `basic_json`
 
 ## Version history

@@ -79,8 +79,9 @@ Output:
 
 ## See also
 
-- [operator/=](https://json.nlohmann.me/api/json_pointer/operator_slasheq/index.md) append to the end of the JSON pointer
-- [push_back](https://json.nlohmann.me/api/json_pointer/push_back/index.md) append an unescaped token at the end of the pointer
+- [`operator/=`](https://json.nlohmann.me/api/json_pointer/operator_slasheq/index.md) - append to the end of the JSON pointer
+- [`push_back`](https://json.nlohmann.me/api/json_pointer/push_back/index.md) - append an unescaped token at the end of the pointer
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - the article on JSON Pointer support
 
 ## Version history
 

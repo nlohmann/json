@@ -51,7 +51,9 @@ true
 
 ## See also
 
-- [is_boolean](https://json.nlohmann.me/api/basic_json/is_boolean/index.md) checks whether the JSON value is a boolean
+- [`is_boolean`](https://json.nlohmann.me/api/basic_json/is_boolean/index.md) - checks whether the JSON value is a boolean
+- [Types](https://json.nlohmann.me/features/types/index.md) - how booleans are stored
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - requirements on the `BooleanType` template parameter
 
 ## Version history
 

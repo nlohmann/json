@@ -137,7 +137,8 @@ j_discarded_by_callback.is_discarded() = false
 
 ## See also
 
-- [basic_json_view::is_discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) - the corresponding check on a zero-copy view, which is `true` if the view refers to no value
+- [`basic_json_view::is_discarded`](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) - the corresponding check on a zero-copy view, which is `true` if the view refers to no value
+- [Types](https://json.nlohmann.me/features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

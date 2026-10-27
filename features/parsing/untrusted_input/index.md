@@ -1,6 +1,6 @@
 # Parsing Untrusted Input
 
-This page is for applications that parse JSON -- or one of the supported [binary formats](https://json.nlohmann.me/features/binary_formats/index.md) (BJData, BON8, BSON, CBOR, MessagePack, UBJSON) -- from a source they do not fully control, such as a network connection, an uploaded file, or another process. It summarizes what the library already does for such input and what remains the caller's responsibility, linking to the pages that cover each aspect in detail rather than repeating them.
+This page is for applications that parse JSON — or one of the supported [binary formats](https://json.nlohmann.me/features/binary_formats/index.md) (BJData, BON8, BSON, CBOR, MessagePack, UBJSON) — from a source they do not fully control, such as a network connection, an uploaded file, or another process. It summarizes what the library already does for such input and what remains the caller's responsibility, linking to the pages that cover each aspect in detail rather than repeating them.
 
 For the project's threat model and the countermeasures behind these behaviors, see the [assurance case](https://json.nlohmann.me/community/assurance_case/index.md); to report a vulnerability, see the [security policy](https://json.nlohmann.me/community/security_policy/index.md).
 
@@ -22,15 +22,15 @@ No built-in depth limit while parsing
 
 Neither the parser nor the binary readers impose a limit on how deep the input may nest. An attacker can still exhaust memory (though not the call stack) with a sufficiently deep document. If you need to reject over-deep untrusted input outright, track the depth yourself, either with a [parser callback](https://json.nlohmann.me/features/parsing/parser_callbacks/#recipe-max-nesting-depth-via-a-callback) for the JSON parser, or by counting `start_object`/`start_array` and `end_object`/`end_array` calls in a [SAX handler](https://json.nlohmann.me/features/parsing/sax_interface/index.md) (for the JSON parser or a binary format alike) and throwing once your limit is exceeded.
 
-Once a value has been parsed, operations that walk it recursively -- serializing it with [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), hashing it, copying it, comparing two values with `==`, `<`, or (in C++20) `<=>`, merging with [`update`](https://json.nlohmann.me/api/basic_json/update/index.md), applying a [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md), creating a patch with [`diff`](https://json.nlohmann.me/api/basic_json/diff/index.md) or [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md), [`flatten`](https://json.nlohmann.me/api/basic_json/flatten/index.md), and the binary writers (`to_cbor`, `to_msgpack`, ...) -- descend at most 128 levels on the call stack and continue below that with an explicit stack instead, so none of them can exhaust the stack either, however deeply the value is nested. Destroying a value (its destructor) never recurses at all, regardless of nesting depth, for the same reason.
+Once a value has been parsed, operations that walk it recursively — serializing it with [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), hashing it, copying it, comparing two values with `==`, `<`, or (in C++20) `<=>`, merging with [`update`](https://json.nlohmann.me/api/basic_json/update/index.md), applying a [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md), creating a patch with [`diff`](https://json.nlohmann.me/api/basic_json/diff/index.md) or [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md), [`flatten`](https://json.nlohmann.me/api/basic_json/flatten/index.md), and the binary writers (`to_cbor`, `to_msgpack`, ...) — descend at most 128 levels on the call stack and continue below that with an explicit stack instead, so none of them can exhaust the stack either, however deeply the value is nested. Destroying a value (its destructor) never recurses at all, regardless of nesting depth, for the same reason.
 
 ## Input size
 
-The library does not limit the overall size of a JSON text; a value nested or wide enough will use memory proportional to the input. If you parse untrusted input of unbounded size, check the size of the file or stream yourself before -- or while -- handing it to `parse()`.
+The library does not limit the overall size of a JSON text; a value nested or wide enough will use memory proportional to the input. If you parse untrusted input of unbounded size, check the size of the file or stream yourself before — or while — handing it to `parse()`.
 
 For the binary formats, an announced size is never trusted outright:
 
-- Reading a string or binary value copies the input in bounded 4096-byte chunks and grows the result as bytes are actually consumed, rather than allocating the announced length up front -- a truncated input runs out of bytes (reported as a parse error) instead of triggering an oversized allocation.
+- Reading a string or binary value copies the input in bounded 4096-byte chunks and grows the result as bytes are actually consumed, rather than allocating the announced length up front — a truncated input runs out of bytes (reported as a parse error) instead of triggering an oversized allocation.
 - When an array announces its number of elements and the array container supports `reserve()` (as `std::vector`, the default, does), the library reserves storage for at most 16384 of them upfront, regardless of how large the announced count is; further elements still grow the container normally as they are read.
 - An announced array or object size that exceeds what the target container could ever hold (its `max_size()`) is rejected immediately as [`out_of_range.408`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range408), without attempting to allocate anything.
 
@@ -42,7 +42,7 @@ Invalid UTF-8 is rejected while parsing, not just while serializing:
 - In UTF-16 or UTF-32 input, an ill-formed sequence is a [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101) as well: a lone surrogate, a high surrogate that is not followed by its low surrogate, and a code point above `U+10FFFF` are all rejected.
 - In a binary format, a string that is not valid UTF-8 is a [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113).
 
-A `'\0'` (NUL) byte *inside* a quoted JSON string is always rejected (it must be escaped as `\u0000`). A NUL byte *outside* of a string is different: by default it is silently treated as the end of the input, so trailing bytes after it -- including further, otherwise well-formed JSON -- are silently ignored rather than rejected. Since untrusted input that happens to embed a NUL is a way to make part of it disappear without a parse error, see the [FAQ entry](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input) and consider defining [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) to `1` to reject a NUL byte like any other unexpected byte instead.
+A `'\0'` (NUL) byte *inside* a quoted JSON string is always rejected (it must be escaped as `\u0000`). A NUL byte *outside* of a string is different: by default it is silently treated as the end of the input, so trailing bytes after it — including further, otherwise well-formed JSON — are silently ignored rather than rejected. Since untrusted input that happens to embed a NUL is a way to make part of it disappear without a parse error, see the [FAQ entry](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input) and consider defining [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) to `1` to reject a NUL byte like any other unexpected byte instead.
 
 Parsing is not the only place invalid UTF-8 matters: a string that reached a `json` value some other way (for example, constructed by application code, or, before JSON_STRICT_NUL_HANDLING existed, read from a binary format that does not validate strings) still has to round-trip back to JSON text. By default, [`dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if the string is not valid UTF-8; passing [`error_handler_t::replace`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md) or `error_handler_t::ignore` avoids the exception instead of crashing an application that forgot to catch it. See [Handling invalid UTF-8](https://json.nlohmann.me/features/serialization/#handling-invalid-utf-8) for the options and an example.
 
@@ -52,7 +52,7 @@ The JSON specification leaves the handling of repeated keys in an object up to t
 
 ## Numbers
 
-A number whose value cannot be represented -- for instance `1E1000`, which overflows `double` -- is rejected while parsing as [`out_of_range.406`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range406) rather than silently becoming infinity. An integer that is syntactically valid but does not fit the 64-bit integer types is not rejected; it is instead stored as a `double`, which may lose precision for very large values. See [number limits](https://json.nlohmann.me/features/types/number_handling/#number-limits) for the exact ranges and an example.
+A number whose value cannot be represented — for instance `1E1000`, which overflows `double` — is rejected while parsing as [`out_of_range.406`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range406) rather than silently becoming infinity. An integer that is syntactically valid but does not fit the 64-bit integer types is not rejected; it is instead stored as a `double`, which may lose precision for very large values. See [number limits](https://json.nlohmann.me/features/types/number_handling/#number-limits) for the exact ranges and an example.
 
 ## Comments and trailing commas
 
@@ -63,7 +63,7 @@ Both [comments](https://json.nlohmann.me/features/comments/index.md) and [traili
 - Wrap parsing in a `try`/`catch` block, or use `allow_exceptions=false`/`accept()` if your environment cannot use exceptions; never let `JSON_NOEXCEPTION`'s `abort()` be the first time you think about error handling.
 - If the input's nesting depth matters to you, enforce your own limit with a [parser callback](https://json.nlohmann.me/features/parsing/parser_callbacks/#recipe-max-nesting-depth-via-a-callback) or a [SAX handler](https://json.nlohmann.me/features/parsing/sax_interface/index.md); the library bounds the call stack but not memory use.
 - Bound the size of the input itself before parsing, independent of the library's own bounded allocations for binary format lengths.
-- Decide up front how you want a string with invalid UTF-8 -- from any source, not only parsing -- to be serialized (`strict`, `replace`, or `ignore`), rather than discovering it from an uncaught `type_error.316`.
+- Decide up front how you want a string with invalid UTF-8 — from any source, not only parsing — to be serialized (`strict`, `replace`, or `ignore`), rather than discovering it from an uncaught `type_error.316`.
 - If a stray NUL byte silently truncating trailing input is a problem for your input format, define `JSON_STRICT_NUL_HANDLING`.
 - Decide whether duplicate object keys should be an error for your application, and add a callback if so.
 - Do not enable `ignore_comments` or `ignore_trailing_commas` for input that must be strictly conforming JSON.
@@ -80,3 +80,9 @@ For the broader design rationale and how it is tested (fuzzing, sanitizers, stat
 - [Number handling](https://json.nlohmann.me/features/types/number_handling/index.md) - number ranges and overflow behavior
 - [Assurance case](https://json.nlohmann.me/community/assurance_case/index.md) - the library's threat model and countermeasures
 - [Security policy](https://json.nlohmann.me/community/security_policy/index.md) - how to report a vulnerability
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events
+- [`parser_callback_t`](https://json.nlohmann.me/api/basic_json/parser_callback_t/index.md) - callback function type for the parser
+- [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input
+- [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) - record start and end positions of parsed values

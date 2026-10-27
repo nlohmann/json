@@ -80,10 +80,12 @@ Arrays are stored as pointers in a `basic_json` type. That is, for any access to
 
 ## See also
 
-- [object_t](object_t.md) the type used to store JSON objects
-- [binary_t](binary_t.md) the type used to store binary values
-- [is_array](is_array.md) checks whether the JSON value is an array
-- [max_size](max_size.md) returns the maximum possible number of elements
+- [`object_t`](object_t.md) - the type used to store JSON objects
+- [`binary_t`](binary_t.md) - the type used to store binary values
+- [`is_array`](is_array.md) - checks whether the JSON value is an array
+- [`max_size`](max_size.md) - returns the maximum possible number of elements
+- [Types](../../features/types/index.md) - how arrays are stored
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the `ArrayType` template parameter
 
 ## Version history
 

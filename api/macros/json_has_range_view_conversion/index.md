@@ -14,7 +14,7 @@ When the macro is not defined, the library will define it to its default value.
 
 Known compiler/stdlib exclusions
 
-- **MinGW** -- disabled, because its `std::ranges` support is incomplete ([issue #4916](https://github.com/nlohmann/json/issues/4916)).
+- **MinGW** — disabled, because its `std::ranges` support is incomplete ([issue #4916](https://github.com/nlohmann/json/issues/4916)).
 - All toolchains for which [`JSON_HAS_RANGES`](https://json.nlohmann.me/api/macros/json_has_ranges/#default-definition) is disabled.
 
 ## Examples
@@ -32,7 +32,7 @@ The code below forces the library to disable the conversion from range views:
 
 ## See also
 
-- [JSON_HAS_RANGES](https://json.nlohmann.me/api/macros/json_has_ranges/index.md) - control `std::ranges` support
+- [`JSON_HAS_RANGES`](https://json.nlohmann.me/api/macros/json_has_ranges/index.md) - control `std::ranges` support
 - [Constructing from a C++20 range view](https://json.nlohmann.me/features/conversions/#putting-values-in) - usage of the feature
 
 ## Version history

@@ -15,7 +15,7 @@ basic_json_view operator[](IntegerType idx) const;
 basic_json_view operator[](const json_pointer& ptr) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see the [Notes](#notes) below) -- or a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view if there is no such member.
+1. Returns the value of the object member with key `key` — the first one, should the key occur more than once (see the [Notes](#notes) below) — or a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view if there is no such member.
 1. Returns the array element at index `idx`, or a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view if `idx` is out of range. The template accepts every integer type except `bool` and `std::size_t` (`int`, `unsigned`, `long`, `std::int64_t`, ...) and forwards to the `size_type` overload, so that an integer argument is not ambiguous between that overload and 1; a negative `idx` is out of range.
 1. Returns the value a JSON pointer `ptr` refers to, starting at this value, or a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view wherever resolving it further is not possible without inserting into or extending the document (see [Return value](#return-value) and [Exceptions](#exceptions) below).
 
@@ -39,8 +39,8 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 
 ## Exceptions
 
-1. Throws [`type_error.305`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error305) if the value is not an object and not [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) -- the same exception, with the same message, that the **const** overload of [`BasicJsonType::operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) throws for a string argument on a non-object value.
-1. Throws [`type_error.305`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error305) if the value is not an array and not [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) -- the same exception, with the same message, that the **const** overload of [`BasicJsonType::operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) throws for a numeric argument on a non-array value.
+1. Throws [`type_error.305`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error305) if the value is not an object and not [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) — the same exception, with the same message, that the **const** overload of [`BasicJsonType::operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) throws for a string argument on a non-object value.
+1. Throws [`type_error.305`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error305) if the value is not an array and not [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) — the same exception, with the same message, that the **const** overload of [`BasicJsonType::operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) throws for a numeric argument on a non-array value.
 1. Throws the same exceptions, with the same messages, that the **const** overload of [`BasicJsonType::operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) throws for the same pointer and the same document:
    - [`out_of_range.402`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range402) if a reference token is `"-"` at an array.
    - [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) if a reference token cannot be resolved because it is used on a primitive value.
@@ -51,13 +51,13 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/a
 
 ## Complexity
 
-1. Linear in the number of members: as for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), members are compared one after another, in document order, stopping at the first match. Each comparison first checks the key's length -- already known from the index, without reading the key bytes -- before comparing its content, so a key of a different length than `key` is rejected without touching the source text. Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
+1. Linear in the number of members: as for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), members are compared one after another, in document order, stopping at the first match. Each comparison first checks the key's length — already known from the index, without reading the key bytes — before comparing its content, so a key of a different length than `key` is rejected without touching the source text. Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
 1. Linear in `idx`: elements are skipped one at a time from the first one, since they are not a fixed size in the index (unlike `BasicJsonType`'s array, which is random-access). Constant if no element of the array is an array or object, since the elements are then adjacent in the index.
 1. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at that level (as 1.) or the index into the array (as 2.).
 
 ## Notes
 
-Unlike `BasicJsonType::operator[]`, which is undefined behavior (guarded by a [runtime assertion](https://json.nlohmann.me/features/assertions/index.md)) for a missing key on a **const** value, this operator returns a safe, testable result for a missing key or an index out of range: a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view, which is tested with [`is_discarded`](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md). There is also no non-const overload that inserts a missing key or extends an array -- a view never modifies the document.
+Unlike `BasicJsonType::operator[]`, which is undefined behavior (guarded by a [runtime assertion](https://json.nlohmann.me/features/assertions/index.md)) for a missing key on a **const** value, this operator returns a safe, testable result for a missing key or an index out of range: a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view, which is tested with [`is_discarded`](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md). There is also no non-const overload that inserts a missing key or extends an array — a view never modifies the document.
 
 Chained access
 
@@ -69,13 +69,13 @@ If the source text has an object with a duplicate key, `operator[]` (and [`at`](
 
 JSON pointer resolution
 
-Overload 3 walks `ptr` one reference token at a time, starting at this value, the same way [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md) and [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md) do. It only ever returns a discarded view where the **const** overload of `BasicJsonType::operator[]` would be undefined behavior for the same pointer -- a missing object member or an out-of-range array index -- and still throws for every other way `ptr` can fail to resolve. See [`at`](https://json.nlohmann.me/api/basic_json_view/at/#exceptions) for the checked version, which throws in every case instead, and [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md) for a version that never throws.
+Overload 3 walks `ptr` one reference token at a time, starting at this value, the same way [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md) and [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md) do. It only ever returns a discarded view where the **const** overload of `BasicJsonType::operator[]` would be undefined behavior for the same pointer — a missing object member or an out-of-range array index — and still throws for every other way `ptr` can fail to resolve. See [`at`](https://json.nlohmann.me/api/basic_json_view/at/#exceptions) for the checked version, which throws in every case instead, and [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md) for a version that never throws.
 
 ## Examples
 
 Example: (1)/(2) access specified element
 
-The example below reads a couple of fields out of a batch of user records without ever materializing a full `BasicJsonType` value for the batch. `operator[]` is used both to look up an optional object member and to index into an array -- in both cases, a missing value comes back as a discarded view that can be tested with a plain `if`, instead of relying on undefined behavior.
+The example below reads a couple of fields out of a batch of user records without ever materializing a full `BasicJsonType` value for the batch. `operator[]` is used both to look up an optional object member and to index into an array — in both cases, a missing value comes back as a discarded view that can be tested with a plain `if`, instead of relying on undefined behavior.
 
 ```
 #include <iostream>
@@ -196,9 +196,9 @@ no such server
 
 ## See also
 
-- [at](https://json.nlohmann.me/api/basic_json_view/at/index.md) - access specified element with bounds checking (throws instead of returning a discarded view)
-- [front](https://json.nlohmann.me/api/basic_json_view/front/index.md), [back](https://json.nlohmann.me/api/basic_json_view/back/index.md) - access the first or last element
-- [find](https://json.nlohmann.me/api/basic_json_view/find/index.md), [contains](https://json.nlohmann.me/api/basic_json_view/contains/index.md) - look up a member without throwing
+- [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md) - access specified element with bounds checking (throws instead of returning a discarded view)
+- [`front`](https://json.nlohmann.me/api/basic_json_view/front/index.md), [`back`](https://json.nlohmann.me/api/basic_json_view/back/index.md) - access the first or last element
+- [`find`](https://json.nlohmann.me/api/basic_json_view/find/index.md), [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md) - look up a member without throwing
 - [`BasicJsonType::operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) - the corresponding function of `basic_json`
 - [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) - JSON pointer type used by overload 3
 

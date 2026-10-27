@@ -145,8 +145,8 @@ Output:
 
 ## See also
 
-- [dump](https://json.nlohmann.me/api/basic_json/dump/index.md)
-- [std::formatter](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) - the `std::format` (C++20) equivalent
+- [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) - serialize a JSON value to a string
+- [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) - the `std::format` (C++20) equivalent
 - [Serialization](https://json.nlohmann.me/features/serialization/index.md) - the serialization article
 
 ## Version history

@@ -118,13 +118,17 @@ Output:
 
 ## See also
 
-- [BSON specification](http://bsonspec.org/spec.html)
-- [to_bson](https://json.nlohmann.me/api/basic_json/to_bson/index.md) for the analogous serialization
-- [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) for the related CBOR format
-- [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md) for the related MessagePack format
-- [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) for the related UBJSON format
-- [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) for the related BJData format
-- [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) for the related BON8 format
+- [BSON](https://json.nlohmann.me/features/binary_formats/bson/index.md) - the format, its byte layout and how values are mapped
+- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - limits and safe handling of hostile data
+- [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
+- [BSON specification](http://bsonspec.org/spec.html) - specification of the BSON format
+- [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) - the analogous serialization
+- [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) - the related CBOR format
+- [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md) - the related MessagePack format
+- [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) - the related UBJSON format
+- [`from_bjdata`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) - the related BJData format
+- [`from_bon8`](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) - the related BON8 format
 
 ## Version history
 

@@ -73,11 +73,12 @@ false
 
 ## See also
 
-- [is_array](https://json.nlohmann.me/api/basic_json/is_array/index.md) checks whether the JSON value is an array
-- [is_structured](https://json.nlohmann.me/api/basic_json/is_structured/index.md) checks whether the JSON value is structured (array or object)
-- [type](https://json.nlohmann.me/api/basic_json/type/index.md) returns the type of the JSON value
-- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects
-- [basic_json_view::is_object](https://json.nlohmann.me/api/basic_json_view/is_object/index.md) - the same check on a zero-copy view
+- [`is_array`](https://json.nlohmann.me/api/basic_json/is_array/index.md) - checks whether the JSON value is an array
+- [`is_structured`](https://json.nlohmann.me/api/basic_json/is_structured/index.md) - checks whether the JSON value is structured (array or object)
+- [`type`](https://json.nlohmann.me/api/basic_json/type/index.md) - returns the type of the JSON value
+- [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md) - the type used to store JSON objects
+- [`basic_json_view::is_object`](https://json.nlohmann.me/api/basic_json_view/is_object/index.md) - the same check on a zero-copy view
+- [Types](https://json.nlohmann.me/features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

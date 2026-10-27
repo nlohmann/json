@@ -65,8 +65,8 @@ Linear in the number of reference tokens in the `json_pointer`.
 
 ## See also
 
-- [front](front.md) return first reference token
-- [pop_front](pop_front.md) remove the first reference token
+- [`front`](front.md) - return first reference token
+- [`pop_front`](pop_front.md) - remove the first reference token
 
 ## Version history
 

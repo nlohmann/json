@@ -43,7 +43,9 @@ Already included a different version of the library!
 
 ## See also
 
-- [NLOHMANN_JSON_VERSION_MAJOR, NLOHMANN_JSON_VERSION_MINOR, NLOHMANN_JSON_VERSION_PATCH](https://json.nlohmann.me/api/macros/nlohmann_json_version_major/index.md) - library version information
+- [`NLOHMANN_JSON_VERSION_MAJOR` / `NLOHMANN_JSON_VERSION_MINOR` / `NLOHMANN_JSON_VERSION_PATCH`](https://json.nlohmann.me/api/macros/nlohmann_json_version_major/index.md) - library version information
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [Integration](https://json.nlohmann.me/integration/index.md) - integrate the library
 
 ## Version history
 

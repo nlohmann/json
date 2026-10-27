@@ -70,7 +70,7 @@ string with the invalid byte kept as is (7 bytes, not valid UTF-8 itself)
 
 ## See also
 
-- [dump](https://json.nlohmann.me/api/basic_json/dump/index.md) serializes a JSON value, with an `error_handler_t` parameter to configure invalid UTF-8 handling
+- [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) - serializes a JSON value, with an `error_handler_t` parameter to configure invalid UTF-8 handling
 - [Handling invalid UTF-8](https://json.nlohmann.me/features/serialization/#handling-invalid-utf-8) - the article on handling invalid UTF-8
 
 ## Version history

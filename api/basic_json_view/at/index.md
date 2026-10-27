@@ -15,7 +15,7 @@ basic_json_view at(IntegerType idx) const;
 basic_json_view at(const json_pointer& ptr) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes)).
+1. Returns the value of the object member with key `key` — the first one, should the key occur more than once (see [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes)).
 1. Returns the array element at index `idx`. The template accepts every integer type except `bool` and `std::size_t` and forwards to the `size_type` overload, as for [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md); a negative `idx` is out of range.
 1. Returns the value a JSON pointer `ptr` refers to, starting at this value.
 
@@ -49,7 +49,7 @@ Strong guarantee: there are no changes to the view or the document it refers to.
    - Throws [`parse_error.106`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error106) if an array index in `ptr` begins with `'0'`.
    - Throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) if an array index in `ptr` is not a number.
    - Throws [`out_of_range.401`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range401) if an array index in `ptr` is out of range.
-   - Throws [`out_of_range.402`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range402) if a reference token is `"-"` at an array -- `at` never inserts an element, so `"-"` is always invalid.
+   - Throws [`out_of_range.402`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range402) if a reference token is `"-"` at an array — `at` never inserts an element, so `"-"` is always invalid.
    - Throws [`out_of_range.403`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range403) if a reference token names an object member that does not exist.
    - Throws [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) if `ptr` cannot be resolved because a reference token is used on a primitive value.
 
@@ -57,7 +57,7 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/a
 
 ## Complexity
 
-1. Linear in the number of members: as for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), members are compared one after another, in document order, stopping at the first match. Each comparison first checks the key's length -- already known from the index, without reading the key bytes -- before comparing its content. Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
+1. Linear in the number of members: as for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), members are compared one after another, in document order, stopping at the first match. Each comparison first checks the key's length — already known from the index, without reading the key bytes — before comparing its content. Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
 1. Linear in `idx`: elements are skipped one at a time from the first one, since they are not a fixed size in the index (unlike `BasicJsonType`'s array, which is random-access). Constant if no element of the array is an array or object, since the elements are then adjacent in the index.
 1. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at that level (as 1.) or the index into the array (as 2.).
 
@@ -67,13 +67,13 @@ Duplicate keys: the first member wins
 
 If the source text repeats a key, this resolves to the *first* member with it, not to the last one that [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) and `parse()` keep. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]` and [Duplicate keys](https://json.nlohmann.me/features/json_view/#duplicate-keys) for the reasons and for how to get the last value.
 
-Unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), which returns a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view for a missing key or an out-of-range index, `at` always throws -- exactly as `BasicJsonType::at` does, and with the same messages, so existing error handling written against `BasicJsonType::at` keeps working unchanged when switched to a view. This also holds for overload 3: unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) with a JSON pointer, which returns a discarded view for a missing key or an out-of-range index, `at` throws for those too (`out_of_range.403`/`out_of_range.401`).
+Unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), which returns a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view for a missing key or an out-of-range index, `at` always throws — exactly as `BasicJsonType::at` does, and with the same messages, so existing error handling written against `BasicJsonType::at` keeps working unchanged when switched to a view. This also holds for overload 3: unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) with a JSON pointer, which returns a discarded view for a missing key or an out-of-range index, `at` throws for those too (`out_of_range.403`/`out_of_range.401`).
 
 ## Examples
 
 Example: (1)/(2) access specified element with bounds checking
 
-The example below reads required fields out of a service configuration with `at`, and shows that the exceptions it throws -- for a wrong type and for a missing key -- carry the same messages [`BasicJsonType::at`](https://json.nlohmann.me/api/basic_json/at/index.md) would produce for the same JSON text.
+The example below reads required fields out of a service configuration with `at`, and shows that the exceptions it throws — for a wrong type and for a missing key — carry the same messages [`BasicJsonType::at`](https://json.nlohmann.me/api/basic_json/at/index.md) would produce for the same JSON text.
 
 ```
 #include <iostream>
@@ -173,8 +173,8 @@ Output:
 
 ## See also
 
-- [operator[]](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - access specified element (returns a discarded view instead of throwing)
-- [front](https://json.nlohmann.me/api/basic_json_view/front/index.md), [back](https://json.nlohmann.me/api/basic_json_view/back/index.md) - access the first or last element
+- [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - access specified element (returns a discarded view instead of throwing)
+- [`front`](https://json.nlohmann.me/api/basic_json_view/front/index.md), [`back`](https://json.nlohmann.me/api/basic_json_view/back/index.md) - access the first or last element
 - [`BasicJsonType::at`](https://json.nlohmann.me/api/basic_json/at/index.md) - the corresponding function of `basic_json`
 - [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) - JSON pointer type used by overload 3
 

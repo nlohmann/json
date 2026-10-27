@@ -4,6 +4,19 @@
 
 JSON Patch ([RFC 6902](https://tools.ietf.org/html/rfc6902)) defines a JSON document structure for expressing a sequence of operations to apply to a JSON document. Operations address locations in the document using [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) paths. With the [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) function, a JSON Patch is applied to the current JSON value by executing all operations from the patch, yielding the patched document as a new value.
 
+The following steps through one operation of each kind. The first three operations are those of the example below; the other three continue on its result.
+
+| Operation                                                 | Before                                             | After                                              |
+| --------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------- |
+| `{"op": "replace", "path": "/baz", "value": "boo"}`       | `{"baz": "qux", "foo": "bar"}`                     | `{"baz": "boo", "foo": "bar"}`                     |
+| `{"op": "add", "path": "/hello", "value": ["world"]}`     | `{"baz": "boo", "foo": "bar"}`                     | `{"baz": "boo", "foo": "bar", "hello": ["world"]}` |
+| `{"op": "remove", "path": "/foo"}`                        | `{"baz": "boo", "foo": "bar", "hello": ["world"]}` | `{"baz": "boo", "hello": ["world"]}`               |
+| `{"op": "move", "from": "/baz", "path": "/hello/1"}`      | `{"baz": "boo", "hello": ["world"]}`               | `{"hello": ["world", "boo"]}`                      |
+| `{"op": "copy", "from": "/hello/0", "path": "/greeting"}` | `{"hello": ["world", "boo"]}`                      | `{"greeting": "world", "hello": ["world", "boo"]}` |
+| `{"op": "test", "path": "/greeting", "value": "world"}`   | `{"greeting": "world", "hello": ["world", "boo"]}` | unchanged (a failed test throws)                   |
+
+Stepper through the six operations: *Next* applies the next operation, *Back* undoes it, and *Reset* returns to the original document. The current operation is highlighted in the patch list, and the lines it changes are marked in the document.
+
 Applying a patch without copying
 
 [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) leaves the original value unchanged and returns the patched result as a copy. If the document is large and the original value is no longer needed, [`patch_inplace`](https://json.nlohmann.me/api/basic_json/patch_inplace/index.md) applies the same operations in place instead.
@@ -78,6 +91,8 @@ flowchart LR
     S -->|"source.patch(patch)"| T["target"]
     P -.->|"applied to source, yields"| T
 ```
+
+How `diff` and `patch` relate: `diff(source, target)` yields a patch, and applying that patch to the source yields the target.
 
 Invariant
 
@@ -174,3 +189,6 @@ Output:
 - [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) - apply a JSON Patch, returning the result as a copy
 - [`patch_inplace`](https://json.nlohmann.me/api/basic_json/patch_inplace/index.md) - apply a JSON Patch without copying
 - [`diff`](https://json.nlohmann.me/api/basic_json/diff/index.md) - compute a JSON Patch from two values
+- [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) - type to represent JSON Pointers
+- [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md) - compute a JSON Merge Patch from two values
+- [Modifying values](https://json.nlohmann.me/features/modifying_values/index.md) - simple in-place modifications

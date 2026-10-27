@@ -5,7 +5,7 @@ This section describes the features of the library in detail. If you are new to 
 ## Creating and reading values
 
 - [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) — build values from literals, initializer lists, and STL containers, and understand the `{}` vs. `[]` ambiguity.
-- [Parsing](https://json.nlohmann.me/features/parsing/index.md) — read a JSON value from a string, file, or stream, including [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md), [callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md), the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md), [error handling](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md), and [parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md).
+- [Parsing](https://json.nlohmann.me/features/parsing/index.md) — read a JSON value from a string, file, or stream, including [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md), [callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md), the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md), [error handling](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md), [large and partial input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md), and [parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md).
 - [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) — read a JSON text through a flat index instead of building a `json` tree; strings and numbers stay in the input and are only decoded when needed.
 - [Editable documents](https://json.nlohmann.me/features/json_view/#editing-a-document) — modify a parsed document without building a `json` tree.
 - [Images](https://json.nlohmann.me/features/json_view/#images) — save a parsed document and load it again without parsing it.
@@ -23,6 +23,7 @@ This section describes the features of the library in detail. If you are new to 
 
 - [Converting values](https://json.nlohmann.me/features/conversions/index.md) — get values out with [`get`](https://json.nlohmann.me/api/basic_json/get/index.md)/[`get_to`](https://json.nlohmann.me/api/basic_json/get_to/index.md), and understand implicit conversions.
 - [Arbitrary types conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) — teach the library about your own structs and classes.
+- [Recipes for common types](https://json.nlohmann.me/features/type_recipes/index.md) — convert smart pointers, `std::variant`, `std::chrono` types, and class hierarchies, which the library deliberately leaves to you.
 - [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md) — map enums to strings instead of integers.
 
 ## Serializing values
@@ -37,6 +38,7 @@ This section describes the features of the library in detail. If you are new to 
 - [Template parameter requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) — what a type passed as one of `basic_json`'s template parameters has to provide.
 - [Object order](https://json.nlohmann.me/features/object_order/index.md) — keep insertion order with [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md).
 - [Performance](https://json.nlohmann.me/features/performance/index.md) — practical advice on parsing, memory use, serialization, and compile times.
+- [Working without exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) — what to use when exceptions are unwanted or unavailable.
 - [Runtime assertions](https://json.nlohmann.me/features/assertions/index.md), [supported macros](https://json.nlohmann.me/features/macros/index.md), the [`nlohmann` namespace](https://json.nlohmann.me/features/namespace/index.md), and [C++ modules](https://json.nlohmann.me/features/modules/index.md) — build-time and runtime configuration.
 
 Looking for a specific function?
@@ -48,5 +50,15 @@ This section gives conceptual overviews. For the precise signature, parameters, 
 - [API documentation](https://json.nlohmann.me/api/basic_json/index.md) - reference of all classes and functions
 - [FAQ](https://json.nlohmann.me/home/faq/index.md) - answers to common questions
 - [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - all exceptions and their error codes
-- [Design goals](https://json.nlohmann.me/home/design_goals/index.md)
+- [Design goals](https://json.nlohmann.me/home/design_goals/index.md) - the goals behind the library
 - [Integration](https://json.nlohmann.me/integration/index.md) - how to add the library to a project
+- [Macros](https://json.nlohmann.me/api/macros/index.md) - reference of all macros
+- [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) - the JSON Pointer class
+- [`adl_serializer`](https://json.nlohmann.me/api/adl_serializer/index.md) - customization point for type conversions
+- [`json_sax`](https://json.nlohmann.me/api/json_sax/index.md) - interface of the SAX parser events
+- [`json_document`](https://json.nlohmann.me/api/json_document/index.md) - an immutable document with a flat index
+- [`json_view`](https://json.nlohmann.me/api/json_view/index.md) - a non-owning view of a value in a document
+- [`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md) - binary values with a subtype
+- [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) - a JSON type preserving insertion order
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - all supported macros
+- [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/index.md) - the library namespace

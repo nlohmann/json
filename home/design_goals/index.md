@@ -12,3 +12,10 @@ Other aspects were not so important to us:
 - **Speed**. There are certainly [faster JSON libraries](https://github.com/miloyip/nativejson-benchmark#parsing-time) out there. However, if your goal is to speed up your development by adding JSON support with a single header, then this library is the way to go. If you know how to use a `std::vector` or `std::map`, you are already set.
 
 See the [contribution guidelines](https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md#please-dont) for more information.
+
+## See also
+
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) - the main class and all its member functions
+- [Macros](https://json.nlohmann.me/api/macros/index.md) - reference of all macros
+- [Performance](https://json.nlohmann.me/features/performance/index.md) - how the library performs and what is not optimized
+- [Architecture](https://json.nlohmann.me/home/architecture/index.md) - how the library is put together

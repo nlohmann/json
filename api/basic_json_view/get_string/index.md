@@ -30,13 +30,13 @@ Constant.
 
 `get_string()` borrows the string: nothing is copied, whereas [`get<std::string>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) copies it. For a borrowed document, the returned [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types) is valid as long as the caller's buffer; for an owned one, as long as the document.
 
-The returned [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types) is valid exactly as long as the view that produced it -- see the [validity rules](https://json.nlohmann.me/api/basic_json_view/index.md) of `basic_json_view` -- and, for a string with no escapes, for as long as the document's source text, which for a borrowed document must remain valid **and unmodified** for as long as the document exists, since floating-point values and unescaped strings are read from the source lazily.
+The returned [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types) is valid exactly as long as the view that produced it — see the [validity rules](https://json.nlohmann.me/api/basic_json_view/index.md) of `basic_json_view` — and, for a string with no escapes, for as long as the document's source text, which for a borrowed document must remain valid **and unmodified** for as long as the document exists, since floating-point values and unescaped strings are read from the source lazily.
 
 ## Examples
 
 Example
 
-The example below pulls one field out of a JSON text that stands in for a large API response, and shows that no `std::string` was allocated for it: the returned view still points inside the original buffer. A field that contains an escape sequence cannot point into the original text -- it was decoded once into the document's own buffer instead -- but still avoids a per-field allocation.
+The example below pulls one field out of a JSON text that stands in for a large API response, and shows that no `std::string` was allocated for it: the returned view still points inside the original buffer. A field that contains an escape sequence cannot point into the original text — it was decoded once into the document's own buffer instead — but still avoids a per-field allocation.
 
 ```
 #include <iostream>
@@ -82,9 +82,10 @@ false
 
 ## See also
 
-- [get](https://json.nlohmann.me/api/basic_json_view/get/index.md) - convert the value to a given type (`get<string_view_t>()` is equivalent to this function)
-- [number_token](https://json.nlohmann.me/api/basic_json_view/number_token/index.md) - a number's token text, without a copy
+- [`get`](https://json.nlohmann.me/api/basic_json_view/get/index.md) - convert the value to a given type (`get<string_view_t>()` is equivalent to this function)
+- [`number_token`](https://json.nlohmann.me/api/basic_json_view/number_token/index.md) - a number's token text, without a copy
 - [`BasicJsonType::get_ref`](https://json.nlohmann.me/api/basic_json/get_ref/index.md) - the closest counterpart of `basic_json`
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#getting-values-out-without-copying) - borrowing strings instead of copying them
 
 ## Version history
 

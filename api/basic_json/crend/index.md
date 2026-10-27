@@ -6,6 +6,8 @@ const_reverse_iterator crend() const noexcept;
 
 Returns an iterator to the reverse-end; that is, one before the first element. This element acts as a placeholder, attempting to access it results in undefined behavior.
 
+`crend()` points to the position before the first element, like `rend()`, and `rbegin()` to the last element. The upper row is the reversed sequence and the lower row the forward sequence; dashed arrows link each reverse iterator to the forward iterator it stores, and dashed cells are past-the-last positions.
+
 ## Return value
 
 reverse iterator to the element following the last element
@@ -54,9 +56,9 @@ Output:
 
 ## See also
 
-- [crbegin](https://json.nlohmann.me/api/basic_json/crbegin/index.md) returns a const reverse iterator to the last element
-- [rend](https://json.nlohmann.me/api/basic_json/rend/index.md) returns a reverse iterator to one before the first element
-- [cend](https://json.nlohmann.me/api/basic_json/cend/index.md) returns a const iterator to one past the last element
+- [`crbegin`](https://json.nlohmann.me/api/basic_json/crbegin/index.md) - returns a const reverse iterator to the last element
+- [`rend`](https://json.nlohmann.me/api/basic_json/rend/index.md) - returns a reverse iterator to one before the first element
+- [`cend`](https://json.nlohmann.me/api/basic_json/cend/index.md) - returns a const iterator to one past the last element
 - [Iterators](https://json.nlohmann.me/features/iterators/index.md) - the article on iterators
 
 ## Version history

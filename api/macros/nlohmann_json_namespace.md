@@ -48,8 +48,11 @@ the library.
 
 ## See also
 
-- [`NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END`](nlohmann_json_namespace_begin.md)
-- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](nlohmann_json_namespace_no_version.md)
+- [`NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END`](nlohmann_json_namespace_begin.md) - macros to open and
+  close the library namespace
+- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](nlohmann_json_namespace_no_version.md) - disable the inline versioned namespace
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
+- [`nlohmann` Namespace](../../features/namespace.md) - the library namespace
 
 ## Version history
 

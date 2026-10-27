@@ -80,10 +80,11 @@ initialization of a binary array type, for backwards compatibility and so it doe
 
 ## See also
 
-- [binary_t](binary_t.md) type for binary values
-- [get_binary](get_binary.md) get a reference to the stored binary value
-- [is_binary](is_binary.md) return whether the value is binary
-- [byte_container_with_subtype](../byte_container_with_subtype/index.md) container for binary values with subtype
+- [Binary formats](../../features/binary_formats/index.md) - formats that can store binary values
+- [`binary_t`](binary_t.md) - type for binary values
+- [`get_binary`](get_binary.md) - get a reference to the stored binary value
+- [`is_binary`](is_binary.md) - return whether the value is binary
+- [`byte_container_with_subtype`](../byte_container_with_subtype/index.md) - container for binary values with subtype
 - [Binary Values](../../features/binary_values.md) - the article on binary values
 
 ## Version history

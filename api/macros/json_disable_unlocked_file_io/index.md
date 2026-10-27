@@ -89,10 +89,11 @@ int main()
 
 ## See also
 
-- [**parse**](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
-- [**sax_parse**](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events
-- [**JSON_DISABLE_STREAM_BULK_SCAN**](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time
-- [Parsing: input sources and performance](https://json.nlohmann.me/features/parsing/#input-sources-and-performance)
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time
+- [Parsing: input sources and performance](https://json.nlohmann.me/features/parsing/#input-sources-and-performance) - how input sources affect parsing performance
+- [Large, Streamed, and Partial Input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md) - chunked, concatenated, and very large input
 
 ## Version history
 

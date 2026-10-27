@@ -70,10 +70,12 @@ true
 
 ## See also
 
-- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects
-- [binary_t](https://json.nlohmann.me/api/basic_json/binary_t/index.md) the type used to store binary values
-- [is_array](https://json.nlohmann.me/api/basic_json/is_array/index.md) checks whether the JSON value is an array
-- [max_size](https://json.nlohmann.me/api/basic_json/max_size/index.md) returns the maximum possible number of elements
+- [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md) - the type used to store JSON objects
+- [`binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md) - the type used to store binary values
+- [`is_array`](https://json.nlohmann.me/api/basic_json/is_array/index.md) - checks whether the JSON value is an array
+- [`max_size`](https://json.nlohmann.me/api/basic_json/max_size/index.md) - returns the maximum possible number of elements
+- [Types](https://json.nlohmann.me/features/types/index.md) - how arrays are stored
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - requirements on the `ArrayType` template parameter
 
 ## Version history
 

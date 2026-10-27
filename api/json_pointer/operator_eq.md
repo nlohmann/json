@@ -169,8 +169,8 @@ tokens.
 
 ## See also
 
-- [operator!=](operator_ne.md) compare for inequality
-- [operator<=>](operator_spaceship.md) comparison: 3-way (C++20)
+- [`operator!=`](operator_ne.md) - compare for inequality
+- [`operator<=>`](operator_spaceship.md) - comparison: 3-way (C++20)
 
 ## Version history
 

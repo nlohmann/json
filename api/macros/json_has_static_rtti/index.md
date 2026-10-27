@@ -27,7 +27,9 @@ The code below forces the library to enable support for libraries with RTTI depe
 
 ## See also
 
-- [**operator ValueType**](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) - get a value (implicit); on C++17, this macro controls whether `std::any` is excluded from its candidate types
+- [`operator ValueType`](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) - get a value (implicit); on C++17, this macro controls whether `std::any` is excluded from its candidate types
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - conversions of values
 
 ## Version history
 

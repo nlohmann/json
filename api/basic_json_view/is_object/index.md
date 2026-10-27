@@ -89,9 +89,9 @@ true
 
 ## See also
 
-- [is_structured](https://json.nlohmann.me/api/basic_json_view/is_structured/index.md) - return whether the type is structured
-- [size](https://json.nlohmann.me/api/basic_json_view/size/index.md) - the number of elements
-- [empty](https://json.nlohmann.me/api/basic_json_view/empty/index.md) - whether there are no elements
+- [`is_structured`](https://json.nlohmann.me/api/basic_json_view/is_structured/index.md) - return whether the type is structured
+- [`size`](https://json.nlohmann.me/api/basic_json_view/size/index.md) - the number of elements
+- [`empty`](https://json.nlohmann.me/api/basic_json_view/empty/index.md) - whether there are no elements
 - [`BasicJsonType::is_object`](https://json.nlohmann.me/api/basic_json/is_object/index.md) - the corresponding function of `basic_json`
 
 ## Version history

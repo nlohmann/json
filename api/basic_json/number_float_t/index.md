@@ -70,10 +70,11 @@ true
 
 ## See also
 
-- [number_integer_t](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md) the type used to store JSON integer numbers
-- [number_unsigned_t](https://json.nlohmann.me/api/basic_json/number_unsigned_t/index.md) the type used to store JSON unsigned integer numbers
-- [is_number_float](https://json.nlohmann.me/api/basic_json/is_number_float/index.md) checks whether the JSON value is a floating-point number
+- [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md) - the type used to store JSON integer numbers
+- [`number_unsigned_t`](https://json.nlohmann.me/api/basic_json/number_unsigned_t/index.md) - the type used to store JSON unsigned integer numbers
+- [`is_number_float`](https://json.nlohmann.me/api/basic_json/is_number_float/index.md) - checks whether the JSON value is a floating-point number
 - [Number Handling](https://json.nlohmann.me/features/types/number_handling/index.md) - the article on number handling
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - requirements on the number template parameters
 
 ## Version history
 

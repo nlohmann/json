@@ -58,7 +58,9 @@ Boolean values are stored directly inside a `basic_json` type.
 
 ## See also
 
-- [is_boolean](is_boolean.md) checks whether the JSON value is a boolean
+- [`is_boolean`](is_boolean.md) - checks whether the JSON value is a boolean
+- [Types](../../features/types/index.md) - how booleans are stored
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the `BooleanType` template parameter
 
 ## Version history
 

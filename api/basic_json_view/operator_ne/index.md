@@ -12,7 +12,7 @@ bool operator!=(const BasicJsonType& lhs, const basic_json_view& rhs);
 1. Compares two views for inequality. Returns `!(lhs == rhs)`, see [operator==](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md).
 1. Compares a view and a `BasicJsonType` value for inequality, in either order. Returns `!(lhs == rhs)` (or, for the reversed order, `!(rhs == lhs)`), see [operator==](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md).
 
-Since `operator!=` is defined as the negation of [`operator==`](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md), it follows the same rules for special cases: for instance, since a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view is never equal to anything by default (see [operator=='s Notes](https://json.nlohmann.me/api/basic_json_view/operator_eq/#notes)), it is never *unequal* to anything either -- `discarded != discarded` is also `false`, exactly as for a discarded `BasicJsonType` value.
+Since `operator!=` is defined as the negation of [`operator==`](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md), it follows the same rules for special cases: for instance, since a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view is never equal to anything by default (see [operator=='s Notes](https://json.nlohmann.me/api/basic_json_view/operator_eq/#notes)), it is never *unequal* to anything either — `discarded != discarded` is also `false`, exactly as for a discarded `BasicJsonType` value.
 
 ## Parameters
 
@@ -38,7 +38,7 @@ Linear, as [`operator==`](https://json.nlohmann.me/api/basic_json_view/operator_
 
 ## Notes
 
-See the [Notes](https://json.nlohmann.me/api/basic_json_view/operator_eq/#notes) of `operator==` -- in particular for how an object's members are compared (order matters for [`ordered_json_view`](https://json.nlohmann.me/api/ordered_json_view/index.md) but not for [`json_view`](https://json.nlohmann.me/api/json_view/index.md)) and for how discarded views compare.
+See the [Notes](https://json.nlohmann.me/api/basic_json_view/operator_eq/#notes) of `operator==` — in particular for how an object's members are compared (order matters for [`ordered_json_view`](https://json.nlohmann.me/api/ordered_json_view/index.md) but not for [`json_view`](https://json.nlohmann.me/api/json_view/index.md)) and for how discarded views compare.
 
 No ordering comparison (`operator<`) is provided for `basic_json_view`; [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) is the way to get a `BasicJsonType` value that supports it.
 
@@ -46,7 +46,7 @@ No ordering comparison (`operator<`) is provided for `basic_json_view`; [`materi
 
 Example
 
-The example below asserts, as a test would, that a received document differs from an unwanted value, and shows that -- as for [`json`](https://json.nlohmann.me/api/json/index.md)/[`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) -- reordering an object's members is detected as a difference for an `ordered_json_view` but not for a `json_view`.
+The example below asserts, as a test would, that a received document differs from an unwanted value, and shows that — as for [`json`](https://json.nlohmann.me/api/json/index.md)/[`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) — reordering an object's members is detected as a difference for an `ordered_json_view` but not for a `json_view`.
 
 ```
 #include <iostream>
@@ -89,8 +89,8 @@ true
 
 ## See also
 
-- [operator==](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md) - compare for equality
-- [materialize](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build a `BasicJsonType` value, e.g. to keep comparing after the document is gone
+- [`operator==`](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md) - compare for equality
+- [`materialize`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build a `BasicJsonType` value, e.g. to keep comparing after the document is gone
 - [`BasicJsonType::operator!=`](https://json.nlohmann.me/api/basic_json/operator_ne/index.md) - the corresponding function of `basic_json`
 
 ## Version history

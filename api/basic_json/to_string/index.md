@@ -76,7 +76,7 @@ Output:
 
 ## See also
 
-- [dump](https://json.nlohmann.me/api/basic_json/dump/index.md)
+- [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) - serialize a JSON value to a string
 - [Serialization](https://json.nlohmann.me/features/serialization/index.md) - the serialization article
 
 ## Version history

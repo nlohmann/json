@@ -29,9 +29,9 @@ This type extends the template parameter `BinaryType` provided to [`basic_json`]
 ## See also
 
 - [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
-- [**binary**](https://json.nlohmann.me/api/basic_json/binary/index.md) - create a binary array value
-- [**get_binary**](https://json.nlohmann.me/api/basic_json/get_binary/index.md) - get a reference to the stored binary value
-- [**binary_t**](https://json.nlohmann.me/api/basic_json/binary_t/index.md) - type for binary arrays
+- [`binary`](https://json.nlohmann.me/api/basic_json/binary/index.md) - create a binary array value
+- [`get_binary`](https://json.nlohmann.me/api/basic_json/get_binary/index.md) - get a reference to the stored binary value
+- [`binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md) - type for binary arrays
 - [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - formats that can store binary values
 
 ## Version history

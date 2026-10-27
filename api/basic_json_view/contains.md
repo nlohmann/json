@@ -34,11 +34,11 @@ No-throw guarantee: this function never throws exceptions.
 
 1. Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after
    another, in document order, stopping at the first match. Each comparison first checks the
-   key's length -- already known from the index, without reading the key bytes -- before comparing its content.
+   key's length — already known from the index, without reading the key bytes — before comparing its content.
    Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes
    constant time on average.
 2. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at
-   that level or the index into the array -- as for [`operator[]`](operator[].md#complexity) and
+   that level or the index into the array — as for [`operator[]`](operator[].md#complexity) and
    [`at`](at.md#complexity) with a JSON pointer.
 
 ## Notes
@@ -50,7 +50,7 @@ No-throw guarantee: this function never throws exceptions.
     `operator[]` and [Duplicate keys](../../features/json_view.md#duplicate-keys) for the reasons and for how to get
     the last value.
 
-Overload 1 always returns `#!cpp false` when the value is not an object -- including a [discarded](is_discarded.md)
+Overload 1 always returns `#!cpp false` when the value is not an object — including a [discarded](is_discarded.md)
 view.
 
 !!! info "Postconditions"
@@ -175,9 +175,9 @@ view.
 
 ## See also
 
-- [find](find.md) - find a value in an object
-- [count](count.md) - returns the number of occurrences of a key
-- [at](at.md), [operator[]](operator[].md) - resolve a JSON pointer and throw, or return a discarded view
+- [`find`](find.md) - find a value in an object
+- [`count`](count.md) - returns the number of occurrences of a key
+- [`at`](at.md), [`operator[]`](operator[].md) - resolve a JSON pointer and throw, or return a discarded view
 - [`BasicJsonType::contains`](../basic_json/contains.md) - the corresponding function of `basic_json`
 
 ## Version history

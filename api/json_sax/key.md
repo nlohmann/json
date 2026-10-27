@@ -205,9 +205,10 @@ It is safe to move the passed object key value.
 
 ## See also
 
-- [start_object](start_object.md) - the beginning of an object was read
-- [end_object](end_object.md) - the end of an object was read
-- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [`start_object`](start_object.md) - the beginning of an object was read
+- [`end_object`](end_object.md) - the end of an object was read
+- [`sax_parse`](../basic_json/sax_parse.md) - SAX parser
+- [SAX Interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
 
 ## Version history
 

@@ -60,9 +60,9 @@ Constant.
 
 ## See also
 
-- [front](front.md) return first reference token
-- [back](back.md) return last reference token
-- [to_string](to_string.md) return a string representation of the JSON pointer
+- [`front`](front.md) - return first reference token
+- [`back`](back.md) - return last reference token
+- [`to_string`](to_string.md) - return a string representation of the JSON pointer
 
 ## Version history
 

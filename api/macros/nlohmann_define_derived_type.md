@@ -223,13 +223,14 @@ void to_json(BasicJsonType& j, const B& b) {
 
 ## See also
 
-- [NLOHMANN_DEFINE_TYPE_INTRUSIVE / NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT / 
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE](nlohmann_define_type_intrusive.md)
-  for similar macros that can be defined _inside_ a non-derived type.
-- [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE / NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT / 
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE](nlohmann_define_type_non_intrusive.md)
-  for similar macros that can be defined _outside_ a non-derived type.
-- [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
+- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE` / `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT` /
+  `NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE`](nlohmann_define_type_intrusive.md) - similar macros that can be
+  defined _inside_ a non-derived type
+- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` / `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT` /
+  `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE`](nlohmann_define_type_non_intrusive.md) - similar macros that can
+  be defined _outside_ a non-derived type
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) - overview of the supported conversions
+- [Recipes for Common Types](../../features/type_recipes.md) - class hierarchies
 
 ## Version history
 

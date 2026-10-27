@@ -9,9 +9,9 @@ enum class number_format {
 
 This enumeration is used in [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) to choose how numbers are written. Two values are differentiated:
 
-shortest : integers are copied from the source text -- already canonical in JSON -- except that `-0` becomes `0`, the way [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) reads it; floats are written with the library's shortest round-trip conversion, exactly as [`BasicJsonType::dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) would (e.g. `1.5`, `100.0`, `1e+100`)
+shortest : integers are copied from the source text — already canonical in JSON — except that `-0` becomes `0`, the way [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) reads it; floats are written with the library's shortest round-trip conversion, exactly as [`BasicJsonType::dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) would (e.g. `1.5`, `100.0`, `1e+100`)
 
-source : every number is copied exactly as it appears in the source text -- `1.50`, `1E2`, `-0`, all digits of an integer literal with more digits than any number type holds -- something `BasicJsonType` cannot do, since parsing already reduces every number to its parsed value
+source : every number is copied exactly as it appears in the source text — `1.50`, `1E2`, `-0`, all digits of an integer literal with more digits than any number type holds — something `BasicJsonType` cannot do, since parsing already reduces every number to its parsed value
 
 ## Examples
 
@@ -59,9 +59,10 @@ Output:
 
 ## See also
 
-- [dump](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - serialize to a JSON-formatted string
-- [number_token](https://json.nlohmann.me/api/basic_json_view/number_token/index.md) - get a single number's token text without dumping the whole value
+- [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - serialize to a JSON-formatted string
+- [`number_token`](https://json.nlohmann.me/api/basic_json_view/number_token/index.md) - get a single number's token text without dumping the whole value
 - [`BasicJsonType::error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md) - the analogous enumeration for `BasicJsonType::dump`'s decoding-error behavior
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#writing-a-view-back) - writing numbers as they appeared in the source
 
 ## Version history
 

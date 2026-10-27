@@ -96,7 +96,7 @@ Linear in the length of `s`.
 ## See also
 
 - [JSON Pointer](../../features/json_pointer.md) - the article on JSON Pointer support
-- [operator""_json_pointer](../operator_literal_json_pointer.md) user-defined string literal for JSON pointers
+- [`operator""_json_pointer`](../operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 
 ## Version history
 

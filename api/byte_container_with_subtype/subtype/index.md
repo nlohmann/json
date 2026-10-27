@@ -58,9 +58,10 @@ c2.subtype() = 42
 
 ## See also
 
-- [set_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/set_subtype/index.md) sets the binary subtype
-- [has_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/has_subtype/index.md) return whether the value has a subtype
-- [clear_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/clear_subtype/index.md) clears the binary subtype
+- [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
+- [`set_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/set_subtype/index.md) - sets the binary subtype
+- [`has_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/has_subtype/index.md) - return whether the value has a subtype
+- [`clear_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/clear_subtype/index.md) - clears the binary subtype
 
 ## Version history
 

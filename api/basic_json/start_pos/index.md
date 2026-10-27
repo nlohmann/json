@@ -155,8 +155,9 @@ The output shows the start/end positions of all the objects and fields in the JS
 
 ## See also
 
-- [end_pos](https://json.nlohmann.me/api/basic_json/end_pos/index.md) to access the end position
-- [JSON_DIAGNOSTIC_POSITIONS](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) for an overview of the diagnostic positions
+- [`end_pos`](https://json.nlohmann.me/api/basic_json/end_pos/index.md) - to access the end position
+- [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) - overview of the supported conversions
+- [Parsing and Exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - handling parse errors and locating them in the input
 
 ## Version history
 

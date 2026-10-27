@@ -80,3 +80,13 @@ Exceptions
 | access to valid array index       | reference to existing value is returned        | const reference to existing value is returned  |
 | access to non-existing object key | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |
 | access to invalid array index     | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |
+
+Result of [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) in each scenario, for a non-const and a const value.
+
+## See also
+
+- [Element Access](https://json.nlohmann.me/features/element_access/index.md) - overview of all ways to access elements
+- [Unchecked access: operator[]](https://json.nlohmann.me/features/element_access/unchecked_access/index.md) - access without range checking
+- [Access with default value: value](https://json.nlohmann.me/features/element_access/default_value/index.md) - fall back to a default instead of throwing
+- [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) - checked access by reference
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - access nested values with `at` and a pointer

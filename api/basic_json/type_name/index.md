@@ -4,7 +4,7 @@
 const char* type_name() const noexcept;
 ```
 
-Returns the type name as string to be used in error messages -- usually to indicate that a function was called on a wrong JSON type.
+Returns the type name as string to be used in error messages — usually to indicate that a function was called on a wrong JSON type.
 
 ## Return value
 
@@ -85,9 +85,10 @@ true is a boolean
 
 ## See also
 
-- [type](https://json.nlohmann.me/api/basic_json/type/index.md) returns the type of the JSON value
-- [value_t](https://json.nlohmann.me/api/basic_json/value_t/index.md) the enumeration of JSON types
-- [basic_json_view::type_name](https://json.nlohmann.me/api/basic_json_view/type_name/index.md) - the same function on a zero-copy view
+- [`type`](https://json.nlohmann.me/api/basic_json/type/index.md) - returns the type of the JSON value
+- [`value_t`](https://json.nlohmann.me/api/basic_json/value_t/index.md) - the enumeration of JSON types
+- [`basic_json_view::type_name`](https://json.nlohmann.me/api/basic_json_view/type_name/index.md) - the same function on a zero-copy view
+- [Types](https://json.nlohmann.me/features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

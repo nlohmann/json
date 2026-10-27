@@ -154,11 +154,12 @@ operations times the length of their paths, so a small change deep inside a valu
 
 ## See also
 
-- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
-- [patch](patch.md) applies a JSON Patch
-- [patch_inplace](patch_inplace.md) applies a JSON Patch in place
-- [merge_patch](merge_patch.md) applies a JSON Merge Patch
-- [merge_diff](merge_diff.md) creates a diff as a JSON Merge Patch
+- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902) - specification of JSON Patch
+- [`patch`](patch.md) - applies a JSON Patch
+- [`patch_inplace`](patch_inplace.md) - applies a JSON Patch in place
+- [`merge_patch`](merge_patch.md) - applies a JSON Merge Patch
+- [`merge_diff`](merge_diff.md) - creates a diff as a JSON Merge Patch
+- [JSON Patch and Diff](../../features/json_patch.md) - the article on JSON Patch
 
 ## Version history
 

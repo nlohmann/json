@@ -197,14 +197,14 @@ j_null.get_to(opt);                                     // ✅ std::nullopt
 
 `static_cast` and `get<std::optional<T>>()` are not guaranteed equivalent
 
-`operator ValueType()` (used by `static_cast` and implicit conversions) intentionally excludes `std::optional<T>` from delegating to `get<T>()`, to avoid a constructor ambiguity with `std::optional<T>`'s own converting constructor from `basic_json`. As a result, `static_cast<std::optional<T>>(json_value)` goes through `std::optional<T>`'s own converting constructor rather than through `get<std::optional<T>>()`, which can behave differently -- for example, with a custom `adl_serializer<std::optional<T>>` specialization. Prefer `get<std::optional<T>>()`/`get_to()` over `static_cast` for optional types.
+`operator ValueType()` (used by `static_cast` and implicit conversions) intentionally excludes `std::optional<T>` from delegating to `get<T>()`, to avoid a constructor ambiguity with `std::optional<T>`'s own converting constructor from `basic_json`. As a result, `static_cast<std::optional<T>>(json_value)` goes through `std::optional<T>`'s own converting constructor rather than through `get<std::optional<T>>()`, which can behave differently — for example, with a custom `adl_serializer<std::optional<T>>` specialization. Prefer `get<std::optional<T>>()`/`get_to()` over `static_cast` for optional types.
 
 Converting to a fixed-size destination does not check the array size
 
 Some destination types have a size that is fixed by their C++ type rather than by the JSON value: `std::pair<A, B>`, `std::tuple<Ts...>`, `std::array<T, N>`, C arrays `T[N]`, and `std::map`/`std::unordered_map` with a non-string key type (which is read from an array of two-element arrays). All of them read exactly as many elements as they need via [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) and **never compare the JSON array's size to that number**. The two mismatch directions therefore behave differently:
 
 - The JSON array has **too many** elements: the surplus is **silently discarded**, and no exception is thrown.
-- The JSON array has **too few** elements: `at` throws [`out_of_range.401`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range401) for the first missing index -- an out-of-range error, not a [`type_error`](https://json.nlohmann.me/home/exceptions/#type-errors), even though the cause is a shape mismatch.
+- The JSON array has **too few** elements: `at` throws [`out_of_range.401`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range401) for the first missing index — an out-of-range error, not a [`type_error`](https://json.nlohmann.me/home/exceptions/#type-errors), even though the cause is a shape mismatch.
 
 ```
 json j = {1, 2, 3, 4, 5};
@@ -220,7 +220,7 @@ If a size mismatch is an error in your application, check the size yourself befo
 
 ## Omitting a field when serializing `std::optional`
 
-By default, `to_json` for `std::optional<T>` writes either the value or `null` -- there is no built-in way to make a field disappear from the serialized object entirely when the `std::optional` is `std::nullopt`. Because a specialization of `adl_serializer<std::optional<T>>` only controls how the *value* is converted (it cannot prevent the containing object's `to_json` from inserting the key in the first place), omission has to be implemented in the *containing* type's `to_json`:
+By default, `to_json` for `std::optional<T>` writes either the value or `null` — there is no built-in way to make a field disappear from the serialized object entirely when the `std::optional` is `std::nullopt`. Because a specialization of `adl_serializer<std::optional<T>>` only controls how the *value* is converted (it cannot prevent the containing object's `to_json` from inserting the key in the first place), omission has to be implemented in the *containing* type's `to_json`:
 
 ```
 struct person {
@@ -247,7 +247,7 @@ json j = numbers;   // [1,2,3]
 
 Constructing from a C++20 range view
 
-A `json` array can also be constructed directly from a C++20 range view (`std::ranges::view`), such as the result of `std::views::filter` or `std::views::transform` -- no intermediate container is needed:
+A `json` array can also be constructed directly from a C++20 range view (`std::ranges::view`), such as the result of `std::views::filter` or `std::views::transform` — no intermediate container is needed:
 
 ```
 std::vector<int> nums{1, 2, 37, 42, 21};
@@ -265,7 +265,11 @@ The conversions above are built in for standard types. To make the same syntax w
 
 - [`get`](https://json.nlohmann.me/api/basic_json/get/index.md) - get a copy converted to a given type
 - [`get_to`](https://json.nlohmann.me/api/basic_json/get_to/index.md) - convert into an existing variable
-- [`get_ref`](https://json.nlohmann.me/api/basic_json/get_ref/index.md) / [`get_ptr`](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) - access the stored value without copying
+- [`get_ref`](https://json.nlohmann.me/api/basic_json/get_ref/index.md) - / [`get_ptr`](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) - access the stored value without copying
 - [Arbitrary types conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - support your own types
 - [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) - toggle implicit conversions
 - [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - get values out of a document or a view
+- [`adl_serializer`](https://json.nlohmann.me/api/adl_serializer/index.md) - the default serializer behind the conversions
+- [`type`](https://json.nlohmann.me/api/basic_json/type/index.md) - query the type of a value
+- [`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](https://json.nlohmann.me/api/macros/json_disable_tuple_reference_conversion/index.md) - toggle conversion to tuples of references
+- [`JSON_HAS_RANGE_VIEW_CONVERSION`](https://json.nlohmann.me/api/macros/json_has_range_view_conversion/index.md) - toggle conversion from ranges

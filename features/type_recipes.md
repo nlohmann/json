@@ -485,5 +485,10 @@ same two functions.
 ## See also
 
 - [Arbitrary type conversions](arbitrary_types.md) - the conversion mechanism and macros
-- [Why isn't my `to_json` found?](arbitrary_types.md#why-isnt-my-to_json-or-from_json-found)
+- [Why isn't my `to_json` found?](arbitrary_types.md#why-isnt-my-to_json-or-from_json-found) - troubleshoot conversion
+  functions that are not picked up
 - [Converting values](conversions.md) - `get`, implicit conversions, and `std::optional`
+- [`NLOHMANN_DEFINE_DERIVED_TYPE`](../api/macros/nlohmann_define_derived_type.md) - conversion functions for derived classes
+- [`adl_serializer`](../api/adl_serializer/index.md) - customize conversions for third-party types
+- [`get`](../api/basic_json/get.md) - convert a JSON value to a C++ type
+

@@ -71,7 +71,7 @@ Output:
 
 ## See also
 
-- [front](https://json.nlohmann.me/api/basic_json_view/front/index.md) - access the first element
+- [`front`](https://json.nlohmann.me/api/basic_json_view/front/index.md) - access the first element
 - [`BasicJsonType::back`](https://json.nlohmann.me/api/basic_json/back/index.md) - the corresponding function of `basic_json`
 
 ## Version history

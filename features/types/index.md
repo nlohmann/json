@@ -64,6 +64,8 @@ basic_json .. json_value
 basic_json .. value_t
 ```
 
+Storage of a `basic_json` value: the enumeration `value_t` holds the type, and the union `json_value` holds the value, as a pointer for objects, arrays, strings, and binary values and directly for booleans and numbers.
+
 ## Template arguments
 
 The data types to store a JSON value are derived from the template arguments passed to class `basic_json`:
@@ -280,8 +282,15 @@ Integer number values, unsigned integer number values, and floating-point number
 ## See also
 
 - [Number handling](https://json.nlohmann.me/features/types/number_handling/index.md) - how numbers are stored and converted
-- [Template parameter requirements](https://json.nlohmann.me/features/types/template_parameters/index.md)
-- [**basic_json**](https://json.nlohmann.me/api/basic_json/index.md) - the class template and its member types
-- [**type**](https://json.nlohmann.me/api/basic_json/type/index.md) and [**value_t**](https://json.nlohmann.me/api/basic_json/value_t/index.md) - query the type of a value
-- [**object_t**](https://json.nlohmann.me/api/basic_json/object_t/index.md), [**array_t**](https://json.nlohmann.me/api/basic_json/array_t/index.md), [**string_t**](https://json.nlohmann.me/api/basic_json/string_t/index.md), [**number_integer_t**](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md), [**number_float_t**](https://json.nlohmann.me/api/basic_json/number_float_t/index.md) - the underlying types
-- [Object order](https://json.nlohmann.me/features/object_order/index.md)
+- [Template parameter requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - what the template parameters of `basic_json` must provide
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) - the class template and its member types
+- [`type`](https://json.nlohmann.me/api/basic_json/type/index.md) - and [`value_t`](https://json.nlohmann.me/api/basic_json/value_t/index.md) - query the type of a value
+- [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md), [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md), [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md), [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md), [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md) - the underlying types
+- [Object order](https://json.nlohmann.me/features/object_order/index.md) - how object keys are ordered
+- [`json`](https://json.nlohmann.me/api/json/index.md) - the default JSON type
+- [`boolean_t`](https://json.nlohmann.me/api/basic_json/boolean_t/index.md) - the underlying boolean type
+- [`number_unsigned_t`](https://json.nlohmann.me/api/basic_json/number_unsigned_t/index.md) - the underlying unsigned integer type
+- [`is_primitive`](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) - and the other `is_*` functions query the type
+- [`is_structured`](https://json.nlohmann.me/api/basic_json/is_structured/index.md) - true for objects and arrays
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - convert JSON values to and from C++ types
+- [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - build JSON values

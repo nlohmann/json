@@ -112,9 +112,10 @@ number of elements with key "three": 0
 
 ## See also
 
-- [find](https://json.nlohmann.me/api/basic_json/find/index.md) find a value in an object
-- [contains](https://json.nlohmann.me/api/basic_json/contains/index.md) checks whether a key exists
-- [basic_json_view::count](https://json.nlohmann.me/api/basic_json_view/count/index.md) - the same check on a zero-copy view
+- [`find`](https://json.nlohmann.me/api/basic_json/find/index.md) - find a value in an object
+- [`contains`](https://json.nlohmann.me/api/basic_json/contains/index.md) - checks whether a key exists
+- [`basic_json_view::count`](https://json.nlohmann.me/api/basic_json_view/count/index.md) - the same check on a zero-copy view
+- [Element Access](https://json.nlohmann.me/features/element_access/#does-this-key-exist) - how to test whether a key exists
 
 ## Version history
 

@@ -75,9 +75,10 @@ Constant.
 
 ## See also
 
-- [boolean_t](boolean_t.md) the type used to store JSON booleans
-- [is_primitive](is_primitive.md) checks whether the JSON value is primitive
-- [basic_json_view::is_boolean](../basic_json_view/is_boolean.md) - the same check on a zero-copy view
+- [`boolean_t`](boolean_t.md) - the type used to store JSON booleans
+- [`is_primitive`](is_primitive.md) - checks whether the JSON value is primitive
+- [`basic_json_view::is_boolean`](../basic_json_view/is_boolean.md) - the same check on a zero-copy view
+- [Types](../../features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

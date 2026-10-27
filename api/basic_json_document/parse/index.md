@@ -19,7 +19,7 @@ static basic_json_document parse(IteratorType first, IteratorType last,
 1. Deserialize from a compatible input, borrowing or owning it depending on its value category and type (see Notes).
 1. Deserialize from a pair of input iterators.
 
-Both overloads accept the same JSON text as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md), with the same `ignore_comments`/`ignore_trailing_commas` options, but build a [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) (a flat index into the input) instead of a tree of `BasicJsonType` values. They accept every input `BasicJsonType::parse()` takes, and in addition a pointer to a null-terminated wide string (which `BasicJsonType::parse()` rejects). Contiguous inputs of single-byte characters that stay alive can be borrowed; all others (streams, `FILE*`, wide characters, which must be converted to UTF-8, and non-contiguous iterators) are read into a copy that the document owns -- see the Notes. Use [`parse_copy()`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) to get an owned copy of a borrowable input as well.
+Both overloads accept the same JSON text as [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md), with the same `ignore_comments`/`ignore_trailing_commas` options, but build a [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) (a flat index into the input) instead of a tree of `BasicJsonType` values. They accept every input `BasicJsonType::parse()` takes, and in addition a pointer to a null-terminated wide string (which `BasicJsonType::parse()` rejects). Contiguous inputs of single-byte characters that stay alive can be borrowed; all others (streams, `FILE*`, wide characters, which must be converted to UTF-8, and non-contiguous iterators) are read into a copy that the document owns — see the Notes. Use [`parse_copy()`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) to get an owned copy of a borrowable input as well.
 
 ## Template parameters
 
@@ -62,7 +62,7 @@ The parsed document. If `allow_exceptions` is `false` and the input is not valid
 
 ## Exceptions
 
-Throws the same exception [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) throws for the same input and options -- the same exception id, message, and position -- because on a failing input the library's own parser is run on the same bytes to produce the diagnostic. This replay runs only for a failing input, and costs about a lexing pass up to the error (its SAX handler builds no values); with `allow_exceptions` set to `false`, it is skipped and a discarded document is returned instead. Additionally throws [`out_of_range.416`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range416) if the input is 4294967280 bytes (4 GiB minus 16 bytes) or larger, a size [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) does not reject.
+Throws the same exception [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) throws for the same input and options — the same exception id, message, and position — because on a failing input the library's own parser is run on the same bytes to produce the diagnostic. This replay runs only for a failing input, and costs about a lexing pass up to the error (its SAX handler builds no values); with `allow_exceptions` set to `false`, it is skipped and a discarded document is returned instead. Additionally throws [`out_of_range.416`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range416) if the input is 4294967280 bytes (4 GiB minus 16 bytes) or larger, a size [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) does not reject.
 
 ## Complexity
 
@@ -74,7 +74,7 @@ Linear in the length of the input.
 
 | `input`                                                                                                        | ownership                                                   |
 | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| lvalue byte container (`std::string`, `std::vector<char>`, ...), `std::string_view`, C string, character array | **borrowed** -- `input` must outlive the document           |
+| lvalue byte container (`std::string`, `std::vector<char>`, ...), `std::string_view`, C string, character array | **borrowed** — `input` must outlive the document            |
 | non-const rvalue `std::string`                                                                                 | **owned**, moved in without a copy                          |
 | other rvalue byte container (including a `const` rvalue `std::string`)                                         | **owned**, copied                                           |
 | stream, `FILE*`, wide characters, or anything else read through the general input adapter                      | **owned**, read into a buffer (a stream is read to its end) |
@@ -85,7 +85,7 @@ See [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source
 
 **Numbers.** As for [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md), an integer literal too large for the 64-bit integer type becomes a floating-point value.
 
-**No lengths.** An integer argument that is not a `bool` where the flags are expected -- for example `parse(ptr, len)` -- does not compile (the overload is deleted). Such a call would convert `len` to `allow_exceptions` and read `ptr` as a null-terminated string, past the end of a buffer that has none. To parse a buffer of a given length, pass a pair of pointers: `parse(ptr, ptr + len)`. The same holds for [`parse_copy`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md), [`accept`](https://json.nlohmann.me/api/basic_json_document/accept/index.md), and [`read`](https://json.nlohmann.me/api/basic_json_document/read/index.md).
+**No lengths.** An integer argument that is not a `bool` where the flags are expected — for example `parse(ptr, len)` — does not compile (the overload is deleted). Such a call would convert `len` to `allow_exceptions` and read `ptr` as a null-terminated string, past the end of a buffer that has none. To parse a buffer of a given length, pass a pair of pointers: `parse(ptr, ptr + len)`. The same holds for [`parse_copy`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md), [`accept`](https://json.nlohmann.me/api/basic_json_document/accept/index.md), and [`read`](https://json.nlohmann.me/api/basic_json_document/read/index.md).
 
 ## Examples
 
@@ -171,11 +171,11 @@ false
 
 ## See also
 
-- [parse_copy](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) - deserialize a copy of a compatible input
-- [accept](https://json.nlohmann.me/api/basic_json_document/accept/index.md) - check whether the input is valid JSON
-- [read](https://json.nlohmann.me/api/basic_json_document/read/index.md) - (re-)parse into this document, reusing its memory
-- [owns_source](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) - return whether the document holds its own copy of the text
-- [load](https://json.nlohmann.me/api/basic_json_document/load/index.md) - read a document from an image instead of parsing JSON text
+- [`parse_copy`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) - deserialize a copy of a compatible input
+- [`accept`](https://json.nlohmann.me/api/basic_json_document/accept/index.md) - check whether the input is valid JSON
+- [`read`](https://json.nlohmann.me/api/basic_json_document/read/index.md) - (re-)parse into this document, reusing its memory
+- [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) - return whether the document holds its own copy of the text
+- [`load`](https://json.nlohmann.me/api/basic_json_document/load/index.md) - read a document from an image instead of parsing JSON text
 - [`BasicJsonType::parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - the corresponding function of `basic_json`
 
 ## Version history

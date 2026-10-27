@@ -68,8 +68,9 @@ Output:
 
 ## See also
 
-- [json_pointer](https://json.nlohmann.me/api/json_pointer/index.md) - type to represent JSON Pointers
-- [JSON_NO_AUTOMATIC_UDLS](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) - do not include the user-defined string literals automatically
+- [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) - type to represent JSON Pointers
+- [`JSON_NO_AUTOMATIC_UDLS`](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) - do not include the user-defined string literals automatically
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - the article on JSON Pointer support
 
 ## Version history
 

@@ -169,9 +169,9 @@ string with ignored invalid characters: "äü"
 
 ## See also
 
-- [to_string](https://json.nlohmann.me/api/basic_json/to_string/index.md) returns a string representation of a JSON value
-- [operator\<<](https://json.nlohmann.me/api/operator_ltlt/index.md) serialize to stream
-- [`basic_json_view::dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) the corresponding function of `basic_json_view`, serializing directly from a flat index without building a `basic_json` value
+- [`to_string`](https://json.nlohmann.me/api/basic_json/to_string/index.md) - returns a string representation of a JSON value
+- [`operator<<`](https://json.nlohmann.me/api/operator_ltlt/index.md) - serialize to stream
+- [`basic_json_view::dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - the corresponding function of `basic_json_view`, serializing directly from a flat index without building a `basic_json` value
 - [Serialization](https://json.nlohmann.me/features/serialization/index.md) - the serialization article
 
 ## Version history

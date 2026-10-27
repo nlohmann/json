@@ -7,6 +7,8 @@ const_iterator end() const noexcept;
 
 Returns an iterator to one past the last element.
 
+`end()` points to the position after the last element and `begin()` to the first element; the dashed cell is the past-the-last position, which must not be dereferenced.
+
 ## Return value
 
 iterator one past the last element
@@ -55,11 +57,11 @@ Output:
 
 ## See also
 
-- [begin](https://json.nlohmann.me/api/basic_json/begin/index.md) returns an iterator to the first element
-- [cend](https://json.nlohmann.me/api/basic_json/cend/index.md) returns a const iterator to one past the last element
-- [rend](https://json.nlohmann.me/api/basic_json/rend/index.md) returns a reverse iterator to one before the first element
+- [`begin`](https://json.nlohmann.me/api/basic_json/begin/index.md) - returns an iterator to the first element
+- [`cend`](https://json.nlohmann.me/api/basic_json/cend/index.md) - returns a const iterator to one past the last element
+- [`rend`](https://json.nlohmann.me/api/basic_json/rend/index.md) - returns a reverse iterator to one before the first element
 - [Iterators](https://json.nlohmann.me/features/iterators/index.md) - the article on iterators
-- [basic_json_view::end](https://json.nlohmann.me/api/basic_json_view/end/index.md) - the same iteration on a zero-copy view
+- [`basic_json_view::end`](https://json.nlohmann.me/api/basic_json_view/end/index.md) - the same iteration on a zero-copy view
 
 ## Version history
 

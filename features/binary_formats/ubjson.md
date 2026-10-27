@@ -313,3 +313,12 @@ The library maps UBJSON types to JSON value types as follows:
     }
     
     ```
+
+## See also
+
+- [Binary formats](index.md) - overview and comparison of the supported binary formats
+- [Binary values](../binary_values.md) - how binary values and subtypes map to UBJSON
+- [`to_ubjson`](../../api/basic_json/to_ubjson.md) - serialize a JSON value to UBJSON
+- [`from_ubjson`](../../api/basic_json/from_ubjson.md) - parse a JSON value from UBJSON
+- [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) - reject ill-formed UTF-8 in strings
+- [SAX interface](../parsing/sax_interface.md) - decode binary formats without building a value

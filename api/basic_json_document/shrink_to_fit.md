@@ -100,9 +100,10 @@ possible would be an internal optimization only, not a guarantee to rely on.
 
 ## See also
 
-- [node_count](node_count.md) - the number of index entries
-- [memory_usage](memory_usage.md) - the number of bytes held by the document
-- [root](root.md) - the view of the root value
+- [`node_count`](node_count.md) - the number of index entries
+- [`memory_usage`](memory_usage.md) - the number of bytes held by the document
+- [`root`](root.md) - the view of the root value
+- [Zero-copy JSON views](../../features/json_view.md#ownership-and-lifetime) - what releasing memory invalidates
 
 ## Version history
 

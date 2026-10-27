@@ -6,7 +6,7 @@ iterator find(const char* key) const;
 iterator find(const string_t& key) const;
 ```
 
-Finds a member with key `key` -- the first one, should the key occur more than once (see [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes)). If the value is not an object, or no member has this key, [`end()`](https://json.nlohmann.me/api/basic_json_view/end/index.md) is returned.
+Finds a member with key `key` — the first one, should the key occur more than once (see [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes)). If the value is not an object, or no member has this key, [`end()`](https://json.nlohmann.me/api/basic_json_view/end/index.md) is returned.
 
 ## Parameters
 
@@ -22,7 +22,7 @@ No-throw guarantee: this function never throws exceptions.
 
 ## Complexity
 
-Linear in the number of members: as for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), members are compared one after another, in document order, stopping at the first match. Each comparison first checks the key's length -- already known from the index, without reading the key bytes -- before comparing its content. Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
+Linear in the number of members: as for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), members are compared one after another, in document order, stopping at the first match. Each comparison first checks the key's length — already known from the index, without reading the key bytes — before comparing its content. Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
 
 ## Notes
 
@@ -30,7 +30,7 @@ Duplicate keys: the first member wins
 
 If the source text repeats a key, this resolves to the *first* member with it, not to the last one that [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) and `parse()` keep. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]` and [Duplicate keys](https://json.nlohmann.me/features/json_view/#duplicate-keys) for the reasons and for how to get the last value.
 
-Unlike [`BasicJsonType::find`](https://json.nlohmann.me/api/basic_json/find/index.md), which always returns `end()` for a non-object type, this also does so for a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view -- there is no separate "invalid" iterator to return.
+Unlike [`BasicJsonType::find`](https://json.nlohmann.me/api/basic_json/find/index.md), which always returns `end()` for a non-object type, this also does so for a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view — there is no separate "invalid" iterator to return.
 
 ## Examples
 
@@ -79,8 +79,8 @@ user 7
 
 ## See also
 
-- [count](https://json.nlohmann.me/api/basic_json_view/count/index.md) - returns the number of occurrences of a key
-- [contains](https://json.nlohmann.me/api/basic_json_view/contains/index.md) - checks whether a key exists
+- [`count`](https://json.nlohmann.me/api/basic_json_view/count/index.md) - returns the number of occurrences of a key
+- [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md) - checks whether a key exists
 - [`BasicJsonType::find`](https://json.nlohmann.me/api/basic_json/find/index.md) - the corresponding function of `basic_json`
 
 ## Version history

@@ -115,12 +115,14 @@ Output:
 
 ## See also
 
-- [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) create a JSON value from an input in BON8 format
-- [to_cbor](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) create a CBOR serialization of a JSON value
-- [to_msgpack](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) create a MessagePack serialization of a JSON value
-- [to_bson](https://json.nlohmann.me/api/basic_json/to_bson/index.md) create a BSON serialization of a JSON value
-- [to_ubjson](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) create a UBJSON serialization of a JSON value
-- [to_bjdata](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) create a BJData serialization of a JSON value
+- [BON8](https://json.nlohmann.me/features/binary_formats/bon8/index.md) - the format, its byte layout and how values are mapped
+- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [`from_bon8`](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) - create a JSON value from an input in BON8 format
+- [`to_cbor`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) - create a CBOR serialization of a JSON value
+- [`to_msgpack`](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) - create a MessagePack serialization of a JSON value
+- [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) - create a BSON serialization of a JSON value
+- [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) - create a UBJSON serialization of a JSON value
+- [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) - create a BJData serialization of a JSON value
 
 ## Version history
 

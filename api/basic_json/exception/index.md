@@ -38,6 +38,8 @@ classDiagram
     style json_exception fill:#CCCCFF
 ```
 
+Class hierarchy of the library's exceptions; arrows point from a derived class to its base class, and the highlighted box is `basic_json::exception`.
+
 Subclasses:
 
 - [`parse_error`](https://json.nlohmann.me/api/basic_json/parse_error/index.md) for exceptions indicating a parse error
@@ -96,7 +98,11 @@ exception id: 403
 
 ## See also
 
-[List of exceptions](https://json.nlohmann.me/home/exceptions/index.md)
+- [List of exceptions](https://json.nlohmann.me/home/exceptions/index.md) - overview of all exceptions thrown by the library
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - using the library without exceptions
+- [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) - extended exception messages with the path of the failing value
+- [Parsing and Exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - parsing alternatives that do not throw
+- [Debugging](https://json.nlohmann.me/home/debugging/index.md) - debugging aids
 
 ## Version history
 

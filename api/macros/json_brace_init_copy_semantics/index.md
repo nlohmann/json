@@ -98,8 +98,9 @@ int main()
 
 ## See also
 
-- [FAQ: Brace initialization yields arrays](https://json.nlohmann.me/home/faq/#brace-initialization-yields-arrays)
-- [**basic_json(initializer_list_t)**](https://json.nlohmann.me/api/basic_json/basic_json/index.md) - the affected constructor
+- [FAQ: Brace initialization yields arrays](https://json.nlohmann.me/home/faq/#brace-initialization-yields-arrays) - why brace initialization may create arrays
+- [`basic_json(initializer_list_t)`](https://json.nlohmann.me/api/basic_json/basic_json/index.md) - the affected constructor
+- [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - initializer lists and braces
 
 ## Version history
 

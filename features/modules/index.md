@@ -4,6 +4,8 @@ This library has experimental support for C++ modules, introduced in C++20. The 
 
 Please be aware that the module is experimental and a full test is outstanding, and the exported symbols are subject to change.
 
+Importing the module instead of including the header reduces the compile time of every translation unit that uses the library, at the price of building the module once. The [Compile times](https://json.nlohmann.me/integration/compile_times/#use-c20-modules) page has measurements and the one-off cost.
+
 ## Requirements
 
 The `nlohmann.json` module requires that the build system is configured to build and resolve modules when imported. Obviously, as modules were introduced in C++20, this feature can only be used in C++20 and subsequent versions.
@@ -67,3 +69,12 @@ Known compiler issues
 - **MSVC** could fail with `C2039: 'json_sax_dom_callback_parser' is not a member of ... detail`; fixed by exporting the required internal symbols from `json.cppm` (see [Exported symbols](#exported-symbols) above). ([issue #3970](https://github.com/nlohmann/json/issues/3970))
 
 If you hit a different module-related build failure, search [existing issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+modules) before filing a new one.
+
+## See also
+
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - macros are not exported by modules
+- [Macros](https://json.nlohmann.me/api/macros/index.md) - reference of all macros
+- [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/index.md) - the library namespace
+- [CMake](https://json.nlohmann.me/integration/cmake/index.md) - enable the module build in CMake
+- [Compile times](https://json.nlohmann.me/integration/compile_times/index.md) - reduce compile times
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) - the main class and all its member functions

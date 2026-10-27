@@ -52,11 +52,15 @@ See [binary values](https://json.nlohmann.me/features/binary_values/index.md) fo
 | UBJSON (size)      | 58.6 %      | 92.3 %       | 86.8 %            | 97.4 %        |
 | UBJSON (size+type) | 55.9 %      | 92.3 %       | 85.0 %            | 95.0 %        |
 
-Sizes compared to minified JSON value; the smallest size per file is printed in bold.
+Size of each test file in each format, in percent of the minified JSON value; the smallest size per file is printed in bold. The (size) and (size+type) rows are written with the `use_size` and `use_type` options of [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) and [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md).
+
+The table above as charts: size per base format relative to minified JSON (vertical line at 100 %); the smallest format per file is drawn in a stronger colour than the others. The size and size+type variants of BJData and UBJSON are omitted here; see the table.
 
 ## See also
 
+- [`cbor_tag_handler_t`](https://json.nlohmann.me/api/basic_json/cbor_tag_handler_t/index.md) - how CBOR tags are handled when parsing
+- [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) - reject ill-formed UTF-8 in strings
 - [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - binary values and subtypes
-- [**to_cbor**](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) / [**from_cbor**](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [**to_msgpack**](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) / [**from_msgpack**](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), [**to_bson**](https://json.nlohmann.me/api/basic_json/to_bson/index.md) / [**from_bson**](https://json.nlohmann.me/api/basic_json/from_bson/index.md), [**to_ubjson**](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) / [**from_ubjson**](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md), [**to_bjdata**](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) / [**from_bjdata**](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md), [**to_bon8**](https://json.nlohmann.me/api/basic_json/to_bon8/index.md) / [**from_bon8**](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) - the conversion functions
-- [Parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md)
+- [`to_cbor`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) - / [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`to_msgpack`](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) / [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) / [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md), [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) / [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md), [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) / [`from_bjdata`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md), [`to_bon8`](https://json.nlohmann.me/api/basic_json/to_bon8/index.md) / [`from_bon8`](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) - the conversion functions
+- [Parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - harden an application that parses untrusted binary data
 - [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - decode binary formats without building a value

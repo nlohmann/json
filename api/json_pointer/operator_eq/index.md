@@ -156,8 +156,8 @@ Output:
 
 ## See also
 
-- [operator!=](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md) compare for inequality
-- [operator\<=>](https://json.nlohmann.me/api/json_pointer/operator_spaceship/index.md) comparison: 3-way (C++20)
+- [`operator!=`](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md) - compare for inequality
+- [`operator<=>`](https://json.nlohmann.me/api/json_pointer/operator_spaceship/index.md) - comparison: 3-way (C++20)
 
 ## Version history
 

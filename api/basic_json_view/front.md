@@ -79,7 +79,7 @@ view.
 
 ## See also
 
-- [back](back.md) - access the last element
+- [`back`](back.md) - access the last element
 - [`BasicJsonType::front`](../basic_json/front.md) - the corresponding function of `basic_json`
 
 ## Version history

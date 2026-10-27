@@ -249,9 +249,9 @@ binary = {"bytes":[1,2,3],"subtype":null}
 
 ## See also
 
-- [std::swap\<basic_json>](https://json.nlohmann.me/api/basic_json/std_swap/index.md)
-- [operator=](https://json.nlohmann.me/api/basic_json/operator%3D/index.md) copy assignment
-- [basic_json](https://json.nlohmann.me/api/basic_json/basic_json/index.md) create a JSON value
+- [`std::swap<basic_json\>`](https://json.nlohmann.me/api/basic_json/std_swap/index.md) - specialization of `std::swap` for JSON values
+- [`operator=`](https://json.nlohmann.me/api/basic_json/operator%3D/index.md) - copy assignment
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/basic_json/index.md) - create a JSON value
 
 ## Version history
 

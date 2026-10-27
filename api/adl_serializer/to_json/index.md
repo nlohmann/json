@@ -64,7 +64,9 @@ Output:
 
 ## See also
 
-- [from_json](https://json.nlohmann.me/api/adl_serializer/from_json/index.md)
+- [`from_json`](https://json.nlohmann.me/api/adl_serializer/from_json/index.md) - convert JSON to a C++ value
+- [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - write your own `from_json` and `to_json` functions
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - overview of `get`, `get_to` and implicit conversions
 
 ## Version history
 

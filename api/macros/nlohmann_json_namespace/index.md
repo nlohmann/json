@@ -43,8 +43,10 @@ nlohmann::json_abi_v3_12_0
 
 ## See also
 
-- [`NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace_begin/index.md)
-- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace_no_version/index.md)
+- [`NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace_begin/index.md) - macros to open and close the library namespace
+- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace_no_version/index.md) - disable the inline versioned namespace
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/index.md) - the library namespace
 
 ## Version history
 

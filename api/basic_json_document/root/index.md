@@ -34,7 +34,7 @@ auto doc = json_document::parse(text);       // OK: keep the document alive
 auto v = doc.root();
 ```
 
-`root()` is a cheap handle into the document's index, not a copy of anything; call it as often as needed. The returned view is valid under the same conditions as any other view of the document -- see [Object inspection](https://json.nlohmann.me/api/basic_json_view/index.md) -- in particular, it is invalidated by the next [`read()`](https://json.nlohmann.me/api/basic_json_document/read/index.md) or [`shrink_to_fit()`](https://json.nlohmann.me/api/basic_json_document/shrink_to_fit/index.md) on this document. A view can dangle, like a `std::string_view`; see [Ownership and lifetime](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime).
+`root()` is a cheap handle into the document's index, not a copy of anything; call it as often as needed. The returned view is valid under the same conditions as any other view of the document — see [Object inspection](https://json.nlohmann.me/api/basic_json_view/index.md) — in particular, it is invalidated by the next [`read()`](https://json.nlohmann.me/api/basic_json_document/read/index.md) or [`shrink_to_fit()`](https://json.nlohmann.me/api/basic_json_document/shrink_to_fit/index.md) on this document. A view can dangle, like a `std::string_view`; see [Ownership and lifetime](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime).
 
 ## Examples
 
@@ -72,8 +72,8 @@ true
 
 ## See also
 
-- [is_discarded](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) - return whether the last parse failed
-- [materialize](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build the `BasicJsonType` value of a subtree
+- [`is_discarded`](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) - return whether the last parse failed
+- [`materialize`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build the `BasicJsonType` value of a subtree
 
 ## Version history
 

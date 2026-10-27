@@ -72,11 +72,13 @@ int main()
 
 ## See also
 
-- [**to_cbor**](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) - create a CBOR serialization of a JSON value
-- [**to_ubjson**](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) - create a UBJSON serialization of a JSON value
-- [**to_bjdata**](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) - create a BJData serialization of a JSON value
-- [**to_bson**](https://json.nlohmann.me/api/basic_json/to_bson/index.md) - create a BSON serialization of a JSON value
-- [**error_handler_t**](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md) - how [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) treats ill-formed UTF-8
+- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - overview of the supported binary formats
+- [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) - also affected when parsing CBOR strings
+- [`to_cbor`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) - create a CBOR serialization of a JSON value
+- [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) - create a UBJSON serialization of a JSON value
+- [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) - create a BJData serialization of a JSON value
+- [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) - create a BSON serialization of a JSON value
+- [`error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md) - how [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) treats ill-formed UTF-8
 
 ## Version history
 

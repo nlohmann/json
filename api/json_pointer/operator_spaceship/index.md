@@ -89,8 +89,8 @@ Output:
 
 ## See also
 
-- [operator==](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) compare: equal
-- [operator!=](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md) compare: not equal
+- [`operator==`](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) - compare: equal
+- [`operator!=`](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md) - compare: not equal
 
 ## Version history
 

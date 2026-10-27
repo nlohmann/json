@@ -70,7 +70,7 @@ Output:
 
 ## See also
 
-- [back](https://json.nlohmann.me/api/basic_json_view/back/index.md) - access the last element
+- [`back`](https://json.nlohmann.me/api/basic_json_view/back/index.md) - access the last element
 - [`BasicJsonType::front`](https://json.nlohmann.me/api/basic_json/front/index.md) - the corresponding function of `basic_json`
 
 ## Version history

@@ -57,8 +57,11 @@ type: binary, subtype: 42
 
 ## See also
 
-- [get](https://json.nlohmann.me/api/basic_json/get/index.md) get a value (explicit conversion)
-- [get_ref](https://json.nlohmann.me/api/basic_json/get_ref/index.md) get a reference to the stored value
+- [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
+- [`binary`](https://json.nlohmann.me/api/basic_json/binary/index.md) - create a binary value
+- [`is_binary`](https://json.nlohmann.me/api/basic_json/is_binary/index.md) - check whether a value is binary
+- [`get`](https://json.nlohmann.me/api/basic_json/get/index.md) - get a value (explicit conversion)
+- [`get_ref`](https://json.nlohmann.me/api/basic_json/get_ref/index.md) - get a reference to the stored value
 
 ## Version history
 

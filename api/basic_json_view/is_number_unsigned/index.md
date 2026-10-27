@@ -89,7 +89,7 @@ true
 
 ## See also
 
-- [is_number_integer](https://json.nlohmann.me/api/basic_json_view/is_number_integer/index.md) - return whether the value is an integer or unsigned integer number
+- [`is_number_integer`](https://json.nlohmann.me/api/basic_json_view/is_number_integer/index.md) - return whether the value is an integer or unsigned integer number
 - [`BasicJsonType::is_number_unsigned`](https://json.nlohmann.me/api/basic_json/is_number_unsigned/index.md) - the corresponding function of `basic_json`
 
 ## Version history

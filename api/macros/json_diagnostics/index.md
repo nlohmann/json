@@ -148,7 +148,11 @@ The output shows the exception with start/end positions only.
 ## See also
 
 - [JSON_Diagnostics](https://json.nlohmann.me/integration/cmake/#json_diagnostics) - CMake option to control the macro
-- [JSON_DIAGNOSTIC_POSITIONS](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) - macro to access positions of elements
+- [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) - macro to access positions of elements
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [Exceptions: extended diagnostic messages](https://json.nlohmann.me/home/exceptions/#extended-diagnostic-messages) - how extended diagnostics change the messages
+- [Debugging](https://json.nlohmann.me/home/debugging/index.md) - debugging aids
+- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) - base class of all exceptions thrown by the library
 
 ## Version history
 

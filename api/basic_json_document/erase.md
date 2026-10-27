@@ -54,7 +54,7 @@ has `erase`; calling it on a read-only `basic_json_document` fails to compile (`
 
 ## Exceptions
 
-1. Throws [`type_error.307`](../../home/exceptions.md#jsonexceptiontype_error307) if `object` is not an object -- the
+1. Throws [`type_error.307`](../../home/exceptions.md#jsonexceptiontype_error307) if `object` is not an object — the
    same message [`BasicJsonType::erase`](../basic_json/erase.md) throws for the same type.
 2. Throws `type_error.307` if `array` is not an array. Throws
    [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if `idx` is negative, or if
@@ -86,12 +86,12 @@ always starts from this document's own [`root()`](root.md).
 
 !!! info "Duplicate keys"
 
-    Overload 1. removes *every* member with `key`, not just the first -- unlike [`set`](set.md), which assigns the
+    Overload 1. removes *every* member with `key`, not just the first — unlike [`set`](set.md), which assigns the
     first occurrence and drops the rest. This is why it returns a count rather than a single view: there may be
     more than one member removed, or none.
 
 Like [`set`](set.md) and [`push_back`](push_back.md), `erase` never moves an element's *value*: a view still
-referring to a removed member or element keeps showing what it last held (see [Edits](index.md#edits)) -- it just no
+referring to a removed member or element keeps showing what it last held (see [Edits](index.md#edits)) — it just no
 longer appears when `array`/`object` is read, dumped, or iterated. What does change is the container's sequence of
 *links* to its elements: removing an element of `array` (2.) shifts the links to the elements after it by one, as
 [`insert`](insert.md) does in the other direction. *Every* iterator already taken over `array`/`object` is invalidated
@@ -101,8 +101,8 @@ by an erase, not only those at or after the removed element, since the container
 
 ??? example
 
-    The example below drops a deprecated field and a decommissioned entry from a configuration document -- using all
-    three overloads -- and shows what stays intact that would not with a plain `json`/`ordered_json` value: the order
+    The example below drops a deprecated field and a decommissioned entry from a configuration document — using all
+    three overloads — and shows what stays intact that would not with a plain `json`/`ordered_json` value: the order
     of the fields around the ones removed, and the exact spelling of a number that was never touched.
 
     ```cpp
@@ -173,12 +173,13 @@ by an erase, not only those at or after the removed element, since the container
 
 ## See also
 
-- [insert](insert.md) - insert an element into an array
-- [set](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
-- [push_back](push_back.md) - append to an array
-- [root](root.md) - the view of the root value, the starting point of overload 3
+- [`insert`](insert.md) - insert an element into an array
+- [`set`](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
+- [`push_back`](push_back.md) - append to an array
+- [`root`](root.md) - the view of the root value, the starting point of overload 3
 - [`BasicJsonType::erase`](../basic_json/erase.md) - the corresponding function of `basic_json`
 - [Edits](index.md#edits) - what an edit guarantees, for every overload
+- [Zero-copy JSON views](../../features/json_view.md#editing-a-document) - what an edit guarantees and costs
 
 ## Version history
 

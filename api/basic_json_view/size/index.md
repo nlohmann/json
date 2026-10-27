@@ -30,9 +30,9 @@ Constant: for an object or array, the element count is stored in the index, not 
 
 ## Notes
 
-As for [`BasicJsonType::size()`](https://json.nlohmann.me/api/basic_json/size/index.md), this does not return the length of a string value -- it is `1` for a string, regardless of its length.
+As for [`BasicJsonType::size()`](https://json.nlohmann.me/api/basic_json/size/index.md), this does not return the length of a string value — it is `1` for a string, regardless of its length.
 
-If the source text has an object with a duplicate key, every occurrence counts towards its `size()` -- unlike [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) (and [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md)), which keeps only the last value for a repeated key. This means `v.size()` can be larger than `v.materialize().size()`. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]` for why lookups and iteration disagree on how many members there are.
+If the source text has an object with a duplicate key, every occurrence counts towards its `size()` — unlike [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) (and [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md)), which keeps only the last value for a repeated key. This means `v.size()` can be larger than `v.materialize().size()`. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]` for why lookups and iteration disagree on how many members there are.
 
 ## Examples
 
@@ -75,7 +75,7 @@ true 0
 
 ## See also
 
-- [empty](https://json.nlohmann.me/api/basic_json_view/empty/index.md) - return whether the value has no elements
+- [`empty`](https://json.nlohmann.me/api/basic_json_view/empty/index.md) - return whether the value has no elements
 - [`BasicJsonType::size`](https://json.nlohmann.me/api/basic_json/size/index.md) - the corresponding function of `basic_json`
 
 ## Version history

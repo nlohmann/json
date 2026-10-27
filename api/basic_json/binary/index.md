@@ -72,10 +72,11 @@ type: binary, subtype: 42
 
 ## See also
 
-- [binary_t](https://json.nlohmann.me/api/basic_json/binary_t/index.md) type for binary values
-- [get_binary](https://json.nlohmann.me/api/basic_json/get_binary/index.md) get a reference to the stored binary value
-- [is_binary](https://json.nlohmann.me/api/basic_json/is_binary/index.md) return whether the value is binary
-- [byte_container_with_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/index.md) container for binary values with subtype
+- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - formats that can store binary values
+- [`binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md) - type for binary values
+- [`get_binary`](https://json.nlohmann.me/api/basic_json/get_binary/index.md) - get a reference to the stored binary value
+- [`is_binary`](https://json.nlohmann.me/api/basic_json/is_binary/index.md) - return whether the value is binary
+- [`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md) - container for binary values with subtype
 - [Binary Values](https://json.nlohmann.me/features/binary_values/index.md) - the article on binary values
 
 ## Version history

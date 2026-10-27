@@ -12,7 +12,7 @@ T value(const json_pointer& ptr, const T& default_value) const;
 string_t value(const json_pointer& ptr, const char* default_value) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes)) -- converted to `T`, or `default_value` if there is no such member.
+1. Returns the value of the object member with key `key` — the first one, should the key occur more than once (see [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes)) — converted to `T`, or `default_value` if there is no such member.
 1. Returns the value a JSON pointer `ptr` refers to, starting at this value, converted to `T`, or `default_value` if `ptr` cannot be resolved.
 
 Both overloads have a dedicated `const char*` overload, so `v.value(key, "default")` (and the JSON pointer equivalent) deduce `string_t`, not `const char*`, for their return type and for the comparison used to pick between `key` and `default_value`.
@@ -40,15 +40,15 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 
 ## Exceptions
 
-1. Throws [`type_error.306`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error306) if the value is not an object -- the same exception, with the same message, that [`BasicJsonType::value`](https://json.nlohmann.me/api/basic_json/value/index.md) throws for the same call. If a member with key `key` is found, throws whatever converting it to `T` throws (typically [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302), with the same message [`BasicJsonType::value`](https://json.nlohmann.me/api/basic_json/value/index.md) throws for the same mismatch); a missing member never throws.
-1. Throws [`type_error.306`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error306) if this value -- not the value `ptr` resolves to -- is neither an object nor an array. Throws [`parse_error.106`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error106) or [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) if `ptr` contains a malformed array index. If `ptr` resolves to a value, throws whatever converting it to `T` throws. Every other way `ptr` can fail to resolve -- a missing key, an out-of-range or "`-`" array index, an unresolvable token on a primitive -- yields `default_value` instead of throwing, exactly as [`BasicJsonType::value`](https://json.nlohmann.me/api/basic_json/value/index.md) catches `out_of_range` and returns `default_value`.
+1. Throws [`type_error.306`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error306) if the value is not an object — the same exception, with the same message, that [`BasicJsonType::value`](https://json.nlohmann.me/api/basic_json/value/index.md) throws for the same call. If a member with key `key` is found, throws whatever converting it to `T` throws (typically [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302), with the same message [`BasicJsonType::value`](https://json.nlohmann.me/api/basic_json/value/index.md) throws for the same mismatch); a missing member never throws.
+1. Throws [`type_error.306`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error306) if this value — not the value `ptr` resolves to — is neither an object nor an array. Throws [`parse_error.106`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error106) or [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) if `ptr` contains a malformed array index. If `ptr` resolves to a value, throws whatever converting it to `T` throws. Every other way `ptr` can fail to resolve — a missing key, an out-of-range or "`-`" array index, an unresolvable token on a primitive — yields `default_value` instead of throwing, exactly as [`BasicJsonType::value`](https://json.nlohmann.me/api/basic_json/value/index.md) catches `out_of_range` and returns `default_value`.
 
 None of these exceptions carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) path: the view has no `BasicJsonType` value to point at, so the exception is created without one, even if `BasicJsonType` was built with `JSON_DIAGNOSTICS` enabled.
 
 ## Complexity
 
 1. Linear in the number of members: as for [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#complexity), members are compared one after another, in document order, stopping at the first match. Plus the complexity of converting the found member to `T` (see [`get`](https://json.nlohmann.me/api/basic_json_view/get/index.md)). Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
-1. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at that level or the index into the array -- as for the [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#complexity) and [`at`](https://json.nlohmann.me/api/basic_json_view/at/#complexity) overloads that take a JSON pointer. Plus the complexity of converting the resolved value to `T`.
+1. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at that level or the index into the array — as for the [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#complexity) and [`at`](https://json.nlohmann.me/api/basic_json_view/at/#complexity) overloads that take a JSON pointer. Plus the complexity of converting the resolved value to `T`.
 
 ## Notes
 
@@ -58,7 +58,7 @@ If the source text repeats a key, this resolves to the *first* member with it, n
 
 Differences to `at` and `operator[]`
 
-Unlike [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md), this function does not throw if `key`/`ptr` resolves to no value. Unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), it never returns a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view -- it always returns a `T` -- and it is available on any view, since it never needs to insert a missing element the way the non-const `BasicJsonType::operator[]` would.
+Unlike [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md), this function does not throw if `key`/`ptr` resolves to no value. Unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), it never returns a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view — it always returns a `T` — and it is available on any view, since it never needs to insert a missing element the way the non-const `BasicJsonType::operator[]` would.
 
 Which values can be asked
 
@@ -148,8 +148,8 @@ none
 
 ## See also
 
-- [at](https://json.nlohmann.me/api/basic_json_view/at/index.md) - access specified element with bounds checking (throws instead of returning a default value)
-- [operator[]](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - access specified element (returns a discarded view instead of a default value)
+- [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md) - access specified element with bounds checking (throws instead of returning a default value)
+- [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - access specified element (returns a discarded view instead of a default value)
 - [`BasicJsonType::value`](https://json.nlohmann.me/api/basic_json/value/index.md) - the corresponding function of `basic_json`
 
 ## Version history

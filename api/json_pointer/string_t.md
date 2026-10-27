@@ -40,8 +40,8 @@ See [`basic_json::string_t`](../basic_json/string_t.md) for more information.
 
 ## See also
 
-- [basic_json::string_t](../basic_json/string_t.md) type used to store JSON strings
-- [to_string](to_string.md) return a string representation of the JSON pointer
+- [`basic_json::string_t`](../basic_json/string_t.md) - type used to store JSON strings
+- [`to_string`](to_string.md) - return a string representation of the JSON pointer
 
 ## Version history
 

@@ -152,4 +152,8 @@ Output:
 
 ## See also
 
-- [JSON_ASSERT](https://json.nlohmann.me/api/macros/json_assert/index.md) - control behavior of runtime assertions
+- [`JSON_ASSERT`](https://json.nlohmann.me/api/macros/json_assert/index.md) - control behavior of runtime assertions
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - all supported macros
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - using the library without exceptions
+- [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - all exceptions and their error codes
+- [Macros](https://json.nlohmann.me/api/macros/index.md) - reference of all macros

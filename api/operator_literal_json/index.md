@@ -71,7 +71,7 @@ Output:
 ## See also
 
 - [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - the article on creating JSON values
-- [JSON_NO_AUTOMATIC_UDLS](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) - do not include the user-defined string literals automatically
+- [`JSON_NO_AUTOMATIC_UDLS`](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) - do not include the user-defined string literals automatically
 
 ## Version history
 

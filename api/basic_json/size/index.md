@@ -30,7 +30,7 @@ Constant, as long as [`array_t`](https://json.nlohmann.me/api/basic_json/array_t
 
 ## Notes
 
-This function does not return the length of a string stored as JSON value -- it returns the number of elements in the JSON value which is `1` in the case of a string.
+This function does not return the length of a string stored as JSON value — it returns the number of elements in the JSON value which is `1` in the case of a string.
 
 ## Examples
 
@@ -86,9 +86,9 @@ Output:
 
 ## See also
 
-- [empty](https://json.nlohmann.me/api/basic_json/empty/index.md) checks whether the JSON value has no elements
-- [max_size](https://json.nlohmann.me/api/basic_json/max_size/index.md) returns the maximum possible number of elements
-- [basic_json_view::size](https://json.nlohmann.me/api/basic_json_view/size/index.md) - the same function on a zero-copy view
+- [`empty`](https://json.nlohmann.me/api/basic_json/empty/index.md) - checks whether the JSON value has no elements
+- [`max_size`](https://json.nlohmann.me/api/basic_json/max_size/index.md) - returns the maximum possible number of elements
+- [`basic_json_view::size`](https://json.nlohmann.me/api/basic_json_view/size/index.md) - the same function on a zero-copy view
 
 ## Version history
 

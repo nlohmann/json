@@ -82,8 +82,9 @@ true
 
 ## See also
 
-- [parse](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input, borrowing it where possible
-- [owns_source](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) - return whether the document holds its own copy of the text
+- [`parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input, borrowing it where possible
+- [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) - return whether the document holds its own copy of the text
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime) - borrowing or copying the source text
 
 ## Version history
 

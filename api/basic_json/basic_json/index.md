@@ -50,7 +50,7 @@ basic_json(basic_json&& other) noexcept;
 
    The postcondition of this constructor can be restored by calling [`clear()`](https://json.nlohmann.me/api/basic_json/clear/index.md).
 
-1. Create a `null` JSON value. It either takes a null pointer as parameter (explicitly creating `null`) or no parameter (implicitly creating `null`). The passed null pointer itself is not read -- it is only used to choose the right constructor.
+1. Create a `null` JSON value. It either takes a null pointer as parameter (explicitly creating `null`) or no parameter (implicitly creating `null`). The passed null pointer itself is not read — it is only used to choose the right constructor.
 
 1. This is a "catch all" constructor for all compatible JSON types; that is, types for which a `to_json()` method exists. The constructor forwards the parameter `val` to that method (to `json_serializer<U>::to_json` method with `U = uncvref_t<CompatibleType>`, to be exact).
 
@@ -84,18 +84,20 @@ basic_json(basic_json&& other) noexcept;
 
    ```
    flowchart TD
-       A(["initializer_list init"]) --> B{"empty, or every element is a 2-element<br/>array whose first element is a string?"}
-       B -->|"yes"| C{"type_deduction"}
-       B -->|"no"| D{"type_deduction"}
+       A(["initializer_list init"]) --> B{{"empty, or every element is a 2-element<br/>array whose first element is a string?"}}
+       B -->|"yes"| C{{"type_deduction"}}
+       B -->|"no"| D{{"type_deduction"}}
        C -->|"true"| OBJ["create object"]
-       C -->|"false"| E{"manual_type"}
+       C -->|"false"| E{{"manual_type"}}
        E -->|"object"| OBJ
        E -->|"array"| ARR["create array"]
        D -->|"true"| ARR
-       D -->|"false"| F{"manual_type"}
+       D -->|"false"| F{{"manual_type"}}
        F -->|"array"| ARR
        F -->|"object"| ERR["throw type_error.301"]
    ```
+
+   Decision flow for an initializer list: hexagons are checks, edge labels are their outcomes, and rectangles are the resulting value or exception.
 
    The rules aim to create the best fit between a C++ initializer list and JSON values. The rationale is as follows:
 
@@ -824,11 +826,12 @@ null
 
 ## See also
 
-- [array](https://json.nlohmann.me/api/basic_json/array/index.md) create a JSON array value, forcing array creation from an initializer list even when it looks like an object
-- [object](https://json.nlohmann.me/api/basic_json/object/index.md) create a JSON object value, forcing object creation from an initializer list
-- [binary](https://json.nlohmann.me/api/basic_json/binary/index.md) create a JSON binary array value
-- [operator=](https://json.nlohmann.me/api/basic_json/operator%3D/index.md) copy assignment operator
+- [`array`](https://json.nlohmann.me/api/basic_json/array/index.md) - create a JSON array value, forcing array creation from an initializer list even when it looks like an object
+- [`object`](https://json.nlohmann.me/api/basic_json/object/index.md) - create a JSON object value, forcing object creation from an initializer list
+- [`binary`](https://json.nlohmann.me/api/basic_json/binary/index.md) - create a JSON binary array value
+- [`operator=`](https://json.nlohmann.me/api/basic_json/operator%3D/index.md) - copy assignment operator
 - [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - the article on creating JSON values
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - which C++ types can be converted
 
 ## Version history
 

@@ -4,7 +4,7 @@
 value_t type() const noexcept;
 ```
 
-Returns the type of the value this view refers to, as a value from the [`value_t`](https://json.nlohmann.me/api/basic_json/value_t/index.md) enumeration -- the same enumeration [`BasicJsonType::type()`](https://json.nlohmann.me/api/basic_json/type/index.md) uses.
+Returns the type of the value this view refers to, as a value from the [`value_t`](https://json.nlohmann.me/api/basic_json/value_t/index.md) enumeration — the same enumeration [`BasicJsonType::type()`](https://json.nlohmann.me/api/basic_json/type/index.md) uses.
 
 ## Return value
 
@@ -93,7 +93,7 @@ true
 
 ## See also
 
-- [is_null](https://json.nlohmann.me/api/basic_json_view/is_null/index.md), [is_boolean](https://json.nlohmann.me/api/basic_json_view/is_boolean/index.md), [is_number](https://json.nlohmann.me/api/basic_json_view/is_number/index.md), [is_string](https://json.nlohmann.me/api/basic_json_view/is_string/index.md), [is_array](https://json.nlohmann.me/api/basic_json_view/is_array/index.md), [is_object](https://json.nlohmann.me/api/basic_json_view/is_object/index.md) - type-specific predicates built on `type()`
+- [`is_null`](https://json.nlohmann.me/api/basic_json_view/is_null/index.md), [`is_boolean`](https://json.nlohmann.me/api/basic_json_view/is_boolean/index.md), [`is_number`](https://json.nlohmann.me/api/basic_json_view/is_number/index.md), [`is_string`](https://json.nlohmann.me/api/basic_json_view/is_string/index.md), [`is_array`](https://json.nlohmann.me/api/basic_json_view/is_array/index.md), [`is_object`](https://json.nlohmann.me/api/basic_json_view/is_object/index.md) - type-specific predicates built on `type()`
 - [`BasicJsonType::type`](https://json.nlohmann.me/api/basic_json/type/index.md) - the corresponding function of `basic_json`
 
 ## Version history

@@ -212,8 +212,9 @@ interpreted as `object_t::value_type` or `std::initializer_list<basic_json>`, se
 
 ## See also
 
-- [emplace_back](emplace_back.md) add a value to an array
-- [push_back](push_back.md) add a value to an array/object
+- [`emplace_back`](emplace_back.md) - add a value to an array
+- [`push_back`](push_back.md) - add a value to an array/object
+- [Modifying values](../../features/modifying_values.md) - the article on modifying values
 
 ## Version history
 

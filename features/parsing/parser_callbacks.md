@@ -31,6 +31,52 @@ table describes the values of the parameters `depth`, `event`, and `parsed`.
 | `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
 | `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
+<div class="nj-fig-wrap" markdown>
+<svg class="nj-fig nj-fig--cb" viewBox="0 0 480 262" role="img" aria-labelledby="fig-cb-title" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-cb-title">Example of the parse events a callback sees for the J&#8203;SON text {&quot;name&quot;: &quot;Berlin&quot;, &quot;location&quot;: [52.519444, 13.406667]}: object_start after the opening brace, key after each key, array_start after the opening bracket, value after each value, array_end after the closing bracket, and object_end after the closing brace. Every array and object also produces a value event when it is complete.</title>
+<text class="fg-h" x="16" y="28">J&#8203;SON to parse</text>
+<text class="fg-h" x="320" y="28">callback events</text>
+<text class="fg-code" x="16" y="74" xml:space="preserve">{</text>
+<circle class="cb-os" cx="35.6" cy="69" r="5.5"/>
+<text class="fg-code" x="35.2" y="102" xml:space="preserve">&quot;name&quot;</text>
+<circle class="cb-k" cx="102.8" cy="97" r="5.5"/>
+<text class="fg-code" x="112.8" y="102" xml:space="preserve">: &quot;Berlin&quot;</text>
+<circle class="cb-v" cx="218.8" cy="97" r="5.5"/>
+<text class="fg-code" x="228.8" y="102" xml:space="preserve">,</text>
+<text class="fg-code" x="35.2" y="130" xml:space="preserve">&quot;location&quot;</text>
+<circle class="cb-k" cx="141.2" cy="125" r="5.5"/>
+<text class="fg-code" x="151.2" y="130" xml:space="preserve">: [</text>
+<circle class="cb-as" cx="190" cy="125" r="5.5"/>
+<text class="fg-code" x="54.4" y="158" xml:space="preserve">52.519444</text>
+<circle class="cb-v" cx="150.8" cy="153" r="5.5"/>
+<text class="fg-code" x="160.8" y="158" xml:space="preserve">,</text>
+<text class="fg-code" x="54.4" y="186" xml:space="preserve">13.406667</text>
+<circle class="cb-v" cx="150.8" cy="181" r="5.5"/>
+<text class="fg-code" x="35.2" y="214" xml:space="preserve">]</text>
+<circle class="cb-ae" cx="54.8" cy="209" r="5.5"/>
+<circle class="cb-v" cx="74.8" cy="209" r="5.5"/>
+<text class="fg-code" x="16" y="242" xml:space="preserve">}</text>
+<circle class="cb-oe" cx="35.6" cy="237" r="5.5"/>
+<circle class="cb-v" cx="55.6" cy="237" r="5.5"/>
+<circle class="cb-os" cx="327" cy="69" r="6"/>
+<text class="fg-code fg-leg" x="344" y="74">object_start</text>
+<circle class="cb-k" cx="327" cy="99" r="6"/>
+<text class="fg-code fg-leg" x="344" y="104">key</text>
+<circle class="cb-oe" cx="327" cy="129" r="6"/>
+<text class="fg-code fg-leg" x="344" y="134">object_end</text>
+<circle class="cb-as" cx="327" cy="159" r="6"/>
+<text class="fg-code fg-leg" x="344" y="164">array_start</text>
+<circle class="cb-ae" cx="327" cy="189" r="6"/>
+<text class="fg-code fg-leg" x="344" y="194">array_end</text>
+<circle class="cb-v" cx="327" cy="219" r="6"/>
+<text class="fg-code fg-leg" x="344" y="224">value</text>
+</svg>
+
+</div>
+
+<p class="nj-caption" markdown>Each coloured dot marks where the parser reports a `parse_event_t` event while reading
+the JSON text on the left; the legend on the right names the event per colour.</p>
+
 ??? example "Example: sequence of callback events"
 
     When parsing the following JSON text,
@@ -177,7 +223,7 @@ was called:
 
 The JSON specification leaves the handling of objects with repeated keys up to the implementation. As described in
 [`object_t`](../../api/basic_json/object_t.md#behavior), it is unspecified which value for a repeated key ends up in
-the resulting `#!c json` value -- once parsing has produced that value, the duplicate is already gone, because object
+the resulting `#!c json` value — once parsing has produced that value, the duplicate is already gone, because object
 storage maps each key to a single value. If duplicate keys should instead be treated as an error, a parser callback
 can detect them while the object is still being read, before that ambiguity ever applies.
 
@@ -267,7 +313,7 @@ This approach has three limitations:
   maintaining a stack of the enclosing keys and array indices in the callback as well.
 
 A [SAX interface](sax_interface.md) does not lift the position limitation: its `key` function receives no position
-either -- only `parse_error` is passed the byte position.
+either — only `parse_error` is passed the byte position.
 
 ## Recipe: streaming a large homogeneous array
 
@@ -316,3 +362,11 @@ tracking the maximum `depth` seen and throwing once it is exceeded:
 
     json::parse(input, callback);
     ```
+
+## See also
+
+- [Parsing](index.md) - overview of the parsing functions
+- [SAX Interface](sax_interface.md) - guide to event-based parsing
+- [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input
+- [`parser_callback_t`](../../api/basic_json/parser_callback_t.md) - callback function type for the parser
+- [`parse_event_t`](../../api/basic_json/parse_event_t.md) - enumeration of parser events

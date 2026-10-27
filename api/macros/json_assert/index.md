@@ -79,6 +79,7 @@ assertion error in operator[]
 ## See also
 
 - [Runtime Assertions](https://json.nlohmann.me/features/assertions/index.md) - overview documentation
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
 
 ## Version history
 

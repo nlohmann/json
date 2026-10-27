@@ -30,10 +30,10 @@ Constant: for an object or array, the element count is stored in the index, not 
 
 ## Notes
 
-As for [`BasicJsonType::size()`](../basic_json/size.md), this does not return the length of a string value -- it is
+As for [`BasicJsonType::size()`](../basic_json/size.md), this does not return the length of a string value — it is
 `1` for a string, regardless of its length.
 
-If the source text has an object with a duplicate key, every occurrence counts towards its `size()` -- unlike
+If the source text has an object with a duplicate key, every occurrence counts towards its `size()` — unlike
 [`materialize()`](materialize.md) (and [`BasicJsonType::parse()`](../basic_json/parse.md)), which keeps only the last
 value for a repeated key. This means `#!cpp v.size()` can be larger than `#!cpp v.materialize().size()`. See the
 [Notes on duplicate keys](operator[].md#notes) of `operator[]` for why lookups and iteration disagree on how many
@@ -83,7 +83,7 @@ members there are.
 
 ## See also
 
-- [empty](empty.md) - return whether the value has no elements
+- [`empty`](empty.md) - return whether the value has no elements
 - [`BasicJsonType::size`](../basic_json/size.md) - the corresponding function of `basic_json`
 
 ## Version history

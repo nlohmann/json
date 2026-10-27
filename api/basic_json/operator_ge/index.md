@@ -105,7 +105,7 @@ Output:
 
 ## See also
 
-- [**operator\<=>**](https://json.nlohmann.me/api/basic_json/operator_spaceship/index.md) comparison: 3-way
+- [`operator<=>`](https://json.nlohmann.me/api/basic_json/operator_spaceship/index.md) - comparison: 3-way
 
 ## Version history
 

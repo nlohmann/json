@@ -89,7 +89,7 @@ true
 
 ## See also
 
-- [source_offset](https://json.nlohmann.me/api/basic_json_view/source_offset/index.md) - byte offset of this value in the source text, which differs for strings: an escaped string has none
+- [`source_offset`](https://json.nlohmann.me/api/basic_json_view/source_offset/index.md) - byte offset of this value in the source text, which differs for strings: an escaped string has none
 - [`BasicJsonType::is_string`](https://json.nlohmann.me/api/basic_json/is_string/index.md) - the corresponding function of `basic_json`
 
 ## Version history

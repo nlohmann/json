@@ -245,12 +245,13 @@ true
 
 ## See also
 
-- [get_to](https://json.nlohmann.me/api/basic_json/get_to/index.md) convert and write into a passed value
-- [get_ptr](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) get a pointer to the stored value
-- [get_ref](https://json.nlohmann.me/api/basic_json/get_ref/index.md) get a reference to the stored value
-- [operator ValueType](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) get a value via implicit conversion
+- [`get_to`](https://json.nlohmann.me/api/basic_json/get_to/index.md) - convert and write into a passed value
+- [`get_ptr`](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) - get a pointer to the stored value
+- [`get_ref`](https://json.nlohmann.me/api/basic_json/get_ref/index.md) - get a reference to the stored value
+- [`operator ValueType`](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) - get a value via implicit conversion
 - [Converting values](https://json.nlohmann.me/features/conversions/index.md) - the type conversions article
-- [basic_json_view::get](https://json.nlohmann.me/api/basic_json_view/get/index.md) - the same conversion on a zero-copy view (many types are converted without ever building a `basic_json` value)
+- [`basic_json_view::get`](https://json.nlohmann.me/api/basic_json_view/get/index.md) - the same conversion on a zero-copy view (many types are converted without ever building a `basic_json` value)
+- [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - make your own types usable with `get`
 
 ## Version history
 

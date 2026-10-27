@@ -185,3 +185,12 @@ void to_json(NLOHMANN_JSON_NAMESPACE::json& j, const person& p)
 ## Do not use the `detail` namespace
 
 The `nlohmann::detail` namespace is not part of the public API of the library and can change in any version without an announcement. Do not rely on any function or type in the `detail` namespace.
+
+## See also
+
+- [`JSON_DELETE_DEPRECATED_FUNCTIONS`](https://json.nlohmann.me/api/macros/json_delete_deprecated_functions/index.md) - remove deprecated functions to check the migration
+- [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) - control implicit conversions
+- [`NLOHMANN_JSON_NAMESPACE`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace/index.md) - refer to the library namespace without hard-coding it
+- [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/index.md) - how the library namespace is structured
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - explicit conversions with get
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) - the main class and all its member functions

@@ -19,7 +19,7 @@ To store strings in C++, a type is defined by the template parameter described b
 ```
 `StringType` must have a `char`-compatible `value_type`: the library relies on UTF-8/`char`-based storage and
 processing internally, so `std::wstring`, `std::u16string`, and `std::u32string` are **not** valid choices for
-`StringType`. To work with wide-character data, convert it to/from UTF-8 at the boundary instead -- see the
+`StringType`. To work with wide-character data, convert it to/from UTF-8 at the boundary instead — see the
 FAQ's [wide string handling](https://json.nlohmann.me/home/faq/#wide-string-handling) section for a conversion recipe.
 
 Beyond the character type, the library expects a substantial part of the `std::string` interface (contiguous
@@ -81,9 +81,11 @@ true
 
 ## See also
 
-- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects (and their keys, which are also `string_t`)
-- [binary_t](https://json.nlohmann.me/api/basic_json/binary_t/index.md) the type used to store binary values
-- [get_ptr](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) returns a pointer to the stored string value
+- [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md) - the type used to store JSON objects (and their keys, which are also `string_t`)
+- [`binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md) - the type used to store binary values
+- [`get_ptr`](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) - returns a pointer to the stored string value
+- [Types](https://json.nlohmann.me/features/types/index.md) - how strings are stored
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - requirements on the `StringType` template parameter
 
 ## Version history
 

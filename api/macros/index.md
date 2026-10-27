@@ -112,8 +112,12 @@ Some aspects of the library can be configured by defining preprocessor macros **
 ## See also
 
 - [Macros](https://json.nlohmann.me/features/macros/index.md) - guide to the supported macros
-- [Runtime assertions](https://json.nlohmann.me/features/assertions/index.md)
+- [Runtime assertions](https://json.nlohmann.me/features/assertions/index.md) - assertions guarding against undefined behavior
 - [Arbitrary type conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - using the `NLOHMANN_DEFINE_TYPE_*` macros
 - [Enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md) - using `NLOHMANN_JSON_SERIALIZE_ENUM`
-- [The `nlohmann` namespace](https://json.nlohmann.me/features/namespace/index.md)
+- [The `nlohmann` namespace](https://json.nlohmann.me/features/namespace/index.md) - how the library's namespace is defined and versioned
 - [CMake integration](https://json.nlohmann.me/integration/cmake/index.md) - setting macros from the build system
+- [Integration](https://json.nlohmann.me/integration/index.md) - integrate the library and set macros
+- [Modules](https://json.nlohmann.me/features/modules/index.md) - macros and C++20 modules
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - using the library without exceptions
+- [Architecture](https://json.nlohmann.me/home/architecture/index.md) - how the library is put together

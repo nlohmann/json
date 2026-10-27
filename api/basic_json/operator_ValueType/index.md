@@ -143,7 +143,7 @@ string: "Hello, world!"
 
 ## See also
 
-- [get](https://json.nlohmann.me/api/basic_json/get/index.md) get a value (explicit conversion)
+- [`get`](https://json.nlohmann.me/api/basic_json/get/index.md) - get a value (explicit conversion)
 - [Converting values](https://json.nlohmann.me/features/conversions/index.md) - the type conversions article
 
 ## Version history

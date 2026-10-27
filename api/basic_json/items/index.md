@@ -50,7 +50,7 @@ If you need to name the type of the dereferenced element explicitly (e.g., to wr
 using element_type = decltype(*j_object.items().begin());
 ```
 
-The per-element type (`iteration_proxy_value`) lives in the library's internal `detail` namespace and is intentionally unspecified as a stable, named type -- `decltype` is the supported way to obtain it, but its exact name/definition may change between versions.
+The per-element type (`iteration_proxy_value`) lives in the library's internal `detail` namespace and is intentionally unspecified as a stable, named type — `decltype` is the supported way to obtain it, but its exact name/definition may change between versions.
 
 ## Return value
 
@@ -118,9 +118,10 @@ key: 4, value: 16
 
 ## See also
 
-- [begin](https://json.nlohmann.me/api/basic_json/begin/index.md) returns an iterator to the first element
-- [end](https://json.nlohmann.me/api/basic_json/end/index.md) returns an iterator to one past the last element
-- [basic_json_view::items](https://json.nlohmann.me/api/basic_json_view/items/index.md) - the same range on a zero-copy view (`const auto`, not `const auto&`: items are produced on the fly; document order, not sorted; duplicate keys are visited)
+- [`begin`](https://json.nlohmann.me/api/basic_json/begin/index.md) - returns an iterator to the first element
+- [`end`](https://json.nlohmann.me/api/basic_json/end/index.md) - returns an iterator to one past the last element
+- [`basic_json_view::items`](https://json.nlohmann.me/api/basic_json_view/items/index.md) - the same range on a zero-copy view (`const auto`, not `const auto&`: items are produced on the fly; document order, not sorted; duplicate keys are visited)
+- [Iterators](https://json.nlohmann.me/features/iterators/#access-object-keys-during-iteration) - the article on iterating over keys and values
 
 ## Version history
 

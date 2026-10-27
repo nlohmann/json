@@ -59,8 +59,8 @@ Output:
 
 ## See also
 
-- [front](https://json.nlohmann.me/api/json_pointer/front/index.md) return first reference token
-- [push_front](https://json.nlohmann.me/api/json_pointer/push_front/index.md) append an unescaped token at the start of the pointer
+- [`front`](https://json.nlohmann.me/api/json_pointer/front/index.md) - return first reference token
+- [`push_front`](https://json.nlohmann.me/api/json_pointer/push_front/index.md) - append an unescaped token at the start of the pointer
 
 ## Version history
 

@@ -23,6 +23,8 @@ sequenceDiagram
     P->>H: end_object()
 ```
 
+Each arrow is one call from the parser to the SAX handler, from top to bottom in the order the calls happen.
+
 Note `elements` is passed as `std::numeric_limits<std::size_t>::max()` (i.e., "unknown") for JSON text input; only binary formats such as CBOR or MessagePack may report the actual number of elements in `start_object`/ `start_array`. Also note that `1` is reported via `number_unsigned` rather than `number_integer` because it has no leading `-` sign.
 
 ## Template parameters
@@ -56,9 +58,9 @@ Note `elements` is passed as `std::numeric_limits<std::size_t>::max()` (i.e., "u
 ## See also
 
 - [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - guide to event-based parsing
-- [**sax_parse**](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events from an input
-- [**parse**](https://json.nlohmann.me/api/basic_json/parse/index.md) - DOM parsing, with optional [parser callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md)
-- [Parse exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md)
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events from an input
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - DOM parsing, with optional [parser callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md)
+- [Parse exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - how parse errors are reported
 
 ## Version history
 

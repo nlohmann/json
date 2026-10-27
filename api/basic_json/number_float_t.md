@@ -95,10 +95,11 @@ Floating-point number values are stored directly inside a `basic_json` type.
 
 ## See also
 
-- [number_integer_t](number_integer_t.md) the type used to store JSON integer numbers
-- [number_unsigned_t](number_unsigned_t.md) the type used to store JSON unsigned integer numbers
-- [is_number_float](is_number_float.md) checks whether the JSON value is a floating-point number
+- [`number_integer_t`](number_integer_t.md) - the type used to store JSON integer numbers
+- [`number_unsigned_t`](number_unsigned_t.md) - the type used to store JSON unsigned integer numbers
+- [`is_number_float`](is_number_float.md) - checks whether the JSON value is a floating-point number
 - [Number Handling](../../features/types/number_handling.md) - the article on number handling
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the number template parameters
 
 ## Version history
 

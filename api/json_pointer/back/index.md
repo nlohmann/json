@@ -55,10 +55,10 @@ last reference token of "/foo/0" is "0"
 
 ## See also
 
-- [front](https://json.nlohmann.me/api/json_pointer/front/index.md) return first reference token
-- [pop_back](https://json.nlohmann.me/api/json_pointer/pop_back/index.md) remove the last reference token
-- [push_back](https://json.nlohmann.me/api/json_pointer/push_back/index.md) append an unescaped token at the end of the pointer
-- [parent_pointer](https://json.nlohmann.me/api/json_pointer/parent_pointer/index.md) returns the parent of this JSON pointer
+- [`front`](https://json.nlohmann.me/api/json_pointer/front/index.md) - return first reference token
+- [`pop_back`](https://json.nlohmann.me/api/json_pointer/pop_back/index.md) - remove the last reference token
+- [`push_back`](https://json.nlohmann.me/api/json_pointer/push_back/index.md) - append an unescaped token at the end of the pointer
+- [`parent_pointer`](https://json.nlohmann.me/api/json_pointer/parent_pointer/index.md) - returns the parent of this JSON pointer
 
 ## Version history
 

@@ -159,7 +159,7 @@ The class satisfies the following concept requirements:
 Functions to inspect the type of a JSON value.
 
 - [**type**](https://json.nlohmann.me/api/basic_json/type/index.md) - return the type of the JSON value
-- [**operator value_t**](https://json.nlohmann.me/api/basic_json/operator_value_t/index.md) - return the type of the JSON value
+- [`operator value_t`](https://json.nlohmann.me/api/basic_json/operator_value_t/index.md) - return the type of the JSON value
 - [**type_name**](https://json.nlohmann.me/api/basic_json/type_name/index.md) - return the type as string
 - [**is_primitive**](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) - return whether the type is primitive
 - [**is_structured**](https://json.nlohmann.me/api/basic_json/is_structured/index.md) - return whether the type is structured
@@ -188,7 +188,7 @@ Direct access to the stored value of a JSON value.
 - [**get_to**](https://json.nlohmann.me/api/basic_json/get_to/index.md) - get a value and write it to a destination
 - [**get_ptr**](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) - get a pointer value
 - [**get_ref**](https://json.nlohmann.me/api/basic_json/get_ref/index.md) - get a reference value
-- [**operator ValueType**](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) - get a value
+- [`operator ValueType`](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) - get a value
 - [**get_binary**](https://json.nlohmann.me/api/basic_json/get_binary/index.md) - get a binary value
 - [**as_base_class**](https://json.nlohmann.me/api/basic_json/as_base_class/index.md) - access the custom base class
 
@@ -393,9 +393,13 @@ Output:
 
 ## See also
 
-- [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format](https://tools.ietf.org/html/rfc8259)
-- [basic_json_document](https://json.nlohmann.me/api/basic_json_document/index.md) / [basic_json_view](https://json.nlohmann.me/api/basic_json_view/index.md) - parse a JSON text into a flat index and read it through a view
+- [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format](https://tools.ietf.org/html/rfc8259) - specification of the JSON data interchange format
+- [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) - / [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) - parse a JSON text into a flat index and read it through a view
 - [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - when to use a document and a view instead of a `basic_json`
+- [Types](https://json.nlohmann.me/features/types/index.md) - how JSON values are stored and which types exist
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - get values out of a JSON value and put values in
+- [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - all the ways to build a JSON value
+- [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - convert your own types to and from JSON
 
 ## Version history
 

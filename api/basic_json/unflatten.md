@@ -124,7 +124,8 @@ Apart from these three cases, for a JSON value `j`, the following is always true
 
 ## See also
 
-- [flatten](flatten.md) the reverse function
+- [`flatten`](flatten.md) - the reverse function
+- [JSON Pointer](../../features/json_pointer.md#flatten-unflatten) - the article on JSON Pointer and flattening
 
 ## Version history
 

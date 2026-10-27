@@ -29,6 +29,8 @@ flowchart LR
     oa --> output
 ```
 
+Data flow through the library: input runs left to right through an input adapter and the lexer and parser (JSON text) or the `binary_reader` (binary formats) into SAX events, which build the value tree; the `serializer` or the `binary_writer` writes the tree to an output adapter.
+
 - **JSON text** is read by an [input adapter](#input-adapters), tokenized by the lexer, and turned into SAX events by the parser.
 - **Binary formats** (BJData, BON8, BSON, CBOR, MessagePack, UBJSON) are read by an input adapter and turned into the same SAX events by the `binary_reader`.
 - A [SAX consumer](#sax-interface) receives the events. The one used by [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) builds a `basic_json` value tree.
@@ -160,6 +162,8 @@ packet-beta
   96-127: "next"
 ```
 
+Layout of one 16-byte node of a JSON view index. Each row is 32 bits wide, and the numbers are the bit offsets of the fields `kind`, `flags`, `extra`, `off`, `len`, and `next`.
+
 | Bytes | Field   | Type       | Contents                                                                                                                                                                                                                                                                                                                                                       |
 | ----- | ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0     | `kind`  | `uint8_t`  | the type, numbered as [`value_t`](https://json.nlohmann.me/api/basic_json/value_t/index.md): 0 null, 1 object, 2 array, 3 string, 4 boolean, 5 signed integer, 6 unsigned integer, 7 float; 10 for a link (see below). There is no node for a discarded value: a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view has none |
@@ -168,6 +172,8 @@ packet-beta
 | 4-7   | `off`   | `uint32_t` | where the value starts: the first byte after a string's opening quote (or its position in the buffer of decoded strings), the first byte of a number or literal, the bracket of an array or object                                                                                                                                                             |
 | 8-11  | `len`   | `uint32_t` | strings: the length after decoding; floats and literals: the length of the token; arrays and objects: the number of elements                                                                                                                                                                                                                                   |
 | 12-15 | `next`  | `uint32_t` | arrays and objects: the number of nodes of the subtree, including the node itself                                                                                                                                                                                                                                                                              |
+
+Fields of a node, by their byte offset within the 16-byte node. Integers use bytes 8-15 differently, see below.
 
 - **Integers** keep their converted value in bytes 8-15 instead of `len` and `next`; the length of their token follows from the number of digits in `extra` (and the sign). Non-negative integers are unsigned integers, as with [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md).
 - **Floats** keep only their token. The digit layout in `extra` lets the conversion read the digits without scanning the token again, and only when the value is read.
@@ -191,6 +197,8 @@ flowchart LR
     n2 -. next .-> e
 ```
 
+The five nodes of `{"a": [1, 2.5]}` in document order. Solid arrows lead from each node to the one after it; dotted arrows show where `next` leads from the object and the array, past their subtrees.
+
 | Node | `kind`               | `extra` | `off` | `len` | `next` |
 | ---- | -------------------- | ------- | ----- | ----- | ------ |
 | 0    | 1 (object)           | 0       | 0     | 1     | 5      |
@@ -198,6 +206,8 @@ flowchart LR
 | 2    | 2 (array)            | 0       | 6     | 2     | 3      |
 | 3    | 6 (unsigned integer) | 0x0001  | 7     | -     | -      |
 | 4    | 7 (float)            | 0x0101  | 10    | 3     | 0      |
+
+Fields of the five nodes of `{"a": [1, 2.5]}`. `off` is the byte offset in the text, and - marks the bytes 8-15 that hold the integer's value instead of `len` and `next`.
 
 All `flags` are 0. The integer's bytes 8-15 hold its value, 1; its `extra` says it has one digit. The float's `extra` says it has one integer and one fraction digit, and its `len` is that of the token `2.5`.
 
@@ -228,7 +238,7 @@ template<class T>
 std::size_t get_elements(T* dest, std::size_t count = 1);
 ```
 
-The lexer detects two optional extensions at compile time. Only `iterator_input_adapter` provides them, and only for random-access input of single-byte characters:
+The lexer detects two optional extensions at compile time. `iterator_input_adapter` provides both, and only for random-access input of single-byte characters. `input_stream_adapter` provides the second one (as a window onto the streambuf's buffer) unless `JSON_DISABLE_STREAM_BULK_SCAN` is defined:
 
 - `supports_seek`, `get_consumed_count()`, and `copy_consumed_range()` let the lexer reconstruct already consumed input for error messages instead of copying every character it reads. With `get_read_count()` and `count_consumed_lines()`, the lexer also derives the read position from the adapter and counts lines only when an error needs them, instead of counting characters and lines on every read.
 - `supports_bulk_scan`, `bulk_data()`, `bulk_remaining()`, and `bulk_skip()` let the lexer scan strings directly in contiguous memory, several bytes at a time, and skip the spaces that indent a line in 8-byte steps.
@@ -240,6 +250,39 @@ The function `input_adapter` picks the right adapter for the argument passed to 
 - `input_stream_adapter` reads from a `std::istream`.
 - `file_input_adapter` reads from a `std::FILE*`.
 
+The adapters have no common base class: the lexer and the parser are templates on the adapter type, and `wide_string_input_adapter` wraps an `iterator_input_adapter`:
+
+```
+classDiagram
+    class input_adapter ["input adapter"] {
+        <<concept>>
+        +char_type
+        +get_character() int_type
+        +get_elements(T* dest, size_t count) size_t
+    }
+    class iterator_input_adapter {
+        -IteratorType current
+        -SentinelType end
+    }
+    class wide_string_input_adapter {
+        -BaseInputAdapter base_adapter
+    }
+    class input_stream_adapter {
+        -std::istream* is
+        -std::streambuf* sb
+    }
+    class file_input_adapter {
+        -std::FILE* m_file
+    }
+    input_adapter <|.. iterator_input_adapter
+    input_adapter <|.. wide_string_input_adapter
+    input_adapter <|.. input_stream_adapter
+    input_adapter <|.. file_input_adapter
+    wide_string_input_adapter o-- iterator_input_adapter : converts to UTF-8
+```
+
+The input adapters as a class diagram. The dotted arrows mean that each adapter implements the input adapter concept; the diamond shows that `wide_string_input_adapter` holds an `iterator_input_adapter`.
+
 ## SAX interface
 
 The parser does not build values itself. It reports what it reads as events to a [SAX](https://json.nlohmann.me/features/parsing/sax_interface/index.md) consumer, which implements the interface [`json_sax`](https://json.nlohmann.me/api/json_sax/index.md): `null`, `boolean`, `number_integer`, `number_unsigned`, `number_float`, `string`, `binary`, `start_object`, `key`, `end_object`, `start_array`, `end_array`, and `parse_error`.
@@ -249,7 +292,7 @@ The library comes with two consumers in `detail/input/json_sax.hpp`:
 - `json_sax_dom_parser` builds a [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) value tree. [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) uses it.
 - `json_sax_dom_callback_parser` does the same, but calls a [parser callback](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md) for each event, which can skip values. `parse` uses it when a callback is given.
 
-The `binary_reader` emits the same events for binary formats, so [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) works with a user-defined consumer for JSON and for all binary formats alike.
+The `binary_reader` emits the same events for binary formats, so [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) works with a user-defined consumer for JSON and for all binary formats alike. The [SAX event stepper](https://json.nlohmann.me/features/parsing/sax_interface/#sax-event-stepper) shows the events for a small input.
 
 ## Output adapters
 
@@ -266,6 +309,35 @@ The `serializer` (used by [`dump`](https://json.nlohmann.me/api/basic_json/dump/
 - `output_vector_adapter` appends to a `std::vector`.
 - `output_stream_adapter` writes to a `std::ostream`.
 - `output_string_adapter` appends to a string.
+
+They implement the abstract class `output_adapter_protocol`. The class `output_adapter` creates the one that matches its argument and holds it in a `std::shared_ptr` (`output_adapter_t`):
+
+```
+classDiagram
+    class output_adapter_protocol~CharType~ {
+        <<interface>>
+        +write_character(CharType c)*
+        +write_characters(const CharType* s, size_t length)*
+    }
+    class output_vector_adapter {
+        -std::vector& v
+    }
+    class output_stream_adapter {
+        -std::basic_ostream& stream
+    }
+    class output_string_adapter {
+        -StringType& str
+    }
+    class output_adapter {
+        -output_adapter_t oa
+    }
+    output_adapter_protocol <|-- output_vector_adapter
+    output_adapter_protocol <|-- output_stream_adapter
+    output_adapter_protocol <|-- output_string_adapter
+    output_adapter o-- output_adapter_protocol : shared_ptr
+```
+
+The output adapters as a class diagram. The three adapters derive from `output_adapter_protocol` (solid arrows), and `output_adapter` holds one of them through a `shared_ptr` (diamond).
 
 The `binary_writer` does not call an adapter for every byte. The `to_*` functions that return a `std::vector` write into the vector through a sink (`output_vector_sink`) that is not virtual. The functions that take an output adapter write through a sink (`output_adapter_sink`) that collects the output in a buffer of one kibibyte and passes it to the adapter in blocks, so that the adapter is called (and a stream locked) once per block instead of once per value.
 
@@ -297,3 +369,14 @@ Namespace `nlohmann::detail` contains all implementation details. It is not part
 - type traits to detect the capabilities of user-defined types (`detail/meta/type_traits.hpp`),
 - backports of C++14/17 features to C++11 (`detail/meta/cpp_future.hpp`), and
 - helpers such as `string_concat` and `string_escape`.
+
+## See also
+
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) - the main class and all its member functions
+- [`adl_serializer`](https://json.nlohmann.me/api/adl_serializer/index.md) - customization point for type conversions
+- [`json_sax`](https://json.nlohmann.me/api/json_sax/index.md) - interface of the SAX parser events
+- [SAX Interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - how to consume parser events without building a DOM
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - the flat node index that backs views and documents
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - the template parameters of basic_json
+- [Serialization](https://json.nlohmann.me/features/serialization/index.md) - the output side of the library
+- [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/index.md) - how the library namespace is structured

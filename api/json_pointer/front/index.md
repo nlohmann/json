@@ -55,9 +55,9 @@ first reference token of "/foo/0" is "foo"
 
 ## See also
 
-- [back](https://json.nlohmann.me/api/json_pointer/back/index.md) return last reference token
-- [pop_front](https://json.nlohmann.me/api/json_pointer/pop_front/index.md) remove the first reference token
-- [push_front](https://json.nlohmann.me/api/json_pointer/push_front/index.md) append an unescaped token at the start of the pointer
+- [`back`](https://json.nlohmann.me/api/json_pointer/back/index.md) - return last reference token
+- [`pop_front`](https://json.nlohmann.me/api/json_pointer/pop_front/index.md) - remove the first reference token
+- [`push_front`](https://json.nlohmann.me/api/json_pointer/push_front/index.md) - append an unescaped token at the start of the pointer
 
 ## Version history
 

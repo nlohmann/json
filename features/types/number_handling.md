@@ -27,7 +27,77 @@ JSON defines the syntax of numbers as follows:
 
 The following railroad diagram from [json.org](https://json.org) visualizes the number syntax:
 
-![Syntax for JSON numbers](../../images/json_syntax_number.png)
+<div class="railroad-wrap" markdown>
+<svg class="railroad" viewBox="0 0 860 214" role="img" aria-labelledby="rr-title" xmlns="http://www.w3.org/2000/svg">
+<title id="rr-title">Railroad diagram of the J&#8203;SON number syntax: optional minus, then 0 or a digit from 1 to 9 followed by digits, then an optional fraction (a dot and digits) and an optional exponent (e or E, an optional sign, and digits).</title>
+<g class="rr-track" fill="none" stroke="currentColor" stroke-opacity=".6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M8 44 L850 44"/>
+<path d="M24 44 L31 44 Q38 44 38 51 L38 82 Q38 92 48 92 L59 92"/>
+<path d="M85 92 L96 92 Q106 92 106 82 L106 51 Q106 44 113 44 L120 44"/>
+<path d="M120 44 L127 44 Q134 44 134 51 L134 82 Q134 92 144 92 L160 92"/>
+<path d="M242 92 L370 92 Q380 92 380 82 L380 52 Q380 44 388 44 L396 44"/>
+<path d="M242 92 L250 92 Q258 92 258 100 L258 126 Q258 136 268 136 L278 136"/>
+<path d="M332 136 L340 136 Q348 136 348 128 L348 92"/>
+<path d="M340 136 L340 160 Q340 170 330 170 L280 170 Q270 170 270 160 L270 136"/>
+<path d="M396 44 L403 44 Q410 44 410 51 L410 84.5 Q410 92 417.5 92 L425 92"/>
+<path d="M451 92 L462 92"/>
+<path d="M524 92 L524 116 Q524 126 514 126 L466 126 Q456 126 456 116 L456 92"/>
+<path d="M516 92 L523 92 Q530 92 530 85 L530 52 Q530 44 538 44 L546 44"/>
+<path d="M546 44 L553 44 Q560 44 560 51 L560 83.5 Q560 92 568.5 92 L577 92"/>
+<path d="M546 44 L553 44 Q560 44 560 51 L560 127.5 Q560 136 568.5 136 L577 136"/>
+<path d="M603 92 L728 92"/>
+<path d="M603 136 L611.5 136 Q620 136 620 127.5 L620 92"/>
+<path d="M640 92 L647 92 Q654 92 654 99 L654 128 Q654 136 662 136 L670 136"/>
+<path d="M640 92 L647 92 Q654 92 654 99 L654 172 Q654 180 662 180 L670 180"/>
+<path d="M696 136 L704 136 Q712 136 712 128 L712 92"/>
+<path d="M696 180 L704 180 Q712 180 712 172 L712 92"/>
+<path d="M728 92 L746 92"/>
+<path d="M808 92 L808 116 Q808 126 798 126 L748 126 Q738 126 738 116 L738 92"/>
+<path d="M800 92 L808 92 Q816 92 816 84 L816 52 Q816 44 824 44 L832 44"/>
+</g>
+<polygon class="rr-arrow" points="2,38 12,44 2,50"/>
+<polygon class="rr-arrow" points="846,38 858,44 846,50"/>
+<circle class="rr-bg" cx="72" cy="92" r="13"/>
+<circle class="rr-t" cx="72" cy="92" r="13"/>
+<circle class="rr-bg" cx="257" cy="44" r="13"/>
+<circle class="rr-t" cx="257" cy="44" r="13"/>
+<rect class="rr-bg" x="160" y="78" width="82" height="28" rx="6"/>
+<rect class="rr-n" x="160" y="78" width="82" height="28" rx="6"/>
+<rect class="rr-bg" x="278" y="122" width="54" height="28" rx="6"/>
+<rect class="rr-n" x="278" y="122" width="54" height="28" rx="6"/>
+<circle class="rr-bg" cx="438" cy="92" r="13"/>
+<circle class="rr-t" cx="438" cy="92" r="13"/>
+<rect class="rr-bg" x="462" y="78" width="54" height="28" rx="6"/>
+<rect class="rr-n" x="462" y="78" width="54" height="28" rx="6"/>
+<circle class="rr-bg" cx="590" cy="92" r="13"/>
+<circle class="rr-t" cx="590" cy="92" r="13"/>
+<circle class="rr-bg" cx="590" cy="136" r="13"/>
+<circle class="rr-t" cx="590" cy="136" r="13"/>
+<circle class="rr-bg" cx="683" cy="136" r="13"/>
+<circle class="rr-t" cx="683" cy="136" r="13"/>
+<circle class="rr-bg" cx="683" cy="180" r="13"/>
+<circle class="rr-t" cx="683" cy="180" r="13"/>
+<rect class="rr-bg" x="746" y="78" width="54" height="28" rx="6"/>
+<rect class="rr-n" x="746" y="78" width="54" height="28" rx="6"/>
+<text class="rr-c" x="72" y="97">&#8722;</text>
+<text class="rr-c" x="257" y="49">0</text>
+<text class="rr-b" x="201" y="97">digit 1&#8211;9</text>
+<text class="rr-b" x="305" y="141">digit</text>
+<text class="rr-c" x="438" y="97">.</text>
+<text class="rr-b" x="489" y="97">digit</text>
+<text class="rr-c" x="590" y="97">e</text>
+<text class="rr-c" x="590" y="141">E</text>
+<text class="rr-c" x="683" y="141">&#8722;</text>
+<text class="rr-c" x="683" y="185">+</text>
+<text class="rr-b" x="773" y="97">digit</text>
+<text class="rr-l rr-name" x="24" y="32">number</text>
+<text class="rr-l" x="420" y="32">fraction</text>
+<text class="rr-l" x="580" y="32">exponent</text>
+</svg>
+
+</div>
+
+<p class="nj-caption" markdown>Read the diagram from left to right: every path along the lines spells a valid number, made of an optional minus sign, an integer part, an optional fraction, and an optional exponent.</p>
 
 ### Number interoperability
 
@@ -69,14 +139,16 @@ otherwise, it uses unsigned integer storage.
 
 ```mermaid
 flowchart TD
-    A["number literal"] --> B{"has a fraction (.) or exponent (e/E)?"}
+    A["number literal"] --> B{{"has a fraction (.) or exponent (e/E)?"}}
     B -->|"yes"| F["number_float_t"]
-    B -->|"no"| C{"has a leading minus sign?"}
+    B -->|"no"| C{{"has a leading minus sign?"}}
     C -->|"yes"| D["try number_integer_t"]
     C -->|"no"| E["try number_unsigned_t"]
     D -->|"overflow"| F
     E -->|"overflow"| F
 ```
+
+<p class="nj-caption" markdown>How the parser picks the storage type of a number literal: a fraction or exponent always gives `number_float_t`; otherwise the sign selects the signed or unsigned integer type, and a value that overflows it is stored as `number_float_t`.</p>
 
 !!! info "Notes"
 
@@ -130,6 +202,32 @@ The JSON number grammar allows for different ways to express zero, and this libr
 | `-0E0`  | `#!c double(-0.0)`     | `-0.0`        |
 
 That is, `-0` is stored as a signed integer, but the serialization does not reproduce the `-`.
+
+The literals mentioned on this page, parsed with `json::parse` and serialized with `dump()` (checked against the
+library; pick one or type it to see the row):
+
+<div class="nj-charts-num" markdown>
+
+| Literal | Stored as (`type()`) | `dump()` |
+|---------|----------------------|----------|
+| `0` | `number_unsigned` (`std::uint64_t`) | `0` |
+| `-0` | `number_integer` (`std::int64_t`) | `0` |
+| `-0.0` | `number_float` (`double`) | `-0.0` |
+| `1E3` | `number_float` (`double`) | `1000.0` |
+| `-12345678912345789123456789` | `number_float` (`double`) | `-1.2345678912345788e+25` |
+| `18446744073709551615` | `number_unsigned` (`std::uint64_t`) | `18446744073709551615` |
+| `18446744073709551616` | `number_float` (`double`) | `1.8446744073709552e+19` |
+| `-9223372036854775808` | `number_integer` (`std::int64_t`) | `-9223372036854775808` |
+| `1E400` | exception `out_of_range.406` | (nothing, parsing fails) |
+| `1E-400` | `number_float` (`double`) | `0.0` |
+| `3.141592653589793238462643383279` | `number_float` (`double`) | `3.141592653589793` |
+| `2555.5599999999999` | `number_float` (`double`) | `2555.56` |
+| `0.0000972439793401814` | `number_float` (`double`) | `9.72439793401814e-05` |
+| `12345E-5` | `number_float` (`double`) | `0.12345` |
+
+</div>
+
+<p class="nj-caption" markdown>Each row shows how a literal is stored and how `dump()` writes it back. The explorer only knows the literals in this list; other input is reported as not in the verified list.</p>
 
 ### Number serialization
 
@@ -329,6 +427,8 @@ the stored number:
 | [`type_name()`](../../api/basic_json/type_name.md)                   | `#!c "number"`    | `#!c "number"`   | `#!c "number"` | `#!c "string"` |
 | [`type()`](../../api/basic_json/type.md)                             | `number_unsigned` | `number_integer` | `number_float` | `string`       |
 
+<p class="nj-table-caption" markdown>Return value of each function for a value that stores an unsigned integer, a signed integer, or a floating-point number, and for a string for comparison.</p>
+
 ### Template number types
 
 The number types can be changed with template parameters.
@@ -362,3 +462,12 @@ The number types can be changed with template parameters.
 
     Note values should then be parsed with `json_ld::parse` rather than `json::parse` as the latter would parse
     floating-point values to `#!c double` before then converting them to `#!c long double`.
+
+## See also
+
+- [Types](index.md) - how all value types are stored
+- [Converting values](../conversions.md) - convert numbers to C++ types
+- [`number_integer_t`](../../api/basic_json/number_integer_t.md) - the signed integer type
+- [`number_unsigned_t`](../../api/basic_json/number_unsigned_t.md) - the unsigned integer type
+- [`number_float_t`](../../api/basic_json/number_float_t.md) - the floating-point type
+- [`is_number`](../../api/basic_json/is_number.md) - check for a number of any kind

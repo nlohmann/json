@@ -96,10 +96,11 @@ int main()
 ## See also
 
 - [JSON_StrictNulHandling](https://json.nlohmann.me/integration/cmake/#json_strictnulhandling) - CMake option to control the macro
-- [FAQ: NUL bytes in the input](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input)
-- [**parse**](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
-- [**accept**](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
-- [**operator>>**](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream
+- [FAQ: NUL bytes in the input](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input) - how NUL bytes in the input are handled
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
+- [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream
+- [Parsing Untrusted Input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - limits and checks for input you do not control
 
 ## Version history
 

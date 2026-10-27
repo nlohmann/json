@@ -26,7 +26,7 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 
 [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md), [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md), and [`value`](https://json.nlohmann.me/api/basic_json_view/value/index.md) also accept a [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md). Unlike `basic_json`, there are no implicit conversion operators (no `operator ValueType()`), and no `get_ptr()` or `get_ref()`; see [`get`](https://json.nlohmann.me/api/basic_json_view/get/index.md).
 
-`basic_json_view` itself is always read-only -- it never has a `set` or `push_back` of its own. A view of an **editable** document (`view_mode::editable`) sees every edit made through [`basic_json_document::set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`basic_json_document::push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md): once a value is changed, every view that still refers to it -- including ones taken before the change -- reads the new value. See [Edits](https://json.nlohmann.me/api/basic_json_document/#edits).
+`basic_json_view` itself is always read-only — it never has a `set` or `push_back` of its own. A view of an **editable** document (`view_mode::editable`) sees every edit made through [`basic_json_document::set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`basic_json_document::push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md): once a value is changed, every view that still refers to it — including ones taken before the change — reads the new value. See [Edits](https://json.nlohmann.me/api/basic_json_document/#edits).
 
 ## Template parameters
 
@@ -125,9 +125,9 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 ## See also
 
 - [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - guide to documents and views
-- [**basic_json_document**](https://json.nlohmann.me/api/basic_json_document/index.md) - the document that owns the parsed data
-- [**json_view**](https://json.nlohmann.me/api/json_view/index.md) and [**json_editable_view**](https://json.nlohmann.me/api/json_editable_view/index.md) - the default specializations
-- [**materialize**](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build a `basic_json` value from a view
+- [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) - the document that owns the parsed data
+- [`json_view`](https://json.nlohmann.me/api/json_view/index.md) - and [`json_editable_view`](https://json.nlohmann.me/api/json_editable_view/index.md) - the default specializations
+- [`materialize`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build a `basic_json` value from a view
 
 ## Version history
 

@@ -44,7 +44,9 @@ The code below forces the library to use the header `<experimental/filesystem>`.
 
 ## See also
 
-- [JSON_HAS_CPP_11 / JSON_HAS_CPP_14 / JSON_HAS_CPP_17 / JSON_HAS_CPP_20 / JSON_HAS_CPP_23 / JSON_HAS_CPP_26](https://json.nlohmann.me/api/macros/json_has_cpp_11/index.md) - set supported C++ standard
+- [`JSON_HAS_CPP_11` / `JSON_HAS_CPP_14` / `JSON_HAS_CPP_17` / `JSON_HAS_CPP_20` / `JSON_HAS_CPP_23` / `JSON_HAS_CPP_26`](https://json.nlohmann.me/api/macros/json_has_cpp_11/index.md) - set supported C++ standard
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - conversions of values
 
 ## Version history
 

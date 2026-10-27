@@ -65,8 +65,9 @@ Linear.
 
 ## See also
 
-- [basic_json](basic_json.md) create a JSON value
-- [swap](swap.md) exchanges the contents of two JSON values
+- [`basic_json`](basic_json.md) - create a JSON value
+- [`swap`](swap.md) - exchanges the contents of two JSON values
+- [Creating JSON values](../../features/creating_values.md) - ways to create and assign JSON values
 
 ## Version history
 

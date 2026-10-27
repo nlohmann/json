@@ -1259,3 +1259,10 @@ This project does not publish an official [npm](https://www.npmjs.com) package. 
 ## ESP-IDF and PlatformIO
 
 There is no official package published to the [ESP-IDF Component Registry](https://components.espressif.com) or the [PlatformIO Registry](https://registry.platformio.org). A community-maintained fork, [Johboh/nlohmann-json](https://github.com/Johboh/nlohmann-json), publishes this library to both registries on each new release and can be used as an unofficial component/package for ESP-IDF and PlatformIO projects. As the library is header-only, it can otherwise be used directly by adding its `include/` directory to your component's/project's include paths, like any other integration method described on this page.
+
+## See also
+
+- [CMake](https://json.nlohmann.me/integration/cmake/index.md) - use the library from CMake
+- [Pkg-config](https://json.nlohmann.me/integration/pkg-config/index.md) - use the library with pkg-config
+- [`meta`](https://json.nlohmann.me/api/basic_json/meta/index.md) - query the library version at run time
+- [`NLOHMANN_JSON_VERSION_MAJOR`](https://json.nlohmann.me/api/macros/nlohmann_json_version_major/index.md) - library version macros

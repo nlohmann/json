@@ -89,8 +89,8 @@ true
 
 ## See also
 
-- [is_primitive](https://json.nlohmann.me/api/basic_json_view/is_primitive/index.md) - return whether the type is primitive
-- [size](https://json.nlohmann.me/api/basic_json_view/size/index.md), [empty](https://json.nlohmann.me/api/basic_json_view/empty/index.md) - the number of elements, and whether there are none
+- [`is_primitive`](https://json.nlohmann.me/api/basic_json_view/is_primitive/index.md) - return whether the type is primitive
+- [`size`](https://json.nlohmann.me/api/basic_json_view/size/index.md), [`empty`](https://json.nlohmann.me/api/basic_json_view/empty/index.md) - the number of elements, and whether there are none
 - [`BasicJsonType::is_structured`](https://json.nlohmann.me/api/basic_json/is_structured/index.md) - the corresponding function of `basic_json`
 
 ## Version history

@@ -34,7 +34,7 @@ copy/move-constructible, and support `push_back()`, `.data()`, and `.size()`, be
 [`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md) derives directly from it. Its
 `value_type` must additionally be exactly one byte wide (e.g., `std::uint8_t`/`char`/`std::byte`): the binary
 serializers (CBOR, MessagePack, BSON, UBJSON) read and write the container's raw bytes via
-`reinterpret_cast`, which is only correct for byte-sized elements -- a container like
+`reinterpret_cast`, which is only correct for byte-sized elements — a container like
 `std::vector<std::intptr_t>` will not work as `BinaryType`. The elements must be stored contiguously, and
 the binary readers additionally require `resize()` and `operator[]`. See
 [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#binarytype) for the full list.
@@ -115,7 +115,9 @@ true
 
 ## See also
 
-- [byte_container_with_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/index.md)
+- [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
+- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - formats that can store binary values
+- [`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md) - container type used by binary values
 
 ## Version history
 

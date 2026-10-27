@@ -35,7 +35,8 @@ The code below forces the library not to use `thread_local` storage.
 
 ## See also
 
-- [FAQ: Thread safety](https://json.nlohmann.me/home/faq/#thread-safety)
+- [FAQ: Thread safety](https://json.nlohmann.me/home/faq/#thread-safety) - thread-safety guarantees of the library
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
 
 ## Version history
 

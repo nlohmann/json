@@ -19,6 +19,8 @@ We distinguish six scenarios (determined by the event type) in which the callbac
 | `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
 | `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
+Parse events for a small JSON text: each coloured dot marks the position at which the parser calls the callback, and the legend on the right names the event per colour.
+
 Discarding a value (i.e., returning `false`) has different effects depending on the context in which function was called:
 
 - Discarded values in structured types are skipped. That is, the parser will behave as if the discarded value was never read. This holds for every value type and for both kinds of parent: a discarded element is removed from the surrounding array, and a discarded member is removed from the surrounding object together with its key.
@@ -200,8 +202,9 @@ null
 
 ## See also
 
-- [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) deserialize from a compatible input
-- [parse_event_t](https://json.nlohmann.me/api/basic_json/parse_event_t/index.md) enumeration of parser events
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`parse_event_t`](https://json.nlohmann.me/api/basic_json/parse_event_t/index.md) - enumeration of parser events
+- [Parser Callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md) - filter or inspect values while parsing
 
 ## Version history
 

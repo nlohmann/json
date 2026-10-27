@@ -9,7 +9,7 @@ static bool accept(InputType&& input,
 
 Checks whether the input is valid JSON, accepting and rejecting exactly what
 [`BasicJsonType::accept()`](../basic_json/accept.md) does, with the same options. Unlike [`parse()`](parse.md), this
-function never throws an exception for invalid input, and the returned `#!cpp bool` is the only result -- no document
+function never throws an exception for invalid input, and the returned `#!cpp bool` is the only result — no document
 is returned.
 
 The result is the same as that of `BasicJsonType::accept()` by design; the difference is how the check is made. This
@@ -92,8 +92,9 @@ compile; see [`parse`](parse.md#notes).
 
 ## See also
 
-- [parse](parse.md) - deserialize from a compatible input
+- [`parse`](parse.md) - deserialize from a compatible input
 - [`BasicJsonType::accept`](../basic_json/accept.md) - the corresponding function of `basic_json`
+- [Zero-copy JSON views](../../features/json_view.md#what-is-the-same-as-parse) - how parsing a document differs from, and matches, basic_json::parse
 
 ## Version history
 

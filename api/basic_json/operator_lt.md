@@ -122,7 +122,7 @@ Linear.
 
 ## See also
 
-- [**operator<=>**](operator_spaceship.md) comparison: 3-way
+- [`operator<=>`](operator_spaceship.md) - comparison: 3-way
 
 ## Version history
 

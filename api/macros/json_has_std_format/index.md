@@ -34,6 +34,8 @@ The code below forces the library to disable support for `std::format`, even if 
 ## See also
 
 - [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) - format JSON values with `std::format`
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [Serialization](https://json.nlohmann.me/features/serialization/index.md) - serialize values to text
 
 ## Version history
 

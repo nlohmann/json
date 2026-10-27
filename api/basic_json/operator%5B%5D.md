@@ -542,13 +542,15 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## See also
 
-- documentation on [unchecked access](../../features/element_access/unchecked_access.md)
-- documentation on [runtime assertions](../../features/assertions.md)
-- see [`at`](at.md) for access by reference with range checking
-- see [`value`](value.md) for access with default value
-- [basic_json_view::operator[]](../basic_json_view/operator%5B%5D.md) - the same access on a zero-copy view (a duplicate
+- [Unchecked access](../../features/element_access/unchecked_access.md) - element access without range checking
+- [Runtime assertions](../../features/assertions.md) - assertions guarding against undefined behavior
+- [`at`](at.md) - access by reference with range checking
+- [`value`](value.md) - access with default value
+- [`basic_json_view::operator[]`](../basic_json_view/operator%5B%5D.md) - the same access on a zero-copy view (a duplicate
   key resolves to the first member, whereas `parse()` keeps the last; a missing key gives a discarded view instead of
   undefined behavior)
+- [Element Access](../../features/element_access/index.md) - overview of all ways to access elements
+- [JSON Pointer](../../features/json_pointer.md) - access nested values with a pointer
 
 ## Version history
 

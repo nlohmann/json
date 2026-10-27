@@ -43,6 +43,8 @@ flowchart LR
     F --> G[binary]
 ```
 
+Arrows point from a type to the next greater type in the ordering used by `operator<`.
+
 Types of numbers
 
 There are three enumerators for numbers (`number_integer`, `number_unsigned`, and `number_float`) to distinguish between different types of numbers:
@@ -110,11 +112,12 @@ true
 
 ## See also
 
-- [type](https://json.nlohmann.me/api/basic_json/type/index.md) return the type of the JSON value
-- [type_name](https://json.nlohmann.me/api/basic_json/type_name/index.md) return the type as string
-- [operator value_t](https://json.nlohmann.me/api/basic_json/operator_value_t/index.md) return the type of the JSON value
-- [is_primitive](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) return whether the type is primitive
-- [is_structured](https://json.nlohmann.me/api/basic_json/is_structured/index.md) return whether the type is structured
+- [`type`](https://json.nlohmann.me/api/basic_json/type/index.md) - return the type of the JSON value
+- [`type_name`](https://json.nlohmann.me/api/basic_json/type_name/index.md) - return the type as string
+- [`operator value_t`](https://json.nlohmann.me/api/basic_json/operator_value_t/index.md) - return the type of the JSON value
+- [`is_primitive`](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) - return whether the type is primitive
+- [`is_structured`](https://json.nlohmann.me/api/basic_json/is_structured/index.md) - return whether the type is structured
+- [Types](https://json.nlohmann.me/features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

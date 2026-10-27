@@ -151,8 +151,9 @@ with `allow_exceptions` set to `#!cpp false`: a parse error then yields a discar
 
 ## See also
 
-- [basic_json_view::is_discarded](../basic_json_view/is_discarded.md) - the corresponding check on a zero-copy view,
+- [`basic_json_view::is_discarded`](../basic_json_view/is_discarded.md) - the corresponding check on a zero-copy view,
   which is `#!cpp true` if the view refers to no value
+- [Types](../../features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

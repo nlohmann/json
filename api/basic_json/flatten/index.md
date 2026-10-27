@@ -128,7 +128,8 @@ Output:
 
 ## See also
 
-- [unflatten](https://json.nlohmann.me/api/basic_json/unflatten/index.md) the reverse function
+- [`unflatten`](https://json.nlohmann.me/api/basic_json/unflatten/index.md) - the reverse function
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/#flatten-unflatten) - the article on JSON Pointer and flattening
 
 ## Version history
 

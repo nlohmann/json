@@ -1,0 +1,116 @@
+<svg class="nj-fig nj-fig--timeline" viewBox="0 0 880 164" role="img" aria-labelledby="nj-int-tl-title" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-int-tl-title">Timeline from the first commit (2013-07-04) and the 44 releases from v1.0.0 (2015-12-28) to v3.12.0 (2025-04-11): 17 minor or major releases, drawn as filled dots with their version above the axis, and 27 patch releases, drawn as rings. The first commit is drawn as a diamond.</title>
+<line class="nj-int-grid" x1="24.0" y1="78" x2="24.0" y2="102"/>
+<text class="nj-int-year" x="55.7" y="118">2013</text>
+<line class="nj-int-grid" x1="88.0" y1="78" x2="88.0" y2="102"/>
+<text class="nj-int-year" x="119.7" y="118">2014</text>
+<line class="nj-int-grid" x1="151.9" y1="78" x2="151.9" y2="102"/>
+<text class="nj-int-year" x="183.6" y="118">2015</text>
+<line class="nj-int-grid" x1="215.9" y1="78" x2="215.9" y2="102"/>
+<text class="nj-int-year" x="247.8" y="118">2016</text>
+<line class="nj-int-grid" x1="280.0" y1="78" x2="280.0" y2="102"/>
+<text class="nj-int-year" x="311.7" y="118">2017</text>
+<line class="nj-int-grid" x1="344.0" y1="78" x2="344.0" y2="102"/>
+<text class="nj-int-year" x="375.7" y="118">2018</text>
+<line class="nj-int-grid" x1="407.9" y1="78" x2="407.9" y2="102"/>
+<text class="nj-int-year" x="439.6" y="118">2019</text>
+<line class="nj-int-grid" x1="471.9" y1="78" x2="471.9" y2="102"/>
+<text class="nj-int-year" x="503.8" y="118">2020</text>
+<line class="nj-int-grid" x1="536.0" y1="78" x2="536.0" y2="102"/>
+<text class="nj-int-year" x="567.7" y="118">2021</text>
+<line class="nj-int-grid" x1="600.0" y1="78" x2="600.0" y2="102"/>
+<text class="nj-int-year" x="631.7" y="118">2022</text>
+<line class="nj-int-grid" x1="663.9" y1="78" x2="663.9" y2="102"/>
+<text class="nj-int-year" x="695.7" y="118">2023</text>
+<line class="nj-int-grid" x1="727.9" y1="78" x2="727.9" y2="102"/>
+<text class="nj-int-year" x="759.8" y="118">2024</text>
+<line class="nj-int-grid" x1="792.0" y1="78" x2="792.0" y2="102"/>
+<text class="nj-int-year" x="823.8" y="118">2025</text>
+<line class="nj-int-grid" x1="856.0" y1="78" x2="856.0" y2="102"/>
+<line class="nj-int-axis" x1="24" y1="94" x2="856" y2="94"/>
+<path class="nj-int-axis" fill="none" d="M215.2 131 V136 H219.9 V131"/>
+<text class="nj-int-major" x="215.2" y="153" text-anchor="start">1.x</text>
+<path class="nj-int-axis" fill="none" d="M246.5 131 V136 H289.7 V131"/>
+<text class="nj-int-major" x="268.1" y="153" text-anchor="middle">2.x</text>
+<path class="nj-int-axis" fill="none" d="M341.3 131 V136 H809.6 V131"/>
+<text class="nj-int-major" x="575.5" y="153" text-anchor="middle">3.x</text>
+<line class="nj-int-leader" x1="56.2" y1="85" x2="56.2" y2="87"/>
+<text class="nj-int-label" x="56.2" y="82">first commit</text>
+<line class="nj-int-leader" x1="215.2" y1="85" x2="215.2" y2="87"/>
+<text class="nj-int-label" x="215.2" y="82">1.0</text>
+<line class="nj-int-leader" x1="219.9" y1="68" x2="219.9" y2="87"/>
+<text class="nj-int-label" x="219.9" y="65">1.1</text>
+<line class="nj-int-leader" x1="246.5" y1="85" x2="246.5" y2="87"/>
+<text class="nj-int-label" x="246.5" y="82">2.0</text>
+<line class="nj-int-leader" x1="284.7" y1="85" x2="284.7" y2="87"/>
+<text class="nj-int-label" x="284.7" y="82">2.1</text>
+<line class="nj-int-leader" x1="341.3" y1="85" x2="341.3" y2="87"/>
+<text class="nj-int-label" x="341.3" y="82">3.0</text>
+<line class="nj-int-leader" x1="349.4" y1="68" x2="349.4" y2="87"/>
+<text class="nj-int-label" x="349.4" y="65">3.1</text>
+<line class="nj-int-leader" x1="384.5" y1="85" x2="384.5" y2="87"/>
+<text class="nj-int-label" x="384.5" y="82">3.2</text>
+<line class="nj-int-leader" x1="392.5" y1="68" x2="392.5" y2="87"/>
+<text class="nj-int-label" x="392.5" y="65">3.3</text>
+<line class="nj-int-leader" x1="396.9" y1="51" x2="396.9" y2="87"/>
+<text class="nj-int-label" x="396.9" y="48">3.4</text>
+<line class="nj-int-leader" x1="406.2" y1="34" x2="406.2" y2="87"/>
+<text class="nj-int-label" x="406.2" y="31">3.5</text>
+<line class="nj-int-leader" x1="421.6" y1="85" x2="421.6" y2="87"/>
+<text class="nj-int-label" x="421.6" y="82">3.6</text>
+<line class="nj-int-leader" x1="444.4" y1="68" x2="444.4" y2="87"/>
+<text class="nj-int-label" x="444.4" y="65">3.7</text>
+<line class="nj-int-leader" x1="500.8" y1="85" x2="500.8" y2="87"/>
+<text class="nj-int-label" x="500.8" y="82">3.8</text>
+<line class="nj-int-leader" x1="508.3" y1="68" x2="508.3" y2="87"/>
+<text class="nj-int-label" x="508.3" y="65">3.9</text>
+<line class="nj-int-leader" x1="576.0" y1="85" x2="576.0" y2="87"/>
+<text class="nj-int-label" x="576.0" y="82">3.10</text>
+<line class="nj-int-leader" x1="637.1" y1="85" x2="637.1" y2="87"/>
+<text class="nj-int-label" x="637.1" y="82">3.11</text>
+<line class="nj-int-leader" x1="809.6" y1="85" x2="809.6" y2="87"/>
+<text class="nj-int-label" x="809.6" y="82">3.12</text>
+<g><title>First commit 2013-07-04</title><circle class="nj-int-hit" cx="56.2" cy="94" r="9"/><path class="nj-int-minor" d="M56.2 94 l7 -7 l7 7 l-7 7z" transform="translate(-7 0)"/></g>
+<g><title>v2.0.1 released 2016-06-28</title><circle class="nj-int-hit" cx="247.2" cy="94" r="9"/><circle class="nj-int-patch" cx="247.2" cy="94" r="3.5"/></g>
+<g><title>v2.0.2 released 2016-07-31</title><circle class="nj-int-hit" cx="253.0" cy="94" r="9"/><circle class="nj-int-patch" cx="253.0" cy="94" r="3.5"/></g>
+<g><title>v2.0.3 released 2016-08-31</title><circle class="nj-int-hit" cx="258.5" cy="94" r="9"/><circle class="nj-int-patch" cx="258.5" cy="94" r="3.5"/></g>
+<g><title>v2.0.4 released 2016-09-11</title><circle class="nj-int-hit" cx="260.4" cy="94" r="9"/><circle class="nj-int-patch" cx="260.4" cy="94" r="3.5"/></g>
+<g><title>v2.0.5 released 2016-09-14</title><circle class="nj-int-hit" cx="260.9" cy="94" r="9"/><circle class="nj-int-patch" cx="260.9" cy="94" r="3.5"/></g>
+<g><title>v2.0.6 released 2016-10-15</title><circle class="nj-int-hit" cx="266.3" cy="94" r="9"/><circle class="nj-int-patch" cx="266.3" cy="94" r="3.5"/></g>
+<g><title>v2.0.7 released 2016-11-02</title><circle class="nj-int-hit" cx="269.5" cy="94" r="9"/><circle class="nj-int-patch" cx="269.5" cy="94" r="3.5"/></g>
+<g><title>v2.0.8 released 2016-12-02</title><circle class="nj-int-hit" cx="274.8" cy="94" r="9"/><circle class="nj-int-patch" cx="274.8" cy="94" r="3.5"/></g>
+<g><title>v2.0.9 released 2016-12-16</title><circle class="nj-int-hit" cx="277.2" cy="94" r="9"/><circle class="nj-int-patch" cx="277.2" cy="94" r="3.5"/></g>
+<g><title>v2.0.10 released 2017-01-02</title><circle class="nj-int-hit" cx="280.2" cy="94" r="9"/><circle class="nj-int-patch" cx="280.2" cy="94" r="3.5"/></g>
+<g><title>v2.1.1 released 2017-02-25</title><circle class="nj-int-hit" cx="289.7" cy="94" r="9"/><circle class="nj-int-patch" cx="289.7" cy="94" r="3.5"/></g>
+<g><title>v3.0.1 released 2017-12-29</title><circle class="nj-int-hit" cx="343.4" cy="94" r="9"/><circle class="nj-int-patch" cx="343.4" cy="94" r="3.5"/></g>
+<g><title>v3.1.1 released 2018-02-13</title><circle class="nj-int-hit" cx="351.5" cy="94" r="9"/><circle class="nj-int-patch" cx="351.5" cy="94" r="3.5"/></g>
+<g><title>v3.1.2 released 2018-03-14</title><circle class="nj-int-hit" cx="356.6" cy="94" r="9"/><circle class="nj-int-patch" cx="356.6" cy="94" r="3.5"/></g>
+<g><title>v3.7.1 released 2019-11-06</title><circle class="nj-int-hit" cx="462.1" cy="94" r="9"/><circle class="nj-int-patch" cx="462.1" cy="94" r="3.5"/></g>
+<g><title>v3.7.2 released 2019-11-10</title><circle class="nj-int-hit" cx="462.8" cy="94" r="9"/><circle class="nj-int-patch" cx="462.8" cy="94" r="3.5"/></g>
+<g><title>v3.7.3 released 2019-11-17</title><circle class="nj-int-hit" cx="464.0" cy="94" r="9"/><circle class="nj-int-patch" cx="464.0" cy="94" r="3.5"/></g>
+<g><title>v3.9.1 released 2020-08-06</title><circle class="nj-int-hit" cx="510.1" cy="94" r="9"/><circle class="nj-int-patch" cx="510.1" cy="94" r="3.5"/></g>
+<g><title>v3.10.1 released 2021-08-24</title><circle class="nj-int-hit" cx="577.2" cy="94" r="9"/><circle class="nj-int-patch" cx="577.2" cy="94" r="3.5"/></g>
+<g><title>v3.10.2 released 2021-08-26</title><circle class="nj-int-hit" cx="577.6" cy="94" r="9"/><circle class="nj-int-patch" cx="577.6" cy="94" r="3.5"/></g>
+<g><title>v3.10.3 released 2021-10-08</title><circle class="nj-int-hit" cx="585.1" cy="94" r="9"/><circle class="nj-int-patch" cx="585.1" cy="94" r="3.5"/></g>
+<g><title>v3.10.4 released 2021-10-16</title><circle class="nj-int-hit" cx="586.5" cy="94" r="9"/><circle class="nj-int-patch" cx="586.5" cy="94" r="3.5"/></g>
+<g><title>v3.10.5 released 2022-01-03</title><circle class="nj-int-hit" cx="600.3" cy="94" r="9"/><circle class="nj-int-patch" cx="600.3" cy="94" r="3.5"/></g>
+<g><title>v3.11.2 released 2022-08-12</title><circle class="nj-int-hit" cx="639.1" cy="94" r="9"/><circle class="nj-int-patch" cx="639.1" cy="94" r="3.5"/></g>
+<g><title>v3.11.3 released 2023-11-28</title><circle class="nj-int-hit" cx="721.9" cy="94" r="9"/><circle class="nj-int-patch" cx="721.9" cy="94" r="3.5"/></g>
+<g><title>v1.0.0 released 2015-12-28</title><circle class="nj-int-hit" cx="215.2" cy="94" r="9"/><circle class="nj-int-minor" cx="215.2" cy="94" r="6"/></g>
+<g><title>v1.1.0 released 2016-01-24</title><circle class="nj-int-hit" cx="219.9" cy="94" r="9"/><circle class="nj-int-minor" cx="219.9" cy="94" r="6"/></g>
+<g><title>v2.0.0 released 2016-06-24</title><circle class="nj-int-hit" cx="246.5" cy="94" r="9"/><circle class="nj-int-minor" cx="246.5" cy="94" r="6"/></g>
+<g><title>v2.1.0 released 2017-01-28</title><circle class="nj-int-hit" cx="284.7" cy="94" r="9"/><circle class="nj-int-minor" cx="284.7" cy="94" r="6"/></g>
+<g><title>v3.0.0 released 2017-12-17</title><circle class="nj-int-hit" cx="341.3" cy="94" r="9"/><circle class="nj-int-minor" cx="341.3" cy="94" r="6"/></g>
+<g><title>v3.1.0 released 2018-02-01</title><circle class="nj-int-hit" cx="349.4" cy="94" r="9"/><circle class="nj-int-minor" cx="349.4" cy="94" r="6"/></g>
+<g><title>v3.2.0 released 2018-08-20</title><circle class="nj-int-hit" cx="384.5" cy="94" r="9"/><circle class="nj-int-minor" cx="384.5" cy="94" r="6"/></g>
+<g><title>v3.3.0 released 2018-10-05</title><circle class="nj-int-hit" cx="392.5" cy="94" r="9"/><circle class="nj-int-minor" cx="392.5" cy="94" r="6"/></g>
+<g><title>v3.4.0 released 2018-10-30</title><circle class="nj-int-hit" cx="396.9" cy="94" r="9"/><circle class="nj-int-minor" cx="396.9" cy="94" r="6"/></g>
+<g><title>v3.5.0 released 2018-12-22</title><circle class="nj-int-hit" cx="406.2" cy="94" r="9"/><circle class="nj-int-minor" cx="406.2" cy="94" r="6"/></g>
+<g><title>v3.6.0, v3.6.1 released 2019-03-20</title><circle class="nj-int-hit" cx="421.6" cy="94" r="9"/><circle class="nj-int-minor" cx="421.6" cy="94" r="6"/></g>
+<g><title>v3.7.0 released 2019-07-28</title><circle class="nj-int-hit" cx="444.4" cy="94" r="9"/><circle class="nj-int-minor" cx="444.4" cy="94" r="6"/></g>
+<g><title>v3.8.0 released 2020-06-14</title><circle class="nj-int-hit" cx="500.8" cy="94" r="9"/><circle class="nj-int-minor" cx="500.8" cy="94" r="6"/></g>
+<g><title>v3.9.0 released 2020-07-27</title><circle class="nj-int-hit" cx="508.3" cy="94" r="9"/><circle class="nj-int-minor" cx="508.3" cy="94" r="6"/></g>
+<g><title>v3.10.0 released 2021-08-17</title><circle class="nj-int-hit" cx="576.0" cy="94" r="9"/><circle class="nj-int-minor" cx="576.0" cy="94" r="6"/></g>
+<g><title>v3.11.0, v3.11.1 released 2022-08-01</title><circle class="nj-int-hit" cx="637.1" cy="94" r="9"/><circle class="nj-int-minor" cx="637.1" cy="94" r="6"/></g>
+<g><title>v3.12.0 released 2025-04-11</title><circle class="nj-int-hit" cx="809.6" cy="94" r="9"/><circle class="nj-int-minor" cx="809.6" cy="94" r="6"/></g>
+</svg>

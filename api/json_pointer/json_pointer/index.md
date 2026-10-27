@@ -90,7 +90,7 @@ Output:
 ## See also
 
 - [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - the article on JSON Pointer support
-- [operator""\_json_pointer](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md) user-defined string literal for JSON pointers
+- [`operator""_json_pointer`](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md) - user-defined string literal for JSON pointers
 
 ## Version history
 

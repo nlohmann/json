@@ -91,6 +91,112 @@ Version 4.0 is therefore the sum of these macros: you can try it on the 3.x rele
 to its 4.0 value and fixing what no longer compiles or behaves differently. Once your code works with all of them, it
 is ready for version 4.0.
 
+Each macro has a default value in 3.x and a different value in version 4.0. Define the macro to the 4.0 value to try it on the 3.x release train today; version 4.0 makes that value the default:
+
+<div class="nj-fig-wrap" markdown>
+<svg class="nj-fig nj-fig--lanes" viewBox="0 0 880 504" role="img" aria-labelledby="nj-int-lanes-title" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-int-lanes-title">Two lanes: the 3.x release train, whose minor and patch releases do not break code that uses the public A&#8203;PI, followed by version 4.0, which has no release date yet. Each breaking change is a macro that is available in 3.x today with its 3.x default and becomes the default in 4.0: JSON_USE_IMPLICIT_CONVERSIONS, added in 3.9.0, 3.x default 1, 4.0 value 0; JSON_USE_GLOBAL_UDLS, added in 3.11.0, 3.x default 1, 4.0 value 0; JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON, added in 3.11.0, 3.x default 0, 4.0 value 0, macro removed; JSON_BRACE_INIT_COPY_SEMANTICS, added in 3.13.0, 3.x default 0, 4.0 value 1; JSON_PRECISE_STREAM_POSITION, added in 3.13.0, 3.x default 0, 4.0 value 1; JSON_STRICT_NUL_HANDLING, added in 3.13.0, 3.x default 0, 4.0 value 1; JSON_STRICT_BINARY_UTF8, added in 3.13.0, 3.x default 0, 4.0 value 1; JSON_DISABLE_TUPLE_REFERENCE_CONVERSION, added in 3.13.0, 3.x default 0, 4.0 value 1; JSON_DELETE_DEPRECATED_FUNCTIONS, added in 3.13.0, 3.x default 0, 4.0 value 1, macro removed.</title>
+<defs><marker id="nj-int-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="fg-head" d="M0 1 L10 5 L0 9 z"/></marker></defs>
+<rect class="nj-int-lane" x="16" y="16" width="600" height="56" rx="10"/>
+<text class="nj-int-lanetext" x="32" y="41">3.x release train</text>
+<text class="nj-int-mute" x="32" y="60">available today</text>
+<line class="nj-int-axis" x1="300" y1="30" x2="300" y2="44"/>
+<text class="nj-int-mute" x="300" y="60" text-anchor="middle">3.9.0</text>
+<line class="nj-int-axis" x1="445" y1="30" x2="445" y2="44"/>
+<text class="nj-int-mute" x="445" y="60" text-anchor="middle">3.11.0</text>
+<line class="nj-int-axis" x1="590" y1="30" x2="590" y2="44"/>
+<text class="nj-int-mute" x="590" y="60" text-anchor="middle">3.13.0</text>
+<line class="fg-arrow" x1="210" y1="37" x2="600" y2="37"/>
+<line class="fg-arrow fg-arrow--dash" x1="618" y1="44" x2="660" y2="44" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-lane nj-int-lane--future" x="664" y="16" width="200" height="56" rx="10"/>
+<text class="nj-int-lanetext" x="680" y="41">4.0</text>
+<text class="nj-int-mute" x="680" y="60">no release date yet</text>
+<text class="nj-int-text" x="16" y="98">A minor or patch release of 3.x does not break code that uses the public A&#8203;PI, unless that code opts in with a macro.</text>
+<text class="nj-int-text" x="16" y="118">4.0 is not developed on a separate branch: it switches the defaults of these macros and removes the macros.</text>
+<text class="fg-h" x="32" y="150">Macro</text>
+<text class="fg-h" x="380" y="150">added</text>
+<text class="fg-h" x="500" y="150" text-anchor="middle">3.x default</text>
+<text class="nj-int-mute" x="632" y="150" text-anchor="middle">define to try today</text>
+<text class="fg-h" x="764" y="150" text-anchor="middle">4.0 default</text>
+<rect class="nj-int-row" x="16" y="170" width="848" height="30" rx="6"/>
+<text class="nj-int-macro" x="32" y="189.5">JSON_USE_IMPLICIT_CONVERSIONS</text>
+<text class="nj-int-mute" x="380" y="189.5">3.9.0</text>
+<rect class="nj-int-pill" x="470" y="174" width="60" height="22" rx="11"/>
+<text class="nj-int-val" x="500" y="189.5" text-anchor="middle">1</text>
+<line class="fg-arrow fg-arrow--dash" x1="544" y1="185" x2="724" y2="185" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-pill nj-int-pill--v4" x="728" y="174" width="72" height="22" rx="11"/>
+<text class="nj-int-val nj-int-val--v4" x="764" y="189.5" text-anchor="middle">0</text>
+<rect class="nj-int-row" x="16" y="204" width="848" height="30" rx="6"/>
+<text class="nj-int-macro" x="32" y="223.5">JSON_USE_GLOBAL_UDLS</text>
+<text class="nj-int-mute" x="380" y="223.5">3.11.0</text>
+<rect class="nj-int-pill" x="470" y="208" width="60" height="22" rx="11"/>
+<text class="nj-int-val" x="500" y="223.5" text-anchor="middle">1</text>
+<line class="fg-arrow fg-arrow--dash" x1="544" y1="219" x2="724" y2="219" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-pill nj-int-pill--v4" x="728" y="208" width="72" height="22" rx="11"/>
+<text class="nj-int-val nj-int-val--v4" x="764" y="223.5" text-anchor="middle">0</text>
+<rect class="nj-int-row" x="16" y="238" width="848" height="30" rx="6"/>
+<text class="nj-int-macro" x="32" y="257.5">JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON</text>
+<text class="nj-int-mute" x="380" y="257.5">3.11.0</text>
+<rect class="nj-int-pill" x="470" y="242" width="60" height="22" rx="11"/>
+<text class="nj-int-val" x="500" y="257.5" text-anchor="middle">0</text>
+<line class="fg-arrow fg-arrow--dash" x1="544" y1="253" x2="724" y2="253" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-pill nj-int-pill--v4" x="728" y="242" width="72" height="22" rx="11"/>
+<text class="nj-int-val nj-int-val--v4" x="764" y="257.5" text-anchor="middle">removed</text>
+<rect class="nj-int-row" x="16" y="272" width="848" height="30" rx="6"/>
+<text class="nj-int-macro" x="32" y="291.5">JSON_BRACE_INIT_COPY_SEMANTICS</text>
+<text class="nj-int-mute" x="380" y="291.5">3.13.0</text>
+<rect class="nj-int-pill" x="470" y="276" width="60" height="22" rx="11"/>
+<text class="nj-int-val" x="500" y="291.5" text-anchor="middle">0</text>
+<line class="fg-arrow fg-arrow--dash" x1="544" y1="287" x2="724" y2="287" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-pill nj-int-pill--v4" x="728" y="276" width="72" height="22" rx="11"/>
+<text class="nj-int-val nj-int-val--v4" x="764" y="291.5" text-anchor="middle">1</text>
+<rect class="nj-int-row" x="16" y="306" width="848" height="30" rx="6"/>
+<text class="nj-int-macro" x="32" y="325.5">JSON_PRECISE_STREAM_POSITION</text>
+<text class="nj-int-mute" x="380" y="325.5">3.13.0</text>
+<rect class="nj-int-pill" x="470" y="310" width="60" height="22" rx="11"/>
+<text class="nj-int-val" x="500" y="325.5" text-anchor="middle">0</text>
+<line class="fg-arrow fg-arrow--dash" x1="544" y1="321" x2="724" y2="321" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-pill nj-int-pill--v4" x="728" y="310" width="72" height="22" rx="11"/>
+<text class="nj-int-val nj-int-val--v4" x="764" y="325.5" text-anchor="middle">1</text>
+<rect class="nj-int-row" x="16" y="340" width="848" height="30" rx="6"/>
+<text class="nj-int-macro" x="32" y="359.5">JSON_STRICT_NUL_HANDLING</text>
+<text class="nj-int-mute" x="380" y="359.5">3.13.0</text>
+<rect class="nj-int-pill" x="470" y="344" width="60" height="22" rx="11"/>
+<text class="nj-int-val" x="500" y="359.5" text-anchor="middle">0</text>
+<line class="fg-arrow fg-arrow--dash" x1="544" y1="355" x2="724" y2="355" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-pill nj-int-pill--v4" x="728" y="344" width="72" height="22" rx="11"/>
+<text class="nj-int-val nj-int-val--v4" x="764" y="359.5" text-anchor="middle">1</text>
+<rect class="nj-int-row" x="16" y="374" width="848" height="30" rx="6"/>
+<text class="nj-int-macro" x="32" y="393.5">JSON_STRICT_BINARY_UTF8</text>
+<text class="nj-int-mute" x="380" y="393.5">3.13.0</text>
+<rect class="nj-int-pill" x="470" y="378" width="60" height="22" rx="11"/>
+<text class="nj-int-val" x="500" y="393.5" text-anchor="middle">0</text>
+<line class="fg-arrow fg-arrow--dash" x1="544" y1="389" x2="724" y2="389" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-pill nj-int-pill--v4" x="728" y="378" width="72" height="22" rx="11"/>
+<text class="nj-int-val nj-int-val--v4" x="764" y="393.5" text-anchor="middle">1</text>
+<rect class="nj-int-row" x="16" y="408" width="848" height="30" rx="6"/>
+<text class="nj-int-macro" x="32" y="427.5">JSON_DISABLE_TUPLE_REFERENCE_CONVERSION</text>
+<text class="nj-int-mute" x="380" y="427.5">3.13.0</text>
+<rect class="nj-int-pill" x="470" y="412" width="60" height="22" rx="11"/>
+<text class="nj-int-val" x="500" y="427.5" text-anchor="middle">0</text>
+<line class="fg-arrow fg-arrow--dash" x1="544" y1="423" x2="724" y2="423" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-pill nj-int-pill--v4" x="728" y="412" width="72" height="22" rx="11"/>
+<text class="nj-int-val nj-int-val--v4" x="764" y="427.5" text-anchor="middle">1</text>
+<rect class="nj-int-row" x="16" y="442" width="848" height="30" rx="6"/>
+<text class="nj-int-macro" x="32" y="461.5">JSON_DELETE_DEPRECATED_FUNCTIONS</text>
+<text class="nj-int-mute" x="380" y="461.5">3.13.0</text>
+<rect class="nj-int-pill" x="470" y="446" width="60" height="22" rx="11"/>
+<text class="nj-int-val" x="500" y="461.5" text-anchor="middle">0</text>
+<line class="fg-arrow fg-arrow--dash" x1="544" y1="457" x2="724" y2="457" marker-end="url(#nj-int-arrow)"/>
+<rect class="nj-int-pill nj-int-pill--v4" x="728" y="446" width="72" height="22" rx="11"/>
+<text class="nj-int-val nj-int-val--v4" x="764" y="461.5" text-anchor="middle">removed</text>
+<text class="nj-int-mute" x="16" y="496">Versions on the 3.x lane are the ones that added a macro, not to scale. &#8220;removed&#8221;: see the 4.0 behavior column of the table.</text>
+</svg>
+
+</div>
+
+<p class="nj-caption" markdown>Each row is one macro: the 3.x release that added it, its default in 3.x, and its value in version 4.0 (highlighted) or "removed". Versions on the 3.x lane are not to scale.</p>
+
 The following macros guard changes that are planned to become the default in version 4.0:
 
 | Macro                                                                                                            | 3.x default | 4.0 behavior                                                                                                                  | CMake option                                                                                                       | Added  |
@@ -104,6 +210,8 @@ The following macros guard changes that are planned to become the default in ver
 | [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md)                                            | `0`         | `1`: `to_cbor`, `to_ubjson`, `to_bjdata`, and `to_bson` throw for strings that are not valid UTF-8 by default                 | [`JSON_StrictBinaryUTF8`](../integration/cmake.md#json_strictbinaryutf8)                                           | 3.13.0 |
 | [`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md)            | `0`         | `1`: a `basic_json` value can no longer be created from a one-element tuple of a reference to it, such as `std::forward_as_tuple(j)`| [`JSON_DisableTupleReferenceConversion`](../integration/cmake.md#json_disabletuplereferenceconversion)             | 3.13.0 |
 | [`JSON_DELETE_DEPRECATED_FUNCTIONS`](../api/macros/json_delete_deprecated_functions.md)                          | `0`         | removed: the deprecated functions are removed (see below); the `from_*(ptr, len)` overloads stay deleted                      | [`JSON_DeleteDeprecatedFunctions`](../integration/cmake.md#json_deletedeprecatedfunctions)                         | 3.13.0 |
+
+<p class="nj-table-caption" markdown>Opt-in macros for the version 4.0 behavior. "3.x default" is the value the library uses when the macro is not defined, "Added" is the release that introduced the macro, and – means there is no CMake option.</p>
 
 For example, the following makes a 3.x release behave like version 4.0 with respect to these changes:
 
@@ -145,6 +253,8 @@ to the `strict` parameter.
 | [`json_pointer`](../api/json_pointer/index.md) with a `basic_json` type as template argument, and the overloads of `value`, `contains`, `operator[]`, and `at` accepting such a pointer                                                           | 3.11.0 | [JSON Pointers](../integration/migration_guide.md#json-pointers)                 |
 | Comparing a [`json_pointer`](../api/json_pointer/index.md) with a string via [`operator==`](../api/json_pointer/operator_eq.md) or [`operator!=`](../api/json_pointer/operator_ne.md)                                                              | 3.11.2 | [JSON Pointers](../integration/migration_guide.md#json-pointers)                 |
 | [`from_bjdata`](../api/basic_json/from_bjdata.md) and [`from_bon8`](../api/basic_json/from_bon8.md) with `(ptr, len)`                                                                                                                              | 3.13.0 | [Parsing](../integration/migration_guide.md#parsing)                             |
+
+<p class="nj-table-caption" markdown>Deprecated functions, with the release that deprecated each one and the section of the migration guide that shows its replacement.</p>
 
 The deprecated legacy comparison of discarded values is controlled by a macro and therefore listed in the table above.
 

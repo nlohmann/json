@@ -6,7 +6,7 @@ std::ostream& operator<<(std::ostream& o, const basic_json_view& v);
 
 Not available when [`JSON_NO_IO`](https://json.nlohmann.me/api/macros/json_no_io/index.md) is defined.
 
-Serializes the given view `v` to the output stream `o`, using [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) -- exactly as `operator<<(std::ostream&, const basic_json&)` does for a `basic_json` value.
+Serializes the given view `v` to the output stream `o`, using [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) — exactly as `operator<<(std::ostream&, const basic_json&)` does for a `basic_json` value.
 
 - The indentation of the output can be controlled with the member variable `width` of the output stream `o`. For instance, using the manipulator `std::setw(4)` on `o` sets the indentation level to `4`, and the serialization result is the same as calling `v.dump(4)`. A `width` of `0` or less (the default) selects the most compact representation, as `v.dump(-1)` does.
 - The indentation character can be controlled with the member variable `fill` of the output stream `o`. For instance, the manipulator `std::setfill('\t')` sets indentation to use a tab character rather than the default space character.
@@ -26,7 +26,7 @@ the stream `o`
 
 ## Exceptions
 
-May throw `std::bad_alloc`, propagated from [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/#exceptions). Unlike `operator<<(std::ostream&, const basic_json&)`, there is no UTF-8 decoding step that could throw [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316), and no `error_handler` to choose between -- see the [Exceptions](https://json.nlohmann.me/api/basic_json_view/dump/#exceptions) of `dump`.
+May throw `std::bad_alloc`, propagated from [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/#exceptions). Unlike `operator<<(std::ostream&, const basic_json&)`, there is no UTF-8 decoding step that could throw [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316), and no `error_handler` to choose between — see the [Exceptions](https://json.nlohmann.me/api/basic_json_view/dump/#exceptions) of `dump`.
 
 ## Complexity
 
@@ -36,7 +36,7 @@ Linear, as [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/#complexit
 
 Example
 
-The example below writes one record out of a larger batch straight to a log stream -- compact for a one-line entry, and pretty-printed with `std::setw`/`std::setfill` for a readable dump -- without ever building a `BasicJsonType` value for the record, or for the rest of the batch.
+The example below writes one record out of a larger batch straight to a log stream — compact for a one-line entry, and pretty-printed with `std::setw`/`std::setfill` for a readable dump — without ever building a `BasicJsonType` value for the record, or for the rest of the batch.
 
 ```
 #include <iostream>
@@ -84,9 +84,10 @@ Output:
 
 ## See also
 
-- [dump](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - serialize to a JSON-formatted string
+- [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - serialize to a JSON-formatted string
 - [`operator<<(std::ostream&)`](https://json.nlohmann.me/api/operator_ltlt/index.md) - the corresponding operator for `basic_json`
 - [`JSON_NO_IO`](https://json.nlohmann.me/api/macros/json_no_io/index.md) - switch off functions relying on certain C++ I/O headers
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#writing-a-view-back) - writing a view back without building a tree
 
 ## Version history
 

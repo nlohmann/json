@@ -42,7 +42,7 @@ Only an **editable** document (`view_mode::editable`, e.g. [`json_editable_docum
 
 ## Exceptions
 
-1. Throws [`type_error.307`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error307) if `object` is not an object -- the same message [`BasicJsonType::erase`](https://json.nlohmann.me/api/basic_json/erase/index.md) throws for the same type.
+1. Throws [`type_error.307`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error307) if `object` is not an object — the same message [`BasicJsonType::erase`](https://json.nlohmann.me/api/basic_json/erase/index.md) throws for the same type.
 1. Throws `type_error.307` if `array` is not an array. Throws [`out_of_range.401`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range401) if `idx` is negative, or if `idx >= array.size()`.
 1. Throws [`out_of_range.405`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range405) ("JSON pointer has no parent") if `ptr` is empty. Throws what [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md) throws (overload 3) for resolving `ptr`'s parent. For the last reference token itself: if the parent is an array, throws what 2. throws for an index that is out of range, or, for a token that is not a valid array index, [`parse_error.106`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error106) (a leading `'0'`), [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) (not a number), [`out_of_range.410`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range410) (too large for `size_type`), or [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) (an empty token); otherwise (an object, or a primitive value the pointer's parent resolves to) throws what 1. throws.
 
@@ -58,15 +58,15 @@ Overloads 1. and 2. also throw [`invalid_iterator.202`](https://json.nlohmann.me
 
 Duplicate keys
 
-Overload 1. removes *every* member with `key`, not just the first -- unlike [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), which assigns the first occurrence and drops the rest. This is why it returns a count rather than a single view: there may be more than one member removed, or none.
+Overload 1. removes *every* member with `key`, not just the first — unlike [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), which assigns the first occurrence and drops the rest. This is why it returns a count rather than a single view: there may be more than one member removed, or none.
 
-Like [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), `erase` never moves an element's *value*: a view still referring to a removed member or element keeps showing what it last held (see [Edits](https://json.nlohmann.me/api/basic_json_document/#edits)) -- it just no longer appears when `array`/`object` is read, dumped, or iterated. What does change is the container's sequence of *links* to its elements: removing an element of `array` (2.) shifts the links to the elements after it by one, as [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md) does in the other direction. *Every* iterator already taken over `array`/`object` is invalidated by an erase, not only those at or after the removed element, since the container may now use a different sequence.
+Like [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), `erase` never moves an element's *value*: a view still referring to a removed member or element keeps showing what it last held (see [Edits](https://json.nlohmann.me/api/basic_json_document/#edits)) — it just no longer appears when `array`/`object` is read, dumped, or iterated. What does change is the container's sequence of *links* to its elements: removing an element of `array` (2.) shifts the links to the elements after it by one, as [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md) does in the other direction. *Every* iterator already taken over `array`/`object` is invalidated by an erase, not only those at or after the removed element, since the container may now use a different sequence.
 
 ## Examples
 
 Example
 
-The example below drops a deprecated field and a decommissioned entry from a configuration document -- using all three overloads -- and shows what stays intact that would not with a plain `json`/`ordered_json` value: the order of the fields around the ones removed, and the exact spelling of a number that was never touched.
+The example below drops a deprecated field and a decommissioned entry from a configuration document — using all three overloads — and shows what stays intact that would not with a plain `json`/`ordered_json` value: the order of the fields around the ones removed, and the exact spelling of a number that was never touched.
 
 ```
 #include <iostream>
@@ -134,12 +134,13 @@ Output:
 
 ## See also
 
-- [insert](https://json.nlohmann.me/api/basic_json_document/insert/index.md) - insert an element into an array
-- [set](https://json.nlohmann.me/api/basic_json_document/set/index.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
-- [push_back](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) - append to an array
-- [root](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of the root value, the starting point of overload 3
+- [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md) - insert an element into an array
+- [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
+- [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) - append to an array
+- [`root`](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of the root value, the starting point of overload 3
 - [`BasicJsonType::erase`](https://json.nlohmann.me/api/basic_json/erase/index.md) - the corresponding function of `basic_json`
 - [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) - what an edit guarantees, for every overload
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#editing-a-document) - what an edit guarantees and costs
 
 ## Version history
 

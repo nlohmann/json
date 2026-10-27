@@ -61,10 +61,10 @@ Output:
 
 ## See also
 
-- [back](https://json.nlohmann.me/api/json_pointer/back/index.md) return last reference token
-- [pop_back](https://json.nlohmann.me/api/json_pointer/pop_back/index.md) remove the last reference token
-- [operator/=](https://json.nlohmann.me/api/json_pointer/operator_slasheq/index.md) append to the end of the JSON pointer
-- [operator/](https://json.nlohmann.me/api/json_pointer/operator_slash/index.md) create JSON Pointer by appending
+- [`back`](https://json.nlohmann.me/api/json_pointer/back/index.md) - return last reference token
+- [`pop_back`](https://json.nlohmann.me/api/json_pointer/pop_back/index.md) - remove the last reference token
+- [`operator/=`](https://json.nlohmann.me/api/json_pointer/operator_slasheq/index.md) - append to the end of the JSON pointer
+- [`operator/`](https://json.nlohmann.me/api/json_pointer/operator_slash/index.md) - create JSON Pointer by appending
 
 ## Version history
 

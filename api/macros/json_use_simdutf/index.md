@@ -12,7 +12,7 @@ When `JSON_USE_SIMDUTF` is defined you must make the `simdutf.h` header availabl
 
 Requires C++17
 
-simdutf requires C++17 and its header rejects older standards with an `#error`. The backend is therefore only compiled in from C++17 on. In C++11 and C++14 the macro has no effect and the scalar validator is used, which accepts and rejects exactly the same input -- only throughput differs. Setting the macro project-wide is therefore safe even when some translation units are built with an older standard.
+simdutf requires C++17 and its header rejects older standards with an `#error`. The backend is therefore only compiled in from C++17 on. In C++11 and C++14 the macro has no effect and the scalar validator is used, which accepts and rejects exactly the same input — only throughput differs. Setting the macro project-wide is therefore safe even when some translation units are built with an older standard.
 
 Define consistently
 
@@ -53,6 +53,8 @@ The unit tests can be built against the simdutf backend with the CMake option [`
 ## See also
 
 - [JSON_TestSimdutf](https://json.nlohmann.me/integration/cmake/#json_testsimdutf) - CMake option to build the unit tests against the simdutf backend
+- [Parsing](https://json.nlohmann.me/features/parsing/index.md) - overview of the parsing functions
+- [Serialization](https://json.nlohmann.me/features/serialization/index.md) - pretty-printing, UTF-8 handling, and number output
 
 ## Version history
 

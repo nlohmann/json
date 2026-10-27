@@ -204,8 +204,9 @@ result: false
 
 ## See also
 
-- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
 - [Parsing and Exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - the article on handling parse errors without exceptions
+- [SAX Interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - guide to event-based parsing
 
 ## Version history
 

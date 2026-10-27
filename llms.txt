@@ -1,5 +1,7 @@
 # JSON for Modern C++
 
+> JSON for Modern C++ is a header-only C++11 library that makes JSON a first-class data type.
+
 JSON for Modern C++ is a C++11 header-only library implementing a JSON value type with an STL-like API, JSON Pointer/Patch, CBOR/MessagePack/ BSON/UBJSON/BJData/BON8 binary format support, and a SAX-style parser interface.
 
 

@@ -24,7 +24,7 @@ Linear in the size of the subtree.
 
 ## Notes
 
-`materialize()` replays the subtree through the same SAX builder [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) uses, so the result matches it exactly -- including, for an object, that a repeated key keeps only its last value. The replay is iterative, so it is not limited by the call stack the way a naive recursive conversion would be; the JSON nesting depth is limited only by available memory, as for `BasicJsonType::parse()` itself.
+`materialize()` replays the subtree through the same SAX builder [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) uses, so the result matches it exactly — including, for an object, that a repeated key keeps only its last value. The replay is iterative, so it is not limited by the call stack the way a naive recursive conversion would be; the JSON nesting depth is limited only by available memory, as for `BasicJsonType::parse()` itself.
 
 Unlike parsing with [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) enabled, the values produced by `materialize()` do not carry source positions. The index has the start offset of every value, but not the end of arrays, objects, and escaped strings, which the positions also need.
 
@@ -34,7 +34,7 @@ Calling `materialize()` on the same view repeatedly builds a new, independent `B
 
 Example
 
-The example below skips messages that are not useful -- a discarded value, or an empty array -- using only [`is_array()`](https://json.nlohmann.me/api/basic_json_view/is_array/index.md) and [`empty()`](https://json.nlohmann.me/api/basic_json_view/empty/index.md), and calls `materialize()` only for the messages that are actually used, so no `BasicJsonType` value (and none of its per-element allocations) is ever built for the skipped ones.
+The example below skips messages that are not useful — a discarded value, or an empty array — using only [`is_array()`](https://json.nlohmann.me/api/basic_json_view/is_array/index.md) and [`empty()`](https://json.nlohmann.me/api/basic_json_view/empty/index.md), and calls `materialize()` only for the messages that are actually used, so no `BasicJsonType` value (and none of its per-element allocations) is ever built for the skipped ones.
 
 ```
 #include <array>
@@ -82,9 +82,10 @@ skipped
 
 ## See also
 
-- [root](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of a document's root value
+- [`root`](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of a document's root value
 - [`BasicJsonType::parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - build a `BasicJsonType` value directly from a JSON text
 - [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) - source positions on parsed values (not produced by `materialize()`)
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#getting-values-out-without-copying) - when to build a basic_json value from a view
 
 ## Version history
 

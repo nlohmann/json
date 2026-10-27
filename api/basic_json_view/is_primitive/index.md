@@ -89,7 +89,7 @@ true
 
 ## See also
 
-- [is_structured](https://json.nlohmann.me/api/basic_json_view/is_structured/index.md) - return whether the type is structured (the complement of this function, for a non-discarded view)
+- [`is_structured`](https://json.nlohmann.me/api/basic_json_view/is_structured/index.md) - return whether the type is structured (the complement of this function, for a non-discarded view)
 - [`BasicJsonType::is_primitive`](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) - the corresponding function of `basic_json`
 
 ## Version history

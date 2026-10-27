@@ -231,3 +231,7 @@ Besides JSON text, a value can also be serialized to the more compact [binary fo
 - [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) - use JSON values with `std::format` and `std::print`
 - [`format_as`](https://json.nlohmann.me/api/basic_json/format_as/index.md) - use JSON values with the {fmt} library
 - [Parsing](https://json.nlohmann.me/features/parsing/index.md) - the reverse operation
+- [`error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md) - how to treat invalid UTF-8 when dumping
+- [`basic_json_view::dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - serialize a view directly
+- [`JSON_NO_IO`](https://json.nlohmann.me/api/macros/json_no_io/index.md) - remove stream and file I/O
+- [`JSON_NO_SIMD`](https://json.nlohmann.me/api/macros/json_no_simd/index.md) - disable SIMD acceleration

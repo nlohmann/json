@@ -167,10 +167,10 @@ Output:
 
 ## See also
 
-- [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md)
-- [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum_strict/index.md)
-- [`JSON_DISABLE_ENUM_SERIALIZATION`](https://json.nlohmann.me/api/macros/json_disable_enum_serialization/index.md)
-- [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md)
+- [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md) - serializing enums as JSON strings
+- [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum_strict/index.md) - strict variant that throws on unmapped values
+- [`JSON_DISABLE_ENUM_SERIALIZATION`](https://json.nlohmann.me/api/macros/json_disable_enum_serialization/index.md) - disable the default enum conversion
+- [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](https://json.nlohmann.me/api/macros/json_use_objects_for_enum_keyed_maps/index.md) - serialize maps with enum keys as objects
 
 ## Version history
 

@@ -15,10 +15,10 @@ static basic_json_document load(std::vector<std::uint8_t>&& image,
 ```
 
 1. Reads an image [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) wrote, from a pointer and a byte count. The image is **borrowed**: `image` must stay alive and unchanged for as long as the returned document, and any view taken from it, is used.
-1. Reads an image from a `std::vector`. Also **borrowed** -- equivalent to overload 1 called with `image.data()` and `image.size()`.
+1. Reads an image from a `std::vector`. Also **borrowed** — equivalent to overload 1 called with `image.data()` and `image.size()`.
 1. Reads an image, keeping the vector instead of copying it: `image` is moved into the document (no copy), which then owns it for as long as it needs the text and the decoded strings. [`owns_source()`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) is `true` afterward.
 
-In every overload, the node index is copied into storage the document itself owns -- so that it is properly aligned, and, for an [editable](https://json.nlohmann.me/api/basic_json_document/#edits) document, can be edited -- while the text and the decoded strings stay in `image`. The hash indexes [large objects](https://json.nlohmann.me/features/json_view/index.md) use for lookup are rebuilt, exactly as after parsing.
+In every overload, the node index is copied into storage the document itself owns — so that it is properly aligned, and, for an [editable](https://json.nlohmann.me/api/basic_json_document/#edits) document, can be edited — while the text and the decoded strings stay in `image`. The hash indexes [large objects](https://json.nlohmann.me/features/json_view/index.md) use for lookup are rebuilt, exactly as after parsing.
 
 ## Parameters
 
@@ -36,7 +36,7 @@ The document read from the image.
 
 Overloads 1 and 2 give the strong guarantee: `image` is only read, never written, so a thrown exception leaves the caller's buffer untouched.
 
-Overload 3 moves `image` into the document *before* validating it, so that a good image is kept without a copy. If loading then fails, the partially built document -- and the vector now inside it -- is discarded along with the exception, and `image` itself is left **empty**, not restored to what was passed in. Move a copy in instead, or validate with overload 2 first, if the original vector must survive a failed load.
+Overload 3 moves `image` into the document *before* validating it, so that a good image is kept without a copy. If loading then fails, the partially built document — and the vector now inside it — is discarded along with the exception, and `image` itself is left **empty**, not restored to what was passed in. Move a copy in instead, or validate with overload 2 first, if the original vector must survive a failed load.
 
 ## Exceptions
 
@@ -47,7 +47,7 @@ Throws [`parse_error.116`](https://json.nlohmann.me/home/exceptions/#jsonexcepti
 | `too short`          | `image` is `nullptr`, or `size` is smaller than the 64-byte header                                                                                               |
 | `unknown format`     | the header's magic bytes or version do not match, or a reserved header field is not zero                                                                         |
 | `sizes out of range` | the node count, text size, or decoded-string size the header describes does not fit `size`, or the `'\0'` after the text or after the decoded strings is missing |
-| `the check failed`   | `check` is not `image_check::none`, and the image fails it -- see [`image_check`](#image_check)                                                                  |
+| `the check failed`   | `check` is not `image_check::none`, and the image fails it — see [`image_check`](#image_check)                                                                   |
 
 Example messages
 
@@ -92,23 +92,23 @@ enum class image_check
 
 How thoroughly `load()` validates `image` before trusting it.
 
-`full` (the default) : Checks everything the parser itself guarantees: structure and bounds; that every string is valid UTF-8 (and, for a string still in the source text, that it contains no quote, backslash, or control character); and that every number token is well-formed and matches the value stored for it. Strings and float tokens may share a range only if the ranges are identical (as nodes that share a value do), and never overlap otherwise. Reading and serializing a checked image is safe and always produces valid JSON, exactly as for a parsed document. This is the right choice for an image from anything you do not fully control -- a file, a cache shared with other processes, a peer on the network.
+`full` (the default) : Checks everything the parser itself guarantees: structure and bounds; that every string is valid UTF-8 (and, for a string still in the source text, that it contains no quote, backslash, or control character); and that every number token is well-formed and matches the value stored for it. Strings and float tokens may share a range only if the ranges are identical (as nodes that share a value do), and never overlap otherwise. Reading and serializing a checked image is safe and always produces valid JSON, exactly as for a parsed document. This is the right choice for an image from anything you do not fully control — a file, a cache shared with other processes, a peer on the network.
 
 `bounds` : Checks structure and bounds only: that every offset and count in the node index stays inside the image. So `load()`, [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md), element access, and [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) can never read outside the image, even on a damaged one. It does *not* guarantee that the image describes valid JSON: a string that a `full` check would have rejected can make [`dump()`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) write invalid UTF-8 or invalid JSON, or throw [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316), and a number can read back with a value that does not match how it is spelled. An [editable document](https://json.nlohmann.me/api/json_editable_document/index.md) does not take such a string over: [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) and [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md) throw `type_error.316` when they copy it from a view of the loaded document, and leave the editable document unchanged. `bounds` skips scanning the text and the decoded strings, so it fits a cache your own process just wrote and reads straight back, where damage would mean a bug or a hardware fault rather than adversarial input.
 
 `none` : Checks nothing. Reading a damaged image is undefined behavior, so use it only for an image you trust as much as your own memory.
 
-**Lifetime.** Overloads 1 and 2 borrow `image`: it must stay alive and byte-for-byte unchanged for as long as the returned document, and any [view](https://json.nlohmann.me/api/basic_json_view/index.md) taken from it, is used -- exactly like a document [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) borrowed its input for. Overload 3 avoids this by keeping the vector itself; see [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md).
+**Lifetime.** Overloads 1 and 2 borrow `image`: it must stay alive and byte-for-byte unchanged for as long as the returned document, and any [view](https://json.nlohmann.me/api/basic_json_view/index.md) taken from it, is used — exactly like a document [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) borrowed its input for. Overload 3 avoids this by keeping the vector itself; see [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md).
 
 Experimental
 
-The image format is versioned but not yet stable, and may change in an incompatible way before it is declared stable; `load()` already rejects an image written by a different format version with `parse_error.116` ("unknown format"). Use images to cache a document within one build of the library, or to hand one to another process running the *same* build on the *same* (little-endian) machine -- not as a long-term storage format.
+The image format is versioned but not yet stable, and may change in an incompatible way before it is declared stable; `load()` already rejects an image written by a different format version with `parse_error.116` ("unknown format"). Use images to cache a document within one build of the library, or to hand one to another process running the *same* build on the *same* (little-endian) machine — not as a long-term storage format.
 
 ## Examples
 
 Caching a document, ownership, and a rejected image
 
-The example below saves a parsed document as an image, checks that `load()` reproduces the original [`dump()`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) without parsing, and shows the difference between `load(std::move(image))` (owned) and `load(image)` (borrowed). It then damages one byte of the image and shows `image_check::full` rejecting it with `parse_error.116`, while `image_check::bounds` -- meant for a cache the process already trusts -- still reads it without going out of bounds.
+The example below saves a parsed document as an image, checks that `load()` reproduces the original [`dump()`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) without parsing, and shows the difference between `load(std::move(image))` (owned) and `load(image)` (borrowed). It then damages one byte of the image and shows `image_check::full` rejecting it with `parse_error.116`, while `image_check::bounds` — meant for a cache the process already trusts — still reads it without going out of bounds.
 
 ```
 #include <cstdint>
@@ -177,9 +177,9 @@ cache
 
 ## See also
 
-- [save](https://json.nlohmann.me/api/basic_json_document/save/index.md) - write the document as an image
-- [owns_source](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) - return whether the document holds its own copy of the text
-- [parse](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from JSON text instead of an image
+- [`save`](https://json.nlohmann.me/api/basic_json_document/save/index.md) - write the document as an image
+- [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) - return whether the document holds its own copy of the text
+- [`parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from JSON text instead of an image
 - [Images](https://json.nlohmann.me/features/json_view/#images) - why and when to use images
 
 ## Version history

@@ -4,7 +4,7 @@
 const char* type_name() const noexcept;
 ```
 
-Returns the type name as string to be used in error messages -- usually to indicate that a function was called on a
+Returns the type name as string to be used in error messages — usually to indicate that a function was called on a
 wrong JSON type. Identical to [`BasicJsonType::type_name()`](../basic_json/type_name.md), including the extra
 `#!cpp "discarded"` return value for a [discarded](is_discarded.md) view (`BasicJsonType::type_name()` produces the
 same string for a discarded `BasicJsonType` value).
@@ -39,7 +39,7 @@ Constant.
 
 ??? example
 
-    The example below reports why some parsed messages were rejected, using only `type_name()` -- no
+    The example below reports why some parsed messages were rejected, using only `type_name()` — no
     `BasicJsonType` value is ever built for the ones that are wrong, and the message text matches what
     [`BasicJsonType::type_name()`](../basic_json/type_name.md) would produce for the same value.
 
@@ -88,7 +88,7 @@ Constant.
 
 ## See also
 
-- [type](type.md) - return the type of the value
+- [`type`](type.md) - return the type of the value
 - [`BasicJsonType::type_name`](../basic_json/type_name.md) - the corresponding function of `basic_json`
 
 ## Version history

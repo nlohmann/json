@@ -73,10 +73,11 @@ true
 
 ## See also
 
-- [is_primitive](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) checks whether the JSON value is primitive
-- [binary_t](https://json.nlohmann.me/api/basic_json/binary_t/index.md) the type used to store binary values
-- [get_binary](https://json.nlohmann.me/api/basic_json/get_binary/index.md) returns a reference to the stored binary value
-- [basic_json_view::is_binary](https://json.nlohmann.me/api/basic_json_view/is_binary/index.md) - the same check on a zero-copy view
+- [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
+- [`is_primitive`](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) - checks whether the JSON value is primitive
+- [`binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md) - the type used to store binary values
+- [`get_binary`](https://json.nlohmann.me/api/basic_json/get_binary/index.md) - returns a reference to the stored binary value
+- [`basic_json_view::is_binary`](https://json.nlohmann.me/api/basic_json_view/is_binary/index.md) - the same check on a zero-copy view
 
 ## Version history
 

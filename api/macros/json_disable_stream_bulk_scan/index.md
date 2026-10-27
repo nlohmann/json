@@ -103,12 +103,13 @@ int main()
 
 ## See also
 
-- [**parse**](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
-- [**operator>>**](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream
-- [**sax_parse**](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events
-- [**JSON_PRECISE_STREAM_POSITION**](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) - leave an input stream positioned right after a parsed number
-- [**JSON_DISABLE_UNLOCKED_FILE_IO**](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) - read a `FILE*` with the locking stdio functions
-- [Parsing: input sources and performance](https://json.nlohmann.me/features/parsing/#input-sources-and-performance)
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events
+- [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) - leave an input stream positioned right after a parsed number
+- [`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) - read a `FILE*` with the locking stdio functions
+- [Parsing: input sources and performance](https://json.nlohmann.me/features/parsing/#input-sources-and-performance) - how input sources affect parsing performance
+- [Large, Streamed, and Partial Input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md) - chunked, concatenated, and very large input
 
 ## Version history
 

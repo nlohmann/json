@@ -4,7 +4,7 @@
 iterator end() const noexcept;
 ```
 
-Returns an iterator to one past the last element of an array, one past the last member value of an object, in **document order** -- see [`begin()`](https://json.nlohmann.me/api/basic_json_view/begin/index.md). A primitive value iterates as a range of one element (itself), and a `null` value or a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view iterates as an empty range (`begin() == end()`).
+Returns an iterator to one past the last element of an array, one past the last member value of an object, in **document order** — see [`begin()`](https://json.nlohmann.me/api/basic_json_view/begin/index.md). A primitive value iterates as a range of one element (itself), and a `null` value or a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view iterates as an empty range (`begin() == end()`).
 
 ## Return value
 
@@ -66,8 +66,8 @@ first reading over 20: 25
 
 ## See also
 
-- [begin](https://json.nlohmann.me/api/basic_json_view/begin/index.md) - returns an iterator to the first element
-- [cend](https://json.nlohmann.me/api/basic_json_view/cend/index.md) - returns a const iterator to one past the last element
+- [`begin`](https://json.nlohmann.me/api/basic_json_view/begin/index.md) - returns an iterator to the first element
+- [`cend`](https://json.nlohmann.me/api/basic_json_view/cend/index.md) - returns a const iterator to one past the last element
 - [`BasicJsonType::end`](https://json.nlohmann.me/api/basic_json/end/index.md) - the corresponding function of `basic_json`
 
 ## Version history

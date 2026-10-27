@@ -225,3 +225,12 @@ Other Important points:
     deserialization failed: [json.exception.out_of_range.410] enum value out of range for Color: "what"
     
     ```
+
+## See also
+
+- [Arbitrary Type Conversions](arbitrary_types.md) - convert your own types
+- [Converting values](conversions.md) - the general overview of `get`/`get_to`
+- [`NLOHMANN_JSON_SERIALIZE_ENUM`](../api/macros/nlohmann_json_serialize_enum.md) - define the enum-to-JSON mapping
+- [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](../api/macros/nlohmann_json_serialize_enum_strict.md) - throw on unmapped values
+- [`JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md) - disable the default enum conversion
+- [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md) - serialize maps with enum keys as objects

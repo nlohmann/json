@@ -49,8 +49,8 @@ Output:
 
 ## See also
 
-- [ordered_map](https://json.nlohmann.me/api/ordered_map/index.md)
-- [Object Order](https://json.nlohmann.me/features/object_order/index.md)
+- [`ordered_map`](https://json.nlohmann.me/api/ordered_map/index.md) - ordered map type used by `ordered_json`
+- [Object Order](https://json.nlohmann.me/features/object_order/index.md) - preserving the insertion order of object keys
 
 ## Version history
 

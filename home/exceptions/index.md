@@ -6,34 +6,30 @@
 
 All exceptions inherit from class `json::exception` (which in turn inherits from `std::exception`). It is used as the base class for all exceptions thrown by the `basic_json` class. This class can hence be used as "wildcard" to catch exceptions.
 
+The map shows the class tree and every exception id documented on this page; click an id to jump to its section.
+
+The exception classes from `std::exception` down to the five families, each with the ids it can throw. Every id chip links to the section that describes it.
+
+Which exception an element access throws depends on the function and on the type of the value:
+
 ```
-classDiagram
-  direction LR
-    class `std::exception` {
-        <<interface>>
-    }
-
-    class `json::exception` {
-        +const int id
-        +const char* what() const
-    }
-
-    class `json::parse_error` {
-        +const std::size_t byte
-    }
-
-    class `json::invalid_iterator`
-    class `json::type_error`
-    class `json::out_of_range`
-    class `json::other_error`
-
-    `std::exception` <|-- `json::exception`
-    `json::exception` <|-- `json::parse_error`
-    `json::exception` <|-- `json::invalid_iterator`
-    `json::exception` <|-- `json::type_error`
-    `json::exception` <|-- `json::out_of_range`
-    `json::exception` <|-- `json::other_error`
+flowchart LR
+    S{{"which call?"}} -->|"at(key)"| A{{"j is"}}
+    A -->|"object, key missing"| A1["out_of_range.403"]
+    A -->|"array or null"| A2["type_error.304"]
+    S -->|"at(index)"| B{{"j is"}}
+    B -->|"array, index >= size()"| B1["out_of_range.401"]
+    B -->|"object or null"| B2["type_error.304"]
+    S -->|"non-const operator[](key)"| C{{"j is"}}
+    C -->|"object or null"| C1["no exception: a missing key is inserted as null"]
+    C -->|"array"| C2["type_error.305"]
+    S -->|"value(key, default)"| D{{"j is"}}
+    D -->|"object, key missing"| D1["no exception: returns the default"]
+    D -->|"object, incompatible value type"| D2["type_error.302"]
+    D -->|"array or null"| D3["type_error.306"]
 ```
+
+Exceptions thrown by element access. Start at the call on the left, follow the edge that matches the type of `j`, and read the exception id (or "no exception") in the box at the end.
 
 ### Switch off exceptions
 
@@ -276,7 +272,7 @@ JSON uses the `\uxxxx` format to describe Unicode characters. Code points above 
 Example message
 
 ```
-parse error at 14: missing or wrong low surrogate
+[json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate
 ```
 
 Note
@@ -290,7 +286,7 @@ Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are inva
 Example message
 
 ```
-parse error: code points above 0x10FFFF are invalid
+[json.exception.parse_error.103] parse error: code points above 0x10FFFF are invalid
 ```
 
 Note
@@ -1045,7 +1041,7 @@ The provided array index `i` is larger than `size-1`.
 Example message
 
 ```
-array index 3 is out of range
+[json.exception.out_of_range.401] array index 3 is out of range
 ```
 
 ### json.exception.out_of_range.402
@@ -1055,7 +1051,7 @@ The special array index `-` in a JSON Pointer never describes a valid element of
 Example message
 
 ```
-array index '-' (3) is out of range
+[json.exception.out_of_range.402] array index '-' (3) is out of range
 ```
 
 ### json.exception.out_of_range.403
@@ -1065,7 +1061,7 @@ The provided key was not found in the JSON object.
 Example message
 
 ```
-key 'foo' not found
+[json.exception.out_of_range.403] key 'foo' not found
 ```
 
 ### json.exception.out_of_range.404
@@ -1075,7 +1071,7 @@ A reference token in a JSON Pointer could not be resolved, for instance an array
 Example message
 
 ```
-unresolved reference token 'foo'
+[json.exception.out_of_range.404] unresolved reference token 'foo'
 ```
 
 ### json.exception.out_of_range.405
@@ -1085,7 +1081,7 @@ The JSON Patch operations 'remove' and 'move' cannot be applied to the root elem
 Example message
 
 ```
-JSON pointer has no parent
+[json.exception.out_of_range.405] JSON pointer has no parent
 ```
 
 ### json.exception.out_of_range.406
@@ -1095,7 +1091,7 @@ A parsed number could not be stored without changing it to NaN or INF. For the b
 Example messages
 
 ```
-number overflow parsing '10E1000'
+[json.exception.out_of_range.406] number overflow parsing '10E1000'
 ```
 
 ```
@@ -1123,11 +1119,11 @@ Before version 3.13.0 unreleased, CBOR, MessagePack, and BSON silently truncated
 Example messages
 
 ```
-integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
+[json.exception.out_of_range.407] integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
 ```
 
 ```
-integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
+[json.exception.out_of_range.407] integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
 ```
 
 ### json.exception.out_of_range.408
@@ -1139,7 +1135,7 @@ The exception is also thrown for a [UBJSON](https://json.nlohmann.me/features/bi
 Example messages
 
 ```
-excessive array size: 8658170730974374167
+[json.exception.out_of_range.408] excessive array size: 8658170730974374167
 ```
 
 ```
@@ -1161,7 +1157,7 @@ Key identifiers to be serialized to BSON cannot contain code point U+0000, since
 Example message
 
 ```
-BSON key cannot contain code point U+0000 (at byte 2)
+[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)
 ```
 
 ### json.exception.out_of_range.410
@@ -1171,8 +1167,8 @@ This exception is thrown when an undefined value is used with [`NLOHMANN_JSON_SE
 Example message
 
 ```
-enum value out of range
-array index 18446744073709551615 exceeds size_type
+[json.exception.out_of_range.410] enum value out of range
+[json.exception.out_of_range.410] array index 18446744073709551615 exceeds size_type
 ```
 
 The second message is thrown, for instance, by `json::parse("[1, 2]").at("/18446744073709551615"_json_pointer)` on a 64-bit platform, where `size_type` is `std::size_t` and this index is `SIZE_MAX`. An index that does not fit into 64 bits (such as `18446744073709551616`) is not reported as 410 but as [`out_of_range.404`](#jsonexceptionout_of_range404).
@@ -1184,7 +1180,7 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 Example message
 
 ```
-cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
+[json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
 ```
 
 Note
@@ -1200,11 +1196,11 @@ BSON stores the length of documents, arrays, strings, and binary values in a sig
 Example messages
 
 ```
-BSON length 2147483661 exceeds maximum of 2147483647
+[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647
 ```
 
 ```
-MessagePack length 4294967296 exceeds maximum of 4294967295
+[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295
 ```
 
 Note
@@ -1218,7 +1214,7 @@ A JSON Patch `remove` operation cannot be applied because the target location's 
 Example message
 
 ```
-cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
+[json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
 ```
 
 Note
@@ -1232,7 +1228,7 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 Example message
 
 ```
-cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
+[json.exception.out_of_range.414] cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
 ```
 
 Note
@@ -1354,3 +1350,15 @@ Example message
 Note
 
 This exception was added in version 3.13.0 unreleased. Before that, debug builds aborted on an assertion and release builds wrote a `$` marker without `#`, which [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) then rejected.
+
+## See also
+
+- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) - base class of all exceptions thrown by the library
+- [`parse_error`](https://json.nlohmann.me/api/basic_json/parse_error/index.md) - exceptions indicating a parse error
+- [`invalid_iterator`](https://json.nlohmann.me/api/basic_json/invalid_iterator/index.md) - exceptions indicating errors with iterators
+- [`type_error`](https://json.nlohmann.me/api/basic_json/type_error/index.md) - exceptions indicating a wrong type
+- [`out_of_range`](https://json.nlohmann.me/api/basic_json/out_of_range/index.md) - exceptions indicating access out of range
+- [`other_error`](https://json.nlohmann.me/api/basic_json/other_error/index.md) - exceptions indicating other library errors
+- [`JSON_NOEXCEPTION`](https://json.nlohmann.me/api/macros/json_noexception/index.md) - switch off exceptions
+- [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) - extended exception messages with the path of the failing value
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - use the library without exceptions

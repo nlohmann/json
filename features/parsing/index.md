@@ -12,6 +12,8 @@ flowchart LR
     A --> V["bool: is the input valid JSON?"]
 ```
 
+The three entry points for parsing: `parse()` builds a `basic_json` value, optionally filtered by a parser callback, `sax_parse()` delivers events to a SAX handler, and `accept()` only checks whether the input is valid.
+
 ## Input
 
 The [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) function reads a JSON value from an input. The input can be
@@ -32,7 +34,7 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
-The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which is read as UTF-16 or UTF-32 -- depending on the character type -- and converted to UTF-8; see the [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) page for an example. A single input may contain only one JSON value. Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) format; input that arrives in chunks or contains several values is covered in [Large, streamed, and partial input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md).
+The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which is read as UTF-16 or UTF-32 — depending on the character type — and converted to UTF-8; see the [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) page for an example. A single input may contain only one JSON value. Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) format; input that arrives in chunks or contains several values is covered in [Large, streamed, and partial input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md).
 
 By default, the library rejects comments and trailing commas. Both can be enabled with parameters of the `parse` function — see [comments](https://json.nlohmann.me/features/comments/index.md) and [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md).
 
@@ -103,4 +105,11 @@ When the input is not valid JSON, the `parse` function throws an exception by de
 - [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - parse into a read-only document and read it through views
 - [parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - control error handling
 - [parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - what to consider when parsing input from untrusted sources
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - parse into a document and read it through a view
+- [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream
+- [`json_sax`](https://json.nlohmann.me/api/json_sax/index.md) - documentation of the SAX interface
+- [`parse_error`](https://json.nlohmann.me/api/basic_json/parse_error/index.md) - exception thrown on a parse error
+- [Comments](https://json.nlohmann.me/features/comments/index.md) - ignore `//` and `/* */` comments while parsing
+- [Trailing Commas](https://json.nlohmann.me/features/trailing_commas/index.md) - accept trailing commas in arrays and objects
+- [Serialization](https://json.nlohmann.me/features/serialization/index.md) - pretty-printing, UTF-8 handling, and number output
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - error handling when exceptions are disabled
+- [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - list of exceptions and error codes

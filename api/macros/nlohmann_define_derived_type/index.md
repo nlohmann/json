@@ -199,9 +199,10 @@ Notes:
 
 ## See also
 
-- [NLOHMANN_DEFINE_TYPE_INTRUSIVE / NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT / NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md) for similar macros that can be defined *inside* a non-derived type.
-- [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE / NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT / NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md) for similar macros that can be defined *outside* a non-derived type.
-- [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) for an overview.
+- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE` / `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT` / `NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE`](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md) - similar macros that can be defined *inside* a non-derived type
+- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` / `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT` / `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE`](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md) - similar macros that can be defined *outside* a non-derived type
+- [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - overview of the supported conversions
+- [Recipes for Common Types](https://json.nlohmann.me/features/type_recipes/index.md) - class hierarchies
 
 ## Version history
 

@@ -125,12 +125,16 @@ Output:
 
 ## See also
 
-- [to_cbor](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) create a CBOR serialization of a JSON value
-- [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md) create a JSON value from an input in MessagePack format
-- [from_bson](https://json.nlohmann.me/api/basic_json/from_bson/index.md) create a JSON value from an input in BSON format
-- [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) create a JSON value from an input in UBJSON format
-- [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) create a JSON value from an input in BJData format
-- [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) create a JSON value from an input in BON8 format
+- [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md) - the format, its byte layout and how values are mapped
+- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - limits and safe handling of hostile data
+- [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
+- [`to_cbor`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) - create a CBOR serialization of a JSON value
+- [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md) - create a JSON value from an input in MessagePack format
+- [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md) - create a JSON value from an input in BSON format
+- [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) - create a JSON value from an input in UBJSON format
+- [`from_bjdata`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) - create a JSON value from an input in BJData format
+- [`from_bon8`](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) - create a JSON value from an input in BON8 format
 
 ## Version history
 

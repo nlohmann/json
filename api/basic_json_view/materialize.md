@@ -28,7 +28,7 @@ Linear in the size of the subtree.
 ## Notes
 
 `materialize()` replays the subtree through the same SAX builder [`BasicJsonType::parse()`](../basic_json/parse.md)
-uses, so the result matches it exactly -- including, for an object, that a repeated key keeps only its
+uses, so the result matches it exactly — including, for an object, that a repeated key keeps only its
 last value. The replay is iterative, so it is not limited by the call stack the way a naive recursive conversion
 would be; the JSON nesting depth is limited only by available memory, as for `BasicJsonType::parse()` itself.
 
@@ -43,7 +43,7 @@ never caches the result.
 
 ??? example
 
-    The example below skips messages that are not useful -- a discarded value, or an empty array -- using only
+    The example below skips messages that are not useful — a discarded value, or an empty array — using only
     [`is_array()`](is_array.md) and [`empty()`](empty.md), and calls `materialize()` only for the messages that are
     actually used, so no `BasicJsonType` value (and none of its per-element allocations) is ever built for the
     skipped ones.
@@ -96,10 +96,11 @@ never caches the result.
 
 ## See also
 
-- [root](../basic_json_document/root.md) - the view of a document's root value
+- [`root`](../basic_json_document/root.md) - the view of a document's root value
 - [`BasicJsonType::parse`](../basic_json/parse.md) - build a `BasicJsonType` value directly from a JSON text
 - [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) - source positions on parsed values (not
   produced by `materialize()`)
+- [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - when to build a basic_json value from a view
 
 ## Version history
 

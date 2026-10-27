@@ -152,8 +152,8 @@ Output:
 
 ## See also
 
-- [operator==](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) compare for equality
-- [operator\<=>](https://json.nlohmann.me/api/json_pointer/operator_spaceship/index.md) comparison: 3-way (C++20)
+- [`operator==`](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) - compare for equality
+- [`operator<=>`](https://json.nlohmann.me/api/json_pointer/operator_spaceship/index.md) - comparison: 3-way (C++20)
 
 ## Version history
 

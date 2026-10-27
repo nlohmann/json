@@ -72,7 +72,8 @@ my_type_name 42
 
 ## See also
 
-- [json_base_class_t](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) - type of the custom base class
+- [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) - type of the custom base class
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - requirements on the `CustomBaseClass` template parameter
 
 ## Version history
 

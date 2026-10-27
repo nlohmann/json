@@ -79,4 +79,11 @@ while (input >> std::ws && input.peek() != std::char_traits<char>::eof())
 }
 ```
 
-A value that is a number must be followed by whitespace -- see the [notes](https://json.nlohmann.me/api/operator_gtgt/#notes) of `operator>>` for details.
+A value that is a number must be followed by whitespace — see the [notes](https://json.nlohmann.me/api/operator_gtgt/#notes) of `operator>>` for details.
+
+## See also
+
+- [Parsing](https://json.nlohmann.me/features/parsing/index.md) - overview of the parsing functions
+- [Large, Streamed, and Partial Input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md) - chunked, concatenated, and very large input
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream

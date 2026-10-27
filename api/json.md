@@ -91,8 +91,11 @@ types.
 
 ## See also
 
-- [basic_json](basic_json/index.md) - the underlying class template
-- [ordered_json](ordered_json.md) - specialization that preserves the insertion order of object keys
+- [`basic_json`](basic_json/index.md) - the underlying class template
+- [`ordered_json`](ordered_json.md) - specialization that preserves the insertion order of object keys
+- [Types](../features/types/index.md) - the JSON value types and how they are stored
+- [Converting values](../features/conversions.md) - get values out of a JSON value and put values in
+- [Creating JSON values](../features/creating_values.md) - all the ways to build a JSON value
 
 ## Version history
 

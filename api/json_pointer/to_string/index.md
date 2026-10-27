@@ -88,8 +88,8 @@ Output:
 
 ## See also
 
-- [operator string_t](https://json.nlohmann.me/api/json_pointer/operator_string_t/index.md) return a string representation of the JSON pointer (deprecated)
-- [operator\<<](https://json.nlohmann.me/api/operator_ltlt/index.md) write a JSON pointer to a stream
+- [`operator string_t`](https://json.nlohmann.me/api/json_pointer/operator_string_t/index.md) - return a string representation of the JSON pointer (deprecated)
+- [`operator<<`](https://json.nlohmann.me/api/operator_ltlt/index.md) - write a JSON pointer to a stream
 
 ## Version history
 

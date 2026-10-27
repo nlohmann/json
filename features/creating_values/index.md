@@ -119,8 +119,12 @@ Note this **parses** the string, so `"42"_json` is the number `42`, whereas `jso
 ## See also
 
 - [`basic_json` constructors](https://json.nlohmann.me/api/basic_json/basic_json/index.md) - all ways to construct a value
-- [`array`](https://json.nlohmann.me/api/basic_json/array/index.md) / [`object`](https://json.nlohmann.me/api/basic_json/object/index.md) - force array or object type
+- [`array`](https://json.nlohmann.me/api/basic_json/array/index.md) - / [`object`](https://json.nlohmann.me/api/basic_json/object/index.md) - force array or object type
 - [`operator""_json`](https://json.nlohmann.me/api/operator_literal_json/index.md) - the `_json` literal
 - [Converting values](https://json.nlohmann.me/features/conversions/index.md) - which C++ types can be used
 - [Parsing](https://json.nlohmann.me/features/parsing/index.md) - create a value from JSON text
 - [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - create a document and a view from JSON text instead of a value
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) - the class template and its member functions
+- [Types](https://json.nlohmann.me/features/types/index.md) - the JSON value types
+- [`JSON_BRACE_INIT_COPY_SEMANTICS`](https://json.nlohmann.me/api/macros/json_brace_init_copy_semantics/index.md) - change how a single braced value is interpreted
+- [`operator=`](https://json.nlohmann.me/api/basic_json/operator%3D/index.md) - assign a new value

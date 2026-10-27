@@ -56,8 +56,8 @@ parsing an object of `n` keys costs O(n²) rather than O(n log n). See
 
 ## See also
 
-- [ordered_map](ordered_map.md)
-- [Object Order](../features/object_order.md)
+- [`ordered_map`](ordered_map.md) - ordered map type used by `ordered_json`
+- [Object Order](../features/object_order.md) - preserving the insertion order of object keys
 
 ## Version history
 

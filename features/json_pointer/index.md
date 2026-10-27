@@ -17,6 +17,24 @@ Consider the following JSON document
 }
 ```
 
+Select a pointer (or a node of the tree) to walk it through this document; each segment of the pointer goes one level deeper. The table below lists the same pointers.
+
+Highlighted: the path of the pointer `/nested/three/1`, which identifies `false`.
+
+- root object
+  - "array" array
+    - 0: "A"
+    - 1: "B"
+    - 2: "C"
+  - "nested" object
+    - "one": 1
+    - "two": 2
+    - "three" array
+      - 0: true
+      - 1: false
+
+The highlighted nodes are the path from the root to the selected level, and the line below the tree shows the value the pointer resolves to. Select a segment in the pointer bar to stop at a shallower level, or a node of the tree to select its pointer.
+
 Then every value inside the JSON document can be identified as follows:
 
 | JSON Pointer      | JSON value                                                                |
@@ -124,11 +142,17 @@ The reverse function, [`unflatten`](https://json.nlohmann.me/api/basic_json/unfl
 auto j_original = j_flat.unflatten();
 ```
 
+Each leaf of the document becomes one key of the flat object, and `unflatten()` reverses the mapping:
+
+Left: the example document as a tree; right: the flat object it becomes. `flatten()` converts from left to right, `unflatten()` from right to left.
+
 ## See also
 
-- Class [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md)
-- Functions [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), [`contains`](https://json.nlohmann.me/api/basic_json/contains/index.md), and [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) accept JSON Pointers; see [Nested values](https://json.nlohmann.me/features/element_access/default_value/#nested-values)
-- Function [`flatten`](https://json.nlohmann.me/api/basic_json/flatten/index.md)
-- Function [`unflatten`](https://json.nlohmann.me/api/basic_json/unflatten/index.md)
+- [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) - the JSON Pointer class
+- [Nested values](https://json.nlohmann.me/features/element_access/default_value/#nested-values) - [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), [`contains`](https://json.nlohmann.me/api/basic_json/contains/index.md), and [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) accept JSON Pointers
+- [`flatten`](https://json.nlohmann.me/api/basic_json/flatten/index.md) - convert a value to an object of JSON Pointers and primitive values
+- [`unflatten`](https://json.nlohmann.me/api/basic_json/unflatten/index.md) - restore a value from a flattened object
 - [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md) - paths inside a patch are JSON Pointers
 - [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) - an alternative patch format that does not use JSON Pointer
+- [`operator""_json_pointer`](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md) - user-defined literal to create a JSON pointer
+- [Element Access](https://json.nlohmann.me/features/element_access/index.md) - other ways to access elements

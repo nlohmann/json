@@ -91,10 +91,11 @@ Output:
 
 ## See also
 
-- [`operator""_json`](https://json.nlohmann.me/api/operator_literal_json/index.md)
-- [`operator""_json_pointer`](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md)
+- [`operator""_json`](https://json.nlohmann.me/api/operator_literal_json/index.md) - user-defined string literal for JSON values
+- [`operator""_json_pointer`](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md) - user-defined string literal for JSON pointers
 - [`JSON_NO_AUTOMATIC_UDLS`](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) - do not include the user-defined string literals automatically
 - [JSON_GlobalUDLs](https://json.nlohmann.me/integration/cmake/#json_globaludls) - CMake option to control the macro
+- [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - the article on creating JSON values
 
 ## Version history
 

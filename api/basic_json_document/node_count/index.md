@@ -53,8 +53,9 @@ Output:
 
 ## See also
 
-- [memory_usage](https://json.nlohmann.me/api/basic_json_document/memory_usage/index.md) - the number of bytes held by the document
-- [shrink_to_fit](https://json.nlohmann.me/api/basic_json_document/shrink_to_fit/index.md) - release unused index capacity
+- [`memory_usage`](https://json.nlohmann.me/api/basic_json_document/memory_usage/index.md) - the number of bytes held by the document
+- [`shrink_to_fit`](https://json.nlohmann.me/api/basic_json_document/shrink_to_fit/index.md) - release unused index capacity
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#the-idea) - the flat node index and its memory
 
 ## Version history
 

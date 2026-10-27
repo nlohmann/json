@@ -7,7 +7,67 @@ const_reverse_iterator rbegin() const noexcept;
 
 Returns an iterator to the reverse-beginning; that is, the last element.
 
-![Illustration from cppreference.com](../../images/range-rbegin-rend.svg)
+<div class="nj-fig-wrap" markdown>
+<svg class="nj-fig nj-fig--range" viewBox="0 0 600 236" role="img" aria-labelledby="fig-rbe-title" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-rbe-title">Two rows of sixteen cells. The upper row shows the reversed sequence: rend() points to a dashed position before the first element and rbegin() to the last element. The lower row shows the forward sequence: begin() points to the first element and end() to a dashed position after the last element. A reverse iterator stores an iterator to the next element, so rend() corresponds to begin() and rbegin() to end().</title>
+<defs><marker id="fig-rbe-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="fg-head" d="M0 1 L10 5 L0 9 z"/></marker></defs>
+<rect class="fg-cell fg-cell--end" x="30" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="64" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="98" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="132" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="166" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="200" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="234" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="268" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="302" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="336" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="370" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="404" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="438" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="472" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="506" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="540" y="62" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="30" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="64" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="98" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="132" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="166" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="200" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="234" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="268" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="302" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="336" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="370" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="404" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="438" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="472" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell" x="506" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-cell fg-cell--end" x="540" y="144" width="30" height="30" rx="5"/>
+<rect class="fg-pill" x="19" y="8" width="52" height="24" rx="6"/>
+<text class="fg-pilltext" x="45" y="24">rend</text>
+<line class="fg-arrow" x1="45" y1="32" x2="45" y2="60" marker-end="url(#fig-rbe-arrow)"/>
+<rect class="fg-pill" x="521" y="8" width="68" height="24" rx="6"/>
+<text class="fg-pilltext" x="555" y="24">rbegin</text>
+<line class="fg-arrow" x1="555" y1="32" x2="555" y2="60" marker-end="url(#fig-rbe-arrow)"/>
+<text class="fg-note fg-note--l" x="81" y="24">Reverse past-the-last element</text>
+<line class="fg-arrow fg-arrow--dash" x1="45" y1="94" x2="45" y2="142"/>
+<line class="fg-arrow fg-arrow--dash" x1="555" y1="94" x2="555" y2="142"/>
+<text class="fg-note" x="300" y="123">A reverse iterator stores an iterator to the next element</text>
+<text class="fg-note" x="300" y="141" dy="0" style="display:none"></text>
+<rect class="fg-pill" x="15" y="204" width="60" height="24" rx="6"/>
+<text class="fg-pilltext" x="45" y="220">begin</text>
+<line class="fg-arrow" x1="45" y1="202" x2="45" y2="178" marker-end="url(#fig-rbe-arrow)"/>
+<rect class="fg-pill" x="531" y="204" width="48" height="24" rx="6"/>
+<text class="fg-pilltext" x="555" y="220">end</text>
+<line class="fg-arrow" x1="555" y1="202" x2="555" y2="178" marker-end="url(#fig-rbe-arrow)"/>
+<text class="fg-note fg-note--r" x="515" y="221">Past-the-last element</text>
+</svg>
+
+</div>
+
+<p class="nj-caption" markdown>`rbegin()` points to the last element and `rend()` to the position before the first
+element. The upper row is the reversed sequence and the lower row the forward sequence; dashed arrows link each reverse
+iterator to the forward iterator it stores, and dashed cells are past-the-last positions.</p>
 
 ## Return value
 
@@ -56,9 +116,9 @@ Constant.
 
 ## See also
 
-- [rend](rend.md) returns a reverse iterator to one before the first element
-- [crbegin](crbegin.md) returns a const reverse iterator to the last element
-- [begin](begin.md) returns an iterator to the first element
+- [`rend`](rend.md) - returns a reverse iterator to one before the first element
+- [`crbegin`](crbegin.md) - returns a const reverse iterator to the last element
+- [`begin`](begin.md) - returns an iterator to the first element
 - [Iterators](../../features/iterators.md) - the article on iterators
 
 ## Version history

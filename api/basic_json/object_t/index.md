@@ -17,7 +17,7 @@ To store objects in C++, a type is defined by the template parameters described 
 
 ## Template parameters
 
-`ObjectType` : the container to store objects. Its template parameters must have the same order and meaning as those of `std::map`; in particular, the third parameter is a comparator. `std::unordered_map`, whose third parameter is a hash function, therefore needs an adapter -- see [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#objecttype) for the full list of requirements, an adapter example, and the containers that are known to work.
+`ObjectType` : the container to store objects. Its template parameters must have the same order and meaning as those of `std::map`; in particular, the third parameter is a comparator. `std::unordered_map`, whose third parameter is a hash function, therefore needs an adapter — see [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#objecttype) for the full list of requirements, an adapter example, and the containers that are known to work.
 
 `StringType` : the type of the keys or names (e.g., `std::string`). The comparison function `std::less<StringType>` is used to order elements inside the container.
 
@@ -105,10 +105,12 @@ true
 
 ## See also
 
-- [array_t](https://json.nlohmann.me/api/basic_json/array_t/index.md) the type used to store JSON arrays
-- [string_t](https://json.nlohmann.me/api/basic_json/string_t/index.md) the type used to store JSON strings
-- [object_comparator_t](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md) the comparator used to order object keys
+- [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md) - the type used to store JSON arrays
+- [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md) - the type used to store JSON strings
+- [`object_comparator_t`](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md) - the comparator used to order object keys
 - [Object Order](https://json.nlohmann.me/features/object_order/index.md) - the article on object key ordering
+- [Types](https://json.nlohmann.me/features/types/index.md) - how objects are stored
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - requirements on the `ObjectType` template parameter
 
 ## Version history
 

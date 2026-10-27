@@ -89,9 +89,9 @@ true
 
 ## See also
 
-- [is_number_integer](https://json.nlohmann.me/api/basic_json_view/is_number_integer/index.md) - return whether the value is an integer or unsigned integer number
-- [is_number_unsigned](https://json.nlohmann.me/api/basic_json_view/is_number_unsigned/index.md) - return whether the value is an unsigned integer number
-- [is_number_float](https://json.nlohmann.me/api/basic_json_view/is_number_float/index.md) - return whether the value is a floating-point number
+- [`is_number_integer`](https://json.nlohmann.me/api/basic_json_view/is_number_integer/index.md) - return whether the value is an integer or unsigned integer number
+- [`is_number_unsigned`](https://json.nlohmann.me/api/basic_json_view/is_number_unsigned/index.md) - return whether the value is an unsigned integer number
+- [`is_number_float`](https://json.nlohmann.me/api/basic_json_view/is_number_float/index.md) - return whether the value is a floating-point number
 - [`BasicJsonType::is_number`](https://json.nlohmann.me/api/basic_json/is_number/index.md) - the corresponding function of `basic_json`
 
 ## Version history

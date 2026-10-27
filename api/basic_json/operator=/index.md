@@ -60,8 +60,9 @@ Output:
 
 ## See also
 
-- [basic_json](https://json.nlohmann.me/api/basic_json/basic_json/index.md) create a JSON value
-- [swap](https://json.nlohmann.me/api/basic_json/swap/index.md) exchanges the contents of two JSON values
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/basic_json/index.md) - create a JSON value
+- [`swap`](https://json.nlohmann.me/api/basic_json/swap/index.md) - exchanges the contents of two JSON values
+- [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - ways to create and assign JSON values
 
 ## Version history
 

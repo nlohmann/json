@@ -276,7 +276,8 @@ When the macro is not defined, the library will define it to its default value.
 ## See also
 
 - [:simple-cmake: JSON_Diagnostic_Positions](../../integration/cmake.md#json_diagnostic_positions) - CMake option to control the macro
-- [JSON_DIAGNOSTICS](json_diagnostics.md) - macro to control extended diagnostics
+- [`JSON_DIAGNOSTICS`](json_diagnostics.md) - macro to control extended diagnostics
+- [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - handling parse errors and locating them in the input
 
 ## Version history
 

@@ -4,7 +4,7 @@
 bool is_discarded() const noexcept;
 ```
 
-Returns whether this view is invalid, i.e. does not refer to a value. This is the case for a default-constructed view (see [(constructor)](https://json.nlohmann.me/api/basic_json_view/basic_json_view/index.md)), and for [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) of a document that is itself [discarded](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) -- in particular, the root of a failed [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) with `allow_exceptions` set to `false`.
+Returns whether this view is invalid, i.e. does not refer to a value. This is the case for a default-constructed view (see [(constructor)](https://json.nlohmann.me/api/basic_json_view/basic_json_view/index.md)), and for [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) of a document that is itself [discarded](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) — in particular, the root of a failed [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) with `allow_exceptions` set to `false`.
 
 A discarded view is also what [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) returns for a missing key, an index out of range, or a JSON pointer that cannot be resolved, and for any access on a view that is itself discarded (so a chain such as `v["a"]["b"]` is safe). [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md) throws instead.
 
@@ -95,10 +95,11 @@ true
 
 ## See also
 
-- [operator[]](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - access specified element; yields a discarded view where an element is missing
-- [(constructor)](https://json.nlohmann.me/api/basic_json_view/basic_json_view/index.md) - the default constructor creates a discarded view
-- [is_discarded (basic_json_document)](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) - return whether the last parse failed
+- [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - access specified element; yields a discarded view where an element is missing
+- [`(constructor)`](https://json.nlohmann.me/api/basic_json_view/basic_json_view/index.md) - the default constructor creates a discarded view
+- [`basic_json_document::is_discarded`](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) - return whether the last parse failed
 - [`BasicJsonType::is_discarded`](https://json.nlohmann.me/api/basic_json/is_discarded/index.md) - the corresponding function of `basic_json`
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#what-is-different) - how views differ from basic_json
 
 ## Version history
 

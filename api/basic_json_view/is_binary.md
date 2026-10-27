@@ -94,7 +94,7 @@ Constant.
 
 ## See also
 
-- [type](type.md) - return the type of the value
+- [`type`](type.md) - return the type of the value
 - [`BasicJsonType::is_binary`](../basic_json/is_binary.md) - the corresponding function of `basic_json`
 
 ## Version history

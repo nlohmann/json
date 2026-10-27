@@ -40,8 +40,10 @@ and [`default_object_comparator_t`](default_object_comparator_t.md) otherwise.
 
 ## See also
 
-- [object_t](object_t.md) the type used to store JSON objects
-- [default_object_comparator_t](default_object_comparator_t.md) the fallback comparator used when `object_t` has no `key_compare` member type
+- [`object_t`](object_t.md) - the type used to store JSON objects
+- [`default_object_comparator_t`](default_object_comparator_t.md) - the fallback comparator used when `object_t` has no `key_compare` member type
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the `ObjectType` template parameter
+- [Object order](../../features/object_order.md) - preserve the insertion order of keys
 
 ## Version history
 

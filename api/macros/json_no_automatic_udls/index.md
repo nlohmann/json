@@ -50,10 +50,11 @@ Without the include of `<nlohmann/json_literals.hpp>`, the code would fail to co
 
 ## See also
 
-- [`operator""_json`](https://json.nlohmann.me/api/operator_literal_json/index.md)
-- [`operator""_json_pointer`](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md)
+- [`operator""_json`](https://json.nlohmann.me/api/operator_literal_json/index.md) - user-defined string literal for JSON values
+- [`operator""_json_pointer`](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md) - user-defined string literal for JSON pointers
 - [`JSON_USE_GLOBAL_UDLS`](https://json.nlohmann.me/api/macros/json_use_global_udls/index.md) - place user-defined string literals (UDLs) into the global namespace
 - [Compile times](https://json.nlohmann.me/integration/compile_times/index.md) - options to reduce compile times
+- [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - the article on creating JSON values
 
 ## Version history
 

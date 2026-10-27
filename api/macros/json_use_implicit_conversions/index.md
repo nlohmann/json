@@ -69,9 +69,10 @@ Specializations that share the same string type, such as `json` and `ordered_jso
 
 ## See also
 
-- [**operator ValueType**](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) - get a value (implicit)
-- [**get**](https://json.nlohmann.me/api/basic_json/get/index.md) - get a value (explicit)
+- [`operator ValueType`](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) - get a value (implicit)
+- [`get`](https://json.nlohmann.me/api/basic_json/get/index.md) - get a value (explicit)
 - [JSON_ImplicitConversions](https://json.nlohmann.me/integration/cmake/#json_implicitconversions) - CMake option to control the macro
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - implicit conversions and how to disable them
 
 ## Version history
 

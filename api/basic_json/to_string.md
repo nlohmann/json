@@ -82,7 +82,7 @@ std::string to_string(const BasicJsonType& j)
 
 ## See also
 
-- [dump](dump.md)
+- [`dump`](dump.md) - serialize a JSON value to a string
 - [Serialization](../../features/serialization.md) - the serialization article
 
 ## Version history

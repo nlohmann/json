@@ -140,8 +140,12 @@ header. See also the [macro overview page](../../features/macros.md).
 ## See also
 
 - [Macros](../../features/macros.md) - guide to the supported macros
-- [Runtime assertions](../../features/assertions.md)
+- [Runtime assertions](../../features/assertions.md) - assertions guarding against undefined behavior
 - [Arbitrary type conversions](../../features/arbitrary_types.md) - using the `NLOHMANN_DEFINE_TYPE_*` macros
 - [Enum conversion](../../features/enum_conversion.md) - using `NLOHMANN_JSON_SERIALIZE_ENUM`
-- [The `nlohmann` namespace](../../features/namespace.md)
+- [The `nlohmann` namespace](../../features/namespace.md) - how the library's namespace is defined and versioned
 - [CMake integration](../../integration/cmake.md) - setting macros from the build system
+- [Integration](../../integration/index.md) - integrate the library and set macros
+- [Modules](../../features/modules.md) - macros and C++20 modules
+- [Working Without Exceptions](../../features/no_exceptions.md) - using the library without exceptions
+- [Architecture](../../home/architecture.md) - how the library is put together

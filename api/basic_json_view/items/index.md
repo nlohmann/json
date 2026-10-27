@@ -4,7 +4,7 @@
 /* unspecified */ items() const noexcept;
 ```
 
-Returns a range of items -- (key, value) pairs -- for use in range-based for loops. An item's `key()` is a `string_view_t` (for an array element, its index converted to a string, as for [`BasicJsonType::items()`](https://json.nlohmann.me/api/basic_json/items/index.md)), and its `value()` is a `basic_json_view` of the element.
+Returns a range of items — (key, value) pairs — for use in range-based for loops. An item's `key()` is a `string_view_t` (for an array element, its index converted to a string, as for [`BasicJsonType::items()`](https://json.nlohmann.me/api/basic_json/items/index.md)), and its `value()` is a `basic_json_view` of the element.
 
 The returned type is not part of the public API and may change between versions; use a range-based for loop (see the example), or `decltype(v.items())` if you need to name it.
 
@@ -40,7 +40,7 @@ Constant.
 
 ## Notes
 
-As for [`begin()`](https://json.nlohmann.me/api/basic_json_view/begin/index.md)/[`end()`](https://json.nlohmann.me/api/basic_json_view/end/index.md), `items()` visits **every** member of an object, including all occurrences of a duplicate key -- unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md), [`find`](https://json.nlohmann.me/api/basic_json_view/find/index.md), and [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md), which resolve to the *first* member with a given key. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]`.
+As for [`begin()`](https://json.nlohmann.me/api/basic_json_view/begin/index.md)/[`end()`](https://json.nlohmann.me/api/basic_json_view/end/index.md), `items()` visits **every** member of an object, including all occurrences of a duplicate key — unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md), [`find`](https://json.nlohmann.me/api/basic_json_view/find/index.md), and [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md), which resolve to the *first* member with a given key. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]`.
 
 Lifetime issues
 
@@ -50,7 +50,7 @@ Unlike `BasicJsonType::items()` (see [#2040](https://github.com/nlohmann/json/is
 
 Example
 
-The example below shows a settings object whose source text records every update to a key as a duplicate member, in the order they happened. `items()` walks all of them, so the update history is visible, while [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) only ever sees the *first* one and [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) -- like [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) -- keeps only the *last*.
+The example below shows a settings object whose source text records every update to a key as a duplicate member, in the order they happened. `items()` walks all of them, so the update history is visible, while [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) only ever sees the *first* one and [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) — like [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) — keeps only the *last*.
 
 ```
 #include <iostream>
@@ -89,7 +89,7 @@ last "retries" kept by materialize(): 5
 
 ## See also
 
-- [begin](https://json.nlohmann.me/api/basic_json_view/begin/index.md), [end](https://json.nlohmann.me/api/basic_json_view/end/index.md) - the iterators `items()` is built on
+- [`begin`](https://json.nlohmann.me/api/basic_json_view/begin/index.md), [`end`](https://json.nlohmann.me/api/basic_json_view/end/index.md) - the iterators `items()` is built on
 - [`BasicJsonType::items`](https://json.nlohmann.me/api/basic_json/items/index.md) - the corresponding function of `basic_json`
 
 ## Version history

@@ -42,6 +42,8 @@ classDiagram
     style json_parse_error fill:#CCCCFF
 ```
 
+Class hierarchy of the library's exceptions; arrows point from a derived class to its base class, and the highlighted box is `basic_json::parse_error`.
+
 ## Member functions
 
 - **what** - returns explanatory string
@@ -94,12 +96,14 @@ byte position of error: 8
 
 ## See also
 
-- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) for the base class of all exceptions thrown by the library
-- [List of parse errors](https://json.nlohmann.me/home/exceptions/#parse-errors)
-- [`invalid_iterator`](https://json.nlohmann.me/api/basic_json/invalid_iterator/index.md) for exceptions indicating errors with iterators
-- [`type_error`](https://json.nlohmann.me/api/basic_json/type_error/index.md) for exceptions indicating executing a member function with a wrong type
-- [`out_of_range`](https://json.nlohmann.me/api/basic_json/out_of_range/index.md) for exceptions indicating access out of the defined range
-- [`other_error`](https://json.nlohmann.me/api/basic_json/other_error/index.md) for exceptions indicating other library errors
+- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) - the base class of all exceptions thrown by the library
+- [List of parse errors](https://json.nlohmann.me/home/exceptions/#parse-errors) - overview of parse errors (`parse_error`)
+- [`invalid_iterator`](https://json.nlohmann.me/api/basic_json/invalid_iterator/index.md) - exceptions indicating errors with iterators
+- [`type_error`](https://json.nlohmann.me/api/basic_json/type_error/index.md) - exceptions indicating executing a member function with a wrong type
+- [`out_of_range`](https://json.nlohmann.me/api/basic_json/out_of_range/index.md) - exceptions indicating access out of the defined range
+- [`other_error`](https://json.nlohmann.me/api/basic_json/other_error/index.md) - exceptions indicating other library errors
+- [Parsing and Exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - handling parse errors and locating them in the input
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - error handling when exceptions are disabled
 
 ## Version history
 

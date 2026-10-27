@@ -27,8 +27,8 @@ The code below forces the library to use 3-way comparison:
 
 ## See also
 
-- [**operator\<=>**](https://json.nlohmann.me/api/basic_json/operator_spaceship/index.md) - 3-way compare JSON values
-- [**operator==**](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) - compare JSON pointers for equality
+- [`operator<=>`](https://json.nlohmann.me/api/basic_json/operator_spaceship/index.md) - 3-way compare JSON values
+- [`operator==`](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) - compare JSON pointers for equality
 
 ## Version history
 

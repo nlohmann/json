@@ -92,7 +92,7 @@ Constant.
 
 ## See also
 
-- [is_number_integer](is_number_integer.md) - return whether the value is an integer or unsigned integer number
+- [`is_number_integer`](is_number_integer.md) - return whether the value is an integer or unsigned integer number
 - [`BasicJsonType::is_number_unsigned`](../basic_json/is_number_unsigned.md) - the corresponding function of `basic_json`
 
 ## Version history

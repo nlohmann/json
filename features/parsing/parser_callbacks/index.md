@@ -25,6 +25,8 @@ We distinguish six scenarios (determined by the event type) in which the callbac
 | `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
 | `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
+Each coloured dot marks where the parser reports a `parse_event_t` event while reading the JSON text on the left; the legend on the right names the event per colour.
+
 Example: sequence of callback events
 
 When parsing the following JSON text,
@@ -160,7 +162,7 @@ Output:
 
 ## Recipe: rejecting duplicate object keys
 
-The JSON specification leaves the handling of objects with repeated keys up to the implementation. As described in [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/#behavior), it is unspecified which value for a repeated key ends up in the resulting `json` value -- once parsing has produced that value, the duplicate is already gone, because object storage maps each key to a single value. If duplicate keys should instead be treated as an error, a parser callback can detect them while the object is still being read, before that ambiguity ever applies.
+The JSON specification leaves the handling of objects with repeated keys up to the implementation. As described in [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/#behavior), it is unspecified which value for a repeated key ends up in the resulting `json` value — once parsing has produced that value, the duplicate is already gone, because object storage maps each key to a single value. If duplicate keys should instead be treated as an error, a parser callback can detect them while the object is still being read, before that ambiguity ever applies.
 
 Example: reject duplicate object keys
 
@@ -241,7 +243,7 @@ This approach has three limitations:
 - The thrown exception cannot carry a `parse_error`-style byte offset, because position tracking only exists inside the parser and lexer, not at the callback layer.
 - The exception only names the repeated key, not where it occurs in the document. Reporting its full path requires maintaining a stack of the enclosing keys and array indices in the callback as well.
 
-A [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) does not lift the position limitation: its `key` function receives no position either -- only `parse_error` is passed the byte position.
+A [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) does not lift the position limitation: its `key` function receives no position either — only `parse_error` is passed the byte position.
 
 ## Recipe: streaming a large homogeneous array
 
@@ -283,3 +285,11 @@ auto callback = [](int depth, json::parse_event_t /*event*/, json& /*parsed*/) -
 
 json::parse(input, callback);
 ```
+
+## See also
+
+- [Parsing](https://json.nlohmann.me/features/parsing/index.md) - overview of the parsing functions
+- [SAX Interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - guide to event-based parsing
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`parser_callback_t`](https://json.nlohmann.me/api/basic_json/parser_callback_t/index.md) - callback function type for the parser
+- [`parse_event_t`](https://json.nlohmann.me/api/basic_json/parse_event_t/index.md) - enumeration of parser events

@@ -4,6 +4,19 @@
 
 You can use the `nlohmann_json::nlohmann_json` interface target in CMake. This target populates the appropriate usage requirements for [`INTERFACE_INCLUDE_DIRECTORIES`](https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_INCLUDE_DIRECTORIES.html) to point to the appropriate include directories and [`INTERFACE_COMPILE_FEATURES`](https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_COMPILE_FEATURES.html) for the necessary C++11 flags. Most [package managers](https://json.nlohmann.me/integration/package_managers/index.md) that provide a CMake package configuration for this library expose this same target.
 
+All ways of adding the library described below end at this one target:
+
+```
+flowchart LR
+    FP["<b>find_package()</b><br>installed package"] --> T
+    AS["<b>add_subdirectory()</b><br>embedded source tree"] --> T
+    FC["<b>FetchContent</b><br>downloaded at configure time"] --> T
+    PM["<b>Package manager</b><br>its CMake package"] --> T
+    T["<b>nlohmann_json::nlohmann_json</b><br>one INTERFACE target"] --> L["<b>target_link_libraries()</b><br>link it PRIVATE"]
+```
+
+The four ways to add the library in CMake all lead to the same `nlohmann_json::nlohmann_json` interface target, which a project links with `target_link_libraries`. The CMake options below apply to `add_subdirectory()` and `FetchContent`; installed packages have their options fixed at install time.
+
 ### External
 
 To use this library from a CMake project, you can locate it directly with [`find_package()`](https://cmake.org/cmake/help/latest/command/find_package.html) and use the namespaced imported target from the generated package configuration:
@@ -220,3 +233,10 @@ add_executable(myproject main.cpp)
 target_link_libraries(myproject PRIVATE nlohmann_json_modules)
 target_compile_definitions(myproject PRIVATE NLOHMANN_JSON_BUILD_MODULES)
 ```
+
+## See also
+
+- [Macros](https://json.nlohmann.me/api/macros/index.md) - reference of all macros
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - the macros that the CMake options set
+- [Modules](https://json.nlohmann.me/features/modules/index.md) - C++20 module support
+- [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/index.md) - namespace options set by CMake

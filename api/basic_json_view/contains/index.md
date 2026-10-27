@@ -30,8 +30,8 @@ No-throw guarantee: this function never throws exceptions.
 
 ## Complexity
 
-1. Linear in the number of members: as for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), members are compared one after another, in document order, stopping at the first match. Each comparison first checks the key's length -- already known from the index, without reading the key bytes -- before comparing its content. Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
-1. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at that level or the index into the array -- as for [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#complexity) and [`at`](https://json.nlohmann.me/api/basic_json_view/at/#complexity) with a JSON pointer.
+1. Linear in the number of members: as for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), members are compared one after another, in document order, stopping at the first match. Each comparison first checks the key's length — already known from the index, without reading the key bytes — before comparing its content. Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes constant time on average.
+1. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at that level or the index into the array — as for [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#complexity) and [`at`](https://json.nlohmann.me/api/basic_json_view/at/#complexity) with a JSON pointer.
 
 ## Notes
 
@@ -39,7 +39,7 @@ Duplicate keys: the first member wins
 
 If the source text repeats a key, this resolves to the *first* member with it, not to the last one that [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) and `parse()` keep. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]` and [Duplicate keys](https://json.nlohmann.me/features/json_view/#duplicate-keys) for the reasons and for how to get the last value.
 
-Overload 1 always returns `false` when the value is not an object -- including a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view.
+Overload 1 always returns `false` when the value is not an object — including a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view.
 
 Postconditions
 
@@ -151,9 +151,9 @@ false
 
 ## See also
 
-- [find](https://json.nlohmann.me/api/basic_json_view/find/index.md) - find a value in an object
-- [count](https://json.nlohmann.me/api/basic_json_view/count/index.md) - returns the number of occurrences of a key
-- [at](https://json.nlohmann.me/api/basic_json_view/at/index.md), [operator[]](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - resolve a JSON pointer and throw, or return a discarded view
+- [`find`](https://json.nlohmann.me/api/basic_json_view/find/index.md) - find a value in an object
+- [`count`](https://json.nlohmann.me/api/basic_json_view/count/index.md) - returns the number of occurrences of a key
+- [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md), [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - resolve a JSON pointer and throw, or return a discarded view
 - [`BasicJsonType::contains`](https://json.nlohmann.me/api/basic_json/contains/index.md) - the corresponding function of `basic_json`
 
 ## Version history

@@ -7,7 +7,7 @@ T& get_to(T& v) const;
 
 Converts the value to `T` and stores it in `v`, in one of three ways:
 
-- For the types that [`get<T>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) converts directly -- arithmetic types, `bool`, `std::nullptr_t`, [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types), `std::basic_string`, `BasicJsonType`, `basic_json_view`, vectors of these, and maps of views -- `v` is assigned: `v = get<T>()`.
+- For the types that [`get<T>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) converts directly — arithmetic types, `bool`, `std::nullptr_t`, [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types), `std::basic_string`, `BasicJsonType`, `basic_json_view`, vectors of these, and maps of views — `v` is assigned: `v = get<T>()`.
 - For a type whose `from_json()` accepts views (see [`get<T>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md)), that `from_json()` is called with the view and the existing `v`, without building a `BasicJsonType` value.
 - For every other type, the subtree is built into a `BasicJsonType` value and `materialize().get_to(v)` is called, i.e. `from_json()` is invoked with the existing `v`, exactly as [`BasicJsonType::get_to()`](https://json.nlohmann.me/api/basic_json/get_to/index.md) does.
 
@@ -88,8 +88,9 @@ db.example.com:5432 (tls)
 
 ## See also
 
-- [get](https://json.nlohmann.me/api/basic_json_view/get/index.md) - convert the value to a given type
+- [`get`](https://json.nlohmann.me/api/basic_json_view/get/index.md) - convert the value to a given type
 - [`BasicJsonType::get_to`](https://json.nlohmann.me/api/basic_json/get_to/index.md) - the corresponding function of `basic_json`
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#getting-values-out-without-copying) - which conversions avoid building a basic_json value
 
 ## Version history
 

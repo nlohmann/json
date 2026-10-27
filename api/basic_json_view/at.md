@@ -15,7 +15,7 @@ basic_json_view at(IntegerType idx) const;
 basic_json_view at(const json_pointer& ptr) const;
 ```
 
-1. Returns the value of the object member with key `key` -- the first one, should the key occur more than once (see
+1. Returns the value of the object member with key `key` — the first one, should the key occur more than once (see
    [Notes on duplicate keys](operator[].md#notes)).
 2. Returns the array element at index `idx`. The template accepts every integer type except `#!cpp bool` and
    `#!cpp std::size_t` and forwards to the `size_type` overload, as for [`operator[]`](operator[].md); a negative
@@ -62,7 +62,7 @@ Strong guarantee: there are no changes to the view or the document it refers to.
     - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if an array index in `ptr`
       is out of range.
     - Throws [`out_of_range.402`](../../home/exceptions.md#jsonexceptionout_of_range402) if a reference token is
-      `#!cpp "-"` at an array -- `at` never inserts an element, so `#!cpp "-"` is always invalid.
+      `#!cpp "-"` at an array — `at` never inserts an element, so `#!cpp "-"` is always invalid.
     - Throws [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if a reference token names
       an object member that does not exist.
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if `ptr` cannot be resolved
@@ -76,7 +76,7 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 
 1. Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after
    another, in document order, stopping at the first match. Each comparison first checks the
-   key's length -- already known from the index, without reading the key bytes -- before comparing its content.
+   key's length — already known from the index, without reading the key bytes — before comparing its content.
    Objects with 128 or more members get a hash index of their keys while parsing, so that a lookup in them takes
    constant time on average.
 2. Linear in `idx`: elements are skipped one at a time from the first one, since they are not a fixed size in the
@@ -95,7 +95,7 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
     the last value.
 
 Unlike [`operator[]`](operator[].md), which returns a [discarded](is_discarded.md) view for a missing key or an
-out-of-range index, `at` always throws -- exactly as `BasicJsonType::at` does, and with the same messages, so
+out-of-range index, `at` always throws — exactly as `BasicJsonType::at` does, and with the same messages, so
 existing error handling written against `BasicJsonType::at` keeps working unchanged when switched to a view. This
 also holds for overload 3: unlike [`operator[]`](operator[].md) with a JSON pointer, which returns a discarded view
 for a missing key or an out-of-range index, `at` throws for those too (`out_of_range.403`/`out_of_range.401`).
@@ -105,7 +105,7 @@ for a missing key or an out-of-range index, `at` throws for those too (`out_of_r
 ??? example "Example: (1)/(2) access specified element with bounds checking"
 
     The example below reads required fields out of a service configuration with `at`, and shows that the exceptions
-    it throws -- for a wrong type and for a missing key -- carry the same messages
+    it throws — for a wrong type and for a missing key — carry the same messages
     [`BasicJsonType::at`](../basic_json/at.md) would produce for the same JSON text.
 
     ```cpp
@@ -211,8 +211,8 @@ for a missing key or an out-of-range index, `at` throws for those too (`out_of_r
 
 ## See also
 
-- [operator[]](operator[].md) - access specified element (returns a discarded view instead of throwing)
-- [front](front.md), [back](back.md) - access the first or last element
+- [`operator[]`](operator[].md) - access specified element (returns a discarded view instead of throwing)
+- [`front`](front.md), [`back`](back.md) - access the first or last element
 - [`BasicJsonType::at`](../basic_json/at.md) - the corresponding function of `basic_json`
 - [`json_pointer`](../json_pointer/index.md) - JSON pointer type used by overload 3
 

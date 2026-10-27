@@ -1,0 +1,126 @@
+<svg class="nj-fig nj-jsonview nj-jsonview-editfig" viewBox="0 0 840 372" role="img" aria-labelledby="fig-jve4-title fig-jve4-title-d" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-jve4-title">Step 5 of 5: doc.set(doc.root(), &quot;retries&quot;, 3)</title>
+<desc id="fig-jve4-title-d">set of a new member: the object moves to a block as well. The dump with number_format::source is {&quot;port&quot;:6380,&quot;price&quot;:19.90,&quot;tags&quot;:[&quot;a\&quot;b&quot;,&quot;new&quot;],&quot;retries&quot;:3}.</desc>
+<defs>
+<marker id="jve4-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="nj-jsonview-c-line nj-jsonview-head" d="M0 1 L10 5 L0 9 z"/></marker>
+<marker id="jve4-own" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="nj-jsonview-c-own nj-jsonview-head" d="M0 1 L10 5 L0 9 z"/></marker>
+<marker id="jve4-struct" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="nj-jsonview-c-struct nj-jsonview-head" d="M0 1 L10 5 L0 9 z"/></marker>
+<marker id="jve4-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="nj-jsonview-c-bad nj-jsonview-head" d="M0 1 L10 5 L0 9 z"/></marker>
+</defs>
+<text class="nj-jsonview-note nj-jsonview-strong" x="16" y="22" xml:space="preserve">parsed index: fixed, never moves</text>
+<text class="nj-jsonview-note" x="824" y="22" text-anchor="end" xml:space="preserve">the source text is never written</text>
+<rect class="nj-jsonview-node nj-jsonview-c-struct" x="36" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="42" y="47" xml:space="preserve">0</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-struct" x="78" y="61" text-anchor="middle" xml:space="preserve">object</text>
+<text class="nj-jsonview-tiny nj-jsonview-c-struct nj-jsonview-strong" x="115" y="47" text-anchor="end" xml:space="preserve">moved</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="78" y="77" text-anchor="middle" xml:space="preserve">{ } 3</text>
+<rect class="nj-jsonview-node nj-jsonview-c-key" x="124" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="130" y="47" xml:space="preserve">1</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="166" y="61" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="166" y="77" text-anchor="middle" xml:space="preserve">port</text>
+<rect class="nj-jsonview-node nj-jsonview-c-num" x="212" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="218" y="47" xml:space="preserve">2</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-num" x="254" y="61" text-anchor="middle" xml:space="preserve">uint</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="254" y="77" text-anchor="middle" xml:space="preserve">6380</text>
+<rect class="nj-jsonview-node nj-jsonview-c-key" x="300" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="306" y="47" xml:space="preserve">3</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="342" y="61" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="342" y="77" text-anchor="middle" xml:space="preserve">price</text>
+<rect class="nj-jsonview-node nj-jsonview-c-num" x="388" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="394" y="47" xml:space="preserve">4</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-num" x="430" y="61" text-anchor="middle" xml:space="preserve">float</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="430" y="77" text-anchor="middle" xml:space="preserve">19.90</text>
+<rect class="nj-jsonview-node nj-jsonview-c-key" x="476" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="482" y="47" xml:space="preserve">5</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="518" y="61" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="518" y="77" text-anchor="middle" xml:space="preserve">tags</text>
+<rect class="nj-jsonview-node nj-jsonview-c-struct" x="564" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="570" y="47" xml:space="preserve">6</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-struct" x="606" y="61" text-anchor="middle" xml:space="preserve">array</text>
+<text class="nj-jsonview-tiny nj-jsonview-c-struct nj-jsonview-strong" x="643" y="47" text-anchor="end" xml:space="preserve">moved</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="606" y="77" text-anchor="middle" xml:space="preserve">[ ] 2</text>
+<rect class="nj-jsonview-node nj-jsonview-gap nj-jsonview-c-str" x="652" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="658" y="47" xml:space="preserve">7</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-str" x="694" y="61" text-anchor="middle" xml:space="preserve">string</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="694" y="77" text-anchor="middle" xml:space="preserve">&quot;eu&quot;</text>
+<text class="nj-jsonview-tiny nj-jsonview-c-bad" x="694" y="98" text-anchor="middle" xml:space="preserve">unreferenced</text>
+<rect class="nj-jsonview-node nj-jsonview-c-dec" x="740" y="34" width="84" height="50" rx="5"/>
+<text class="nj-jsonview-tiny" x="746" y="47" xml:space="preserve">8</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-dec" x="782" y="61" text-anchor="middle" xml:space="preserve">string</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="782" y="77" text-anchor="middle" xml:space="preserve">a&quot;b</text>
+<text class="nj-jsonview-note nj-jsonview-strong nj-jsonview-c-own" x="16" y="288" xml:space="preserve">owned storage: allocated on demand, never moves</text>
+<rect class="nj-jsonview-store" x="10" y="192" width="820" height="54" rx="8"/>
+<rect class="nj-jsonview-node nj-jsonview-c-struct" x="16" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="66" y="207" text-anchor="end" xml:space="preserve">0&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-struct" x="43" y="220" text-anchor="middle" xml:space="preserve">header</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="43" y="235" text-anchor="middle" xml:space="preserve">[ ] 2</text>
+<rect class="nj-jsonview-node nj-jsonview-c-own" x="73" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="123" y="207" text-anchor="end" xml:space="preserve">1&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-own" x="100" y="220" text-anchor="middle" xml:space="preserve">link</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="100" y="235" text-anchor="middle" xml:space="preserve">→ 8</text>
+<path class="nj-jsonview-arr nj-jsonview-c-own" d="M100 196 C100 140 782 140 782 84" marker-end="url(#jve4-own)"/>
+<rect class="nj-jsonview-node nj-jsonview-c-own" x="130" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="180" y="207" text-anchor="end" xml:space="preserve">2&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-own" x="157" y="220" text-anchor="middle" xml:space="preserve">link</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="157" y="235" text-anchor="middle" xml:space="preserve">→ 3&#x27;</text>
+<path class="nj-jsonview-arr nj-jsonview-c-own" d="M157 242 C157 268 214 268 214 244" marker-end="url(#jve4-own)"/>
+<rect class="nj-jsonview-node nj-jsonview-c-str" x="187" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="237" y="207" text-anchor="end" xml:space="preserve">3&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-str" x="214" y="220" text-anchor="middle" xml:space="preserve">string</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="214" y="235" text-anchor="middle" xml:space="preserve">&quot;new&quot;</text>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-num" x="244" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="294" y="207" text-anchor="end" xml:space="preserve">4&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-num" x="271" y="220" text-anchor="middle" xml:space="preserve">uint</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="271" y="235" text-anchor="middle" xml:space="preserve">3</text>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-struct" x="301" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="351" y="207" text-anchor="end" xml:space="preserve">5&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-struct" x="328" y="220" text-anchor="middle" xml:space="preserve">header</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="328" y="235" text-anchor="middle" xml:space="preserve">{ } 4</text>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-key" x="358" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="408" y="207" text-anchor="end" xml:space="preserve">6&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="385" y="220" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="385" y="235" text-anchor="middle" xml:space="preserve">port</text>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-own" x="415" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="465" y="207" text-anchor="end" xml:space="preserve">7&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-own" x="442" y="220" text-anchor="middle" xml:space="preserve">link</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="442" y="235" text-anchor="middle" xml:space="preserve">→ 2</text>
+<path class="nj-jsonview-arr nj-jsonview-c-own" d="M442 196 C442 140 254 140 254 84" marker-end="url(#jve4-own)"/>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-key" x="472" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="522" y="207" text-anchor="end" xml:space="preserve">8&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="499" y="220" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="499" y="235" text-anchor="middle" xml:space="preserve">price</text>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-own" x="529" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="579" y="207" text-anchor="end" xml:space="preserve">9&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-own" x="556" y="220" text-anchor="middle" xml:space="preserve">link</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="556" y="235" text-anchor="middle" xml:space="preserve">→ 4</text>
+<path class="nj-jsonview-arr nj-jsonview-c-own" d="M556 196 C556 140 430 140 430 84" marker-end="url(#jve4-own)"/>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-key" x="586" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="636" y="207" text-anchor="end" xml:space="preserve">10&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="613" y="220" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="613" y="235" text-anchor="middle" xml:space="preserve">tags</text>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-own" x="643" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="693" y="207" text-anchor="end" xml:space="preserve">11&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-own" x="670" y="220" text-anchor="middle" xml:space="preserve">link</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="670" y="235" text-anchor="middle" xml:space="preserve">→ 6</text>
+<path class="nj-jsonview-arr nj-jsonview-c-own" d="M670 196 C670 140 614 140 614 84" marker-end="url(#jve4-own)"/>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-key" x="700" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="750" y="207" text-anchor="end" xml:space="preserve">12&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-key" x="727" y="220" text-anchor="middle" xml:space="preserve">key</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="727" y="235" text-anchor="middle" xml:space="preserve">retries</text>
+<rect class="nj-jsonview-node nj-jsonview-hot nj-jsonview-c-own" x="757" y="196" width="54" height="46" rx="5"/>
+<text class="nj-jsonview-tiny" x="807" y="207" text-anchor="end" xml:space="preserve">13&#x27;</text>
+<text class="nj-jsonview-kind nj-jsonview-xs nj-jsonview-c-own" x="784" y="220" text-anchor="middle" xml:space="preserve">link</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="784" y="235" text-anchor="middle" xml:space="preserve">→ 4&#x27;</text>
+<path class="nj-jsonview-arr nj-jsonview-c-own" d="M784 242 C784 268 271 268 271 244" marker-end="url(#jve4-own)"/>
+<path class="nj-jsonview-arr nj-jsonview-c-struct nj-jsonview-dash" d="M598 84 C598 140 43 140 43 196" marker-end="url(#jve4-struct)"/>
+<path class="nj-jsonview-arr nj-jsonview-c-struct nj-jsonview-dash" d="M70 84 C70 140 328 140 328 196" marker-end="url(#jve4-struct)"/>
+<text class="nj-jsonview-note" x="588" y="282" text-anchor="end" xml:space="preserve">edited text</text>
+<rect class="nj-jsonview-node nj-jsonview-c-str" x="596" y="264" width="112" height="26" rx="4"/>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="602" y="282" xml:space="preserve">newretries</text>
+<path class="nj-jsonview-sep" d="M16 300 H824"/>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="16" y="318" xml:space="preserve">view v = root()[&quot;tags&quot;] (taken after parse):</text>
+<text class="nj-jsonview-note nj-jsonview-c-struct nj-jsonview-strong" x="320" y="318" xml:space="preserve">valid, sees every edit</text>
+<text class="nj-jsonview-mono nj-jsonview-xs" x="16" y="338" xml:space="preserve">iterator over tags (taken after parse):</text>
+<text class="nj-jsonview-note nj-jsonview-c-bad nj-jsonview-strong" x="320" y="338" xml:space="preserve">invalid: tags no longer uses the parsed layout</text>
+<text class="nj-jsonview-mono nj-jsonview-xs nj-jsonview-muted" x="16" y="360" xml:space="preserve">dump(): {&quot;port&quot;:6380,&quot;price&quot;:19.90,&quot;tags&quot;:[&quot;a\&quot;b&quot;,&quot;new&quot;],&quot;retries&quot;:3}</text>
+</svg>

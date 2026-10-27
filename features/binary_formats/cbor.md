@@ -334,3 +334,13 @@ string of the same major type, as required by [RFC 8949, Section 3.2.3](https://
     }
     
     ```
+
+## See also
+
+- [Binary formats](index.md) - overview and comparison of the supported binary formats
+- [Binary values](../binary_values.md) - how binary values and subtypes map to CBOR
+- [`to_cbor`](../../api/basic_json/to_cbor.md) - serialize a JSON value to CBOR
+- [`from_cbor`](../../api/basic_json/from_cbor.md) - parse a JSON value from CBOR
+- [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) - reject ill-formed UTF-8 in strings
+- [SAX interface](../parsing/sax_interface.md) - decode binary formats without building a value
+- [`cbor_tag_handler_t`](../../api/basic_json/cbor_tag_handler_t.md) - how CBOR tags are handled when parsing

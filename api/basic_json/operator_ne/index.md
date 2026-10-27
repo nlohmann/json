@@ -136,9 +136,9 @@ null != nullptr false
 
 ## See also
 
-- [operator==](https://json.nlohmann.me/api/basic_json/operator_eq/index.md) comparison: equal
-- [operator\<=>](https://json.nlohmann.me/api/basic_json/operator_spaceship/index.md) comparison: 3-way (C++20)
-- [basic_json_view::operator!=](https://json.nlohmann.me/api/basic_json_view/operator_ne/index.md) - the same comparison on a zero-copy view, without building a `basic_json` value for it
+- [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md) - comparison: equal
+- [`operator<=>`](https://json.nlohmann.me/api/basic_json/operator_spaceship/index.md) - comparison: 3-way (C++20)
+- [`basic_json_view::operator!=`](https://json.nlohmann.me/api/basic_json_view/operator_ne/index.md) - the same comparison on a zero-copy view, without building a `basic_json` value for it
 
 ## Version history
 

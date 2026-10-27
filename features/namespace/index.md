@@ -27,6 +27,14 @@ For example, the namespace name for version 3.11.2 with `JSON_DIAGNOSTICS` defin
 nlohmann::json_abi_diag_v3_11_2
 ```
 
+The name is assembled from these segments; pick a version and macros to see the resulting name:
+
+`nlohmann`root namespace `::`  `json_abi`always `_diag`JSON_DIAGNOSTICS=1 `_v3_11_2`version 3.11.2
+
+Version 3.11.2 with `JSON_DIAGNOSTICS` defined to `1`. ABI tags are appended in the order of the list above, the version suffix comes last.
+
+The name of the inline namespace, assembled from its segments. Select a version and macros to see which ABI tags appear; a tag the chosen version does not have is disabled.
+
 ## Purpose
 
 Several incompatibilities have been observed. Amongst the most common ones is linking code compiled with different definitions of [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md). This is illustrated in the diagram below.
@@ -42,6 +50,8 @@ graph
     app --> json_diag
     app --> library
 ```
+
+The application uses the library with `JSON_DIAGNOSTICS=1` and links `some library`, which uses the same library version with `JSON_DIAGNOSTICS=0`. Arrows point from a component to what it uses.
 
 In releases prior to 3.11.0, mixing any version of the JSON library with different `JSON_DIAGNOSTICS` settings would result in a crashing application. If `some_library` never passes instances of JSON library types to the application, this scenario became safe in version 3.11.0 and above due to the inline namespace yielding distinct symbol names.
 
@@ -75,6 +85,15 @@ When interoperability with code using a pre-3.11.0 version of the library is req
 Use at your own risk
 
 Overriding the namespace and mixing ABI-incompatible versions will result in crashes or incorrect behavior. You have been warned!
+
+## See also
+
+- [`NLOHMANN_JSON_NAMESPACE`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace/index.md) - the library namespace as macro
+- [`NLOHMANN_JSON_NAMESPACE_BEGIN`, `NLOHMANN_JSON_NAMESPACE_END`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace_begin/index.md) - open and close the library namespace
+- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace_no_version/index.md) - disable the version component
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - all supported macros
+- [Migration Guide](https://json.nlohmann.me/integration/migration_guide/index.md) - do not hard-code the library namespace
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) - the main class and all its member functions
 
 ## Version history
 

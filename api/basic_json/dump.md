@@ -192,9 +192,9 @@ Binary values are serialized as an object containing two keys:
 
 ## See also
 
-- [to_string](to_string.md) returns a string representation of a JSON value
-- [operator<<](../operator_ltlt.md) serialize to stream
-- [`basic_json_view::dump`](../basic_json_view/dump.md) the corresponding function of `basic_json_view`, serializing
+- [`to_string`](to_string.md) - returns a string representation of a JSON value
+- [`operator<<`](../operator_ltlt.md) - serialize to stream
+- [`basic_json_view::dump`](../basic_json_view/dump.md) - the corresponding function of `basic_json_view`, serializing
   directly from a flat index without building a `basic_json` value
 - [Serialization](../../features/serialization.md) - the serialization article
 

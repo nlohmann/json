@@ -40,6 +40,8 @@ classDiagram
     style json_invalid_iterator fill:#CCCCFF
 ```
 
+Class hierarchy of the library's exceptions; arrows point from a derived class to its base class, and the highlighted box is `basic_json::invalid_iterator`.
+
 ## Member functions
 
 - **what** - returns explanatory string
@@ -87,12 +89,14 @@ exception id: 207
 
 ## See also
 
-- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) for the base class of all exceptions thrown by the library
-- [List of iterator errors](https://json.nlohmann.me/home/exceptions/#iterator-errors)
-- [`parse_error`](https://json.nlohmann.me/api/basic_json/parse_error/index.md) for exceptions indicating a parse error
-- [`type_error`](https://json.nlohmann.me/api/basic_json/type_error/index.md) for exceptions indicating executing a member function with a wrong type
-- [`out_of_range`](https://json.nlohmann.me/api/basic_json/out_of_range/index.md) for exceptions indicating access out of the defined range
-- [`other_error`](https://json.nlohmann.me/api/basic_json/other_error/index.md) for exceptions indicating other library errors
+- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) - the base class of all exceptions thrown by the library
+- [List of iterator errors](https://json.nlohmann.me/home/exceptions/#iterator-errors) - overview of iterator errors (`invalid_iterator`)
+- [`parse_error`](https://json.nlohmann.me/api/basic_json/parse_error/index.md) - exceptions indicating a parse error
+- [`type_error`](https://json.nlohmann.me/api/basic_json/type_error/index.md) - exceptions indicating executing a member function with a wrong type
+- [`out_of_range`](https://json.nlohmann.me/api/basic_json/out_of_range/index.md) - exceptions indicating access out of the defined range
+- [`other_error`](https://json.nlohmann.me/api/basic_json/other_error/index.md) - exceptions indicating other library errors
+- [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - all exceptions and their error codes
+- [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) - extended exception messages with the path of the failing value
 
 ## Version history
 

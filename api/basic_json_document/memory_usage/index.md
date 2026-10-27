@@ -20,7 +20,7 @@ Constant.
 
 ## Notes
 
-The exact value depends on the platform, the allocator, and the library's own layout, and may change between versions; do not rely on it being a specific number, and do not compare it across different builds or platforms. Compare it for the same document over time, or between documents built with the same binary, instead -- for instance to observe the effect of [`shrink_to_fit()`](https://json.nlohmann.me/api/basic_json_document/shrink_to_fit/index.md).
+The exact value depends on the platform, the allocator, and the library's own layout, and may change between versions; do not rely on it being a specific number, and do not compare it across different builds or platforms. Compare it for the same document over time, or between documents built with the same binary, instead — for instance to observe the effect of [`shrink_to_fit()`](https://json.nlohmann.me/api/basic_json_document/shrink_to_fit/index.md).
 
 ## Examples
 
@@ -66,8 +66,9 @@ true
 
 ## See also
 
-- [node_count](https://json.nlohmann.me/api/basic_json_document/node_count/index.md) - the number of index entries
-- [shrink_to_fit](https://json.nlohmann.me/api/basic_json_document/shrink_to_fit/index.md) - release unused index capacity
+- [`node_count`](https://json.nlohmann.me/api/basic_json_document/node_count/index.md) - the number of index entries
+- [`shrink_to_fit`](https://json.nlohmann.me/api/basic_json_document/shrink_to_fit/index.md) - release unused index capacity
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#the-idea) - the flat node index and its memory
 
 ## Version history
 

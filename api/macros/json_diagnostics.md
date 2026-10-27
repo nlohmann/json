@@ -162,7 +162,11 @@ When the macro is not defined, the library will define it to its default value.
 ## See also
 
 - [:simple-cmake: JSON_Diagnostics](../../integration/cmake.md#json_diagnostics) - CMake option to control the macro
-- [JSON_DIAGNOSTIC_POSITIONS](json_diagnostic_positions.md) - macro to access positions of elements
+- [`JSON_DIAGNOSTIC_POSITIONS`](json_diagnostic_positions.md) - macro to access positions of elements
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
+- [Exceptions: extended diagnostic messages](../../home/exceptions.md#extended-diagnostic-messages) - how extended diagnostics change the messages
+- [Debugging](../../home/debugging.md) - debugging aids
+- [`exception`](../basic_json/exception.md) - base class of all exceptions thrown by the library
 
 ## Version history
 

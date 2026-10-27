@@ -34,7 +34,7 @@ Linear in the length of the input.
 
 ## Notes
 
-Every view taken from `*this` before the call -- including the previous [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) -- is invalidated, whether or not the new parse succeeds; take fresh views from [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) afterward.
+Every view taken from `*this` before the call — including the previous [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) — is invalidated, whether or not the new parse succeeds; take fresh views from [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) afterward.
 
 `input` is borrowed or owned by the same rules as [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/#notes); a document can borrow on one call and own on the next, since ownership is decided freshly each time. An input that is copied (see the table in [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/#notes)) is written into the document's previous owned copy, reusing its memory; a moved-in `std::string` replaces it.
 
@@ -91,9 +91,10 @@ true
 
 ## See also
 
-- [parse](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
-- [root](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of the root value
-- [load](https://json.nlohmann.me/api/basic_json_document/load/index.md) - read a document from an image instead of parsing JSON text
+- [`parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
+- [`root`](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of the root value
+- [`load`](https://json.nlohmann.me/api/basic_json_document/load/index.md) - read a document from an image instead of parsing JSON text
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime) - reusing a document and what it invalidates
 
 ## Version history
 

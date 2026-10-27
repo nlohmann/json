@@ -95,8 +95,10 @@ int main()
 
 ## See also
 
-- [**basic_json(CompatibleType&&)**](https://json.nlohmann.me/api/basic_json/basic_json/index.md) - the affected constructor
+- [`basic_json(CompatibleType&&)`](https://json.nlohmann.me/api/basic_json/basic_json/index.md) - the affected constructor
 - [JSON_DisableTupleReferenceConversion](https://json.nlohmann.me/integration/cmake/#json_disabletuplereferenceconversion) - CMake option to control the macro
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - getting values out
+- [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - converting your own types
 
 ## Version history
 

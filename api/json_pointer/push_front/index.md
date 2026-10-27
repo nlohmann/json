@@ -61,8 +61,8 @@ Output:
 
 ## See also
 
-- [front](https://json.nlohmann.me/api/json_pointer/front/index.md) return first reference token
-- [pop_front](https://json.nlohmann.me/api/json_pointer/pop_front/index.md) remove the first reference token
+- [`front`](https://json.nlohmann.me/api/json_pointer/front/index.md) - return first reference token
+- [`pop_front`](https://json.nlohmann.me/api/json_pointer/pop_front/index.md) - remove the first reference token
 
 ## Version history
 

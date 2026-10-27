@@ -184,10 +184,12 @@ inline void from_json(const BasicJsonType& j, type& e);
 
 ## See also
 
-- [Specializing enum conversion](../../features/enum_conversion.md)
-- [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](./nlohmann_json_serialize_enum_strict.md)
-- [`JSON_DISABLE_ENUM_SERIALIZATION`](json_disable_enum_serialization.md)
-- [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](json_use_objects_for_enum_keyed_maps.md)
+- [Specializing enum conversion](../../features/enum_conversion.md) - serializing enums as JSON strings
+- [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](./nlohmann_json_serialize_enum_strict.md) - strict variant that throws on
+  unmapped values
+- [`JSON_DISABLE_ENUM_SERIALIZATION`](json_disable_enum_serialization.md) - disable the default enum conversion
+- [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](json_use_objects_for_enum_keyed_maps.md) - serialize maps with enum keys as
+  objects
 
 ## Version history
 

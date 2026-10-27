@@ -189,8 +189,9 @@ null
 
 ## See also
 
-- [emplace_back](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) add a value to an array
-- [push_back](https://json.nlohmann.me/api/basic_json/push_back/index.md) add a value to an array/object
+- [`emplace_back`](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) - add a value to an array
+- [`push_back`](https://json.nlohmann.me/api/basic_json/push_back/index.md) - add a value to an array/object
+- [Modifying values](https://json.nlohmann.me/features/modifying_values/index.md) - the article on modifying values
 
 ## Version history
 

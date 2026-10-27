@@ -73,6 +73,8 @@ int main()
 
 - [Roadmap: removal of deprecated functions](https://json.nlohmann.me/community/roadmap/#removal-of-deprecated-functions) - the deprecated functions and the version they were deprecated in
 - [Migration guide: replace deprecated functions](https://json.nlohmann.me/integration/migration_guide/#replace-deprecated-functions) - how to replace each deprecated function
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [CMake](https://json.nlohmann.me/integration/cmake/index.md) - the corresponding CMake option
 
 ## Version history
 

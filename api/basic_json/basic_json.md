@@ -52,7 +52,7 @@ basic_json(basic_json&& other) noexcept;
     The postcondition of this constructor can be restored by calling [`clear()`](clear.md).
 
 2. Create a `#!json null` JSON value. It either takes a null pointer as parameter (explicitly creating `#!json null`)
-   or no parameter (implicitly creating `#!json null`). The passed null pointer itself is not read -- it is only used to
+   or no parameter (implicitly creating `#!json null`). The passed null pointer itself is not read — it is only used to
    choose the right constructor.
 
 3. This is a "catch all" constructor for all compatible JSON types; that is, types for which a `to_json()` method
@@ -113,18 +113,21 @@ basic_json(basic_json&& other) noexcept;
 
     ```mermaid
     flowchart TD
-        A(["initializer_list init"]) --> B{"empty, or every element is a 2-element<br/>array whose first element is a string?"}
-        B -->|"yes"| C{"type_deduction"}
-        B -->|"no"| D{"type_deduction"}
+        A(["initializer_list init"]) --> B{{"empty, or every element is a 2-element<br/>array whose first element is a string?"}}
+        B -->|"yes"| C{{"type_deduction"}}
+        B -->|"no"| D{{"type_deduction"}}
         C -->|"true"| OBJ["create object"]
-        C -->|"false"| E{"manual_type"}
+        C -->|"false"| E{{"manual_type"}}
         E -->|"object"| OBJ
         E -->|"array"| ARR["create array"]
         D -->|"true"| ARR
-        D -->|"false"| F{"manual_type"}
+        D -->|"false"| F{{"manual_type"}}
         F -->|"array"| ARR
         F -->|"object"| ERR["throw type_error.301"]
     ```
+
+    <p class="nj-caption" markdown>Decision flow for an initializer list: hexagons are checks, edge labels are their
+    outcomes, and rectangles are the resulting value or exception.</p>
 
     The rules aim to create the best fit between a C++ initializer list and JSON values. The rationale is as follows:
     
@@ -922,12 +925,13 @@ basic_json(basic_json&& other) noexcept;
 
 ## See also
 
-- [array](array.md) create a JSON array value, forcing array creation from an initializer list even when it looks like
+- [`array`](array.md) - create a JSON array value, forcing array creation from an initializer list even when it looks like
   an object
-- [object](object.md) create a JSON object value, forcing object creation from an initializer list
-- [binary](binary.md) create a JSON binary array value
-- [operator=](operator=.md) copy assignment operator
+- [`object`](object.md) - create a JSON object value, forcing object creation from an initializer list
+- [`binary`](binary.md) - create a JSON binary array value
+- [`operator=`](operator=.md) - copy assignment operator
 - [Creating JSON values](../../features/creating_values.md) - the article on creating JSON values
+- [Converting values](../../features/conversions.md) - which C++ types can be converted
 
 ## Version history
 

@@ -88,8 +88,11 @@ Output:
 
 ## See also
 
-- [basic_json](https://json.nlohmann.me/api/basic_json/index.md) - the underlying class template
-- [ordered_json](https://json.nlohmann.me/api/ordered_json/index.md) - specialization that preserves the insertion order of object keys
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) - the underlying class template
+- [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) - specialization that preserves the insertion order of object keys
+- [Types](https://json.nlohmann.me/features/types/index.md) - the JSON value types and how they are stored
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - get values out of a JSON value and put values in
+- [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - all the ways to build a JSON value
 
 ## Version history
 

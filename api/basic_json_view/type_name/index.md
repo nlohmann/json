@@ -4,7 +4,7 @@
 const char* type_name() const noexcept;
 ```
 
-Returns the type name as string to be used in error messages -- usually to indicate that a function was called on a wrong JSON type. Identical to [`BasicJsonType::type_name()`](https://json.nlohmann.me/api/basic_json/type_name/index.md), including the extra `"discarded"` return value for a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view (`BasicJsonType::type_name()` produces the same string for a discarded `BasicJsonType` value).
+Returns the type name as string to be used in error messages — usually to indicate that a function was called on a wrong JSON type. Identical to [`BasicJsonType::type_name()`](https://json.nlohmann.me/api/basic_json/type_name/index.md), including the extra `"discarded"` return value for a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view (`BasicJsonType::type_name()` produces the same string for a discarded `BasicJsonType` value).
 
 ## Return value
 
@@ -34,7 +34,7 @@ Constant.
 
 Example
 
-The example below reports why some parsed messages were rejected, using only `type_name()` -- no `BasicJsonType` value is ever built for the ones that are wrong, and the message text matches what [`BasicJsonType::type_name()`](https://json.nlohmann.me/api/basic_json/type_name/index.md) would produce for the same value.
+The example below reports why some parsed messages were rejected, using only `type_name()` — no `BasicJsonType` value is ever built for the ones that are wrong, and the message text matches what [`BasicJsonType::type_name()`](https://json.nlohmann.me/api/basic_json/type_name/index.md) would produce for the same value.
 
 ```
 #include <iostream>
@@ -79,7 +79,7 @@ expected an object, got discarded
 
 ## See also
 
-- [type](https://json.nlohmann.me/api/basic_json_view/type/index.md) - return the type of the value
+- [`type`](https://json.nlohmann.me/api/basic_json_view/type/index.md) - return the type of the value
 - [`BasicJsonType::type_name`](https://json.nlohmann.me/api/basic_json/type_name/index.md) - the corresponding function of `basic_json`
 
 ## Version history

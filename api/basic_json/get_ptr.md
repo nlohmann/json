@@ -109,7 +109,8 @@ Constant.
 
 ## See also
 
-- [get_ref()](get_ref.md) get a reference value
+- [`get_ref()`](get_ref.md) - get a reference value
+- [Converting values](../../features/conversions.md) - getting values out, with or without copying
 
 ## Version history
 

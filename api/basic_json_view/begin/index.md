@@ -4,7 +4,7 @@
 iterator begin() const noexcept;
 ```
 
-Returns an iterator to the first element of an array, or the first member value of an object, in **document order** -- the order the values appear in the source text, not sorted by key. A primitive value iterates as a range of one element (itself), and a `null` value or a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view iterates as an empty range.
+Returns an iterator to the first element of an array, or the first member value of an object, in **document order** — the order the values appear in the source text, not sorted by key. A primitive value iterates as a range of one element (itself), and a `null` value or a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view iterates as an empty range.
 
 ## Return value
 
@@ -20,7 +20,7 @@ Constant.
 
 ## Notes
 
-For an object, iteration visits **every** member, including all occurrences of a duplicate key -- unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md), [`find`](https://json.nlohmann.me/api/basic_json_view/find/index.md), and [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md), which all resolve to the *first* member with a given key. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]`.
+For an object, iteration visits **every** member, including all occurrences of a duplicate key — unlike [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md), [`find`](https://json.nlohmann.me/api/basic_json_view/find/index.md), and [`contains`](https://json.nlohmann.me/api/basic_json_view/contains/index.md), which all resolve to the *first* member with a given key. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]`.
 
 Because objects are iterated in document order rather than sorted by key, the order seen here can differ from what iterating the [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md)d `BasicJsonType` value would produce: a `basic_json` object (`std::map`-backed by default) sorts its keys, while a view does not.
 
@@ -63,9 +63,9 @@ message="started"
 
 ## See also
 
-- [end](https://json.nlohmann.me/api/basic_json_view/end/index.md) - returns an iterator to one past the last element
-- [cbegin](https://json.nlohmann.me/api/basic_json_view/cbegin/index.md) - returns a const iterator to the first element
-- [items](https://json.nlohmann.me/api/basic_json_view/items/index.md) - access iterator member functions in range-based for
+- [`end`](https://json.nlohmann.me/api/basic_json_view/end/index.md) - returns an iterator to one past the last element
+- [`cbegin`](https://json.nlohmann.me/api/basic_json_view/cbegin/index.md) - returns a const iterator to the first element
+- [`items`](https://json.nlohmann.me/api/basic_json_view/items/index.md) - access iterator member functions in range-based for
 - [`BasicJsonType::begin`](https://json.nlohmann.me/api/basic_json/begin/index.md) - the corresponding function of `basic_json`
 
 ## Version history

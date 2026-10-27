@@ -91,10 +91,11 @@ Ned Flanders (60) lives in 744 Evergreen Terrace
 
 ## See also
 
-- [adl_serializer](https://json.nlohmann.me/api/adl_serializer/index.md) the default `json_serializer`
-- [get](https://json.nlohmann.me/api/basic_json/get/index.md) explicit type conversion using the `json_serializer`'s `from_json()` method
-- [get_to](https://json.nlohmann.me/api/basic_json/get_to/index.md) explicit type conversion into a variable using the `json_serializer`'s `from_json()` method
+- [`adl_serializer`](https://json.nlohmann.me/api/adl_serializer/index.md) - the default `json_serializer`
+- [`get`](https://json.nlohmann.me/api/basic_json/get/index.md) - explicit type conversion using the `json_serializer`'s `from_json()` method
+- [`get_to`](https://json.nlohmann.me/api/basic_json/get_to/index.md) - explicit type conversion into a variable using the `json_serializer`'s `from_json()` method
 - [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - the article on converting between JSON values and arbitrary types
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - requirements on the `JSONSerializer` template parameter
 
 ## Version history
 

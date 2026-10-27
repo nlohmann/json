@@ -249,3 +249,14 @@ the value starts at line 3, column 10
 Positions are only available for values created by [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), they are not updated when a value is changed, and the macro makes every value 16 bytes larger on 64-bit platforms, so use it where the cost is acceptable, for example for configuration files. Note that `start_pos()` is a 0-based index into the input, whereas `byte` of a `parse_error` starts at 1.
 
 For binary formats such as CBOR, there are no lines; `byte` is the position in the byte sequence. To find out how many bytes a successfully parsed value used, see [Several values in one stream](https://json.nlohmann.me/features/parsing/large_and_partial_input/#several-values-in-one-stream).
+
+## See also
+
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events
+- [`parse_error`](https://json.nlohmann.me/api/basic_json/parse_error/index.md) - exception thrown on a parse error
+- [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) - record start and end positions of parsed values
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - error handling when exceptions are disabled
+- [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - list of exceptions and error codes
+- [Parsing Untrusted Input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - limits and checks for input you do not control

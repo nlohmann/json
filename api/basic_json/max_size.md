@@ -33,7 +33,7 @@ constant complexity.
 
 ## Notes
 
-This function does not return the maximal length of a string stored as JSON value -- it returns the maximal number of
+This function does not return the maximal length of a string stored as JSON value — it returns the maximal number of
 string elements the JSON value can store which is `1`.
 
 ## Examples
@@ -88,9 +88,9 @@ string elements the JSON value can store which is `1`.
 
 ## See also
 
-- [size](size.md) returns the number of elements
-- [array_t](array_t.md) the type used to store JSON arrays
-- [object_t](object_t.md) the type used to store JSON objects
+- [`size`](size.md) - returns the number of elements
+- [`array_t`](array_t.md) - the type used to store JSON arrays
+- [`object_t`](object_t.md) - the type used to store JSON objects
 
 ## Version history
 

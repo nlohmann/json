@@ -9,7 +9,7 @@ Only an **editable** document (`view_mode::editable`, e.g. [`json_editable_docum
 
 Inserts `value` into `array` as a new element before position `idx`, which must not be past the end (`idx <= array.size()`; `idx == array.size()` appends, like [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md)). Unlike [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), a [null](https://json.nlohmann.me/api/basic_json_view/is_null/index.md) `array` does *not* first become an empty array: `array` must already be an array.
 
-`value` is accepted three ways: a [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) of *any* document -- read-only or editable, and it does not have to be `array`'s own document -- which is copied so that nothing is shared with the source document afterward; a `BasicJsonType` value; or anything `BasicJsonType` can be constructed from (numbers, strings, `bool`, `nullptr`, containers, ...).
+`value` is accepted three ways: a [`basic_json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) of *any* document — read-only or editable, and it does not have to be `array`'s own document — which is copied so that nothing is shared with the source document afterward; a `BasicJsonType` value; or anything `BasicJsonType` can be constructed from (numbers, strings, `bool`, `nullptr`, containers, ...).
 
 ## Template parameters
 
@@ -31,11 +31,11 @@ a view of the new element, now holding `value`
 
 ## Exception safety
 
-Basic exception safety: `value` is fully encoded -- including the checks below -- into storage owned by the document before anything already reachable from [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) is touched, so a failure while encoding `value` (an invalid argument, or `std::bad_alloc`) leaves the document completely unchanged, other than memory allocated for the encoding that is not reclaimed. A failure of a later allocation -- while `array` switches from its parsed layout to a growable block, or while that block grows, see [Notes](#notes) -- can still leave `array` already switched to that layout even though `value` itself was not inserted.
+Basic exception safety: `value` is fully encoded — including the checks below — into storage owned by the document before anything already reachable from [`root()`](https://json.nlohmann.me/api/basic_json_document/root/index.md) is touched, so a failure while encoding `value` (an invalid argument, or `std::bad_alloc`) leaves the document completely unchanged, other than memory allocated for the encoding that is not reclaimed. A failure of a later allocation — while `array` switches from its parsed layout to a growable block, or while that block grows, see [Notes](#notes) — can still leave `array` already switched to that layout even though `value` itself was not inserted.
 
 ## Exceptions
 
-Throws [`type_error.309`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error309) if `array` is not an array -- the same message [`BasicJsonType::insert`](https://json.nlohmann.me/api/basic_json/insert/index.md) throws for the same type; a null `array` throws this too (see above). Throws [`out_of_range.401`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range401) if `idx` is negative, or if `idx > array.size()`. Throws [`invalid_iterator.202`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator202) ("view does not belong to this document") if `array` is a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view or a view of a *different* document. Throws [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302) if `value` is a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view or a [discarded](https://json.nlohmann.me/api/basic_json/is_discarded/index.md) `BasicJsonType` value, and [`type_error.319`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error319) if `value` is (or contains) a binary value -- `BasicJsonType` can hold one, but a `json_document` cannot. Throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if `value` is (or contains) a string that is not valid UTF-8, with the same message [`BasicJsonType::dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) gives for that string.
+Throws [`type_error.309`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error309) if `array` is not an array — the same message [`BasicJsonType::insert`](https://json.nlohmann.me/api/basic_json/insert/index.md) throws for the same type; a null `array` throws this too (see above). Throws [`out_of_range.401`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range401) if `idx` is negative, or if `idx > array.size()`. Throws [`invalid_iterator.202`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator202) ("view does not belong to this document") if `array` is a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view or a view of a *different* document. Throws [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302) if `value` is a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view or a [discarded](https://json.nlohmann.me/api/basic_json/is_discarded/index.md) `BasicJsonType` value, and [`type_error.319`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error319) if `value` is (or contains) a binary value — `BasicJsonType` can hold one, but a `json_document` cannot. Throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if `value` is (or contains) a string that is not valid UTF-8, with the same message [`BasicJsonType::dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) gives for that string.
 
 ## Complexity
 
@@ -43,13 +43,13 @@ Linear in the number of elements of `array` at or after `idx` (they move one slo
 
 ## Notes
 
-Like [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) on a member or an element, `insert` never moves an existing *element's value* -- only where `array`'s *links* to its elements live -- so a view of an existing element of `array` stays valid across an `insert`, and keeps referring to the same element even though its index shifts. Any iterator already taken over `array` is invalidated, since it was walking the old layout. See [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) for what stays valid across an edit in general.
+Like [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) on a member or an element, `insert` never moves an existing *element's value* — only where `array`'s *links* to its elements live — so a view of an existing element of `array` stays valid across an `insert`, and keeps referring to the same element even though its index shifts. Any iterator already taken over `array` is invalidated, since it was walking the old layout. See [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) for what stays valid across an edit in general.
 
 ## Examples
 
 Example
 
-The example below inserts a step into the middle of a deployment plan, without touching the steps that come after it, and shows that a view taken before the insert keeps referring to the same element even though its index shifts -- something a plain `json`/`ordered_json` array, or its `std::vector`-based storage, has no equivalent for.
+The example below inserts a step into the middle of a deployment plan, without touching the steps that come after it, and shows that a view taken before the insert keeps referring to the same element even though its index shifts — something a plain `json`/`ordered_json` array, or its `std::vector`-based storage, has no equivalent for.
 
 ```
 #include <iostream>
@@ -122,11 +122,12 @@ Output:
 
 ## See also
 
-- [push_back](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) - append to an array
-- [erase](https://json.nlohmann.me/api/basic_json_document/erase/index.md) - remove an object member, an array element, or the value a JSON pointer refers to
-- [set](https://json.nlohmann.me/api/basic_json_document/set/index.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
+- [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) - append to an array
+- [`erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md) - remove an object member, an array element, or the value a JSON pointer refers to
+- [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
 - [`BasicJsonType::insert`](https://json.nlohmann.me/api/basic_json/insert/index.md) - the corresponding function of `basic_json`
 - [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) - what an edit guarantees, for every overload
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#editing-a-document) - what an edit guarantees and costs
 
 ## Version history
 

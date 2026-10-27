@@ -99,7 +99,8 @@ true
 
 ## See also
 
-- [get_ref()](https://json.nlohmann.me/api/basic_json/get_ref/index.md) get a reference value
+- [`get_ref()`](https://json.nlohmann.me/api/basic_json/get_ref/index.md) - get a reference value
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - getting values out, with or without copying
 
 ## Version history
 

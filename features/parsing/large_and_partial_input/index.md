@@ -14,6 +14,8 @@ flowchart TD
     H -->|"yes"| I["stop early with SAX, or read through a view"]
 ```
 
+Questions about the input and the approach this page describes for each; an input can match more than one question.
+
 ## Several values in one stream
 
 For newline-delimited input, read line by line and parse each line, as described in [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md). For values that are simply concatenated, [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) reads one value and leaves the stream positioned after it. Check for the end of the stream before each read, because a read at the end throws:
@@ -162,6 +164,10 @@ chunk , 3]} -> complete
 
 The example feeds a document in five chunks. The first four are reported as incomplete, and a syntax error is reported as such, not as missing data.
 
+The chunks of the example, and the bytes each attempt parses again:
+
+Each row is one parse attempt on the growing buffer: an error at the byte after the end of the buffer means the value is incomplete, an error before the end is a real syntax error. The last line adds up the bytes parsed over all attempts.
+
 Limits of buffering
 
 - The buffer must contain exactly one value. Data that belongs to the next value is a syntax error. Use framing if values follow each other without a separator.
@@ -171,6 +177,10 @@ Limits of buffering
 ## Input too large for memory
 
 The input does not have to become one huge `json` value. The two tools below process it piece by piece.
+
+How the memory use develops while a large array of records is parsed (illustrative, not a measurement):
+
+Memory use over the number of records parsed: `parse()` keeps the whole tree, `json_document` the text plus its index, a discarding callback one record at a time, and SAX only what the handler keeps.
 
 ### Handle and discard elements with a callback
 
@@ -330,3 +340,8 @@ If the whole text is available and you only need to read some of it, a [`json_do
 - [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - event-based parsing
 - [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - read parts of a large document without building a tree
 - [Untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - limits for input you do not control
+- [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - generate SAX events
+- [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) - leave the stream positioned right after a parsed number
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time

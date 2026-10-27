@@ -59,9 +59,9 @@ Output:
 
 ## See also
 
-- [back](https://json.nlohmann.me/api/json_pointer/back/index.md) return last reference token
-- [push_back](https://json.nlohmann.me/api/json_pointer/push_back/index.md) append an unescaped token at the end of the pointer
-- [parent_pointer](https://json.nlohmann.me/api/json_pointer/parent_pointer/index.md) returns the parent of this JSON pointer
+- [`back`](https://json.nlohmann.me/api/json_pointer/back/index.md) - return last reference token
+- [`push_back`](https://json.nlohmann.me/api/json_pointer/push_back/index.md) - append an unescaped token at the end of the pointer
+- [`parent_pointer`](https://json.nlohmann.me/api/json_pointer/parent_pointer/index.md) - returns the parent of this JSON pointer
 
 ## Version history
 

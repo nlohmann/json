@@ -17,6 +17,8 @@ flowchart TD
     H -->|"yes"| I["stop early with SAX, or read through a view"]
 ```
 
+<p class="nj-caption" markdown>Questions about the input and the approach this page describes for each; an input can match more than one question.</p>
+
 ## Several values in one stream
 
 For newline-delimited input, read line by line and parse each line, as described in [JSON Lines](json_lines.md). For
@@ -182,6 +184,64 @@ exception is one past the buffer size in the first case:
 The example feeds a document in five chunks. The first four are reported as incomplete, and a syntax error is reported as
 such, not as missing data.
 
+The chunks of the example, and the bytes each attempt parses again:
+
+<div class="nj-fig-wrap" markdown>
+<svg class="nj-fig nj-fig--sax-buf" viewBox="0 0 700 442" role="img" aria-labelledby="fig-sax-buf-title fig-sax-buf-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-sax-buf-title">Buffering chunks until the value is complete: five chunks of {&quot;name&quot;: &quot;Mary&quot;, &quot;list&quot;: [1, 2, 3]} appended to a buffer.</title>
+<desc id="fig-sax-buf-desc">After chunks 1 to 4 the buffer has 4, 12, 19, and 30 bytes, and parsing it fails at byte 5, 13, 20, and 31: one past the end, so the input is incomplete and the program waits for more. After chunk 5 the buffer of 35 bytes parses as one complete value. For the input [1, ] of 5 bytes the error is at byte 5, before the end, so it is a real syntax error. Every attempt parses the buffer from byte 1, so 4 + 12 + 19 + 30 + 35 = 100 bytes are parsed for a 35-byte value, and the work grows quadratically.</desc>
+<text class="fg-h" x="16" y="24">chunk</text>
+<text class="fg-h" x="96" y="24">buffer, parsed from byte 1 each time</text>
+<text class="fg-h" x="420" y="24">result</text>
+<text class="fg-note fg-note--l" x="16" y="67">chunk 1</text>
+<rect class="nj-sax-new" x="96" y="50" width="36.6" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="67" xml:space="preserve">{&quot;na</text>
+<path class="nj-sax-caret nj-sax-s-wait" d="M133.8 76 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-wait" x="420" y="61">error at byte 5 = size + 1</text>
+<text class="fg-note fg-note--l" x="420" y="77">incomplete: wait for more</text>
+<text class="fg-note fg-note--l" x="16" y="117">chunk 2</text>
+<rect class="nj-sax-old" x="93" y="100" width="36.6" height="24" rx="4"/>
+<rect class="nj-sax-new" x="129.6" y="100" width="70.2" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="117" xml:space="preserve">{&quot;name&quot;: &quot;Ma</text>
+<path class="nj-sax-caret nj-sax-s-wait" d="M201 126 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-wait" x="420" y="111">error at byte 13 = size + 1</text>
+<text class="fg-note fg-note--l" x="420" y="127">incomplete: wait for more</text>
+<text class="fg-note fg-note--l" x="16" y="167">chunk 3</text>
+<rect class="nj-sax-old" x="93" y="150" width="103.8" height="24" rx="4"/>
+<rect class="nj-sax-new" x="196.8" y="150" width="61.8" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="167" xml:space="preserve">{&quot;name&quot;: &quot;Mary&quot;, &quot;l</text>
+<path class="nj-sax-caret nj-sax-s-wait" d="M259.8 176 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-wait" x="420" y="161">error at byte 20 = size + 1</text>
+<text class="fg-note fg-note--l" x="420" y="177">incomplete: wait for more</text>
+<text class="fg-note fg-note--l" x="16" y="217">chunk 4</text>
+<rect class="nj-sax-old" x="93" y="200" width="162.6" height="24" rx="4"/>
+<rect class="nj-sax-new" x="255.6" y="200" width="95.4" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="217" xml:space="preserve">{&quot;name&quot;: &quot;Mary&quot;, &quot;list&quot;: [1, 2</text>
+<path class="nj-sax-caret nj-sax-s-wait" d="M352.2 226 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-wait" x="420" y="211">error at byte 31 = size + 1</text>
+<text class="fg-note fg-note--l" x="420" y="227">incomplete: wait for more</text>
+<text class="fg-note fg-note--l" x="16" y="267">chunk 5</text>
+<rect class="nj-sax-old" x="93" y="250" width="255" height="24" rx="4"/>
+<rect class="nj-sax-new" x="348" y="250" width="45" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="267" xml:space="preserve">{&quot;name&quot;: &quot;Mary&quot;, &quot;list&quot;: [1, 2, 3]}</text>
+<text class="nj-sax-status nj-sax-s-ok" x="420" y="261">parsed, size 35</text>
+<text class="fg-note fg-note--l" x="420" y="277">complete: one value</text>
+<path class="nj-sax-sep" d="M16 290 H684"/>
+<text class="fg-note fg-note--l" x="16" y="325">other input</text>
+<rect class="nj-sax-new" x="96" y="308" width="45" height="24" rx="4"/>
+<text class="nj-sax-buf" x="96" y="325" xml:space="preserve">[1, ]</text>
+<path class="nj-sax-caret nj-sax-s-err" d="M133.8 334 l-5 8 h10 z"/>
+<text class="nj-sax-status nj-sax-s-err" x="420" y="319">error at byte 5, size 5</text>
+<text class="fg-note fg-note--l" x="420" y="335">before the end: a real error</text>
+<text class="fg-note fg-note--l" x="16" y="366">Bytes parsed: 4 + 12 + 19 + 30 + 35 = 100 for a value of 35 bytes.</text>
+<text class="fg-note fg-note--l" x="16" y="386">Every attempt starts again at byte 1, so the total work grows</text>
+<text class="fg-note fg-note--l" x="16" y="406">quadratically with the size of the value.</text>
+</svg>
+
+</div>
+
+<p class="nj-caption" markdown>Each row is one parse attempt on the growing buffer: an error at the byte after the end of the buffer means the value is incomplete, an error before the end is a real syntax error. The last line adds up the bytes parsed over all attempts.</p>
+
 !!! warning "Limits of buffering"
 
     - The buffer must contain exactly one value. Data that belongs to the next value is a syntax error. Use framing if
@@ -194,6 +254,34 @@ such, not as missing data.
 ## Input too large for memory
 
 The input does not have to become one huge `json` value. The two tools below process it piece by piece.
+
+How the memory use develops while a large array of records is parsed (illustrative, not a measurement):
+
+<div class="nj-fig-wrap" markdown>
+<svg class="nj-fig nj-fig--sax-mem" viewBox="0 0 660 312" role="img" aria-labelledby="fig-sax-mem-title fig-sax-mem-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-sax-mem-title">Illustrative memory use over time while a large array of records is parsed, not a measurement.</title>
+<desc id="fig-sax-mem-desc">Four curves. D&#8203;OM, parse(): rises steadily until the whole tree is in memory. json_document: starts at about the size of the text, which it keeps, and grows a little while its index is built. Parser callback that discards every record: stays flat at the size of one record. S&#8203;AX: stays flat and lowest, because no value is built and only what the handler keeps is in memory.</desc>
+<path class="nj-sax-axis" d="M56 36 V272 H448"/>
+<text class="fg-h" x="16" y="24">memory</text>
+<text class="fg-note fg-note--l" x="56" y="294">time: records parsed</text>
+<text class="fg-note fg-note--r nj-sax-illus" x="648" y="24">illustrative, not a measurement</text>
+<path class="nj-sax-curve nj-sax-c-dom" d="M56 268 L440 52"/>
+<path class="nj-sax-curve nj-sax-c-doc" d="M56 168 L440 146"/>
+<path class="nj-sax-curve nj-sax-c-cb" d="M56 250 L88 238 L88 250 L120 238 L120 250 L152 238 L152 250 L184 238 L184 250 L216 238 L216 250 L248 238 L248 250 L280 238 L280 250 L312 238 L312 250 L344 238 L344 250 L376 238 L376 250 L408 238 L408 250 L440 238 L440 250"/>
+<path class="nj-sax-curve nj-sax-c-sax" d="M56 264 H440"/>
+<text class="nj-sax-lab nj-sax-c-dom" x="456" y="48">D&#8203;OM: parse()</text>
+<text class="fg-note fg-note--l" x="456" y="65">the whole tree</text>
+<text class="nj-sax-lab nj-sax-c-doc" x="456" y="142">json_document</text>
+<text class="fg-note fg-note--l" x="456" y="159">the text plus its index</text>
+<text class="nj-sax-lab nj-sax-c-cb" x="456" y="227">callback, discard</text>
+<text class="fg-note fg-note--l" x="456" y="244">one record at a time</text>
+<text class="nj-sax-lab nj-sax-c-sax" x="456" y="269">S&#8203;AX</text>
+<text class="fg-note fg-note--l" x="456" y="286">only what the handler keeps</text>
+</svg>
+
+</div>
+
+<p class="nj-caption" markdown>Memory use over the number of records parsed: `parse()` keeps the whole tree, `json_document` the text plus its index, a discarding callback one record at a time, and SAX only what the handler keeps.</p>
 
 ### Handle and discard elements with a callback
 
@@ -368,3 +456,8 @@ and gives read-only [views](../../api/basic_json_view/index.md) of the parts you
 - [SAX interface](sax_interface.md) - event-based parsing
 - [Zero-copy JSON views](../json_view.md) - read parts of a large document without building a tree
 - [Untrusted input](untrusted_input.md) - limits for input you do not control
+- [`operator>>`](../../api/operator_gtgt.md) - deserialize from stream
+- [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input
+- [`sax_parse`](../../api/basic_json/sax_parse.md) - generate SAX events
+- [`JSON_PRECISE_STREAM_POSITION`](../../api/macros/json_precise_stream_position.md) - leave the stream positioned right after a parsed number
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](../../api/macros/json_disable_stream_bulk_scan.md) - read a `std::istream` one character at a time

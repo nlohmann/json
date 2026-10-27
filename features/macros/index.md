@@ -245,3 +245,17 @@ A strict variant [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](https://json.nlohmann.m
 These macros are defined by the library and contain the version numbers according to [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 See [full documentation of `NLOHMANN_JSON_VERSION_MAJOR`, `NLOHMANN_JSON_VERSION_MINOR`, and `NLOHMANN_JSON_VERSION_PATCH`](https://json.nlohmann.me/api/macros/nlohmann_json_version_major/index.md).
+
+## See also
+
+- [Macros](https://json.nlohmann.me/api/macros/index.md) - reference of all macros
+- [Runtime Assertions](https://json.nlohmann.me/features/assertions/index.md) - runtime assertions in detail
+- [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/index.md) - the library namespace and its macros
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - using the library without exceptions
+- [Modules](https://json.nlohmann.me/features/modules/index.md) - macros and C++20 modules
+- [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - all exceptions and their error codes
+- [CMake](https://json.nlohmann.me/integration/cmake/index.md) - set macros via CMake options
+- [Compile times](https://json.nlohmann.me/integration/compile_times/index.md) - reduce compile times with macros
+- [Architecture](https://json.nlohmann.me/home/architecture/index.md) - how the library is put together
+- [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md) - enum macros
+- [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - type conversion macros

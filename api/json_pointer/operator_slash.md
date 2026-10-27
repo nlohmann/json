@@ -86,8 +86,9 @@ a new JSON pointer is built from a copy of `lhs`.
 
 ## See also
 
-- [operator/=](operator_slasheq.md) append to the end of the JSON pointer
-- [push_back](push_back.md) append an unescaped token at the end of the pointer
+- [`operator/=`](operator_slasheq.md) - append to the end of the JSON pointer
+- [`push_back`](push_back.md) - append an unescaped token at the end of the pointer
+- [JSON Pointer](../../features/json_pointer.md) - the article on JSON Pointer support
 
 ## Version history
 

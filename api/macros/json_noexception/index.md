@@ -35,7 +35,11 @@ The code below switches off exceptions in the library.
 
 ## See also
 
-- [Switch off exceptions](https://json.nlohmann.me/home/exceptions/#switch-off-exceptions) for more information how to switch off exceptions
+- [Switch off exceptions](https://json.nlohmann.me/home/exceptions/#switch-off-exceptions) - more information how to switch off exceptions
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [Working Without Exceptions](https://json.nlohmann.me/features/no_exceptions/index.md) - using the library without exceptions
+- [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - all exceptions and their error codes
+- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) - base class of all exceptions thrown by the library
 
 ## Version history
 

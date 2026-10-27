@@ -79,7 +79,7 @@ Linear.
 ## See also
 
 - [Creating JSON values](../features/creating_values.md) - the article on creating JSON values
-- [JSON_NO_AUTOMATIC_UDLS](macros/json_no_automatic_udls.md) - do not include the user-defined string literals
+- [`JSON_NO_AUTOMATIC_UDLS`](macros/json_no_automatic_udls.md) - do not include the user-defined string literals
   automatically
 
 ## Version history

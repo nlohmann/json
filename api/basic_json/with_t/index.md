@@ -124,8 +124,9 @@ Output:
 
 ## See also
 
-- [basic_json](https://json.nlohmann.me/api/basic_json/#template-parameters) - the template parameters that can be replaced
-- [json_base_class_t](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) - the type used for `CustomBaseClass`
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/#template-parameters) - the template parameters that can be replaced
+- [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) - the type used for `CustomBaseClass`
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - requirements on the template parameters
 
 ## Version history
 

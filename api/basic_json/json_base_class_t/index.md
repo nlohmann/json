@@ -124,7 +124,7 @@ Output:
 
 ## See also
 
-- [as_base_class](https://json.nlohmann.me/api/basic_json/as_base_class/index.md) - access the custom base class
+- [`as_base_class`](https://json.nlohmann.me/api/basic_json/as_base_class/index.md) - access the custom base class
 - [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#custombaseclass) - the requirements for `CustomBaseClass`
 
 ## Version history

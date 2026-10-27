@@ -57,10 +57,10 @@ Constant.
 
 ## See also
 
-- [front](front.md) return first reference token
-- [pop_back](pop_back.md) remove the last reference token
-- [push_back](push_back.md) append an unescaped token at the end of the pointer
-- [parent_pointer](parent_pointer.md) returns the parent of this JSON pointer
+- [`front`](front.md) - return first reference token
+- [`pop_back`](pop_back.md) - remove the last reference token
+- [`push_back`](push_back.md) - append an unescaped token at the end of the pointer
+- [`parent_pointer`](parent_pointer.md) - returns the parent of this JSON pointer
 
 ## Version history
 

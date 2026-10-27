@@ -151,7 +151,7 @@ result: true
 
 ## See also
 
-- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
 - [SAX Interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - the SAX interface article
 - [Binary Values](https://json.nlohmann.me/features/binary_values/index.md) - the article on binary values
 

@@ -31,7 +31,7 @@ Constant.
 
 ## Notes
 
-As for [`BasicJsonType::empty()`](../basic_json/empty.md), this does not return whether a string value is empty -- it
+As for [`BasicJsonType::empty()`](../basic_json/empty.md), this does not return whether a string value is empty — it
 is `#!cpp false` for any string, regardless of its length.
 
 ## Examples
@@ -78,7 +78,7 @@ is `#!cpp false` for any string, regardless of its length.
 
 ## See also
 
-- [size](size.md) - return the number of elements
+- [`size`](size.md) - return the number of elements
 - [`BasicJsonType::empty`](../basic_json/empty.md) - the corresponding function of `basic_json`
 
 ## Version history

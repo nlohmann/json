@@ -9,7 +9,7 @@ Returns the byte offset of this value in the document's [`source()`](https://jso
 ## Return value
 
 - For a string with no escapes, a number, `true`/`false`/`null`, an array, or an object: the byte offset of the first byte of the value's token (for a string: the first byte after the opening quote) in [`source()`](https://json.nlohmann.me/api/basic_json_document/source/index.md).
-- `static_cast<std::size_t>(-1)` for a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view, and for a string that contains escapes -- such a string was decoded once into the document's own buffer, so there is no single byte range in `source()` left to point at.
+- `static_cast<std::size_t>(-1)` for a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view, and for a string that contains escapes — such a string was decoded once into the document's own buffer, so there is no single byte range in `source()` left to point at.
 
 ## Exception safety
 
@@ -74,8 +74,9 @@ true
 
 ## See also
 
-- [source](https://json.nlohmann.me/api/basic_json_document/source/index.md) - the parsed text
-- [is_string](https://json.nlohmann.me/api/basic_json_view/is_string/index.md) - return whether the value is a string
+- [`source`](https://json.nlohmann.me/api/basic_json_document/source/index.md) - the parsed text
+- [`is_string`](https://json.nlohmann.me/api/basic_json_view/is_string/index.md) - return whether the value is a string
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#images) - images and the source text
 
 ## Version history
 

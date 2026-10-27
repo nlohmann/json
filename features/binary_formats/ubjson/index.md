@@ -261,3 +261,12 @@ Output:
   "schema": 0
 }
 ```
+
+## See also
+
+- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes map to UBJSON
+- [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) - serialize a JSON value to UBJSON
+- [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) - parse a JSON value from UBJSON
+- [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) - reject ill-formed UTF-8 in strings
+- [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - decode binary formats without building a value

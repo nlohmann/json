@@ -92,7 +92,7 @@ Constant.
 
 ## See also
 
-- [type](type.md) - return the type of the value
+- [`type`](type.md) - return the type of the value
 - [`BasicJsonType::is_boolean`](../basic_json/is_boolean.md) - the corresponding function of `basic_json`
 
 ## Version history

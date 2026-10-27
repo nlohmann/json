@@ -54,7 +54,7 @@ using element_type = decltype(*j_object.items().begin());
 ```
 
 The per-element type (`iteration_proxy_value`) lives in the library's internal `detail` namespace and is
-intentionally unspecified as a stable, named type -- `decltype` is the supported way to obtain it, but its exact
+intentionally unspecified as a stable, named type — `decltype` is the supported way to obtain it, but its exact
 name/definition may change between versions.
 
 ## Return value
@@ -127,10 +127,11 @@ When iterating over an array, `key()` will return the index of the element as st
 
 ## See also
 
-- [begin](begin.md) returns an iterator to the first element
-- [end](end.md) returns an iterator to one past the last element
-- [basic_json_view::items](../basic_json_view/items.md) - the same range on a zero-copy view (`#!cpp const auto`,
+- [`begin`](begin.md) - returns an iterator to the first element
+- [`end`](end.md) - returns an iterator to one past the last element
+- [`basic_json_view::items`](../basic_json_view/items.md) - the same range on a zero-copy view (`#!cpp const auto`,
   not `#!cpp const auto&`: items are produced on the fly; document order, not sorted; duplicate keys are visited)
+- [Iterators](../../features/iterators.md#access-object-keys-during-iteration) - the article on iterating over keys and values
 
 ## Version history
 

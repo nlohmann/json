@@ -22,6 +22,8 @@ The parser callback distinguishes the following events:
 
 ## Examples
 
+Each coloured dot marks where the parser reports a `parse_event_t` event while reading the JSON text on the left; the legend on the right names the event per colour.
+
 Example
 
 The following code parses a small JSON text with a parser callback that reports every event together with its depth and keeps every value (by always returning `true`).
@@ -90,8 +92,9 @@ Output:
 
 ## See also
 
-- [parser_callback_t](https://json.nlohmann.me/api/basic_json/parser_callback_t/index.md) callback function type for the parser
-- [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) deserialize from a compatible input
+- [`parser_callback_t`](https://json.nlohmann.me/api/basic_json/parser_callback_t/index.md) - callback function type for the parser
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [Parser Callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md) - filter or inspect values while parsing
 
 ## Version history
 

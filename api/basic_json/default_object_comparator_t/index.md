@@ -41,8 +41,10 @@ three < four : false
 
 ## See also
 
-- [object_comparator_t](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md) the comparator actually used by `object_t`
-- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects
+- [`object_comparator_t`](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md) - the comparator actually used by `object_t`
+- [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md) - the type used to store JSON objects
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) - requirements on the `ObjectType` template parameter
+- [Object order](https://json.nlohmann.me/features/object_order/index.md) - preserve the insertion order of keys
 
 ## Version history
 

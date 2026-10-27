@@ -105,7 +105,8 @@ Output:
 
 ## See also
 
-- [flatten](https://json.nlohmann.me/api/basic_json/flatten/index.md) the reverse function
+- [`flatten`](https://json.nlohmann.me/api/basic_json/flatten/index.md) - the reverse function
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/#flatten-unflatten) - the article on JSON Pointer and flattening
 
 ## Version history
 

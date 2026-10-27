@@ -57,7 +57,8 @@ The hash values shown are examples only. They depend on the platform, the compil
 
 ## See also
 
-- [operator==](https://json.nlohmann.me/api/basic_json/operator_eq/index.md) compares two JSON values for equality, consistent with equal hash values
+- [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md) - compares two JSON values for equality, consistent with equal hash values
+- [Types](https://json.nlohmann.me/features/types/index.md) - the JSON value types and how they compare
 
 ## Version history
 

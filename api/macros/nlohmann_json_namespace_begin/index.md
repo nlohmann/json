@@ -82,9 +82,10 @@ Output:
 
 ## See also
 
-- [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/index.md)
-- [NLOHMANN_JSON_NAMESPACE](https://json.nlohmann.me/api/macros/nlohmann_json_namespace/index.md)
-- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace_no_version/index.md)
+- [`nlohmann` Namespace](https://json.nlohmann.me/features/namespace/index.md) - how the library's namespace is defined and versioned
+- [`NLOHMANN_JSON_NAMESPACE`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace/index.md) - macro expanding to the library namespace
+- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](https://json.nlohmann.me/api/macros/nlohmann_json_namespace_no_version/index.md) - disable the inline versioned namespace
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
 
 ## Version history
 

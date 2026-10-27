@@ -22,7 +22,7 @@ Constant.
 
 Example
 
-The example below checks that every record of a batch is an object with `std::all_of`, using [`cbegin()`](https://json.nlohmann.me/api/basic_json_view/cbegin/index.md)/`cend()` as the range -- the same way it would for any standard container -- before materializing any record of the batch.
+The example below checks that every record of a batch is an object with `std::all_of`, using [`cbegin()`](https://json.nlohmann.me/api/basic_json_view/cbegin/index.md)/`cend()` as the range — the same way it would for any standard container — before materializing any record of the batch.
 
 ```
 #include <algorithm>
@@ -59,8 +59,8 @@ true
 
 ## See also
 
-- [end](https://json.nlohmann.me/api/basic_json_view/end/index.md) - returns an iterator to one past the last element
-- [cbegin](https://json.nlohmann.me/api/basic_json_view/cbegin/index.md) - returns a const iterator to the first element
+- [`end`](https://json.nlohmann.me/api/basic_json_view/end/index.md) - returns an iterator to one past the last element
+- [`cbegin`](https://json.nlohmann.me/api/basic_json_view/cbegin/index.md) - returns a const iterator to the first element
 - [`BasicJsonType::cend`](https://json.nlohmann.me/api/basic_json/cend/index.md) - the corresponding function of `basic_json`
 
 ## Version history

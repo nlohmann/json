@@ -75,9 +75,10 @@ Linear.
 
 ## See also
 
-- [json_pointer](json_pointer/index.md) - type to represent JSON Pointers
-- [JSON_NO_AUTOMATIC_UDLS](macros/json_no_automatic_udls.md) - do not include the user-defined string literals
+- [`json_pointer`](json_pointer/index.md) - type to represent JSON Pointers
+- [`JSON_NO_AUTOMATIC_UDLS`](macros/json_no_automatic_udls.md) - do not include the user-defined string literals
   automatically
+- [JSON Pointer](../features/json_pointer.md) - the article on JSON Pointer support
 
 ## Version history
 

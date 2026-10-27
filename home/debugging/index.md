@@ -34,4 +34,11 @@ The repository ships a [GDB Python pretty printer](https://github.com/nlohmann/j
 
 ## Extended exception diagnostics
 
-Defining [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) before including the library augments `type_error`/`out_of_range`-style exceptions with a JSON Pointer to the offending value, which can help pinpoint where in a large document a runtime error occurred. This only applies to exceptions thrown *after* a value exists (e.g. during element access); parse errors, which happen before any value exists to point at, are not covered by this mechanism -- see [Parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) for how parse errors report their own location instead.
+Defining [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) before including the library augments `type_error`/`out_of_range`-style exceptions with a JSON Pointer to the offending value, which can help pinpoint where in a large document a runtime error occurred. This only applies to exceptions thrown *after* a value exists (e.g. during element access); parse errors, which happen before any value exists to point at, are not covered by this mechanism — see [Parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) for how parse errors report their own location instead.
+
+## See also
+
+- [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) - extended exception messages with the path of the failing value
+- [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) - record byte positions of values for error messages
+- [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - all exceptions and their error codes
+- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) - base class of all exceptions thrown by the library

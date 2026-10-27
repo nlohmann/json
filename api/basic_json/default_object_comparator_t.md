@@ -45,8 +45,10 @@ The actual comparator used depends on [`object_t`](object_t.md) and can be obtai
 
 ## See also
 
-- [object_comparator_t](object_comparator_t.md) the comparator actually used by `object_t`
-- [object_t](object_t.md) the type used to store JSON objects
+- [`object_comparator_t`](object_comparator_t.md) - the comparator actually used by `object_t`
+- [`object_t`](object_t.md) - the type used to store JSON objects
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the `ObjectType` template parameter
+- [Object order](../../features/object_order.md) - preserve the insertion order of keys
 
 ## Version history
 

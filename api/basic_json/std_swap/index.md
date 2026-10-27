@@ -68,7 +68,7 @@ j1 = [1,2,4,8,16] | j2 = {"one":1,"two":2}
 
 ## See also
 
-- [swap](https://json.nlohmann.me/api/basic_json/swap/index.md)
+- [`swap`](https://json.nlohmann.me/api/basic_json/swap/index.md) - exchange the contents of two JSON values
 
 ## Version history
 

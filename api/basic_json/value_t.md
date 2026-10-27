@@ -48,6 +48,9 @@ functions [`is_null`](is_null.md), [`is_object`](is_object.md), [`is_array`](is_
         F --> G[binary]
     ```
 
+    <p class="nj-caption" markdown>Arrows point from a type to the next greater type in the ordering used by
+    `operator<`.</p>
+
 !!! note "Types of numbers"
 
     There are three enumerators for numbers (`number_integer`, `number_unsigned`, and `number_float`) to distinguish
@@ -122,11 +125,12 @@ functions [`is_null`](is_null.md), [`is_object`](is_object.md), [`is_array`](is_
 
 ## See also
 
-- [type](type.md) return the type of the JSON value
-- [type_name](type_name.md) return the type as string
-- [operator value_t](operator_value_t.md) return the type of the JSON value
-- [is_primitive](is_primitive.md) return whether the type is primitive
-- [is_structured](is_structured.md) return whether the type is structured
+- [`type`](type.md) - return the type of the JSON value
+- [`type_name`](type_name.md) - return the type as string
+- [`operator value_t`](operator_value_t.md) - return the type of the JSON value
+- [`is_primitive`](is_primitive.md) - return whether the type is primitive
+- [`is_structured`](is_structured.md) - return whether the type is structured
+- [Types](../../features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

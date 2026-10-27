@@ -127,9 +127,10 @@ Output:
 
 ## See also
 
-- [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396)
-- [merge_patch](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) applies a JSON Merge Patch
-- [diff](https://json.nlohmann.me/api/basic_json/diff/index.md) creates a diff as a JSON Patch
+- [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396) - specification of JSON Merge Patch
+- [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - applies a JSON Merge Patch
+- [`diff`](https://json.nlohmann.me/api/basic_json/diff/index.md) - creates a diff as a JSON Patch
+- [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) - the article on JSON Merge Patch
 
 ## Version history
 

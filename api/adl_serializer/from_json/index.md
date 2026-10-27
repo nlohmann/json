@@ -27,7 +27,7 @@ This function is usually called by the [`get()`](https://json.nlohmann.me/api/ba
 
 ## Return value
 
-1. (none) -- the converted value is written to the output parameter `val`.
+1. (none) — the converted value is written to the output parameter `val`.
 1. the JSON value `j` converted to `TargetType`
 
 ## Examples
@@ -150,7 +150,9 @@ Ned Flanders (60) lives in 744 Evergreen Terrace
 
 ## See also
 
-- [to_json](https://json.nlohmann.me/api/adl_serializer/to_json/index.md)
+- [`to_json`](https://json.nlohmann.me/api/adl_serializer/to_json/index.md) - convert a C++ value to JSON
+- [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - write your own `from_json` and `to_json` functions
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - overview of `get`, `get_to` and implicit conversions
 
 ## Version history
 

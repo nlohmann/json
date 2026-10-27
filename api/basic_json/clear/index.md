@@ -91,8 +91,9 @@ false
 
 ## See also
 
-- [erase](https://json.nlohmann.me/api/basic_json/erase/index.md) removes elements from a JSON value
-- [empty](https://json.nlohmann.me/api/basic_json/empty/index.md) checks whether the JSON value has no elements
+- [`erase`](https://json.nlohmann.me/api/basic_json/erase/index.md) - removes elements from a JSON value
+- [`empty`](https://json.nlohmann.me/api/basic_json/empty/index.md) - checks whether the JSON value has no elements
+- [Modifying values](https://json.nlohmann.me/features/modifying_values/index.md) - the article on modifying values
 
 ## Version history
 

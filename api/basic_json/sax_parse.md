@@ -315,12 +315,14 @@ use the same file with stdio functions, but it must not wait for another thread 
 
 ## See also
 
-- [parse](parse.md) - deserialize from a compatible input
-- [accept](accept.md) - check if the input is valid JSON
+- [`parse`](parse.md) - deserialize from a compatible input
+- [`accept`](accept.md) - check if the input is valid JSON
 - [`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md) - read a `std::istream` one character
   at a time
 - [`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md) - read a `FILE*` with the locking stdio
   functions
+- [SAX Interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
+- [Large, Streamed, and Partial Input](../../features/parsing/large_and_partial_input.md) - chunked, concatenated, and very large input
 
 ## Version history
 

@@ -6,6 +6,8 @@ A `basic_json` value is a container and allows access via iterators. Depending o
 
 As for other containers, [`begin()`](https://json.nlohmann.me/api/basic_json/begin/index.md) returns an iterator to the first value and [`end()`](https://json.nlohmann.me/api/basic_json/end/index.md) returns an iterator to the value following the last value. The latter iterator is a placeholder and cannot be dereferenced. In case of null values, empty arrays, or empty objects, `begin()` will return `end()`.
 
+The range of `begin()` and `end()`: `begin()` refers to the first element, `end()` to the position after the last element, which must not be dereferenced.
+
 ### Iteration order for objects
 
 When iterating over objects, values are ordered with respect to the `object_comparator_t` type which defaults to `std::less`. See the [types documentation](https://json.nlohmann.me/features/types/#key-order) for more information.
@@ -104,6 +106,8 @@ Using `items()` on temporary objects is dangerous. Make sure the object's lifeti
 
 [`rbegin()`](https://json.nlohmann.me/api/basic_json/rbegin/index.md) and [`rend()`](https://json.nlohmann.me/api/basic_json/rend/index.md) return iterators in the reverse sequence.
 
+The range of `rbegin()` and `rend()` over the same elements: `rbegin()` refers to the last element and `rend()` to the position before the first one. Each reverse iterator stores an iterator to the element after the one it refers to.
+
 Example: reverse iteration with `rbegin()` and `rend()`
 
 ```
@@ -149,3 +153,13 @@ Output:
 | Operations | invalidated iterators |
 | ---------- | --------------------- |
 | `clear`    | all                   |
+
+## See also
+
+- [`begin`](https://json.nlohmann.me/api/basic_json/begin/index.md) - / [`end`](https://json.nlohmann.me/api/basic_json/end/index.md) - iterators to the first and one past the last element
+- [`rbegin`](https://json.nlohmann.me/api/basic_json/rbegin/index.md) - / [`rend`](https://json.nlohmann.me/api/basic_json/rend/index.md) - reverse iterators
+- [`cbegin`](https://json.nlohmann.me/api/basic_json/cbegin/index.md) - / [`cend`](https://json.nlohmann.me/api/basic_json/cend/index.md) - const iterators
+- [`items`](https://json.nlohmann.me/api/basic_json/items/index.md) - iterate over keys and values
+- [Object Order](https://json.nlohmann.me/features/object_order/index.md) - iteration order of object keys
+- [Element Access](https://json.nlohmann.me/features/element_access/index.md) - access single elements
+- [Modifying values](https://json.nlohmann.me/features/modifying_values/index.md) - add and remove elements (including iterator invalidation rules)

@@ -10,14 +10,14 @@ enum class number_format {
 This enumeration is used in [`dump`](dump.md) to choose how numbers are written. Two values are differentiated:
 
 shortest
-:   integers are copied from the source text -- already canonical in JSON -- except that `#!cpp -0` becomes
+:   integers are copied from the source text — already canonical in JSON — except that `#!cpp -0` becomes
     `#!cpp 0`, the way [`BasicJsonType::parse()`](../basic_json/parse.md) reads it; floats are written with the
     library's shortest round-trip conversion, exactly as [`BasicJsonType::dump()`](../basic_json/dump.md) would (e.g.
     `#!cpp 1.5`, `#!cpp 100.0`, `#!cpp 1e+100`)
 
 source
-:   every number is copied exactly as it appears in the source text -- `#!cpp 1.50`, `#!cpp 1E2`, `#!cpp -0`, all
-    digits of an integer literal with more digits than any number type holds -- something `BasicJsonType` cannot do,
+:   every number is copied exactly as it appears in the source text — `#!cpp 1.50`, `#!cpp 1E2`, `#!cpp -0`, all
+    digits of an integer literal with more digits than any number type holds — something `BasicJsonType` cannot do,
     since parsing already reduces every number to its parsed value
 
 ## Examples
@@ -71,10 +71,11 @@ source
 
 ## See also
 
-- [dump](dump.md) - serialize to a JSON-formatted string
-- [number_token](number_token.md) - get a single number's token text without dumping the whole value
+- [`dump`](dump.md) - serialize to a JSON-formatted string
+- [`number_token`](number_token.md) - get a single number's token text without dumping the whole value
 - [`BasicJsonType::error_handler_t`](../basic_json/error_handler_t.md) - the analogous enumeration for
   `BasicJsonType::dump`'s decoding-error behavior
+- [Zero-copy JSON views](../../features/json_view.md#writing-a-view-back) - writing numbers as they appeared in the source
 
 ## Version history
 

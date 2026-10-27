@@ -21,6 +21,8 @@ class vector ["std::vector<uint8_t>"]
 vector <|-- binary_t
 ```
 
+Class diagram of `json::binary_t`: it derives from `std::vector<uint8_t>` and adds functions to set, clear, query, and test an optional subtype.
+
 By default, binary values are stored as `std::vector<std::uint8_t>`. This type can be changed by providing a template parameter to the `basic_json` type. To store binary subtypes, the storage type is extended and exposed as [`json::binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md):
 
 ```
@@ -396,3 +398,13 @@ Note that subtype (42) is **not** serialized and that UBJSON has **no binary typ
   "binary": [202, 254, 186, 190]
 }
 ```
+
+## See also
+
+- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - the formats that can store binary values
+- [`binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md) - type for binary values
+- [`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md) - container for binary values with subtype
+- [`binary`](https://json.nlohmann.me/api/basic_json/binary/index.md) - create a binary value
+- [`get_binary`](https://json.nlohmann.me/api/basic_json/get_binary/index.md) - access the stored binary value
+- [`is_binary`](https://json.nlohmann.me/api/basic_json/is_binary/index.md) - check whether a value is binary
+- [`cbor_tag_handler_t`](https://json.nlohmann.me/api/basic_json/cbor_tag_handler_t/index.md) - store or ignore CBOR tags when parsing

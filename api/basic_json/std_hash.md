@@ -66,7 +66,8 @@ large integers that convert to the same `number_float_t`.
 
 ## See also
 
-- [operator==](operator_eq.md) compares two JSON values for equality, consistent with equal hash values
+- [`operator==`](operator_eq.md) - compares two JSON values for equality, consistent with equal hash values
+- [Types](../../features/types/index.md) - the JSON value types and how they compare
 
 ## Version history
 

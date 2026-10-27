@@ -117,10 +117,14 @@ The operations above work on a `basic_json` value. A JSON text that was parsed i
 
 ## See also
 
-- [`push_back`](https://json.nlohmann.me/api/basic_json/push_back/index.md) / [`emplace_back`](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) - append to an array
+- [`push_back`](https://json.nlohmann.me/api/basic_json/push_back/index.md) - / [`emplace_back`](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) - append to an array
 - [`emplace`](https://json.nlohmann.me/api/basic_json/emplace/index.md) - insert into an object if the key is absent
 - [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) - merge objects (shallow, or recursive with `merge_objects`)
 - [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - apply an RFC 7396 merge patch
-- [`erase`](https://json.nlohmann.me/api/basic_json/erase/index.md) / [`clear`](https://json.nlohmann.me/api/basic_json/clear/index.md) - remove elements
-- [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md) and [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) - structured modifications
+- [`erase`](https://json.nlohmann.me/api/basic_json/erase/index.md) - / [`clear`](https://json.nlohmann.me/api/basic_json/clear/index.md) - remove elements
+- [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md) - and [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) - structured modifications
 - [Editing a document](https://json.nlohmann.me/features/json_view/#editing-a-document) - change a parsed document in place
+- [`insert`](https://json.nlohmann.me/api/basic_json/insert/index.md) - insert elements at an iterator position or merge a range
+- [`operator+=`](https://json.nlohmann.me/api/basic_json/operator%2B%3D/index.md) - shorthand for `push_back`
+- [Element Access](https://json.nlohmann.me/features/element_access/index.md) - read elements
+- [Iterators](https://json.nlohmann.me/features/iterators/index.md) - iterate over elements

@@ -7,6 +7,8 @@ const_iterator begin() const noexcept;
 
 Returns an iterator to the first element.
 
+`begin()` points to the first element and `end()` to the position after the last element; the dashed cell is the past-the-last position, which must not be dereferenced.
+
 ## Return value
 
 iterator to the first element
@@ -52,12 +54,12 @@ Output:
 
 ## See also
 
-- [end](https://json.nlohmann.me/api/basic_json/end/index.md) returns an iterator to one past the last element
-- [cbegin](https://json.nlohmann.me/api/basic_json/cbegin/index.md) returns a const iterator to the first element
-- [rbegin](https://json.nlohmann.me/api/basic_json/rbegin/index.md) returns a reverse iterator to the last element
-- [items](https://json.nlohmann.me/api/basic_json/items/index.md) returns an iteration proxy to access keys and values during range-based for loops
+- [`end`](https://json.nlohmann.me/api/basic_json/end/index.md) - returns an iterator to one past the last element
+- [`cbegin`](https://json.nlohmann.me/api/basic_json/cbegin/index.md) - returns a const iterator to the first element
+- [`rbegin`](https://json.nlohmann.me/api/basic_json/rbegin/index.md) - returns a reverse iterator to the last element
+- [`items`](https://json.nlohmann.me/api/basic_json/items/index.md) - returns an iteration proxy to access keys and values during range-based for loops
 - [Iterators](https://json.nlohmann.me/features/iterators/index.md) - the article on iterators
-- [basic_json_view::begin](https://json.nlohmann.me/api/basic_json_view/begin/index.md) - the same iteration on a zero-copy view (in document order, not sorted by key)
+- [`basic_json_view::begin`](https://json.nlohmann.me/api/basic_json_view/begin/index.md) - the same iteration on a zero-copy view (in document order, not sorted by key)
 
 ## Version history
 

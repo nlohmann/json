@@ -61,6 +61,10 @@ The plan for version 4.0 described below is not final and may still change: macr
 
 Version 4.0 will not be developed on a separate branch. Instead, every breaking change is first added to a 3.x release behind a macro whose default keeps the 3.x behavior. Version 4.0 then switches the defaults and removes the macros. Version 4.0 is therefore the sum of these macros: you can try it on the 3.x release train today by defining each macro to its 4.0 value and fixing what no longer compiles or behaves differently. Once your code works with all of them, it is ready for version 4.0.
 
+Each macro has a default value in 3.x and a different value in version 4.0. Define the macro to the 4.0 value to try it on the 3.x release train today; version 4.0 makes that value the default:
+
+Each row is one macro: the 3.x release that added it, its default in 3.x, and its value in version 4.0 (highlighted) or "removed". Versions on the 3.x lane are not to scale.
+
 The following macros guard changes that are planned to become the default in version 4.0:
 
 | Macro                                                                                                                                   | 3.x default | 4.0 behavior                                                                                                                             | CMake option                                                                                                               | Added  |
@@ -74,6 +78,8 @@ The following macros guard changes that are planned to become the default in ver
 | [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md)                                       | `0`         | `1`: `to_cbor`, `to_ubjson`, `to_bjdata`, and `to_bson` throw for strings that are not valid UTF-8 by default                            | [`JSON_StrictBinaryUTF8`](https://json.nlohmann.me/integration/cmake/#json_strictbinaryutf8)                               | 3.13.0 |
 | [`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](https://json.nlohmann.me/api/macros/json_disable_tuple_reference_conversion/index.md)       | `0`         | `1`: a `basic_json` value can no longer be created from a one-element tuple of a reference to it, such as `std::forward_as_tuple(j)`     | [`JSON_DisableTupleReferenceConversion`](https://json.nlohmann.me/integration/cmake/#json_disabletuplereferenceconversion) | 3.13.0 |
 | [`JSON_DELETE_DEPRECATED_FUNCTIONS`](https://json.nlohmann.me/api/macros/json_delete_deprecated_functions/index.md)                     | `0`         | removed: the deprecated functions are removed (see below); the `from_*(ptr, len)` overloads stay deleted                                 | [`JSON_DeleteDeprecatedFunctions`](https://json.nlohmann.me/integration/cmake/#json_deletedeprecatedfunctions)             | 3.13.0 |
+
+Opt-in macros for the version 4.0 behavior. "3.x default" is the value the library uses when the macro is not defined, "Added" is the release that introduced the macro, and – means there is no CMake option.
 
 For example, the following makes a 3.x release behave like version 4.0 with respect to these changes:
 
@@ -109,6 +115,8 @@ The `from_*` overloads taking a pointer and a length are not removed in version 
 | [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) with a `basic_json` type as template argument, and the overloads of `value`, `contains`, `operator[]`, and `at` accepting such a pointer                                                                                                                                                     | 3.11.0 | [JSON Pointers](https://json.nlohmann.me/integration/migration_guide/#json-pointers)                     |
 | Comparing a [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) with a string via [`operator==`](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) or [`operator!=`](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md)                                                                                               | 3.11.2 | [JSON Pointers](https://json.nlohmann.me/integration/migration_guide/#json-pointers)                     |
 | [`from_bjdata`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) and [`from_bon8`](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) with `(ptr, len)`                                                                                                                                                                                     | 3.13.0 | [Parsing](https://json.nlohmann.me/integration/migration_guide/#parsing)                                 |
+
+Deprecated functions, with the release that deprecated each one and the section of the migration guide that shows its replacement.
 
 The deprecated legacy comparison of discarded values is controlled by a macro and therefore listed in the table above.
 

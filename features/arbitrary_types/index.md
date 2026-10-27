@@ -190,25 +190,27 @@ For all the macros, the first parameter is the name of the class/struct. The `DE
 
 ```
 flowchart TD
-    A["choosing a NLOHMANN_DEFINE_* macro"] --> B{"adding fields to a base class?"}
+    A["choosing a NLOHMANN_DEFINE_* macro"] --> B{{"adding fields to a base class?"}}
     B -->|"yes"| C["...DERIVED_TYPE..."]
     B -->|"no"| D["...TYPE..."]
-    C --> E{"need access to private members?"}
+    C --> E{{"need access to private members?"}}
     D --> E
     E -->|"yes"| F["...INTRUSIVE... (used inside the class)"]
     E -->|"no"| G["...NON_INTRUSIVE... (used in the namespace)"]
-    F --> H{"only serializing, never parsing back?"}
+    F --> H{{"only serializing, never parsing back?"}}
     G --> H
     H -->|"yes"| I["...ONLY_SERIALIZE"]
-    H -->|"no"| J{"allow missing keys when parsing?"}
+    H -->|"no"| J{{"allow missing keys when parsing?"}}
     J -->|"yes"| K["...WITH_DEFAULT"]
     J -->|"no"| L["plain (missing keys throw)"]
-    I --> M{"need custom JSON key names?"}
+    I --> M{{"need custom JSON key names?"}}
     K --> M
     L --> M
     M -->|"yes"| N["...WITH_NAMES"]
     M -->|"no"| O["done"]
 ```
+
+Decision tree for choosing a `NLOHMANN_DEFINE_*` macro: answer the questions from top to bottom; each answer picks one part of the macro name, and the parts are combined in this order. The table below lists the resulting macros.
 
 | Need access to private members | Need only serialization | Allow missing values when de-serializing | macro                                                                                                                                    |
 | ------------------------------ | ----------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -218,6 +220,8 @@ flowchart TD
 |                                |                         |                                          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md)                |
 |                                |                         |                                          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md)   |
 |                                |                         |                                          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md) |
+
+Macros for classes and structs without a base class. A green check means yes, a red cross means no, and a grey skip sign means the column does not apply, as a macro that only serializes never reads values.
 
 For *derived* classes and structs, use the following macros
 
@@ -230,10 +234,25 @@ For *derived* classes and structs, use the following macros
 |                                |                         |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)   |
 |                                |                         |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md) |
 
+Macros for derived classes and structs, read as Table 1.
+
 Implementation limits
 
 - The current macro implementations are limited to at most 63 member variables. If you want to serialize/deserialize types with more than 63 member variables, you need to define the `to_json`/`from_json` functions manually.
 - For the `WITH_NAMES` variants the limit is halved to 31 member variables.
+
+To pick the macro for your own type and get code to start from, answer the questions below.
+
+- Members are private: use an `INTRUSIVE` macro inside the class ([reference](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md)).
+- All members are public, or you cannot edit the class: use a `NON_INTRUSIVE` macro in the class's namespace ([reference](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md)).
+- The class adds members to a serializable base class: use a `DERIVED_TYPE` macro with the base class as second argument ([reference](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)).
+- Missing keys should keep their default values: append `_WITH_DEFAULT`; otherwise a missing key throws.
+- You only convert to JSON: append `_ONLY_SERIALIZE` instead.
+- JSON keys differ from the member names: append `_WITH_NAMES` and write `"key", member` pairs ([reference](https://json.nlohmann.me/api/macros/nlohmann_define_type_with_names/index.md)).
+- Private members of a class you cannot edit: no macro works; write the conversion by hand ([third-party types](#how-do-i-convert-third-party-types)).
+- The type is not default constructible and is converted in both directions: no macro works; specialize `adl_serializer` with a `from_json` that returns the value, or append `_ONLY_SERIALIZE` if you only convert to JSON ([non-default-constructible types](#how-can-i-use-get-for-non-default-constructiblenon-copyable-types)).
+
+Macro chooser: each answer selects one part of the macro name; the generated program defines the type, calls the macro and converts a value to JSON and back. Combinations that no macro supports show the alternative instead of code.
 
 Example: using the `NLOHMANN_DEFINE_TYPE_*` macros
 
@@ -301,7 +320,7 @@ Members declared as raw C-style arrays (e.g., `char buf[1024]`) do not round-tri
 
 Macros and `nlohmann::ordered_json`
 
-The `NLOHMANN_DEFINE_TYPE_*`/`NLOHMANN_DEFINE_DERIVED_TYPE_*` macros are generic over any `basic_json` specialization, including `nlohmann::ordered_json`. Simply use `ordered_json` as the target type and members are serialized in declaration order -- no separate macro or extra code is needed.
+The `NLOHMANN_DEFINE_TYPE_*`/`NLOHMANN_DEFINE_DERIVED_TYPE_*` macros are generic over any `basic_json` specialization, including `nlohmann::ordered_json`. Simply use `ordered_json` as the target type and members are serialized in declaration order — no separate macro or extra code is needed.
 
 ```
 namespace ns {
@@ -330,7 +349,7 @@ nlohmann::json j = m; // {}
 
 No macro for non-default-constructible types
 
-There is currently no `NLOHMANN_DEFINE_TYPE_*`-style macro for types that are not [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). This is not an intentional omission of documentation -- no such macro exists yet; see [How can I use `get()` for non-default constructible/non-copyable types?](#how-can-i-use-get-for-non-default-constructiblenon-copyable-types) for the manual pattern to use instead.
+There is currently no `NLOHMANN_DEFINE_TYPE_*`-style macro for types that are not [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). This is not an intentional omission of documentation — no such macro exists yet; see [How can I use `get()` for non-default constructible/non-copyable types?](#how-can-i-use-get-for-non-default-constructiblenon-copyable-types) for the manual pattern to use instead.
 
 ## How do I convert third-party types?
 
@@ -343,6 +362,8 @@ flowchart LR
     C -->|"unqualified call, found via ADL"| D["free to_json(j, t) / from_json(j, t) in T's namespace"]
     B -->|"user specialization replaces the default"| E["user's adl_serializer specialization for T"]
 ```
+
+How a conversion between `json` and a type `T` is dispatched: the default `adl_serializer` calls the free `to_json`/`from_json` functions found by argument-dependent lookup, while a user specialization of `adl_serializer` replaces this path.
 
 The library uses **JSON Serializers** to convert types to JSON. The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](https://en.cppreference.com/w/cpp/language/adl)).
 
@@ -512,7 +533,7 @@ For smart pointers, class hierarchies, `std::variant`, and `std::chrono`, see [R
 
 ## Why can't I convert to/from `std::any`?
 
-`std::any` is intentionally excluded from `get<T>()`/generic conversion support, so `get<std::any>()` and containers like `std::map<std::string, std::any>` fail to compile by design -- there is no way to know, from a `json` value alone, which concrete type to store inside the `std::any`. To work with heterogeneous JSON values, dispatch on the value's type manually and construct the `std::any` (or extract from it) yourself:
+`std::any` is intentionally excluded from `get<T>()`/generic conversion support, so `get<std::any>()` and containers like `std::map<std::string, std::any>` fail to compile by design — there is no way to know, from a `json` value alone, which concrete type to store inside the `std::any`. To work with heterogeneous JSON values, dispatch on the value's type manually and construct the `std::any` (or extract from it) yourself:
 
 ```
 std::any value_to_any(const json& j) {
@@ -539,7 +560,7 @@ A `std::map`/`std::unordered_map` whose key type is not string-like (e.g., `std:
 
 ## Why does `std::wstring` convert or dump incorrectly?
 
-The library assumes UTF-8 encoding internally, so `std::wstring` is not supported out of the box -- see the FAQ entry on [wide string handling](https://json.nlohmann.me/home/faq/#wide-string-handling) for why, and for a UTF-8 conversion recipe.
+The library assumes UTF-8 encoding internally, so `std::wstring` is not supported out of the box — see the FAQ entry on [wide string handling](https://json.nlohmann.me/home/faq/#wide-string-handling) for why, and for a UTF-8 conversion recipe.
 
 ## Can I write my own serializer? (Advanced use)
 
@@ -604,3 +625,11 @@ struct bad_serializer
 - [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md) - map enums to JSON strings instead of integers
 - [Supported macros](https://json.nlohmann.me/features/macros/index.md) - reference for `NLOHMANN_DEFINE_TYPE_*` and related macros
 - [`adl_serializer`](https://json.nlohmann.me/api/adl_serializer/index.md) - the default `JSONSerializer` used in the conversion dispatch
+- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md) - generate the conversion functions inside the type
+- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md) - generate the conversion functions outside the type
+- [`NLOHMANN_DEFINE_TYPE_WITH_NAMES`](https://json.nlohmann.me/api/macros/nlohmann_define_type_with_names/index.md) - use JSON keys that differ from the member names
+- [`NLOHMANN_DEFINE_DERIVED_TYPE`](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md) - generate the conversion functions for derived classes
+- [`NLOHMANN_JSON_SERIALIZE_ENUM`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/index.md) - map enum values to JSON values
+- [`get`](https://json.nlohmann.me/api/basic_json/get/index.md) - convert a JSON value to a C++ type
+- [`get_to`](https://json.nlohmann.me/api/basic_json/get_to/index.md) - convert a JSON value into an existing variable
+- [`json_serializer`](https://json.nlohmann.me/api/basic_json/json_serializer/index.md) - the `JSONSerializer` template parameter

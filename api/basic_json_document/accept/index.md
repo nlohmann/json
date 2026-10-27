@@ -7,7 +7,7 @@ static bool accept(InputType&& input,
                    const bool ignore_trailing_commas = false);
 ```
 
-Checks whether the input is valid JSON, accepting and rejecting exactly what [`BasicJsonType::accept()`](https://json.nlohmann.me/api/basic_json/accept/index.md) does, with the same options. Unlike [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md), this function never throws an exception for invalid input, and the returned `bool` is the only result -- no document is returned.
+Checks whether the input is valid JSON, accepting and rejecting exactly what [`BasicJsonType::accept()`](https://json.nlohmann.me/api/basic_json/accept/index.md) does, with the same options. Unlike [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md), this function never throws an exception for invalid input, and the returned `bool` is the only result — no document is returned.
 
 The result is the same as that of `BasicJsonType::accept()` by design; the difference is how the check is made. This function runs the document's index builder (and discards the index), while `BasicJsonType::accept()` runs the SAX parser with a handler that ignores every event. Use this one if you go on to parse the same input with [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) anyway, so that both use the same code; either is fine for a plain yes/no answer.
 
@@ -76,8 +76,9 @@ true
 
 ## See also
 
-- [parse](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
+- [`parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
 - [`BasicJsonType::accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - the corresponding function of `basic_json`
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#what-is-the-same-as-parse) - how parsing a document differs from, and matches, basic_json::parse
 
 ## Version history
 

@@ -6,34 +6,208 @@
 
 All exceptions inherit from class `json::exception` (which in turn inherits from `std::exception`). It is used as the base class for all exceptions thrown by the `basic_json` class. This class can hence be used as "wildcard" to catch exceptions.
 
-``` mermaid
-classDiagram
-  direction LR
-    class `std::exception` {
-        <<interface>>
-    }
+The map shows the class tree and every exception id documented on this page; click an id to jump to its section.
 
-    class `json::exception` {
-        +const int id
-        +const char* what() const
-    }
+<div class="nj-fig-wrap" markdown>
+<svg class="nj-fig nj-exceptions-map nj-exceptions-map--wide" viewBox="0 0 760 694" aria-labelledby="nj-exc-map-title-w nj-exc-map-desc-w" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title id="nj-exc-map-title-w">Exception id map</title>
+<desc id="nj-exc-map-desc-w">Class tree: std::exception is the base of json::exception, which is the base of the five exception families parse_error (ids 1xx), invalid_iterator (2xx), type_error (3xx), out_of_range (4xx) and other_error (5xx). Each family lists the ids documented on this page, 68 in total; every id links to its section.</desc>
+<defs><marker id="nj-exc-tri-w" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto"><path class="nj-exceptions-tri" d="M1 1 L11 6 L1 11 z"/></marker></defs>
+<line class="nj-exceptions-edge" x1="34" y1="656" x2="34" y2="158" marker-end="url(#nj-exc-tri-w)"/>
+<rect class="nj-exceptions-box" x="12" y="12" width="200" height="52" rx="7"/><text class="nj-exceptions-name" x="24" y="34">std::exception</text><text class="nj-exceptions-sub" x="24" y="53">C++ standard library base</text>
+<line class="nj-exceptions-edge" x1="34" y1="104" x2="34" y2="66" marker-end="url(#nj-exc-tri-w)"/>
+<rect class="nj-exceptions-box" x="12" y="104" width="300" height="52" rx="7"/><text class="nj-exceptions-name" x="24" y="126">json::exception</text><text class="nj-exceptions-sub" x="24" y="145">id, what() · catch-all</text>
+<line class="nj-exceptions-edge" x1="34" y1="222" x2="64" y2="222"/>
+<a class="nj-exceptions-fam" xlink:href="#parse-errors" aria-label="json::parse_error, 1xx · 15 ids · adds member byte"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="196" width="214" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="218">json::parse_error</text><text class="nj-exceptions-sub" x="76" y="237">1xx · 15 ids · adds member byte</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error101" aria-label="json.exception.parse_error.101"><rect x="294" y="208" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="226.5">101</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error102" aria-label="json.exception.parse_error.102"><rect x="341.7" y="208" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="226.5">102</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error103" aria-label="json.exception.parse_error.103"><rect x="389.4" y="208" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="398.4" y="226.5">103</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error104" aria-label="json.exception.parse_error.104"><rect x="437.1" y="208" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="446.1" y="226.5">104</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error105" aria-label="json.exception.parse_error.105"><rect x="484.8" y="208" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="493.8" y="226.5">105</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error106" aria-label="json.exception.parse_error.106"><rect x="532.5" y="208" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="541.5" y="226.5">106</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error107" aria-label="json.exception.parse_error.107"><rect x="580.2" y="208" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="589.2" y="226.5">107</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error108" aria-label="json.exception.parse_error.108"><rect x="627.9" y="208" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="636.9" y="226.5">108</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error109" aria-label="json.exception.parse_error.109"><rect x="675.6" y="208" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="684.6" y="226.5">109</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error110" aria-label="json.exception.parse_error.110"><rect x="294" y="242" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="260.5">110</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error112" aria-label="json.exception.parse_error.112"><rect x="341.7" y="242" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="260.5">112</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error113" aria-label="json.exception.parse_error.113"><rect x="389.4" y="242" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="398.4" y="260.5">113</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error114" aria-label="json.exception.parse_error.114"><rect x="437.1" y="242" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="446.1" y="260.5">114</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error115" aria-label="json.exception.parse_error.115"><rect x="484.8" y="242" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="493.8" y="260.5">115</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error116" aria-label="json.exception.parse_error.116"><rect x="532.5" y="242" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="541.5" y="260.5">116</text></a>
+<line class="nj-exceptions-edge" x1="34" y1="322" x2="64" y2="322"/>
+<a class="nj-exceptions-fam" xlink:href="#iterator-errors" aria-label="json::invalid_iterator, 2xx · 14 ids"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="296" width="214" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="318">json::invalid_iterator</text><text class="nj-exceptions-sub" x="76" y="337">2xx · 14 ids</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator201" aria-label="json.exception.invalid_iterator.201"><rect x="294" y="308" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="326.5">201</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator202" aria-label="json.exception.invalid_iterator.202"><rect x="341.7" y="308" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="326.5">202</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator203" aria-label="json.exception.invalid_iterator.203"><rect x="389.4" y="308" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="398.4" y="326.5">203</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator204" aria-label="json.exception.invalid_iterator.204"><rect x="437.1" y="308" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="446.1" y="326.5">204</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator205" aria-label="json.exception.invalid_iterator.205"><rect x="484.8" y="308" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="493.8" y="326.5">205</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator206" aria-label="json.exception.invalid_iterator.206"><rect x="532.5" y="308" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="541.5" y="326.5">206</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator207" aria-label="json.exception.invalid_iterator.207"><rect x="580.2" y="308" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="589.2" y="326.5">207</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator208" aria-label="json.exception.invalid_iterator.208"><rect x="627.9" y="308" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="636.9" y="326.5">208</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator209" aria-label="json.exception.invalid_iterator.209"><rect x="675.6" y="308" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="684.6" y="326.5">209</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator210" aria-label="json.exception.invalid_iterator.210"><rect x="294" y="342" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="360.5">210</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator211" aria-label="json.exception.invalid_iterator.211"><rect x="341.7" y="342" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="360.5">211</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator212" aria-label="json.exception.invalid_iterator.212"><rect x="389.4" y="342" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="398.4" y="360.5">212</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator213" aria-label="json.exception.invalid_iterator.213"><rect x="437.1" y="342" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="446.1" y="360.5">213</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator214" aria-label="json.exception.invalid_iterator.214"><rect x="484.8" y="342" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="493.8" y="360.5">214</text></a>
+<line class="nj-exceptions-edge" x1="34" y1="422" x2="64" y2="422"/>
+<a class="nj-exceptions-fam" xlink:href="#type-errors" aria-label="json::type_error, 3xx · 21 ids"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="396" width="214" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="418">json::type_error</text><text class="nj-exceptions-sub" x="76" y="437">3xx · 21 ids</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error301" aria-label="json.exception.type_error.301"><rect x="294" y="408" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="426.5">301</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error302" aria-label="json.exception.type_error.302"><rect x="341.7" y="408" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="426.5">302</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error303" aria-label="json.exception.type_error.303"><rect x="389.4" y="408" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="398.4" y="426.5">303</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error304" aria-label="json.exception.type_error.304"><rect x="437.1" y="408" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="446.1" y="426.5">304</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error305" aria-label="json.exception.type_error.305"><rect x="484.8" y="408" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="493.8" y="426.5">305</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error306" aria-label="json.exception.type_error.306"><rect x="532.5" y="408" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="541.5" y="426.5">306</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error307" aria-label="json.exception.type_error.307"><rect x="580.2" y="408" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="589.2" y="426.5">307</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error308" aria-label="json.exception.type_error.308"><rect x="627.9" y="408" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="636.9" y="426.5">308</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error309" aria-label="json.exception.type_error.309"><rect x="675.6" y="408" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="684.6" y="426.5">309</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error310" aria-label="json.exception.type_error.310"><rect x="294" y="442" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="460.5">310</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error311" aria-label="json.exception.type_error.311"><rect x="341.7" y="442" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="460.5">311</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error312" aria-label="json.exception.type_error.312"><rect x="389.4" y="442" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="398.4" y="460.5">312</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error313" aria-label="json.exception.type_error.313"><rect x="437.1" y="442" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="446.1" y="460.5">313</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error314" aria-label="json.exception.type_error.314"><rect x="484.8" y="442" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="493.8" y="460.5">314</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error315" aria-label="json.exception.type_error.315"><rect x="532.5" y="442" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="541.5" y="460.5">315</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error316" aria-label="json.exception.type_error.316"><rect x="580.2" y="442" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="589.2" y="460.5">316</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error317" aria-label="json.exception.type_error.317"><rect x="627.9" y="442" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="636.9" y="460.5">317</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error318" aria-label="json.exception.type_error.318"><rect x="675.6" y="442" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="684.6" y="460.5">318</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error319" aria-label="json.exception.type_error.319"><rect x="294" y="476" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="494.5">319</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error320" aria-label="json.exception.type_error.320"><rect x="341.7" y="476" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="494.5">320</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error321" aria-label="json.exception.type_error.321"><rect x="389.4" y="476" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="398.4" y="494.5">321</text></a>
+<line class="nj-exceptions-edge" x1="34" y1="556" x2="64" y2="556"/>
+<a class="nj-exceptions-fam" xlink:href="#out-of-range" aria-label="json::out_of_range, 4xx · 16 ids"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="530" width="214" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="552">json::out_of_range</text><text class="nj-exceptions-sub" x="76" y="571">4xx · 16 ids</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range401" aria-label="json.exception.out_of_range.401"><rect x="294" y="542" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="560.5">401</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range402" aria-label="json.exception.out_of_range.402"><rect x="341.7" y="542" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="560.5">402</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range403" aria-label="json.exception.out_of_range.403"><rect x="389.4" y="542" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="398.4" y="560.5">403</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range404" aria-label="json.exception.out_of_range.404"><rect x="437.1" y="542" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="446.1" y="560.5">404</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range405" aria-label="json.exception.out_of_range.405"><rect x="484.8" y="542" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="493.8" y="560.5">405</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range406" aria-label="json.exception.out_of_range.406"><rect x="532.5" y="542" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="541.5" y="560.5">406</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range407" aria-label="json.exception.out_of_range.407"><rect x="580.2" y="542" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="589.2" y="560.5">407</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range408" aria-label="json.exception.out_of_range.408"><rect x="627.9" y="542" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="636.9" y="560.5">408</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range409" aria-label="json.exception.out_of_range.409"><rect x="675.6" y="542" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="684.6" y="560.5">409</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range410" aria-label="json.exception.out_of_range.410"><rect x="294" y="576" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="594.5">410</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range411" aria-label="json.exception.out_of_range.411"><rect x="341.7" y="576" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="594.5">411</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range412" aria-label="json.exception.out_of_range.412"><rect x="389.4" y="576" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="398.4" y="594.5">412</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range413" aria-label="json.exception.out_of_range.413"><rect x="437.1" y="576" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="446.1" y="594.5">413</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range414" aria-label="json.exception.out_of_range.414"><rect x="484.8" y="576" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="493.8" y="594.5">414</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range415" aria-label="json.exception.out_of_range.415"><rect x="532.5" y="576" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="541.5" y="594.5">415</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range416" aria-label="json.exception.out_of_range.416"><rect x="580.2" y="576" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="589.2" y="594.5">416</text></a>
+<line class="nj-exceptions-edge" x1="34" y1="656" x2="64" y2="656"/>
+<a class="nj-exceptions-fam" xlink:href="#further-exceptions" aria-label="json::other_error, 5xx · 2 ids"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="630" width="214" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="652">json::other_error</text><text class="nj-exceptions-sub" x="76" y="671">5xx · 2 ids</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionother_error501" aria-label="json.exception.other_error.501"><rect x="294" y="642" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="303" y="660.5">501</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionother_error502" aria-label="json.exception.other_error.502"><rect x="341.7" y="642" width="41.7" height="28" rx="6"/><text class="nj-exceptions-id" x="350.7" y="660.5">502</text></a>
+</svg>
+<svg class="nj-fig nj-exceptions-map nj-exceptions-map--narrow" viewBox="0 0 360 1152" aria-labelledby="nj-exc-map-title-n nj-exc-map-desc-n" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title id="nj-exc-map-title-n">Exception id map</title>
+<desc id="nj-exc-map-desc-n">Class tree: std::exception is the base of json::exception, which is the base of the five exception families parse_error (ids 1xx), invalid_iterator (2xx), type_error (3xx), out_of_range (4xx) and other_error (5xx). Each family lists the ids documented on this page, 68 in total; every id links to its section.</desc>
+<defs><marker id="nj-exc-tri-n" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto"><path class="nj-exceptions-tri" d="M1 1 L11 6 L1 11 z"/></marker></defs>
+<line class="nj-exceptions-edge" x1="34" y1="1070" x2="34" y2="158" marker-end="url(#nj-exc-tri-n)"/>
+<rect class="nj-exceptions-box" x="12" y="12" width="190" height="52" rx="7"/><text class="nj-exceptions-name" x="24" y="34">std::exception</text><text class="nj-exceptions-sub" x="24" y="53">C++ standard library base</text>
+<line class="nj-exceptions-edge" x1="34" y1="104" x2="34" y2="66" marker-end="url(#nj-exc-tri-n)"/>
+<rect class="nj-exceptions-box" x="12" y="104" width="250" height="52" rx="7"/><text class="nj-exceptions-name" x="24" y="126">json::exception</text><text class="nj-exceptions-sub" x="24" y="145">id, what() · catch-all</text>
+<line class="nj-exceptions-edge" x1="34" y1="222" x2="64" y2="222"/>
+<a class="nj-exceptions-fam" xlink:href="#parse-errors" aria-label="json::parse_error, 1xx · 15 ids · adds member byte"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="196" width="284" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="218">json::parse_error</text><text class="nj-exceptions-sub" x="76" y="237">1xx · 15 ids · adds member byte</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error101" aria-label="json.exception.parse_error.101"><rect x="64" y="258" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="279.5">101</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error102" aria-label="json.exception.parse_error.102"><rect x="111.7" y="258" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="279.5">102</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error103" aria-label="json.exception.parse_error.103"><rect x="159.4" y="258" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="279.5">103</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error104" aria-label="json.exception.parse_error.104"><rect x="207.1" y="258" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="279.5">104</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error105" aria-label="json.exception.parse_error.105"><rect x="254.8" y="258" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="263.8" y="279.5">105</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error106" aria-label="json.exception.parse_error.106"><rect x="302.5" y="258" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="311.5" y="279.5">106</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error107" aria-label="json.exception.parse_error.107"><rect x="64" y="298" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="319.5">107</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error108" aria-label="json.exception.parse_error.108"><rect x="111.7" y="298" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="319.5">108</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error109" aria-label="json.exception.parse_error.109"><rect x="159.4" y="298" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="319.5">109</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error110" aria-label="json.exception.parse_error.110"><rect x="207.1" y="298" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="319.5">110</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error112" aria-label="json.exception.parse_error.112"><rect x="254.8" y="298" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="263.8" y="319.5">112</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error113" aria-label="json.exception.parse_error.113"><rect x="302.5" y="298" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="311.5" y="319.5">113</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error114" aria-label="json.exception.parse_error.114"><rect x="64" y="338" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="359.5">114</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error115" aria-label="json.exception.parse_error.115"><rect x="111.7" y="338" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="359.5">115</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionparse_error116" aria-label="json.exception.parse_error.116"><rect x="159.4" y="338" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="359.5">116</text></a>
+<line class="nj-exceptions-edge" x1="34" y1="424" x2="64" y2="424"/>
+<a class="nj-exceptions-fam" xlink:href="#iterator-errors" aria-label="json::invalid_iterator, 2xx · 14 ids"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="398" width="284" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="420">json::invalid_iterator</text><text class="nj-exceptions-sub" x="76" y="439">2xx · 14 ids</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator201" aria-label="json.exception.invalid_iterator.201"><rect x="64" y="460" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="481.5">201</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator202" aria-label="json.exception.invalid_iterator.202"><rect x="111.7" y="460" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="481.5">202</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator203" aria-label="json.exception.invalid_iterator.203"><rect x="159.4" y="460" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="481.5">203</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator204" aria-label="json.exception.invalid_iterator.204"><rect x="207.1" y="460" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="481.5">204</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator205" aria-label="json.exception.invalid_iterator.205"><rect x="254.8" y="460" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="263.8" y="481.5">205</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator206" aria-label="json.exception.invalid_iterator.206"><rect x="302.5" y="460" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="311.5" y="481.5">206</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator207" aria-label="json.exception.invalid_iterator.207"><rect x="64" y="500" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="521.5">207</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator208" aria-label="json.exception.invalid_iterator.208"><rect x="111.7" y="500" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="521.5">208</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator209" aria-label="json.exception.invalid_iterator.209"><rect x="159.4" y="500" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="521.5">209</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator210" aria-label="json.exception.invalid_iterator.210"><rect x="207.1" y="500" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="521.5">210</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator211" aria-label="json.exception.invalid_iterator.211"><rect x="254.8" y="500" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="263.8" y="521.5">211</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator212" aria-label="json.exception.invalid_iterator.212"><rect x="302.5" y="500" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="311.5" y="521.5">212</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator213" aria-label="json.exception.invalid_iterator.213"><rect x="64" y="540" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="561.5">213</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptioninvalid_iterator214" aria-label="json.exception.invalid_iterator.214"><rect x="111.7" y="540" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="561.5">214</text></a>
+<line class="nj-exceptions-edge" x1="34" y1="626" x2="64" y2="626"/>
+<a class="nj-exceptions-fam" xlink:href="#type-errors" aria-label="json::type_error, 3xx · 21 ids"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="600" width="284" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="622">json::type_error</text><text class="nj-exceptions-sub" x="76" y="641">3xx · 21 ids</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error301" aria-label="json.exception.type_error.301"><rect x="64" y="662" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="683.5">301</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error302" aria-label="json.exception.type_error.302"><rect x="111.7" y="662" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="683.5">302</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error303" aria-label="json.exception.type_error.303"><rect x="159.4" y="662" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="683.5">303</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error304" aria-label="json.exception.type_error.304"><rect x="207.1" y="662" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="683.5">304</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error305" aria-label="json.exception.type_error.305"><rect x="254.8" y="662" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="263.8" y="683.5">305</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error306" aria-label="json.exception.type_error.306"><rect x="302.5" y="662" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="311.5" y="683.5">306</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error307" aria-label="json.exception.type_error.307"><rect x="64" y="702" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="723.5">307</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error308" aria-label="json.exception.type_error.308"><rect x="111.7" y="702" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="723.5">308</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error309" aria-label="json.exception.type_error.309"><rect x="159.4" y="702" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="723.5">309</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error310" aria-label="json.exception.type_error.310"><rect x="207.1" y="702" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="723.5">310</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error311" aria-label="json.exception.type_error.311"><rect x="254.8" y="702" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="263.8" y="723.5">311</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error312" aria-label="json.exception.type_error.312"><rect x="302.5" y="702" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="311.5" y="723.5">312</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error313" aria-label="json.exception.type_error.313"><rect x="64" y="742" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="763.5">313</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error314" aria-label="json.exception.type_error.314"><rect x="111.7" y="742" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="763.5">314</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error315" aria-label="json.exception.type_error.315"><rect x="159.4" y="742" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="763.5">315</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error316" aria-label="json.exception.type_error.316"><rect x="207.1" y="742" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="763.5">316</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error317" aria-label="json.exception.type_error.317"><rect x="254.8" y="742" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="263.8" y="763.5">317</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error318" aria-label="json.exception.type_error.318"><rect x="302.5" y="742" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="311.5" y="763.5">318</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error319" aria-label="json.exception.type_error.319"><rect x="64" y="782" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="803.5">319</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error320" aria-label="json.exception.type_error.320"><rect x="111.7" y="782" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="803.5">320</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptiontype_error321" aria-label="json.exception.type_error.321"><rect x="159.4" y="782" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="803.5">321</text></a>
+<line class="nj-exceptions-edge" x1="34" y1="868" x2="64" y2="868"/>
+<a class="nj-exceptions-fam" xlink:href="#out-of-range" aria-label="json::out_of_range, 4xx · 16 ids"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="842" width="284" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="864">json::out_of_range</text><text class="nj-exceptions-sub" x="76" y="883">4xx · 16 ids</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range401" aria-label="json.exception.out_of_range.401"><rect x="64" y="904" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="925.5">401</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range402" aria-label="json.exception.out_of_range.402"><rect x="111.7" y="904" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="925.5">402</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range403" aria-label="json.exception.out_of_range.403"><rect x="159.4" y="904" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="925.5">403</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range404" aria-label="json.exception.out_of_range.404"><rect x="207.1" y="904" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="925.5">404</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range405" aria-label="json.exception.out_of_range.405"><rect x="254.8" y="904" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="263.8" y="925.5">405</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range406" aria-label="json.exception.out_of_range.406"><rect x="302.5" y="904" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="311.5" y="925.5">406</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range407" aria-label="json.exception.out_of_range.407"><rect x="64" y="944" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="965.5">407</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range408" aria-label="json.exception.out_of_range.408"><rect x="111.7" y="944" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="965.5">408</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range409" aria-label="json.exception.out_of_range.409"><rect x="159.4" y="944" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="965.5">409</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range410" aria-label="json.exception.out_of_range.410"><rect x="207.1" y="944" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="965.5">410</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range411" aria-label="json.exception.out_of_range.411"><rect x="254.8" y="944" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="263.8" y="965.5">411</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range412" aria-label="json.exception.out_of_range.412"><rect x="302.5" y="944" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="311.5" y="965.5">412</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range413" aria-label="json.exception.out_of_range.413"><rect x="64" y="984" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="1005.5">413</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range414" aria-label="json.exception.out_of_range.414"><rect x="111.7" y="984" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="1005.5">414</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range415" aria-label="json.exception.out_of_range.415"><rect x="159.4" y="984" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="168.4" y="1005.5">415</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionout_of_range416" aria-label="json.exception.out_of_range.416"><rect x="207.1" y="984" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="216.1" y="1005.5">416</text></a>
+<line class="nj-exceptions-edge" x1="34" y1="1070" x2="64" y2="1070"/>
+<a class="nj-exceptions-fam" xlink:href="#further-exceptions" aria-label="json::other_error, 5xx · 2 ids"><rect class="nj-exceptions-box nj-exceptions-box--fam" x="64" y="1044" width="284" height="52" rx="7"/><text class="nj-exceptions-name" x="76" y="1066">json::other_error</text><text class="nj-exceptions-sub" x="76" y="1085">5xx · 2 ids</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionother_error501" aria-label="json.exception.other_error.501"><rect x="64" y="1106" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="73" y="1127.5">501</text></a>
+<a class="nj-exceptions-chip" xlink:href="#jsonexceptionother_error502" aria-label="json.exception.other_error.502"><rect x="111.7" y="1106" width="41.7" height="34" rx="6"/><text class="nj-exceptions-id" x="120.7" y="1127.5">502</text></a>
+</svg>
 
-    class `json::parse_error` {
-        +const std::size_t byte
-    }
+</div>
 
-    class `json::invalid_iterator`
-    class `json::type_error`
-    class `json::out_of_range`
-    class `json::other_error`
+<p class="nj-caption" markdown>The exception classes from `std::exception` down to the five families, each with the ids it can throw. Every id chip links to the section that describes it.</p>
 
-    `std::exception` <|-- `json::exception`
-    `json::exception` <|-- `json::parse_error`
-    `json::exception` <|-- `json::invalid_iterator`
-    `json::exception` <|-- `json::type_error`
-    `json::exception` <|-- `json::out_of_range`
-    `json::exception` <|-- `json::other_error`
+Which exception an element access throws depends on the function and on the type of the value:
+
+```mermaid
+flowchart LR
+    S{{"which call?"}} -->|"at(key)"| A{{"j is"}}
+    A -->|"object, key missing"| A1["out_of_range.403"]
+    A -->|"array or null"| A2["type_error.304"]
+    S -->|"at(index)"| B{{"j is"}}
+    B -->|"array, index >= size()"| B1["out_of_range.401"]
+    B -->|"object or null"| B2["type_error.304"]
+    S -->|"non-const operator[](key)"| C{{"j is"}}
+    C -->|"object or null"| C1["no exception: a missing key is inserted as null"]
+    C -->|"array"| C2["type_error.305"]
+    S -->|"value(key, default)"| D{{"j is"}}
+    D -->|"object, key missing"| D1["no exception: returns the default"]
+    D -->|"object, incompatible value type"| D2["type_error.302"]
+    D -->|"array or null"| D3["type_error.306"]
 ```
+
+<p class="nj-caption" markdown>Exceptions thrown by element access. Start at the call on the left, follow the edge that matches the type of `j`, and read the exception id (or "no exception") in the box at the end.</p>
 
 ### Switch off exceptions
 
@@ -297,7 +471,7 @@ JSON uses the `\uxxxx` format to describe Unicode characters. Code points above 
 !!! failure "Example message"
 
     ```
-    parse error at 14: missing or wrong low surrogate
+    [json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate
     ```
 
 !!! note
@@ -311,7 +485,7 @@ Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are inva
 !!! failure "Example message"
 
     ```
-    parse error: code points above 0x10FFFF are invalid
+    [json.exception.parse_error.103] parse error: code points above 0x10FFFF are invalid
     ```
 
 !!! note
@@ -1081,7 +1255,7 @@ The provided array index `i` is larger than `size-1`.
 !!! failure "Example message"
 
     ```
-    array index 3 is out of range
+    [json.exception.out_of_range.401] array index 3 is out of range
     ```
 
 ### json.exception.out_of_range.402
@@ -1091,7 +1265,7 @@ The special array index `-` in a JSON Pointer never describes a valid element of
 !!! failure "Example message"
 
     ```
-    array index '-' (3) is out of range
+    [json.exception.out_of_range.402] array index '-' (3) is out of range
     ```
 
 ### json.exception.out_of_range.403
@@ -1101,7 +1275,7 @@ The provided key was not found in the JSON object.
 !!! failure "Example message"
 
     ```
-    key 'foo' not found
+    [json.exception.out_of_range.403] key 'foo' not found
     ```
 
 ### json.exception.out_of_range.404
@@ -1112,7 +1286,7 @@ contains other characters (e.g., `1a`), or `-` where it cannot be used.
 !!! failure "Example message"
 
     ```
-    unresolved reference token 'foo'
+    [json.exception.out_of_range.404] unresolved reference token 'foo'
     ```
 
 ### json.exception.out_of_range.405
@@ -1124,7 +1298,7 @@ also thrown when the parent or a reference token of an empty JSON Pointer is req
 !!! failure "Example message"
 
     ```
-    JSON pointer has no parent
+    [json.exception.out_of_range.405] JSON pointer has no parent
     ```
 
 ### json.exception.out_of_range.406
@@ -1136,7 +1310,7 @@ double-precision number when `number_float_t` is `#!cpp float`.
 !!! failure "Example messages"
 
     ```
-    number overflow parsing '10E1000'
+    [json.exception.out_of_range.406] number overflow parsing '10E1000'
     ```
     ```
     [json.exception.out_of_range.406] syntax error while parsing CBOR value: number overflow
@@ -1172,10 +1346,10 @@ exception, because they serialize integers beyond 64 bits as high-precision numb
 !!! failure "Example messages"
 
     ```
-    integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
+    [json.exception.out_of_range.407] integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
     ```
     ```
-    integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
+    [json.exception.out_of_range.407] integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
     ```
 
 ### json.exception.out_of_range.408
@@ -1193,7 +1367,7 @@ count and one marker per element are kept), so any value it produces can still b
 !!! failure "Example messages"
 
     ```
-    excessive array size: 8658170730974374167
+    [json.exception.out_of_range.408] excessive array size: 8658170730974374167
     ```
     ```
     [json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size
@@ -1212,7 +1386,7 @@ Key identifiers to be serialized to BSON cannot contain code point U+0000, since
 !!! failure "Example message"
 
     ```
-    BSON key cannot contain code point U+0000 (at byte 2)
+    [json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)
     ```
 
 ### json.exception.out_of_range.410
@@ -1224,8 +1398,8 @@ a JSON pointer exceeds the range of `size_type` (e.g., on 32-bit platforms).
 !!! failure "Example message"
 
     ```
-    enum value out of range
-    array index 18446744073709551615 exceeds size_type
+    [json.exception.out_of_range.410] enum value out of range
+    [json.exception.out_of_range.410] array index 18446744073709551615 exceeds size_type
     ```
 
     The second message is thrown, for instance, by `#!cpp json::parse("[1, 2]").at("/18446744073709551615"_json_pointer)`
@@ -1240,7 +1414,7 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 !!! failure "Example message"
 
     ```
-    cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
+    [json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
     ```
 
 !!! note
@@ -1258,10 +1432,10 @@ is thrown when a value is too large to be described by such a length field.
 !!! failure "Example messages"
 
     ```
-    BSON length 2147483661 exceeds maximum of 2147483647
+    [json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647
     ```
     ```
-    MessagePack length 4294967296 exceeds maximum of 4294967295
+    [json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295
     ```
 
 !!! note
@@ -1278,7 +1452,7 @@ A JSON Patch `remove` operation cannot be applied because the target location's 
 !!! failure "Example message"
 
     ```
-    cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
+    [json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
     ```
 
 !!! note
@@ -1292,7 +1466,7 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 !!! failure "Example message"
 
     ```
-    cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
+    [json.exception.out_of_range.414] cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
     ```
 
 !!! note
@@ -1428,3 +1602,15 @@ do not throw.
 
     This exception was added in version 3.13.0. Before that, debug builds aborted on an assertion and release builds
     wrote a `$` marker without `#`, which [`from_ubjson`](../api/basic_json/from_ubjson.md) then rejected.
+
+## See also
+
+- [`exception`](../api/basic_json/exception.md) - base class of all exceptions thrown by the library
+- [`parse_error`](../api/basic_json/parse_error.md) - exceptions indicating a parse error
+- [`invalid_iterator`](../api/basic_json/invalid_iterator.md) - exceptions indicating errors with iterators
+- [`type_error`](../api/basic_json/type_error.md) - exceptions indicating a wrong type
+- [`out_of_range`](../api/basic_json/out_of_range.md) - exceptions indicating access out of range
+- [`other_error`](../api/basic_json/other_error.md) - exceptions indicating other library errors
+- [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md) - switch off exceptions
+- [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) - extended exception messages with the path of the failing value
+- [Working Without Exceptions](../features/no_exceptions.md) - use the library without exceptions

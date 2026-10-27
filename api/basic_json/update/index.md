@@ -217,8 +217,8 @@ effective_settings.update(user_settings, true);
 
 ## See also
 
-- [insert](https://json.nlohmann.me/api/basic_json/insert/index.md) add values to an array/object
-- [merge_patch](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) applies a JSON Merge Patch
+- [`insert`](https://json.nlohmann.me/api/basic_json/insert/index.md) - add values to an array/object
+- [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - applies a JSON Merge Patch
 - [Modifying values](https://json.nlohmann.me/features/modifying_values/index.md) - the article on modifying values
 
 ## Version history

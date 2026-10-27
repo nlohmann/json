@@ -89,7 +89,7 @@ true
 
 ## See also
 
-- [type](https://json.nlohmann.me/api/basic_json_view/type/index.md) - return the type of the value
+- [`type`](https://json.nlohmann.me/api/basic_json_view/type/index.md) - return the type of the value
 - [`BasicJsonType::is_null`](https://json.nlohmann.me/api/basic_json/is_null/index.md) - the corresponding function of `basic_json`
 
 ## Version history

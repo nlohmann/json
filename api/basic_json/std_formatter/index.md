@@ -72,9 +72,9 @@ Output:
 
 ## See also
 
-- [dump](https://json.nlohmann.me/api/basic_json/dump/index.md) - serialization
-- [operator\<<(std::ostream&)](https://json.nlohmann.me/api/operator_ltlt/index.md) - serialize to stream
-- [format_as](https://json.nlohmann.me/api/basic_json/format_as/index.md) - customization point used by `fmt::format` (fmtlib)
+- [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) - serialization
+- [`operator<<(std::ostream&)`](https://json.nlohmann.me/api/operator_ltlt/index.md) - serialize to stream
+- [`format_as`](https://json.nlohmann.me/api/basic_json/format_as/index.md) - customization point used by `fmt::format` (fmtlib)
 - [Serialization](https://json.nlohmann.me/features/serialization/index.md) - the serialization article
 
 ## Version history

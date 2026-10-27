@@ -41,8 +41,10 @@ JSON for Modern C++ version 3.12.0
 
 ## See also
 
-- [meta](https://json.nlohmann.me/api/basic_json/meta/index.md) - returns version information on the library
-- [JSON_SKIP_LIBRARY_VERSION_CHECK](https://json.nlohmann.me/api/macros/json_skip_library_version_check/index.md) - skip library version check
+- [`meta`](https://json.nlohmann.me/api/basic_json/meta/index.md) - returns version information on the library
+- [`JSON_SKIP_LIBRARY_VERSION_CHECK`](https://json.nlohmann.me/api/macros/json_skip_library_version_check/index.md) - skip library version check
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
+- [Integration](https://json.nlohmann.me/integration/index.md) - integrate the library
 
 ## Version history
 

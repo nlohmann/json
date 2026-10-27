@@ -221,9 +221,10 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## See also
 
-- [find](find.md) find a value in an object
-- [count](count.md) returns the number of occurrences of a key
-- [basic_json_view::contains](../basic_json_view/contains.md) - the same check on a zero-copy view
+- [`find`](find.md) - find a value in an object
+- [`count`](count.md) - returns the number of occurrences of a key
+- [`basic_json_view::contains`](../basic_json_view/contains.md) - the same check on a zero-copy view
+- [Element Access](../../features/element_access/index.md#does-this-key-exist) - how to test whether a key exists
 
 ## Version history
 

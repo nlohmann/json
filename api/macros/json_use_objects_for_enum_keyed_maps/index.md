@@ -112,9 +112,9 @@ int main()
 
 ## See also
 
-- [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md)
-- [**NLOHMANN_JSON_SERIALIZE_ENUM**](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/index.md) - serialize/deserialize an enum
-- [**NLOHMANN_JSON_SERIALIZE_ENUM_STRICT**](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum_strict/index.md) - serialize/deserialize an enum with exceptions
+- [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md) - serializing enums as JSON strings
+- [`NLOHMANN_JSON_SERIALIZE_ENUM`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/index.md) - serialize/deserialize an enum
+- [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum_strict/index.md) - serialize/deserialize an enum with exceptions
 
 ## Version history
 

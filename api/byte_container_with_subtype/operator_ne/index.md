@@ -61,9 +61,10 @@ c3 != c5: true
 
 ## See also
 
-- [operator==](https://json.nlohmann.me/api/byte_container_with_subtype/operator_eq/index.md) comparison: equal
-- [has_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/has_subtype/index.md) return whether the value has a subtype
-- [subtype](https://json.nlohmann.me/api/byte_container_with_subtype/subtype/index.md) return the binary subtype
+- [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
+- [`operator==`](https://json.nlohmann.me/api/byte_container_with_subtype/operator_eq/index.md) - comparison: equal
+- [`has_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/has_subtype/index.md) - return whether the value has a subtype
+- [`subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/subtype/index.md) - return the binary subtype
 
 ## Version history
 

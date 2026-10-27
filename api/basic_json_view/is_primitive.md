@@ -92,7 +92,7 @@ Constant.
 
 ## See also
 
-- [is_structured](is_structured.md) - return whether the type is structured (the complement of this function, for a
+- [`is_structured`](is_structured.md) - return whether the type is structured (the complement of this function, for a
   non-discarded view)
 - [`BasicJsonType::is_primitive`](../basic_json/is_primitive.md) - the corresponding function of `basic_json`
 

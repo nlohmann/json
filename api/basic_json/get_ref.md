@@ -89,9 +89,10 @@ Constant.
 
 ## See also
 
-- [get_ptr()](get_ptr.md) get a pointer value
-- [basic_json_view::get_string](../basic_json_view/get_string.md) - the closest counterpart on a zero-copy view: a
+- [`get_ptr()`](get_ptr.md) - get a pointer value
+- [`basic_json_view::get_string`](../basic_json_view/get_string.md) - the closest counterpart on a zero-copy view: a
   string without a copy, but as a view rather than a reference to a value that must already exist
+- [Converting values](../../features/conversions.md) - getting values out, with or without copying
 
 ## Version history
 

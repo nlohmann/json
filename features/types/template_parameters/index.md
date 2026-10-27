@@ -1,6 +1,6 @@
 # Template Parameter Requirements
 
-Class [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) is configurable through eleven template parameters. The library never formally states what a type passed for one of these parameters has to provide -- the requirements are implied by the way the library uses the resulting [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md), [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md), [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md), etc. This page collects these requirements so they do not have to be discovered by trial and error. Each section lists the concrete types that are known to work for that parameter and the ones that do not, checked against Boost 1.83, Abseil 20250127.0, Folly, EASTL 3.21, `ankerl::unordered_dense`, `phmap`, `gtl`, `robin_hood`, `tsl::ordered_map`, and Qt 6.
+Class [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) is configurable through eleven template parameters. The library never formally states what a type passed for one of these parameters has to provide — the requirements are implied by the way the library uses the resulting [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md), [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md), [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md), etc. This page collects these requirements so they do not have to be discovered by trial and error. Each section lists the concrete types that are known to work for that parameter and the ones that do not, checked against Boost 1.83, Abseil 20250127.0, Folly, EASTL 3.21, `ankerl::unordered_dense`, `phmap`, `gtl`, `robin_hood`, `tsl::ordered_map`, and Qt 6.
 
 To change a single template parameter and keep the others, use the member alias templates [`with_*_t`](https://json.nlohmann.me/api/basic_json/with_t/index.md); for instance, `nlohmann::json::with_float_t<long double>` is `json` with `long double` as [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md).
 
@@ -8,8 +8,8 @@ To change a single template parameter and keep the others, use the member alias 
 
 Requirements are split into two groups:
 
-- **Always required** -- needed to instantiate `basic_json` at all, or needed by functions that virtually every program uses (construction, element access, [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md)).
-- **Required for ...** -- only needed when a particular part of the API is instantiated. Member function templates are only instantiated when they are used, so a type may be perfectly usable even though it does not satisfy these requirements, as long as the corresponding functions are never called.
+- **Always required** — needed to instantiate `basic_json` at all, or needed by functions that virtually every program uses (construction, element access, [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md)).
+- **Required for ...** — only needed when a particular part of the API is instantiated. Member function templates are only instantiated when they are used, so a type may be perfectly usable even though it does not satisfy these requirements, as long as the corresponding functions are never called.
 
 Requirements are not checked
 
@@ -37,9 +37,9 @@ Three requirements are checked with a `static_assert`: the array iterator catego
 
 Third-party containers and incomplete types
 
-`object_t` is instantiated inside the definition of `basic_json` -- it is probed for a `key_compare` member to form [`object_comparator_t`](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md) -- i.e. while `basic_json` is still an incomplete type. `std::map` is required by the standard to support incomplete mapped types; most third-party maps are not, and inspecting the mapped type at class scope (for instance with `std::is_trivially_move_assignable`) makes them unusable as `ObjectType`, no matter how their template arguments are adapted. This rules out `absl::btree_map`, `phmap::btree_map`, `gtl::btree_map`, `robin_hood::unordered_node_map`, `folly::F14FastMap`, and `eastl::hash_map`.
+`object_t` is instantiated inside the definition of `basic_json` — it is probed for a `key_compare` member to form [`object_comparator_t`](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md) — i.e. while `basic_json` is still an incomplete type. `std::map` is required by the standard to support incomplete mapped types; most third-party maps are not, and inspecting the mapped type at class scope (for instance with `std::is_trivially_move_assignable`) makes them unusable as `ObjectType`, no matter how their template arguments are adapted. This rules out `absl::btree_map`, `phmap::btree_map`, `gtl::btree_map`, `robin_hood::unordered_node_map`, `folly::F14FastMap`, and `eastl::hash_map`.
 
-`array_t` is only *named* in the class definition and is not instantiated until `basic_json` is complete, so an `ArrayType` that inspects its value type at class scope is generally fine -- `boost::container::small_vector` and `static_vector` both reject incomplete value types yet work here. `absl::InlinedVector` is the exception: the `std::is_trivially_move_assignable<basic_json>` it evaluates while instantiating itself re-enters the library's own trait machinery mid-instantiation.
+`array_t` is only *named* in the class definition and is not instantiated until `basic_json` is complete, so an `ArrayType` that inspects its value type at class scope is generally fine — `boost::container::small_vector` and `static_vector` both reject incomplete value types yet work here. `absl::InlinedVector` is the exception: the `std::is_trivially_move_assignable<basic_json>` it evaluates while instantiating itself re-enters the library's own trait machinery mid-instantiation.
 
 Folly requires C++20
 
@@ -61,7 +61,7 @@ i.e., the template arguments follow the order and meaning of `std::map`.
 
 ### Always required
 
-- The template must be usable with **four** type arguments in the order shown above. The third argument is a **comparator**; containers that expect something else in this position (e.g., a hash function) need an alias template or wrapper -- see [Notes](#notes).
+- The template must be usable with **four** type arguments in the order shown above. The third argument is a **comparator**; containers that expect something else in this position (e.g., a hash function) need an alias template or wrapper — see [Notes](#notes).
 - An optional member type `key_compare`. If it is present it becomes [`object_comparator_t`](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md); otherwise [`default_object_comparator_t`](https://json.nlohmann.me/api/basic_json/default_object_comparator_t/index.md) is used.
 - Member types `key_type`, `mapped_type`, `value_type`, and `iterator`.
 - `value_type` must behave like `std::pair<const key_type, mapped_type>`; the library accesses `.first` and `.second` on it.
@@ -72,7 +72,7 @@ i.e., the template arguments follow the order and meaning of `std::map`.
 - `at(key)` is required only by [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) and [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md), but every container tried here provides it.
 - `emplace` and `insert(value_type)` must return `std::pair<iterator, bool>` and must have **unique-key** semantics; multimaps cannot be used.
 - The type must be swappable (via `std::swap` or an ADL `swap`).
-- The comparison operators `==` and `<`; `!=`, `<=`, `>`, and `>=` are derived from them. Where the library uses three-way comparison (C++20), `==` and `<=>` are required **instead** -- the six two-way operators do not satisfy it. They implement [`basic_json`'s comparison operators](https://json.nlohmann.me/api/basic_json/operator_eq/index.md).
+- The comparison operators `==` and `<`; `!=`, `<=`, `>`, and `>=` are derived from them. Where the library uses three-way comparison (C++20), `==` and `<=>` are required **instead** — the six two-way operators do not satisfy it. They implement [`basic_json`'s comparison operators](https://json.nlohmann.me/api/basic_json/operator_eq/index.md).
 
 ### Required for heterogeneous key lookup
 
@@ -132,7 +132,7 @@ The library never relies on the container's iteration order for correctness; it 
 
 #### `capacity()` marks a container as insertion-ordered
 
-With [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) enabled, the library detects insertion-ordered maps by probing for a `capacity()` member function (`nlohmann::ordered_map` inherits it from `std::vector`) and refreshes all parent pointers after every insertion. An `ObjectType` that happens to have a `capacity()` member is therefore treated conservatively -- this is correct, but slower.
+With [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) enabled, the library detects insertion-ordered maps by probing for a `capacity()` member function (`nlohmann::ordered_map` inherits it from `std::vector`) and refreshes all parent pointers after every insertion. An `ObjectType` that happens to have a `capacity()` member is therefore treated conservatively — this is correct, but slower.
 
 #### Key order and duplicate keys
 
@@ -140,7 +140,7 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 
 Reference implementation
 
-`docs/mkdocs/docs/examples/custom_object_type.hpp` wraps a private `std::map` and satisfies every requirement above. It does not define `key_compare`, so `object_comparator_t` falls back to [`default_object_comparator_t`](https://json.nlohmann.me/api/basic_json/default_object_comparator_t/index.md) -- a good starting point for a custom `ObjectType`.
+`docs/mkdocs/docs/examples/custom_object_type.hpp` wraps a private `std::map` and satisfies every requirement above. It does not define `key_compare`, so `object_comparator_t` falls back to [`default_object_comparator_t`](https://json.nlohmann.me/api/basic_json/default_object_comparator_t/index.md) — a good starting point for a custom `ObjectType`.
 
 ```
 #pragma once
@@ -393,7 +393,7 @@ With [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/i
 
 Reference implementation
 
-`docs/mkdocs/docs/examples/custom_array_type.hpp` wraps a private `std::vector` and satisfies every requirement above -- a good starting point for a custom `ArrayType`.
+`docs/mkdocs/docs/examples/custom_array_type.hpp` wraps a private `std::vector` and satisfies every requirement above — a good starting point for a custom `ArrayType`.
 
 ```
 #pragma once
@@ -622,10 +622,10 @@ true
 
 ### Required for JSON Pointer, `flatten`, and `diff`
 
-- A static member `npos` and the member function `find_first_of(char, size_type)` -- together with `data()`, `reserve(n)`, and `append(const char*, size_type)` they implement the escaping and unescaping of reference tokens described in RFC 6901. Neither `find(const StringType&, size_type)`, nor `substr(pos, count)`, nor `replace(pos, count, const StringType&)` is required.
+- A static member `npos` and the member function `find_first_of(char, size_type)` — together with `data()`, `reserve(n)`, and `append(const char*, size_type)` they implement the escaping and unescaping of reference tokens described in RFC 6901. Neither `find(const StringType&, size_type)`, nor `substr(pos, count)`, nor `replace(pos, count, const StringType&)` is required.
 - `empty()`.
-- `resize(n)` (one argument) -- used by `to_string` to size the result before the reference tokens are copied into it.
-- `begin()` and `end()` -- used by [`operator[](const json_pointer&)`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) to decide whether a reference token denotes an array index.
+- `resize(n)` (one argument) — used by `to_string` to size the result before the reference tokens are copied into it.
+- `begin()` and `end()` — used by [`operator[](const json_pointer&)`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) to decide whether a reference token denotes an array index.
 
 ### Required for other functionality
 
@@ -642,15 +642,15 @@ true
 
 ### Compatible types
 
-| Type                                                      | Notes                                                                                                                                                                                                                                                |
-| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `std::string` (default)                                   |                                                                                                                                                                                                                                                      |
-| `std::basic_string` with a custom **stateless** allocator |                                                                                                                                                                                                                                                      |
-| `std::pmr::string`                                        | see the warning below before relying on the memory resource                                                                                                                                                                                          |
-| `boost::container::string`                                | needs a user-supplied `std::hash` specialization (Boost provides `boost::hash` instead)                                                                                                                                                              |
-| `folly::fbstring`                                         | requires C++20, see the note above                                                                                                                                                                                                                   |
-| `eastl::string`                                           | needs a user-supplied `std::hash` and an ADL `int_to_string` (it is not assignable from a `std::string`); [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) does not accept it directly -- pass a character range or a `std::string` |
-| a custom string class in a user-defined namespace         | if the requirements above are met                                                                                                                                                                                                                    |
+| Type                                                      | Notes                                                                                                                                                                                                                                               |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `std::string` (default)                                   |                                                                                                                                                                                                                                                     |
+| `std::basic_string` with a custom **stateless** allocator |                                                                                                                                                                                                                                                     |
+| `std::pmr::string`                                        | see the warning below before relying on the memory resource                                                                                                                                                                                         |
+| `boost::container::string`                                | needs a user-supplied `std::hash` specialization (Boost provides `boost::hash` instead)                                                                                                                                                             |
+| `folly::fbstring`                                         | requires C++20, see the note above                                                                                                                                                                                                                  |
+| `eastl::string`                                           | needs a user-supplied `std::hash` and an ADL `int_to_string` (it is not assignable from a `std::string`); [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) does not accept it directly — pass a character range or a `std::string` |
+| a custom string class in a user-defined namespace         | if the requirements above are met                                                                                                                                                                                                                   |
 
 ### Types that cannot be used
 
@@ -665,16 +665,16 @@ A `std::pmr::string` mostly does not use the memory resource you choose
 
 `basic_json` cannot be given an allocator or a memory resource. `AllocatorType` is default-constructed at every allocation and has to be stateless (see [`AllocatorType`](#allocatortype)), and string values the library creates are constructed with their own default allocator. So:
 
-- Every string the library itself produces -- from [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), from [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), or by default construction -- allocates from `std::pmr::get_default_resource()`.
+- Every string the library itself produces — from [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), from [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), or by default construction — allocates from `std::pmr::get_default_resource()`.
 - **Copying** an arena-backed string into a value silently drops its memory resource: the copy lands on the default resource, because `std::pmr::polymorphic_allocator` does not propagate on copy construction. Nothing warns about this.
-- **Moving** one in does keep it, and later growth still allocates from that arena -- but it does not survive a copy of the enclosing `basic_json`.
+- **Moving** one in does keep it, and later growth still allocates from that arena — but it does not survive a copy of the enclosing `basic_json`.
 - Passing `std::pmr::polymorphic_allocator` as `AllocatorType` does not work around any of this; it does not compile.
 
 Apart from moving a string in, the only way to redirect these allocations is the process-global `std::pmr::set_default_resource()`.
 
 Reference implementation
 
-`docs/mkdocs/docs/examples/custom_string_type.hpp` wraps a private `std::string` and satisfies every requirement above -- a good starting point for a custom `StringType`. The unit test `tests/src/unit-alt-string.cpp` contains a more thorough variant, `alt_string`, exercised against a larger part of the API.
+`docs/mkdocs/docs/examples/custom_string_type.hpp` wraps a private `std::string` and satisfies every requirement above — a good starting point for a custom `StringType`. The unit test `tests/src/unit-alt-string.cpp` contains a more thorough variant, `alt_string`, exercised against a larger part of the API.
 
 ```
 #pragma once
@@ -870,7 +870,7 @@ true
 ### Always required
 
 - A literal type that is trivially default-constructible, trivially copyable, and trivially destructible; otherwise the union's special member functions are deleted.
-- **Implicitly** convertible from `bool` -- an `explicit` constructor is not enough, because the `to_json` overload for a custom `BooleanType` is constrained on `std::is_convertible` -- and contextually convertible to `bool` (here an `explicit operator bool` is fine).
+- **Implicitly** convertible from `bool` — an `explicit` constructor is not enough, because the `to_json` overload for a custom `BooleanType` is constrained on `std::is_convertible` — and contextually convertible to `bool` (here an `explicit operator bool` is fine).
 - Comparison operators `==`, `!=`, `<`, `<=`, `>`, `>=` (or `<=>`).
 - Convertible from and to `bool` through the serializer, because [`get<bool>()`](https://json.nlohmann.me/api/basic_json/get/index.md) is used internally.
 
@@ -878,7 +878,7 @@ There is little reason to use anything other than `bool` here.
 
 ### Compatible types
 
-`bool` is the only usable choice. Another trivially copyable type that is implicitly convertible to and from `bool` -- `std::uint8_t`, say -- does compile, and JSON booleans still round-trip, but the type then serves as both `boolean_t` and an ordinary integer: `basic_json` can no longer be constructed or assigned from a `std::uint8_t` at all (the boolean and unsigned-integer `to_json` overloads become ambiguous), and [`get<std::uint8_t>()`](https://json.nlohmann.me/api/basic_json/get/index.md) on a number throws [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302) instead of returning the value.
+`bool` is the only usable choice. Another trivially copyable type that is implicitly convertible to and from `bool` — `std::uint8_t`, say — does compile, and JSON booleans still round-trip, but the type then serves as both `boolean_t` and an ordinary integer: `basic_json` can no longer be constructed or assigned from a `std::uint8_t` at all (the boolean and unsigned-integer `to_json` overloads become ambiguous), and [`get<std::uint8_t>()`](https://json.nlohmann.me/api/basic_json/get/index.md) on a number throws [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302) instead of returning the value.
 
 ## `NumberIntegerType` and `NumberUnsignedType`
 
@@ -886,7 +886,7 @@ Both types are stored **directly** inside `basic_json`'s union.
 
 ### Always required
 
-- `std::is_integral` must be satisfied: `NumberIntegerType` must be a **signed** integer type, `NumberUnsignedType` an **unsigned** integer type or the same type as `NumberIntegerType` (see [below](#same-type-for-both)). Class types are not supported -- among others, the constructors taking integer values are constrained on `std::is_integral`.
+- `std::is_integral` must be satisfied: `NumberIntegerType` must be a **signed** integer type, `NumberUnsignedType` an **unsigned** integer type or the same type as `NumberIntegerType` (see [below](#same-type-for-both)). Class types are not supported — among others, the constructors taking integer values are constrained on `std::is_integral`.
 - Trivially default-constructible, trivially copyable, and trivially destructible (union member).
 - `std::numeric_limits` must be specialized for both types.
 - An unsigned `NumberUnsignedType` must be able to represent the absolute value of every `NumberIntegerType` value; serialization of negative numbers converts the value to `NumberUnsignedType`. A `static_assert` requires it to be at least as wide as `NumberIntegerType`, which is what that amounts to for the standard integer types.
@@ -977,7 +977,7 @@ If `std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary64 number,
 
 ### Always required
 
-- The template must accept **two** type arguments. It does not have to give the second one a default -- `basic_json` declares the parameter as `template<typename T, typename SFINAE = void> class JSONSerializer`, so uses such as `JSONSerializer<T>` inside the library supply `void` themselves. The second parameter exists so that partial specializations can be constrained by SFINAE.
+- The template must accept **two** type arguments. It does not have to give the second one a default — `basic_json` declares the parameter as `template<typename T, typename SFINAE = void> class JSONSerializer`, so uses such as `JSONSerializer<T>` inside the library supply `void` themselves. The second parameter exists so that partial specializations can be constrained by SFINAE.
 - For every type `T` that is converted **to** a JSON value, a static member function `static void to_json(basic_json&, T)` must exist.
 - For every type `T` that is converted **from** a JSON value, either `static void from_json(const basic_json&, T&)` or `static T from_json(const basic_json&)` must exist. The latter form is required for types that are not default-constructible; see [Arbitrary Types Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md).
 - To support the [converting constructor](https://json.nlohmann.me/api/basic_json/basic_json/index.md) between different `basic_json` specializations, `to_json` must be available for `boolean_t`, `number_integer_t`, `number_unsigned_t`, `number_float_t`, `string_t`, `object_t`, `array_t`, and `binary_t` of the *source* specialization.
@@ -1000,7 +1000,7 @@ using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
 
 ### Always required
 
-- A non-`final` class type -- [`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md) derives from it publicly.
+- A non-`final` class type — [`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md) derives from it publicly.
 - A member type `value_type` that is **exactly one byte** wide (e.g., `std::uint8_t`, `char`, or `std::byte`). Readers and writers reinterpret the container's storage as raw bytes, so a wider `value_type` is rejected with a `static_assert`.
 - Contiguous storage: the binary readers `std::memcpy` into `&binary[n]`, the writers `reinterpret_cast` `data()`. `data() + n` would do for the readers too, but they share one helper with [`StringType`](#stringtype), whose non-`const` `data()` is C++17 and later only.
 - Default-constructible, copy-constructible, and move-constructible.
@@ -1017,7 +1017,7 @@ See [`binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md) for 
 
 Reference implementation
 
-`docs/mkdocs/docs/examples/custom_binary_type.hpp` wraps a private `std::vector<std::uint8_t>` and satisfies every requirement above -- a good starting point for a custom `BinaryType`.
+`docs/mkdocs/docs/examples/custom_binary_type.hpp` wraps a private `std::vector<std::uint8_t>` and satisfies every requirement above — a good starting point for a custom `BinaryType`.
 
 ```
 #pragma once
@@ -1179,7 +1179,7 @@ true
 | `QByteArray`                                         | no `empty()` (it spells that `isEmpty()`); its `insert` takes an index rather than an iterator; and it converts to `string_t`, which makes `to_json` ambiguous between a string and a binary value            |
 | `std::string`                                        | `binary_t::container_type` and `string_t` would be the same type, so the two [`swap`](https://json.nlohmann.me/api/basic_json/swap/index.md) overloads collide and `basic_json` cannot be instantiated at all |
 | `std::deque<std::uint8_t>`                           | storage is not contiguous, so there is no `data()`                                                                                                                                                            |
-| containers whose `value_type` is wider than one byte | see above -- accepted by the compiler, wrong at runtime                                                                                                                                                       |
+| containers whose `value_type` is wider than one byte | see above — accepted by the compiler, wrong at runtime                                                                                                                                                        |
 
 ## `CustomBaseClass`
 
@@ -1216,7 +1216,14 @@ See [issue #3425](https://github.com/nlohmann/json/issues/3425), [`string_t`](ht
 
 ## See also
 
-- [Types](https://json.nlohmann.me/features/types/index.md) -- overview of how JSON values are stored
-- [Number Handling](https://json.nlohmann.me/features/types/number_handling/index.md) -- how the number types affect parsing and serialization
-- [Object Order](https://json.nlohmann.me/features/object_order/index.md) -- using an insertion-ordered `ObjectType`
-- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) -- API documentation of the class template
+- [Types](https://json.nlohmann.me/features/types/index.md) - overview of how JSON values are stored
+- [Number Handling](https://json.nlohmann.me/features/types/number_handling/index.md) - how the number types affect parsing and serialization
+- [Object Order](https://json.nlohmann.me/features/object_order/index.md) - using an insertion-ordered `ObjectType`
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) - API documentation of the class template
+- [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md) - the `ObjectType` in use
+- [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md) - the `ArrayType` in use
+- [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md) - the `StringType` in use
+- [`json_serializer`](https://json.nlohmann.me/api/basic_json/json_serializer/index.md) - the `JSONSerializer` in use
+- [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) - the `CustomBaseClass` in use
+- [`with_t`](https://json.nlohmann.me/api/basic_json/with_t/index.md) - derive a specialization with one parameter replaced
+- [`get_allocator`](https://json.nlohmann.me/api/basic_json/get_allocator/index.md) - the allocator in use

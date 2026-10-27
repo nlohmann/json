@@ -28,6 +28,8 @@ flowchart LR
     parent["parent_pointer() returns /a/b"] -.-> B
 ```
 
+Boxes are the reference tokens in order; dotted arrows show which token each member function reads, removes, or adds to.
+
 The diagram shows the reference tokens of the JSON pointer `/a/b/c`.
 
 ## Member types
@@ -38,7 +40,7 @@ The diagram shows the reference tokens of the JSON pointer `/a/b/c`.
 
 - [(constructor)](https://json.nlohmann.me/api/json_pointer/json_pointer/index.md)
 - [**to_string**](https://json.nlohmann.me/api/json_pointer/to_string/index.md) - return a string representation of the JSON pointer
-- [**operator string_t**](https://json.nlohmann.me/api/json_pointer/operator_string_t/index.md) - return a string representation of the JSON pointer (deprecated)
+- [`operator string_t`](https://json.nlohmann.me/api/json_pointer/operator_string_t/index.md) - return a string representation of the JSON pointer (deprecated)
 - [**operator==**](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) - compare: equal
 - [**operator!=**](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md) - compare: not equal
 - [**operator\<=>**](https://json.nlohmann.me/api/json_pointer/operator_spaceship/index.md) - compare: 3-way (C++20)
@@ -59,7 +61,9 @@ The diagram shows the reference tokens of the JSON pointer `/a/b/c`.
 
 ## See also
 
-- [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901)
+- [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901) - specification of JSON Pointer
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - the article on JSON Pointer support
+- [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md) - patch paths are JSON pointers
 
 ## Version history
 

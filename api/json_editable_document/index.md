@@ -6,13 +6,13 @@ Defined in header `<nlohmann/json_view.hpp>`
 using json_editable_document = basic_json_document<json, view_mode::editable>;
 ```
 
-This type is an **editable** [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) of the default [`json`](https://json.nlohmann.me/api/json/index.md) specialization: in addition to everything [`json_document`](https://json.nlohmann.me/api/json_document/index.md) offers, [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) change values after parsing, without ever rewriting the source text -- see [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) and [Editing a document](https://json.nlohmann.me/features/json_view/#editing-a-document).
+This type is an **editable** [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) of the default [`json`](https://json.nlohmann.me/api/json/index.md) specialization: in addition to everything [`json_document`](https://json.nlohmann.me/api/json_document/index.md) offers, [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) change values after parsing, without ever rewriting the source text — see [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) and [Editing a document](https://json.nlohmann.me/features/json_view/#editing-a-document).
 
 ## Examples
 
 Example
 
-The example below patches two fields of a small configuration document -- changing one and adding another -- and dumps it back out with the member order and the spelling of the untouched number preserved, something a plain [`json`](https://json.nlohmann.me/api/json/index.md) value cannot do.
+The example below patches two fields of a small configuration document — changing one and adding another — and dumps it back out with the member order and the spelling of the untouched number preserved, something a plain [`json`](https://json.nlohmann.me/api/json/index.md) value cannot do.
 
 ```
 #include <iostream>
@@ -58,9 +58,9 @@ Output:
 
 ## See also
 
-- [json_editable_view](https://json.nlohmann.me/api/json_editable_view/index.md) - a view of a value of a `json_editable_document`
-- [json_document](https://json.nlohmann.me/api/json_document/index.md) - the read-only document this type adds edits to
-- [ordered_json_editable_document](https://json.nlohmann.me/api/ordered_json_editable_document/index.md) - the corresponding editable document for `ordered_json`
+- [`json_editable_view`](https://json.nlohmann.me/api/json_editable_view/index.md) - a view of a value of a `json_editable_document`
+- [`json_document`](https://json.nlohmann.me/api/json_document/index.md) - the read-only document this type adds edits to
+- [`ordered_json_editable_document`](https://json.nlohmann.me/api/ordered_json_editable_document/index.md) - the corresponding editable document for `ordered_json`
 - [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) - what an edit guarantees
 
 ## Version history

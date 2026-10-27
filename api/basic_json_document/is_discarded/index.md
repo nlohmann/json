@@ -58,8 +58,9 @@ false
 
 ## See also
 
-- [parse](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
-- [is_discarded (basic_json_view)](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) - return whether a view is invalid
+- [`parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
+- [`basic_json_view::is_discarded`](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) - return whether a view is invalid
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#what-is-the-same-as-parse) - how a discarded document arises
 
 ## Version history
 

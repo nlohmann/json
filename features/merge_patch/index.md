@@ -6,6 +6,71 @@ Instead of using [JSON Pointer](https://json.nlohmann.me/features/json_pointer/i
 
 The function [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md) creates a merge patch that changes one JSON value into another.
 
+The example below applies one patch to one document. Here is the document before:
+
+```
+{
+    "title": "Goodbye!",
+    "author": {
+        "givenName": "John",
+        "familyName": "Doe"
+    },
+    "tags": ["example", "sample"],
+    "content": "This will be unchanged"
+}
+```
+
+This is the patch:
+
+```
+{
+    "title": "Hello!",
+    "phoneNumber": "+01-123-456-7890",
+    "author": {
+        "familyName": null
+    },
+    "tags": ["example"]
+}
+```
+
+And this is the document after applying it:
+
+```
+{
+    "title": "Hello!",
+    "author": {
+        "givenName": "John"
+    },
+    "tags": ["example"],
+    "content": "This will be unchanged",
+    "phoneNumber": "+01-123-456-7890"
+}
+```
+
+The table goes through the members one by one. "Member" is the name of an object member in the patch (and in the document); it is not a [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) and nothing of it is passed to the function: the whole patch is passed to [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md).
+
+| Rule                      | Member                       | Before                                       | Patch                  | After                      |
+| ------------------------- | ---------------------------- | -------------------------------------------- | ---------------------- | -------------------------- |
+| change value              | `title`                      | `"Goodbye!"`                                 | `"Hello!"`             | `"Hello!"`                 |
+| add key                   | `phoneNumber`                | (no member)                                  | `"+01-123-456-7890"`   | `"+01-123-456-7890"`       |
+| object merges recursively | `author`                     | `{"givenName": "John", "familyName": "Doe"}` | `{"familyName": null}` | `{"givenName": "John"}`    |
+| null removes key          | `familyName` inside `author` | `"Doe"`                                      | `null`                 | (removed)                  |
+| array replaced whole      | `tags`                       | `["example", "sample"]`                      | `["example"]`          | `["example"]`              |
+| unchanged key             | `content`                    | `"This will be unchanged"`                   | (no member)            | `"This will be unchanged"` |
+
+An array in the patch replaces the array in the target, so a merge patch cannot change a single element. Each member of the patch is applied like this; a patch that is not an object replaces the whole target.
+
+```
+flowchart LR
+    M["member of the patch"] --> N{{"value null?"}}
+    N -->|yes| D["delete the key"]
+    N -->|no| O{{"value an object?"}}
+    O -->|yes| R["merge recursively into the target's value"]
+    O -->|no| S["set the key to the value"]
+```
+
+How one member of a merge patch is applied: a `null` value deletes the key, an object is merged recursively, and any other value replaces the value of the key.
+
 Not a general deep merge
 
 A merge patch is not a general deep merge: a `null` value in the patch deletes the key from the target. To merge two objects recursively (e.g., defaults and user settings), use [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) with `merge_objects` set to `true`; see [Merging objects](https://json.nlohmann.me/features/modifying_values/#merging-objects).
@@ -87,6 +152,7 @@ Output:
 
 - [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md) - a more expressive alternative that describes a sequence of operations
 - [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - the addressing scheme used by JSON Patch
-- Function [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md)
-- Function [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md)
+- [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - apply a JSON Merge Patch to a value
+- [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md) - create a JSON Merge Patch from two values
 - Function [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) - merge objects, optionally recursively
+- [Modifying values](https://json.nlohmann.me/features/modifying_values/index.md) - simple in-place modifications

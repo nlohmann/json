@@ -93,10 +93,11 @@ Integer number values are stored directly inside a `basic_json` type.
 
 ## See also
 
-- [number_integer_t](number_integer_t.md) the type used to store JSON integer numbers
-- [number_float_t](number_float_t.md) the type used to store JSON floating-point numbers
-- [is_number_unsigned](is_number_unsigned.md) checks whether the JSON value is an unsigned integer number
+- [`number_integer_t`](number_integer_t.md) - the type used to store JSON integer numbers
+- [`number_float_t`](number_float_t.md) - the type used to store JSON floating-point numbers
+- [`is_number_unsigned`](is_number_unsigned.md) - checks whether the JSON value is an unsigned integer number
 - [Number Handling](../../features/types/number_handling.md) - the article on number handling
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the number template parameters
 
 ## Version history
 

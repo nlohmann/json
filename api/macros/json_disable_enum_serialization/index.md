@@ -139,6 +139,7 @@ int main()
 
 - [JSON_DisableEnumSerialization](https://json.nlohmann.me/integration/cmake/#json_disableenumserialization) - CMake option to control the macro
 - [`NLOHMANN_JSON_SERIALIZE_ENUM`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/index.md) - serialize/deserialize an enum
+- [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md) - map enums to JSON strings instead of integers
 
 ## Version history
 

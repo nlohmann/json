@@ -30,7 +30,7 @@ Constant, as long as [`array_t`](https://json.nlohmann.me/api/basic_json/array_t
 
 ## Notes
 
-This function does not return the maximal length of a string stored as JSON value -- it returns the maximal number of string elements the JSON value can store which is `1`.
+This function does not return the maximal length of a string stored as JSON value — it returns the maximal number of string elements the JSON value can store which is `1`.
 
 ## Examples
 
@@ -82,9 +82,9 @@ Note the output is platform-dependent.
 
 ## See also
 
-- [size](https://json.nlohmann.me/api/basic_json/size/index.md) returns the number of elements
-- [array_t](https://json.nlohmann.me/api/basic_json/array_t/index.md) the type used to store JSON arrays
-- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects
+- [`size`](https://json.nlohmann.me/api/basic_json/size/index.md) - returns the number of elements
+- [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md) - the type used to store JSON arrays
+- [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md) - the type used to store JSON objects
 
 ## Version history
 

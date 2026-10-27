@@ -73,8 +73,9 @@ Note the output is platform-dependent.
 
 ## See also
 
-- [**NLOHMANN_JSON_VERSION_MAJOR**/**NLOHMANN_JSON_VERSION_MINOR**/**NLOHMANN_JSON_VERSION_PATCH**](https://json.nlohmann.me/api/macros/nlohmann_json_version_major/index.md)
-  - library version information
+- [`NLOHMANN_JSON_VERSION_MAJOR`](https://json.nlohmann.me/api/macros/nlohmann_json_version_major/index.md) / [`NLOHMANN_JSON_VERSION_MINOR`](https://json.nlohmann.me/api/macros/nlohmann_json_version_major/index.md) / [`NLOHMANN_JSON_VERSION_PATCH`](https://json.nlohmann.me/api/macros/nlohmann_json_version_major/index.md) - library version information
+- [Integration](https://json.nlohmann.me/integration/index.md) - integrate the library
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
 
 ## Version history
 

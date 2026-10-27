@@ -112,3 +112,13 @@ for (int i = 0; i < 1000; ++i) {
 | access to valid array index       | reference to existing value is returned                                                                                                | const reference to existing value is returned                                                                    |
 | access to non-existing object key | reference to newly inserted `null` value is returned                                                                                   | **undefined behavior**; [runtime assertion](https://json.nlohmann.me/features/assertions/index.md) in debug mode |
 | access to invalid array index     | reference to newly inserted `null` value is returned; any index between previous maximal index and passed index are filled with `null` | **undefined behavior**; [runtime assertion](https://json.nlohmann.me/features/assertions/index.md) in debug mode |
+
+Result of [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) in each scenario, for a non-const and a const value.
+
+## See also
+
+- [Element Access](https://json.nlohmann.me/features/element_access/index.md) - overview of all ways to access elements
+- [Checked access: at](https://json.nlohmann.me/features/element_access/checked_access/index.md) - access with range checking
+- [Access with default value: value](https://json.nlohmann.me/features/element_access/default_value/index.md) - fall back to a default instead of throwing
+- [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) - unchecked access by reference
+- [Runtime assertions](https://json.nlohmann.me/features/assertions/index.md) - assertions that guard `operator[]` misuse

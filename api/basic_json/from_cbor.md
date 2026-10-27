@@ -146,12 +146,16 @@ Linear in the size of the input.
 
 ## See also
 
-- [to_cbor](to_cbor.md) create a CBOR serialization of a JSON value
-- [from_msgpack](from_msgpack.md) create a JSON value from an input in MessagePack format
-- [from_bson](from_bson.md) create a JSON value from an input in BSON format
-- [from_ubjson](from_ubjson.md) create a JSON value from an input in UBJSON format
-- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
-- [from_bon8](from_bon8.md) create a JSON value from an input in BON8 format
+- [CBOR](../../features/binary_formats/cbor.md) - the format, its byte layout and how values are mapped
+- [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Parsing untrusted input](../../features/parsing/untrusted_input.md) - limits and safe handling of hostile data
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [`to_cbor`](to_cbor.md) - create a CBOR serialization of a JSON value
+- [`from_msgpack`](from_msgpack.md) - create a JSON value from an input in MessagePack format
+- [`from_bson`](from_bson.md) - create a JSON value from an input in BSON format
+- [`from_ubjson`](from_ubjson.md) - create a JSON value from an input in UBJSON format
+- [`from_bjdata`](from_bjdata.md) - create a JSON value from an input in BJData format
+- [`from_bon8`](from_bon8.md) - create a JSON value from an input in BON8 format
 
 ## Version history
 

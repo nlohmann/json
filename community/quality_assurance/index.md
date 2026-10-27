@@ -2,6 +2,10 @@
 
 Ensuring quality is paramount for this project, particularly because [numerous other projects](https://json.nlohmann.me/home/customers/index.md) depend on it. Each commit to the library undergoes rigorous checks against the following requirements, and any violations will result in a failed build.
 
+The overview shows the checks a change passes on its way from a push or pull request to a release; the sections below describe each of them.
+
+The checks grouped by the stage at which they run, from push or pull request through the merge into develop to a release. The badge on each card says whether the check runs on every push or PR, on a schedule, or continuously.
+
 ## C++ language compliance and compiler compatibility
 
 Requirement: Compiler support

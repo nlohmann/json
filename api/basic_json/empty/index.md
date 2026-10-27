@@ -39,7 +39,7 @@ bool empty() const noexcept
 
 ## Notes
 
-This function does not return whether a string stored as JSON value is empty -- it returns whether the JSON container itself is empty which is `false` in the case of a string.
+This function does not return whether a string stored as JSON value is empty — it returns whether the JSON container itself is empty which is `false` in the case of a string.
 
 ## Examples
 
@@ -96,9 +96,9 @@ false
 
 ## See also
 
-- [size](https://json.nlohmann.me/api/basic_json/size/index.md) returns the number of elements
-- [clear](https://json.nlohmann.me/api/basic_json/clear/index.md) clears the content and resets the value to the default value
-- [basic_json_view::empty](https://json.nlohmann.me/api/basic_json_view/empty/index.md) - the same check on a zero-copy view
+- [`size`](https://json.nlohmann.me/api/basic_json/size/index.md) - returns the number of elements
+- [`clear`](https://json.nlohmann.me/api/basic_json/clear/index.md) - clears the content and resets the value to the default value
+- [`basic_json_view::empty`](https://json.nlohmann.me/api/basic_json_view/empty/index.md) - the same check on a zero-copy view
 
 ## Version history
 

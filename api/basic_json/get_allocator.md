@@ -55,7 +55,7 @@ Constant.
 
 ## See also
 
-- [basic_json](index.md#template-parameters) the class template, with `AllocatorType` as one of its template parameters
+- [`basic_json`](index.md#template-parameters) - the class template, with `AllocatorType` as one of its template parameters
 - [Template Parameter Requirements](../../features/types/template_parameters.md#allocatortype) - the requirements for `AllocatorType`
 
 ## Version history

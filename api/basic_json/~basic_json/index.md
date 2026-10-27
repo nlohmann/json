@@ -16,8 +16,8 @@ Linear.
 
 ## See also
 
-- [basic_json](https://json.nlohmann.me/api/basic_json/basic_json/index.md) constructs a JSON value
-- [clear](https://json.nlohmann.me/api/basic_json/clear/index.md) clears the content of a JSON value without destroying it
+- [`basic_json`](https://json.nlohmann.me/api/basic_json/basic_json/index.md) - constructs a JSON value
+- [`clear`](https://json.nlohmann.me/api/basic_json/clear/index.md) - clears the content of a JSON value without destroying it
 
 ## Version history
 

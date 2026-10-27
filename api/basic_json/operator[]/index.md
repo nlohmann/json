@@ -490,11 +490,13 @@ Output:
 
 ## See also
 
-- documentation on [unchecked access](https://json.nlohmann.me/features/element_access/unchecked_access/index.md)
-- documentation on [runtime assertions](https://json.nlohmann.me/features/assertions/index.md)
-- see [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) for access by reference with range checking
-- see [`value`](https://json.nlohmann.me/api/basic_json/value/index.md) for access with default value
-- [basic_json_view::operator[]](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - the same access on a zero-copy view (a duplicate key resolves to the first member, whereas `parse()` keeps the last; a missing key gives a discarded view instead of undefined behavior)
+- [Unchecked access](https://json.nlohmann.me/features/element_access/unchecked_access/index.md) - element access without range checking
+- [Runtime assertions](https://json.nlohmann.me/features/assertions/index.md) - assertions guarding against undefined behavior
+- [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) - access by reference with range checking
+- [`value`](https://json.nlohmann.me/api/basic_json/value/index.md) - access with default value
+- [`basic_json_view::operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) - the same access on a zero-copy view (a duplicate key resolves to the first member, whereas `parse()` keeps the last; a missing key gives a discarded view instead of undefined behavior)
+- [Element Access](https://json.nlohmann.me/features/element_access/index.md) - overview of all ways to access elements
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - access nested values with a pointer
 
 ## Version history
 

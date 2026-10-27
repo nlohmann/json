@@ -13,3 +13,9 @@ Users of the [Meson build system](https://json.nlohmann.me/integration/package_m
 ```
 json = dependency('nlohmann_json', required: true)
 ```
+
+## See also
+
+- [Integration](https://json.nlohmann.me/integration/index.md) - all ways to integrate the library
+- [CMake](https://json.nlohmann.me/integration/cmake/index.md) - use the library from CMake
+- [Package Managers](https://json.nlohmann.me/integration/package_managers/index.md) - install the library via package managers

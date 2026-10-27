@@ -253,10 +253,11 @@ Output:
 
 ## See also
 
-- [emplace](https://json.nlohmann.me/api/basic_json/emplace/index.md) add a value to an object
-- [emplace_back](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) add a value to an array
-- [push_back](https://json.nlohmann.me/api/basic_json/push_back/index.md) add a value to an array/object
-- [update](https://json.nlohmann.me/api/basic_json/update/index.md) merges objects
+- [`emplace`](https://json.nlohmann.me/api/basic_json/emplace/index.md) - add a value to an object
+- [`emplace_back`](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) - add a value to an array
+- [`push_back`](https://json.nlohmann.me/api/basic_json/push_back/index.md) - add a value to an array/object
+- [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) - merges objects
+- [Modifying values](https://json.nlohmann.me/features/modifying_values/index.md) - the article on modifying values
 
 ## Version history
 

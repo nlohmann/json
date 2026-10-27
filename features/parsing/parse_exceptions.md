@@ -280,3 +280,14 @@ acceptable, for example for configuration files. Note that `start_pos()` is a 0-
 For binary formats such as CBOR, there are no lines; `byte` is the position in the byte sequence. To find out how many
 bytes a successfully parsed value used, see
 [Several values in one stream](large_and_partial_input.md#several-values-in-one-stream).
+
+## See also
+
+- [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input
+- [`accept`](../../api/basic_json/accept.md) - check if the input is valid JSON
+- [`sax_parse`](../../api/basic_json/sax_parse.md) - generate SAX events
+- [`parse_error`](../../api/basic_json/parse_error.md) - exception thrown on a parse error
+- [`JSON_DIAGNOSTIC_POSITIONS`](../../api/macros/json_diagnostic_positions.md) - record start and end positions of parsed values
+- [Working Without Exceptions](../no_exceptions.md) - error handling when exceptions are disabled
+- [Exceptions](../../home/exceptions.md) - list of exceptions and error codes
+- [Parsing Untrusted Input](untrusted_input.md) - limits and checks for input you do not control

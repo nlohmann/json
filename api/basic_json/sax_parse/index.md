@@ -288,10 +288,12 @@ result: false
 
 ## See also
 
-- [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
-- [accept](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
 - [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time
 - [`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) - read a `FILE*` with the locking stdio functions
+- [SAX Interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - guide to event-based parsing
+- [Large, Streamed, and Partial Input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md) - chunked, concatenated, and very large input
 
 ## Version history
 

@@ -7,7 +7,7 @@ string_t dump(const int indent = -1,
               const number_format numbers = number_format::shortest) const;
 ```
 
-Serializes this value (and its subtree) directly from the flat index, without ever building a `BasicJsonType` value first. With the default `numbers == number_format::shortest`, the result is the same string [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) would produce for the value [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) builds from the same source text, called with the same `indent`, `indent_char`, and `ensure_ascii` -- except that members of an object appear in document order rather than sorted by key, and *every* occurrence of a repeated key is written rather than only the last one (see [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes)). For a `json_view` (whose `BasicJsonType` is not ordered), this means `dump()` can print an object's members in a different order than [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md)`.dump()` of the same subtree.
+Serializes this value (and its subtree) directly from the flat index, without ever building a `BasicJsonType` value first. With the default `numbers == number_format::shortest`, the result is the same string [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) would produce for the value [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) builds from the same source text, called with the same `indent`, `indent_char`, and `ensure_ascii` — except that members of an object appear in document order rather than sorted by key, and *every* occurrence of a repeated key is written rather than only the last one (see [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes)). For a `json_view` (whose `BasicJsonType` is not ordered), this means `dump()` can print an object's members in a different order than [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md)`.dump()` of the same subtree.
 
 ## Parameters
 
@@ -37,13 +37,13 @@ Linear in the size of the output text.
 
 ## Notes
 
-The walk over the subtree is iterative, so the nesting depth it can write is limited by available memory only, not by the call stack -- as for [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md).
+The walk over the subtree is iterative, so the nesting depth it can write is limited by available memory only, not by the call stack — as for [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md).
 
 Strings are escaped by the same rules as [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md).
 
-With `numbers == number_format::shortest`, floats are written with the library's shortest round-trip conversion, exactly as [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) would (e.g. `1.5`, `100.0`, `1e+100`), and integers are copied from the source text -- already canonical in JSON, so this matches their shortest form too -- except that `-0` is written as `0`, the way [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) reads it.
+With `numbers == number_format::shortest`, floats are written with the library's shortest round-trip conversion, exactly as [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) would (e.g. `1.5`, `100.0`, `1e+100`), and integers are copied from the source text — already canonical in JSON, so this matches their shortest form too — except that `-0` is written as `0`, the way [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) reads it.
 
-`number_format::source` copies every number exactly as written in the source text instead, with no exception for `-0` -- `1.50`, `1E2`, `-0.0`, `-0`, or all digits of an integer literal with more digits than any number type holds (such a literal is itself classified as a float, see [What is different](https://json.nlohmann.me/features/json_view/#what-is-different)) -- something `BasicJsonType` cannot do, since parsing already reduces every number to its parsed value.
+`number_format::source` copies every number exactly as written in the source text instead, with no exception for `-0` — `1.50`, `1E2`, `-0.0`, `-0`, or all digits of an integer literal with more digits than any number type holds (such a literal is itself classified as a float, see [What is different](https://json.nlohmann.me/features/json_view/#what-is-different)) — something `BasicJsonType` cannot do, since parsing already reduces every number to its parsed value.
 
 ## Examples
 
@@ -101,9 +101,10 @@ Output:
 ## See also
 
 - [`number_format`](https://json.nlohmann.me/api/basic_json_view/number_format/index.md) - how `dump()` writes numbers
-- [operator\<<](https://json.nlohmann.me/api/basic_json_view/operator_ltlt/index.md) - serialize this value to a stream
-- [materialize](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build a `BasicJsonType` value, e.g. to use `BasicJsonType::dump`'s `error_handler`
+- [`operator<<`](https://json.nlohmann.me/api/basic_json_view/operator_ltlt/index.md) - serialize this value to a stream
+- [`materialize`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build a `BasicJsonType` value, e.g. to use `BasicJsonType::dump`'s `error_handler`
 - [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) - the corresponding function of `basic_json`
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#writing-a-view-back) - writing a view back without building a tree
 
 ## Version history
 

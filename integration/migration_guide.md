@@ -283,3 +283,12 @@ exact version and configuration is relevant, use macro
 
 The `nlohmann::detail` namespace is not part of the public API of the library and can change in any version without
 an announcement. Do not rely on any function or type in the `detail` namespace.
+
+## See also
+
+- [`JSON_DELETE_DEPRECATED_FUNCTIONS`](../api/macros/json_delete_deprecated_functions.md) - remove deprecated functions to check the migration
+- [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) - control implicit conversions
+- [`NLOHMANN_JSON_NAMESPACE`](../api/macros/nlohmann_json_namespace.md) - refer to the library namespace without hard-coding it
+- [`nlohmann` Namespace](../features/namespace.md) - how the library namespace is structured
+- [Converting values](../features/conversions.md) - explicit conversions with get
+- [`basic_json`](../api/basic_json/index.md) - the main class and all its member functions

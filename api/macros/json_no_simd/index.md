@@ -56,12 +56,13 @@ int main()
 
 ## See also
 
-- [**parse**](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
-- [**dump**](https://json.nlohmann.me/api/basic_json/dump/index.md) - serialization
-- [**JSON_USE_SIMDUTF**](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md) - use the simdutf library to accelerate UTF-8 validation
-- [**JSON_DISABLE_STREAM_BULK_SCAN**](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time
-- [Parsing: input sources and performance](https://json.nlohmann.me/features/parsing/#input-sources-and-performance)
-- [json_view](https://json.nlohmann.me/features/json_view/index.md) - the zero-copy view, whose parser the macro also affects
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) - serialization
+- [`JSON_USE_SIMDUTF`](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md) - use the simdutf library to accelerate UTF-8 validation
+- [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) - read a `std::istream` one character at a time
+- [Parsing: input sources and performance](https://json.nlohmann.me/features/parsing/#input-sources-and-performance) - how input sources affect parsing performance
+- [Serialization](https://json.nlohmann.me/features/serialization/index.md) - pretty-printing, UTF-8 handling, and number output
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - the zero-copy view, whose parser the macro also affects
 
 ## Version history
 

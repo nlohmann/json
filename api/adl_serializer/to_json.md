@@ -69,7 +69,9 @@ This function is usually called by the constructors of the [basic_json](../basic
 
 ## See also
 
-- [from_json](from_json.md)
+- [`from_json`](from_json.md) - convert JSON to a C++ value
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) - write your own `from_json` and `to_json` functions
+- [Converting values](../../features/conversions.md) - overview of `get`, `get_to` and implicit conversions
 
 ## Version history
 

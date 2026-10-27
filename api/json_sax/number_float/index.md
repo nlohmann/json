@@ -200,9 +200,10 @@ result: false
 
 ## See also
 
-- [number_integer](https://json.nlohmann.me/api/json_sax/number_integer/index.md) - an integer number was read
-- [number_unsigned](https://json.nlohmann.me/api/json_sax/number_unsigned/index.md) - an unsigned integer number was read
-- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [`number_integer`](https://json.nlohmann.me/api/json_sax/number_integer/index.md) - an integer number was read
+- [`number_unsigned`](https://json.nlohmann.me/api/json_sax/number_unsigned/index.md) - an unsigned integer number was read
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [SAX Interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - guide to event-based parsing
 
 ## Version history
 

@@ -202,8 +202,9 @@ result: false
 
 ## See also
 
-- [end_array](https://json.nlohmann.me/api/json_sax/end_array/index.md) - the end of an array was read
-- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [`end_array`](https://json.nlohmann.me/api/json_sax/end_array/index.md) - the end of an array was read
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [SAX Interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - guide to event-based parsing
 
 ## Version history
 

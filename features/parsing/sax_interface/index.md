@@ -29,6 +29,8 @@ class sax_t ["json::sax_t"] {
 }
 ```
 
+The interface `json::sax_t`: one function per event, each returning `bool`; the functions marked with `*` are pure virtual.
+
 ```
 // called when null is parsed
 bool null();
@@ -62,6 +64,42 @@ bool parse_error(std::size_t position, const std::string& last_token, const json
 
 The return value of each function determines whether parsing should proceed.
 
+## Stepping through the events
+
+The events for a small input, step by step, and what two different handlers do with them. Press *Play* or step with *Next*:
+
+input
+
+`{"a":[1,true],"b":"x"}`
+
+events, in the order the parser calls them
+
+1. `start_object(-1)`
+1. `key("a")`
+1. `start_array(-1)`
+1. `number_unsigned(1)`
+1. `boolean(true)`
+1. `end_array()`
+1. `key("b")`
+1. `string("x")`
+1. `end_object()`
+
+handler: build a value tree, as `parse` does
+
+```
+{
+  "a": [
+    1,
+    true
+  ],
+  "b": "x"
+}
+```
+
+After `end_object()` the tree is complete and no container is open. The number of elements is passed as -1: the parser does not know it in advance.
+
+The three lanes show the input consumed so far, the events called so far, and the state of the selected handler (*build a tree* or *keep only /b*). Check *return false at this event* to stop the parse at the current event and see which events are no longer called.
+
 To implement your own SAX handler, proceed as follows:
 
 1. Implement the SAX interface in a class. You can use class `nlohmann::json_sax<json>` as base class, but you can also use any class where the functions described above are implemented and public.
@@ -72,5 +110,9 @@ Note the `sax_parse` function only returns a `bool` indicating the result of the
 
 ## See also
 
-- [json_sax](https://json.nlohmann.me/api/json_sax/index.md) - documentation of the SAX interface
-- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [`json_sax`](https://json.nlohmann.me/api/json_sax/index.md) - documentation of the SAX interface
+- [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [Parsing](https://json.nlohmann.me/features/parsing/index.md) - overview of the parsing functions
+- [Parsing and Exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - handling parse errors and locating them in the input
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [Binary Formats](https://json.nlohmann.me/features/binary_formats/index.md) - CBOR, MessagePack, BSON, and other formats

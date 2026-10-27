@@ -163,12 +163,12 @@ false <=> true := less
 
 ## See also
 
-- [**operator==**](https://json.nlohmann.me/api/basic_json/operator_eq/index.md) - comparison: equal
-- [**operator!=**](https://json.nlohmann.me/api/basic_json/operator_ne/index.md) - comparison: not equal
-- [**operator\<**](https://json.nlohmann.me/api/basic_json/operator_lt/index.md) - comparison: less than
-- [**operator\<=**](https://json.nlohmann.me/api/basic_json/operator_le/index.md) - comparison: less than or equal
-- [**operator>**](https://json.nlohmann.me/api/basic_json/operator_gt/index.md) - comparison: greater than
-- [**operator>=**](https://json.nlohmann.me/api/basic_json/operator_ge/index.md) - comparison: greater than or equal
+- [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md) - comparison: equal
+- [`operator!=`](https://json.nlohmann.me/api/basic_json/operator_ne/index.md) - comparison: not equal
+- [`operator<`](https://json.nlohmann.me/api/basic_json/operator_lt/index.md) - comparison: less than
+- [`operator<=`](https://json.nlohmann.me/api/basic_json/operator_le/index.md) - comparison: less than or equal
+- [`operator>`](https://json.nlohmann.me/api/basic_json/operator_gt/index.md) - comparison: greater than
+- [`operator>=`](https://json.nlohmann.me/api/basic_json/operator_ge/index.md) - comparison: greater than or equal
 
 ## Version history
 

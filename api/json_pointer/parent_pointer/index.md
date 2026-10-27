@@ -55,8 +55,8 @@ parent of "/foo/0" is "/foo"
 
 ## See also
 
-- [pop_back](https://json.nlohmann.me/api/json_pointer/pop_back/index.md) remove the last reference token
-- [back](https://json.nlohmann.me/api/json_pointer/back/index.md) return the last reference token
+- [`pop_back`](https://json.nlohmann.me/api/json_pointer/pop_back/index.md) - remove the last reference token
+- [`back`](https://json.nlohmann.me/api/json_pointer/back/index.md) - return the last reference token
 
 ## Version history
 

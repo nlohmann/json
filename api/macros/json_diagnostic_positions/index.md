@@ -255,7 +255,8 @@ The output shows the exception with diagnostic path info and start/end positions
 ## See also
 
 - [JSON_Diagnostic_Positions](https://json.nlohmann.me/integration/cmake/#json_diagnostic_positions) - CMake option to control the macro
-- [JSON_DIAGNOSTICS](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) - macro to control extended diagnostics
+- [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) - macro to control extended diagnostics
+- [Parsing and Exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - handling parse errors and locating them in the input
 
 ## Version history
 

@@ -23,8 +23,8 @@ has `set`; calling it on a read-only `basic_json_document` fails to compile (`#!
 
 1. Replaces the value `target` refers to with `value`.
 2. Sets the member `key` of the object `object` to `value`: assigns it if `object` already has a member with this
-   key -- the first one, should the key occur more than once, and the later duplicates are then dropped (see the
-   [Notes](#notes) below) -- or appends a new member at the end otherwise. A [null](../basic_json_view/is_null.md)
+   key — the first one, should the key occur more than once, and the later duplicates are then dropped (see the
+   [Notes](#notes) below) — or appends a new member at the end otherwise. A [null](../basic_json_view/is_null.md)
    `object` first becomes an empty object.
 3. Assigns `value` to the element at index `idx` of the array `array`, which must already exist (`#!cpp idx <
    array.size()`).
@@ -37,7 +37,7 @@ has `set`; calling it on a read-only `basic_json_document` fails to compile (`#!
    null values up to that index), an object otherwise. An empty `ptr` sets [`root()`](root.md) itself, as in 1.
 
 In every overload, `value` is accepted three ways: a [`basic_json_view`](../basic_json_view/index.md) of *any*
-document -- read-only or editable, and it does not have to be `target`'s/`object`'s/`array`'s own document -- which
+document — read-only or editable, and it does not have to be `target`'s/`object`'s/`array`'s own document — which
 is copied so that nothing is shared with the source document afterward; a `BasicJsonType` value; or anything
 `BasicJsonType` can be constructed from (numbers, strings, `#!cpp bool`, `#!cpp nullptr`, containers, ...).
 
@@ -82,11 +82,11 @@ is copied so that nothing is shared with the source document afterward; a `Basic
 
 ## Exception safety
 
-Basic exception safety: `value` is fully encoded -- including the checks below -- into storage owned by the document
+Basic exception safety: `value` is fully encoded — including the checks below — into storage owned by the document
 before anything already reachable from [`root()`](root.md) is touched, so a failure while encoding `value` (an
 invalid argument, or `#!cpp std::bad_alloc`) leaves the document completely unchanged, other than memory allocated
-for the encoding that is not reclaimed. A failure of a later allocation -- while an edited array or object switches
-from its parsed layout to a growable block, see [Notes](#notes) -- can still leave a partial effect, such as a
+for the encoding that is not reclaimed. A failure of a later allocation — while an edited array or object switches
+from its parsed layout to a growable block, see [Notes](#notes) — can still leave a partial effect, such as a
 [null](../basic_json_view/is_null.md) `object`/`array` argument already turned into an empty object/array even
 though `value` itself was not linked in. Likewise, a failure of `value` in 4. leaves a null parent that is set with an
 index beyond 0 already filled with the null values before the index.
@@ -95,14 +95,14 @@ index beyond 0 already filled with the null values before the index.
 
 1. Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `value` is a
    [discarded](../basic_json_view/is_discarded.md) view, or a [discarded](../basic_json/is_discarded.md)
-   `BasicJsonType` value (e.g. `#!cpp BasicJsonType(value_t::discarded)`) -- an object or array `value`, of either
+   `BasicJsonType` value (e.g. `#!cpp BasicJsonType(value_t::discarded)`) — an object or array `value`, of either
    kind, is fine and is encoded as a whole subtree.
 2. Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if `object` is neither an object
-   nor null -- the same message [`operator[]`](../basic_json_view/operator%5B%5D.md) throws for a string argument on
+   nor null — the same message [`operator[]`](../basic_json_view/operator%5B%5D.md) throws for a string argument on
    such a value. Throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) if `key` is not
    valid UTF-8, with the same message [`BasicJsonType::dump()`](../basic_json/dump.md) gives for that string.
    Also throws what 1. throws for `value`.
-3. Throws `type_error.305` if `array` is not an array -- the same message `operator[]` throws for a numeric argument
+3. Throws `type_error.305` if `array` is not an array — the same message `operator[]` throws for a numeric argument
    on such a value. Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if `idx` is
    negative, or if `#!cpp idx >= array.size()`. Also throws what 1. throws for `value`.
 4. Throws what [`at`](../basic_json_view/at.md) throws (overload 3) for resolving `ptr`'s parent, except that a
@@ -121,7 +121,7 @@ index beyond 0 already filled with the null values before the index.
    Also throws what 1. throws for `value`.
 
 Every overload also throws [`type_error.319`](../../home/exceptions.md#jsonexceptiontype_error319) if `value` is (or
-contains) a binary value -- `BasicJsonType` can hold one, but a `json_document` cannot -- and
+contains) a binary value — `BasicJsonType` can hold one, but a `json_document` cannot — and
 [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) ("view does not belong to this
 document") if `target`/`object`/`array` is a [discarded](../basic_json_view/is_discarded.md) view or a view of a
 *different* document (overloads 1-3 only; overload 4 always starts from this document's own [`root()`](root.md)).
@@ -132,7 +132,7 @@ document") if `target`/`object`/`array` is a [discarded](../basic_json_view/is_d
    number of nested values for an array or object. If `target` is itself an array or object that spans more than one
    node in its parent's original, unedited layout, and `value` is a scalar, replacing it additionally costs time
    linear in the size of the document, the *first* time (the parent of `target` is looked up from
-   [`root()`](root.md), and then switches to links) -- see [Notes](#notes). Once the parent has links, `target` is
+   [`root()`](root.md), and then switches to links) — see [Notes](#notes). Once the parent has links, `target` is
    replaced in constant time: setting every element of a large array one after the other is linear overall. To avoid
    the lookup altogether, use 3. (or 2. for an object), which know the parent.
 2. Linear in the number of members of `object`, to find an existing member with `key`, plus the complexity of 1. for
@@ -147,7 +147,7 @@ document") if `target`/`object`/`array` is a [discarded](../basic_json_view/is_d
 !!! info "Duplicate keys"
 
     If `object` already has more than one member with `key` (2.), the *first* one is assigned `value` and every
-    later member with the same key is removed -- so that a lookup, an iteration, and
+    later member with the same key is removed — so that a lookup, an iteration, and
     [`materialize()`](../basic_json_view/materialize.md) of `object` afterward all agree on a single value for
     `key`, the same way [`operator[]`](../basic_json_view/operator%5B%5D.md) already picks the first occurrence of a
     duplicate key for reading. See the [Notes on duplicate keys](../basic_json_view/operator%5B%5D.md#notes) of
@@ -156,8 +156,8 @@ document") if `target`/`object`/`array` is a [discarded](../basic_json_view/is_d
 Setting a member (2.) or an element (3., through 4.) of an array or object whose elements have not been edited
 before switches it from its parsed layout to a growable block holding links to its elements; a later
 [`push_back`](push_back.md) or `set` on the same container reuses that block, growing it (amortized constant time)
-only once it runs out of room. This never moves an element itself -- only where the container's *links* to its
-elements live -- so a view of an element stays valid, but any iterator already taken over the container is
+only once it runs out of room. This never moves an element itself — only where the container's *links* to its
+elements live — so a view of an element stays valid, but any iterator already taken over the container is
 invalidated, since it was walking the old layout. See [Edits](index.md#edits) for what stays valid across an edit in
 general.
 
@@ -170,8 +170,8 @@ one-node scalar.
 
 ??? example "Example: (1)/(2)/(3)/(4) replace a value, set a member, assign an element, set via a JSON pointer"
 
-    The example below edits a small configuration document -- replacing a value, adding an object member, assigning
-    an array element, and reaching a field through a JSON pointer -- and shows what
+    The example below edits a small configuration document — replacing a value, adding an object member, assigning
+    an array element, and reaching a field through a JSON pointer — and shows what
     [`dump()`](../basic_json_view/dump.md) preserves that is lost once the same edits are made on a `BasicJsonType`
     value instead: the order object members were written in, and the exact spelling of a number that was never
     touched.
@@ -254,10 +254,10 @@ one-node scalar.
 
 ## See also
 
-- [push_back](push_back.md) - append to an array
-- [insert](insert.md) - insert an element into an array
-- [erase](erase.md) - remove an object member, an array element, or the value a JSON pointer refers to
-- [root](root.md) - the view of the root value, the starting point of overload 4
+- [`push_back`](push_back.md) - append to an array
+- [`insert`](insert.md) - insert an element into an array
+- [`erase`](erase.md) - remove an object member, an array element, or the value a JSON pointer refers to
+- [`root`](root.md) - the view of the root value, the starting point of overload 4
 - [`basic_json_view::dump`](../basic_json_view/dump.md) - serialize the document, keeping an untouched number's
   spelling with `#!cpp number_format::source`
 - [Edits](index.md#edits) - what an edit guarantees, for every overload

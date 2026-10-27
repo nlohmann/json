@@ -99,8 +99,8 @@ Linear in the number of reference tokens.
 
 ## See also
 
-- [operator==](operator_eq.md) compare: equal
-- [operator!=](operator_ne.md) compare: not equal
+- [`operator==`](operator_eq.md) - compare: equal
+- [`operator!=`](operator_ne.md) - compare: not equal
 
 ## Version history
 

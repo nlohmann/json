@@ -95,8 +95,9 @@ Constant.
 
 ## See also
 
-- [type](type.md) named member function equivalent to this implicit conversion operator
-- [value_t](value_t.md) the enumeration of JSON types
+- [`type`](type.md) - named member function equivalent to this implicit conversion operator
+- [`value_t`](value_t.md) - the enumeration of JSON types
+- [Types](../../features/types/index.md) - the JSON value types
 
 ## Version history
 

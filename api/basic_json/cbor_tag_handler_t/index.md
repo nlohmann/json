@@ -64,8 +64,9 @@ Output:
 
 ## See also
 
-- [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) deserializes a JSON value from CBOR
-- [input_format_t](https://json.nlohmann.me/api/basic_json/input_format_t/index.md) the enumeration of supported input formats
+- [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
+- [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) - deserializes a JSON value from CBOR
+- [`input_format_t`](https://json.nlohmann.me/api/basic_json/input_format_t/index.md) - the enumeration of supported input formats
 - [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md) - the article on the CBOR format
 
 ## Version history

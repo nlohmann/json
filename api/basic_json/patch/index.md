@@ -160,10 +160,12 @@ Output:
 
 ## See also
 
-- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
-- [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
-- [patch_inplace](https://json.nlohmann.me/api/basic_json/patch_inplace/index.md) applies a JSON Patch without creating a copy of the document
-- [merge_patch](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) applies a JSON Merge Patch
+- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902) - specification of JSON Patch
+- [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901) - specification of JSON Pointer
+- [`patch_inplace`](https://json.nlohmann.me/api/basic_json/patch_inplace/index.md) - applies a JSON Patch without creating a copy of the document
+- [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md) - applies a JSON Merge Patch
+- [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md) - the article on JSON Patch
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - the addressing scheme used for patch paths
 
 ## Version history
 

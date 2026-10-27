@@ -22,7 +22,7 @@ Constant.
 
 Example
 
-The example below sums many measurements with `std::accumulate`, using `cbegin()`/[`cend()`](https://json.nlohmann.me/api/basic_json_view/cend/index.md) as the range -- the same way it would for any standard container -- without ever materializing the whole array into a `BasicJsonType` value.
+The example below sums many measurements with `std::accumulate`, using `cbegin()`/[`cend()`](https://json.nlohmann.me/api/basic_json_view/cend/index.md) as the range — the same way it would for any standard container — without ever materializing the whole array into a `BasicJsonType` value.
 
 ```
 #include <iostream>
@@ -59,8 +59,8 @@ Output:
 
 ## See also
 
-- [begin](https://json.nlohmann.me/api/basic_json_view/begin/index.md) - returns an iterator to the first element
-- [cend](https://json.nlohmann.me/api/basic_json_view/cend/index.md) - returns a const iterator to one past the last element
+- [`begin`](https://json.nlohmann.me/api/basic_json_view/begin/index.md) - returns an iterator to the first element
+- [`cend`](https://json.nlohmann.me/api/basic_json_view/cend/index.md) - returns a const iterator to one past the last element
 - [`BasicJsonType::cbegin`](https://json.nlohmann.me/api/basic_json/cbegin/index.md) - the corresponding function of `basic_json`
 
 ## Version history

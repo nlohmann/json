@@ -218,5 +218,10 @@ With exceptions off, you can replace the `abort()` by your own code, for example
 
 - [Exceptions](https://json.nlohmann.me/home/exceptions/index.md) - all exceptions and their ids
 - [Parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - the parsing alternatives in detail
-- [Parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md)
-- [`JSON_NOEXCEPTION`](https://json.nlohmann.me/api/macros/json_noexception/index.md)
+- [Parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - harden an application that parses data it does not control
+- [`JSON_NOEXCEPTION`](https://json.nlohmann.me/api/macros/json_noexception/index.md) - disable exceptions in the library
+- [`exception`](https://json.nlohmann.me/api/basic_json/exception/index.md) - base class of all exceptions thrown by the library
+- [`JSON_THROW_USER`](https://json.nlohmann.me/api/macros/json_throw_user/index.md) - replace the throw statements of the library
+- [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
+- [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - check whether the input is valid JSON
+- [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - all supported macros

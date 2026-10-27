@@ -89,9 +89,10 @@ true 1
 
 ## See also
 
-- [node_count](https://json.nlohmann.me/api/basic_json_document/node_count/index.md) - the number of index entries
-- [memory_usage](https://json.nlohmann.me/api/basic_json_document/memory_usage/index.md) - the number of bytes held by the document
-- [root](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of the root value
+- [`node_count`](https://json.nlohmann.me/api/basic_json_document/node_count/index.md) - the number of index entries
+- [`memory_usage`](https://json.nlohmann.me/api/basic_json_document/memory_usage/index.md) - the number of bytes held by the document
+- [`root`](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of the root value
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime) - what releasing memory invalidates
 
 ## Version history
 

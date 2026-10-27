@@ -90,10 +90,11 @@ false
 
 ## See also
 
-- [is_primitive()](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) returns whether JSON value is primitive
-- [is_array()](https://json.nlohmann.me/api/basic_json/is_array/index.md) returns whether the value is an array
-- [is_object()](https://json.nlohmann.me/api/basic_json/is_object/index.md) returns whether the value is an object
-- [basic_json_view::is_structured](https://json.nlohmann.me/api/basic_json_view/is_structured/index.md) - the same check on a zero-copy view
+- [`is_primitive()`](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) - returns whether JSON value is primitive
+- [`is_array()`](https://json.nlohmann.me/api/basic_json/is_array/index.md) - returns whether the value is an array
+- [`is_object()`](https://json.nlohmann.me/api/basic_json/is_object/index.md) - returns whether the value is an object
+- [`basic_json_view::is_structured`](https://json.nlohmann.me/api/basic_json_view/is_structured/index.md) - the same check on a zero-copy view
+- [Types](https://json.nlohmann.me/features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

@@ -170,8 +170,9 @@ bon8
 
 ## See also
 
-- [sax_parse](sax_parse.md) generic SAX parse interface, taking an `input_format_t` to select the input format
-- [cbor_tag_handler_t](cbor_tag_handler_t.md) configures how CBOR tags are treated while parsing
+- [`sax_parse`](sax_parse.md) - generic SAX parse interface, taking an `input_format_t` to select the input format
+- [`cbor_tag_handler_t`](cbor_tag_handler_t.md) - configures how CBOR tags are treated while parsing
+- [Binary Formats](../../features/binary_formats/index.md) - CBOR, MessagePack, BSON, and other formats
 
 ## Version history
 
