@@ -45,6 +45,8 @@ using nlohmann::ordered_json_document;
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wfloat-equal")
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 // The from_json() functions of the NLOHMANN_DEFINE_TYPE_* and
 // NLOHMANN_JSON_SERIALIZE_ENUM macros read views directly; other from_json()
@@ -66,10 +68,11 @@ struct point
 
 struct shape
 {
-    std::string name;
-    std::vector<point> points;
-    point center;
-    std::map<std::string, point> named;
+    // initialized for GCC -Weffc++
+    std::string name{};
+    std::vector<point> points{};
+    point center{};
+    std::map<std::string, point> named{};
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(shape, name, points, center, named)
 };
 
@@ -84,7 +87,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(with_defaults, a, b, c)
 struct with_names
 {
     int value = 0;
-    std::string text;
+    std::string text{};  // initialized for GCC -Weffc++
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(with_names, "Value", value, "Text", text)
 
@@ -454,3 +457,4 @@ TEST_CASE("json_view from_json")
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
+DOCTEST_GCC_SUPPRESS_WARNING_POP
