@@ -41,6 +41,11 @@ using nlohmann::ordered_json_document;
     #include <optional>
 #endif
 
+// NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair; same() compares floating-point values on purpose
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wfloat-equal")
+
 // The from_json() functions of the NLOHMANN_DEFINE_TYPE_* and
 // NLOHMANN_JSON_SERIALIZE_ENUM macros read views directly; other from_json()
 // functions get the value of materialize().
@@ -447,3 +452,5 @@ TEST_CASE("json_view from_json")
     }
 #endif
 }
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP

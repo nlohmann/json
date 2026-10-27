@@ -54,9 +54,11 @@
 // IWYU pragma: no_include <version>
 // IWYU pragma: no_include "nlohmann/detail/abi_config.hpp"
 // IWYU pragma: no_include "nlohmann/detail/abi_macros.hpp"
+// IWYU pragma: no_include "nlohmann/detail/conversions/from_json.hpp"
 // IWYU pragma: no_include "nlohmann/detail/input/input_adapters.hpp"
 // IWYU pragma: no_include "nlohmann/detail/json_pointer.hpp"
 // IWYU pragma: no_include "nlohmann/detail/meta/cpp_future.hpp"
+// IWYU pragma: no_include "nlohmann/detail/meta/type_traits.hpp"
 // IWYU pragma: no_include "nlohmann/detail/string_concat.hpp"
 // IWYU pragma: no_include "nlohmann/detail/value_t.hpp"
 // IWYU pragma: no_include "nlohmann/json.hpp"
