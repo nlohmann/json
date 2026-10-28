@@ -1185,6 +1185,32 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* skip_digits(const unsigned char
     return p;
 }
 
+/// advance over the text of a line comment (after its "//") to the line
+/// break or the end (with NulIsEnd also a null byte, which is left for the
+/// caller to see, as in parse())
+template<bool NulIsEnd = false>
+inline const unsigned char* skip_line_comment(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (p != e && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
+    {
+        ++p;
+    }
+    return p;
+}
+
+/// the "*/" that ends a block comment whose text starts at p (after its "/*");
+/// if it is unterminated, the end (with NulIsEnd also a null byte), which is
+/// where the caller reports the error
+template<bool NulIsEnd = false>
+inline const unsigned char* find_block_comment_end(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (p != e && !(NulIsEnd && *p == 0) && !(*p == '*' && p + 1 != e && p[1] == '/'))
+    {
+        ++p;
+    }
+    return p;
+}
+
 /// powers of ten up to 10^19 as integers
 inline std::uint64_t int_pow10(unsigned k) noexcept
 {
@@ -1382,31 +1408,16 @@ class builder
         }
         if (p[1] == '/')
         {
-            p += 2;
-            // (as in parse(), a null byte is the end of the input, so it is
-            // left for the caller to see)
-            while (p != m_end && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
-            {
-                ++p;
-            }
-            return p;
+            return skip_line_comment<NulIsEnd>(p + 2, m_end);
         }
         if (p[1] == '*')
         {
-            p += 2;
-            for (;;)
+            p = find_block_comment_end<NulIsEnd>(p + 2, m_end);
+            if (p == m_end || *p != '*')
             {
-                if (p == m_end || (NulIsEnd && *p == 0))
-                {
-                    return fail_at(error_code::comment_unterminated, p);
-                }
-                if (*p == '*' && p + 1 != m_end && p[1] == '/')
-                {
-                    p += 2;
-                    return p;
-                }
-                ++p;
+                return fail_at(error_code::comment_unterminated, p);
             }
+            return p + 2;
         }
         ++p;
         return fail_at(error_code::comment_start, p);
@@ -6114,6 +6125,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/number.hpp>
 
+// #include <nlohmann/detail/view/scan.hpp>
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -6203,6 +6216,8 @@ struct position_source
     /// (the source was validated when it was parsed)
     static std::size_t container_end(const char* src, std::size_t size, std::size_t pos) noexcept
     {
+        const auto* const b = reinterpret_cast<const unsigned char*>(src); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): the text as bytes, as the builder reads it
+        const unsigned char* const e = b + size;
         while (pos < size)
         {
             switch (src[pos])
@@ -6220,21 +6235,13 @@ struct position_source
                 case '/':
                     if (pos + 1 < size && src[pos + 1] == '/')
                     {
-                        pos += 2;
-                        while (pos < size && src[pos] != '\n' && src[pos] != '\r')
-                        {
-                            ++pos;
-                        }
+                        pos = static_cast<std::size_t>(skip_line_comment(b + pos + 2, e) - b);
                         break;
                     }
                     if (pos + 1 < size && src[pos + 1] == '*')
                     {
-                        pos += 2;
-                        while (pos < size && !(src[pos] == '*' && pos + 1 < size && src[pos + 1] == '/'))
-                        {
-                            ++pos;
-                        }
-                        pos += 2;
+                        // (unterminated: pos is size, which ends the loop)
+                        pos = static_cast<std::size_t>(find_block_comment_end(b + pos + 2, e) - b) + 2;
                         break;
                     }
                     return std::string::npos;

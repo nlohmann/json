@@ -173,31 +173,16 @@ class builder
         }
         if (p[1] == '/')
         {
-            p += 2;
-            // (as in parse(), a null byte is the end of the input, so it is
-            // left for the caller to see)
-            while (p != m_end && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
-            {
-                ++p;
-            }
-            return p;
+            return skip_line_comment<NulIsEnd>(p + 2, m_end);
         }
         if (p[1] == '*')
         {
-            p += 2;
-            for (;;)
+            p = find_block_comment_end<NulIsEnd>(p + 2, m_end);
+            if (p == m_end || *p != '*')
             {
-                if (p == m_end || (NulIsEnd && *p == 0))
-                {
-                    return fail_at(error_code::comment_unterminated, p);
-                }
-                if (*p == '*' && p + 1 != m_end && p[1] == '/')
-                {
-                    p += 2;
-                    return p;
-                }
-                ++p;
+                return fail_at(error_code::comment_unterminated, p);
             }
+            return p + 2;
         }
         ++p;
         return fail_at(error_code::comment_start, p);

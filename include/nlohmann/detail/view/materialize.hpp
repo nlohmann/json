@@ -19,6 +19,7 @@
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/node.hpp>
 #include <nlohmann/detail/view/number.hpp>
+#include <nlohmann/detail/view/scan.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -108,6 +109,8 @@ struct position_source
     /// (the source was validated when it was parsed)
     static std::size_t container_end(const char* src, std::size_t size, std::size_t pos) noexcept
     {
+        const auto* const b = reinterpret_cast<const unsigned char*>(src); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): the text as bytes, as the builder reads it
+        const unsigned char* const e = b + size;
         while (pos < size)
         {
             switch (src[pos])
@@ -125,21 +128,13 @@ struct position_source
                 case '/':
                     if (pos + 1 < size && src[pos + 1] == '/')
                     {
-                        pos += 2;
-                        while (pos < size && src[pos] != '\n' && src[pos] != '\r')
-                        {
-                            ++pos;
-                        }
+                        pos = static_cast<std::size_t>(skip_line_comment(b + pos + 2, e) - b);
                         break;
                     }
                     if (pos + 1 < size && src[pos + 1] == '*')
                     {
-                        pos += 2;
-                        while (pos < size && !(src[pos] == '*' && pos + 1 < size && src[pos + 1] == '/'))
-                        {
-                            ++pos;
-                        }
-                        pos += 2;
+                        // (unterminated: pos is size, which ends the loop)
+                        pos = static_cast<std::size_t>(find_block_comment_end(b + pos + 2, e) - b) + 2;
                         break;
                     }
                     return std::string::npos;
