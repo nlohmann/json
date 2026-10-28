@@ -42,6 +42,14 @@ Unlike [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md), `patch
 
 Duplicate member names inside an operation object are resolved by the parser before the patch is applied (the last one is kept, see [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/#behavior)), so `{"op": "add", "op": "remove", "path": "/a"}` is a `remove` operation.
 
+The JSON patch may be the JSON value itself (`j.patch_inplace(j)`): the operations are then read from a copy of the patch made before the first operation is applied, so the result is the same as that of `j = j.patch(j)`, and the exception safety is the same as above.
+
+If [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) is enabled, the same holds for a JSON patch stored inside the JSON value (e.g., `j.patch_inplace(j["patch"])`): it is detected via the parent pointers.
+
+Undefined behavior
+
+Without [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md), the JSON patch must not be a value stored inside the JSON value (e.g., `j.patch_inplace(j["patch"])`), as the operations may change or destroy it while it is read. Pass a copy (`j.patch_inplace(json(j["patch"]))`) or use [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) instead.
+
 ## Examples
 
 Example: apply a JSON patch in place
@@ -174,3 +182,4 @@ Output:
 - Added [`out_of_range.413`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range413) and stopped silently ignoring a "remove" operation whose target location has a non-object/non-array parent in version 3.13.0 unreleased.
 - Added [`out_of_range.414`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper prefix of its "path" location instead of silently producing a corrupted result in version 3.13.0 unreleased.
 - Throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) instead of [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) for a one-character array index that is not a digit (e.g., `/x`) in version 3.13.0 unreleased, as it already did for longer ones.
+- Applying a JSON value as patch to itself (or, with `JSON_DIAGNOSTICS`, to a value stored inside it) no longer results in undefined behavior in version 3.13.0 unreleased.

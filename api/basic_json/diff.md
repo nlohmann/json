@@ -19,9 +19,10 @@ The equality holds up to [`operator==`](operator_eq.md), so it has the following
 - A value that is not equal to itself cannot round-trip. This applies to `NaN` (also nested in an array or object) and
   to [discarded](is_discarded.md) values: `diff` emits a `replace` operation for them. A `NaN` in the patch is
   serialized as `#!json null`, so a patch that was dumped and parsed again would set `#!json null`.
-- Numbers that compare equal produce no operation, even if their types or signs differ: `diff(1, 1.0)`,
-  `diff(1u, 1)` (unsigned and signed integer) and `diff(0.0, -0.0)` all return `#!json []`. The patched value is then
-  the `source` and keeps its number type.
+- Numbers that compare equal produce no operation, even if their types differ or if one is zero and the other is
+  negative zero: `diff(1, 1.0)` (integer and floating-point), `diff(1u, 1)` (unsigned and signed integer) and
+  `diff(0.0, -0.0)` (positive and negative zero) all return `#!json []`. The patched value is then the `source` and
+  keeps its number type and sign.
 
 ## Parameters
 

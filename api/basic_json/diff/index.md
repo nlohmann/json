@@ -17,7 +17,7 @@ source.patch(diff(source, target)) == target;
 The equality holds up to [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md), so it has the following exceptions:
 
 - A value that is not equal to itself cannot round-trip. This applies to `NaN` (also nested in an array or object) and to [discarded](https://json.nlohmann.me/api/basic_json/is_discarded/index.md) values: `diff` emits a `replace` operation for them. A `NaN` in the patch is serialized as `null`, so a patch that was dumped and parsed again would set `null`.
-- Numbers that compare equal produce no operation, even if their types or signs differ: `diff(1, 1.0)`, `diff(1u, 1)` (unsigned and signed integer) and `diff(0.0, -0.0)` all return `[]`. The patched value is then the `source` and keeps its number type.
+- Numbers that compare equal produce no operation, even if their types differ or if one is zero and the other is negative zero: `diff(1, 1.0)` (integer and floating-point), `diff(1u, 1)` (unsigned and signed integer) and `diff(0.0, -0.0)` (positive and negative zero) all return `[]`. The patched value is then the `source` and keeps its number type and sign.
 
 ## Parameters
 

@@ -32,9 +32,24 @@ uses, so the result matches it exactly — including, for an object, that a repe
 last value. The replay is iterative, so it is not limited by the call stack the way a naive recursive conversion
 would be; the JSON nesting depth is limited only by available memory, as for `BasicJsonType::parse()` itself.
 
-Unlike parsing with [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) enabled, the values
-produced by `materialize()` do not carry source positions. The index has the start offset of every value, but not the
-end of arrays, objects, and escaped strings, which the positions also need.
+With [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) enabled, the values get the source
+positions [`BasicJsonType::parse()`](../basic_json/parse.md) would give them, also for the subtree of a view (the
+positions are those in the document's whole source text), and exceptions about them name the same bytes. For values of
+an [editable document](../json_editable_document.md), positions are all-or-nothing, and [`start_pos()`](../basic_json/start_pos.md)
+and [`end_pos()`](../basic_json/end_pos.md) return `std::string::npos` for
+
+- a value written by an edit (a copy of an array or object of the document is also new; copies of its scalars keep
+  their positions),
+- an array or object whose elements were changed (its elements keep theirs), and
+- an array or object whose last element has no positions (its end is found from that element).
+
+This differs from a `basic_json` value, whose positions are not updated when it is changed: they stay as they were
+parsed, even if they no longer match the value (see [`start_pos()`](../basic_json/start_pos.md)).
+
+Documents [loaded](../basic_json_document/load.md) from an image have the positions of the saved document. Its strings
+with escapes have positions only if the document was parsed with `JSON_DIAGNOSTIC_POSITIONS`: the position of their
+opening quote is recorded while parsing, and `save()` and `load()` keep it whether or not they are compiled with the
+macro.
 
 Calling `materialize()` on the same view repeatedly builds a new, independent `BasicJsonType` value each time; it
 never caches the result.
@@ -98,8 +113,7 @@ never caches the result.
 
 - [`root`](../basic_json_document/root.md) - the view of a document's root value
 - [`BasicJsonType::parse`](../basic_json/parse.md) - build a `BasicJsonType` value directly from a JSON text
-- [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) - source positions on parsed values (not
-  produced by `materialize()`)
+- [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) - source positions on parsed values
 - [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - when to build a basic_json value from a view
 
 ## Version history

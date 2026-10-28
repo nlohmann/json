@@ -447,10 +447,12 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   end must still fit.
 - **A stream is always read to its end.** There is no partial/streaming read of an `#!cpp std::istream`: the stream
   is read to its end into a buffer the document owns, and parsing starts after that.
-- **No source positions on `materialize()`.** Even with
+- **Fewer source positions after edits.** With
   [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) enabled,
-  [`materialize()`](../api/basic_json_view/materialize.md) does not set them. The index has the start offset of every
-  value, but not the end of arrays, objects, and escaped strings, which the positions also need.
+  [`materialize()`](../api/basic_json_view/materialize.md) sets the same positions as `#!cpp basic_json::parse()`.
+  In an [editable document](../api/json_editable_document.md), a value written by an edit has none, and neither has
+  an array or object whose elements changed or whose last element has none; a `basic_json` value keeps its positions
+  when it is changed. See [`materialize()`](../api/basic_json_view/materialize.md#notes).
 - **Objects iterate in document order.** [`begin()`](../api/basic_json_view/begin.md)/
   [`end()`](../api/basic_json_view/end.md) and [`items()`](../api/basic_json_view/items.md) visit an object's
   members in the order they appear in the source text. `basic_json`'s default `object_t` is a `std::map`, which

@@ -17,7 +17,7 @@ json_pointer& operator/=(std::size_t array_idx)
 
 ## Parameters
 
-`ptr` (in) : JSON pointer to append
+`ptr` (in) : JSON pointer to append; may be the JSON pointer itself (`p /= p`), which then appends a copy of its reference tokens
 
 `token` (in) : reference token to append
 
@@ -90,6 +90,6 @@ Output:
 
 ## Version history
 
-1. Added in version 3.6.0.
+1. Added in version 3.6.0. Appending a JSON pointer to itself no longer results in undefined behavior in version 3.13.0.
 1. Added in version 3.6.0. Changed type of `token` to `string_t` in version 3.11.0.
 1. Added in version 3.6.0.

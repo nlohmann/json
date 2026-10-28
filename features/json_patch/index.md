@@ -105,7 +105,7 @@ source.patch(diff(source, target)) == target;
 The equality holds up to [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md), with these exceptions:
 
 - `NaN` and [discarded](https://json.nlohmann.me/api/basic_json/is_discarded/index.md) values are not equal to themselves, so the invariant cannot hold for them. `diff` emits a `replace` operation for such a value, and a `NaN` in a patch is serialized as `null`.
-- Numbers that compare equal produce no operation even if their types differ: `diff(1, 1.0)`, `diff(1u, 1)`, and `diff(0.0, -0.0)` return `[]`, so the patched value keeps the number type of *source*.
+- Numbers that compare equal produce no operation even if their types differ or if one is zero and the other is negative zero: `diff(1, 1.0)`, `diff(1u, 1)`, and `diff(0.0, -0.0)` return `[]`, so the patched value keeps the number type and sign of *source*.
 - A [binary value](https://json.nlohmann.me/features/binary_values/index.md) in a patch is serialized as an object (`{"bytes":[...],"subtype":null}`), so a patch that was dumped and parsed again no longer holds a binary value.
 
 Example: create a JSON Patch from the difference of two values

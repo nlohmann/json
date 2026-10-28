@@ -58,6 +58,10 @@ A number whose value cannot be represented — for instance `1E1000`, which over
 
 Both [comments](https://json.nlohmann.me/features/comments/index.md) and [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md) are rejected by default, matching the JSON specification; they must be explicitly enabled per call with the `ignore_comments` and `ignore_trailing_commas` parameters of [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) or [`accept()`](https://json.nlohmann.me/api/basic_json/accept/index.md). Do not enable either for input whose conformance you cannot otherwise control, since interoperability with strictly conforming JSON consumers is exactly what the default rejects.
 
+## JSON Pointers and flattened keys
+
+A [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) can come from untrusted input as well, for instance as a path in a request or as a key of a flattened object. The non-const [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) with a JSON Pointer and [`unflatten`](https://json.nlohmann.me/api/basic_json/unflatten/index.md) create missing values, and when an array index lies beyond the end of an array, they fill the array with `null` values up to that index. The memory used therefore grows with the index, not with the size of the pointer: on a 64-bit platform, the index `10000000` allocates about 160 MB, the index `100000000` about 1.6 GB. The library does not limit the index. For pointers from untrusted input, check the array indices (or the pointer as a whole) before using them, or use [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) or [`contains`](https://json.nlohmann.me/api/basic_json/contains/index.md), which never add values.
+
 ## Checklist
 
 - Wrap parsing in a `try`/`catch` block, or use `allow_exceptions=false`/`accept()` if your environment cannot use exceptions; never let `JSON_NOEXCEPTION`'s `abort()` be the first time you think about error handling.
@@ -67,6 +71,7 @@ Both [comments](https://json.nlohmann.me/features/comments/index.md) and [traili
 - If a stray NUL byte silently truncating trailing input is a problem for your input format, define `JSON_STRICT_NUL_HANDLING`.
 - Decide whether duplicate object keys should be an error for your application, and add a callback if so.
 - Do not enable `ignore_comments` or `ignore_trailing_commas` for input that must be strictly conforming JSON.
+- Check the array indices of untrusted JSON Pointers and flattened keys before passing them to the non-const `operator[]` or `unflatten()`, which fill arrays with `null` values up to the index.
 
 For the broader design rationale and how it is tested (fuzzing, sanitizers, static analysis), see the [assurance case](https://json.nlohmann.me/community/assurance_case/index.md) and [quality assurance](https://json.nlohmann.me/community/quality_assurance/index.md). To report a security issue in the library itself, follow the [security policy](https://json.nlohmann.me/community/security_policy/index.md).
 

@@ -122,8 +122,9 @@ flowchart LR
     - `NaN` and [discarded](../api/basic_json/is_discarded.md) values are not equal to themselves, so the invariant
       cannot hold for them. `diff` emits a `replace` operation for such a value, and a `NaN` in a patch is serialized
       as `#!json null`.
-    - Numbers that compare equal produce no operation even if their types differ: `diff(1, 1.0)`, `diff(1u, 1)`, and
-      `diff(0.0, -0.0)` return `#!json []`, so the patched value keeps the number type of *source*.
+    - Numbers that compare equal produce no operation even if their types differ or if one is zero and the other is
+      negative zero: `diff(1, 1.0)`, `diff(1u, 1)`, and `diff(0.0, -0.0)` return `#!json []`, so the patched value
+      keeps the number type and sign of *source*.
     - A [binary value](binary_values.md) in a patch is serialized as an object
       (`#!json {"bytes":[...],"subtype":null}`), so a patch that was dumped and parsed again no longer holds a binary
       value.
