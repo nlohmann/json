@@ -24331,6 +24331,13 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(const json_pointer& ptr)
     {
+        // insert() must not be given iterators into the vector it inserts
+        // into: append a copy when a pointer is appended to itself
+        if (JSON_HEDLEY_UNLIKELY(&ptr == this))
+        {
+            return *this /= json_pointer(ptr);
+        }
+
         reference_tokens.insert(reference_tokens.end(),
                                 ptr.reference_tokens.begin(),
                                 ptr.reference_tokens.end());
@@ -43701,6 +43708,25 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/patch/
     void patch_inplace(const basic_json& json_patch)
     {
+        // the operations below change *this while iterating json_patch: apply
+        // a copy when a value is applied as patch to itself or, with
+        // JSON_DIAGNOSTICS, to a value stored inside it
+        // NOLINTNEXTLINE(misc-const-correctness): only the JSON_DIAGNOSTICS build modifies it
+        bool patch_aliases_this = (&json_patch == this);
+#if JSON_DIAGNOSTICS
+        for (const basic_json* p = json_patch.m_parent; !patch_aliases_this && p != nullptr; p = p->m_parent)
+        {
+            patch_aliases_this = (p == this);
+        }
+#endif
+        if (JSON_HEDLEY_UNLIKELY(patch_aliases_this))
+        {
+            // NOLINTNEXTLINE(performance-unnecessary-copy-initialization): *this is modified below
+            const basic_json json_patch_copy = json_patch;
+            patch_inplace(json_patch_copy);
+            return;
+        }
+
         basic_json& result = *this;
         // the valid JSON Patch operations
         enum class patch_operations {add, remove, replace, move, copy, test, invalid};
