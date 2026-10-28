@@ -435,6 +435,14 @@ A good part of 3.13.0 came from reading the code the compiler produced for the h
   reloaded after every store. `json_view`'s writer keeps it in a local variable instead.
 - **Inlining that disappears** ([#5878][5878]). Once `dump_escaped()` had grown, GCC 13 and 16 stopped inlining two
   small helpers into the pretty-printing loop, and indented output got up to 13 % slower. They are now forced inline.
+- **Branches the compiler chose** ([#5908][5908]). `json_document` writes most floats of `canada.json` by
+  deciding, from the position of the double relative to the token, which of two or three candidate digit strings
+  to write. The conditions of those `?:` selections depend on the digits, so they are as good as random. Clang
+  compiled them as conditional moves; GCC 13 compiled them as jumps, and the processor guessed wrong about once per
+  float (callgrind's branch simulation: 220,000 mispredictions per dump with GCC, 97,000 with Clang). Writing the
+  selections as bit masks, which no compiler turns into a jump, made the dump of `canada.json` with GCC on x86-64
+  about 15 % faster, with 5 % *more* instructions; Clang's code stayed as it was. We found this one while writing
+  this post.
 - **Code size as a cost** ([#5902][5902]). `get<std::array<int, 1000>>()` used a pack expansion that compiled to one
   function of about 28,000 instructions: a thousand inlined copies of the bounds and type checks. A loop needs 49.
 
@@ -678,8 +686,9 @@ design, not the writer: a string that had no escape sequence in the source has n
 from the source text without being scanned, and integers are copied as their source text. Floats are formatted
 anew with Żmij (theme 3), and since `json_document` keeps floats as text, a float of more than 15 significant digits
 is first converted from its digits to a `double`. That is why `canada.json` is the closest race on the Mac (Glaze
-takes 1.05 times as long, yyjson 1.06) and is lost on x86-64, where yyjson takes 0.78 (GCC) and 0.93 (Clang) of
-`json_document`'s time; with GCC, even `json::dump()`, which has the `double`s already, is faster there (0.92).
+takes 1.05 times as long, yyjson 1.06) and is lost on x86-64, where yyjson takes 0.95 (GCC) and 0.91 (Clang) of
+`json_document`'s time. With GCC it was 0.78, and even `json::dump()`, which has the `double`s already, was
+faster, until the change described in [theme 5](#5-read-the-assembly).
 
 
 The fastest *other* engine for each workload, as its time divided by nlohmann/json's `json_document`'s, over the
@@ -690,8 +699,8 @@ four files above: above 1, `json_document` is ahead; below 1, it is behind.
 | parse | 1.06–1.58 (yyjson, simdjson DOM) | 0.97–1.01 (simdjson DOM) on `twitter`, `citm_catalog`; 1.89 on `canada`; **0.71** (sonic-cpp) on `jeopardy` | 0.96–0.97 (simdjson DOM) on `twitter`, `citm_catalog`; 1.21–1.56 on `canada`, `jeopardy` |
 | traverse | 1.04–1.18 (yyjson, simdjson On-Demand) | **0.58–0.86** (simdjson On-Demand) | **0.86**–1.20 (sonic-cpp, simdjson On-Demand, yyjson) |
 | select | **0.34–0.84** (Glaze structs, simdjson On-Demand) | **0.26–0.65** | **0.33–0.86** |
-| parse+dump | 1.18–1.35 (yyjson) | 1.20–1.41 (yyjson, sonic-cpp) | 1.16–1.27 (yyjson, sonic-cpp) |
-| dump | 1.05–1.40 (yyjson, Glaze, sonic-cpp) | 1.23–1.34 (yyjson) on `twitter`, `citm_catalog`; **0.78** (yyjson) on `canada`; 0.99 (yyjson) on `jeopardy` | 1.28–1.33 (yyjson) on `twitter`, `citm_catalog`; **0.93** (yyjson) on `canada`; **0.95** (sonic-cpp) on `jeopardy` |
+| parse+dump | 1.18–1.35 (yyjson) | 1.20–1.52 (yyjson, sonic-cpp) | 1.16–1.27 (yyjson, sonic-cpp) |
+| dump | 1.05–1.40 (yyjson, Glaze, sonic-cpp) | 1.23–1.34 (yyjson) on `twitter`, `citm_catalog`; **0.95** (yyjson) on `canada`; 0.99 (yyjson) on `jeopardy` | 1.28–1.33 (yyjson) on `twitter`, `citm_catalog`; **0.91** (yyjson) on `canada`; **0.95** (sonic-cpp) on `jeopardy` |
 
 <p class="nj-table-caption" markdown>Time of the fastest other engine divided by the time of nlohmann/json's `json_document`, as a range over the four files, with the engines that were fastest; below 1, nlohmann/json is behind.</p>
 
@@ -710,7 +719,7 @@ Apple silicon. On x86-64 it ties with simdjson's DOM on typical documents. Where
   while parsing. The `canada.json` parse row flatters it; *traverse* is the fair comparison, and there it is
   1.04× ahead on the Mac and behind sonic-cpp with Clang on x86-64 (0.88).
 - **Writing floats on x86-64.** Writing a document it parsed beforehand, `json_document` is behind yyjson on
-  `canada.json` (0.78 with GCC, 0.93 with Clang), because it first converts most floats from their text, and ties
+  `canada.json` (0.95 with GCC, 0.91 with Clang), because it first converts most floats from their text, and ties
   on `jeopardy.json` (0.95 to 0.99).
 - **Small documents.** On a 2.5 KB message, all document parsers take about a microsecond, and yyjson and
   simdjson's DOM are as fast or a few percent faster.
@@ -787,6 +796,12 @@ merged in ([#5890][5890], [#5908][5908], [#5914][5914], [#5926][5926], [#5936][5
 removed; nothing else was changed. Both are compiled from the *same* benchmark source, the Google Benchmark suite in
 [`tests/benchmarks`](https://github.com/nlohmann/json/tree/develop/tests/benchmarks), with the BON8 benchmarks
 removed because 3.12.0 has no BON8.
+
+The x86-64 rows for *dump* and *parse+dump* of `canada.json` include one later commit of #5908
+([9fad526888](https://github.com/nlohmann/json/commit/9fad526888), the change at the end of theme 5), measured again
+for this post; the other files' rows are from the runs before it. That commit changes neither the instructions nor
+the mispredicted branches of dumping `twitter.json` or `citm_catalog.json` (callgrind, GCC 13 and Clang 18), and on
+the M1 Max it changes the dump of `canada.json` by about 1 % (cycles).
 
 | | |
 | --- | --- |
