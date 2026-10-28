@@ -939,14 +939,16 @@ TEST_CASE("JSON pointers")
             json::json_pointer ptr(s);
             const json::json_pointer expected(s + s);
 
-            json::json_pointer& ret = (ptr /= ptr);
+            const json::json_pointer& ret = (ptr /= ptr);
             CHECK(&ret == &ptr);
             CHECK(ptr == expected);
             CHECK(ptr.to_string() == s + s);
 
             // appending to itself again doubles the pointer once more
             ptr /= ptr;
-            CHECK(ptr.to_string() == s + s + s + s);
+            std::string quadruple = s + s;
+            quadruple += quadruple;
+            CHECK(ptr.to_string() == quadruple);
 
             // operator/ appends to a copy and leaves the operand unchanged
             const json::json_pointer original(s);
