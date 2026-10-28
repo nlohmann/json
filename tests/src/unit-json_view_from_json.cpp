@@ -318,7 +318,8 @@ TEST_CASE("json_view from_json")
         v["nested"][0].get_to(c_array[0]);
         CHECK(c_array[0][1] == 2);
 #ifdef JSON_HAS_CPP_17
-        CHECK(v["points"][0].get<std::optional<point>>().value().y == 2);
+        const auto first = v["points"][0].get<std::optional<point>>();
+        CHECK((first.has_value() && first->y == 2));
         CHECK(!v["nothing"].get<std::optional<point>>().has_value());
 #endif
         // containers of views keep views of the elements
