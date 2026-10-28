@@ -917,6 +917,46 @@ TEST_CASE("JSON pointers")
         CHECK(ptr.to_string() == "/object/~1");
     }
 
+    SECTION("appending a pointer to itself")
+    {
+        // operator/= must not pass iterators into its own token vector to
+        // insert(); each pointer is appended to itself and must yield the
+        // pointer whose string representation is the original one twice
+        const std::vector<std::string> pointers =
+        {
+            "",
+            "/",
+            "/a",
+            "/a/b",
+            "/foo/0/-",
+            "/a~1b/~0c/~01",
+            "/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17"
+        };
+
+        for (const auto& s : pointers)
+        {
+            CAPTURE(s)
+            json::json_pointer ptr(s);
+            const json::json_pointer expected(s + s);
+
+            const json::json_pointer& ret = (ptr /= ptr);
+            CHECK(&ret == &ptr);
+            CHECK(ptr == expected);
+            CHECK(ptr.to_string() == s + s);
+
+            // appending to itself again doubles the pointer once more
+            ptr /= ptr;
+            std::string quadruple = s + s;
+            quadruple += quadruple;
+            CHECK(ptr.to_string() == quadruple);
+
+            // operator/ appends to a copy and leaves the operand unchanged
+            const json::json_pointer original(s);
+            CHECK((original / original) == expected);
+            CHECK(original.to_string() == s);
+        }
+    }
+
     SECTION("equality comparison")
     {
         std::string ptr_string{"/foo/bar"};
