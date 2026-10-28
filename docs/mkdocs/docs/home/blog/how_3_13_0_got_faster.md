@@ -8,9 +8,10 @@ Since 2016, the README of this library has said this about speed:
 That sentence is still true, but the gap is a lot smaller now. Swap the 3.12.0 header for the 3.13.0 one and recompile,
 and the 182 benchmarks of the library's suite run on average 2.9× as fast, without a line of your code changing.
 Parsing the 1.7 MB `citm_catalog.json` takes 1.75 ms instead of 7.20 ms, and `dump()` of documents made of objects
-and strings is 4.7 to 6.7× as fast. The new read-only [`json_document`](../../features/json_view.md) parses the
-usual test files faster than yyjson and simdjson's DOM on Apple silicon (with a caveat for float-heavy files that we
-explain below).
+and strings is 4.7 to 6.7× as fast. The new read-only [`json_document`](../../features/json_view.md) parses and
+writes faster than the other document parsers we measured on Apple silicon, including yyjson, simdjson and
+sonic-rs, and ties with simdjson on x86-64. It is not the fastest everywhere; [section 8](#8-build-a-different-data-structure)
+says where it loses.
 
 This post is about *how*. None of the techniques is new: almost every one of them is borrowed from simdjson, yyjson,
 fast_float, Żmij, serde_json, SQLite, Boost.JSON or a textbook, and we name the source at each step. What we think is
@@ -552,42 +553,77 @@ entries in document order instead of trees of separate allocations, and yyjson's
   returning the last one meant scanning every object to its end and made lookups in small objects 1.6 to 3.4 times
   slower ([#5622][5622]).
 
-Parse times in µs on the M1 Max (C++17, `-O3`, best of 30 interleaved rounds; a fresh `json_document` and yyjson
-document each time, simdjson's parser reused as its documentation recommends):
+### How it compares
 
-| file | `json_document` | yyjson 0.13.0 | simdjson 4.6.11 DOM | Boost.JSON 1.92.0 | `json::parse` |
-| --- | --: | --: | --: | --: | --: |
-| `twitter.json` (632 KB) | **182** | 192 | 216 | 866 | 1,368 |
-| `citm_catalog.json` (1.7 MB) | **360** | 478 | 490 | 1,480 | 2,409 |
-| `canada.json` (2.3 MB) | **960** | 1,489 | 2,098 | 2,501 | 5,890 |
-| `jeopardy.json` (56 MB) | **22,687** | 30,528 | 26,875 | 88,900 | 167,664 |
+We compared `json_document` with eleven other engines. In C++: yyjson 0.13.0, simdjson 4.6.11 (its DOM and its
+On-Demand API), sonic-cpp 1.0.2, RapidJSON (master, 24b5e7a), Glaze 9.0.0 (its `generic_u64` DOM, its `lazy_json`,
+and reading straight into structs), and Boost.JSON (1.92 on the Mac, 1.83 on x86-64). In Rust: sonic-rs 0.5.10, simd-json 0.19.0 and serde_json
+1.0.154. Plus `json::parse`. Before anything is timed, every engine must report the same number of values, the same
+number of string bytes, and a bit-identical sum of all numbers in document order. That means every engine converts
+every number exactly; RapidJSON guarantees that only with `kParseFullPrecisionFlag`, so that is what it runs with
+(with its default flags it happened to produce the same values for these files, and those rows are in the data).
+
+The workloads: *parse* (build the document and free it), *traverse* (parse, then visit every value and convert every
+number), *select* (parse, then read a few fields of every record) and *parse+dump*. We ran them on the M1 Max with
+Apple clang 21 (and Rust 1.99), and on the x86-64 Haswell server with GCC 13 and Clang 18 (`-march=haswell`, one
+pinned core). That server has other work running, so differences of a few percent there are noise. Glaze 9 could
+not be built with Clang 18 on it (Clang 18 can't use GCC 13's `std::expected`), and the Rust engines ran on the Mac
+only.
+
+Parse times in µs on the M1 Max, a fresh document each time (C++23 and Rust `--release`, `-O3`, best of 30
+interleaved rounds):
+
+| engine | `twitter.json` (632 KB) | `citm_catalog.json` (1.7 MB) | `canada.json` (2.3 MB) | `jeopardy.json` (56 MB) |
+| --- | --: | --: | --: | --: |
+| `json_document` | **183** | **364** | **943** | **22,681** |
+| yyjson | 194 | 478 | 1,489 | 30,342 |
+| simdjson DOM | 202 | 486 | 2,097 | 26,904 |
+| sonic-rs (Rust) | 302 | 664 | 1,907 | 30,202 |
+| sonic-cpp | 379 | 986 | 2,580 | 40,804 |
+| simd-json (Rust, input copy included) | 567 | 1,616 | 4,939 | 59,364 |
+| Boost.JSON | 868 | 1,483 | 2,481 | 88,925 |
+| RapidJSON | 1,183 | 1,613 | 7,358 | 143,044 |
+| serde_json (Rust) | 1,202 | 2,337 | 6,836 | 139,829 |
+| Glaze `generic_u64` | 1,268 | 2,727 | 9,262 | 132,273 |
+| `json::parse` | 1,352 | 2,386 | 5,915 | 163,750 |
 
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/perf_blog_view.svg"
 </div>
 
-On the same four files, reading every value takes yyjson 1.06 to 1.30 times as long as `json_document`, writing
-them back with `dump()` 1.06 to 1.35 times, and parsing, editing a few values and writing them 1.34 to 1.85 times (1.0 to 1.57 times for an edit in every
-record). Integers are
-already converted when you read them, and the writer copies strings and integer tokens straight from the source
-([#5633][5633]).
+The fastest *other* engine for each workload, as its time divided by `json_document`'s, over the four files above:
+above 1, `json_document` is ahead; below 1, it is behind.
 
-It is not faster everywhere, and the harness ([#5627][5627], [#5914][5914]) is built to show where:
+| workload | M1 Max, Apple clang 21 | x86-64, GCC 13 | x86-64, Clang 18 |
+| --- | --- | --- | --- |
+| parse | 1.06–1.58 (yyjson, simdjson DOM) | 0.97–1.01 (simdjson DOM) on `twitter`, `citm_catalog`; 1.89 on `canada`; **0.71** (sonic-cpp) on `jeopardy` | 0.96–0.97 (simdjson DOM) on `twitter`, `citm_catalog`; 1.21–1.56 on `canada`, `jeopardy` |
+| traverse | 1.04–1.18 (yyjson, simdjson On-Demand) | **0.58–0.86** (simdjson On-Demand) | **0.86**–1.20 (sonic-cpp, simdjson On-Demand, yyjson) |
+| select | **0.34–0.84** (Glaze structs, simdjson On-Demand) | **0.26–0.65** | **0.33–0.86** |
+| parse+dump | 1.18–1.35 (yyjson) | 1.20–1.41 (yyjson, sonic-cpp) | 1.16–1.27 (yyjson, sonic-cpp) |
 
-- **Reading a few fields.** simdjson's On-Demand API builds nothing and can only read forward. Picking a few fields
-  out of `twitter.json`, `canada.json` and `jeopardy.json` takes it 0.67 to 0.80 times as long as `json_document`.
-- **Floats are converted later.** `json_document` converts a float when you read it; yyjson and simdjson convert
-  every number while parsing. For `canada.json`, which is almost all floats, the parse row therefore flatters
-  `json_document` (1.55× ahead of yyjson); reading every value after parsing is the fair comparison, and there it
-  is 1.07× ahead.
-- **Other CPUs.** On the x86-64 machine with GCC, simdjson's DOM with AVX2 was 19 % ahead on parsing
-  `twitter.json` and 7 % on `citm_catalog.json` ([#5627][5627]), and yyjson's `dump()` of `canada.json` still is
-  ahead: `json_document` takes 1.4 times as long there ([#5908][5908]). Our tables are from one Apple silicon
-  machine.
-- **Small documents.** For a 2.5 KB status message, all three engines parse in about a microsecond, and yyjson is
-  6 % ahead. For a 94-byte message, the engines trade places between runs.
-- **`json::parse` itself.** Boost.JSON builds a mutable tree, as `json` does, so it is the fair comparison for
-  `json::parse`, not for `json_document`. It is still 1.6 to 2.4 times as fast.
+So, is it the fastest JSON parser? Not in general. Among the parsers that build a document you can read in any
+order, it is the fastest at parsing and writing back in every configuration we ran, and the fastest at parsing on
+Apple silicon. On x86-64 it ties with simdjson's DOM on typical documents. Where it loses:
+
+- **Reading a few known fields.** simdjson's On-Demand API builds nothing and reads forward only; Glaze reading into
+  structs that declare just the needed fields skips everything else without building it. Both are faster for
+  *select*, Glaze by up to 3.8× on `canada.json`, where it skips the coordinates.
+- **One pass over everything on x86-64 with GCC.** simdjson On-Demand visits every value in 0.58 to 0.86 of the time.
+- **Fresh large documents on Linux.** A fresh 56 MB `jeopardy.json` pays for the page faults of a new index of
+  3.25 million 16-byte nodes (52 MB). With GCC, sonic-cpp parses it in 0.71 of the time. Reusing the document (`read()`) halves `json_document`'s time
+  there, and then it is ahead of a reused simdjson parser (0.53 against 0.61 of the fresh time).
+- **Float-heavy documents, measured fairly.** `json_document` converts a float when you read it; the others convert
+  while parsing. The `canada.json` parse row flatters it; *traverse* is the fair comparison, and there it is
+  1.04× ahead on the Mac and behind sonic-cpp with Clang on x86-64 (0.88).
+- **Small documents.** On a 2.5 KB message, all document parsers take about a microsecond, and yyjson and
+  simdjson's DOM are as fast or a few percent faster.
+
+And `json::parse`? Boost.JSON builds a mutable tree as `json` does, so it is the fair comparison. It is 1.6 to 2.4
+times as fast on the Mac, and 2.4 to 4.5 times on the x86-64 server.
+
+The programs are in
+[`tests/benchmarks/json_view/others`](https://github.com/nlohmann/json/tree/develop/tests/benchmarks/json_view/others),
+with the pinned versions and checksums of every library.
 
 ## What didn't work
 

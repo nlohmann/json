@@ -7,7 +7,7 @@ Generated files:
   json.hpp or json_view.hpp since 3.12.0, one panel each
 - perf_blog_swar.svg: the eight-byte string test on one word of input
 - perf_blog_cliffs.svg: operations that were quadratic or worse, 3.12.0 against 3.13.0 (log scale)
-- perf_blog_view.svg: parse throughput of json_document, yyjson, simdjson's DOM, Boost.JSON and json::parse
+- perf_blog_view.svg: parse throughput of json_document and six other document parsers
 
 The numbers are copied from the tables of the post (the timeline from data/perf_timeline.csv, which
 `tests/benchmarks/history/history.py summarize` writes); the tables stay on the page as the accessible fallback. Update both together.
@@ -303,12 +303,14 @@ def cliffs():
 # engines and GB/s per file, copied from the table in "Build a different data structure"
 VIEW_FILES = ["twitter.json", "citm_catalog.json", "canada.json", "jeopardy.json"]
 VIEW_BYTES = [631514, 1727204, 2251051, 55554625]
-VIEW_US = [   # (engine, css class, [µs per file])
-    ("json_document", "nj-charts-c1", [181.7, 359.9, 959.5, 22687]),
-    ("yyjson", "nj-charts-c2", [192.0, 478.1, 1489, 30528]),
-    ("simdjson DOM", "nj-charts-c3", [216.4, 490.2, 2098, 26875]),
-    ("Boost.JSON", "nj-charts-c4", [866.0, 1480, 2501, 88900]),
-    ("json::parse", "nj-charts-c5", [1368, 2409, 5890, 167664]),
+VIEW_US = [   # (engine, css class, [µs per file]), fresh documents, from the table in "How it compares"
+    ("json_document", "nj-charts-c1", [183, 364, 943, 22681]),
+    ("yyjson", "nj-charts-c2", [194, 478, 1489, 30342]),
+    ("simdjson DOM", "nj-charts-c3", [202, 486, 2097, 26904]),
+    ("sonic-rs (Rust)", "nj-charts-c4", [302, 664, 1907, 30202]),
+    ("sonic-cpp", "nj-charts-c5", [379, 986, 2580, 40804]),
+    ("Boost.JSON", "nj-charts-c6", [868, 1483, 2481, 88925]),
+    ("json::parse", "nj-charts-c1 nj-charts-dim", [1352, 2386, 5915, 163750]),
 ]
 VIEW = [(e, c, [n / (t * 1000) for n, t in zip(VIEW_BYTES, us)]) for e, c, us in VIEW_US]   # GB/s
 
@@ -318,15 +320,18 @@ def view():
     hi = max(max(v) for _, _, v in VIEW)
     hi = math.ceil(hi * 2) / 2
     X = lambda v: L + v / hi * (R - L)
-    bh, gap = 11, 2
-    top = 44
+    bh, gap = 9, 2
+    top = 64
     group_h = len(VIEW) * (bh + gap) + 14
     b, desc = [], []
-    x = 8
+    x, ly = 8, 10
     for j, (eng, cls, _) in enumerate(VIEW):
-        b.append('<rect class="%s" x="%g" y="10" width="12" height="12" rx="3"/>' % (cls, x))
-        b.append('<text class="nj-charts-leg" x="%g" y="20.5">%s</text>' % (x + 18, esc(eng)))
-        x += 18 + 7.4 * len(eng) + 16
+        w = 18 + 7.4 * len(eng) + 16
+        if x + w > W:
+            x, ly = 8, ly + 20
+        b.append('<rect class="%s" x="%g" y="%g" width="12" height="12" rx="3"/>' % (cls, x, ly))
+        b.append('<text class="nj-charts-leg" x="%g" y="%g">%s</text>' % (x + 18, ly + 10.5, esc(eng)))
+        x += w
     axis_y = top + group_h * len(VIEW_FILES)
     t = 0.5
     while t <= hi + 1e-9:
@@ -344,7 +349,7 @@ def view():
             desc.append("%s %s %.2f GB/s" % (f, eng, vals[i]))
     b.append('<line class="nj-charts-zero" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(0), top - 4, X(0), axis_y))
     write("perf_blog_view.svg", W, axis_y + 44, "nj-charts--blog", "nj-blog-view",
-          "Parse throughput of json_document, yyjson, simdjson's DOM, Boost.JSON and json::parse, Apple M1 Max",
+          "Parse throughput of json_document and six other document parsers, fresh documents, Apple M1 Max",
           "Grouped horizontal bars in GB/s. " + "; ".join(desc) + ".", b)
 
 

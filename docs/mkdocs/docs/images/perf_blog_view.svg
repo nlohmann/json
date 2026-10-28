@@ -1,6 +1,6 @@
-<svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 580 404" role="img" aria-labelledby="nj-blog-view nj-blog-view-d" xmlns="http://www.w3.org/2000/svg">
-<title id="nj-blog-view">Parse throughput of json_document, yyjson, simdjson&#x27;s D&#8203;OM, Boost.J&#8203;SON and json::parse, Apple M1 Max</title>
-<desc id="nj-blog-view-d">Grouped horizontal bars in GB/s. twitter.json json_document 3.48 GB/s; twitter.json yyjson 3.29 GB/s; twitter.json simdjson D&#8203;OM 2.92 GB/s; twitter.json Boost.J&#8203;SON 0.73 GB/s; twitter.json json::parse 0.46 GB/s; citm_catalog.json json_document 4.80 GB/s; citm_catalog.json yyjson 3.61 GB/s; citm_catalog.json simdjson D&#8203;OM 3.52 GB/s; citm_catalog.json Boost.J&#8203;SON 1.17 GB/s; citm_catalog.json json::parse 0.72 GB/s; canada.json json_document 2.35 GB/s; canada.json yyjson 1.51 GB/s; canada.json simdjson D&#8203;OM 1.07 GB/s; canada.json Boost.J&#8203;SON 0.90 GB/s; canada.json json::parse 0.38 GB/s; jeopardy.json json_document 2.45 GB/s; jeopardy.json yyjson 1.82 GB/s; jeopardy.json simdjson D&#8203;OM 2.07 GB/s; jeopardy.json Boost.J&#8203;SON 0.62 GB/s; jeopardy.json json::parse 0.33 GB/s.</desc>
+<svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 580 472" role="img" aria-labelledby="nj-blog-view nj-blog-view-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-blog-view">Parse throughput of json_document and six other document parsers, fresh documents, Apple M1 Max</title>
+<desc id="nj-blog-view-d">Grouped horizontal bars in GB/s. twitter.json json_document 3.45 GB/s; twitter.json yyjson 3.26 GB/s; twitter.json simdjson D&#8203;OM 3.13 GB/s; twitter.json sonic-rs (Rust) 2.09 GB/s; twitter.json sonic-cpp 1.67 GB/s; twitter.json Boost.J&#8203;SON 0.73 GB/s; twitter.json json::parse 0.47 GB/s; citm_catalog.json json_document 4.75 GB/s; citm_catalog.json yyjson 3.61 GB/s; citm_catalog.json simdjson D&#8203;OM 3.55 GB/s; citm_catalog.json sonic-rs (Rust) 2.60 GB/s; citm_catalog.json sonic-cpp 1.75 GB/s; citm_catalog.json Boost.J&#8203;SON 1.16 GB/s; citm_catalog.json json::parse 0.72 GB/s; canada.json json_document 2.39 GB/s; canada.json yyjson 1.51 GB/s; canada.json simdjson D&#8203;OM 1.07 GB/s; canada.json sonic-rs (Rust) 1.18 GB/s; canada.json sonic-cpp 0.87 GB/s; canada.json Boost.J&#8203;SON 0.91 GB/s; canada.json json::parse 0.38 GB/s; jeopardy.json json_document 2.45 GB/s; jeopardy.json yyjson 1.83 GB/s; jeopardy.json simdjson D&#8203;OM 2.06 GB/s; jeopardy.json sonic-rs (Rust) 1.84 GB/s; jeopardy.json sonic-cpp 1.36 GB/s; jeopardy.json Boost.J&#8203;SON 0.62 GB/s; jeopardy.json json::parse 0.34 GB/s.</desc>
 <rect class="nj-charts-c1" x="8" y="10" width="12" height="12" rx="3"/>
 <text class="nj-charts-leg" x="26" y="20.5">json_document</text>
 <rect class="nj-charts-c2" x="138.2" y="10" width="12" height="12" rx="3"/>
@@ -8,73 +8,93 @@
 <rect class="nj-charts-c3" x="216.6" y="10" width="12" height="12" rx="3"/>
 <text class="nj-charts-leg" x="234.6" y="20.5">simdjson D&#8203;OM</text>
 <rect class="nj-charts-c4" x="339.4" y="10" width="12" height="12" rx="3"/>
-<text class="nj-charts-leg" x="357.4" y="20.5">Boost.J&#8203;SON</text>
-<rect class="nj-charts-c5" x="447.4" y="10" width="12" height="12" rx="3"/>
-<text class="nj-charts-leg" x="465.4" y="20.5">json::parse</text>
-<line class="nj-charts-grid" x1="182.3" y1="40" x2="182.3" y2="360"/>
-<text class="nj-charts-tick" x="182.3" y="376">0.5</text>
-<line class="nj-charts-grid" x1="222.6" y1="40" x2="222.6" y2="360"/>
-<text class="nj-charts-tick" x="222.6" y="376">1</text>
-<line class="nj-charts-grid" x1="262.9" y1="40" x2="262.9" y2="360"/>
-<text class="nj-charts-tick" x="262.9" y="376">1.5</text>
-<line class="nj-charts-grid" x1="303.2" y1="40" x2="303.2" y2="360"/>
-<text class="nj-charts-tick" x="303.2" y="376">2</text>
-<line class="nj-charts-grid" x1="343.5" y1="40" x2="343.5" y2="360"/>
-<text class="nj-charts-tick" x="343.5" y="376">2.5</text>
-<line class="nj-charts-grid" x1="383.8" y1="40" x2="383.8" y2="360"/>
-<text class="nj-charts-tick" x="383.8" y="376">3</text>
-<line class="nj-charts-grid" x1="424.1" y1="40" x2="424.1" y2="360"/>
-<text class="nj-charts-tick" x="424.1" y="376">3.5</text>
-<line class="nj-charts-grid" x1="464.4" y1="40" x2="464.4" y2="360"/>
-<text class="nj-charts-tick" x="464.4" y="376">4</text>
-<line class="nj-charts-grid" x1="504.7" y1="40" x2="504.7" y2="360"/>
-<text class="nj-charts-tick" x="504.7" y="376">4.5</text>
-<line class="nj-charts-grid" x1="545" y1="40" x2="545" y2="360"/>
-<text class="nj-charts-tick" x="545" y="376">5</text>
-<text class="nj-charts-tick" x="343.5" y="394">GB/s, longer is faster</text>
-<text class="nj-charts-rowlabel" x="134" y="83.5" text-anchor="end">twitter.json</text>
-<path class="nj-charts-c1" d="M142 44 H418.132 Q422.132 44 422.132 48 V51 Q422.132 55 418.132 55 H142 Z"><title>json_document, twitter.json: 3.48 GB/s</title></path>
-<text class="nj-charts-val" x="426.132" y="53.5">3.48</text>
-<path class="nj-charts-c2" d="M142 57 H403.104 Q407.104 57 407.104 61 V64 Q407.104 68 403.104 68 H142 Z"><title>yyjson, twitter.json: 3.29 GB/s</title></path>
-<text class="nj-charts-val" x="411.104" y="66.5">3.29</text>
-<path class="nj-charts-c3" d="M142 70 H373.213 Q377.213 70 377.213 74 V77 Q377.213 81 373.213 81 H142 Z"><title>simdjson D&#8203;OM, twitter.json: 2.92 GB/s</title></path>
-<text class="nj-charts-val" x="381.213" y="79.5">2.92</text>
-<path class="nj-charts-c4" d="M142 83 H196.776 Q200.776 83 200.776 87 V90 Q200.776 94 196.776 94 H142 Z"><title>Boost.J&#8203;SON, twitter.json: 0.73 GB/s</title></path>
-<text class="nj-charts-val" x="204.776" y="92.5">0.73</text>
-<path class="nj-charts-c5" d="M142 96 H175.208 Q179.208 96 179.208 100 V103 Q179.208 107 175.208 107 H142 Z"><title>json::parse, twitter.json: 0.46 GB/s</title></path>
-<text class="nj-charts-val" x="183.208" y="105.5">0.46</text>
-<text class="nj-charts-rowlabel" x="134" y="162.5" text-anchor="end">citm_catalog.json</text>
-<path class="nj-charts-c1" d="M142 123 H524.809 Q528.809 123 528.809 127 V130 Q528.809 134 524.809 134 H142 Z"><title>json_document, citm_catalog.json: 4.80 GB/s</title></path>
-<text class="nj-charts-val" x="532.809" y="132.5">4.80</text>
-<path class="nj-charts-c2" d="M142 136 H429.179 Q433.179 136 433.179 140 V143 Q433.179 147 429.179 147 H142 Z"><title>yyjson, citm_catalog.json: 3.61 GB/s</title></path>
-<text class="nj-charts-val" x="437.179" y="145.5">3.61</text>
-<path class="nj-charts-c3" d="M142 149 H421.992 Q425.992 149 425.992 153 V156 Q425.992 160 421.992 160 H142 Z"><title>simdjson D&#8203;OM, citm_catalog.json: 3.52 GB/s</title></path>
-<text class="nj-charts-val" x="429.992" y="158.5">3.52</text>
-<path class="nj-charts-c4" d="M142 162 H232.063 Q236.063 162 236.063 166 V169 Q236.063 173 232.063 173 H142 Z"><title>Boost.J&#8203;SON, citm_catalog.json: 1.17 GB/s</title></path>
-<text class="nj-charts-val" x="240.063" y="171.5">1.17</text>
-<path class="nj-charts-c5" d="M142 175 H195.789 Q199.789 175 199.789 179 V182 Q199.789 186 195.789 186 H142 Z"><title>json::parse, citm_catalog.json: 0.72 GB/s</title></path>
-<text class="nj-charts-val" x="203.789" y="184.5">0.72</text>
-<text class="nj-charts-rowlabel" x="134" y="241.5" text-anchor="end">canada.json</text>
-<path class="nj-charts-c1" d="M142 202 H327.093 Q331.093 202 331.093 206 V209 Q331.093 213 327.093 213 H142 Z"><title>json_document, canada.json: 2.35 GB/s</title></path>
-<text class="nj-charts-val" x="335.093" y="211.5">2.35</text>
-<path class="nj-charts-c2" d="M142 215 H259.85 Q263.85 215 263.85 219 V222 Q263.85 226 259.85 226 H142 Z"><title>yyjson, canada.json: 1.51 GB/s</title></path>
-<text class="nj-charts-val" x="267.85" y="224.5">1.51</text>
-<path class="nj-charts-c3" d="M142 228 H224.48 Q228.48 228 228.48 232 V235 Q228.48 239 224.48 239 H142 Z"><title>simdjson D&#8203;OM, canada.json: 1.07 GB/s</title></path>
-<text class="nj-charts-val" x="232.48" y="237.5">1.07</text>
-<path class="nj-charts-c4" d="M142 241 H210.545 Q214.545 241 214.545 245 V248 Q214.545 252 210.545 252 H142 Z"><title>Boost.J&#8203;SON, canada.json: 0.90 GB/s</title></path>
-<text class="nj-charts-val" x="218.545" y="250.5">0.90</text>
-<path class="nj-charts-c5" d="M142 254 H168.804 Q172.804 254 172.804 258 V261 Q172.804 265 168.804 265 H142 Z"><title>json::parse, canada.json: 0.38 GB/s</title></path>
-<text class="nj-charts-val" x="176.804" y="263.5">0.38</text>
-<text class="nj-charts-rowlabel" x="134" y="320.5" text-anchor="end">jeopardy.json</text>
-<path class="nj-charts-c1" d="M142 281 H335.369 Q339.369 281 339.369 285 V288 Q339.369 292 335.369 292 H142 Z"><title>json_document, jeopardy.json: 2.45 GB/s</title></path>
-<text class="nj-charts-val" x="343.369" y="290.5">2.45</text>
-<path class="nj-charts-c2" d="M142 294 H284.675 Q288.675 294 288.675 298 V301 Q288.675 305 284.675 305 H142 Z"><title>yyjson, jeopardy.json: 1.82 GB/s</title></path>
-<text class="nj-charts-val" x="292.675" y="303.5">1.82</text>
-<path class="nj-charts-c3" d="M142 307 H304.612 Q308.612 307 308.612 311 V314 Q308.612 318 304.612 318 H142 Z"><title>simdjson D&#8203;OM, jeopardy.json: 2.07 GB/s</title></path>
-<text class="nj-charts-val" x="312.612" y="316.5">2.07</text>
-<path class="nj-charts-c4" d="M142 320 H188.368 Q192.368 320 192.368 324 V327 Q192.368 331 188.368 331 H142 Z"><title>Boost.J&#8203;SON, jeopardy.json: 0.62 GB/s</title></path>
-<text class="nj-charts-val" x="196.368" y="329.5">0.62</text>
-<path class="nj-charts-c5" d="M142 333 H164.706 Q168.706 333 168.706 337 V340 Q168.706 344 164.706 344 H142 Z"><title>json::parse, jeopardy.json: 0.33 GB/s</title></path>
-<text class="nj-charts-val" x="172.706" y="342.5">0.33</text>
-<line class="nj-charts-zero" x1="142" y1="40" x2="142" y2="360"/>
+<text class="nj-charts-leg" x="357.4" y="20.5">sonic-rs (Rust)</text>
+<rect class="nj-charts-c5" x="8" y="30" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="26" y="40.5">sonic-cpp</text>
+<rect class="nj-charts-c6" x="108.6" y="30" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="126.6" y="40.5">Boost.J&#8203;SON</text>
+<rect class="nj-charts-c1 nj-charts-dim" x="216.6" y="30" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="234.6" y="40.5">json::parse</text>
+<line class="nj-charts-grid" x1="182.3" y1="60" x2="182.3" y2="428"/>
+<text class="nj-charts-tick" x="182.3" y="444">0.5</text>
+<line class="nj-charts-grid" x1="222.6" y1="60" x2="222.6" y2="428"/>
+<text class="nj-charts-tick" x="222.6" y="444">1</text>
+<line class="nj-charts-grid" x1="262.9" y1="60" x2="262.9" y2="428"/>
+<text class="nj-charts-tick" x="262.9" y="444">1.5</text>
+<line class="nj-charts-grid" x1="303.2" y1="60" x2="303.2" y2="428"/>
+<text class="nj-charts-tick" x="303.2" y="444">2</text>
+<line class="nj-charts-grid" x1="343.5" y1="60" x2="343.5" y2="428"/>
+<text class="nj-charts-tick" x="343.5" y="444">2.5</text>
+<line class="nj-charts-grid" x1="383.8" y1="60" x2="383.8" y2="428"/>
+<text class="nj-charts-tick" x="383.8" y="444">3</text>
+<line class="nj-charts-grid" x1="424.1" y1="60" x2="424.1" y2="428"/>
+<text class="nj-charts-tick" x="424.1" y="444">3.5</text>
+<line class="nj-charts-grid" x1="464.4" y1="60" x2="464.4" y2="428"/>
+<text class="nj-charts-tick" x="464.4" y="444">4</text>
+<line class="nj-charts-grid" x1="504.7" y1="60" x2="504.7" y2="428"/>
+<text class="nj-charts-tick" x="504.7" y="444">4.5</text>
+<line class="nj-charts-grid" x1="545" y1="60" x2="545" y2="428"/>
+<text class="nj-charts-tick" x="545" y="444">5</text>
+<text class="nj-charts-tick" x="343.5" y="462">GB/s, longer is faster</text>
+<text class="nj-charts-rowlabel" x="134" y="109.5" text-anchor="end">twitter.json</text>
+<path class="nj-charts-c1" d="M142 64 H416.142 Q420.142 64 420.142 68 V69 Q420.142 73 416.142 73 H142 Z"><title>json_document, twitter.json: 3.45 GB/s</title></path>
+<text class="nj-charts-val" x="424.142" y="71.5">3.45</text>
+<path class="nj-charts-c2" d="M142 75 H400.371 Q404.371 75 404.371 79 V80 Q404.371 84 400.371 84 H142 Z"><title>yyjson, twitter.json: 3.26 GB/s</title></path>
+<text class="nj-charts-val" x="408.371" y="82.5">3.26</text>
+<path class="nj-charts-c3" d="M142 86 H389.98 Q393.98 86 393.98 90 V91 Q393.98 95 389.98 95 H142 Z"><title>simdjson D&#8203;OM, twitter.json: 3.13 GB/s</title></path>
+<text class="nj-charts-val" x="397.98" y="93.5">3.13</text>
+<path class="nj-charts-c4" d="M142 97 H306.543 Q310.543 97 310.543 101 V102 Q310.543 106 306.543 106 H142 Z"><title>sonic-rs (Rust), twitter.json: 2.09 GB/s</title></path>
+<text class="nj-charts-val" x="314.543" y="104.5">2.09</text>
+<path class="nj-charts-c5" d="M142 108 H272.301 Q276.301 108 276.301 112 V113 Q276.301 117 272.301 117 H142 Z"><title>sonic-cpp, twitter.json: 1.67 GB/s</title></path>
+<text class="nj-charts-val" x="280.301" y="115.5">1.67</text>
+<path class="nj-charts-c6" d="M142 119 H196.641 Q200.641 119 200.641 123 V124 Q200.641 128 196.641 128 H142 Z"><title>Boost.J&#8203;SON, twitter.json: 0.73 GB/s</title></path>
+<text class="nj-charts-val" x="204.641" y="126.5">0.73</text>
+<path class="nj-charts-c1 nj-charts-dim" d="M142 130 H175.648 Q179.648 130 179.648 134 V135 Q179.648 139 175.648 139 H142 Z"><title>json::parse, twitter.json: 0.47 GB/s</title></path>
+<text class="nj-charts-val" x="183.648" y="137.5">0.47</text>
+<text class="nj-charts-rowlabel" x="134" y="200.5" text-anchor="end">citm_catalog.json</text>
+<path class="nj-charts-c1" d="M142 155 H520.452 Q524.452 155 524.452 159 V160 Q524.452 164 520.452 164 H142 Z"><title>json_document, citm_catalog.json: 4.75 GB/s</title></path>
+<text class="nj-charts-val" x="528.452" y="162.5">4.75</text>
+<path class="nj-charts-c2" d="M142 166 H429.24 Q433.24 166 433.24 170 V171 Q433.24 175 429.24 175 H142 Z"><title>yyjson, citm_catalog.json: 3.61 GB/s</title></path>
+<text class="nj-charts-val" x="437.24" y="173.5">3.61</text>
+<path class="nj-charts-c3" d="M142 177 H424.446 Q428.446 177 428.446 181 V182 Q428.446 186 424.446 186 H142 Z"><title>simdjson D&#8203;OM, citm_catalog.json: 3.55 GB/s</title></path>
+<text class="nj-charts-val" x="432.446" y="184.5">3.55</text>
+<path class="nj-charts-c4" d="M142 188 H347.658 Q351.658 188 351.658 192 V193 Q351.658 197 347.658 197 H142 Z"><title>sonic-rs (Rust), citm_catalog.json: 2.60 GB/s</title></path>
+<text class="nj-charts-val" x="355.658" y="195.5">2.60</text>
+<path class="nj-charts-c5" d="M142 199 H279.189 Q283.189 199 283.189 203 V204 Q283.189 208 279.189 208 H142 Z"><title>sonic-cpp, citm_catalog.json: 1.75 GB/s</title></path>
+<text class="nj-charts-val" x="287.189" y="206.5">1.75</text>
+<path class="nj-charts-c6" d="M142 210 H231.872 Q235.872 210 235.872 214 V215 Q235.872 219 231.872 219 H142 Z"><title>Boost.J&#8203;SON, citm_catalog.json: 1.16 GB/s</title></path>
+<text class="nj-charts-val" x="239.872" y="217.5">1.16</text>
+<path class="nj-charts-c1 nj-charts-dim" d="M142 221 H196.346 Q200.346 221 200.346 225 V226 Q200.346 230 196.346 230 H142 Z"><title>json::parse, citm_catalog.json: 0.72 GB/s</title></path>
+<text class="nj-charts-val" x="204.346" y="228.5">0.72</text>
+<text class="nj-charts-rowlabel" x="134" y="291.5" text-anchor="end">canada.json</text>
+<path class="nj-charts-c1" d="M142 246 H330.402 Q334.402 246 334.402 250 V251 Q334.402 255 330.402 255 H142 Z"><title>json_document, canada.json: 2.39 GB/s</title></path>
+<text class="nj-charts-val" x="338.402" y="253.5">2.39</text>
+<path class="nj-charts-c2" d="M142 257 H259.85 Q263.85 257 263.85 261 V262 Q263.85 266 259.85 266 H142 Z"><title>yyjson, canada.json: 1.51 GB/s</title></path>
+<text class="nj-charts-val" x="267.85" y="264.5">1.51</text>
+<path class="nj-charts-c3" d="M142 268 H224.521 Q228.521 268 228.521 272 V273 Q228.521 277 224.521 277 H142 Z"><title>simdjson D&#8203;OM, canada.json: 1.07 GB/s</title></path>
+<text class="nj-charts-val" x="232.521" y="275.5">1.07</text>
+<path class="nj-charts-c4" d="M142 279 H233.141 Q237.141 279 237.141 283 V284 Q237.141 288 233.141 288 H142 Z"><title>sonic-rs (Rust), canada.json: 1.18 GB/s</title></path>
+<text class="nj-charts-val" x="241.141" y="286.5">1.18</text>
+<path class="nj-charts-c5" d="M142 290 H208.324 Q212.324 290 212.324 294 V295 Q212.324 299 208.324 299 H142 Z"><title>sonic-cpp, canada.json: 0.87 GB/s</title></path>
+<text class="nj-charts-val" x="216.324" y="297.5">0.87</text>
+<path class="nj-charts-c6" d="M142 301 H211.13 Q215.13 301 215.13 305 V306 Q215.13 310 211.13 310 H142 Z"><title>Boost.J&#8203;SON, canada.json: 0.91 GB/s</title></path>
+<text class="nj-charts-val" x="219.13" y="308.5">0.91</text>
+<path class="nj-charts-c1 nj-charts-dim" d="M142 312 H168.674 Q172.674 312 172.674 316 V317 Q172.674 321 168.674 321 H142 Z"><title>json::parse, canada.json: 0.38 GB/s</title></path>
+<text class="nj-charts-val" x="176.674" y="319.5">0.38</text>
+<text class="nj-charts-rowlabel" x="134" y="382.5" text-anchor="end">jeopardy.json</text>
+<path class="nj-charts-c1" d="M142 337 H335.421 Q339.421 337 339.421 341 V342 Q339.421 346 335.421 346 H142 Z"><title>json_document, jeopardy.json: 2.45 GB/s</title></path>
+<text class="nj-charts-val" x="343.421" y="344.5">2.45</text>
+<path class="nj-charts-c2" d="M142 348 H285.574 Q289.574 348 289.574 352 V353 Q289.574 357 285.574 357 H142 Z"><title>yyjson, jeopardy.json: 1.83 GB/s</title></path>
+<text class="nj-charts-val" x="293.574" y="355.5">1.83</text>
+<path class="nj-charts-c3" d="M142 359 H304.433 Q308.433 359 308.433 363 V364 Q308.433 368 304.433 368 H142 Z"><title>simdjson D&#8203;OM, jeopardy.json: 2.06 GB/s</title></path>
+<text class="nj-charts-val" x="312.433" y="366.5">2.06</text>
+<path class="nj-charts-c4" d="M142 370 H286.258 Q290.258 370 290.258 374 V375 Q290.258 379 286.258 379 H142 Z"><title>sonic-rs (Rust), jeopardy.json: 1.84 GB/s</title></path>
+<text class="nj-charts-val" x="294.258" y="377.5">1.84</text>
+<path class="nj-charts-c5" d="M142 381 H247.737 Q251.737 381 251.737 385 V386 Q251.737 390 247.737 390 H142 Z"><title>sonic-cpp, jeopardy.json: 1.36 GB/s</title></path>
+<text class="nj-charts-val" x="255.737" y="388.5">1.36</text>
+<path class="nj-charts-c6" d="M142 392 H188.354 Q192.354 392 192.354 396 V397 Q192.354 401 188.354 401 H142 Z"><title>Boost.J&#8203;SON, jeopardy.json: 0.62 GB/s</title></path>
+<text class="nj-charts-val" x="196.354" y="399.5">0.62</text>
+<path class="nj-charts-c1 nj-charts-dim" d="M142 403 H165.345 Q169.345 403 169.345 407 V408 Q169.345 412 165.345 412 H142 Z"><title>json::parse, jeopardy.json: 0.34 GB/s</title></path>
+<text class="nj-charts-val" x="173.345" y="410.5">0.34</text>
+<line class="nj-charts-zero" x1="142" y1="60" x2="142" y2="428"/>
 </svg>
