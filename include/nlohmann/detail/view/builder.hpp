@@ -173,31 +173,16 @@ class builder
         }
         if (p[1] == '/')
         {
-            p += 2;
-            // (as in parse(), a null byte is the end of the input, so it is
-            // left for the caller to see)
-            while (p != m_end && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
-            {
-                ++p;
-            }
-            return p;
+            return skip_line_comment<NulIsEnd>(p + 2, m_end);
         }
         if (p[1] == '*')
         {
-            p += 2;
-            for (;;)
+            p = find_block_comment_end<NulIsEnd>(p + 2, m_end);
+            if (p == m_end || *p != '*')
             {
-                if (p == m_end || (NulIsEnd && *p == 0))
-                {
-                    return fail_at(error_code::comment_unterminated, p);
-                }
-                if (*p == '*' && p + 1 != m_end && p[1] == '/')
-                {
-                    p += 2;
-                    return p;
-                }
-                ++p;
+                return fail_at(error_code::comment_unterminated, p);
             }
+            return p + 2;
         }
         ++p;
         return fail_at(error_code::comment_start, p);
@@ -1193,7 +1178,14 @@ indent_done:
                 return false;
             }
             p = r.p;
-            push_node(node_kind::string, node_flags::escaped, 0, r.start, r.len);
+#if JSON_DIAGNOSTIC_POSITIONS
+            // the decoded string is in the arena: next keeps the source offset
+            // of the opening quote plus one (0: unknown) for materialize()
+            const std::uint64_t second = static_cast<std::uint64_t>(r.len) | (static_cast<std::uint64_t>(s - b) << 32);
+#else
+            const std::uint64_t second = r.len;
+#endif
+            push_node(node_kind::string, node_flags::escaped, 0, r.start, second);
             return true;
         }
     };

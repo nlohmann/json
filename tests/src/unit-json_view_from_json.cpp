@@ -69,9 +69,12 @@ struct point
 struct shape
 {
     // initialized for GCC -Weffc++
+    // NOLINTNEXTLINE(readability-redundant-member-init)
     std::string name{};
+    // NOLINTNEXTLINE(readability-redundant-member-init)
     std::vector<point> points{};
     point center{};
+    // NOLINTNEXTLINE(readability-redundant-member-init)
     std::map<std::string, point> named{};
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(shape, name, points, center, named)
 };
@@ -82,13 +85,17 @@ struct with_defaults
     std::string b = "default";
     std::vector<int> c = {1, 2};
 };
+// NOLINTNEXTLINE(misc-use-internal-linkage): found by ADL, like the from_json() functions of users
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(with_defaults, a, b, c)
 
 struct with_names
 {
     int value = 0;
-    std::string text{};  // initialized for GCC -Weffc++
+    // initialized for GCC -Weffc++
+    // NOLINTNEXTLINE(readability-redundant-member-init)
+    std::string text{};
 };
+// NOLINTNEXTLINE(misc-use-internal-linkage): found by ADL, like the from_json() functions of users
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(with_names, "Value", value, "Text", text)
 
 struct empty
@@ -102,6 +109,7 @@ enum class color
     green,
     blue
 };
+// NOLINTNEXTLINE(misc-use-internal-linkage): found by ADL, like the from_json() functions of users
 NLOHMANN_JSON_SERIALIZE_ENUM(color,
 {
     {color::red, "red"},
@@ -114,6 +122,7 @@ enum class strict_color
     red,
     green
 };
+// NOLINTNEXTLINE(misc-use-internal-linkage): found by ADL, like the from_json() functions of users
 NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(strict_color,
 {
     {strict_color::red, "red"},
@@ -154,6 +163,7 @@ struct derived_from_legacy : legacy_base
 {
     int extra = 0;
 };
+// NOLINTNEXTLINE(misc-use-internal-linkage): found by ADL, like the from_json() functions of users
 NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(derived_from_legacy, legacy_base, extra)
 
 // from_json() for json only: converted through materialize()
@@ -301,18 +311,19 @@ TEST_CASE("json_view from_json")
         CHECK(same<std::string>(v, j, "text"));
         CHECK(same<std::nullptr_t>(v, j, "nothing"));
         CHECK(same<json>(v, j, "object"));
-        const std::valarray<int> va = v["ints"].get<std::valarray<int>>();
+        const auto va = v["ints"].get<std::valarray<int>>();
         CHECK(va.size() == 4);
         CHECK(va[0] == 3);
         int c_array[2][2] = {{0, 0}, {0, 0}}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): the conversion to C arrays
         v["nested"][0].get_to(c_array[0]);
         CHECK(c_array[0][1] == 2);
 #ifdef JSON_HAS_CPP_17
-        CHECK(v["points"][0].get<std::optional<point>>()->y == 2);
+        const auto first = v["points"][0].get<std::optional<point>>();
+        CHECK((first.has_value() && first->y == 2));
         CHECK(!v["nothing"].get<std::optional<point>>().has_value());
 #endif
         // containers of views keep views of the elements
-        const std::vector<json_view> views = v["points"].get<std::vector<json_view>>();
+        const auto views = v["points"].get<std::vector<json_view>>();
         CHECK(views.size() == 2);
         CHECK(views[1]["x"].get<int>() == 3);
         CHECK(v["object"].get<std::map<std::string, json_view>>().at("a").get<int>() == 2);
@@ -326,7 +337,8 @@ TEST_CASE("json_view from_json")
         CHECK(d.root().get<std::unordered_map<std::string, int>>().at("a") == 3);
     }
 
-#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS
+    // (the exceptions of views have neither the path nor the byte range of the value)
+#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS && !JSON_DIAGNOSTIC_POSITIONS
     SECTION("std types: the same errors as from the materialized value")
     {
         const json_document d = json_document::parse(R"([[1, "x"], {"a": 1}, "text", [1], 5, null])");
@@ -352,7 +364,7 @@ TEST_CASE("json_view from_json")
     {
         const json_document d = json_document::parse(R"({"name": "s", "points": [{"x": 1, "y": 2}, {"x": 3, "y": 4}],
             "center": {"x": 5, "y": 6}, "named": {"a": {"x": 7, "y": 8}}})");
-        const shape s = d.root().get<shape>();
+        const auto s = d.root().get<shape>();
         CHECK(s.name == "s");
         CHECK(s.points.size() == 2);
         CHECK(s.points[1].y == 4);
@@ -370,13 +382,13 @@ TEST_CASE("json_view from_json")
     SECTION("defaults and names")
     {
         const json_document d = json_document::parse(R"({"a": 5, "Value": 3, "Text": "t"})");
-        const with_defaults w = d.root().get<with_defaults>();
+        const auto w = d.root().get<with_defaults>();
         CHECK(w.a == 5);
         CHECK(w.b == "default");
         CHECK(w.c == std::vector<int> {1, 2});
         const json_document null_document = json_document::parse("null");
         CHECK(null_document.root().get<with_defaults>().a == 1);
-        const with_names n = d.root().get<with_names>();
+        const auto n = d.root().get<with_names>();
         CHECK(n.value == 3);
         CHECK(n.text == "t");
     }
@@ -392,7 +404,7 @@ TEST_CASE("json_view from_json")
 #if !defined(JSON_NOEXCEPTION)
         const json j = d.root().materialize();
         CHECK(exception_of_call([&] { static_cast<void>(d.root()[2].get<strict_color>()); }) == "[json.exception.out_of_range.410] enum value out of range for strict_color: \"purple\"");
-#if !JSON_DIAGNOSTICS
+#if !JSON_DIAGNOSTICS && !JSON_DIAGNOSTIC_POSITIONS
         CHECK(exception_of_call([&] { static_cast<void>(d.root()[2].get<strict_color>()); }) == exception_of_call([&] { static_cast<void>(j[2].get<strict_color>()); }));
 #endif
 #endif
@@ -401,13 +413,13 @@ TEST_CASE("json_view from_json")
     SECTION("derived types")
     {
         const json_document d = json_document::parse(R"({"id": 7, "c": "green", "extra": 3})");
-        const derived x = d.root().get<derived>();
+        const auto x = d.root().get<derived>();
         CHECK(x.id == 7);
         CHECK(x.c == color::green);
-        const derived_with_defaults y = d.root().get<derived_with_defaults>();
+        const auto y = d.root().get<derived_with_defaults>();
         CHECK(y.id == 7);
         CHECK(y.label == "none");
-        const derived_from_legacy z = d.root().get<derived_from_legacy>();
+        const auto z = d.root().get<derived_from_legacy>();
         CHECK(z.id == 7);
         CHECK(z.extra == 3);
     }
@@ -440,10 +452,11 @@ TEST_CASE("json_view from_json")
         CHECK(o.root().get<shape>().center.y == 2);
     }
 
-#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS
+#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS && !JSON_DIAGNOSTIC_POSITIONS
     SECTION("errors are those of the same conversion of a json value")
     {
-        // (with JSON_DIAGNOSTICS, those of json name the path of the value)
+        // (with JSON_DIAGNOSTICS, those of json name the path of the value,
+        // and with JSON_DIAGNOSTIC_POSITIONS its bytes)
         const json_document d = json_document::parse(R"([{"x": 1}, {"x": "1", "y": 2}, [1, 2], {"id": "7", "c": "red"}])");
         const json j = d.root().materialize();
         for (std::size_t i = 0; i < 3; ++i)
