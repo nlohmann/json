@@ -749,6 +749,20 @@ std::string exception_of(F f)
     }
     return "";
 }
+
+// the exception a call on a basic_json value throws, without the byte range of
+// the value (JSON_DIAGNOSTIC_POSITIONS), which the exceptions of views lack
+template<typename F>
+std::string json_exception_of(F f)
+{
+    std::string what = exception_of(f);
+    const std::size_t at = what.find("] (bytes ");
+    if (at != std::string::npos)
+    {
+        what.erase(at + 2, what.find(") ", at) - at);
+    }
+    return what;
+}
 #endif
 
 // compares a view with the ordered_json value materialize() gives for it:
@@ -957,24 +971,24 @@ TEST_CASE("json_view element access and iteration")
 #if !defined(JSON_NOEXCEPTION)
             if (!j.is_object())
             {
-                CHECK(exception_of([&] { static_cast<void>(v["a"]); }) == exception_of([&] { static_cast<void>(j["a"]); }));
+                CHECK(exception_of([&] { static_cast<void>(v["a"]); }) == json_exception_of([&] { static_cast<void>(j["a"]); }));
             }
             if (!j.is_array())
             {
-                CHECK(exception_of([&] { static_cast<void>(v[0]); }) == exception_of([&] { static_cast<void>(j[0]); }));
+                CHECK(exception_of([&] { static_cast<void>(v[0]); }) == json_exception_of([&] { static_cast<void>(j[0]); }));
             }
-            CHECK(exception_of([&] { static_cast<void>(v.at("a")); }) == exception_of([&] { static_cast<void>(j.at("a")); }));
-            CHECK(exception_of([&] { static_cast<void>(v.at("missing")); }) == exception_of([&] { static_cast<void>(j.at("missing")); }));
-            CHECK(exception_of([&] { static_cast<void>(v.at(0)); }) == exception_of([&] { static_cast<void>(j.at(0)); }));
-            CHECK(exception_of([&] { static_cast<void>(v.at(5)); }) == exception_of([&] { static_cast<void>(j.at(5)); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at("a")); }) == json_exception_of([&] { static_cast<void>(j.at("a")); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at("missing")); }) == json_exception_of([&] { static_cast<void>(j.at("missing")); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at(0)); }) == json_exception_of([&] { static_cast<void>(j.at(0)); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at(5)); }) == json_exception_of([&] { static_cast<void>(j.at(5)); }));
             if (!(j.is_object() && j.empty())) // (key() of an end iterator)
             {
-                CHECK(exception_of([&] { static_cast<void>(v.begin().key()); }) == exception_of([&] { static_cast<void>(j.begin().key()); }));
+                CHECK(exception_of([&] { static_cast<void>(v.begin().key()); }) == json_exception_of([&] { static_cast<void>(j.begin().key()); }));
             }
             if (!j.empty() || j.is_null())
             {
-                CHECK(exception_of([&] { static_cast<void>(v.front()); }) == exception_of([&] { static_cast<void>(j.front()); }));
-                CHECK(exception_of([&] { static_cast<void>(v.back()); }) == exception_of([&] { static_cast<void>(j.back()); }));
+                CHECK(exception_of([&] { static_cast<void>(v.front()); }) == json_exception_of([&] { static_cast<void>(j.front()); }));
+                CHECK(exception_of([&] { static_cast<void>(v.back()); }) == json_exception_of([&] { static_cast<void>(j.back()); }));
             }
 #endif
             CHECK(v.contains("a") == j.contains("a"));

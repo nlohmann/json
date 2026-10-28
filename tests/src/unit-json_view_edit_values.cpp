@@ -54,14 +54,18 @@ int accepts_any(nlohmann::basic_json_view<BasicJsonType, Mode> /*unused*/)
     return Mode == nlohmann::view_mode::editable ? 3 : 4;
 }
 
-template<typename View>
-auto overload(View v) -> decltype(accepts_editable(v))
+// overloads that differ only in the mode; deduction ignores the conversion from
+// read-only to editable views, so each view picks the overload of its own mode
+// (two templates that differ only in a decltype return type are a redefinition
+// for MSVC 2015)
+template<typename BasicJsonType>
+int overload(nlohmann::basic_json_view<BasicJsonType, nlohmann::view_mode::editable> v)
 {
     return accepts_editable(v);
 }
 
-template<typename View>
-auto overload(View v) -> decltype(accepts_read_only(v))
+template<typename BasicJsonType>
+int overload(nlohmann::basic_json_view<BasicJsonType, nlohmann::view_mode::read_only> v)
 {
     return accepts_read_only(v);
 }

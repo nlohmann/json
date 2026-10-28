@@ -113,6 +113,7 @@ When the macro is not defined, the library will define it to its default value.
 
 - [:simple-cmake: JSON_Diagnostic_Positions](../../integration/cmake.md#json_diagnostic_positions) - CMake option to control the macro
 - [`JSON_DIAGNOSTICS`](json_diagnostics.md) - macro to control extended diagnostics
+- [`materialize()`](../basic_json_view/materialize.md) - values of a JSON view, with the same positions
 - [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - handling parse errors and locating them in the input
 
 ## Version history

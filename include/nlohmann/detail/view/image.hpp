@@ -80,7 +80,8 @@ constexpr std::uint64_t image_limit = 0xFFFFFFF0u;
 /// Copy the current structure of an edited document into nodes in document
 /// order, as the parser would have written them. Text written by edits is
 /// appended to text_tail (number tokens) and arena_tail (strings); floats that
-/// are not finite become null, as dump() writes them.
+/// are not finite become null, as dump() writes them. Nodes keep the flag
+/// is_new: they have no source position (JSON_DIAGNOSTIC_POSITIONS).
 inline void compact_nodes(const document_data& d, std::size_t arena_size, std::vector<node>& out, std::string& text_tail, std::string& arena_tail)
 {
     struct frame
@@ -103,16 +104,18 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
             arena_tail.append(d.str(s), s.len);
             r.flags = node_flags::escaped;
         }
+        r.flags = static_cast<std::uint8_t>(r.flags | (s.flags & node_flags::is_new));
         return r;
     };
     const auto copy_node = [&](const node * v)
     {
         node r = *v;
+        const auto is_new = static_cast<std::uint8_t>(v->flags & node_flags::is_new);
         switch (static_cast<value_t>(v->kind))
         {
             case value_t::object:
             case value_t::array:
-                r.flags = 0;
+                r.flags = is_new;
                 r.extra = 0;
                 r.off = (v->flags & (node_flags::moved | node_flags::is_new)) != 0 ? 0 : v->off;
                 r.len = 0;  // counted below
@@ -129,7 +132,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                     r.off = static_cast<std::uint32_t>(d.size + text_tail.size());
                     text_tail.append(d.str(*v), number_length(*v));
                 }
-                r.flags = 0;
+                r.flags = is_new;
                 break;
             case value_t::number_float:
                 if ((v->flags & node_flags::storage) == node_flags::edited)
@@ -139,22 +142,23 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                     {
                         r = node{}; // nan and infinity: null, as dump() writes them
                         r.kind = node_kind::null;
+                        r.flags = is_new;
                         break;
                     }
                     r.off = static_cast<std::uint32_t>(d.size + text_tail.size());
                     text_tail.append(t, v->len);
                     r.extra = 0xFFFFu; // the digit layout is not recorded
                 }
-                r.flags = 0;
+                r.flags = is_new;
                 break;
             case value_t::boolean:
-                r.flags = static_cast<std::uint8_t>(v->flags & node_flags::is_true);
+                r.flags = static_cast<std::uint8_t>(v->flags & (node_flags::is_true | node_flags::is_new));
                 break;
             case value_t::null:
             case value_t::binary:
             case value_t::discarded:
             default:
-                r.flags = 0;
+                r.flags = is_new;
                 break;
         }
         out.push_back(r);
@@ -515,13 +519,15 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
     std::vector<float_range> floats;
     const auto check_string = [&](const node & n) -> bool
     {
-        if ((n.flags & ~node_flags::escaped) != 0 || n.extra != 0)
+        if ((n.flags & ~(node_flags::escaped | node_flags::is_new)) != 0 || n.extra != 0)
         {
             return false;
         }
         const bool decoded = (n.flags & node_flags::escaped) != 0;
         const std::size_t limit = decoded ? arena_size : text_size;
-        if (n.off > limit || n.len > limit - n.off)
+        // (next: the source offset of a decoded string's opening quote plus
+        // one, or 0; see node)
+        if (n.off > limit || n.len > limit - n.off || n.next > text_size)
         {
             return false;
         }
@@ -593,13 +599,13 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         {
             case value_t::null:
                 // (the offset of a literal is read to size the output of dump())
-                if (n.flags != 0 || n.extra != 0 || n.off > text_size)
+                if ((n.flags & ~node_flags::is_new) != 0 || n.extra != 0 || n.off > text_size)
                 {
                     return false;
                 }
                 break;
             case value_t::boolean:
-                if ((n.flags & ~node_flags::is_true) != 0 || n.extra != 0 || n.off > text_size)
+                if ((n.flags & ~(node_flags::is_true | node_flags::is_new)) != 0 || n.extra != 0 || n.off > text_size)
                 {
                     return false;
                 }
@@ -613,7 +619,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             case value_t::number_integer:
             case value_t::number_unsigned:
             case value_t::number_float:
-                if (n.flags != 0 || !number_in_bounds(n))
+                if ((n.flags & ~node_flags::is_new) != 0 || !number_in_bounds(n))
                 {
                     return false;
                 }
@@ -635,7 +641,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             case value_t::object:
             {
                 const std::size_t limit = stack.empty() ? count : stack.back().end;
-                if (n.flags != 0 || n.extra != 0 || n.next == 0 || n.next > limit - i || n.off > text_size)
+                if ((n.flags & ~node_flags::is_new) != 0 || n.extra != 0 || n.next == 0 || n.next > limit - i || n.off > text_size)
                 {
                     return false;
                 }
