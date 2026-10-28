@@ -172,6 +172,32 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* skip_digits(const unsigned char
     return p;
 }
 
+/// advance over the text of a line comment (after its "//") to the line
+/// break or the end (with NulIsEnd also a null byte, which is left for the
+/// caller to see, as in parse())
+template<bool NulIsEnd = false>
+inline const unsigned char* skip_line_comment(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (p != e && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
+    {
+        ++p;
+    }
+    return p;
+}
+
+/// the "*/" that ends a block comment whose text starts at p (after its "/*");
+/// if it is unterminated, the end (with NulIsEnd also a null byte), which is
+/// where the caller reports the error
+template<bool NulIsEnd = false>
+inline const unsigned char* find_block_comment_end(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (p != e && !(NulIsEnd && *p == 0) && !(*p == '*' && p + 1 != e && p[1] == '/'))
+    {
+        ++p;
+    }
+    return p;
+}
+
 /// powers of ten up to 10^19 as integers
 inline std::uint64_t int_pow10(unsigned k) noexcept
 {

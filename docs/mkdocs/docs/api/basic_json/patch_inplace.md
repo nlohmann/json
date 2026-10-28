@@ -69,6 +69,19 @@ Duplicate member names inside an operation object are resolved by the parser bef
 is kept, see [`object_t`](object_t.md#behavior)), so `#!json {"op": "add", "op": "remove", "path": "/a"}` is a
 `remove` operation.
 
+The JSON patch may be the JSON value itself (`#!cpp j.patch_inplace(j)`): the operations are then read from a copy of
+the patch made before the first operation is applied, so the result is the same as that of
+`#!cpp j = j.patch(j)`, and the exception safety is the same as above.
+
+If [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) is enabled, the same holds for a JSON patch stored inside the
+JSON value (e.g., `#!cpp j.patch_inplace(j["patch"])`): it is detected via the parent pointers.
+
+!!! danger "Undefined behavior"
+
+    Without [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md), the JSON patch must not be a value stored inside the
+    JSON value (e.g., `#!cpp j.patch_inplace(j["patch"])`), as the operations may change or destroy it while it is
+    read. Pass a copy (`#!cpp j.patch_inplace(json(j["patch"]))`) or use [`patch`](patch.md) instead.
+
 ## Examples
 
 ??? example "Example: apply a JSON patch in place"
@@ -122,3 +135,5 @@ is kept, see [`object_t`](object_t.md#behavior)), so `#!json {"op": "add", "op":
 - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) instead of
   [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) for a one-character array index that is
   not a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.
+- Applying a JSON value as patch to itself (or, with `JSON_DIAGNOSTICS`, to a value stored inside it) no longer results
+  in undefined behavior in version 3.13.0.

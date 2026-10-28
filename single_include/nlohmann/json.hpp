@@ -15629,7 +15629,10 @@ struct diagnostic_positions
         {
             // Lexer has read the first character of the container, so
             // subtract 1 from the position to get the correct start position.
-            v.start_position = lexer->get_chars_read_total() - 1;
+            // (npos: a value without a source position, see materialize() of
+            // json_view)
+            const std::size_t read = lexer->get_chars_read_total();
+            v.start_position = read == std::string::npos ? std::string::npos : read - 1;
         }
     }
 
@@ -15644,6 +15647,12 @@ struct diagnostic_positions
         {
             // Lexer's position is past the closing brace or bracket, so set that as the end position.
             v.end_position = lexer->get_chars_read_total();
+            if (v.end_position == std::string::npos)
+            {
+                // a range has both ends or none (exception::diagnostics()
+                // prints only complete ones)
+                v.start_position = std::string::npos;
+            }
         }
     }
 
@@ -15660,6 +15669,12 @@ struct diagnostic_positions
             // The start position will be set below based on the length of the string representation
             // of the value.
             v.end_position = lexer->get_chars_read_total();
+            if (v.end_position == std::string::npos)
+            {
+                // a value without a source position
+                v.start_position = std::string::npos;
+                return;
+            }
 
             switch (v.type())
             {
@@ -15872,8 +15887,12 @@ read up to it.
 @tparam Collect  whether to collect the values of containers of unknown size on
                  a stack (only for a caller that does not use the value after a
                  parse error)
+@tparam LexerType  the type of the lexer that reports the source positions
+                   (JSON_DIAGNOSTIC_POSITIONS); only diagnostic_positions uses
+                   it, so any type with its three functions works (as
+                   materialize() of json_view uses it)
 */
-template<typename BasicJsonType, typename InputAdapterType, bool Collect = false>
+template<typename BasicJsonType, typename InputAdapterType, bool Collect = false, typename LexerType = lexer<BasicJsonType, InputAdapterType>>
 class json_sax_dom_parser : public json_sax_dom_error_state
 {
   public:
@@ -15882,7 +15901,7 @@ class json_sax_dom_parser : public json_sax_dom_error_state
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
     using binary_t = typename BasicJsonType::binary_t;
-    using lexer_t = lexer<BasicJsonType, InputAdapterType>;
+    using lexer_t = LexerType;
 
     /*!
     @param[in,out] r  reference to a JSON value that is manipulated while
@@ -22515,8 +22534,8 @@ using parser_callback_t =
 template<typename SAX>
 struct sax_ignores_number_text : std::false_type {};
 
-template<typename BasicJsonType, typename InputAdapterType, bool Collect>
-struct sax_ignores_number_text<json_sax_dom_parser<BasicJsonType, InputAdapterType, Collect>> : std::true_type {};
+template<typename BasicJsonType, typename InputAdapterType, bool Collect, typename LexerType>
+struct sax_ignores_number_text<json_sax_dom_parser<BasicJsonType, InputAdapterType, Collect, LexerType>> : std::true_type {};
 
 template<typename BasicJsonType, typename InputAdapterType>
 struct sax_ignores_number_text<json_sax_dom_callback_parser<BasicJsonType, InputAdapterType>> : std::true_type {};
@@ -24331,6 +24350,13 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(const json_pointer& ptr)
     {
+        // insert() must not be given iterators into the vector it inserts
+        // into: append a copy when a pointer is appended to itself
+        if (JSON_HEDLEY_UNLIKELY(&ptr == this))
+        {
+            return *this /= json_pointer(ptr);
+        }
+
         reference_tokens.insert(reference_tokens.end(),
                                 ptr.reference_tokens.begin(),
                                 ptr.reference_tokens.end());
@@ -36910,7 +36936,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     friend class ::nlohmann::detail::binary_writer;
     template<typename BasicJsonType, typename InputType, typename SAX>
     friend class ::nlohmann::detail::binary_reader;
-    template<typename BasicJsonType, typename InputAdapterType, bool Collect>
+    template<typename BasicJsonType, typename InputAdapterType, bool Collect, typename LexerType>
     friend class ::nlohmann::detail::json_sax_dom_parser;
     template<typename BasicJsonType, typename InputAdapterType>
     friend class ::nlohmann::detail::json_sax_dom_binary_parser;
@@ -43701,6 +43727,25 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/patch/
     void patch_inplace(const basic_json& json_patch)
     {
+        // the operations below change *this while iterating json_patch: apply
+        // a copy when a value is applied as patch to itself or, with
+        // JSON_DIAGNOSTICS, to a value stored inside it
+        // NOLINTNEXTLINE(misc-const-correctness): only the JSON_DIAGNOSTICS build modifies it
+        bool patch_aliases_this = (&json_patch == this);
+#if JSON_DIAGNOSTICS
+        for (const basic_json* p = json_patch.m_parent; !patch_aliases_this && p != nullptr; p = p->m_parent)
+        {
+            patch_aliases_this = (p == this);
+        }
+#endif
+        if (JSON_HEDLEY_UNLIKELY(patch_aliases_this))
+        {
+            // NOLINTNEXTLINE(performance-unnecessary-copy-initialization): *this is modified below
+            const basic_json json_patch_copy = json_patch;
+            patch_inplace(json_patch_copy);
+            return;
+        }
+
         basic_json& result = *this;
         // the valid JSON Patch operations
         enum class patch_operations {add, remove, replace, move, copy, test, invalid};
