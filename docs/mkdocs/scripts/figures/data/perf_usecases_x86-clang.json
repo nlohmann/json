@@ -1,0 +1,7224 @@
+{
+  "validate": {
+    "twitter": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 301.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 301.9,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 294.2,
+            "level": "full"
+          },
+          "parse": {
+            "us": 301.9,
+            "level": "full"
+          },
+          "accept": {
+            "us": 306.9,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "accept",
+          "us": 746.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "accept",
+          "us": 746.3,
+          "level": "full"
+        },
+        "variants": {
+          "accept": {
+            "us": 746.3,
+            "level": "full"
+          },
+          "parse": {
+            "us": 3621.8,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 378.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy)",
+          "us": 378.8,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy)": {
+            "us": 378.8,
+            "level": "full"
+          },
+          "read": {
+            "us": 382.3,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 311.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "DOM",
+          "us": 311.3,
+          "level": "full"
+        },
+        "variants": {
+          "DOM (reused)": {
+            "us": 307.1,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 311.3,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 449.6,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 449.6,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "validate_json",
+          "us": 621.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "validate_json",
+          "us": 621.2,
+          "level": "full"
+        },
+        "variants": {
+          "validate_json": {
+            "us": 621.2,
+            "level": "full"
+          },
+          "generic": {
+            "us": 3963.7,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 595.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 595.8,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 595.8,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1224.4,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 1845.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 1227.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 1227.3,
+            "level": "no UTF-8"
+          },
+          "SAX (no encoding check)": {
+            "us": 1303.4,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 1603.8,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 1845.2,
+            "level": "full"
+          },
+          "SAX": {
+            "us": 2180.5,
+            "level": "full"
+          },
+          "Document": {
+            "us": 2338.1,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + IgnoredAny",
+          "us": 633.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 486.9,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 486.9,
+            "level": "no UTF-8"
+          },
+          "from_utf8 + IgnoredAny": {
+            "us": 633.5,
+            "level": "full"
+          },
+          "Value": {
+            "us": 3815.1,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "IgnoredAny",
+          "us": 469.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 469.6,
+          "level": "full"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 469.6,
+            "level": "full"
+          },
+          "Value": {
+            "us": 563.3,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "tape (copy)",
+          "us": 591.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "tape (copy)",
+          "us": 591.5,
+          "level": "full"
+        },
+        "variants": {
+          "tape (reused)": {
+            "us": 578.1,
+            "level": "full"
+          },
+          "tape (copy)": {
+            "us": 591.5,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 1281.8,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "citm_catalog": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 720.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 720.3,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 718.8,
+            "level": "full"
+          },
+          "parse": {
+            "us": 720.3,
+            "level": "full"
+          },
+          "accept": {
+            "us": 722.5,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "accept",
+          "us": 1424.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "accept",
+          "us": 1424.2,
+          "level": "full"
+        },
+        "variants": {
+          "accept": {
+            "us": 1424.2,
+            "level": "full"
+          },
+          "parse": {
+            "us": 5667.8,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "read",
+          "us": 895.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "read",
+          "us": 895.6,
+          "level": "full"
+        },
+        "variants": {
+          "read": {
+            "us": 895.6,
+            "level": "full"
+          },
+          "insitu (copy)": {
+            "us": 898.6,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 735.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "DOM",
+          "us": 735.5,
+          "level": "full"
+        },
+        "variants": {
+          "DOM": {
+            "us": 735.5,
+            "level": "full"
+          },
+          "DOM (reused)": {
+            "us": 759.0,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 1026.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 1026.3,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "validate_json",
+          "us": 1402.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "validate_json",
+          "us": 1402.4,
+          "level": "full"
+        },
+        "variants": {
+          "validate_json": {
+            "us": 1402.4,
+            "level": "full"
+          },
+          "generic": {
+            "us": 7390.0,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 923.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 923.4,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 923.4,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1658.3,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 2149.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX (no encoding check)",
+          "us": 1665.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX (no encoding check)": {
+            "us": 1665.3,
+            "level": "no UTF-8"
+          },
+          "insitu (copy) (no encoding check)": {
+            "us": 2037.7,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 2060.5,
+            "level": "no UTF-8"
+          },
+          "SAX": {
+            "us": 2149.5,
+            "level": "full"
+          },
+          "insitu (copy)": {
+            "us": 2424.6,
+            "level": "full"
+          },
+          "Document": {
+            "us": 2460.0,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + IgnoredAny",
+          "us": 1447.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 1370.5,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 1370.5,
+            "level": "no UTF-8"
+          },
+          "from_utf8 + IgnoredAny": {
+            "us": 1447.6,
+            "level": "full"
+          },
+          "Value": {
+            "us": 6238.9,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "IgnoredAny",
+          "us": 965.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 965.6,
+          "level": "full"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 965.6,
+            "level": "full"
+          },
+          "Value": {
+            "us": 1189.7,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "tape (copy)",
+          "us": 1425.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "tape (copy)",
+          "us": 1425.7,
+          "level": "full"
+        },
+        "variants": {
+          "tape (reused)": {
+            "us": 1409.5,
+            "level": "full"
+          },
+          "tape (copy)": {
+            "us": 1425.7,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 3637.0,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "canada": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 1783.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 1783.7,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 1776.8,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1783.7,
+            "level": "full"
+          },
+          "accept": {
+            "us": 1787.4,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "accept",
+          "us": 4200.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "accept",
+          "us": 4200.8,
+          "level": "full"
+        },
+        "variants": {
+          "accept": {
+            "us": 4200.8,
+            "level": "full"
+          },
+          "parse": {
+            "us": 12011.4,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 2851.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy)",
+          "us": 2851.4,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy)": {
+            "us": 2851.4,
+            "level": "full"
+          },
+          "read": {
+            "us": 2856.6,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 3343.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "DOM",
+          "us": 3343.0,
+          "level": "full"
+        },
+        "variants": {
+          "DOM (reused)": {
+            "us": 3285.4,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 3343.0,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 3140.1,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 3140.1,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "validate_json",
+          "us": 1805.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "validate_json",
+          "us": 1805.5,
+          "level": "full"
+        },
+        "variants": {
+          "validate_json": {
+            "us": 1805.5,
+            "level": "full"
+          },
+          "generic": {
+            "us": 26132.2,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 6234.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 6234.3,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 6234.3,
+            "level": "full"
+          },
+          "parse": {
+            "us": 7192.5,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 11718.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX (no encoding check)",
+          "us": 11600.8,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX (no encoding check)": {
+            "us": 11600.8,
+            "level": "no UTF-8"
+          },
+          "SAX": {
+            "us": 11718.7,
+            "level": "full"
+          },
+          "insitu (copy) (no encoding check)": {
+            "us": 11728.7,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 11852.8,
+            "level": "full"
+          },
+          "Document": {
+            "us": 12506.9,
+            "level": "full"
+          },
+          "Document (no encoding check)": {
+            "us": 12664.2,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + IgnoredAny",
+          "us": 2401.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 2318.5,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 2318.5,
+            "level": "no UTF-8"
+          },
+          "from_utf8 + IgnoredAny": {
+            "us": 2401.7,
+            "level": "full"
+          },
+          "Value": {
+            "us": 13367.6,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "IgnoredAny",
+          "us": 2249.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 2249.4,
+          "level": "full"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 2249.4,
+            "level": "full"
+          },
+          "Value": {
+            "us": 3754.2,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "tape (copy)",
+          "us": 4302.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "tape (copy)",
+          "us": 4302.9,
+          "level": "full"
+        },
+        "variants": {
+          "tape (reused)": {
+            "us": 4245.2,
+            "level": "full"
+          },
+          "tape (copy)": {
+            "us": 4302.9,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 10036.5,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "jeopardy": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 81369.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 81369.6,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 43820.9,
+            "level": "full"
+          },
+          "parse": {
+            "us": 81369.6,
+            "level": "full"
+          },
+          "accept": {
+            "us": 82844.4,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "accept",
+          "us": 100878.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "accept",
+          "us": 100878.3,
+          "level": "full"
+        },
+        "variants": {
+          "accept": {
+            "us": 100878.3,
+            "level": "full"
+          },
+          "parse": {
+            "us": 566744.4,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 124180.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy)",
+          "us": 124180.2,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy)": {
+            "us": 124180.2,
+            "level": "full"
+          },
+          "read": {
+            "us": 126846.3,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 115626.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "DOM",
+          "us": 115626.5,
+          "level": "full"
+        },
+        "variants": {
+          "DOM (reused)": {
+            "us": 49170.2,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 115626.5,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 98200.0,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 98200.0,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "validate_json",
+          "us": 76163.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "validate_json",
+          "us": 76163.6,
+          "level": "full"
+        },
+        "variants": {
+          "validate_json": {
+            "us": 76163.6,
+            "level": "full"
+          },
+          "generic": {
+            "us": 483058.9,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 56653.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 56653.7,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 56653.7,
+            "level": "full"
+          },
+          "parse": {
+            "us": 184353.3,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 233417.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX (no encoding check)",
+          "us": 156744.4,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX (no encoding check)": {
+            "us": 156744.4,
+            "level": "no UTF-8"
+          },
+          "insitu (copy) (no encoding check)": {
+            "us": 173543.2,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 189439.3,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 233417.1,
+            "level": "full"
+          },
+          "SAX": {
+            "us": 249262.4,
+            "level": "full"
+          },
+          "Document": {
+            "us": 272448.4,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + IgnoredAny",
+          "us": 66822.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 59800.9,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 59800.9,
+            "level": "no UTF-8"
+          },
+          "from_utf8 + IgnoredAny": {
+            "us": 66822.2,
+            "level": "full"
+          },
+          "Value": {
+            "us": 490960.4,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "IgnoredAny",
+          "us": 54246.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 54246.3,
+          "level": "full"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 54246.3,
+            "level": "full"
+          },
+          "Value": {
+            "us": 117743.3,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "tape (copy)",
+          "us": 211715.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "tape (copy)",
+          "us": 211715.5,
+          "level": "full"
+        },
+        "variants": {
+          "tape (reused)": {
+            "us": 135460.9,
+            "level": "full"
+          },
+          "tape (copy)": {
+            "us": 211715.5,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 289558.6,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "status": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "accept",
+          "us": 1.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "accept",
+          "us": 1.5,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 1.3,
+            "level": "full"
+          },
+          "accept": {
+            "us": 1.5,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1.5,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "accept",
+          "us": 4.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "accept",
+          "us": 4.1,
+          "level": "full"
+        },
+        "variants": {
+          "accept": {
+            "us": 4.1,
+            "level": "full"
+          },
+          "parse": {
+            "us": 16.8,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "read",
+          "us": 1.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "read",
+          "us": 1.6,
+          "level": "full"
+        },
+        "variants": {
+          "read": {
+            "us": 1.6,
+            "level": "full"
+          },
+          "insitu (copy)": {
+            "us": 1.6,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 1.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "DOM",
+          "us": 1.8,
+          "level": "full"
+        },
+        "variants": {
+          "DOM (reused)": {
+            "us": 1.5,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 1.8,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 2.0,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 2.0,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "validate_json",
+          "us": 2.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "validate_json",
+          "us": 2.6,
+          "level": "full"
+        },
+        "variants": {
+          "validate_json": {
+            "us": 2.6,
+            "level": "full"
+          },
+          "generic": {
+            "us": 17.5,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 2.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 2.4,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 2.4,
+            "level": "full"
+          },
+          "parse": {
+            "us": 6.2,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 8.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 4.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 4.3,
+            "level": "no UTF-8"
+          },
+          "SAX (no encoding check)": {
+            "us": 7.2,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 8.4,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 8.6,
+            "level": "full"
+          },
+          "SAX": {
+            "us": 10.9,
+            "level": "full"
+          },
+          "Document": {
+            "us": 12.2,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + IgnoredAny",
+          "us": 2.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 1.9,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 1.9,
+            "level": "no UTF-8"
+          },
+          "from_utf8 + IgnoredAny": {
+            "us": 2.4,
+            "level": "full"
+          },
+          "Value": {
+            "us": 12.5,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "IgnoredAny",
+          "us": 1.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "IgnoredAny",
+          "us": 1.8,
+          "level": "full"
+        },
+        "variants": {
+          "IgnoredAny": {
+            "us": 1.8,
+            "level": "full"
+          },
+          "Value": {
+            "us": 2.4,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "tape (copy)",
+          "us": 2.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "tape (copy)",
+          "us": 2.8,
+          "level": "full"
+        },
+        "variants": {
+          "tape (reused)": {
+            "us": 2.4,
+            "level": "full"
+          },
+          "tape (copy)": {
+            "us": 2.8,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 5.3,
+            "level": "full"
+          }
+        }
+      }
+    }
+  },
+  "sum": {
+    "twitter": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 377.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 377.8,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 364.5,
+            "level": "full"
+          },
+          "parse": {
+            "us": 377.8,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "sax",
+          "us": 783.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "sax",
+          "us": 783.9,
+          "level": "full"
+        },
+        "variants": {
+          "sax": {
+            "us": 783.9,
+            "level": "full"
+          },
+          "parse": {
+            "us": 3831.1,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 434.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy)",
+          "us": 434.6,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy)": {
+            "us": 434.6,
+            "level": "full"
+          },
+          "read": {
+            "us": 438.2,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 399.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "DOM",
+          "us": 399.0,
+          "level": "full"
+        },
+        "variants": {
+          "DOM (reused)": {
+            "us": 393.4,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 399.0,
+            "level": "full"
+          },
+          "On-Demand (reused)": {
+            "us": 565.5,
+            "level": "full"
+          },
+          "On-Demand": {
+            "us": 569.0,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 504.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 504.3,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 3889.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "lazy_json",
+          "us": 2829.3,
+          "level": "partial"
+        },
+        "variants": {
+          "lazy_json": {
+            "us": 2829.3,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 3889.8,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 581.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 581.7,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 581.7,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1281.1,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 1868.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 1236.8,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 1236.8,
+            "level": "no UTF-8"
+          },
+          "SAX (no encoding check)": {
+            "us": 1351.9,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 1558.1,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 1868.6,
+            "level": "full"
+          },
+          "SAX": {
+            "us": 2102.7,
+            "level": "full"
+          },
+          "Document": {
+            "us": 2243.2,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "visitor",
+          "us": 1318.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 1318.2,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 1318.2,
+            "level": "full"
+          },
+          "Value": {
+            "us": 4058.1,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "visitor",
+          "us": 494.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 494.3,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 494.3,
+            "level": "full"
+          },
+          "Value": {
+            "us": 808.3,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "visitor (copy)",
+          "us": 722.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor (copy)",
+          "us": 722.1,
+          "level": "full"
+        },
+        "variants": {
+          "visitor (copy)": {
+            "us": 722.1,
+            "level": "full"
+          },
+          "borrowed (reused)": {
+            "us": 1451.8,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 1475.4,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "citm_catalog": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 891.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 891.0,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 887.8,
+            "level": "full"
+          },
+          "parse": {
+            "us": 891.0,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "sax",
+          "us": 1466.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "sax",
+          "us": 1466.5,
+          "level": "full"
+        },
+        "variants": {
+          "sax": {
+            "us": 1466.5,
+            "level": "full"
+          },
+          "parse": {
+            "us": 5870.2,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 1048.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy)",
+          "us": 1048.4,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy)": {
+            "us": 1048.4,
+            "level": "full"
+          },
+          "read": {
+            "us": 1054.1,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 946.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "DOM",
+          "us": 946.1,
+          "level": "full"
+        },
+        "variants": {
+          "DOM (reused)": {
+            "us": 939.8,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 946.1,
+            "level": "full"
+          },
+          "On-Demand (reused)": {
+            "us": 1344.0,
+            "level": "full"
+          },
+          "On-Demand": {
+            "us": 1357.1,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 1180.1,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 1180.1,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 7282.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 7282.0,
+          "level": "full"
+        },
+        "variants": {
+          "generic": {
+            "us": 7282.0,
+            "level": "full"
+          },
+          "lazy_json": {
+            "us": 10912.0,
+            "level": "partial"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 927.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 927.1,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 927.1,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1819.2,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 2171.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX (no encoding check)",
+          "us": 1769.8,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX (no encoding check)": {
+            "us": 1769.8,
+            "level": "no UTF-8"
+          },
+          "insitu (copy) (no encoding check)": {
+            "us": 2099.5,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 2160.2,
+            "level": "no UTF-8"
+          },
+          "SAX": {
+            "us": 2171.6,
+            "level": "full"
+          },
+          "insitu (copy)": {
+            "us": 2482.4,
+            "level": "full"
+          },
+          "Document": {
+            "us": 2632.9,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "visitor",
+          "us": 2298.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 2298.7,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 2298.7,
+            "level": "full"
+          },
+          "Value": {
+            "us": 6416.1,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "visitor",
+          "us": 1134.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 1134.9,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 1134.9,
+            "level": "full"
+          },
+          "Value": {
+            "us": 1798.1,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "visitor (copy)",
+          "us": 1685.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor (copy)",
+          "us": 1685.7,
+          "level": "full"
+        },
+        "variants": {
+          "visitor (copy)": {
+            "us": 1685.7,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 3825.0,
+            "level": "full"
+          },
+          "borrowed (reused)": {
+            "us": 3865.2,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "canada": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 4150.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 4150.6,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 4119.7,
+            "level": "full"
+          },
+          "parse": {
+            "us": 4150.6,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "sax",
+          "us": 5344.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "sax",
+          "us": 5344.7,
+          "level": "full"
+        },
+        "variants": {
+          "sax": {
+            "us": 5344.7,
+            "level": "full"
+          },
+          "parse": {
+            "us": 12267.2,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 3467.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy)",
+          "us": 3467.4,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy)": {
+            "us": 3467.4,
+            "level": "full"
+          },
+          "read": {
+            "us": 3487.7,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 4100.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "DOM",
+          "us": 4100.1,
+          "level": "full"
+        },
+        "variants": {
+          "DOM": {
+            "us": 4100.1,
+            "level": "full"
+          },
+          "DOM (reused)": {
+            "us": 4105.9,
+            "level": "full"
+          },
+          "On-Demand (reused)": {
+            "us": 5932.2,
+            "level": "full"
+          },
+          "On-Demand": {
+            "us": 6036.4,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 3736.5,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 3736.5,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 25797.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "lazy_json",
+          "us": 17578.3,
+          "level": "partial"
+        },
+        "variants": {
+          "lazy_json": {
+            "us": 17578.3,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 25797.9,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 5934.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 5934.9,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 5934.9,
+            "level": "full"
+          },
+          "parse": {
+            "us": 7638.8,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 12183.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 12081.5,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 12081.5,
+            "level": "no UTF-8"
+          },
+          "SAX (no encoding check)": {
+            "us": 12110.1,
+            "level": "no UTF-8"
+          },
+          "SAX": {
+            "us": 12183.3,
+            "level": "full"
+          },
+          "insitu (copy)": {
+            "us": 12315.6,
+            "level": "full"
+          },
+          "Document": {
+            "us": 13053.7,
+            "level": "full"
+          },
+          "Document (no encoding check)": {
+            "us": 13070.9,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "visitor",
+          "us": 7610.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 7610.4,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 7610.4,
+            "level": "full"
+          },
+          "Value": {
+            "us": 14578.6,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "visitor",
+          "us": 4580.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 4580.2,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 4580.2,
+            "level": "full"
+          },
+          "Value": {
+            "us": 7489.7,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "visitor (copy)",
+          "us": 5190.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor (copy)",
+          "us": 5190.9,
+          "level": "full"
+        },
+        "variants": {
+          "visitor (copy)": {
+            "us": 5190.9,
+            "level": "full"
+          },
+          "borrowed (reused)": {
+            "us": 11384.6,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 11483.9,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "jeopardy": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 89688.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 89688.9,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 55164.4,
+            "level": "full"
+          },
+          "parse": {
+            "us": 89688.9,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "sax",
+          "us": 101437.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "sax",
+          "us": 101437.1,
+          "level": "full"
+        },
+        "variants": {
+          "sax": {
+            "us": 101437.1,
+            "level": "full"
+          },
+          "parse": {
+            "us": 624696.4,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "read",
+          "us": 135382.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "read",
+          "us": 135382.1,
+          "level": "full"
+        },
+        "variants": {
+          "read": {
+            "us": 135382.1,
+            "level": "full"
+          },
+          "insitu (copy)": {
+            "us": 136448.0,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "On-Demand",
+          "us": 120055.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "On-Demand",
+          "us": 120055.8,
+          "level": "full"
+        },
+        "variants": {
+          "DOM (reused)": {
+            "us": 65216.0,
+            "level": "full"
+          },
+          "On-Demand (reused)": {
+            "us": 77126.3,
+            "level": "full"
+          },
+          "On-Demand": {
+            "us": 120055.8,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 131813.5,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 110323.5,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 110323.5,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 501804.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "lazy_json",
+          "us": 223672.4,
+          "level": "partial"
+        },
+        "variants": {
+          "lazy_json": {
+            "us": 223672.4,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 501804.9,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 56310.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 56310.4,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 56310.4,
+            "level": "full"
+          },
+          "parse": {
+            "us": 205611.0,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 253074.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX (no encoding check)",
+          "us": 163825.6,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX (no encoding check)": {
+            "us": 163825.6,
+            "level": "no UTF-8"
+          },
+          "insitu (copy) (no encoding check)": {
+            "us": 187363.2,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 199547.1,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 253074.6,
+            "level": "full"
+          },
+          "SAX": {
+            "us": 254345.5,
+            "level": "full"
+          },
+          "Document": {
+            "us": 289092.1,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "visitor",
+          "us": 123810.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 123810.1,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 123810.1,
+            "level": "full"
+          },
+          "Value": {
+            "us": 526223.6,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "visitor",
+          "us": 59149.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 59149.2,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 59149.2,
+            "level": "full"
+          },
+          "Value": {
+            "us": 150764.0,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "visitor (copy)",
+          "us": 220581.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor (copy)",
+          "us": 220581.9,
+          "level": "full"
+        },
+        "variants": {
+          "visitor (copy)": {
+            "us": 220581.9,
+            "level": "full"
+          },
+          "borrowed (reused)": {
+            "us": 228425.7,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 293609.3,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "status": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 1.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 1.9,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 1.8,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1.9,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "sax",
+          "us": 4.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "sax",
+          "us": 4.1,
+          "level": "full"
+        },
+        "variants": {
+          "sax": {
+            "us": 4.1,
+            "level": "full"
+          },
+          "parse": {
+            "us": 15.9,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 1.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy)",
+          "us": 1.9,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy)": {
+            "us": 1.9,
+            "level": "full"
+          },
+          "read": {
+            "us": 2.0,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 2.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "DOM",
+          "us": 2.2,
+          "level": "full"
+        },
+        "variants": {
+          "DOM (reused)": {
+            "us": 1.9,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 2.2,
+            "level": "full"
+          },
+          "On-Demand (reused)": {
+            "us": 2.8,
+            "level": "full"
+          },
+          "On-Demand": {
+            "us": 3.0,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 2.2,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 2.2,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 16.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "lazy_json",
+          "us": 5.9,
+          "level": "partial"
+        },
+        "variants": {
+          "lazy_json": {
+            "us": 5.9,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 16.7,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "SAX",
+          "us": 2.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX",
+          "us": 2.4,
+          "level": "full"
+        },
+        "variants": {
+          "SAX": {
+            "us": 2.4,
+            "level": "full"
+          },
+          "parse": {
+            "us": 6.1,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 8.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 4.4,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 4.4,
+            "level": "no UTF-8"
+          },
+          "SAX (no encoding check)": {
+            "us": 6.7,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 8.1,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 8.4,
+            "level": "full"
+          },
+          "SAX": {
+            "us": 10.7,
+            "level": "full"
+          },
+          "Document": {
+            "us": 11.8,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "visitor",
+          "us": 4.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 4.3,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 4.3,
+            "level": "full"
+          },
+          "Value": {
+            "us": 12.9,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "visitor",
+          "us": 2.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor",
+          "us": 2.4,
+          "level": "full"
+        },
+        "variants": {
+          "visitor": {
+            "us": 2.4,
+            "level": "full"
+          },
+          "Value": {
+            "us": 4.1,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "visitor (copy)",
+          "us": 3.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "visitor (copy)",
+          "us": 3.8,
+          "level": "full"
+        },
+        "variants": {
+          "visitor (copy)": {
+            "us": 3.8,
+            "level": "full"
+          },
+          "borrowed (reused)": {
+            "us": 5.7,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 6.3,
+            "level": "full"
+          }
+        }
+      }
+    }
+  },
+  "select": {
+    "twitter": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 324.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 324.1,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 312.4,
+            "level": "full"
+          },
+          "parse": {
+            "us": 324.1,
+            "level": "full"
+          },
+          "structs (from_json)": {
+            "us": 325.7,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "parse",
+          "us": 3653.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 3653.8,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 3653.8,
+            "level": "full"
+          },
+          "structs (from_json)": {
+            "us": 3684.2,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 387.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy)",
+          "us": 387.3,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy)": {
+            "us": 387.3,
+            "level": "full"
+          },
+          "read": {
+            "us": 392.7,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 330.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "On-Demand",
+          "us": 210.3,
+          "level": "partial"
+        },
+        "variants": {
+          "On-Demand (reused)": {
+            "us": 206.7,
+            "level": "partial"
+          },
+          "On-Demand": {
+            "us": 210.3,
+            "level": "partial"
+          },
+          "DOM (reused)": {
+            "us": 324.5,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 330.3,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 460.7,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 460.7,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "structs (validate_skipped)",
+          "us": 559.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 345.1,
+          "level": "partial"
+        },
+        "variants": {
+          "structs": {
+            "us": 345.1,
+            "level": "partial"
+          },
+          "structs (validate_skipped)": {
+            "us": 559.5,
+            "level": "full"
+          },
+          "lazy_json": {
+            "us": 793.4,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 4014.2,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 1263.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 1263.6,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 1263.6,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 1900.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 1251.0,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 1251.0,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 1501.8,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 1900.9,
+            "level": "full"
+          },
+          "Document": {
+            "us": 2250.8,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + structs",
+          "us": 769.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "from_utf8 + structs",
+          "us": 769.2,
+          "level": "full"
+        },
+        "variants": {
+          "from_utf8 + structs": {
+            "us": 769.2,
+            "level": "full"
+          },
+          "structs": {
+            "us": 812.9,
+            "level": "no UTF-8"
+          },
+          "Value": {
+            "us": 4230.2,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "structs",
+          "us": 556.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 556.9,
+          "level": "full"
+        },
+        "variants": {
+          "structs": {
+            "us": 556.9,
+            "level": "full"
+          },
+          "Value": {
+            "us": 632.6,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "structs (copy)",
+          "us": 729.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs (copy)",
+          "us": 729.9,
+          "level": "full"
+        },
+        "variants": {
+          "structs (copy)": {
+            "us": 729.9,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 1364.3,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "citm_catalog": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 728.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 728.4,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 726.0,
+            "level": "full"
+          },
+          "parse": {
+            "us": 728.4,
+            "level": "full"
+          },
+          "structs (from_json)": {
+            "us": 774.9,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "parse",
+          "us": 5493.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 5493.9,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 5493.9,
+            "level": "full"
+          },
+          "structs (from_json)": {
+            "us": 5527.6,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 900.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy)",
+          "us": 900.3,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy)": {
+            "us": 900.3,
+            "level": "full"
+          },
+          "read": {
+            "us": 904.2,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 743.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "On-Demand",
+          "us": 609.7,
+          "level": "partial"
+        },
+        "variants": {
+          "On-Demand": {
+            "us": 609.7,
+            "level": "partial"
+          },
+          "On-Demand (reused)": {
+            "us": 612.8,
+            "level": "partial"
+          },
+          "DOM (reused)": {
+            "us": 741.1,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 743.3,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 1024.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 1024.3,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "structs (validate_skipped)",
+          "us": 1329.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 424.0,
+          "level": "partial"
+        },
+        "variants": {
+          "structs": {
+            "us": 424.0,
+            "level": "partial"
+          },
+          "structs (validate_skipped)": {
+            "us": 1329.0,
+            "level": "full"
+          },
+          "lazy_json": {
+            "us": 6523.9,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 7022.3,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 1658.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 1658.9,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 1658.9,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 2328.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 1936.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 1936.3,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 1997.3,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 2328.9,
+            "level": "full"
+          },
+          "Document": {
+            "us": 2472.0,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + structs",
+          "us": 1503.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 1472.7,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "structs": {
+            "us": 1472.7,
+            "level": "no UTF-8"
+          },
+          "from_utf8 + structs": {
+            "us": 1503.9,
+            "level": "full"
+          },
+          "Value": {
+            "us": 6038.8,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "structs",
+          "us": 1022.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 1022.9,
+          "level": "full"
+        },
+        "variants": {
+          "structs": {
+            "us": 1022.9,
+            "level": "full"
+          },
+          "Value": {
+            "us": 1200.9,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "structs (copy)",
+          "us": 1658.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs (copy)",
+          "us": 1658.4,
+          "level": "full"
+        },
+        "variants": {
+          "structs (copy)": {
+            "us": 1658.4,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 3571.2,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "canada": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "structs (from_json)",
+          "us": 1784.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs (from_json)",
+          "us": 1784.2,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 1774.9,
+            "level": "full"
+          },
+          "structs (from_json)": {
+            "us": 1784.2,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1785.3,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "structs (from_json)",
+          "us": 11582.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs (from_json)",
+          "us": 11582.9,
+          "level": "full"
+        },
+        "variants": {
+          "structs (from_json)": {
+            "us": 11582.9,
+            "level": "full"
+          },
+          "parse": {
+            "us": 11983.5,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "read",
+          "us": 2814.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "read",
+          "us": 2814.4,
+          "level": "full"
+        },
+        "variants": {
+          "read": {
+            "us": 2814.4,
+            "level": "full"
+          },
+          "insitu (copy)": {
+            "us": 2824.2,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 3290.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "On-Demand",
+          "us": 861.0,
+          "level": "partial"
+        },
+        "variants": {
+          "On-Demand": {
+            "us": 861.0,
+            "level": "partial"
+          },
+          "On-Demand (reused)": {
+            "us": 864.4,
+            "level": "partial"
+          },
+          "DOM (reused)": {
+            "us": 3282.5,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 3290.8,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 3030.1,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 3030.1,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "structs (validate_skipped)",
+          "us": 1779.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 463.3,
+          "level": "partial"
+        },
+        "variants": {
+          "structs": {
+            "us": 463.3,
+            "level": "partial"
+          },
+          "structs (validate_skipped)": {
+            "us": 1779.8,
+            "level": "full"
+          },
+          "lazy_json": {
+            "us": 2724.1,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 25691.0,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 7172.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 7172.7,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 7172.7,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 11813.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 11564.9,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 11564.9,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 11813.5,
+            "level": "full"
+          },
+          "Document": {
+            "us": 12192.2,
+            "level": "full"
+          },
+          "Document (no encoding check)": {
+            "us": 12503.6,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + structs",
+          "us": 2442.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 2322.9,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "structs": {
+            "us": 2322.9,
+            "level": "no UTF-8"
+          },
+          "from_utf8 + structs": {
+            "us": 2442.0,
+            "level": "full"
+          },
+          "Value": {
+            "us": 13892.3,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "structs",
+          "us": 2246.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 2246.6,
+          "level": "full"
+        },
+        "variants": {
+          "structs": {
+            "us": 2246.6,
+            "level": "full"
+          },
+          "Value": {
+            "us": 3718.3,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "structs (copy)",
+          "us": 4915.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs (copy)",
+          "us": 4915.3,
+          "level": "full"
+        },
+        "variants": {
+          "structs (copy)": {
+            "us": 4915.3,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 10315.4,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "jeopardy": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 89730.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 89730.7,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 54161.1,
+            "level": "full"
+          },
+          "parse": {
+            "us": 89730.7,
+            "level": "full"
+          },
+          "structs (from_json)": {
+            "us": 108169.2,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "structs (from_json)",
+          "us": 641176.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs (from_json)",
+          "us": 641176.3,
+          "level": "full"
+        },
+        "variants": {
+          "structs (from_json)": {
+            "us": 641176.3,
+            "level": "full"
+          },
+          "parse": {
+            "us": 651580.1,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "read",
+          "us": 139633.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "read",
+          "us": 139633.8,
+          "level": "full"
+        },
+        "variants": {
+          "read": {
+            "us": 139633.8,
+            "level": "full"
+          },
+          "insitu (copy)": {
+            "us": 143534.7,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 129469.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "On-Demand",
+          "us": 48547.8,
+          "level": "partial"
+        },
+        "variants": {
+          "On-Demand (reused)": {
+            "us": 29787.0,
+            "level": "partial"
+          },
+          "On-Demand": {
+            "us": 48547.8,
+            "level": "partial"
+          },
+          "DOM (reused)": {
+            "us": 62947.0,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 129469.9,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 109906.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 109906.3,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "structs (validate_skipped)",
+          "us": 93673.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 76185.7,
+          "level": "partial"
+        },
+        "variants": {
+          "structs": {
+            "us": 76185.7,
+            "level": "partial"
+          },
+          "structs (validate_skipped)": {
+            "us": 93673.6,
+            "level": "full"
+          },
+          "lazy_json": {
+            "us": 106237.4,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 493089.6,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 202455.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 202455.8,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 202455.8,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 251223.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 181143.6,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 181143.6,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 198185.5,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 251223.0,
+            "level": "full"
+          },
+          "Document": {
+            "us": 285738.0,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + structs",
+          "us": 108385.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "from_utf8 + structs",
+          "us": 108385.8,
+          "level": "full"
+        },
+        "variants": {
+          "from_utf8 + structs": {
+            "us": 108385.8,
+            "level": "full"
+          },
+          "structs": {
+            "us": 138827.1,
+            "level": "no UTF-8"
+          },
+          "Value": {
+            "us": 560794.9,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "structs",
+          "us": 91995.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 91995.7,
+          "level": "full"
+        },
+        "variants": {
+          "structs": {
+            "us": 91995.7,
+            "level": "full"
+          },
+          "Value": {
+            "us": 145370.6,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "structs (copy)",
+          "us": 266072.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs (copy)",
+          "us": 266072.7,
+          "level": "full"
+        },
+        "variants": {
+          "structs (copy)": {
+            "us": 266072.7,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 328257.2,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "status": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse",
+          "us": 1.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 1.6,
+          "level": "full"
+        },
+        "variants": {
+          "read (reused)": {
+            "us": 1.5,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1.6,
+            "level": "full"
+          },
+          "structs (from_json)": {
+            "us": 1.6,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "structs (from_json)",
+          "us": 15.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs (from_json)",
+          "us": 15.2,
+          "level": "full"
+        },
+        "variants": {
+          "structs (from_json)": {
+            "us": 15.2,
+            "level": "full"
+          },
+          "parse": {
+            "us": 15.4,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "read",
+          "us": 1.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "read",
+          "us": 1.7,
+          "level": "full"
+        },
+        "variants": {
+          "read": {
+            "us": 1.7,
+            "level": "full"
+          },
+          "insitu (copy)": {
+            "us": 1.7,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM",
+          "us": 2.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "On-Demand",
+          "us": 1.3,
+          "level": "partial"
+        },
+        "variants": {
+          "On-Demand (reused)": {
+            "us": 1.0,
+            "level": "partial"
+          },
+          "On-Demand": {
+            "us": 1.3,
+            "level": "partial"
+          },
+          "DOM (reused)": {
+            "us": 1.6,
+            "level": "full"
+          },
+          "DOM": {
+            "us": 2.0,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 2.0,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 2.0,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "structs (validate_skipped)",
+          "us": 2.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 1.7,
+          "level": "partial"
+        },
+        "variants": {
+          "structs": {
+            "us": 1.7,
+            "level": "partial"
+          },
+          "lazy_json": {
+            "us": 2.0,
+            "level": "partial"
+          },
+          "structs (validate_skipped)": {
+            "us": 2.2,
+            "level": "full"
+          },
+          "generic": {
+            "us": 17.5,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 5.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 5.9,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 5.9,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 8.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 4.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 4.3,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 7.9,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 8.2,
+            "level": "full"
+          },
+          "Document": {
+            "us": 11.6,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "from_utf8 + structs",
+          "us": 3.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 3.0,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "structs": {
+            "us": 3.0,
+            "level": "no UTF-8"
+          },
+          "from_utf8 + structs": {
+            "us": 3.1,
+            "level": "full"
+          },
+          "Value": {
+            "us": 14.9,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "structs",
+          "us": 2.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs",
+          "us": 2.0,
+          "level": "full"
+        },
+        "variants": {
+          "structs": {
+            "us": 2.0,
+            "level": "full"
+          },
+          "Value": {
+            "us": 2.8,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "structs (copy)",
+          "us": 3.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "structs (copy)",
+          "us": 3.6,
+          "level": "full"
+        },
+        "variants": {
+          "structs (copy)": {
+            "us": 3.6,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 5.4,
+            "level": "full"
+          }
+        }
+      }
+    }
+  },
+  "edit": {
+    "twitter": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "editable (source numbers)",
+          "us": 523.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "editable (source numbers)",
+          "us": 523.7,
+          "level": "full"
+        },
+        "variants": {
+          "editable (source numbers)": {
+            "us": 523.7,
+            "level": "full"
+          },
+          "editable": {
+            "us": 534.3,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "ordered_json",
+          "us": 3058.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "ordered_json",
+          "us": 3058.0,
+          "level": "full"
+        },
+        "variants": {
+          "ordered_json": {
+            "us": 3058.0,
+            "level": "full"
+          },
+          "parse": {
+            "us": 4426.6,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "mut copy",
+          "us": 911.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "mut copy",
+          "us": 911.7,
+          "level": "full"
+        },
+        "variants": {
+          "mut copy": {
+            "us": 911.7,
+            "level": "full"
+          },
+          "insitu (copy) + mut copy": {
+            "us": 915.3,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 644.0,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 644.0,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 4277.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 4277.9,
+          "level": "full"
+        },
+        "variants": {
+          "generic": {
+            "us": 4277.9,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 1722.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 1722.3,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 1722.3,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 2564.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 1902.5,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 1902.5,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 2091.8,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 2564.6,
+            "level": "full"
+          },
+          "Document": {
+            "us": 2933.2,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 4474.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 4474.5,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 4474.5,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 1188.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 1188.6,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 1188.6,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed (copy)",
+          "us": 2071.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "borrowed (copy)",
+          "us": 2071.4,
+          "level": "full"
+        },
+        "variants": {
+          "borrowed (copy)": {
+            "us": 2071.4,
+            "level": "full"
+          },
+          "owned (copy)": {
+            "us": 2880.3,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "citm_catalog": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "editable (source numbers)",
+          "us": 1093.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "editable (source numbers)",
+          "us": 1093.2,
+          "level": "full"
+        },
+        "variants": {
+          "editable (source numbers)": {
+            "us": 1093.2,
+            "level": "full"
+          },
+          "editable": {
+            "us": 1099.6,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "ordered_json",
+          "us": 5099.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "ordered_json",
+          "us": 5099.3,
+          "level": "full"
+        },
+        "variants": {
+          "ordered_json": {
+            "us": 5099.3,
+            "level": "full"
+          },
+          "parse": {
+            "us": 6414.4,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "mut copy",
+          "us": 1686.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "mut copy",
+          "us": 1686.5,
+          "level": "full"
+        },
+        "variants": {
+          "mut copy": {
+            "us": 1686.5,
+            "level": "full"
+          },
+          "insitu (copy) + mut copy": {
+            "us": 1717.5,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 1508.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 1508.3,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 7988.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 7988.6,
+          "level": "full"
+        },
+        "variants": {
+          "generic": {
+            "us": 7988.6,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 2613.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 2613.8,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 2613.8,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 3328.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 2859.3,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 2859.3,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 2942.8,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 3328.2,
+            "level": "full"
+          },
+          "Document": {
+            "us": 3389.9,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 6922.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 6922.5,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 6922.5,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 2383.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 2383.6,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 2383.6,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed (copy)",
+          "us": 4465.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "borrowed (copy)",
+          "us": 4465.1,
+          "level": "full"
+        },
+        "variants": {
+          "borrowed (copy)": {
+            "us": 4465.1,
+            "level": "full"
+          },
+          "owned (copy)": {
+            "us": 5204.4,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "canada": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "editable (source numbers)",
+          "us": 2866.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "editable (source numbers)",
+          "us": 2866.5,
+          "level": "full"
+        },
+        "variants": {
+          "editable (source numbers)": {
+            "us": 2866.5,
+            "level": "full"
+          },
+          "editable": {
+            "us": 5935.1,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "parse",
+          "us": 16378.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 16378.1,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 16378.1,
+            "level": "full"
+          },
+          "ordered_json": {
+            "us": 16737.3,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "mut copy",
+          "us": 7407.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "mut copy",
+          "us": 7407.4,
+          "level": "full"
+        },
+        "variants": {
+          "mut copy": {
+            "us": 7407.4,
+            "level": "full"
+          },
+          "insitu (copy) + mut copy": {
+            "us": 7432.6,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 7971.6,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 7971.6,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 30869.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 30869.2,
+          "level": "full"
+        },
+        "variants": {
+          "generic": {
+            "us": 30869.2,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 12952.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 12952.9,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 12952.9,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 22449.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 21666.8,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 21666.8,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 22449.4,
+            "level": "full"
+          },
+          "Document": {
+            "us": 22480.2,
+            "level": "full"
+          },
+          "Document (no encoding check)": {
+            "us": 22600.0,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 18301.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 18301.0,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 18301.0,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 8007.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 8007.1,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 8007.1,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "owned (copy)",
+          "us": 16360.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "owned (copy)",
+          "us": 16360.2,
+          "level": "full"
+        },
+        "variants": {
+          "owned (copy)": {
+            "us": 16360.2,
+            "level": "full"
+          },
+          "borrowed (copy)": {
+            "us": 16446.2,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "jeopardy": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "editable",
+          "us": 208247.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "editable",
+          "us": 208247.2,
+          "level": "full"
+        },
+        "variants": {
+          "editable": {
+            "us": 208247.2,
+            "level": "full"
+          },
+          "editable (source numbers)": {
+            "us": 211513.2,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "ordered_json",
+          "us": 920570.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "ordered_json",
+          "us": 920570.5,
+          "level": "full"
+        },
+        "variants": {
+          "ordered_json": {
+            "us": 920570.5,
+            "level": "full"
+          },
+          "parse": {
+            "us": 1233449.1,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy) + mut copy",
+          "us": 318770.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) + mut copy",
+          "us": 318770.3,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy) + mut copy": {
+            "us": 318770.3,
+            "level": "full"
+          },
+          "mut copy": {
+            "us": 355553.6,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 184491.1,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 184491.1,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 1095799.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 1095799.9,
+          "level": "full"
+        },
+        "variants": {
+          "generic": {
+            "us": 1095799.9,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 346072.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 346072.6,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 346072.6,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 378036.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 321177.0,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 321177.0,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 326538.7,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 378036.0,
+            "level": "full"
+          },
+          "Document": {
+            "us": 409680.8,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 805289.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 805289.9,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 805289.9,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 413714.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 413714.2,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 413714.2,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed (copy)",
+          "us": 416658.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "borrowed (copy)",
+          "us": 416658.4,
+          "level": "full"
+        },
+        "variants": {
+          "borrowed (copy)": {
+            "us": 416658.4,
+            "level": "full"
+          },
+          "owned (copy)": {
+            "us": 701262.6,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "status": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "editable",
+          "us": 3.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "editable",
+          "us": 3.0,
+          "level": "full"
+        },
+        "variants": {
+          "editable": {
+            "us": 3.0,
+            "level": "full"
+          },
+          "editable (source numbers)": {
+            "us": 3.1,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "ordered_json",
+          "us": 14.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "ordered_json",
+          "us": 14.7,
+          "level": "full"
+        },
+        "variants": {
+          "ordered_json": {
+            "us": 14.7,
+            "level": "full"
+          },
+          "parse": {
+            "us": 18.0,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "mut copy",
+          "us": 4.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "mut copy",
+          "us": 4.0,
+          "level": "full"
+        },
+        "variants": {
+          "mut copy": {
+            "us": 4.0,
+            "level": "full"
+          },
+          "insitu (copy) + mut copy": {
+            "us": 4.0,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document",
+          "us": 3.2,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document": {
+            "us": 3.2,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 19.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 19.5,
+          "level": "full"
+        },
+        "variants": {
+          "generic": {
+            "us": 19.5,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse",
+          "us": 8.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse",
+          "us": 8.5,
+          "level": "full"
+        },
+        "variants": {
+          "parse": {
+            "us": 8.5,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "insitu (copy)",
+          "us": 11.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) (no encoding check)",
+          "us": 7.8,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "insitu (copy) (no encoding check)": {
+            "us": 7.8,
+            "level": "no UTF-8"
+          },
+          "Document (no encoding check)": {
+            "us": 11.5,
+            "level": "no UTF-8"
+          },
+          "insitu (copy)": {
+            "us": 11.8,
+            "level": "full"
+          },
+          "Document": {
+            "us": 15.1,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 21.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 21.2,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 21.2,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 6.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 6.6,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 6.6,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed (copy)",
+          "us": 9.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "borrowed (copy)",
+          "us": 9.0,
+          "level": "full"
+        },
+        "variants": {
+          "borrowed (copy)": {
+            "us": 9.0,
+            "level": "full"
+          },
+          "owned (copy)": {
+            "us": 14.6,
+            "level": "full"
+          }
+        }
+      }
+    }
+  },
+  "minify": {
+    "twitter": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse + dump (source numbers)",
+          "us": 472.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump (source numbers)",
+          "us": 472.3,
+          "level": "full"
+        },
+        "variants": {
+          "read + dump (reused)": {
+            "us": 463.6,
+            "level": "full"
+          },
+          "parse + dump (source numbers)": {
+            "us": 472.3,
+            "level": "full"
+          },
+          "parse + dump": {
+            "us": 474.4,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "parse + dump",
+          "us": 4037.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump",
+          "us": 4037.3,
+          "level": "full"
+        },
+        "variants": {
+          "parse + dump": {
+            "us": 4037.3,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy) + write",
+          "us": 625.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) + write",
+          "us": 625.3,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy) + write": {
+            "us": 625.3,
+            "level": "full"
+          },
+          "read + write": {
+            "us": 638.3,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM + to_string",
+          "us": 857.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify",
+          "us": 103.2,
+          "level": "partial"
+        },
+        "variants": {
+          "minify": {
+            "us": 103.2,
+            "level": "partial"
+          },
+          "DOM (reused) + to_string": {
+            "us": 854.9,
+            "level": "full"
+          },
+          "DOM + to_string": {
+            "us": 857.2,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document + Serialize",
+          "us": 646.7,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document + Serialize": {
+            "us": 646.7,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 4215.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify_json",
+          "us": 418.5,
+          "level": "partial"
+        },
+        "variants": {
+          "minify_json": {
+            "us": 418.5,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 4215.1,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse + serialize",
+          "us": 1758.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + serialize",
+          "us": 1758.4,
+          "level": "full"
+        },
+        "variants": {
+          "parse + serialize": {
+            "us": 1758.4,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "SAX to Writer",
+          "us": 2464.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX to Writer (raw numbers) (no encoding check)",
+          "us": 1803.7,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX to Writer (raw numbers) (no encoding check)": {
+            "us": 1803.7,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer (no encoding check)": {
+            "us": 1928.1,
+            "level": "no UTF-8"
+          },
+          "Document + Writer (no encoding check)": {
+            "us": 2181.3,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer": {
+            "us": 2464.9,
+            "level": "full"
+          },
+          "SAX to Writer (raw numbers)": {
+            "us": 2471.9,
+            "level": "full"
+          },
+          "Document + Writer": {
+            "us": 2940.2,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 4081.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 4081.3,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 4081.3,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 987.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 987.7,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 987.7,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed (copy)",
+          "us": 1924.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "borrowed (copy)",
+          "us": 1924.3,
+          "level": "full"
+        },
+        "variants": {
+          "borrowed (copy)": {
+            "us": 1924.3,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "citm_catalog": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse + dump",
+          "us": 992.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump",
+          "us": 992.8,
+          "level": "full"
+        },
+        "variants": {
+          "read + dump (reused)": {
+            "us": 988.6,
+            "level": "full"
+          },
+          "parse + dump": {
+            "us": 992.8,
+            "level": "full"
+          },
+          "parse + dump (source numbers)": {
+            "us": 993.8,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "parse + dump",
+          "us": 6081.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump",
+          "us": 6081.1,
+          "level": "full"
+        },
+        "variants": {
+          "parse + dump": {
+            "us": 6081.1,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "read + write",
+          "us": 1256.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "read + write",
+          "us": 1256.0,
+          "level": "full"
+        },
+        "variants": {
+          "read + write": {
+            "us": 1256.0,
+            "level": "full"
+          },
+          "insitu (copy) + write": {
+            "us": 1258.5,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM + to_string",
+          "us": 1543.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify",
+          "us": 256.3,
+          "level": "partial"
+        },
+        "variants": {
+          "minify": {
+            "us": 256.3,
+            "level": "partial"
+          },
+          "DOM (reused) + to_string": {
+            "us": 1532.0,
+            "level": "full"
+          },
+          "DOM + to_string": {
+            "us": 1543.1,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document + Serialize",
+          "us": 1486.7,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document + Serialize": {
+            "us": 1486.7,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 7644.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify_json",
+          "us": 1061.9,
+          "level": "partial"
+        },
+        "variants": {
+          "minify_json": {
+            "us": 1061.9,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 7644.4,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse + serialize",
+          "us": 2553.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + serialize",
+          "us": 2553.3,
+          "level": "full"
+        },
+        "variants": {
+          "parse + serialize": {
+            "us": 2553.3,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "SAX to Writer",
+          "us": 2829.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX to Writer (no encoding check)",
+          "us": 2416.0,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX to Writer (no encoding check)": {
+            "us": 2416.0,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer (raw numbers) (no encoding check)": {
+            "us": 2724.7,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer": {
+            "us": 2829.0,
+            "level": "full"
+          },
+          "Document + Writer (no encoding check)": {
+            "us": 2926.9,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer (raw numbers)": {
+            "us": 3153.1,
+            "level": "full"
+          },
+          "Document + Writer": {
+            "us": 3413.1,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 6879.5,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 6879.5,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 6879.5,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 2093.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 2093.3,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 2093.3,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed (copy)",
+          "us": 4375.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "borrowed (copy)",
+          "us": 4375.1,
+          "level": "full"
+        },
+        "variants": {
+          "borrowed (copy)": {
+            "us": 4375.1,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "canada": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse + dump (source numbers)",
+          "us": 2767.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump (source numbers)",
+          "us": 2767.2,
+          "level": "full"
+        },
+        "variants": {
+          "parse + dump (source numbers)": {
+            "us": 2767.2,
+            "level": "full"
+          },
+          "parse + dump": {
+            "us": 5444.7,
+            "level": "full"
+          },
+          "read + dump (reused)": {
+            "us": 5475.8,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "parse + dump",
+          "us": 16348.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump",
+          "us": 16348.6,
+          "level": "full"
+        },
+        "variants": {
+          "parse + dump": {
+            "us": 16348.6,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "read + write",
+          "us": 6260.9,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "read + write",
+          "us": 6260.9,
+          "level": "full"
+        },
+        "variants": {
+          "read + write": {
+            "us": 6260.9,
+            "level": "full"
+          },
+          "insitu (copy) + write": {
+            "us": 6282.8,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM + to_string",
+          "us": 16516.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify",
+          "us": 372.7,
+          "level": "partial"
+        },
+        "variants": {
+          "minify": {
+            "us": 372.7,
+            "level": "partial"
+          },
+          "DOM (reused) + to_string": {
+            "us": 16449.6,
+            "level": "full"
+          },
+          "DOM + to_string": {
+            "us": 16516.3,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document + Serialize",
+          "us": 7924.5,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document + Serialize": {
+            "us": 7924.5,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 29762.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify_json",
+          "us": 2150.4,
+          "level": "partial"
+        },
+        "variants": {
+          "minify_json": {
+            "us": 2150.4,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 29762.2,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse + serialize",
+          "us": 12744.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + serialize",
+          "us": 12744.1,
+          "level": "full"
+        },
+        "variants": {
+          "parse + serialize": {
+            "us": 12744.1,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "SAX to Writer (raw numbers)",
+          "us": 14949.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX to Writer (raw numbers) (no encoding check)",
+          "us": 14730.4,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX to Writer (raw numbers) (no encoding check)": {
+            "us": 14730.4,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer (raw numbers)": {
+            "us": 14949.3,
+            "level": "full"
+          },
+          "Document + Writer": {
+            "us": 22131.7,
+            "level": "full"
+          },
+          "Document + Writer (no encoding check)": {
+            "us": 22582.9,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer (no encoding check)": {
+            "us": 23656.8,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer": {
+            "us": 23802.4,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 17248.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 17248.7,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 17248.7,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 7774.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 7774.6,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 7774.6,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed (copy)",
+          "us": 15278.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "borrowed (copy)",
+          "us": 15278.3,
+          "level": "full"
+        },
+        "variants": {
+          "borrowed (copy)": {
+            "us": 15278.3,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "jeopardy": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse + dump",
+          "us": 153154.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump",
+          "us": 153154.8,
+          "level": "full"
+        },
+        "variants": {
+          "read + dump (reused)": {
+            "us": 118386.0,
+            "level": "full"
+          },
+          "parse + dump": {
+            "us": 153154.8,
+            "level": "full"
+          },
+          "parse + dump (source numbers)": {
+            "us": 155443.9,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "parse + dump",
+          "us": 771911.6,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump",
+          "us": 771911.6,
+          "level": "full"
+        },
+        "variants": {
+          "parse + dump": {
+            "us": 771911.6,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "insitu (copy) + write",
+          "us": 212042.8,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "insitu (copy) + write",
+          "us": 212042.8,
+          "level": "full"
+        },
+        "variants": {
+          "insitu (copy) + write": {
+            "us": 212042.8,
+            "level": "full"
+          },
+          "read + write": {
+            "us": 217458.1,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM + to_string",
+          "us": 326881.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify",
+          "us": 51242.9,
+          "level": "partial"
+        },
+        "variants": {
+          "minify": {
+            "us": 51242.9,
+            "level": "partial"
+          },
+          "DOM (reused) + to_string": {
+            "us": 255382.7,
+            "level": "full"
+          },
+          "DOM + to_string": {
+            "us": 326881.1,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document + Serialize",
+          "us": 182939.5,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document + Serialize": {
+            "us": 182939.5,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 683744.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify_json",
+          "us": 93265.4,
+          "level": "partial"
+        },
+        "variants": {
+          "minify_json": {
+            "us": 93265.4,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 683744.4,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse + serialize",
+          "us": 358018.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + serialize",
+          "us": 358018.4,
+          "level": "full"
+        },
+        "variants": {
+          "parse + serialize": {
+            "us": 358018.4,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "SAX to Writer",
+          "us": 374258.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX to Writer (no encoding check)",
+          "us": 269636.8,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX to Writer (no encoding check)": {
+            "us": 269636.8,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer (raw numbers) (no encoding check)": {
+            "us": 278648.6,
+            "level": "no UTF-8"
+          },
+          "Document + Writer (no encoding check)": {
+            "us": 338594.4,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer": {
+            "us": 374258.4,
+            "level": "full"
+          },
+          "SAX to Writer (raw numbers)": {
+            "us": 379957.3,
+            "level": "full"
+          },
+          "Document + Writer": {
+            "us": 438464.5,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 615033.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 615033.2,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 615033.2,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 217697.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 217697.4,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 217697.4,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed (copy)",
+          "us": 419473.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "borrowed (copy)",
+          "us": 419473.7,
+          "level": "full"
+        },
+        "variants": {
+          "borrowed (copy)": {
+            "us": 419473.7,
+            "level": "full"
+          }
+        }
+      }
+    },
+    "status": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "parse + dump",
+          "us": 2.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump",
+          "us": 2.4,
+          "level": "full"
+        },
+        "variants": {
+          "read + dump (reused)": {
+            "us": 2.3,
+            "level": "full"
+          },
+          "parse + dump": {
+            "us": 2.4,
+            "level": "full"
+          },
+          "parse + dump (source numbers)": {
+            "us": 2.5,
+            "level": "full"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "parse + dump",
+          "us": 17.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + dump",
+          "us": 17.0,
+          "level": "full"
+        },
+        "variants": {
+          "parse + dump": {
+            "us": 17.0,
+            "level": "full"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "read + write",
+          "us": 3.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "read + write",
+          "us": 3.1,
+          "level": "full"
+        },
+        "variants": {
+          "read + write": {
+            "us": 3.1,
+            "level": "full"
+          },
+          "insitu (copy) + write": {
+            "us": 3.1,
+            "level": "full"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "DOM + to_string",
+          "us": 5.1,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify",
+          "us": 0.5,
+          "level": "partial"
+        },
+        "variants": {
+          "minify": {
+            "us": 0.5,
+            "level": "partial"
+          },
+          "DOM (reused) + to_string": {
+            "us": 4.7,
+            "level": "full"
+          },
+          "DOM + to_string": {
+            "us": 5.1,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": null,
+        "best_any": {
+          "variant": "Document + Serialize",
+          "us": 3.2,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "Document + Serialize": {
+            "us": 3.2,
+            "level": "no UTF-8"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 18.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "minify_json",
+          "us": 2.0,
+          "level": "partial"
+        },
+        "variants": {
+          "minify_json": {
+            "us": 2.0,
+            "level": "partial"
+          },
+          "generic": {
+            "us": 18.7,
+            "level": "full"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "parse + serialize",
+          "us": 9.0,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "parse + serialize",
+          "us": 9.0,
+          "level": "full"
+        },
+        "variants": {
+          "parse + serialize": {
+            "us": 9.0,
+            "level": "full"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "SAX to Writer",
+          "us": 13.2,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "SAX to Writer (no encoding check)",
+          "us": 9.5,
+          "level": "no UTF-8"
+        },
+        "variants": {
+          "SAX to Writer (no encoding check)": {
+            "us": 9.5,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer (raw numbers) (no encoding check)": {
+            "us": 9.6,
+            "level": "no UTF-8"
+          },
+          "Document + Writer (no encoding check)": {
+            "us": 11.7,
+            "level": "no UTF-8"
+          },
+          "SAX to Writer": {
+            "us": 13.2,
+            "level": "full"
+          },
+          "SAX to Writer (raw numbers)": {
+            "us": 13.4,
+            "level": "full"
+          },
+          "Document + Writer": {
+            "us": 15.2,
+            "level": "full"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 18.4,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 18.4,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 18.4,
+            "level": "full"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 5.3,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 5.3,
+          "level": "full"
+        },
+        "variants": {
+          "Value": {
+            "us": 5.3,
+            "level": "full"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed (copy)",
+          "us": 8.7,
+          "level": "full"
+        },
+        "best_any": {
+          "variant": "borrowed (copy)",
+          "us": 8.7,
+          "level": "full"
+        },
+        "variants": {
+          "borrowed (copy)": {
+            "us": 8.7,
+            "level": "full"
+          }
+        }
+      }
+    }
+  },
+  "write": {
+    "twitter": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "dump",
+          "us": 152.3,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump",
+          "us": 152.3,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump": {
+            "us": 152.3,
+            "level": "n/a"
+          },
+          "dump (source numbers)": {
+            "us": 153.9,
+            "level": "n/a"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "dump",
+          "us": 445.2,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump",
+          "us": 445.2,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump": {
+            "us": 445.2,
+            "level": "n/a"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "write",
+          "us": 219.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "write",
+          "us": 219.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "write": {
+            "us": 219.4,
+            "level": "n/a"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "to_string",
+          "us": 551.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "to_string",
+          "us": 551.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "to_string": {
+            "us": 551.4,
+            "level": "n/a"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "Writer",
+          "us": 644.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Writer",
+          "us": 644.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "Writer": {
+            "us": 644.4,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": {
+          "variant": "Serialize",
+          "us": 231.2,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Serialize",
+          "us": 231.2,
+          "level": "n/a"
+        },
+        "variants": {
+          "Serialize": {
+            "us": 231.2,
+            "level": "n/a"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 413.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 413.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "generic": {
+            "us": 413.4,
+            "level": "n/a"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "serialize",
+          "us": 489.2,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "serialize",
+          "us": 489.2,
+          "level": "n/a"
+        },
+        "variants": {
+          "serialize": {
+            "us": 489.2,
+            "level": "n/a"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 562.8,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 562.8,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 562.8,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 442.3,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 442.3,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 442.3,
+            "level": "n/a"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed",
+          "us": 604.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "borrowed",
+          "us": 604.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "borrowed": {
+            "us": 604.4,
+            "level": "n/a"
+          }
+        }
+      }
+    },
+    "citm_catalog": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "dump",
+          "us": 271.5,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump",
+          "us": 271.5,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump": {
+            "us": 271.5,
+            "level": "n/a"
+          },
+          "dump (source numbers)": {
+            "us": 273.0,
+            "level": "n/a"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "dump",
+          "us": 590.0,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump",
+          "us": 590.0,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump": {
+            "us": 590.0,
+            "level": "n/a"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "write",
+          "us": 363.9,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "write",
+          "us": 363.9,
+          "level": "n/a"
+        },
+        "variants": {
+          "write": {
+            "us": 363.9,
+            "level": "n/a"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "to_string",
+          "us": 802.6,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "to_string",
+          "us": 802.6,
+          "level": "n/a"
+        },
+        "variants": {
+          "to_string": {
+            "us": 802.6,
+            "level": "n/a"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "Writer",
+          "us": 966.5,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Writer",
+          "us": 966.5,
+          "level": "n/a"
+        },
+        "variants": {
+          "Writer": {
+            "us": 966.5,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": {
+          "variant": "Serialize",
+          "us": 475.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Serialize",
+          "us": 475.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "Serialize": {
+            "us": 475.4,
+            "level": "n/a"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 725.0,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 725.0,
+          "level": "n/a"
+        },
+        "variants": {
+          "generic": {
+            "us": 725.0,
+            "level": "n/a"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "serialize",
+          "us": 902.0,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "serialize",
+          "us": 902.0,
+          "level": "n/a"
+        },
+        "variants": {
+          "serialize": {
+            "us": 902.0,
+            "level": "n/a"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 882.5,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 882.5,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 882.5,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 934.6,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 934.6,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 934.6,
+            "level": "n/a"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed",
+          "us": 809.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "borrowed",
+          "us": 809.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "borrowed": {
+            "us": 809.4,
+            "level": "n/a"
+          }
+        }
+      }
+    },
+    "canada": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "dump (source numbers)",
+          "us": 985.5,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump (source numbers)",
+          "us": 985.5,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump (source numbers)": {
+            "us": 985.5,
+            "level": "n/a"
+          },
+          "dump": {
+            "us": 3634.1,
+            "level": "n/a"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "dump",
+          "us": 4523.3,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump",
+          "us": 4523.3,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump": {
+            "us": 4523.3,
+            "level": "n/a"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "write",
+          "us": 3380.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "write",
+          "us": 3380.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "write": {
+            "us": 3380.4,
+            "level": "n/a"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "to_string",
+          "us": 12976.8,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "to_string",
+          "us": 12976.8,
+          "level": "n/a"
+        },
+        "variants": {
+          "to_string": {
+            "us": 12976.8,
+            "level": "n/a"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "Writer",
+          "us": 9613.7,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Writer",
+          "us": 9613.7,
+          "level": "n/a"
+        },
+        "variants": {
+          "Writer": {
+            "us": 9613.7,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": {
+          "variant": "Serialize",
+          "us": 4851.0,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Serialize",
+          "us": 4851.0,
+          "level": "n/a"
+        },
+        "variants": {
+          "Serialize": {
+            "us": 4851.0,
+            "level": "n/a"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 4238.7,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 4238.7,
+          "level": "n/a"
+        },
+        "variants": {
+          "generic": {
+            "us": 4238.7,
+            "level": "n/a"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "serialize",
+          "us": 5658.9,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "serialize",
+          "us": 5658.9,
+          "level": "n/a"
+        },
+        "variants": {
+          "serialize": {
+            "us": 5658.9,
+            "level": "n/a"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 3978.8,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 3978.8,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 3978.8,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 3954.2,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 3954.2,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 3954.2,
+            "level": "n/a"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed",
+          "us": 4824.9,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "borrowed",
+          "us": 4824.9,
+          "level": "n/a"
+        },
+        "variants": {
+          "borrowed": {
+            "us": 4824.9,
+            "level": "n/a"
+          }
+        }
+      }
+    },
+    "jeopardy": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "dump",
+          "us": 68840.1,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump",
+          "us": 68840.1,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump": {
+            "us": 68840.1,
+            "level": "n/a"
+          },
+          "dump (source numbers)": {
+            "us": 69769.1,
+            "level": "n/a"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "dump",
+          "us": 118445.9,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump",
+          "us": 118445.9,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump": {
+            "us": 118445.9,
+            "level": "n/a"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "write",
+          "us": 75135.8,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "write",
+          "us": 75135.8,
+          "level": "n/a"
+        },
+        "variants": {
+          "write": {
+            "us": 75135.8,
+            "level": "n/a"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "to_string",
+          "us": 183836.8,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "to_string",
+          "us": 183836.8,
+          "level": "n/a"
+        },
+        "variants": {
+          "to_string": {
+            "us": 183836.8,
+            "level": "n/a"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "Writer",
+          "us": 127166.6,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Writer",
+          "us": 127166.6,
+          "level": "n/a"
+        },
+        "variants": {
+          "Writer": {
+            "us": 127166.6,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": {
+          "variant": "Serialize",
+          "us": 69344.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Serialize",
+          "us": 69344.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "Serialize": {
+            "us": 69344.4,
+            "level": "n/a"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 137011.4,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 137011.4,
+          "level": "n/a"
+        },
+        "variants": {
+          "generic": {
+            "us": 137011.4,
+            "level": "n/a"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "serialize",
+          "us": 127822.6,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "serialize",
+          "us": 127822.6,
+          "level": "n/a"
+        },
+        "variants": {
+          "serialize": {
+            "us": 127822.6,
+            "level": "n/a"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 120716.3,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 120716.3,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 120716.3,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 100888.7,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 100888.7,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 100888.7,
+            "level": "n/a"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed",
+          "us": 110710.5,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "borrowed",
+          "us": 110710.5,
+          "level": "n/a"
+        },
+        "variants": {
+          "borrowed": {
+            "us": 110710.5,
+            "level": "n/a"
+          }
+        }
+      }
+    },
+    "status": {
+      "nlohmann json_document": {
+        "best": {
+          "variant": "dump",
+          "us": 0.9,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump",
+          "us": 0.9,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump": {
+            "us": 0.9,
+            "level": "n/a"
+          },
+          "dump (source numbers)": {
+            "us": 0.9,
+            "level": "n/a"
+          }
+        }
+      },
+      "nlohmann json": {
+        "best": {
+          "variant": "dump",
+          "us": 1.9,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "dump",
+          "us": 1.9,
+          "level": "n/a"
+        },
+        "variants": {
+          "dump": {
+            "us": 1.9,
+            "level": "n/a"
+          }
+        }
+      },
+      "yyjson": {
+        "best": {
+          "variant": "write",
+          "us": 1.3,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "write",
+          "us": 1.3,
+          "level": "n/a"
+        },
+        "variants": {
+          "write": {
+            "us": 1.3,
+            "level": "n/a"
+          }
+        }
+      },
+      "simdjson": {
+        "best": {
+          "variant": "to_string",
+          "us": 3.2,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "to_string",
+          "us": 3.2,
+          "level": "n/a"
+        },
+        "variants": {
+          "to_string": {
+            "us": 3.2,
+            "level": "n/a"
+          }
+        }
+      },
+      "RapidJSON": {
+        "best": {
+          "variant": "Writer",
+          "us": 3.9,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Writer",
+          "us": 3.9,
+          "level": "n/a"
+        },
+        "variants": {
+          "Writer": {
+            "us": 3.9,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-cpp": {
+        "best": {
+          "variant": "Serialize",
+          "us": 1.2,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Serialize",
+          "us": 1.2,
+          "level": "n/a"
+        },
+        "variants": {
+          "Serialize": {
+            "us": 1.2,
+            "level": "n/a"
+          }
+        }
+      },
+      "Glaze": {
+        "best": {
+          "variant": "generic",
+          "us": 2.1,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "generic",
+          "us": 2.1,
+          "level": "n/a"
+        },
+        "variants": {
+          "generic": {
+            "us": 2.1,
+            "level": "n/a"
+          }
+        }
+      },
+      "Boost.JSON": {
+        "best": {
+          "variant": "serialize",
+          "us": 2.5,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "serialize",
+          "us": 2.5,
+          "level": "n/a"
+        },
+        "variants": {
+          "serialize": {
+            "us": 2.5,
+            "level": "n/a"
+          }
+        }
+      },
+      "serde_json": {
+        "best": {
+          "variant": "Value",
+          "us": 2.9,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 2.9,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 2.9,
+            "level": "n/a"
+          }
+        }
+      },
+      "sonic-rs": {
+        "best": {
+          "variant": "Value",
+          "us": 2.6,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "Value",
+          "us": 2.6,
+          "level": "n/a"
+        },
+        "variants": {
+          "Value": {
+            "us": 2.6,
+            "level": "n/a"
+          }
+        }
+      },
+      "simd-json": {
+        "best": {
+          "variant": "borrowed",
+          "us": 2.7,
+          "level": "n/a"
+        },
+        "best_any": {
+          "variant": "borrowed",
+          "us": 2.7,
+          "level": "n/a"
+        },
+        "variants": {
+          "borrowed": {
+            "us": 2.7,
+            "level": "n/a"
+          }
+        }
+      }
+    }
+  }
+}

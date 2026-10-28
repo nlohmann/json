@@ -3,22 +3,24 @@
 Generated files:
 
 - perf_blog_overview.svg: speedup of 3.13.0 over 3.12.0 per workload (Google Benchmark suite)
+- perf_blog_distribution.svg: how many of the suite's benchmarks got how much faster (data/perf_suite.csv)
 - perf_blog_timeline_<workload>.svg: speedup over 3.12.0 of eight workloads at every develop commit that changed
   json.hpp or json_view.hpp since 3.12.0, one panel each
 - perf_blog_swar.svg: the eight-byte string test on one word of input
 - perf_blog_cliffs.svg: operations that were quadratic or worse, 3.12.0 against 3.13.0 (log scale)
-- perf_blog_view.svg: parse throughput of json_document and six other document parsers
-- perf_blog_view_dump.svg: write throughput of the same engines, each writing a document parsed beforehand
+- perf_blog_usecases_<platform>.svg: libraries x use cases, time relative to the fastest fully validating library
+  (data/perf_usecases_<platform>.json); perf_blog_tables.py prints the tables of the appendix from the same data
 
 The numbers are copied from the tables of the post (the timeline from data/perf_timeline.csv, which
 `tests/benchmarks/history/history.py summarize` writes); the tables stay on the page as the accessible fallback. Update both together.
 Like the figures of charts.py, the SVGs are not images: the page includes their text with
-`--8<-- "images/<name>.svg"`, so they follow the colours and fonts of the page (`nj-charts` rules in
+`--8<-- "images/<name>.svg"`, so they follow the colors and fonts of the page (`nj-charts` rules in
 docs/css/fig-charts.css, `nj-fig` rules in docs/css/brand.css). Run `python3 scripts/figures/perf_blog.py` from
 docs/mkdocs after changing data or drawing, and commit the generated files.
 """
 import csv
 import html
+import json
 import math
 import re
 from pathlib import Path
@@ -29,7 +31,8 @@ MINUS = "&#8722;"
 TIMES = "&#215;"
 
 # words the abbreviation extension (includes/glossary.md) would wrap in <abbr> inside the SVG text
-ABBR = re.compile(r"(?<![\w;])(BJData|BON8|BSON|CBOR|GCC|UBJSON|MsgPack|JSON|DOM|SAX|SIMD|UTF|ASCII)(?!\w)")
+GLOSSARY = re.findall(r"^\*\[([^\]]+)\]", (HERE.parents[1] / "includes" / "glossary.md").read_text(), re.M)
+ABBR = re.compile(r"(?<![\w;])(%s)(?!\w)" % "|".join(sorted(map(re.escape, GLOSSARY), key=len, reverse=True)))
 
 
 def protect(text):
@@ -140,7 +143,7 @@ def overview():
     hi = max(v for _, _, v in OVERVIEW)
     hi = math.ceil(hi + 0.5)
     X = lambda v: L + v / hi * (R - L)
-    pitch, bh, top = 24, 15, 34
+    pitch, bh, top = 24, 15, 8
     b, desc = [], []
     y = top
     group = None
@@ -165,23 +168,66 @@ def overview():
         desc.append("%s %s" % (label, fx(v).replace(TIMES, "x")))
     b.append('<line class="nj-charts-ref" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(1), top, X(1), axis_y))
     b.append('<line class="nj-charts-zero" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(0), top, X(0), axis_y))
-    b.append('<text class="nj-charts-note" x="%g" y="%g">speedup over 3.12.0, more is better (the line at 1%s is 3.12.0)</text>' % (L, 18, TIMES))
-    write("perf_blog_overview.svg", W, axis_y + 28, "nj-charts--blog", "nj-blog-overview",
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">speedup over 3.12.0 (3.12.0 = 1%s), more is better</text>'
+             % ((L + R) / 2, axis_y + 34, TIMES))
+    write("perf_blog_overview.svg", W, axis_y + 44, "nj-charts--blog", "nj-blog-overview",
           "Speedup of 3.13.0 over 3.12.0 per workload, Apple M1 Max, Apple clang",
           "Horizontal bars of the speedup, more is better. " + "; ".join(desc) + ".", b)
 
 
+# ---------- distribution: how many of the suite's benchmarks got how much faster ----------
+# bins of the speedup (3.12.0 time / 3.13.0 time) over all rows of data/perf_suite.csv
+BINS = [(0, 1, "below 1" + TIMES), (1, 1.5, "1 to 1.5" + TIMES), (1.5, 2, "1.5 to 2" + TIMES),
+        (2, 3, "2 to 3" + TIMES), (3, 5, "3 to 5" + TIMES), (5, 10, "5 to 10" + TIMES), (10, 1e9, "10" + TIMES + " or more")]
+
+
+def distribution():
+    rows = list(csv.DictReader((HERE / "data" / "perf_suite.csv").open()))
+    s = sorted(float(r["speedup"]) for r in rows)
+    n = len(s)
+    counts = [sum(lo <= v < hi for v in s) for lo, hi, _ in BINS]
+    geo = math.exp(sum(math.log(v) for v in s) / n)
+    med = (s[(n - 1) // 2] + s[n // 2]) / 2
+    W, H = 560, 250
+    L, R, T, B = 52, 548, 16, 196
+    hi = 10 * math.ceil(max(counts) / 10 + 0.4)
+    Y = lambda c: B - c / hi * (B - T)
+    slot = (R - L) / len(BINS)
+    b, desc = [], []
+    for t in range(0, hi + 1, 20):
+        b.append('<line class="nj-charts-grid" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (L, Y(t), R, Y(t)))
+        b.append('<text class="nj-charts-tick nj-charts-tick--r" x="%g" y="%g">%d</text>' % (L - 6, Y(t) + 4, t))
+    for k, ((lo, _, label), c) in enumerate(zip(BINS, counts)):
+        x = L + k * slot + 8
+        w = slot - 16
+        cls = "nj-charts-c2" if lo < 1 else "nj-charts-c1"
+        b.append('<rect class="%s" x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="3"><title>%s: %d</title></rect>'
+                 % (cls, x, Y(c), w, B - Y(c), label, c))
+        b.append('<text class="nj-charts-val" x="%.1f" y="%.1f" text-anchor="middle">%d</text>' % (x + w / 2, Y(c) - 5, c))
+        b.append('<text class="nj-charts-tick" x="%.1f" y="%.1f">%s</text>' % (x + w / 2, B + 16, label))
+        desc.append("%s: %d" % (label.replace(TIMES, "x"), c))
+    b.append('<line class="nj-charts-axis" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (L, B, R, B))
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">speedup over 3.12.0, more is better</text>' % ((L + R) / 2, H - 10))
+    b.append('<text class="nj-charts-tick" transform="rotate(-90)" x="%g" y="14">number of benchmarks</text>' % (-(T + B) / 2))
+    print("distribution: median %s, geometric mean %s" % (fx(med), fx(geo)))
+    write("perf_blog_distribution.svg", W, H, "nj-charts--blog", "nj-blog-dist",
+          "Speedup of 3.13.0 over 3.12.0 for all %d benchmarks of the suite" % n,
+          "Bars counting the benchmarks per speedup range: " + "; ".join(desc)
+          + ". Median %s, geometric mean %s." % (fx(med).replace(TIMES, "x"), fx(geo).replace(TIMES, "x")), b)
+
+
 # ---------- timeline: one panel per workload ----------
-# (column in perf_timeline.csv, panel title, [PR numbers to label])
+# (column in perf_timeline.csv, panel title, [(PR, label)]): each labeled step shows the number of the theme that
+# explains it ("U" for the UTF-8 check of the binary readers that came and went); the appendix maps steps to PRs
 TIMELINE = [
-    ("parse_citm", "parse() citm_catalog.json", [5234, 5283, 5592, 5809, 5810, 5882]),
-    ("parse_canada", "parse() canada.json", [5234, 5283, 5617, 5738, 5851, 5882]),
-    ("accept_twitter", "accept() twitter.json", [5234, 5283, 5592, 5809, 5810, 5853]),
-    ("parse_twitter_ifstream", "parse() twitter.json, std::ifstream", [5828, 5884]),
-    ("dump_twitter", "dump() twitter.json", [5285, 5738, 5878, 5883]),
-    ("dump_canada", "dump() canada.json", [5285, 5634]),
-    ("from_cbor_twitter", "from_cbor() twitter", [5233, 5501, 5185, 5746]),
-    ("to_cbor_twitter", "to_cbor() twitter", [5328, 5824, 5885]),
+    ("parse_citm", "parse() citm_catalog.json", [(5234, "4"), (5283, "1"), (5592, "4"), (5809, "4"), (5810, "2"), (5882, "4")]),
+    ("parse_canada", "parse() canada.json", [(5234, "4"), (5283, "1"), (5617, "3"), (5738, "3"), (5851, "3"), (5882, "4")]),
+    ("accept_twitter", "accept() twitter.json", [(5234, "4"), (5283, "1"), (5592, "4"), (5809, "4"), (5810, "2"), (5853, "2")]),
+    ("parse_twitter_ifstream", "parse() twitter.json, std::ifstream", [(5828, "1"), (5884, "1")]),
+    ("dump_twitter", "dump() twitter.json", [(5285, "6"), (5738, "2"), (5878, "2"), (5883, "2")]),
+    ("dump_canada", "dump() canada.json", [(5285, "6"), (5634, "3")]),
+    ("from_cbor_twitter", "from_cbor() twitter", [(5233, "1"), (5501, "4"), (5185, "U"), (5746, "U")]),
+    ("to_cbor_twitter", "to_cbor() twitter", [(5328, "4"), (5824, "6"), (5885, "6")]),
 ]
 MONTHS = [("2025-04", "3.12.0"), ("2026-09", "Sep 2026"), ("2026-10", "Oct")]
 
@@ -190,7 +236,7 @@ def timeline():
     rows = list(csv.DictReader((HERE / "data" / "perf_timeline.csv").open()))
     n = len(rows)
     W, H = 340, 270
-    L, R, T, B = 44, 330, 62, 208
+    L, R, T, B = 44, 330, 66, 208
     for col, title, labels in TIMELINE:
         vals = [float(r[col]) if r[col] else None for r in rows]
         base = vals[0]
@@ -227,35 +273,38 @@ def timeline():
         # labels for named steps: a dot at the commit and its PR number above it; PRs a few commits apart share a
         # label, and a label that would overlap one already placed moves up
         groups = []
-        for pr in labels:
+        for pr, lab in labels:
             i = next(k for k, r in enumerate(rows) if r["pr"] == str(pr))
             if groups and X(i) - X(groups[-1][-1][1]) < 6:
-                groups[-1].append((pr, i))
+                groups[-1].append((pr, i, lab))
             else:
-                groups.append([(pr, i)])
+                groups.append([(pr, i, lab)])
         # labels in two rows above the plot, each with a guide down to its dot
         placed = []
         for g in groups:
             i = g[-1][1]
             x, y = X(i), Y(rel[i])
-            for pr, k in g:
+            for pr, k, lab in g:
                 b.append('<circle class="nj-charts-json-dot" cx="%.1f" cy="%.1f" r="3.5"><title>#%s: %s</title></circle>'
                          % (X(k), Y(rel[k]), pr, fx(rel[k])))
-            text = ", ".join("#%s" % pr for pr, _ in g)
-            w = 7.2 * len(text)
+            marks = list(dict.fromkeys(lab for _, _, lab in g))
+            w = 18 * len(marks) - 3
             tx = min(max(x, L + w / 2), R - w / 2)
             row = 0
             while any(r == row and abs(tx - px) < (w + pw) / 2 + 4 for px, r, pw in placed):
                 row += 1
             placed.append((tx, row, w))
-            ty = 50 - 13 * row
-            b.append('<line class="nj-charts-grid" stroke-dasharray="2 2" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>' % (x, ty + 4, x, y - 5))
-            b.append('<text class="nj-charts-note" x="%.1f" y="%.1f" text-anchor="middle">%s</text>' % (tx, ty, text))
+            ty = 46 - 18 * row   # the center of the badges
+            b.append('<line class="nj-charts-grid" stroke-dasharray="2 2" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>' % (x, ty + 8, x, y - 5))
+            for k, mark in enumerate(marks):
+                cx = tx - w / 2 + 7.5 + 18 * k
+                b.append('<circle class="nj-theme-dot%s" cx="%.1f" cy="%.1f" r="7.5"/>' % ("" if mark.isdigit() else " nj-theme-dot--other", cx, ty))
+                b.append('<text class="nj-theme-num" x="%.1f" y="%.1f" text-anchor="middle">%s</text>' % (cx, ty + 4, mark))
         b.append('<line class="nj-charts-axis" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (L, B, R, B))
         b.append('<text class="nj-charts-note" x="%g" y="%g">speedup over 3.12.0 (log scale), more is better</text>' % (8, H - 8))
         final = rel[-1]
-        desc = ("%s: speedup over 3.12.0 at each of %d commits, ending at %s. Labeled steps: %s."
-                % (title, n, fx(final).replace(TIMES, "x"), ", ".join("#%s" % p for p in labels)))
+        desc = ("%s: speedup over 3.12.0 at each of %d commits, ending at %s. Labeled steps, by theme: %s."
+                % (title, n, fx(final).replace(TIMES, "x"), ", ".join(lab for _, lab in labels)))
         write("perf_blog_timeline_%s.svg" % col, W, H, "nj-charts--timeline", "nj-blog-tl-" + col,
               "%s: speedup over 3.12.0 by commit" % title, desc, b)
 
@@ -266,8 +315,8 @@ CLIFFS = [
     ("diff() 64k numbers vs []", 4102, 9.98),
     ("diff() 20k objects vs half", 119, 3.85),
     ("parse() callback, 32k objects", 1334, 11.5),
-    ("< nested 24 deep", 62.6, 0.002),
-    ("< citm, 10x", 274, 3.81),
+    ("operator< nested 24 deep", 62.6, 0.002),
+    ("operator< citm, 10x", 274, 3.81),
     ("flatten() citm, ordered_json", 253, 1.37),
     ("to_bson() 200 deep, 100x", 19.5, 0.566),
     ("push_back() 100k, diagnostics", 1514, 4.98),
@@ -306,84 +355,282 @@ def cliffs():
           "Dot plot on a logarithmic time axis, less is better; an arrow leads from each 3.12.0 time to the 3.13.0 time. " + "; ".join(desc) + ".", b)
 
 
-# ---------- json_view: parse throughput ----------
-# engines and GB/s per file, copied from the table in "Build a different data structure"
-VIEW_FILES = ["twitter.json", "citm_catalog.json", "canada.json", "jeopardy.json"]
-VIEW_BYTES = [631514, 1727204, 2251051, 55554625]
-VIEW_US = [   # (engine, css class, [µs per file]), fresh documents, from the table in "How it compares"
-    ("nlohmann/json json_document", "nj-charts-c1", [183, 364, 943, 22681]),
-    ("yyjson", "nj-charts-c2", [194, 478, 1489, 30342]),
-    ("simdjson DOM", "nj-charts-c3", [202, 486, 2097, 26904]),
-    ("sonic-rs (Rust)", "nj-charts-c4", [302, 664, 1907, 30202]),
-    ("sonic-cpp", "nj-charts-c5", [379, 986, 2580, 40804]),
-    ("Boost.JSON", "nj-charts-c6", [868, 1483, 2481, 88925]),
-    ("nlohmann/json json::parse", "nj-charts-c1 nj-charts-dim", [1352, 2386, 5915, 163750]),
+# ---------- the price: compile time of two programs against 3.12.0 ----------
+# CPU time of the compiler in ms, median of 9 interleaved rounds, C++20, M1 Max (the post's appendix G)
+# (3.12.0, 3.13.0, 3.13.0 with a precompiled header, 3.13.0 as a module)
+PRICE = [
+    ("Apple clang 21, -O0 (debug)", [("count_numbers", 959.1, 1155.3, 679.1, 803.9), ("server_config", 1108.2, 1445.1, 763.1, 1057.0)]),
+    ("Apple clang 21, -O2", [("count_numbers", 1268.8, 1867.7, 1364.3, 1512.9), ("server_config", 1576.9, 2353.6, 1749.4, 2141.4)]),
+    ("GCC 16, -O0 (debug)", [("count_numbers", 1443.7, 2346.4, 1579.2, 1662.5), ("server_config", 1984.8, 2781.7, 2113.3, 2181.1)]),
+    ("GCC 16, -O2", [("count_numbers", 2326.9, 3453.3, 2972.4, 2895.3), ("server_config", 2888.7, 4388.6, 3941.8, 3825.5)]),
 ]
-VIEW = [(e, c, [n / (t * 1000) for n, t in zip(VIEW_BYTES, us)]) for e, c, us in VIEW_US]   # GB/s
-# dump: the bytes of the compact output, and the same engines, from the dump table in "How it compares"
-DUMP_BYTES = [466906, 500299, 2090234, 52508728]
-DUMP_US = [
-    ("nlohmann/json json_document", "nj-charts-c1", [74.5, 132.8, 1625.1, 14757.2]),
-    ("yyjson", "nj-charts-c2", [104.2, 165.7, 1715.7, 20133.5]),
-    ("simdjson DOM", "nj-charts-c3", [354.2, 498.2, 6816.1, 54833.4]),
-    ("sonic-rs (Rust)", "nj-charts-c4", [212.6, 443.9, 2416.8, 33818.5]),
-    ("sonic-cpp", "nj-charts-c5", [104.6, 222.3, 3044.2, 19836.1]),
-    ("Boost.JSON", "nj-charts-c6", [497.6, 501.4, 2941.8, 63392.3]),
-    ("nlohmann/json json::dump", "nj-charts-c1 nj-charts-dim", [216.7, 285.5, 2244.0, 31205.3]),
-]
-DUMP = [(e, c, [n / (t * 1000) for n, t in zip(DUMP_BYTES, us)]) for e, c, us in DUMP_US]   # GB/s
+PRICE_SERIES = [("3.13.0", "nj-charts-c2"), ("3.13.0, precompiled header", "nj-charts-c1"), ("3.13.0, module", "nj-charts-c3")]
 
 
-def view(VIEW=VIEW, name="perf_blog_view.svg", tid="nj-blog-view",
-         title="Parse throughput of nlohmann/json's json_document and json::parse and five other document parsers, fresh documents, Apple M1 Max",
-         what="parse"):
-    W, L, R = 580, 142, 545
-    hi = max(max(v) for _, _, v in VIEW)
-    hi = math.ceil(hi * 2) / 2
-    X = lambda v: L + v / hi * (R - L)
-    bh, gap = 9, 2
-    group_h = len(VIEW) * (bh + gap) + 14
+def price():
+    W, L, R = 600, 150, 560
+    lo, hi = -50, 70
+    X = lambda pct: L + (pct - lo) / (hi - lo) * (R - L)
+    pct = lambda new, old: round((new / old - 1) * 100)
+    lab = lambda p: (MINUS + "%d %%" % -p) if p < 0 else "+%d %%" % p
+    bh, pitch, gap = 11, 14, 10
     b, desc = [], []
-    x, ly = 8, 10
-    for j, (eng, cls, _) in enumerate(VIEW):
-        w = 18 + 7.4 * len(eng) + 16
-        if x + w > W:
-            x, ly = 8, ly + 20
-        b.append('<rect class="%s" x="%g" y="%g" width="12" height="12" rx="3"/>' % (cls, x, ly))
-        b.append('<text class="nj-charts-leg" x="%g" y="%g">%s</text>' % (x + 18, ly + 10.5, esc(eng)))
-        x += w
-    top = ly + 34   # below the last row of the legend
-    axis_y = top + group_h * len(VIEW_FILES)
-    t = 0.5
-    while t <= hi + 1e-9:
-        b.append('<line class="nj-charts-grid" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(t), top - 4, X(t), axis_y))
-        b.append('<text class="nj-charts-tick" x="%g" y="%g">%g</text>' % (X(t), axis_y + 16, t))
-        t += 0.5
-    b.append('<text class="nj-charts-tick" x="%g" y="%g">GB/s, more is better</text>' % ((L + R) / 2, axis_y + 34))
-    for i, f in enumerate(VIEW_FILES):
-        y0 = top + i * group_h
-        b.append('<text class="nj-charts-rowlabel" x="%g" y="%g" text-anchor="end">%s</text>' % (L - 8, y0 + group_h / 2, esc(f)))
-        for j, (eng, cls, vals) in enumerate(VIEW):
-            y = y0 + j * (bh + gap)
-            b.append('<path class="%s" d="%s"><title>%s, %s: %.2f GB/s</title></path>' % (cls, hbar(X(0), X(vals[i]), y, bh), esc(eng), esc(f), vals[i]))
-            b.append('<text class="nj-charts-val" x="%g" y="%g">%.2f</text>' % (X(vals[i]) + 4, y + bh - 1.5, vals[i]))
-            desc.append("%s %s %.2f GB/s" % (f, eng, vals[i]))
-    b.append('<line class="nj-charts-zero" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(0), top - 4, X(0), axis_y))
-    write(name, W, axis_y + 44, "nj-charts--blog", tid, title,
-          "Grouped horizontal bars of %s throughput in GB/s, more is better. " % what + "; ".join(desc) + ".", b)
+    # the key above the plot
+    x = 8
+    for name, cls in PRICE_SERIES:
+        b.append('<rect class="%s" x="%g" y="6" width="12" height="12" rx="3"/>' % (cls, x))
+        b.append('<text class="nj-charts-leg" x="%g" y="16.5">%s</text>' % (x + 18, esc(name)))
+        x += 18 + 8.2 * len(name) + 22
+    top = 54
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">as fast as 3.12.0</text>' % (X(0), top - 8))
+    y = top
+    for build, progs in PRICE:
+        b.append('<text class="nj-charts-panel" x="8" y="%g">%s</text>' % (y + 14, esc(build)))
+        y += 24
+        y0, at = y, len(b)
+        for prog, old, *new in progs:
+            b.append('<text class="nj-charts-rowlabel nj-charts-code" x="%g" y="%g" text-anchor="end">%s</text>'
+                     % (L - 8, y + 1.5 * pitch + 2, prog))
+            for (name, cls), t in zip(PRICE_SERIES, new):
+                p = pct(t, old)
+                b.append('<path class="%s" d="%s"><title>%s, %s, %s: %s ms against %s ms with 3.12.0 (%s)</title></path>'
+                         % (cls, hbar(X(0), X(p), y, bh), prog, esc(build), esc(name), format(round(t), ","), format(round(old), ","), lab(p)))
+                if p < 0:
+                    b.append('<text class="nj-charts-val" x="%g" y="%g" text-anchor="end">%s</text>' % (X(p) - 5, y + bh - 1.5, lab(p)))
+                else:
+                    b.append('<text class="nj-charts-val" x="%g" y="%g">%s</text>' % (X(p) + 5, y + bh - 1.5, lab(p)))
+                desc.append("%s, %s, %s: %s" % (build, prog, name, lab(p).replace(MINUS, "-")))
+                y += pitch
+            y += gap - (pitch - bh)
+        # the grid behind this panel's bars only, so that it doesn't cross the panel titles
+        b[at:at] = ['<line class="nj-charts-grid" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(t), y0 - 4, X(t), y - gap + 4)
+                    for t in range(lo + 10, hi + 1, 20) if t]
+        y += 8
+    axis_y = y
+    b.append('<line class="nj-charts-ref" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(0), top - 2, X(0), axis_y))
+    for t in range(lo + 10, hi + 1, 20):
+        b.append('<text class="nj-charts-tick" x="%g" y="%g">%s</text>' % (X(t), axis_y + 16, "0" if t == 0 else lab(t)))
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">compile time compared with 3.12.0, less is better</text>' % ((L + R) / 2, axis_y + 34))
+    write("perf_blog_price.svg", W, axis_y + 44, "nj-charts--blog", "nj-blog-price",
+          "Compile time of two programs with 3.13.0, alone, with a precompiled header and as a module, compared with 3.12.0",
+          "Horizontal bars of the change in compile time against 3.12.0, less is better. " + "; ".join(desc) + ".", b)
+
+
+# ---------- use cases: libraries x use cases, relative time ----------
+# data/perf_usecases_<platform>.json is written by tests/benchmarks/json_view/others/summarize.py --json
+UC_FILES = ["twitter", "citm_catalog", "canada", "jeopardy"]
+USE_CASES = [("validate", "validate"), ("sum", "sum"), ("select", "select"),
+             ("edit", "edit"), ("minify", "minify"), ("write", "write")]
+UC_LIBS = {   # library in the JSON -> row label
+    "nlohmann json_document": "nlohmann/json json_document", "nlohmann json": "nlohmann/json json",
+    "yyjson": "yyjson", "simdjson": "simdjson", "sonic-cpp": "sonic-cpp", "Glaze": "Glaze", "Boost.JSON": "Boost.JSON",
+    "RapidJSON": "RapidJSON", "sonic-rs": "sonic-rs (Rust)", "simd-json": "simd-json (Rust)", "serde_json": "serde_json (Rust)",
+}
+UC_PLATFORMS = [("mac", "Use cases: time of each library relative to the fastest, Apple M1 Max"),
+                ("x86-gcc", "Use cases: time of each library relative to the fastest, x86-64 with GCC 16.2"),
+                ("x86-gcc13", "Use cases: time of each library relative to the fastest, x86-64 with GCC 13"),
+                ("x86-clang", "Use cases: time of each library relative to the fastest, x86-64 with Clang 23")]
+LEVEL_MARK = {"no UTF-8": "U", "partial": "P", "full": ""}
+# why a cell is empty (the tooltips of the n/a cells)
+NA = {("simdjson", "edit"): "simdjson's documents are read-only: it has no API to change a value and write the result"}
+
+
+def geomean(xs):
+    return math.exp(sum(math.log(x) for x in xs) / len(xs))
+
+
+def normalize_usecases(data):
+    """Chooses each library's best variants again with the rules of the post: variants that copy each number's text
+    instead of formatting it (json_document's number_format::source, RapidJSON's raw numbers) and variants that reuse
+    a parser or document across calls are measured but not chosen"""
+    data = json.loads(json.dumps(data))
+    rank = {"full": 0, "n/a": 0, "no UTF-8": 1, "partial": 2}
+    for files in data.values():
+        for cell in files.values():
+            for e in cell.values():
+                vs = [(v["us"], k, v["level"]) for k, v in e["variants"].items()
+                      if not any(w in k for w in ("source numbers", "raw numbers", "reused"))]
+                full = [v for v in vs if rank[v[2]] == 0]
+                pick = lambda v: {"us": v[0], "variant": v[1], "level": "full" if rank[v[2]] == 0 else v[2]}
+                e["best"] = pick(min(full)) if full else None
+                e["best_any"] = pick(min(vs))
+    return data
+
+
+FILE_NAMES = {"twitter": "twitter.json", "citm_catalog": "citm_catalog.json", "canada": "canada.json",
+              "jeopardy": "jeopardy.json"}
+# what a variant that checks less skips, worded as the trade it is (the tooltips of the heatmaps)
+CHECKS_LESS = [
+    ("simdjson", "On-Demand", "reads lazily: On-Demand reads only what you ask for and steps over the rest by matching brackets"),
+    ("simdjson", "minify", "simdjson::minify() only removes whitespace, without parsing the values"),
+    ("Glaze", "lazy_json", "reads lazily: lazy_json reads only what you ask for and steps over the rest"),
+    ("Glaze", "minify_json", "minify_json only removes whitespace, without parsing the values"),
+    ("Glaze", "structs", "reads into structs and steps over fields it doesn't know without checking them "
+                         "(validate_skipped checks them too)"),
+    ("RapidJSON", "", "trusts UTF-8: RapidJSON's default (kParseValidateEncodingFlag checks it)"),
+    ("sonic-cpp", "", "trusts UTF-8: sonic-cpp 1.0.2 doesn't check it"),
+    ("serde_json", "", "trusts UTF-8 in the strings it skips (from_slice); strings it reads are checked"),
+]
+
+
+def checks_less(lib, variant):
+    for l, v, text in CHECKS_LESS:
+        if l == lib and v in variant:
+            return text
+    return "checks less"
+
+
+def usecase_table(data):
+    """{library: {use case: cell}}: per library the geometric mean over UC_FILES of its fastest fully validating time
+    ("full") and of its fastest time at any level ("alt", only if it is at least 3 % faster), each divided by the best
+    such fully validating mean in the use case, so that every file counts equally and the fastest library is 1.00"""
+    out = {}
+    data = normalize_usecases(data)
+    for uc, _ in USE_CASES:
+        files = data.get(uc, {})
+        if not files:
+            continue
+        cells = {}
+        for lib in UC_LIBS:
+            es = [files.get(f, {}).get(lib) for f in UC_FILES]
+            if not all(es):
+                continue
+            full = [e["best"] for e in es]
+            alt = [e["best_any"] for e in es]
+            cells[lib] = {"full": geomean([b["us"] for b in full]) if all(full) else None, "alt": geomean([a["us"] for a in alt]),
+                          "files": [(f, b, a) for f, b, a in zip(UC_FILES, full, alt)]}
+        ref = min(c["full"] for c in cells.values() if c["full"])
+        for lib, c in cells.items():
+            full = c["full"] / ref if c["full"] else None
+            alt = c["alt"] / ref
+            if full is not None and alt > full * 0.97:
+                alt = None
+            levels = {a["level"] for _, _, a in c["files"]} if alt is not None else set()
+            level = "partial" if "partial" in levels else "no UTF-8" if "no UTF-8" in levels else "full"
+            out.setdefault(lib, {})[uc] = {"full": full, "alt": alt, "level": level, "files": c["files"]}
+    return out
+
+
+# cell colors: green for the fastest, gray around twice the time, red for the slowest; the upper bounds of the steps
+HEAT_STEPS = [1.15, 1.5, 2.5, 5, float("inf")]
+HEAT_LABELS = ["below 1.15", "1.15 to 1.5", "1.5 to 2.5", "2.5 to 5", "5 and more"]
+
+
+def heat(r):
+    return next(i for i, b in enumerate(HEAT_STEPS) if r < b)
+
+
+def fr(r):
+    return "%.2f" % r if r < 9.995 else "%.1f" % r if r < 99.95 else "%.0f" % r
+
+
+def fus(us):
+    return "{:,.0f} µs".format(us) if us >= 100 else "%.1f µs" % us
+
+
+def tip(lib, uc_label, c, half):
+    """the tooltip of a cell: lines separated by newlines (&#10; in the attribute), the first one the heading"""
+    if half == "full":
+        lines = ["%s · %s" % (UC_LIBS[lib], uc_label),
+                 "%s× the time of the fastest library (fully validating)" % fr(c["full"])]
+        picks = [(f, b) for f, b, _ in c["files"]]
+    else:
+        lines = ["%s · %s, checking less" % (UC_LIBS[lib], uc_label),
+                 "%s× the time of the fastest fully validating library" % fr(c["alt"])]
+        picks = [(f, a) for f, _, a in c["files"]]
+    ways = sorted({e["variant"] for _, e in picks})
+    if len(ways) == 1:
+        lines.append("way: %s" % ways[0])
+    for f, e in picks:
+        lines.append("%s: %s%s%s" % (FILE_NAMES[f], fus(e["us"]), "" if len(ways) == 1 else " · " + e["variant"],
+                                     " (validates fully)" if half == "alt" and e["level"] == "full" else ""))
+    if half == "alt":
+        seen = []
+        for _, e in picks:
+            if e["level"] != "full":
+                t = checks_less(lib, e["variant"])
+                if t not in seen:
+                    seen.append(t)
+        lines += seen
+    if any("(copy)" in e["variant"] for _, e in picks):
+        lines.append("(copy): parses in place, on a copy of the input that is part of the time")
+    return "&#10;".join(lines)
+
+
+def heatmap(platform, title):
+    data = json.load((HERE / "data" / ("perf_usecases_%s.json" % platform)).open())
+    t = usecase_table(data)
+    libs = [l for l in UC_LIBS if l in t]
+    score = lambda l: geomean([v["full"] if v["full"] else v["alt"] * 1.5 for v in t[l].values()])
+    libs.sort(key=score)
+    W, L, cw, ch, top = 784, 224, 92, 36, 44
+    b, desc = [], []
+    for j, (uc, label) in enumerate(USE_CASES):
+        b.append('<text class="nj-charts-tick" x="%g" y="%g">%s</text>' % (L + j * cw + cw / 2, top - 10, esc(label)))
+    for i, lib in enumerate(libs):
+        y = top + i * ch
+        cls = "nj-charts-name-json" if lib.startswith("nlohmann") else ""
+        b.append('<text class="nj-charts-rowlabel %s" x="%g" y="%g" text-anchor="end">%s</text>' % (cls, L - 8, y + ch / 2 + 4, esc(UC_LIBS[lib])))
+        for j, (uc, label) in enumerate(USE_CASES):
+            x = L + j * cw
+            c = t[lib].get(uc)
+            if c is None:
+                b.append('<g class="nj-heat-cell" tabindex="0" data-tip="%s">' % esc("%s · %s&#10;%s" % (UC_LIBS[lib], label, NA.get((lib, uc), "the library has no API for this use case"))))
+                b.append('<rect class="nj-heat-na" x="%g" y="%g" width="%g" height="%g" rx="3"/>' % (x + 1, y + 1, cw - 2, ch - 2))
+                b.append('<text class="nj-charts-tick" x="%g" y="%g">n/a</text>' % (x + cw / 2, y + ch / 2 + 4))
+                b.append('</g>')
+                desc.append("%s %s: n/a" % (UC_LIBS[lib], label))
+                continue
+            halves = []
+            if c["full"] is not None:
+                halves.append(("full", c["full"]))
+            if c["alt"] is not None:
+                halves.append(("alt", c["alt"]))
+            hw = (cw - 2) / len(halves)
+            for k, (half, r) in enumerate(halves):
+                hx = x + 1 + k * hw
+                gap = 1 if len(halves) == 2 else 0
+                b.append('<g class="nj-heat-cell" tabindex="0" data-tip="%s">' % esc(tip(lib, label, c, half)))
+                b.append('<rect class="nj-heat-%d" x="%g" y="%g" width="%g" height="%g" rx="3"/>'
+                         % (heat(r), hx + (gap if k else 0), y + 1, hw - gap, ch - 2))
+                cx = hx + hw / 2
+                if half == "alt":
+                    b.append('<text class="nj-charts-cell" x="%g" y="%g" text-anchor="middle">%s</text>' % (cx, y + 16, fr(r)))
+                    b.append('<text class="nj-charts-cell nj-charts-cell--small" x="%g" y="%g" text-anchor="middle">%s</text>'
+                             % (cx, y + 29, LEVEL_MARK[c["level"]]))
+                else:
+                    b.append('<text class="nj-charts-cell" x="%g" y="%g" text-anchor="middle">%s</text>' % (cx, y + ch / 2 + 4, fr(r)))
+                b.append('</g>')
+            if c["full"] is None:   # no fully validating way: the left half stays empty
+                pass
+            desc.append("%s %s: %s%s" % (UC_LIBS[lib], label, fr(c["full"]) if c["full"] else "no fully validating way",
+                                         (" (%s checking less, %s)" % (fr(c["alt"]), c["level"])) if c["alt"] else ""))
+    # the key, set apart from the grid and narrower than its columns, so that it doesn't read as a row of it
+    yb = top + len(libs) * ch + 28
+    b.append('<text class="nj-charts-tick nj-charts-tick--l" x="8" y="%g">time relative to the fastest fully validating library, less is better</text>' % (yb + 4))
+    kw, ky = 76, yb + 14
+    for i, lab in enumerate(HEAT_LABELS):
+        # each swatch in its own group, so that the ink rule for the strong steps (a sibling selector) stays inside it
+        b.append('<g><rect class="nj-heat-%d" x="%g" y="%g" width="%g" height="20" rx="3"/>' % (i, 8 + i * (kw + 4), ky, kw))
+        b.append('<text class="nj-charts-cell nj-charts-cell--small" x="%g" y="%g" text-anchor="middle">%s</text></g>' % (8 + i * (kw + 4) + kw / 2, ky + 14, esc(lab)))
+    nx = 8 + len(HEAT_LABELS) * (kw + 4) + 12
+    b.append('<rect class="nj-heat-na" x="%g" y="%g" width="%g" height="20" rx="3"/>' % (nx, ky, 40))
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">n/a</text>' % (nx + 20, ky + 14))
+    b.append('<text class="nj-charts-tick nj-charts-tick--l" x="%g" y="%g">no API for it</text>' % (nx + 48, ky + 14))
+    write("perf_blog_usecases_%s.svg" % platform, W, ky + 28, "nj-charts--blog nj-charts--heat", "nj-blog-uc-" + platform, title,
+          "Table of relative times, libraries by use case. " + "; ".join(desc) + ".", b)
 
 
 if __name__ == "__main__":
     swar()
     if OVERVIEW:
         overview()
+    distribution()
     if TIMELINE:
         timeline()
     if CLIFFS:
         cliffs()
-    if VIEW:
-        view()
-    if DUMP:
-        view(DUMP, "perf_blog_view_dump.svg", "nj-blog-view-dump",
-             "Write throughput of nlohmann/json's json_document and json, and five other libraries, each writing a "
-             "document parsed beforehand, Apple M1 Max", "write")
+    price()
+    for platform, title in UC_PLATFORMS:
+        if (HERE / "data" / ("perf_usecases_%s.json" % platform)).exists():
+            heatmap(platform, title)

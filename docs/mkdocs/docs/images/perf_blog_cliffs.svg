@@ -1,6 +1,6 @@
 <svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 600 380" role="img" aria-labelledby="nj-blog-cliffs nj-blog-cliffs-d" xmlns="http://www.w3.org/2000/svg">
 <title id="nj-blog-cliffs">Operations that grew quadratically or worse: time with 3.12.0 and 3.13.0, log scale</title>
-<desc id="nj-blog-cliffs-d">Dot plot on a logarithmic time axis, less is better; an arrow leads from each 3.12.0 time to the 3.13.0 time. diff() 64k numbers vs []: 4102 ms to 9.98 ms; diff() 20k objects vs half: 119 ms to 3.85 ms; parse() callback, 32k objects: 1334 ms to 11.5 ms; &lt; nested 24 deep: 62.6 ms to 0.002 ms; &lt; citm, 10x: 274 ms to 3.81 ms; flatten() citm, ordered_json: 253 ms to 1.37 ms; to_bson() 200 deep, 100x: 19.5 ms to 0.566 ms; push_back() 100k, diagnostics: 1514 ms to 4.98 ms; at(i) 10k, diagnostics: 43.2 ms to 0.081 ms.</desc>
+<desc id="nj-blog-cliffs-d">Dot plot on a logarithmic time axis, less is better; an arrow leads from each 3.12.0 time to the 3.13.0 time. diff() 64k numbers vs []: 4102 ms to 9.98 ms; diff() 20k objects vs half: 119 ms to 3.85 ms; parse() callback, 32k objects: 1334 ms to 11.5 ms; operator&lt; nested 24 deep: 62.6 ms to 0.002 ms; operator&lt; citm, 10x: 274 ms to 3.81 ms; flatten() citm, ordered_json: 253 ms to 1.37 ms; to_bson() 200 deep, 100x: 19.5 ms to 0.566 ms; push_back() 100k, diagnostics: 1514 ms to 4.98 ms; at(i) 10k, diagnostics: 43.2 ms to 0.081 ms.</desc>
 <line class="nj-charts-grid" x1="250" y1="30" x2="250" y2="336"/>
 <text class="nj-charts-tick" x="250" y="352">1 µs</text>
 <line class="nj-charts-grid" x1="297.857" y1="30" x2="297.857" y2="336"/>
@@ -36,15 +36,15 @@
 <circle class="nj-charts-ojson-dot" cx="543.132" cy="116" r="5"><title>parse() callback, 32k objects, 3.12.0: 1334 ms</title></circle>
 <circle class="nj-charts-json-dot" cx="444.333" cy="116" r="5"><title>parse() callback, 32k objects, 3.13.0: 11.5 ms</title></circle>
 <text class="nj-charts-factor" x="493.733" y="109">116&#215;</text>
-<text class="nj-charts-rowlabel" x="240" y="154" text-anchor="end">&lt; nested 24 deep</text>
+<text class="nj-charts-rowlabel" x="240" y="154" text-anchor="end">operator&lt; nested 24 deep</text>
 <line class="nj-charts-axis" x1="473.55" y1="150" x2="271.406" y2="150" marker-end="url(#nj-blog-cliffs-head)"/>
-<circle class="nj-charts-ojson-dot" cx="479.55" cy="150" r="5"><title>&lt; nested 24 deep, 3.12.0: 62.6 ms</title></circle>
-<circle class="nj-charts-json-dot" cx="264.406" cy="150" r="5"><title>&lt; nested 24 deep, 3.13.0: 0.002 ms</title></circle>
+<circle class="nj-charts-ojson-dot" cx="479.55" cy="150" r="5"><title>operator&lt; nested 24 deep, 3.12.0: 62.6 ms</title></circle>
+<circle class="nj-charts-json-dot" cx="264.406" cy="150" r="5"><title>operator&lt; nested 24 deep, 3.13.0: 0.002 ms</title></circle>
 <text class="nj-charts-factor" x="371.978" y="143">31300&#215;</text>
-<text class="nj-charts-rowlabel" x="240" y="188" text-anchor="end">&lt; citm, 10x</text>
+<text class="nj-charts-rowlabel" x="240" y="188" text-anchor="end">operator&lt; citm, 10x</text>
 <line class="nj-charts-axis" x1="504.235" y1="184" x2="428.373" y2="184" marker-end="url(#nj-blog-cliffs-head)"/>
-<circle class="nj-charts-ojson-dot" cx="510.235" cy="184" r="5"><title>&lt; citm, 10x, 3.12.0: 274 ms</title></circle>
-<circle class="nj-charts-json-dot" cx="421.373" cy="184" r="5"><title>&lt; citm, 10x, 3.13.0: 3.81 ms</title></circle>
+<circle class="nj-charts-ojson-dot" cx="510.235" cy="184" r="5"><title>operator&lt; citm, 10x, 3.12.0: 274 ms</title></circle>
+<circle class="nj-charts-json-dot" cx="421.373" cy="184" r="5"><title>operator&lt; citm, 10x, 3.13.0: 3.81 ms</title></circle>
 <text class="nj-charts-factor" x="465.804" y="177">72&#215;</text>
 <text class="nj-charts-rowlabel" x="240" y="222" text-anchor="end">flatten() citm, ordered_json</text>
 <line class="nj-charts-axis" x1="502.578" y1="218" x2="407.114" y2="218" marker-end="url(#nj-blog-cliffs-head)"/>

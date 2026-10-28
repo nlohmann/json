@@ -8,6 +8,7 @@
 *[BDFL]: Benevolent Dictator for Life
 *[BJData]: Binary JData
 *[BON8]: Binary Object Notation 8
+*[BSL]: Boost Software License
 *[BSON]: Binary JSON
 *[CBOR]: Concise Binary Object Representation
 *[CC0]: Creative Commons Zero
@@ -16,6 +17,7 @@
 *[CUDA]: Compute Unified Device Architecture
 *[CVE]: Common Vulnerabilities and Exposures
 *[DOM]: Document Object Model
+*[EDG]: Edison Design Group, maker of a C++ compiler front end
 *[EOF]: End of File
 *[FAQ]: Frequently Asked Questions
 *[GCC]: GNU Compiler Collection
@@ -31,9 +33,11 @@
 *[JSONC]: JSON with Comments
 *[JWCC]: JSON With Commas and Comments
 *[LLDB]: LLVM Debugger
+*[LTO]: Link-Time Optimization
 *[LTS]: Long-Term Support
 *[MinGW]: Minimalist GNU for Windows
 *[MIT]: Massachusetts Institute of Technology
+*[MPL]: Mozilla Public License
 *[MsgPack]: MessagePack
 *[MSVC]: Microsoft Visual C++
 *[NaN]: Not a Number
@@ -42,6 +46,7 @@
 *[NEON]: Arm SIMD instruction set extension
 *[NUL]: Null character (U+0000, byte value 0)
 *[ODR]: One Definition Rule
+*[PCH]: Precompiled Header
 *[REUSE]: Software licensing specification by the Free Software Foundation Europe
 *[RFC]: Request for Comments
 *[RTTI]: Runtime Type Information
@@ -60,3 +65,4 @@
 *[UDLs]: User-defined literals
 *[URL]: Uniform Resource Locator
 *[UTF]: Unicode Transformation Format
+*[XOR]: Exclusive or

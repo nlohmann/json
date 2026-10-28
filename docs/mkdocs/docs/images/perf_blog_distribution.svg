@@ -1,0 +1,36 @@
+<svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 560 250" role="img" aria-labelledby="nj-blog-dist nj-blog-dist-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-blog-dist">Speedup of 3.13.0 over 3.12.0 for all 182 benchmarks of the suite</title>
+<desc id="nj-blog-dist-d">Bars counting the benchmarks per speedup range: below 1x: 2; 1 to 1.5x: 23; 1.5 to 2x: 17; 2 to 3x: 57; 3 to 5x: 54; 5 to 10x: 24; 10x or more: 5. Median 2.9x, geometric mean 2.9x.</desc>
+<line class="nj-charts-grid" x1="52" y1="196" x2="548" y2="196"/>
+<text class="nj-charts-tick nj-charts-tick--r" x="46" y="200">0</text>
+<line class="nj-charts-grid" x1="52" y1="144.571" x2="548" y2="144.571"/>
+<text class="nj-charts-tick nj-charts-tick--r" x="46" y="148.571">20</text>
+<line class="nj-charts-grid" x1="52" y1="93.1429" x2="548" y2="93.1429"/>
+<text class="nj-charts-tick nj-charts-tick--r" x="46" y="97.1429">40</text>
+<line class="nj-charts-grid" x1="52" y1="41.7143" x2="548" y2="41.7143"/>
+<text class="nj-charts-tick nj-charts-tick--r" x="46" y="45.7143">60</text>
+<rect class="nj-charts-c2" x="60.0" y="190.9" width="54.9" height="5.1" rx="3"><title>below 1&#215;: 2</title></rect>
+<text class="nj-charts-val" x="87.4" y="185.9" text-anchor="middle">2</text>
+<text class="nj-charts-tick" x="87.4" y="212.0">below 1&#215;</text>
+<rect class="nj-charts-c1" x="130.9" y="136.9" width="54.9" height="59.1" rx="3"><title>1 to 1.5&#215;: 23</title></rect>
+<text class="nj-charts-val" x="158.3" y="131.9" text-anchor="middle">23</text>
+<text class="nj-charts-tick" x="158.3" y="212.0">1 to 1.5&#215;</text>
+<rect class="nj-charts-c1" x="201.7" y="152.3" width="54.9" height="43.7" rx="3"><title>1.5 to 2&#215;: 17</title></rect>
+<text class="nj-charts-val" x="229.1" y="147.3" text-anchor="middle">17</text>
+<text class="nj-charts-tick" x="229.1" y="212.0">1.5 to 2&#215;</text>
+<rect class="nj-charts-c1" x="272.6" y="49.4" width="54.9" height="146.6" rx="3"><title>2 to 3&#215;: 57</title></rect>
+<text class="nj-charts-val" x="300.0" y="44.4" text-anchor="middle">57</text>
+<text class="nj-charts-tick" x="300.0" y="212.0">2 to 3&#215;</text>
+<rect class="nj-charts-c1" x="343.4" y="57.1" width="54.9" height="138.9" rx="3"><title>3 to 5&#215;: 54</title></rect>
+<text class="nj-charts-val" x="370.9" y="52.1" text-anchor="middle">54</text>
+<text class="nj-charts-tick" x="370.9" y="212.0">3 to 5&#215;</text>
+<rect class="nj-charts-c1" x="414.3" y="134.3" width="54.9" height="61.7" rx="3"><title>5 to 10&#215;: 24</title></rect>
+<text class="nj-charts-val" x="441.7" y="129.3" text-anchor="middle">24</text>
+<text class="nj-charts-tick" x="441.7" y="212.0">5 to 10&#215;</text>
+<rect class="nj-charts-c1" x="485.1" y="183.1" width="54.9" height="12.9" rx="3"><title>10&#215; or more: 5</title></rect>
+<text class="nj-charts-val" x="512.6" y="178.1" text-anchor="middle">5</text>
+<text class="nj-charts-tick" x="512.6" y="212.0">10&#215; or more</text>
+<line class="nj-charts-axis" x1="52" y1="196" x2="548" y2="196"/>
+<text class="nj-charts-tick" x="300" y="240">speedup over 3.12.0, more is better</text>
+<text class="nj-charts-tick" transform="rotate(-90)" x="-106" y="14">number of benchmarks</text>
+</svg>

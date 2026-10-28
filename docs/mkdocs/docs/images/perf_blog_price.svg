@@ -1,0 +1,99 @@
+<svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 600 618" role="img" aria-labelledby="nj-blog-price nj-blog-price-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-blog-price">Compile time of two programs with 3.13.0, alone, with a precompiled header and as a module, compared with 3.12.0</title>
+<desc id="nj-blog-price-d">Horizontal bars of the change in compile time against 3.12.0, less is better. Apple clang 21, -O0 (debug), count_numbers, 3.13.0: +20 %; Apple clang 21, -O0 (debug), count_numbers, 3.13.0, precompiled header: -29 %; Apple clang 21, -O0 (debug), count_numbers, 3.13.0, module: -16 %; Apple clang 21, -O0 (debug), server_config, 3.13.0: +30 %; Apple clang 21, -O0 (debug), server_config, 3.13.0, precompiled header: -31 %; Apple clang 21, -O0 (debug), server_config, 3.13.0, module: -5 %; Apple clang 21, -O2, count_numbers, 3.13.0: +47 %; Apple clang 21, -O2, count_numbers, 3.13.0, precompiled header: +8 %; Apple clang 21, -O2, count_numbers, 3.13.0, module: +19 %; Apple clang 21, -O2, server_config, 3.13.0: +49 %; Apple clang 21, -O2, server_config, 3.13.0, precompiled header: +11 %; Apple clang 21, -O2, server_config, 3.13.0, module: +36 %; G&#8203;CC 16, -O0 (debug), count_numbers, 3.13.0: +63 %; G&#8203;CC 16, -O0 (debug), count_numbers, 3.13.0, precompiled header: +9 %; G&#8203;CC 16, -O0 (debug), count_numbers, 3.13.0, module: +15 %; G&#8203;CC 16, -O0 (debug), server_config, 3.13.0: +40 %; G&#8203;CC 16, -O0 (debug), server_config, 3.13.0, precompiled header: +6 %; G&#8203;CC 16, -O0 (debug), server_config, 3.13.0, module: +10 %; G&#8203;CC 16, -O2, count_numbers, 3.13.0: +48 %; G&#8203;CC 16, -O2, count_numbers, 3.13.0, precompiled header: +28 %; G&#8203;CC 16, -O2, count_numbers, 3.13.0, module: +24 %; G&#8203;CC 16, -O2, server_config, 3.13.0: +52 %; G&#8203;CC 16, -O2, server_config, 3.13.0, precompiled header: +36 %; G&#8203;CC 16, -O2, server_config, 3.13.0, module: +32 %.</desc>
+<rect class="nj-charts-c2" x="8" y="6" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="26" y="16.5">3.13.0</text>
+<rect class="nj-charts-c1" x="97.2" y="6" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="115.2" y="16.5">3.13.0, precompiled header</text>
+<rect class="nj-charts-c3" x="350.4" y="6" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="368.4" y="16.5">3.13.0, module</text>
+<text class="nj-charts-tick" x="320.833" y="46">as fast as 3.12.0</text>
+<text class="nj-charts-panel" x="8" y="68">Apple clang 21, -O0 (debug)</text>
+<line class="nj-charts-grid" x1="184.167" y1="74" x2="184.167" y2="170"/>
+<line class="nj-charts-grid" x1="252.5" y1="74" x2="252.5" y2="170"/>
+<line class="nj-charts-grid" x1="389.167" y1="74" x2="389.167" y2="170"/>
+<line class="nj-charts-grid" x1="457.5" y1="74" x2="457.5" y2="170"/>
+<line class="nj-charts-grid" x1="525.833" y1="74" x2="525.833" y2="170"/>
+<text class="nj-charts-rowlabel nj-charts-code" x="142" y="101" text-anchor="end">count_numbers</text>
+<path class="nj-charts-c2" d="M320.833 78 H385.167 Q389.167 78 389.167 82 V85 Q389.167 89 385.167 89 H320.833 Z"><title>count_numbers, Apple clang 21, -O0 (debug), 3.13.0: 1,155 ms against 959 ms with 3.12.0 (+20 %)</title></path>
+<text class="nj-charts-val" x="394.167" y="87.5">+20 %</text>
+<path class="nj-charts-c1" d="M320.833 92 H225.75 Q221.75 92 221.75 96 V99 Q221.75 103 225.75 103 H320.833 Z"><title>count_numbers, Apple clang 21, -O0 (debug), 3.13.0, precompiled header: 679 ms against 959 ms with 3.12.0 (&#8722;29 %)</title></path>
+<text class="nj-charts-val" x="216.75" y="101.5" text-anchor="end">&#8722;29 %</text>
+<path class="nj-charts-c3" d="M320.833 106 H270.167 Q266.167 106 266.167 110 V113 Q266.167 117 270.167 117 H320.833 Z"><title>count_numbers, Apple clang 21, -O0 (debug), 3.13.0, module: 804 ms against 959 ms with 3.12.0 (&#8722;16 %)</title></path>
+<text class="nj-charts-val" x="261.167" y="115.5" text-anchor="end">&#8722;16 %</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="142" y="150" text-anchor="end">server_config</text>
+<path class="nj-charts-c2" d="M320.833 127 H419.333 Q423.333 127 423.333 131 V134 Q423.333 138 419.333 138 H320.833 Z"><title>server_config, Apple clang 21, -O0 (debug), 3.13.0: 1,445 ms against 1,108 ms with 3.12.0 (+30 %)</title></path>
+<text class="nj-charts-val" x="428.333" y="136.5">+30 %</text>
+<path class="nj-charts-c1" d="M320.833 141 H218.917 Q214.917 141 214.917 145 V148 Q214.917 152 218.917 152 H320.833 Z"><title>server_config, Apple clang 21, -O0 (debug), 3.13.0, precompiled header: 763 ms against 1,108 ms with 3.12.0 (&#8722;31 %)</title></path>
+<text class="nj-charts-val" x="209.917" y="150.5" text-anchor="end">&#8722;31 %</text>
+<path class="nj-charts-c3" d="M320.833 155 H307.75 Q303.75 155 303.75 159 V162 Q303.75 166 307.75 166 H320.833 Z"><title>server_config, Apple clang 21, -O0 (debug), 3.13.0, module: 1,057 ms against 1,108 ms with 3.12.0 (&#8722;5 %)</title></path>
+<text class="nj-charts-val" x="298.75" y="164.5" text-anchor="end">&#8722;5 %</text>
+<text class="nj-charts-panel" x="8" y="198">Apple clang 21, -O2</text>
+<line class="nj-charts-grid" x1="184.167" y1="204" x2="184.167" y2="300"/>
+<line class="nj-charts-grid" x1="252.5" y1="204" x2="252.5" y2="300"/>
+<line class="nj-charts-grid" x1="389.167" y1="204" x2="389.167" y2="300"/>
+<line class="nj-charts-grid" x1="457.5" y1="204" x2="457.5" y2="300"/>
+<line class="nj-charts-grid" x1="525.833" y1="204" x2="525.833" y2="300"/>
+<text class="nj-charts-rowlabel nj-charts-code" x="142" y="231" text-anchor="end">count_numbers</text>
+<path class="nj-charts-c2" d="M320.833 208 H477.417 Q481.417 208 481.417 212 V215 Q481.417 219 477.417 219 H320.833 Z"><title>count_numbers, Apple clang 21, -O2, 3.13.0: 1,868 ms against 1,269 ms with 3.12.0 (+47 %)</title></path>
+<text class="nj-charts-val" x="486.417" y="217.5">+47 %</text>
+<path class="nj-charts-c1" d="M320.833 222 H344.167 Q348.167 222 348.167 226 V229 Q348.167 233 344.167 233 H320.833 Z"><title>count_numbers, Apple clang 21, -O2, 3.13.0, precompiled header: 1,364 ms against 1,269 ms with 3.12.0 (+8 %)</title></path>
+<text class="nj-charts-val" x="353.167" y="231.5">+8 %</text>
+<path class="nj-charts-c3" d="M320.833 236 H381.75 Q385.75 236 385.75 240 V243 Q385.75 247 381.75 247 H320.833 Z"><title>count_numbers, Apple clang 21, -O2, 3.13.0, module: 1,513 ms against 1,269 ms with 3.12.0 (+19 %)</title></path>
+<text class="nj-charts-val" x="390.75" y="245.5">+19 %</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="142" y="280" text-anchor="end">server_config</text>
+<path class="nj-charts-c2" d="M320.833 257 H484.25 Q488.25 257 488.25 261 V264 Q488.25 268 484.25 268 H320.833 Z"><title>server_config, Apple clang 21, -O2, 3.13.0: 2,354 ms against 1,577 ms with 3.12.0 (+49 %)</title></path>
+<text class="nj-charts-val" x="493.25" y="266.5">+49 %</text>
+<path class="nj-charts-c1" d="M320.833 271 H354.417 Q358.417 271 358.417 275 V278 Q358.417 282 354.417 282 H320.833 Z"><title>server_config, Apple clang 21, -O2, 3.13.0, precompiled header: 1,749 ms against 1,577 ms with 3.12.0 (+11 %)</title></path>
+<text class="nj-charts-val" x="363.417" y="280.5">+11 %</text>
+<path class="nj-charts-c3" d="M320.833 285 H439.833 Q443.833 285 443.833 289 V292 Q443.833 296 439.833 296 H320.833 Z"><title>server_config, Apple clang 21, -O2, 3.13.0, module: 2,141 ms against 1,577 ms with 3.12.0 (+36 %)</title></path>
+<text class="nj-charts-val" x="448.833" y="294.5">+36 %</text>
+<text class="nj-charts-panel" x="8" y="328">G&#8203;CC 16, -O0 (debug)</text>
+<line class="nj-charts-grid" x1="184.167" y1="334" x2="184.167" y2="430"/>
+<line class="nj-charts-grid" x1="252.5" y1="334" x2="252.5" y2="430"/>
+<line class="nj-charts-grid" x1="389.167" y1="334" x2="389.167" y2="430"/>
+<line class="nj-charts-grid" x1="457.5" y1="334" x2="457.5" y2="430"/>
+<line class="nj-charts-grid" x1="525.833" y1="334" x2="525.833" y2="430"/>
+<text class="nj-charts-rowlabel nj-charts-code" x="142" y="361" text-anchor="end">count_numbers</text>
+<path class="nj-charts-c2" d="M320.833 338 H532.083 Q536.083 338 536.083 342 V345 Q536.083 349 532.083 349 H320.833 Z"><title>count_numbers, G&#8203;CC 16, -O0 (debug), 3.13.0: 2,346 ms against 1,444 ms with 3.12.0 (+63 %)</title></path>
+<text class="nj-charts-val" x="541.083" y="347.5">+63 %</text>
+<path class="nj-charts-c1" d="M320.833 352 H347.583 Q351.583 352 351.583 356 V359 Q351.583 363 347.583 363 H320.833 Z"><title>count_numbers, G&#8203;CC 16, -O0 (debug), 3.13.0, precompiled header: 1,579 ms against 1,444 ms with 3.12.0 (+9 %)</title></path>
+<text class="nj-charts-val" x="356.583" y="361.5">+9 %</text>
+<path class="nj-charts-c3" d="M320.833 366 H368.083 Q372.083 366 372.083 370 V373 Q372.083 377 368.083 377 H320.833 Z"><title>count_numbers, G&#8203;CC 16, -O0 (debug), 3.13.0, module: 1,662 ms against 1,444 ms with 3.12.0 (+15 %)</title></path>
+<text class="nj-charts-val" x="377.083" y="375.5">+15 %</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="142" y="410" text-anchor="end">server_config</text>
+<path class="nj-charts-c2" d="M320.833 387 H453.5 Q457.5 387 457.5 391 V394 Q457.5 398 453.5 398 H320.833 Z"><title>server_config, G&#8203;CC 16, -O0 (debug), 3.13.0: 2,782 ms against 1,985 ms with 3.12.0 (+40 %)</title></path>
+<text class="nj-charts-val" x="462.5" y="396.5">+40 %</text>
+<path class="nj-charts-c1" d="M320.833 401 H337.333 Q341.333 401 341.333 405 V408 Q341.333 412 337.333 412 H320.833 Z"><title>server_config, G&#8203;CC 16, -O0 (debug), 3.13.0, precompiled header: 2,113 ms against 1,985 ms with 3.12.0 (+6 %)</title></path>
+<text class="nj-charts-val" x="346.333" y="410.5">+6 %</text>
+<path class="nj-charts-c3" d="M320.833 415 H351 Q355 415 355 419 V422 Q355 426 351 426 H320.833 Z"><title>server_config, G&#8203;CC 16, -O0 (debug), 3.13.0, module: 2,181 ms against 1,985 ms with 3.12.0 (+10 %)</title></path>
+<text class="nj-charts-val" x="360" y="424.5">+10 %</text>
+<text class="nj-charts-panel" x="8" y="458">G&#8203;CC 16, -O2</text>
+<line class="nj-charts-grid" x1="184.167" y1="464" x2="184.167" y2="560"/>
+<line class="nj-charts-grid" x1="252.5" y1="464" x2="252.5" y2="560"/>
+<line class="nj-charts-grid" x1="389.167" y1="464" x2="389.167" y2="560"/>
+<line class="nj-charts-grid" x1="457.5" y1="464" x2="457.5" y2="560"/>
+<line class="nj-charts-grid" x1="525.833" y1="464" x2="525.833" y2="560"/>
+<text class="nj-charts-rowlabel nj-charts-code" x="142" y="491" text-anchor="end">count_numbers</text>
+<path class="nj-charts-c2" d="M320.833 468 H480.833 Q484.833 468 484.833 472 V475 Q484.833 479 480.833 479 H320.833 Z"><title>count_numbers, G&#8203;CC 16, -O2, 3.13.0: 3,453 ms against 2,327 ms with 3.12.0 (+48 %)</title></path>
+<text class="nj-charts-val" x="489.833" y="477.5">+48 %</text>
+<path class="nj-charts-c1" d="M320.833 482 H412.5 Q416.5 482 416.5 486 V489 Q416.5 493 412.5 493 H320.833 Z"><title>count_numbers, G&#8203;CC 16, -O2, 3.13.0, precompiled header: 2,972 ms against 2,327 ms with 3.12.0 (+28 %)</title></path>
+<text class="nj-charts-val" x="421.5" y="491.5">+28 %</text>
+<path class="nj-charts-c3" d="M320.833 496 H398.833 Q402.833 496 402.833 500 V503 Q402.833 507 398.833 507 H320.833 Z"><title>count_numbers, G&#8203;CC 16, -O2, 3.13.0, module: 2,895 ms against 2,327 ms with 3.12.0 (+24 %)</title></path>
+<text class="nj-charts-val" x="407.833" y="505.5">+24 %</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="142" y="540" text-anchor="end">server_config</text>
+<path class="nj-charts-c2" d="M320.833 517 H494.5 Q498.5 517 498.5 521 V524 Q498.5 528 494.5 528 H320.833 Z"><title>server_config, G&#8203;CC 16, -O2, 3.13.0: 4,389 ms against 2,889 ms with 3.12.0 (+52 %)</title></path>
+<text class="nj-charts-val" x="503.5" y="526.5">+52 %</text>
+<path class="nj-charts-c1" d="M320.833 531 H439.833 Q443.833 531 443.833 535 V538 Q443.833 542 439.833 542 H320.833 Z"><title>server_config, G&#8203;CC 16, -O2, 3.13.0, precompiled header: 3,942 ms against 2,889 ms with 3.12.0 (+36 %)</title></path>
+<text class="nj-charts-val" x="448.833" y="540.5">+36 %</text>
+<path class="nj-charts-c3" d="M320.833 545 H426.167 Q430.167 545 430.167 549 V552 Q430.167 556 426.167 556 H320.833 Z"><title>server_config, G&#8203;CC 16, -O2, 3.13.0, module: 3,826 ms against 2,889 ms with 3.12.0 (+32 %)</title></path>
+<text class="nj-charts-val" x="435.167" y="554.5">+32 %</text>
+<line class="nj-charts-ref" x1="320.833" y1="52" x2="320.833" y2="574"/>
+<text class="nj-charts-tick" x="184.167" y="590">&#8722;40 %</text>
+<text class="nj-charts-tick" x="252.5" y="590">&#8722;20 %</text>
+<text class="nj-charts-tick" x="320.833" y="590">0</text>
+<text class="nj-charts-tick" x="389.167" y="590">+20 %</text>
+<text class="nj-charts-tick" x="457.5" y="590">+40 %</text>
+<text class="nj-charts-tick" x="525.833" y="590">+60 %</text>
+<text class="nj-charts-tick" x="355" y="608">compile time compared with 3.12.0, less is better</text>
+</svg>
