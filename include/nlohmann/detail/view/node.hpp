@@ -69,7 +69,7 @@ struct node
     std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the object's key hash index (1-based, 0 = none); otherwise 0
     std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
     std::uint32_t len;   ///< string: decoded bytes; float: token bytes; array/object: element count
-    std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence)
+    std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence); escaped string: source offset of the opening quote plus one (JSON_DIAGNOSTIC_POSITIONS; 0: unknown)
 };
 static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 
