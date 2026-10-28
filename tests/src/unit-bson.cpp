@@ -1311,6 +1311,8 @@ TEST_CASE("BSON declared document size bounds the content")
     // records the events that a SAX parser receives
     struct recorder : nlohmann::json_sax<json>
     {
+        // GCC's -Weffc++ wants the member initialized in the member initialization list
+        // NOLINTNEXTLINE(readability-redundant-member-init)
         std::string events {};
 
         bool null() override
