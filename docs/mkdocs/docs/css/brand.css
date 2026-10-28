@@ -759,6 +759,11 @@ body:has(.nj-hero) .md-content {
     }
 }
 
+/* blog posts: author and date right below the title */
+.md-typeset .nj-byline { margin: -.8rem 0 1.6rem; font-size: .75rem; color: var(--md-default-fg-color--light); }
+.md-typeset .nj-byline a { color: inherit; }
+.md-typeset .nj-byline a:hover { color: var(--md-accent-fg-color); }
+
 /* figure captions: "Figure N." in bold, close to the figure, set in from the text column; figures and tables are
    numbered per page, each with its own counter */
 .md-content__inner { counter-reset: nj-figure nj-table; }

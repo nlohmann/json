@@ -1,5 +1,7 @@
 # How nlohmann/json 3.13.0 got 2.9× faster
 
+<p class="nj-byline"><a href="https://github.com/nlohmann">Niels Lohmann</a> · <time datetime="2026-10-28">October 28, 2026</time></p>
+
 Since 2016, the README of this library has said this about speed:
 
 > There are certainly faster JSON libraries out there. However, if your goal is to speed up your development by adding
@@ -312,7 +314,8 @@ The table stays as the fallback for other targets.
 
 **Escapes come from a table, too.** When the scanner stops at a quote, a backslash or a control character,
 [#5822][5822] copies its escape sequence from a table of 8-byte rows (padded with zeros, length in the last byte)
-straight into the write buffer: one 8-byte copy and one add, an idea from orjson's `QUOTE_TAB`. On an M1 Max, that
+straight into the write buffer: one 8-byte copy and one add, an idea from orjson's `QUOTE_TAB` (which orjson took
+from sonic-rs). On an M1 Max, that
 made dumping 100,000 log lines full of `\n`, `\t` and quotes 23 % faster. Most of that, the PR found, comes from
 writing straight into the write buffer instead of going through an intermediate one; the table alone gained 2 to
 7 %.
@@ -770,30 +773,33 @@ behaves differently. We did not test Windows for speed at all.
 ## Thanks
 
 Most of what is in this post was invented by other people. The libraries and papers we took ideas or code from, in
-the order they appear above. Where the library contains code adapted from another project, we name the license we use
-it under; the [README](https://github.com/nlohmann/json#license) has the copyright notices. From the others we took
-the idea, not their code.
+the order they appear above, each with its license in parentheses. The library contains code adapted from four of
+them, marked "adapted code", which it uses under the MIT License; the
+[README](https://github.com/nlohmann/json#license) has their copyright notices. From the others we took the idea,
+not their code.
 
-- [serde_json](https://github.com/serde-rs/json): deriving positions from the offset only on error.
-- Sean Eron Anderson's [Bit Twiddling Hacks](https://graphics.stanford.edu/~seander/bithacks.html): the zero-byte
-  test behind every word-at-a-time scan.
-- [Glaze](https://github.com/stephenberry/glaze): skipping indentation in 8-byte steps (`skip_matching_ws`).
-- [simdjson](https://github.com/simdjson/simdjson) by Daniel Lemire, Geoff Langdale, John Keiser and contributors:
-  the "lookup4" UTF-8 check (J. Keiser and D. Lemire, "Validating UTF-8 In Less Than One Instruction Per Byte",
-  2021, adapted code; MIT License, also available under the Apache License 2.0), and the tape that showed what a
-  flat index can do.
-- [SQLite](https://sqlite.org)'s `jsonAppendString()`: writing short strings with a table loop.
-- [orjson](https://github.com/ijl/orjson)'s `QUOTE_TAB`: escape sequences as fixed-size table rows.
-- [fast_float](https://github.com/fastfloat/fast_float) by Daniel Lemire and contributors: the Eisel-Lemire
-  algorithm, its table of powers of five, its digit comparison, and eight digits at a time (N. Mushtak and D. Lemire,
-  "Fast number parsing without fallback", 2023; adapted code; MIT License, also available under the Apache License
-  2.0 and the Boost Software License 1.0). W. D. Clinger for the fast path, M. Eisel for the algorithm.
-- [Żmij](https://github.com/vitaut/zmij) by Victor Zverovich, with the digit conversion of Xiang JunBo and the SIMD
-  sequence of Dougall Johnson (ported to C++11; MIT License).
-- [Boost.JSON](https://github.com/boostorg/json): switching to a hash table for large objects.
-- [yyjson](https://github.com/ibireme/yyjson) by YaoYuan: table-driven `\u` decoding, fixed-offset unrolled checks,
-  and a 16-byte flat document to measure against (adapted code in `json_view.hpp`; MIT License).
-- [RapidJSON](https://github.com/Tencent/rapidjson): the measured reason to keep recursion as the default.
+- [serde_json](https://github.com/serde-rs/json) (MIT or Apache-2.0): deriving positions from the offset only on error.
+- Sean Eron Anderson's [Bit Twiddling Hacks](https://graphics.stanford.edu/~seander/bithacks.html) (snippets in the
+  public domain): the zero-byte test behind every word-at-a-time scan.
+- [Glaze](https://github.com/stephenberry/glaze) (MIT): skipping indentation in 8-byte steps (`skip_matching_ws`).
+- [simdjson](https://github.com/simdjson/simdjson) (Apache-2.0 or MIT) by Daniel Lemire, Geoff Langdale, John Keiser
+  and contributors: the "lookup4" UTF-8 check (J. Keiser and D. Lemire, "Validating UTF-8 In Less Than One
+  Instruction Per Byte", 2021; adapted code), and the tape that showed what a flat index can do.
+- [SQLite](https://sqlite.org) (public domain): writing short strings with a table loop, as its `jsonAppendString()`
+  does.
+- [orjson](https://github.com/ijl/orjson) (Apache-2.0 or MIT; its escape table MPL-2.0) and
+  [sonic-rs](https://github.com/cloudwego/sonic-rs) (Apache-2.0), from which orjson adapted it: escape sequences as
+  fixed-size table rows (`QUOTE_TAB`).
+- [fast_float](https://github.com/fastfloat/fast_float) (Apache-2.0, MIT or BSL-1.0) by Daniel Lemire and
+  contributors: the Eisel-Lemire algorithm, its table of powers of five, its digit comparison, and eight digits at a
+  time (N. Mushtak and D. Lemire, "Fast number parsing without fallback", 2023; adapted code). W. D. Clinger for the
+  fast path, M. Eisel for the algorithm.
+- [Żmij](https://github.com/vitaut/zmij) (MIT) by Victor Zverovich, with the digit conversion of Xiang JunBo and the
+  SIMD sequence of Dougall Johnson (adapted code: ported to C++11).
+- [Boost.JSON](https://github.com/boostorg/json) (BSL-1.0): switching to a hash table for large objects.
+- [yyjson](https://github.com/ibireme/yyjson) (MIT) by YaoYuan: table-driven `\u` decoding and fixed-offset unrolled
+  checks (adapted code in `json_view.hpp`), and a 16-byte flat document to measure against.
+- [RapidJSON](https://github.com/Tencent/rapidjson) (MIT): the measured reason to keep recursion as the default.
 
 And the people who sent or shaped pull requests: [@gregmarr](https://github.com/gregmarr) reviewed most of them and
 suggested the sized-sentinel fast path, the peek design for exact stream positions, one SIMD switch for the whole
@@ -808,7 +814,7 @@ intrinsics ([#5782][5782]); [@ayush-singh-0601](https://github.com/ayush-singh-0
 and [@alexprabhat99](https://github.com/alexprabhat99) removed the temporary values behind CBOR and MessagePack
 object keys ([#5328][5328]).
 `twitter.json`, `citm_catalog.json` and `canada.json` come from Milo Yip's
-[nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark).
+[nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark) (MIT).
 
 [5185]: https://github.com/nlohmann/json/pull/5185
 [5234]: https://github.com/nlohmann/json/pull/5234
