@@ -826,6 +826,129 @@ TEST_CASE("JSON patch")
             CHECK(doc.at("foo") == "bar");
         }
 #endif // !defined(JSON_NOEXCEPTION)
+
+        SECTION("applying a value as patch to itself")
+        {
+            // a JSON patch is an array, so an array of operations can be
+            // applied to itself; the operations are read from the patch as
+            // it was before the first operation, as patch() does it
+            const json copy_op = {{"op", "copy"}, {"from", "/0"}, {"path", "/-"}};
+            json copy_ops = json::array();
+            for (int i = 0; i < 5; ++i)
+            {
+                copy_ops.push_back(copy_op);
+            }
+
+            json expected_copies = copy_ops;
+            for (int i = 0; i < 5; ++i)
+            {
+                expected_copies.push_back(copy_op);
+            }
+
+            SECTION("copy operations without spare capacity")
+            {
+                // a copy has exactly as much capacity as elements
+                json doc = copy_ops;
+                CHECK(doc.patch(doc) == expected_copies);
+
+                doc.patch_inplace(doc);
+                CHECK(doc == expected_copies);
+            }
+
+#if JSON_DIAGNOSTICS
+            SECTION("patch stored inside the patched value")
+            {
+                // the parent pointers of JSON_DIAGNOSTICS make the aliasing detectable
+                const json op = {{"op", "replace"}, {"path", "/patch"}, {"value", 1}};
+                json doc = {{"a", 1}, {"patch", json::array({op})}};
+                const json expected = doc.patch(doc["patch"]);
+
+                doc.patch_inplace(doc["patch"]);
+                CHECK(doc == expected);
+            }
+#endif
+
+            SECTION("copy operations with spare capacity")
+            {
+                // reserve while the array is empty: reallocating non-empty
+                // elements behind the library's back leaves stale parent
+                // pointers with JSON_DIAGNOSTICS
+                json doc = json::array();
+                doc.get_ref<json::array_t&>().reserve(100);
+                for (int i = 0; i < 5; ++i)
+                {
+                    doc.push_back(copy_op);
+                }
+                CHECK(doc.patch(doc) == expected_copies);
+
+                doc.patch_inplace(doc);
+                CHECK(doc == expected_copies);
+            }
+
+            SECTION("remove operations")
+            {
+                json doc = R"([
+                        {"op": "remove", "path": "/0"},
+                        {"op": "remove", "path": "/0"},
+                        {"op": "remove", "path": "/0"}
+                    ])"_json;
+                CHECK(doc.patch(doc) == json::array());
+
+                doc.patch_inplace(doc);
+                CHECK(doc == json::array());
+            }
+
+            SECTION("operations that read a changed element")
+            {
+                // the second operation is still a "test" operation, although
+                // the first one replaced it in the document
+                json doc = R"([
+                        {"op": "replace", "path": "/1", "value": 1},
+                        {"op": "test", "path": "/1", "value": 1},
+                        {"op": "add", "path": "/-", "value": 2}
+                    ])"_json;
+                const json expected = R"([
+                        {"op": "replace", "path": "/1", "value": 1},
+                        1,
+                        {"op": "add", "path": "/-", "value": 2},
+                        2
+                    ])"_json;
+                CHECK(doc.patch(doc) == expected);
+
+                doc.patch_inplace(doc);
+                CHECK(doc == expected);
+            }
+
+            SECTION("replacing the root")
+            {
+                json doc = R"([
+                        {"op": "add", "path": "", "value": [1, 2]},
+                        {"op": "add", "path": "/-", "value": 3},
+                        {"op": "replace", "path": "", "value": {"a": 4}}
+                    ])"_json;
+                const json expected = {{"a", 4}};
+                CHECK(doc.patch(doc) == expected);
+
+                doc.patch_inplace(doc);
+                CHECK(doc == expected);
+            }
+
+#if !defined(JSON_NOEXCEPTION)
+            SECTION("failing operation")
+            {
+                // the operations before the failing one remain applied
+                json doc = R"([
+                        {"op": "add", "path": "/-", "value": 1},
+                        {"op": "test", "path": "/0/op", "value": "remove"}
+                    ])"_json;
+                CHECK_THROWS_AS(doc.patch(doc), json::other_error&);
+
+                CHECK_THROWS_AS(doc.patch_inplace(doc), json::other_error&);
+                CHECK(doc.size() == 3);
+                CHECK(doc.back() == 1);
+            }
+#endif // !defined(JSON_NOEXCEPTION)
+        }
     }
 
     SECTION("errors")
