@@ -32,7 +32,8 @@ using nlohmann::json_editable_document;
 
 namespace
 {
-constexpr std::size_t npos = std::string::npos;
+// not constexpr: VS 2015 does not accept std::string::npos in a constant expression (C2131)
+const std::size_t npos = std::string::npos;
 
 // whether every value of a has the source positions of the value of b at the
 // same place (a and b are equal; shallow test documents only)
