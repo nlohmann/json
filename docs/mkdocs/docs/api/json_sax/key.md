@@ -32,8 +32,9 @@ When parsing JSON text, `val` is the decoded object name, not its spelling in th
 - `key` is called before the following `:` is read, so a parse error may still follow for the same member.
 - A name that occurs several times in the same object is passed once per occurrence.
 
-For the binary formats, object keys contain no escape sequences: `val` holds the bytes stored in the input.
-[`sax_parse`](../basic_json/sax_parse.md) passes them unchanged, without checking them for valid UTF-8.
+For the binary formats, object keys contain no escape sequences. For CBOR, MessagePack, UBJSON, and BSON, `val` holds
+the bytes stored in the input, and [`sax_parse`](../basic_json/sax_parse.md) passes them unchanged, without checking them
+for valid UTF-8. BON8 encodes characters itself, so an ill-formed name is a parse error and `key` is not called for it.
 
 ## Examples
 
