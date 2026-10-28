@@ -203,7 +203,7 @@ packet-beta
 | 2-3   | `extra` | `uint16_t` | numbers: the number of integer digits (low byte) and fraction digits (high byte), 255 for more; objects: the number of their key hash index (1-based), or 0; otherwise 0 |
 | 4-7   | `off`   | `uint32_t` | where the value starts: the first byte after a string's opening quote (or its position in the buffer of decoded strings), the first byte of a number or literal, the bracket of an array or object |
 | 8-11  | `len`   | `uint32_t` | strings: the length after decoding; floats and literals: the length of the token; arrays and objects: the number of elements |
-| 12-15 | `next`  | `uint32_t` | arrays and objects: the number of nodes of the subtree, including the node itself; strings with escapes: the position of the opening quote in the source plus one if the document was parsed with [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md), else 0; otherwise 0 |
+| 12-15 | `next`  | `uint32_t` | arrays and objects: the number of nodes of the subtree, including the node itself; strings with escapes: the position of the opening quote in the source plus one if the document was parsed with [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md), or 0 if it was not; all other values: 0 |
 
 <p class="nj-table-caption" markdown>Fields of a node, by their byte offset within the 16-byte node. Integers use bytes 8-15 differently, see below.</p>
 

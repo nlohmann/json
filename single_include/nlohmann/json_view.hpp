@@ -6427,15 +6427,13 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 const bool object = n->kind == node_kind::object;
 #if JSON_DIAGNOSTIC_POSITIONS
                 // (moved containers are also new)
-                const std::size_t start = (n->flags & node_flags::is_new) == 0 && n->off < d.size ? std::size_t{n->off} :
-                                          std::string::npos;
-                if (start == std::string::npos)
+                if ((n->flags & node_flags::is_new) != 0 || n->off >= d.size)
                 {
                     positions.clear();
                 }
                 else
                 {
-                    positions.set(start, start + 1);
+                    positions.set(std::size_t{n->off}, std::size_t{n->off} + 1);
                 }
 #endif
                 if (object)
@@ -6458,7 +6456,7 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 // own bracket is the last thing read)
                 open[depth++] = frame{nav::first(d, n), nav::end(d, n), object
 #if JSON_DIAGNOSTIC_POSITIONS
-                                      , start, positions.end
+                                      , positions.start, positions.end
 #endif
                                      };
                 break;
@@ -6502,22 +6500,28 @@ BasicJsonType materialize(const document_data& d, const node* n)
             if (f.pos == f.end)
             {
 #if JSON_DIAGNOSTIC_POSITIONS
-                const std::size_t end = f.start == std::string::npos || f.last_end == std::string::npos ? std::string::npos :
-                                        position_source::container_end(d.base[0], d.size, f.last_end);
-                if (end == std::string::npos)
+                if (f.start == std::string::npos || f.last_end == std::string::npos)
                 {
                     positions.clear();
                 }
                 else
                 {
-                    // the closing bracket, as the lexer reports it (end_object()
-                    // and end_array() only read its end; the start of the
-                    // container was set when it was opened)
-                    positions.set(end - 1, end);
+                    const std::size_t end = position_source::container_end(d.base[0], d.size, f.last_end);
+                    if (end == std::string::npos)
+                    {
+                        positions.clear();
+                    }
+                    else
+                    {
+                        // the closing bracket, as the lexer reports it (end_object()
+                        // and end_array() only read its end; the start of the
+                        // container was set when it was opened)
+                        positions.set(end - 1, end);
+                    }
                 }
                 if (depth > 1)
                 {
-                    open[depth - 2].last_end = end;
+                    open[depth - 2].last_end = positions.end;
                 }
 #endif
                 if (f.object)
