@@ -17,10 +17,13 @@ untimed one, and the best round is reported.
 | `traverse` | parse, then visit every value, convert every number, touch every string and key |
 | `select` | parse, then read a few fields of every record (the fields are listed in `bench_view.cpp`) |
 | `parse+dump` | parse, then write the document as compact JSON |
+| `dump` | write a document parsed beforehand as compact JSON; only the writing is timed |
 
 Before timing, every engine must report the same number of values, the same number of string bytes, and a sum of all
 numbers in document order that is bit-identical to `json_document`'s (`json::parse` visits objects in key order and
 is compared within 1e-9): every number is converted exactly. For *select*, all engines must return the same value.
+For *dump*, every engine's output must read back as the same values with the same sum, so every float is written
+exactly.
 
 | engine | version | notes |
 |---|---|---|
@@ -64,7 +67,9 @@ python3 summarize.py mac-cpp-*.log --rust mac-rs-*.log
 ```
 
 On x86-64, use `-march=haswell -DRAPIDJSON_SSE42` instead of `-DRAPIDJSON_NEON` (sonic-cpp needs AVX2), pin the
-process to one core, and add the document name as third argument to time one document per process. Glaze 9 needs
+process to one core, and add the document name as third argument to time one document per process. A fourth
+argument times only one workload (`./bench_all <json_test_data> 30 "" dump`); `bench_rs` takes the workload as third
+argument. Glaze 9 needs
 `std::expected`, which Clang 18 cannot use from GCC 13's standard library; `-DBENCH_NO_GLAZE=1` builds without it.
 
 ## Reading the results

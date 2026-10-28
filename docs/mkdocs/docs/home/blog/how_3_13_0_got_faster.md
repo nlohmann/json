@@ -615,7 +615,8 @@ every number exactly; RapidJSON guarantees that only with `kParseFullPrecisionFl
 (with its default flags it happened to produce the same values for these files, and those rows are in the data).
 
 The workloads: *parse* (build the document and free it), *traverse* (parse, then visit every value and convert every
-number), *select* (parse, then read a few fields of every record) and *parse+dump*. We ran them on the M1 Max with
+number), *select* (parse, then read a few fields of every record), *parse+dump*, and *dump* (write a document that
+was parsed beforehand; only the writing is timed). We ran them on the M1 Max with
 Apple clang 21 (and Rust 1.99), and on the x86-64 Haswell server with GCC 13 and Clang 18 (`-march=haswell`, one
 pinned core). That server has other work running, so differences of a few percent there are noise. Glaze 9 could
 not be built with Clang 18 on it (Clang 18 can't use GCC 13's `std::expected`), and the Rust engines ran on the Mac
@@ -646,6 +647,41 @@ interleaved rounds):
 
 <p class="nj-caption" markdown>The parse times of the table above as throughput (file size divided by time), more is better. RapidJSON, Glaze, serde_json and simd-json are left out to keep the chart readable; they are in the table.</p>
 
+Writing, with each document parsed beforehand, so that only the writing of compact JSON into a new string is timed.
+Before anything is timed, every output must read back as the same values, with bit-identical numbers, so every
+engine writes every float exactly:
+
+| engine | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` |
+| --- | --: | --: | --: | --: |
+| nlohmann/json `json_document` | **74.5** | **133** | **1,625** | **14,757** |
+| yyjson | 104 | 166 | 1,716 | 20,134 |
+| sonic-cpp | 105 | 222 | 3,044 | 19,836 |
+| Glaze `generic_u64` | 208 | 469 | 1,700 | 34,367 |
+| sonic-rs (Rust) | 213 | 444 | 2,417 | 33,818 |
+| nlohmann/json `json::dump` | 217 | 286 | 2,244 | 31,205 |
+| serde_json (Rust) | 329 | 487 | 2,236 | 52,629 |
+| simdjson DOM | 354 | 498 | 6,816 | 54,833 |
+| simd-json (Rust) | 358 | 473 | 2,707 | 47,998 |
+| Boost.JSON | 498 | 501 | 2,942 | 63,392 |
+| RapidJSON | 592 | 815 | 6,999 | 83,397 |
+
+<p class="nj-table-caption" markdown>Write times in µs, less is better: compact output of a document parsed beforehand, on an Apple M1 Max, best of 2 × 30 interleaved rounds (2 × 6 for `jeopardy.json`). The fastest engine of each file is in bold. Boost.JSON writes some floats of `canada.json` with more digits, so its output is 9 % larger.</p>
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/perf_blog_view_dump.svg"
+</div>
+
+<p class="nj-caption" markdown>The write times of the table above as throughput (size of the compact output divided by time), more is better, for the engines of the parse chart.</p>
+
+On the Mac, `json_document` writes fastest on every file, 1.05 to 1.40 times ahead of the next engine. Part of that is its
+design, not the writer: a string that had no escape sequence in the source has nothing to escape, so it is copied
+from the source text without being scanned, and integers are copied as their source text. Floats are formatted
+anew with Żmij (theme 3), and since `json_document` keeps floats as text, a float of more than 15 significant digits
+is first converted from its digits to a `double`. That is why `canada.json` is the closest race on the Mac (Glaze
+takes 1.05 times as long, yyjson 1.06) and is lost on x86-64, where yyjson takes 0.78 (GCC) and 0.93 (Clang) of
+`json_document`'s time; with GCC, even `json::dump()`, which has the `double`s already, is faster there (0.92).
+
+
 The fastest *other* engine for each workload, as its time divided by nlohmann/json's `json_document`'s, over the
 four files above: above 1, `json_document` is ahead; below 1, it is behind.
 
@@ -655,6 +691,7 @@ four files above: above 1, `json_document` is ahead; below 1, it is behind.
 | traverse | 1.04–1.18 (yyjson, simdjson On-Demand) | **0.58–0.86** (simdjson On-Demand) | **0.86**–1.20 (sonic-cpp, simdjson On-Demand, yyjson) |
 | select | **0.34–0.84** (Glaze structs, simdjson On-Demand) | **0.26–0.65** | **0.33–0.86** |
 | parse+dump | 1.18–1.35 (yyjson) | 1.20–1.41 (yyjson, sonic-cpp) | 1.16–1.27 (yyjson, sonic-cpp) |
+| dump | 1.05–1.40 (yyjson, Glaze, sonic-cpp) | 1.23–1.34 (yyjson) on `twitter`, `citm_catalog`; **0.78** (yyjson) on `canada`; 0.99 (yyjson) on `jeopardy` | 1.28–1.33 (yyjson) on `twitter`, `citm_catalog`; **0.93** (yyjson) on `canada`; **0.95** (sonic-cpp) on `jeopardy` |
 
 <p class="nj-table-caption" markdown>Time of the fastest other engine divided by the time of nlohmann/json's `json_document`, as a range over the four files, with the engines that were fastest; below 1, nlohmann/json is behind.</p>
 
@@ -672,11 +709,17 @@ Apple silicon. On x86-64 it ties with simdjson's DOM on typical documents. Where
 - **Float-heavy documents, measured fairly.** `json_document` converts a float when you read it; the others convert
   while parsing. The `canada.json` parse row flatters it; *traverse* is the fair comparison, and there it is
   1.04× ahead on the Mac and behind sonic-cpp with Clang on x86-64 (0.88).
+- **Writing floats on x86-64.** Writing a document it parsed beforehand, `json_document` is behind yyjson on
+  `canada.json` (0.78 with GCC, 0.93 with Clang), because it first converts most floats from their text, and ties
+  on `jeopardy.json` (0.95 to 0.99).
 - **Small documents.** On a 2.5 KB message, all document parsers take about a microsecond, and yyjson and
   simdjson's DOM are as fast or a few percent faster.
 
 And `json::parse`? Boost.JSON builds a mutable tree as `json` does, so it is the fair comparison. It is 1.6 to 2.4
-times as fast on the Mac, and 2.4 to 4.5 times on the x86-64 server.
+times as fast on the Mac, and 2.4 to 4.5 times on the x86-64 server. For writing, the comparison goes the other way:
+`json::dump()` writes 1.3 to 2.3 times as fast as Boost.JSON's `serialize()` on the Mac. On the x86-64 server it is
+1.1 to 1.6 times as fast on three files, but Boost.JSON writes `jeopardy.json` 4 % (Clang) to 12 % (GCC) faster. On the Mac it is also ahead of RapidJSON, simdjson's DOM and simd-json on every file, and of sonic-rs and
+serde_json on all but one file each, where they are within 2 %.
 
 The programs are in
 [`tests/benchmarks/json_view/others`](https://github.com/nlohmann/json/tree/develop/tests/benchmarks/json_view/others),
@@ -772,33 +815,39 @@ behaves differently. We did not test Windows for speed at all.
 
 ## Thanks
 
-Most of what is in this post was invented by other people. The libraries and papers we took ideas or code from, in
-the order they appear above, each with its license in parentheses. The library contains code adapted from four of
-them, marked "adapted code", which it uses under the MIT License; the
-[README](https://github.com/nlohmann/json#license) has their copyright notices. From the others we took the idea,
-not their code.
+Most of what is in this post was invented by other people. Each library is listed with its license in
+parentheses.
+
+**Code we adapted.** The library contains code adapted from these four projects. We use it under the MIT License,
+and the source files that contain it carry the authors' copyright lines and say what was taken; the
+[README](https://github.com/nlohmann/json#license) lists them too.
+
+- [fast_float](https://github.com/fastfloat/fast_float) (Apache-2.0, MIT or BSL-1.0) by Daniel Lemire and
+  contributors: the Eisel-Lemire algorithm, its table of powers of five, its digit comparison for long numbers, and
+  its parsing of eight digits at a time (N. Mushtak and D. Lemire, "Fast number parsing without fallback", 2023).
+  W. D. Clinger for the fast path, M. Eisel for the algorithm.
+- [Żmij](https://github.com/vitaut/zmij) (MIT) by Victor Zverovich, with the digit conversion of Xiang JunBo and the
+  SIMD sequence and compressed powers of ten of Dougall Johnson: ported to C++11.
+- [simdjson](https://github.com/simdjson/simdjson) (Apache-2.0 or MIT) by Daniel Lemire, Geoff Langdale, John Keiser
+  and contributors: the "lookup4" UTF-8 check and its tables (J. Keiser and D. Lemire, "Validating UTF-8 In Less
+  Than One Instruction Per Byte", 2021), in `json.hpp`'s lexer and in `json_view.hpp`.
+- [yyjson](https://github.com/ibireme/yyjson) (MIT) by YaoYuan: table-driven `\u` decoding and the unrolled checks
+  at fixed offsets in `json_view.hpp`'s parser.
+
+**Ideas we took.** From these we took the idea, not their code, in the order they appear above:
 
 - [serde_json](https://github.com/serde-rs/json) (MIT or Apache-2.0): deriving positions from the offset only on error.
 - Sean Eron Anderson's [Bit Twiddling Hacks](https://graphics.stanford.edu/~seander/bithacks.html) (snippets in the
   public domain): the zero-byte test behind every word-at-a-time scan.
 - [Glaze](https://github.com/stephenberry/glaze) (MIT): skipping indentation in 8-byte steps (`skip_matching_ws`).
-- [simdjson](https://github.com/simdjson/simdjson) (Apache-2.0 or MIT) by Daniel Lemire, Geoff Langdale, John Keiser
-  and contributors: the "lookup4" UTF-8 check (J. Keiser and D. Lemire, "Validating UTF-8 In Less Than One
-  Instruction Per Byte", 2021; adapted code), and the tape that showed what a flat index can do.
 - [SQLite](https://sqlite.org) (public domain): writing short strings with a table loop, as its `jsonAppendString()`
   does.
 - [orjson](https://github.com/ijl/orjson) (Apache-2.0 or MIT; its escape table MPL-2.0) and
   [sonic-rs](https://github.com/cloudwego/sonic-rs) (Apache-2.0), from which orjson adapted it: escape sequences as
   fixed-size table rows (`QUOTE_TAB`).
-- [fast_float](https://github.com/fastfloat/fast_float) (Apache-2.0, MIT or BSL-1.0) by Daniel Lemire and
-  contributors: the Eisel-Lemire algorithm, its table of powers of five, its digit comparison, and eight digits at a
-  time (N. Mushtak and D. Lemire, "Fast number parsing without fallback", 2023; adapted code). W. D. Clinger for the
-  fast path, M. Eisel for the algorithm.
-- [Żmij](https://github.com/vitaut/zmij) (MIT) by Victor Zverovich, with the digit conversion of Xiang JunBo and the
-  SIMD sequence of Dougall Johnson (adapted code: ported to C++11).
+- [simdjson](https://github.com/simdjson/simdjson)'s tape and [yyjson](https://github.com/ibireme/yyjson)'s 16-byte
+  immutable document: a flat index in document order instead of a tree.
 - [Boost.JSON](https://github.com/boostorg/json) (BSL-1.0): switching to a hash table for large objects.
-- [yyjson](https://github.com/ibireme/yyjson) (MIT) by YaoYuan: table-driven `\u` decoding and fixed-offset unrolled
-  checks (adapted code in `json_view.hpp`), and a 16-byte flat document to measure against.
 - [RapidJSON](https://github.com/Tencent/rapidjson) (MIT): the measured reason to keep recursion as the default.
 
 And the people who sent or shaped pull requests: [@gregmarr](https://github.com/gregmarr) reviewed most of them and

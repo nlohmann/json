@@ -21,7 +21,7 @@ import sys
 
 REUSED = {"json_view (reused)", "simdjson DOM"}
 DOCS = ["twitter", "citm_catalog", "canada", "jeopardy", "status"]
-WORKLOADS = ["parse", "traverse", "select", "parse+dump"]
+WORKLOADS = ["parse", "traverse", "select", "parse+dump", "dump"]
 
 
 def parse(path, suffix=""):
@@ -58,10 +58,11 @@ def main():
                 continue
             jv = cell["json_view"]
             order = sorted(cell.items(), key=lambda x: x[1])
-            fresh = {e: v for e, v in cell.items() if e not in REUSED and e != "json_view"}
+            # in dump, every engine writes a document parsed beforehand: nothing is reused
+            fresh = {e: v for e, v in cell.items() if (wl == "dump" or e not in REUSED) and e != "json_view"}
             other, t = min(fresh.items(), key=lambda x: x[1])
             line = "%-13s json_view %10.1f us  fastest other: %s %.2f" % (doc, jv, other, t / jv)
-            if "json_view (reused)" in cell and "simdjson DOM" in cell:
+            if wl != "dump" and "json_view (reused)" in cell and "simdjson DOM" in cell:
                 line += "  | reused: simdjson DOM %.2f" % (cell["simdjson DOM"] / cell["json_view (reused)"])
             print(line)
             print("    " + ", ".join("%s %.2f" % (e, v / jv) for e, v in order))

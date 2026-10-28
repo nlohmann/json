@@ -12,8 +12,8 @@
 // Prints one line per workload: the name and the median of 9 batches in microseconds per call.
 #include <nlohmann/json.hpp>
 #if __has_include(<nlohmann/json_view.hpp>) && !defined(HISTORY_NO_VIEW)
-#include <nlohmann/json_view.hpp>
-#define HISTORY_VIEW 1
+    #include <nlohmann/json_view.hpp>
+    #define HISTORY_VIEW 1
 #endif
 #include <algorithm>
 #include <chrono>
@@ -42,16 +42,25 @@ static void bench(const char* name, const std::function<std::size_t()>& f)
     for (;;)
     {
         auto t0 = clk::now();
-        for (std::size_t i = 0; i < n; ++i) sink = f();
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            sink = f();
+        }
         double dt = std::chrono::duration<double>(clk::now() - t0).count();
-        if (dt > 0.02) break;
+        if (dt > 0.02)
+        {
+            break;
+        }
         n *= 2;
     }
     std::vector<double> v;
     for (int b = 0; b < 9; ++b)
     {
         auto t0 = clk::now();
-        for (std::size_t i = 0; i < n; ++i) sink = f();
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            sink = f();
+        }
         v.push_back(std::chrono::duration<double, std::micro>(clk::now() - t0).count() / n);
     }
     std::sort(v.begin(), v.end());
@@ -62,7 +71,7 @@ int main(int, char** argv)
 {
     std::string d = argv[1];
     const std::string tw = slurp(d + "/twitter.json"), ci = slurp(d + "/citm_catalog.json"),
-                      ca = slurp(d + "/canada.json"), cii = slurp(d + "/citm_compact.json");
+          ca = slurp(d + "/canada.json"), cii = slurp(d + "/citm_compact.json");
     const json jtw = json::parse(tw), jci = json::parse(ci), jca = json::parse(ca);
     const std::vector<std::uint8_t> cbtw = json::to_cbor(jtw);
 

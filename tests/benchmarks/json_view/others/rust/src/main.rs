@@ -7,8 +7,8 @@
 // SPDX-License-Identifier: MIT
 
 // Same workloads and method as bench_all.cpp: parse (build + free), traverse (parse, then visit every
-// value, convert every number, touch every string and key), parse+dump; every engine interleaved, an
-// untimed call before each timed one, best round reported.
+// value, convert every number, touch every string and key), parse+dump, and dump (write a document parsed
+// beforehand); every engine interleaved, an untimed call before each timed one, best round reported.
 // simd-json parses in place, so its timings include copying the input into a mutable buffer.
 use simd_json::prelude::*;
 use std::time::Instant;
@@ -108,6 +108,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     let t = format!("{}/", args[1]);
     let rounds: usize = args.get(2).map(|r| r.parse().unwrap()).unwrap_or(30);
+    let only_workload: String = args.get(3).cloned().unwrap_or_default();
     let mut docs: Vec<(String, String, usize)> = Vec::new();
     for f in ["nativejson-benchmark/twitter.json", "nativejson-benchmark/citm_catalog.json", "nativejson-benchmark/canada.json", "jeopardy/jeopardy.json"] {
         let name = f.split('/').nth(1).unwrap().trim_end_matches(".json").to_string();
@@ -129,7 +130,31 @@ fn main() {
                  name, if same(&r, &a) { "OK" } else { "MISMATCH" }, if same(&r, &b) { "OK" } else { "MISMATCH" }, r.nodes, r.str_, r.num, b.num);
     }
 
+    for (name, text, _) in &docs {
+        // every writer's output must read back as the same values
+        let mut r = Stats::default();
+        walk_serde(&serde_json::from_str(text).unwrap(), &mut r);
+        let mut buf = text.as_bytes().to_vec();
+        let outs = [
+            ("simd-json", simd_json::to_string(&simd_json::to_borrowed_value(&mut buf).unwrap()).unwrap()),
+            ("sonic-rs", sonic_rs::to_string(&sonic_rs::from_str::<sonic_rs::Value>(text).unwrap()).unwrap()),
+            ("serde_json", serde_json::to_string(&serde_json::from_str::<serde_json::Value>(text).unwrap()).unwrap()),
+        ];
+        print!("check {:<13} dump", name);
+        for (n, o) in &outs {
+            let mut st = Stats::default();
+            walk_serde(&serde_json::from_str(o).unwrap(), &mut st);
+            print!(" {}:{}({} bytes)", n, if same(&r, &st) { "OK" } else { "MISMATCH" }, o.len());
+        }
+        println!();
+    }
+
     for (name, s, batch) in &docs {
+        // for dump: each engine's document, parsed once outside the timer
+        let mut dump_buf = s.as_bytes().to_vec();
+        let dump_simd = simd_json::to_borrowed_value(&mut dump_buf).unwrap();
+        let dump_sonic: sonic_rs::Value = sonic_rs::from_str(s).unwrap();
+        let dump_serde: serde_json::Value = serde_json::from_str(s).unwrap();
         type Eng<'a> = (&'static str, Box<dyn Fn() + 'a>);
         let workloads: Vec<(&str, Vec<Eng>)> = vec![
             ("parse", vec![
@@ -147,8 +172,16 @@ fn main() {
                 ("sonic-rs", Box::new(|| { let v: sonic_rs::Value = sonic_rs::from_str(s).unwrap(); let o = sonic_rs::to_string(&v).unwrap(); sink(o.len() as f64); })),
                 ("serde_json", Box::new(|| { let v: serde_json::Value = serde_json::from_str(s).unwrap(); let o = serde_json::to_string(&v).unwrap(); sink(o.len() as f64); })),
             ]),
+            ("dump", vec![
+                ("simd-json", Box::new(|| { let o = simd_json::to_string(&dump_simd).unwrap(); sink(o.len() as f64); })),
+                ("sonic-rs", Box::new(|| { let o = sonic_rs::to_string(&dump_sonic).unwrap(); sink(o.len() as f64); })),
+                ("serde_json", Box::new(|| { let o = serde_json::to_string(&dump_serde).unwrap(); sink(o.len() as f64); })),
+            ]),
         ];
         for (wl, engines) in &workloads {
+            if !only_workload.is_empty() && *wl != only_workload {
+                continue;
+            }
             let r = if s.len() > 10_000_000 { std::cmp::max(3, rounds / 5) } else { rounds };
             let mut best = vec![f64::MAX; engines.len()];
             for _ in 0..r {

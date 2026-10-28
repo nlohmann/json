@@ -16,8 +16,8 @@
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
 #if !BENCH_NO_GLAZE
-#include <glaze/glaze.hpp>
-#include <glaze/json/lazy.hpp>
+    #include <glaze/glaze.hpp>
+    #include <glaze/json/lazy.hpp>
 #endif
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -62,13 +62,25 @@ static void walk(const json& j, stats& st)
             }
             break;
         case json::value_t::array:
-            for (const auto& e : j.get_ref<const json::array_t&>()) walk(e, st);
+            for (const auto& e : j.get_ref<const json::array_t&>())
+            {
+                walk(e, st);
+            }
             break;
-        case json::value_t::string: st.str += j.get_ref<const std::string&>().size(); break;
-        case json::value_t::number_integer: st.num += static_cast<double>(*j.get_ptr<const json::number_integer_t*>()); break;
-        case json::value_t::number_unsigned: st.num += static_cast<double>(*j.get_ptr<const json::number_unsigned_t*>()); break;
-        case json::value_t::number_float: st.num += *j.get_ptr<const json::number_float_t*>(); break;
-        default: break;
+        case json::value_t::string:
+            st.str += j.get_ref<const std::string&>().size();
+            break;
+        case json::value_t::number_integer:
+            st.num += static_cast<double>(*j.get_ptr<const json::number_integer_t*>());
+            break;
+        case json::value_t::number_unsigned:
+            st.num += static_cast<double>(*j.get_ptr<const json::number_unsigned_t*>());
+            break;
+        case json::value_t::number_float:
+            st.num += *j.get_ptr<const json::number_float_t*>();
+            break;
+        default:
+            break;
     }
 }
 
@@ -85,13 +97,25 @@ static void walk(json_view v, stats& st)
             }
             break;
         case json::value_t::array:
-            for (const json_view e : v) walk(e, st);
+            for (const json_view e : v)
+            {
+                walk(e, st);
+            }
             break;
-        case json::value_t::string: st.str += v.get_string().size(); break;
-        case json::value_t::number_integer: st.num += static_cast<double>(v.get<std::int64_t>()); break;
-        case json::value_t::number_unsigned: st.num += static_cast<double>(v.get<std::uint64_t>()); break;
-        case json::value_t::number_float: st.num += v.get<double>(); break;
-        default: break;
+        case json::value_t::string:
+            st.str += v.get_string().size();
+            break;
+        case json::value_t::number_integer:
+            st.num += static_cast<double>(v.get<std::int64_t>());
+            break;
+        case json::value_t::number_unsigned:
+            st.num += static_cast<double>(v.get<std::uint64_t>());
+            break;
+        case json::value_t::number_float:
+            st.num += v.get<double>();
+            break;
+        default:
+            break;
     }
 }
 
@@ -104,7 +128,7 @@ static void walk(yyjson_val* v, stats& st)
         case YYJSON_TYPE_OBJ:
         {
             std::size_t idx, max;
-            yyjson_val *k, *val;
+            yyjson_val* k, * val;
             yyjson_obj_foreach(v, idx, max, k, val)
             {
                 st.str += yyjson_get_len(k);
@@ -119,13 +143,25 @@ static void walk(yyjson_val* v, stats& st)
             yyjson_arr_foreach(v, idx, max, val) walk(val, st);
             break;
         }
-        case YYJSON_TYPE_STR: st.str += yyjson_get_len(v); break;
-        case YYJSON_TYPE_NUM:
-            if (yyjson_is_sint(v)) st.num += static_cast<double>(yyjson_get_sint(v));
-            else if (yyjson_is_uint(v)) st.num += static_cast<double>(yyjson_get_uint(v));
-            else st.num += yyjson_get_real(v);
+        case YYJSON_TYPE_STR:
+            st.str += yyjson_get_len(v);
             break;
-        default: break;
+        case YYJSON_TYPE_NUM:
+            if (yyjson_is_sint(v))
+            {
+                st.num += static_cast<double>(yyjson_get_sint(v));
+            }
+            else if (yyjson_is_uint(v))
+            {
+                st.num += static_cast<double>(yyjson_get_uint(v));
+            }
+            else
+            {
+                st.num += yyjson_get_real(v);
+            }
+            break;
+        default:
+            break;
     }
 }
 
@@ -143,13 +179,25 @@ static void walk(simdjson::dom::element e, stats& st)
             }
             break;
         case simdjson::dom::element_type::ARRAY:
-            for (auto c : simdjson::dom::array(e)) walk(c, st);
+            for (auto c : simdjson::dom::array(e))
+            {
+                walk(c, st);
+            }
             break;
-        case simdjson::dom::element_type::STRING: st.str += std::string_view(e).size(); break;
-        case simdjson::dom::element_type::INT64: st.num += static_cast<double>(int64_t(e)); break;
-        case simdjson::dom::element_type::UINT64: st.num += static_cast<double>(uint64_t(e)); break;
-        case simdjson::dom::element_type::DOUBLE: st.num += double(e); break;
-        default: break;
+        case simdjson::dom::element_type::STRING:
+            st.str += std::string_view(e).size();
+            break;
+        case simdjson::dom::element_type::INT64:
+            st.num += static_cast<double>(int64_t(e));
+            break;
+        case simdjson::dom::element_type::UINT64:
+            st.num += static_cast<double>(uint64_t(e));
+            break;
+        case simdjson::dom::element_type::DOUBLE:
+            st.num += double(e);
+            break;
+        default:
+            break;
     }
 }
 
@@ -166,22 +214,37 @@ static void walk_od(simdjson::ondemand::value v, stats& st)
             }
             break;
         case simdjson::ondemand::json_type::array:
-            for (auto c : v.get_array()) walk_od(c.value(), st);
+            for (auto c : v.get_array())
+            {
+                walk_od(c.value(), st);
+            }
             break;
-        case simdjson::ondemand::json_type::string: st.str += std::string_view(v.get_string()).size(); break;
+        case simdjson::ondemand::json_type::string:
+            st.str += std::string_view(v.get_string()).size();
+            break;
         case simdjson::ondemand::json_type::number:
         {
             simdjson::ondemand::number n = v.get_number();
             switch (n.get_number_type())
             {
-                case simdjson::ondemand::number_type::signed_integer: st.num += static_cast<double>(n.get_int64()); break;
-                case simdjson::ondemand::number_type::unsigned_integer: st.num += static_cast<double>(n.get_uint64()); break;
-                default: st.num += n.get_double(); break;
+                case simdjson::ondemand::number_type::signed_integer:
+                    st.num += static_cast<double>(n.get_int64());
+                    break;
+                case simdjson::ondemand::number_type::unsigned_integer:
+                    st.num += static_cast<double>(n.get_uint64());
+                    break;
+                default:
+                    st.num += n.get_double();
+                    break;
             }
             break;
         }
-        case simdjson::ondemand::json_type::boolean: (void)bool(v.get_bool()); break;
-        default: (void)v.is_null(); break;
+        case simdjson::ondemand::json_type::boolean:
+            (void)bool(v.get_bool());
+            break;
+        default:
+            (void)v.is_null();
+            break;
     }
 }
 
@@ -199,15 +262,30 @@ static void walk(const rapidjson::Value& v, stats& st)
             }
             break;
         case rapidjson::kArrayType:
-            for (const auto& e : v.GetArray()) walk(e, st);
+            for (const auto& e : v.GetArray())
+            {
+                walk(e, st);
+            }
             break;
-        case rapidjson::kStringType: st.str += v.GetStringLength(); break;
+        case rapidjson::kStringType:
+            st.str += v.GetStringLength();
+            break;
         case rapidjson::kNumberType:
-            if (v.IsDouble()) st.num += v.GetDouble();
-            else if (v.IsInt64()) st.num += static_cast<double>(v.GetInt64());
-            else st.num += static_cast<double>(v.GetUint64());
+            if (v.IsDouble())
+            {
+                st.num += v.GetDouble();
+            }
+            else if (v.IsInt64())
+            {
+                st.num += static_cast<double>(v.GetInt64());
+            }
+            else
+            {
+                st.num += static_cast<double>(v.GetUint64());
+            }
             break;
-        default: break;
+        default:
+            break;
     }
 }
 
@@ -226,7 +304,10 @@ static void walk_sonic(const N& v, stats& st)
     }
     else if (v.IsArray())
     {
-        for (auto e = v.Begin(); e != v.End(); ++e) walk_sonic(*e, st);
+        for (auto e = v.Begin(); e != v.End(); ++e)
+        {
+            walk_sonic(*e, st);
+        }
     }
     else if (v.IsString())
     {
@@ -234,9 +315,18 @@ static void walk_sonic(const N& v, stats& st)
     }
     else if (v.IsNumber())
     {
-        if (v.IsDouble()) st.num += v.GetDouble();
-        else if (v.IsUint64()) st.num += static_cast<double>(v.GetUint64());
-        else st.num += static_cast<double>(v.GetInt64());
+        if (v.IsDouble())
+        {
+            st.num += v.GetDouble();
+        }
+        else if (v.IsUint64())
+        {
+            st.num += static_cast<double>(v.GetUint64());
+        }
+        else
+        {
+            st.num += static_cast<double>(v.GetInt64());
+        }
     }
 }
 
@@ -245,7 +335,7 @@ static void walk_sonic(const N& v, stats& st)
 static void walk(const glz::generic_u64& j, stats& st)
 {
     ++st.nodes;
-    std::visit([&](const auto& x)
+    std::visit([&](const auto & x)
     {
         using T = std::decay_t<decltype(x)>;
         if constexpr (std::is_same_v<T, glz::generic_u64::object_t>)
@@ -258,10 +348,19 @@ static void walk(const glz::generic_u64& j, stats& st)
         }
         else if constexpr (std::is_same_v<T, glz::generic_u64::array_t>)
         {
-            for (const auto& e : x) walk(e, st);
+            for (const auto& e : x)
+            {
+                walk(e, st);
+            }
         }
-        else if constexpr (std::is_same_v<T, std::string>) st.str += x.size();
-        else if constexpr (std::is_same_v<T, double> || std::is_same_v<T, std::int64_t> || std::is_same_v<T, std::uint64_t>) st.num += static_cast<double>(x);
+        else if constexpr (std::is_same_v<T, std::string>)
+        {
+            st.str += x.size();
+        }
+        else if constexpr (std::is_same_v<T, double> || std::is_same_v<T, std::int64_t> || std::is_same_v<T, std::uint64_t>)
+        {
+            st.num += static_cast<double>(x);
+        }
     }, j.data);
 }
 
@@ -279,7 +378,10 @@ static void walk_lazy(const V& v, stats& st)
     }
     else if (v.is_array())
     {
-        for (auto item : v) walk_lazy(item, st);
+        for (auto item : v)
+        {
+            walk_lazy(item, st);
+        }
     }
     else if (v.is_string())
     {
@@ -288,9 +390,18 @@ static void walk_lazy(const V& v, stats& st)
     else if (v.is_number())
     {
         const std::string_view raw = v.raw_json();
-        if (raw.find_first_of(".eE") != std::string_view::npos) st.num += v.template get<double>().value();
-        else if (raw[0] == '-') st.num += static_cast<double>(v.template get<std::int64_t>().value());
-        else st.num += static_cast<double>(v.template get<std::uint64_t>().value());
+        if (raw.find_first_of(".eE") != std::string_view::npos)
+        {
+            st.num += v.template get<double>().value();
+        }
+        else if (raw[0] == '-')
+        {
+            st.num += static_cast<double>(v.template get<std::int64_t>().value());
+        }
+        else
+        {
+            st.num += static_cast<double>(v.template get<std::uint64_t>().value());
+        }
     }
 }
 
@@ -310,13 +421,25 @@ static void walk(const boost::json::value& v, stats& st)
             }
             break;
         case boost::json::kind::array:
-            for (const auto& c : v.get_array()) walk(c, st);
+            for (const auto& c : v.get_array())
+            {
+                walk(c, st);
+            }
             break;
-        case boost::json::kind::string: st.str += v.get_string().size(); break;
-        case boost::json::kind::int64: st.num += static_cast<double>(v.get_int64()); break;
-        case boost::json::kind::uint64: st.num += static_cast<double>(v.get_uint64()); break;
-        case boost::json::kind::double_: st.num += v.get_double(); break;
-        default: break;
+        case boost::json::kind::string:
+            st.str += v.get_string().size();
+            break;
+        case boost::json::kind::int64:
+            st.num += static_cast<double>(v.get_int64());
+            break;
+        case boost::json::kind::uint64:
+            st.num += static_cast<double>(v.get_uint64());
+            break;
+        case boost::json::kind::double_:
+            st.num += v.get_double();
+            break;
+        default:
+            break;
     }
 }
 
@@ -558,15 +681,50 @@ static double pick_od(const std::string& name, simdjson::ondemand::document& d)
 // Glaze reading into structs that declare only the fields the selection uses; unknown keys are skipped
 namespace sel
 {
-struct user { std::string screen_name; };
-struct status { std::uint64_t id{}; sel::user user; std::int64_t retweet_count{}; };
-struct twitter { std::vector<status> statuses; };
-struct performance { std::uint64_t id{}; std::uint64_t eventId{}; std::vector<glz::raw_json_view> seatCategories; };
-struct citm { std::map<std::string, glz::raw_json_view> events; std::vector<performance> performances; };
-struct geometry { std::string type; std::vector<glz::raw_json_view> coordinates; };
-struct feature { sel::geometry geometry; };
-struct canada { std::string type; std::vector<feature> features; };
-struct question { std::string category; std::string round; };
+struct user
+{
+    std::string screen_name;
+};
+struct status
+{
+    std::uint64_t id{};
+    sel::user user;
+    std::int64_t retweet_count{};
+};
+struct twitter
+{
+    std::vector<status> statuses;
+};
+struct performance
+{
+    std::uint64_t id{};
+    std::uint64_t eventId{};
+    std::vector<glz::raw_json_view> seatCategories;
+};
+struct citm
+{
+    std::map<std::string, glz::raw_json_view> events;
+    std::vector<performance> performances;
+};
+struct geometry
+{
+    std::string type;
+    std::vector<glz::raw_json_view> coordinates;
+};
+struct feature
+{
+    sel::geometry geometry;
+};
+struct canada
+{
+    std::string type;
+    std::vector<feature> features;
+};
+struct question
+{
+    std::string category;
+    std::string round;
+};
 }
 
 constexpr glz::opts sel_opts{.error_on_unknown_keys = false};
@@ -576,7 +734,7 @@ static double pick_glaze_structs(const std::string& name, const std::string& s)
     double acc = 0;
     if (name == "twitter" || name == "status")
     {
-        auto one = [&](const sel::status& x)
+        auto one = [&](const sel::status & x)
         {
             acc += static_cast<double>(x.id);
             acc += static_cast<double>(x.user.screen_name.size());
@@ -585,33 +743,54 @@ static double pick_glaze_structs(const std::string& name, const std::string& s)
         if (name == "twitter")
         {
             sel::twitter t;
-            if (glz::read<sel_opts>(t, s)) return -1;
-            for (const auto& x : t.statuses) one(x);
+            if (glz::read<sel_opts>(t, s))
+            {
+                return -1;
+            }
+            for (const auto& x : t.statuses)
+            {
+                one(x);
+            }
         }
         else
         {
             sel::status x;
-            if (glz::read<sel_opts>(x, s)) return -1;
+            if (glz::read<sel_opts>(x, s))
+            {
+                return -1;
+            }
             one(x);
         }
     }
     else if (name == "citm_catalog")
     {
         sel::citm c;
-        if (glz::read<sel_opts>(c, s)) return -1;
-        for (const auto& p : c.performances) acc += static_cast<double>(p.id + p.eventId + p.seatCategories.size());
+        if (glz::read<sel_opts>(c, s))
+        {
+            return -1;
+        }
+        for (const auto& p : c.performances)
+        {
+            acc += static_cast<double>(p.id + p.eventId + p.seatCategories.size());
+        }
         acc += static_cast<double>(c.events.size());
     }
     else if (name == "canada")
     {
         sel::canada c;
-        if (glz::read<sel_opts>(c, s)) return -1;
+        if (glz::read<sel_opts>(c, s))
+        {
+            return -1;
+        }
         acc += static_cast<double>(c.type.size() + c.features[0].geometry.type.size() + c.features[0].geometry.coordinates.size());
     }
     else if (name == "jeopardy")
     {
         std::vector<sel::question> q;
-        if (glz::read<sel_opts>(q, s)) return -1;
+        if (glz::read<sel_opts>(q, s))
+        {
+            return -1;
+        }
         for (const auto& x : q)
         {
             acc += x.round == "Final Jeopardy!" ? 1 : 0;
@@ -625,7 +804,7 @@ template<class D>
 static double pick_glaze_lazy(const std::string& name, const D& d)
 {
     double acc = 0;
-    auto one = [&](const auto& x)
+    auto one = [&](const auto & x)
     {
         acc += static_cast<double>(x["id"].template get<std::uint64_t>().value());
         acc += static_cast<double>(x["user"]["screen_name"].template get<std::string>().value().size());
@@ -633,7 +812,10 @@ static double pick_glaze_lazy(const std::string& name, const D& d)
     };
     if (name == "twitter")
     {
-        for (auto x : d["statuses"]) one(x);
+        for (auto x : d["statuses"])
+        {
+            one(x);
+        }
     }
     else if (name == "status")
     {
@@ -642,7 +824,9 @@ static double pick_glaze_lazy(const std::string& name, const D& d)
     else if (name == "citm_catalog")
     {
         for (auto p : d["performances"])
+        {
             acc += static_cast<double>(p["id"].template get<std::uint64_t>().value() + p["eventId"].template get<std::uint64_t>().value() + p["seatCategories"].size());
+        }
         acc += static_cast<double>(d["events"].size());
     }
     else if (name == "canada")
@@ -687,14 +871,17 @@ int main(int argc, char** argv)
 {
     const std::string T = std::string(argv[1]) + "/";
     const int rounds = argc > 2 ? std::atoi(argv[2]) : 30;
-    const std::string only = argc > 3 ? argv[3] : "";   // time only this document (the check covers all)
+    const std::string only = argc > 3 ? argv[3] : "";   // time only this document (the check covers all); "" for all
+    const std::string only_workload = argc > 4 ? argv[4] : "";   // time only this workload
     struct doc
     {
         std::string name, text;
         int batch;
     };
     std::vector<doc> docs;
-    for (const char* f : {"nativejson-benchmark/twitter.json", "nativejson-benchmark/citm_catalog.json", "nativejson-benchmark/canada.json", "jeopardy/jeopardy.json"})
+    for (const char* f :
+            {"nativejson-benchmark/twitter.json", "nativejson-benchmark/citm_catalog.json", "nativejson-benchmark/canada.json", "jeopardy/jeopardy.json"
+            })
     {
         std::string n = std::string(f).substr(std::string(f).find('/') + 1);
         docs.push_back({n.substr(0, n.size() - 5), slurp(T + f), 1});
@@ -708,31 +895,97 @@ int main(int argc, char** argv)
         stats ref;
         walk(json::parse(dc.text), ref);
         std::vector<std::pair<std::string, stats>> got(9, {"(not built)", stats{}});
-        { auto d = json_document::parse(dc.text); walk(d.root(), got[0].second); got[0].first = "json_view"; }
-        { yyjson_doc* d = yyjson_read(dc.text.data(), dc.text.size(), 0); walk(yyjson_doc_get_root(d), got[1].second); yyjson_doc_free(d); got[1].first = "yyjson"; }
-        { simdjson::dom::parser p; walk(p.parse(dc.text).value(), got[2].second); got[2].first = "simdjson DOM"; }
-        { simdjson::ondemand::parser p; simdjson::padded_string ps(dc.text); auto d = p.iterate(ps).value(); walk_od(d.get_value().value(), got[3].second); got[3].first = "simdjson OD"; }
-        { rapidjson::Document d; d.Parse<rj_flags>(dc.text.data(), dc.text.size()); if (d.HasParseError()) std::puts("RapidJSON parse error"); walk(d, got[4].second); got[4].first = "RapidJSON"; }
-        { rapidjson::Document d; d.Parse(dc.text.data(), dc.text.size()); stats x; walk(d, x); std::printf("info %-13s RapidJSON default flags: sum %s\n", dc.name.c_str(), x.num == got[0].second.num ? "exact" : "differs from the correctly rounded one"); }
-        { sonic_json::Document d; d.Parse(dc.text.data(), dc.text.size()); if (d.HasParseError()) std::puts("sonic parse error"); walk_sonic(d, got[5].second); got[5].first = "sonic-cpp"; }
+        {
+            auto d = json_document::parse(dc.text);
+            walk(d.root(), got[0].second);
+            got[0].first = "json_view";
+        }
+        {
+            yyjson_doc* d = yyjson_read(dc.text.data(), dc.text.size(), 0);
+            walk(yyjson_doc_get_root(d), got[1].second);
+            yyjson_doc_free(d);
+            got[1].first = "yyjson";
+        }
+        {
+            simdjson::dom::parser p;
+            walk(p.parse(dc.text).value(), got[2].second);
+            got[2].first = "simdjson DOM";
+        }
+        {
+            simdjson::ondemand::parser p;
+            simdjson::padded_string ps(dc.text);
+            auto d = p.iterate(ps).value();
+            walk_od(d.get_value().value(), got[3].second);
+            got[3].first = "simdjson OD";
+        }
+        {
+            rapidjson::Document d;
+            d.Parse<rj_flags>(dc.text.data(), dc.text.size());
+            if (d.HasParseError())
+            {
+                std::puts("RapidJSON parse error");
+            }
+            walk(d, got[4].second);
+            got[4].first = "RapidJSON";
+        }
+        {
+            rapidjson::Document d;
+            d.Parse(dc.text.data(), dc.text.size());
+            stats x;
+            walk(d, x);
+            std::printf("info %-13s RapidJSON default flags: sum %s\n", dc.name.c_str(), x.num == got[0].second.num ? "exact" : "differs from the correctly rounded one");
+        }
+        {
+            sonic_json::Document d;
+            d.Parse(dc.text.data(), dc.text.size());
+            if (d.HasParseError())
+            {
+                std::puts("sonic parse error");
+            }
+            walk_sonic(d, got[5].second);
+            got[5].first = "sonic-cpp";
+        }
 #if !BENCH_NO_GLAZE
-        { glz::generic_u64 j; auto ec = glz::read_json(j, dc.text); if (ec) std::puts("glaze parse error"); walk(j, got[6].second); got[6].first = "Glaze generic"; }
+        {
+            glz::generic_u64 j;
+            auto ec = glz::read_json(j, dc.text);
+            if (ec)
+            {
+                std::puts("glaze parse error");
+            }
+            walk(j, got[6].second);
+            got[6].first = "Glaze generic";
+        }
 #endif
 #if !BENCH_NO_GLAZE
-        { auto r = glz::lazy_json(dc.text); walk_lazy(r->root(), got[7].second); got[7].first = "Glaze lazy"; }
+        {
+            auto r = glz::lazy_json(dc.text);
+            walk_lazy(r->root(), got[7].second);
+            got[7].first = "Glaze lazy";
+        }
 #endif
-        { auto v = boost::json::parse(dc.text); walk(v, got[8].second); got[8].first = "Boost.JSON"; }
+        {
+            auto v = boost::json::parse(dc.text);
+            walk(v, got[8].second);
+            got[8].first = "Boost.JSON";
+        }
         std::printf("check %-13s", dc.name.c_str());
         for (const auto& g : got)
         {
-            if (g.first == "(not built)") continue;
+            if (g.first == "(not built)")
+            {
+                continue;
+            }
             const bool ok = same(ref, g.second);
             all_ok = all_ok && ok;
             // every engine but json::parse (std::map order) visits the values in document order, so their sums
             // must be bit-identical to json_view's if every number was converted to the same double
             const bool exact = g.second.num == got[0].second.num;
             std::printf(" %s:%s%s", g.first.c_str(), ok ? "OK" : "MISMATCH", exact ? "" : "(inexact)");
-            if (!ok) std::printf("(nodes %zu/%zu str %zu/%zu num %.17g/%.17g)", g.second.nodes, ref.nodes, g.second.str, ref.str, g.second.num, ref.num);
+            if (!ok)
+            {
+                std::printf("(nodes %zu/%zu str %zu/%zu num %.17g/%.17g)", g.second.nodes, ref.nodes, g.second.str, ref.str, g.second.num, ref.num);
+            }
         }
         std::printf("\n");
     }
@@ -758,78 +1011,186 @@ int main(int argc, char** argv)
         all_ok = all_ok && ok;
         std::printf("check %-13s select %s (json_view %.17g yyjson %.17g OD %.17g Glaze structs %.17g lazy %.17g)\n", dc.name.c_str(), ok ? "OK" : "MISMATCH", ref, py, po, pg, pl);
     }
-    if (!all_ok) std::printf("WARNING: some engines disagree, see above\n");
+    for (const auto& dc : docs)
+    {
+        // every writer's output must read back as the same values; all but json::dump (std::map order) keep the
+        // document order, so their sums must be bit-identical to the input's: no float may change when written
+        const auto in = json_document::parse(dc.text);
+        stats ref;
+        walk(in.root(), ref);
+        std::vector<std::pair<std::string, std::string>> out;
+        out.push_back({"json_view", in.root().dump()});
+        {
+            yyjson_doc* d = yyjson_read(dc.text.data(), dc.text.size(), 0);
+            std::size_t n = 0;
+            char* o = yyjson_write(d, 0, &n);
+            out.push_back({"yyjson", std::string(o, n)});
+            std::free(o);
+            yyjson_doc_free(d);
+        }
+        {
+            simdjson::dom::parser p;
+            out.push_back({"simdjson DOM", simdjson::to_string(p.parse(dc.text).value())});
+        }
+        {
+            rapidjson::Document d;
+            d.Parse<rj_flags>(dc.text.data(), dc.text.size());
+            rapidjson::StringBuffer sb;
+            rapidjson::Writer<rapidjson::StringBuffer> w(sb);
+            d.Accept(w);
+            out.push_back({"RapidJSON", std::string(sb.GetString(), sb.GetSize())});
+        }
+        {
+            sonic_json::Document d;
+            d.Parse(dc.text.data(), dc.text.size());
+            sonic_json::WriteBuffer wb;
+            d.Serialize(wb);
+            out.push_back({"sonic-cpp", std::string(wb.ToString(), wb.Size())});
+        }
+#if !BENCH_NO_GLAZE
+        {
+            glz::generic_u64 j;
+            (void)glz::read_json(j, dc.text);
+            std::string o;
+            (void)glz::write_json(j, o);
+            out.push_back({"Glaze generic", o});
+        }
+#endif
+        {
+            auto v = boost::json::parse(dc.text);
+            out.push_back({"Boost.JSON", boost::json::serialize(v)});
+        }
+        out.push_back({"json::dump", json::parse(dc.text).dump()});
+        std::printf("check %-13s dump", dc.name.c_str());
+        for (const auto& o : out)
+        {
+            stats st;
+            bool ok = true;
+            try
+            {
+                const auto back = json_document::parse(o.second);
+                walk(back.root(), st);
+            }
+            catch (...)
+            {
+                ok = false;
+            }
+            ok = ok && (o.first == "json::dump" ? same(ref, st) : st.nodes == ref.nodes && st.str == ref.str && st.num == ref.num);
+            all_ok = all_ok && ok;
+            std::printf(" %s:%s(%zu bytes)", o.first.c_str(), ok ? "OK" : "MISMATCH", o.second.size());
+        }
+        std::printf("\n");
+    }
+    if (!all_ok)
+    {
+        std::printf("WARNING: some engines disagree, see above\n");
+    }
 
     json_document reused;   // read() reuses its memory, as simdjson DOM reuses its parser
     simdjson::dom::parser sj;
     simdjson::ondemand::parser od;
     for (const auto& dc : docs)
     {
-        if (!only.empty() && dc.name != only) continue;
+        if (!only.empty() && dc.name != only)
+        {
+            continue;
+        }
         const std::string& s = dc.text;
         const simdjson::padded_string ps(s);
+        // for dump: each engine's document, parsed once outside the timer
+        const json_document dump_view = json_document::parse(s);
+        yyjson_doc* const dump_yy = yyjson_read(s.data(), s.size(), 0);
+        simdjson::dom::parser dump_sj_parser;
+        const simdjson::dom::element dump_sj = dump_sj_parser.parse(ps).value_unsafe();
+        rapidjson::Document dump_rj;
+        dump_rj.Parse<rj_flags>(s.data(), s.size());
+        sonic_json::Document dump_sonic;
+        dump_sonic.Parse(s.data(), s.size());
+#if !BENCH_NO_GLAZE
+        glz::generic_u64 dump_glaze;
+        (void)glz::read_json(dump_glaze, s);
+#endif
+        boost::json::monotonic_resource dump_mr;
+        const boost::json::value dump_boost = boost::json::parse(s, &dump_mr);
+        const json dump_json = json::parse(s);
         std::vector<std::pair<std::string, std::vector<engine>>> workloads;
         workloads.push_back({"parse", {
-            {"json_view", [&] { auto d = json_document::parse(s); g_sink = static_cast<double>(d.node_count()); }},
-            {"json_view (reused)", [&] { reused.read(s); g_sink = static_cast<double>(reused.node_count()); }},
-            {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); g_sink = static_cast<double>(yyjson_doc_get_val_count(d)); yyjson_doc_free(d); }},
-            {"simdjson DOM", [&] { auto e = sj.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
-            {"simdjson DOM (fresh)", [&] { simdjson::dom::parser p; auto e = p.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
-            {"RapidJSON", [&] { rapidjson::Document d; d.Parse<rj_flags>(s.data(), s.size()); g_sink = d.IsObject(); }},
-            {"RapidJSON (default flags)", [&] { rapidjson::Document d; d.Parse(s.data(), s.size()); g_sink = d.IsObject(); }},
-            {"RapidJSON (in situ, with copy)", [&] { std::string c = s; rapidjson::Document d; d.ParseInsitu<rj_flags>(&c[0]); g_sink = d.IsObject(); }},
-            {"sonic-cpp", [&] { sonic_json::Document d; d.Parse(s.data(), s.size()); g_sink = d.IsObject(); }},
+                {"json_view", [&] { auto d = json_document::parse(s); g_sink = static_cast<double>(d.node_count()); }},
+                {"json_view (reused)", [&] { reused.read(s); g_sink = static_cast<double>(reused.node_count()); }},
+                {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); g_sink = static_cast<double>(yyjson_doc_get_val_count(d)); yyjson_doc_free(d); }},
+                {"simdjson DOM", [&] { auto e = sj.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
+                {"simdjson DOM (fresh)", [&] { simdjson::dom::parser p; auto e = p.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
+                {"RapidJSON", [&] { rapidjson::Document d; d.Parse<rj_flags>(s.data(), s.size()); g_sink = d.IsObject(); }},
+                {"RapidJSON (default flags)", [&] { rapidjson::Document d; d.Parse(s.data(), s.size()); g_sink = d.IsObject(); }},
+                {"RapidJSON (in situ, with copy)", [&] { std::string c = s; rapidjson::Document d; d.ParseInsitu<rj_flags>(&c[0]); g_sink = d.IsObject(); }},
+                {"sonic-cpp", [&] { sonic_json::Document d; d.Parse(s.data(), s.size()); g_sink = d.IsObject(); }},
 #if !BENCH_NO_GLAZE
-            {"Glaze generic", [&] { glz::generic_u64 j; auto ec = glz::read_json(j, s); g_sink = static_cast<double>(bool(ec)); }},
+                {"Glaze generic", [&] { glz::generic_u64 j; auto ec = glz::read_json(j, s); g_sink = static_cast<double>(bool(ec)); }},
 #endif
-            {"Boost.JSON", [&] { boost::json::monotonic_resource mr; auto v = boost::json::parse(s, &mr); g_sink = v.is_object(); }},
-            {"json::parse", [&] { json j = json::parse(s); g_sink = static_cast<double>(j.size()); }},
-        }});
+                {"Boost.JSON", [&] { boost::json::monotonic_resource mr; auto v = boost::json::parse(s, &mr); g_sink = v.is_object(); }},
+                {"json::parse", [&] { json j = json::parse(s); g_sink = static_cast<double>(j.size()); }},
+            }});
         workloads.push_back({"traverse", {
-            {"json_view", [&] { auto d = json_document::parse(s); stats st; walk(d.root(), st); g_sink = st.num; }},
-            {"json_view (reused)", [&] { reused.read(s); stats st; walk(reused.root(), st); g_sink = st.num; }},
-            {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); stats st; walk(yyjson_doc_get_root(d), st); g_sink = st.num; yyjson_doc_free(d); }},
-            {"simdjson DOM", [&] { stats st; walk(sj.parse(ps).value_unsafe(), st); g_sink = st.num; }},
-            {"simdjson OD", [&] { auto d = od.iterate(ps).value_unsafe(); stats st; walk_od(d.get_value().value_unsafe(), st); g_sink = st.num; }},
-            {"RapidJSON", [&] { rapidjson::Document d; d.Parse<rj_flags>(s.data(), s.size()); stats st; walk(d, st); g_sink = st.num; }},
-            {"RapidJSON (default flags)", [&] { rapidjson::Document d; d.Parse(s.data(), s.size()); stats st; walk(d, st); g_sink = st.num; }},
-            {"sonic-cpp", [&] { sonic_json::Document d; d.Parse(s.data(), s.size()); stats st; walk_sonic(d, st); g_sink = st.num; }},
+                {"json_view", [&] { auto d = json_document::parse(s); stats st; walk(d.root(), st); g_sink = st.num; }},
+                {"json_view (reused)", [&] { reused.read(s); stats st; walk(reused.root(), st); g_sink = st.num; }},
+                {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); stats st; walk(yyjson_doc_get_root(d), st); g_sink = st.num; yyjson_doc_free(d); }},
+                {"simdjson DOM", [&] { stats st; walk(sj.parse(ps).value_unsafe(), st); g_sink = st.num; }},
+                {"simdjson OD", [&] { auto d = od.iterate(ps).value_unsafe(); stats st; walk_od(d.get_value().value_unsafe(), st); g_sink = st.num; }},
+                {"RapidJSON", [&] { rapidjson::Document d; d.Parse<rj_flags>(s.data(), s.size()); stats st; walk(d, st); g_sink = st.num; }},
+                {"RapidJSON (default flags)", [&] { rapidjson::Document d; d.Parse(s.data(), s.size()); stats st; walk(d, st); g_sink = st.num; }},
+                {"sonic-cpp", [&] { sonic_json::Document d; d.Parse(s.data(), s.size()); stats st; walk_sonic(d, st); g_sink = st.num; }},
 #if !BENCH_NO_GLAZE
-            {"Glaze generic", [&] { glz::generic_u64 j; auto ec = glz::read_json(j, s); stats st; walk(j, st); g_sink = st.num + static_cast<double>(bool(ec)); }},
+                {"Glaze generic", [&] { glz::generic_u64 j; auto ec = glz::read_json(j, s); stats st; walk(j, st); g_sink = st.num + static_cast<double>(bool(ec)); }},
 #endif
 #if !BENCH_NO_GLAZE
-            {"Glaze lazy", [&] { auto r = glz::lazy_json(s); stats st; walk_lazy(r->root(), st); g_sink = st.num; }},
+                {"Glaze lazy", [&] { auto r = glz::lazy_json(s); stats st; walk_lazy(r->root(), st); g_sink = st.num; }},
 #endif
-            {"Boost.JSON", [&] { boost::json::monotonic_resource mr; auto v = boost::json::parse(s, &mr); stats st; walk(v, st); g_sink = st.num; }},
-            {"json::parse", [&] { json j = json::parse(s); stats st; walk(j, st); g_sink = st.num; }},
-        }});
+                {"Boost.JSON", [&] { boost::json::monotonic_resource mr; auto v = boost::json::parse(s, &mr); stats st; walk(v, st); g_sink = st.num; }},
+                {"json::parse", [&] { json j = json::parse(s); stats st; walk(j, st); g_sink = st.num; }},
+            }});
         {
             const std::string name = dc.name;
             workloads.push_back({"select", {
-                {"json_view", [&, name] { auto d = json_document::parse(s); g_sink = pick(name, d.root()); }},
-                {"json_view (reused)", [&, name] { reused.read(s); g_sink = pick(name, reused.root()); }},
-                {"yyjson", [&, name] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); g_sink = pick(name, yyjson_doc_get_root(d)); yyjson_doc_free(d); }},
-                {"simdjson OD", [&, name] { auto d = od.iterate(ps).value_unsafe(); g_sink = pick_od(name, d); }},
+                    {"json_view", [&, name] { auto d = json_document::parse(s); g_sink = pick(name, d.root()); }},
+                    {"json_view (reused)", [&, name] { reused.read(s); g_sink = pick(name, reused.root()); }},
+                    {"yyjson", [&, name] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); g_sink = pick(name, yyjson_doc_get_root(d)); yyjson_doc_free(d); }},
+                    {"simdjson OD", [&, name] { auto d = od.iterate(ps).value_unsafe(); g_sink = pick_od(name, d); }},
 #if !BENCH_NO_GLAZE
-                {"Glaze structs", [&, name] { g_sink = pick_glaze_structs(name, s); }},
-                {"Glaze lazy", [&, name] { auto r = glz::lazy_json(s); g_sink = pick_glaze_lazy(name, *r); }},
+                    {"Glaze structs", [&, name] { g_sink = pick_glaze_structs(name, s); }},
+                    {"Glaze lazy", [&, name] { auto r = glz::lazy_json(s); g_sink = pick_glaze_lazy(name, *r); }},
 #endif
-            }});
+                }});
         }
         workloads.push_back({"parse+dump", {
-            {"json_view", [&] { auto d = json_document::parse(s); std::string o = d.root().dump(); g_sink = static_cast<double>(o.size()); }},
-            {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); std::size_t n = 0; char* o = yyjson_write(d, 0, &n); g_sink = static_cast<double>(n); std::free(o); yyjson_doc_free(d); }},
-            {"simdjson DOM", [&] { std::string o = simdjson::to_string(sj.parse(ps).value_unsafe()); g_sink = static_cast<double>(o.size()); }},
-            {"RapidJSON", [&] { rapidjson::Document d; d.Parse<rj_flags>(s.data(), s.size()); rapidjson::StringBuffer sb; rapidjson::Writer<rapidjson::StringBuffer> w(sb); d.Accept(w); g_sink = static_cast<double>(sb.GetSize()); }},
-            {"sonic-cpp", [&] { sonic_json::Document d; d.Parse(s.data(), s.size()); sonic_json::WriteBuffer wb; d.Serialize(wb); g_sink = static_cast<double>(wb.Size()); }},
+                {"json_view", [&] { auto d = json_document::parse(s); std::string o = d.root().dump(); g_sink = static_cast<double>(o.size()); }},
+                {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); std::size_t n = 0; char* o = yyjson_write(d, 0, &n); g_sink = static_cast<double>(n); std::free(o); yyjson_doc_free(d); }},
+                {"simdjson DOM", [&] { std::string o = simdjson::to_string(sj.parse(ps).value_unsafe()); g_sink = static_cast<double>(o.size()); }},
+                {"RapidJSON", [&] { rapidjson::Document d; d.Parse<rj_flags>(s.data(), s.size()); rapidjson::StringBuffer sb; rapidjson::Writer<rapidjson::StringBuffer> w(sb); d.Accept(w); g_sink = static_cast<double>(sb.GetSize()); }},
+                {"sonic-cpp", [&] { sonic_json::Document d; d.Parse(s.data(), s.size()); sonic_json::WriteBuffer wb; d.Serialize(wb); g_sink = static_cast<double>(wb.Size()); }},
 #if !BENCH_NO_GLAZE
-            {"Glaze generic", [&] { glz::generic_u64 j; (void)glz::read_json(j, s); std::string o; (void)glz::write_json(j, o); g_sink = static_cast<double>(o.size()); }},
+                {"Glaze generic", [&] { glz::generic_u64 j; (void)glz::read_json(j, s); std::string o; (void)glz::write_json(j, o); g_sink = static_cast<double>(o.size()); }},
 #endif
-            {"Boost.JSON", [&] { boost::json::monotonic_resource mr; auto v = boost::json::parse(s, &mr); std::string o = boost::json::serialize(v); g_sink = static_cast<double>(o.size()); }},
-            {"json::parse", [&] { json j = json::parse(s); std::string o = j.dump(); g_sink = static_cast<double>(o.size()); }},
-        }});
+                {"Boost.JSON", [&] { boost::json::monotonic_resource mr; auto v = boost::json::parse(s, &mr); std::string o = boost::json::serialize(v); g_sink = static_cast<double>(o.size()); }},
+                {"json::parse", [&] { json j = json::parse(s); std::string o = j.dump(); g_sink = static_cast<double>(o.size()); }},
+            }});
+        workloads.push_back({"dump", {
+                {"json_view", [&] { std::string o = dump_view.root().dump(); g_sink = static_cast<double>(o.size()); }},
+                {"yyjson", [&] { std::size_t n = 0; char* o = yyjson_write(dump_yy, 0, &n); g_sink = static_cast<double>(n); std::free(o); }},
+                {"simdjson DOM", [&] { std::string o = simdjson::to_string(dump_sj); g_sink = static_cast<double>(o.size()); }},
+                {"RapidJSON", [&] { rapidjson::StringBuffer sb; rapidjson::Writer<rapidjson::StringBuffer> w(sb); dump_rj.Accept(w); g_sink = static_cast<double>(sb.GetSize()); }},
+                {"sonic-cpp", [&] { sonic_json::WriteBuffer wb; dump_sonic.Serialize(wb); g_sink = static_cast<double>(wb.Size()); }},
+#if !BENCH_NO_GLAZE
+                {"Glaze generic", [&] { std::string o; (void)glz::write_json(dump_glaze, o); g_sink = static_cast<double>(o.size()); }},
+#endif
+                {"Boost.JSON", [&] { std::string o = boost::json::serialize(dump_boost); g_sink = static_cast<double>(o.size()); }},
+                {"json::dump", [&] { std::string o = dump_json.dump(); g_sink = static_cast<double>(o.size()); }},
+            }});
         for (auto& wl : workloads)
         {
+            if (!only_workload.empty() && wl.first != only_workload)
+            {
+                continue;
+            }
             std::vector<double> best(wl.second.size(), 1e300);
             const int r = s.size() > 10000000 ? std::max(3, rounds / 5) : rounds;
             for (int i = 0; i < r; ++i)
@@ -838,15 +1199,21 @@ int main(int argc, char** argv)
                 {
                     wl.second[k].fn();   // untimed: the previous engine's leftovers are cleaned up here
                     const auto t0 = std::chrono::steady_clock::now();
-                    for (int b = 0; b < dc.batch; ++b) wl.second[k].fn();
+                    for (int b = 0; b < dc.batch; ++b)
+                    {
+                        wl.second[k].fn();
+                    }
                     best[k] = std::min(best[k], std::chrono::duration<double, std::nano>(std::chrono::steady_clock::now() - t0).count() / dc.batch);
                 }
             }
             std::printf("%-13s %-11s", dc.name.c_str(), wl.first.c_str());
             for (std::size_t k = 0; k < wl.second.size(); ++k)
+            {
                 std::printf("  %s %.1fus (%.2fx)", wl.second[k].name.c_str(), best[k] / 1e3, best[k] / best[0]);
+            }
             std::printf("\n");
             std::fflush(stdout);
         }
+        yyjson_doc_free(dump_yy);
     }
 }

@@ -8,6 +8,7 @@ Generated files:
 - perf_blog_swar.svg: the eight-byte string test on one word of input
 - perf_blog_cliffs.svg: operations that were quadratic or worse, 3.12.0 against 3.13.0 (log scale)
 - perf_blog_view.svg: parse throughput of json_document and six other document parsers
+- perf_blog_view_dump.svg: write throughput of the same engines, each writing a document parsed beforehand
 
 The numbers are copied from the tables of the post (the timeline from data/perf_timeline.csv, which
 `tests/benchmarks/history/history.py summarize` writes); the tables stay on the page as the accessible fallback. Update both together.
@@ -319,9 +320,23 @@ VIEW_US = [   # (engine, css class, [µs per file]), fresh documents, from the t
     ("nlohmann/json json::parse", "nj-charts-c1 nj-charts-dim", [1352, 2386, 5915, 163750]),
 ]
 VIEW = [(e, c, [n / (t * 1000) for n, t in zip(VIEW_BYTES, us)]) for e, c, us in VIEW_US]   # GB/s
+# dump: the bytes of the compact output, and the same engines, from the dump table in "How it compares"
+DUMP_BYTES = [466906, 500299, 2090234, 52508728]
+DUMP_US = [
+    ("nlohmann/json json_document", "nj-charts-c1", [74.5, 132.8, 1625.1, 14757.2]),
+    ("yyjson", "nj-charts-c2", [104.2, 165.7, 1715.7, 20133.5]),
+    ("simdjson DOM", "nj-charts-c3", [354.2, 498.2, 6816.1, 54833.4]),
+    ("sonic-rs (Rust)", "nj-charts-c4", [212.6, 443.9, 2416.8, 33818.5]),
+    ("sonic-cpp", "nj-charts-c5", [104.6, 222.3, 3044.2, 19836.1]),
+    ("Boost.JSON", "nj-charts-c6", [497.6, 501.4, 2941.8, 63392.3]),
+    ("nlohmann/json json::dump", "nj-charts-c1 nj-charts-dim", [216.7, 285.5, 2244.0, 31205.3]),
+]
+DUMP = [(e, c, [n / (t * 1000) for n, t in zip(DUMP_BYTES, us)]) for e, c, us in DUMP_US]   # GB/s
 
 
-def view():
+def view(VIEW=VIEW, name="perf_blog_view.svg", tid="nj-blog-view",
+         title="Parse throughput of nlohmann/json's json_document and json::parse and five other document parsers, fresh documents, Apple M1 Max",
+         what="parse"):
     W, L, R = 580, 142, 545
     hi = max(max(v) for _, _, v in VIEW)
     hi = math.ceil(hi * 2) / 2
@@ -354,9 +369,8 @@ def view():
             b.append('<text class="nj-charts-val" x="%g" y="%g">%.2f</text>' % (X(vals[i]) + 4, y + bh - 1.5, vals[i]))
             desc.append("%s %s %.2f GB/s" % (f, eng, vals[i]))
     b.append('<line class="nj-charts-zero" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(0), top - 4, X(0), axis_y))
-    write("perf_blog_view.svg", W, axis_y + 44, "nj-charts--blog", "nj-blog-view",
-          "Parse throughput of nlohmann/json's json_document and json::parse and five other document parsers, fresh documents, Apple M1 Max",
-          "Grouped horizontal bars in GB/s, more is better. " + "; ".join(desc) + ".", b)
+    write(name, W, axis_y + 44, "nj-charts--blog", tid, title,
+          "Grouped horizontal bars of %s throughput in GB/s, more is better. " % what + "; ".join(desc) + ".", b)
 
 
 if __name__ == "__main__":
@@ -369,3 +383,7 @@ if __name__ == "__main__":
         cliffs()
     if VIEW:
         view()
+    if DUMP:
+        view(DUMP, "perf_blog_view_dump.svg", "nj-blog-view-dump",
+             "Write throughput of nlohmann/json's json_document and json, and five other libraries, each writing a "
+             "document parsed beforehand, Apple M1 Max", "write")
