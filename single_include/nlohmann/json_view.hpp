@@ -7026,11 +7026,27 @@ NLOHMANN_VIEW_ALWAYS_INLINE int locate_token(std::uint64_t w, int q, std::uint64
     return decided ? g : 3;
 }
 
+/// all bits set if b, else none
+NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t mask_if(bool b) noexcept
+{
+    return std::uint64_t{0} - static_cast<std::uint64_t>(b);
+}
+
+/// a if b, else c, without a branch (the conditions of token_digits_1/2() are
+/// as good as random, and GCC compiled their ?: as branches: one misprediction
+/// per float of canada.json on x86-64)
+NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t select_if(bool b, std::uint64_t a, std::uint64_t c) noexcept
+{
+    return c ^ ((a ^ c) & mask_if(b));
+}
+
 /// the distance of a position (see locate_token()) from the biased point 32
 NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t biased_distance(std::uint64_t position) noexcept
 {
     constexpr std::uint64_t center = std::uint64_t{32} << 56u;
-    return position >= center ? position - center : center - position;
+    // |position - center|, without a branch: negated (complemented, plus 1) if below
+    const std::uint64_t below = mask_if(position < center);
+    return ((position - center) ^ below) - below;
 }
 
 /*!
@@ -7048,10 +7064,10 @@ NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t token_digits_1(std::uint64_t w, std::u
     constexpr std::uint64_t one = std::uint64_t{1} << 56u;
     const std::uint64_t from = offset + (r10 * one); // x - (w - r10) (+ 32)
     const bool up = from > 37 * one;                  // (nearer to the multiple above)
-    const bool shorter = biased_distance(from - (up ? 10 * one : 0)) < radius;
-    const std::uint64_t a = w - r10 + (up ? 10u : 0u);
+    const bool shorter = biased_distance(from - (mask_if(up) & (10 * one))) < radius;
+    const std::uint64_t a = w - r10 + (mask_if(up) & 10u);
     const std::uint64_t b = w + ((offset + (one / 2)) >> 56u) - 32;                // w rounded to x
-    return shorter ? a : b;
+    return select_if(shorter, a, b);
 }
 
 /*!
@@ -7064,15 +7080,15 @@ NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t token_digits_2(std::uint64_t w, std::u
     constexpr std::uint64_t one = std::uint64_t{1} << 56u;
     const std::uint64_t from = offset + (r100 * one);
     const bool up = from > 82 * one;
-    const bool shorter = biased_distance(from - (up ? 100 * one : 0)) < radius;
-    const std::uint64_t a = w - r100 + (up ? 100u : 0u);
+    const bool shorter = biased_distance(from - (mask_if(up) & (100 * one))) < radius;
+    const std::uint64_t a = w - r100 + (mask_if(up) & 100u);
     // x - (w - r10), in [-12, 21]: the multiple of 10 nearest to x is that one,
     // or one or two above, or one below
     const std::uint64_t y = offset + (r10 * one);
-    const std::uint64_t steps = (y > 37 * one ? 1u : 0u) + (y > 47 * one ? 1u : 0u);
+    const std::uint64_t steps = static_cast<std::uint64_t>(y > 37 * one) + static_cast<std::uint64_t>(y > 47 * one);
     const bool down = y < 27 * one;
-    const std::uint64_t b = w - r10 + (10 * steps) - (down ? 10u : 0u);
-    return shorter ? a : b;
+    const std::uint64_t b = w - r10 + (10 * steps) - (mask_if(down) & 10u);
+    return select_if(shorter, a, b);
 }
 
 /// the four ASCII digits of x < 10^4, the first in the lowest byte (as
@@ -7866,11 +7882,11 @@ class view_serializer
             // (the range excludes the values of bytes that are not digits, only
             // in a damaged image loaded with image_check::bounds)
             const int g = w - 1000000000000000u < 99000000000000000u ? locate_token(w, exponent[i], offset[i], radius[i]) : 3;
-            batch.digits[i] = g <= 0 ? (last_four[i] >> 16u) + 1 : 0;
+            batch.digits[i] = mask_if(g <= 0) & ((last_four[i] >> 16u) + 1);
             kind_1[count_1] = static_cast<std::uint8_t>(i);
-            count_1 += g == 1 ? 1 : 0;
+            count_1 += static_cast<std::size_t>(g == 1);
             kind_2[count_2] = static_cast<std::uint8_t>(i);
-            count_2 += g == 2 ? 1 : 0;
+            count_2 += static_cast<std::size_t>(g == 2);
         }
         // the digits to write, in one loop per kind (see mark())
         for (std::size_t k = 0; k != count_1; ++k)
