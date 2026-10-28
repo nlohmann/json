@@ -1,4 +1,4 @@
-<svg class="nj-fig nj-charts nj-charts--timeline" viewBox="0 0 340 252" role="img" aria-labelledby="nj-blog-tl-from_cbor_twitter nj-blog-tl-from_cbor_twitter-d" xmlns="http://www.w3.org/2000/svg">
+<svg class="nj-fig nj-charts nj-charts--timeline" viewBox="0 0 340 270" role="img" aria-labelledby="nj-blog-tl-from_cbor_twitter nj-blog-tl-from_cbor_twitter-d" xmlns="http://www.w3.org/2000/svg">
 <title id="nj-blog-tl-from_cbor_twitter">from_cbor() twitter: speedup over 3.12.0 by commit</title>
 <desc id="nj-blog-tl-from_cbor_twitter-d">from_cbor() twitter: speedup over 3.12.0 at each of 317 commits, ending at 2.6x. Labeled steps: #5233, #5501, #5185, #5746.</desc>
 <text class="nj-charts-panel" x="8" y="18">from_cbor() twitter</text>
@@ -28,4 +28,5 @@
 <line class="nj-charts-grid" stroke-dasharray="2 2" x1="235.0" y1="54.0" x2="235.0" y2="114.6"/>
 <text class="nj-charts-note" x="235.0" y="50.0" text-anchor="middle">#5746</text>
 <line class="nj-charts-axis" x1="44" y1="208" x2="330" y2="208"/>
+<text class="nj-charts-note" x="8" y="262">speedup over 3.12.0 (log scale), more is better</text>
 </svg>

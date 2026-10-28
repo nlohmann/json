@@ -26,6 +26,19 @@ machine, and say so.
 
 ## The short version
 
+Most rows below use three files from Milo Yip's [nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark)
+that JSON libraries have been measured with for a decade, plus one large file. They stress different parts of a
+parser:
+
+| file | size | what it is | what makes it hard |
+| --- | --: | --- | --- |
+| `twitter.json` | 632 KB | 100 tweets from Twitter's search API, with their users | strings: 58 % of the bytes are keys and strings, 15 % of the bytes are non-ASCII (almost all of it Japanese text), and 13,345 keys |
+| `citm_catalog.json` | 1.7 MB | a concert hall's catalog of events, performances and seat categories, in French | structure: 21,388 small objects and arrays, 14,392 integers, keys that average 8 bytes, and 71 % whitespace from indentation |
+| `canada.json` | 2.3 MB | the outline of Canada in GeoJSON | numbers: 111,080 floating-point coordinates, most with 16 or 17 significant digits, in 56,045 arrays, and almost no whitespace |
+| `jeopardy.json` | 56 MB | 216,930 Jeopardy! questions as one array of objects | size: 1.5 million short strings in objects of 7 members; far larger than the CPU caches |
+
+<p class="nj-table-caption" markdown>The test files. The counts are of the parsed values; the share of whitespace, string and non-ASCII bytes is of the file as distributed.</p>
+
 Apple M1 Max, Apple clang 21, `-O3 -flto`, the compiler's default standard (C++14); the same benchmark source for both
 headers. The parse rows do not include destroying the result (the suite pauses the timer for that):
 
@@ -50,9 +63,13 @@ headers. The parse rows do not include destroying the result (the suite pauses t
 | copying `citm_catalog.json` and destroying the copy | 1.61 ms | 1.45 ms | 1.11× |
 | `==` of `citm_catalog.json` and a copy | 0.264 ms | 0.254 ms | 1.04× |
 
+<p class="nj-table-caption" markdown>Time per call with 3.12.0 and 3.13.0, Google Benchmark suite, median of 8 runs; the speedup is the old time divided by the new one.</p>
+
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/perf_blog_overview.svg"
 </div>
+
+<p class="nj-caption" markdown>The speedups of the table above as bars. More is better; the vertical line at 1× is 3.12.0.</p>
 
 The average over all 182 benchmarks of the suite is 2.93× (geometric mean); none got slower except the time of a
 copy alone, 0.94 to 1.03× (copying and destroying together is 1.09 to 1.29× as fast). We have not measured where the
@@ -81,8 +98,18 @@ Eight themes did most of the work:
 
 The suite compares two points. To see which change did what, we compiled one small benchmark against the header of
 every commit on `develop` that changed `json.hpp` or `json_view.hpp` since 3.12.0, 315 of them, and ran all of them interleaved
-(details in [How we measured](#how-we-measured)). Each panel shows the speedup over 3.12.0 after each commit; the
-labels name the pull requests behind the largest steps. Each point is one build, and moving code around changes a
+(details in [How we measured](#how-we-measured)). Each panel is one workload, chosen so that each exercises a
+different part of the library:
+
+- `parse()` of `citm_catalog.json`: the lexer's structure and whitespace handling, and building many small objects;
+- `parse()` of `canada.json`: converting text to floating-point numbers;
+- `accept()` of `twitter.json`: the lexer alone, since `accept()` only validates and builds nothing;
+- `parse()` of `twitter.json` from an `std::ifstream`: reading from a stream instead of a string;
+- `dump()` of `twitter.json` and of `canada.json`: writing strings and writing floating-point numbers;
+- `from_cbor()` and `to_cbor()` of `twitter.json`: reading and writing a binary format.
+
+Each panel shows the speedup over 3.12.0 after each commit on a logarithmic scale, so that a step of 2× has the same
+height everywhere; the labels name the pull requests behind the largest steps. Each point is one build, and moving code around changes a
 build's speed by a few percent on its own, so only the larger steps mean something. When `accept()` of
 `twitter.json` got 2.5 % slower over the last 20 commits, we timed the two ends against each other in one binary
 with six code layouts: they were equal within 0.2 %.
@@ -113,6 +140,8 @@ with six code layouts: they were equal within 0.2 %.
 --8<-- "images/perf_blog_timeline_to_cbor_twitter.svg"
 </div>
 </div>
+
+<p class="nj-caption" markdown>Speedup over 3.12.0 of eight workloads after each of the 315 commits that changed the headers, from 3.12.0 (left) to the 3.13.0 candidate (right). More is better; each point is the median of 4 interleaved runs of one build.</p>
 
 A few things stand out:
 
@@ -250,6 +279,8 @@ also flag a byte *after* a real hit (a borrow), but never one before it, so the 
 --8<-- "images/perf_blog_swar.svg"
 </div>
 
+<p class="nj-caption" markdown>`swar_string_special()` on the last eight bytes of `"twitter",`: one word in, one flag out, and the count of trailing zero bits says how many bytes can be copied before the quote.</p>
+
 The same kind of word test, written in standard C++11 with a `memcpy` load and a fallback for big-endian targets,
 now runs in many places:
 
@@ -260,6 +291,8 @@ now runs in many places:
 | lexer: numbers | eight digits per step, as fast_float does | [#5738][5738], [#5851][5851] |
 | `dump()` | runs that need no escaping, with and without `ensure_ascii` | [#5285][5285] |
 | `json_view` `dump()` | ASCII runs with `ensure_ascii` | [#5879][5879] |
+
+<p class="nj-table-caption" markdown>Where the eight-byte test is used in 3.13.0, and the pull requests that added it.</p>
 
 Where a vector unit is part of the baseline instruction set (SSE2 on x86-64, NEON on 64-bit Arm), the string paths
 use 16 bytes per step ([#5853][5853], [#5628][5628]). Non-ASCII text is validated 16 bytes at a time with simdjson's
@@ -495,9 +528,13 @@ fixed in this release cycle, measured on the same machine:
 | 100,000 × `push_back()` on an `ordered_json` with `JSON_DIAGNOSTICS` | 1,514 ms | 4.98 ms | 304× | every insert re-pointed the parent pointers of all elements | [#5832][5832] |
 | 10,000 × `at(i)` on an `ordered_json` array with `JSON_DIAGNOSTICS` | 43.2 ms | 0.081 ms | 533× | the same | [#5832][5832] |
 
+<p class="nj-table-caption" markdown>Operations that were quadratic or worse in 3.12.0, timed with both versions (C++17, `-O3`, median of 3 interleaved runs).</p>
+
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/perf_blog_cliffs.svg"
 </div>
+
+<p class="nj-caption" markdown>The times of the table above on a logarithmic scale; each arrow leads from the time with 3.12.0 to the time with 3.13.0. Less is better.</p>
 
 The `<` case matters to anyone who keeps `json` values in a `std::set`, uses them as `std::map` keys, or sorts them
 before C++20. Each level of nesting doubled the work: two equal values nested 30 levels deep took 3.8 seconds to
@@ -522,13 +559,24 @@ one million small objects 1.39 times (125 ms to 90 ms).
 After all of the above, `json::parse()` is still bound by what it builds: one heap allocation per string, array and
 object, and a `std::map` node per member. Many programs only parse a document, read some fields and throw it away.
 For them, 3.13.0 adds [`json_document`](../../features/json_view.md) and `json_view` in a new header,
-`<nlohmann/json_view.hpp>`.
+`<nlohmann/json_view.hpp>`. The two figures below show what each parser makes of this 54-byte text:
+
+```json
+{"port": 6379, "price": 19.90, "tags": ["eu", "a\"b"]}
+```
 
 <div class="nj-fig-wrap" markdown>
---8<-- "images/json_view_layout.svg"
+--8<-- "images/json_view_layout_tree.svg"
 </div>
 
-<p class="nj-caption" markdown>Top: the tree of separate heap allocations that `json::parse()` builds. Bottom: `json_document::parse()` keeps the source text and builds one flat index of 16-byte nodes that point back into it, plus a buffer of decoded strings.</p>
+<p class="nj-caption" markdown>What `json::parse()` builds: a tree in which every object, array and string is a separate heap allocation (dashed). The float is converted to a `double` while parsing, so the original text `19.90` is gone.</p>
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/json_view_layout_index.svg"
+</div>
+
+<p class="nj-caption" markdown>What `json_document::parse()` builds from the same text: one flat index of nine 16-byte nodes in document order, which point back into the source text, plus a buffer for the one string with an escape. A `json_view` is two pointers, here to the array.</p>
+
 
 The design is not ours either. simdjson's tape and yyjson's immutable document are both flat arrays of fixed-size
 entries in document order instead of trees of separate allocations, and yyjson's entries are 16 bytes, too. What
@@ -575,7 +623,7 @@ interleaved rounds):
 
 | engine | `twitter.json` (632 KB) | `citm_catalog.json` (1.7 MB) | `canada.json` (2.3 MB) | `jeopardy.json` (56 MB) |
 | --- | --: | --: | --: | --: |
-| `json_document` | **183** | **364** | **943** | **22,681** |
+| nlohmann/json `json_document` | **183** | **364** | **943** | **22,681** |
 | yyjson | 194 | 478 | 1,489 | 30,342 |
 | simdjson DOM | 202 | 486 | 2,097 | 26,904 |
 | sonic-rs (Rust) | 302 | 664 | 1,907 | 30,202 |
@@ -585,14 +633,18 @@ interleaved rounds):
 | RapidJSON | 1,183 | 1,613 | 7,358 | 143,044 |
 | serde_json (Rust) | 1,202 | 2,337 | 6,836 | 139,829 |
 | Glaze `generic_u64` | 1,268 | 2,727 | 9,262 | 132,273 |
-| `json::parse` | 1,352 | 2,386 | 5,915 | 163,750 |
+| nlohmann/json `json::parse` | 1,352 | 2,386 | 5,915 | 163,750 |
+
+<p class="nj-table-caption" markdown>Parse times in µs, less is better: a fresh document per call, built and freed, on an Apple M1 Max. The fastest engine of each file is in bold.</p>
 
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/perf_blog_view.svg"
 </div>
 
-The fastest *other* engine for each workload, as its time divided by `json_document`'s, over the four files above:
-above 1, `json_document` is ahead; below 1, it is behind.
+<p class="nj-caption" markdown>The parse times of the table above as throughput (file size divided by time), more is better. RapidJSON, Glaze, serde_json and simd-json are left out to keep the chart readable; they are in the table.</p>
+
+The fastest *other* engine for each workload, as its time divided by nlohmann/json's `json_document`'s, over the
+four files above: above 1, `json_document` is ahead; below 1, it is behind.
 
 | workload | M1 Max, Apple clang 21 | x86-64, GCC 13 | x86-64, Clang 18 |
 | --- | --- | --- | --- |
@@ -600,6 +652,8 @@ above 1, `json_document` is ahead; below 1, it is behind.
 | traverse | 1.04–1.18 (yyjson, simdjson On-Demand) | **0.58–0.86** (simdjson On-Demand) | **0.86**–1.20 (sonic-cpp, simdjson On-Demand, yyjson) |
 | select | **0.34–0.84** (Glaze structs, simdjson On-Demand) | **0.26–0.65** | **0.33–0.86** |
 | parse+dump | 1.18–1.35 (yyjson) | 1.20–1.41 (yyjson, sonic-cpp) | 1.16–1.27 (yyjson, sonic-cpp) |
+
+<p class="nj-table-caption" markdown>Time of the fastest other engine divided by the time of nlohmann/json's `json_document`, as a range over the four files, with the engines that were fastest; below 1, nlohmann/json is behind.</p>
 
 So, is it the fastest JSON parser? Not in general. Among the parsers that build a document you can read in any
 order, it is the fastest at parsing and writing back in every configuration we ran, and the fastest at parsing on
@@ -642,6 +696,8 @@ The PRs record the ideas that measured worse, which is as useful as the ones tha
 | `json_view`: note a large object inline in the parse loop | `canada.json` 37 % slower | [#5628][5628] |
 | `json_view`: vector-scan every string in `set()` | 14–16 % slower on 16-byte strings | [#5926][5926] |
 
+<p class="nj-table-caption" markdown>Ideas that were measured and dropped, from the pull requests that tried them.</p>
+
 ## Making fast paths safe
 
 Fast paths are where the bugs are: they read in 8- and 16-byte steps, they skip validation that the slow path did, and
@@ -670,6 +726,8 @@ header of 11,310 lines that you only pay for if you include it). Apple clang 21 
 | only includes `json.hpp` | 528 ms | 709 ms (+34 %) | 508 ms (−4 %) |
 | parses, dumps and writes CBOR | 1,175 ms | 1,885 ms (+60 %) | 1,858 ms (+58 %) |
 
+<p class="nj-table-caption" markdown>Compile time of one translation unit, Apple clang 21, `-O2`, median of 9 compilations; less is better.</p>
+
 We have not broken the second row down by change. [`JSON_NO_AUTOMATIC_UDLS`](../../api/macros/json_no_automatic_udls.md) moves the
 `_json` literals into their own header and more than makes up for the first row; the
 [compile-time page](../../integration/compile_times.md) lists the other options.
@@ -693,6 +751,8 @@ removed because 3.12.0 has no BON8.
 | noise | the coefficient of variation was 3 % or less for 176 of the 182 rows with 3.12.0 and 178 with 3.13.0; the largest was 12 % |
 | inputs | `twitter.json`, `citm_catalog.json` and `canada.json` from [nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark), a 56 MB `jeopardy.json`, and number-heavy files |
 
+<p class="nj-table-caption" markdown>Setup of the Google Benchmark comparison of 3.12.0 and 3.13.0.</p>
+
 The cliffs come from small extra programs (C++17, `-O3`, median of 3 interleaved runs). The timeline is
 [`tests/benchmarks/history`](https://github.com/nlohmann/json/tree/develop/tests/benchmarks/history): one program,
 compiled against `single_include` of 3.12.0, of each of the 315 commits on `develop` that changed `json.hpp` or `json_view.hpp` since, and of the candidate, 4 rounds in random order, median of
@@ -710,7 +770,9 @@ behaves differently. We did not test Windows for speed at all.
 ## Thanks
 
 Most of what is in this post was invented by other people. The libraries and papers we took ideas or code from, in
-the order they appear above:
+the order they appear above. Where the library contains code adapted from another project, we name the license we use
+it under; the [README](https://github.com/nlohmann/json#license) has the copyright notices. From the others we took
+the idea, not their code.
 
 - [serde_json](https://github.com/serde-rs/json): deriving positions from the offset only on error.
 - Sean Eron Anderson's [Bit Twiddling Hacks](https://graphics.stanford.edu/~seander/bithacks.html): the zero-byte
@@ -718,17 +780,19 @@ the order they appear above:
 - [Glaze](https://github.com/stephenberry/glaze): skipping indentation in 8-byte steps (`skip_matching_ws`).
 - [simdjson](https://github.com/simdjson/simdjson) by Daniel Lemire, Geoff Langdale, John Keiser and contributors:
   the "lookup4" UTF-8 check (J. Keiser and D. Lemire, "Validating UTF-8 In Less Than One Instruction Per Byte",
-  2021), and the tape that showed what a flat index can do.
+  2021, adapted code; MIT License, also available under the Apache License 2.0), and the tape that showed what a
+  flat index can do.
 - [SQLite](https://sqlite.org)'s `jsonAppendString()`: writing short strings with a table loop.
 - [orjson](https://github.com/ijl/orjson)'s `QUOTE_TAB`: escape sequences as fixed-size table rows.
 - [fast_float](https://github.com/fastfloat/fast_float) by Daniel Lemire and contributors: the Eisel-Lemire
   algorithm, its table of powers of five, its digit comparison, and eight digits at a time (N. Mushtak and D. Lemire,
-  "Fast number parsing without fallback", 2023). W. D. Clinger for the fast path, M. Eisel for the algorithm.
+  "Fast number parsing without fallback", 2023; adapted code; MIT License, also available under the Apache License
+  2.0 and the Boost Software License 1.0). W. D. Clinger for the fast path, M. Eisel for the algorithm.
 - [Żmij](https://github.com/vitaut/zmij) by Victor Zverovich, with the digit conversion of Xiang JunBo and the SIMD
-  sequence of Dougall Johnson.
+  sequence of Dougall Johnson (ported to C++11; MIT License).
 - [Boost.JSON](https://github.com/boostorg/json): switching to a hash table for large objects.
 - [yyjson](https://github.com/ibireme/yyjson) by YaoYuan: table-driven `\u` decoding, fixed-offset unrolled checks,
-  and a 16-byte flat document to measure against.
+  and a 16-byte flat document to measure against (adapted code in `json_view.hpp`; MIT License).
 - [RapidJSON](https://github.com/Tencent/rapidjson): the measured reason to keep recursion as the default.
 
 And the people who sent or shaped pull requests: [@gregmarr](https://github.com/gregmarr) reviewed most of them and
@@ -775,6 +839,7 @@ object keys ([#5328][5328]).
 [5741]: https://github.com/nlohmann/json/pull/5741
 [5746]: https://github.com/nlohmann/json/pull/5746
 [5762]: https://github.com/nlohmann/json/pull/5762
+[5782]: https://github.com/nlohmann/json/pull/5782
 [5809]: https://github.com/nlohmann/json/pull/5809
 [5810]: https://github.com/nlohmann/json/pull/5810
 [5822]: https://github.com/nlohmann/json/pull/5822

@@ -51,6 +51,7 @@
 .nj-charts .nj-charts-grid { stroke: var(--nj-charts-grid); stroke-width: 1; }
 .nj-charts .nj-charts-zero, .nj-charts .nj-charts-axis { stroke: var(--nj-charts-base); stroke-width: 1.5; }
 .nj-charts .nj-charts-ref { stroke: currentColor; stroke-width: 1.5; }
+.nj-charts .nj-charts-head { fill: var(--nj-charts-base); }
 
 .nj-charts .nj-charts-c1 { fill: var(--nj-charts-c1); }
 .nj-charts .nj-charts-c2 { fill: var(--nj-charts-c2); }

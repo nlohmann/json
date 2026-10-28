@@ -164,10 +164,10 @@ def overview():
         desc.append("%s %s" % (label, fx(v).replace(TIMES, "x")))
     b.append('<line class="nj-charts-ref" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(1), top, X(1), axis_y))
     b.append('<line class="nj-charts-zero" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(0), top, X(0), axis_y))
-    b.append('<text class="nj-charts-note" x="%g" y="%g">speedup over 3.12.0 (the line at 1%s is 3.12.0)</text>' % (L, 18, TIMES))
+    b.append('<text class="nj-charts-note" x="%g" y="%g">speedup over 3.12.0, more is better (the line at 1%s is 3.12.0)</text>' % (L, 18, TIMES))
     write("perf_blog_overview.svg", W, axis_y + 28, "nj-charts--blog", "nj-blog-overview",
           "Speedup of 3.13.0 over 3.12.0 per workload, Apple M1 Max, Apple clang",
-          "Horizontal bars, longer is faster. " + "; ".join(desc) + ".", b)
+          "Horizontal bars of the speedup, more is better. " + "; ".join(desc) + ".", b)
 
 
 # ---------- timeline: one panel per workload ----------
@@ -188,7 +188,7 @@ MONTHS = [("2025-04", "3.12.0"), ("2026-09", "Sep 2026"), ("2026-10", "Oct")]
 def timeline():
     rows = list(csv.DictReader((HERE / "data" / "perf_timeline.csv").open()))
     n = len(rows)
-    W, H = 340, 252
+    W, H = 340, 270
     L, R, T, B = 44, 330, 62, 208
     for col, title, labels in TIMELINE:
         vals = [float(r[col]) if r[col] else None for r in rows]
@@ -251,6 +251,7 @@ def timeline():
             b.append('<line class="nj-charts-grid" stroke-dasharray="2 2" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>' % (x, ty + 4, x, y - 5))
             b.append('<text class="nj-charts-note" x="%.1f" y="%.1f" text-anchor="middle">%s</text>' % (tx, ty, text))
         b.append('<line class="nj-charts-axis" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (L, B, R, B))
+        b.append('<text class="nj-charts-note" x="%g" y="%g">speedup over 3.12.0 (log scale), more is better</text>' % (8, H - 8))
         final = rel[-1]
         desc = ("%s: speedup over 3.12.0 at each of %d commits, ending at %s. Labeled steps: %s."
                 % (title, n, fx(final).replace(TIMES, "x"), ", ".join("#%s" % p for p in labels)))
@@ -284,19 +285,24 @@ def cliffs():
         b.append('<line class="nj-charts-grid" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(10 ** e), top - 10, X(10 ** e), axis_y))
         lab = {-3: "1 µs", -2: "10 µs", -1: "0.1 ms", 0: "1 ms", 1: "10 ms", 2: "0.1 s", 3: "1 s", 4: "10 s"}[e]
         b.append('<text class="nj-charts-tick" x="%g" y="%g">%s</text>' % (X(10 ** e), axis_y + 16, lab))
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">runtime (log scale), less is better</text>' % ((L + R) / 2, axis_y + 34))
+    b.append('<defs><marker id="nj-blog-cliffs-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" '
+             'orient="auto"><path class="nj-charts-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>')
     b.append('<circle class="nj-charts-ojson-dot" cx="%g" cy="14" r="5"/><text class="nj-charts-leg" x="%g" y="18.5">3.12.0</text>' % (L, L + 10))
     b.append('<circle class="nj-charts-json-dot" cx="%g" cy="14" r="5"/><text class="nj-charts-leg" x="%g" y="18.5">3.13.0</text>' % (L + 80, L + 90))
     for i, (op, old, new) in enumerate(CLIFFS):
         y = top + i * pitch + 8
         b.append('<text class="nj-charts-rowlabel" x="%g" y="%g" text-anchor="end">%s</text>' % (L - 10, y + 4, esc(op)))
-        b.append('<line class="nj-charts-axis" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(new), y, X(old), y))
+        # an arrow from the old time to the new one, ending just before the new dot
+        b.append('<line class="nj-charts-axis" x1="%g" y1="%g" x2="%g" y2="%g" marker-end="url(#nj-blog-cliffs-head)"/>'
+                 % (X(old) - 6, y, X(new) + 7, y))
         b.append('<circle class="nj-charts-ojson-dot" cx="%g" cy="%g" r="5"><title>%s, 3.12.0: %g ms</title></circle>' % (X(old), y, esc(op), old))
         b.append('<circle class="nj-charts-json-dot" cx="%g" cy="%g" r="5"><title>%s, 3.13.0: %g ms</title></circle>' % (X(new), y, esc(op), new))
         b.append('<text class="nj-charts-factor" x="%g" y="%g">%s</text>' % ((X(old) + X(new)) / 2, y - 7, fx(old / new)))
         desc.append("%s: %g ms to %g ms" % (op, old, new))
-    write("perf_blog_cliffs.svg", W, axis_y + 28, "nj-charts--blog", "nj-blog-cliffs",
+    write("perf_blog_cliffs.svg", W, axis_y + 44, "nj-charts--blog", "nj-blog-cliffs",
           "Operations that grew quadratically or worse: time with 3.12.0 and 3.13.0, log scale",
-          "Dot plot on a logarithmic time axis. " + "; ".join(desc) + ".", b)
+          "Dot plot on a logarithmic time axis, less is better; an arrow leads from each 3.12.0 time to the 3.13.0 time. " + "; ".join(desc) + ".", b)
 
 
 # ---------- json_view: parse throughput ----------
@@ -304,13 +310,13 @@ def cliffs():
 VIEW_FILES = ["twitter.json", "citm_catalog.json", "canada.json", "jeopardy.json"]
 VIEW_BYTES = [631514, 1727204, 2251051, 55554625]
 VIEW_US = [   # (engine, css class, [µs per file]), fresh documents, from the table in "How it compares"
-    ("json_document", "nj-charts-c1", [183, 364, 943, 22681]),
+    ("nlohmann/json json_document", "nj-charts-c1", [183, 364, 943, 22681]),
     ("yyjson", "nj-charts-c2", [194, 478, 1489, 30342]),
     ("simdjson DOM", "nj-charts-c3", [202, 486, 2097, 26904]),
     ("sonic-rs (Rust)", "nj-charts-c4", [302, 664, 1907, 30202]),
     ("sonic-cpp", "nj-charts-c5", [379, 986, 2580, 40804]),
     ("Boost.JSON", "nj-charts-c6", [868, 1483, 2481, 88925]),
-    ("json::parse", "nj-charts-c1 nj-charts-dim", [1352, 2386, 5915, 163750]),
+    ("nlohmann/json json::parse", "nj-charts-c1 nj-charts-dim", [1352, 2386, 5915, 163750]),
 ]
 VIEW = [(e, c, [n / (t * 1000) for n, t in zip(VIEW_BYTES, us)]) for e, c, us in VIEW_US]   # GB/s
 
@@ -321,7 +327,6 @@ def view():
     hi = math.ceil(hi * 2) / 2
     X = lambda v: L + v / hi * (R - L)
     bh, gap = 9, 2
-    top = 64
     group_h = len(VIEW) * (bh + gap) + 14
     b, desc = [], []
     x, ly = 8, 10
@@ -332,13 +337,14 @@ def view():
         b.append('<rect class="%s" x="%g" y="%g" width="12" height="12" rx="3"/>' % (cls, x, ly))
         b.append('<text class="nj-charts-leg" x="%g" y="%g">%s</text>' % (x + 18, ly + 10.5, esc(eng)))
         x += w
+    top = ly + 34   # below the last row of the legend
     axis_y = top + group_h * len(VIEW_FILES)
     t = 0.5
     while t <= hi + 1e-9:
         b.append('<line class="nj-charts-grid" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(t), top - 4, X(t), axis_y))
         b.append('<text class="nj-charts-tick" x="%g" y="%g">%g</text>' % (X(t), axis_y + 16, t))
         t += 0.5
-    b.append('<text class="nj-charts-tick" x="%g" y="%g">GB/s, longer is faster</text>' % ((L + R) / 2, axis_y + 34))
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">GB/s, more is better</text>' % ((L + R) / 2, axis_y + 34))
     for i, f in enumerate(VIEW_FILES):
         y0 = top + i * group_h
         b.append('<text class="nj-charts-rowlabel" x="%g" y="%g" text-anchor="end">%s</text>' % (L - 8, y0 + group_h / 2, esc(f)))
@@ -349,8 +355,8 @@ def view():
             desc.append("%s %s %.2f GB/s" % (f, eng, vals[i]))
     b.append('<line class="nj-charts-zero" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(0), top - 4, X(0), axis_y))
     write("perf_blog_view.svg", W, axis_y + 44, "nj-charts--blog", "nj-blog-view",
-          "Parse throughput of json_document and six other document parsers, fresh documents, Apple M1 Max",
-          "Grouped horizontal bars in GB/s. " + "; ".join(desc) + ".", b)
+          "Parse throughput of nlohmann/json's json_document and json::parse and five other document parsers, fresh documents, Apple M1 Max",
+          "Grouped horizontal bars in GB/s, more is better. " + "; ".join(desc) + ".", b)
 
 
 if __name__ == "__main__":

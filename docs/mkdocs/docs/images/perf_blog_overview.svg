@@ -1,6 +1,6 @@
 <svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 560 614" role="img" aria-labelledby="nj-blog-overview nj-blog-overview-d" xmlns="http://www.w3.org/2000/svg">
 <title id="nj-blog-overview">Speedup of 3.13.0 over 3.12.0 per workload, Apple M1 Max, Apple clang</title>
-<desc id="nj-blog-overview-d">Horizontal bars, longer is faster. twitter.json 3.0x; citm_catalog.json 4.1x; canada.json 3.5x; canada.json, indented 6.7x; citm, ordered_json 6.6x; twitter, std::ifstream 2.5x; citm, FILE* 4.8x; citm, accept() 7.0x; dump() twitter 6.7x; dump() canada 3.0x; dump(4) citm 4.6x; to_cbor() twitter 4.5x; twitter, memory 3.1x; twitter, FILE* 6.3x; diff() canada 10x; iterate canada 2.7x; copy + destroy citm 1.11x; == citm 1.04x.</desc>
+<desc id="nj-blog-overview-d">Horizontal bars of the speedup, more is better. twitter.json 3.0x; citm_catalog.json 4.1x; canada.json 3.5x; canada.json, indented 6.7x; citm, ordered_json 6.6x; twitter, std::ifstream 2.5x; citm, FILE* 4.8x; citm, accept() 7.0x; dump() twitter 6.7x; dump() canada 3.0x; dump(4) citm 4.6x; to_cbor() twitter 4.5x; twitter, memory 3.1x; twitter, FILE* 6.3x; diff() canada 10x; iterate canada 2.7x; copy + destroy citm 1.11x; == citm 1.04x.</desc>
 <text class="nj-charts-panel" x="8" y="46">Parsing</text>
 <text class="nj-charts-panel" x="8" y="270">Writing</text>
 <text class="nj-charts-panel" x="8" y="398">Reading C&#8203;BOR</text>
@@ -83,5 +83,5 @@
 <text class="nj-charts-val" x="226.2" y="572">1.04&#215;</text>
 <line class="nj-charts-ref" x1="220" y1="34" x2="220" y2="586"/>
 <line class="nj-charts-zero" x1="190" y1="34" x2="190" y2="586"/>
-<text class="nj-charts-note" x="190" y="18">speedup over 3.12.0 (the line at 1&#215; is 3.12.0)</text>
+<text class="nj-charts-note" x="190" y="18">speedup over 3.12.0, more is better (the line at 1&#215; is 3.12.0)</text>
 </svg>
