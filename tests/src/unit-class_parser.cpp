@@ -3035,7 +3035,7 @@ TEST_CASE("object keys are delivered decoded and validated")
 {
     // json_sax::key and the key event of a parser callback see the decoded name, and
     // only after the whole name was scanned and validated
-    const auto keys_of = [](const std::string & text, const json::input_format_t format = json::input_format_t::json)
+    const auto keys_of_format = [](const std::string & text, const json::input_format_t format)
     {
         SaxEventLogger l;
         json::sax_parse(text, &l, format);
@@ -3050,6 +3050,11 @@ TEST_CASE("object keys are delivered decoded and validated")
         return keys;
     };
 
+    const auto keys_of = [&keys_of_format](const std::string & text)
+    {
+        return keys_of_format(text, json::input_format_t::json);
+    };
+
     const auto callback_keys_of = [](const std::string & text)
     {
         std::vector<std::string> keys;
@@ -3061,7 +3066,8 @@ TEST_CASE("object keys are delivered decoded and validated")
             }
             return true;
         };
-        static_cast<void>(json::parse(text, cb, false));
+        const json parsed = json::parse(text, cb, false);
+        static_cast<void>(parsed);
         return keys;
     };
 
@@ -3142,9 +3148,9 @@ TEST_CASE("object keys are delivered decoded and validated")
     {
         const std::string stored = "\xff\\";
         const std::vector<std::string> expected = {stored};
-        const auto keys_of_bytes = [&keys_of](const std::vector<std::uint8_t>& v, json::input_format_t format)
+        const auto keys_of_bytes = [&keys_of_format](const std::vector<std::uint8_t>& v, json::input_format_t format)
         {
-            return keys_of(std::string(v.begin(), v.end()), format);
+            return keys_of_format(std::string(v.begin(), v.end()), format);
         };
 
         CHECK(keys_of_bytes({0xA1, 0x62, 0xFF, 0x5C, 0x01}, json::input_format_t::cbor) == expected);
@@ -3156,7 +3162,7 @@ TEST_CASE("object keys are delivered decoded and validated")
     SECTION("BON8 rejects ill-formed UTF-8 in a name")
     {
         const std::vector<std::string> valid = {"\\"};
-        CHECK(keys_of(std::string("\x87\x5C\x91"), json::input_format_t::bon8) == valid);
-        CHECK(keys_of(std::string("\x87\xC3\x28\x91"), json::input_format_t::bon8).empty());
+        CHECK(keys_of_format(std::string("\x87\x5C\x91"), json::input_format_t::bon8) == valid);
+        CHECK(keys_of_format(std::string("\x87\xC3\x28\x91"), json::input_format_t::bon8).empty());
     }
 }
