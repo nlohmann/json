@@ -92,7 +92,7 @@ TEST_CASE("json_view materialize() source positions")
             R"("\n")", R"("\u00e9")", R"("\ud83d\ude00")", "\"\xf0\x9f\x98\x80\"", R"("a\"b\\")", R"("x\\")",
             "  [ ]  ", "{}", "[[[]]]", R"({"a":{"b":[1,{"c":[]}]}})",
             R"({"\u0041": "v\n", "k": "\"", "\t":[ "\/" ]})",
-            "[1, 2.5, true, false, null, \"s\", \"\\u0000\", -0]",
+            R"([1, 2.5, true, false, null, "s", "\u0000", -0])",
             "\n\t[\r\n  1 ,\n  {\n    \"a\" : [ ]\n  }\n]\n",
             "\xef\xbb\xbf[1, {\"a\": \"b\"}]", "\xef\xbb\xbf\"\\n\"",
         };
@@ -110,7 +110,7 @@ TEST_CASE("json_view materialize() source positions")
         {
             "[1 /* ] */]", "[1 // ]\n]", "{\"a\": 1 /* } */ , }", "[1, 2, ]", "[[1,],[2 , /**/ ] , ]",
             "{\"a\": [] // }\n, \"b\": {} /* } ] */ }", "[ /* empty */ ]", "{ // }\n}", "/* a */ [1] // b",
-            "[\"\\n\" /* \" */ , ]",
+            R"(["\n" /* " */ , ])",
         };
         for (const auto& text : texts)
         {
@@ -329,7 +329,13 @@ TEST_CASE("json_view materialize() source positions")
             REQUIRE(n.next == 2);
             n.next = 7;
             std::memcpy(image.data() + 64 + sizeof(n), &n, sizeof(n));
-            CHECK_THROWS_AS(json_document::load(image), json::parse_error&);
+            const auto load_image = [&image]
+            {
+                // GCC ignores a cast to void for [[nodiscard]]-like results, so keep the document
+                const json_document d = json_document::load(image);
+                static_cast<void>(d);
+            };
+            CHECK_THROWS_AS(load_image(), json::parse_error&);
             // without the check, the position is out of bounds and ignored
             const json_document d = json_document::load(image, json_document::image_check::none);
             CHECK(range(d.root()[0].materialize()) == "none");
