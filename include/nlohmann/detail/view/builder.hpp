@@ -1196,10 +1196,11 @@ indent_done:
 #if JSON_DIAGNOSTIC_POSITIONS
             // the decoded string is in the arena: next keeps the source offset
             // of the opening quote plus one (0: unknown) for materialize()
-            push_node(node_kind::string, node_flags::escaped, 0, r.start, static_cast<std::uint64_t>(r.len) | (static_cast<std::uint64_t>(s - b) << 32));
+            const std::uint64_t second = static_cast<std::uint64_t>(r.len) | (static_cast<std::uint64_t>(s - b) << 32);
 #else
-            push_node(node_kind::string, node_flags::escaped, 0, r.start, r.len);
+            const std::uint64_t second = r.len;
 #endif
+            push_node(node_kind::string, node_flags::escaped, 0, r.start, second);
             return true;
         }
     };

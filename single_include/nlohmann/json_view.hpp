@@ -2405,10 +2405,11 @@ indent_done:
 #if JSON_DIAGNOSTIC_POSITIONS
             // the decoded string is in the arena: next keeps the source offset
             // of the opening quote plus one (0: unknown) for materialize()
-            push_node(node_kind::string, node_flags::escaped, 0, r.start, static_cast<std::uint64_t>(r.len) | (static_cast<std::uint64_t>(s - b) << 32));
+            const std::uint64_t second = static_cast<std::uint64_t>(r.len) | (static_cast<std::uint64_t>(s - b) << 32);
 #else
-            push_node(node_kind::string, node_flags::escaped, 0, r.start, r.len);
+            const std::uint64_t second = r.len;
 #endif
+            push_node(node_kind::string, node_flags::escaped, 0, r.start, second);
             return true;
         }
     };
@@ -6126,7 +6127,9 @@ namespace view
 
 Stands in for the lexer of json_sax_dom_parser, which reads the positions of
 the values it stores from these three functions (diagnostic_positions). npos
-is a value without a source position.
+is a value without a source position. One position_source serves a whole
+materialize() call: before each value is handed to the handler, the range of
+that value is set (or cleared), overwriting that of the value before.
 */
 struct position_source
 {
@@ -6159,9 +6162,20 @@ struct position_source
     /// the range [first, last), or none if either is npos
     void set(std::size_t first, std::size_t last) noexcept
     {
-        const bool known = first != std::string::npos && last != std::string::npos;
-        start = known ? first : std::string::npos;
-        end = known ? last : std::string::npos;
+        if (first == std::string::npos || last == std::string::npos)
+        {
+            clear();
+            return;
+        }
+        start = first;
+        end = last;
+    }
+
+    /// no range: the next value has no source position
+    void clear() noexcept
+    {
+        start = std::string::npos;
+        end = std::string::npos;
     }
 
     /// one past the closing quote of the string whose opening quote is at
@@ -6234,58 +6248,64 @@ struct position_source
     /// the range of the scalar n of document d
     void set_scalar(const document_data& d, const node& n) noexcept
     {
-        const std::size_t size = d.size;
-        const std::size_t off = n.off;
+        if ((n.flags & node_flags::is_new) != 0)
+        {
+            clear();
+            return;
+        }
         std::size_t first = std::string::npos;
         std::size_t last = std::string::npos;
-        if ((n.flags & node_flags::is_new) == 0)
+        switch (n.kind)
         {
-            switch (static_cast<value_t>(n.kind))
-            {
-                case value_t::string:
-                    if ((n.flags & node_flags::storage) == 0)
+            case node_kind::string:
+                if ((n.flags & node_flags::storage) == 0)
+                {
+                    // off is the first byte after the opening quote
+                    if (n.off != 0)
                     {
-                        // off is the first byte after the opening quote
-                        if (off != 0)
-                        {
-                            first = off - 1;
-                            last = off + std::size_t{n.len} + 1;
-                        }
+                        first = n.off - 1;
+                        last = n.off + std::size_t{n.len} + 1;
                     }
-                    else if ((n.flags & node_flags::storage) == node_flags::escaped && n.next != 0)
-                    {
-                        // next is the offset of the opening quote plus one
-                        first = n.next - 1;
-                        last = string_end(d.base[0], size, first);
-                    }
-                    break;
-                case value_t::number_integer:
-                case value_t::number_unsigned:
-                case value_t::number_float:
-                    if ((n.flags & node_flags::storage) == 0)
-                    {
-                        first = off;
-                        last = off + number_length(n);
-                    }
-                    break;
-                case value_t::boolean:
-                    first = off;
-                    last = off + ((n.flags & node_flags::is_true) != 0 ? 4u : 5u);
-                    break;
-                case value_t::null:
-                    first = off;
-                    last = off + 4u;
-                    break;
-                case value_t::object:
-                case value_t::array:
-                case value_t::binary:
-                case value_t::discarded:
-                default:
-                    break;
-            }
+                }
+                else if ((n.flags & node_flags::storage) == node_flags::escaped && n.next != 0)
+                {
+                    // next is the offset of the opening quote plus one
+                    first = n.next - 1;
+                    last = string_end(d.base[0], d.size, first);
+                }
+                break;
+            case node_kind::number_integer:
+            case node_kind::number_unsigned:
+            case node_kind::number_float:
+                if ((n.flags & node_flags::storage) == 0)
+                {
+                    first = n.off;
+                    last = n.off + number_length(n);
+                }
+                break;
+            case node_kind::boolean:
+                first = n.off;
+                last = n.off + ((n.flags & node_flags::is_true) != 0 ? 4u : 5u);
+                break;
+            case node_kind::null:
+                first = n.off;
+                last = n.off + 4u;
+                break;
+            case node_kind::object:
+            case node_kind::array:
+            case node_kind::link:
+            default:
+                break;
         }
         // (a crafted image can point past the text)
-        set(first, last != std::string::npos && last <= size ? last : std::string::npos);
+        if (last == std::string::npos || last > d.size)
+        {
+            clear();
+        }
+        else
+        {
+            set(first, last);
+        }
     }
 };
 #endif
@@ -6308,11 +6328,13 @@ template<typename BasicJsonType, bool Editable>
 BasicJsonType materialize(const document_data& d, const node* n)
 {
     using string_t = typename BasicJsonType::string_t;
+    using input_t = iterator_input_adapter<const char*>;
 #if JSON_DIAGNOSTIC_POSITIONS
-    using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>, true, position_source>;
+    using lexer_t = position_source;
 #else
-    using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>, true>;
+    using lexer_t = lexer<BasicJsonType, input_t>; // (the default: unused, as no lexer is passed)
 #endif
+    using sax_t = json_sax_dom_parser<BasicJsonType, input_t, true, lexer_t>;
     using nav = navigation<Editable>;
 
     // the open containers: their next element (or key of the next member),
@@ -6400,7 +6422,14 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 // (moved containers are also new)
                 const std::size_t start = (n->flags & node_flags::is_new) == 0 && n->off < d.size ? std::size_t{n->off} :
                                           std::string::npos;
-                positions.set(start, start + 1);
+                if (start == std::string::npos)
+                {
+                    positions.clear();
+                }
+                else
+                {
+                    positions.set(start, start + 1);
+                }
 #endif
                 if (object)
                 {
@@ -6418,14 +6447,14 @@ BasicJsonType materialize(const document_data& d, const node* n)
                     open = deep.data();
                     capacity = deep.size();
                 }
+                // (with positions: until an element is read, the container's
+                // own bracket is the last thing read)
+                open[depth++] = frame{nav::first(d, n), nav::end(d, n), object
 #if JSON_DIAGNOSTIC_POSITIONS
-                // (until an element is read, the container's own bracket is the last thing read)
-                open[depth++] = frame{nav::first(d, n), nav::end(d, n), object, start, positions.end};
-                break;
-#else
-                open[depth++] = frame {nav::first(d, n), nav::end(d, n), object};
-                break;
+                                      , start, positions.end
 #endif
+                                     };
+                break;
             }
             case value_t::string:
             {
@@ -6466,9 +6495,19 @@ BasicJsonType materialize(const document_data& d, const node* n)
             if (f.pos == f.end)
             {
 #if JSON_DIAGNOSTIC_POSITIONS
-                const std::size_t end = f.start == std::string::npos || f.last_end == std::string::npos ? std::string::npos : position_source::container_end(d.base[0], d.size, f.last_end);
-                // (an end of npos clears the start, see diagnostic_positions)
-                positions.set(end == std::string::npos ? end : end - 1, end);
+                const std::size_t end = f.start == std::string::npos || f.last_end == std::string::npos ? std::string::npos :
+                                        position_source::container_end(d.base[0], d.size, f.last_end);
+                if (end == std::string::npos)
+                {
+                    positions.clear();
+                }
+                else
+                {
+                    // the closing bracket, as the lexer reports it (end_object()
+                    // and end_array() only read its end; the start of the
+                    // container was set when it was opened)
+                    positions.set(end - 1, end);
+                }
                 if (depth > 1)
                 {
                     open[depth - 2].last_end = end;

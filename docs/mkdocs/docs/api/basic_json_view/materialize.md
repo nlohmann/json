@@ -43,9 +43,13 @@ and [`end_pos()`](../basic_json/end_pos.md) return `std::string::npos` for
 - an array or object whose elements were changed (its elements keep theirs), and
 - an array or object whose last element has no positions (its end is found from that element).
 
-A `basic_json` value, in contrast, keeps its positions when it is changed. Documents [loaded](../basic_json_document/load.md)
-from an image have the positions of the saved document, except that its strings with escapes have none if it was saved
-without `JSON_DIAGNOSTIC_POSITIONS`.
+This differs from a `basic_json` value, whose positions are not updated when it is changed: they stay as they were
+parsed, even if they no longer match the value (see [`start_pos()`](../basic_json/start_pos.md)).
+
+Documents [loaded](../basic_json_document/load.md) from an image have the positions of the saved document. Its strings
+with escapes have positions only if the document was parsed with `JSON_DIAGNOSTIC_POSITIONS`: the position of their
+opening quote is recorded while parsing, and `save()` and `load()` keep it whether or not they are compiled with the
+macro.
 
 Calling `materialize()` on the same view repeatedly builds a new, independent `BasicJsonType` value each time; it
 never caches the result.

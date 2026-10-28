@@ -15632,7 +15632,7 @@ struct diagnostic_positions
             // (npos: a value without a source position, see materialize() of
             // json_view)
             const std::size_t read = lexer->get_chars_read_total();
-            v.start_position = read == std::string::npos ? read : read - 1;
+            v.start_position = read == std::string::npos ? std::string::npos : read - 1;
         }
     }
 
@@ -15651,7 +15651,7 @@ struct diagnostic_positions
             {
                 // a range has both ends or none (exception::diagnostics()
                 // prints only complete ones)
-                v.start_position = v.end_position;
+                v.start_position = std::string::npos;
             }
         }
     }
@@ -15672,7 +15672,7 @@ struct diagnostic_positions
             if (v.end_position == std::string::npos)
             {
                 // a value without a source position
-                v.start_position = v.end_position;
+                v.start_position = std::string::npos;
                 return;
             }
 
