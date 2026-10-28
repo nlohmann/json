@@ -19,6 +19,22 @@ Whether parsing should proceed.
 
 It is safe to move the passed object key value.
 
+When parsing JSON text, `val` is the decoded object name, not its spelling in the input:
+
+- All escape sequences (`\"`, `\\`, `\/`, `\b`, `\f`, `\n`, `\r`, `\t`, `\uXXXX`, and surrogate pairs) are
+  decoded, and `\uXXXX` escapes are stored as UTF-8. Different spellings of the same name, such as `#!json "/"`
+  and `#!json "\/"`, or `#!json "\u00e9"` and `#!json "\u00E9"`, yield identical strings. An escaped `\u0000` yields
+  an embedded NUL byte.
+- The name is scanned and validated completely before `key` is called. If it contains an invalid escape sequence, an
+  unpaired surrogate, a control character, or ill-formed UTF-8, the parse fails with a
+  [`parse_error`](../../home/exceptions.md#parse-errors), and `key` is not called for it.
+- No Unicode normalization or case conversion is applied: names that differ in any byte are different strings.
+- `key` is called before the following `:` is read, so a parse error may still follow for the same member.
+- A name that occurs several times in the same object is passed once per occurrence.
+
+For the binary formats, object keys contain no escape sequences: `val` holds the bytes stored in the input.
+[`sax_parse`](../basic_json/sax_parse.md) passes them unchanged, without checking them for valid UTF-8.
+
 ## Examples
 
 ??? example
