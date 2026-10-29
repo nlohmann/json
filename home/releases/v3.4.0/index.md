@@ -19,3 +19,4 @@ Feature release. All changes are backward-compatible.
 **Changed:**
 
 - [`basic_json::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md): Error handlers added in version 3.4.0.
+- [`json_sax::key`](https://json.nlohmann.me/api/json_sax/key/index.md): BSON is only supported from version 3.4.0, and BON8 only from version 3.13.0 unreleased.

@@ -40,6 +40,10 @@ Discarding a value (i.e., returning `false`) has different effects depending on 
 
 Whether the JSON value which called the function during parsing should be kept (`true`) or not (`false`). In the latter case, it is skipped completely, or replaced by `null` if it is the top-level value.
 
+## Notes
+
+For a `parse_event_t::key` event, `parsed` holds the decoded object name, with the same guarantees as the `val` parameter of [`json_sax::key`](https://json.nlohmann.me/api/json_sax/key/#notes): all escape sequences are decoded and `\uXXXX` escapes are stored as UTF-8, so different spellings of the same name yield identical strings; the name is validated completely before the callback is called, so a name with an invalid escape sequence or ill-formed UTF-8 causes a parse error and no `key` event; no Unicode normalization or case conversion is applied; and a name that occurs several times in the same object yields one `key` event per occurrence.
+
 ## Examples
 
 Example: skip an object key while parsing
