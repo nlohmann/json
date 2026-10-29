@@ -185,8 +185,10 @@ std::uint32_t rng()
 
 TEST_CASE("json_view images: round trips")
 {
-    static_assert(json_view_image_test::has_save<json_document>::value && json_view_image_test::has_load<json_document>::value, "save() and load() on a little-endian target");
-    static_assert(json_view_image_test::has_save<ordered_json_editable_document>::value && json_view_image_test::has_load<ordered_json_editable_document>::value, "save() and load() on a little-endian target");
+    static_assert(json_view_image_test::has_save<json_document>::value, "save() on a little-endian target");
+    static_assert(json_view_image_test::has_load<json_document>::value, "load() on a little-endian target");
+    static_assert(json_view_image_test::has_save<ordered_json_editable_document>::value, "save() on a little-endian target");
+    static_assert(json_view_image_test::has_load<ordered_json_editable_document>::value, "load() on a little-endian target");
 
     SECTION("small documents")
     {
