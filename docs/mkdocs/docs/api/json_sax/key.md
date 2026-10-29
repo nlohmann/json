@@ -62,3 +62,7 @@ for valid UTF-8. BON8 encodes characters itself, so an ill-formed name is a pars
 ## Version history
 
 - Added in version 3.2.0.
+- The behavior described in the notes above (decoded names, validation before `key` is called, no normalization, `key`
+  before the `:` check, one call per duplicate, bytes of binary formats passed unchanged) is the same in all versions
+  from 3.2.0 on, and for the `key` event of a [parser callback](../basic_json/parser_callback_t.md) from 3.0.0 on. BSON
+  is only supported from version 3.4.0, and BON8 only from version 3.13.0.
