@@ -3835,7 +3835,7 @@ struct first_true<false, Conditions...> : std::integral_constant < int, 1 + firs
 /// well-formed sequence can continue with (Unicode, Table 3-7).
 NLOHMANN_VIEW_ALWAYS_INLINE void check_utf8_bytewise(const unsigned char* p, std::size_t n, std::size_t i)
 {
-    for (; i < n;)
+    while (i < n)
     {
         const unsigned char c = p[i];
         if (c < 0x80)
