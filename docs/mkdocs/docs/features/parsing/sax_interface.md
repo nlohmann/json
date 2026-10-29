@@ -64,6 +64,9 @@ bool parse_error(std::size_t position, const std::string& last_token, const json
 
 The return value of each function determines whether parsing should proceed.
 
+Object keys are passed to `key` decoded and validated: escape sequences are already resolved, so different spellings of
+the same name yield the same string. See [`key`](../../api/json_sax/key.md#notes) for the exact guarantees.
+
 ## Stepping through the events
 
 The events for a small input, step by step, and what two different handlers do with them. Press *Play* or step with *Next*:
