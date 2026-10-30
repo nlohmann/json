@@ -105,9 +105,9 @@
         <DisplayString Condition="(int)kind == 1">object, size={len}</DisplayString>
         <DisplayString Condition="(int)kind == 2">array, size={len}</DisplayString>
         <DisplayString Condition="(int)kind == 3">string, length={len}</DisplayString>
-        <DisplayString Condition="(int)kind == 4">{(flags &amp; 4) != 0}</DisplayString>
-        <DisplayString Condition="(int)kind == 5">{(__int64)((unsigned __int64)len | ((unsigned __int64)next &lt;&lt; 32))}</DisplayString>
-        <DisplayString Condition="(int)kind == 6">{(unsigned __int64)len | ((unsigned __int64)next &lt;&lt; 32)}</DisplayString>
+        <DisplayString Condition="(int)kind == 4">boolean: {(flags &amp; 4) != 0}</DisplayString>
+        <DisplayString Condition="(int)kind == 5">int64: {(__int64)((unsigned __int64)len | ((unsigned __int64)next &lt;&lt; 32))}</DisplayString>
+        <DisplayString Condition="(int)kind == 6">uint64: {(unsigned __int64)len | ((unsigned __int64)next &lt;&lt; 32)}</DisplayString>
         <DisplayString Condition="(int)kind == 7">float, length={len}</DisplayString>
         <DisplayString>link</DisplayString>
         <Expand>
