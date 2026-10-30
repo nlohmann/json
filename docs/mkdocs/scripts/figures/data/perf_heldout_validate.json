@@ -1,0 +1,3202 @@
+{
+ "mac": {
+  "apache_builds": {
+   "Boost.JSON": {
+    "us": 109.8,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 86.5,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 270.4,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 120.3,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 40.2,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 87.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 55.8,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 34.9,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 63.2,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 54.5,
+    "variant": "insitu (copy)"
+   }
+  },
+  "github_events": {
+   "Boost.JSON": {
+    "us": 56.6,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 35.0,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 144.9,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 46.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 14.5,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 35.8,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 27.9,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 17.9,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 24.5,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 19.1,
+    "variant": "insitu (copy)"
+   }
+  },
+  "google_maps_api_compact_response": {
+   "Boost.JSON": {
+    "us": 11.8,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 12.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 29.2,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 19.2,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 6.5,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 14.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 10.5,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 7.7,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 8.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 6.3,
+    "variant": "insitu (copy)"
+   }
+  },
+  "google_maps_api_response": {
+   "Boost.JSON": {
+    "us": 19.2,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 17.7,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 39.0,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 25.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 9.5,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 20.7,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 13.4,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 9.4,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 14.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 9.4,
+    "variant": "insitu (copy)"
+   }
+  },
+  "gsoc-2018": {
+   "Boost.JSON": {
+    "us": 2783.4,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 1059.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 7219.2,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1131.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 560.1,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 1034.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 1246.0,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 837.1,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 758.0,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 936.1,
+    "variant": "insitu (copy)"
+   }
+  },
+  "instruments": {
+   "Boost.JSON": {
+    "us": 159.6,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 136.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 381.4,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 199.7,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 76.5,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 160.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 110.0,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 80.6,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 125.2,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 78.0,
+    "variant": "insitu (copy)"
+   }
+  },
+  "marine_ik": {
+   "Boost.JSON": {
+    "us": 2485.6,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 2297.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 5056.8,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 4217.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 1697.0,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 2841.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 3150.2,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 2454.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 2910.2,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 2351.2,
+    "variant": "insitu (copy)"
+   }
+  },
+  "mesh": {
+   "Boost.JSON": {
+    "us": 588.8,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 518.0,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1562.5,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 956.5,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 414.8,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 607.3,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 729.2,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 627.4,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 768.4,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 565.5,
+    "variant": "insitu (copy)"
+   }
+  },
+  "mesh.pretty": {
+   "Boost.JSON": {
+    "us": 954.8,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 835.3,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 2541.6,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1184.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 795.0,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 1129.2,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 1083.0,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 850.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1160.6,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 955.9,
+    "variant": "read"
+   }
+  },
+  "numbers": {
+   "Boost.JSON": {
+    "us": 89.9,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 89.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 327.3,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 142.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 62.8,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 101.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 129.2,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 118.3,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 135.6,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 103.0,
+    "variant": "insitu (copy)"
+   }
+  },
+  "random": {
+   "Boost.JSON": {
+    "us": 601.5,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 446.4,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1224.5,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 783.5,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 234.5,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 619.9,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 335.4,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 251.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 265.5,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 315.4,
+    "variant": "insitu (copy)"
+   }
+  },
+  "repeat": {
+   "Boost.JSON": {
+    "us": 10.7,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 7.0,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 15.2,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 9.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 3.0,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 9.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 5.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 4.0,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 5.6,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 4.4,
+    "variant": "insitu (copy)"
+   }
+  },
+  "semanticscholar-corpus": {
+   "Boost.JSON": {
+    "us": 8277.2,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 4637.0,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 20811.4,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 5973.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 2390.5,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 4768.2,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 4728.2,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 3401.2,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 2766.9,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 3598.1,
+    "variant": "read"
+   }
+  },
+  "tree-pretty": {
+   "Boost.JSON": {
+    "us": 24.5,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 22.0,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 58.0,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 31.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 11.4,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 26.3,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 17.9,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 11.3,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 17.1,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 11.4,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_api_compact_response": {
+   "Boost.JSON": {
+    "us": 9.2,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 5.7,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 25.1,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 9.2,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 3.3,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 6.7,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 5.3,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 3.6,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 4.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 3.3,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_api_response": {
+   "Boost.JSON": {
+    "us": 11.9,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 7.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 31.8,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 11.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 4.3,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 9.2,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 6.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 4.4,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 7.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 4.3,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_timeline": {
+   "Boost.JSON": {
+    "us": 40.4,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 29.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 103.8,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 49.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 16.3,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 33.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 29.0,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 17.6,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 26.4,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 15.7,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitterescaped": {
+   "Boost.JSON": {
+    "us": 559.8,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 477.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1215.4,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 813.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 239.1,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 397.9,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 537.4,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 251.1,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 313.3,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 217.2,
+    "variant": "insitu (copy)"
+   }
+  },
+  "update-center": {
+   "Boost.JSON": {
+    "us": 551.3,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 422.9,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1343.2,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 566.1,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 209.7,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 406.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 313.2,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 223.0,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 221.2,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 243.5,
+    "variant": "read (raw numbers)"
+   }
+  }
+ },
+ "x86-clang": {
+  "apache_builds": {
+   "Boost.JSON": {
+    "us": 103.6,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 145.7,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 370.0,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 148.3,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 61.0,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 109.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 126.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 63.1,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 90.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 86.3,
+    "variant": "insitu (copy)"
+   }
+  },
+  "github_events": {
+   "Boost.JSON": {
+    "us": 38.6,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 65.5,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 183.3,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 66.3,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 25.7,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 51.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 53.4,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 29.3,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 41.1,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 33.8,
+    "variant": "read"
+   }
+  },
+  "google_maps_api_compact_response": {
+   "Boost.JSON": {
+    "us": 14.6,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 19.9,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 46.1,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 31.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 12.3,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 16.7,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 23.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 13.0,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 13.8,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 10.7,
+    "variant": "insitu (copy)"
+   }
+  },
+  "google_maps_api_response": {
+   "Boost.JSON": {
+    "us": 26.7,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 28.2,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 55.8,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 37.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 17.1,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 26.4,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 27.8,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 14.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 23.3,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 17.2,
+    "variant": "insitu (copy)"
+   }
+  },
+  "gsoc-2018": {
+   "Boost.JSON": {
+    "us": 1005.5,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 2049.4,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 8350.9,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1608.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 1136.3,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 1464.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 2005.8,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 1130.8,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1114.9,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 1844.4,
+    "variant": "insitu (copy)"
+   }
+  },
+  "instruments": {
+   "Boost.JSON": {
+    "us": 217.9,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 217.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 543.1,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 303.1,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 148.6,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 206.8,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 256.9,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 128.7,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 225.3,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 153.6,
+    "variant": "read"
+   }
+  },
+  "marine_ik": {
+   "Boost.JSON": {
+    "us": 2904.8,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 3456.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 7659.6,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 6841.7,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 3523.6,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 4143.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 7077.0,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 4387.0,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 4871.1,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 3887.4,
+    "variant": "read"
+   }
+  },
+  "mesh": {
+   "Boost.JSON": {
+    "us": 1017.9,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 713.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 2468.4,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1744.7,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 839.8,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 911.1,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 1679.5,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 1167.6,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1211.3,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 1053.5,
+    "variant": "read"
+   }
+  },
+  "mesh.pretty": {
+   "Boost.JSON": {
+    "us": 1164.1,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 1230.5,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 4163.2,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 2150.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 1332.4,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 1521.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 2309.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 1445.8,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1554.6,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 1625.2,
+    "variant": "insitu (copy)"
+   }
+  },
+  "numbers": {
+   "Boost.JSON": {
+    "us": 74.7,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 115.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 507.3,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 251.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 109.4,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 164.3,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 271.6,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 198.1,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 159.1,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 170.1,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "random": {
+   "Boost.JSON": {
+    "us": 890.3,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 705.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1782.7,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1035.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 452.6,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 792.9,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 779.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 413.7,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 506.2,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 531.4,
+    "variant": "insitu (copy)"
+   }
+  },
+  "repeat": {
+   "Boost.JSON": {
+    "us": 13.4,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 11.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 21.2,
+    "variant": "SAX (raw numbers)"
+   },
+   "nlohmann json": {
+    "us": 12.6,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 6.0,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 12.8,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 10.6,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 6.2,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 7.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 8.8,
+    "variant": "read"
+   }
+  },
+  "semanticscholar-corpus": {
+   "Boost.JSON": {
+    "us": 5345.8,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 8178.0,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 27005.7,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 8693.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 3880.7,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 6929.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 11228.2,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 7800.2,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 5179.9,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 6290.5,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "tree-pretty": {
+   "Boost.JSON": {
+    "us": 34.5,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 40.2,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 76.3,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 52.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 22.4,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 38.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 36.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 19.1,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 29.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 19.7,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_api_compact_response": {
+   "Boost.JSON": {
+    "us": 7.0,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 11.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 35.3,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 15.7,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 5.5,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 8.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 12.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 6.2,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 7.4,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 6.2,
+    "variant": "read"
+   }
+  },
+  "twitter_api_response": {
+   "Boost.JSON": {
+    "us": 11.5,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 15.7,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 44.8,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 19.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 7.5,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 13.2,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 13.9,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 7.4,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 11.6,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 8.3,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_timeline": {
+   "Boost.JSON": {
+    "us": 39.4,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 50.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 144.3,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 82.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 27.7,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 48.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 52.4,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 31.4,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 45.7,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 29.4,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "twitterescaped": {
+   "Boost.JSON": {
+    "us": 614.9,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 772.3,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1823.1,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1389.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 418.2,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 729.2,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 842.3,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 425.4,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 654.5,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 431.6,
+    "variant": "read"
+   }
+  },
+  "update-center": {
+   "Boost.JSON": {
+    "us": 342.9,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 711.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1878.7,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 772.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 312.4,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 488.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 643.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 345.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 381.1,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 455.4,
+    "variant": "read"
+   }
+  }
+ },
+ "x86-gcc": {
+  "apache_builds": {
+   "Boost.JSON": {
+    "us": 107.7,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 151.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 218.0,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 164.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 59.1,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 109.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 126.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 60.0,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 90.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 87.5,
+    "variant": "read"
+   }
+  },
+  "github_events": {
+   "Boost.JSON": {
+    "us": 41.0,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 72.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 114.2,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 70.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 23.8,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 51.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 53.4,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 27.6,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 41.1,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 35.9,
+    "variant": "insitu (copy)"
+   }
+  },
+  "google_maps_api_compact_response": {
+   "Boost.JSON": {
+    "us": 15.2,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 21.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 29.6,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 32.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 12.2,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 16.7,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 23.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 12.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 13.8,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 10.9,
+    "variant": "insitu (copy)"
+   }
+  },
+  "google_maps_api_response": {
+   "Boost.JSON": {
+    "us": 26.9,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 34.3,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 39.9,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 41.6,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 16.6,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 26.4,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 27.8,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 13.9,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 23.3,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 17.5,
+    "variant": "insitu (copy)"
+   }
+  },
+  "gsoc-2018": {
+   "Boost.JSON": {
+    "us": 1053.8,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 1994.4,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 4502.4,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1668.6,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 1162.1,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 1464.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 2005.8,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 1142.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1114.9,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 1849.7,
+    "variant": "insitu (copy)"
+   }
+  },
+  "instruments": {
+   "Boost.JSON": {
+    "us": 218.6,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 263.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 410.9,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 341.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 140.2,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 206.8,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 256.9,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 119.1,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 225.3,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 158.4,
+    "variant": "read"
+   }
+  },
+  "marine_ik": {
+   "Boost.JSON": {
+    "us": 2918.8,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 4906.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 7333.1,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 7464.6,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 3598.7,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 4143.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 7077.0,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 4103.7,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 4871.1,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 3831.6,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "mesh": {
+   "Boost.JSON": {
+    "us": 978.8,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 1070.7,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 2362.7,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1890.5,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 803.5,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 911.1,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 1679.5,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 1102.1,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1211.3,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 1057.1,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "mesh.pretty": {
+   "Boost.JSON": {
+    "us": 1048.0,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 1857.5,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 3817.2,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 2603.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 1561.0,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 1521.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 2309.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 1360.8,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1554.6,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 1775.0,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "numbers": {
+   "Boost.JSON": {
+    "us": 81.5,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 147.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 436.9,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 290.2,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 107.8,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 164.3,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 271.6,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 196.3,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 159.1,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 171.4,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "random": {
+   "Boost.JSON": {
+    "us": 907.8,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 754.4,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1111.9,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1157.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 458.0,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 792.9,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 779.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 389.8,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 506.2,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 568.3,
+    "variant": "insitu (copy)"
+   }
+  },
+  "repeat": {
+   "Boost.JSON": {
+    "us": 14.7,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 15.5,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 16.6,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 15.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 7.3,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 12.8,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 10.6,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 6.4,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 7.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 9.1,
+    "variant": "insitu (copy)"
+   }
+  },
+  "semanticscholar-corpus": {
+   "Boost.JSON": {
+    "us": 5729.2,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 8246.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 15070.7,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 8827.3,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 3869.6,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 6929.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 11228.2,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 7547.3,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 5179.9,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 6408.0,
+    "variant": "insitu (copy)"
+   }
+  },
+  "tree-pretty": {
+   "Boost.JSON": {
+    "us": 35.3,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 49.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 73.2,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 53.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 21.6,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 38.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 36.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 19.0,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 29.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 22.2,
+    "variant": "read"
+   }
+  },
+  "twitter_api_compact_response": {
+   "Boost.JSON": {
+    "us": 7.6,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 11.0,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 21.1,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 15.3,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 5.4,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 8.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 12.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 6.0,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 7.4,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 6.3,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_api_response": {
+   "Boost.JSON": {
+    "us": 11.9,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 17.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 30.3,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 20.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 7.4,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 13.2,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 13.9,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 7.4,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 11.6,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 8.5,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_timeline": {
+   "Boost.JSON": {
+    "us": 45.8,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 58.4,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 88.7,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 81.2,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 28.4,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 48.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 52.4,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 29.9,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 45.7,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 27.8,
+    "variant": "read"
+   }
+  },
+  "twitterescaped": {
+   "Boost.JSON": {
+    "us": 670.0,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 760.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1154.4,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1356.5,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 428.2,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 729.2,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 842.3,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 397.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 654.5,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 472.8,
+    "variant": "read"
+   }
+  },
+  "update-center": {
+   "Boost.JSON": {
+    "us": 388.6,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 734.7,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1146.5,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 805.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 311.6,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 488.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 643.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 340.2,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 381.1,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 466.8,
+    "variant": "insitu (copy)"
+   }
+  }
+ },
+ "x86-gcc13": {
+  "apache_builds": {
+   "Boost.JSON": {
+    "us": 109.9,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 134.9,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 319.0,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 170.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 67.9,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 109.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 126.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 62.9,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 90.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 88.3,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "github_events": {
+   "Boost.JSON": {
+    "us": 41.7,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 65.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 173.8,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 72.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 27.1,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 51.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 53.4,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 28.6,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 41.1,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 39.7,
+    "variant": "read"
+   }
+  },
+  "google_maps_api_compact_response": {
+   "Boost.JSON": {
+    "us": 17.6,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 20.9,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 41.4,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 35.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 13.5,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 16.7,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 23.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 13.3,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 13.8,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 11.3,
+    "variant": "read"
+   }
+  },
+  "google_maps_api_response": {
+   "Boost.JSON": {
+    "us": 27.9,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 27.4,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 53.5,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 43.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 17.7,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 26.4,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 27.8,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 15.3,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 23.3,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 18.0,
+    "variant": "read"
+   }
+  },
+  "gsoc-2018": {
+   "Boost.JSON": {
+    "us": 1096.0,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 1814.2,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 7708.8,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1704.4,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 1167.2,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 1464.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 2005.8,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 1166.7,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1114.9,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 1861.3,
+    "variant": "insitu (copy)"
+   }
+  },
+  "instruments": {
+   "Boost.JSON": {
+    "us": 226.8,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 211.2,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 504.5,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 329.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 148.5,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 206.8,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 256.9,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 125.9,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 225.3,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 162.5,
+    "variant": "read"
+   }
+  },
+  "marine_ik": {
+   "Boost.JSON": {
+    "us": 2898.5,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 3453.4,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 7600.7,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 7361.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 3670.6,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 4143.5,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 7077.0,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 4312.1,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 4871.1,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 4175.9,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "mesh": {
+   "Boost.JSON": {
+    "us": 983.8,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 709.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 2565.5,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 1933.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 806.9,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 911.1,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 1679.5,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 1204.4,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1211.3,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 1122.3,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "mesh.pretty": {
+   "Boost.JSON": {
+    "us": 1049.2,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 1248.8,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 3791.7,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 2365.8,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 1425.8,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 1521.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 2309.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 1399.3,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 1554.6,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 1838.5,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "numbers": {
+   "Boost.JSON": {
+    "us": 79.7,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 115.5,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 511.6,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 275.5,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 105.4,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 164.3,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 271.6,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 199.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 159.1,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 177.2,
+    "variant": "read (raw numbers)"
+   }
+  },
+  "random": {
+   "Boost.JSON": {
+    "us": 950.9,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 698.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1455.5,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1183.1,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 498.8,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 792.9,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 779.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 419.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 506.2,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 568.7,
+    "variant": "insitu (copy)"
+   }
+  },
+  "repeat": {
+   "Boost.JSON": {
+    "us": 14.8,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 12.4,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 18.7,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 14.6,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 7.1,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 12.8,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 10.6,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 6.7,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 7.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 9.3,
+    "variant": "read"
+   }
+  },
+  "semanticscholar-corpus": {
+   "Boost.JSON": {
+    "us": 6334.0,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 7753.2,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 25583.7,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 9055.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 4111.4,
+    "variant": "accept"
+   },
+   "serde_json": {
+    "us": 6929.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 11228.2,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 8262.2,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 5179.9,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 6587.3,
+    "variant": "read"
+   }
+  },
+  "tree-pretty": {
+   "Boost.JSON": {
+    "us": 39.4,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 40.4,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 88.9,
+    "variant": "SAX"
+   },
+   "nlohmann json": {
+    "us": 58.0,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 24.1,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 38.0,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 36.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 20.0,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 29.7,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 22.7,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_api_compact_response": {
+   "Boost.JSON": {
+    "us": 8.3,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 10.1,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 30.5,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 16.2,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 5.9,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 8.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 12.1,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 6.5,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 7.4,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 6.7,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_api_response": {
+   "Boost.JSON": {
+    "us": 12.0,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 13.9,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 39.5,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 20.9,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 7.4,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 13.2,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 13.9,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 7.1,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 11.6,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 8.0,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitter_timeline": {
+   "Boost.JSON": {
+    "us": 47.0,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 51.6,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 136.6,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 82.3,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 31.3,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 48.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 52.4,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 32.6,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 45.7,
+    "variant": "IgnoredAny"
+   },
+   "yyjson": {
+    "us": 30.4,
+    "variant": "insitu (copy)"
+   }
+  },
+  "twitterescaped": {
+   "Boost.JSON": {
+    "us": 689.6,
+    "variant": "SAX (numbers: none)"
+   },
+   "Glaze": {
+    "us": 736.5,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1449.1,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 1427.1,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 450.4,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 729.2,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 842.3,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 440.7,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 654.5,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 503.1,
+    "variant": "insitu (copy)"
+   }
+  },
+  "update-center": {
+   "Boost.JSON": {
+    "us": 405.0,
+    "variant": "SAX"
+   },
+   "Glaze": {
+    "us": 692.5,
+    "variant": "validate_json"
+   },
+   "RapidJSON": {
+    "us": 1636.4,
+    "variant": "insitu (copy)"
+   },
+   "nlohmann json": {
+    "us": 818.3,
+    "variant": "accept"
+   },
+   "nlohmann json_document": {
+    "us": 338.5,
+    "variant": "parse"
+   },
+   "serde_json": {
+    "us": 488.6,
+    "variant": "from_utf8 + IgnoredAny"
+   },
+   "simd-json": {
+    "us": 643.7,
+    "variant": "tape (copy)"
+   },
+   "simdjson": {
+    "us": 355.6,
+    "variant": "DOM"
+   },
+   "sonic-rs": {
+    "us": 381.1,
+    "variant": "Value"
+   },
+   "yyjson": {
+    "us": 468.6,
+    "variant": "read"
+   }
+  }
+ }
+}

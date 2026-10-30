@@ -7,7 +7,11 @@ Generated files:
 - perf_blog_timeline_<workload>.svg: speedup over 3.12.0 of eight workloads at every develop commit that changed
   json.hpp or json_view.hpp since 3.12.0, one panel each
 - perf_blog_swar.svg: the eight-byte string test on one word of input
+- perf_blog_overlap.svg: writing a short string with two overlapping 16-byte loads and stores
+- perf_blog_digits.svg: converting eight ASCII digits with three multiplications
 - perf_blog_cliffs.svg: operations that were quadratic or worse, 3.12.0 against 3.13.0 (log scale)
+- perf_blog_heldout.svg: validate on the 19 files we didn't tune on, json_document against the fastest library per
+  file (data/perf_heldout_validate.json)
 - perf_blog_usecases_<platform>.svg: libraries x use cases, time relative to the fastest fully validating library
   (data/perf_usecases_<platform>.json); perf_blog_tables.py prints the tables of the appendix from the same data
 
@@ -41,6 +45,11 @@ def protect(text):
 
 def esc(s):
     return html.escape(s, quote=True).replace("&amp;#", "&#")
+
+
+def esc_md(s):
+    """esc() for text with _ or *, which the page's Markdown pass would pair across text elements as emphasis"""
+    return esc(s).replace("_", "&#95;").replace("*", "&#42;")
 
 
 def write(name, W, H, cls, tid, title, desc, body):
@@ -112,6 +121,81 @@ def swar():
           "The eight bytes w, i, t, t, e, r, quote and comma are loaded as one word. The test sets the high bit only in "
           "byte 6, the quote. Counting trailing zero bits gives 55, divided by eight gives 6: bytes 0 to 5 are copied "
           "at once, then the quote ends the string.", b)
+
+
+def span(b, x0, x1, y, cls, label):
+    """a bracket under the cells from x0 to x1, tinted, with a label to its right or inside"""
+    b.append('<rect class="%s" fill-opacity=".22" x="%g" y="%g" width="%g" height="22" rx="4"/>' % (cls, x0, y, x1 - x0))
+    b.append('<rect class="%s" x="%g" y="%g" width="4" height="22" rx="2"/>' % (cls, x0, y))
+    b.append('<rect class="%s" x="%g" y="%g" width="4" height="22" rx="2"/>' % (cls, x1 - 4, y))
+    b.append('<text class="fg-code" x="%g" y="%g" text-anchor="middle" style="font-size:14px">%s</text>' % ((x0 + x1) / 2, y + 16, label))
+
+
+# ---------- short strings: two overlapping 16-byte loads ----------
+def overlap():
+    text = "profile_link_color"   # a key of twitter.json, 18 bytes
+    n = len(text)
+    W = 640
+    L, cw, top = 40, 31, 34
+    X = lambda i: L + i * cw
+    b = ['<text class="fg-h" x="%g" y="20">a string of n = %d bytes: too long for one 16-byte vector, too short for a loop</text>' % (L, n)]
+    for i, ch in enumerate(text):
+        both = n - 16 <= i < 16
+        b.append('<rect class="fg-cell" x="%g" y="%g" width="%g" height="36" rx="4"/>' % (X(i), top, cw - 4))
+        if both:
+            b.append('<rect class="nj-charts-c3" fill-opacity=".3" x="%g" y="%g" width="%g" height="36" rx="4"/>' % (X(i), top, cw - 4))
+        b.append('<text class="fg-code" x="%g" y="%g" text-anchor="middle">%s</text>' % (X(i) + (cw - 4) / 2, top + 24, esc_md(ch)))
+    for i in (0, n - 16, 15, n - 1):
+        b.append('<text class="nj-charts-tick" x="%g" y="%g">%d</text>' % (X(i) + (cw - 4) / 2, top + 52, i))
+    y = top + 66
+    span(b, X(0), X(15) + cw - 4, y, "nj-charts-c1", "a = load 16 bytes at p")
+    span(b, X(n - 16), X(n - 1) + cw - 4, y + 30, "nj-charts-c2", "b = load 16 bytes at p + n " + MINUS + " 16")
+    y += 82
+    b.append('<text class="fg-note fg-note--l" x="%g" y="%g">Both loads lie inside the string, and together they cover all of it; bytes %d to 15 are in both.</text>' % (L, y, n - 16))
+    b.append('<text class="fg-note fg-note--l" x="%g" y="%g">Test a and b for a quote, a backslash, a control character or 0x7F: none, so write</text>' % (L, y + 22))
+    b.append('<text class="fg-code" x="%g" y="%g">store a at d, store b at d + n %s 16</text>' % (L, y + 52, MINUS))
+    b.append('<text class="fg-note fg-note--l" x="%g" y="%g">The second store writes bytes %d to 15 again, with the same values. For any n from 16 to 32:</text>' % (L, y + 80, n - 16))
+    b.append('<text class="fg-note fg-note--l" x="%g" y="%g">two loads, one test, two stores, no loop and no branch on the length.</text>' % (L, y + 98))
+    write("perf_blog_overlap.svg", W, y + 112, "nj-charts--swar", "nj-blog-overlap",
+          "Writing an 18-byte string with two overlapping 16-byte loads and stores",
+          "The 18 bytes of profile_link_color. Load a covers bytes 0 to 15, load b covers bytes 2 to 17, so bytes 2 to 15 "
+          "are in both. Neither contains a byte that needs escaping, so a is stored at the destination and b 2 bytes "
+          "later; the second store writes bytes 2 to 15 again with the same values. This works for any length from 16 to "
+          "32 bytes without a loop.", b)
+
+
+# ---------- eight digits at a time: three multiplications ----------
+def digits():
+    W = 600
+    L, cw, h = 40, 64, 34
+    X = lambda i: L + i * cw
+    steps = [
+        ("eight ASCII digits in one 64-bit word (byte 0 is the lowest)", 1, list("12345678"), True),
+        ("& 0x0F0F0F0F0F0F0F0F: one digit value per byte", 1, list("12345678"), False),
+        ("× (10 · 2⁸ + 1) >> 8, every second byte kept: two digits per 16 bits", 2, ["12", "34", "56", "78"], False),
+        ("× (100 · 2¹⁶ + 1) >> 16, every second lane kept: four digits per 32 bits", 4, ["1234", "5678"], False),
+        ("× (10000 · 2³² + 1) >> 32: the value", 8, ["12345678"], False),
+    ]
+    b = []
+    y = 20
+    for k, (head, width, cells, ascii_) in enumerate(steps):
+        b.append('<text class="fg-h" x="%g" y="%g">%s</text>' % (L, y, esc(head)))
+        for j, c in enumerate(cells):
+            x = X(j * width)
+            b.append('<rect class="fg-cell" x="%g" y="%g" width="%g" height="%g" rx="4"/>' % (x, y + 10, width * cw - 6, h))
+            if k == len(steps) - 1:
+                b.append('<rect class="nj-charts-c1" fill-opacity=".25" x="%g" y="%g" width="%g" height="%g" rx="4"/>' % (x, y + 10, width * cw - 6, h))
+            b.append('<text class="fg-code" x="%g" y="%g" text-anchor="middle">%s</text>' % (x + (width * cw - 6) / 2, y + 10 + 23, esc(c)))
+            if ascii_:
+                b.append('<text class="nj-charts-tick" x="%g" y="%g">0x%02X</text>' % (x + (width * cw - 6) / 2, y + h + 26, ord(c)))
+        y += h + (58 if ascii_ else 40)
+    b.append('<text class="fg-note fg-note--l" x="%g" y="%g">Each step combines neighboring lanes, in all lanes of the word at once:</text>' % (L, y - 8))
+    b.append('<text class="fg-note fg-note--l" x="%g" y="%g">three multiplications instead of eight, and no branch.</text>' % (L, y + 10))
+    write("perf_blog_digits.svg", W, y + 22, "nj-charts--swar", "nj-blog-digits",
+          "Converting eight ASCII digits to their value with three multiplications",
+          "The text 12345678 as one word. Masking gives the digit values 1 to 8, one per byte. Multiplying by 10 times 2 to "
+          "the 8 plus 1 and shifting gives 12, 34, 56 and 78 in 16-bit lanes; multiplying by 100 times 2 to the 16 plus 1 "
+          "gives 1234 and 5678 in 32-bit lanes; multiplying by 10000 times 2 to the 32 plus 1 gives 12345678.", b)
 
 
 # ---------- overview: speedup per workload (Google Benchmark rows, 3.12.0 time / 3.13.0 time) ----------
@@ -353,6 +437,60 @@ def cliffs():
     write("perf_blog_cliffs.svg", W, axis_y + 44, "nj-charts--blog", "nj-blog-cliffs",
           "Operations that grew quadratically or worse: time with 3.12.0 and 3.13.0, log scale",
           "Dot plot on a logarithmic time axis, less is better; an arrow leads from each 3.12.0 time to the 3.13.0 time. " + "; ".join(desc) + ".", b)
+
+
+# ---------- validating the files we didn't tune on, file by file ----------
+# data/perf_heldout_validate.json: per platform, file and library the fastest fully validating way of the validate
+# use case on the 19 other files of simdjson's jsonexamples (reused parsers not chosen), extracted from
+# summarize.py --json of the held-out run
+HELDOUT = [("mac", "Apple M1 Max", "nj-charts-json-dot"), ("x86-gcc", "x86-64, GCC 16.2", "nj-charts-ojson-dot")]
+
+
+def heldout():
+    data = json.load((HERE / "data" / "perf_heldout_validate.json").open())
+    files = sorted(data["mac"])
+    rel, winner = {}, {}
+    for plat, _, _ in HELDOUT:
+        for f in files:
+            libs = data[plat][f]
+            best = min(libs, key=lambda l: libs[l]["us"])
+            rel[plat, f] = libs["nlohmann json_document"]["us"] / libs[best]["us"]
+            winner[plat, f] = UC_LIBS.get(best, best)
+    files.sort(key=lambda f: (rel["x86-gcc", f], rel["mac", f]))
+    W, L, R = 620, 262, 486
+    lo, hi = 1.0, 1.55
+    X = lambda r: L + (r - lo) / (hi - lo) * (R - L)
+    top, pitch = 58, 20
+    axis_y = top + pitch * len(files)
+    b, desc = [], []
+    for t in (1.0, 1.1, 1.2, 1.3, 1.4, 1.5):
+        b.append('<line class="nj-charts-grid" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(t), top - 8, X(t), axis_y))
+        b.append('<text class="nj-charts-tick" x="%g" y="%g">%.1f%s</text>' % (X(t), axis_y + 16, t, TIMES))
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">json&#95;document&#8217;s time / the fastest library&#8217;s, less is better</text>' % ((L + R) / 2, axis_y + 34))
+    x = 8
+    for plat, name, cls in HELDOUT:
+        b.append('<circle class="%s" cx="%g" cy="14" r="5"/><text class="nj-charts-leg" x="%g" y="18.5">%s</text>' % (cls, x + 5, x + 15, esc_md(name)))
+        x += 30 + 7.6 * len(name)
+    b.append('<text class="nj-charts-tick nj-charts-tick--l" x="%g" y="%g">fastest on x86-64</text>' % (R + 14, top - 10))
+    for i, f in enumerate(files):
+        y = top + i * pitch + 6
+        b.append('<text class="nj-charts-rowlabel nj-charts-code" x="%g" y="%g" text-anchor="end">%s</text>' % (L - 10, y + 4, esc_md(f)))
+        for k, (plat, name, cls) in enumerate(HELDOUT):
+            r = rel[plat, f]
+            b.append('<circle class="%s" cx="%.1f" cy="%g" r="4.5"><title>%s, %s: %.2f%s the time of %s</title></circle>'
+                     % (cls, X(min(r, hi)), y - 3.5 + 7 * k, esc_md(f), esc_md(name), r, TIMES, esc_md(winner[plat, f]) if r > 1.0005 else "the fastest (it is the fastest)"))
+        w = winner["x86-gcc", f]
+        b.append('<text class="nj-charts-tick nj-charts-tick--l%s" x="%g" y="%g">%s</text>'
+                 % ("" if w.startswith("nlohmann") else " nj-charts-best", R + 14, y + 4, esc_md("json_document" if w.startswith("nlohmann") else w)))
+        desc.append("%s: Mac %.2f, x86-64 %.2f (%s)" % (f, rel["mac", f], rel["x86-gcc", f], w))
+    b.append('<line class="nj-charts-ref" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(1), top - 8, X(1), axis_y))
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">fastest</text>' % (X(1), top - 14))
+    wins = {p: sum(rel[p, f] < 1.0005 for f in files) for p, _, _ in HELDOUT}
+    print("heldout: json_document fastest on %s" % wins)
+    write("perf_blog_heldout.svg", W, axis_y + 44, "nj-charts--blog", "nj-blog-heldout",
+          "Validating 19 files 3.13.0 was not tuned on: json_document's time relative to the fastest library per file",
+          "Dot plot per file, less is better; 1.0 means json_document is the fastest fully validating library. "
+          + "; ".join(desc) + ".", b)
 
 
 # ---------- the price: compile time of two programs against 3.12.0 ----------
@@ -628,6 +766,9 @@ def heatmap(platform, title):
 
 if __name__ == "__main__":
     swar()
+    overlap()
+    digits()
+    heldout()
     if OVERVIEW:
         overview()
     distribution()

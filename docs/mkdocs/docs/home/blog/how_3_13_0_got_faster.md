@@ -391,10 +391,14 @@ vst1q_u8(d + n - 16, b);   // the two stores overlap too, with the same bytes
 
 <p class="nj-code-caption" markdown>Writing a string of 16 to 32 bytes with two overlapping loads and stores (NEON).</p>
 
-Both loads lie inside the string, together they cover all of it, and all tests happen before the first store. Shorter
-strings use the same trick with two overlapping 8-, 4- or 2-byte loads, so no `memcpy` with a length known only at run
-time is left. On `twitter.json`,
-this cut the instructions of `dump()` by 21 %.
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/perf_blog_overlap.svg"
+</div>
+
+<p class="nj-caption" markdown>The code above on `profile_link_color`, a key of `twitter.json`.</p>
+
+Shorter strings use the same trick with two overlapping 8-, 4- or 2-byte loads, so no `memcpy` with a length known
+only at run time is left. On `twitter.json`, this cut the instructions of `dump()` by 21 %.
 
 ### Escapes from a table
 
@@ -476,11 +480,14 @@ std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
 
 <p class="nj-code-caption" markdown>fast_float's conversion of eight ASCII digits to their value, with three multiplications.</p>
 
-The mask turns the characters into digit values. Multiplying by `10·2⁸ + 1` adds ten times each byte to the byte
-above it, so after the shift every second byte holds a two-digit number: `"12345678"` becomes 12, 34, 56 and 78. The
-second step does the same with pairs of bytes and a factor of 100 (1234 and 5678), the third with 32-bit halves and
-10,000. Whether all eight bytes are digits is one more expression: a digit is 0x30 to 0x39, so its high nibble must be
-3, and adding 6 must keep it 3. Integers of up to 18 digits and floats of up to 19 then need no overflow check at all.
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/perf_blog_digits.svg"
+</div>
+
+<p class="nj-caption" markdown>`parse_eight_digits()` on `"12345678"`: multiplying by `10·2⁸ + 1` adds ten times each byte to the byte above it, and the shift and the next mask keep every second lane.</p>
+
+Whether all eight bytes are digits is one more expression: a digit is 0x30 to 0x39, so its high nibble must be 3, and
+adding 6 must keep it 3. Integers of up to 18 digits and floats of up to 19 then need no overflow check at all.
 
 ### Clinger's fast path
 
@@ -1290,9 +1297,17 @@ The four files are the ones 3.13.0 was tuned on, so we also ran *validate*, *sum
 other files of simdjson's [`jsonexamples`](https://github.com/simdjson/simdjson-data/tree/master/jsonexamples). By
 geometric mean, `json_document` stays the fastest in *validate*, *minify* and *write* on every compiler, and in *sum*
 with Clang and on the Mac; with GCC, simdjson sums in 0.83 to 0.85 of its time. File by file, it is less
-clear-cut: on x86-64, `json_document` validates only 4 to 8 of the 19 files fastest (13 on the Mac). simdjson wins 5
-to 8 of the others, and Boost.JSON, without number conversion, validates the number-heavy `mesh.pretty`, `numbers`
-and `marine_ik` up to 1.5 times as fast. We know two causes, but so far each fix slowed down other files.
+clear-cut:
+
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/perf_blog_heldout.svg"
+</div>
+
+<p class="nj-caption" markdown>*validate* on the 19 files: `json_document`'s fastest fully validating way against the fastest library's, per file; 1.0× means it is the fastest. Less is better. The right column names the fastest library on x86-64 (GCC 16.2).</p>
+
+On x86-64, `json_document` validates only 4 to 8 of the 19 files fastest, against 13 on the Mac. Boost.JSON, without
+number conversion, validates the number-heavy `mesh.pretty`, `numbers` and `marine_ik` up to 1.5 times as fast. We
+know two causes, but so far each fix slowed down other files.
 
 Every *validate* way also ran the 318 files of [JSONTestSuite](https://github.com/nst/JSONTestSuite). The fully
 validating ways pass, with a few exceptions listed in [Appendix E](#e-comparison-with-other-libraries), one of them
