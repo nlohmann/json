@@ -701,6 +701,64 @@ TEST_CASE("json_view images: ownership")
 #if !defined(JSON_NOEXCEPTION)
 TEST_CASE("json_view images: errors")
 {
+    SECTION("float tokens: a changed byte is accepted if the text is still a number with the digits the node records")
+    {
+        for (const char* const token :
+                {
+                    "-12.375", "0.5", "123456.0", "-0.0", "9999999999999999999.5", "0.000000000000000000000001", "1.25e10", "5E-3"
+                })
+        {
+            CAPTURE(token)
+            const std::string text = std::string("[") + token + "]";
+            const json_document d = json_document::parse(text);
+            const std::vector<std::uint8_t> image = d.save();
+            const std::size_t at = text_at(image) + 1; // the first byte of the token
+            const std::uint16_t recorded = node_at(image, 1).extra;
+            CHECK(loaded_dump(image) == json::parse(text).dump());
+            for (std::size_t pos = 0; token[pos] != '\0'; ++pos)
+            {
+                for (unsigned int byte = 0; byte < 256; ++byte)
+                {
+                    std::vector<std::uint8_t> changed = image;
+                    changed[at + pos] = static_cast<std::uint8_t>(byte);
+                    std::string t = token;
+                    t[pos] = static_cast<char>(byte);
+                    // the digits of the integer part and of the fraction of the changed token
+                    std::size_t integer = 0;
+                    std::size_t fraction = 0;
+                    std::size_t k = (t[0] == '-') ? 1 : 0;
+                    for (; k < t.size() && t[k] >= '0' && t[k] <= '9'; ++k)
+                    {
+                        ++integer;
+                    }
+                    if (k < t.size() && t[k] == '.')
+                    {
+                        for (++k; k < t.size() && t[k] >= '0' && t[k] <= '9'; ++k)
+                        {
+                            ++fraction;
+                        }
+                    }
+                    // (as a JSON text, the token may have white space around it)
+                    const bool float_token = json::accept(t) && t.find_first_of(std::string(" \t\r\n\0", 5)) == std::string::npos && (t.find('.') != std::string::npos || t.find_first_of("eE") != std::string::npos) // NOLINT(abseil-string-find-str-contains)
+                                             && ((integer | (fraction << 8U)) == recorded);
+                    CAPTURE(pos)
+                    CAPTURE(byte)
+                    std::string result;
+                    try
+                    {
+                        result = loaded_dump(changed);
+                    }
+                    catch (const json::parse_error& e)
+                    {
+                        CHECK(std::string(e.what()) == check_failed);
+                        result = "rejected";
+                    }
+                    CHECK((result != "rejected") == float_token);
+                }
+            }
+        }
+    }
+
     SECTION("invalid UTF-8 of a decoded string: the compact dump writes it, the others throw")
     {
         const json_document d = json_document::parse(R"({"k\n":"\u00e9x"})");
