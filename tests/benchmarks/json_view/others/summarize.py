@@ -16,13 +16,15 @@ comma and invalid UTF-8), "no UTF-8" (accepts only the invalid UTF-8), "partial"
 error, or crashes on any probe), or "n/a" (write: no input to validate; counts as full). A variant's level is the
 worst it got for any file. Prints, for every use case and file,
   (a) per library the best "full" variant and, if faster, the best variant at any level, with their ratios to the
-      best "full" nlohmann json_document variant (variants named "(reused)" keep a parser or document across calls and
-      are never chosen as a library's best),
+      best "full" nlohmann json_document variant (variants named "(reused)" or "(reused allocator)" keep a parser,
+      document or allocator across calls and are never chosen as a library's best), and in a "reused:" line the
+      library's best reused variant in the same way,
   (b) all variants with their levels and times,
   (c) the variants below "full" with what the probes found, and the variants excluded for wrong results.
 --json writes {use case: {file: {library: {"best": {"variant", "us", "level"} or null, "best_any": {...},
-"variants": {variant: {"us", "level"}}, "excluded": {variant: reason}}}}} for the chart scripts; variant names there
-omit the "<library>: " prefix.
+"best_reused": {...} or null, "best_reused_any": {...} or null, "variants": {variant: {"us", "level"}}, "excluded":
+{variant: reason}}}}} for the chart scripts ("best_reused" is the best full reused variant, "best_reused_any" the best
+reused variant at any level); variant names there omit the "<library>: " prefix.
 
 Several logs are combined by taking each cell's best time. A variant excluded for one file (or in one log) is excluded
 for every file of that use case. The reference values that bench_all and bench_rs print for sum and select are
@@ -33,7 +35,7 @@ import re
 import sys
 
 USE_CASES = ["validate", "sum", "select", "edit", "minify", "write"]
-DOCS = ["twitter", "citm_catalog", "canada", "jeopardy", "status"]
+DOCS = ["twitter", "citm_catalog", "canada", "jeopardy", "status", "twitter_min", "citm_catalog_min"]
 OURS = "nlohmann json_document"
 RANK = {"full": 0, "n/a": 0, "no UTF-8": 1, "partial": 2}
 CELL = re.compile(r"^(.+) \[(full|no UTF-8|partial|n/a)\] ([\d.]+)us(?: \(([\d.]+)x\))?$")
@@ -49,7 +51,7 @@ def variant(name):
 
 
 def is_reused(name):
-    return "(reused)" in name
+    return re.search(r"\(reused[ )]", name) is not None
 
 
 def worse(a, b):
@@ -84,6 +86,8 @@ def parse(path, cells, levels, notes, excluded, refs):
             m = CELL.match(c.strip())
             if m:
                 key = (head[0], head[1], m[1])
+                if head[0] not in DOCS:   # bench_all --files: the documents are the files of a directory
+                    DOCS.append(head[0])
                 cells[key] = min(cells.get(key, float("inf")), float(m[3]))
                 levels[(head[1], m[1])] = worse(levels.get((head[1], m[1])), m[2])
 
@@ -145,29 +149,43 @@ def main():
                 libs.setdefault(library(n), {})[n] = t
             entry = result.setdefault(uc, {}).setdefault(doc, {})
             rows = []
+            def pick(vs):
+                """the best full variant and the best variant at any level"""
+                full = {n: t for n, t in vs.items() if is_full(levels[(uc, n)])}
+                return (min(full.items(), key=lambda x: x[1]) if full else None,
+                        min(vs.items(), key=lambda x: x[1]) if vs else None)
+
+            def described(x):
+                return {"variant": variant(x[0]), "us": x[1], "level": levels[(uc, x[0])]} if x else None
+
             for lib, vs in libs.items():
-                fresh = {n: t for n, t in vs.items() if not is_reused(n)}
-                full = {n: t for n, t in fresh.items() if is_full(levels[(uc, n)])}
-                b = min(full.items(), key=lambda x: x[1]) if full else None
-                a = min(fresh.items(), key=lambda x: x[1]) if fresh else None
+                b, a = pick({n: t for n, t in vs.items() if not is_reused(n)})
+                rb, ra = pick({n: t for n, t in vs.items() if is_reused(n)})
                 entry[lib] = {
-                    "best": {"variant": variant(b[0]), "us": b[1], "level": levels[(uc, b[0])]} if b else None,
-                    "best_any": {"variant": variant(a[0]), "us": a[1], "level": levels[(uc, a[0])]} if a else None,
+                    "best": described(b),
+                    "best_any": described(a),
+                    "best_reused": described(rb),
+                    "best_reused_any": described(ra),
                     "variants": {variant(n): {"us": t, "level": levels[(uc, n)]} for n, t in sorted(vs.items(), key=lambda x: x[1])},
                 }
-                rows.append((lib, b, a))
+                rows.append((lib, b, a, rb, ra))
             for (u, n), whys in excluded.items():
                 if u == uc:
-                    lib = entry.setdefault(library(n), {"best": None, "best_any": None, "variants": {}})
+                    lib = entry.setdefault(library(n), {"best": None, "best_any": None, "best_reused": None, "best_reused_any": None, "variants": {}})
                     lib.setdefault("excluded", {})[variant(n)] = "; ".join(sorted(whys))
-            ours = next((b[1] for lib, b, a in rows if lib == OURS and b), None)
+            ours = next((b[1] for lib, b, a, rb, ra in rows if lib == OURS and b), None)
             print("%s%s" % (doc, "" if ours else "  (no full %s result)" % OURS))
             rows.sort(key=lambda r: (r[1] is None, r[1][1] if r[1] else r[2][1] if r[2] else 0))
-            for lib, b, a in rows:
+            for lib, b, a, rb, ra in rows:
                 line = "    %-24s %s" % (lib, show(*b, ours, uc) if b else "%-40s %-10s %14s %5s" % ("(none)", "", "", ""))
                 if a and (not b or a[0] != b[0]):
                     line += "  | faster: %s" % show(*a, ours, uc)
                 print(line)
+                if ra:
+                    line = "      %-22s %s" % ("reused:", show(*rb, ours, uc) if rb else "%-40s %-10s %14s %5s" % ("(none)", "", "", ""))
+                    if not rb or ra[0] != rb[0]:
+                        line += "  | faster: %s" % show(*ra, ours, uc)
+                    print(line)
 
     print("\n# (b) All variants")
     for uc in USE_CASES:

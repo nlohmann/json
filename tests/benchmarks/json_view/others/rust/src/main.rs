@@ -250,11 +250,40 @@ pick_value!(pick_serde, serde_json::Value);
 pick_value!(pick_sonic, sonic_rs::Value);
 pick_value!(pick_simd, simd_json::BorrowedValue<'_>);
 
-// into structs that declare only the fields the selection uses; unknown keys are skipped
+// into structs that declare only the fields the selection uses, the same data as nlohmann/json's from_json() structs in
+// bench_all.cpp (nsel); unknown keys are skipped; Count counts the elements of an array or the members of an object
+// (nlohmann's count_only)
 mod sel {
-    use serde::de::IgnoredAny;
+    use serde::de::{Deserializer, IgnoredAny, MapAccess, SeqAccess, Visitor};
     use serde::Deserialize;
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
+    pub struct Count(pub usize);
+    impl<'de> Deserialize<'de> for Count {
+        fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Count, D::Error> {
+            struct V;
+            impl<'de> Visitor<'de> for V {
+                type Value = Count;
+                fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                    f.write_str("an array or an object")
+                }
+                fn visit_seq<A: SeqAccess<'de>>(self, mut a: A) -> Result<Count, A::Error> {
+                    let mut n = 0;
+                    while a.next_element::<IgnoredAny>()?.is_some() {
+                        n += 1;
+                    }
+                    Ok(Count(n))
+                }
+                fn visit_map<A: MapAccess<'de>>(self, mut a: A) -> Result<Count, A::Error> {
+                    let mut n = 0;
+                    while a.next_entry::<IgnoredAny, IgnoredAny>()?.is_some() {
+                        n += 1;
+                    }
+                    Ok(Count(n))
+                }
+            }
+            d.deserialize_any(V)
+        }
+    }
     #[derive(Deserialize)]
     pub struct User {
         pub screen_name: String,
@@ -275,18 +304,18 @@ mod sel {
         #[serde(rename = "eventId")]
         pub event_id: u64,
         #[serde(rename = "seatCategories")]
-        pub seat_categories: Vec<IgnoredAny>,
+        pub seat_categories: Count,
     }
     #[derive(Deserialize)]
     pub struct Citm {
-        pub events: HashMap<String, IgnoredAny>,
+        pub events: BTreeMap<String, Count>,
         pub performances: Vec<Performance>,
     }
     #[derive(Deserialize)]
     pub struct Geometry {
         #[serde(rename = "type")]
         pub type_: String,
-        pub coordinates: Vec<IgnoredAny>,
+        pub coordinates: Count,
     }
     #[derive(Deserialize)]
     pub struct Feature {
@@ -355,14 +384,14 @@ fn pick_structs<D: De>(name: &str, s: &[u8]) -> Option<f64> {
         "citm_catalog" => {
             let c: sel::Citm = D::de(s)?;
             for p in &c.performances {
-                acc += (p.id + p.event_id + p.seat_categories.len() as u64) as f64;
+                acc += (p.id + p.event_id + p.seat_categories.0 as u64) as f64;
             }
             acc += c.events.len() as f64;
         }
         "canada" => {
             let c: sel::Canada = D::de(s)?;
             let g = &c.features[0].geometry;
-            acc += (c.type_.len() + g.type_.len() + g.coordinates.len()) as f64;
+            acc += (c.type_.len() + g.type_.len() + g.coordinates.0) as f64;
         }
         "jeopardy" => {
             let q: Vec<sel::Question> = D::de(s)?;
@@ -568,6 +597,31 @@ fn padded(s: &[u8]) -> Vec<u8> {
     r
 }
 
+// the minified inputs (twitter_min, citm_catalog_min): the whitespace outside strings removed, the bytes inside strings
+// untouched (the same function as strip_ws in bench_all.cpp)
+fn strip_ws(s: &[u8]) -> Vec<u8> {
+    let mut r = Vec::with_capacity(s.len());
+    let mut in_string = false;
+    let mut i = 0;
+    while i < s.len() {
+        let ch = s[i];
+        if in_string {
+            r.push(ch);
+            if ch == b'\\' && i + 1 < s.len() {
+                i += 1;
+                r.push(s[i]);
+            } else if ch == b'"' {
+                in_string = false;
+            }
+        } else if ch != b' ' && ch != b'\n' && ch != b'\r' && ch != b'\t' {
+            r.push(ch);
+            in_string = ch == b'"';
+        }
+        i += 1;
+    }
+    r
+}
+
 // malformed inputs derived from a valid document, as in bench_all.cpp (0xFF in a string value, not a key)
 // (what, text, is the 0xFF probe)
 fn malformed(s: &[u8]) -> Vec<(&'static str, Vec<u8>, bool)> {
@@ -612,14 +666,26 @@ fn malformed(s: &[u8]) -> Vec<(&'static str, Vec<u8>, bool)> {
     while matches!(t.last(), Some(b' ' | b'\n' | b'\r' | b'\t')) {
         t.pop();
     }
+    let mut trailing = t.clone();
+    trailing.extend_from_slice(b" ]x"); // after the value
     t.pop();
-    let mut out = vec![("truncated input", padded(&t), false)];
+    let mut out = vec![("truncated input", padded(&t), false), ("trailing garbage", padded(&trailing), false)];
     let mut t = s.to_vec();
-    t.insert(first_close.unwrap(), b',');
-    out.push(("a stray comma before '}'", padded(&t), false));
-    let mut t = s.to_vec();
-    t.insert(mid_quote.or(last_quote).unwrap() + 1, 0xFF);
-    out.push(("invalid UTF-8 (0xFF in a string)", padded(&t), true));
+    if let Some(c) = first_close {
+        t.insert(c, b',');
+        out.push(("a stray comma before '}'", padded(&t), false));
+    } else {
+        // a file without objects (--files): the comma goes before the last ']'
+        let c = (0..t.len()).rev().find(|&i| t[i] == b']').unwrap();
+        t.insert(c, b',');
+        out.push(("a stray comma before ']'", padded(&t), false));
+    }
+    // a file without string values (--files) gets no UTF-8 probe
+    if let Some(q) = mid_quote.or(last_quote) {
+        let mut t = s.to_vec();
+        t.insert(q + 1, 0xFF);
+        out.push(("invalid UTF-8 (0xFF in a string)", padded(&t), true));
+    }
     out
 }
 
@@ -629,34 +695,55 @@ fn same_text(out: &[u8], expected: &serde_json::Value) -> bool {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        eprintln!("usage: {} <json_test_data dir> [rounds] [document] [use case]", args[0]);
+    // --files <dir>: every *.json file of the directory instead of the files below, without select and edit;
+    // --conformance <dir>: every validate variant on every *.json file of the directory (JSONTestSuite), no timing
+    let files = args.len() > 1 && args[1] == "--files";
+    let conformance = args.len() > 1 && args[1] == "--conformance";
+    let a = if files || conformance { 2 } else { 1 };
+    if args.len() <= a {
+        eprintln!("usage: {0} <json_test_data dir> [rounds] [document] [use case]\n       {0} --files <dir> [rounds] [document] [use case]\n       {0} --conformance <dir>", args[0]);
         std::process::exit(1);
     }
-    let t = format!("{}/", args[1]);
-    let rounds: usize = args.get(2).map(|r| r.parse().unwrap()).unwrap_or(30).max(1);
-    let only: String = args.get(3).cloned().unwrap_or_default();
-    let only_uc: String = args.get(4).cloned().unwrap_or_default();
-    let mut docs: Vec<(String, Vec<u8>, usize)> = Vec::new();
-    for f in ["nativejson-benchmark/twitter.json", "nativejson-benchmark/citm_catalog.json", "nativejson-benchmark/canada.json", "jeopardy/jeopardy.json"] {
-        let name = f.split('/').nth(1).unwrap().trim_end_matches(".json").to_string();
-        docs.push((name, padded(&std::fs::read(format!("{}{}", t, f)).unwrap()), 1));
+    let t = format!("{}/", args[a]);
+    let rounds: usize = args.get(a + 1).map(|r| r.parse().unwrap()).unwrap_or(30).max(1);
+    let only: String = args.get(a + 2).cloned().unwrap_or_default();
+    let only_uc: String = if conformance { "validate".to_string() } else { args.get(a + 3).cloned().unwrap_or_default() };
+    // (file, text, batch, the document whose select and edit apply)
+    let mut docs: Vec<(String, Vec<u8>, usize, String)> = Vec::new();
+    if files || conformance {
+        let mut paths: Vec<std::path::PathBuf> = std::fs::read_dir(&t).unwrap().map(|e| e.unwrap().path()).filter(|p| p.extension().map_or(false, |x| x == "json")).collect();
+        paths.sort();
+        for p in paths {
+            // small files are timed in batches of about 500 KB of input, as status is
+            let text = padded(&std::fs::read(&p).unwrap());
+            let name = if conformance { p.file_name() } else { p.file_stem() }.unwrap().to_string_lossy().to_string();
+            let batch = (500000 / text.len().max(1)).max(1);
+            docs.push((name.clone(), text, batch, name));
+        }
+    } else {
+        for f in ["nativejson-benchmark/twitter.json", "nativejson-benchmark/citm_catalog.json", "nativejson-benchmark/canada.json", "jeopardy/jeopardy.json"] {
+            let name = f.split('/').nth(1).unwrap().trim_end_matches(".json").to_string();
+            docs.push((name.clone(), padded(&std::fs::read(format!("{}{}", t, f)).unwrap()), 1, name));
+        }
+        let tw: serde_json::Value = serde_json::from_slice(&docs[0].1).unwrap();
+        docs.push(("status".to_string(), padded(serde_json::to_string(&tw["statuses"][0]).unwrap().as_bytes()), 200, "status".to_string()));
+        let (tw_min, citm_min) = (padded(&strip_ws(&docs[0].1)), padded(&strip_ws(&docs[1].1)));
+        docs.push(("twitter_min".to_string(), tw_min, 1, "twitter".to_string()));
+        docs.push(("citm_catalog_min".to_string(), citm_min, 1, "citm_catalog".to_string()));
     }
-    let tw: serde_json::Value = serde_json::from_slice(&docs[0].1).unwrap();
-    docs.push(("status".to_string(), padded(serde_json::to_string(&tw["statuses"][0]).unwrap().as_bytes()), 200));
 
     std::panic::set_hook(Box::new(|_| {})); // a panic is a failed call, reported by the checks
     let simd_reused = RefCell::new((simd_json::Buffers::default(), Vec::<u8>::new()));
     let mut excluded_total = 0;
-    for (name, s, batch) in &docs {
-        if !only.is_empty() && *name != only {
+    for (file, s, batch, base) in &docs {
+        if !only.is_empty() && *file != only {
             continue;
         }
-        let name = name.as_str();
+        let (file, name) = (file.as_str(), base.as_str());
         let s = s.as_slice();
-        let bad = malformed(s);
+        let bad = if conformance { Vec::new() } else { malformed(s) };
         for uc in ["validate", "sum", "select", "edit", "minify", "write"] {
-            if !only_uc.is_empty() && uc != only_uc {
+            if (!only_uc.is_empty() && uc != only_uc) || (files && (uc == "select" || uc == "edit")) {
                 continue;
             }
             // write: each library's document, parsed once outside the timer
@@ -753,11 +840,11 @@ fn main() {
             match uc {
                 "sum" => {
                     sum_serde(s, &mut ref_st);
-                    println!("check {:<13} {:<9} reference: nodes {} str {} num {:.16e}", name, uc, ref_st.nodes, ref_st.str_, ref_st.num);
+                    println!("check {:<13} {:<9} reference: nodes {} str {} num {:.16e}", file, uc, ref_st.nodes, ref_st.str_, ref_st.num);
                 }
                 "select" => {
                     ref_acc = pick_serde(name, &serde_json::from_slice(s).unwrap());
-                    println!("check {:<13} {:<9} reference: {:.16e}", name, uc, ref_acc);
+                    println!("check {:<13} {:<9} reference: {:.16e}", file, uc, ref_acc);
                 }
                 "validate" => {}
                 _ => {
@@ -766,6 +853,20 @@ fn main() {
                         edit_serde(name, &mut ref_json);
                     }
                 }
+            }
+            if conformance {
+                // CONF_VARIANT=<name>: only this variant (a stack overflow aborts the process, see conformance.sh)
+                let only_var = std::env::var("CONF_VARIANT").unwrap_or_default();
+                for var in all.iter().filter(|v| only_var.is_empty() || v.name == only_var) {
+                    let mut r = Res::new(true);
+                    let verdict = match catch_unwind(AssertUnwindSafe(|| (var.f)(s, &mut r))) {
+                        Ok(true) => "accepted",
+                        Ok(false) => "rejected",
+                        Err(_) => "crashed",
+                    };
+                    println!("conformance: {} | {} | {}", file, var.name, verdict);
+                }
+                continue;
             }
             let n_all = all.len();
             let mut vs: Vec<Variant> = Vec::new();
@@ -812,25 +913,37 @@ fn main() {
                         }
                         level = if structural { "partial" } else if utf8 { "no UTF-8" } else { "full" };
                         if !notes.is_empty() {
-                            println!("level: {} {} | {} | {} | {}", name, uc, var.name, level, notes.join("; "));
+                            println!("level: {} {} | {} | {} | {}", file, uc, var.name, level, notes.join("; "));
                         }
                     }
                     vs.push(var);
                     levels.push(level);
                 } else {
                     excluded_total += 1;
-                    println!("excluded: {} {} | {} | {}", name, uc, var.name, why);
+                    println!("excluded: {} {} | {} | {}", file, uc, var.name, why);
                 }
             }
-            println!("check {:<13} {:<9} {} of {} variants give the right result", name, uc, vs.len(), n_all);
+            println!("check {:<13} {:<9} {} of {} variants give the right result", file, uc, vs.len(), n_all);
             if vs.is_empty() {
                 continue;
             }
 
             let r = if s.len() > 10_000_000 { rounds.min((rounds / 5).max(3)) } else { rounds };
             let mut best = vec![f64::MAX; vs.len()];
-            for _ in 0..r {
-                for (k, var) in vs.iter().enumerate() {
+            // a new order of the variants in every round (as in bench_all.cpp): a Fisher-Yates shuffle with xorshift64
+            let mut order: Vec<usize> = (0..vs.len()).collect();
+            let mut rng: u64 = 12345;
+            for i in 0..r {
+                if i > 0 {
+                    for j in (1..order.len()).rev() {
+                        rng ^= rng << 13;
+                        rng ^= rng >> 7;
+                        rng ^= rng << 17;
+                        order.swap(j, (rng % (j as u64 + 1)) as usize);
+                    }
+                }
+                for &k in &order {
+                    let var = &vs[k];
                     let mut res = Res::new(false);
                     run(var, s, &mut res); // untimed: the previous variant's leftovers are cleaned up here
                     sink(res.st.num + res.acc);
@@ -844,7 +957,7 @@ fn main() {
                     best[k] = best[k].min(ns);
                 }
             }
-            print!("{:<13} {:<9}", name, uc);
+            print!("{:<13} {:<9}", file, uc);
             for (k, var) in vs.iter().enumerate() {
                 print!(" | {} [{}] {:.1}us ({:.2}x)", var.name, levels[k], best[k] / 1e3, best[k] / best[0]);
             }
