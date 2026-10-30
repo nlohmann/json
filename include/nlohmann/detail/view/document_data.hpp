@@ -36,7 +36,6 @@ struct document_data
     const char* src = nullptr;
     std::size_t size = 0;
     node* nodes = nullptr; ///< the node index (see node.hpp)
-    bool validate_only = false; ///< accept(): build() checks the text and stores no nodes
     std::size_t node_count = 0;
     std::size_t node_capacity = 0;
     node* inline_nodes = nullptr; ///< node array allocated together with this header
@@ -59,6 +58,7 @@ struct document_data
     std::vector<std::uint32_t> large_objects; ///< positions of the objects to index (noted while parsing)
     std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena, edit arena, unused (indexed by flags & node_flags::storage)
     bool discarded = true;
+    bool validate_only = false; ///< accept(): build() checks the text and stores no nodes (next to `discarded`: no member moves)
 
     /// The storage of edits (editable documents only; see edit_storage.hpp).
     /// No edit moves or resizes the parsed index, and the nodes of values

@@ -16,6 +16,7 @@
 #include <cstring> // memcmp, memcpy
 #include <limits> // numeric_limits
 #include <string> // string
+#include <type_traits> // false_type, integral_constant, true_type
 #include <vector> // vector
 
 #include <nlohmann/json.hpp>
@@ -244,6 +245,88 @@ class builder
             }
         }
         return p;
+    }
+
+    /// the string from p, the first backslash, control character, ill-formed UTF-8 byte, or the end, checked and not
+    /// decoded (accept() stores nothing, so the arena is not written): the checks, errors and error positions of
+    /// slow_string(), for everything up to the closing quote
+    NLOHMANN_VIEW_NOINLINE decoded check_string(const unsigned char* p)
+    {
+        const unsigned char* const end = m_end;
+        for (;;)
+        {
+            if (p == end)
+            {
+                return failed(error_code::string_missing_quote, p);
+            }
+            const unsigned char c = *p;
+            if (c == '"')
+            {
+                ++p;
+                return decoded{p, 0, 0};
+            }
+            if (c != '\\')
+            {
+                return failed(c < 0x20 ? error_code::string_control_character : error_code::string_utf8, p);
+            }
+            ++p;
+            if (p == end)
+            {
+                return failed(error_code::string_missing_quote, p);
+            }
+            const unsigned char d = *p++;
+            if (d == 'u')
+            {
+                const int cp = hex4(p); // (moves p past the four digits)
+                if (NLOHMANN_VIEW_UNLIKELY(cp < 0))
+                {
+                    return failed(error_code::string_unicode_hex, p);
+                }
+                if (NLOHMANN_VIEW_UNLIKELY((cp & 0xF800) == 0xD800)) // a surrogate
+                {
+                    if (cp >= 0xDC00)
+                    {
+                        return failed(error_code::string_surrogate_low, p);
+                    }
+                    if (end - p < 2 || p[0] != '\\' || p[1] != 'u')
+                    {
+                        return failed(error_code::string_surrogate_high, p);
+                    }
+                    p += 2;
+                    const int lo = hex4(p); // (moves p past the four digits)
+                    if (lo < 0)
+                    {
+                        return failed(error_code::string_unicode_hex, p);
+                    }
+                    if (lo < 0xDC00 || lo > 0xDFFF)
+                    {
+                        return failed(error_code::string_surrogate_high, p);
+                    }
+                }
+            }
+            else if (!(d == '"' || d == '\\' || d == '/' || d == 'b' || d == 'f' || d == 'n' || d == 'r' || d == 't'))
+            {
+                --p;
+                return failed(error_code::string_escape, p);
+            }
+            p = scan_string_run(p, end); // the text up to the next backslash, quote, control character, or ill-formed UTF-8
+        }
+    }
+
+    /// the string from p, decoded into the arena, or only checked (Store == false)
+    decoded decode_string(const unsigned char* s, const unsigned char* p)
+    {
+        return decode_string(s, p, std::integral_constant<bool, Store>());
+    }
+
+    decoded decode_string(const unsigned char* s, const unsigned char* p, std::true_type /*unused*/)
+    {
+        return slow_string(s, p);
+    }
+
+    decoded decode_string(const unsigned char* /*unused*/, const unsigned char* p, std::false_type /*unused*/)
+    {
+        return check_string(p);
     }
 
     /// s points to the start of the string, p to a backslash, a control
@@ -1193,7 +1276,7 @@ indent_done:
                 ++p;
                 return true;
             }
-            const decoded r = cold.slow_string(s, p);
+            const decoded r = cold.decode_string(s, p);
             if (r.p == nullptr)
             {
                 return false;

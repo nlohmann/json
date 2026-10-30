@@ -509,6 +509,47 @@ TEST_CASE("json_view builder")
             CAPTURE(text)
             CHECK(nlohmann::basic_json_document<float_json>::accept(text) == float_json::accept(text));
         }
+
+        // strings are checked and not decoded: runs of text of every length from 0 to 40 between valid and invalid
+        // escapes, UTF-8 sequences and control characters, in values and in keys, cut near the end of the text
+        const std::array<const char*, 9> valid = {{"\\n", "\\\"", "\\\\", "\\/", "\\t", "\\u00e4", "\\u20ac", "\\ud83d\\ude00", "\\u0000"}};
+        const std::array<const char*, 12> invalid = {{"\\x", "\\ud800", "\\udc00", "\\u12G4", "\\u12", "\\ud83dx", "\\ud83d\\u0041", "\\ud83d\\ud83d", "\\", "\x01", "\x1f", "\x7f"}};
+        const std::array<const char*, 6> utf8 = {{"\xc3\xa4", "\xe2\x82\xac", "\xf0\x9f\x98\x80", "\xc3", "\xff", "\x80"}};
+        std::mt19937 rng(2029); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+        for (std::size_t run = 0; run <= 40; ++run)
+        {
+            for (int i = 0; i < 30; ++i)
+            {
+                std::string content = std::string(rng() % 20, 'a');
+                const auto pieces = 1 + (rng() % 6);
+                for (unsigned k = 0; k < pieces; ++k)
+                {
+                    content += valid[rng() % valid.size()];
+                    content += std::string(k == 0 ? run : rng() % 41, static_cast<char>('b' + (rng() % 20)));
+                    switch (rng() % 8)
+                    {
+                        case 0:
+                            content += utf8[rng() % 3];
+                            break;
+                        case 1:
+                            content += utf8[rng() % utf8.size()];
+                            break;
+                        case 2:
+                            content += invalid[rng() % invalid.size()];
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                for (const std::string& text :
+                        {
+                            "[\"" + content + "\"]", "{\"" + content + "\":1}", "[\"" + content, "[\"" + content.substr(0, content.size() - (rng() % 4)) + "\"]"
+                        })
+                {
+                    check_accept(text);
+                }
+            }
+        }
     }
 
     SECTION("test files")
