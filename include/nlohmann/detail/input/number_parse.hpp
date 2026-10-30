@@ -44,6 +44,13 @@
 // use std::from_chars or std::strtold. They are free functions so the lexer
 // stays focused on scanning (see lexer::convert_number()) and so that other
 // parsers of JSON text can convert tokens exactly like it does.
+//
+// The Eisel-Lemire conversion (eisel_lemire()), the digit comparison for the
+// cases it cannot decide, and the eight-digits-at-a-time helpers
+// (is_eight_digits(), parse_eight_digits()) are adapted from fast_float
+// (https://github.com/fastfloat/fast_float, Daniel Lemire and contributors,
+// available under the MIT, Apache 2.0, and Boost Software licenses; used here
+// under the MIT license). The table of powers of five is in pow5_table.hpp.
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
