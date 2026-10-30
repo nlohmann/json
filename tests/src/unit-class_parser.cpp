@@ -3150,7 +3150,12 @@ TEST_CASE("object keys are delivered decoded and validated")
         const std::vector<std::string> expected = {stored};
         const auto keys_of_bytes = [&keys_of_format](const std::vector<std::uint8_t>& v, json::input_format_t format)
         {
-            return keys_of_format(std::string(v.begin(), v.end()), format);
+            std::string text;
+            for (const auto byte : v)
+            {
+                text.push_back(static_cast<char>(byte));
+            }
+            return keys_of_format(text, format);
         };
 
         CHECK(keys_of_bytes({0xA1, 0x62, 0xFF, 0x5C, 0x01}, json::input_format_t::cbor) == expected);
