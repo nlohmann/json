@@ -81,6 +81,111 @@ std::string range(const json& j)
 {
     return j.start_pos() == npos && j.end_pos() == npos ? "none" : std::to_string(j.start_pos()) + "-" + std::to_string(j.end_pos());
 }
+
+#if !defined(JSON_NOEXCEPTION)
+using json_view_test::exception_of_call;
+
+// the exceptions about every value of v are those about the value at the same
+// place in j, a value of the whole document from parse() or materialize() (so
+// that its parents and positions are set); members whose key repeats are
+// skipped (the view finds the first one, j holds the last)
+template<typename View>
+void check_exceptions(const View& v, const json& j)
+{
+    CAPTURE(j.dump())
+    if (!v.is_number())
+    {
+        CHECK(exception_of_call([&] { static_cast<void>(v.template get<int>()); }) == exception_of_call([&] { static_cast<void>(j.get<int>()); }));
+    }
+    if (!v.is_string())
+    {
+        CHECK(exception_of_call([&] { static_cast<void>(v.template get<std::string>()); }) == exception_of_call([&] { static_cast<void>(j.get<std::string>()); }));
+    }
+    if (!v.is_array())
+    {
+        CHECK(exception_of_call([&] { static_cast<void>(v.template get<std::vector<int>>()); }) == exception_of_call([&] { static_cast<void>(j.get<std::vector<int>>()); }));
+    }
+    CHECK(exception_of_call([&] { static_cast<void>(v.at("missing")); }) == exception_of_call([&] { static_cast<void>(j.at("missing")); }));
+    CHECK(exception_of_call([&] { static_cast<void>(v.at(1000)); }) == exception_of_call([&] { static_cast<void>(j.at(1000)); }));
+    CHECK(exception_of_call([&] { static_cast<void>(v.at(json::json_pointer("/missing"))); }) == exception_of_call([&] { static_cast<void>(j.at(json::json_pointer("/missing"))); }));
+    CHECK(exception_of_call([&] { static_cast<void>(v.at(json::json_pointer("/-"))); }) == exception_of_call([&] { static_cast<void>(j.at(json::json_pointer("/-"))); }));
+    CHECK(exception_of_call([&] { static_cast<void>(v.value("k", 0)); }) == exception_of_call([&] { static_cast<void>(j.value("k", 0)); }));
+    if (!v.is_object())
+    {
+        CHECK(exception_of_call([&] { static_cast<void>(v["k"]); }) == exception_of_call([&] { static_cast<void>(j["k"]); }));
+        CHECK(exception_of_call([&] { static_cast<void>(v.begin().key()); }) == exception_of_call([&] { static_cast<void>(j.begin().key()); }));
+    }
+    if (!v.is_array())
+    {
+        CHECK(exception_of_call([&] { static_cast<void>(v[0]); }) == exception_of_call([&] { static_cast<void>(j[0]); }));
+    }
+    if (v.is_null())
+    {
+        CHECK(exception_of_call([&] { static_cast<void>(v.front()); }) == exception_of_call([&] { static_cast<void>(j.front()); }));
+    }
+    if (v.is_object())
+    {
+        for (auto it = v.begin(); it != v.end(); ++it)
+        {
+            const std::string key(it.key().data(), it.key().size());
+            if (v.count(key) == 1)
+            {
+                check_exceptions(it.value(), j.at(key));
+            }
+        }
+    }
+    else if (v.is_array())
+    {
+        for (std::size_t i = 0; i < v.size(); ++i)
+        {
+            check_exceptions(v[i], j[i]);
+        }
+    }
+}
+
+// as check_exceptions, for edits that fail (they change neither d nor j)
+void check_edit_exceptions(json_editable_document& d, const json_editable_document::view_type& v, json& j)
+{
+    CAPTURE(j.dump())
+    if (!v.is_object() && !v.is_null())
+    {
+        CHECK(exception_of_call([&] { d.set(v, "k", 1); }) == exception_of_call([&] { j["k"] = 1; }));
+        CHECK(exception_of_call([&] { d.erase(v, "k"); }) == exception_of_call([&] { j.erase("k"); }));
+    }
+    if (!v.is_array() && !v.is_null())
+    {
+        CHECK(exception_of_call([&] { d.set(v, 0, 1); }) == exception_of_call([&] { j[0] = 1; }));
+        CHECK(exception_of_call([&] { d.push_back(v, 1); }) == exception_of_call([&] { j.push_back(1); }));
+    }
+    if (!v.is_array())
+    {
+        CHECK(exception_of_call([&] { d.insert(v, 0, 1); }) == exception_of_call([&] { j.insert(j.cbegin(), 1); }));
+        CHECK(exception_of_call([&] { d.erase(v, 0); }) == exception_of_call([&] { j.erase(0); }));
+    }
+    else
+    {
+        CHECK(exception_of_call([&] { d.erase(v, 1000); }) == exception_of_call([&] { j.erase(1000); }));
+    }
+    if (v.is_object())
+    {
+        for (auto it = v.begin(); it != v.end(); ++it)
+        {
+            const std::string key(it.key().data(), it.key().size());
+            if (v.count(key) == 1)
+            {
+                check_edit_exceptions(d, it.value(), j.at(key));
+            }
+        }
+    }
+    else if (v.is_array())
+    {
+        for (std::size_t i = 0; i < v.size(); ++i)
+        {
+            check_edit_exceptions(d, v[i], j[i]);
+        }
+    }
+}
+#endif
 } // namespace
 
 TEST_CASE("json_view materialize() source positions")
@@ -345,3 +450,96 @@ TEST_CASE("json_view materialize() source positions")
     }
 #endif
 }
+
+#if !defined(JSON_NOEXCEPTION)
+TEST_CASE("json_view exceptions name the path and the bytes of the value")
+{
+    SECTION("as those of basic_json")
+    {
+        const std::vector<std::string> texts =
+        {
+            "null", "true", "42", "\"s\"", "[]", "{}", "[1, [2, [3, []]]]", R"({"a": {"b": [1, {"c": null}]}, "d": "e"})",
+            R"({"a/b": {"~": [1]}, "\u0041\n": {"x": "\t"}, "": [{}]})",
+            R"([1 /* ] */, {"a": [] // }
+, "b": {} } , ])",
+            "\n\t[\r\n  1 ,\n  {\n    \"a\" : [ ]\n  }\n]\n",
+        };
+        for (const auto& text : texts)
+        {
+            CAPTURE(text)
+            const json j = json::parse(text, nullptr, true, true, true);
+            const json_document d = json_document::parse(text, true, true, true);
+            check_exceptions(d.root(), j);
+            json_editable_document e = json_editable_document::parse(text, true, true, true);
+            check_exceptions(e.root(), j);
+            json m = e.root().materialize();
+            check_edit_exceptions(e, e.root(), m);
+        }
+    }
+
+    SECTION("generated documents")
+    {
+        json_view_test::generator gen;
+        for (int i = 0; i < 100; ++i)
+        {
+            std::string text;
+            gen.value(text, 0);
+            CAPTURE(text)
+            const json_document d = json_document::parse(text);
+            check_exceptions(d.root(), json::parse(text));
+        }
+    }
+
+    SECTION("edited documents: as those of materialize()")
+    {
+        const std::string text = R"({"a": [1, 2], "b": {"c": "\n", "d": true}, "e": [3, [4]], "f": "x"})";
+        json_editable_document d = json_editable_document::parse(text);
+        d.set(d.root()["f"], 5);
+        d.push_back(d.root()["a"], json::parse(R"({"n": [null]})"));
+        d.erase(d.root()["e"], 0);
+        d.set(d.root()["b"], "c2", d.root()["e"]);
+        d.insert(d.root()["e"], 0, "new");
+        json m = d.root().materialize();
+        check_exceptions(d.root(), m);
+        check_edit_exceptions(d, d.root(), m);
+        // (a value inside a new container: a path, but no bytes)
+        CHECK(exception_of_call([&] { static_cast<void>(d.root()["a"][2]["n"][0].get<int>()); }) == "[json.exception.type_error.302] "
+#if JSON_DIAGNOSTICS
+              "(/a/2/n/0) "
+#endif
+              "type must be number, but is null");
+    }
+
+    SECTION("examples")
+    {
+        const std::string text = R"({"people": [{"name": "a", "age": 1}, {"name": "c", "age": "x"}], "o": {"k": 1}})";
+        const json_document d = json_document::parse(text);
+        CHECK(exception_of_call([&] { static_cast<void>(d.root()["people"][1]["age"].get<int>()); }) == "[json.exception.type_error.302] "
+#if JSON_DIAGNOSTICS
+              "(/people/1/age) "
+#endif
+              "(bytes 58-61) type must be number, but is string");
+        CHECK(exception_of_call([&] { static_cast<void>(d.root().at(json::json_pointer("/people/0/zz"))); }) == "[json.exception.out_of_range.403] "
+#if JSON_DIAGNOSTICS
+              "(/people/0) "
+#endif
+              "(bytes 12-35) key 'zz' not found");
+        // the root has no path, and with JSON_DIAGNOSTICS then no bytes either (as basic_json)
+        CHECK(exception_of_call([&] { static_cast<void>(d.root().at("missing")); }) == "[json.exception.out_of_range.403] "
+#if !JSON_DIAGNOSTICS
+              "(bytes 0-79) "
+#endif
+              "key 'missing' not found");
+    }
+
+    SECTION("duplicate keys: the value the view finds")
+    {
+        const json_document d = json_document::parse(R"({"x": "1", "x": "22"})");
+        CHECK(exception_of_call([&] { static_cast<void>(d.root()["x"].get<int>()); }) == "[json.exception.type_error.302] "
+#if JSON_DIAGNOSTICS
+              "(/x) "
+#endif
+              "(bytes 6-9) type must be number, but is string");
+    }
+}
+#endif

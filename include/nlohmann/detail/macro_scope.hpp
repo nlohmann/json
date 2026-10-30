@@ -347,7 +347,7 @@
             return ej_pair.second == j;                                                         \
         });                                                                                     \
         if (it != std::end(m)) e = it->first;                                                   \
-        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(nlohmann::detail::exception_id::value_out_of_range, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", nlohmann::detail::from_json_dump(j)), nlohmann::detail::exception_context(j))); \
+        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(nlohmann::detail::exception_id::value_out_of_range, nlohmann::detail::concat(nlohmann::detail::exception_prefix(j), "enum value out of range for " #ENUM_TYPE ": ", nlohmann::detail::from_json_dump(j)), nlohmann::detail::exception_context(j))); \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They

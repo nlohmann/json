@@ -462,7 +462,7 @@ TEST_CASE("json_view large objects")
         CHECK(v[""].get_string() == "empty key");
         CHECK(v["k1"].get<int>() == 1); // the first of duplicate keys, as for small objects
         CHECK(!v.contains("missing"));
-        CHECK_THROWS_WITH_AS(v.at("missing"), "[json.exception.out_of_range.403] key 'missing' not found", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(v.at("missing"), json_view_test::message("out_of_range.403", "", 0, text.size(), "key 'missing' not found").c_str(), json::out_of_range&);
         CHECK(v == j);
         CHECK(v.materialize() == j);
     }

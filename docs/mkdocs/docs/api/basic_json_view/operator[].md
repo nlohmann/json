@@ -73,9 +73,10 @@ Strong guarantee: there are no changes to the view or the document it refers to.
     - [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in `ptr` is not a
       number.
 
-None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) path: the view has no
-`BasicJsonType` value to point at, so the exception is created without one, even if `BasicJsonType` was built with
-`JSON_DIAGNOSTICS` enabled.
+As for `BasicJsonType`, with [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) these exceptions name the JSON
+Pointer path of the value within the document, and with
+[`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) its bytes in the source text (where
+[`materialize()`](materialize.md) sets them).
 
 ## Complexity
 

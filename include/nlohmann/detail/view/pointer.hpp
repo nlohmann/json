@@ -45,6 +45,7 @@ index_status array_index(const StringType& s, std::size_t& idx) noexcept
 
 /// throws the exception json_pointer::array_index throws for this status
 template<typename StringType>
+/// (without a context, as json_pointer::array_index)
 [[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_array_index_error(index_status status, const StringType& s)
 {
     switch (status)
@@ -83,7 +84,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             {
                 if (mode == pointer_mode::checked)
                 {
-                    throw_key_not_found(token);
+                    throw_key_not_found(site_of(cur), token);
                 }
                 return View();
             }
@@ -95,7 +96,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             {
                 if (throwing)
                 {
-                    throw_array_index_past_end(cur.size());
+                    throw_array_index_past_end(site_of(cur), cur.size());
                 }
                 return View();
             }
@@ -114,7 +115,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
             {
                 if (mode == pointer_mode::checked)
                 {
-                    throw_array_index_out_of_range(idx);
+                    throw_array_index_out_of_range(site_of(cur), idx);
                 }
                 return View();
             }
@@ -124,7 +125,7 @@ View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
         {
             if (throwing)
             {
-                throw_out_of_range(exception_id::pointer_unresolved, concat("unresolved reference token '", token, "'"));
+                throw_out_of_range(site_of(cur), exception_id::pointer_unresolved, concat("unresolved reference token '", token, "'"));
             }
             return View();
         }
