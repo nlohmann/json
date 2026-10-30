@@ -763,7 +763,11 @@ class basic_json_view
     template<typename, view_mode> friend class basic_json_document;
     template<typename, view_mode> friend class basic_json_view;
     template<typename, typename> friend class detail::view::editor;
+    template<typename, typename> friend class detail::view::view_side;
     friend iterator;
+
+    /// whether the view is one of an editable document
+    static constexpr bool is_editable = Editable;
 
     basic_json_view(const document_data* d, const node* n) noexcept
         : m_doc(d), m_node(n)

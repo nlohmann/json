@@ -10970,6 +10970,13 @@ NLOHMANN_JSON_NAMESPACE_END
 // use std::from_chars or std::strtold. They are free functions so the lexer
 // stays focused on scanning (see lexer::convert_number()) and so that other
 // parsers of JSON text can convert tokens exactly like it does.
+//
+// The Eisel-Lemire conversion (eisel_lemire()), the digit comparison for the
+// cases it cannot decide, and the eight-digits-at-a-time helpers
+// (is_eight_digits(), parse_eight_digits()) are adapted from fast_float
+// (https://github.com/fastfloat/fast_float, Daniel Lemire and contributors,
+// available under the MIT, Apache 2.0, and Boost Software licenses; used here
+// under the MIT license). The table of powers of five is in pow5_table.hpp.
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -12078,6 +12085,13 @@ NLOHMANN_JSON_NAMESPACE_END
 // NLOHMANN_JSON_NO_TARGET_ATTRIBUTE (for compilers that ignore the target
 // attribute and then reject the SSSE3 intrinsics) keeps the check portable
 // without disabling the SSE2 code.
+//
+// The vector UTF-8 check (utf8_lookup4) is adapted from simdjson
+// (https://github.com/simdjson/simdjson, Daniel Lemire, Geoff Langdale, John
+// Keiser, and contributors, available under the Apache 2.0 and MIT licenses;
+// used here under the MIT license): the "lookup4" algorithm and tables of
+// J. Keiser and D. Lemire, "Validating UTF-8 In Less Than One Instruction Per
+// Byte" (2021).
 #if !defined(JSON_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     #include <arm_neon.h>
     #define JSON_SCAN_NEON 1
@@ -32495,6 +32509,11 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <type_traits> // conditional
 
 
+// The shortest-digit conversion of doubles (see zmij.hpp) and the writing of
+// its digits, including the conversion of the digits to text by Xiang JunBo
+// and the SIMD instruction sequence by Dougall Johnson, are ported from Zmij
+// by Victor Zverovich (https://github.com/vitaut/zmij, MIT license).
+//
 // SSE2 (every x86-64 CPU) and NEON (every 64-bit Arm CPU) convert the 16
 // digits of a double at once (unless JSON_NO_SIMD selects the portable code)
 #if !defined(JSON_NO_SIMD) && (defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC)))

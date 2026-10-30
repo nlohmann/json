@@ -688,6 +688,13 @@ NLOHMANN_JSON_NAMESPACE_END
 // NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE (set by the GCC module interface, where GCC
 // ignores the target attribute and then rejects the SSSE3 intrinsics) keeps the
 // check portable without disabling the SSE2 code.
+//
+// The vector UTF-8 check (utf8_lookup4) is adapted from simdjson
+// (https://github.com/simdjson/simdjson, Daniel Lemire, Geoff Langdale, John
+// Keiser, and contributors, available under the Apache 2.0 and MIT licenses;
+// used here under the MIT license): the "lookup4" algorithm and tables of
+// J. Keiser and D. Lemire, "Validating UTF-8 In Less Than One Instruction Per
+// Byte" (2021).
 #if !defined(JSON_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && NLOHMANN_VIEW_LITTLE_ENDIAN
     #include <arm_neon.h>
     #define NLOHMANN_VIEW_NEON 1
@@ -2472,14 +2479,366 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // sort, stable_sort
+#include <algorithm> // is_sorted, sort, stable_sort
+#include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // int64_t, uint32_t, uint64_t
+#include <cstring> // memcpy
+#include <functional> // equal_to
 #include <string> // string
-#include <utility> // move, pair
+#include <utility> // move, pair, swap
 #include <vector> // vector
 
 // #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/document_data.hpp>
+
 // #include <nlohmann/detail/view/macro_scope.hpp>
+
+// #include <nlohmann/detail/view/node.hpp>
+
+// #include <nlohmann/detail/view/number.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstddef> // size_t
+#include <cstdint> // int64_t, uint64_t
+#include <limits> // numeric_limits
+#include <string> // string
+#include <type_traits> // integral_constant
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/document_data.hpp>
+
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+// #include <nlohmann/detail/view/node.hpp>
+
+// #include <nlohmann/detail/view/scan.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+/*!
+@brief locate the decimal point and the end of the mantissa of a float token
+
+Also checks that the token is a JSON number. Tokens of the parser and of edits
+always are; an image loaded with image_check::bounds can hold any bytes, which
+must not reach the conversion (it expects a well-formed token).
+*/
+inline bool float_token_layout(const char* first, const char* last, std::size_t& dot, std::size_t& mantissa_end) noexcept
+{
+    const auto digit = [last](const char* q)
+    {
+        return q != last && is_digit(static_cast<unsigned char>(*q));
+    };
+    const char* p = first;
+    p += (p != last && *p == '-') ? 1 : 0;
+    if (!digit(p) || (*p == '0' && digit(p + 1)))
+    {
+        return false;
+    }
+    do
+    {
+        ++p;
+    }
+    while (digit(p));
+    dot = std::string::npos;
+    if (p != last && *p == '.')
+    {
+        dot = static_cast<std::size_t>(p - first);
+        if (!digit(++p))
+        {
+            return false;
+        }
+        do
+        {
+            ++p;
+        }
+        while (digit(p));
+    }
+    mantissa_end = static_cast<std::size_t>(p - first);
+    if (p != last && (*p == 'e' || *p == 'E'))
+    {
+        ++p;
+        p += (p != last && (*p == '+' || *p == '-')) ? 1 : 0;
+        if (!digit(p))
+        {
+            return false;
+        }
+        do
+        {
+            ++p;
+        }
+        while (digit(p));
+    }
+    return p == last;
+}
+
+/*!
+@brief the value of the float token of a node, as parse() converts it
+
+Uses the lexer's conversion (detail::convert_float), so that the values are
+bit-identical to parse(): float and double are converted without allocation
+and independent of the locale. A token that is not a JSON number (only in a
+damaged image loaded with image_check::bounds) yields 0.
+*/
+template<typename FloatType>
+NLOHMANN_VIEW_NOINLINE FloatType float_value(const char* first, const node& n)
+{
+    const char* const last = first + n.len;
+    std::size_t dot = 0;
+    std::size_t mantissa_end = 0;
+    if (NLOHMANN_VIEW_UNLIKELY(!float_token_layout(first, last, dot, mantissa_end)))
+    {
+        return FloatType{};
+    }
+    return convert_float<FloatType>(first, last, dot, mantissa_end);
+}
+
+/*!
+@brief the digits of a float token with at most 19 digits, from its layout
+
+The digit layout recorded while parsing says where the integer digits, the
+fraction digits, and the exponent are, so the digits are read eight at a
+time without scanning.
+
+@param[in] p  first character of the token
+@param[in] e  end of the token
+@param[in] limit  end of the readable memory (the source text)
+*/
+NLOHMANN_VIEW_ALWAYS_INLINE float_significand layout_decimal(const unsigned char* p, const unsigned char* e, unsigned int_digits, unsigned frac_digits, const unsigned char* limit) noexcept
+{
+    const bool negative = *p == '-';
+    p += negative ? 1 : 0;
+    std::uint64_t w = parse_upto19(p, int_digits, limit);
+    p += int_digits;
+    std::int64_t q = 0;
+    if (frac_digits != 0)
+    {
+        w = (w * int_pow10(frac_digits)) + parse_upto19(p + 1, frac_digits, limit);
+        p += 1 + frac_digits;
+        q = -static_cast<std::int64_t>(frac_digits);
+    }
+    if (p != e)
+    {
+        // [eE][+-]digits; huge exponents saturate (the parser rejected
+        // overflow). The token is not read beyond e, and the digits are taken
+        // as unsigned, so that a token that is not well-formed (a damaged
+        // image loaded with image_check::bounds) yields a wrong value, but no
+        // overflow.
+        ++p;
+        const bool exp_negative = p != e && *p == '-';
+        p += (p != e && (*p == '-' || *p == '+')) ? 1 : 0;
+        std::int64_t exp_value = 0;
+        for (; p != e; ++p)
+        {
+            if (exp_value < 0x10000000)
+            {
+                exp_value = (exp_value * 10) + static_cast<unsigned char>(*p - '0');
+            }
+        }
+        q += exp_negative ? -exp_value : exp_value;
+    }
+
+    float_significand d;
+    d.w = w;
+    d.exponent = q;
+    d.negative = negative;
+    return d;
+}
+
+/*!
+@brief the value of a float token with at most 19 digits, from its layout
+
+The result is correctly rounded by the lexer's conversion
+(detail::decimal_to_float(): Clinger's fast path where both operands are
+exact, else the Eisel-Lemire algorithm, which needs no fallback for up to 19
+digits), so it is the value parse() produces.
+*/
+template<typename FloatType>
+NLOHMANN_VIEW_ALWAYS_INLINE FloatType layout_float(const unsigned char* p, const unsigned char* e, unsigned int_digits, unsigned frac_digits, const unsigned char* limit) noexcept
+{
+    return decimal_to_float<FloatType>(layout_decimal(p, e, int_digits, frac_digits, limit));
+}
+
+/// the value of a float set by an edit: its token (the shortest round-trip
+/// text, or "nan", "inf", "-inf") in the edit arena
+template<typename FloatType>
+NLOHMANN_VIEW_NOINLINE FloatType edited_float(const char* token, const node& n)
+{
+    if (token[0] == 'n')
+    {
+        return std::numeric_limits<FloatType>::quiet_NaN();
+    }
+    if (token[0] == 'i' || (token[0] == '-' && token[1] == 'i'))
+    {
+        return token[0] == 'i' ? std::numeric_limits<FloatType>::infinity() : -std::numeric_limits<FloatType>::infinity();
+    }
+    return float_value<FloatType>(token, n);
+}
+
+/// the value of the float token of a node, as parse() converts it; floats and
+/// doubles with at most 19 digits are converted from the digit layout
+template<typename FloatType>
+FloatType float_value(const document_data& d, const node& n)
+{
+    if (NLOHMANN_VIEW_UNLIKELY((n.flags & node_flags::storage) == node_flags::edited))
+    {
+        return edited_float<FloatType>(d.str(n), n);
+    }
+    return float_value<FloatType>(d, n, std::integral_constant<bool, has_native_float_format<FloatType>::value> {});
+}
+
+template<typename FloatType>
+FloatType float_value(const document_data& d, const node& n, std::true_type /*binary32 or binary64*/)
+{
+    const unsigned int_digits = n.extra & 0xFFu;
+    const unsigned frac_digits = n.extra >> 8u;
+    if (NLOHMANN_VIEW_LIKELY(int_digits + frac_digits <= 19)) // (255 marks "many")
+    {
+        // (a float token not written by an edit is in the text)
+        const auto* const first = reinterpret_cast<const unsigned char*>(d.src + n.off); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        return layout_float<FloatType>(first, first + n.len, int_digits, frac_digits, reinterpret_cast<const unsigned char*>(d.src + d.size)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    }
+    return float_value<FloatType>(d.str(n), n);
+}
+
+template<typename FloatType>
+FloatType float_value(const document_data& d, const node& n, std::false_type /*other*/)
+{
+    return float_value<FloatType>(d.str(n), n);
+}
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
+// #include <nlohmann/detail/view/string_ref.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <algorithm> // min
+#include <cstddef> // size_t
+#include <cstring> // memcmp, strlen
+#include <string> // basic_string
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+
+#if NLOHMANN_VIEW_HAS_CPP_17
+    #include <string_view> // string_view
+#endif
+#ifndef JSON_NO_IO
+    #include <ostream> // ostream
+#endif
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+#if NLOHMANN_VIEW_HAS_CPP_17
+using string_ref = std::string_view;
+#else
+/// minimal C++11 stand-in for std::string_view
+class string_ref
+{
+  public:
+    using size_type = std::size_t;
+    using const_iterator = const char*;
+
+    string_ref() noexcept = default;
+    // s must be null-terminated, as for std::string_view(const char*)
+    // flawfinder: ignore
+    string_ref(const char* s) : m_data(s), m_size(std::strlen(s)) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+    string_ref(const char* s, std::size_t n) noexcept : m_data(s), m_size(n) {}
+    template<typename Traits, typename Alloc>
+    string_ref(const std::basic_string<char, Traits, Alloc>& s) noexcept : m_data(s.data()), m_size(s.size()) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+
+    const char* data() const noexcept
+    {
+        return m_data;
+    }
+    std::size_t size() const noexcept
+    {
+        return m_size;
+    }
+    std::size_t length() const noexcept
+    {
+        return m_size;
+    }
+    bool empty() const noexcept
+    {
+        return m_size == 0;
+    }
+    const char* begin() const noexcept
+    {
+        return m_data;
+    }
+    const char* end() const noexcept
+    {
+        return m_data + m_size;
+    }
+    char operator[](std::size_t i) const noexcept
+    {
+        return m_data[i];
+    }
+
+    template<typename Traits, typename Alloc>
+    explicit operator std::basic_string<char, Traits, Alloc>() const
+    {
+        return std::basic_string<char, Traits, Alloc>(m_data, m_size);
+    }
+
+    friend bool operator==(string_ref a, string_ref b) noexcept
+    {
+        return a.m_size == b.m_size && (a.m_size == 0 || std::memcmp(a.m_data, b.m_data, a.m_size) == 0);
+    }
+    friend bool operator!=(string_ref a, string_ref b) noexcept
+    {
+        return !(a == b);
+    }
+    friend bool operator<(string_ref a, string_ref b) noexcept
+    {
+        const int c = std::memcmp(a.m_data, b.m_data, (std::min)(a.m_size, b.m_size));
+        return c != 0 ? c < 0 : a.m_size < b.m_size;
+    }
+#ifndef JSON_NO_IO
+    friend std::ostream& operator<<(std::ostream& o, string_ref s)
+    {
+        return o.write(s.m_data, static_cast<std::streamsize>(s.m_size));
+    }
+#endif
+
+  private:
+    const char* m_data = "";
+    std::size_t m_size = 0;
+};
+#endif
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -2495,16 +2854,354 @@ namespace view
 // value, at the position of the first occurrence), and in document order if
 // the object type keeps an order (ordered_json), by key otherwise.
 
+/// whether n bytes are equal; the short texts of JSON (keys, numbers, most
+/// strings) are compared by two overlapping loads instead of a library call
+NLOHMANN_VIEW_ALWAYS_INLINE bool bytes_equal(const char* x, const char* y, std::size_t n) noexcept
+{
+    const auto load8 = [](const char* p)
+    {
+        std::uint64_t v = 0;
+        std::memcpy(&v, p, sizeof(v));
+        return v;
+    };
+    const auto load4 = [](const char* p)
+    {
+        std::uint32_t v = 0;
+        std::memcpy(&v, p, sizeof(v));
+        return v;
+    };
+    if (n >= 8)
+    {
+        for (std::size_t i = 0; i + 8 < n; i += 8)
+        {
+            if (load8(x + i) != load8(y + i))
+            {
+                return false;
+            }
+        }
+        return load8(x + n - 8) == load8(y + n - 8);
+    }
+    if (n >= 4)
+    {
+        return load4(x) == load4(y) && load4(x + n - 4) == load4(y + n - 4);
+    }
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        if (x[i] != y[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// whether the n1 bytes at x are before the n2 bytes at y (memcmp() order, then the shorter first);
+/// the first difference is found eight bytes at a time
+NLOHMANN_VIEW_ALWAYS_INLINE bool bytes_less(const char* x, std::size_t n1, const char* y, std::size_t n2) noexcept
+{
+    const std::size_t n = n1 < n2 ? n1 : n2;
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        const std::uint64_t u = read_eight_bytes(x + i);
+        const std::uint64_t v = read_eight_bytes(y + i);
+        if (u != v)
+        {
+            const auto shift = static_cast<unsigned>(count_trailing_zeros(u ^ v)) & ~7u; // (the first byte that differs)
+            return ((u >> shift) & 0xFFu) < ((v >> shift) & 0xFFu);
+        }
+    }
+    for (; i < n; ++i)
+    {
+        if (x[i] != y[i])
+        {
+            return static_cast<unsigned char>(x[i]) < static_cast<unsigned char>(y[i]);
+        }
+    }
+    return n1 < n2;
+}
+
+/// whether the key a is before the key b
+template<typename Key>
+NLOHMANN_VIEW_ALWAYS_INLINE bool key_less(const Key& a, const Key& b) noexcept
+{
+    return bytes_less(a.data(), a.size(), b.data(), b.size());
+}
+
+/// sorts the indices order[0..n) of the members m by key; equal keys stay in
+/// document order (small objects with an insertion sort, which needs no memory)
+template<typename Entry>
+void sort_by_key(std::uint32_t* order, std::size_t n, const Entry* m)
+{
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        order[i] = static_cast<std::uint32_t>(i);
+    }
+    if (n <= 16)
+    {
+        for (std::size_t i = 1; i < n; ++i)
+        {
+            const std::uint32_t x = order[i];
+            std::size_t j = i;
+            for (; j > 0 && key_less(m[x].first, m[order[j - 1]].first); --j)
+            {
+                order[j] = order[j - 1];
+            }
+            order[j] = x;
+        }
+    }
+    else
+    {
+        std::stable_sort(order, order + n, [m](std::uint32_t x, std::uint32_t y)
+        {
+            return key_less(m[x].first, m[y].first);
+        });
+    }
+}
+
+/// The members of an object as parse() keeps them: one per key, the last
+/// value at the position of the first occurrence, in the order of the
+/// comparison (sorted by key, or, if the object type keeps the order, the order
+/// of first occurrence). The members m[0..n) are in document order; this
+/// appends to out the indices of the member of each key that has its value
+/// (its last one), in the order of the comparison. Most objects have unique
+/// keys. scratch is working memory, kept by the caller so that its capacity
+/// is reused.
+template<typename Entry>
+void resolve_indices(const Entry* m, std::size_t n, bool ordered, std::vector<std::uint32_t>& out, std::vector<std::uint32_t>& scratch)
+{
+    const std::size_t start = out.size();
+    out.resize(start + n);
+    std::uint32_t* const order = out.data() + start;
+    sort_by_key(order, n, m);
+    if (!ordered)
+    {
+        // the last of each run of equal keys
+        std::size_t w = 0;
+        for (std::size_t i = 0; i < n;)
+        {
+            std::size_t last = i;
+            while (last + 1 < n && m[order[last + 1]].first == m[order[i]].first)
+            {
+                ++last;
+            }
+            order[w++] = order[last];
+            i = last + 1;
+        }
+        out.resize(start + w);
+        return;
+    }
+    // (document order) the value of the last occurrence at the first occurrence of each key
+    constexpr std::uint32_t none = 0xFFFFFFFFu;
+    bool any = false;
+    for (std::size_t i = 0; i < n;)
+    {
+        std::size_t last = i;
+        while (last + 1 < n && m[order[last + 1]].first == m[order[i]].first)
+        {
+            ++last;
+        }
+        if (last != i)
+        {
+            if (!any)
+            {
+                scratch.assign(n, none);
+                for (std::size_t k = 0; k < i; ++k)
+                {
+                    scratch[order[k]] = order[k];
+                }
+                any = true;
+            }
+            scratch[order[i]] = order[last]; // (stable: order[i] is the first occurrence)
+        }
+        else if (any)
+        {
+            scratch[order[i]] = order[i];
+        }
+        i = last + 1;
+    }
+    if (!any)
+    {
+        // unique keys: document order
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            order[i] = static_cast<std::uint32_t>(i);
+        }
+        return;
+    }
+    std::size_t w = 0;
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        if (scratch[i] != none)
+        {
+            order[w++] = scratch[i];
+        }
+    }
+    out.resize(start + w);
+}
+
+/// whether the keys of n members are the same, in the same order
+template<typename EntryA, typename EntryB>
+bool same_keys(const EntryA* a, const EntryB* b, std::size_t n)
+{
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        if (!(a[i].first == b[i].first))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// The members of an object as parse() keeps them (one per key: the last
+/// value at the position of the first occurrence), sorted by key or, if the
+/// object type keeps the order, in the order of first occurrence. The
+/// members are given in document order, at the end of m (from the position
+/// base on); most objects have unique keys, in which case they are only sorted
+/// (for small objects with an insertion sort, which keeps equal keys in order
+/// and needs no memory). scratch is working memory, kept by the caller.
+template<typename Side, typename StringView>
+void resolve_members(std::vector<std::pair<StringView, Side>>& m, std::size_t base, bool ordered, std::vector<std::uint32_t>& scratch)
+{
+    using entry = std::pair<StringView, Side>;
+    const std::size_t n = m.size() - base;
+    entry* const first = m.data() + base;
+    if (ordered)
+    {
+        // (document order) later values of a key go to its first occurrence;
+        // scratch holds the order by key, then whether a member is dropped
+        constexpr std::uint32_t dropped = 1;
+        scratch.assign(2 * n, 0);
+        std::uint32_t* const order = scratch.data();
+        std::uint32_t* const drop = order + n;
+        sort_by_key(order, n, first);
+        bool any = false;
+        for (std::size_t i = 0; i < n;)
+        {
+            std::size_t last = i;
+            while (last + 1 < n && first[order[last + 1]].first == first[order[i]].first)
+            {
+                ++last;
+            }
+            if (last != i)
+            {
+                first[order[i]].second = first[order[last]].second;
+                for (std::size_t k = i + 1; k <= last; ++k)
+                {
+                    drop[order[k]] = dropped;
+                }
+                any = true;
+            }
+            i = last + 1;
+        }
+        if (any)
+        {
+            std::size_t w = 0;
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                if (drop[i] != dropped)
+                {
+                    if (w != i)
+                    {
+                        first[w] = std::move(first[i]);
+                    }
+                    ++w;
+                }
+            }
+            m.erase(m.begin() + static_cast<std::ptrdiff_t>(base + w), m.end());
+        }
+        return;
+    }
+    // sorted by key; equal keys stay in document order
+    if (n <= 16)
+    {
+        for (std::size_t i = 1; i < n; ++i)
+        {
+            entry x = std::move(first[i]);
+            std::size_t j = i;
+            for (; j > 0 && key_less(x.first, first[j - 1].first); --j)
+            {
+                first[j] = std::move(first[j - 1]);
+            }
+            first[j] = std::move(x);
+        }
+    }
+    else
+    {
+        std::stable_sort(first, first + n, [](const entry & x, const entry & y)
+        {
+            return key_less(x.first, y.first);
+        });
+    }
+    // the first key of a run with the last value
+    std::size_t w = 0;
+    for (std::size_t i = 0; i < n;)
+    {
+        std::size_t last = i;
+        while (last + 1 < n && first[last + 1].first == first[i].first)
+        {
+            ++last;
+        }
+        if (w != i || last != i)
+        {
+            first[w] = entry(first[i].first, std::move(first[last].second));
+        }
+        ++w;
+        i = last + 1;
+    }
+    m.erase(m.begin() + static_cast<std::ptrdiff_t>(base + w), m.end());
+}
+
+/// room for k more entries, growing geometrically (reserve(size() + k) alone would
+/// reallocate for each object nested in another)
+template<typename T>
+void reserve_more(std::vector<T>& v, std::size_t k)
+{
+    const std::size_t needed = v.size() + k;
+    if (needed > v.capacity())
+    {
+        v.reserve((std::max)(needed, 2 * v.capacity()));
+    }
+}
+
 /// one side of a comparison: a view
 template<typename BasicJsonType, typename View>
 class view_side
 {
   public:
     using string_view_t = typename View::string_view_t;
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using nav = navigation<View::is_editable>;
+
+    /// the position in the elements of an array
+    struct cursor
+    {
+        const node* pos = nullptr;
+    };
+
+    view_side() noexcept
+        : m_view()
+    {}
 
     explicit view_side(const View& v) noexcept
         : m_view(v)
     {}
+
+    /// the document and the node of the view (nullptr: a discarded view)
+    const document_data& document() const noexcept
+    {
+        return *m_view.m_doc;
+    }
+
+    const node* value_node() const noexcept
+    {
+        return m_view.m_node;
+    }
+
+    static constexpr bool is_editable = View::is_editable;
 
     value_t type() const noexcept
     {
@@ -2519,6 +3216,32 @@ class view_side
     string_view_t string() const
     {
         return m_view.get_string();
+    }
+
+    bool boolean() const noexcept
+    {
+        return (m_view.m_node->flags & node_flags::is_true) != 0;
+    }
+
+    number_integer_t integer() const noexcept
+    {
+        return static_cast<number_integer_t>(static_cast<std::int64_t>(integer_bits(*m_view.m_node)));
+    }
+
+    number_unsigned_t unsigned_integer() const noexcept
+    {
+        return static_cast<number_unsigned_t>(integer_bits(*m_view.m_node));
+    }
+
+    number_float_t floating() const
+    {
+        return float_value<number_float_t>(*m_view.m_doc, *m_view.m_node);
+    }
+
+    /// the token of a float
+    string_view_t float_token() const noexcept
+    {
+        return string_view_t(m_view.m_doc->str(*m_view.m_node), m_view.m_node->len);
     }
 
     /// a number, boolean, or null as a basic_json value (no allocation)
@@ -2545,60 +3268,47 @@ class view_side
         }
     }
 
-    void elements(std::vector<view_side>& out) const
+    /// start at the first element of this array
+    void enter(cursor& c) const noexcept
     {
-        out.reserve(m_view.size());
-        for (const View e : m_view)
+        c.pos = nav::first(*m_view.m_doc, m_view.m_node);
+    }
+
+    /// the element at c (and advance)
+    view_side take(cursor& c) const noexcept
+    {
+        const node* const v = nav::value(c.pos);
+        c.pos = document_data::after(c.pos);
+        return view_side(View(m_view.m_doc, v));
+    }
+
+    /// the keys of the first n members of this object (n <= its size), in document order
+    void first_keys(string_view_t* out, std::size_t n) const noexcept
+    {
+        const node* pos = nav::first(*m_view.m_doc, m_view.m_node);
+        for (std::size_t i = 0; i < n; ++i)
         {
-            out.emplace_back(e);
+            out[i] = string_view_t(m_view.m_doc->str(*pos), pos->len);
+            pos = document_data::after(pos + 1);
         }
     }
 
-    /// the members as parse() keeps them: one per key, the last value at the
-    /// position of the first occurrence; in that order, or sorted by key
-    void members(std::vector<std::pair<string_view_t, view_side>>& out, bool ordered) const
+    /// append the members to out, in document order; whether their keys ascend
+    /// (then they are unique, and in the order of the comparison of a std::map)
+    bool members(std::vector<std::pair<string_view_t, view_side>>& out, bool /*ordered*/) const
     {
-        struct member
+        const std::size_t base = out.size();
+        reserve_more(out, m_view.m_node->len);
+        bool sorted = true;
+        const node* pos = nav::first(*m_view.m_doc, m_view.m_node);
+        for (std::size_t i = m_view.m_node->len; i != 0; --i)
         {
-            string_view_t key;
-            View value;
-            std::size_t position;
-        };
-        std::vector<member> all;
-        all.reserve(m_view.size());
-        std::size_t position = 0;
-        for (auto it = m_view.begin(); it != m_view.end(); ++it)
-        {
-            all.push_back(member{it.key(), it.value(), position++});
+            const string_view_t key(m_view.m_doc->str(*pos), pos->len);
+            sorted = sorted && (out.size() == base || key_less(out.back().first, key));
+            out.emplace_back(key, view_side(View(m_view.m_doc, nav::value(pos + 1))));
+            pos = document_data::after(pos + 1);
         }
-        std::stable_sort(all.begin(), all.end(), [](const member & a, const member & b)
-        {
-            return a.key < b.key;
-        });
-        std::vector<member> unique;
-        unique.reserve(all.size());
-        for (std::size_t i = 0; i < all.size();)
-        {
-            std::size_t last = i;
-            while (last + 1 < all.size() && all[last + 1].key == all[i].key)
-            {
-                ++last;
-            }
-            unique.push_back(member{all[i].key, all[last].value, all[i].position});
-            i = last + 1;
-        }
-        if (ordered)
-        {
-            std::sort(unique.begin(), unique.end(), [](const member & a, const member & b)
-            {
-                return a.position < b.position;
-            });
-        }
-        out.reserve(unique.size());
-        for (const member& m : unique)
-        {
-            out.emplace_back(m.key, view_side(m.value));
-        }
+        return sorted;
     }
 
   private:
@@ -2611,6 +3321,17 @@ class json_side
 {
   public:
     using string_view_t = StringView;
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+
+    /// the position in the elements of an array
+    struct cursor
+    {
+        typename BasicJsonType::const_iterator it{};
+    };
+
+    json_side() noexcept = default;
 
     explicit json_side(const BasicJsonType& j) noexcept
         : m_json(&j)
@@ -2632,44 +3353,427 @@ class json_side
         return string_view_t(s.data(), s.size());
     }
 
+    bool boolean() const noexcept
+    {
+        return *m_json->template get_ptr<const bool*>();
+    }
+
+    number_integer_t integer() const noexcept
+    {
+        return *m_json->template get_ptr<const number_integer_t*>();
+    }
+
+    number_unsigned_t unsigned_integer() const noexcept
+    {
+        return *m_json->template get_ptr<const number_unsigned_t*>();
+    }
+
+    number_float_t floating() const noexcept
+    {
+        return *m_json->template get_ptr<const number_float_t*>();
+    }
+
     BasicJsonType scalar() const
     {
         return *m_json;
     }
 
-    void elements(std::vector<json_side>& out) const
+    void enter(cursor& c) const
     {
-        out.reserve(m_json->size());
-        for (const auto& e : *m_json)
+        c.it = m_json->cbegin();
+    }
+
+    json_side take(cursor& c) const
+    {
+        const json_side r(*c.it);
+        ++c.it;
+        return r;
+    }
+
+    /// the keys of the first n members of this object (n <= its size), in document order
+    void first_keys(string_view_t* out, std::size_t n) const
+    {
+        auto it = m_json->cbegin();
+        for (std::size_t i = 0; i < n; ++i, ++it)
         {
-            out.emplace_back(e);
+            out[i] = string_view_t(it.key().data(), it.key().size());
         }
     }
 
-    void members(std::vector<std::pair<string_view_t, json_side>>& out, bool ordered) const
+    /// append the members to out, in the order of the comparison (the keys of a
+    /// basic_json are unique); true
+    bool members(std::vector<std::pair<string_view_t, json_side>>& out, bool ordered) const
     {
-        out.reserve(m_json->size());
+        const std::size_t base = out.size();
+        reserve_more(out, m_json->size());
         for (auto it = m_json->cbegin(); it != m_json->cend(); ++it)
         {
             out.emplace_back(string_view_t(it.key().data(), it.key().size()), json_side(it.value()));
         }
         if (!ordered)
         {
-            std::sort(out.begin(), out.end(), [](const std::pair<string_view_t, json_side>& a, const std::pair<string_view_t, json_side>& b)
+            const auto less = [](const std::pair<string_view_t, json_side>& a, const std::pair<string_view_t, json_side>& b)
             {
-                return a.first < b.first;
-            });
+                return key_less(a.first, b.first);
+            };
+            const auto first = out.begin() + static_cast<std::ptrdiff_t>(base);
+            if (!std::is_sorted(first, out.end(), less))
+            {
+                std::sort(first, out.end(), less);
+            }
+        }
+        return true;
+    }
+
+  private:
+    const BasicJsonType* m_json = nullptr;
+};
+
+/*!
+@brief the values at two nodes, found equal by walking both documents in the
+same order
+
+Two values are equal if they have the same type, the same number token or
+string, the same elements, and the same members with the same keys in the same
+order: a value that matches this way is equal under the rules above whatever
+the object type and duplicate keys (the last value of a key then wins on
+both sides, and their order of first occurrence is the same). The walk does
+not find every equal pair (numbers spelled differently, members in another
+order, duplicate keys with other values), only the ones that are the same
+text; it stops at the first difference and then says nothing. Containers
+nested deeper than the budget are not walked.
+
+The walk goes through the document in its order, the comparison that follows
+goes through the members of an object by key. So that the walk never reaches
+a difference later than the comparison would, and never costs more than it,
+it enters an object only if the two orders agree (the keys ascend, or the
+object type keeps the order) or if the walk is cheaper than preparing the
+comparison of the object (all values are scalars).
+*/
+/// the containers that lockstep found different, from the outermost to the
+/// innermost: the comparison that goes on from there does not walk them again
+struct lockstep_path
+{
+    /// the nesting depth up to which lockstep walks (the recursion is bounded)
+    static constexpr unsigned budget() noexcept
+    {
+        return 48;
+    }
+
+    /// a pair of containers that differ; for arrays, the elements where the walk stopped
+    /// (the ones before are equal)
+    struct entry
+    {
+        const node* a;
+        const node* b;
+        const node* element_a;
+        const node* element_b;
+        std::uint32_t index;
+    };
+
+    /// the number of entries that a path can hold (a container deeper than the
+    /// budget of the walk is not entered)
+    static constexpr std::size_t levels() noexcept
+    {
+        return 50;
+    }
+
+    explicit lockstep_path(entry* storage) noexcept
+        : nodes(storage)
+    {}
+
+    entry* nodes; ///< levels() entries, written before they are read
+    unsigned length = 0; ///< pairs recorded by the last walk
+    unsigned next = 0;   ///< the pair that the comparison enters next
+    const entry* resume = nullptr; ///< the entry of the pair that was just looked at, if it is in the path
+};
+
+template<bool EA, bool EB>
+class lockstep
+{
+  public:
+    lockstep(const document_data& a, const document_data& b, lockstep_path& path, bool ordered) noexcept
+        : m_a(a), m_b(b), m_path(path), m_ordered(ordered)
+    {}
+
+    /// whether the values at a and b are the same (the nodes of the values,
+    /// not entries of a sequence)
+    bool same(const node* a, const node* b, unsigned budget) noexcept
+    {
+        if (a->kind != b->kind)
+        {
+            return false;
+        }
+        switch (static_cast<value_t>(a->kind))
+        {
+            case value_t::null:
+                return true;
+            case value_t::boolean:
+                return ((a->flags ^ b->flags) & node_flags::is_true) == 0;
+            case value_t::string:
+                return a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len);
+            case value_t::number_float: // (the token, and the digit layout that the value is read with: they only differ in a damaged image)
+                return a->extra == b->extra && a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len);
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+                return integer_bits(*a) == integer_bits(*b);
+            case value_t::array:
+                if (budget == 0 || a->len != b->len)
+                {
+                    return false;
+                }
+                {
+                    lockstep_path::entry stop{a, b, nullptr, nullptr, 0};
+                    if (elements(a, b, budget - 1, stop))
+                    {
+                        return true;
+                    }
+                    record(stop, budget);
+                    return false;
+                }
+            case value_t::object:
+                if (budget == 0 || a->len != b->len)
+                {
+                    return false;
+                }
+                if (!visits_in_order(a) || !members(a, b, budget - 1))
+                {
+                    record(lockstep_path::entry{a, b, nullptr, nullptr, 0}, budget);
+                    return false;
+                }
+                return true;
+            case value_t::binary:    // LCOV_EXCL_LINE (not in a document)
+            case value_t::discarded: // LCOV_EXCL_LINE
+            default:                 // LCOV_EXCL_LINE
+                return false;        // LCOV_EXCL_LINE
         }
     }
 
   private:
-    const BasicJsonType* m_json;
+    using nav_a = navigation<EA>;
+    using nav_b = navigation<EB>;
+
+    /// note the containers a and b (at the nesting level that budget stands
+    /// for) as different
+    NLOHMANN_VIEW_NOINLINE void record(const lockstep_path::entry& stop, unsigned budget) const noexcept
+    {
+        const unsigned level = lockstep_path::budget() - budget;
+        m_path.nodes[level] = stop;
+        if (m_path.length == 0)
+        {
+            m_path.length = level + 1; // (the innermost container is the first to be left)
+        }
+    }
+
+    /// whether the object @a a of a document that cannot be edited has scalar values only
+    static bool scalar_values_only(const node* a, std::false_type /*editable*/) noexcept
+    {
+        return a->next == 1 + (2 * static_cast<std::size_t>(a->len));
+    }
+
+    /// (the nodes of an editable document can be elsewhere: not decided)
+    static bool scalar_values_only(const node* /*a*/, std::true_type /*editable*/) noexcept
+    {
+        return false;
+    }
+
+    /// Whether the comparison that follows visits the members of the object a in the
+    /// order of the document: if the object type keeps the order, if the keys
+    /// ascend (it sorts by key), or if all values are scalars (then the walk costs
+    /// less than collecting and sorting the members, whichever member differs).
+    /// Otherwise a difference could be found by the walk later than by the
+    /// comparison, which is not worth the walk.
+    bool visits_in_order(const node* a) const noexcept
+    {
+        if (m_ordered || a->len < 2)
+        {
+            return true;
+        }
+        if (scalar_values_only(a, std::integral_constant<bool, EA> {}))
+        {
+            return true;
+        }
+        const node* k = nav_a::first(m_a, a);
+        string_ref previous(m_a.str(*k), k->len);
+        for (std::uint32_t i = a->len - 1; i != 0; --i)
+        {
+            k = document_data::after(k + 1);
+            const string_ref key(m_a.str(*k), k->len);
+            if (!key_less(previous, key))
+            {
+                return false;
+            }
+            previous = key;
+        }
+        return true;
+    }
+
+    bool elements(const node* a, const node* b, unsigned budget, lockstep_path::entry& stop) noexcept
+    {
+        const node* pa = nav_a::first(m_a, a);
+        const node* pb = nav_b::first(m_b, b);
+        for (std::uint32_t i = a->len; i != 0; --i)
+        {
+            if (!same(nav_a::value(pa), nav_b::value(pb), budget))
+            {
+                stop.element_a = pa;
+                stop.element_b = pb;
+                stop.index = a->len - i;
+                return false;
+            }
+            pa = document_data::after(pa);
+            pb = document_data::after(pb);
+        }
+        return true;
+    }
+
+    bool members(const node* a, const node* b, unsigned budget) noexcept
+    {
+        const node* pa = nav_a::first(m_a, a);
+        const node* pb = nav_b::first(m_b, b);
+        for (std::uint32_t i = a->len; i != 0; --i)
+        {
+            if (pa->len != pb->len || !bytes_equal(m_a.str(*pa), m_b.str(*pb), pa->len))
+            {
+                return false;
+            }
+            if (!same(nav_a::value(pa + 1), nav_b::value(pb + 1), budget))
+            {
+                return false;
+            }
+            pa = document_data::after(pa + 1);
+            pb = document_data::after(pb + 1);
+        }
+        return true;
+    }
+
+    const document_data& m_a;
+    const document_data& m_b;
+    lockstep_path& m_path;
+    bool m_ordered; ///< the object type keeps the order of the members
 };
+
+/// whether two views certainly have equal values (see lockstep); if not, the
+/// path says where they differ
+template<typename BasicJsonType, typename ViewA, typename ViewB>
+bool certainly_equal(const view_side<BasicJsonType, ViewA>& a, const view_side<BasicJsonType, ViewB>& b, lockstep_path& path, bool ordered) noexcept
+{
+    const node* const na = a.value_node();
+    const node* const nb = b.value_node();
+    if (na == nullptr || nb == nullptr)
+    {
+        return false;
+    }
+    if (na == nb)
+    {
+        return true; // (the same node of the same document: documents have distinct nodes)
+    }
+    path.resume = nullptr;
+    if (path.next < path.length && path.nodes[path.next].a == na && path.nodes[path.next].b == nb)
+    {
+        path.resume = &path.nodes[path.next];
+        ++path.next; // (the walk found these different already)
+        return false;
+    }
+    path.length = 0;
+    const bool equal = lockstep<view_side<BasicJsonType, ViewA>::is_editable, view_side<BasicJsonType, ViewB>::is_editable>(a.document(), b.document(), path, ordered).same(na, nb, lockstep_path::budget());
+    path.next = path.length != 0 ? 1 : 0; // (this pair is the first in the path)
+    path.resume = path.length != 0 ? &path.nodes[0] : nullptr;
+    return equal;
+}
+
+/// (a view and a basic_json value: no walk)
+template<typename A, typename B>
+bool certainly_equal(const A& /*a*/, const B& /*b*/, lockstep_path& /*path*/, bool /*ordered*/) noexcept
+{
+    return false;
+}
+
+/// (arrays of two views) the elements where the walk stopped are the next pair: the ones before are equal
+template<typename BasicJsonType, typename ViewA, typename ViewB>
+void resume_array(const lockstep_path& path, const view_side<BasicJsonType, ViewA>& a, const view_side<BasicJsonType, ViewB>& b,
+                  typename view_side<BasicJsonType, ViewA>::cursor& cursor_a, typename view_side<BasicJsonType, ViewB>::cursor& cursor_b, std::size_t& next) noexcept
+{
+    if (path.resume != nullptr && path.resume->element_a != nullptr && path.resume->a == a.value_node() && path.resume->b == b.value_node())
+    {
+        cursor_a.pos = path.resume->element_a;
+        cursor_b.pos = path.resume->element_b;
+        next = path.resume->index;
+    }
+}
+
+template<typename A, typename B, typename CursorA, typename CursorB>
+void resume_array(const lockstep_path& /*path*/, const A& /*a*/, const B& /*b*/, CursorA& /*cursor_a*/, CursorB& /*cursor_b*/, std::size_t& /*next*/) noexcept
+{}
+
+/// whether two floats are equal (the tokens of two views: equal text and digit layout is an equal value; they
+/// only differ in a damaged image)
+template<typename BasicJsonType, typename ViewA, typename ViewB>
+bool floats_equal(const view_side<BasicJsonType, ViewA>& a, const view_side<BasicJsonType, ViewB>& b)
+{
+    return (a.value_node()->extra == b.value_node()->extra && a.float_token() == b.float_token()) || std::equal_to<typename BasicJsonType::number_float_t>()(a.floating(), b.floating());
+}
+
+template<typename A, typename B>
+bool floats_equal(const A& a, const B& b)
+{
+    return std::equal_to<typename A::number_float_t>()(a.floating(), b.floating());
+}
+
+/// Whether two objects of a type that keeps the order are different because of the keys of
+/// their first members, found without the preparation of the comparison: the comparison goes
+/// through the members in the order of the first occurrence of their keys, so if the first
+/// members have the same distinct keys and then one pair of keys differs, where neither is
+/// one of the keys before it, the objects are different. (The keys that are the same as an
+/// earlier key are the duplicates that the comparison drops, so those are not decided here.)
+template<typename SideA, typename SideB>
+bool keys_differ_early(const SideA& a, const SideB& b)
+{
+    using string_view_t = typename SideA::string_view_t;
+    constexpr std::size_t limit = 4;
+    const std::size_t n = (std::min)((std::min)(a.size(), b.size()), limit);
+    std::array<string_view_t, limit> ka{};
+    std::array<string_view_t, limit> kb{};
+    a.first_keys(ka.data(), n);
+    b.first_keys(kb.data(), n);
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        if (ka[i] != kb[i])
+        {
+            for (std::size_t k = 0; k < i; ++k)
+            {
+                if (ka[i] == ka[k] || kb[i] == ka[k])
+                {
+                    return false; // (a duplicate: not decided)
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+/// keys_differ_early() for a type that keeps the order of the members
+template<typename SideA, typename SideB>
+bool keys_differ_early(const SideA& a, const SideB& b, std::true_type /*ordered*/)
+{
+    return keys_differ_early(a, b);
+}
+
+/// (a type that sorts the members by key: not decided early)
+template<typename SideA, typename SideB>
+bool keys_differ_early(const SideA& /*a*/, const SideB& /*b*/, std::false_type /*ordered*/) noexcept
+{
+    return false;
+}
 
 inline bool is_number(value_t t) noexcept
 {
     return t == value_t::number_integer || t == value_t::number_unsigned || t == value_t::number_float;
 }
+
+/// the index_a/index_b of a frame of equal() whose members are compared in document order
+constexpr std::size_t document_order = static_cast<std::size_t>(-1);
 
 /// whether two sides are equal; iterative, so that the nesting depth is
 /// limited by memory only
@@ -2681,20 +3785,52 @@ bool equal(const A& a0, const B& b0)
 
     struct frame
     {
-        std::vector<A> elements_a{};
-        std::vector<B> elements_b{};
-        std::vector<std::pair<string_view_t, A>> members_a{};
-        std::vector<std::pair<string_view_t, B>> members_b{};
+        A array_a{};
+        B array_b{};
+        typename A::cursor cursor_a{};
+        typename B::cursor cursor_b{};
+        std::size_t base_a = 0; ///< the members of an object: from this position in members_a
+        std::size_t base_b = 0;
+        std::size_t index_a = document_order; ///< their order in the comparison: from this position in indices (document_order: as they are)
+        std::size_t index_b = document_order;
+        std::size_t index_mark = 0; ///< the size of indices before this frame
         bool object = false;
         std::size_t next = 0;
+        std::size_t count = 0;
     };
     std::vector<frame> stack;
+    std::vector<std::uint32_t> indices; // the order of the members of the open objects, where it is not their order in the document
+    std::vector<std::uint32_t> scratch; // working memory of resolve_indices() and resolve_members()
+    // the members of the open objects (the ones of an object follow those of the objects around it)
+    std::vector<std::pair<string_view_t, A>> members_a;
+    std::vector<std::pair<string_view_t, B>> members_b;
+    std::array<lockstep_path::entry, lockstep_path::levels()> path_storage; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+    lockstep_path path(path_storage.data());
+    {
+        // (values that differ in type or in the size of an array need no walk)
+        const value_t first = a0.type();
+        const value_t second = b0.type();
+        if (first != second && !(is_number(first) && is_number(second)) && first != value_t::discarded && second != value_t::discarded)
+        {
+            return false;
+        }
+        if (first == value_t::array && second == value_t::array && a0.size() != b0.size())
+        {
+            return false;
+        }
+    }
     A a = a0;
     B b = b0;
+    // (pairs of views that are certainly equal need no further look)
+    if (certainly_equal(a, b, path, ordered))
+    {
+        return true;
+    }
     for (;;)
     {
         const value_t ta = a.type();
         const value_t tb = b.type();
+        const bool numbers = is_number(ta) && is_number(tb);
         if (ta == value_t::discarded || tb == value_t::discarded)
         {
             // basic_json decides (JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON)
@@ -2705,7 +3841,7 @@ bool equal(const A& a0, const B& b0)
         }
         else
         {
-            if (ta != tb && !(is_number(ta) && is_number(tb))) // numbers of different types can be equal
+            if (ta != tb && !numbers) // numbers of different types can be equal
             {
                 return false;
             }
@@ -2722,31 +3858,98 @@ bool equal(const A& a0, const B& b0)
                 {
                     return false;
                 }
-                frame f;
+                if (ta == value_t::object && keys_differ_early(a, b, std::integral_constant<bool, is_ordered_map<typename BasicJsonType::object_t>::value> {}))
+                {
+                    return false;
+                }
+                stack.emplace_back();
+                frame& f = stack.back();
                 f.object = ta == value_t::object;
                 if (f.object)
                 {
-                    a.members(f.members_a, ordered);
-                    b.members(f.members_b, ordered);
-                    if (f.members_a.size() != f.members_b.size())
+                    f.base_a = members_a.size();
+                    f.base_b = members_b.size();
+                    f.index_mark = indices.size();
+                    const bool sorted_a = a.members(members_a, ordered);
+                    const bool sorted_b = b.members(members_b, ordered);
+                    const std::size_t size_a = members_a.size() - f.base_a;
+                    const std::size_t size_b = members_b.size() - f.base_b;
+                    std::size_t count_a = size_a;
+                    std::size_t count_b = size_b;
+                    if (!sorted_a && !sorted_b && size_a == size_b && same_keys(members_a.data() + f.base_a, members_b.data() + f.base_b, size_a))
+                    {
+                        // the same keys in the same order: one order of the comparison for both
+                        f.index_a = indices.size();
+                        f.index_b = f.index_a;
+                        resolve_indices(members_a.data() + f.base_a, size_a, ordered, indices, scratch);
+                        count_a = indices.size() - f.index_a;
+                        count_b = count_a;
+                    }
+                    else
+                    {
+                        if (!sorted_a)
+                        {
+                            resolve_members(members_a, f.base_a, ordered, scratch);
+                            count_a = members_a.size() - f.base_a;
+                        }
+                        if (!sorted_b)
+                        {
+                            resolve_members(members_b, f.base_b, ordered, scratch);
+                            count_b = members_b.size() - f.base_b;
+                        }
+                    }
+                    f.count = count_a;
+                    if (count_a != count_b)
                     {
                         return false;
                     }
                 }
                 else
                 {
-                    a.elements(f.elements_a);
-                    b.elements(f.elements_b);
+                    f.array_a = a;
+                    f.array_b = b;
+                    a.enter(f.cursor_a);
+                    b.enter(f.cursor_b);
+                    f.count = a.size();
+                    resume_array(path, a, b, f.cursor_a, f.cursor_b, f.next);
                 }
-                stack.push_back(std::move(f));
             }
-            else if (a.scalar() != b.scalar()) // numbers (also of different types), null, boolean
+            else if (ta == value_t::boolean)
+            {
+                if (a.boolean() != b.boolean())
+                {
+                    return false;
+                }
+            }
+            else if (numbers && ta == tb)
+            {
+                // numbers of one type: as basic_json compares them
+                bool differ = false;
+                if (ta == value_t::number_integer)
+                {
+                    differ = a.integer() != b.integer();
+                }
+                else if (ta == value_t::number_unsigned)
+                {
+                    differ = a.unsigned_integer() != b.unsigned_integer();
+                }
+                else
+                {
+                    differ = !floats_equal(a, b);
+                }
+                if (differ)
+                {
+                    return false;
+                }
+            }
+            else if (numbers && !(a.scalar() == b.scalar())) // numbers of different types
             {
                 return false;
             }
+            // (null equals null)
         }
 
-        // the next pair of values
+        // the next pair of values that is not certainly equal
         for (;;)
         {
             if (stack.empty())
@@ -2754,28 +3957,38 @@ bool equal(const A& a0, const B& b0)
                 return true;
             }
             frame& f = stack.back();
-            const std::size_t count = f.object ? f.members_a.size() : f.elements_a.size();
-            if (f.next == count)
+            if (f.next == f.count)
             {
+                if (f.object)
+                {
+                    members_a.erase(members_a.begin() + static_cast<std::ptrdiff_t>(f.base_a), members_a.end());
+                    members_b.erase(members_b.begin() + static_cast<std::ptrdiff_t>(f.base_b), members_b.end());
+                    indices.resize(f.index_mark);
+                }
                 stack.pop_back(); // (f dangles now, and is bound again after continue)
                 continue;
             }
             if (f.object)
             {
-                if (!(f.members_a[f.next].first == f.members_b[f.next].first))
+                const auto& member_a = members_a[f.base_a + (f.index_a == document_order ? f.next : indices[f.index_a + f.next])];
+                const auto& member_b = members_b[f.base_b + (f.index_b == document_order ? f.next : indices[f.index_b + f.next])];
+                if (!(member_a.first == member_b.first))
                 {
                     return false;
                 }
-                a = f.members_a[f.next].second;
-                b = f.members_b[f.next].second;
+                a = member_a.second;
+                b = member_b.second;
             }
             else
             {
-                a = f.elements_a[f.next];
-                b = f.elements_b[f.next];
+                a = f.array_a.take(f.cursor_a);
+                b = f.array_b.take(f.cursor_b);
             }
             ++f.next;
-            break;
+            if (!certainly_equal(a, b, path, ordered))
+            {
+                break;
+            }
         }
     }
 }
@@ -3758,6 +4971,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/node.hpp>
 
+// #include <nlohmann/detail/view/scan.hpp>
+
 // #include <nlohmann/detail/view/view_mode.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -3831,10 +5046,9 @@ struct first_true<false, Conditions...> : std::integral_constant < int, 1 + firs
 /// (type_error.316 with the same message), so that an editable document
 /// only holds valid UTF-8: the error is at the first byte that no
 /// well-formed sequence can continue with (Unicode, Table 3-7).
-inline void check_utf8(const char* s, std::size_t n)
+NLOHMANN_VIEW_ALWAYS_INLINE void check_utf8_bytewise(const unsigned char* p, std::size_t n, std::size_t i)
 {
-    const auto* const p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    for (std::size_t i = 0; i < n;)
+    while (i < n)
     {
         const unsigned char c = p[i];
         if (c < 0x80)
@@ -3862,6 +5076,43 @@ inline void check_utf8(const char* s, std::size_t n)
         }
         i += len;
     }
+}
+
+/// The long-string path of check_utf8(): skips well-formed runs with the
+/// parser's string scan (which stops at a quote, a backslash, or a control
+/// character, all legal here, and at ill-formed UTF-8); the byte-wise check
+/// runs only from where the scan found ill-formed UTF-8, to report it.
+NLOHMANN_VIEW_NOINLINE inline void check_utf8_scan(const unsigned char* p, std::size_t n)
+{
+    const unsigned char* const e = p + n;
+    const unsigned char* q = p;
+    for (;;)
+    {
+        q = scan_string_run<true>(q, e);
+        if (q == e)
+        {
+            return;
+        }
+        if (*q >= 0x80)
+        {
+            check_utf8_bytewise(p, n, static_cast<std::size_t>(q - p));
+            return; // not reached: the scan stopped at ill-formed UTF-8
+        }
+        ++q; // a quote, backslash, or control character
+    }
+}
+
+inline void check_utf8(const char* s, std::size_t n)
+{
+    const auto* const p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    if (NLOHMANN_VIEW_UNLIKELY(n >= 32))
+    {
+        check_utf8_scan(p, n);
+        return;
+    }
+    // short strings: the vector scan costs more than it saves; (the loop is
+    // inlined with a constant start, so this path is the plain byte-wise check)
+    check_utf8_bytewise(p, n, 0);
 }
 
 /*!
@@ -4675,232 +5926,6 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/view/node.hpp>
 
 // #include <nlohmann/detail/view/number.hpp>
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.12.0
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-
-
-#include <cstddef> // size_t
-#include <cstdint> // int64_t, uint64_t
-#include <limits> // numeric_limits
-#include <string> // string
-#include <type_traits> // integral_constant
-
-// #include <nlohmann/json.hpp>
-// #include <nlohmann/detail/view/document_data.hpp>
-
-// #include <nlohmann/detail/view/macro_scope.hpp>
-
-// #include <nlohmann/detail/view/node.hpp>
-
-// #include <nlohmann/detail/view/scan.hpp>
-
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-namespace view
-{
-
-/*!
-@brief locate the decimal point and the end of the mantissa of a float token
-
-Also checks that the token is a JSON number. Tokens of the parser and of edits
-always are; an image loaded with image_check::bounds can hold any bytes, which
-must not reach the conversion (it expects a well-formed token).
-*/
-inline bool float_token_layout(const char* first, const char* last, std::size_t& dot, std::size_t& mantissa_end) noexcept
-{
-    const auto digit = [last](const char* q)
-    {
-        return q != last && is_digit(static_cast<unsigned char>(*q));
-    };
-    const char* p = first;
-    p += (p != last && *p == '-') ? 1 : 0;
-    if (!digit(p) || (*p == '0' && digit(p + 1)))
-    {
-        return false;
-    }
-    do
-    {
-        ++p;
-    }
-    while (digit(p));
-    dot = std::string::npos;
-    if (p != last && *p == '.')
-    {
-        dot = static_cast<std::size_t>(p - first);
-        if (!digit(++p))
-        {
-            return false;
-        }
-        do
-        {
-            ++p;
-        }
-        while (digit(p));
-    }
-    mantissa_end = static_cast<std::size_t>(p - first);
-    if (p != last && (*p == 'e' || *p == 'E'))
-    {
-        ++p;
-        p += (p != last && (*p == '+' || *p == '-')) ? 1 : 0;
-        if (!digit(p))
-        {
-            return false;
-        }
-        do
-        {
-            ++p;
-        }
-        while (digit(p));
-    }
-    return p == last;
-}
-
-/*!
-@brief the value of the float token of a node, as parse() converts it
-
-Uses the lexer's conversion (detail::convert_float), so that the values are
-bit-identical to parse(): float and double are converted without allocation
-and independent of the locale. A token that is not a JSON number (only in a
-damaged image loaded with image_check::bounds) yields 0.
-*/
-template<typename FloatType>
-NLOHMANN_VIEW_NOINLINE FloatType float_value(const char* first, const node& n)
-{
-    const char* const last = first + n.len;
-    std::size_t dot = 0;
-    std::size_t mantissa_end = 0;
-    if (NLOHMANN_VIEW_UNLIKELY(!float_token_layout(first, last, dot, mantissa_end)))
-    {
-        return FloatType{};
-    }
-    return convert_float<FloatType>(first, last, dot, mantissa_end);
-}
-
-/*!
-@brief the digits of a float token with at most 19 digits, from its layout
-
-The digit layout recorded while parsing says where the integer digits, the
-fraction digits, and the exponent are, so the digits are read eight at a
-time without scanning.
-
-@param[in] p  first character of the token
-@param[in] e  end of the token
-@param[in] limit  end of the readable memory (the source text)
-*/
-NLOHMANN_VIEW_ALWAYS_INLINE float_significand layout_decimal(const unsigned char* p, const unsigned char* e, unsigned int_digits, unsigned frac_digits, const unsigned char* limit) noexcept
-{
-    const bool negative = *p == '-';
-    p += negative ? 1 : 0;
-    std::uint64_t w = parse_upto19(p, int_digits, limit);
-    p += int_digits;
-    std::int64_t q = 0;
-    if (frac_digits != 0)
-    {
-        w = (w * int_pow10(frac_digits)) + parse_upto19(p + 1, frac_digits, limit);
-        p += 1 + frac_digits;
-        q = -static_cast<std::int64_t>(frac_digits);
-    }
-    if (p != e)
-    {
-        // [eE][+-]digits; huge exponents saturate (the parser rejected
-        // overflow). The token is not read beyond e, and the digits are taken
-        // as unsigned, so that a token that is not well-formed (a damaged
-        // image loaded with image_check::bounds) yields a wrong value, but no
-        // overflow.
-        ++p;
-        const bool exp_negative = p != e && *p == '-';
-        p += (p != e && (*p == '-' || *p == '+')) ? 1 : 0;
-        std::int64_t exp_value = 0;
-        for (; p != e; ++p)
-        {
-            if (exp_value < 0x10000000)
-            {
-                exp_value = (exp_value * 10) + static_cast<unsigned char>(*p - '0');
-            }
-        }
-        q += exp_negative ? -exp_value : exp_value;
-    }
-
-    float_significand d;
-    d.w = w;
-    d.exponent = q;
-    d.negative = negative;
-    return d;
-}
-
-/*!
-@brief the value of a float token with at most 19 digits, from its layout
-
-The result is correctly rounded by the lexer's conversion
-(detail::decimal_to_float(): Clinger's fast path where both operands are
-exact, else the Eisel-Lemire algorithm, which needs no fallback for up to 19
-digits), so it is the value parse() produces.
-*/
-template<typename FloatType>
-NLOHMANN_VIEW_ALWAYS_INLINE FloatType layout_float(const unsigned char* p, const unsigned char* e, unsigned int_digits, unsigned frac_digits, const unsigned char* limit) noexcept
-{
-    return decimal_to_float<FloatType>(layout_decimal(p, e, int_digits, frac_digits, limit));
-}
-
-/// the value of a float set by an edit: its token (the shortest round-trip
-/// text, or "nan", "inf", "-inf") in the edit arena
-template<typename FloatType>
-NLOHMANN_VIEW_NOINLINE FloatType edited_float(const char* token, const node& n)
-{
-    if (token[0] == 'n')
-    {
-        return std::numeric_limits<FloatType>::quiet_NaN();
-    }
-    if (token[0] == 'i' || (token[0] == '-' && token[1] == 'i'))
-    {
-        return token[0] == 'i' ? std::numeric_limits<FloatType>::infinity() : -std::numeric_limits<FloatType>::infinity();
-    }
-    return float_value<FloatType>(token, n);
-}
-
-/// the value of the float token of a node, as parse() converts it; floats and
-/// doubles with at most 19 digits are converted from the digit layout
-template<typename FloatType>
-FloatType float_value(const document_data& d, const node& n)
-{
-    if (NLOHMANN_VIEW_UNLIKELY((n.flags & node_flags::storage) == node_flags::edited))
-    {
-        return edited_float<FloatType>(d.str(n), n);
-    }
-    return float_value<FloatType>(d, n, std::integral_constant<bool, has_native_float_format<FloatType>::value> {});
-}
-
-template<typename FloatType>
-FloatType float_value(const document_data& d, const node& n, std::true_type /*binary32 or binary64*/)
-{
-    const unsigned int_digits = n.extra & 0xFFu;
-    const unsigned frac_digits = n.extra >> 8u;
-    if (NLOHMANN_VIEW_LIKELY(int_digits + frac_digits <= 19)) // (255 marks "many")
-    {
-        // (a float token not written by an edit is in the text)
-        const auto* const first = reinterpret_cast<const unsigned char*>(d.src + n.off); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-        return layout_float<FloatType>(first, first + n.len, int_digits, frac_digits, reinterpret_cast<const unsigned char*>(d.src + d.size)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    }
-    return float_value<FloatType>(d.str(n), n);
-}
-
-template<typename FloatType>
-FloatType float_value(const document_data& d, const node& n, std::false_type /*other*/)
-{
-    return float_value<FloatType>(d.str(n), n);
-}
-
-}  // namespace view
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/object_index.hpp>
 
@@ -5139,6 +6164,81 @@ struct number_token
     bool is_float; ///< a fraction or an exponent
 };
 
+/// advance over ASCII digits, eight bytes at a time
+inline const unsigned char* digit_run(const unsigned char* p, const unsigned char* e) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    while (e - p >= 8)
+    {
+        // (the digits become 0..9; a byte above 9, or with bit 7 set, is no digit. A carry
+        // out of a byte with bit 7 set only affects the bytes above, after the first one
+        // that count_trailing_zeros finds.)
+        const std::uint64_t x = read_eight_bytes(p) ^ (ones * 0x30u);
+        const std::uint64_t not_digit = ((x + (ones * 0x76u)) | x) & (ones * 0x80u);
+        if (not_digit != 0)
+        {
+            return p + (static_cast<std::size_t>(count_trailing_zeros(not_digit)) / 8);
+        }
+        p += 8;
+    }
+    while (p != e && is_digit(*p))
+    {
+        ++p;
+    }
+    return p;
+}
+
+/// whether the n bytes at p are ASCII digits (n > 0)
+inline bool all_digits(const unsigned char* p, std::size_t n) noexcept
+{
+    const auto digits = [](const unsigned char* q)
+    {
+        constexpr std::uint64_t ones = 0x0101010101010101ull;
+        const std::uint64_t x = read_eight_bytes(q) ^ (ones * 0x30u);
+        return (((x + (ones * 0x76u)) | x) & (ones * 0x80u)) == 0;
+    };
+    if (n >= 8)
+    {
+        for (std::size_t i = 0; i + 8 < n; i += 8)
+        {
+            if (!digits(p + i))
+            {
+                return false;
+            }
+        }
+        return digits(p + n - 8); // (overlapping the bytes before: they are digits)
+    }
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        if (!is_digit(p[i]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// Whether a float token has the shape that the parser records for most of
+/// them: [-]digits.digits, with the numbers of digits of the node's layout
+/// (extra). Then the token is a number of that layout, and the general scan
+/// that follows is not needed.
+inline bool plain_float_token(const unsigned char* s, std::size_t len, std::uint16_t extra) noexcept
+{
+    const std::size_t int_digits = extra & 0xFFu;
+    const std::size_t frac_digits = extra >> 8u;
+    if (int_digits == 0 || int_digits >= 255 || frac_digits == 0 || frac_digits >= 255 || len == 0)
+    {
+        return false;
+    }
+    const std::size_t negative = *s == '-' ? 1 : 0;
+    if (len != negative + int_digits + 1 + frac_digits)
+    {
+        return false;
+    }
+    const unsigned char* const p = s + negative;
+    return !(int_digits > 1 && *p == '0') && p[int_digits] == '.' && all_digits(p, int_digits) && all_digits(p + int_digits + 1, frac_digits);
+}
+
 /// whether [s, s + len) is a JSON number (the grammar the parser accepts)
 inline bool scan_number_token(const unsigned char* s, std::size_t len, number_token& t)
 {
@@ -5157,11 +6257,7 @@ inline bool scan_number_token(const unsigned char* s, std::size_t len, number_to
     }
     else if (*p >= '1' && *p <= '9')
     {
-        do
-        {
-            ++p;
-        }
-        while (p != e && is_digit(*p));
+        p = digit_run(p + 1, e);
     }
     else
     {
@@ -5173,10 +6269,7 @@ inline bool scan_number_token(const unsigned char* s, std::size_t len, number_to
     if (p != e && *p == '.')
     {
         const unsigned char* const f0 = ++p;
-        while (p != e && is_digit(*p))
-        {
-            ++p;
-        }
+        p = digit_run(p, e);
         if (p == f0)
         {
             return false;
@@ -5287,10 +6380,15 @@ struct float_range
 template<typename Check>
 bool check_distinct_ranges(std::vector<byte_range>& ranges, Check check)
 {
-    std::sort(ranges.begin(), ranges.end(), [](const byte_range & a, const byte_range & b)
+    // (save() writes the ranges in the order of the nodes, which is sorted already)
+    const auto before = [](const byte_range & a, const byte_range & b)
     {
         return a.off != b.off ? a.off < b.off : a.len < b.len;
-    });
+    };
+    if (!std::is_sorted(ranges.begin(), ranges.end(), before))
+    {
+        std::sort(ranges.begin(), ranges.end(), before);
+    }
     std::size_t end = 0;
     for (std::size_t i = 0; i < ranges.size(); ++i)
     {
@@ -5312,7 +6410,8 @@ bool check_distinct_ranges(std::vector<byte_range>& ranges, Check check)
 /// record layouts that match it), tokens must not overlap.
 inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned char* text)
 {
-    std::sort(ranges.begin(), ranges.end(), [](const float_range & a, const float_range & b)
+    // (save() writes the tokens in the order of the nodes, which is sorted already)
+    const auto before = [](const float_range & a, const float_range & b)
     {
         if (a.off != b.off)
         {
@@ -5323,7 +6422,11 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
             return a.len < b.len;
         }
         return a.extra < b.extra;
-    });
+    };
+    if (!std::is_sorted(ranges.begin(), ranges.end(), before))
+    {
+        std::sort(ranges.begin(), ranges.end(), before);
+    }
     std::size_t end = 0;
     std::size_t i = 0;
     while (i < ranges.size())
@@ -5333,14 +6436,18 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
         {
             return false;
         }
-        number_token t{};
         const unsigned char* const s = text + r.off;
-        if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+        std::uint16_t layout = r.extra;
+        if (!plain_float_token(s, r.len, r.extra))
         {
-            return false;
+            number_token t{};
+            if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+            {
+                return false;
+            }
+            // the digit layout the parser records (or "many", as compaction writes it)
+            layout = float_layout(t);
         }
-        // the digit layout the parser records (or "many", as compaction writes it)
-        const std::uint16_t layout = float_layout(t);
         for (; i < ranges.size() && ranges[i].off == r.off && ranges[i].len == r.len; ++i)
         {
             if (ranges[i].extra != layout && ranges[i].extra != 0xFFFFu)
@@ -7865,120 +8972,6 @@ class view_serializer
 NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/string_ref.hpp>
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.12.0
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-
-
-#include <algorithm> // min
-#include <cstddef> // size_t
-#include <cstring> // memcmp, strlen
-#include <string> // basic_string
-
-// #include <nlohmann/json.hpp>
-// #include <nlohmann/detail/view/macro_scope.hpp>
-
-
-#if NLOHMANN_VIEW_HAS_CPP_17
-    #include <string_view> // string_view
-#endif
-#ifndef JSON_NO_IO
-    #include <ostream> // ostream
-#endif
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-namespace view
-{
-
-#if NLOHMANN_VIEW_HAS_CPP_17
-using string_ref = std::string_view;
-#else
-/// minimal C++11 stand-in for std::string_view
-class string_ref
-{
-  public:
-    using size_type = std::size_t;
-    using const_iterator = const char*;
-
-    string_ref() noexcept = default;
-    // s must be null-terminated, as for std::string_view(const char*)
-    // flawfinder: ignore
-    string_ref(const char* s) : m_data(s), m_size(std::strlen(s)) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
-    string_ref(const char* s, std::size_t n) noexcept : m_data(s), m_size(n) {}
-    template<typename Traits, typename Alloc>
-    string_ref(const std::basic_string<char, Traits, Alloc>& s) noexcept : m_data(s.data()), m_size(s.size()) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
-
-    const char* data() const noexcept
-    {
-        return m_data;
-    }
-    std::size_t size() const noexcept
-    {
-        return m_size;
-    }
-    std::size_t length() const noexcept
-    {
-        return m_size;
-    }
-    bool empty() const noexcept
-    {
-        return m_size == 0;
-    }
-    const char* begin() const noexcept
-    {
-        return m_data;
-    }
-    const char* end() const noexcept
-    {
-        return m_data + m_size;
-    }
-    char operator[](std::size_t i) const noexcept
-    {
-        return m_data[i];
-    }
-
-    template<typename Traits, typename Alloc>
-    explicit operator std::basic_string<char, Traits, Alloc>() const
-    {
-        return std::basic_string<char, Traits, Alloc>(m_data, m_size);
-    }
-
-    friend bool operator==(string_ref a, string_ref b) noexcept
-    {
-        return a.m_size == b.m_size && (a.m_size == 0 || std::memcmp(a.m_data, b.m_data, a.m_size) == 0);
-    }
-    friend bool operator!=(string_ref a, string_ref b) noexcept
-    {
-        return !(a == b);
-    }
-    friend bool operator<(string_ref a, string_ref b) noexcept
-    {
-        const int c = std::memcmp(a.m_data, b.m_data, (std::min)(a.m_size, b.m_size));
-        return c != 0 ? c < 0 : a.m_size < b.m_size;
-    }
-#ifndef JSON_NO_IO
-    friend std::ostream& operator<<(std::ostream& o, string_ref s)
-    {
-        return o.write(s.m_data, static_cast<std::streamsize>(s.m_size));
-    }
-#endif
-
-  private:
-    const char* m_data = "";
-    std::size_t m_size = 0;
-};
-#endif
-
-}  // namespace view
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/value.hpp>
 //     __ _____ _____ _____
@@ -8811,7 +9804,11 @@ class basic_json_view
     template<typename, view_mode> friend class basic_json_document;
     template<typename, view_mode> friend class basic_json_view;
     template<typename, typename> friend class detail::view::editor;
+    template<typename, typename> friend class detail::view::view_side;
     friend iterator;
+
+    /// whether the view is one of an editable document
+    static constexpr bool is_editable = Editable;
 
     basic_json_view(const document_data* d, const node* n) noexcept
         : m_doc(d), m_node(n)
