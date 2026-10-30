@@ -3030,3 +3030,144 @@ TEST_CASE("a json_sax_dom_parser keeps the values read before a parse error")
         CHECK(read_before_error<nlohmann::ordered_json>(c.first) == c.second);
     }
 }
+
+TEST_CASE("object keys are delivered decoded and validated")
+{
+    // json_sax::key and the key event of a parser callback see the decoded name, and
+    // only after the whole name was scanned and validated
+    const auto keys_of_format = [](const std::string & text, const json::input_format_t format)
+    {
+        SaxEventLogger l;
+        json::sax_parse(text, &l, format);
+        std::vector<std::string> keys;
+        for (const auto& e : l.events)
+        {
+            if (e.compare(0, 4, "key(") == 0)
+            {
+                keys.push_back(e.substr(4, e.size() - 5));
+            }
+        }
+        return keys;
+    };
+
+    const auto keys_of = [&keys_of_format](const std::string & text)
+    {
+        return keys_of_format(text, json::input_format_t::json);
+    };
+
+    const auto callback_keys_of = [](const std::string & text)
+    {
+        std::vector<std::string> keys;
+        const json::parser_callback_t cb = [&keys](int /*depth*/, json::parse_event_t event, json & parsed)
+        {
+            if (event == json::parse_event_t::key)
+            {
+                keys.push_back(parsed.get<std::string>());
+            }
+            return true;
+        };
+        const json parsed = json::parse(text, cb, false);
+        static_cast<void>(parsed);
+        return keys;
+    };
+
+    SECTION("different spellings of a name yield the same string")
+    {
+        const std::string e_acute = "\xc3\xa9";
+        const std::string text = std::string(R"({"/":1,"\/":2,"\u002f":3,"\u00e9":4,"\u00E9":5,")") + e_acute + R"(":6})";
+        const std::vector<std::string> expected = {"/", "/", "/", e_acute, e_acute, e_acute};
+        CHECK(keys_of(text) == expected);
+        CHECK(callback_keys_of(text) == expected);
+    }
+
+    SECTION("escape sequences are decoded")
+    {
+        const std::string simple = R"({"\"\\\/\b\f\n\r\t":1})";
+        const std::vector<std::string> simple_expected = {std::string("\"\\/\b\f\n\r\t")};
+        CHECK(keys_of(simple) == simple_expected);
+        CHECK(callback_keys_of(simple) == simple_expected);
+
+        const std::string nul = R"({"\u0000":1})";
+        const std::vector<std::string> nul_expected = {std::string(1, '\0')};
+        CHECK(keys_of(nul) == nul_expected);
+        CHECK(callback_keys_of(nul) == nul_expected);
+
+        const std::string pair = R"({"\ud83d\ude00":1})";
+        const std::vector<std::string> pair_expected = {"\xf0\x9f\x98\x80"};
+        CHECK(keys_of(pair) == pair_expected);
+        CHECK(callback_keys_of(pair) == pair_expected);
+    }
+
+    SECTION("no normalization and no case conversion")
+    {
+        const std::string text = std::string("{\"\xc3\xa9\":1,\"e\xcc\x81\":2,\"A\":3,\"a\":4}");
+        const std::vector<std::string> expected = {"\xc3\xa9", "e\xcc\x81", "A", "a"};
+        CHECK(keys_of(text) == expected);
+        CHECK(callback_keys_of(text) == expected);
+    }
+
+    SECTION("a name that is not valid is not delivered")
+    {
+        const std::vector<std::string> texts =
+        {
+            R"({"\u12G4":1})",       // malformed escape
+            R"({"\udc00":1})",       // lone low surrogate
+            R"({"\ud800":1})",       // lone high surrogate
+            R"({"\ud800\u0041":1})", // high surrogate not followed by a low one
+            R"({"\x":1})",           // unknown escape
+            std::string("{\"a\x01\":1}"),   // control character
+            std::string("{\"\xff\":1}")     // ill-formed UTF-8
+        };
+        for (const auto& text : texts)
+        {
+            CAPTURE(text)
+            CHECK(!json::accept(text));
+            CHECK(keys_of(text).empty());
+            CHECK(callback_keys_of(text).empty());
+        }
+    }
+
+    SECTION("a name is delivered before the following colon is read")
+    {
+        const std::string text = R"({"a" 1})";
+        const std::vector<std::string> expected = {"a"};
+        CHECK(!json::accept(text));
+        CHECK(keys_of(text) == expected);
+        CHECK(callback_keys_of(text) == expected);
+    }
+
+    SECTION("a repeated name is delivered once per occurrence")
+    {
+        const std::string text = R"({"a":1,"a":2})";
+        const std::vector<std::string> expected = {"a", "a"};
+        CHECK(keys_of(text) == expected);
+        CHECK(callback_keys_of(text) == expected);
+    }
+
+    SECTION("binary formats pass the stored bytes through")
+    {
+        const std::string stored = "\xff\\";
+        const std::vector<std::string> expected = {stored};
+        const auto keys_of_bytes = [&keys_of_format](const std::vector<std::uint8_t>& v, json::input_format_t format)
+        {
+            std::string text;
+            for (const auto byte : v)
+            {
+                text.push_back(static_cast<char>(byte));
+            }
+            return keys_of_format(text, format);
+        };
+
+        CHECK(keys_of_bytes({0xA1, 0x62, 0xFF, 0x5C, 0x01}, json::input_format_t::cbor) == expected);
+        CHECK(keys_of_bytes({0x81, 0xA2, 0xFF, 0x5C, 0x01}, json::input_format_t::msgpack) == expected);
+        CHECK(keys_of_bytes({'{', 'i', 2, 0xFF, 0x5C, 'i', 1, '}'}, json::input_format_t::ubjson) == expected);
+        CHECK(keys_of_bytes({0x0D, 0, 0, 0, 0x10, 0xFF, 0x5C, 0, 1, 0, 0, 0, 0}, json::input_format_t::bson) == expected);
+    }
+
+    SECTION("BON8 rejects ill-formed UTF-8 in a name")
+    {
+        const std::vector<std::string> valid = {"\\"};
+        CHECK(keys_of_format(std::string("\x87\x5C\x91"), json::input_format_t::bon8) == valid);
+        CHECK(keys_of_format(std::string("\x87\xC3\x28\x91"), json::input_format_t::bon8).empty());
+    }
+}
