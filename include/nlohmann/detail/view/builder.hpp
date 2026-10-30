@@ -1082,7 +1082,7 @@ indent_done:
             {
                 ++p;
                 const unsigned char* const f0 = p;
-                p = skip_digits(p, e);
+                p = skip_fraction_digits(p, e);
                 if (NLOHMANN_VIEW_UNLIKELY(p == f0))
                 {
                     return fail(error_code::number_after_dot);

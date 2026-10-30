@@ -1218,6 +1218,57 @@ inline const unsigned char* find_block_comment_end(const unsigned char* p, const
     return p;
 }
 
+/// The digits of a fraction, whose number varies from one number to the next: skip_digits() with 16 bytes compared at
+/// once and the end of the run taken from a bit mask (SSE2), instead of a compare and a branch for each digit. That
+/// is about a third of the instructions for a fraction of 12 digits, and no branch that is mispredicted when the
+/// lengths vary. Where there is no SSE2, skip_digits() is used.
+#if NLOHMANN_VIEW_SSE2
+// The last bytes of the input, one at a time. GCC unrolls this loop in every inlined copy of the function below, which
+// makes the parse loop 4 KiB larger and slows down documents that have hardly any fractions; out of line, it does
+// not. Clang does better with the loop inline (a call in the parse loop costs it more than the unrolling).
+#if defined(__GNUC__) && !defined(__clang__)
+inline NLOHMANN_VIEW_NOINLINE const unsigned char* skip_digits_tail(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (p != e && is_digit(*p))
+    {
+        ++p;
+    }
+    return p;
+}
+#else
+NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* skip_digits_tail(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (p != e && is_digit(*p))
+    {
+        ++p;
+    }
+    return p;
+}
+#endif
+
+NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* skip_fraction_digits(const unsigned char* p, const unsigned char* e) noexcept
+{
+    while (e - p >= 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
+        // a digit is above '/' and below ':' (signed compares: a byte with the top bit set is negative, and neither)
+        const __m128i digits = _mm_and_si128(_mm_cmpgt_epi8(in, _mm_set1_epi8('/')), _mm_cmplt_epi8(in, _mm_set1_epi8(':')));
+        const auto not_digit = static_cast<std::uint64_t>(~static_cast<unsigned>(_mm_movemask_epi8(digits)) & 0xFFFFu);
+        if (not_digit != 0)
+        {
+            return p + count_trailing_zeros(not_digit);
+        }
+        p += 16;
+    }
+    return skip_digits_tail(p, e);
+}
+#else
+NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* skip_fraction_digits(const unsigned char* p, const unsigned char* e) noexcept
+{
+    return skip_digits(p, e);
+}
+#endif
+
 /// powers of ten up to 10^19 as integers
 inline std::uint64_t int_pow10(unsigned k) noexcept
 {
@@ -2324,7 +2375,7 @@ indent_done:
             {
                 ++p;
                 const unsigned char* const f0 = p;
-                p = skip_digits(p, e);
+                p = skip_fraction_digits(p, e);
                 if (NLOHMANN_VIEW_UNLIKELY(p == f0))
                 {
                     return fail(error_code::number_after_dot);
