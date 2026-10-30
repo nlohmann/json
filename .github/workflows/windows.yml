@@ -28,7 +28,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@41b837e47d7f85214629d255b9c4bc3fcbe9fd63 # v3.0
+        uses: egor-tensin/setup-mingw@d54f5ef0ce585bd3fbb1f8a71b5b254f59dbf931 # v3.0
         with:
           platform: ${{ matrix.architecture }}
           version: 12.2.0 # https://github.com/egor-tensin/setup-mingw/issues/14
@@ -153,7 +153,7 @@ jobs:
       - name: Install Clang
         run: curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}/LLVM-${{ matrix.version }}-win64.exe ; 7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
       - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@41b837e47d7f85214629d255b9c4bc3fcbe9fd63 # v3.0
+        uses: egor-tensin/setup-mingw@d54f5ef0ce585bd3fbb1f8a71b5b254f59dbf931 # v3.0
         with:
           platform: x64
           version: 12.2.0 # https://github.com/egor-tensin/setup-mingw/issues/14
