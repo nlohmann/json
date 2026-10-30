@@ -29,7 +29,9 @@ using nlohmann::json;
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "sax_event_loggers.hpp"
 using utils::SaxCountdown;
+using utils::SaxEventLogger;
 
 
 TEST_CASE("CBOR")
@@ -2444,6 +2446,78 @@ TEST_CASE("CBOR SAX parsing stops at every event")
     const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
     CHECK(count_events(json::to_cbor(j)) == 20);
     CHECK(count_events(std::vector<std::uint8_t>({0xBF, 0x61, 'a', 0x9F, 0x01, 0xFF, 0xFF})) == 6);
+}
+
+TEST_CASE("CBOR arrays of scalars from contiguous and non-contiguous input")
+{
+    // contiguous input reads the integers, floats, booleans, and nulls an
+    // array begins with in one loop, other input value by value; both must
+    // give the same events, value, or error for the complete document and for
+    // every truncation of it, and stop at every event a SAX handler rejects
+    const std::vector<std::uint8_t> cbor =
+    {
+        0xA3,                                                       // map(3)
+        0x61, 'a',                                                  // "a"
+        0x98, 0x16,                                                 // array(22)
+        0x00, 0x17, 0x18, 0xFF, 0x19, 0x01, 0x00,                   // 0, 23, 255, 256
+        0x1A, 0x00, 0x01, 0x00, 0x00,                               // 65536
+        0x1B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,       // 18446744073709551615
+        0x20, 0x37, 0x38, 0xFF, 0x39, 0x01, 0x00,                   // -1, -24, -256, -257
+        0x3A, 0x00, 0x01, 0x00, 0x00,                               // -65537
+        0x3B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,       // -18446744073709551616 (a float)
+        0x3B, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,       // -9223372036854775808
+        0xF4, 0xF5, 0xF6,                                           // false, true, null
+        0xFA, 0x3F, 0xC0, 0x00, 0x00,                               // 1.5 (float32)
+        0xFB, 0xBF, 0xB9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9A,       // -0.1
+        0xF9, 0x3C, 0x00,                                           // 1.0 (float16, ends the loop)
+        0x01, 0x61, 'a',                                            // 1, "a"
+        0xFB, 0x40, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       // 2.5
+        0x61, 'b',                                                  // "b"
+        0x83,                                                       // array(3)
+        0x82, 0xFB, 0x3F, 0xF4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // [1.25,
+        0xFB, 0xC0, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       //  -3.75]
+        0x82, 0xFB, 0x3F, 0xF4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // [1.25,
+        0xFB, 0xC0, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       //  -3.75]
+        0x80,                                                       // []
+        0x61, 'c',                                                  // "c"
+        0x84, 0xA0, 0x01, 0xC1, 0x02, 0x81, 0x03                    // [{}, 1, tag(1) 2, [3]]
+    };
+    const auto tags = json::cbor_tag_handler_t::ignore;
+
+    const json j = json::from_cbor(cbor, true, true, tags);
+    CHECK(j["a"].size() == 22);
+    CHECK(j["a"][5] == 18446744073709551615u);
+    CHECK(j["a"][11].is_number_float());
+    CHECK(j["a"][11] == -18446744073709551616.0);
+    CHECK(j["a"][12] == (std::numeric_limits<std::int64_t>::min)());
+    CHECK(j["a"][17] == -0.1);
+    CHECK(j["b"] == json::parse("[[1.25, -3.75], [1.25, -3.75], []]"));
+    CHECK(j["c"] == json::parse("[{}, 1, 2, [3]]"));
+
+    for (std::size_t length = 0; length <= cbor.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> contiguous(cbor.begin(), cbor.begin() + static_cast<std::ptrdiff_t>(length));
+        const std::list<std::uint8_t> bytewise(contiguous.begin(), contiguous.end());
+
+        CHECK(json::from_cbor(contiguous, true, false, tags).dump() == json::from_cbor(bytewise.begin(), bytewise.end(), true, false, tags).dump());
+
+        SaxEventLogger from_contiguous;
+        SaxEventLogger from_bytewise;
+        CHECK(json::sax_parse(contiguous, &from_contiguous, json::input_format_t::cbor, true, false, false, tags)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::cbor, true, false, false, tags));
+        CHECK(from_contiguous.events == from_bytewise.events);
+    }
+
+    for (int events = 0; events <= 60; ++events)
+    {
+        CAPTURE(events)
+        const std::list<std::uint8_t> bytewise(cbor.begin(), cbor.end());
+        SaxCountdown from_contiguous(events);
+        SaxCountdown from_bytewise(events);
+        CHECK(json::sax_parse(cbor, &from_contiguous, json::input_format_t::cbor, true, false, false, tags)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::cbor, true, false, false, tags));
+    }
 }
 
 TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")
