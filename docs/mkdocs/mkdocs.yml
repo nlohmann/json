@@ -192,6 +192,7 @@ nav:
           - 'default_object_comparator_t': api/basic_json/default_object_comparator_t.md
           - 'diff': api/basic_json/diff.md
           - 'dump': api/basic_json/dump.md
+          - 'dump_canonical': api/basic_json/dump_canonical.md
           - 'emplace': api/basic_json/emplace.md
           - 'emplace_back': api/basic_json/emplace_back.md
           - 'empty': api/basic_json/empty.md

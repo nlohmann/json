@@ -281,6 +281,7 @@ Access to the JSON value
 ### Serialization / Dumping
 
 - [**dump**](dump.md) - serialization
+- [**dump_canonical**](dump_canonical.md) - serialization using JSON Canonicalization Scheme (RFC 8785)
 
 ### Deserialization / Parsing
 
