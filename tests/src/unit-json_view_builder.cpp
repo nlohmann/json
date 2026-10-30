@@ -172,6 +172,22 @@ void check_string(const std::string& content)
     }
 }
 
+// accept() stores no nodes: it must accept and reject what json::accept does, for all options and for inputs with
+// and without a terminating NUL
+void check_accept(const std::string& text)
+{
+    CAPTURE(text)
+    const std::vector<char> bytes(text.begin(), text.end());
+    for (int options = 0; options < 4; ++options)
+    {
+        const bool comments = (options & 1) != 0;
+        const bool trailing_commas = (options & 2) != 0;
+        const bool accepted = json::accept(text, comments, trailing_commas);
+        CHECK(nlohmann::json_document::accept(text, comments, trailing_commas) == accepted);
+        CHECK(nlohmann::json_document::accept(bytes, comments, trailing_commas) == accepted);
+    }
+}
+
 // a small deterministic generator of documents
 struct generator
 {
@@ -420,6 +436,78 @@ TEST_CASE("json_view builder")
             damaged[at] = replacements[g.r(16)];
             check_same(damaged);
             check_same(text.substr(0, at));
+        }
+    }
+
+    SECTION("accept() without an index")
+    {
+        for (const char* text :
+                {
+                    "", " ", "\n", "null", "nul", "true", "[", "]", "[]", "{}", "[1,2,3]", "[1,2,3", "[1,2,3,]", "{\"a\":1,}", "{\"a\"}", "{\"a\":}",
+                    "[1] x", "[1][2]", "\xEF\xBB\xBF[1]", "[\"a\\", "[\"\\u12\"]", "[\"\\ud800\"]", "[\"\x01\"]", "[\"\xff\"]", "[01]", "[1.]",
+                    "[.5]", "[-]", "[1e]", "// c\n[1]", "/* c */ {\"a\" /* x */ : 1}", "/* c", "[1] // c", "1e400", "-1e400", "123456789012345678901234567890",
+                    "{\"a\":1,\"a\":2}", "[[[]]]", "\"\\u00e4\\n\\ud83d\\ude00\""
+                })
+        {
+            check_accept(text);
+        }
+        // a null byte inside the text, and after it
+        check_accept(std::string("[1,\0]", 5));
+        check_accept(std::string("[1]\0", 4));
+        check_accept(std::string("\0", 1));
+
+        // generated documents and damaged copies, as for the builder above
+        generator g;
+        for (int i = 0; i < 2000; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            check_accept(text);
+            std::string damaged = text;
+            const auto at = static_cast<std::size_t>(g.r(static_cast<int>(damaged.size())));
+            static const char replacements[] = {'x', '"', '\\', ',', ':', ']', '}', '[', '{', '1', '-', '.', 'e', '\0', '\n', '/'}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            damaged[at] = replacements[g.r(16)];
+            check_accept(damaged);
+            check_accept(text.substr(0, at));
+        }
+
+        // nesting beyond the 64 levels that are kept on the builder's own stack, closed and not closed
+        for (const std::size_t depth :
+                {
+                    63, 64, 65, 66, 200, 1000
+                })
+        {
+            check_accept(std::string(depth, '[') + std::string(depth, ']'));
+            check_accept(std::string(depth, '[') + std::string(depth - 1, ']'));
+            std::string objects;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                objects += "{\"k\":";
+            }
+            objects += "1" + std::string(depth, '}');
+            check_accept(objects);
+            check_accept(objects.substr(0, objects.size() - 1));
+        }
+
+        // objects with enough members to get a hash index when they are indexed (and duplicate keys)
+        std::string large = "{";
+        for (int i = 0; i < 300; ++i)
+        {
+            large += (i == 0 ? "\"k" : ",\"k") + std::to_string(i % 200) + "\":" + std::to_string(i);
+        }
+        check_accept(large + "}");
+        check_accept(large);
+        check_accept("[" + large + "},{" + large.substr(1) + "}]");
+
+        // the overflow check uses the floating-point type of the document
+        using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        for (const char* text :
+                {
+                    "1e39", "-1e39", "3.4028235e38", "3.4028236e38", "[1.5e38, 3.5e38]", "{\"a\": 1e-50, \"b\": 1e39}", "340282356779733661637539395458142568448"
+                })
+        {
+            CAPTURE(text)
+            CHECK(nlohmann::basic_json_document<float_json>::accept(text) == float_json::accept(text));
         }
     }
 

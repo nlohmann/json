@@ -1088,6 +1088,7 @@ class basic_json_document
     static bool accept(InputType&& input, const bool ignore_comments = false, const bool ignore_trailing_commas = false)
     {
         basic_json_document d;
+        d.m_validate_only = true; // (nothing is stored: only the result is used)
         d.read(std::forward<InputType>(input), false, ignore_comments, ignore_trailing_commas);
         return !d.is_discarded();
     }
@@ -1532,7 +1533,9 @@ class basic_json_document
         }
         else
         {
+            d.validate_only = m_validate_only;
             ok = detail::view::build < typename BasicJsonType::number_float_t, !detail::abi_config::strict_nul_handling > (d, src, size, comments, trailing_commas, sentinel, failure);
+            d.validate_only = false;
         }
         if (NLOHMANN_VIEW_LIKELY(ok))
         {
@@ -1693,6 +1696,7 @@ class basic_json_document
     }
 
     std::unique_ptr<document_data, document_data::deleter> m_data{}; // NOLINT(readability-redundant-member-init)
+    bool m_validate_only = false; ///< set by accept(): build() stores no nodes
 };
 
 /*!

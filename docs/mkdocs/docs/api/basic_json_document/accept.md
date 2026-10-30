@@ -13,9 +13,11 @@ function never throws an exception for invalid input, and the returned `#!cpp bo
 is returned.
 
 The result is the same as that of `BasicJsonType::accept()` by design; the difference is how the check is made. This
-function runs the document's index builder (and discards the index), while `BasicJsonType::accept()` runs the SAX
-parser with a handler that ignores every event. Use this one if you go on to parse the same input with
-[`parse()`](parse.md) anyway, so that both use the same code; either is fine for a plain yes/no answer.
+function runs the document's builder, which checks the text as [`parse()`](parse.md) does but writes no index (for
+input without comments and trailing commas; with either option it builds the index and discards it), while
+`BasicJsonType::accept()` runs the SAX parser with a handler that ignores every event. Use this one if you go on to
+parse the same input with [`parse()`](parse.md) anyway, so that both use the same code; either is fine for a plain
+yes/no answer.
 
 ## Template parameters
 

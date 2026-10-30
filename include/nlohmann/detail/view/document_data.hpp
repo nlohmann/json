@@ -36,6 +36,7 @@ struct document_data
     const char* src = nullptr;
     std::size_t size = 0;
     node* nodes = nullptr; ///< the node index (see node.hpp)
+    bool validate_only = false; ///< accept(): build() checks the text and stores no nodes
     std::size_t node_count = 0;
     std::size_t node_capacity = 0;
     node* inline_nodes = nullptr; ///< node array allocated together with this header
