@@ -89,9 +89,9 @@ class parser
                     const bool allow_exceptions_ = true,
                     const bool ignore_comments = false,
                     const bool ignore_trailing_commas_ = false,
-                    const bool discard_number_values_ = false)
+                    const bool discard_values_ = false)
         : callback(std::move(cb))
-        , m_lexer(std::move(adapter), ignore_comments, discard_number_values_)
+        , m_lexer(std::move(adapter), ignore_comments, discard_values_)
         , allow_exceptions(allow_exceptions_)
         , ignore_trailing_commas(ignore_trailing_commas_)
     {

@@ -184,11 +184,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const bool allow_exceptions = true,
         const bool ignore_comments = false,
         const bool ignore_trailing_commas = false,
-        const bool discard_number_values = false
+        const bool discard_values = false
     )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
+               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_values);
     }
 
   private:
