@@ -39,6 +39,7 @@ using nlohmann::ordered_json_document;
 
 #ifdef JSON_HAS_CPP_17
     #include <optional>
+    #include <string_view>
 #endif
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair; same() compares floating-point values on purpose
@@ -468,6 +469,71 @@ TEST_CASE("json_view from_json")
     }
 #endif
 }
+
+#ifdef JSON_HAS_CPP_17
+namespace view_from_json
+{
+// a string_view member is not copied: it points into the source text or, for a
+// string with escape sequences, into the buffer of decoded strings of the document
+struct named_view
+{
+    // initialized for GCC -Weffc++
+    // NOLINTNEXTLINE(readability-redundant-member-init)
+    std::string_view name{};
+    int n = 0;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(named_view, name, n)
+};
+}  // namespace view_from_json
+
+TEST_CASE("json_view from_json: string_view members borrow from the document")
+{
+    using view_from_json::named_view;
+
+    // whether all of s is inside the bytes of text
+    const auto within = [](std::string_view s, std::string_view text)
+    {
+        const auto first = reinterpret_cast<std::uintptr_t>(text.data());
+        const auto begin = reinterpret_cast<std::uintptr_t>(s.data());
+        return begin >= first && begin + s.size() <= first + text.size();
+    };
+
+    SECTION("a string without escapes points into the source text")
+    {
+        const std::string text = R"({"name": "hello", "n": 1})";
+        const json_document d = json_document::parse(text);
+        REQUIRE_FALSE(d.owns_source());
+        const named_view r = d.root().get<named_view>();
+        CHECK(r.name == "hello");
+        CHECK(r.n == 1);
+        CHECK(within(r.name, text));
+        CHECK(within(r.name, d.source()));
+    }
+
+    SECTION("a string with escapes points into the document, not into the source text")
+    {
+        const std::string text = R"({"name": "a\nb", "n": 2})";
+        json_document d = json_document::parse(text);
+        REQUIRE_FALSE(d.owns_source());
+        const named_view r = d.root().get<named_view>();
+        CHECK(r.name == "a\nb");
+        CHECK(r.n == 2);
+        CHECK_FALSE(within(r.name, text));
+        // valid as long as the document is alive, even if the document is moved
+        const json_document moved = std::move(d);
+        CHECK(r.name == "a\nb");
+        CHECK(moved.root().get<named_view>().name == r.name);
+    }
+
+    SECTION("a document that owns its text keeps the members readable while it is alive")
+    {
+        const json_document d = json_document::parse(std::string(R"({"name": "owned", "n": 3})"));
+        REQUIRE(d.owns_source());
+        const named_view r = d.root().get<named_view>();
+        CHECK(r.name == "owned");
+        CHECK(within(r.name, d.source()));
+    }
+}
+#endif
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
 DOCTEST_GCC_SUPPRESS_WARNING_POP
