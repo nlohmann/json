@@ -1164,7 +1164,13 @@ TEST_CASE("BSON keys from contiguous and stream input")
     // contiguous input reads a key up to its \x00-byte in one step, a stream
     // reads it byte by byte; both must give the same value or error for the
     // complete document and for every truncation of it
-    const json j = {{"", true}, {"k", {1, 2, 3}}, {std::string(40, 'x'), {{"nested key", "value"}}}};
+    json j = {{"", true}, {"k", {1, 2, 3}}, {std::string(40, 'x'), {{"nested key", "value"}}}};
+    // keys and array element names ("0" to "11") that end at every position of
+    // an 8-byte word, which contiguous input scans at a time
+    for (std::size_t length = 1; length <= 17; ++length)
+    {
+        j[std::string(length, static_cast<char>('a' + length))] = json::array({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, {11}});
+    }
     const std::vector<std::uint8_t> bson = json::to_bson(j);
     CHECK(json::from_bson(bson) == j);
 
@@ -1193,6 +1199,33 @@ TEST_CASE("BSON keys from contiguous and stream input")
         }
         CHECK(from_vector == from_stream);
     }
+}
+
+TEST_CASE("BSON array element names")
+{
+    // an array's element names are not part of the value, so they are not
+    // passed on; error_handler_t::strict still rejects ill-formed UTF-8 in them
+    const std::vector<std::uint8_t> bson =
+    {
+        0x1D, 0x00, 0x00, 0x00, // size (little endian)
+        0x04, 'a', 0x00,        // entry: array "a"
+        0x15, 0x00, 0x00, 0x00, // size (little endian)
+        0x08, 0xFF, 0x00, 0x01, // entry: boolean named "\xFF", true
+        0x08, '1', '2', '3', '4', '5', '6', '7', '8', '9', 0x00, 0x00, // entry: boolean named "123456789", false
+        0x00,                   // end of the array
+        0x00                    // end of the document
+    };
+    const json expected = {{"a", {true, false}}};
+
+    CHECK(json::from_bson(bson) == expected);
+    CHECK(json::from_bson(bson, true, true, json::error_handler_t::replace) == expected);
+    CHECK(json::from_bson(bson, true, true, json::error_handler_t::ignore) == expected);
+
+    json _;
+    CHECK_THROWS_WITH_AS(_ = json::from_bson(bson, true, true, json::error_handler_t::strict), "[json.exception.parse_error.113] parse error at byte 14: syntax error while parsing BSON key: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+
+    std::istringstream stream(std::string(bson.begin(), bson.end()));
+    CHECK(json::from_bson(stream) == expected);
 }
 #endif
 
