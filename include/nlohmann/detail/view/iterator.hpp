@@ -67,17 +67,9 @@ class view_iterator
 
     /// @param[in] pos  the element, or the key of the member
     /// @param[in] object  whether pos is a key (its value is the next node)
-    /// @param[in] container  the value iterated over (the context of the
-    ///            exceptions, kept only with JSON_DIAGNOSTICS or
-    ///            JSON_DIAGNOSTIC_POSITIONS)
-    view_iterator(const document_data* d, const node* pos, bool object, const node* container) noexcept
+    view_iterator(const document_data* d, const node* pos, bool object) noexcept
         : m_doc(d), m_pos(pos), m_value_offset(object ? 1 : 0)
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
-        , m_container(container)
-#endif
-    {
-        static_cast<void>(container);
-    }
+    {}
 
     NLOHMANN_VIEW_ALWAYS_INLINE View operator*() const noexcept
     {
@@ -113,12 +105,15 @@ class view_iterator
     }
 
     /// the key of the current object member; throws invalid_iterator.207 for
-    /// other iterators, like basic_json's iterators
+    /// other iterators, like basic_json's iterators (but without the context
+    /// JSON_DIAGNOSTICS and JSON_DIAGNOSTIC_POSITIONS add: the iterator does not
+    /// know the value it iterates over, and keeping it would make iterators
+    /// larger, which keeps GCC from inlining recursive walks)
     string_view_t key() const
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_value_offset == 0))
         {
-            throw_invalid_iterator(site(), exception_id::iterator_key_not_object, "cannot use key() for non-object iterators");
+            throw_invalid_iterator(exception_id::iterator_key_not_object, "cannot use key() for non-object iterators");
         }
         return string_view_t(m_doc->str(*m_pos), m_pos->len);
     }
@@ -135,22 +130,9 @@ class view_iterator
     }
 
   private:
-    /// the value iterated over, as the context of an exception
-    error_site site() const noexcept
-    {
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
-        return error_site(m_doc, m_container);
-#else
-        return error_site();
-#endif
-    }
-
     const document_data* m_doc = nullptr;
     const node* m_pos = nullptr;
     std::size_t m_value_offset = 0; ///< 1 for objects: the value follows its key
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
-    const node* m_container = nullptr;
-#endif
 };
 
 /*!

@@ -481,7 +481,7 @@ class basic_json_view
             return end();
         }
         const node* const k = find_key(key);
-        return k != nullptr ? iterator(m_doc, k, true, m_node) : end();
+        return k != nullptr ? iterator(m_doc, k, true) : end();
     }
 
     iterator find(const char* key) const
@@ -544,18 +544,18 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, navigation::first(*m_doc, m_node), is_object(), m_node);
+            return iterator(m_doc, navigation::first(*m_doc, m_node), is_object());
         }
-        return iterator(m_doc, m_node, false, m_node);
+        return iterator(m_doc, m_node, false);
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE iterator end() const noexcept
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, navigation::end(*m_doc, m_node), is_object(), m_node);
+            return iterator(m_doc, navigation::end(*m_doc, m_node), is_object());
         }
-        return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false, m_node);
+        return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false);
     }
 
     iterator cbegin() const noexcept

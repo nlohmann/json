@@ -113,7 +113,8 @@ void check_exceptions(const View& v, const json& j)
     if (!v.is_object())
     {
         CHECK(exception_of_call([&] { static_cast<void>(v["k"]); }) == exception_of_call([&] { static_cast<void>(j["k"]); }));
-        CHECK(exception_of_call([&] { static_cast<void>(v.begin().key()); }) == exception_of_call([&] { static_cast<void>(j.begin().key()); }));
+        // (without the context of basic_json: view iterators do not know the value they iterate over)
+        CHECK(exception_of_call([&] { static_cast<void>(v.begin().key()); }) == "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
     }
     if (!v.is_array())
     {

@@ -4744,7 +4744,15 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
 /// a value: "(/path) " with JSON_DIAGNOSTICS (none for the root), then
 /// "(bytes a-b) " with JSON_DIAGNOSTIC_POSITIONS (with JSON_DIAGNOSTICS, only
 /// if there is a path)
-inline std::string diagnostics(const error_site site)
+///
+/// This and the throw helpers that take an error_site are templates, so that
+/// the path and range code is instantiated only where an exception can be
+/// thrown: instantiated in every translation unit (as a non-template inline
+/// function makes it), it changed GCC's early inlining of unrelated view
+/// functions, so that GCC 13 no longer inlined a recursive walk over a view
+/// into itself (2.7 times the instructions).
+template<typename Unused = void>
+std::string diagnostics(const error_site site)
 {
 #if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
     if (site.doc() == nullptr || site.value() == nullptr)
@@ -4797,7 +4805,7 @@ inline std::string diagnostics(const error_site site)
 template<typename View>
 std::string diagnostics_of(const View& v)
 {
-    return diagnostics(site_of(v));
+    return diagnostics<>(site_of(v));
 }
 
 // Exceptions are thrown out of line, so that the accessors that may throw stay
@@ -4824,19 +4832,22 @@ std::string diagnostics_of(const View& v)
     NLOHMANN_VIEW_THROW(invalid_iterator::create(id, msg, nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(const error_site site, exception_id id, const char* prefix, const char* type)
+template<typename Unused = void>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_type_error(const error_site site, exception_id id, const char* prefix, const char* type)
 {
-    NLOHMANN_VIEW_THROW(type_error::create(id, concat(diagnostics(site), prefix, type), nullptr));
+    NLOHMANN_VIEW_THROW(type_error::create(id, concat(diagnostics<>(site), prefix, type), nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_out_of_range(const error_site site, exception_id id, const std::string& msg)
+template<typename Unused = void>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_out_of_range(const error_site site, exception_id id, const std::string& msg)
 {
-    NLOHMANN_VIEW_THROW(out_of_range::create(id, concat(diagnostics(site), msg), nullptr));
+    NLOHMANN_VIEW_THROW(out_of_range::create(id, concat(diagnostics<>(site), msg), nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_invalid_iterator(const error_site site, exception_id id, const char* msg)
+template<typename Unused = void>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_invalid_iterator(const error_site site, exception_id id, const char* msg)
 {
-    NLOHMANN_VIEW_THROW(invalid_iterator::create(id, concat(diagnostics(site), msg), nullptr));
+    NLOHMANN_VIEW_THROW(invalid_iterator::create(id, concat(diagnostics<>(site), msg), nullptr));
 }
 
 /// a parse error without a position (as those of json_pointer)
@@ -4853,7 +4864,8 @@ template<typename Index>
 }
 
 /// out_of_range.402: the JSON Pointer token '-' of an array of @a size elements
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_array_index_past_end(const error_site site, std::size_t size)
+template<typename Unused = void>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_array_index_past_end(const error_site site, std::size_t size)
 {
     throw_out_of_range(site, exception_id::pointer_past_the_end_index, concat("array index '-' (", std::to_string(size), ") is out of range"));
 }
@@ -7748,17 +7760,9 @@ class view_iterator
 
     /// @param[in] pos  the element, or the key of the member
     /// @param[in] object  whether pos is a key (its value is the next node)
-    /// @param[in] container  the value iterated over (the context of the
-    ///            exceptions, kept only with JSON_DIAGNOSTICS or
-    ///            JSON_DIAGNOSTIC_POSITIONS)
-    view_iterator(const document_data* d, const node* pos, bool object, const node* container) noexcept
+    view_iterator(const document_data* d, const node* pos, bool object) noexcept
         : m_doc(d), m_pos(pos), m_value_offset(object ? 1 : 0)
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
-        , m_container(container)
-#endif
-    {
-        static_cast<void>(container);
-    }
+    {}
 
     NLOHMANN_VIEW_ALWAYS_INLINE View operator*() const noexcept
     {
@@ -7794,12 +7798,15 @@ class view_iterator
     }
 
     /// the key of the current object member; throws invalid_iterator.207 for
-    /// other iterators, like basic_json's iterators
+    /// other iterators, like basic_json's iterators (but without the context
+    /// JSON_DIAGNOSTICS and JSON_DIAGNOSTIC_POSITIONS add: the iterator does not
+    /// know the value it iterates over, and keeping it would make iterators
+    /// larger, which keeps GCC from inlining recursive walks)
     string_view_t key() const
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_value_offset == 0))
         {
-            throw_invalid_iterator(site(), exception_id::iterator_key_not_object, "cannot use key() for non-object iterators");
+            throw_invalid_iterator(exception_id::iterator_key_not_object, "cannot use key() for non-object iterators");
         }
         return string_view_t(m_doc->str(*m_pos), m_pos->len);
     }
@@ -7816,22 +7823,9 @@ class view_iterator
     }
 
   private:
-    /// the value iterated over, as the context of an exception
-    error_site site() const noexcept
-    {
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
-        return error_site(m_doc, m_container);
-#else
-        return error_site();
-#endif
-    }
-
     const document_data* m_doc = nullptr;
     const node* m_pos = nullptr;
     std::size_t m_value_offset = 0; ///< 1 for objects: the value follows its key
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
-    const node* m_container = nullptr;
-#endif
 };
 
 /*!
@@ -9835,7 +9829,7 @@ class basic_json_view
             return end();
         }
         const node* const k = find_key(key);
-        return k != nullptr ? iterator(m_doc, k, true, m_node) : end();
+        return k != nullptr ? iterator(m_doc, k, true) : end();
     }
 
     iterator find(const char* key) const
@@ -9898,18 +9892,18 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, navigation::first(*m_doc, m_node), is_object(), m_node);
+            return iterator(m_doc, navigation::first(*m_doc, m_node), is_object());
         }
-        return iterator(m_doc, m_node, false, m_node);
+        return iterator(m_doc, m_node, false);
     }
 
     NLOHMANN_VIEW_ALWAYS_INLINE iterator end() const noexcept
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, navigation::end(*m_doc, m_node), is_object(), m_node);
+            return iterator(m_doc, navigation::end(*m_doc, m_node), is_object());
         }
-        return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false, m_node);
+        return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false);
     }
 
     iterator cbegin() const noexcept

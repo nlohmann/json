@@ -138,7 +138,9 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md), the exceptions of views name the path
   and the bytes of the value as those of `#!cpp basic_json` do; as a view has neither parent pointers nor stored
   positions, both are found from the document's index when the exception is thrown, which takes time linear in the
-  size of the document (only for an exception). The other macros only affect the values `materialize()` produces,
+  size of the document (only for an exception). One exception has neither: `key()` of an iterator over an array or a
+  primitive value ([`invalid_iterator.207`](../home/exceptions.md#jsonexceptioninvalid_iterator207)), as a view's
+  iterator does not know the value it iterates over. The other macros only affect the values `materialize()` produces,
   through `BasicJsonType`.
 
 ## What is different

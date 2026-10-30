@@ -238,7 +238,15 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
 /// a value: "(/path) " with JSON_DIAGNOSTICS (none for the root), then
 /// "(bytes a-b) " with JSON_DIAGNOSTIC_POSITIONS (with JSON_DIAGNOSTICS, only
 /// if there is a path)
-inline std::string diagnostics(const error_site site)
+///
+/// This and the throw helpers that take an error_site are templates, so that
+/// the path and range code is instantiated only where an exception can be
+/// thrown: instantiated in every translation unit (as a non-template inline
+/// function makes it), it changed GCC's early inlining of unrelated view
+/// functions, so that GCC 13 no longer inlined a recursive walk over a view
+/// into itself (2.7 times the instructions).
+template<typename Unused = void>
+std::string diagnostics(const error_site site)
 {
 #if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
     if (site.doc() == nullptr || site.value() == nullptr)
@@ -291,7 +299,7 @@ inline std::string diagnostics(const error_site site)
 template<typename View>
 std::string diagnostics_of(const View& v)
 {
-    return diagnostics(site_of(v));
+    return diagnostics<>(site_of(v));
 }
 
 // Exceptions are thrown out of line, so that the accessors that may throw stay
@@ -318,19 +326,22 @@ std::string diagnostics_of(const View& v)
     NLOHMANN_VIEW_THROW(invalid_iterator::create(id, msg, nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(const error_site site, exception_id id, const char* prefix, const char* type)
+template<typename Unused = void>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_type_error(const error_site site, exception_id id, const char* prefix, const char* type)
 {
-    NLOHMANN_VIEW_THROW(type_error::create(id, concat(diagnostics(site), prefix, type), nullptr));
+    NLOHMANN_VIEW_THROW(type_error::create(id, concat(diagnostics<>(site), prefix, type), nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_out_of_range(const error_site site, exception_id id, const std::string& msg)
+template<typename Unused = void>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_out_of_range(const error_site site, exception_id id, const std::string& msg)
 {
-    NLOHMANN_VIEW_THROW(out_of_range::create(id, concat(diagnostics(site), msg), nullptr));
+    NLOHMANN_VIEW_THROW(out_of_range::create(id, concat(diagnostics<>(site), msg), nullptr));
 }
 
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_invalid_iterator(const error_site site, exception_id id, const char* msg)
+template<typename Unused = void>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_invalid_iterator(const error_site site, exception_id id, const char* msg)
 {
-    NLOHMANN_VIEW_THROW(invalid_iterator::create(id, concat(diagnostics(site), msg), nullptr));
+    NLOHMANN_VIEW_THROW(invalid_iterator::create(id, concat(diagnostics<>(site), msg), nullptr));
 }
 
 /// a parse error without a position (as those of json_pointer)
@@ -347,7 +358,8 @@ template<typename Index>
 }
 
 /// out_of_range.402: the JSON Pointer token '-' of an array of @a size elements
-[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_array_index_past_end(const error_site site, std::size_t size)
+template<typename Unused = void>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_array_index_past_end(const error_site site, std::size_t size)
 {
     throw_out_of_range(site, exception_id::pointer_past_the_end_index, concat("array index '-' (", std::to_string(size), ") is out of range"));
 }

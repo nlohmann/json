@@ -970,7 +970,8 @@ TEST_CASE("json_view element access and iteration")
             CHECK(exception_of([&] { static_cast<void>(v.at(5)); }) == exception_of([&] { static_cast<void>(j.at(5)); }));
             if (!(j.is_object() && j.empty())) // (key() of an end iterator)
             {
-                CHECK(exception_of([&] { static_cast<void>(v.begin().key()); }) == exception_of([&] { static_cast<void>(j.begin().key()); }));
+                // (without the context of basic_json: view iterators do not know the value they iterate over)
+                CHECK(exception_of([&] { static_cast<void>(v.begin().key()); }) == (j.is_object() ? "" : "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators"));
             }
             if (!j.empty() || j.is_null())
             {
