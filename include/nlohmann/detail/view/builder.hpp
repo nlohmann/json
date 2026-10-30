@@ -343,6 +343,21 @@ class builder
                 }
                 arena_ensure(w, w_end, 4);
                 w = put_utf8(w, cp);
+                // A chain of unicode escapes ("\u3042\u3044\u3046", as Python's json.dumps writes non-ASCII text) is
+                // decoded here, without going round the loop above for each of them. Anything else (a surrogate, a
+                // bad digit, fewer than six bytes) leaves p at the backslash: the loop above handles it, and reports
+                // the same error at the same position as it would without this loop.
+                while (end - p >= 6 && p[0] == '\\' && p[1] == 'u')
+                {
+                    const int next = hex_codepoint(p + 2);
+                    if (next < 0 || (next & 0xF800) == 0xD800)
+                    {
+                        break;
+                    }
+                    p += 6;
+                    arena_ensure(w, w_end, 4);
+                    w = put_utf8(w, next);
+                }
             }
             else if (NLOHMANN_VIEW_LIKELY(d < 128 && simple_escape[d] != 0))
             {
