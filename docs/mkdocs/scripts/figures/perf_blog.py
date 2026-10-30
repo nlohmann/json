@@ -439,17 +439,21 @@ def geomean(xs):
     return math.exp(sum(math.log(x) for x in xs) / len(xs))
 
 
+WRITING = ("edit", "minify", "write")   # the use cases that write numbers
+
+
 def normalize_usecases(data):
-    """Chooses each library's best variants again with the rules of the post: variants that copy each number's text
-    instead of formatting it (json_document's number_format::source, RapidJSON's raw numbers) and variants that reuse
-    a parser or document across calls are measured but not chosen"""
+    """Chooses each library's best variants again with the rules of the post: variants that reuse a parser or document
+    across calls are measured but not chosen, and neither are variants that write each number by copying its text
+    instead of formatting it (json_document's number_format::source, yyjson's and RapidJSON's raw numbers in edit,
+    minify and write). Skipping the number conversion while reading is allowed"""
     data = json.loads(json.dumps(data))
     rank = {"full": 0, "n/a": 0, "no UTF-8": 1, "partial": 2}
-    for files in data.values():
+    for uc, files in data.items():
+        banned = ("reused",) + (("source numbers", "raw numbers") if uc in WRITING else ())
         for cell in files.values():
             for e in cell.values():
-                vs = [(v["us"], k, v["level"]) for k, v in e["variants"].items()
-                      if not any(w in k for w in ("source numbers", "raw numbers", "reused"))]
+                vs = [(v["us"], k, v["level"]) for k, v in e["variants"].items() if not any(w in k for w in banned)]
                 full = [v for v in vs if rank[v[2]] == 0]
                 pick = lambda v: {"us": v[0], "variant": v[1], "level": "full" if rank[v[2]] == 0 else v[2]}
                 e["best"] = pick(min(full)) if full else None
@@ -465,6 +469,7 @@ CHECKS_LESS = [
     ("simdjson", "minify", "simdjson::minify() only removes whitespace, without parsing the values"),
     ("Glaze", "lazy_json", "reads lazily: lazy_json reads only what you ask for and steps over the rest"),
     ("Glaze", "minify_json", "minify_json only removes whitespace, without parsing the values"),
+    ("Glaze", "generic", "accepts trailing garbage after the value: Glaze's default (validate_trailing_whitespace checks it)"),
     ("Glaze", "structs", "reads into structs and steps over fields it doesn't know without checking them "
                          "(validate_skipped checks them too)"),
     ("RapidJSON", "", "trusts UTF-8: RapidJSON's default (kParseValidateEncodingFlag checks it)"),
@@ -561,7 +566,7 @@ def heatmap(platform, title):
     data = json.load((HERE / "data" / ("perf_usecases_%s.json" % platform)).open())
     t = usecase_table(data)
     libs = [l for l in UC_LIBS if l in t]
-    score = lambda l: geomean([v["full"] if v["full"] else v["alt"] * 1.5 for v in t[l].values()])
+    score = lambda l: geomean([v["full"] or v["alt"] for v in t[l].values()])   # the mean of the row as shown
     libs.sort(key=score)
     W, L, cw, ch, top = 784, 224, 92, 36, 44
     b, desc = [], []

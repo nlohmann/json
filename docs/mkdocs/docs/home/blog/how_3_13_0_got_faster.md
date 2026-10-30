@@ -23,8 +23,8 @@ that in debug builds, and a quarter to four fifths of it in optimized builds ([T
 This post is about *how*. None of the techniques is new: almost every one of them is borrowed from
 [simdjson](https://github.com/simdjson/simdjson), [yyjson](https://github.com/ibireme/yyjson),
 [fast_float](https://github.com/fastfloat/fast_float), [Żmij](https://github.com/vitaut/zmij),
-[serde_json](https://github.com/serde-rs/json), [SQLite](https://sqlite.org),
-[Boost.JSON](https://github.com/boostorg/json) or a textbook, and we name the source at each step. What we think is
+[serde_json](https://github.com/serde-rs/json), [Glaze](https://github.com/stephenberry/glaze),
+[SQLite](https://sqlite.org), [Boost.JSON](https://github.com/boostorg/json) or a textbook, and we name the source at each step. What we think is
 worth writing about is the combination, and the conditions it had to work under: a C++11 header-only library with a
 value type that is a template over its string, number, object and allocator types; input from strings, streams,
 `FILE*`, iterator pairs, wide strings and user-defined adapters; output that had to stay the same byte for byte; and
@@ -322,7 +322,7 @@ The same kind of word test now runs in several places:
 ### 16 bytes with SSE2 and NEON
 
 Where a vector unit is part of the baseline instruction set (SSE2 on x86-64, NEON on
-64-bit Arm), the string paths take 16 bytes per step. Two details are worth stealing. A signed comparison
+64-bit Arm), the string paths take 16 bytes per step. Two well-known details are worth repeating. A signed comparison
 `byte < 0x20` catches control characters *and* every byte from 0x80, because those are negative as `int8_t`, so four
 classes of bytes take three comparisons. And NEON has no equivalent of x86's `pmovmskb`, which turns a vector of
 comparison results into a bit mask. The usual replacement, after
@@ -372,7 +372,7 @@ per string and `jeopardy.json` 14. For them, setting up a scan costs more than t
 of [SQLite](https://sqlite.org/src/file/src/json.c)'s `jsonAppendString()`: check each byte of a string of up to 32 bytes against a 256-entry table of bytes
 that can be written unchanged, and copy the string in one go if they all pass. 32 bytes was the best threshold on the
 M1; 16 gained less, and 64 lost again. The second step replaced the table, where SSE2 or NEON is available, with
-overlapping loads:
+overlapping loads, the trick that `memcpy` implementations such as glibc's use for short copies:
 
 ```cpp
 // 16 <= n <= 32: two loads that overlap in the middle cover the whole string
@@ -1137,6 +1137,10 @@ Which approach wins depends on the task, and a comparison of "parse" times acros
 different amounts of work. In nlohmann/json, `json` is the mutable tree and `json_document` the flat document, so we
 show the library twice: its best way *with* `json_document` and its best way *without* it.
 
+A word on who set the rules: we wrote every library's benchmark code, chose the files and the rules, and tuned
+3.13.0 on the same machines and files. No maintainer of the other libraries has reviewed their code. To check
+ourselves, we also ran files and a conformance suite we never tuned on ([below](#files-and-checks-we-didnt-choose)).
+
 ### Six use cases
 
 Each starts from the file's text in a `std::string` (or a byte slice in Rust) and ends with everything the library
@@ -1182,8 +1186,8 @@ lazy reader such as simdjson's On-Demand API or Glaze's `lazy_json` only looks a
 rest, it matches brackets without looking inside, so reading a few fields of a large record costs little more than
 finding them. A minifier only needs to find whitespace, not understand the values. Skipping the UTF-8 check is
 RapidJSON's default and sonic-cpp's too. Each is a good choice for input that is known to be valid, for example text
-your own program wrote a moment ago. To tell these ways apart, every way is also fed three broken inputs: the file cut
-short by one byte, a stray comma, and an invalid UTF-8 byte in a string. A way that rejects all three validates fully,
+your own program wrote a moment ago. To tell these ways apart, every way is also fed four broken inputs: the file cut
+short by one byte, a stray comma, an invalid UTF-8 byte in a string, and garbage after the value. A way that rejects all four validates fully,
 and each cell shows the fastest such way. If a way that checks less is faster, it is shown in the right half of the
 cell: "U" trusts UTF-8, "P" reads lazily or only removes whitespace.
 
@@ -1191,7 +1195,7 @@ cell: "U" trusts UTF-8, "P" reads lazily or only removes whitespace.
 --8<-- "images/perf_blog_usecases_mac.svg"
 </div>
 
-<p class="nj-caption" markdown>Time per library and use case on an Apple M1 Max: each library's fastest fully validating way, as the geometric mean over `twitter.json`, `citm_catalog.json`, `canada.json` and `jeopardy.json`, relative to the fastest library, so that every file counts equally. Less is better. Where a way that checks less is at least 3 % faster, it is shown in the right half of the cell: "U" trusts UTF-8, "P" reads lazily or only removes whitespace. "n/a" means the library has no API for the use case. Hover over or tap a cell for the times per file and the way; the tables are in [Appendix E](#e-comparison-with-other-libraries).</p>
+<p class="nj-caption" markdown>Time per library and use case on an Apple M1 Max: each library's fastest fully validating way, as the geometric mean over `twitter.json`, `citm_catalog.json`, `canada.json` and `jeopardy.json`, relative to the fastest library, so that every file counts equally. Less is better. Where a way that checks less is at least 3 % faster, it is shown in the right half of the cell: "U" trusts UTF-8, "P" reads lazily or only removes whitespace. "n/a" means the library has no API for the use case. Hover over or tap a cell for the times per file and the way; the tables are in [Appendix E](#e-comparison-with-other-libraries). sonic-cpp's README lists only x86-64 Linux; we show it on the Mac anyway.</p>
 
 ### Results on the Mac
 
@@ -1205,32 +1209,41 @@ Some caveats belong next to that:
   and *select*. Most of the lead comes from the indentation of `citm_catalog.json`, the floats of `canada.json` (next
   point) and the size of `jeopardy.json`.
 - **Floats are converted only when read.** That helps `json_document` in *validate* and *select* on `canada.json`,
-  where the others convert 111,080 floats nobody looks at. *sum* reads every number, so it is the fair comparison for
-  floats; there, `json_document` is still slightly ahead of yyjson.
+  where most others convert 111,080 floats nobody looks at. Libraries that can skip the conversion use that mode
+  there, but only Boost.JSON gains much: it validates `canada.json` in half the time. *sum* reads every number, so it
+  is the fair comparison for floats; there, `json_document` is still slightly ahead of yyjson. Deferring integers
+  too saved `json_document` another 2 % on the Mac and 5 to 6 % on x86-64 in an experiment; that is not in 3.13.0.
+- **Checking less pays in *select*.** If the input needn't be checked fully, simdjson's On-Demand API and Glaze
+  reading into structs select in 0.75 and 0.82 of `json_document`'s time, and in 0.53 to 0.58 on x86-64: the right
+  halves of the *select* column.
+- **Indentation.** Two of the four files are indented, which theme <a class="nj-theme" href="#theme-2" title="theme 2">2</a> helps. On minified copies of
+  `twitter.json` and `citm_catalog.json`, yyjson comes closer (*validate* 1.15 → 1.08, *sum* 1.10 → 1.03), but
+  `json_document` stays first.
 - **Number text can be copied.** With [`number_format::source`](../../api/basic_json_view/number_format.md), `json_document` writes each number by copying its text
   instead of formatting it, and RapidJSON can read numbers as strings and write them back unchanged. That would make
   writing `canada.json` with `json_document` four times as fast. The figures use neither: every library formats the
   numbers it converted.
 - **Small documents.** On a 2.5 KB message, the fastest libraries take about a microsecond on the Mac and 1.5 to 2
-  on x86-64. yyjson validates and sums
-  it slightly faster than `json_document` on the Mac, and yyjson and simdjson sum it slightly faster with GCC on
-  x86-64.
+  on x86-64. yyjson validates it as fast as `json_document` and sums it slightly faster on the Mac, and yyjson and
+  simdjson sum it slightly faster with GCC on x86-64.
 
 ### Reading into structs
 
 A view converts into your own types with the same [`from_json()`](../../features/arbitrary_types.md) as `json`, including the
 ones the [`NLOHMANN_DEFINE_TYPE_*`](../../api/macros/nlohmann_define_type_non_intrusive.md) macros generate. That is as fast as picking the fields by hand from the view; only
-for the many small records of `jeopardy.json` does it take a quarter longer. On the Mac, Glaze and serde_json, reading into
-the same structs and checking everything, take 1.7 and 2.2 times as long (geometric mean over the four files). On a `json` value, `from_json()` costs about what
+for the many small records of `jeopardy.json` does it take about a fifth longer. On the Mac, Glaze, serde_json and
+Boost.JSON's `parse_into`, reading into the same structs and checking everything, take 1.7, 2.3 and 3.1 times as long
+(geometric mean over the four files). On a `json` value, `from_json()` costs about what
 `json::parse()` costs.
 
 ### nlohmann/json without `json_document`
 
 And nlohmann/json without `json_document`? `json` builds a tree of separate allocations, and it shows: for
 *select*, *edit* and *minify* it takes several times as long as `json_document`, like Boost.JSON and RapidJSON. Where
-no tree is needed, it is closer: on the Mac, [`json::accept()`](../../api/basic_json/accept.md) and a SAX handler are on par with Boost.JSON (on x86-64,
-Boost.JSON is 20 to 35 % faster there), and `dump()` writes faster than Boost.JSON, RapidJSON, Glaze and
-serde_json.
+no tree is needed, it is closer: on the Mac, a SAX handler is on par with Boost.JSON's, and
+[`json::accept()`](../../api/basic_json/accept.md) takes 13 % longer than Boost.JSON without number conversion (on
+x86-64, Boost.JSON validates in 0.57 to 0.59 and sums in 0.75 of the time). `dump()` writes faster than Boost.JSON,
+RapidJSON and serde_json, and about as fast as Glaze.
 
 ### Results on x86-64
 
@@ -1246,26 +1259,47 @@ only about *sum*.
 
 <p class="nj-caption" markdown>The same comparison on an x86-64 Haswell server with GCC 16.2, with the same cells and halves as the figure above. Less is better; hover over or tap a cell for the times and the way. The figures for GCC 13 and Clang 23 are in [Appendix E](#e-comparison-with-other-libraries).</p>
 
-`json_document` is the fastest in five of the six columns with GCC and in all six with Clang. Behind those means, it
-loses on single files:
+`json_document` is the fastest in five of the six columns with GCC and in all six with Clang, where its lead in
+*sum* (4 %) is within the noise of this machine. Behind those means, it loses on single files:
 
 - **One pass over every value, with GCC.** simdjson's On-Demand API sums all numbers of `twitter.json`,
-  `citm_catalog.json` and `canada.json` in 0.85 to 0.91 of `json_document`'s time with GCC 16. With Clang, `json_document` is
-  ahead there, except on `canada.json`, where yyjson, which converts the floats during the parse, is faster than
-  converting them on access, and simdjson is about as fast.
+  `citm_catalog.json` and `canada.json` in 0.87 to 0.91 of `json_document`'s time with GCC 16 (0.81 to 0.88 with
+  GCC 13). With Clang, `json_document` is ahead there, except on `canada.json`, where yyjson, which converts the
+  floats during the parse, is faster than converting them on access.
 - **Fresh large documents.** For the 56 MB `jeopardy.json`, a fresh document needs a fresh 52 MB index, and on Linux
   the page faults of that much new memory are a large part of the time: copying the file into fresh memory alone
   takes about half as long as `json_document`'s parse. Boost.JSON's SAX parser and sonic-rs, which build nothing,
-  validate and sum it in 0.63 to 0.77 of the time, and serde_json validates it in 0.85. Reusing the document cuts
-  `json_document`'s time by 40 to 47 %, and its `read()` then validates `jeopardy.json` faster than any of them. On the Mac, a
-  fresh document costs hardly more than a reused one.
-- **Writing floats.** yyjson writes `canada.json` in 0.86 (GCC 16) to 0.93 (Clang) of the time, because
+  validate and sum it in 0.64 to 0.76 of the time, serde_json validates it in 0.79 to 0.82 and Glaze in 0.87 to 0.99.
+  Reusing the document cuts `json_document`'s time by 43 to 46 %, to 45 to 47 ms, and then no library validates
+  `jeopardy.json` faster, even reused: the next is simdjson's reused parser at 50 to 53 ms. On the Mac, a fresh
+  document costs hardly more than a reused one.
+- **Writing floats.** yyjson writes `canada.json` in 0.88 (GCC 16) to 0.92 (Clang) of the time, because
   `json_document` first converts most floats from their text. Writing the source text instead
   (`number_format::source`) avoids that.
-- **Within a few percent.** With GCC, simdjson's DOM validates or selects from `twitter.json` and
-  `citm_catalog.json` 1 to 4 % faster in some of the combinations.
+- **simdjson's DOM, with GCC.** It validates `twitter.json` and `citm_catalog.json` 3 to 8 % faster, and selects
+  from `citm_catalog.json` 6 to 9 % faster; with Clang, the two are even. On minified copies of the two files,
+  `json_document` is ahead again.
 
 The full tables, with each library's variants, are in [Appendix E](#e-comparison-with-other-libraries).
+
+### Files and checks we didn't choose { #files-and-checks-we-didnt-choose }
+
+The four files are the ones 3.13.0 was tuned on, so we also ran *validate*, *sum*, *minify* and *write* on the 19
+other files of simdjson's [`jsonexamples`](https://github.com/simdjson/simdjson-data/tree/master/jsonexamples). By
+geometric mean, `json_document` stays the fastest in *validate*, *minify* and *write* on every compiler, and in *sum*
+with Clang and on the Mac; with GCC, simdjson sums in 0.83 to 0.85 of its time. File by file, it is less
+clear-cut: on x86-64, `json_document` validates only 4 to 8 of the 19 files fastest (13 on the Mac). simdjson wins 5
+to 8 of the others, and Boost.JSON, without number conversion, validates the number-heavy `mesh.pretty`, `numbers`
+and `marine_ik` up to 1.5 times as fast. We know two causes, but so far each fix slowed down other files.
+
+Every *validate* way also ran the 318 files of [JSONTestSuite](https://github.com/nst/JSONTestSuite). The fully
+validating ways pass, with a few exceptions listed in [Appendix E](#e-comparison-with-other-libraries), one of them
+ours: nlohmann/json accepts `123` followed by a NUL byte, which it treats as the end of the input. The suite also
+showed that Glaze's generic reader accepts garbage after the value by default, which our probes had missed; the
+figures use its strict option.
+
+We did not measure memory use, a CPU with AVX-512, MSVC, writing from structs, streaming input, or link-time
+optimization.
 
 ## What didn't work
 
@@ -1702,34 +1736,50 @@ one binary with six code layouts: they were equal within 0.2 %.
 [`tests/benchmarks/json_view/others`](https://github.com/nlohmann/json/tree/develop/tests/benchmarks/json_view/others),
 whose README lists every variant, the pinned versions and checksums of every library, and the build commands. The
 libraries: [yyjson](https://github.com/ibireme/yyjson) 0.13.0, [simdjson](https://github.com/simdjson/simdjson)
-4.6.11, [sonic-cpp](https://github.com/bytedance/sonic-cpp) 1.0.2, [RapidJSON](https://github.com/Tencent/rapidjson)
-(master, 24b5e7a), [Glaze](https://github.com/stephenberry/glaze) 9.0.0, [Boost.JSON](https://github.com/boostorg/json)
+5.0.8, [sonic-cpp](https://github.com/bytedance/sonic-cpp) 1.0.2, [RapidJSON](https://github.com/Tencent/rapidjson)
+(master, 24b5e7a, as its last release is from 2016), [Glaze](https://github.com/stephenberry/glaze) 9.1.0, [Boost.JSON](https://github.com/boostorg/json)
 1.92, and in Rust [sonic-rs](https://github.com/cloudwego/sonic-rs) 0.5.10,
 [simd-json](https://github.com/simd-lite/simd-json) 0.19.0 and [serde_json](https://github.com/serde-rs/json)
 1.0.154. C++23 with
 `-O3`; on the Mac Apple clang 21 (the compiler of the current Xcode), on x86-64 GCC 16.2, GCC 13 (Ubuntu 24.04's
 default) and Clang 23 with `-march=haswell`, pinned to one core; Rust 1.99 with `-C target-cpu=haswell` on x86-64. Every
-variant runs in every round, interleaved, each timed call after an untimed one; the time is the best of 2 × 30 rounds
-(2 × 6 for `jeopardy.json`). Boost.JSON uses a monotonic resource and precise number parsing, RapidJSON
-`kParseFullPrecisionFlag`, serde_json `float_roundtrip`: every library has to convert every number exactly.
+variant runs in every round, in a new random order each round, each timed call after an untimed one; the time is the
+best of 2 × 30 rounds (2 × 6 for `jeopardy.json`). Boost.JSON uses a monotonic resource and precise number parsing,
+RapidJSON `kParseFullPrecisionFlag`, serde_json `float_roundtrip`: every number a library converts has to be exact.
+That rule, like the others here, is our choice.
 
-**Validation levels.** A way validates fully if it rejects all three broken inputs (cut short by one byte, a
-stray comma, an invalid UTF-8 byte in a string); "U" accepts the invalid UTF-8 byte; "P" accepts one of the other
-two. These three probes are not a conformance suite; they separate the ways that check everything from those that
-check less. sonic-cpp 1.0.2 does not check UTF-8. RapidJSON does only with `kParseValidateEncodingFlag`, and
+**Validation levels.** A way validates fully if it rejects all four broken inputs (cut short by one byte, a
+stray comma, an invalid UTF-8 byte in a string, garbage after the value); "U" accepts the invalid UTF-8 byte; "P"
+accepts one of the other three. The probes separate the ways that check everything from those that check less;
+JSONTestSuite is the conformance check. sonic-cpp 1.0.2 does not check UTF-8. RapidJSON does only with `kParseValidateEncodingFlag`, and
 serde_json reading into `IgnoredAny` or structs from bytes doesn't check the strings it skips, unless the input is
 checked with `std::str::from_utf8` first; both are shown both ways. simdjson's On-Demand API, Glaze's `lazy_json`,
-`simdjson::minify()` and Glaze's `minify_json()` don't validate what they skip, and Glaze's structs only with
-`validate_skipped`.
+`simdjson::minify()` and Glaze's `minify_json()` don't validate what they skip, Glaze's structs only with
+`validate_skipped`, and Glaze's generic reader rejects garbage after the value only with
+`validate_trailing_whitespace` (its strict variants also set `escape_control_characters`, without which it writes
+control characters unescaped).
+
+**Conformance.** Every *validate* way ran the 318 files of [JSONTestSuite](https://github.com/nst/JSONTestSuite). No
+way rejected a file that must be accepted. Of those that must be rejected, a few got through: `123` followed by a NUL
+byte in nlohmann/json and RapidJSON (nlohmann/json treats NUL as the end of the input; for `json`,
+[`JSON_STRICT_NUL_HANDLING`](../../api/macros/json_strict_nul_handling.md) changes that), an incomplete UTF-8
+byte-order mark in RapidJSON, an invalid `\u` escape in sonic-rs's `IgnoredAny`, and, in 17 files, garbage after the
+value in Glaze's generic reader without `validate_trailing_whitespace`. sonic-rs, and RapidJSON's SAX reader with GCC
+on x86-64, crash with a stack overflow on 100,000 nested arrays. Neither machine has AVX-512, so simdjson's fastest
+kernel never ran, and yyjson and simdjson are compiled as separate files without link-time optimization, while the
+header-only libraries inline into the benchmark.
 
 **Choices.** A library's time is its fastest fully validating way per file; "(U …)" and "(P …)" give a faster
 way that checks less. A cell of the figures is the geometric mean of a library's four times, divided by the smallest
-such mean in its column. Variants that keep a parser or document across calls (simdjson's parsers,
-`json_document::read()`) are measured but not chosen. Neither are variants that copy each number's text instead of
-formatting it (`json_document` with `number_format::source`, RapidJSON with `kParseNumbersAsStringsFlag`); they matter
-only for `canada.json` (`json_document`'s *write*: 398 µs instead of 1,621 µs on the Mac). nlohmann/json's struct
-variants use the `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` macro, Glaze's and serde's their reflection and `derive`; all
-three declare the same fields.
+such mean in its column. Variants that keep a parser or document across calls are measured but not chosen; with
+every library reused, the first place in each column stays the same. Variants that leave numbers
+unconverted while reading are chosen where they pass the checks (yyjson's and RapidJSON's raw numbers, Boost.JSON's
+`number_precision::none`). Variants that write each number by copying its text instead of formatting it are not
+(`json_document` with `number_format::source`, yyjson's and RapidJSON's raw numbers); they matter only for
+`canada.json` (`json_document`'s *write*: 398 µs instead of 1,617 µs on the Mac). Glaze's `generic` with `double`
+numbers fails the checks wherever it has to write the 64-bit ids of `twitter.json`. The struct variants of
+nlohmann/json, Glaze, simdjson and serde read into the same types; Boost.JSON's `parse_into` has no type that skips a
+value, so it holds a little more.
 
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/perf_blog_usecases_x86-clang.svg"
@@ -1749,96 +1799,96 @@ three declare the same fields.
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | accept, parse | 176 | 359 | 943 | 22,862 | 1.0 |
-    | yyjson | insitu (copy), read | 180 | 473 | 1,493 | 30,542 | 0.9 |
-    | simdjson | DOM | 221 | 493 | 2,104 | 27,311 | 1.1 |
-    | sonic-rs (Rust) | Value | 329 | 684 | 1,930 | 32,169 | 1.4 |
-    | Glaze | validate_json | 329 | 853 | 1,302 | 46,471 | 1.4 |
-    | simd-json (Rust) | tape (copy) | 304 | 709 | 2,286 | 39,592 | 1.7 |
-    | sonic-cpp | Document [U] | – (U 380) | – (U 982) | – (U 2,577) | – (U 41,571) | – (U 1.6) |
-    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 457 (U 354) | 1,105 (U 1,052) | 1,532 (U 1,459) | 47,547 (U 44,881) | 2.0 (U 1.7) |
-    | nlohmann/json `json` | accept | 481 | 897 | 2,463 | 63,383 | 2.4 |
-    | Boost.JSON | SAX | 536 | 1,017 | 3,065 | 55,102 | 2.3 |
-    | RapidJSON | SAX, insitu (copy), insitu (copy) (no encoding check) [U] | 1,314 (U 704) | 1,568 (U 1,150) | 6,871 | 142,654 (U 65,584) | 6.1 (U 2.6) |
+    | **nlohmann/json `json_document`** | accept, parse | 176 | 360 | 959 | 22,553 | 0.9 |
+    | yyjson | insitu (copy), read | 178 | 471 | 1,486 | 30,278 | 0.9 |
+    | simdjson | DOM | 199 | 448 | 1,885 | 28,368 | 1.0 |
+    | sonic-rs (Rust) | Value | 326 | 681 | 1,939 | 31,450 | 1.4 |
+    | Glaze | validate_json | 329 | 854 | 1,302 | 44,972 | 1.4 |
+    | simd-json (Rust) | tape (copy) | 289 | 698 | 2,278 | 38,874 | 1.7 |
+    | sonic-cpp | Document [U] | – (U 379) | – (U 982) | – (U 2,575) | – (U 40,691) | – (U 1.6) |
+    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 452 (U 354) | 1,103 (U 1,047) | 1,556 (U 1,451) | 46,517 (U 44,984) | 2.0 (U 1.7) |
+    | Boost.JSON | SAX, SAX (numbers: none) | 530 | 991 | 1,466 | 53,807 | 2.3 |
+    | nlohmann/json `json` | accept | 471 | 907 | 2,510 | 62,074 | 2.4 |
+    | RapidJSON | SAX, insitu (copy), insitu (copy) (no encoding check) [U] | 1,311 (U 695) | 1,568 (U 1,145) | 6,787 | 139,323 (U 63,152) | 6.1 (U 2.6) |
 
     **sum**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse | 226 | 480 | 1,804 | 29,208 | 1.2 |
-    | yyjson | insitu (copy), read | 229 | 573 | 1,937 | 37,916 | 1.1 |
-    | simdjson | DOM, On-Demand | 256 | 608 | 2,594 | 33,706 | 1.3 |
-    | sonic-rs (Rust) | visitor | 372 | 778 | 2,695 | 41,462 | 1.6 |
-    | simd-json (Rust) | visitor (copy) | 372 | 866 | 2,727 | 48,506 | 2.0 |
-    | sonic-cpp | Document [U] | – (U 427) | – (U 1,091) | – (U 2,976) | – (U 48,840) | – (U 1.9) |
-    | nlohmann/json `json` | sax | 461 | 928 | 3,100 | 63,272 | 2.5 |
-    | Boost.JSON | SAX | 537 | 1,020 | 3,046 | 54,818 | 2.3 |
-    | serde_json (Rust) | visitor | 665 | 1,229 | 4,813 | 66,093 | 2.5 |
-    | RapidJSON | SAX, insitu (copy), insitu (copy) (no encoding check) [U] | 1,331 (U 755) | 1,626 (U 1,258) | 6,924 | 149,474 (U 72,381) | 6.1 (U 2.9) |
-    | Glaze | generic, lazy_json [P] | 1,323 | 2,845 | 9,777 | 151,441 | 6.7 (P 3.5) |
+    | **nlohmann/json `json_document`** | parse | 225 | 482 | 1,818 | 28,721 | 1.2 |
+    | yyjson | insitu (copy), read | 230 | 570 | 1,931 | 37,534 | 1.1 |
+    | simdjson | DOM, On-Demand | 239 | 570 | 2,372 | 34,562 | 1.3 |
+    | sonic-rs (Rust) | visitor | 364 | 778 | 2,703 | 41,361 | 1.7 |
+    | simd-json (Rust) | visitor (copy) | 354 | 866 | 2,717 | 47,518 | 2.0 |
+    | sonic-cpp | Document [U] | – (U 428) | – (U 1,083) | – (U 2,956) | – (U 48,064) | – (U 1.9) |
+    | Boost.JSON | SAX | 533 | 1,005 | 3,029 | 53,595 | 2.3 |
+    | nlohmann/json `json` | sax | 461 | 930 | 3,127 | 62,756 | 2.5 |
+    | serde_json (Rust) | visitor | 652 | 1,242 | 4,772 | 66,568 | 2.5 |
+    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 977 | 2,068 | 6,254 | 98,851 | 4.8 (P 3.5) |
+    | RapidJSON | SAX, insitu (copy), insitu (copy) (no encoding check) [U] | 1,311 (U 742) | 1,623 (U 1,256) | 6,913 | 145,744 (U 70,079) | 6.1 (U 2.9) |
 
     **select**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse, structs (from_json) | 187 | 367 | 987 | 24,409 | 1.0 |
-    | yyjson | insitu (copy), read | 188 | 481 | 1,493 | 33,546 | 1.1 |
-    | simdjson | DOM, On-Demand [P] | 231 (P 144) | 510 | 2,104 (P 646) | 32,075 (P 18,601) | 1.2 (P 0.8) |
-    | Glaze | structs (validate_skipped), structs [P] | 312 (P 238) | 873 (P 252) | 1,304 (P 316) | 51,046 (P 41,037) | 1.4 (P 1.1) |
-    | sonic-rs (Rust) | Value | 340 | 700 | 1,938 | 41,203 | 1.6 |
-    | sonic-cpp | Document [U] | – (U 385) | – (U 992) | – (U 2,590) | – (U 46,922) | – (U 1.7) |
-    | simd-json (Rust) | structs (copy) | 375 | 871 | 2,660 | 57,877 | 2.0 |
-    | serde_json (Rust) | from_utf8 + structs, structs [U] | 483 (U 416) | 1,121 (U 1,082) | 1,532 (U 1,458) | 63,635 | 2.2 (U 1.9) |
-    | Boost.JSON | parse | 889 | 1,490 | 3,632 | 96,757 | 3.8 |
-    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,319 (U 703) | 1,572 (U 1,146) | 6,762 | 142,740 (U 66,763) | 6.4 (U 2.7) |
-    | nlohmann/json `json` | parse, structs (from_json) | 1,357 | 2,439 | 6,066 | 179,366 | 7.5 |
+    | **nlohmann/json `json_document`** | parse | 181 | 363 | 959 | 24,308 | 1.0 |
+    | yyjson | insitu (copy), read, read (raw numbers) | 188 | 476 | 1,488 | 32,182 | 1.1 |
+    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P], On-Demand structs [P] | 197 (P 126) | 447 (P 352) | 1,882 (P 564) | 30,173 (P 19,313) | 1.1 (P 0.7) |
+    | Glaze | structs (validate_skipped), structs [P] | 311 (P 239) | 848 (P 253) | 1,302 (P 310) | 45,909 (P 36,348) | 1.4 (P 1.2) |
+    | sonic-rs (Rust) | Value | 333 | 691 | 1,936 | 40,660 | 1.7 |
+    | sonic-cpp | Document [U] | – (U 384) | – (U 989) | – (U 2,580) | – (U 45,320) | – (U 1.7) |
+    | simd-json (Rust) | structs (copy) | 364 | 914 | 2,657 | 57,697 | 2.1 |
+    | serde_json (Rust) | from_utf8 + structs, structs [U] | 480 (U 410) | 1,125 (U 1,084) | 1,560 (U 1,455) | 62,378 | 2.3 (U 1.9) |
+    | Boost.JSON | parse, parse_into structs | 620 | 1,206 | 3,619 | 66,538 | 2.7 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,314 (U 697) | 1,574 (U 1,148) | 6,750 | 141,640 (U 65,799) | 6.4 (U 2.6) |
+    | nlohmann/json `json` | parse, structs (from_json) | 1,368 | 2,435 | 5,915 | 180,551 | 7.5 |
 
     **edit**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | editable | 290 | 560 | 2,742 | 58,265 | 1.9 |
-    | yyjson | insitu (copy) + mut copy, mut copy | 438 | 900 | 3,694 | 84,447 | 2.4 |
-    | sonic-cpp | Document [U] | – (U 490) | – (U 1,227) | – (U 5,655) | – (U 63,940) | – (U 2.6) |
-    | sonic-rs (Rust) | Value | 634 | 1,264 | 4,379 | 140,693 | 3.8 |
-    | simd-json (Rust) | borrowed (copy) | 934 | 2,111 | 7,695 | 111,832 | 5.3 |
-    | Boost.JSON | parse | 1,367 | 1,999 | 6,542 | 157,555 | 6.6 |
-    | nlohmann/json `json` | ordered_json, parse | 1,269 | 2,376 | 8,194 | 173,089 | 7.1 |
-    | Glaze | generic | 1,503 | 3,223 | 11,125 | 187,294 | 8.2 |
-    | RapidJSON | Document, insitu (copy), insitu (copy) (no encoding check) [U] | 1,917 (U 1,349) | 2,404 (U 1,987) | 13,880 | 224,650 (U 148,239) | 10.3 (U 6.5) |
-    | serde_json (Rust) | Value | 2,001 | 3,287 | 9,670 | 248,681 | 9.3 |
+    | **nlohmann/json `json_document`** | editable | 283 | 557 | 2,747 | 57,355 | 1.9 |
+    | yyjson | insitu (copy) + mut copy, mut copy | 438 | 897 | 3,681 | 83,160 | 2.4 |
+    | sonic-cpp | Document [U] | – (U 481) | – (U 1,220) | – (U 5,623) | – (U 62,390) | – (U 2.5) |
+    | sonic-rs (Rust) | Value | 634 | 1,257 | 4,396 | 140,936 | 3.8 |
+    | simd-json (Rust) | borrowed (copy) | 948 | 2,102 | 7,654 | 110,693 | 5.4 |
+    | Boost.JSON | parse | 1,363 | 1,995 | 6,500 | 154,406 | 6.5 |
+    | nlohmann/json `json` | ordered_json, parse | 1,270 | 2,337 | 8,183 | 173,044 | 7.0 |
+    | Glaze | generic (strict), generic [P] | 1,526 | 3,206 | 10,930 | 177,272 | 8.2 |
+    | RapidJSON | Document, insitu (copy), insitu (copy) (no encoding check) [U] | 1,914 (U 1,350) | 2,399 (U 1,974) | 13,711 | 220,629 (U 144,275) | 10.2 (U 6.4) |
+    | serde_json (Rust) | Value | 2,009 | 3,316 | 9,666 | 251,931 | 9.6 |
 
     **minify**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse + dump | 264 | 496 | 2,566 | 37,936 | 1.5 |
-    | yyjson | insitu (copy) + write, read + write | 289 | 640 | 3,213 | 50,740 | 1.6 |
-    | sonic-rs (Rust) | Value | 546 | 1,139 | 4,366 | 64,830 | 2.9 |
-    | sonic-cpp | Document + Serialize [U] | – (U 497) | – (U 1,219) | – (U 5,658) | – (U 61,948) | – (U 2.5) |
-    | simdjson | DOM + to_string, minify [P] | 590 (P 65.0) | 990 (P 178) | 8,949 (P 236) | 82,232 (P 5,929) | 3.7 (P 0.3) |
-    | simd-json (Rust) | borrowed (copy) | 959 | 2,097 | 7,743 | 107,444 | 5.4 |
-    | Boost.JSON | parse + serialize | 1,391 | 1,987 | 6,586 | 154,714 | 6.8 |
-    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U] | 1,497 (U 1,310) | 1,797 (U 1,699) | 14,455 | 181,502 (U 167,920) | 8.0 (U 7.3) |
-    | nlohmann/json `json` | parse + dump | 1,592 | 2,694 | 8,280 | 200,923 | 8.5 |
-    | Glaze | generic, minify_json [P] | 1,488 (P 283) | 3,208 (P 740) | 11,076 (P 1,808) | 172,917 (P 39,976) | 7.8 (P 1.3) |
-    | serde_json (Rust) | Value | 1,999 | 3,240 | 9,748 | 227,301 | 9.2 |
+    | **nlohmann/json `json_document`** | parse + dump | 254 | 492 | 2,578 | 37,096 | 1.4 |
+    | yyjson | insitu (copy) + write, read + write | 289 | 635 | 3,209 | 50,039 | 1.6 |
+    | sonic-rs (Rust) | Value | 535 | 1,134 | 4,377 | 64,832 | 3.0 |
+    | sonic-cpp | Document + Serialize [U] | – (U 495) | – (U 1,218) | – (U 5,628) | – (U 60,548) | – (U 2.5) |
+    | simdjson | DOM + to_string, minify [P] | 567 (P 61.3) | 920 (P 168) | 5,026 (P 228) | 81,800 (P 5,682) | 3.6 (P 0.3) |
+    | simd-json (Rust) | borrowed (copy) | 952 | 2,111 | 7,658 | 108,130 | 5.5 |
+    | Boost.JSON | parse + serialize | 1,378 | 1,984 | 6,505 | 151,127 | 6.7 |
+    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U] | 1,499 (U 1,300) | 1,797 (U 1,697) | 14,205 | 180,015 (U 164,086) | 8.0 (U 7.3) |
+    | nlohmann/json `json` | parse + dump | 1,599 | 2,716 | 8,185 | 201,407 | 8.7 |
+    | Glaze | generic (strict), minify_json [P] | 1,501 (P 279) | 3,179 (P 726) | 10,937 (P 1,705) | 168,733 (P 39,268) | 7.9 (P 1.3) |
+    | serde_json (Rust) | Value | 2,004 | 3,290 | 9,792 | 227,369 | 9.5 |
 
     **write**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | dump | 75.2 | 136 | 1,621 | 14,846 | 0.5 |
-    | yyjson | write | 104 | 164 | 1,717 | 20,119 | 0.7 |
-    | sonic-cpp | Serialize | 111 | 231 | 3,047 | 20,342 | 0.9 |
-    | nlohmann/json `json` | dump | 220 | 286 | 2,240 | 30,983 | 1.2 |
-    | Glaze | generic | 212 | 469 | 1,692 | 34,921 | 1.3 |
-    | sonic-rs (Rust) | Value | 214 | 454 | 2,414 | 33,358 | 1.4 |
-    | serde_json (Rust) | Value | 327 | 504 | 2,257 | 49,857 | 2.0 |
-    | simd-json (Rust) | borrowed | 364 | 496 | 2,723 | 48,114 | 1.8 |
-    | simdjson | to_string | 352 | 494 | 6,770 | 54,528 | 2.5 |
-    | Boost.JSON | serialize | 499 | 503 | 2,868 | 62,964 | 2.8 |
-    | RapidJSON | Writer | 592 | 818 | 6,947 | 81,580 | 3.8 |
+    | **nlohmann/json `json_document`** | dump | 72.6 | 133 | 1,617 | 14,444 | 0.5 |
+    | yyjson | write | 100 | 164 | 1,714 | 19,665 | 0.7 |
+    | sonic-cpp | Serialize | 110 | 232 | 3,038 | 20,165 | 0.8 |
+    | nlohmann/json `json` | dump | 216 | 287 | 2,235 | 31,197 | 1.2 |
+    | Glaze | generic | 210 | 469 | 1,696 | 33,710 | 1.3 |
+    | sonic-rs (Rust) | Value | 212 | 446 | 2,419 | 33,366 | 1.5 |
+    | serde_json (Rust) | Value | 322 | 490 | 2,286 | 49,967 | 2.0 |
+    | simd-json (Rust) | borrowed | 355 | 478 | 2,728 | 47,412 | 1.8 |
+    | simdjson | to_string | 342 | 450 | 3,141 | 52,878 | 2.5 |
+    | Boost.JSON | serialize | 498 | 501 | 2,876 | 62,385 | 2.8 |
+    | RapidJSON | Writer | 593 | 818 | 6,872 | 79,758 | 3.9 |
 
 ??? info "Times in µs on x86-64 with GCC 16.2"
 
@@ -1846,96 +1896,96 @@ three declare the same fields.
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | accept, parse | 304 | 733 | 1,682 | 78,594 | 1.5 |
-    | sonic-rs (Rust) | IgnoredAny | 470 | 966 | 2,249 | 54,246 | 1.8 |
-    | simdjson | DOM | 302 | 705 | 3,176 | 114,180 | 1.8 |
-    | sonic-cpp | Document [U] | – (U 405) | – (U 935) | – (U 3,218) | – (U 95,565) | – (U 1.7) |
-    | yyjson | insitu (copy), read | 394 | 956 | 3,322 | 130,978 | 1.6 |
-    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 634 (U 487) | 1,448 (U 1,370) | 2,402 (U 2,318) | 66,822 (U 59,801) | 2.4 (U 1.9) |
-    | Glaze | validate_json | 727 | 1,983 | 2,571 | 76,361 | 2.6 |
-    | Boost.JSON | SAX | 680 | 922 | 5,993 | 60,687 | 2.6 |
-    | simd-json (Rust) | tape (copy) | 592 | 1,426 | 4,303 | 211,716 | 2.8 |
-    | nlohmann/json `json` | accept | 817 | 1,614 | 4,402 | 92,387 | 4.1 |
-    | RapidJSON | SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,250 (U 1,098) | 1,910 (U 1,607) | 10,181 | 150,241 (U 143,546) | 5.3 (U 3.6) |
+    | **nlohmann/json `json_document`** | accept, parse | 310 | 732 | 1,685 | 80,224 | 1.5 |
+    | sonic-rs (Rust) | IgnoredAny | 482 | 969 | 2,489 | 55,486 | 1.8 |
+    | simdjson | DOM | 302 | 676 | 3,234 | 121,861 | 1.8 |
+    | yyjson | insitu (copy), read (raw numbers) | 397 | 935 | 2,151 | 135,866 | 1.6 |
+    | sonic-cpp | Document [U] | – (U 404) | – (U 921) | – (U 3,186) | – (U 100,732) | – (U 1.7) |
+    | Boost.JSON | SAX, SAX (numbers: none) | 680 | 909 | 1,642 | 60,757 | 2.9 |
+    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 622 (U 480) | 1,440 (U 1,371) | 2,621 (U 2,538) | 65,602 (U 60,154) | 2.5 (U 1.9) |
+    | Glaze | validate_json | 714 | 1,975 | 2,544 | 79,737 | 2.5 |
+    | simd-json (Rust) | tape (copy) | 563 | 1,403 | 4,630 | 212,467 | 2.9 |
+    | nlohmann/json `json` | accept | 792 | 1,585 | 4,678 | 98,338 | 3.9 |
+    | RapidJSON | SAX (no encoding check) [U], SAX (raw numbers), insitu (copy), insitu (copy) (no encoding check) [U] | 1,254 (U 1,092) | 1,885 (U 1,589) | 10,363 | 161,392 (U 155,425) | 5.0 (U 3.5) |
 
     **sum**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | simdjson | On-Demand | 347 | 796 | 3,476 | 92,000 | 1.9 |
-    | **nlohmann/json `json_document`** | parse | 383 | 932 | 3,874 | 93,197 | 2.0 |
-    | sonic-rs (Rust) | visitor | 494 | 1,135 | 4,580 | 59,149 | 2.4 |
-    | sonic-cpp | Document [U] | – (U 462) | – (U 1,125) | – (U 3,867) | – (U 106,727) | – (U 2.1) |
-    | yyjson | insitu (copy), read | 448 | 1,094 | 3,955 | 136,684 | 1.9 |
-    | Boost.JSON | SAX | 668 | 934 | 5,692 | 62,486 | 2.7 |
-    | nlohmann/json `json` | sax | 790 | 1,624 | 5,671 | 93,964 | 3.9 |
-    | simd-json (Rust) | visitor (copy) | 722 | 1,686 | 5,191 | 220,582 | 3.8 |
-    | serde_json (Rust) | visitor | 1,318 | 2,299 | 7,610 | 123,810 | 4.3 |
-    | RapidJSON | SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,296 (U 1,145) | 2,011 (U 1,688) | 10,601 | 170,083 (U 157,809) | 5.3 (U 3.9) |
-    | Glaze | generic, lazy_json [P] | 2,940 | 5,528 | 17,830 | 390,814 (P 255,217) | 12.6 (P 6.3) |
+    | simdjson | On-Demand | 348 | 804 | 3,368 | 90,882 | 1.9 |
+    | **nlohmann/json `json_document`** | parse | 384 | 929 | 3,867 | 89,000 | 2.0 |
+    | sonic-rs (Rust) | visitor | 503 | 1,123 | 4,418 | 59,993 | 2.8 |
+    | sonic-cpp | Document [U] | – (U 462) | – (U 1,197) | – (U 3,854) | – (U 109,985) | – (U 2.1) |
+    | yyjson | insitu (copy), read | 450 | 1,101 | 3,944 | 140,178 | 1.9 |
+    | Boost.JSON | SAX | 688 | 1,020 | 5,676 | 61,670 | 3.0 |
+    | nlohmann/json `json` | sax | 801 | 1,705 | 5,532 | 94,952 | 4.0 |
+    | simd-json (Rust) | visitor (copy) | 668 | 1,688 | 5,134 | 224,411 | 4.0 |
+    | serde_json (Rust) | visitor | 1,311 | 2,316 | 7,241 | 130,249 | 5.1 |
+    | RapidJSON | SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,301 (U 1,141) | 2,166 (U 1,832) | 10,523 | 162,402 | 5.3 (U 3.8) |
+    | Glaze | generic (double, strict), lazy_json [P] | 2,410 | 4,407 | 10,384 | 285,204 (P 239,395) | 9.4 (P 6.3) |
 
     **select**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse, structs (from_json) | 325 | 784 | 1,686 | 91,622 | 1.6 |
-    | simdjson | DOM, On-Demand [P] | 315 (P 202) | 754 (P 642) | 3,190 (P 907) | 129,838 (P 50,352) | 1.9 (P 1.3) |
-    | sonic-rs (Rust) | structs | 557 | 1,023 | 2,247 | 91,996 | 2.0 |
-    | sonic-cpp | Document [U] | – (U 410) | – (U 952) | – (U 3,249) | – (U 106,866) | – (U 1.8) |
-    | yyjson | insitu (copy) | 403 | 1,011 | 3,268 | 139,623 | 1.7 |
-    | Glaze | structs (validate_skipped), structs [P] | 619 (P 360) | 2,238 (P 412) | 2,544 (P 433) | 96,608 (P 74,849) | 2.1 (P 1.5) |
-    | serde_json (Rust) | from_utf8 + structs, structs [U] | 769 | 1,504 | 2,442 (U 2,323) | 108,386 | 3.1 (U 3.0) |
-    | simd-json (Rust) | structs (copy) | 730 | 1,658 | 4,915 | 266,073 | 3.6 |
-    | Boost.JSON | parse | 1,326 | 1,871 | 6,892 | 196,136 | 6.1 |
-    | RapidJSON | Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,274 (U 1,098) | 2,060 | 10,432 | 165,343 (U 156,012) | 5.2 (U 3.7) |
-    | nlohmann/json `json` | parse, structs (from_json) | 3,643 | 6,199 | 11,694 | 605,646 | 14.5 |
+    | **nlohmann/json `json_document`** | parse | 327 | 752 | 1,684 | 91,119 | 1.7 |
+    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand structs [P] | 337 (P 183) | 686 (P 483) | 3,191 (P 700) | 128,921 (P 49,265) | 1.9 (P 1.2) |
+    | yyjson | insitu (copy), read, read (raw numbers) | 445 | 956 | 2,139 | 143,238 | 1.8 |
+    | sonic-rs (Rust) | structs | 538 | 1,028 | 2,283 | 91,950 | 2.0 |
+    | sonic-cpp | Document [U] | – (U 409) | – (U 944) | – (U 3,172) | – (U 112,498) | – (U 1.8) |
+    | Glaze | structs (validate_skipped), structs [P] | 679 (P 355) | 1,971 (P 400) | 2,518 (P 430) | 89,804 (P 68,491) | 2.1 (P 1.5) |
+    | serde_json (Rust) | from_utf8 + structs, structs [U] | 722 | 1,559 | 2,585 (U 2,448) | 114,701 | 3.0 |
+    | Boost.JSON | parse, parse_into structs | 954 | 1,223 | 6,775 | 99,560 | 3.6 |
+    | simd-json (Rust) | structs (copy) | 740 | 1,802 | 4,997 | 258,566 | 3.7 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,405 (U 1,218) | 1,895 | 10,256 | 165,022 (U 153,824) | 5.4 (U 4.0) |
+    | nlohmann/json `json` | parse, structs (from_json) | 3,693 | 5,596 | 11,689 | 601,495 | 13.9 |
 
     **edit**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | editable | 552 | 1,082 | 5,801 | 198,867 | 3.1 |
-    | sonic-cpp | Document [U] | – (U 629) | – (U 1,455) | – (U 8,594) | – (U 185,870) | – (U 3.5) |
-    | yyjson | insitu (copy) + mut copy, mut copy | 801 | 1,641 | 7,402 | 313,182 | 3.7 |
-    | sonic-rs (Rust) | Value | 1,189 | 2,384 | 8,007 | 413,714 | 6.6 |
-    | Boost.JSON | parse | 1,771 | 2,496 | 12,504 | 311,015 | 8.6 |
-    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,983 (U 1,799) | 2,859 | 19,769 | 298,015 (U 286,231) | 9.0 (U 7.5) |
-    | simd-json (Rust) | borrowed (copy), owned (copy) | 2,071 | 4,465 | 16,360 | 416,658 | 9.0 |
-    | nlohmann/json `json` | ordered_json | 3,046 | 5,087 | 15,464 | 863,465 | 13.8 |
-    | Glaze | generic | 3,547 | 6,080 | 22,146 | 937,712 | 15.6 |
-    | serde_json (Rust) | Value | 4,474 | 6,922 | 18,301 | 805,290 | 21.2 |
+    | **nlohmann/json `json_document`** | editable | 531 | 1,081 | 5,914 | 174,422 | 3.4 |
+    | sonic-cpp | Document [U] | – (U 624) | – (U 1,445) | – (U 8,363) | – (U 188,709) | – (U 3.6) |
+    | yyjson | insitu (copy) + mut copy, mut copy | 798 | 1,645 | 7,430 | 297,562 | 4.1 |
+    | sonic-rs (Rust) | Value | 1,201 | 2,416 | 7,958 | 421,718 | 6.9 |
+    | Boost.JSON | parse | 1,755 | 2,482 | 12,291 | 331,024 | 9.5 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,981 (U 1,824) | 2,969 (U 2,810) | 19,675 | 306,064 | 9.3 (U 7.6) |
+    | simd-json (Rust) | borrowed (copy), owned (copy) | 1,924 | 4,575 | 15,746 | 435,817 | 9.6 |
+    | nlohmann/json `json` | ordered_json | 2,914 | 5,182 | 15,284 | 842,581 | 14.8 |
+    | Glaze | generic (strict), generic [P] | 3,451 (P 3,332) | 6,457 (P 6,198) | 21,021 | 737,298 | 16.7 (P 16.1) |
+    | serde_json (Rust) | Value | 4,036 | 7,181 | 17,371 | 843,034 | 16.9 |
 
     **minify**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse + dump | 482 | 1,001 | 5,856 | 159,533 | 2.5 |
-    | yyjson | insitu (copy) + write, read + write | 658 | 1,268 | 6,934 | 210,677 | 2.9 |
-    | sonic-cpp | Document + Serialize [U] | – (U 633) | – (U 1,436) | – (U 8,992) | – (U 178,113) | – (U 3.3) |
-    | sonic-rs (Rust) | Value | 988 | 2,093 | 7,775 | 217,697 | 5.3 |
-    | simdjson | DOM + to_string, minify [P] | 799 (P 104) | 1,461 (P 246) | 15,173 (P 365) | 310,524 (P 47,397) | 4.7 (P 0.5) |
-    | Boost.JSON | parse + serialize | 1,803 | 2,480 | 13,545 | 324,721 | 8.7 |
-    | simd-json (Rust) | borrowed (copy) | 1,924 | 4,375 | 15,278 | 419,474 | 8.7 |
-    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U] | 2,606 (U 1,820) | 2,810 (U 2,456) | 22,160 | 360,474 (U 277,281) | 13.6 (U 9.4) |
-    | Glaze | generic, minify_json [P] | 3,394 (P 419) | 6,016 (P 1,301) | 23,223 (P 2,832) | 512,061 (P 92,190) | 15.1 (P 1.9) |
-    | nlohmann/json `json` | parse + dump | 4,168 | 6,253 | 16,656 | 777,125 | 16.4 |
-    | serde_json (Rust) | Value | 4,081 | 6,880 | 17,249 | 615,033 | 18.4 |
+    | **nlohmann/json `json_document`** | parse + dump | 480 | 995 | 5,655 | 147,812 | 2.5 |
+    | yyjson | insitu (copy) + write, read + write | 622 | 1,264 | 6,624 | 198,884 | 2.9 |
+    | sonic-cpp | Document + Serialize [U] | – (U 633) | – (U 1,435) | – (U 8,404) | – (U 179,298) | – (U 3.3) |
+    | simdjson | DOM + to_string, minify [P] | 787 (P 104) | 1,300 (P 247) | 8,944 (P 367) | 295,041 (P 46,756) | 4.7 (P 0.5) |
+    | sonic-rs (Rust) | Value | 1,003 | 2,174 | 7,753 | 217,354 | 5.5 |
+    | Boost.JSON | parse + serialize | 1,772 | 2,495 | 12,783 | 304,037 | 8.5 |
+    | simd-json (Rust) | borrowed (copy) | 1,878 | 4,655 | 15,955 | 419,412 | 9.5 |
+    | RapidJSON | Document + Writer, Document + Writer (no encoding check) [U], SAX to Writer, SAX to Writer (no encoding check) [U] | 2,458 (U 1,764) | 2,873 (U 2,494) | 21,009 | 353,444 (U 271,282) | 13.5 (U 9.6) |
+    | Glaze | generic (strict), minify_json [P] | 3,332 (P 416) | 6,408 (P 1,298) | 21,303 (P 2,661) | 494,208 (P 93,101) | 15.0 (P 1.9) |
+    | nlohmann/json `json` | parse + dump | 3,822 | 6,431 | 15,804 | 737,629 | 15.2 |
+    | serde_json (Rust) | Value | 4,220 | 6,876 | 17,276 | 628,192 | 16.7 |
 
     **write**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | dump | 155 | 253 | 3,899 | 69,593 | 1.0 |
-    | yyjson | write | 190 | 320 | 3,349 | 69,582 | 1.2 |
-    | sonic-cpp | Serialize | 259 | 510 | 5,269 | 76,584 | 1.5 |
-    | nlohmann/json `json` | dump | 433 | 607 | 3,896 | 126,529 | 1.9 |
-    | Glaze | generic | 367 | 688 | 4,097 | 134,165 | 1.9 |
-    | sonic-rs (Rust) | Value | 442 | 935 | 3,954 | 100,889 | 2.6 |
-    | Boost.JSON | serialize | 454 | 835 | 5,468 | 132,656 | 2.5 |
-    | simd-json (Rust) | borrowed | 604 | 809 | 4,825 | 110,710 | 2.7 |
-    | serde_json (Rust) | Value | 563 | 882 | 3,979 | 120,716 | 2.9 |
-    | simdjson | to_string | 471 | 712 | 11,156 | 186,861 | 2.9 |
-    | RapidJSON | Writer | 653 | 978 | 9,071 | 138,832 | 4.0 |
+    | **nlohmann/json `json_document`** | dump | 154 | 252 | 3,864 | 67,299 | 0.9 |
+    | yyjson | write | 193 | 320 | 3,391 | 68,367 | 1.2 |
+    | sonic-cpp | Serialize | 260 | 508 | 5,333 | 73,212 | 1.4 |
+    | nlohmann/json `json` | dump | 431 | 605 | 3,894 | 116,689 | 1.9 |
+    | Glaze | generic, generic (strict) | 379 | 730 | 4,088 | 133,699 | 2.0 |
+    | Boost.JSON | serialize | 452 | 827 | 5,615 | 123,767 | 2.5 |
+    | sonic-rs (Rust) | Value | 445 | 931 | 4,048 | 104,487 | 2.8 |
+    | simdjson | to_string | 457 | 597 | 5,272 | 173,760 | 2.9 |
+    | simd-json (Rust) | borrowed | 597 | 809 | 4,817 | 114,245 | 3.1 |
+    | serde_json (Rust) | Value | 560 | 848 | 3,964 | 129,473 | 3.2 |
+    | RapidJSON | Writer | 649 | 974 | 9,080 | 129,698 | 3.7 |
 
 ??? info "Times in µs on x86-64 with GCC 13"
 
@@ -1943,96 +1993,96 @@ three declare the same fields.
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | accept, parse | 325 | 742 | 1,699 | 84,790 | 1.6 |
-    | sonic-rs (Rust) | IgnoredAny | 470 | 966 | 2,249 | 54,246 | 1.8 |
-    | simdjson | DOM | 328 | 810 | 3,178 | 121,064 | 1.9 |
-    | Glaze | validate_json | 590 | 1,399 | 1,847 | 71,293 | 2.3 |
-    | sonic-cpp | Document [U] | – (U 425) | – (U 1,032) | – (U 3,618) | – (U 95,772) | – (U 1.8) |
-    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 634 (U 487) | 1,448 (U 1,370) | 2,402 (U 2,318) | 66,822 (U 59,801) | 2.4 (U 1.9) |
-    | yyjson | insitu (copy), read | 390 | 995 | 5,320 | 132,598 | 1.7 |
-    | Boost.JSON | SAX | 738 | 1,007 | 5,465 | 59,249 | 3.2 |
-    | simd-json (Rust) | tape (copy) | 592 | 1,426 | 4,303 | 211,716 | 2.8 |
-    | nlohmann/json `json` | accept | 789 | 1,631 | 4,570 | 94,289 | 4.0 |
-    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,638 (U 1,135) | 2,230 (U 1,666) | 11,264 | 209,691 (U 157,274) | 7.3 (U 3.8) |
+    | **nlohmann/json `json_document`** | accept, parse | 332 | 764 | 1,691 | 82,408 | 1.6 |
+    | sonic-rs (Rust) | IgnoredAny | 482 | 969 | 2,489 | 55,486 | 1.8 |
+    | yyjson | insitu (copy), read, read (raw numbers) | 393 | 988 | 2,211 | 131,844 | 1.6 |
+    | simdjson | DOM | 312 | 730 | 3,166 | 123,620 | 1.8 |
+    | sonic-cpp | Document [U] | – (U 407) | – (U 1,022) | – (U 3,560) | – (U 90,971) | – (U 1.6) |
+    | Glaze | validate_json | 597 | 1,407 | 1,844 | 71,646 | 2.3 |
+    | Boost.JSON | SAX, SAX (numbers: none) | 725 | 924 | 1,637 | 62,571 | 3.1 |
+    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 622 (U 480) | 1,440 (U 1,371) | 2,621 (U 2,538) | 65,602 (U 60,154) | 2.5 (U 1.9) |
+    | simd-json (Rust) | tape (copy) | 563 | 1,403 | 4,630 | 212,467 | 2.9 |
+    | nlohmann/json `json` | accept | 783 | 1,619 | 4,621 | 98,860 | 3.9 |
+    | RapidJSON | SAX, SAX (no encoding check) [U], SAX (raw numbers), SAX (raw numbers) (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,651 (U 1,120) | 2,232 (U 1,660) | 10,380 | 210,972 (U 157,831) | 7.1 (U 3.8) |
 
     **sum**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | simdjson | On-Demand | 358 | 817 | 3,407 | 90,338 | 2.0 |
-    | **nlohmann/json `json_document`** | parse | 405 | 945 | 4,038 | 87,781 | 2.1 |
-    | sonic-rs (Rust) | visitor | 494 | 1,135 | 4,580 | 59,149 | 2.4 |
-    | sonic-cpp | Document [U] | – (U 482) | – (U 1,234) | – (U 4,412) | – (U 105,062) | – (U 2.2) |
-    | yyjson | insitu (copy) | 447 | 1,148 | 5,959 | 138,001 | 2.0 |
-    | Boost.JSON | SAX | 753 | 1,030 | 5,688 | 61,479 | 3.2 |
-    | nlohmann/json `json` | sax | 807 | 1,647 | 5,962 | 100,804 | 4.1 |
-    | simd-json (Rust) | visitor (copy) | 722 | 1,686 | 5,191 | 220,582 | 3.8 |
-    | serde_json (Rust) | visitor | 1,318 | 2,299 | 7,610 | 123,810 | 4.3 |
-    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,679 (U 1,185) | 2,388 (U 1,768) | 11,030 | 216,612 (U 161,397) | 7.4 (U 4.1) |
-    | Glaze | generic, lazy_json [P] | 3,206 (P 2,948) | 5,928 | 20,405 (P 16,203) | 403,975 (P 231,683) | 13.5 (P 6.0) |
+    | simdjson | On-Demand | 360 | 819 | 3,269 | 95,622 | 2.0 |
+    | **nlohmann/json `json_document`** | parse | 410 | 960 | 4,026 | 91,857 | 2.1 |
+    | sonic-rs (Rust) | visitor | 503 | 1,123 | 4,418 | 59,993 | 2.8 |
+    | sonic-cpp | Document [U] | – (U 478) | – (U 1,234) | – (U 4,454) | – (U 109,509) | – (U 2.1) |
+    | yyjson | insitu (copy), read | 447 | 1,146 | 6,051 | 137,148 | 2.0 |
+    | Boost.JSON | SAX | 748 | 1,018 | 5,668 | 64,462 | 3.2 |
+    | nlohmann/json `json` | sax | 813 | 1,676 | 6,045 | 104,843 | 4.1 |
+    | simd-json (Rust) | visitor (copy) | 668 | 1,688 | 5,134 | 224,411 | 4.0 |
+    | serde_json (Rust) | visitor | 1,311 | 2,316 | 7,241 | 130,249 | 5.1 |
+    | RapidJSON | Document (no encoding check) [U], SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,679 (U 1,175) | 2,311 (U 1,740) | 11,995 | 226,217 (U 167,558) | 7.4 (U 4.1) |
+    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 2,399 | 4,212 | 11,369 | 307,211 (P 236,277) | 9.8 (P 6.2) |
 
     **select**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse, structs (from_json) | 347 | 763 | 1,700 | 98,540 | 1.7 |
-    | sonic-rs (Rust) | structs | 557 | 1,023 | 2,247 | 91,996 | 2.0 |
-    | simdjson | DOM, On-Demand [P] | 337 (P 211) | 837 (P 804) | 3,283 (P 1,138) | 134,701 (P 51,878) | 2.1 (P 1.4) |
-    | Glaze | structs (validate_skipped), structs [P] | 539 (P 348) | 1,475 (P 408) | 1,850 (P 449) | 99,194 (P 77,565) | 1.9 (P 1.5) |
-    | sonic-cpp | Document [U] | – (U 419) | – (U 1,044) | – (U 3,675) | – (U 111,999) | – (U 1.9) |
-    | yyjson | insitu (copy), read | 408 | 996 | 5,375 | 142,713 | 1.8 |
-    | serde_json (Rust) | from_utf8 + structs, structs [U] | 769 | 1,504 | 2,442 (U 2,323) | 108,386 | 3.1 (U 3.0) |
-    | simd-json (Rust) | structs (copy) | 730 | 1,658 | 4,915 | 266,073 | 3.6 |
-    | Boost.JSON | parse | 1,605 | 1,903 | 7,605 | 214,973 | 6.7 |
-    | RapidJSON | Document, Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,779 (U 1,194) | 2,257 (U 1,923) | 12,214 | 226,825 (U 175,262) | 7.2 (U 3.9) |
-    | nlohmann/json `json` | parse, structs (from_json) | 3,523 | 5,534 | 12,684 | 623,070 | 13.6 |
+    | **nlohmann/json `json_document`** | parse, structs (from_json) | 361 | 788 | 1,693 | 92,200 | 1.8 |
+    | yyjson | read, read (raw numbers) | 404 | 1,000 | 2,214 | 139,234 | 1.8 |
+    | sonic-rs (Rust) | structs | 538 | 1,028 | 2,283 | 91,950 | 2.0 |
+    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P] | 348 (P 190) | 740 (P 498) | 3,170 (P 726) | 124,766 (P 49,901) | 2.2 (P 1.3) |
+    | Glaze | structs (validate_skipped), structs [P] | 595 (P 340) | 1,500 (P 403) | 1,854 (P 447) | 86,510 (P 68,532) | 2.1 (P 1.5) |
+    | sonic-cpp | Document [U] | – (U 453) | – (U 1,041) | – (U 3,639) | – (U 106,529) | – (U 1.9) |
+    | serde_json (Rust) | from_utf8 + structs, structs [U] | 722 | 1,559 | 2,585 (U 2,448) | 114,701 | 3.0 |
+    | Boost.JSON | parse_into structs | 973 | 1,358 | 6,913 | 103,145 | 4.2 |
+    | simd-json (Rust) | structs (copy) | 740 | 1,802 | 4,997 | 258,566 | 3.7 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,703 (U 1,176) | 2,297 (U 1,915) | 11,423 | 217,155 (U 171,258) | 8.2 (U 4.3) |
+    | nlohmann/json `json` | parse, structs (from_json) | 3,609 | 5,673 | 12,031 | 607,902 | 14.4 |
 
     **edit**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | editable | 552 | 1,112 | 6,027 | 203,217 | 3.3 |
-    | sonic-cpp | Document [U] | – (U 663) | – (U 1,572) | – (U 8,879) | – (U 181,438) | – (U 3.6) |
-    | yyjson | insitu (copy) + mut copy, mut copy | 810 | 1,724 | 9,806 | 322,621 | 3.8 |
-    | sonic-rs (Rust) | Value | 1,189 | 2,384 | 8,007 | 413,714 | 6.6 |
-    | Boost.JSON | parse | 2,026 | 2,943 | 13,352 | 337,632 | 9.4 |
-    | simd-json (Rust) | borrowed (copy), owned (copy) | 2,071 | 4,465 | 16,360 | 416,658 | 9.0 |
-    | RapidJSON | Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 2,511 (U 1,896) | 3,310 (U 2,942) | 20,627 | 362,717 (U 314,375) | 11.6 (U 7.9) |
-    | nlohmann/json `json` | ordered_json | 3,156 | 5,280 | 16,247 | 922,463 | 15.0 |
-    | Glaze | generic | 3,767 | 6,532 | 24,351 | 940,280 | 16.2 |
-    | serde_json (Rust) | Value | 4,474 | 6,922 | 18,301 | 805,290 | 21.2 |
+    | **nlohmann/json `json_document`** | editable | 630 | 1,128 | 5,910 | 184,135 | 3.5 |
+    | sonic-cpp | Document [U] | – (U 662) | – (U 1,560) | – (U 8,647) | – (U 191,340) | – (U 3.5) |
+    | yyjson | insitu (copy) + mut copy, mut copy | 824 | 1,729 | 9,727 | 299,300 | 3.8 |
+    | sonic-rs (Rust) | Value | 1,201 | 2,416 | 7,958 | 421,718 | 6.9 |
+    | Boost.JSON | parse | 2,086 | 2,928 | 13,189 | 340,875 | 9.8 |
+    | simd-json (Rust) | borrowed (copy), owned (copy) | 1,924 | 4,575 | 15,746 | 435,817 | 9.6 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 2,588 (U 2,120) | 3,273 (U 2,905) | 20,202 | 363,265 (U 307,430) | 12.0 (U 8.4) |
+    | nlohmann/json `json` | ordered_json, parse | 3,222 | 5,204 | 16,070 | 855,263 | 15.2 |
+    | serde_json (Rust) | Value | 4,036 | 7,181 | 17,371 | 843,034 | 16.9 |
+    | Glaze | generic (strict), generic [P] | 4,023 (P 3,901) | 6,662 | 23,242 | 724,016 | 18.0 |
 
     **minify**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse + dump | 497 | 1,028 | 5,930 | 156,014 | 2.6 |
-    | yyjson | insitu (copy) + write, read + write | 657 | 1,326 | 9,202 | 195,618 | 3.1 |
-    | sonic-cpp | Document + Serialize [U] | – (U 667) | – (U 1,568) | – (U 9,007) | – (U 174,144) | – (U 3.5) |
-    | sonic-rs (Rust) | Value | 988 | 2,093 | 7,775 | 217,697 | 5.3 |
-    | simdjson | DOM + to_string, minify [P] | 839 (P 128) | 1,588 (P 322) | 14,645 (P 469) | 292,317 (P 50,456) | 4.9 (P 0.6) |
-    | Boost.JSON | parse + serialize | 1,931 | 2,902 | 13,756 | 328,321 | 9.8 |
-    | simd-json (Rust) | borrowed (copy) | 1,924 | 4,375 | 15,278 | 419,474 | 8.7 |
-    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U] | 2,963 (U 1,872) | 3,189 (U 2,490) | 21,761 | 406,899 (U 282,973) | 15.7 (U 11.1) |
-    | Glaze | generic, minify_json [P] | 3,647 (P 428) | 6,503 (P 1,144) | 25,082 (P 2,468) | 546,003 (P 94,867) | 16.1 (P 2.0) |
-    | nlohmann/json `json` | parse + dump | 3,980 | 6,495 | 17,573 | 730,814 | 16.5 |
-    | serde_json (Rust) | Value | 4,081 | 6,880 | 17,249 | 615,033 | 18.4 |
+    | **nlohmann/json `json_document`** | parse + dump | 503 | 1,045 | 5,569 | 156,948 | 2.6 |
+    | yyjson | insitu (copy) + write, read + write | 605 | 1,323 | 9,272 | 200,777 | 3.0 |
+    | sonic-cpp | Document + Serialize [U] | – (U 640) | – (U 1,558) | – (U 8,901) | – (U 175,992) | – (U 3.2) |
+    | simdjson | DOM + to_string, minify [P] | 792 (P 128) | 1,348 (P 331) | 8,324 (P 464) | 290,206 (P 47,486) | 4.7 (P 0.6) |
+    | sonic-rs (Rust) | Value | 1,003 | 2,174 | 7,753 | 217,354 | 5.5 |
+    | Boost.JSON | parse + serialize | 1,911 | 2,840 | 13,417 | 307,134 | 9.2 |
+    | simd-json (Rust) | borrowed (copy) | 1,878 | 4,655 | 15,955 | 419,412 | 9.5 |
+    | RapidJSON | Document + Writer, Document + Writer (no encoding check) [U], SAX to Writer, SAX to Writer (no encoding check) [U] | 2,733 (U 1,855) | 3,088 (U 2,516) | 21,466 (U 20,678) | 410,160 (U 295,852) | 15.2 (U 10.1) |
+    | nlohmann/json `json` | parse + dump | 3,741 | 6,096 | 16,580 | 721,380 | 15.1 |
+    | Glaze | generic (strict), minify_json [P] | 3,520 (P 425) | 6,525 (P 1,142) | 24,118 (P 2,391) | 500,684 (P 97,583) | 15.6 (P 2.0) |
+    | serde_json (Rust) | Value | 4,220 | 6,876 | 17,276 | 628,192 | 16.7 |
 
     **write**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | dump | 153 | 271 | 3,934 | 72,106 | 0.9 |
-    | yyjson | write | 216 | 331 | 3,620 | 76,733 | 1.2 |
-    | sonic-cpp | Serialize | 270 | 533 | 5,100 | 80,556 | 1.5 |
-    | Glaze | generic | 364 | 712 | 4,265 | 143,981 | 1.9 |
-    | nlohmann/json `json` | dump | 441 | 628 | 4,091 | 129,455 | 2.0 |
-    | sonic-rs (Rust) | Value | 442 | 935 | 3,954 | 100,889 | 2.6 |
-    | simd-json (Rust) | borrowed | 604 | 809 | 4,825 | 110,710 | 2.7 |
-    | serde_json (Rust) | Value | 563 | 882 | 3,979 | 120,716 | 2.9 |
-    | Boost.JSON | serialize | 478 | 1,015 | 5,750 | 137,840 | 2.5 |
-    | simdjson | to_string | 491 | 750 | 10,840 | 196,092 | 2.9 |
-    | RapidJSON | Writer | 746 | 1,032 | 8,773 | 150,334 | 4.3 |
+    | **nlohmann/json `json_document`** | dump | 153 | 272 | 3,979 | 68,836 | 0.9 |
+    | yyjson | write | 180 | 330 | 3,620 | 70,502 | 1.2 |
+    | sonic-cpp | Serialize | 262 | 532 | 5,268 | 74,547 | 1.4 |
+    | Glaze | generic | 336 | 663 | 3,685 | 127,928 | 1.8 |
+    | nlohmann/json `json` | dump | 440 | 636 | 4,063 | 119,266 | 2.0 |
+    | sonic-rs (Rust) | Value | 445 | 931 | 4,048 | 104,487 | 2.8 |
+    | simdjson | to_string | 451 | 598 | 5,334 | 174,144 | 2.8 |
+    | Boost.JSON | serialize | 459 | 1,012 | 6,253 | 126,330 | 2.4 |
+    | simd-json (Rust) | borrowed | 597 | 809 | 4,817 | 114,245 | 3.1 |
+    | serde_json (Rust) | Value | 560 | 848 | 3,964 | 129,473 | 3.2 |
+    | RapidJSON | Writer | 688 | 1,020 | 9,144 | 138,466 | 3.9 |
 
 ??? info "Times in µs on x86-64 with Clang 23"
 
@@ -2040,96 +2090,96 @@ three declare the same fields.
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | accept, parse | 302 | 720 | 1,784 | 81,370 | 1.5 |
-    | sonic-rs (Rust) | IgnoredAny | 470 | 966 | 2,249 | 54,246 | 1.8 |
-    | simdjson | DOM | 311 | 736 | 3,343 | 115,626 | 1.8 |
-    | yyjson | insitu (copy), read | 379 | 896 | 2,851 | 124,180 | 1.6 |
-    | sonic-cpp | Document [U] | – (U 450) | – (U 1,026) | – (U 3,140) | – (U 98,200) | – (U 2.0) |
-    | Glaze | validate_json | 621 | 1,402 | 1,806 | 76,164 | 2.6 |
-    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 634 (U 487) | 1,448 (U 1,370) | 2,402 (U 2,318) | 66,822 (U 59,801) | 2.4 (U 1.9) |
-    | Boost.JSON | SAX | 596 | 923 | 6,234 | 56,654 | 2.4 |
-    | nlohmann/json `json` | accept | 746 | 1,424 | 4,201 | 100,878 | 4.1 |
-    | simd-json (Rust) | tape (copy) | 592 | 1,426 | 4,303 | 211,716 | 2.8 |
-    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,845 (U 1,227) | 2,150 (U 1,665) | 11,719 | 233,417 (U 156,744) | 8.6 (U 4.3) |
+    | **nlohmann/json `json_document`** | accept, parse | 305 | 715 | 2,019 | 83,361 | 1.4 |
+    | sonic-rs (Rust) | IgnoredAny | 482 | 969 | 2,489 | 55,486 | 1.8 |
+    | Boost.JSON | SAX, SAX (numbers: none) | 568 | 903 | 1,896 | 56,244 | 2.3 |
+    | yyjson | insitu (copy), read, read (raw numbers) | 380 | 918 | 2,533 | 126,565 | 1.6 |
+    | simdjson | DOM | 306 | 713 | 3,652 | 121,820 | 1.8 |
+    | sonic-cpp | Document [U] | – (U 450) | – (U 1,007) | – (U 3,351) | – (U 99,056) | – (U 1.9) |
+    | Glaze | validate_json | 617 | 1,370 | 1,990 | 81,604 | 2.5 |
+    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 622 (U 480) | 1,440 (U 1,371) | 2,621 (U 2,538) | 65,602 (U 60,154) | 2.5 (U 1.9) |
+    | nlohmann/json `json` | accept | 736 | 1,417 | 4,605 | 95,644 | 4.0 |
+    | simd-json (Rust) | tape (copy) | 563 | 1,403 | 4,630 | 212,467 | 2.9 |
+    | RapidJSON | SAX, SAX (no encoding check) [U], SAX (raw numbers), SAX (raw numbers) (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,815 (U 1,174) | 2,123 (U 1,663) | 11,775 | 237,714 (U 161,724) | 8.4 (U 4.1) |
 
     **sum**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse | 378 | 891 | 4,151 | 89,689 | 1.9 |
-    | simdjson | DOM, On-Demand | 399 | 946 | 4,100 | 120,056 | 2.2 |
-    | sonic-rs (Rust) | visitor | 494 | 1,135 | 4,580 | 59,149 | 2.4 |
-    | yyjson | insitu (copy), read | 435 | 1,048 | 3,467 | 135,382 | 1.9 |
-    | Boost.JSON | SAX | 582 | 927 | 5,935 | 56,310 | 2.4 |
-    | sonic-cpp | Document [U] | – (U 504) | – (U 1,180) | – (U 3,736) | – (U 110,324) | – (U 2.2) |
-    | nlohmann/json `json` | sax | 784 | 1,466 | 5,345 | 101,437 | 4.1 |
-    | simd-json (Rust) | visitor (copy) | 722 | 1,686 | 5,191 | 220,582 | 3.8 |
-    | serde_json (Rust) | visitor | 1,318 | 2,299 | 7,610 | 123,810 | 4.3 |
-    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,869 (U 1,237) | 2,172 (U 1,770) | 12,183 | 253,075 (U 163,826) | 8.4 (U 4.4) |
-    | Glaze | generic, lazy_json [P] | 3,890 (P 2,829) | 7,282 | 25,798 (P 17,578) | 501,805 (P 223,672) | 16.7 (P 5.9) |
+    | **nlohmann/json `json_document`** | parse | 373 | 893 | 4,353 | 89,554 | 1.9 |
+    | simdjson | DOM, On-Demand | 396 | 969 | 4,454 | 115,048 | 2.3 |
+    | yyjson | insitu (copy), read | 437 | 1,091 | 3,587 | 135,079 | 1.9 |
+    | sonic-rs (Rust) | visitor | 503 | 1,123 | 4,418 | 59,993 | 2.8 |
+    | Boost.JSON | SAX | 582 | 927 | 6,356 | 57,388 | 2.4 |
+    | sonic-cpp | Document [U] | – (U 506) | – (U 1,208) | – (U 4,034) | – (U 107,937) | – (U 2.3) |
+    | nlohmann/json `json` | sax | 750 | 1,488 | 5,684 | 95,696 | 4.1 |
+    | simd-json (Rust) | visitor (copy) | 668 | 1,688 | 5,134 | 224,411 | 4.0 |
+    | serde_json (Rust) | visitor | 1,311 | 2,316 | 7,241 | 130,249 | 5.1 |
+    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,866 (U 1,233) | 2,308 (U 1,863) | 13,209 | 251,431 (U 169,921) | 8.5 (U 4.4) |
+    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 2,516 | 4,350 | 13,015 | 311,560 (P 215,314) | 10.1 (P 6.0) |
 
     **select**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse, structs (from_json) | 324 | 728 | 1,784 | 89,731 | 1.6 |
-    | simdjson | DOM, On-Demand [P] | 330 (P 210) | 743 (P 610) | 3,291 (P 861) | 129,470 (P 48,548) | 2.0 (P 1.3) |
-    | yyjson | insitu (copy), read | 387 | 900 | 2,814 | 139,634 | 1.7 |
-    | sonic-rs (Rust) | structs | 557 | 1,023 | 2,247 | 91,996 | 2.0 |
-    | Glaze | structs (validate_skipped), structs [P] | 560 (P 345) | 1,329 (P 424) | 1,780 (P 463) | 93,674 (P 76,186) | 2.2 (P 1.7) |
-    | sonic-cpp | Document [U] | – (U 461) | – (U 1,024) | – (U 3,030) | – (U 109,906) | – (U 2.0) |
-    | serde_json (Rust) | from_utf8 + structs, structs [U] | 769 | 1,504 | 2,442 (U 2,323) | 108,386 | 3.1 (U 3.0) |
-    | simd-json (Rust) | structs (copy) | 730 | 1,658 | 4,915 | 266,073 | 3.6 |
-    | Boost.JSON | parse | 1,264 | 1,659 | 7,173 | 202,456 | 5.9 |
-    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,901 (U 1,251) | 2,329 (U 1,936) | 11,814 | 251,223 (U 181,144) | 8.2 (U 4.3) |
-    | nlohmann/json `json` | parse, structs (from_json) | 3,654 | 5,494 | 11,583 | 641,176 | 15.2 |
+    | **nlohmann/json `json_document`** | parse | 324 | 729 | 1,795 | 94,289 | 1.6 |
+    | yyjson | insitu (copy), read (raw numbers) | 395 | 934 | 2,374 | 135,642 | 1.7 |
+    | simdjson | DOM, On-Demand [P] | 341 (P 186) | 723 (P 487) | 3,231 (P 703) | 128,975 (P 49,244) | 1.9 (P 1.3) |
+    | sonic-rs (Rust) | structs | 538 | 1,028 | 2,283 | 91,950 | 2.0 |
+    | Glaze | structs (validate_skipped), structs [P] | 563 (P 340) | 1,270 (P 412) | 1,790 (P 460) | 91,224 (P 70,238) | 2.2 (P 1.7) |
+    | sonic-cpp | Document [U] | – (U 486) | – (U 1,024) | – (U 3,201) | – (U 113,041) | – (U 2.1) |
+    | serde_json (Rust) | from_utf8 + structs, structs [U] | 722 | 1,559 | 2,585 (U 2,448) | 114,701 | 3.0 |
+    | Boost.JSON | parse, parse_into structs | 850 | 1,400 | 7,389 | 100,054 | 3.3 |
+    | simd-json (Rust) | structs (copy) | 740 | 1,802 | 4,997 | 258,566 | 3.7 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,893 (U 1,189) | 2,322 (U 1,944) | 11,855 | 255,774 (U 189,496) | 8.4 (U 4.2) |
+    | nlohmann/json `json` | parse, structs (from_json) | 3,825 | 5,475 | 12,002 | 639,061 | 16.0 |
 
     **edit**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | editable | 534 | 1,100 | 5,935 | 208,247 | 3.0 |
-    | sonic-cpp | Document [U] | – (U 644) | – (U 1,508) | – (U 7,972) | – (U 184,491) | – (U 3.2) |
-    | yyjson | insitu (copy) + mut copy, mut copy | 912 | 1,686 | 7,407 | 318,770 | 4.0 |
-    | sonic-rs (Rust) | Value | 1,189 | 2,384 | 8,007 | 413,714 | 6.6 |
-    | Boost.JSON | parse | 1,722 | 2,614 | 12,953 | 346,073 | 8.5 |
-    | simd-json (Rust) | borrowed (copy), owned (copy) | 2,071 | 4,465 | 16,360 | 416,658 | 9.0 |
-    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 2,565 (U 1,902) | 3,328 (U 2,859) | 22,449 (U 21,667) | 378,036 (U 321,177) | 11.8 (U 7.8) |
-    | nlohmann/json `json` | ordered_json, parse | 3,058 | 5,099 | 16,378 | 920,570 | 14.7 |
-    | serde_json (Rust) | Value | 4,474 | 6,922 | 18,301 | 805,290 | 21.2 |
-    | Glaze | generic | 4,278 | 7,989 | 30,869 | 1,095,800 | 19.5 |
+    | **nlohmann/json `json_document`** | editable | 523 | 1,093 | 6,109 | 179,999 | 3.0 |
+    | sonic-cpp | Document [U] | – (U 645) | – (U 1,481) | – (U 7,924) | – (U 185,114) | – (U 3.4) |
+    | yyjson | insitu (copy) + mut copy, mut copy | 816 | 1,710 | 7,258 | 296,347 | 3.9 |
+    | sonic-rs (Rust) | Value | 1,201 | 2,416 | 7,958 | 421,718 | 6.9 |
+    | Boost.JSON | parse | 1,725 | 2,594 | 13,178 | 343,065 | 8.5 |
+    | simd-json (Rust) | borrowed (copy), owned (copy) | 1,924 | 4,575 | 15,746 | 435,817 | 9.6 |
+    | RapidJSON | Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 2,486 (U 1,852) | 3,253 (U 2,889) | 21,592 | 397,189 (U 301,007) | 12.0 (U 7.9) |
+    | nlohmann/json `json` | ordered_json, parse | 2,810 | 5,096 | 16,935 | 864,150 | 14.4 |
+    | serde_json (Rust) | Value | 4,036 | 7,181 | 17,371 | 843,034 | 16.9 |
+    | Glaze | generic (strict), generic [P] | 4,192 | 8,087 | 30,621 | 868,944 | 20.1 |
 
     **minify**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse + dump | 474 | 993 | 5,445 | 153,155 | 2.4 |
-    | yyjson | insitu (copy) + write, read + write | 625 | 1,256 | 6,261 | 212,043 | 3.1 |
-    | sonic-cpp | Document + Serialize [U] | – (U 647) | – (U 1,487) | – (U 7,924) | – (U 182,940) | – (U 3.2) |
-    | sonic-rs (Rust) | Value | 988 | 2,093 | 7,775 | 217,697 | 5.3 |
-    | simdjson | DOM + to_string, minify [P] | 857 (P 103) | 1,543 (P 256) | 16,516 (P 373) | 326,881 (P 51,243) | 5.1 (P 0.5) |
-    | Boost.JSON | parse + serialize | 1,758 | 2,553 | 12,744 | 358,018 | 9.0 |
-    | simd-json (Rust) | borrowed (copy) | 1,924 | 4,375 | 15,278 | 419,474 | 8.7 |
-    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U] | 2,465 (U 1,928) | 2,829 (U 2,416) | 22,132 | 374,258 (U 269,637) | 13.2 (U 9.5) |
-    | nlohmann/json `json` | parse + dump | 4,037 | 6,081 | 16,349 | 771,912 | 17.0 |
-    | serde_json (Rust) | Value | 4,081 | 6,880 | 17,249 | 615,033 | 18.4 |
-    | Glaze | generic, minify_json [P] | 4,215 (P 418) | 7,644 (P 1,062) | 29,762 (P 2,150) | 683,744 (P 93,265) | 18.7 (P 2.0) |
+    | **nlohmann/json `json_document`** | parse + dump | 472 | 993 | 5,467 | 152,456 | 2.5 |
+    | yyjson | insitu (copy) + write, read + write | 626 | 1,290 | 6,113 | 196,773 | 3.1 |
+    | sonic-cpp | Document + Serialize [U] | – (U 653) | – (U 1,491) | – (U 7,777) | – (U 172,744) | – (U 3.2) |
+    | simdjson | DOM + to_string, minify [P] | 824 (P 103) | 1,419 (P 256) | 8,134 (P 373) | 305,008 (P 47,751) | 4.9 (P 0.5) |
+    | sonic-rs (Rust) | Value | 1,003 | 2,174 | 7,753 | 217,354 | 5.5 |
+    | Boost.JSON | parse + serialize | 1,738 | 2,558 | 12,553 | 308,079 | 8.6 |
+    | simd-json (Rust) | borrowed (copy) | 1,878 | 4,655 | 15,955 | 419,412 | 9.5 |
+    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U] | 2,403 (U 1,776) | 2,933 (U 2,429) | 21,919 | 359,464 (U 273,075) | 13.0 (U 9.5) |
+    | nlohmann/json `json` | parse + dump | 3,903 | 6,251 | 16,164 | 744,934 | 17.3 |
+    | serde_json (Rust) | Value | 4,220 | 6,876 | 17,276 | 628,192 | 16.7 |
+    | Glaze | generic (strict), minify_json [P] | 4,058 (P 413) | 8,169 (P 1,055) | 29,542 (P 2,139) | 615,992 (P 88,989) | 19.3 (P 2.0) |
 
     **write**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | dump | 152 | 272 | 3,634 | 68,840 | 0.9 |
-    | yyjson | write | 219 | 364 | 3,380 | 75,136 | 1.3 |
-    | sonic-cpp | Serialize | 231 | 475 | 4,851 | 69,344 | 1.2 |
-    | nlohmann/json `json` | dump | 445 | 590 | 4,523 | 118,446 | 1.9 |
-    | Glaze | generic | 413 | 725 | 4,239 | 137,011 | 2.1 |
-    | sonic-rs (Rust) | Value | 442 | 935 | 3,954 | 100,889 | 2.6 |
-    | Boost.JSON | serialize | 489 | 902 | 5,659 | 127,823 | 2.5 |
-    | simd-json (Rust) | borrowed | 604 | 809 | 4,825 | 110,710 | 2.7 |
-    | serde_json (Rust) | Value | 563 | 882 | 3,979 | 120,716 | 2.9 |
-    | simdjson | to_string | 551 | 803 | 12,977 | 183,837 | 3.2 |
-    | RapidJSON | Writer | 644 | 966 | 9,614 | 127,167 | 3.9 |
+    | **nlohmann/json `json_document`** | dump | 152 | 272 | 3,724 | 69,602 | 0.9 |
+    | yyjson | write | 215 | 350 | 3,419 | 78,246 | 1.3 |
+    | sonic-cpp | Serialize | 232 | 480 | 4,857 | 70,286 | 1.2 |
+    | nlohmann/json `json` | dump | 438 | 597 | 4,571 | 119,233 | 2.0 |
+    | Glaze | generic | 388 | 717 | 4,140 | 138,931 | 2.0 |
+    | sonic-rs (Rust) | Value | 445 | 931 | 4,048 | 104,487 | 2.8 |
+    | Boost.JSON | serialize | 488 | 903 | 5,752 | 132,633 | 2.6 |
+    | simdjson | to_string | 492 | 680 | 4,787 | 183,334 | 3.0 |
+    | serde_json (Rust) | Value | 560 | 848 | 3,964 | 129,473 | 3.2 |
+    | simd-json (Rust) | borrowed | 597 | 809 | 4,817 | 114,245 | 3.1 |
+    | RapidJSON | Writer | 639 | 961 | 9,785 | 132,023 | 3.6 |
 
 ### F. Behavior changes
 
@@ -2436,12 +2486,16 @@ These are the checks behind the themes:
 - **Unchanged output.** For this post, we checked that 3.13.0 writes the same bytes as 3.12.0 in all five binary
   formats for 39 test files, and the same JSON text for `twitter.json` and `citm_catalog.json`. The changes of float
   output are listed in [Appendix F](#f-behavior-changes).
+- **`json_document` against `json`.** A fuzzer parses every input with both and requires the same verdict, the same
+  value and the same error message, from a borrowed string and from an exact-size buffer without a closing NUL
+  ([`fuzzer-parse_json_view.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/fuzzer-parse_json_view.cpp)).
 - **Comparison** (theme <a class="nj-theme" href="#theme-7" title="theme 7">7</a>). The single-pass `operator<` was compared with the old code on 68,121 pairs of values.
 - **Mutation checks.** Break a fast path on purpose (skip one byte too many, mark `"` as copyable) and make sure the
   tests notice. Marking the quote as copyable in the short-string table fails 4,551 assertions.
 - **The comparison with other libraries.** Before anything is timed, every way's result is checked: the same values,
   the same string bytes, the same sum of all numbers to the last bit, and an output that reads back as the expected
-  document ([Appendix E](#e-comparison-with-other-libraries)).
+  document. The expected values come from nlohmann/json; the Rust programs compute their own with serde_json, and
+  the two agree ([Appendix E](#e-comparison-with-other-libraries)).
 
 [5185]: https://github.com/nlohmann/json/pull/5185
 [5233]: https://github.com/nlohmann/json/pull/5233
