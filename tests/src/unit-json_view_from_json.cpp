@@ -502,7 +502,7 @@ TEST_CASE("json_view from_json: string_view members borrow from the document")
         const std::string text = R"({"name": "hello", "n": 1})";
         const json_document d = json_document::parse(text);
         REQUIRE_FALSE(d.owns_source());
-        const named_view r = d.root().get<named_view>();
+        const auto r = d.root().get<named_view>();
         CHECK(r.name == "hello");
         CHECK(r.n == 1);
         CHECK(within(r.name, text));
@@ -514,7 +514,7 @@ TEST_CASE("json_view from_json: string_view members borrow from the document")
         const std::string text = R"({"name": "a\nb", "n": 2})";
         json_document d = json_document::parse(text);
         REQUIRE_FALSE(d.owns_source());
-        const named_view r = d.root().get<named_view>();
+        const auto r = d.root().get<named_view>();
         CHECK(r.name == "a\nb");
         CHECK(r.n == 2);
         CHECK_FALSE(within(r.name, text));
@@ -528,7 +528,7 @@ TEST_CASE("json_view from_json: string_view members borrow from the document")
     {
         const json_document d = json_document::parse(std::string(R"({"name": "owned", "n": 3})"));
         REQUIRE(d.owns_source());
-        const named_view r = d.root().get<named_view>();
+        const auto r = d.root().get<named_view>();
         CHECK(r.name == "owned");
         CHECK(within(r.name, d.source()));
     }
