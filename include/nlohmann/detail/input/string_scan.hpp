@@ -90,6 +90,34 @@ JSON_HEDLEY_ALWAYS_INLINE std::size_t find_string_special(const unsigned char* d
     return n;
 }
 
+// return the index of the first 0x00 byte in [data, data+n), or n if there is
+// none; scans 8 bytes at a time (BSON's C-style strings)
+JSON_HEDLEY_ALWAYS_INLINE std::size_t find_zero_byte(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        const std::uint64_t v = read_eight_bytes(data + i);
+        const std::uint64_t zero = (v - ones) & ~v & high;
+        if (zero != 0)
+        {
+            // the lowest flagged byte is the first zero byte (see
+            // find_string_special())
+            return i + (static_cast<std::size_t>(count_trailing_zeros(zero)) / 8);
+        }
+    }
+    for (; i < n; ++i)
+    {
+        if (data[i] == 0x00)
+        {
+            return i;
+        }
+    }
+    return n;
+}
+
 // classify a byte as one the serializer must NOT copy verbatim when
 // ensure_ascii is requested: the closing quote, an escape, a control character
 // (< 0x20), DEL (0x7F), or any non-ASCII byte (>= 0x80). Everything else -

@@ -465,15 +465,17 @@ class binary_reader
             }
 
             const std::size_t element_type_parse_position = chars_read;
+            // an array's elements are named "0", "1", ... in the wire format,
+            // and those names are not passed on: they are skipped unless
+            // error_handler_t::strict must reject ill-formed UTF-8 in them
+            const bool is_object = container_stack.back().is_object;
             key.clear();
-            if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key)))
+            if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key, is_object || error_handler == error_handler_t::strict)))
             {
                 return false;
             }
 
-            // an array's elements are named "0", "1", ... in the wire format,
-            // and those names are not passed on
-            if (container_stack.back().is_object && !sax->key(key))
+            if (is_object && !sax->key(key))
             {
                 return false;
             }
@@ -489,14 +491,18 @@ class binary_reader
     @brief Parses a C-style string from the BSON input.
     @param[in,out] result  A reference to the string variable where the read
                             string is to be stored.
+    @param[in] store  whether the characters are needed; if not (the names of
+                      an array's elements), they are skipped and @a result may
+                      be left unchanged, and they are not checked against
+                      @ref error_handler
     @return `true` if the \\x00-byte indicating the end of the string was
              encountered before the EOF; false` indicates an unexpected EOF.
     */
-    bool get_bson_cstr(string_t& result)
+    bool get_bson_cstr(string_t& result, const bool store = true)
     {
-        if (get_bson_cstr_bulk(result, std::integral_constant<bool, bulk_scan> {}))
+        if (get_bson_cstr_bulk(result, store, std::integral_constant<bool, bulk_scan> {}))
         {
-            return check_string_utf8(result, "key");
+            return !store || check_string_utf8(result, "key");
         }
 
         auto out = std::back_inserter(result);
@@ -509,7 +515,7 @@ class binary_reader
             }
             if (current == 0x00)
             {
-                return check_string_utf8(result, "key");
+                return !store || check_string_utf8(result, "key");
             }
             *out++ = static_cast<typename string_t::value_type>(current);
         }
@@ -519,10 +525,11 @@ class binary_reader
     @brief read a C-style string from contiguous input in one step
 
     @param[in,out] result  the string to append to
+    @param[in] store  whether to append the characters to @a result
     @return whether the string was read; if the input has no \\x00-byte, nothing
             is read, and @ref get_bson_cstr reports the end of the input
     */
-    bool get_bson_cstr_bulk(string_t& result, std::true_type /*bulk*/)
+    bool get_bson_cstr_bulk(string_t& result, const bool store, std::true_type /*bulk*/)
     {
         const std::size_t remaining = ia.bulk_remaining();
         if (remaining == 0)
@@ -530,18 +537,15 @@ class binary_reader
             return false;
         }
         const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
-        // a plain loop rather than std::memchr: most keys are short (array
-        // indices are keys, too), and the call would cost more than it saves
-        std::size_t length = 0;
-        while (length < remaining && data[length] != 0x00)
-        {
-            ++length;
-        }
+        const std::size_t length = find_zero_byte(data, remaining);
         if (length == remaining)
         {
             return false;
         }
-        result.append(reinterpret_cast<const typename string_t::value_type*>(data), length);
+        if (store)
+        {
+            result.append(reinterpret_cast<const typename string_t::value_type*>(data), length);
+        }
         // consume the string and its \x00-byte, as the byte-wise path does
         ia.bulk_skip(length + 1);
         chars_read += length + 1;
@@ -550,7 +554,7 @@ class binary_reader
     }
 
     /// input that is not contiguous: C-style strings are read byte by byte
-    bool get_bson_cstr_bulk(string_t& /*result*/, std::false_type /*bulk*/) const noexcept
+    bool get_bson_cstr_bulk(string_t& /*result*/, const bool /*store*/, std::false_type /*bulk*/) const noexcept
     {
         return false;
     }
