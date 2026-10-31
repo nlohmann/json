@@ -236,6 +236,64 @@ inline std::size_t valid_utf8_prefix(const unsigned char* data, std::size_t n) n
     return pos;
 }
 
+/*!
+@brief whether [data, data+n) is valid UTF-8, for checking whole strings
+
+The same answer as valid_utf8_prefix(data, n) == n. Short ASCII strings, the
+most common keys and values, are decided in one test, and long strings are
+checked 16 bytes at a time where the vector check is available.
+*/
+inline bool valid_utf8_string(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    if (n <= 16)
+    {
+        // two overlapping words cover 8 to 16 bytes, one partial word fewer
+        std::uint64_t first = 0;
+        std::uint64_t last = 0;
+        if (n >= 8)
+        {
+            std::memcpy(&first, data, sizeof(first));
+            std::memcpy(&last, data + n - 8, sizeof(last));
+        }
+        else if (n != 0)
+        {
+            std::memcpy(&first, data, n);
+        }
+        if (((first | last) & high) == 0)
+        {
+            return true;
+        }
+    }
+#if JSON_SCAN_VECTOR_UTF8
+    else if (n >= 32
+#if JSON_SCAN_SSSE3_DISPATCH
+             && cpu_has_ssse3()
+#endif
+            )
+    {
+        const unsigned char* block = vector_utf8_valid_blocks(data, data + n);
+        // the rest from the start of a sequence that may be cut at block
+        for (int i = 1; i <= 3 && block - i >= data; ++i)
+        {
+            const unsigned char c = block[-i];
+            if (c < 0x80)
+            {
+                break;
+            }
+            if (c >= 0xC0)
+            {
+                block -= i;
+                break;
+            }
+        }
+        const auto checked = static_cast<std::size_t>(block - data);
+        return checked + valid_utf8_prefix(block, n - checked) == n;
+    }
+#endif
+    return valid_utf8_prefix(data, n) == n;
+}
+
 #if JSON_SCAN_VECTOR_UTF8
 /// the end of scan_string_vector from block, where the vector loop stopped
 /// (ill-formed UTF-8, or fewer than 16 bytes left): one byte or sequence at a
