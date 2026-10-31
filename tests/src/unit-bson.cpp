@@ -2357,6 +2357,8 @@ TEST_CASE("BSON written in one pass and in two passes")
         }
     }
 
+#if !defined(JSON_NOEXCEPTION)
+    // every entry here throws, which aborts without exceptions
     SECTION("errors at every position")
     {
         // an entry that cannot be written, at each place among valid ones
@@ -2395,4 +2397,5 @@ TEST_CASE("BSON written in one pass and in two passes")
             }
         }
     }
+#endif
 }

@@ -29649,7 +29649,7 @@ class binary_writer
     /// the 32-bit size of BSON
     bool bson_entry_fits(const std::size_t start, const std::size_t entry_size, const std::size_t open_containers) const noexcept
     {
-        const std::size_t limit = static_cast<std::size_t>((std::numeric_limits<std::int32_t>::max)());
+        const auto limit = static_cast<std::size_t>((std::numeric_limits<std::int32_t>::max)());
         const std::size_t written = oa.written() - start;
         return written <= limit && entry_size <= limit - written && open_containers <= limit - written - entry_size;
     }
