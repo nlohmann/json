@@ -285,7 +285,7 @@ class basic_json_view
             {
                 return {};
             }
-            detail::view::throw_type_error(detail::exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", type_name());
         }
         return lookup(key);
     }
@@ -311,7 +311,7 @@ class basic_json_view
             {
                 return {};
             }
-            detail::view::throw_type_error(detail::exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", type_name());
         }
         return idx < m_node->len ? element(idx) : basic_json_view();
     }
@@ -344,12 +344,12 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
-            detail::view::throw_type_error(detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
         }
         const basic_json_view r = lookup(key);
         if (NLOHMANN_VIEW_UNLIKELY(r.is_discarded()))
         {
-            detail::view::throw_key_not_found(std::string(key.data(), key.size()));
+            detail::view::throw_key_not_found(site(), std::string(key.data(), key.size()));
         }
         return r;
     }
@@ -370,11 +370,11 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
         {
-            detail::view::throw_type_error(detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::at_wrong_type, "cannot use at() with ", type_name());
         }
         if (NLOHMANN_VIEW_UNLIKELY(idx >= m_node->len))
         {
-            detail::view::throw_array_index_out_of_range(idx);
+            detail::view::throw_array_index_out_of_range(site(), idx);
         }
         return element(idx);
     }
@@ -402,7 +402,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
-            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         const basic_json_view r = lookup(key);
         return r.is_discarded() ? default_value : r.template get<T>();
@@ -412,7 +412,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
         {
-            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         // (the default is made only if there is no such member)
         const basic_json_view r = lookup(key);
@@ -427,7 +427,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
         {
-            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
         return r.is_discarded() ? default_value : r.template get<T>();
@@ -437,7 +437,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
         {
-            detail::view::throw_type_error(detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::value_wrong_type, "cannot use value() with ", type_name());
         }
         const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
         return r.is_discarded() ? string_t(default_value) : r.template get<string_t>();
@@ -450,7 +450,7 @@ class basic_json_view
         const iterator it = begin();
         if (NLOHMANN_VIEW_UNLIKELY(it == end()))
         {
-            detail::view::throw_invalid_iterator(detail::exception_id::iterator_value_unavailable, "cannot get value");
+            detail::view::throw_invalid_iterator(site(), detail::exception_id::iterator_value_unavailable, "cannot get value");
         }
         return *it;
     }
@@ -606,7 +606,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_string()))
         {
-            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be string, but is ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::type_mismatch, "type must be string, but is ", type_name());
         }
         return {m_doc->str(*m_node), m_node->len};
     }
@@ -618,7 +618,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_number()))
         {
-            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
         }
         return {m_doc->str(*m_node), detail::view::number_length(*m_node)};
     }
@@ -764,11 +764,18 @@ class basic_json_view
     template<typename, view_mode> friend class basic_json_view;
     template<typename, typename> friend class detail::view::editor;
     template<typename, typename> friend class detail::view::view_side;
+    friend struct detail::view::view_access;
     friend iterator;
 
     basic_json_view(const document_data* d, const node* n) noexcept
         : m_doc(d), m_node(n)
     {}
+
+    /// this value as the context of an exception
+    detail::view::error_site site() const noexcept
+    {
+        return detail::view::error_site(m_doc, m_node);
+    }
 
     using json_side_t = detail::view::json_side<BasicJsonType, string_view_t>;
 
@@ -876,7 +883,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_boolean()))
         {
-            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be boolean, but is ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::type_mismatch, "type must be boolean, but is ", type_name());
         }
         return (m_node->flags & detail::view::node_flags::is_true) != 0;
     }
@@ -886,7 +893,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_node == nullptr))
         {
-            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::type_mismatch, "type must be number, but is ", type_name());
         }
         return detail::view::arithmetic_value<T, BasicJsonType>(*m_doc, *m_node);
     }
@@ -895,7 +902,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_UNLIKELY(!is_null()))
         {
-            detail::view::throw_type_error(detail::exception_id::type_mismatch, "type must be null, but is ", type_name());
+            detail::view::throw_type_error(site(), detail::exception_id::type_mismatch, "type must be null, but is ", type_name());
         }
         return nullptr;
     }
@@ -1309,7 +1316,7 @@ class basic_json_document
     template<typename I, typename V, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
     view_type set(view_type array, I idx, V && value)
     {
-        return editor().set(array, index(idx), std::forward<V>(value));
+        return editor().set(array, index(array, idx), std::forward<V>(value));
     }
 
     /// set the value at a JSON pointer: its parent must exist; an object
@@ -1346,7 +1353,7 @@ class basic_json_document
                 const std::size_t idx = pointer_index(token);
                 if (idx >= 0xFFFFFFFFu)
                 {
-                    detail::view::throw_array_index_out_of_range(idx);
+                    detail::view::throw_array_index_out_of_range(detail::view::site_of(parent), idx);
                 }
                 for (std::size_t i = 0; i < idx; ++i)
                 {
@@ -1380,7 +1387,7 @@ class basic_json_document
     template<typename I, typename V, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
     view_type insert(view_type array, I idx, V && value)
     {
-        return editor().insert(array, index(idx), std::forward<V>(value));
+        return editor().insert(array, index(array, idx), std::forward<V>(value));
     }
 
     /// remove all members with this key; returns their number
@@ -1393,7 +1400,7 @@ class basic_json_document
     template<typename I, typename std::enable_if<detail::view::is_non_bool_integral<I>::value, int>::type = 0>
     void erase(view_type array, I idx)
     {
-        editor().erase(array, index(idx));
+        editor().erase(array, index(array, idx));
     }
 
     /// remove the value at a JSON pointer; returns the number of removed
@@ -1427,25 +1434,25 @@ class basic_json_document
         return detail::view::editor<BasicJsonType, view_type>(*m_data);
     }
 
-    /// an index (out_of_range.401 if negative)
+    /// an index into @a array (out_of_range.401 if negative)
     template<typename I>
-    static std::size_t index(I idx)
+    static std::size_t index(const view_type& array, I idx)
     {
-        return index(idx, std::is_signed<I> {});
+        return index(array, idx, std::is_signed<I> {});
     }
 
     template<typename I>
-    static std::size_t index(I idx, std::true_type /*signed*/)
+    static std::size_t index(const view_type& array, I idx, std::true_type /*signed*/)
     {
         if (idx < 0)
         {
-            detail::view::throw_array_index_out_of_range(idx);
+            detail::view::throw_array_index_out_of_range(detail::view::site_of(array), idx);
         }
         return static_cast<std::size_t>(idx);
     }
 
     template<typename I>
-    static std::size_t index(I idx, std::false_type /*unsigned*/)
+    static std::size_t index(const view_type& /*array*/, I idx, std::false_type /*unsigned*/)
     {
         return static_cast<std::size_t>(idx);
     }

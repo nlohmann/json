@@ -134,9 +134,21 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
 - **Macros.** [`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md) and
   [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md)/[`JSON_THROW_USER`](../api/macros/json_throw_user.md)
   behave the same way they do for `<nlohmann/json.hpp>`. These are the macros that change what the parser accepts or
-  how it reports errors. The others either do not apply ([`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md)
-  needs parent pointers in `basic_json` values) or only affect the values `materialize()` produces, through
-  `BasicJsonType`.
+  how it reports errors. Two more macros add context to the exceptions of views, as they do for those of
+  `#!cpp basic_json`:
+
+    - With [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md), an exception names the JSON Pointer path of the
+      value within the document.
+    - With [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md), an exception names the bytes of
+      the value in the source text.
+
+    A view has neither parent pointers nor stored positions, so both are found from the document's index when the
+    exception is thrown. This takes time linear in the size of the document. One exception has neither:
+    `key()` of an iterator over an array or a primitive value
+    ([`invalid_iterator.207`](../home/exceptions.md#jsonexceptioninvalid_iterator207)), because a view's iterator does
+    not know the value it iterates over.
+
+    The other macros only affect the values `materialize()` produces, through `BasicJsonType`.
 
 ## What is different
 
@@ -167,10 +179,6 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   [`at`](../api/basic_json_view/at.md) throws for every missing value.
 - **Duplicate keys: lookups find the first member, `parse()` keeps the last.** See [Duplicate keys](#duplicate-keys)
   below.
-- **No [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) path.** Exceptions thrown by `basic_json_view`'s own
-  element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the
-  view has no `basic_json` value to point at, so the exception is created without one, regardless of how
-  `BasicJsonType` was built.
 - **Ordering comparisons are not provided** by `basic_json_view` — there is no `#!cpp operator<`.
   [`operator==`](../api/basic_json_view/operator_eq.md) and [`operator!=`](../api/basic_json_view/operator_ne.md) are
   provided, though: two views, or a view and a `BasicJsonType` value, compare equal exactly when
@@ -329,14 +337,10 @@ Its body may only use what views and `basic_json` have in common: the type check
 a view does not have; such a type is converted through `materialize()`. A `from_json()` for `json` only is
 converted through `materialize()` as well.
 
-Two things differ when a `from_json()` reads the view:
-
-- **Duplicate keys.** Members looked up by name (`at()`, `value()`, ... and thus the macros) find the **first** member
-  with a repeated key, see [Duplicate keys](#duplicate-keys); `#!cpp materialize().get<T>()` would see the last one.
-  Containers built from an object, such as `#!cpp std::map`, keep the **last** value either way, as
-  [`parse()`](../api/basic_json/parse.md) does.
-- **[`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md).** Exceptions thrown by the view carry no path to the
-  value.
+One thing differs when a `from_json()` reads the view: members looked up by name (`at()`, `value()`, ... and thus
+the macros) find the **first** member with a repeated key, see [Duplicate keys](#duplicate-keys);
+`#!cpp materialize().get<T>()` would see the last one. Containers built from an object, such as `#!cpp std::map`,
+keep the **last** value either way, as [`parse()`](../api/basic_json/parse.md) does.
 
 `to_json()` is unaffected: it writes `basic_json` values, never views.
 

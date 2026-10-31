@@ -157,7 +157,7 @@ class editor
         node* const o = own(object);
         if (o->kind != node_kind::object && o->kind != node_kind::null)
         {
-            throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", object.type_name());
+            throw_type_error(site_of(object), exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", object.type_name());
         }
         check_utf8(key.data(), key.size());
         const encoded e = encode(std::forward<V>(value));
@@ -208,9 +208,9 @@ class editor
         node* const a = own(array);
         if (a->kind != node_kind::array)
         {
-            throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", array.type_name());
+            throw_type_error(site_of(array), exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", array.type_name());
         }
-        check_index(idx, a->len);
+        check_index(a, idx, a->len);
         const encoded e = encode(std::forward<V>(value));
         node* const slot = const_cast<node*>(nav::value(element_at<true>(m_doc, a, idx))); // NOLINT(cppcoreguidelines-pro-type-const-cast)
         assign(slot, e, a, true);
@@ -225,7 +225,7 @@ class editor
         node* const a = own(array);
         if (a->kind != node_kind::array && a->kind != node_kind::null)
         {
-            throw_type_error(exception_id::push_back_wrong_type, "cannot use push_back() with ", array.type_name());
+            throw_type_error(site_of(array), exception_id::push_back_wrong_type, "cannot use push_back() with ", array.type_name());
         }
         const encoded e = encode(std::forward<V>(value));
         if (a->kind == node_kind::null)
@@ -249,9 +249,9 @@ class editor
         node* const a = own(array);
         if (a->kind != node_kind::array)
         {
-            throw_type_error(exception_id::insert_wrong_type, "cannot use insert() with ", array.type_name());
+            throw_type_error(site_of(array), exception_id::insert_wrong_type, "cannot use insert() with ", array.type_name());
         }
-        check_index(idx, a->len + 1);
+        check_index(a, idx, a->len + 1);
         const encoded e = encode(std::forward<V>(value));
         node* const slot = new_slot(e);
         node* const h = block_of(m_doc, a, 1);
@@ -269,7 +269,7 @@ class editor
         node* const o = own(object);
         if (o->kind != node_kind::object)
         {
-            throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", object.type_name());
+            throw_type_error(site_of(object), exception_id::erase_wrong_type, "cannot use erase() with ", object.type_name());
         }
         for (const node* k = nav::first(m_doc, o), *end = nav::end(m_doc, o); k != end; k = document_data::after(k + 1))
         {
@@ -287,9 +287,9 @@ class editor
         node* const a = own(array);
         if (a->kind != node_kind::array)
         {
-            throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", array.type_name());
+            throw_type_error(site_of(array), exception_id::erase_wrong_type, "cannot use erase() with ", array.type_name());
         }
-        check_index(idx, a->len);
+        check_index(a, idx, a->len);
         node* const h = block_of(m_doc, a, 0);
         std::memmove(h + 1 + idx, h + 2 + idx, (h->next - 2 - idx) * sizeof(node));
         --h->next;
@@ -316,11 +316,11 @@ class editor
         return const_cast<node*>(v.m_node); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to this document
     }
 
-    static void check_index(std::size_t idx, std::size_t limit)
+    void check_index(const node* array, std::size_t idx, std::size_t limit) const
     {
         if (idx >= limit)
         {
-            throw_array_index_out_of_range(idx);
+            throw_array_index_out_of_range(error_site(&m_doc, array), idx);
         }
     }
 

@@ -80,14 +80,13 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 - For every other `T`: whatever [`materialize().get<T>()`](../basic_json/get.md) throws — typically `type_error.302`,
   or whatever a user-provided `from_json()` throws.
 
-None of the exceptions thrown directly by this function or by a `from_json()` that reads the view (the first four
-bullets above) carry a
-[`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) path: the view has no `BasicJsonType` value to point at. An
-exception thrown while converting through `materialize()` (the last bullet) is different: it is thrown by a real
-`BasicJsonType` value, so it **does** carry a `JSON_DIAGNOSTICS` path if `BasicJsonType` was built with it enabled.
-That path is relative to the root of the view's subtree, because `materialize()` builds only the subtree (with parent
-pointers): it is empty if the failing value is the subtree's root itself, and it never is the path within the whole
-document.
+The exceptions thrown directly by this function or by a `from_json()` that reads the view (the first four bullets
+above) carry the context of those of `BasicJsonType`: with [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) the
+JSON Pointer path of the value within the document, and with
+[`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) its bytes in the source text. An exception
+thrown while converting through `materialize()` (the last bullet) is thrown by the materialized `BasicJsonType` value
+instead: its path is relative to the root of the view's subtree, because `materialize()` builds only the subtree
+(with parent pointers), so it is empty if the failing value is the subtree's root itself.
 
 ## Complexity
 
