@@ -512,6 +512,26 @@ TEST_CASE("json_view exceptions name the path and the bytes of the value")
         CHECK(exception_of_call([&] { static_cast<void>(d.root()["a"][2]["n"][0].get<int>()); }) == expected);
     }
 
+    SECTION("deep documents with siblings after every nested container")
+    {
+        // the search for the path pushes and pops one frame per level (the
+        // stack reallocates while it grows, and shrinks again at every
+        // sibling): run under a sanitizer, a reference to a popped or moved
+        // frame would show here
+        std::string text = "7";
+        for (int level = 0; level < 40; ++level)
+        {
+            text = R"([[1, [2]], )" + text + R"(, {"k": [3, {"l": [4]}]}, [5, [6, [7]]]])";
+        }
+        CAPTURE(text)
+        const json j = json::parse(text);
+        const json_document d = json_document::parse(text);
+        check_exceptions(d.root(), j);
+        json_editable_document e = json_editable_document::parse(text);
+        e.set(e.root()[0][0], 9);
+        check_exceptions(e.root(), e.root().materialize());
+    }
+
     SECTION("examples")
     {
         const std::string text = R"({"people": [{"name": "a", "age": 1}, {"name": "c", "age": "x"}], "o": {"k": 1}})";

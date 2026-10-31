@@ -4546,16 +4546,11 @@ class error_site
   public:
     error_site() noexcept = default;
 
+#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
     error_site(const document_data* d, const node* n) noexcept
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
         : m_doc(d), m_node(n)
-#endif
-    {
-        static_cast<void>(d);
-        static_cast<void>(n);
-    }
+    {}
 
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
     const document_data* doc() const noexcept
     {
         return m_doc;
@@ -4568,6 +4563,8 @@ class error_site
   private:
     const document_data* m_doc = nullptr;
     const node* m_node = nullptr;
+#else
+    error_site(const document_data* /*d*/, const node* /*n*/) noexcept {}
 #endif
 };
 
@@ -4584,6 +4581,7 @@ struct view_access
 template<typename View>
 error_site site_of(const View& v) noexcept
 {
+    static_assert(is_json_view<View>::value, "the site of a value is only defined for views");
     return view_access::site(v);
 }
 
@@ -4621,16 +4619,18 @@ bool value_path(const document_data& d, const node* target, std::vector<std::str
     std::vector<frame> stack;
     stack.push_back(frame{nav::first(d, root), nav::end(d, root), 0, root->kind == node_kind::object});
     // (tokens[i] leads from stack[i] to stack[i + 1], or to the target)
-    while (!stack.empty())
+    for (;;)
     {
+        // (f is not used after the stack changes: pop_back() below, push_back() at the end)
         frame& f = stack.back();
         if (f.pos == f.end)
         {
             stack.pop_back();
-            if (!tokens.empty())
+            if (stack.empty())
             {
-                tokens.pop_back();
+                return false;
             }
+            tokens.pop_back();
             continue;
         }
         const node* entry = f.pos;
@@ -4651,20 +4651,19 @@ bool value_path(const document_data& d, const node* target, std::vector<std::str
             token = std::to_string(f.index);
         }
         const node* const child = nav::value(entry);
-        f.pos = document_data::after(entry);
-        ++f.index;
         if (child == target)
         {
             tokens.push_back(token);
             return true;
         }
+        f.pos = document_data::after(entry);
+        ++f.index;
         if (is_container(*child) && (nav::editable() || (target > child && target < child + child->next)))
         {
             tokens.push_back(token);
             stack.push_back(frame{nav::first(d, child), nav::end(d, child), 0, child->kind == node_kind::object});
         }
     }
-    return false;
 }
 #endif
 
@@ -4701,32 +4700,31 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
     std::size_t pos = std::string::npos;
     for (const node* c = n;;)
     {
-        if (is_container(*c))
+        if (!is_container(*c))
         {
-            if ((c->flags & node_flags::is_new) != 0 || c->off >= d.size)
-            {
-                return;
-            }
-            ++closing;
-            const node* const first = nav::first(d, c);
-            const node* const last_end = nav::end(d, c);
-            if (first == last_end)
-            {
-                pos = std::size_t{c->off} + 1;
-                break;
-            }
-            const std::size_t value_offset = c->kind == node_kind::object ? 1 : 0;
-            const node* last = first;
-            for (const node* e = document_data::after(first + value_offset); e != last_end; e = document_data::after(e + value_offset))
-            {
-                last = e;
-            }
-            c = nav::value(last + value_offset);
-            continue;
+            p.set_scalar(d, *c);
+            pos = p.end;
+            break;
         }
-        p.set_scalar(d, *c);
-        pos = p.end;
-        break;
+        if ((c->flags & node_flags::is_new) != 0 || c->off >= d.size)
+        {
+            return;
+        }
+        ++closing;
+        const node* const first = nav::first(d, c);
+        const node* const last_end = nav::end(d, c);
+        if (first == last_end)
+        {
+            pos = std::size_t{c->off} + 1;
+            break;
+        }
+        const std::size_t value_offset = c->kind == node_kind::object ? 1 : 0;
+        const node* last = first;
+        for (const node* e = document_data::after(first + value_offset); e != last_end; e = document_data::after(e + value_offset))
+        {
+            last = e;
+        }
+        c = nav::value(last + value_offset);
     }
     for (; closing != 0 && pos != std::string::npos; --closing)
     {
@@ -4751,33 +4749,17 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
 /// function makes it), it changed GCC's early inlining of unrelated view
 /// functions, so that GCC 13 no longer inlined a recursive walk over a view
 /// into itself (2.7 times the instructions).
+#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
 template<typename Unused = void>
 std::string diagnostics(const error_site site)
 {
-#if JSON_DIAGNOSTICS || JSON_DIAGNOSTIC_POSITIONS
     if (site.doc() == nullptr || site.value() == nullptr)
     {
         return "";
     }
     const document_data& d = *site.doc();
     const bool edited = d.edits != nullptr;
-    std::string bytes;
-#if JSON_DIAGNOSTIC_POSITIONS
-    std::size_t start = 0;
-    std::size_t end = 0;
-    if (edited)
-    {
-        value_range<true>(d, site.value(), start, end);
-    }
-    else
-    {
-        value_range<false>(d, site.value(), start, end);
-    }
-    if (start != std::string::npos && end != std::string::npos)
-    {
-        bytes = concat("(bytes ", std::to_string(start), "-", std::to_string(end), ") ");
-    }
-#endif
+    std::string context;
 #if JSON_DIAGNOSTICS
     std::vector<std::string> tokens;
     const bool found = edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens);
@@ -4791,15 +4773,33 @@ std::string diagnostics(const error_site site)
         path.push_back('/');
         path += detail::escape(token);
     }
-    return concat('(', path, ") ", bytes);
-#else
-    return bytes;
+    context = concat('(', path, ") ");
 #endif
-#else
-    static_cast<void>(site);
-    return "";
+#if JSON_DIAGNOSTIC_POSITIONS
+    std::size_t start = 0;
+    std::size_t end = 0;
+    if (edited)
+    {
+        value_range<true>(d, site.value(), start, end);
+    }
+    else
+    {
+        value_range<false>(d, site.value(), start, end);
+    }
+    if (start != std::string::npos && end != std::string::npos)
+    {
+        context += concat("(bytes ", std::to_string(start), "-", std::to_string(end), ") ");
+    }
 #endif
+    return context;
 }
+#else
+template<typename Unused = void>
+std::string diagnostics(const error_site /*site*/)
+{
+    return "";
+}
+#endif
 
 /// the context of an exception about view @a v (see exception_prefix())
 template<typename View>
@@ -4811,6 +4811,13 @@ std::string diagnostics_of(const View& v)
 // Exceptions are thrown out of line, so that the accessors that may throw stay
 // small enough to be inlined. The overloads with an error_site put its context
 // in front of the message.
+//
+// The overloads without one are for exceptions that are not about a value of a
+// document: limits and invalid input of the editing and image functions, a
+// discarded view (it has no node), a view of another document (its path would
+// be one in that document), and those that basic_json creates without a
+// context too (the errors of json_pointer, invalid UTF-8). The one exception
+// about a value that has no site is key(), see view_iterator::key().
 
 [[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_type_error(exception_id id, const char* prefix, const char* type)
 {
@@ -8019,8 +8026,8 @@ index_status array_index(const StringType& s, std::size_t& idx) noexcept
 }
 
 /// throws the exception json_pointer::array_index throws for this status
-template<typename StringType>
 /// (without a context, as json_pointer::array_index)
+template<typename StringType>
 [[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_array_index_error(index_status status, const StringType& s)
 {
     switch (status)

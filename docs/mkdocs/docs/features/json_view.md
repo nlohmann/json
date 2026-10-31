@@ -134,14 +134,21 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
 - **Macros.** [`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md) and
   [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md)/[`JSON_THROW_USER`](../api/macros/json_throw_user.md)
   behave the same way they do for `<nlohmann/json.hpp>`. These are the macros that change what the parser accepts or
-  how it reports errors. With [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) and
-  [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md), the exceptions of views name the path
-  and the bytes of the value as those of `#!cpp basic_json` do; as a view has neither parent pointers nor stored
-  positions, both are found from the document's index when the exception is thrown, which takes time linear in the
-  size of the document (only for an exception). One exception has neither: `key()` of an iterator over an array or a
-  primitive value ([`invalid_iterator.207`](../home/exceptions.md#jsonexceptioninvalid_iterator207)), as a view's
-  iterator does not know the value it iterates over. The other macros only affect the values `materialize()` produces,
-  through `BasicJsonType`.
+  how it reports errors. Two more macros add context to the exceptions of views, as they do for those of
+  `#!cpp basic_json`:
+
+    - With [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md), an exception names the JSON Pointer path of the
+      value within the document.
+    - With [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md), an exception names the bytes of
+      the value in the source text.
+
+    A view has neither parent pointers nor stored positions, so both are found from the document's index when the
+    exception is thrown. This takes time linear in the size of the document. One exception has neither:
+    `key()` of an iterator over an array or a primitive value
+    ([`invalid_iterator.207`](../home/exceptions.md#jsonexceptioninvalid_iterator207)), because a view's iterator does
+    not know the value it iterates over.
+
+    The other macros only affect the values `materialize()` produces, through `BasicJsonType`.
 
 ## What is different
 

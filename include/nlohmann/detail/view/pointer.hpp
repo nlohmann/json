@@ -44,8 +44,8 @@ index_status array_index(const StringType& s, std::size_t& idx) noexcept
 }
 
 /// throws the exception json_pointer::array_index throws for this status
-template<typename StringType>
 /// (without a context, as json_pointer::array_index)
+template<typename StringType>
 [[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_array_index_error(index_status status, const StringType& s)
 {
     switch (status)

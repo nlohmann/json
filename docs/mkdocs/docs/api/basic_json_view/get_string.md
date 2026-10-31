@@ -24,7 +24,7 @@ Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) i
 
 As for `BasicJsonType`, with [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) the exception names the JSON Pointer
 path of the value within the document, and with [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md)
-its bytes in the source text (where [`materialize()`](materialize.md) sets them).
+its bytes in the source text (when [`materialize()`](materialize.md) sets them).
 
 ## Complexity
 

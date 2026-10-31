@@ -75,7 +75,7 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 
 As for `BasicJsonType`, with [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) these exceptions name the JSON
 Pointer path of the value within the document, and with
-[`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) its bytes in the source text (where
+[`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) its bytes in the source text (when
 [`materialize()`](materialize.md) sets them).
 
 ## Complexity
