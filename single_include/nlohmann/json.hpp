@@ -12377,6 +12377,78 @@ JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline bool vector_utf8_run(cons
     block_out = block;
     return false;
 }
+
+/*!
+@brief skip 16-byte blocks of well-formed UTF-8 at p (a character boundary)
+
+Like vector_utf8_run, but quotes, backslashes, and control characters are
+ordinary characters. Returns the start of the first block in which the check
+found an error (which may belong to a sequence begun in the block before) or
+where fewer than 16 bytes are left; a sequence may be cut at that point, so the
+caller resumes at its start, one sequence at a time.
+*/
+JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline const unsigned char* vector_utf8_valid_blocks(const unsigned char* block, const unsigned char* e) noexcept
+{
+    using lookup = utf8_lookup4<>;
+#if JSON_SCAN_NEON
+    const uint8x16_t t1h = vld1q_u8(lookup::byte_1_high.data());
+    const uint8x16_t t1l = vld1q_u8(lookup::byte_1_low.data());
+    const uint8x16_t t2h = vld1q_u8(lookup::byte_2_high.data());
+    uint8x16_t prev = vdupq_n_u8(0);
+    while (e - block >= 16)
+    {
+        const uint8x16_t in = vld1q_u8(block);
+        if (vmaxvq_u8(vorrq_u8(in, prev)) < 0x80)
+        {
+            // ASCII here, and no sequence from the block before to finish
+            prev = in;
+            block += 16;
+            continue;
+        }
+        const uint8x16_t prev1 = vextq_u8(prev, in, 15);
+        const uint8x16_t sc = vandq_u8(vandq_u8(vqtbl1q_u8(t1h, vshrq_n_u8(prev1, 4)), vqtbl1q_u8(t1l, vandq_u8(prev1, vdupq_n_u8(0x0F)))), vqtbl1q_u8(t2h, vshrq_n_u8(in, 4)));
+        const uint8x16_t must23 = vorrq_u8(vqsubq_u8(vextq_u8(prev, in, 14), vdupq_n_u8(0xE0 - 0x80)), vqsubq_u8(vextq_u8(prev, in, 13), vdupq_n_u8(0xF0 - 0x80)));
+        const uint8x16_t err = veorq_u8(vandq_u8(must23, vdupq_n_u8(0x80)), sc);
+        if (vmaxvq_u8(err) != 0)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#else
+    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i nibble = _mm_set1_epi8(0x0F);
+    const __m128i zero = _mm_setzero_si128();
+    __m128i prev = zero;
+    while (e - block >= 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
+        if (_mm_movemask_epi8(_mm_or_si128(in, prev)) == 0)
+        {
+            prev = in;
+            block += 16;
+            continue;
+        }
+        const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
+        const __m128i sc = _mm_and_si128(_mm_and_si128(_mm_shuffle_epi8(t1h, _mm_and_si128(_mm_srli_epi16(prev1, 4), nibble)),
+                                         _mm_shuffle_epi8(t1l, _mm_and_si128(prev1, nibble))),
+                                         _mm_shuffle_epi8(t2h, _mm_and_si128(_mm_srli_epi16(in, 4), nibble)));
+        const __m128i must23 = _mm_or_si128(_mm_subs_epu8(_mm_alignr_epi8(in, prev, 14), _mm_set1_epi8(0xE0 - 0x80)),
+                                            _mm_subs_epu8(_mm_alignr_epi8(in, prev, 13), _mm_set1_epi8(0xF0 - 0x80)));
+        const __m128i err = _mm_xor_si128(_mm_and_si128(must23, _mm_set1_epi8(static_cast<char>(-128))), sc);
+        if (_mm_movemask_epi8(_mm_cmpeq_epi8(err, zero)) != 0xFFFF)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#endif
+    return block;
+}
 #endif
 
 }  // namespace detail
@@ -12602,6 +12674,64 @@ inline std::size_t valid_utf8_prefix(const unsigned char* data, std::size_t n) n
         pos += seq;
     }
     return pos;
+}
+
+/*!
+@brief whether [data, data+n) is valid UTF-8, for checking whole strings
+
+The same answer as valid_utf8_prefix(data, n) == n. Short ASCII strings, the
+most common keys and values, are decided in one test, and long strings are
+checked 16 bytes at a time where the vector check is available.
+*/
+inline bool valid_utf8_string(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    if (n <= 16)
+    {
+        // two overlapping words cover 8 to 16 bytes, one partial word fewer
+        std::uint64_t first = 0;
+        std::uint64_t last = 0;
+        if (n >= 8)
+        {
+            std::memcpy(&first, data, sizeof(first));
+            std::memcpy(&last, data + n - 8, sizeof(last));
+        }
+        else if (n != 0)
+        {
+            std::memcpy(&first, data, n);
+        }
+        if (((first | last) & high) == 0)
+        {
+            return true;
+        }
+    }
+#if JSON_SCAN_VECTOR_UTF8
+    else if (n >= 32
+#if JSON_SCAN_SSSE3_DISPATCH
+             && cpu_has_ssse3()
+#endif
+            )
+    {
+        const unsigned char* block = vector_utf8_valid_blocks(data, data + n);
+        // the rest from the start of a sequence that may be cut at block
+        for (int i = 1; i <= 3 && block - i >= data; ++i)
+        {
+            const unsigned char c = block[-i];
+            if (c < 0x80)
+            {
+                break;
+            }
+            if (c >= 0xC0)
+            {
+                block -= i;
+                break;
+            }
+        }
+        const auto checked = static_cast<std::size_t>(block - data);
+        return checked + valid_utf8_prefix(block, n - checked) == n;
+    }
+#endif
+    return valid_utf8_prefix(data, n) == n;
 }
 
 #if JSON_SCAN_VECTOR_UTF8
@@ -22069,6 +22199,19 @@ class binary_reader
         return get_bytes(len, "string", result);
     }
 
+    /// whether @a s is valid UTF-8: ASCII eight bytes at a time, the rest
+    /// sequence by sequence (as the binary writers check strings)
+    static bool is_valid_utf8_string(const string_t& s, std::true_type /*is_byte*/) noexcept
+    {
+        return valid_utf8_string(reinterpret_cast<const unsigned char*>(s.data()), s.size());
+    }
+
+    /// whether @a s, of a character type wider than a byte, is valid UTF-8
+    static bool is_valid_utf8_string(const string_t& s, std::false_type /*is_byte*/) noexcept
+    {
+        return is_valid_utf8(s);
+    }
+
     /*!
     @brief validate a decoded text string (value or object key) against @ref error_handler
 
@@ -22088,7 +22231,16 @@ class binary_reader
     */
     bool check_string_utf8(string_t& result, const char* context)
     {
-        if (error_handler == error_handler_t::keep || is_valid_utf8(result))
+        return error_handler == error_handler_t::keep || check_string_utf8_handler(result, context);
+    }
+
+    /// @ref check_string_utf8 for an error handler other than @ref
+    /// error_handler_t::keep; out of line, so that reading strings without a
+    /// check does not pay for the code of the check
+    JSON_HEDLEY_NEVER_INLINE
+    bool check_string_utf8_handler(string_t& result, const char* context)
+    {
+        if (is_valid_utf8_string(result, std::integral_constant<bool, sizeof(typename string_t::value_type) == 1>()))
         {
             return true;
         }
@@ -30306,6 +30458,25 @@ class binary_writer
         }
     }
 
+    /// write the head and the characters of @a value, at most
+    /// max_text_in_reservation of them, in one reservation
+    JSON_HEDLEY_ALWAYS_INLINE void write_cbor_string_reserved(const string_t& value)
+    {
+        CharType* const out = oa.reserve(value.size() + 2);
+        CharType* p = out;
+        if (value.size() <= 0x17)
+        {
+            *p++ = to_char_type(static_cast<std::uint8_t>(0x60 + value.size()));
+        }
+        else
+        {
+            *p++ = to_char_type(0x78);
+            *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+        }
+        copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+        oa.commit(static_cast<std::size_t>(p - out) + value.size());
+    }
+
     /*!
     @brief write a CBOR text string
 
@@ -30327,19 +30498,7 @@ class binary_writer
             // the string is written as it is: head and characters in one reservation
             if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
             {
-                CharType* const out = oa.reserve(value.size() + 2);
-                CharType* p = out;
-                if (value.size() <= 0x17)
-                {
-                    *p++ = to_char_type(static_cast<std::uint8_t>(0x60 + value.size()));
-                }
-                else
-                {
-                    *p++ = to_char_type(0x78);
-                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
-                }
-                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
-                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                write_cbor_string_reserved(value);
                 return;
             }
         }
@@ -30353,6 +30512,13 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_cbor_checked_string(const string_t& value, const BasicJsonType& context)
     {
+        if (error_handler == error_handler_t::strict && value.size() <= max_text_in_reservation)
+        {
+            check_utf8(value, context);
+            write_cbor_string_reserved(value);
+            return;
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -30366,6 +30532,27 @@ class binary_writer
     /////////////
     // MsgPack //
     /////////////
+
+    /// write the head and the characters of @a value, at most
+    /// max_text_in_reservation of them, in one reservation
+    JSON_HEDLEY_ALWAYS_INLINE void write_msgpack_string_reserved(const string_t& value)
+    {
+        CharType* const out = oa.reserve(value.size() + 2);
+        CharType* p = out;
+        if (value.size() <= 31)
+        {
+            // fixstr
+            *p++ = to_char_type(static_cast<std::uint8_t>(0xA0 | value.size()));
+        }
+        else
+        {
+            // str 8
+            *p++ = to_char_type(0xD9);
+            *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+        }
+        copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+        oa.commit(static_cast<std::size_t>(p - out) + value.size());
+    }
 
     /*!
     @brief write a MessagePack str
@@ -30384,21 +30571,7 @@ class binary_writer
             // the string is written as it is: head and characters in one reservation
             if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
             {
-                CharType* const out = oa.reserve(value.size() + 2);
-                CharType* p = out;
-                if (value.size() <= 31)
-                {
-                    // fixstr
-                    *p++ = to_char_type(static_cast<std::uint8_t>(0xA0 | value.size()));
-                }
-                else
-                {
-                    // str 8
-                    *p++ = to_char_type(0xD9);
-                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
-                }
-                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
-                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                write_msgpack_string_reserved(value);
                 return;
             }
         }
@@ -30411,6 +30584,13 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_msgpack_checked_string(const string_t& value, const BasicJsonType& context)
     {
+        if (error_handler == error_handler_t::strict && value.size() <= max_text_in_reservation)
+        {
+            check_utf8(value, context);
+            write_msgpack_string_reserved(value);
+            return;
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -32020,10 +32200,9 @@ class binary_writer
     static void check_utf8(const string_t& s, const BasicJsonType& context)
     {
         const auto* data = reinterpret_cast<const unsigned char*>(s.data());
-        const std::size_t valid = valid_utf8_prefix(data, s.size());
-        if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
+        if (JSON_HEDLEY_UNLIKELY(!valid_utf8_string(data, s.size())))
         {
-            throw_invalid_utf8(data, valid, context);
+            throw_invalid_utf8(data, valid_utf8_prefix(data, s.size()), context);
         }
     }
 

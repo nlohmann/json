@@ -403,6 +403,7 @@ TEST_CASE("guard page")
                     CHECK(nlohmann::detail::find_string_special(p, n) <= n);
                     CHECK(nlohmann::detail::find_ascii_copyable_run(p, n) <= n);
                     CHECK(nlohmann::detail::valid_utf8_prefix(p, n) <= n);
+                    CHECK(nlohmann::detail::valid_utf8_string(p, n) == (nlohmann::detail::valid_utf8_prefix(p, n) == n));
 #if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
                     CHECK(nlohmann::detail::find_string_delimiter(p, n) <= n);
 #endif
