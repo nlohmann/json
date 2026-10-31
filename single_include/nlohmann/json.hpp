@@ -13065,8 +13065,13 @@ constexpr bool input_adapter_bulk_window(std::false_type /*detected*/)
 @brief lexical analysis
 
 This class organizes the lexical analysis during JSON deserialization.
+
+DiscardValues: the caller only needs the token types and never looks at the values of number and string tokens (only
+accept(), which parses through json_sax_acceptor). A template parameter rather than a member, so that the lexer of
+parse() is compiled without the paths of accept(): with both string scans in one scan(), parse() was up to 2 % slower
+on Apple M1.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, bool DiscardValues = false>
 class lexer : public lexer_base<BasicJsonType>
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -13124,10 +13129,9 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false, bool discard_number_values_ = false) noexcept
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false) noexcept
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
-        , discard_number_values(discard_number_values_)
     {
         // the token string of an error before the first token is everything
         // read so far
@@ -13244,6 +13248,8 @@ class lexer : public lexer_base<BasicJsonType>
     checks if it is inside the range. If a violation was detected, set up an
     error message and return false. Otherwise, return true.
 
+    @param[in] keep    whether the bytes are added to token_buffer (false for
+                       accept(), see scan())
     @param[in] ranges  list of integers; interpreted as list of pairs of
                        inclusive lower and upper bound, respectively
 
@@ -13252,17 +13258,18 @@ class lexer : public lexer_base<BasicJsonType>
 
     @return true if and only if no range violation was detected
     */
-    bool next_byte_in_range(std::initializer_list<char_int_type> ranges)
+    template<bool Keep>
+    bool next_byte_in_range(std::integral_constant<bool, Keep> keep, std::initializer_list<char_int_type> ranges)
     {
         JSON_ASSERT(ranges.size() == 2 || ranges.size() == 4 || ranges.size() == 6);
-        add(current);
+        add_string_char(keep, current);
 
         for (auto range = ranges.begin(); range != ranges.end(); ++range)
         {
             get();
             if (JSON_HEDLEY_LIKELY(*range <= current && current <= *(++range))) // NOLINT(bugprone-inc-dec-in-conditions)
             {
-                add(current);
+                add_string_char(keep, current);
             }
             else
             {
@@ -13275,14 +13282,16 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// contiguous input: bulk-append the run of ordinary characters and complete
-    /// well-formed UTF-8 sequences starting at the current read position, then
+    /// well-formed UTF-8 sequences starting at the current read position (only
+    /// skip it if @a keep is false), then
     /// read the first byte that needs individual handling (the closing quote, an
     /// escape, a control character, or an ill-formed UTF-8 byte) like get().
     /// That byte is taken from the buffer that was just scanned. Through get(),
     /// Apple Clang merged this read with the other get() calls of the scan
     /// function, which load the read position again right after it was stored
     /// (3% of json::accept() on jeopardy.json on Apple M1).
-    char_int_type get_after_string_run(std::true_type /*bulk*/)
+    template<bool Keep>
+    char_int_type get_after_string_run(std::true_type /*bulk*/, std::integral_constant<bool, Keep> keep)
     {
         // a pending unget must be consumed through the normal path first
         if (next_unget)
@@ -13300,7 +13309,7 @@ class lexer : public lexer_base<BasicJsonType>
         const std::size_t pos = lexer_string_bulk_run(data, remaining);
         if (pos != 0)
         {
-            token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
+            append_string_run(keep, data, pos);
             bulk_consume(reinterpret_cast<const char*>(data), pos);
         }
         if (pos == remaining)
@@ -13344,7 +13353,8 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// streaming input: no bulk fast path
-    char_int_type get_after_string_run(std::false_type /*bulk*/)
+    template<bool Keep>
+    char_int_type get_after_string_run(std::false_type /*bulk*/, std::integral_constant<bool, Keep> /*keep*/)
     {
         return get();
     }
@@ -13358,13 +13368,18 @@ class lexer : public lexer_base<BasicJsonType>
     may contain \0 bytes), and token_buffer.size() is the number of bytes in the
     string.
 
+    @param[in] keep  whether the string is copied into token_buffer; if false
+                     (accept(), see scan()), it is only checked, with the same
+                     errors, and token_buffer stays empty
+
     @return token_type::value_string if string could be successfully scanned,
             token_type::parse_error otherwise
 
     @note In case of errors, variable error_message contains a textual
           description.
     */
-    token_type scan_string()
+    template<bool Keep>
+    token_type scan_string(std::integral_constant<bool, Keep> keep)
     {
         // reset token_buffer (ignore opening quote)
         reset();
@@ -13376,7 +13391,7 @@ class lexer : public lexer_base<BasicJsonType>
         {
             // bulk-consume ordinary characters from contiguous input, then
             // get the next character, the one that ends the run
-            switch (get_after_string_run(std::integral_constant<bool, bulk_scan>()))
+            switch (get_after_string_run(std::integral_constant<bool, bulk_scan>(), keep))
             {
                 // end of file while parsing the string
                 case char_traits<char_type>::eof():
@@ -13398,35 +13413,35 @@ class lexer : public lexer_base<BasicJsonType>
                     {
                         // quotation mark
                         case '\"':
-                            add('\"');
+                            add_string_char(keep, '\"');
                             break;
                         // reverse solidus
                         case '\\':
-                            add('\\');
+                            add_string_char(keep, '\\');
                             break;
                         // solidus
                         case '/':
-                            add('/');
+                            add_string_char(keep, '/');
                             break;
                         // backspace
                         case 'b':
-                            add('\b');
+                            add_string_char(keep, '\b');
                             break;
                         // form feed
                         case 'f':
-                            add('\f');
+                            add_string_char(keep, '\f');
                             break;
                         // line feed
                         case 'n':
-                            add('\n');
+                            add_string_char(keep, '\n');
                             break;
                         // carriage return
                         case 'r':
-                            add('\r');
+                            add_string_char(keep, '\r');
                             break;
                         // tab
                         case 't':
-                            add('\t');
+                            add_string_char(keep, '\t');
                             break;
 
                         // unicode escapes
@@ -13494,10 +13509,7 @@ class lexer : public lexer_base<BasicJsonType>
                             JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
-                            encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
-                            {
-                                add(static_cast<char_int_type>(byte));
-                            });
+                            add_codepoint(keep, codepoint);
 
                             break;
                         }
@@ -13680,7 +13692,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0x7E:
                 case 0x7F:
                 {
-                    add(current);
+                    add_string_char(keep, current);
                     break;
                 }
 
@@ -13716,7 +13728,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xDE:
                 case 0xDF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!next_byte_in_range({0x80, 0xBF})))
+                    if (JSON_HEDLEY_UNLIKELY(!next_byte_in_range(keep, {0x80, 0xBF})))
                     {
                         return token_type::parse_error;
                     }
@@ -13726,7 +13738,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
                 case 0xE0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0xA0, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13750,7 +13762,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xEE:
                 case 0xEF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13760,7 +13772,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+D000..U+D7FF: bytes ED 80..9F 80..BF
                 case 0xED:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x80, 0x9F, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13770,7 +13782,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
                 case 0xF0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13782,7 +13794,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xF2:
                 case 0xF3:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13792,7 +13804,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
                 case 0xF4:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -14283,7 +14295,7 @@ scan_number_done:
     token_type convert_number(token_type number_type, std::size_t mantissa_end)
     {
         // accept() only needs to know whether the input is valid, so it sets
-        // discard_number_values (see json.hpp), and an integer token whose
+        // discard_values (see json.hpp), and an integer token whose
         // digit count shows that it fits is reported without calling
         // convert_integer(). A number with up to 18 digits always fits into
         // both std::uint64_t and std::int64_t (18 nines is about 1e18, below
@@ -14298,7 +14310,7 @@ scan_number_done:
         // json_sax_acceptor, whose number callbacks discard their argument and
         // return true, and the parser rejects neither integers nor finite
         // floats. value_unsigned/value_integer are left unset here, so a caller
-        // that reads the converted value must not set discard_number_values.
+        // that reads the converted value must not set discard_values.
         //
         // On contiguous input, scan_number_bulk_contiguous() converts integer
         // tokens itself and does not pass them to this function, unless
@@ -14306,7 +14318,7 @@ scan_number_done:
         // reached for input without bulk access (e.g. streams), with
         // JSON_DIAGNOSTIC_POSITIONS, or when scan_number_bulk_contiguous()
         // falls back to scan_number().
-        if (discard_number_values)
+        if (discard_values())
         {
             constexpr std::size_t safe_digit_count = 18;
             if (number_type == token_type::value_unsigned && token_buffer.size() <= safe_digit_count)
@@ -14557,7 +14569,7 @@ scan_number_done:
         // w < 10^19, so a value below 10^max_exponent10 cannot overflow, and a
         // value that underflows is a finite number as well. Only a token that
         // may overflow has to be converted to find out.
-        if (JSON_HEDLEY_UNLIKELY(discard_number_values && s.exponent + 19 <= std::numeric_limits<number_float_t>::max_exponent10))
+        if (JSON_HEDLEY_UNLIKELY(discard_values() && s.exponent + 19 <= std::numeric_limits<number_float_t>::max_exponent10))
         {
             value_float = 0;
             return true;
@@ -14888,6 +14900,34 @@ scan_number_done:
     {
         token_buffer.push_back(static_cast<typename string_t::value_type>(c));
     }
+
+    /// add a character of a string token; accept() checks the string but does
+    /// not keep its value (@a keep is false)
+    void add_string_char(std::true_type /*keep*/, char_int_type c)
+    {
+        token_buffer.push_back(static_cast<typename string_t::value_type>(c));
+    }
+
+    static void add_string_char(std::false_type /*keep*/, char_int_type /*c*/) noexcept {}
+
+    /// add the UTF-8 bytes of a code point from a \\u escape to a string token
+    void add_codepoint(std::true_type /*keep*/, int codepoint)
+    {
+        encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
+        {
+            add(static_cast<char_int_type>(byte));
+        });
+    }
+
+    static void add_codepoint(std::false_type /*keep*/, int /*codepoint*/) noexcept {}
+
+    /// append a run of ordinary string characters (see get_after_string_run())
+    void append_string_run(std::true_type /*keep*/, const unsigned char* data, std::size_t n)
+    {
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), n);
+    }
+
+    static void append_string_run(std::false_type /*keep*/, const unsigned char* /*data*/, std::size_t /*n*/) noexcept {}
 
   public:
     /////////////////////
@@ -15283,7 +15323,9 @@ scan_number_done:
 
             // string
             case '\"':
-                return scan_string();
+                // accept() (DiscardValues) checks strings without copying them
+                // into token_buffer
+                return scan_string(keep_strings {});
 
             // number
             case '-':
@@ -15368,11 +15410,19 @@ scan_number_done:
     std::size_t decimal_point_position = std::string::npos;
 
     /// whether the caller only needs the token types and never looks at the
-    /// converted numeric values; set only by accept(), which parses through
-    /// json_sax_acceptor. When set, convert_number() skips converting integer
-    /// tokens whose digit count guarantees that they fit into 64 bits (see
-    /// there)
-    const bool discard_number_values = false;
+    /// values of number and string tokens; DiscardValues, set only by accept(), which parses
+    /// through json_sax_acceptor. When set, convert_number() skips converting
+    /// integer tokens whose digit count guarantees that they fit into 64 bits
+    /// (see there), floats are converted only when they may overflow (see
+    /// convert_accumulated_float()), and strings are checked without being
+    /// copied into token_buffer (see scan())
+    static bool discard_values() noexcept
+    {
+        return DiscardValues;
+    }
+
+    /// the tag of scan_string(): whether string tokens are kept
+    using keep_strings = typename std::conditional<DiscardValues, std::false_type, std::true_type>::type;
 };
 
 }  // namespace detail
@@ -22564,14 +22614,14 @@ This class implements a parser for JSON text. Nested arrays and objects are trac
 stack instead of recursion, so deeply nested input does not exhaust the call stack, and what is read
 is reported as SAX events.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, bool DiscardValues = false>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using lexer_t = lexer<BasicJsonType, InputAdapterType>;
+    using lexer_t = lexer<BasicJsonType, InputAdapterType, DiscardValues>;
     using token_type = typename lexer_t::token_type;
 
   public:
@@ -22580,10 +22630,9 @@ class parser
                     parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true,
                     const bool ignore_comments = false,
-                    const bool ignore_trailing_commas_ = false,
-                    const bool discard_number_values_ = false)
+                    const bool ignore_trailing_commas_ = false)
         : callback(std::move(cb))
-        , m_lexer(std::move(adapter), ignore_comments, discard_number_values_)
+        , m_lexer(std::move(adapter), ignore_comments)
         , allow_exceptions(allow_exceptions_)
         , ignore_trailing_commas(ignore_trailing_commas_)
     {
@@ -36980,7 +37029,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // can be restored when json_pointer backwards compatibility is removed
     // friend ::nlohmann::json_pointer<StringType>;
 
-    template<typename BasicJsonType, typename InputType>
+    template<typename BasicJsonType, typename InputType, bool DiscardValues>
     friend class ::nlohmann::detail::parser;
     friend ::nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
@@ -37013,12 +37062,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false,
-        const bool ignore_trailing_commas = false,
-        const bool discard_number_values = false
+        const bool ignore_trailing_commas = false
                                  )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
+            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
     }
 
   private:
@@ -39947,7 +39995,9 @@ public:
                             const bool ignore_comments,
                             const bool ignore_trailing_commas)
     {
-        return parser(std::forward<InputAdapterType>(adapter), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
+        // the parser and lexer that discard the values of tokens (see lexer)
+        return ::nlohmann::detail::parser<basic_json, typename std::decay<InputAdapterType>::type, true>(std::forward<InputAdapterType>(adapter),
+                nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
     }
 
     /// generate SAX events from the input behind an already created adapter
