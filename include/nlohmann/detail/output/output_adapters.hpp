@@ -227,6 +227,29 @@ class output_vector_sink
     void flush() noexcept
     {}
 
+    /// the number of characters written so far, the position of the next one
+    std::size_t written() const noexcept
+    {
+        return position();
+    }
+
+    /// @brief replace @a length characters written before, from position @a pos
+    ///
+    /// Lets a writer put a length in front of data it has written since, such
+    /// as the size of a BSON document, without computing it in advance.
+    void overwrite(const std::size_t pos, const CharType* s, const std::size_t length) noexcept
+    {
+        JSON_ASSERT(pos + length <= position());
+        std::memcpy(v->data() + pos, s, length * sizeof(CharType));
+    }
+
+    /// drop the characters written from position @a pos on
+    void rewind(const std::size_t pos) noexcept
+    {
+        JSON_ASSERT(pos <= position());
+        cursor = v->data() + pos;
+    }
+
   private:
     /// number of characters of *v written so far
     std::size_t position() const noexcept
