@@ -546,7 +546,11 @@ TEST_CASE("json_view builder: fraction digits")
             const std::string number = std::string(rng() % 2 == 0 ? "-" : "") + std::to_string(rng() % 100000) + "." + fraction;
             check_same(number);
             check_same("[" + number + "]");
-            check_same("[" + number + "," + number + "]");
+            std::string pair = "[" + number;
+            pair += ",";
+            pair += number;
+            pair += "]";
+            check_same(pair);
             check_same("{\"a\":" + number + "}");
             for (const char follower : followers)
             {
