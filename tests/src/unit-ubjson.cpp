@@ -21,12 +21,15 @@ using nlohmann::json;
 
 #include <iostream>
 #include <fstream>
+#include <list>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "sax_event_loggers.hpp"
 using utils::SaxCountdown;
+using utils::SaxEventLogger;
 
 
 TEST_CASE("UBJSON")
@@ -3398,5 +3401,72 @@ TEST_CASE("UBJSON optimized container type marker is validated for count 0")
             CHECK(json::from_ubjson(va) == json::array());
             CHECK(json::from_ubjson(vo) == json::object());
         }
+    }
+}
+
+TEST_CASE("UBJSON optimized arrays from contiguous and non-contiguous input")
+{
+    // contiguous input reads the numbers of an array with a type marker in
+    // one loop, other input number by number; both must give the same events,
+    // value, or error for the complete document and for every truncation of
+    // it, and stop at every event a SAX handler rejects
+    json document =
+    {
+        {"u8", {0, 200, 255}},
+        {"i8", {-5, 100, -128}},
+        {"i16", {-30000, 1000, 30000}},
+        {"i32", {-2000000000, 5, 70000}},
+        {"i64", {-9000000000000000000LL, 1, 5000000000LL}},
+        {"f64", {1.5, -0.1, 2.5}},
+        {"pairs", {{1.25, -3.75}, {1.25, -3.75}, json::array()}},
+        {"mixed", {1, "a", 2.5, nullptr}},
+    };
+    const std::vector<std::uint8_t> encoded = json::to_ubjson(document, true, true);
+    CHECK(json::from_ubjson(encoded) == document);
+
+    for (std::size_t length = 0; length <= encoded.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> contiguous(encoded.begin(), encoded.begin() + static_cast<std::ptrdiff_t>(length));
+        const std::list<std::uint8_t> bytewise(contiguous.begin(), contiguous.end());
+
+        CHECK(json::from_ubjson(contiguous, true, false).dump() == json::from_ubjson(bytewise.begin(), bytewise.end(), true, false).dump());
+#if !defined(JSON_NOEXCEPTION)
+        std::string contiguous_error;
+        std::string bytewise_error;
+        try
+        {
+            static_cast<void>(json::from_ubjson(contiguous));
+        }
+        catch (const json::exception& e)
+        {
+            contiguous_error = e.what();
+        }
+        try
+        {
+            static_cast<void>(json::from_ubjson(bytewise.begin(), bytewise.end()));
+        }
+        catch (const json::exception& e)
+        {
+            bytewise_error = e.what();
+        }
+        CHECK(contiguous_error == bytewise_error);
+#endif
+
+        SaxEventLogger from_contiguous;
+        SaxEventLogger from_bytewise;
+        CHECK(json::sax_parse(contiguous, &from_contiguous, json::input_format_t::ubjson)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::ubjson));
+        CHECK(from_contiguous.events == from_bytewise.events);
+    }
+
+    for (int events = 0; events <= 80; ++events)
+    {
+        CAPTURE(events)
+        const std::list<std::uint8_t> bytewise(encoded.begin(), encoded.end());
+        SaxCountdown from_contiguous(events);
+        SaxCountdown from_bytewise(events);
+        CHECK(json::sax_parse(encoded, &from_contiguous, json::input_format_t::ubjson)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::ubjson));
     }
 }
