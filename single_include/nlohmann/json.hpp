@@ -19497,6 +19497,8 @@ class binary_reader
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
             std::size_t size = 0;
+            // false positive: every case assigns accepted before it is read
+            // @infer-ignore DEAD_STORE
             bool accepted = true;
             switch (head)
             {
