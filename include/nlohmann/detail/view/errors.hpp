@@ -259,7 +259,8 @@ std::string diagnostics(const error_site site)
     const bool found = edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens);
     if (!found || tokens.empty())
     {
-        return "";
+        // context is still empty; returning it keeps the copy elided (-Wnrvo)
+        return context;
     }
     std::string path;
     for (const std::string& token : tokens)
