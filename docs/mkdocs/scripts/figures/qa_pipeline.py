@@ -22,19 +22,24 @@ P = "nj-exceptions-"
 TRIGGERS = {
     "push": ("every push / PR", "push"),
     "pr": ("every PR", "push"),
+    "merge": ("before merge", "push"),
+    "nightly": ("nightly", "sched"),
     "sched": ("scheduled", "sched"),
     "cont": ("continuous", "cont"),
 }
 
 # title, triggers, lines (at most 31 characters, so they fit a card of the three-column drawing)
 LANES = [
-    ("Build matrix", ["push"], [
+    ("Build matrix", ["push", "merge"], [
         "50+ compilers: GCC, Clang, MSVC,",
         "AppleClang, Intel, NVIDIA, ...",
         "C++11, 14, 17, 20, 23, and 26",
         "libc++ and libstdc++",
         "warnings: Clang -Weverything,",
         "GCC 300+ warnings",
+        "a subset on every push and PR,",
+        "all before merge; Intel, NVIDIA,",
+        "CUDA, and ARM64 nightly",
     ]),
     ("Unit tests (doctest)", ["push"], [
         "every public API function",
@@ -44,7 +49,7 @@ LANES = [
         "custom number, string, array,",
         "and object types",
     ]),
-    ("Coverage", ["push"], [
+    ("Coverage", ["nightly"], [
         "unit tests cover all lines",
         "of the code base",
     ]),
@@ -53,11 +58,11 @@ LANES = [
         "Clang Static Analyzer (52",
         "checkers), IWYU, Codacy",
         "CodeQL, Semgrep, Flawfinder",
-        "(also scheduled)",
+        "(also scheduled); Infer nightly",
     ]),
-    ("Dynamic analysis", ["push"], [
+    ("Dynamic analysis", ["push", "nightly"], [
         "runtime assertions",
-        "Valgrind (Memcheck)",
+        "Valgrind (Memcheck), nightly",
         "address and undefined behavior",
         "sanitizers, integer overflow,",
         "nullability violations",
@@ -178,7 +183,7 @@ def drawing(W, cols, suffix):
     defs = ('<defs><marker id="%s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">'
             '<path class="fg-head" d="M0 1 L10 5 L0 9 z"/></marker></defs>' % mid)
     tid, did = "nj-qa-title-" + suffix, "nj-qa-desc-" + suffix
-    desc = ("Every push or pull request starts these checks in parallel: " +
+    desc = ("A push or pull request starts these checks; the badges say when each runs: " +
             "; ".join("%s (%s): %s" % (t, ", ".join(TRIGGERS[k][0] for k in trig), " ".join(lines)) for t, trig, lines in LANES) +
             ". When they pass, the change is merged into develop; a release is made only when no vulnerability alert is open.")
     out = ['<svg class="nj-fig %sqa %sqa--%s" viewBox="0 0 %d %d" role="img" aria-labelledby="%s %s" xmlns="http://www.w3.org/2000/svg">'

@@ -69,6 +69,10 @@ KNOWN_REFERENCES = [
     ('tests/src/make_test_data_available.hpp', 'README.md', 'a file of the external test data repository'),
     ('tools/check_build_options/check_build_options.py', 'docs/', 'builds the path of package_managers.md, which '
                                                                   'PATHS includes'),
+    ('tools/ci_jobs/ci_jobs.py', 'docs/mkdocs/docs/community/quality_assurance.md',
+     'checks the job table; runs in repository_checks.yml, which has no path filter'),
+    ('tools/ci_jobs/ci_jobs.py', '.github/workflows/repository_checks.yml', 'read by --compare, a manual check'),
+    ('tools/ci_jobs/ci_jobs.py', '.github/workflows/check_amalgamation.yml', 'read by --compare, a manual check'),
 ]
 
 

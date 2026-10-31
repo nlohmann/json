@@ -2,7 +2,7 @@ name: Repository checks
 
 # Checks that concern files the compiler workflows (ubuntu.yml, macos.yml,
 # windows.yml) skip with their path filter: the documentation, the license
-# information, and the path filter itself. This workflow has no path filter.
+# information, and the CI configuration itself. This workflow has no path filter.
 on:
   push:
     branches:
@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check_path_filters:
+  check_ci_configuration:
     runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
@@ -33,6 +33,11 @@ jobs:
           persist-credentials: false
       - name: Check the path filters of the compiler workflows
         run: python3 tools/check_path_filters/check_path_filters.py
+      - name: Check the job sets of the compiler workflows and their documentation
+        run: |
+          python3 -m venv venv
+          venv/bin/pip install --quiet -r tools/ci_jobs/requirements.txt
+          venv/bin/python tools/ci_jobs/ci_jobs.py
 
   ci_reuse_compliance:
     runs-on: ubuntu-26.04

@@ -7,6 +7,8 @@ on:
       - master
       - release/*
   pull_request:
+    # labeled: the "🚀 ready to merge" label starts the full set (see below)
+    types: [opened, synchronize, reopened, labeled]
     # Skip pull requests that change only files no job here reads. The list is checked by
     # tools/check_path_filters/check_path_filters.py (repository_checks.yml); change both together.
     paths:
@@ -26,17 +28,41 @@ on:
       # built by the swiftpm job (macos.yml)
       - 'docs/mkdocs/docs/integration/swift/**'
       - '.github/workflows/ubuntu.yml'
+  schedule:
+    # the nightly set (see below), on develop
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# A run triggered by any other label gets a group of its own, so it does not
+# cancel the run of the last push; its jobs are skipped.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'schedule' && 'nightly' || github.ref || github.run_id }}${{ github.event.action == 'labeled' && github.event.label.name != '🚀 ready to merge' && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
+# The jobs are split into three sets (see "How CI runs" in
+# docs/mkdocs/docs/community/quality_assurance.md):
+#
+# - PR set: every pull request push and every push; chosen because these jobs
+#   caught 92 % of the failing commits in Sep/Oct 2026.
+# - full set: after the PR set passed, on pushes and on pull requests with the
+#   "🚀 ready to merge" label; every remaining compiler, version and standard.
+# - nightly set: slow tools and rare compilers, nightly on develop, on pushes
+#   to master and release/*, and when started by hand.
+#
+# A matrix whose entries belong to different sets is split into one job per
+# set; the jobs share their steps through YAML anchors. tools/ci_jobs checks
+# that every job belongs to exactly one set.
+
 jobs:
+  ###########################################################################
+  # PR set
+  ###########################################################################
+
   ci_test_gcc:
+    if: &pr_set ${{ github.event_name != 'schedule' && (github.event.action != 'labeled' || github.event.label.name == '🚀 ready to merge') }}
     runs-on: ubuntu-latest
     container: gcc:latest
     steps:
@@ -51,6 +77,7 @@ jobs:
         run: cmake --build build --target ci_test_gcc
 
   ci_meson_install:
+    if: *pr_set
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -95,7 +122,342 @@ jobs:
           cmake -S tests/cmake_import/project -B build-import-split -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install-split
           cmake --build build-import-split
 
+  ci_static_analysis_ubuntu:
+    if: *pr_set
+    runs-on: ubuntu-26.04
+    strategy:
+      matrix:
+        target: [ci_cpplint]
+    steps: &static_analysis_ubuntu_steps
+      - name: Harden Runner
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
+
+      - name: Install Valgrind
+        if: matrix.target == 'ci_test_valgrind'
+        run: sudo apt-get update ; sudo apt-get install -y valgrind
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ${{ matrix.target }}
+
+  ci_static_analysis_clang:
+    if: *pr_set
+    runs-on: ubuntu-latest
+    container: silkeh/clang:22
+    strategy:
+      matrix:
+        target: [ci_test_clang, ci_clang_tidy, ci_test_clang_sanitizer, ci_single_binaries]
+    steps: &static_analysis_clang_steps
+      - name: Install git, clang-tools, iwyu (ci_single_binaries), and unzip
+        run: apt-get update ; apt-get install -y git clang-tools iwyu unzip
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ${{ matrix.target }}
+
+  ci_cmake_options:
+    if: *pr_set
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    strategy:
+      matrix:
+        target: [ci_test_diagnostics, ci_test_diagnostic_positions, ci_test_noexceptions, ci_test_noglobaludls]
+    steps: &cmake_options_steps
+      - name: Install build-essential
+        run: apt-get update ; apt-get install -y build-essential unzip wget git
+      # the CMake 3.5.0 release binary that ci_cmake_flags downloads links
+      # against libidn.so.11, which Ubuntu 24.04 no longer ships
+      - name: Install libidn11 for CMake 3.5.0
+        if: matrix.target == 'ci_cmake_flags'
+        run: |
+          wget -q http://archive.ubuntu.com/ubuntu/pool/main/libi/libidn/libidn11_1.33-2.2ubuntu2_amd64.deb
+          dpkg -i libidn11_1.33-2.2ubuntu2_amd64.deb
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ${{ matrix.target }}
+
+  ci_test_compilers_gcc_old:
+    if: *pr_set
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: ['4.8']
+    # official gcc:4.8/4.9/5/6 images fail to check out code (too old for
+    # actions/checkout); install the old compilers on top of official ubuntu:20.04
+    # instead, mirroring what the (now retired) custom json-ci image did.
+    container: ubuntu:20.04
+    steps: &compilers_gcc_old_steps
+      - name: Install g++-${{ matrix.compiler }}
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg make git
+          # add-apt-repository resolves the PPA through the Launchpad API,
+          # which intermittently times out or fails the team lookup (the plain
+          # "deb ..." sources below never hit Launchpad and never flake).
+          # Retry with backoff so a transient Launchpad blip does not fail CI.
+          for attempt in 1 2 3 4 5; do
+            add-apt-repository -y ppa:ubuntu-toolchain-r/test && break
+            echo "::warning::add-apt-repository ppa:ubuntu-toolchain-r/test failed (attempt ${attempt}/5); retrying"
+            sleep $((attempt * 10))
+          done
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic main"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic universe"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial main"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial universe"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial-updates main"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial-updates universe"
+          apt-get update
+          apt-get install -y --no-install-recommends g++-${{ matrix.compiler }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Run CMake
+        run: CXX=g++-${{ matrix.compiler }} cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_test_compiler_g++-${{ matrix.compiler }}
+
+  ci_test_compilers_clang:
+    if: *pr_set
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: ['3.4']
+    container: silkeh/clang:${{ matrix.compiler }}
+    steps: &compilers_clang_steps
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Disable filesystem support (std::filesystem is unusable) for clang 7 / 8 / 9 / 10
+        run: echo "JSON_FORCED_GLOBAL_COMPILE_OPTIONS=-DJSON_HAS_FILESYSTEM=0;-DJSON_HAS_EXPERIMENTAL_FILESYSTEM=0" >> "$GITHUB_ENV"
+        if: ${{ matrix.compiler == '7' || matrix.compiler == '8' || matrix.compiler == '9' || matrix.compiler == '10' }}
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_test_compiler_default
+
+  ci_test_standards_gcc:
+    if: *pr_set
+    runs-on: ubuntu-latest
+    container: gcc:latest
+    strategy:
+      matrix:
+        standard: [26]
+    steps: &standards_gcc_steps
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_test_gcc_cxx${{ matrix.standard }}
+
+  ci_test_standards_clang:
+    if: *pr_set
+    runs-on: ubuntu-latest
+    container: silkeh/clang:latest
+    strategy:
+      matrix:
+        standard: [26]
+        stdlib: [libcxx]
+    steps: &standards_clang_steps
+      - name: Install git and unzip
+        run: apt-get update ; apt-get install -y git unzip
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build with libc++
+        run: cmake --build build --target ci_test_clang_libcxx_cxx${{ matrix.standard }}
+        if: ${{ matrix.stdlib == 'libcxx' }}
+      - name: Build with libstdc++
+        run: cmake --build build --target ci_test_clang_cxx${{ matrix.standard }}
+        if: ${{ matrix.stdlib == 'libstdcxx' }}
+
+  ci_emscripten:
+    if: *pr_set
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
+
+      - name: Install emscripten
+        uses: mymindstorm/setup-emsdk@4528d102f7230f0e7b276855c01ea1159be0e984 # v16
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Run CMake
+        run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -GNinja
+      - name: Build
+        run: cmake --build build
+
+  ###########################################################################
+  # full set: starts after the PR set passed
+  ###########################################################################
+
+  ci_static_analysis_ubuntu_full:
+    needs: &pr_set_jobs [ci_test_gcc, ci_meson_install, ci_static_analysis_ubuntu, ci_static_analysis_clang, ci_cmake_options, ci_test_compilers_gcc_old, ci_test_compilers_clang, ci_test_standards_gcc, ci_test_standards_clang, ci_emscripten]
+    if: &full_set ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, '🚀 ready to merge') }}
+    runs-on: ubuntu-26.04
+    strategy:
+      matrix:
+        target: [ci_test_single_header, ci_cppcheck, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata]
+    steps: *static_analysis_ubuntu_steps
+
+  ci_static_analysis_clang_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: ubuntu-latest
+    container: silkeh/clang:22
+    strategy:
+      matrix:
+        target: [ci_clang_analyze]
+    steps: *static_analysis_clang_steps
+
+  ci_cmake_options_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    strategy:
+      matrix:
+        target: [ci_cmake_flags, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_disableenumserialization, ci_test_disabletuplereferenceconversion, ci_test_skiplibraryversioncheck, ci_test_simdutf, ci_test_strict_nul_handling, ci_test_delete_deprecated_functions, ci_test_no_thread_local]
+    steps: *cmake_options_steps
+
+  ci_test_compilers_gcc_old_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: ['4.9', '5', '6']
+    container: ubuntu:20.04
+    steps: *compilers_gcc_old_steps
+
+  ci_test_compilers_gcc_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # older GCC docker images (4, 5, 6) fail to check out code
+        compiler: ['7', '8', '9', '10', '11', '12', '13', '14', '15', '16', 'latest']
+    container: gcc:${{ matrix.compiler }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_test_compiler_default
+
+  ci_test_compilers_clang_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: ['3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15-bullseye', '16', '17', '18', '19', '20', '21', '22', 'latest']
+    container: silkeh/clang:${{ matrix.compiler }}
+    steps: *compilers_clang_steps
+
+  ci_test_standards_gcc_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: ubuntu-latest
+    container: gcc:latest
+    strategy:
+      matrix:
+        standard: [11, 14, 17, 20, 23]
+    steps: *standards_gcc_steps
+
+  ci_test_standards_clang_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: ubuntu-latest
+    container: silkeh/clang:latest
+    strategy:
+      matrix:
+        standard: [11, 14, 17, 20, 23, 26]
+        stdlib: [libcxx, libstdcxx]
+        exclude:
+          # in the PR set
+          - standard: 26
+            stdlib: libcxx
+    steps: *standards_clang_steps
+
+  ci_module_cpp20:
+    needs: *pr_set_jobs
+    if: *full_set
+    strategy:
+      matrix:
+        container: ['gcc:latest', 'silkeh/clang:latest']
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The module test uses `import std;`, which needs CMake's experimental
+      # import-std support. Its opt-in token is CMake-version-specific, so pin
+      # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
+      - name: Get pinned CMake and ninja
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        with:
+          cmakeVersion: 4.3.4
+      # Clang: the std library module is provided by libc++ (the image's libstdc++
+      # ships none), and the image's libc++ module manifest has a broken relative
+      # path — repoint it at the real module sources.
+      - name: Use libc++ and fix its module manifest path (Clang)
+        if: matrix.container == 'silkeh/clang:latest'
+        run: |
+          echo "CXXFLAGS=-stdlib=libc++" >> "$GITHUB_ENV"
+          mkdir -p /usr/lib/share && ln -sf /usr/lib/llvm-*/share/libc++ /usr/lib/share/libc++
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_module_cpp20
+
+  ###########################################################################
+  # nightly set
+  ###########################################################################
+
   ci_infer:
+    if: &nightly_set ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref != 'refs/heads/develop') }}
     runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
@@ -124,76 +486,16 @@ jobs:
           path: ${{ github.workspace }}/build/build_infer/infer-out/report.txt
           if-no-files-found: ignore
 
-  ci_static_analysis_ubuntu:
+  ci_static_analysis_ubuntu_nightly:
+    if: *nightly_set
     runs-on: ubuntu-26.04
     strategy:
       matrix:
-        target: [ci_test_single_header, ci_cppcheck, ci_cpplint, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata, ci_test_valgrind]
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
-        with:
-          egress-policy: audit
-
-      - name: Install Valgrind
-        if: matrix.target == 'ci_test_valgrind'
-        run: sudo apt-get update ; sudo apt-get install -y valgrind
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ${{ matrix.target }}
-
-  ci_static_analysis_clang:
-    runs-on: ubuntu-latest
-    container: silkeh/clang:22
-    strategy:
-      matrix:
-        target: [ci_test_clang, ci_clang_tidy, ci_test_clang_sanitizer, ci_clang_analyze, ci_single_binaries]
-    steps:
-      - name: Install git, clang-tools, iwyu (ci_single_binaries), and unzip
-        run: apt-get update ; apt-get install -y git clang-tools iwyu unzip
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ${{ matrix.target }}
-
-  ci_cmake_options:
-    runs-on: ubuntu-latest
-    container: ubuntu:24.04
-    strategy:
-      matrix:
-        target: [ci_cmake_flags, ci_test_diagnostics, ci_test_diagnostic_positions, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls, ci_test_disableenumserialization, ci_test_disabletuplereferenceconversion, ci_test_skiplibraryversioncheck, ci_test_simdutf, ci_test_strict_nul_handling, ci_test_delete_deprecated_functions, ci_test_no_thread_local]
-    steps:
-      - name: Install build-essential
-        run: apt-get update ; apt-get install -y build-essential unzip wget git
-      # the CMake 3.5.0 release binary that ci_cmake_flags downloads links
-      # against libidn.so.11, which Ubuntu 24.04 no longer ships
-      - name: Install libidn11 for CMake 3.5.0
-        if: matrix.target == 'ci_cmake_flags'
-        run: |
-          wget -q http://archive.ubuntu.com/ubuntu/pool/main/libi/libidn/libidn11_1.33-2.2ubuntu2_amd64.deb
-          dpkg -i libidn11_1.33-2.2ubuntu2_amd64.deb
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ${{ matrix.target }}
+        target: [ci_test_valgrind]
+    steps: *static_analysis_ubuntu_steps
 
   ci_test_coverage:
+    if: *nightly_set
     runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
@@ -227,128 +529,8 @@ jobs:
           path-to-lcov: ${{ github.workspace }}/build/json.info.filtered.noexcept
           fail-on-error: false
 
-  ci_test_compilers_gcc_old:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        compiler: ['4.8', '4.9', '5', '6']
-    # official gcc:4.8/4.9/5/6 images fail to check out code (too old for
-    # actions/checkout); install the old compilers on top of official ubuntu:20.04
-    # instead, mirroring what the (now retired) custom json-ci image did.
-    container: ubuntu:20.04
-    steps:
-      - name: Install g++-${{ matrix.compiler }}
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update
-          apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg make git
-          # add-apt-repository resolves the PPA through the Launchpad API,
-          # which intermittently times out or fails the team lookup (the plain
-          # "deb ..." sources below never hit Launchpad and never flake).
-          # Retry with backoff so a transient Launchpad blip does not fail CI.
-          for attempt in 1 2 3 4 5; do
-            add-apt-repository -y ppa:ubuntu-toolchain-r/test && break
-            echo "::warning::add-apt-repository ppa:ubuntu-toolchain-r/test failed (attempt ${attempt}/5); retrying"
-            sleep $((attempt * 10))
-          done
-          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic main"
-          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic universe"
-          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial main"
-          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial universe"
-          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial-updates main"
-          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial-updates universe"
-          apt-get update
-          apt-get install -y --no-install-recommends g++-${{ matrix.compiler }}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-      - name: Run CMake
-        run: CXX=g++-${{ matrix.compiler }} cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ci_test_compiler_g++-${{ matrix.compiler }}
-
-  ci_test_compilers_gcc:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # older GCC docker images (4, 5, 6) fail to check out code
-        compiler: ['7', '8', '9', '10', '11', '12', '13', '14', '15', '16', 'latest']
-    container: gcc:${{ matrix.compiler }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ci_test_compiler_default
-
-  ci_test_compilers_clang:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        compiler: ['3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15-bullseye', '16', '17', '18', '19', '20', '21', '22', 'latest']
-    container: silkeh/clang:${{ matrix.compiler }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-      - name: Disable filesystem support (std::filesystem is unusable) for clang 7 / 8 / 9 / 10
-        run: echo "JSON_FORCED_GLOBAL_COMPILE_OPTIONS=-DJSON_HAS_FILESYSTEM=0;-DJSON_HAS_EXPERIMENTAL_FILESYSTEM=0" >> "$GITHUB_ENV"
-        if: ${{ matrix.compiler == '7' || matrix.compiler == '8' || matrix.compiler == '9' || matrix.compiler == '10' }}
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ci_test_compiler_default
-
-  ci_test_standards_gcc:
-    runs-on: ubuntu-latest
-    container: gcc:latest
-    strategy:
-      matrix:
-        standard: [11, 14, 17, 20, 23, 26]
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ci_test_gcc_cxx${{ matrix.standard }}
-
-  ci_test_standards_clang:
-    runs-on: ubuntu-latest
-    container: silkeh/clang:latest
-    strategy:
-      matrix:
-        standard: [11, 14, 17, 20, 23, 26]
-        stdlib: [libcxx, libstdcxx]
-    steps:
-      - name: Install git and unzip
-        run: apt-get update ; apt-get install -y git unzip
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build with libc++
-        run: cmake --build build --target ci_test_clang_libcxx_cxx${{ matrix.standard }}
-        if: ${{ matrix.stdlib == 'libcxx' }}
-      - name: Build with libstdc++
-        run: cmake --build build --target ci_test_clang_cxx${{ matrix.standard }}
-        if: ${{ matrix.stdlib == 'libstdcxx' }}
-
   ci_cuda_example:
+    if: *nightly_set
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -371,37 +553,8 @@ jobs:
       - name: Build
         run: cmake --build build --target ci_cuda_example
 
-  ci_module_cpp20:
-    strategy:
-      matrix:
-        container: ['gcc:latest', 'silkeh/clang:latest']
-    runs-on: ubuntu-latest
-    container: ${{ matrix.container }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      # The module test uses `import std;`, which needs CMake's experimental
-      # import-std support. Its opt-in token is CMake-version-specific, so pin
-      # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
-      - name: Get pinned CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-        with:
-          cmakeVersion: 4.3.4
-      # Clang: the std library module is provided by libc++ (the image's libstdc++
-      # ships none), and the image's libc++ module manifest has a broken relative
-      # path — repoint it at the real module sources.
-      - name: Use libc++ and fix its module manifest path (Clang)
-        if: matrix.container == 'silkeh/clang:latest'
-        run: |
-          echo "CXXFLAGS=-stdlib=libc++" >> "$GITHUB_ENV"
-          mkdir -p /usr/lib/share && ln -sf /usr/lib/llvm-*/share/libc++ /usr/lib/share/libc++
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ci_module_cpp20
-
   ci_icpc:
+    if: *nightly_set
     runs-on: ubuntu-latest
     # Intel discontinued the classic icc/icpc compiler in oneAPI 2024.0; this is
     # Intel's own last officially published image that still includes it.
@@ -421,6 +574,7 @@ jobs:
         run: cmake --build build --target ci_icpc
 
   ci_icpx:
+    if: *nightly_set
     runs-on: ubuntu-latest
     container: intel/oneapi-hpckit:latest
     steps:
@@ -435,6 +589,7 @@ jobs:
         run: cmake --build build --target ci_icpx
 
   ci_nvhpc:
+    if: *nightly_set
     runs-on: ubuntu-latest
     container: nvcr.io/nvidia/nvhpc:25.5-devel-cuda12.9-ubuntu22.04
     steps:
@@ -448,29 +603,10 @@ jobs:
       - name: Build
         run: cmake --build build --target ci_nvhpc
 
-  ci_emscripten:
-    runs-on: ubuntu-26.04
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
-        with:
-          egress-policy: audit
-
-      - name: Install emscripten
-        uses: mymindstorm/setup-emsdk@4528d102f7230f0e7b276855c01ea1159be0e984 # v16
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
-      - name: Run CMake
-        run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -GNinja
-      - name: Build
-        run: cmake --build build
-
   # Native Linux ARM64 runner with the latest GCC. The ubuntu-24.04-arm label is
   # only available for public repositories.
   ci_test_arm64:
+    if: *nightly_set
     runs-on: ubuntu-24.04-arm
     container: gcc:latest
     steps:
@@ -485,3 +621,33 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_test_compiler_default
+
+  # A failure of a scheduled run opens an issue, or comments on the open one.
+  nightly_report:
+    needs: [ci_infer, ci_static_analysis_ubuntu_nightly, ci_test_coverage, ci_cuda_example, ci_icpc, ci_icpx, ci_nvhpc, ci_test_arm64]
+    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-26.04
+    permissions:
+      issues: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
+
+      - name: Open or update the nightly failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WORKFLOW: ${{ github.workflow }}
+          SHA: ${{ github.sha }}
+        run: |
+          title="Nightly CI failure (${WORKFLOW})"
+          body="The nightly run of ${WORKFLOW} on ${SHA:0:10} failed: ${RUN_URL}"
+          number=$(gh issue list --state open --search "in:title \"${title}\"" --json number,title --jq "map(select(.title == \"${title}\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi

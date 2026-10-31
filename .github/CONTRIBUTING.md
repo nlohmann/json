@@ -159,6 +159,10 @@ compiler workflows (Ubuntu, macOS, Windows); the documentation and license check
 [`tools/check_path_filters`](https://github.com/nlohmann/json/tree/develop/tools/check_path_filters) for the list of
 skipped files and what to do when a compiler job starts reading one of them.
 
+Most compiler jobs run only once a maintainer adds the label "🚀 ready to merge" to a pull request; until then, a
+smaller set of jobs runs on every push. See
+[How CI runs](https://json.nlohmann.me/community/quality_assurance/#how-ci-runs) for the sets and when they run.
+
 ### Amalgamate the source code
 
 The single-header files
