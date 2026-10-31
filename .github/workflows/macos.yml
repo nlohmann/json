@@ -7,6 +7,8 @@ on:
       - master
       - release/*
   pull_request:
+    # labeled: the "🚀 ready to merge" label starts the full set (see below)
+    types: [opened, synchronize, reopened, labeled]
     # Skip pull requests that change only files no job here reads. The list is checked by
     # tools/check_path_filters/check_path_filters.py (repository_checks.yml); change both together.
     paths:
@@ -28,23 +30,37 @@ on:
       - '.github/workflows/macos.yml'
   workflow_dispatch:
 
+# A run triggered by any other label gets a group of its own, so it does not
+# cancel the run of the last push; its jobs are skipped.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'schedule' && 'nightly' || github.ref || github.run_id }}${{ github.event.action == 'labeled' && github.event.label.name != '🚀 ready to merge' && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
+
+# The jobs are split into a PR set and a full set like in ubuntu.yml (see "How
+# CI runs" in docs/mkdocs/docs/community/quality_assurance.md): the PR set runs
+# on every push; the full set after the PR set passed, on pushes and on pull
+# requests with the "🚀 ready to merge" label. tools/ci_jobs checks that every
+# job belongs to exactly one set.
+
 jobs:
+  ###########################################################################
+  # PR set
+  ###########################################################################
+
   macos-15:
+    if: &pr_set ${{ github.event_name != 'schedule' && (github.event.action != 'labeled' || github.event.label.name == '🚀 ready to merge') }}
     runs-on: macos-15 # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
     strategy:
       matrix:
-        xcode: ['16.0', '16.1', '16.2', '16.3', '16.4', '26.0.1', '26.1.1', '26.2', '26.3']
+        xcode: ['16.0', '16.4', '26.3']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
-    steps:
+    steps: &xcode_steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -56,10 +72,11 @@ jobs:
         run: cd build ; ctest -j 10 --output-on-failure
 
   macos-26:
+    if: *pr_set
     runs-on: macos-26 # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md
     strategy:
       matrix:
-        xcode: ['26.4.1', '26.5', '26.6']
+        xcode: ['26.6']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
@@ -75,12 +92,13 @@ jobs:
         run: cd build ; ctest -j 10 --output-on-failure
 
   xcode_standards:
+    if: *pr_set
     runs-on: macos-latest
     strategy:
       matrix:
-        standard: [11, 14, 17, 20, 23, 26]
+        standard: [14]
 
-    steps:
+    steps: &xcode_standards_steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -92,6 +110,7 @@ jobs:
         run: cd build ; ctest -j 10 --output-on-failure
 
   swiftpm:
+    if: *pr_set
     runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -125,3 +144,42 @@ jobs:
           EOF
           cd /tmp/json-swiftpm-consumer
           swift build
+
+
+  ###########################################################################
+  # full set: starts after the PR set passed
+  ###########################################################################
+
+  macos-15_full:
+    needs: &pr_set_jobs [macos-15, macos-26, xcode_standards, swiftpm]
+    if: &full_set ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, '🚀 ready to merge') }}
+    runs-on: macos-15 # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+    strategy:
+      matrix:
+        xcode: ['16.1', '16.2', '16.3', '26.0.1', '26.1.1', '26.2']
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+
+    steps: *xcode_steps
+
+  macos-26_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: macos-26 # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md
+    strategy:
+      matrix:
+        xcode: ['26.4.1', '26.5']
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+
+    steps: *xcode_steps
+
+  xcode_standards_full:
+    needs: *pr_set_jobs
+    if: *full_set
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        standard: [11, 17, 20, 23, 26]
+
+    steps: *xcode_standards_steps
