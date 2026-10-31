@@ -523,6 +523,51 @@ TEST_CASE("json_view builder: strings across vector blocks")
     }
 }
 
+TEST_CASE("json_view builder: fraction digits")
+{
+    // The digits of a fraction are skipped 16 bytes at a time where there are
+    // that many left (SSE2), and one at a time after that. Fractions of every
+    // length from 0 to 40 digits, followed by every kind of byte that ends a
+    // number or lies next to the digits in ASCII ('/' and ':'), as values, as
+    // keys' neighbours, and at the very end of the text (a vector without a
+    // terminating NUL). The length of the number is part of the value that
+    // the test compares with json::parse().
+    const std::string followers = ",]}/:.eE+-x \n\t\"09";
+    std::mt19937 rng(2028); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+    for (std::size_t digits = 0; digits <= 40; ++digits)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            std::string fraction;
+            for (std::size_t k = 0; k < digits; ++k)
+            {
+                fraction += static_cast<char>('0' + (rng() % 10));
+            }
+            const std::string number = std::string(rng() % 2 == 0 ? "-" : "") + std::to_string(rng() % 100000) + "." + fraction;
+            check_same(number);
+            check_same("[" + number + "]");
+            std::string pair = "[" + number;
+            pair += ",";
+            pair += number;
+            pair += "]";
+            check_same(pair);
+            check_same("{\"a\":" + number + "}");
+            for (const char follower : followers)
+            {
+                check_same(number + follower);
+                check_same("[" + number + follower + "]");
+                check_same("[" + number + follower + std::string(rng() % 20, '1'));
+            }
+            // everything near the end of the text: the number cut in every place
+            for (std::size_t cut = 1; cut <= 18 && cut <= number.size(); ++cut)
+            {
+                check_same(number.substr(0, number.size() - cut));
+                check_same("[" + number.substr(0, number.size() - cut));
+            }
+        }
+    }
+}
+
 TEST_CASE("json_view builder: escapes between runs of text")
 {
     // The text between escapes is copied 16 bytes at a time where there are
