@@ -741,11 +741,13 @@ class binary_reader
     bool get_cbor_negative_integer()
     {
         NumberType number{};
-        if (JSON_HEDLEY_UNLIKELY(!get_number(number)))
-        {
-            return false;
-        }
+        return get_number(number) && emit_cbor_negative_integer(number);
+    }
 
+    /// pass the CBOR negative integer -1 - @a number to the SAX parser
+    template<typename NumberType>
+    bool emit_cbor_negative_integer(const NumberType number)
+    {
         // the value is -1 - number, which fits into number_integer_t
         // whenever number does; the outer cast undoes the integral promotion
         // for number_integer_t types narrower than int
@@ -970,7 +972,7 @@ class binary_reader
             case 0x95:
             case 0x96:
             case 0x97:
-                return enter_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
+                return enter_cbor_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0x98: // array (one-byte uint8_t for n follows)
             case 0x99: // array (two-byte uint16_t for n follow)
@@ -979,7 +981,7 @@ class binary_reader
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_cbor_argument(len) && get_cbor_container_size(len, size, "array") && enter_array(size);
+                return get_cbor_argument(len) && get_cbor_container_size(len, size, "array") && enter_cbor_array(size);
             }
 
             case 0x9F: // array (indefinite length)
@@ -1677,6 +1679,183 @@ class binary_reader
     }
 
     /*!
+    @brief read a big-endian number of type @a NumberType at @a data
+    */
+    template<typename NumberType>
+    NumberType load_big_endian(const unsigned char* data) const noexcept
+    {
+        NumberType result{};
+        std::memcpy(&result, data, sizeof(NumberType));
+        if (is_little_endian)
+        {
+            byte_swap(result);
+        }
+        return result;
+    }
+
+    /*!
+    @brief read the integers, floats, booleans, and nulls that follow in a
+           definite-length array, without the per-element bookkeeping of
+           @ref parse_cbor_internal
+
+    Stops at the end of the array, at any other kind of value, and when fewer
+    than 9 bytes (the longest of these values) are left in the input, leaving
+    those to @ref parse_cbor_value, which reads them the same way.
+
+    The caller has checked that an element remains, that at least 9 bytes are
+    left, and that the next byte begins a scalar.
+
+    @param[in,out] remaining  the number of elements of the array not yet read
+    @return whether the SAX parser accepted the values
+    */
+    bool parse_cbor_scalar_run(std::size_t& remaining)
+    {
+        do
+        {
+            const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+            const unsigned char head = data[0];
+            std::size_t size = 0;
+            // false positive: every case assigns accepted before it is read
+            // @infer-ignore DEAD_STORE
+            bool accepted = true;
+            switch (head)
+            {
+                case 0x18:
+                    size = 2;
+                    accepted = emit_unsigned(data[1]);
+                    break;
+                case 0x19:
+                    size = 3;
+                    accepted = emit_unsigned(load_big_endian<std::uint16_t>(data + 1));
+                    break;
+                case 0x1A:
+                    size = 5;
+                    accepted = emit_unsigned(load_big_endian<std::uint32_t>(data + 1));
+                    break;
+                case 0x1B:
+                    size = 9;
+                    accepted = emit_unsigned(load_big_endian<std::uint64_t>(data + 1));
+                    break;
+                case 0x38:
+                    size = 2;
+                    accepted = emit_cbor_negative_integer(data[1]);
+                    break;
+                case 0x39:
+                    size = 3;
+                    accepted = emit_cbor_negative_integer(load_big_endian<std::uint16_t>(data + 1));
+                    break;
+                case 0x3A:
+                    size = 5;
+                    accepted = emit_cbor_negative_integer(load_big_endian<std::uint32_t>(data + 1));
+                    break;
+                case 0x3B:
+                    size = 9;
+                    accepted = emit_cbor_negative_integer(load_big_endian<std::uint64_t>(data + 1));
+                    break;
+                case 0xF4:
+                    size = 1;
+                    accepted = sax->boolean(false);
+                    break;
+                case 0xF5:
+                    size = 1;
+                    accepted = sax->boolean(true);
+                    break;
+                case 0xF6:
+                    size = 1;
+                    accepted = sax->null();
+                    break;
+                case 0xFA:
+                    size = 5;
+                    accepted = emit_float(load_big_endian<float>(data + 1));
+                    break;
+                case 0xFB:
+                    size = 9;
+                    accepted = emit_float(load_big_endian<double>(data + 1));
+                    break;
+                default:
+                    if (head <= 0x17)
+                    {
+                        size = 1;
+                        accepted = sax->number_unsigned(static_cast<number_unsigned_t>(head));
+                    }
+                    else if (head >= 0x20 && head <= 0x37)
+                    {
+                        size = 1;
+                        accepted = sax->number_integer(static_cast<std::int8_t>(0x20 - 1 - head));
+                    }
+                    else
+                    {
+                        // any other value is read by parse_cbor_value
+                        return true;
+                    }
+                    break;
+            }
+            // as if read by get() and get_number(): current is the head byte
+            ia.bulk_skip(size);
+            chars_read += size;
+            current = head;
+            --remaining;
+            if (JSON_HEDLEY_UNLIKELY(!accepted))
+            {
+                return false;
+            }
+        }
+        while (remaining != 0 && ia.bulk_remaining() >= 9);
+        return true;
+    }
+
+    /*!
+    @brief open a definite-length array and read the scalars it begins with
+           (see @ref parse_cbor_scalar_run)
+
+    Only the start of an array is tried, which covers arrays of numbers
+    (e.g. coordinates) but costs arrays of other values only one test, not one
+    per element.
+
+    @param[in] len  the number of elements
+    @return whether the SAX parser accepted the array and the values read
+    */
+    bool enter_cbor_array(const std::size_t len)
+    {
+        return enter_array(len) && (len == 0 || !cbor_scalar_follows(std::integral_constant<bool, bulk_scan> {})
+                                    || parse_cbor_array_start(std::integral_constant<bool, bulk_scan> {}));
+    }
+
+    /// whether a run of scalars can start at the next byte: at least 9 bytes
+    /// are left and the byte begins an integer, a float, a boolean, or null;
+    /// one test, so that an array of containers or strings makes no call
+    bool cbor_scalar_follows(std::true_type /*bulk*/) const
+    {
+        if (ia.bulk_remaining() < 9)
+        {
+            return false;
+        }
+        const auto head = static_cast<unsigned char>(*ia.bulk_data());
+        return head < 0x40 || head >= 0xF4;
+    }
+
+    /// input that is not contiguous: every value is read by parse_cbor_value
+    bool cbor_scalar_follows(std::false_type /*bulk*/) const noexcept
+    {
+        return false;
+    }
+
+    /// read the scalars the array just opened begins with; out of line, so
+    /// that @ref parse_cbor_value stays small enough to be inlined into
+    /// @ref parse_cbor_internal
+    JSON_HEDLEY_NEVER_INLINE
+    bool parse_cbor_array_start(std::true_type /*bulk*/)
+    {
+        return parse_cbor_scalar_run(container_stack.back().remaining);
+    }
+
+    /// input that is not contiguous: every value is read by parse_cbor_value
+    bool parse_cbor_array_start(std::false_type /*bulk*/) const noexcept
+    {
+        return true;
+    }
+
+    /*!
     @brief read a CBOR value and everything nested inside it
 
     Reads values until the one that was begun here is complete, resuming the
@@ -1705,6 +1884,7 @@ class binary_reader
                 // pop_back() below, which destroys the container_stack element
                 // it would otherwise alias
                 const container_frame top = container_stack.back();
+                const bool is_object = top.is_object;
                 bool at_end = false;
 
                 if (top.remaining != npos)
@@ -1716,7 +1896,7 @@ class binary_reader
                     {
                         // claim the element about to be read
                         --container_stack.back().remaining;
-                        if (top.is_object)
+                        if (is_object)
                         {
                             get();
                         }
@@ -1729,7 +1909,7 @@ class binary_reader
                     // Testing for it consumes a byte, which is the first byte
                     // of the next element when it is not one.
                     at_end = (get() == 0xFF);
-                    fetch = top.is_object;
+                    fetch = is_object;
                 }
 
                 if (at_end)
@@ -1746,7 +1926,7 @@ class binary_reader
                     continue;
                 }
 
-                if (top.is_object)
+                if (is_object)
                 {
                     if (JSON_HEDLEY_UNLIKELY(!skip_cbor_key_tags(tag_handler)))
                     {
@@ -3691,13 +3871,13 @@ class binary_reader
                 return sax->null();
 
             case 0xFB:
-                return sax->number_float(static_cast<number_float_t>(-1.0), "");
+                return sax->number_float(static_cast<number_float_t>(-1.0), no_source);
 
             case 0xFC:
-                return sax->number_float(static_cast<number_float_t>(0.0), "");
+                return sax->number_float(static_cast<number_float_t>(0.0), no_source);
 
             case 0xFD:
-                return sax->number_float(static_cast<number_float_t>(1.0), "");
+                return sax->number_float(static_cast<number_float_t>(1.0), no_source);
 
             case 0xFF: // empty string
             {
@@ -4201,7 +4381,7 @@ class binary_reader
         {
             return out_of_range_error(exception_id::number_overflow, "number overflow", "value");
         }
-        return sax->number_float(result, "");
+        return sax->number_float(result, no_source);
     }
 
     /*!
@@ -4261,7 +4441,7 @@ class binary_reader
         }();
         return sax->number_float((half & 0x8000u) != 0
                                  ? static_cast<number_float_t>(-val)
-                                 : static_cast<number_float_t>(val), "");
+                                 : static_cast<number_float_t>(val), no_source);
     }
 
     /*!
@@ -4585,6 +4765,10 @@ class binary_reader
 
     /// the SAX parser
     json_sax_t* sax = nullptr;
+
+    /// the (empty) source text of every number_float event: binary formats
+    /// have none, and a string_t built for each float would cost more
+    const string_t no_source{};
 
     /// the containers that have been opened and not closed yet; see @ref container_frame
     std::vector<container_frame> container_stack{};
