@@ -2156,7 +2156,7 @@ class binary_reader
             case 0x9D:
             case 0x9E:
             case 0x9F:
-                return enter_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+                return enter_msgpack_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixstr
             case 0xA0:
@@ -2287,13 +2287,13 @@ class binary_reader
             case 0xDC: // array 16
             {
                 std::uint16_t len{};
-                return get_number(len) && enter_array(static_cast<std::size_t>(len));
+                return get_number(len) && enter_msgpack_array(static_cast<std::size_t>(len));
             }
 
             case 0xDD: // array 32
             {
                 std::uint32_t len{};
-                return get_number(len) && enter_array(conditional_static_cast<std::size_t>(len));
+                return get_number(len) && enter_msgpack_array(conditional_static_cast<std::size_t>(len));
             }
 
             case 0xDE: // map 16
@@ -2633,6 +2633,165 @@ class binary_reader
             default:           // LCOV_EXCL_LINE
                 return false;  // LCOV_EXCL_LINE
         }
+    }
+
+    /*!
+    @brief read the integers, floats, booleans, and nils that follow in a
+           MessagePack array, without the per-element bookkeeping of
+           @ref parse_msgpack_internal
+
+    Stops at the end of the array, at any other kind of value, and when fewer
+    than 9 bytes (the longest of these values) are left in the input, leaving
+    those to @ref parse_msgpack_value, which reads them the same way.
+
+    The caller has checked that an element remains, that at least 9 bytes are
+    left, and that the next byte begins a scalar.
+
+    @param[in,out] remaining  the number of elements of the array not yet read
+    @return whether the SAX parser accepted the values
+    */
+    bool parse_msgpack_scalar_run(std::size_t& remaining)
+    {
+        do
+        {
+            const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+            const unsigned char head = data[0];
+            std::size_t size = 0;
+            // false positive: every case assigns accepted before it is read
+            // @infer-ignore DEAD_STORE
+            bool accepted = true;
+            switch (head)
+            {
+                case 0xC0: // nil
+                    size = 1;
+                    accepted = sax->null();
+                    break;
+                case 0xC2: // false
+                    size = 1;
+                    accepted = sax->boolean(false);
+                    break;
+                case 0xC3: // true
+                    size = 1;
+                    accepted = sax->boolean(true);
+                    break;
+                case 0xCA: // float 32
+                    size = 5;
+                    accepted = emit_float(load_big_endian<float>(data + 1));
+                    break;
+                case 0xCB: // float 64
+                    size = 9;
+                    accepted = emit_float(load_big_endian<double>(data + 1));
+                    break;
+                case 0xCC: // uint 8
+                    size = 2;
+                    accepted = emit_unsigned(data[1]);
+                    break;
+                case 0xCD: // uint 16
+                    size = 3;
+                    accepted = emit_unsigned(load_big_endian<std::uint16_t>(data + 1));
+                    break;
+                case 0xCE: // uint 32
+                    size = 5;
+                    accepted = emit_unsigned(load_big_endian<std::uint32_t>(data + 1));
+                    break;
+                case 0xCF: // uint 64
+                    size = 9;
+                    accepted = emit_unsigned(load_big_endian<std::uint64_t>(data + 1));
+                    break;
+                case 0xD0: // int 8
+                    size = 2;
+                    accepted = emit_signed(static_cast<std::int8_t>(data[1]));
+                    break;
+                case 0xD1: // int 16
+                    size = 3;
+                    accepted = emit_signed(load_big_endian<std::int16_t>(data + 1));
+                    break;
+                case 0xD2: // int 32
+                    size = 5;
+                    accepted = emit_signed(load_big_endian<std::int32_t>(data + 1));
+                    break;
+                case 0xD3: // int 64
+                    size = 9;
+                    accepted = emit_signed(load_big_endian<std::int64_t>(data + 1));
+                    break;
+                default:
+                    if (head <= 0x7F)
+                    {
+                        // positive fixint
+                        size = 1;
+                        accepted = sax->number_unsigned(static_cast<number_unsigned_t>(head));
+                    }
+                    else if (head >= 0xE0)
+                    {
+                        // negative fixint
+                        size = 1;
+                        accepted = sax->number_integer(static_cast<std::int8_t>(head));
+                    }
+                    else
+                    {
+                        // any other value is read by parse_msgpack_value
+                        return true;
+                    }
+                    break;
+            }
+            // as if read by get() and get_number(): current is the last byte
+            ia.bulk_skip(size);
+            chars_read += size;
+            current = data[size - 1];
+            --remaining;
+            if (JSON_HEDLEY_UNLIKELY(!accepted))
+            {
+                return false;
+            }
+        }
+        while (remaining != 0 && ia.bulk_remaining() >= 9);
+        return true;
+    }
+
+    /*!
+    @brief open a MessagePack array and read the scalars it begins with (see
+           @ref parse_msgpack_scalar_run)
+    @param[in] len  the number of elements
+    @return whether the SAX parser accepted the array and the values read
+    */
+    bool enter_msgpack_array(const std::size_t len)
+    {
+        return enter_array(len) && (len == 0 || !msgpack_scalar_follows(std::integral_constant<bool, bulk_scan> {})
+                                    || parse_msgpack_array_start(std::integral_constant<bool, bulk_scan> {}));
+    }
+
+    /// whether a run of scalars can start at the next byte: at least 9 bytes
+    /// are left and the byte begins a fixint, nil, a boolean, a float, or a
+    /// sized integer (0xC0-0xD3); one test, so that an array of containers or
+    /// strings makes no call
+    bool msgpack_scalar_follows(std::true_type /*bulk*/) const
+    {
+        if (ia.bulk_remaining() < 9)
+        {
+            return false;
+        }
+        const auto head = static_cast<unsigned char>(*ia.bulk_data());
+        return head < 0x80 || head >= 0xE0 || (head >= 0xC0 && head <= 0xD3);
+    }
+
+    /// input that is not contiguous: every value is read by parse_msgpack_value
+    bool msgpack_scalar_follows(std::false_type /*bulk*/) const noexcept
+    {
+        return false;
+    }
+
+    /// read the scalars the array just opened begins with; out of line, so
+    /// that @ref parse_msgpack_value stays small enough to be inlined
+    JSON_HEDLEY_NEVER_INLINE
+    bool parse_msgpack_array_start(std::true_type /*bulk*/)
+    {
+        return parse_msgpack_scalar_run(container_stack.back().remaining);
+    }
+
+    /// input that is not contiguous: every value is read by parse_msgpack_value
+    bool parse_msgpack_array_start(std::false_type /*bulk*/) const noexcept
+    {
+        return true;
     }
 
     /*!
