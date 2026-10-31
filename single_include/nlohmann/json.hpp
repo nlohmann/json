@@ -36224,6 +36224,23 @@ class serializer
             return;
         }
 
+        // 17 to 20 digits: the first one to four, then twice eight
+        if (magnitude_fits_64_bits(abs_value, std::integral_constant<bool, magnitude_has_at_most_64_bits>()))
+        {
+            const auto value = static_cast<std::uint64_t>(abs_value);
+            const std::uint64_t top = value / 10000000000000000u; // 1 to 1844
+            const std::uint64_t low16 = value - (top * 10000000000000000u);
+            const std::uint64_t middle = low16 / 100000000u;
+            const std::uint64_t first = dtoa_impl::eight_digit_bytes(top);
+            const auto leading = static_cast<unsigned>(count_leading_zeros(first) / 8); // (first is not 0)
+            char* const p = buffer_ptr + n_chars;
+            dtoa_impl::store_msb_first(p, (first << (8 * leading)) + 0x3030303030303030u);
+            dtoa_impl::store_msb_first(p + 8 - leading, dtoa_impl::eight_digit_bytes(middle) + 0x3030303030303030u);
+            dtoa_impl::store_msb_first(p + 16 - leading, dtoa_impl::eight_digit_bytes(low16 - (middle * 100000000u)) + 0x3030303030303030u);
+            write_buffer_pos += n_chars + 24 - leading;
+            return;
+        }
+
         n_chars += count_digits(abs_value);
 
         // spare 1 byte for '\0'
@@ -36367,6 +36384,23 @@ class serializer
         {
             put_literal(".0");
         }
+    }
+
+    /// whether every number_magnitude_t fits 64 bits
+    static constexpr bool magnitude_has_at_most_64_bits = std::numeric_limits<number_magnitude_t>::is_specialized
+        && std::numeric_limits<number_magnitude_t>::digits <= 64;
+
+    /// whether @a x fits 64 bits: always if number_magnitude_t has at most
+    /// 64 bits (selected by type, as the comparison would be reported as
+    /// always true), else compared
+    static bool magnitude_fits_64_bits(const number_magnitude_t& /*unused*/, std::true_type /*unused*/) noexcept
+    {
+        return true;
+    }
+
+    static bool magnitude_fits_64_bits(const number_magnitude_t& x, std::false_type /*unused*/) noexcept
+    {
+        return x <= 18446744073709551615u;
     }
 
     /*
