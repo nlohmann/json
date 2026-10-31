@@ -40,6 +40,15 @@
     #define NLOHMANN_VIEW_NOINLINE
 #endif
 
+// GCC: a function compiled as written, without the clones in which interprocedural
+// constant propagation drops an argument that every caller passes as the same constant
+// (calling such a clone changes the code GCC generates for the parse loop that calls it)
+#if defined(__GNUC__) && !defined(__clang__)
+    #define NLOHMANN_VIEW_NOCLONE __attribute__((noclone))
+#else
+    #define NLOHMANN_VIEW_NOCLONE
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
     #define NLOHMANN_VIEW_NODISCARD __attribute__((warn_unused_result))
 #elif defined(_MSC_VER)
