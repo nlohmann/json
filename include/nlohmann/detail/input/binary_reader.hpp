@@ -1711,7 +1711,7 @@ class binary_reader
         {
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
-            std::size_t size = 1;
+            std::size_t size = 0;
             bool accepted = true;
             switch (head)
             {
@@ -1748,12 +1748,15 @@ class binary_reader
                     accepted = emit_cbor_negative_integer(load_big_endian<std::uint64_t>(data + 1));
                     break;
                 case 0xF4:
+                    size = 1;
                     accepted = sax->boolean(false);
                     break;
                 case 0xF5:
+                    size = 1;
                     accepted = sax->boolean(true);
                     break;
                 case 0xF6:
+                    size = 1;
                     accepted = sax->null();
                     break;
                 case 0xFA:
@@ -1767,10 +1770,12 @@ class binary_reader
                 default:
                     if (head <= 0x17)
                     {
+                        size = 1;
                         accepted = sax->number_unsigned(static_cast<number_unsigned_t>(head));
                     }
                     else if (head >= 0x20 && head <= 0x37)
                     {
+                        size = 1;
                         accepted = sax->number_integer(static_cast<std::int8_t>(0x20 - 1 - head));
                     }
                     else
@@ -1815,7 +1820,7 @@ class binary_reader
     JSON_HEDLEY_NEVER_INLINE
     bool parse_cbor_array_start(std::true_type /*bulk*/)
     {
-        return !cbor_scalar_follows() || parse_cbor_scalar_run(container_stack.back().remaining);
+        return parse_cbor_scalar_run(container_stack.back().remaining);
     }
 
     /// input that is not contiguous: every value is read by parse_cbor_value
@@ -1823,25 +1828,6 @@ class binary_reader
     {
         return true;
     }
-
-    /*!
-    @brief whether @ref parse_cbor_scalar_run can read the next value: one of
-           the heads it handles, with at least 9 bytes of input left
-    */
-    bool cbor_scalar_follows() const
-    {
-        if (ia.bulk_remaining() < 9)
-        {
-            return false;
-        }
-        const auto head = static_cast<unsigned int>(*reinterpret_cast<const unsigned char*>(ia.bulk_data()));
-        // major types 0 and 1 (unsigned and negative integers) up to an
-        // 8-byte argument, or false, true, null, float32, float64 (0xF4,
-        // 0xF5, 0xF6, 0xFA, 0xFB: bits 0, 1, 2, 6, 7 of 0xC7)
-        return ((head & 0xC0u) == 0 && (head & 0x1Fu) <= 0x1Bu)
-               || (head >= 0xF4u && ((0xC7u >> (head - 0xF4u)) & 1u) != 0);
-    }
-
 
     /*!
     @brief read a CBOR value and everything nested inside it
@@ -1868,6 +1854,9 @@ class binary_reader
         {
             if (!container_stack.empty())
             {
+                // a copy, not a reference: it must stay valid across the
+                // pop_back() below, which destroys the container_stack element
+                // it would otherwise alias
                 const container_frame top = container_stack.back();
                 const bool is_object = top.is_object;
                 bool at_end = false;
