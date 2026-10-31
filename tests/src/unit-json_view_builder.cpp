@@ -59,7 +59,7 @@ built build(const std::string& text, bool comments, bool trailing_commas, bool s
         r.copy.assign(text.begin(), text.end());
         src = r.copy.data();
     }
-    r.ok = nlohmann::detail::view::build < FloatType, !nlohmann::detail::abi_config::strict_nul_handling > (*r.data, src, text.size(), comments, trailing_commas, sentinel, r.failure);
+    r.ok = nlohmann::detail::view::build < FloatType, !nlohmann::detail::abi_config::strict_nul_handling > (*r.data, src, text.size(), comments, trailing_commas, sentinel, false, r.failure);
     r.data->src = src;
     r.data->base[0] = src;
     r.data->base[1] = r.data->arena.data();

@@ -1051,11 +1051,6 @@ indent_done:
             {
                 // accept(): nothing is stored, so what computes the arguments is not run either. base and out stay
                 // null: their difference, which open() takes, is 0.
-                static_cast<void>(k);
-                static_cast<void>(flags);
-                static_cast<void>(extra);
-                static_cast<void>(off);
-                static_cast<void>(second);
                 return out;
             }
             if (NLOHMANN_VIEW_UNLIKELY(out == cap))
@@ -1296,7 +1291,7 @@ indent_done:
 };
 
 /// run the builder with compile-time options
-template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Store = true>
+template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Store>
 inline bool build_with(document_data& d, const char* src, std::size_t size, bool sentinel, parse_failure& failure)
 {
     if (sentinel)
@@ -1313,22 +1308,27 @@ inline bool build_with(document_data& d, const char* src, std::size_t size, bool
 }
 
 /// sentinel: src[size] is readable and 0 (e.g. std::string); FloatType: the
-/// number_float_t of the document
+/// number_float_t of the document; validate_only: accept(), only the result is
+/// used
 template<typename FloatType, bool NulIsEnd>
-inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, parse_failure& failure)
+inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, bool validate_only,
+                  parse_failure& failure)
 {
-    if (d.validate_only && !comments && !trailing_commas)
+    if (validate_only && !comments && !trailing_commas)
     {
-        // accept() of plain JSON: nothing is stored (the other option sets keep the builder that stores)
+        // accept() of plain JSON: nothing is stored. The other option sets
+        // could skip the stores just as well; they keep the builder that
+        // stores only so that there are two more instantiations of the parse
+        // loop, not eight.
         return build_with<FloatType, false, false, NulIsEnd, false>(d, src, size, sentinel, failure);
     }
     if (comments)
     {
-        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd>(d, src, size, sentinel, failure)
-               : build_with<FloatType, true, false, NulIsEnd>(d, src, size, sentinel, failure);
+        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd, true>(d, src, size, sentinel, failure)
+               : build_with<FloatType, true, false, NulIsEnd, true>(d, src, size, sentinel, failure);
     }
-    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd>(d, src, size, sentinel, failure)
-           : build_with<FloatType, false, false, NulIsEnd>(d, src, size, sentinel, failure);
+    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd, true>(d, src, size, sentinel, failure)
+           : build_with<FloatType, false, false, NulIsEnd, true>(d, src, size, sentinel, failure);
 }
 
 }  // namespace view
