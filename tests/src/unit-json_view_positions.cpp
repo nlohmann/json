@@ -504,43 +504,50 @@ TEST_CASE("json_view exceptions name the path and the bytes of the value")
         check_exceptions(d.root(), m);
         check_edit_exceptions(d, d.root(), m);
         // (a value inside a new container: a path, but no bytes)
-        CHECK(exception_of_call([&] { static_cast<void>(d.root()["a"][2]["n"][0].get<int>()); }) == "[json.exception.type_error.302] "
+        std::string expected = "[json.exception.type_error.302] ";
 #if JSON_DIAGNOSTICS
-              "(/a/2/n/0) "
+        expected += "(/a/2/n/0) ";
 #endif
-              "type must be number, but is null");
+        expected += "type must be number, but is null";
+        CHECK(exception_of_call([&] { static_cast<void>(d.root()["a"][2]["n"][0].get<int>()); }) == expected);
     }
 
     SECTION("examples")
     {
         const std::string text = R"({"people": [{"name": "a", "age": 1}, {"name": "c", "age": "x"}], "o": {"k": 1}})";
         const json_document d = json_document::parse(text);
-        CHECK(exception_of_call([&] { static_cast<void>(d.root()["people"][1]["age"].get<int>()); }) == "[json.exception.type_error.302] "
+        std::string expected_age = "[json.exception.type_error.302] ";
 #if JSON_DIAGNOSTICS
-              "(/people/1/age) "
+        expected_age += "(/people/1/age) ";
 #endif
-              "(bytes 58-61) type must be number, but is string");
-        CHECK(exception_of_call([&] { static_cast<void>(d.root().at(json::json_pointer("/people/0/zz"))); }) == "[json.exception.out_of_range.403] "
+        expected_age += "(bytes 58-61) type must be number, but is string";
+        CHECK(exception_of_call([&] { static_cast<void>(d.root()["people"][1]["age"].get<int>()); }) == expected_age);
+
+        std::string expected_zz = "[json.exception.out_of_range.403] ";
 #if JSON_DIAGNOSTICS
-              "(/people/0) "
+        expected_zz += "(/people/0) ";
 #endif
-              "(bytes 12-35) key 'zz' not found");
+        expected_zz += "(bytes 12-35) key 'zz' not found";
+        CHECK(exception_of_call([&] { static_cast<void>(d.root().at(json::json_pointer("/people/0/zz"))); }) == expected_zz);
+
         // the root has no path, and with JSON_DIAGNOSTICS then no bytes either (as basic_json)
-        CHECK(exception_of_call([&] { static_cast<void>(d.root().at("missing")); }) == "[json.exception.out_of_range.403] "
+        std::string expected_missing = "[json.exception.out_of_range.403] ";
 #if !JSON_DIAGNOSTICS
-              "(bytes 0-79) "
+        expected_missing += "(bytes 0-79) ";
 #endif
-              "key 'missing' not found");
+        expected_missing += "key 'missing' not found";
+        CHECK(exception_of_call([&] { static_cast<void>(d.root().at("missing")); }) == expected_missing);
     }
 
     SECTION("duplicate keys: the value the view finds")
     {
         const json_document d = json_document::parse(R"({"x": "1", "x": "22"})");
-        CHECK(exception_of_call([&] { static_cast<void>(d.root()["x"].get<int>()); }) == "[json.exception.type_error.302] "
+        std::string expected = "[json.exception.type_error.302] ";
 #if JSON_DIAGNOSTICS
-              "(/x) "
+        expected += "(/x) ";
 #endif
-              "(bytes 6-9) type must be number, but is string");
+        expected += "(bytes 6-9) type must be number, but is string";
+        CHECK(exception_of_call([&] { static_cast<void>(d.root()["x"].get<int>()); }) == expected);
     }
 }
 #endif
