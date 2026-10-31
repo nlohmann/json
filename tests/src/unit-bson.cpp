@@ -1190,7 +1190,7 @@ TEST_CASE("BSON keys from contiguous and stream input")
         }
         try
         {
-            std::istringstream stream(std::string(input.begin(), input.end()));
+            std::istringstream stream(std::string(reinterpret_cast<const char*>(input.data()), input.size()));
             from_stream = json::from_bson(stream).dump();
         }
         catch (const json::parse_error& e)
@@ -1224,7 +1224,7 @@ TEST_CASE("BSON array element names")
     json _;
     CHECK_THROWS_WITH_AS(_ = json::from_bson(bson, true, true, json::error_handler_t::strict), "[json.exception.parse_error.113] parse error at byte 14: syntax error while parsing BSON key: invalid string: ill-formed UTF-8 byte", json::parse_error&);
 
-    std::istringstream stream(std::string(bson.begin(), bson.end()));
+    std::istringstream stream(std::string(reinterpret_cast<const char*>(bson.data()), bson.size()));
     CHECK(json::from_bson(stream) == expected);
 }
 #endif
