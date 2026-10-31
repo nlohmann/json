@@ -13,6 +13,7 @@
     #include <nlohmann/detail/view/builder.hpp>
     #include <nlohmann/detail/view/materialize.hpp>
     #include <nlohmann/detail/view/string_ref.hpp>
+    #include <nlohmann/json_view.hpp> // json_document::accept
 #else
     #include <nlohmann/json_view.hpp> // the single header contains the internal headers
 #endif
@@ -59,7 +60,8 @@ built build(const std::string& text, bool comments, bool trailing_commas, bool s
         r.copy.assign(text.begin(), text.end());
         src = r.copy.data();
     }
-    r.ok = nlohmann::detail::view::build < FloatType, !nlohmann::detail::abi_config::strict_nul_handling > (*r.data, src, text.size(), comments, trailing_commas, sentinel, r.failure);
+    constexpr bool nul_is_end = !nlohmann::detail::abi_config::strict_nul_handling;
+    r.ok = nlohmann::detail::view::build<FloatType, nul_is_end>(*r.data, src, text.size(), comments, trailing_commas, sentinel, false, r.failure);
     r.data->src = src;
     r.data->base[0] = src;
     r.data->base[1] = r.data->arena.data();
@@ -169,6 +171,22 @@ void check_string(const std::string& content)
                 CHECK((b.ok && accepted ? value_of(b) == json::parse(text) : true));
             }
         }
+    }
+}
+
+// accept() stores no nodes: it must accept and reject what json::accept does, for all options and for inputs with
+// and without a terminating NUL
+void check_accept(const std::string& text)
+{
+    CAPTURE(text)
+    const std::vector<char> bytes(text.begin(), text.end());
+    for (int options = 0; options < 4; ++options)
+    {
+        const bool comments = (options & 1) != 0;
+        const bool trailing_commas = (options & 2) != 0;
+        const bool accepted = json::accept(text, comments, trailing_commas);
+        CHECK(nlohmann::json_document::accept(text, comments, trailing_commas) == accepted);
+        CHECK(nlohmann::json_document::accept(bytes, comments, trailing_commas) == accepted);
     }
 }
 
@@ -420,6 +438,133 @@ TEST_CASE("json_view builder")
             damaged[at] = replacements[g.r(16)];
             check_same(damaged);
             check_same(text.substr(0, at));
+        }
+    }
+
+    SECTION("accept() without an index")
+    {
+        for (const char* text :
+                {
+                    "", " ", "\n", "null", "nul", "true", "[", "]", "[]", "{}", "[1,2,3]", "[1,2,3", "[1,2,3,]", "{\"a\":1,}", "{\"a\"}", "{\"a\":}",
+                    "[1] x", "[1][2]", "\xEF\xBB\xBF[1]", "[\"a\\", "[\"\\u12\"]", "[\"\\ud800\"]", "[\"\x01\"]", "[\"\xff\"]", "[01]", "[1.]",
+                    "[.5]", "[-]", "[1e]", "// c\n[1]", "/* c */ {\"a\" /* x */ : 1}", "/* c", "[1] // c", "1e400", "-1e400", "123456789012345678901234567890",
+                    "{\"a\":1,\"a\":2}", "[[[]]]", "\"\\u00e4\\n\\ud83d\\ude00\""
+                })
+        {
+            check_accept(text);
+        }
+        // a null byte inside the text, and after it
+        check_accept(std::string("[1,\0]", 5));
+        check_accept(std::string("[1]\0", 4));
+        check_accept(std::string("\0", 1));
+
+        // generated documents and damaged copies, as for the builder above
+        generator g;
+        for (int i = 0; i < 2000; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            check_accept(text);
+            std::string damaged = text;
+            const auto at = static_cast<std::size_t>(g.r(static_cast<int>(damaged.size())));
+            static const char replacements[] = {'x', '"', '\\', ',', ':', ']', '}', '[', '{', '1', '-', '.', 'e', '\0', '\n', '/'}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            damaged[at] = replacements[g.r(16)];
+            check_accept(damaged);
+            check_accept(text.substr(0, at));
+        }
+
+        // nesting beyond the 64 levels that are kept on the builder's own stack, closed and not closed
+        for (const std::size_t depth :
+                {
+                    63, 64, 65, 66, 200, 1000
+                })
+        {
+            check_accept(std::string(depth, '[') + std::string(depth, ']'));
+            check_accept(std::string(depth, '[') + std::string(depth - 1, ']'));
+            std::string objects;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                objects += "{\"k\":";
+            }
+            objects += "1" + std::string(depth, '}');
+            check_accept(objects);
+            check_accept(objects.substr(0, objects.size() - 1));
+        }
+
+        // objects with enough members to get a hash index when they are indexed (and duplicate keys)
+        std::string large = "{";
+        for (int i = 0; i < 300; ++i)
+        {
+            large += (i == 0 ? "\"k" : ",\"k") + std::to_string(i % 200) + "\":" + std::to_string(i);
+        }
+        check_accept(large + "}");
+        check_accept(large);
+        check_accept("[" + large + "},{" + large.substr(1) + "}]");
+
+        // the overflow check uses the floating-point type of the document
+        using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        for (const char* text :
+                {
+                    "1e39", "-1e39", "3.4028235e38", "3.4028236e38", "[1.5e38, 3.5e38]", "{\"a\": 1e-50, \"b\": 1e39}", "340282356779733661637539395458142568448"
+                })
+        {
+            CAPTURE(text)
+            CHECK(nlohmann::basic_json_document<float_json>::accept(text) == float_json::accept(text));
+        }
+
+        // strings are checked and not decoded: runs of text of every length from 0 to 40 between valid and invalid
+        // escapes, UTF-8 sequences and control characters, in values and in keys, cut near the end of the text
+        const std::array<const char*, 9> valid = {{"\\n", "\\\"", "\\\\", "\\/", "\\t", "\\u00e4", "\\u20ac", "\\ud83d\\ude00", "\\u0000"}};
+        const std::array<const char*, 12> invalid = {{"\\x", "\\ud800", "\\udc00", "\\u12G4", "\\u12", "\\ud83dx", "\\ud83d\\u0041", "\\ud83d\\ud83d", "\\", "\x01", "\x1f", "\x7f"}};
+        const std::array<const char*, 6> utf8 = {{"\xc3\xa4", "\xe2\x82\xac", "\xf0\x9f\x98\x80", "\xc3", "\xff", "\x80"}};
+        std::mt19937 rng(2029); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+        for (std::size_t run = 0; run <= 40; ++run)
+        {
+            for (int i = 0; i < 30; ++i)
+            {
+                std::string content = std::string(rng() % 20, 'a');
+                const auto pieces = 1 + (rng() % 6);
+                for (unsigned k = 0; k < pieces; ++k)
+                {
+                    content += valid[rng() % valid.size()];
+                    content += std::string(k == 0 ? run : rng() % 41, static_cast<char>('b' + (rng() % 20)));
+                    switch (rng() % 8)
+                    {
+                        case 0:
+                            content += utf8[rng() % 3];
+                            break;
+                        case 1:
+                            content += utf8[rng() % utf8.size()];
+                            break;
+                        case 2:
+                            content += invalid[rng() % invalid.size()];
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                for (const std::string& text :
+                        {
+                            "[\"" + content + "\"]", "{\"" + content + "\":1}", "[\"" + content, "[\"" + content.substr(0, content.size() - (rng() % 4)) + "\"]"
+                        })
+                {
+                    check_accept(text);
+                }
+            }
+        }
+    }
+
+    SECTION("escapes in a row")
+    {
+        for (const char* content :
+                {
+                    "\\n", "\\n\\t\\\\", "\\u00e9\\u00e9\\u4e2d", "\\u00e9\\u00e", "\\u00e9\\", "\\n\\q", "\\n\\ud83d\\ude00\\n",
+                    "\\ud83d\\ude00\\ud83d", "\\n\\n\\n abc \\n\\n", "\\n\x01", "\\n\xC3\x28", "\\n\\"
+                })
+        {
+            check_accept(std::string("[\"") + content + "\"]");
+            check_accept(std::string("[\"") + content);
+            check_accept(std::string("{\"") + content + "\":1}");
         }
     }
 

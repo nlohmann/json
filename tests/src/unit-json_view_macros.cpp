@@ -25,7 +25,7 @@
 #endif
 
 // the view's own macros do not leak
-#if defined(NLOHMANN_VIEW_LIKELY) || defined(NLOHMANN_VIEW_UNLIKELY) || defined(NLOHMANN_VIEW_ALWAYS_INLINE) || defined(NLOHMANN_VIEW_NOINLINE) \
+#if defined(NLOHMANN_VIEW_LIKELY) || defined(NLOHMANN_VIEW_UNLIKELY) || defined(NLOHMANN_VIEW_ALWAYS_INLINE) || defined(NLOHMANN_VIEW_NOINLINE) || defined(NLOHMANN_VIEW_NOCLONE) \
     || defined(NLOHMANN_VIEW_NODISCARD) || defined(NLOHMANN_VIEW_THROW) || defined(NLOHMANN_VIEW_HAS_CPP_17) || defined(NLOHMANN_VIEW_LITTLE_ENDIAN) \
     || defined(NLOHMANN_VIEW_REPEAT16)
     #error "json_view.hpp leaks a macro"

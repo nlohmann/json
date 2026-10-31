@@ -157,6 +157,15 @@
     #define NLOHMANN_VIEW_NOINLINE
 #endif
 
+// GCC: a function compiled as written, without the clones in which interprocedural
+// constant propagation drops an argument that every caller passes as the same constant
+// (calling such a clone changes the code GCC generates for the parse loop that calls it)
+#if defined(__GNUC__) && !defined(__clang__)
+    #define NLOHMANN_VIEW_NOCLONE __attribute__((noclone))
+#else
+    #define NLOHMANN_VIEW_NOCLONE
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
     #define NLOHMANN_VIEW_NODISCARD __attribute__((warn_unused_result))
 #elif defined(_MSC_VER)
@@ -948,9 +957,12 @@ compares, and the UTF-8 check covers the bytes up to it. Returns where the
 string scan stops, like scan_string_run: before ill-formed UTF-8 and for the
 last bytes of the input, the bytes are checked one sequence at a time. Out of
 line, so that no constants of the check occupy registers in the parse loop.
-On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()).
+On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()). Not cloned: with
+the calls of accept()'s builder, GCC 16 would clone it without plain (always
+string_plain()), and calling the clone made json_document::parse() run 0.7-1.2 %
+more instructions.
 */
-NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e, const std::uint8_t* plain) noexcept
+NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE NLOHMANN_VIEW_NOCLONE inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e, const std::uint8_t* plain) noexcept
 {
     using lookup = utf8_lookup4<>;
     const unsigned char* block = p;
@@ -1311,7 +1323,8 @@ struct parse_failure
 };
 
 /// FloatType: the number_float_t of the document, whose overflow parse() rejects
-template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Sentinel>
+/// Store: false for accept(): the grammar, number, string and UTF-8 checks run as for parse(), but no node is written
+template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Sentinel, bool Store>
 class builder
 {
   public:
@@ -1487,11 +1500,87 @@ class builder
         return p;
     }
 
+    /// the string from p, the first backslash, control character, ill-formed UTF-8 byte, or the end, checked and not
+    /// decoded (accept() stores nothing, so the arena is not written): the checks, errors and error positions of
+    /// slow_string(), for everything up to the closing quote
+    NLOHMANN_VIEW_NOINLINE decoded check_string(const unsigned char* p)
+    {
+        const unsigned char* const end = m_end;
+        for (;;)
+        {
+            if (p == end)
+            {
+                return failed(error_code::string_missing_quote, p);
+            }
+            const unsigned char c = *p;
+            if (c == '"')
+            {
+                ++p;
+                return decoded{p, 0, 0};
+            }
+            if (c != '\\')
+            {
+                return failed(c < 0x20 ? error_code::string_control_character : error_code::string_utf8, p);
+            }
+            ++p;
+            if (p == end)
+            {
+                return failed(error_code::string_missing_quote, p);
+            }
+            const unsigned char d = *p++;
+            if (d == 'u')
+            {
+                const int cp = hex4(p); // (moves p past the four digits)
+                if (NLOHMANN_VIEW_UNLIKELY(cp < 0))
+                {
+                    return failed(error_code::string_unicode_hex, p);
+                }
+                if (NLOHMANN_VIEW_UNLIKELY((cp & 0xF800) == 0xD800)) // a surrogate
+                {
+                    if (cp >= 0xDC00)
+                    {
+                        return failed(error_code::string_surrogate_low, p);
+                    }
+                    if (end - p < 2 || p[0] != '\\' || p[1] != 'u')
+                    {
+                        return failed(error_code::string_surrogate_high, p);
+                    }
+                    p += 2;
+                    const int lo = hex4(p); // (moves p past the four digits)
+                    if (lo < 0)
+                    {
+                        return failed(error_code::string_unicode_hex, p);
+                    }
+                    if (lo < 0xDC00 || lo > 0xDFFF)
+                    {
+                        return failed(error_code::string_surrogate_high, p);
+                    }
+                }
+            }
+            else if (!(d == '"' || d == '\\' || d == '/' || d == 'b' || d == 'f' || d == 'n' || d == 'r' || d == 't'))
+            {
+                --p;
+                return failed(error_code::string_escape, p);
+            }
+            if (p != end && *p == '\\')
+            {
+                continue; // (escapes in a row: no run of text between them)
+            }
+            p = scan_string_run(p, end); // the text up to the next backslash, quote, control character, or ill-formed UTF-8
+        }
+    }
+
     /// s points to the start of the string, p to a backslash, a control
     /// character, an ill-formed UTF-8 byte, or the end: decode the string into
     /// the arena
     NLOHMANN_VIEW_NOINLINE decoded slow_string(const unsigned char* s, const unsigned char* p)
     {
+        if (!enabled(Store))
+        {
+            // (accept(): the string is checked, not decoded)
+            static_cast<void>(s);
+            return check_string(p);
+        }
         // single-character escapes; 0: invalid (and 'u', handled separately)
         static const std::array<char, 128> simple_escape =
         {
@@ -1867,10 +1956,13 @@ run_found:
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool run()
         {
-            cold.m_doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
-            base = cold.m_doc.nodes;
-            out = base;
-            cap = base + cold.m_doc.node_capacity;
+            if (enabled(Store))
+            {
+                cold.m_doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
+                base = cold.m_doc.nodes;
+                out = base;
+                cap = base + cold.m_doc.node_capacity;
+            }
 
             if (e - p >= 3 && p[0] == 0xEF && p[1] == 0xBB && p[2] == 0xBF)
             {
@@ -2054,7 +2146,10 @@ close_object:
             // an array pays nothing for this)
             if (NLOHMANN_VIEW_UNLIKELY(cur_count >= document_data::index_min_members))
             {
-                cold.note_large_object(cur_idx);
+                if (enabled(Store))
+                {
+                    cold.note_large_object(cur_idx);
+                }
             }
 
 close_container:
@@ -2214,6 +2309,12 @@ indent_done:
         /// an integer's value); two stores on little-endian targets
         NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(node_kind k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
         {
+            if (!enabled(Store))
+            {
+                // accept(): nothing is stored, so what computes the arguments is not run either. base and out stay
+                // null: their difference, which open() takes, is 0.
+                return out;
+            }
             if (NLOHMANN_VIEW_UNLIKELY(out == cap))
             {
                 const auto n = static_cast<std::size_t>(out - base);
@@ -2272,9 +2373,12 @@ indent_done:
 
         NLOHMANN_VIEW_ALWAYS_INLINE void close()
         {
-            node& n = base[cur_idx];
-            n.len = cur_count;
-            n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
+            if (enabled(Store))
+            {
+                node& n = base[cur_idx];
+                n.len = cur_count;
+                n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
+            }
             if (--depth != 0)
             {
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
@@ -2449,34 +2553,44 @@ indent_done:
 };
 
 /// run the builder with compile-time options
-template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd>
+template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Store>
 inline bool build_with(document_data& d, const char* src, std::size_t size, bool sentinel, parse_failure& failure)
 {
     if (sentinel)
     {
-        builder<FloatType, Comments, TrailingCommas, NulIsEnd, true> bld(d, src, size);
+        builder<FloatType, Comments, TrailingCommas, NulIsEnd, true, Store> bld(d, src, size);
         const bool ok = bld.run();
         failure = bld.failure();
         return ok;
     }
-    builder<FloatType, Comments, TrailingCommas, NulIsEnd, false> bld(d, src, size);
+    builder<FloatType, Comments, TrailingCommas, NulIsEnd, false, Store> bld(d, src, size);
     const bool ok = bld.run();
     failure = bld.failure();
     return ok;
 }
 
 /// sentinel: src[size] is readable and 0 (e.g. std::string); FloatType: the
-/// number_float_t of the document
+/// number_float_t of the document; validate_only: accept(), only the result is
+/// used
 template<typename FloatType, bool NulIsEnd>
-inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, parse_failure& failure)
+inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, bool validate_only,
+                  parse_failure& failure)
 {
+    if (validate_only && !comments && !trailing_commas)
+    {
+        // accept() of plain JSON: nothing is stored. The other option sets
+        // could skip the stores just as well; they keep the builder that
+        // stores only so that there are two more instantiations of the parse
+        // loop, not eight.
+        return build_with<FloatType, false, false, NulIsEnd, false>(d, src, size, sentinel, failure);
+    }
     if (comments)
     {
-        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd>(d, src, size, sentinel, failure)
-               : build_with<FloatType, true, false, NulIsEnd>(d, src, size, sentinel, failure);
+        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd, true>(d, src, size, sentinel, failure)
+               : build_with<FloatType, true, false, NulIsEnd, true>(d, src, size, sentinel, failure);
     }
-    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd>(d, src, size, sentinel, failure)
-           : build_with<FloatType, false, false, NulIsEnd>(d, src, size, sentinel, failure);
+    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd, true>(d, src, size, sentinel, failure)
+           : build_with<FloatType, false, false, NulIsEnd, true>(d, src, size, sentinel, failure);
 }
 
 }  // namespace view
@@ -10116,7 +10230,7 @@ class basic_json_document
                                      const bool ignore_trailing_commas = false)
     {
         basic_json_document d;
-        d.read_range(first, last, allow_exceptions, ignore_comments, ignore_trailing_commas);
+        d.read_range(first, last, error_mode(allow_exceptions), ignore_comments, ignore_trailing_commas);
         return d;
     }
 
@@ -10131,7 +10245,7 @@ class basic_json_document
         basic_json_document d;
         std::string buf;
         append_input(buf, std::forward<InputType>(input));
-        d.build_owned(std::move(buf), allow_exceptions, ignore_comments, ignore_trailing_commas);
+        d.build_owned(std::move(buf), error_mode(allow_exceptions), ignore_comments, ignore_trailing_commas);
         return d;
     }
 
@@ -10144,7 +10258,8 @@ class basic_json_document
     static bool accept(InputType&& input, const bool ignore_comments = false, const bool ignore_trailing_commas = false)
     {
         basic_json_document d;
-        d.read(std::forward<InputType>(input), false, ignore_comments, ignore_trailing_commas);
+        d.read_kind(std::forward<InputType>(input), on_error::validate, ignore_comments, ignore_trailing_commas,
+                    std::integral_constant<detail::view::input_kind, detail::view::classify_input<InputType>::value> {});
         return !d.is_discarded();
     }
 
@@ -10160,7 +10275,7 @@ class basic_json_document
               const bool ignore_comments = false,
               const bool ignore_trailing_commas = false)
     {
-        read_kind(std::forward<InputType>(input), allow_exceptions, ignore_comments, ignore_trailing_commas,
+        read_kind(std::forward<InputType>(input), error_mode(allow_exceptions), ignore_comments, ignore_trailing_commas,
                   std::integral_constant<detail::view::input_kind, detail::view::classify_input<InputType>::value> {});
     }
 
@@ -10519,6 +10634,22 @@ class basic_json_document
         return idx;
     }
 
+    /// what a failed parse does
+    enum class on_error : std::uint8_t
+    {
+        discard, ///< the document is discarded
+        raise,   ///< parse_error is thrown
+        validate ///< accept(): the document is discarded, and no node is stored while parsing
+    };
+
+    static on_error error_mode(bool allow_exceptions) noexcept
+    {
+        return allow_exceptions ? on_error::raise : on_error::discard;
+    }
+
+    /// NulIsEnd of the builder: a null byte ends the input unless strict_nul_handling
+    static constexpr bool nul_is_end = !detail::abi_config::strict_nul_handling;
+
     /// create the storage (sized for the input) on first use
     void ensure_data(const char* src, std::size_t size)
     {
@@ -10530,7 +10661,7 @@ class basic_json_document
 
     /// parse a buffer the document takes ownership of (it replaces the
     /// previous owned copy)
-    void build_owned(std::string&& buf, bool allow_exceptions, bool comments, bool trailing_commas)
+    void build_owned(std::string&& buf, on_error allow_exceptions, bool comments, bool trailing_commas)
     {
         ensure_data(buf.data(), buf.size());
         m_data->owned = std::move(buf);
@@ -10540,7 +10671,7 @@ class basic_json_document
     /// parse a copy of the input; the copy is appended to the cleared owned
     /// buffer, so that its capacity is reused
     template<typename T>
-    void build_copy(T&& input, bool allow_exceptions, bool comments, bool trailing_commas)
+    void build_copy(T&& input, on_error allow_exceptions, bool comments, bool trailing_commas)
     {
         if (!m_data)
         {
@@ -10561,7 +10692,7 @@ class basic_json_document
     }
 
     /// sentinel: src[size] is readable and 0 (std::string, C strings)
-    void build(const char* src, std::size_t size, bool allow_exceptions, bool comments, bool trailing_commas, bool owned, bool sentinel)
+    void build(const char* src, std::size_t size, on_error allow_exceptions, bool comments, bool trailing_commas, bool owned, bool sentinel)
     {
         ensure_data(src, size);
         document_data& d = *m_data;
@@ -10588,7 +10719,8 @@ class basic_json_document
         }
         else
         {
-            ok = detail::view::build < typename BasicJsonType::number_float_t, !detail::abi_config::strict_nul_handling > (d, src, size, comments, trailing_commas, sentinel, failure);
+            ok = detail::view::build<typename BasicJsonType::number_float_t, nul_is_end>(d, src, size, comments, trailing_commas, sentinel,
+                 allow_exceptions == on_error::validate, failure);
         }
         if (NLOHMANN_VIEW_LIKELY(ok))
         {
@@ -10601,7 +10733,7 @@ class basic_json_document
             return;
         }
         std::vector<std::uint32_t>().swap(d.large_objects);
-        if (allow_exceptions)
+        if (allow_exceptions == on_error::raise)
         {
             detail::view::throw_parse_failure<BasicJsonType>(failure, src, size, comments, trailing_commas);
         }
@@ -10609,13 +10741,13 @@ class basic_json_document
 
     // --- input dispatch (see detail::view::input_kind) ---
 
-    void read_kind(std::string&& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::move_string> /*unused*/)
+    void read_kind(std::string&& s, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::move_string> /*unused*/)
     {
         build_owned(std::move(s), ae, c, tc);
     }
 
     template<typename CharT>
-    void read_kind(CharT* s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::c_string> /*unused*/)
+    void read_kind(CharT* s, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::c_string> /*unused*/)
     {
         if (s == nullptr)
         {
@@ -10629,7 +10761,7 @@ class basic_json_document
     }
 
     template<typename Array>
-    void read_kind(Array& a, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::char_array> /*unused*/)
+    void read_kind(Array& a, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::char_array> /*unused*/)
     {
         using CharT = typename std::remove_cv<typename std::remove_extent<Array>::type>::type;
         const std::size_t n = std::extent<Array>::value;
@@ -10640,7 +10772,7 @@ class basic_json_document
     }
 
     template<typename T>
-    void read_kind(const T& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::borrow_range> /*unused*/)
+    void read_kind(const T& s, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::borrow_range> /*unused*/)
     {
         // std::basic_string guarantees data()[size()] == 0: use it as sentinel
         const auto size = static_cast<std::size_t>(s.size());
@@ -10649,13 +10781,13 @@ class basic_json_document
     }
 
     template<typename T>
-    void read_kind(const T& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
+    void read_kind(const T& s, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
     {
         build_copy(s, ae, c, tc);
     }
 
     template<typename CharT>
-    void read_kind(CharT* s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::wide_c_string> /*unused*/)
+    void read_kind(CharT* s, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::wide_c_string> /*unused*/)
     {
         if (s == nullptr)
         {
@@ -10667,13 +10799,13 @@ class basic_json_document
     }
 
     template<typename T>
-    void read_kind(T&& input, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::adapter> /*unused*/)
+    void read_kind(T&& input, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::adapter> /*unused*/)
     {
         build_copy(std::forward<T>(input), ae, c, tc);
     }
 
     template<typename IteratorType>
-    void read_range(IteratorType first, IteratorType last, bool ae, bool c, bool tc)
+    void read_range(IteratorType first, IteratorType last, on_error ae, bool c, bool tc)
     {
         using value_type = typename std::remove_cv<typename std::iterator_traits<IteratorType>::value_type>::type;
         // borrow the range where the library's input adapter scans it as one
@@ -10684,14 +10816,14 @@ class basic_json_document
     }
 
     template<typename IteratorType>
-    void read_range_impl(IteratorType first, IteratorType last, bool ae, bool c, bool tc, std::true_type /*contiguous bytes*/)
+    void read_range_impl(IteratorType first, IteratorType last, on_error ae, bool c, bool tc, std::true_type /*contiguous bytes*/)
     {
         const auto size = static_cast<std::size_t>(std::distance(first, last));
         build(size == 0 ? "" : reinterpret_cast<const char*>(&*first), size, ae, c, tc, false, size == 0); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     }
 
     template<typename IteratorType>
-    void read_range_impl(IteratorType first, IteratorType last, bool ae, bool c, bool tc, std::false_type /*other*/)
+    void read_range_impl(IteratorType first, IteratorType last, on_error ae, bool c, bool tc, std::false_type /*other*/)
     {
         build_copy(detail::view::make_adapter_input(detail::input_adapter(first, last)), ae, c, tc);
     }
@@ -10822,6 +10954,7 @@ class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert
 #undef NLOHMANN_VIEW_UNLIKELY
 #undef NLOHMANN_VIEW_ALWAYS_INLINE
 #undef NLOHMANN_VIEW_NOINLINE
+#undef NLOHMANN_VIEW_NOCLONE
 #undef NLOHMANN_VIEW_NODISCARD
 #undef NLOHMANN_VIEW_THROW
 #undef NLOHMANN_VIEW_LITTLE_ENDIAN
