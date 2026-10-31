@@ -575,6 +575,59 @@ TEST_CASE("json_view builder: escapes between runs of text")
     }
 }
 
+TEST_CASE("json_view builder: chains of unicode escapes")
+{
+    // Consecutive \uXXXX escapes are decoded in a loop of their own. Chains of
+    // every length from 1 to 40 of escapes that give one, two, and three
+    // bytes of UTF-8, in upper and lower case, followed by what ends a chain:
+    // the end of the string, text, another escape, UTF-8, and everything that
+    // is not a valid escape (a bad digit at every position of the last
+    // escape, a lone surrogate, a surrogate pair, a cut in every place).
+    const std::array<const char*, 8> chain = {{"\\u0041", "\\u00e4", "\\u00E4", "\\u20ac", "\\u3042", "\\uFFFF", "\\u0000", "\\u07ff"}};
+    const std::array<const char*, 12> ends = {{"", "abc", "\\n", "\\u00e9", "\\ud83d\\ude00", "\\ud83d", "\\ude00", "\\ud83d\\u0041", "\\u12G4", "\\u12", "\xc3\xa4", "\\"}};
+    std::mt19937 rng(2027); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+    for (std::size_t length = 1; length <= 40; ++length)
+    {
+        for (int i = 0; i < 20; ++i)
+        {
+            std::string content = std::string(rng() % 20, 'a');
+            for (std::size_t k = 0; k < length; ++k)
+            {
+                content += chain[rng() % chain.size()];
+            }
+            const std::string whole = content;
+            for (const char* end : ends)
+            {
+                check_string(whole + end);
+                check_string(whole + end + std::string(rng() % 19, 'z'));
+            }
+            // a bad digit at every position of every escape near the end of the chain
+            for (std::size_t back = 1; back <= 6 && back <= length; ++back)
+            {
+                for (std::size_t digit = 2; digit < 6; ++digit)
+                {
+                    std::string broken = whole;
+                    broken[broken.size() - (6 * back) + digit] = "gG\"\x01 z"[rng() % 6];
+                    check_string(broken);
+                }
+            }
+            // the text cut in every place of the last three escapes
+            for (std::size_t cut = 0; cut <= 18 && cut <= whole.size(); ++cut)
+            {
+                check_string(whole.substr(0, whole.size() - cut));
+            }
+        }
+    }
+    // a chain longer than the first growth of the arena, in a key and in a value
+    std::string long_chain;
+    for (int i = 0; i < 3000; ++i)
+    {
+        long_chain += chain[static_cast<std::size_t>(i) % chain.size()];
+    }
+    check_string(long_chain);
+    check_string(long_chain + "\\ud83d\\ude00" + long_chain);
+}
+
 TEST_CASE("json_view node integer bits")
 {
     using nlohmann::detail::view::integer_bits;
