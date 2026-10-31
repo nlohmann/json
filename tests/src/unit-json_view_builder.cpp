@@ -476,7 +476,7 @@ TEST_CASE("json_view builder")
         // nesting beyond the 64 levels that are kept on the builder's own stack, closed and not closed
         for (const std::size_t depth :
                 {
-                    63, 64, 65, 66, 200, 1000
+                    63u, 64u, 65u, 66u, 200u, 1000u
                 })
         {
             check_accept(std::string(depth, '[') + std::string(depth, ']'));
