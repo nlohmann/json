@@ -19478,12 +19478,15 @@ class binary_reader
     than 9 bytes (the longest of these values) are left in the input, leaving
     those to @ref parse_cbor_value, which reads them the same way.
 
+    The caller has checked that an element remains, that at least 9 bytes are
+    left, and that the next byte begins a scalar.
+
     @param[in,out] remaining  the number of elements of the array not yet read
     @return whether the SAX parser accepted the values
     */
     bool parse_cbor_scalar_run(std::size_t& remaining)
     {
-        while (remaining != 0 && ia.bulk_remaining() >= 9)
+        do
         {
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
@@ -19571,6 +19574,7 @@ class binary_reader
                 return false;
             }
         }
+        while (remaining != 0 && ia.bulk_remaining() >= 9);
         return true;
     }
 
@@ -19587,7 +19591,27 @@ class binary_reader
     */
     bool enter_cbor_array(const std::size_t len)
     {
-        return enter_array(len) && (len == 0 || parse_cbor_array_start(std::integral_constant<bool, bulk_scan> {}));
+        return enter_array(len) && (len == 0 || !cbor_scalar_follows(std::integral_constant<bool, bulk_scan> {})
+                                    || parse_cbor_array_start(std::integral_constant<bool, bulk_scan> {}));
+    }
+
+    /// whether a run of scalars can start at the next byte: at least 9 bytes
+    /// are left and the byte begins an integer, a float, a boolean, or null;
+    /// one test, so that an array of containers or strings makes no call
+    bool cbor_scalar_follows(std::true_type /*bulk*/) const
+    {
+        if (ia.bulk_remaining() < 9)
+        {
+            return false;
+        }
+        const auto head = static_cast<unsigned char>(*ia.bulk_data());
+        return head < 0x40 || head >= 0xF4;
+    }
+
+    /// input that is not contiguous: every value is read by parse_cbor_value
+    bool cbor_scalar_follows(std::false_type /*bulk*/) const noexcept
+    {
+        return false;
     }
 
     /// read the scalars the array just opened begins with; out of line, so
