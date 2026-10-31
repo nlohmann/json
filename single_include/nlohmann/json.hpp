@@ -20419,12 +20419,15 @@ class binary_reader
     than 9 bytes (the longest of these values) are left in the input, leaving
     those to @ref parse_msgpack_value, which reads them the same way.
 
+    The caller has checked that an element remains, that at least 9 bytes are
+    left, and that the next byte begins a scalar.
+
     @param[in,out] remaining  the number of elements of the array not yet read
     @return whether the SAX parser accepted the values
     */
     bool parse_msgpack_scalar_run(std::size_t& remaining)
     {
-        while (remaining != 0 && ia.bulk_remaining() >= 9)
+        do
         {
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
@@ -20514,6 +20517,7 @@ class binary_reader
                 return false;
             }
         }
+        while (remaining != 0 && ia.bulk_remaining() >= 9);
         return true;
     }
 
@@ -20525,7 +20529,28 @@ class binary_reader
     */
     bool enter_msgpack_array(const std::size_t len)
     {
-        return enter_array(len) && (len == 0 || parse_msgpack_array_start(std::integral_constant<bool, bulk_scan> {}));
+        return enter_array(len) && (len == 0 || !msgpack_scalar_follows(std::integral_constant<bool, bulk_scan> {})
+                                    || parse_msgpack_array_start(std::integral_constant<bool, bulk_scan> {}));
+    }
+
+    /// whether a run of scalars can start at the next byte: at least 9 bytes
+    /// are left and the byte begins a fixint, nil, a boolean, a float, or a
+    /// sized integer (0xC0-0xD3); one test, so that an array of containers or
+    /// strings makes no call
+    bool msgpack_scalar_follows(std::true_type /*bulk*/) const
+    {
+        if (ia.bulk_remaining() < 9)
+        {
+            return false;
+        }
+        const auto head = static_cast<unsigned char>(*ia.bulk_data());
+        return head < 0x80 || head >= 0xE0 || (head >= 0xC0 && head <= 0xD3);
+    }
+
+    /// input that is not contiguous: every value is read by parse_msgpack_value
+    bool msgpack_scalar_follows(std::false_type /*bulk*/) const noexcept
+    {
+        return false;
     }
 
     /// read the scalars the array just opened begins with; out of line, so
