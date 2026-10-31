@@ -6,6 +6,11 @@ The checked-in `nlohmann_json.natvis` covers the default namespace (no ABI tags)
 of ABI tags, with both versioned and unversioned namespace variants. Configurations that enable three or more ABI tags
 are not covered by this reduced file; use `--abi-tags` or `--all` (see below) to generate a file for them.
 
+The visualizers of `basic_json_document` and `basic_json_view` live in the same inline namespaces as `basic_json`, so the
+ABI tags apply to them in the same way, and the `view_mode` template argument is covered by a wildcard: it does not
+multiply the namespaces. Each namespace gets three more types (`basic_json_view<*,*>`, `basic_json_document<*,*>`, and
+`detail::view::node`), which roughly doubles the size of the file.
+
 The ABI tag list and the library version are parsed from
 `include/nlohmann/detail/abi_macros.hpp`, so this script must be re-run (via
 `make natvis`) whenever an `NLOHMANN_JSON_ABI_TAG_*` macro is added to that
@@ -35,7 +40,7 @@ version other than the one in `abi_macros.hpp`.
 |-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--list-tags`     | Print every ABI tag (in namespace order) with the macro that enables it and the `NLOHMANN_JSON_ABI_TAG_*` identifier, then exit.                                                                                                                    |
 | `--abi-tags TAGS` | Add the namespaces of one configuration, given as a comma-separated list of ABI tags (`_diag,_dp,_ns`; the leading underscore is optional, and the order does not matter). Can be repeated for several configurations. Unknown tags are an error. |
-| `--all`           | Generate the namespaces for every combination of ABI tags. The file size doubles with each tag (about 60 MB for 12 tags). Cannot be combined with `--abi-tags`.                                                                                    |
+| `--all`           | Generate the namespaces for every combination of ABI tags. The file size doubles with each tag (about 60 MB for 11 tags). Cannot be combined with `--abi-tags`.                                                                                    |
 | `--output FILE`   | Write the Natvis file to `FILE` instead of `nlohmann_json.natvis` in the repository root.                                                                                                                                                           |
 
 Each configuration gets both the versioned (`json_abi_diag_dp_ns_v3_12_0`) and the unversioned (`json_abi_diag_dp_ns`,

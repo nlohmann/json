@@ -5,6 +5,39 @@
 <!-- * * * * * * * * AUTO-GENERATED FILE  * * * * * * * * -->
 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+{# The children of the container node `node` (a pointer expression) of the document `doc` (a document_data pointer
+   expression). A node is only an index into the source text: strings are read from `doc`, so the strings of the
+   direct children are readable here, but the children of a nested container are shown as nodes (see the node
+   visualizer below). Containers with edits (flag 8, "moved") are not expanded. The node kinds are the numbers of
+   node_kind: 1 object, 2 array, 3 string; the float token is shown only by the node visualizer. #}
+{% macro children(node, doc=none) %}
+            <CustomListItems MaxItemsPerView="1000">
+              <Variable Name="nd" InitialValue="{{ node }}" />
+              <Variable Name="obj" InitialValue="nd != 0 &amp;&amp; (int)nd-&gt;kind == 1" />
+              <Variable Name="n" InitialValue="(nd != 0 &amp;&amp; ((int)nd-&gt;kind == 1 || (int)nd-&gt;kind == 2) &amp;&amp; (nd-&gt;flags &amp; 8) == 0) ? (int)nd-&gt;len : 0" />
+              <Variable Name="p" InitialValue="nd + 1" />
+              <Variable Name="i" InitialValue="0" />
+              <Size>obj ? 2 * n : n</Size>
+              <Loop Condition="i &lt; n">
+{% if doc %}
+                <Item Name="key" Condition="obj">{{ doc }}-&gt;base._Elems[p-&gt;flags &amp; 3] + p-&gt;off,[p-&gt;len]s8</Item>
+{% else %}
+                <Item Name="key" Condition="obj">*p</Item>
+{% endif %}
+                <Exec Condition="obj">p = p + 1</Exec>
+{% if doc %}
+                <Item Name="value" Condition="obj &amp;&amp; (int)p-&gt;kind == 3">{{ doc }}-&gt;base._Elems[p-&gt;flags &amp; 3] + p-&gt;off,[p-&gt;len]s8</Item>
+{% endif %}
+                <Item Name="value" Condition="obj{% if doc %} &amp;&amp; (int)p-&gt;kind != 3{% endif %}">*p</Item>
+{% if doc %}
+                <Item Condition="!obj &amp;&amp; (int)p-&gt;kind == 3">{{ doc }}-&gt;base._Elems[p-&gt;flags &amp; 3] + p-&gt;off,[p-&gt;len]s8</Item>
+{% endif %}
+                <Item Condition="!obj{% if doc %} &amp;&amp; (int)p-&gt;kind != 3{% endif %}">*p</Item>
+                <Exec>p = p + (((int)p-&gt;kind == 1 || (int)p-&gt;kind == 2) ? p-&gt;next : 1)</Exec>
+                <Exec>i = i + 1</Exec>
+              </Loop>
+            </CustomListItems>
+{%- endmacro %}
 {% for ns in namespaces %}
     <!-- Namespace {{ ns }} -->
     <Type Name="{{ ns }}::basic_json&lt;*&gt;">
@@ -62,5 +95,44 @@
     </Type>
 
 {% endfor %}
+
+    <!-- json_view / json_document (include/nlohmann/json_view.hpp). They live in the same inline namespaces as
+         basic_json, so the ABI tags need no extra entries; the view_mode is a template argument that the wildcard
+         covers. A view is a pointer to the document's data and a pointer to a node of its flat index; the
+         strings of the source are found through document_data::base (std::array of the MSVC STL: _Elems). -->
+    <Type Name="{{ ns }}::detail::view::node">
+        <DisplayString Condition="(int)kind == 0">null</DisplayString>
+        <DisplayString Condition="(int)kind == 1">object, size={len}</DisplayString>
+        <DisplayString Condition="(int)kind == 2">array, size={len}</DisplayString>
+        <DisplayString Condition="(int)kind == 3">string, length={len}</DisplayString>
+        <DisplayString Condition="(int)kind == 4">boolean: {(flags &amp; 4) != 0}</DisplayString>
+        <DisplayString Condition="(int)kind == 5">int64: {(__int64)((unsigned __int64)len | ((unsigned __int64)next &lt;&lt; 32))}</DisplayString>
+        <DisplayString Condition="(int)kind == 6">uint64: {(unsigned __int64)len | ((unsigned __int64)next &lt;&lt; 32)}</DisplayString>
+        <DisplayString Condition="(int)kind == 7">float, length={len}</DisplayString>
+        <DisplayString>link</DisplayString>
+        <Expand>
+{{ children('this') }}
+        </Expand>
+    </Type>
+
+    <Type Name="{{ ns }}::basic_json_view&lt;*,*&gt;">
+        <DisplayString Condition="m_node == 0">discarded</DisplayString>
+        <DisplayString Condition="(int)m_node-&gt;kind == 3">{m_doc-&gt;base._Elems[m_node-&gt;flags &amp; 3] + m_node-&gt;off,[m_node-&gt;len]s8}</DisplayString>
+        <DisplayString Condition="(int)m_node-&gt;kind == 7">{m_doc-&gt;base._Elems[m_node-&gt;flags &amp; 3] + m_node-&gt;off,[m_node-&gt;len]s8b}</DisplayString>
+        <DisplayString>{*m_node}</DisplayString>
+        <Expand>
+{{ children('m_node', 'm_doc') }}
+        </Expand>
+    </Type>
+
+    <Type Name="{{ ns }}::basic_json_document&lt;*,*&gt;">
+        <DisplayString Condition="m_data._Mypair._Myval2 == 0 || m_data._Mypair._Myval2-&gt;discarded">discarded</DisplayString>
+        <DisplayString>{*m_data._Mypair._Myval2-&gt;nodes}</DisplayString>
+        <Expand>
+            <Item Name="[source]" Condition="m_data._Mypair._Myval2 != 0">m_data._Mypair._Myval2-&gt;src,[m_data._Mypair._Myval2-&gt;size]s8b</Item>
+            <Item Name="[nodes]" Condition="m_data._Mypair._Myval2 != 0">m_data._Mypair._Myval2-&gt;node_count</Item>
+{{ children('m_data._Mypair._Myval2->nodes', 'm_data._Mypair._Myval2') }}
+        </Expand>
+    </Type>
 {% endfor %}
 </AutoVisualizer>
