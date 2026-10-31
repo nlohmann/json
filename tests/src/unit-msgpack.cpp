@@ -27,12 +27,15 @@ using nlohmann::json;
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <list>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "sax_event_loggers.hpp"
 using utils::SaxCountdown;
+using utils::SaxEventLogger;
 
 
 TEST_CASE("MessagePack")
@@ -2210,5 +2213,99 @@ TEST_CASE("MessagePack large strings and binaries (chunked reader)")
             json _;
             CHECK_THROWS_AS(_ = json::from_msgpack(truncated), json::parse_error);
         }
+    }
+}
+
+TEST_CASE("MessagePack arrays of scalars from contiguous and non-contiguous input")
+{
+    // contiguous input reads the integers, floats, booleans, and nils an
+    // array begins with in one loop, other input value by value; both must
+    // give the same events, value, or error for the complete document and for
+    // every truncation of it, and stop at every event a SAX handler rejects
+    const std::vector<std::uint8_t> msgpack =
+    {
+        0x83,                                                       // map(3)
+        0xA1, 'a',                                                  // "a"
+        0xDC, 0x00, 0x16,                                           // array 16 (22)
+        0x00, 0x7F, 0xCC, 0xFF, 0xCD, 0x01, 0x00,                   // 0, 127, 255, 256
+        0xCE, 0x00, 0x01, 0x00, 0x00,                               // 65536
+        0xCF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,       // 18446744073709551615
+        0xFF, 0xE0, 0xD0, 0x80, 0xD1, 0xFF, 0x00,                   // -1, -32, -128, -256
+        0xD2, 0xFF, 0xFE, 0xFF, 0xFF,                               // -65537
+        0xD3, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       // -9223372036854775808
+        0xC2, 0xC3, 0xC0,                                           // false, true, nil
+        0xCA, 0x3F, 0xC0, 0x00, 0x00,                               // 1.5 (float 32)
+        0xCB, 0xBF, 0xB9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9A,       // -0.1
+        0xA1, 'x',                                                  // "x" (ends the loop)
+        0x01,                                                       // 1
+        0xCB, 0x40, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       // 2.5
+        0xD9, 0x01, 'y',                                            // "y" (str 8)
+        0xC0,                                                       // nil
+        0xA1, 'b',                                                  // "b"
+        0x93,                                                       // fixarray(3)
+        0x92, 0xCB, 0x3F, 0xF4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // [1.25,
+        0xCB, 0xC0, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       //  -3.75]
+        0x92, 0xCB, 0x3F, 0xF4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // [1.25,
+        0xCB, 0xC0, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       //  -3.75]
+        0x90,                                                       // []
+        0xA1, 'c',                                                  // "c"
+        0x94, 0x80, 0x01, 0xC4, 0x01, 0x05, 0x91, 0x03              // [{}, 1, bin 8, [3]]
+    };
+
+    const json j = json::from_msgpack(msgpack);
+    CHECK(j["a"].size() == 22);
+    CHECK(j["a"][5] == 18446744073709551615u);
+    CHECK(j["a"][7] == -32);
+    CHECK(j["a"][11] == (std::numeric_limits<std::int64_t>::min)());
+    CHECK(j["a"][15] == 1.5);
+    CHECK(j["a"][16] == -0.1);
+    CHECK(j["a"][17] == "x");
+    CHECK(j["b"] == json::parse("[[1.25, -3.75], [1.25, -3.75], []]"));
+    CHECK(j["c"][2].is_binary());
+
+    for (std::size_t length = 0; length <= msgpack.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> contiguous(msgpack.begin(), msgpack.begin() + static_cast<std::ptrdiff_t>(length));
+        const std::list<std::uint8_t> bytewise(contiguous.begin(), contiguous.end());
+
+        CHECK(json::from_msgpack(contiguous, true, false).dump() == json::from_msgpack(bytewise.begin(), bytewise.end(), true, false).dump());
+#if !defined(JSON_NOEXCEPTION)
+        std::string contiguous_error;
+        std::string bytewise_error;
+        try
+        {
+            static_cast<void>(json::from_msgpack(contiguous));
+        }
+        catch (const json::parse_error& e)
+        {
+            contiguous_error = e.what();
+        }
+        try
+        {
+            static_cast<void>(json::from_msgpack(bytewise.begin(), bytewise.end()));
+        }
+        catch (const json::parse_error& e)
+        {
+            bytewise_error = e.what();
+        }
+        CHECK(contiguous_error == bytewise_error);
+#endif
+
+        SaxEventLogger from_contiguous;
+        SaxEventLogger from_bytewise;
+        CHECK(json::sax_parse(contiguous, &from_contiguous, json::input_format_t::msgpack)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::msgpack));
+        CHECK(from_contiguous.events == from_bytewise.events);
+    }
+
+    for (int events = 0; events <= 60; ++events)
+    {
+        CAPTURE(events)
+        const std::list<std::uint8_t> bytewise(msgpack.begin(), msgpack.end());
+        SaxCountdown from_contiguous(events);
+        SaxCountdown from_bytewise(events);
+        CHECK(json::sax_parse(msgpack, &from_contiguous, json::input_format_t::msgpack)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::msgpack));
     }
 }
