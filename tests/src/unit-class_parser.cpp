@@ -2989,7 +2989,7 @@ TEST_CASE("accept() agrees with parse() on strings, which it checks without copy
     // must accept and reject exactly what parse() does
     const std::vector<std::string> pieces =
     {
-        "", "abc", "\\\"\\\\\\/\\b\\f\\n\\r\\t", "\\u0041\\u00e4\\u20AC", "\\ud83d\\ude00", "\\uD83D\\uDE00",
+        "", "abc", R"(\"\\\/\b\f\n\r\t)", R"(\u0041\u00e4\u20AC)", "\\ud83d\\ude00", "\\uD83D\\uDE00",
         "\\ud800", "\\udc00", "\\ud800\\u0041", "\\ud800x", "\\udbff\\udfff", "\\u12", "\\u12g4", "\\x", "\\",
         "\xc3\xa4", "\xe2\x82\xac", "\xf0\x9f\x98\x80", "\xf4\x8f\xbf\xbf", "\xc0\xaf", "\xed\xa0\x80", "\xf4\x90\x80\x80",
         "\xff", "\xe2\x82", "\xc3", "\x01", "\x1f", "\x7f", "\n", std::string(1, '\0')
@@ -3001,11 +3001,28 @@ TEST_CASE("accept() agrees with parse() on strings, which it checks without copy
         {
             // a run of ordinary characters puts the piece at every offset of the bulk scanners
             const std::string str = std::string(run, 'a') + piece;
-            for (const std::string& text :
-                    {
-                        "\"" + str + "\"", "[\"" + str + "\"]", "{\"" + str + "\":1}", "{\"k\":\"" + str + "\",\"" + str + "\":[\"" + str + "\"]}",
-                        "[\"" + str
-                    })
+            std::string opened = "\"";
+            opened += str;
+            std::string closed = opened;
+            closed += '"';
+            std::vector<std::string> texts;
+            texts.push_back(closed);
+            texts.push_back("[");
+            texts.back() += closed;
+            texts.back() += ']';
+            texts.push_back("{");
+            texts.back() += closed;
+            texts.back() += ":1}";
+            texts.push_back("{\"k\":");
+            texts.back() += closed;
+            texts.back() += ',';
+            texts.back() += closed;
+            texts.back() += ":[";
+            texts.back() += closed;
+            texts.back() += "]}";
+            texts.push_back("[");
+            texts.back() += opened;
+            for (const std::string& text : texts)
             {
                 CAPTURE(text)
                 for (int options = 0; options < 4; ++options)
