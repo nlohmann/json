@@ -553,6 +553,20 @@ TEST_CASE("json_view builder")
         }
     }
 
+    SECTION("escapes in a row")
+    {
+        for (const char* content :
+                {
+                    "\\n", "\\n\\t\\\\", "\\u00e9\\u00e9\\u4e2d", "\\u00e9\\u00e", "\\u00e9\\", "\\n\\q", "\\n\\ud83d\\ude00\\n",
+                    "\\ud83d\\ude00\\ud83d", "\\n\\n\\n abc \\n\\n", "\\n\x01", "\\n\xC3\x28", "\\n\\"
+                })
+        {
+            check_accept(std::string("[\"") + content + "\"]");
+            check_accept(std::string("[\"") + content);
+            check_accept(std::string("{\"") + content + "\":1}");
+        }
+    }
+
     SECTION("test files")
     {
         for (const char* name :

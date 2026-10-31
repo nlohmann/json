@@ -88,7 +88,6 @@
 #include <cstring> // memcmp, memcpy
 #include <limits> // numeric_limits
 #include <string> // string
-#include <type_traits> // false_type, integral_constant, true_type
 #include <vector> // vector
 
 // #include <nlohmann/json.hpp>
@@ -1551,24 +1550,12 @@ class builder
                 --p;
                 return failed(error_code::string_escape, p);
             }
+            if (p != end && *p == '\\')
+            {
+                continue; // (escapes in a row: no run of text between them)
+            }
             p = scan_string_run(p, end); // the text up to the next backslash, quote, control character, or ill-formed UTF-8
         }
-    }
-
-    /// the string from p, decoded into the arena, or only checked (Store == false)
-    decoded decode_string(const unsigned char* s, const unsigned char* p)
-    {
-        return decode_string(s, p, std::integral_constant<bool, Store>());
-    }
-
-    decoded decode_string(const unsigned char* s, const unsigned char* p, std::true_type /*unused*/)
-    {
-        return slow_string(s, p);
-    }
-
-    decoded decode_string(const unsigned char* /*unused*/, const unsigned char* p, std::false_type /*unused*/)
-    {
-        return check_string(p);
     }
 
     /// s points to the start of the string, p to a backslash, a control
@@ -1576,6 +1563,12 @@ class builder
     /// the arena
     NLOHMANN_VIEW_NOINLINE decoded slow_string(const unsigned char* s, const unsigned char* p)
     {
+        if (!enabled(Store))
+        {
+            // (accept(): the string is checked, not decoded)
+            static_cast<void>(s);
+            return check_string(p);
+        }
         // single-character escapes; 0: invalid (and 'u', handled separately)
         static const std::array<char, 128> simple_escape =
         {
@@ -2513,7 +2506,7 @@ indent_done:
                 ++p;
                 return true;
             }
-            const decoded r = cold.decode_string(s, p);
+            const decoded r = cold.slow_string(s, p);
             if (r.p == nullptr)
             {
                 return false;
