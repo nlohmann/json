@@ -443,6 +443,30 @@ TEST_CASE("json_view from_json")
         CHECK(d.root().materialize().get<point>().x == 3);
     }
 
+    SECTION("escaped keys: members are found by their decoded names")
+    {
+        // keys are decoded before they are compared, as by parse(); a lookup
+        // that compares the raw bytes of the source would miss these members
+        const json_document d = json_document::parse(R"([{"\u0078": 1, "y": 2}, {"V\u0061lue": 3, "Te\u0078t": "t"}, {"\u0062": "escaped"}, {"x": 1, "\u0078": 3, "y": 2}])");
+        const json j = d.root().materialize();
+        CHECK(d.root()[0].get<point>().x == 1);
+        CHECK(d.root()[0].get<point>().y == 2);
+        CHECK((d.root()[0].get<point>() == j[0].get<point>()));
+        CHECK(d.root()[1].get<with_names>().value == 3);
+        CHECK(d.root()[1].get<with_names>().text == "t");
+        CHECK(d.root()[2].get<with_defaults>().b == "escaped");
+        CHECK(d.root()[2].get<with_defaults>().a == 1);
+        // a duplicate key written once plain and once escaped: still the first member
+        CHECK(d.root()[3].get<point>().x == 1);
+        CHECK(j[3].get<point>().x == 3);
+#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS && !JSON_DIAGNOSTIC_POSITIONS
+        // an escaped backslash is part of the decoded key: "x\\" is not "x"
+        const json_document e = json_document::parse(R"({"x\\": 1, "y": 2})");
+        CHECK(exception_of_call([&] { static_cast<void>(e.root().get<point>()); }) == exception_of_call([&] { static_cast<void>(e.root().materialize().get<point>()); }));
+        CHECK(exception_of_call([&] { static_cast<void>(e.root().get<point>()); }) == "[json.exception.out_of_range.403] key 'x' not found");
+#endif
+    }
+
     SECTION("editable documents and ordered_json")
     {
         json_editable_document e = json_editable_document::parse(R"({"x": 1, "y": 2})");
