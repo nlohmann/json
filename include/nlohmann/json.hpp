@@ -150,7 +150,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // can be restored when json_pointer backwards compatibility is removed
     // friend ::nlohmann::json_pointer<StringType>;
 
-    template<typename BasicJsonType, typename InputType>
+    template<typename BasicJsonType, typename InputType, bool DiscardValues>
     friend class ::nlohmann::detail::parser;
     friend ::nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
@@ -183,12 +183,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false,
-        const bool ignore_trailing_commas = false,
-        const bool discard_values = false
+        const bool ignore_trailing_commas = false
     )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_values);
+               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
     }
 
   private:
@@ -3117,7 +3116,9 @@ public:
                             const bool ignore_comments,
                             const bool ignore_trailing_commas)
     {
-        return parser(std::forward<InputAdapterType>(adapter), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
+        // the parser and lexer that discard the values of tokens (see lexer)
+        return ::nlohmann::detail::parser<basic_json, typename std::decay<InputAdapterType>::type, true>(std::forward<InputAdapterType>(adapter),
+                nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
     }
 
     /// generate SAX events from the input behind an already created adapter

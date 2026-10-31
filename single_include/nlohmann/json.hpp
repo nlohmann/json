@@ -13065,8 +13065,13 @@ constexpr bool input_adapter_bulk_window(std::false_type /*detected*/)
 @brief lexical analysis
 
 This class organizes the lexical analysis during JSON deserialization.
+
+DiscardValues: the caller only needs the token types and never looks at the values of number and string tokens (only
+accept(), which parses through json_sax_acceptor). A template parameter rather than a member, so that the lexer of
+parse() is compiled without the paths of accept(): with both string scans in one scan(), parse() was up to 2 % slower
+on Apple M1.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, bool DiscardValues = false>
 class lexer : public lexer_base<BasicJsonType>
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -13124,10 +13129,9 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false, bool discard_values_ = false) noexcept
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false) noexcept
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
-        , discard_values(discard_values_)
     {
         // the token string of an error before the first token is everything
         // read so far
@@ -14314,7 +14318,7 @@ scan_number_done:
         // reached for input without bulk access (e.g. streams), with
         // JSON_DIAGNOSTIC_POSITIONS, or when scan_number_bulk_contiguous()
         // falls back to scan_number().
-        if (discard_values)
+        if (discard_values())
         {
             constexpr std::size_t safe_digit_count = 18;
             if (number_type == token_type::value_unsigned && token_buffer.size() <= safe_digit_count)
@@ -14565,7 +14569,7 @@ scan_number_done:
         // w < 10^19, so a value below 10^max_exponent10 cannot overflow, and a
         // value that underflows is a finite number as well. Only a token that
         // may overflow has to be converted to find out.
-        if (JSON_HEDLEY_UNLIKELY(discard_values && s.exponent + 19 <= std::numeric_limits<number_float_t>::max_exponent10))
+        if (JSON_HEDLEY_UNLIKELY(discard_values() && s.exponent + 19 <= std::numeric_limits<number_float_t>::max_exponent10))
         {
             value_float = 0;
             return true;
@@ -15319,11 +15323,9 @@ scan_number_done:
 
             // string
             case '\"':
-                // accept() (discard_values) checks strings without copying them
-                // into token_buffer. The choice is made once per string: a
-                // check inside the string loop made number-heavy documents up
-                // to 3 % slower (mesh.json, Apple M1)
-                return discard_values ? scan_string(std::false_type {}) : scan_string(std::true_type {});
+                // accept() (DiscardValues) checks strings without copying them
+                // into token_buffer
+                return scan_string(keep_strings {});
 
             // number
             case '-':
@@ -15408,13 +15410,19 @@ scan_number_done:
     std::size_t decimal_point_position = std::string::npos;
 
     /// whether the caller only needs the token types and never looks at the
-    /// values of number and string tokens; set only by accept(), which parses
+    /// values of number and string tokens; DiscardValues, set only by accept(), which parses
     /// through json_sax_acceptor. When set, convert_number() skips converting
     /// integer tokens whose digit count guarantees that they fit into 64 bits
     /// (see there), floats are converted only when they may overflow (see
     /// convert_accumulated_float()), and strings are checked without being
     /// copied into token_buffer (see scan())
-    const bool discard_values = false;
+    static bool discard_values() noexcept
+    {
+        return DiscardValues;
+    }
+
+    /// the tag of scan_string(): whether string tokens are kept
+    using keep_strings = typename std::conditional<DiscardValues, std::false_type, std::true_type>::type;
 };
 
 }  // namespace detail
@@ -22606,14 +22614,14 @@ This class implements a parser for JSON text. Nested arrays and objects are trac
 stack instead of recursion, so deeply nested input does not exhaust the call stack, and what is read
 is reported as SAX events.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, bool DiscardValues = false>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using lexer_t = lexer<BasicJsonType, InputAdapterType>;
+    using lexer_t = lexer<BasicJsonType, InputAdapterType, DiscardValues>;
     using token_type = typename lexer_t::token_type;
 
   public:
@@ -22622,10 +22630,9 @@ class parser
                     parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true,
                     const bool ignore_comments = false,
-                    const bool ignore_trailing_commas_ = false,
-                    const bool discard_values_ = false)
+                    const bool ignore_trailing_commas_ = false)
         : callback(std::move(cb))
-        , m_lexer(std::move(adapter), ignore_comments, discard_values_)
+        , m_lexer(std::move(adapter), ignore_comments)
         , allow_exceptions(allow_exceptions_)
         , ignore_trailing_commas(ignore_trailing_commas_)
     {
@@ -36988,7 +36995,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // can be restored when json_pointer backwards compatibility is removed
     // friend ::nlohmann::json_pointer<StringType>;
 
-    template<typename BasicJsonType, typename InputType>
+    template<typename BasicJsonType, typename InputType, bool DiscardValues>
     friend class ::nlohmann::detail::parser;
     friend ::nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
@@ -37021,12 +37028,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false,
-        const bool ignore_trailing_commas = false,
-        const bool discard_values = false
+        const bool ignore_trailing_commas = false
                                  )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_values);
+            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
     }
 
   private:
@@ -39955,7 +39961,9 @@ public:
                             const bool ignore_comments,
                             const bool ignore_trailing_commas)
     {
-        return parser(std::forward<InputAdapterType>(adapter), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
+        // the parser and lexer that discard the values of tokens (see lexer)
+        return ::nlohmann::detail::parser<basic_json, typename std::decay<InputAdapterType>::type, true>(std::forward<InputAdapterType>(adapter),
+                nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
     }
 
     /// generate SAX events from the input behind an already created adapter
