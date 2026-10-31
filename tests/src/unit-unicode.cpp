@@ -1639,19 +1639,19 @@ TEST_CASE("UTF-8 check of whole strings")
     // 16 bytes at a time where a vector check is available; it must agree with
     // the byte-wise check for every mix of ASCII, sequences of each length,
     // ill-formed and truncated sequences, at every length and offset
-    const char* const pieces[] =
+    const char* const pieces[] = // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         "a", "\x7F", "\xC3\xA9", "\xE2\x82\xAC", "\xE0\xA0\x80", "\xEF\xBF\xBF", "\xF0\x9F\x98\x80", "\xF4\x8F\xBF\xBF",
         "\x80", "\xC0\xAF", "\xC3", "\xE2\x82", "\xED\xA0\x80", "\xF0\x9F", "\xF4\x90\x80\x80", "\xFF"
     };
     // std::mt19937's sequence is fixed by the standard; no distribution is used
-    std::mt19937 rng(5);
+    std::mt19937 rng(5); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
     std::size_t valid = 0;
     for (int i = 0; i < 100000; ++i)
     {
         std::string s;
         const std::size_t length = rng() % 100;
-        const std::uint32_t ascii = rng() % 101;
+        const auto ascii = static_cast<std::uint32_t>(rng() % 101);
         while (s.size() < length)
         {
             // mostly well-formed pieces (the first eight), so that long valid
