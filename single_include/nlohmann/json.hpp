@@ -21324,6 +21324,107 @@ class binary_reader
     }
 
     /*!
+    @brief read the elements of an optimized array of numbers (type marker
+           @a type) that are in the input, in one loop, without the
+           per-element bookkeeping of @ref parse_ubjson_internal
+
+    Values are emitted as @ref get_ubjson_value emits them. Types other than
+    the fixed-size integers and floats are left to @ref get_ubjson_value, as
+    are the elements the input ends before.
+
+    @param[in,out] remaining  the number of elements not yet read
+    @param[in] type  the type marker of the elements
+    @return whether the SAX parser accepted the values
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    bool parse_ubjson_typed_run(std::size_t& remaining, const char_int_type type, std::true_type /*bulk*/)
+    {
+        const bool bjdata = input_format == input_format_t::bjdata;
+        switch (type)
+        {
+            case 'U':
+                return parse_ubjson_typed_run<std::uint8_t>(remaining);
+            case 'i':
+                return parse_ubjson_typed_run<std::int8_t>(remaining);
+            case 'I':
+                return parse_ubjson_typed_run<std::int16_t>(remaining);
+            case 'l':
+                return parse_ubjson_typed_run<std::int32_t>(remaining);
+            case 'L':
+                return parse_ubjson_typed_run<std::int64_t>(remaining);
+            case 'u':
+                return !bjdata || parse_ubjson_typed_run<std::uint16_t>(remaining);
+            case 'm':
+                return !bjdata || parse_ubjson_typed_run<std::uint32_t>(remaining);
+            case 'M':
+                return !bjdata || parse_ubjson_typed_run<std::uint64_t>(remaining);
+            case 'd':
+                return parse_ubjson_typed_run<float>(remaining);
+            case 'D':
+                return parse_ubjson_typed_run<double>(remaining);
+            default:
+                return true;
+        }
+    }
+
+    /// input that is not contiguous: every element is read by get_ubjson_value
+    bool parse_ubjson_typed_run(std::size_t& /*remaining*/, const char_int_type /*type*/, std::false_type /*bulk*/) const noexcept
+    {
+        return true;
+    }
+
+    template<typename NumberType>
+    bool parse_ubjson_typed_run(std::size_t& remaining)
+    {
+        constexpr std::size_t size = sizeof(NumberType);
+        const std::size_t count = (std::min)(remaining, ia.bulk_remaining() / size);
+        if (count == 0)
+        {
+            return true;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        // UBJSON stores numbers big-endian, BJData little-endian
+        const bool swap = is_little_endian != (input_format == input_format_t::bjdata);
+        std::size_t read = 0;
+        bool accepted = true;
+        while (read < count && accepted)
+        {
+            NumberType number{};
+            std::memcpy(&number, data + (read * size), size);
+            if (swap)
+            {
+                byte_swap(number);
+            }
+            ++read;
+            accepted = emit_ubjson_number(number);
+        }
+        // as if read by get_number(): current is the last byte read
+        ia.bulk_skip(read * size);
+        chars_read += read * size;
+        current = data[(read * size) - 1];
+        remaining -= read;
+        return accepted;
+    }
+
+    template<typename NumberType, enable_if_t<std::is_floating_point<NumberType>::value, int> = 0>
+    bool emit_ubjson_number(const NumberType number)
+    {
+        return emit_float(number);
+    }
+
+    template < typename NumberType, enable_if_t < std::is_integral<NumberType>::value&& std::is_signed<NumberType>::value, int > = 0 >
+    bool emit_ubjson_number(const NumberType number)
+    {
+        return emit_signed(number);
+    }
+
+    template < typename NumberType, enable_if_t < std::is_integral<NumberType>::value&& !std::is_signed<NumberType>::value, int > = 0 >
+    bool emit_ubjson_number(const NumberType number)
+    {
+        return emit_unsigned(number);
+    }
+
+    /*!
     @return whether array creation completed
     */
     bool get_ubjson_array()
@@ -21358,7 +21459,15 @@ class binary_reader
                 return false;
             }
 
-            for (std::size_t i = 0; i < size_and_type.first; ++i)
+            // the numbers that are in the input, in one loop; the rest (if
+            // the input ends early) one by one below
+            std::size_t remaining = size_and_type.first;
+            if (!nd_is_char && JSON_HEDLEY_UNLIKELY(!parse_ubjson_typed_run(remaining, size_and_type.second, std::integral_constant<bool, bulk_scan> {})))
+            {
+                return false;
+            }
+
+            for (std::size_t i = size_and_type.first - remaining; i < size_and_type.first; ++i)
             {
                 if (nd_is_char)
                 {
@@ -21418,7 +21527,8 @@ class binary_reader
                 container_stack.back().remaining = 0;
             }
 
-            return true;
+            return size_and_type.second == 0
+                   || parse_ubjson_typed_run(container_stack.back().remaining, size_and_type.second, std::integral_constant<bool, bulk_scan> {});
         }
 
         return enter_array(detail::unknown_size());
