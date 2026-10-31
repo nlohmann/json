@@ -13,6 +13,7 @@
     #include <nlohmann/detail/view/builder.hpp>
     #include <nlohmann/detail/view/materialize.hpp>
     #include <nlohmann/detail/view/string_ref.hpp>
+    #include <nlohmann/json_view.hpp> // json_document::accept
 #else
     #include <nlohmann/json_view.hpp> // the single header contains the internal headers
 #endif
