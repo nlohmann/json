@@ -154,6 +154,11 @@ and each page's title (H1) and declaration by
 [`docs/docset/generate_docset.py`](https://github.com/nlohmann/json/blob/develop/docs/docset/generate_docset.py);
 `make build` reports API pages that cannot be classified.
 
+A pull request that changes only the documentation, Markdown files, GitHub metadata, or license files skips the
+compiler workflows (Ubuntu, macOS, Windows); the documentation and license checks still run. See
+[`tools/check_path_filters`](https://github.com/nlohmann/json/tree/develop/tools/check_path_filters) for the list of
+skipped files and what to do when a compiler job starts reading one of them.
+
 ### Amalgamate the source code
 
 The single-header files

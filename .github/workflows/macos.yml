@@ -7,6 +7,25 @@ on:
       - master
       - release/*
   pull_request:
+    # Skip pull requests that change only files no job here reads. The list is checked by
+    # tools/check_path_filters/check_path_filters.py (repository_checks.yml); change both together.
+    paths:
+      - '**'
+      - '!docs/**'
+      - '!**.md'
+      - '!.github/*'
+      - '!.github/ISSUE_TEMPLATE/**'
+      - '!.github/external_ci/**'
+      - '!.github/workflows/**'
+      - '!.reuse/**'
+      - '!LICENSES/**'
+      - '!CITATION.cff'
+      - '!REUSE.toml'
+      # read by tools/check_build_options in the ci_meson_install job (ubuntu.yml)
+      - 'docs/mkdocs/docs/integration/package_managers.md'
+      # built by the swiftpm job (macos.yml)
+      - 'docs/mkdocs/docs/integration/swift/**'
+      - '.github/workflows/macos.yml'
   workflow_dispatch:
 
 concurrency:
