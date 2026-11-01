@@ -139,7 +139,7 @@ inline OutStringType concat(Args && ... args)
     str.reserve(concat_length(args...));
     concat_into(str, std::forward<Args>(args)...);
     return str;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

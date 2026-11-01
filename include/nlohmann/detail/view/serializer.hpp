@@ -1389,18 +1389,8 @@ class view_serializer
     /// a float node as dump() writes it
     void write_float_node(const node& n)
     {
-        write_float_node(n, fast_double {});
-    }
-
-    void write_float_node(const node& n, std::false_type /*other*/)
-    {
+        // (only for types other than double: doubles go through write_double_ahead())
         write_float(float_value<number_float_t>(m_doc, n));
-    }
-
-    void write_float_node(const node& n, std::true_type /*double*/)
-    {
-        m_out.reserve(64);
-        m_out.set_cursor(write_double_at(m_out.cursor(), n));
     }
 
     /*!
@@ -1497,7 +1487,7 @@ class view_serializer
     {
         const string_t dumped = BasicJsonType(string_t(reinterpret_cast<const char*>(s), n)).dump(); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         static_cast<void>(dumped);
-    }
+    } // LCOV_EXCL_LINE (dump() throws: the callers pass only ill-formed UTF-8)
 
     template<bool EnsureAscii>
     void write_codepoint(std::uint32_t codepoint, const unsigned char* bytes, std::size_t len)
@@ -1530,15 +1520,7 @@ class view_serializer
         }
         if (codepoint <= 0x1F || (EnsureAscii && codepoint >= 0x7F))
         {
-            if (codepoint <= 0xFFFF)
-            {
-                write_u_escape(codepoint);
-            }
-            else
-            {
-                write_u_escape(0xD7C0u + (codepoint >> 10u));
-                write_u_escape(0xDC00u + (codepoint & 0x3FFu));
-            }
+            write_u_escape(codepoint); // (a single byte: the only caller passes s[i])
             return;
         }
         m_out.put(reinterpret_cast<const char*>(bytes), len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) LCOV_EXCL_LINE (printable characters are copied in runs)

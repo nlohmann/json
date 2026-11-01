@@ -999,7 +999,7 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         ordered_data.members[f.ordered.dest_member].second = std::move(value);
     }
 
-    static void place_member(const frame& /*f*/, BasicJsonType&& /*value*/, std::false_type /*indexed*/) noexcept {}
+    static void place_member(const frame& /*f*/, BasicJsonType&& /*value*/, std::false_type /*indexed*/) noexcept {} // LCOV_EXCL_LINE
 
     /// store the members of a new object directly in it
     bool start_stored_object(std::size_t len)

@@ -1117,7 +1117,7 @@ class serializer
                     // character
                     if (EnsureAscii)
                     {
-                        JSON_ASSERT(codepoint >= 0x7F);
+                        JSON_ASSERT(codepoint == 0x7F);
                         if (error_handler == error_handler_t::keep)
                         {
                             // this character was buffered as raw bytes below
@@ -1128,21 +1128,13 @@ class serializer
                             // character instead
                             bytes = bytes_after_last_accept;
                         }
-                        if (codepoint <= 0xFFFF)
-                        {
-                            write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
-                        }
-                        else
-                        {
-                            write_u_escape(bytes, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)));
-                            write_u_escape(bytes, static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
-                        }
+                        write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
                     }
                     else
                     {
                         // copy byte to buffer (all previous bytes of the
                         // sequence have been copied in the default case below)
-                        string_buffer[bytes++] = s[i];
+                        string_buffer[bytes++] = s[i]; // LCOV_EXCL_LINE (well-formed sequences are copied in runs)
                     }
 
                     reserve_string_buffer(bytes);

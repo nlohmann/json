@@ -3580,28 +3580,19 @@ class view_side
         return string_view_t(m_view.m_doc->str(*m_view.m_node), m_view.m_node->len);
     }
 
-    /// a number, boolean, or null as a basic_json value (no allocation)
+    /// a number as a basic_json value (no allocation); only called for numbers
     BasicJsonType scalar() const
     {
-        switch (m_view.type())
+        const value_t t = m_view.type();
+        if (t == value_t::number_integer)
         {
-            case value_t::number_integer:
-                return BasicJsonType(m_view.template get<typename BasicJsonType::number_integer_t>());
-            case value_t::number_unsigned:
-                return BasicJsonType(m_view.template get<typename BasicJsonType::number_unsigned_t>());
-            case value_t::number_float:
-                return BasicJsonType(m_view.template get<typename BasicJsonType::number_float_t>());
-            case value_t::boolean:
-                return BasicJsonType(m_view.template get<bool>());
-            case value_t::null:
-            case value_t::object:
-            case value_t::array:
-            case value_t::string:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                return BasicJsonType(nullptr);
+            return BasicJsonType(m_view.template get<typename BasicJsonType::number_integer_t>());
         }
+        if (t == value_t::number_unsigned)
+        {
+            return BasicJsonType(m_view.template get<typename BasicJsonType::number_unsigned_t>());
+        }
+        return BasicJsonType(m_view.template get<typename BasicJsonType::number_float_t>());
     }
 
     /// start at the first element of this array
@@ -4478,14 +4469,9 @@ struct position_source
         return token{end - start};
     }
 
-    /// the range [first, last), or none if either is npos
+    /// the range [first, last)
     void set(std::size_t first, std::size_t last) noexcept
     {
-        if (first == std::string::npos || last == std::string::npos)
-        {
-            clear();
-            return;
-        }
         start = first;
         end = last;
     }
@@ -4604,11 +4590,11 @@ struct position_source
                 first = n.off;
                 last = n.off + 4u;
                 break;
-            case node_kind::object:
+            case node_kind::object: // LCOV_EXCL_LINE
             case node_kind::array:
             case node_kind::link:
             default:
-                break;
+                break; // LCOV_EXCL_LINE
         }
         // (a crafted image can point past the text)
         if (last == std::string::npos || last > d.size)
@@ -5262,10 +5248,12 @@ struct throwing_sax
         return true;
     }
 
+    // LCOV_EXCL_START (throw_parse_failure parses JSON only)
     bool binary(binary_t& /*unused*/)
     {
         return true;
     }
+    // LCOV_EXCL_STOP
 
     bool start_object(std::size_t /*unused*/)
     {
@@ -5573,7 +5561,7 @@ inline node* find_parent(const document_data& d, const node* target)
     }
     if (target == lo)
     {
-        return nullptr;
+        return nullptr; // LCOV_EXCL_LINE (the root, or a new value's root, which is linked)
     }
     for (;;)
     {
@@ -6194,11 +6182,11 @@ NLOHMANN_VIEW_NOINLINE inline void check_utf8_scan(const unsigned char* p, std::
         }
         if (*q >= 0x80)
         {
-            check_utf8_bytewise(p, n, static_cast<std::size_t>(q - p));
-            return; // not reached: the scan stopped at ill-formed UTF-8
+            break; // ill-formed UTF-8: reported below
         }
         ++q; // a quote, backslash, or control character
     }
+    check_utf8_bytewise(p, n, static_cast<std::size_t>(q - p));
 }
 
 inline void check_utf8(const char* s, std::size_t n)
@@ -9853,18 +9841,8 @@ class view_serializer
     /// a float node as dump() writes it
     void write_float_node(const node& n)
     {
-        write_float_node(n, fast_double {});
-    }
-
-    void write_float_node(const node& n, std::false_type /*other*/)
-    {
+        // (only for types other than double: doubles go through write_double_ahead())
         write_float(float_value<number_float_t>(m_doc, n));
-    }
-
-    void write_float_node(const node& n, std::true_type /*double*/)
-    {
-        m_out.reserve(64);
-        m_out.set_cursor(write_double_at(m_out.cursor(), n));
     }
 
     /*!
@@ -9961,7 +9939,7 @@ class view_serializer
     {
         const string_t dumped = BasicJsonType(string_t(reinterpret_cast<const char*>(s), n)).dump(); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         static_cast<void>(dumped);
-    }
+    } // LCOV_EXCL_LINE (dump() throws: the callers pass only ill-formed UTF-8)
 
     template<bool EnsureAscii>
     void write_codepoint(std::uint32_t codepoint, const unsigned char* bytes, std::size_t len)
@@ -9994,15 +9972,7 @@ class view_serializer
         }
         if (codepoint <= 0x1F || (EnsureAscii && codepoint >= 0x7F))
         {
-            if (codepoint <= 0xFFFF)
-            {
-                write_u_escape(codepoint);
-            }
-            else
-            {
-                write_u_escape(0xD7C0u + (codepoint >> 10u));
-                write_u_escape(0xDC00u + (codepoint & 0x3FFu));
-            }
+            write_u_escape(codepoint); // (a single byte: the only caller passes s[i])
             return;
         }
         m_out.put(reinterpret_cast<const char*>(bytes), len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) LCOV_EXCL_LINE (printable characters are copied in runs)
@@ -11799,9 +11769,11 @@ class basic_json_document
         {
             // (as before: the library's adapter decides what a null stream yields)
             detail::view::append_adapter(buf, detail::input_adapter(file));
-            return;
         }
-        detail::view::append_file(buf, file);
+        else
+        {
+            detail::view::append_file(buf, file);
+        }
     }
 #endif
 

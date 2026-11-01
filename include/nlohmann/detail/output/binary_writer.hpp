@@ -833,7 +833,7 @@ class binary_writer
         while (n != 0);
         std::reverse(result.begin(), result.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /*!
     @brief the decimal digits of the integer @a n, with a leading '-' if it
@@ -860,7 +860,7 @@ class binary_writer
         }
         std::reverse(result.begin(), result.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /*!
     @brief throws because the integer @a j is too large for @a format
@@ -1792,7 +1792,7 @@ class binary_writer
         std::memcpy(out, &n, sizeof(NumberType));
         if (!is_little_endian)
         {
-            std::reverse(out, out + sizeof(NumberType));
+            std::reverse(out, out + sizeof(NumberType)); // LCOV_EXCL_LINE (big-endian hosts only)
         }
     }
 
@@ -1921,7 +1921,7 @@ class binary_writer
             const string_t& value = *j.m_data.m_value.string;
             if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size() + 1ul)))
             {
-                return false;
+                return false; // LCOV_EXCL_LINE (a string of 2 GiB or more)
             }
             out[0] = to_char_type(0x02);
             store_little_endian<std::int32_t>(p, static_cast<std::int32_t>(value.size() + 1ul));
@@ -2378,7 +2378,7 @@ class binary_writer
         const std::size_t size = oa.written() - pos;
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
         {
-            return false;
+            return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
         }
         const auto le_size = static_cast<std::uint32_t>(size);
         oa.overwrite(pos, is_little_endian ? le_size : byteswap(le_size));
@@ -2507,7 +2507,7 @@ class binary_writer
                     {
                         if (JSON_HEDLEY_UNLIKELY(!close_bson_container(nested_size_pos)))
                         {
-                            return false;
+                            return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
                         }
                         continue;
                     }
@@ -2522,7 +2522,7 @@ class binary_writer
 
             if (JSON_HEDLEY_UNLIKELY(!close_bson_container(current.size_slot)))
             {
-                return false;
+                return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
             }
             if (parents.empty())
             {
@@ -2779,10 +2779,10 @@ class binary_writer
 
     Selected through masks rather than branches, as the type and the sign of
     the values in an array of mixed signs alternate unpredictably (non-negative
-    integers are number_unsigned after parsing). Up to 64 bits, the sign is bit
-    63 of the result (a narrower integer is sign-extended); computing it with
-    masks keeps GCC from branching on the type. A wider integer has to be
-    compared.
+    integers are number_unsigned after parsing). The sign is bit 63 of the
+    result (a narrower integer is sign-extended); computing it with masks keeps
+    GCC from branching on the type. Only called if @ref integers_fit_64_bits();
+    a wider number type is written with range checks on the whole value.
     */
     static std::uint64_t integer_bits(const BasicJsonType& j, std::uint64_t& sign_mask) noexcept
     {
@@ -2790,9 +2790,7 @@ class binary_writer
         const std::uint64_t raw = is_signed
                                   ? static_cast<std::uint64_t>(j.m_data.m_value.number_integer)
                                   : static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned);
-        sign_mask = sizeof(typename BasicJsonType::number_integer_t) <= sizeof(std::uint64_t)
-                    ? (std::uint64_t{0} - static_cast<std::uint64_t>(is_signed)) & (std::uint64_t{0} - (raw >> 63u))
-                    : std::uint64_t{0} - static_cast<std::uint64_t>(is_signed && j.m_data.m_value.number_integer < 0);
+        sign_mask = (std::uint64_t{0} - static_cast<std::uint64_t>(is_signed)) & (std::uint64_t{0} - (raw >> 63u));
         return raw;
     }
 
@@ -4159,57 +4157,34 @@ class binary_writer
     }
 
     /*!
-    @brief validate (dry_run) or write one BJData ND-array element of integer dtype @a T
-    @return whether @a el's value is in range of @a T; always true when @a dry_run is false
-    */
-    template<typename T>
-    bool write_bjdata_ndarray_element(const BasicJsonType& el, const bool dry_run)
-    {
-        if (dry_run)
-        {
-            return bjdata_ndarray_value_in_range<T>(el);
-        }
-        using storage_type = typename std::conditional<std::is_unsigned<T>::value, std::uint64_t, std::int64_t>::type;
-        write_number(static_cast<T>(el.template get<storage_type>()), true);
-        return true;
-    }
-
-    /*!
-    @brief validate (dry_run) or write one BJData ND-array element of dtype 'd' (single precision)
+    @brief whether the BJData ND-array element @a el can be written with dtype 'd' (single precision)
     @return whether @a el's value survives narrowing to float and back without any change
-            (so the ND-array round-trips exactly), or is infinite or NaN; always true when
-            @a dry_run is false
+            (so the ND-array round-trips exactly), or is infinite or NaN
     */
-    bool write_bjdata_ndarray_float_element(const BasicJsonType& el, const bool dry_run)
+    static bool bjdata_ndarray_float_in_range(const BasicJsonType& el) noexcept
     {
         const auto dval = static_cast<double>(el.m_data.m_value.number_float);
-        if (dry_run)
-        {
 #ifdef __GNUC__
-            JSON_HEDLEY_DIAGNOSTIC_PUSH
-            JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-            // a value that would be rounded (rather than exactly represented) by the
-            // narrowing to float is treated like an out-of-range integer element; this
-            // is the same criterion write_compact_float() uses for CBOR/MessagePack
-            const bool in_range = std::isnan(dval) ||
-                                  (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                                   dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                                   static_cast<double>(static_cast<float>(dval)) == dval) ||
-                                  std::isinf(dval);
+        // a value that would be rounded (rather than exactly represented) by the
+        // narrowing to float is treated like an out-of-range integer element; this
+        // is the same criterion write_compact_float() uses for CBOR/MessagePack
+        return std::isnan(dval) ||
+               (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                static_cast<double>(static_cast<float>(dval)) == dval) ||
+               std::isinf(dval);
 #ifdef __GNUC__
-            JSON_HEDLEY_DIAGNOSTIC_POP
+        JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
-            return in_range;
-        }
-        write_number(static_cast<float>(dval), true);
-        return true;
     }
 
     /*!
     @brief write the elements of an ND-array as the number kind @a dtype names
            (see @ref write_bjdata_ndarray), after they have been found to be
-           in range by a dry run of @ref write_bjdata_ndarray_elements
+           in range by @ref bjdata_ndarray_elements_in_range
 
     The elements are encoded in blocks into space reserved from the sink.
     */
@@ -4291,20 +4266,13 @@ class binary_writer
     }
 
     /*!
-    @brief validate or write every element of a BJData ND-array's `_ArrayData_`
+    @brief whether every element of a BJData ND-array's `_ArrayData_` is in range for its dtype
     @param[in] array_data  the `_ArrayData_` array
     @param[in] dtype       the ND-array dtype marker, as returned by bjdata_ndarray_type_marker()
-    @param[in] dry_run     true to only range-check each element, false to write it
-    @return whether every element is in range for @a dtype (always true when @a dry_run is false)
+    @return whether every element is in range for @a dtype
     */
-    bool write_bjdata_ndarray_elements(const BasicJsonType& array_data, const CharType dtype, const bool dry_run)
+    static bool bjdata_ndarray_elements_in_range(const BasicJsonType& array_data, const CharType dtype)
     {
-        if (!dry_run)
-        {
-            write_bjdata_ndarray_values(array_data, dtype);
-            return true;
-        }
-
         for (const auto& el : array_data)
         {
             bool ok = true;
@@ -4312,43 +4280,39 @@ class binary_writer
             {
                 case 'U':
                 case 'B':
-                    ok = write_bjdata_ndarray_element<std::uint8_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'C':
                     // BJData limits a char to 0..127 (the intersection of the int8 and uint8 ranges)
                     ok = bjdata_ndarray_value_in_range<std::int8_t>(el) && bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'i':
-                    ok = write_bjdata_ndarray_element<std::int8_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int8_t>(el);
                     break;
                 case 'u':
-                    ok = write_bjdata_ndarray_element<std::uint16_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint16_t>(el);
                     break;
                 case 'I':
-                    ok = write_bjdata_ndarray_element<std::int16_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int16_t>(el);
                     break;
                 case 'm':
-                    ok = write_bjdata_ndarray_element<std::uint32_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint32_t>(el);
                     break;
                 case 'l':
-                    ok = write_bjdata_ndarray_element<std::int32_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int32_t>(el);
                     break;
                 case 'M':
-                    ok = write_bjdata_ndarray_element<std::uint64_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint64_t>(el);
                     break;
                 case 'L':
-                    ok = write_bjdata_ndarray_element<std::int64_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int64_t>(el);
                     break;
                 case 'd':
-                    ok = write_bjdata_ndarray_float_element(el, dry_run);
+                    ok = bjdata_ndarray_float_in_range(el);
                     break;
                 case 'D':
                 default:
                     // 'D' (double) already spans the full range of number_float_t
-                    if (!dry_run)
-                    {
-                        write_number(el.template get<double>(), true);
-                    }
                     break;
             }
             if (!ok)
@@ -4435,7 +4399,7 @@ class binary_writer
             const auto dim = el.template get<std::uint64_t>();
             if (!value_in_range_of<std::size_t>(dim))
             {
-                return true;
+                return true; // LCOV_EXCL_LINE (size_t is narrower than 64 bits)
             }
             const auto dim_size = static_cast<std::size_t>(dim);
 
@@ -4485,7 +4449,7 @@ class binary_writer
         // wrap (integers) or overflow to infinity (the "single" precision
         // float) instead of being reported, so such an object falls back to
         // a plain object encoding as well
-        if (!write_bjdata_ndarray_elements(array_data, dtype, true))
+        if (!bjdata_ndarray_elements_in_range(array_data, dtype))
         {
             return true;
         }
@@ -4497,7 +4461,7 @@ class binary_writer
 
         write_ubjson(array_size, use_count, use_type, true,  true, bjdata_version);
 
-        write_bjdata_ndarray_elements(array_data, dtype, false);
+        write_bjdata_ndarray_values(array_data, dtype);
         return false;
     }
 
@@ -4823,8 +4787,8 @@ class binary_writer
     run are encoded into space reserved from the sink, as in
     @ref write_array_elements; an integer that BON8 cannot write (an unsigned
     one above the int64 range, or one of a number type wider than 64 bits) throws
-    from write_bon8_value, like any other value that is not a number. Kept out
-    of line, like @ref write_cbor_array.
+    out_of_range.407, as write_bon8_value does. Kept out of line, like
+    @ref write_cbor_array.
     */
     template<typename ArrayType>
     JSON_HEDLEY_NEVER_INLINE
@@ -4874,10 +4838,10 @@ class binary_writer
                 string_open = false;
             }
 
-            if (unencodable)
+            if (JSON_HEDLEY_UNLIKELY(unencodable))
             {
-                write_bon8_value(*it, string_open, depth + 1);
-                ++it;
+                // an integer beyond the int64 range, as write_bon8_value would report it
+                throw_integer_out_of_range(*it, input_format_t::bon8, "int64");
             }
         }
     }
@@ -4912,14 +4876,13 @@ class binary_writer
                     break;
 
                 case value_t::number_integer:
-                    if (JSON_HEDLEY_LIKELY(integer_fits<std::int64_t>(value.m_data.m_value.number_integer)))
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(value.m_data.m_value.number_integer)))
                     {
-                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_integer));
-                        string_open = false;
-                        break;
+                        // beyond 64 bits (number types wider than that)
+                        throw_integer_out_of_range(value, input_format_t::bon8, "int64");
                     }
-                    // beyond 64 bits (number types wider than that): throws
-                    write_bon8_value(value, string_open, depth + 1);
+                    write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_integer));
+                    string_open = false;
                     break;
 
                 case value_t::number_float:
@@ -4928,14 +4891,13 @@ class binary_writer
                     break;
 
                 case value_t::number_unsigned:
-                    if (JSON_HEDLEY_LIKELY(integer_fits_max<std::int64_t>(value.m_data.m_value.number_unsigned)))
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::int64_t>(value.m_data.m_value.number_unsigned)))
                     {
-                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_unsigned));
-                        string_open = false;
-                        break;
+                        // too large for BON8
+                        throw_integer_out_of_range(value, input_format_t::bon8, "int64");
                     }
-                    // too large for BON8: throws
-                    write_bon8_value(value, string_open, depth + 1);
+                    write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_unsigned));
+                    string_open = false;
                     break;
 
                 case value_t::object:

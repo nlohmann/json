@@ -243,7 +243,7 @@ inline node* find_parent(const document_data& d, const node* target)
     }
     if (target == lo)
     {
-        return nullptr;
+        return nullptr; // LCOV_EXCL_LINE (the root, or a new value's root, which is linked)
     }
     for (;;)
     {

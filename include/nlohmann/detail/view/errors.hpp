@@ -420,10 +420,12 @@ struct throwing_sax
         return true;
     }
 
+    // LCOV_EXCL_START (throw_parse_failure parses JSON only)
     bool binary(binary_t& /*unused*/)
     {
         return true;
     }
+    // LCOV_EXCL_STOP
 
     bool start_object(std::size_t /*unused*/)
     {

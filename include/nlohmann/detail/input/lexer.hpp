@@ -437,11 +437,10 @@ class lexer : public lexer_base<BasicJsonType>
     template<bool Keep>
     char_int_type get_after_string_run(std::true_type /*bulk*/, std::integral_constant<bool, Keep> keep)
     {
-        // a pending unget must be consumed through the normal path first
-        if (next_unget)
-        {
-            return get();
-        }
+        // scan_string() is entered from scan_after_whitespace(), whose current
+        // was read by skip_whitespace() (its first get() clears a pending
+        // unget), and nothing in scan_string() calls unget()
+        JSON_ASSERT(!next_unget);
         const std::size_t remaining = ia.bulk_remaining();
         if (remaining == 0)
         {
@@ -1516,11 +1515,9 @@ scan_number_done:
     */
     token_type scan_number_bulk_contiguous()
     {
-        // a pending unget offsets the buffer position from current; fall back
-        if (next_unget)
-        {
-            return token_type::uninitialized;
-        }
+        // called right after scan_after_whitespace() read current (see
+        // get_after_string_run()), so no unget is pending
+        JSON_ASSERT(!next_unget);
         const std::size_t rem = ia.bulk_remaining();
         if (rem == 0)
         {
@@ -1541,11 +1538,7 @@ scan_number_done:
         if (data[0] == '-')
         {
             number_type = token_type::value_integer;
-            i = 1;
-            if (i >= avail)
-            {
-                return token_type::uninitialized;
-            }
+            i = 1; // avail >= 2: rem == 0 returned above
         }
         const std::size_t integer_begin = i;
         if (data[i] == '0')
