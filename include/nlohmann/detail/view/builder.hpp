@@ -69,7 +69,8 @@ struct parse_failure
 };
 
 /// FloatType: the number_float_t of the document, whose overflow parse() rejects
-template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Sentinel>
+/// Store: false for accept(): the grammar, number, string and UTF-8 checks run as for parse(), but no node is written
+template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Sentinel, bool Store>
 class builder
 {
   public:
@@ -245,11 +246,87 @@ class builder
         return p;
     }
 
+    /// the string from p, the first backslash, control character, ill-formed UTF-8 byte, or the end, checked and not
+    /// decoded (accept() stores nothing, so the arena is not written): the checks, errors and error positions of
+    /// slow_string(), for everything up to the closing quote
+    NLOHMANN_VIEW_NOINLINE decoded check_string(const unsigned char* p)
+    {
+        const unsigned char* const end = m_end;
+        for (;;)
+        {
+            if (p == end)
+            {
+                return failed(error_code::string_missing_quote, p);
+            }
+            const unsigned char c = *p;
+            if (c == '"')
+            {
+                ++p;
+                return decoded{p, 0, 0};
+            }
+            if (c != '\\')
+            {
+                return failed(c < 0x20 ? error_code::string_control_character : error_code::string_utf8, p);
+            }
+            ++p;
+            if (p == end)
+            {
+                return failed(error_code::string_missing_quote, p);
+            }
+            const unsigned char d = *p++;
+            if (d == 'u')
+            {
+                const int cp = hex4(p); // (moves p past the four digits)
+                if (NLOHMANN_VIEW_UNLIKELY(cp < 0))
+                {
+                    return failed(error_code::string_unicode_hex, p);
+                }
+                if (NLOHMANN_VIEW_UNLIKELY((cp & 0xF800) == 0xD800)) // a surrogate
+                {
+                    if (cp >= 0xDC00)
+                    {
+                        return failed(error_code::string_surrogate_low, p);
+                    }
+                    if (end - p < 2 || p[0] != '\\' || p[1] != 'u')
+                    {
+                        return failed(error_code::string_surrogate_high, p);
+                    }
+                    p += 2;
+                    const int lo = hex4(p); // (moves p past the four digits)
+                    if (lo < 0)
+                    {
+                        return failed(error_code::string_unicode_hex, p);
+                    }
+                    if (lo < 0xDC00 || lo > 0xDFFF)
+                    {
+                        return failed(error_code::string_surrogate_high, p);
+                    }
+                }
+            }
+            else if (!(d == '"' || d == '\\' || d == '/' || d == 'b' || d == 'f' || d == 'n' || d == 'r' || d == 't'))
+            {
+                --p;
+                return failed(error_code::string_escape, p);
+            }
+            if (p != end && *p == '\\')
+            {
+                continue; // (escapes in a row: no run of text between them)
+            }
+            p = scan_string_run(p, end); // the text up to the next backslash, quote, control character, or ill-formed UTF-8
+        }
+    }
+
     /// s points to the start of the string, p to a backslash, a control
     /// character, an ill-formed UTF-8 byte, or the end: decode the string into
     /// the arena
     NLOHMANN_VIEW_NOINLINE decoded slow_string(const unsigned char* s, const unsigned char* p)
     {
+        if (!enabled(Store))
+        {
+            // (accept(): the string is checked, not decoded)
+            static_cast<void>(s);
+            return check_string(p);
+        }
         // single-character escapes; 0: invalid (and 'u', handled separately)
         static const std::array<char, 128> simple_escape =
         {
@@ -625,10 +702,13 @@ run_found:
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool run()
         {
-            cold.m_doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
-            base = cold.m_doc.nodes;
-            out = base;
-            cap = base + cold.m_doc.node_capacity;
+            if (enabled(Store))
+            {
+                cold.m_doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
+                base = cold.m_doc.nodes;
+                out = base;
+                cap = base + cold.m_doc.node_capacity;
+            }
 
             if (e - p >= 3 && p[0] == 0xEF && p[1] == 0xBB && p[2] == 0xBF)
             {
@@ -812,7 +892,10 @@ close_object:
             // an array pays nothing for this)
             if (NLOHMANN_VIEW_UNLIKELY(cur_count >= document_data::index_min_members))
             {
-                cold.note_large_object(cur_idx);
+                if (enabled(Store))
+                {
+                    cold.note_large_object(cur_idx);
+                }
             }
 
 close_container:
@@ -972,6 +1055,12 @@ indent_done:
         /// an integer's value); two stores on little-endian targets
         NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(node_kind k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
         {
+            if (!enabled(Store))
+            {
+                // accept(): nothing is stored, so what computes the arguments is not run either. base and out stay
+                // null: their difference, which open() takes, is 0.
+                return out;
+            }
             if (NLOHMANN_VIEW_UNLIKELY(out == cap))
             {
                 const auto n = static_cast<std::size_t>(out - base);
@@ -1030,9 +1119,12 @@ indent_done:
 
         NLOHMANN_VIEW_ALWAYS_INLINE void close()
         {
-            node& n = base[cur_idx];
-            n.len = cur_count;
-            n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
+            if (enabled(Store))
+            {
+                node& n = base[cur_idx];
+                n.len = cur_count;
+                n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
+            }
             if (--depth != 0)
             {
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
@@ -1207,34 +1299,44 @@ indent_done:
 };
 
 /// run the builder with compile-time options
-template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd>
+template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Store>
 inline bool build_with(document_data& d, const char* src, std::size_t size, bool sentinel, parse_failure& failure)
 {
     if (sentinel)
     {
-        builder<FloatType, Comments, TrailingCommas, NulIsEnd, true> bld(d, src, size);
+        builder<FloatType, Comments, TrailingCommas, NulIsEnd, true, Store> bld(d, src, size);
         const bool ok = bld.run();
         failure = bld.failure();
         return ok;
     }
-    builder<FloatType, Comments, TrailingCommas, NulIsEnd, false> bld(d, src, size);
+    builder<FloatType, Comments, TrailingCommas, NulIsEnd, false, Store> bld(d, src, size);
     const bool ok = bld.run();
     failure = bld.failure();
     return ok;
 }
 
 /// sentinel: src[size] is readable and 0 (e.g. std::string); FloatType: the
-/// number_float_t of the document
+/// number_float_t of the document; validate_only: accept(), only the result is
+/// used
 template<typename FloatType, bool NulIsEnd>
-inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, parse_failure& failure)
+inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, bool validate_only,
+                  parse_failure& failure)
 {
+    if (validate_only && !comments && !trailing_commas)
+    {
+        // accept() of plain JSON: nothing is stored. The other option sets
+        // could skip the stores just as well; they keep the builder that
+        // stores only so that there are two more instantiations of the parse
+        // loop, not eight.
+        return build_with<FloatType, false, false, NulIsEnd, false>(d, src, size, sentinel, failure);
+    }
     if (comments)
     {
-        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd>(d, src, size, sentinel, failure)
-               : build_with<FloatType, true, false, NulIsEnd>(d, src, size, sentinel, failure);
+        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd, true>(d, src, size, sentinel, failure)
+               : build_with<FloatType, true, false, NulIsEnd, true>(d, src, size, sentinel, failure);
     }
-    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd>(d, src, size, sentinel, failure)
-           : build_with<FloatType, false, false, NulIsEnd>(d, src, size, sentinel, failure);
+    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd, true>(d, src, size, sentinel, failure)
+           : build_with<FloatType, false, false, NulIsEnd, true>(d, src, size, sentinel, failure);
 }
 
 }  // namespace view
