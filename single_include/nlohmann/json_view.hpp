@@ -4621,8 +4621,8 @@ bool value_path(const document_data& d, const node* target, std::vector<std::str
     // (tokens[i] leads from stack[i] to stack[i + 1], or to the target)
     for (;;)
     {
-        // (f is not used after the stack changes: pop_back() below, push_back() at the end)
-        frame& f = stack.back();
+        // a copy: pop_back() and push_back() below change the stack
+        const frame f = stack.back();
         if (f.pos == f.end)
         {
             stack.pop_back();
@@ -4656,8 +4656,8 @@ bool value_path(const document_data& d, const node* target, std::vector<std::str
             tokens.push_back(token);
             return true;
         }
-        f.pos = document_data::after(entry);
-        ++f.index;
+        stack.back().pos = document_data::after(entry);
+        ++stack.back().index;
         if (is_container(*child) && (nav::editable() || (target > child && target < child + child->next)))
         {
             tokens.push_back(token);
