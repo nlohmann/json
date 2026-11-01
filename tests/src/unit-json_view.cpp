@@ -1551,6 +1551,77 @@ TEST_CASE("json_view values")
     }
 }
 
+namespace
+{
+// get<T>() of a boolean: the same value or the same exception in basic_json and in the view (#5988)
+template<typename T>
+void check_boolean_get_parity()
+{
+    for (const bool b :
+            {
+                true, false
+            })
+    {
+        const std::string text = b ? "true" : "false";
+        const json j = json::parse(text);
+        const json_document d = json_document::parse(text);
+        CAPTURE(text)
+#if !defined(JSON_NOEXCEPTION)
+        T dom_value {};
+        T view_value{};
+        const std::string dom_error = json_view_test::exception_of_call([&] { dom_value = j.get<T>(); });
+        const std::string view_error = json_view_test::exception_of_call([&] { view_value = d.root().template get<T>(); });
+        CHECK(dom_error == view_error);
+        if (dom_error.empty())
+        {
+            CHECK(dom_value == view_value);
+            CHECK(view_value == static_cast<T>(b));
+        }
+#else
+        CHECK(j.get<T>() == d.root().template get<T>());
+#endif
+    }
+}
+} // namespace
+
+TEST_CASE("json_view get<T>() of a boolean (#5988)")
+{
+    check_boolean_get_parity<bool>();
+    check_boolean_get_parity<char>();
+    check_boolean_get_parity<signed char>();
+    check_boolean_get_parity<unsigned char>();
+    check_boolean_get_parity<short>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<unsigned short>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<int>();
+    check_boolean_get_parity<unsigned>();
+    check_boolean_get_parity<long>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<unsigned long>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<long long>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<unsigned long long>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<std::int64_t>();
+    check_boolean_get_parity<std::uint64_t>();
+    check_boolean_get_parity<float>();
+    check_boolean_get_parity<double>();
+    check_boolean_get_parity<long double>();
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("the exceptions of the exact number types")
+    {
+        const json_document d = json_document::parse("true");
+        CHECK_THROWS_WITH_AS(d.root().get<json::number_integer_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(d.root().get<json::number_unsigned_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(d.root().get<json::number_float_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+        CHECK(d.root().get<int>() == 1);
+        // get_to() and value() go through get<T>()
+        json::number_float_t x = 0;
+        CHECK_THROWS_AS(d.root().get_to(x), json::type_error&);
+        const json_document o = json_document::parse("{\"b\":true}");
+        CHECK_THROWS_AS(static_cast<void>(o.root().value("b", 0.0)), json::type_error&);
+        CHECK(o.root().value("b", 0) == 1);
+    }
+#endif
+}
+
 TEST_CASE("json_view JSON pointers")
 {
     SECTION("every value of generated documents")
