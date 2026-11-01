@@ -18925,10 +18925,8 @@ class binary_reader
         }
     }
 
-    /// read a single- or double-precision float (kept out of
-    /// parse_cbor_value, which is inlined into parse_cbor_internal)
+    /// read a single- or double-precision float
     template<typename NumberType>
-    JSON_HEDLEY_NEVER_INLINE
     bool get_cbor_float()
     {
         NumberType number{};
@@ -22141,7 +22139,12 @@ class binary_reader
     `char_traits<char_type>::eof()` in that case.
 
     @return character read from the input
+
+    @note always inlined: GCC otherwise stops inlining the stream adapter's
+          get_character() into parse_cbor_internal once that function grows
+          (+0.45 % instructions for CBOR from a std::istringstream with GCC 13)
     */
+    JSON_HEDLEY_ALWAYS_INLINE
     char_int_type get()
     {
         ++chars_read;
