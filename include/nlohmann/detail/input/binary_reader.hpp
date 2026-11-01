@@ -1707,12 +1707,16 @@ class binary_reader
 
     Out of line, so that @ref parse_cbor_value stays small enough to be inlined.
 
-    @param[in,out] remaining  the number of elements of the array not yet read
+    The array is the one on top of @ref container_stack; its count of
+    elements not yet read is updated.
+
     @return whether the SAX parser accepted the values
     */
     JSON_HEDLEY_NEVER_INLINE
-    bool parse_cbor_scalar_run(std::size_t& remaining, std::true_type /*bulk*/)
+    bool parse_cbor_scalar_run(std::true_type /*bulk*/)
     {
+        // nothing pushes onto the stack while the run reads scalars
+        std::size_t& remaining = container_stack.back().remaining;
         while (remaining != 0 && ia.bulk_remaining() >= 9)
         {
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
@@ -1817,11 +1821,11 @@ class binary_reader
     */
     bool enter_cbor_array(const std::size_t len)
     {
-        return enter_array(len) && (len == 0 || parse_cbor_scalar_run(container_stack.back().remaining, std::integral_constant<bool, bulk_scan> {}));
+        return enter_array(len) && (len == 0 || parse_cbor_scalar_run(std::integral_constant<bool, bulk_scan> {}));
     }
 
     /// input that is not contiguous: every value is read by parse_cbor_value
-    bool parse_cbor_scalar_run(std::size_t& /*remaining*/, std::false_type /*bulk*/) const noexcept
+    bool parse_cbor_scalar_run(std::false_type /*bulk*/) const noexcept
     {
         return true;
     }
