@@ -8874,6 +8874,233 @@ NLOHMANN_JSON_NAMESPACE_END
     #include <bit>  //byteswap
 #endif
 
+// #include <nlohmann/detail/bit_ops.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstdint> // uint64_t
+#include <cstring> // memcpy
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64)) && (!defined(__SIZEOF_INT128__) || (!defined(__GNUC__) && !defined(__clang__)))
+    #include <intrin0.h> // __umulh, _umul128, _BitScanForward64, _BitScanReverse64
+#endif
+
+#ifdef _MSC_VER
+    #include <cstdlib> // _byteswap_ushort, _byteswap_ulong, _byteswap_uint64
+#endif
+#if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_IX86) || defined(_M_ARM))
+    #include <intrin.h> // _BitScanForward, _BitScanReverse
+#endif
+
+// #include <nlohmann/detail/macro_scope.hpp>
+// JSON_HEDLEY_ALWAYS_INLINE, NLOHMANN_JSON_NAMESPACE_BEGIN
+
+#if defined(__cpp_lib_bit_cast) || defined(__cpp_lib_bitops) || defined(__cpp_lib_byteswap)
+    #include <bit> // bit_cast, byteswap, countl_zero, countr_zero
+#endif
+
+// Portable bit-level helpers for the number and string scanners. They use
+// compiler builtins or platform-specific intrinsics where available, the
+// C++20 <bit> functions next, and plain C++ otherwise, so they work regardless
+// of byte order. (The builtins and intrinsics come first: MSVC's
+// std::countl_zero checks for LZCNT at run time unless AVX2 is enabled.)
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+/// number of leading zero bits of x (x != 0)
+inline int count_leading_zeros(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_clzll(x);
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
+    _BitScanReverse64(&index, x);
+    return 63 - static_cast<int>(index);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
+    if (_BitScanReverse(&index, static_cast<unsigned long>(x >> 32u))) // NOLINT(runtime/int)
+    {
+        return 31 - static_cast<int>(index);
+    }
+    _BitScanReverse(&index, static_cast<unsigned long>(x)); // NOLINT(runtime/int)
+    return 63 - static_cast<int>(index);
+#elif defined(__cpp_lib_bitops)
+    return std::countl_zero(x);
+#else
+    int n = 0;
+    for (int shift = 32; shift != 0; shift >>= 1)
+    {
+        if ((x >> (64 - shift)) == 0)
+        {
+            n += shift;
+            x <<= shift;
+        }
+    }
+    return n;
+#endif
+}
+
+/// number of trailing zero bits of x (x != 0)
+inline int count_trailing_zeros(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_ctzll(x);
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
+    _BitScanForward64(&index, x);
+    return static_cast<int>(index);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
+    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
+    if (_BitScanForward(&index, static_cast<unsigned long>(x))) // NOLINT(runtime/int)
+    {
+        return static_cast<int>(index);
+    }
+    _BitScanForward(&index, static_cast<unsigned long>(x >> 32u)); // NOLINT(runtime/int)
+    return 32 + static_cast<int>(index);
+#elif defined(__cpp_lib_bitops)
+    return std::countr_zero(x);
+#else
+    int n = 0;
+    for (int shift = 32; shift != 0; shift >>= 1)
+    {
+        if ((x << (64 - shift)) == 0)
+        {
+            n += shift;
+            x >>= shift;
+        }
+    }
+    return n;
+#endif
+}
+
+/// the object representation of @a from as a @a To (std::bit_cast in C++20)
+template<typename To, typename From>
+JSON_HEDLEY_ALWAYS_INLINE To bit_cast(const From& from) noexcept
+{
+    static_assert(sizeof(To) == sizeof(From), "bit_cast needs types of the same size");
+#if defined(__cpp_lib_bit_cast)
+    return std::bit_cast<To>(from);
+#else
+    To to {};
+    std::memcpy(&to, &from, sizeof(To));
+    return to;
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23); compilers lower
+/// it to a single bswap/rev/movbe
+inline std::uint16_t byteswap(std::uint16_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap16(x);
+#elif defined(_MSC_VER)
+    return _byteswap_ushort(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    return static_cast<std::uint16_t>((x >> 8u) | (x << 8u));
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23)
+inline std::uint32_t byteswap(std::uint32_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap32(x);
+#elif defined(_MSC_VER)
+    return _byteswap_ulong(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    return ((x & 0x000000FFu) << 24u) | ((x & 0x0000FF00u) << 8u)
+           | ((x & 0x00FF0000u) >> 8u) | ((x & 0xFF000000u) >> 24u);
+#endif
+}
+
+/// x with its bytes in reverse order (std::byteswap in C++23)
+inline std::uint64_t byteswap(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_bswap64(x);
+#elif defined(_MSC_VER)
+    return _byteswap_uint64(x);
+#elif defined(__cpp_lib_byteswap)
+    return std::byteswap(x);
+#else
+    x = ((x & 0x00000000FFFFFFFFull) << 32u) | ((x & 0xFFFFFFFF00000000ull) >> 32u);
+    x = ((x & 0x0000FFFF0000FFFFull) << 16u) | ((x & 0xFFFF0000FFFF0000ull) >> 16u);
+    x = ((x & 0x00FF00FF00FF00FFull) << 8u) | ((x & 0xFF00FF00FF00FF00ull) >> 8u);
+    return x;
+#endif
+}
+
+/// the 128-bit product of two 64-bit numbers
+struct uint128_parts
+{
+    std::uint64_t low;
+    std::uint64_t high;
+};
+
+inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexcept
+{
+#if defined(__SIZEOF_INT128__)
+    __extension__ using uint128 = unsigned __int128;
+    const uint128 r = static_cast<uint128>(a) * b;
+    return {static_cast<std::uint64_t>(r), static_cast<std::uint64_t>(r >> 64u)};
+#elif defined(_MSC_VER) && defined(_M_X64)
+    std::uint64_t high = 0;
+    const std::uint64_t low = _umul128(a, b, &high);
+    return {low, high};
+#elif defined(_MSC_VER) && defined(_M_ARM64)
+    return {a * b, __umulh(a, b)};
+#else
+    const std::uint64_t a_lo = a & 0xFFFFFFFFu;
+    const std::uint64_t a_hi = a >> 32u;
+    const std::uint64_t b_lo = b & 0xFFFFFFFFu;
+    const std::uint64_t b_hi = b >> 32u;
+    const std::uint64_t lo_lo = a_lo * b_lo;
+    const std::uint64_t hi_lo = a_hi * b_lo;
+    const std::uint64_t lo_hi = a_lo * b_hi;
+    const std::uint64_t hi_hi = a_hi * b_hi;
+    const std::uint64_t cross = (lo_lo >> 32u) + (hi_lo & 0xFFFFFFFFu) + lo_hi;
+    return {(cross << 32u) | (lo_lo & 0xFFFFFFFFu), (hi_lo >> 32u) + (cross >> 32u) + hi_hi};
+#endif
+}
+
+/// eight bytes as a little-endian word (a single load on little-endian
+/// targets; always inlined, as GCC otherwise calls it in the number loops)
+JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
+{
+#if JSON_LITTLE_ENDIAN_TARGET
+    // the byte order already matches
+    std::uint64_t result = 0;
+    std::memcpy(&result, b, sizeof(result));
+    return result;
+#else
+    return static_cast<std::uint64_t>(b[0]) | (static_cast<std::uint64_t>(b[1]) << 8u)
+           | (static_cast<std::uint64_t>(b[2]) << 16u) | (static_cast<std::uint64_t>(b[3]) << 24u)
+           | (static_cast<std::uint64_t>(b[4]) << 32u) | (static_cast<std::uint64_t>(b[5]) << 40u)
+           | (static_cast<std::uint64_t>(b[6]) << 48u) | (static_cast<std::uint64_t>(b[7]) << 56u);
+#endif
+}
+
+/// eight bytes as a little-endian word
+JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const char* p) noexcept
+{
+    return read_eight_bytes(reinterpret_cast<const unsigned char*>(p)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+}
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
@@ -10338,231 +10565,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <vector> // vector
 
 // #include <nlohmann/detail/bit_ops.hpp>
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.12.0
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-
-
-#include <cstdint> // uint64_t
-#include <cstring> // memcpy
-#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64)) && (!defined(__SIZEOF_INT128__) || (!defined(__GNUC__) && !defined(__clang__)))
-    #include <intrin0.h> // __umulh, _umul128, _BitScanForward64, _BitScanReverse64
-#endif
-
-#ifdef _MSC_VER
-    #include <cstdlib> // _byteswap_ushort, _byteswap_ulong, _byteswap_uint64
-#endif
-#if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_IX86) || defined(_M_ARM))
-    #include <intrin.h> // _BitScanForward, _BitScanReverse
-#endif
-
-// #include <nlohmann/detail/macro_scope.hpp>
-// JSON_HEDLEY_ALWAYS_INLINE, NLOHMANN_JSON_NAMESPACE_BEGIN
-
-#if defined(__cpp_lib_bit_cast) || defined(__cpp_lib_bitops) || defined(__cpp_lib_byteswap)
-    #include <bit> // bit_cast, byteswap, countl_zero, countr_zero
-#endif
-
-// Portable bit-level helpers for the number and string scanners. They use
-// compiler builtins or platform-specific intrinsics where available, the
-// C++20 <bit> functions next, and plain C++ otherwise, so they work regardless
-// of byte order. (The builtins and intrinsics come first: MSVC's
-// std::countl_zero checks for LZCNT at run time unless AVX2 is enabled.)
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-
-/// number of leading zero bits of x (x != 0)
-inline int count_leading_zeros(std::uint64_t x) noexcept
-{
-#if defined(__GNUC__) || defined(__clang__)
-    return __builtin_clzll(x);
-#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
-    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
-    _BitScanReverse64(&index, x);
-    return 63 - static_cast<int>(index);
-#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
-    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
-    if (_BitScanReverse(&index, static_cast<unsigned long>(x >> 32u))) // NOLINT(runtime/int)
-    {
-        return 31 - static_cast<int>(index);
-    }
-    _BitScanReverse(&index, static_cast<unsigned long>(x)); // NOLINT(runtime/int)
-    return 63 - static_cast<int>(index);
-#elif defined(__cpp_lib_bitops)
-    return std::countl_zero(x);
-#else
-    int n = 0;
-    for (int shift = 32; shift != 0; shift >>= 1)
-    {
-        if ((x >> (64 - shift)) == 0)
-        {
-            n += shift;
-            x <<= shift;
-        }
-    }
-    return n;
-#endif
-}
-
-/// number of trailing zero bits of x (x != 0)
-inline int count_trailing_zeros(std::uint64_t x) noexcept
-{
-#if defined(__GNUC__) || defined(__clang__)
-    return __builtin_ctzll(x);
-#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
-    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan*64 takes
-    _BitScanForward64(&index, x);
-    return static_cast<int>(index);
-#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_ARM))
-    unsigned long index = 0; // NOLINT(runtime/int): the type _BitScan* takes
-    if (_BitScanForward(&index, static_cast<unsigned long>(x))) // NOLINT(runtime/int)
-    {
-        return static_cast<int>(index);
-    }
-    _BitScanForward(&index, static_cast<unsigned long>(x >> 32u)); // NOLINT(runtime/int)
-    return 32 + static_cast<int>(index);
-#elif defined(__cpp_lib_bitops)
-    return std::countr_zero(x);
-#else
-    int n = 0;
-    for (int shift = 32; shift != 0; shift >>= 1)
-    {
-        if ((x << (64 - shift)) == 0)
-        {
-            n += shift;
-            x >>= shift;
-        }
-    }
-    return n;
-#endif
-}
-
-/// the object representation of @a from as a @a To (std::bit_cast in C++20)
-template<typename To, typename From>
-JSON_HEDLEY_ALWAYS_INLINE To bit_cast(const From& from) noexcept
-{
-    static_assert(sizeof(To) == sizeof(From), "bit_cast needs types of the same size");
-#if defined(__cpp_lib_bit_cast)
-    return std::bit_cast<To>(from);
-#else
-    To to {};
-    std::memcpy(&to, &from, sizeof(To));
-    return to;
-#endif
-}
-
-/// x with its bytes in reverse order (std::byteswap in C++23); compilers lower
-/// it to a single bswap/rev/movbe
-inline std::uint16_t byteswap(std::uint16_t x) noexcept
-{
-#if defined(__GNUC__) || defined(__clang__)
-    return __builtin_bswap16(x);
-#elif defined(_MSC_VER)
-    return _byteswap_ushort(x);
-#elif defined(__cpp_lib_byteswap)
-    return std::byteswap(x);
-#else
-    return static_cast<std::uint16_t>((x >> 8u) | (x << 8u));
-#endif
-}
-
-/// x with its bytes in reverse order (std::byteswap in C++23)
-inline std::uint32_t byteswap(std::uint32_t x) noexcept
-{
-#if defined(__GNUC__) || defined(__clang__)
-    return __builtin_bswap32(x);
-#elif defined(_MSC_VER)
-    return _byteswap_ulong(x);
-#elif defined(__cpp_lib_byteswap)
-    return std::byteswap(x);
-#else
-    return ((x & 0x000000FFu) << 24u) | ((x & 0x0000FF00u) << 8u)
-           | ((x & 0x00FF0000u) >> 8u) | ((x & 0xFF000000u) >> 24u);
-#endif
-}
-
-/// x with its bytes in reverse order (std::byteswap in C++23)
-inline std::uint64_t byteswap(std::uint64_t x) noexcept
-{
-#if defined(__GNUC__) || defined(__clang__)
-    return __builtin_bswap64(x);
-#elif defined(_MSC_VER)
-    return _byteswap_uint64(x);
-#elif defined(__cpp_lib_byteswap)
-    return std::byteswap(x);
-#else
-    x = ((x & 0x00000000FFFFFFFFull) << 32u) | ((x & 0xFFFFFFFF00000000ull) >> 32u);
-    x = ((x & 0x0000FFFF0000FFFFull) << 16u) | ((x & 0xFFFF0000FFFF0000ull) >> 16u);
-    x = ((x & 0x00FF00FF00FF00FFull) << 8u) | ((x & 0xFF00FF00FF00FF00ull) >> 8u);
-    return x;
-#endif
-}
-
-/// the 128-bit product of two 64-bit numbers
-struct uint128_parts
-{
-    std::uint64_t low;
-    std::uint64_t high;
-};
-
-inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexcept
-{
-#if defined(__SIZEOF_INT128__)
-    __extension__ using uint128 = unsigned __int128;
-    const uint128 r = static_cast<uint128>(a) * b;
-    return {static_cast<std::uint64_t>(r), static_cast<std::uint64_t>(r >> 64u)};
-#elif defined(_MSC_VER) && defined(_M_X64)
-    std::uint64_t high = 0;
-    const std::uint64_t low = _umul128(a, b, &high);
-    return {low, high};
-#elif defined(_MSC_VER) && defined(_M_ARM64)
-    return {a * b, __umulh(a, b)};
-#else
-    const std::uint64_t a_lo = a & 0xFFFFFFFFu;
-    const std::uint64_t a_hi = a >> 32u;
-    const std::uint64_t b_lo = b & 0xFFFFFFFFu;
-    const std::uint64_t b_hi = b >> 32u;
-    const std::uint64_t lo_lo = a_lo * b_lo;
-    const std::uint64_t hi_lo = a_hi * b_lo;
-    const std::uint64_t lo_hi = a_lo * b_hi;
-    const std::uint64_t hi_hi = a_hi * b_hi;
-    const std::uint64_t cross = (lo_lo >> 32u) + (hi_lo & 0xFFFFFFFFu) + lo_hi;
-    return {(cross << 32u) | (lo_lo & 0xFFFFFFFFu), (hi_lo >> 32u) + (cross >> 32u) + hi_hi};
-#endif
-}
-
-/// eight bytes as a little-endian word (a single load on little-endian
-/// targets; always inlined, as GCC otherwise calls it in the number loops)
-JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
-{
-#if JSON_LITTLE_ENDIAN_TARGET
-    // the byte order already matches
-    std::uint64_t result = 0;
-    std::memcpy(&result, b, sizeof(result));
-    return result;
-#else
-    return static_cast<std::uint64_t>(b[0]) | (static_cast<std::uint64_t>(b[1]) << 8u)
-           | (static_cast<std::uint64_t>(b[2]) << 16u) | (static_cast<std::uint64_t>(b[3]) << 24u)
-           | (static_cast<std::uint64_t>(b[4]) << 32u) | (static_cast<std::uint64_t>(b[5]) << 40u)
-           | (static_cast<std::uint64_t>(b[6]) << 48u) | (static_cast<std::uint64_t>(b[7]) << 56u);
-#endif
-}
-
-/// eight bytes as a little-endian word
-JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const char* p) noexcept
-{
-    return read_eight_bytes(reinterpret_cast<const unsigned char*>(p)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-}
-
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
@@ -12399,6 +12401,78 @@ JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline bool vector_utf8_run(cons
     block_out = block;
     return false;
 }
+
+/*!
+@brief skip 16-byte blocks of well-formed UTF-8 at p (a character boundary)
+
+Like vector_utf8_run, but quotes, backslashes, and control characters are
+ordinary characters. Returns the start of the first block in which the check
+found an error (which may belong to a sequence begun in the block before) or
+where fewer than 16 bytes are left; a sequence may be cut at that point, so the
+caller resumes at its start, one sequence at a time.
+*/
+JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline const unsigned char* vector_utf8_valid_blocks(const unsigned char* block, const unsigned char* e) noexcept
+{
+    using lookup = utf8_lookup4<>;
+#if JSON_SCAN_NEON
+    const uint8x16_t t1h = vld1q_u8(lookup::byte_1_high.data());
+    const uint8x16_t t1l = vld1q_u8(lookup::byte_1_low.data());
+    const uint8x16_t t2h = vld1q_u8(lookup::byte_2_high.data());
+    uint8x16_t prev = vdupq_n_u8(0);
+    while (e - block >= 16)
+    {
+        const uint8x16_t in = vld1q_u8(block);
+        if (vmaxvq_u8(vorrq_u8(in, prev)) < 0x80)
+        {
+            // ASCII here, and no sequence from the block before to finish
+            prev = in;
+            block += 16;
+            continue;
+        }
+        const uint8x16_t prev1 = vextq_u8(prev, in, 15);
+        const uint8x16_t sc = vandq_u8(vandq_u8(vqtbl1q_u8(t1h, vshrq_n_u8(prev1, 4)), vqtbl1q_u8(t1l, vandq_u8(prev1, vdupq_n_u8(0x0F)))), vqtbl1q_u8(t2h, vshrq_n_u8(in, 4)));
+        const uint8x16_t must23 = vorrq_u8(vqsubq_u8(vextq_u8(prev, in, 14), vdupq_n_u8(0xE0 - 0x80)), vqsubq_u8(vextq_u8(prev, in, 13), vdupq_n_u8(0xF0 - 0x80)));
+        const uint8x16_t err = veorq_u8(vandq_u8(must23, vdupq_n_u8(0x80)), sc);
+        if (vmaxvq_u8(err) != 0)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#else
+    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i nibble = _mm_set1_epi8(0x0F);
+    const __m128i zero = _mm_setzero_si128();
+    __m128i prev = zero;
+    while (e - block >= 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
+        if (_mm_movemask_epi8(_mm_or_si128(in, prev)) == 0)
+        {
+            prev = in;
+            block += 16;
+            continue;
+        }
+        const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
+        const __m128i sc = _mm_and_si128(_mm_and_si128(_mm_shuffle_epi8(t1h, _mm_and_si128(_mm_srli_epi16(prev1, 4), nibble)),
+                                         _mm_shuffle_epi8(t1l, _mm_and_si128(prev1, nibble))),
+                                         _mm_shuffle_epi8(t2h, _mm_and_si128(_mm_srli_epi16(in, 4), nibble)));
+        const __m128i must23 = _mm_or_si128(_mm_subs_epu8(_mm_alignr_epi8(in, prev, 14), _mm_set1_epi8(0xE0 - 0x80)),
+                                            _mm_subs_epu8(_mm_alignr_epi8(in, prev, 13), _mm_set1_epi8(0xF0 - 0x80)));
+        const __m128i err = _mm_xor_si128(_mm_and_si128(must23, _mm_set1_epi8(static_cast<char>(-128))), sc);
+        if (_mm_movemask_epi8(_mm_cmpeq_epi8(err, zero)) != 0xFFFF)
+        {
+            break;
+        }
+        prev = in;
+        block += 16;
+    }
+#endif
+    return block;
+}
 #endif
 
 }  // namespace detail
@@ -12473,6 +12547,34 @@ JSON_HEDLEY_ALWAYS_INLINE std::size_t find_string_special(const unsigned char* d
     for (; i < n; ++i)
     {
         if (is_string_special(data[i]))
+        {
+            return i;
+        }
+    }
+    return n;
+}
+
+// return the index of the first 0x00 byte in [data, data+n), or n if there is
+// none; scans 8 bytes at a time (BSON's C-style strings)
+JSON_HEDLEY_ALWAYS_INLINE std::size_t find_zero_byte(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        const std::uint64_t v = read_eight_bytes(data + i);
+        const std::uint64_t zero = (v - ones) & ~v & high;
+        if (zero != 0)
+        {
+            // the lowest flagged byte is the first zero byte (see
+            // find_string_special())
+            return i + (static_cast<std::size_t>(count_trailing_zeros(zero)) / 8);
+        }
+    }
+    for (; i < n; ++i)
+    {
+        if (data[i] == 0x00)
         {
             return i;
         }
@@ -12624,6 +12726,64 @@ inline std::size_t valid_utf8_prefix(const unsigned char* data, std::size_t n) n
         pos += seq;
     }
     return pos;
+}
+
+/*!
+@brief whether [data, data+n) is valid UTF-8, for checking whole strings
+
+The same answer as valid_utf8_prefix(data, n) == n. Short ASCII strings, the
+most common keys and values, are decided in one test, and long strings are
+checked 16 bytes at a time where the vector check is available.
+*/
+inline bool valid_utf8_string(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    if (n <= 16)
+    {
+        // two overlapping words cover 8 to 16 bytes, one partial word fewer
+        std::uint64_t first = 0;
+        std::uint64_t last = 0;
+        if (n >= 8)
+        {
+            std::memcpy(&first, data, sizeof(first));
+            std::memcpy(&last, data + n - 8, sizeof(last));
+        }
+        else if (n != 0)
+        {
+            std::memcpy(&first, data, n);
+        }
+        if (((first | last) & high) == 0)
+        {
+            return true;
+        }
+    }
+#if JSON_SCAN_VECTOR_UTF8
+    else if (n >= 32
+#if JSON_SCAN_SSSE3_DISPATCH
+             && cpu_has_ssse3()
+#endif
+            )
+    {
+        const unsigned char* block = vector_utf8_valid_blocks(data, data + n);
+        // the rest from the start of a sequence that may be cut at block
+        for (int i = 1; i <= 3 && block - i >= data; ++i)
+        {
+            const unsigned char c = block[-i];
+            if (c < 0x80)
+            {
+                break;
+            }
+            if (c >= 0xC0)
+            {
+                block -= i;
+                break;
+            }
+        }
+        const auto checked = static_cast<std::size_t>(block - data);
+        return checked + valid_utf8_prefix(block, n - checked) == n;
+    }
+#endif
+    return valid_utf8_prefix(data, n) == n;
 }
 
 #if JSON_SCAN_VECTOR_UTF8
@@ -13087,8 +13247,13 @@ constexpr bool input_adapter_bulk_window(std::false_type /*detected*/)
 @brief lexical analysis
 
 This class organizes the lexical analysis during JSON deserialization.
+
+DiscardValues: the caller only needs the token types and never looks at the values of number and string tokens (only
+accept(), which parses through json_sax_acceptor). A template parameter rather than a member, so that the lexer of
+parse() is compiled without the paths of accept(): with both string scans in one scan(), parse() was up to 2 % slower
+on Apple M1.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, bool DiscardValues = false>
 class lexer : public lexer_base<BasicJsonType>
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -13146,10 +13311,9 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false, bool discard_number_values_ = false) noexcept
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false) noexcept
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
-        , discard_number_values(discard_number_values_)
     {
         // the token string of an error before the first token is everything
         // read so far
@@ -13266,6 +13430,8 @@ class lexer : public lexer_base<BasicJsonType>
     checks if it is inside the range. If a violation was detected, set up an
     error message and return false. Otherwise, return true.
 
+    @param[in] keep    whether the bytes are added to token_buffer (false for
+                       accept(), see scan())
     @param[in] ranges  list of integers; interpreted as list of pairs of
                        inclusive lower and upper bound, respectively
 
@@ -13274,17 +13440,18 @@ class lexer : public lexer_base<BasicJsonType>
 
     @return true if and only if no range violation was detected
     */
-    bool next_byte_in_range(std::initializer_list<char_int_type> ranges)
+    template<bool Keep>
+    bool next_byte_in_range(std::integral_constant<bool, Keep> keep, std::initializer_list<char_int_type> ranges)
     {
         JSON_ASSERT(ranges.size() == 2 || ranges.size() == 4 || ranges.size() == 6);
-        add(current);
+        add_string_char(keep, current);
 
         for (auto range = ranges.begin(); range != ranges.end(); ++range)
         {
             get();
             if (JSON_HEDLEY_LIKELY(*range <= current && current <= *(++range))) // NOLINT(bugprone-inc-dec-in-conditions)
             {
-                add(current);
+                add_string_char(keep, current);
             }
             else
             {
@@ -13297,14 +13464,16 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// contiguous input: bulk-append the run of ordinary characters and complete
-    /// well-formed UTF-8 sequences starting at the current read position, then
+    /// well-formed UTF-8 sequences starting at the current read position (only
+    /// skip it if @a keep is false), then
     /// read the first byte that needs individual handling (the closing quote, an
     /// escape, a control character, or an ill-formed UTF-8 byte) like get().
     /// That byte is taken from the buffer that was just scanned. Through get(),
     /// Apple Clang merged this read with the other get() calls of the scan
     /// function, which load the read position again right after it was stored
     /// (3% of json::accept() on jeopardy.json on Apple M1).
-    char_int_type get_after_string_run(std::true_type /*bulk*/)
+    template<bool Keep>
+    char_int_type get_after_string_run(std::true_type /*bulk*/, std::integral_constant<bool, Keep> keep)
     {
         // a pending unget must be consumed through the normal path first
         if (next_unget)
@@ -13322,7 +13491,7 @@ class lexer : public lexer_base<BasicJsonType>
         const std::size_t pos = lexer_string_bulk_run(data, remaining);
         if (pos != 0)
         {
-            token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
+            append_string_run(keep, data, pos);
             bulk_consume(reinterpret_cast<const char*>(data), pos);
         }
         if (pos == remaining)
@@ -13366,7 +13535,8 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /// streaming input: no bulk fast path
-    char_int_type get_after_string_run(std::false_type /*bulk*/)
+    template<bool Keep>
+    char_int_type get_after_string_run(std::false_type /*bulk*/, std::integral_constant<bool, Keep> /*keep*/)
     {
         return get();
     }
@@ -13380,13 +13550,18 @@ class lexer : public lexer_base<BasicJsonType>
     may contain \0 bytes), and token_buffer.size() is the number of bytes in the
     string.
 
+    @param[in] keep  whether the string is copied into token_buffer; if false
+                     (accept(), see scan()), it is only checked, with the same
+                     errors, and token_buffer stays empty
+
     @return token_type::value_string if string could be successfully scanned,
             token_type::parse_error otherwise
 
     @note In case of errors, variable error_message contains a textual
           description.
     */
-    token_type scan_string()
+    template<bool Keep>
+    token_type scan_string(std::integral_constant<bool, Keep> keep)
     {
         // reset token_buffer (ignore opening quote)
         reset();
@@ -13398,7 +13573,7 @@ class lexer : public lexer_base<BasicJsonType>
         {
             // bulk-consume ordinary characters from contiguous input, then
             // get the next character, the one that ends the run
-            switch (get_after_string_run(std::integral_constant<bool, bulk_scan>()))
+            switch (get_after_string_run(std::integral_constant<bool, bulk_scan>(), keep))
             {
                 // end of file while parsing the string
                 case char_traits<char_type>::eof():
@@ -13420,35 +13595,35 @@ class lexer : public lexer_base<BasicJsonType>
                     {
                         // quotation mark
                         case '\"':
-                            add('\"');
+                            add_string_char(keep, '\"');
                             break;
                         // reverse solidus
                         case '\\':
-                            add('\\');
+                            add_string_char(keep, '\\');
                             break;
                         // solidus
                         case '/':
-                            add('/');
+                            add_string_char(keep, '/');
                             break;
                         // backspace
                         case 'b':
-                            add('\b');
+                            add_string_char(keep, '\b');
                             break;
                         // form feed
                         case 'f':
-                            add('\f');
+                            add_string_char(keep, '\f');
                             break;
                         // line feed
                         case 'n':
-                            add('\n');
+                            add_string_char(keep, '\n');
                             break;
                         // carriage return
                         case 'r':
-                            add('\r');
+                            add_string_char(keep, '\r');
                             break;
                         // tab
                         case 't':
-                            add('\t');
+                            add_string_char(keep, '\t');
                             break;
 
                         // unicode escapes
@@ -13516,10 +13691,7 @@ class lexer : public lexer_base<BasicJsonType>
                             JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
-                            encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
-                            {
-                                add(static_cast<char_int_type>(byte));
-                            });
+                            add_codepoint(keep, codepoint);
 
                             break;
                         }
@@ -13702,7 +13874,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0x7E:
                 case 0x7F:
                 {
-                    add(current);
+                    add_string_char(keep, current);
                     break;
                 }
 
@@ -13738,7 +13910,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xDE:
                 case 0xDF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!next_byte_in_range({0x80, 0xBF})))
+                    if (JSON_HEDLEY_UNLIKELY(!next_byte_in_range(keep, {0x80, 0xBF})))
                     {
                         return token_type::parse_error;
                     }
@@ -13748,7 +13920,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
                 case 0xE0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0xA0, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13772,7 +13944,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xEE:
                 case 0xEF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13782,7 +13954,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+D000..U+D7FF: bytes ED 80..9F 80..BF
                 case 0xED:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x80, 0x9F, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13792,7 +13964,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
                 case 0xF0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13804,7 +13976,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xF2:
                 case 0xF3:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -13814,7 +13986,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
                 case 0xF4:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range(keep, {0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -14305,7 +14477,7 @@ scan_number_done:
     token_type convert_number(token_type number_type, std::size_t mantissa_end)
     {
         // accept() only needs to know whether the input is valid, so it sets
-        // discard_number_values (see json.hpp), and an integer token whose
+        // discard_values (see json.hpp), and an integer token whose
         // digit count shows that it fits is reported without calling
         // convert_integer(). A number with up to 18 digits always fits into
         // both std::uint64_t and std::int64_t (18 nines is about 1e18, below
@@ -14320,7 +14492,7 @@ scan_number_done:
         // json_sax_acceptor, whose number callbacks discard their argument and
         // return true, and the parser rejects neither integers nor finite
         // floats. value_unsigned/value_integer are left unset here, so a caller
-        // that reads the converted value must not set discard_number_values.
+        // that reads the converted value must not set discard_values.
         //
         // On contiguous input, scan_number_bulk_contiguous() converts integer
         // tokens itself and does not pass them to this function, unless
@@ -14328,7 +14500,7 @@ scan_number_done:
         // reached for input without bulk access (e.g. streams), with
         // JSON_DIAGNOSTIC_POSITIONS, or when scan_number_bulk_contiguous()
         // falls back to scan_number().
-        if (discard_number_values)
+        if (discard_values())
         {
             constexpr std::size_t safe_digit_count = 18;
             if (number_type == token_type::value_unsigned && token_buffer.size() <= safe_digit_count)
@@ -14579,7 +14751,7 @@ scan_number_done:
         // w < 10^19, so a value below 10^max_exponent10 cannot overflow, and a
         // value that underflows is a finite number as well. Only a token that
         // may overflow has to be converted to find out.
-        if (JSON_HEDLEY_UNLIKELY(discard_number_values && s.exponent + 19 <= std::numeric_limits<number_float_t>::max_exponent10))
+        if (JSON_HEDLEY_UNLIKELY(discard_values() && s.exponent + 19 <= std::numeric_limits<number_float_t>::max_exponent10))
         {
             value_float = 0;
             return true;
@@ -14910,6 +15082,34 @@ scan_number_done:
     {
         token_buffer.push_back(static_cast<typename string_t::value_type>(c));
     }
+
+    /// add a character of a string token; accept() checks the string but does
+    /// not keep its value (@a keep is false)
+    void add_string_char(std::true_type /*keep*/, char_int_type c)
+    {
+        token_buffer.push_back(static_cast<typename string_t::value_type>(c));
+    }
+
+    static void add_string_char(std::false_type /*keep*/, char_int_type /*c*/) noexcept {}
+
+    /// add the UTF-8 bytes of a code point from a \\u escape to a string token
+    void add_codepoint(std::true_type /*keep*/, int codepoint)
+    {
+        encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
+        {
+            add(static_cast<char_int_type>(byte));
+        });
+    }
+
+    static void add_codepoint(std::false_type /*keep*/, int /*codepoint*/) noexcept {}
+
+    /// append a run of ordinary string characters (see get_after_string_run())
+    void append_string_run(std::true_type /*keep*/, const unsigned char* data, std::size_t n)
+    {
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), n);
+    }
+
+    static void append_string_run(std::false_type /*keep*/, const unsigned char* /*data*/, std::size_t /*n*/) noexcept {}
 
   public:
     /////////////////////
@@ -15305,7 +15505,9 @@ scan_number_done:
 
             // string
             case '\"':
-                return scan_string();
+                // accept() (DiscardValues) checks strings without copying them
+                // into token_buffer
+                return scan_string(keep_strings {});
 
             // number
             case '-':
@@ -15390,11 +15592,19 @@ scan_number_done:
     std::size_t decimal_point_position = std::string::npos;
 
     /// whether the caller only needs the token types and never looks at the
-    /// converted numeric values; set only by accept(), which parses through
-    /// json_sax_acceptor. When set, convert_number() skips converting integer
-    /// tokens whose digit count guarantees that they fit into 64 bits (see
-    /// there)
-    const bool discard_number_values = false;
+    /// values of number and string tokens; DiscardValues, set only by accept(), which parses
+    /// through json_sax_acceptor. When set, convert_number() skips converting
+    /// integer tokens whose digit count guarantees that they fit into 64 bits
+    /// (see there), floats are converted only when they may overflow (see
+    /// convert_accumulated_float()), and strings are checked without being
+    /// copied into token_buffer (see scan())
+    static bool discard_values() noexcept
+    {
+        return DiscardValues;
+    }
+
+    /// the tag of scan_string(): whether string tokens are kept
+    using keep_strings = typename std::conditional<DiscardValues, std::false_type, std::true_type>::type;
 };
 
 }  // namespace detail
@@ -18263,15 +18473,17 @@ class binary_reader
             }
 
             const std::size_t element_type_parse_position = chars_read;
+            // an array's elements are named "0", "1", ... in the wire format,
+            // and those names are not passed on: they are skipped unless
+            // error_handler_t::strict must reject ill-formed UTF-8 in them
+            const bool is_object = container_stack.back().is_object;
             key.clear();
-            if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key)))
+            if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key, is_object || error_handler == error_handler_t::strict)))
             {
                 return false;
             }
 
-            // an array's elements are named "0", "1", ... in the wire format,
-            // and those names are not passed on
-            if (container_stack.back().is_object && !sax->key(key))
+            if (is_object && !sax->key(key))
             {
                 return false;
             }
@@ -18287,14 +18499,18 @@ class binary_reader
     @brief Parses a C-style string from the BSON input.
     @param[in,out] result  A reference to the string variable where the read
                             string is to be stored.
+    @param[in] store  whether the characters are needed; if not (the names of
+                      an array's elements), they are skipped and @a result may
+                      be left unchanged, and they are not checked against
+                      @ref error_handler
     @return `true` if the \\x00-byte indicating the end of the string was
              encountered before the EOF; false` indicates an unexpected EOF.
     */
-    bool get_bson_cstr(string_t& result)
+    bool get_bson_cstr(string_t& result, const bool store = true)
     {
-        if (get_bson_cstr_bulk(result, std::integral_constant<bool, bulk_scan> {}))
+        if (get_bson_cstr_bulk(result, store, std::integral_constant<bool, bulk_scan> {}))
         {
-            return check_string_utf8(result, "key");
+            return !store || check_string_utf8(result, "key");
         }
 
         auto out = std::back_inserter(result);
@@ -18307,7 +18523,7 @@ class binary_reader
             }
             if (current == 0x00)
             {
-                return check_string_utf8(result, "key");
+                return !store || check_string_utf8(result, "key");
             }
             *out++ = static_cast<typename string_t::value_type>(current);
         }
@@ -18317,10 +18533,11 @@ class binary_reader
     @brief read a C-style string from contiguous input in one step
 
     @param[in,out] result  the string to append to
+    @param[in] store  whether to append the characters to @a result
     @return whether the string was read; if the input has no \\x00-byte, nothing
             is read, and @ref get_bson_cstr reports the end of the input
     */
-    bool get_bson_cstr_bulk(string_t& result, std::true_type /*bulk*/)
+    bool get_bson_cstr_bulk(string_t& result, const bool store, std::true_type /*bulk*/)
     {
         const std::size_t remaining = ia.bulk_remaining();
         if (remaining == 0)
@@ -18328,18 +18545,15 @@ class binary_reader
             return false;
         }
         const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
-        // a plain loop rather than std::memchr: most keys are short (array
-        // indices are keys, too), and the call would cost more than it saves
-        std::size_t length = 0;
-        while (length < remaining && data[length] != 0x00)
-        {
-            ++length;
-        }
+        const std::size_t length = find_zero_byte(data, remaining);
         if (length == remaining)
         {
             return false;
         }
-        result.append(reinterpret_cast<const typename string_t::value_type*>(data), length);
+        if (store)
+        {
+            result.append(reinterpret_cast<const typename string_t::value_type*>(data), length);
+        }
         // consume the string and its \x00-byte, as the byte-wise path does
         ia.bulk_skip(length + 1);
         chars_read += length + 1;
@@ -18348,7 +18562,7 @@ class binary_reader
     }
 
     /// input that is not contiguous: C-style strings are read byte by byte
-    bool get_bson_cstr_bulk(string_t& /*result*/, std::false_type /*bulk*/) const noexcept
+    bool get_bson_cstr_bulk(string_t& /*result*/, const bool /*store*/, std::false_type /*bulk*/) const noexcept
     {
         return false;
     }
@@ -18539,11 +18753,13 @@ class binary_reader
     bool get_cbor_negative_integer()
     {
         NumberType number{};
-        if (JSON_HEDLEY_UNLIKELY(!get_number(number)))
-        {
-            return false;
-        }
+        return get_number(number) && emit_cbor_negative_integer(number);
+    }
 
+    /// pass the CBOR negative integer -1 - @a number to the SAX parser
+    template<typename NumberType>
+    bool emit_cbor_negative_integer(const NumberType number)
+    {
         // the value is -1 - number, which fits into number_integer_t
         // whenever number does; the outer cast undoes the integral promotion
         // for number_integer_t types narrower than int
@@ -18768,7 +18984,7 @@ class binary_reader
             case 0x95:
             case 0x96:
             case 0x97:
-                return enter_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
+                return enter_cbor_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0x98: // array (one-byte uint8_t for n follows)
             case 0x99: // array (two-byte uint16_t for n follow)
@@ -18777,7 +18993,7 @@ class binary_reader
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_cbor_argument(len) && get_cbor_container_size(len, size, "array") && enter_array(size);
+                return get_cbor_argument(len) && get_cbor_container_size(len, size, "array") && enter_cbor_array(size);
             }
 
             case 0x9F: // array (indefinite length)
@@ -18931,22 +19147,24 @@ class binary_reader
                 return get_half_float(false);
 
             case 0xFA: // Single-Precision Float (four-byte IEEE 754)
-            {
-                float number{};
-                return get_number(number) && emit_float(number);
-            }
+                return get_cbor_float<float>();
 
             case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
-            {
-                double number{};
-                return get_number(number) && emit_float(number);
-            }
+                return get_cbor_float<double>();
 
             default: // anything else (0xFF is handled inside the other types)
             {
                 return unexpected_byte("invalid byte", "value");
             }
         }
+    }
+
+    /// read a single- or double-precision float
+    template<typename NumberType>
+    bool get_cbor_float()
+    {
+        NumberType number{};
+        return get_number(number) && emit_float(number);
     }
 
     /*!
@@ -19475,6 +19693,155 @@ class binary_reader
     }
 
     /*!
+    @brief read a big-endian number of type @a NumberType at @a data
+    */
+    template<typename NumberType>
+    NumberType load_big_endian(const unsigned char* data) const noexcept
+    {
+        NumberType result{};
+        std::memcpy(&result, data, sizeof(NumberType));
+        if (is_little_endian)
+        {
+            byte_swap(result);
+        }
+        return result;
+    }
+
+    /*!
+    @brief read the integers, floats, booleans, and nulls that follow in a
+           definite-length array, without the per-element bookkeeping of
+           @ref parse_cbor_internal
+
+    Stops at the end of the array, at any other kind of value, and when fewer
+    than 9 bytes (the longest of these values) are left in the input, leaving
+    those to @ref parse_cbor_value, which reads them the same way.
+
+    Out of line, so that @ref parse_cbor_value stays small enough to be inlined.
+
+    The array is the one on top of @ref container_stack; its count of
+    elements not yet read is updated.
+
+    @return whether the SAX parser accepted the values
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    bool parse_cbor_scalar_run(std::true_type /*bulk*/)
+    {
+        // nothing pushes onto the stack while the run reads scalars
+        std::size_t& remaining = container_stack.back().remaining;
+        while (remaining != 0 && ia.bulk_remaining() >= 9)
+        {
+            const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+            const unsigned char head = data[0];
+            std::size_t size = 0;
+            bool accepted = false;
+            switch (head)
+            {
+                case 0x18:
+                    size = 2;
+                    accepted = emit_unsigned(data[1]);
+                    break;
+                case 0x19:
+                    size = 3;
+                    accepted = emit_unsigned(load_big_endian<std::uint16_t>(data + 1));
+                    break;
+                case 0x1A:
+                    size = 5;
+                    accepted = emit_unsigned(load_big_endian<std::uint32_t>(data + 1));
+                    break;
+                case 0x1B:
+                    size = 9;
+                    accepted = emit_unsigned(load_big_endian<std::uint64_t>(data + 1));
+                    break;
+                case 0x38:
+                    size = 2;
+                    accepted = emit_cbor_negative_integer(data[1]);
+                    break;
+                case 0x39:
+                    size = 3;
+                    accepted = emit_cbor_negative_integer(load_big_endian<std::uint16_t>(data + 1));
+                    break;
+                case 0x3A:
+                    size = 5;
+                    accepted = emit_cbor_negative_integer(load_big_endian<std::uint32_t>(data + 1));
+                    break;
+                case 0x3B:
+                    size = 9;
+                    accepted = emit_cbor_negative_integer(load_big_endian<std::uint64_t>(data + 1));
+                    break;
+                case 0xF4:
+                    size = 1;
+                    accepted = sax->boolean(false);
+                    break;
+                case 0xF5:
+                    size = 1;
+                    accepted = sax->boolean(true);
+                    break;
+                case 0xF6:
+                    size = 1;
+                    accepted = sax->null();
+                    break;
+                case 0xFA:
+                    size = 5;
+                    accepted = emit_float(load_big_endian<float>(data + 1));
+                    break;
+                case 0xFB:
+                    size = 9;
+                    accepted = emit_float(load_big_endian<double>(data + 1));
+                    break;
+                default:
+                    if (head <= 0x17)
+                    {
+                        size = 1;
+                        accepted = sax->number_unsigned(static_cast<number_unsigned_t>(head));
+                    }
+                    else if (head >= 0x20 && head <= 0x37)
+                    {
+                        size = 1;
+                        accepted = sax->number_integer(static_cast<std::int8_t>(0x20 - 1 - head));
+                    }
+                    else
+                    {
+                        // any other value is read by parse_cbor_value
+                        return true;
+                    }
+                    break;
+            }
+            // as if read by get() and get_number(): current is the head byte
+            ia.bulk_skip(size);
+            chars_read += size;
+            current = head;
+            --remaining;
+            if (JSON_HEDLEY_UNLIKELY(!accepted))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*!
+    @brief open a definite-length array and read the scalars it begins with
+           (see @ref parse_cbor_scalar_run)
+
+    Only the start of an array is tried, which covers arrays of numbers
+    (e.g. coordinates) but costs arrays of other values only one call, not one
+    per element.
+
+    @param[in] len  the number of elements
+    @return whether the SAX parser accepted the array and the values read
+    */
+    bool enter_cbor_array(const std::size_t len)
+    {
+        return enter_array(len) && (len == 0 || parse_cbor_scalar_run(std::integral_constant<bool, bulk_scan> {}));
+    }
+
+    /// input that is not contiguous: every value is read by parse_cbor_value
+    bool parse_cbor_scalar_run(std::false_type /*bulk*/) const noexcept
+    {
+        return true;
+    }
+
+    /*!
     @brief read a CBOR value and everything nested inside it
 
     Reads values until the one that was begun here is complete, resuming the
@@ -19503,6 +19870,7 @@ class binary_reader
                 // pop_back() below, which destroys the container_stack element
                 // it would otherwise alias
                 const container_frame top = container_stack.back();
+                const bool is_object = top.is_object;
                 bool at_end = false;
 
                 if (top.remaining != npos)
@@ -19514,7 +19882,7 @@ class binary_reader
                     {
                         // claim the element about to be read
                         --container_stack.back().remaining;
-                        if (top.is_object)
+                        if (is_object)
                         {
                             get();
                         }
@@ -19527,7 +19895,7 @@ class binary_reader
                     // Testing for it consumes a byte, which is the first byte
                     // of the next element when it is not one.
                     at_end = (get() == 0xFF);
-                    fetch = top.is_object;
+                    fetch = is_object;
                 }
 
                 if (at_end)
@@ -19544,7 +19912,7 @@ class binary_reader
                     continue;
                 }
 
-                if (top.is_object)
+                if (is_object)
                 {
                     if (JSON_HEDLEY_UNLIKELY(!skip_cbor_key_tags(tag_handler)))
                     {
@@ -19769,7 +20137,7 @@ class binary_reader
             case 0x9D:
             case 0x9E:
             case 0x9F:
-                return enter_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+                return enter_msgpack_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixstr
             case 0xA0:
@@ -19900,13 +20268,13 @@ class binary_reader
             case 0xDC: // array 16
             {
                 std::uint16_t len{};
-                return get_number(len) && enter_array(static_cast<std::size_t>(len));
+                return get_number(len) && enter_msgpack_array(static_cast<std::size_t>(len));
             }
 
             case 0xDD: // array 32
             {
                 std::uint32_t len{};
-                return get_number(len) && enter_array(conditional_static_cast<std::size_t>(len));
+                return get_number(len) && enter_msgpack_array(conditional_static_cast<std::size_t>(len));
             }
 
             case 0xDE: // map 16
@@ -20246,6 +20614,137 @@ class binary_reader
             default:           // LCOV_EXCL_LINE
                 return false;  // LCOV_EXCL_LINE
         }
+    }
+
+    /*!
+    @brief read the integers, floats, booleans, and nils that follow in a
+           MessagePack array, without the per-element bookkeeping of
+           @ref parse_msgpack_internal
+
+    Stops at the end of the array, at any other kind of value, and when fewer
+    than 9 bytes (the longest of these values) are left in the input, leaving
+    those to @ref parse_msgpack_value, which reads them the same way.
+
+    Out of line, so that @ref parse_msgpack_value stays small enough to be inlined.
+
+    The array is the one on top of @ref container_stack; its count of
+    elements not yet read is updated.
+
+    @return whether the SAX parser accepted the values
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    bool parse_msgpack_scalar_run(std::true_type /*bulk*/)
+    {
+        // nothing pushes onto the stack while the run reads scalars
+        std::size_t& remaining = container_stack.back().remaining;
+        while (remaining != 0 && ia.bulk_remaining() >= 9)
+        {
+            const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+            const unsigned char head = data[0];
+            std::size_t size = 0;
+            bool accepted = false;
+            switch (head)
+            {
+                case 0xC0: // nil
+                    size = 1;
+                    accepted = sax->null();
+                    break;
+                case 0xC2: // false
+                    size = 1;
+                    accepted = sax->boolean(false);
+                    break;
+                case 0xC3: // true
+                    size = 1;
+                    accepted = sax->boolean(true);
+                    break;
+                case 0xCA: // float 32
+                    size = 5;
+                    accepted = emit_float(load_big_endian<float>(data + 1));
+                    break;
+                case 0xCB: // float 64
+                    size = 9;
+                    accepted = emit_float(load_big_endian<double>(data + 1));
+                    break;
+                case 0xCC: // uint 8
+                    size = 2;
+                    accepted = emit_unsigned(data[1]);
+                    break;
+                case 0xCD: // uint 16
+                    size = 3;
+                    accepted = emit_unsigned(load_big_endian<std::uint16_t>(data + 1));
+                    break;
+                case 0xCE: // uint 32
+                    size = 5;
+                    accepted = emit_unsigned(load_big_endian<std::uint32_t>(data + 1));
+                    break;
+                case 0xCF: // uint 64
+                    size = 9;
+                    accepted = emit_unsigned(load_big_endian<std::uint64_t>(data + 1));
+                    break;
+                case 0xD0: // int 8
+                    size = 2;
+                    accepted = emit_signed(static_cast<std::int8_t>(data[1]));
+                    break;
+                case 0xD1: // int 16
+                    size = 3;
+                    accepted = emit_signed(load_big_endian<std::int16_t>(data + 1));
+                    break;
+                case 0xD2: // int 32
+                    size = 5;
+                    accepted = emit_signed(load_big_endian<std::int32_t>(data + 1));
+                    break;
+                case 0xD3: // int 64
+                    size = 9;
+                    accepted = emit_signed(load_big_endian<std::int64_t>(data + 1));
+                    break;
+                default:
+                    if (head <= 0x7F)
+                    {
+                        // positive fixint
+                        size = 1;
+                        accepted = sax->number_unsigned(static_cast<number_unsigned_t>(head));
+                    }
+                    else if (head >= 0xE0)
+                    {
+                        // negative fixint
+                        size = 1;
+                        accepted = sax->number_integer(static_cast<std::int8_t>(head));
+                    }
+                    else
+                    {
+                        // any other value is read by parse_msgpack_value
+                        return true;
+                    }
+                    break;
+            }
+            // as if read by get() and get_number(): current is the last byte
+            ia.bulk_skip(size);
+            chars_read += size;
+            current = data[size - 1];
+            --remaining;
+            if (JSON_HEDLEY_UNLIKELY(!accepted))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*!
+    @brief open a MessagePack array and read the scalars it begins with (see
+           @ref parse_msgpack_scalar_run)
+    @param[in] len  the number of elements
+    @return whether the SAX parser accepted the array and the values read
+    */
+    bool enter_msgpack_array(const std::size_t len)
+    {
+        return enter_array(len) && (len == 0 || parse_msgpack_scalar_run(std::integral_constant<bool, bulk_scan> {}));
+    }
+
+    /// input that is not contiguous: every value is read by parse_msgpack_value
+    bool parse_msgpack_scalar_run(std::false_type /*bulk*/) const noexcept
+    {
+        return true;
     }
 
     /*!
@@ -21054,6 +21553,107 @@ class binary_reader
     }
 
     /*!
+    @brief read the elements of an optimized array of numbers (type marker
+           @a type) that are in the input, in one loop, without the
+           per-element bookkeeping of @ref parse_ubjson_internal
+
+    Values are emitted as @ref get_ubjson_value emits them. Types other than
+    the fixed-size integers and floats are left to @ref get_ubjson_value, as
+    are the elements the input ends before.
+
+    @param[in,out] remaining  the number of elements not yet read
+    @param[in] type  the type marker of the elements
+    @return whether the SAX parser accepted the values
+    */
+    JSON_HEDLEY_NEVER_INLINE
+    bool parse_ubjson_typed_run(std::size_t& remaining, const char_int_type type, std::true_type /*bulk*/)
+    {
+        const bool bjdata = input_format == input_format_t::bjdata;
+        switch (type)
+        {
+            case 'U':
+                return parse_ubjson_typed_run<std::uint8_t>(remaining);
+            case 'i':
+                return parse_ubjson_typed_run<std::int8_t>(remaining);
+            case 'I':
+                return parse_ubjson_typed_run<std::int16_t>(remaining);
+            case 'l':
+                return parse_ubjson_typed_run<std::int32_t>(remaining);
+            case 'L':
+                return parse_ubjson_typed_run<std::int64_t>(remaining);
+            case 'u':
+                return !bjdata || parse_ubjson_typed_run<std::uint16_t>(remaining);
+            case 'm':
+                return !bjdata || parse_ubjson_typed_run<std::uint32_t>(remaining);
+            case 'M':
+                return !bjdata || parse_ubjson_typed_run<std::uint64_t>(remaining);
+            case 'd':
+                return parse_ubjson_typed_run<float>(remaining);
+            case 'D':
+                return parse_ubjson_typed_run<double>(remaining);
+            default:
+                return true;
+        }
+    }
+
+    /// input that is not contiguous: every element is read by get_ubjson_value
+    bool parse_ubjson_typed_run(std::size_t& /*remaining*/, const char_int_type /*type*/, std::false_type /*bulk*/) const noexcept
+    {
+        return true;
+    }
+
+    template<typename NumberType>
+    bool parse_ubjson_typed_run(std::size_t& remaining)
+    {
+        constexpr std::size_t size = sizeof(NumberType);
+        const std::size_t count = (std::min)(remaining, ia.bulk_remaining() / size);
+        if (count == 0)
+        {
+            return true;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        // UBJSON stores numbers big-endian, BJData little-endian
+        const bool swap = is_little_endian != (input_format == input_format_t::bjdata);
+        std::size_t read = 0;
+        bool accepted = true;
+        while (read < count && accepted)
+        {
+            NumberType number{};
+            std::memcpy(&number, data + (read * size), size);
+            if (swap)
+            {
+                byte_swap(number);
+            }
+            ++read;
+            accepted = emit_ubjson_number(number);
+        }
+        // as if read by get_number(): current is the last byte read
+        ia.bulk_skip(read * size);
+        chars_read += read * size;
+        current = data[(read * size) - 1];
+        remaining -= read;
+        return accepted;
+    }
+
+    template<typename NumberType, enable_if_t<std::is_floating_point<NumberType>::value, int> = 0>
+    bool emit_ubjson_number(const NumberType number)
+    {
+        return emit_float(number);
+    }
+
+    template < typename NumberType, enable_if_t < std::is_integral<NumberType>::value&& std::is_signed<NumberType>::value, int > = 0 >
+    bool emit_ubjson_number(const NumberType number)
+    {
+        return emit_signed(number);
+    }
+
+    template < typename NumberType, enable_if_t < std::is_integral<NumberType>::value&& !std::is_signed<NumberType>::value, int > = 0 >
+    bool emit_ubjson_number(const NumberType number)
+    {
+        return emit_unsigned(number);
+    }
+
+    /*!
     @return whether array creation completed
     */
     bool get_ubjson_array()
@@ -21088,7 +21688,15 @@ class binary_reader
                 return false;
             }
 
-            for (std::size_t i = 0; i < size_and_type.first; ++i)
+            // the numbers that are in the input, in one loop; the rest (if
+            // the input ends early) one by one below
+            std::size_t remaining = size_and_type.first;
+            if (!nd_is_char && JSON_HEDLEY_UNLIKELY(!parse_ubjson_typed_run(remaining, size_and_type.second, std::integral_constant<bool, bulk_scan> {})))
+            {
+                return false;
+            }
+
+            for (std::size_t i = size_and_type.first - remaining; i < size_and_type.first; ++i)
             {
                 if (nd_is_char)
                 {
@@ -21148,7 +21756,8 @@ class binary_reader
                 container_stack.back().remaining = 0;
             }
 
-            return true;
+            return size_and_type.second == 0
+                   || parse_ubjson_typed_run(container_stack.back().remaining, size_and_type.second, std::integral_constant<bool, bulk_scan> {});
         }
 
         return enter_array(detail::unknown_size());
@@ -21489,13 +22098,13 @@ class binary_reader
                 return sax->null();
 
             case 0xFB:
-                return sax->number_float(static_cast<number_float_t>(-1.0), "");
+                return sax->number_float(static_cast<number_float_t>(-1.0), no_source);
 
             case 0xFC:
-                return sax->number_float(static_cast<number_float_t>(0.0), "");
+                return sax->number_float(static_cast<number_float_t>(0.0), no_source);
 
             case 0xFD:
-                return sax->number_float(static_cast<number_float_t>(1.0), "");
+                return sax->number_float(static_cast<number_float_t>(1.0), no_source);
 
             case 0xFF: // empty string
             {
@@ -21818,7 +22427,12 @@ class binary_reader
     `char_traits<char_type>::eof()` in that case.
 
     @return character read from the input
+
+    @note always inlined: GCC otherwise stops inlining the stream adapter's
+          get_character() into parse_cbor_internal once that function grows
+          (+0.45 % instructions for CBOR from a std::istringstream with GCC 13)
     */
+    JSON_HEDLEY_ALWAYS_INLINE
     char_int_type get()
     {
         ++chars_read;
@@ -21862,6 +22476,27 @@ class binary_reader
         while (current == 'N');
 
         return current;
+    }
+
+    /// reverse the byte order of a double with a single byteswap(): GCC does
+    /// not merge the byte-wise swap of the generic version into one
+    static void byte_swap(double& number) noexcept
+    {
+        static_assert(sizeof(double) == sizeof(std::uint64_t), "double must have 64 bits");
+        std::uint64_t bits{};
+        std::memcpy(&bits, &number, sizeof(bits));
+        bits = byteswap(bits);
+        std::memcpy(&number, &bits, sizeof(bits));
+    }
+
+    /// reverse the byte order of a float with a single byteswap()
+    static void byte_swap(float& number) noexcept
+    {
+        static_assert(sizeof(float) == sizeof(std::uint32_t), "float must have 32 bits");
+        std::uint32_t bits{};
+        std::memcpy(&bits, &number, sizeof(bits));
+        bits = byteswap(bits);
+        std::memcpy(&number, &bits, sizeof(bits));
     }
 
     template<class NumberType>
@@ -21999,7 +22634,7 @@ class binary_reader
         {
             return out_of_range_error(exception_id::number_overflow, "number overflow", "value");
         }
-        return sax->number_float(result, "");
+        return sax->number_float(result, no_source);
     }
 
     /*!
@@ -22059,7 +22694,7 @@ class binary_reader
         }();
         return sax->number_float((half & 0x8000u) != 0
                                  ? static_cast<number_float_t>(-val)
-                                 : static_cast<number_float_t>(val), "");
+                                 : static_cast<number_float_t>(val), no_source);
     }
 
     /*!
@@ -22091,6 +22726,19 @@ class binary_reader
         return get_bytes(len, "string", result);
     }
 
+    /// whether @a s is valid UTF-8: ASCII eight bytes at a time, the rest
+    /// sequence by sequence (as the binary writers check strings)
+    static bool is_valid_utf8_string(const string_t& s, std::true_type /*is_byte*/) noexcept
+    {
+        return valid_utf8_string(reinterpret_cast<const unsigned char*>(s.data()), s.size());
+    }
+
+    /// whether @a s, of a character type wider than a byte, is valid UTF-8
+    static bool is_valid_utf8_string(const string_t& s, std::false_type /*is_byte*/) noexcept
+    {
+        return is_valid_utf8(s);
+    }
+
     /*!
     @brief validate a decoded text string (value or object key) against @ref error_handler
 
@@ -22110,7 +22758,16 @@ class binary_reader
     */
     bool check_string_utf8(string_t& result, const char* context)
     {
-        if (error_handler == error_handler_t::keep || is_valid_utf8(result))
+        return error_handler == error_handler_t::keep || check_string_utf8_handler(result, context);
+    }
+
+    /// @ref check_string_utf8 for an error handler other than @ref
+    /// error_handler_t::keep; out of line, so that reading strings without a
+    /// check does not pay for the code of the check
+    JSON_HEDLEY_NEVER_INLINE
+    bool check_string_utf8_handler(string_t& result, const char* context)
+    {
+        if (is_valid_utf8_string(result, std::integral_constant<bool, sizeof(typename string_t::value_type) == 1>()))
         {
             return true;
         }
@@ -22384,6 +23041,10 @@ class binary_reader
     /// the SAX parser
     json_sax_t* sax = nullptr;
 
+    /// the (empty) source text of every number_float event: binary formats
+    /// have none, and a string_t built for each float would cost more
+    const string_t no_source{};
+
     /// the containers that have been opened and not closed yet; see @ref container_frame
     std::vector<container_frame> container_stack{};
 
@@ -22586,14 +23247,14 @@ This class implements a parser for JSON text. Nested arrays and objects are trac
 stack instead of recursion, so deeply nested input does not exhaust the call stack, and what is read
 is reported as SAX events.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, bool DiscardValues = false>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using lexer_t = lexer<BasicJsonType, InputAdapterType>;
+    using lexer_t = lexer<BasicJsonType, InputAdapterType, DiscardValues>;
     using token_type = typename lexer_t::token_type;
 
   public:
@@ -22602,10 +23263,9 @@ class parser
                     parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true,
                     const bool ignore_comments = false,
-                    const bool ignore_trailing_commas_ = false,
-                    const bool discard_number_values_ = false)
+                    const bool ignore_trailing_commas_ = false)
         : callback(std::move(cb))
-        , m_lexer(std::move(adapter), ignore_comments, discard_number_values_)
+        , m_lexer(std::move(adapter), ignore_comments)
         , allow_exceptions(allow_exceptions_)
         , ignore_trailing_commas(ignore_trailing_commas_)
     {
@@ -26675,6 +27335,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <algorithm> // max
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
@@ -26891,6 +27552,31 @@ class output_vector_sink
     /// nothing to pass on: the characters are in the vector (see output_adapter_sink)
     void flush() noexcept
     {}
+
+    /// the number of characters written so far, the position of the next one
+    std::size_t written() const noexcept
+    {
+        return position();
+    }
+
+    /// @brief replace the 4 bytes written before at position @a pos with
+    ///        those of @a n, in the byte order of the machine
+    ///
+    /// Lets a writer put a length in front of data it has written since, such
+    /// as the size of a BSON document, without computing it in advance.
+    void overwrite(const std::size_t pos, const std::uint32_t n) noexcept
+    {
+        static_assert(sizeof(CharType) == 1, "overwrite() writes bytes");
+        JSON_ASSERT(pos + sizeof(n) <= position());
+        std::memcpy(v->data() + pos, &n, sizeof(n));
+    }
+
+    /// drop the characters written from position @a pos on
+    void rewind(const std::size_t pos) noexcept
+    {
+        JSON_ASSERT(pos <= position());
+        cursor = v->data() + pos;
+    }
 
   private:
     /// number of characters of *v written so far
@@ -29336,7 +30022,8 @@ class binary_writer
         /// arrays: the first index with one more digit; only maintained by
         /// @ref calc_bson_sizes
         std::uint64_t index_boundary = 10;
-        /// @ref calc_bson_sizes only: where its size goes in the table
+        /// @ref calc_bson_sizes: where its size goes in the table; @ref
+        /// write_bson_document_single_pass: the position of its size field
         std::size_t size_slot;
         /// @ref calc_bson_sizes only: the size of its entries seen so far
         std::size_t entries_size = 0;
@@ -29587,6 +30274,199 @@ class binary_writer
         }
     }
 
+    template<typename SinkType>
+    using sink_written_t = decltype(std::declval<const SinkType&>().written());
+
+    /// whether every integer fits the 64 bits BSON has, so that writing an
+    /// array of numbers needs no range check
+    static constexpr bool bson_integers_fit_64_bits =
+        std::numeric_limits<typename BasicJsonType::number_integer_t>::is_specialized
+        && std::numeric_limits<typename BasicJsonType::number_integer_t>::digits <= std::numeric_limits<std::int64_t>::digits
+        && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::is_specialized
+        && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::digits <= std::numeric_limits<std::uint64_t>::digits;
+
+    /*!
+    @brief whether BSON documents can be written in a single pass: the sink
+           can overwrite what it has written (output_vector_sink), and
+           @ref bson_integers_fit_64_bits
+    */
+    using bson_single_pass_sink = conjunction<is_detected<sink_written_t, OutputSinkType>, std::integral_constant<bool, bson_integers_fit_64_bits>>;
+
+    /// write a placeholder for the size of an object or array whose entries
+    /// follow; @return its position, for @ref close_bson_container
+    std::size_t write_bson_size_placeholder()
+    {
+        const std::size_t pos = oa.written();
+        // zero in any byte order
+        const std::array<CharType, sizeof(std::int32_t)> zero{};
+        oa.write_characters(zero.data(), zero.size());
+        return pos;
+    }
+
+    /// end the object or array whose size is at @a pos and write its size
+    /// there: everything from that field to the terminating null byte
+    /// @return false (and the size is not written) if it does not fit
+    bool close_bson_container(const std::size_t pos)
+    {
+        oa.write_character(to_char_type(0x00));
+        const std::size_t size = oa.written() - pos;
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
+        {
+            return false;
+        }
+        const auto le_size = static_cast<std::uint32_t>(size);
+        oa.overwrite(pos, is_little_endian ? le_size : byteswap(le_size));
+        return true;
+    }
+
+    /*!
+    @brief check the value @a j of a BSON entry as @ref calc_bson_value_size
+           does, for @ref write_bson_document_single_pass
+    @return at least the size of the value
+    A number, boolean, or null needs no check there (its integers have at most
+    64 bits) and has at most 8 characters; a discarded value is rejected with
+    the same exception when it is written.
+    */
+    std::size_t check_bson_value(const BasicJsonType& j)
+    {
+        return (j.is_string() || j.is_binary()) ? calc_bson_value_size(j) : 8;
+    }
+
+    /// whether an entry of @a entry_size characters keeps the document that
+    /// begins at @a start, closed by @a open_containers null bytes, within
+    /// the 32-bit size of BSON
+    bool bson_entry_fits(const std::size_t start, const std::size_t entry_size, const std::size_t open_containers) const noexcept
+    {
+        const auto limit = static_cast<std::size_t>((std::numeric_limits<std::int32_t>::max)());
+        const std::size_t written = oa.written() - start;
+        return written <= limit && entry_size <= limit - written && open_containers <= limit - written - entry_size;
+    }
+
+    /*!
+    @brief Serializes the JSON object @a document as a BSON document in a
+           single pass, writing the size of each object and array once it is
+           complete
+
+    Checks every key and value as @ref calc_bson_sizes does, in the same
+    order, so the same exception is thrown; the output written up to then is
+    discarded with the vector it was written to.
+
+    @return false as soon as the document or a string, binary value, object,
+            or array in it would be larger than the 32-bit BSON sizes allow;
+            nothing large has been written then, and the caller writes the
+            document in two passes, which reports that error
+    */
+    template<typename SinkType = OutputSinkType, typename std::enable_if<is_detected<sink_written_t, SinkType>::value, int>::type = 0>
+    bool write_bson_document_single_pass(const BasicJsonType& document)
+    {
+        const std::size_t start = oa.written();
+        // the object or array whose entries are being written (with the
+        // position of its size), and the ones it is in
+        bson_frame current(&document, write_bson_size_placeholder());
+        std::vector<bson_frame> parents;
+
+        while (true)
+        {
+            const BasicJsonType* nested = nullptr;
+            std::size_t nested_size_pos = 0;
+            if (current.value->is_object())
+            {
+                const auto& object = *current.value->m_data.m_value.object;
+                while (nested == nullptr && current.member != object.cend())
+                {
+                    const auto& el = *current.member;
+                    ++current.member;
+                    const std::size_t header_size = calc_bson_entry_header_size(el.first, el.second);
+                    const std::size_t value_size = el.second.is_structured() ? 0 : check_bson_value(el.second);
+                    if (JSON_HEDLEY_UNLIKELY(!bson_entry_fits(start, header_size + value_size, parents.size() + 1)))
+                    {
+                        return false;
+                    }
+                    if (el.second.is_structured())
+                    {
+                        write_bson_entry_header(el.first, el.second.is_object() ? 0x03 : 0x04);
+                        nested_size_pos = write_bson_size_placeholder();
+                        nested = &el.second;
+                    }
+                    else
+                    {
+                        write_bson_value(el.first, el.second);
+                    }
+                }
+            }
+            else
+            {
+                const auto& array = *current.value->m_data.m_value.array;
+                while (nested == nullptr && current.index < array.size())
+                {
+                    if (is_bson_fixed_size(array[current.index]))
+                    {
+                        write_bson_array_fixed_entries(current);
+                        if (current.index == array.size())
+                        {
+                            break;
+                        }
+                    }
+
+                    // a string, binary value, object or array
+                    const BasicJsonType& el = array[current.index];
+                    const string_t index_name(current.index_name.data(), current.index_name_size);
+                    current.next_index();
+                    const std::size_t value_size = el.is_structured() ? 0 : check_bson_value(el);
+                    if (JSON_HEDLEY_UNLIKELY(!bson_entry_fits(start, 2 + index_name.size() + value_size, parents.size() + 1)))
+                    {
+                        return false;
+                    }
+                    if (el.is_structured())
+                    {
+                        write_bson_entry_header(index_name, el.is_object() ? 0x03 : 0x04);
+                        nested_size_pos = write_bson_size_placeholder();
+                        nested = &el;
+                    }
+                    else
+                    {
+                        write_bson_value(index_name, el);
+                    }
+                }
+            }
+
+            if (nested != nullptr)
+            {
+                if (nested->is_array())
+                {
+                    // an array of booleans, numbers and null is written without a frame on the stack
+                    bson_frame leaf(nested, nested_size_pos);
+                    write_bson_array_fixed_entries(leaf);
+                    if (leaf.index == nested->m_data.m_value.array->size())
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(!close_bson_container(nested_size_pos)))
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+                    parents.push_back(std::move(current));
+                    current = std::move(leaf);
+                    continue;
+                }
+                parents.push_back(std::move(current));
+                current = bson_frame(nested, nested_size_pos);
+                continue;
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!close_bson_container(current.size_slot)))
+            {
+                return false;
+            }
+            if (parents.empty())
+            {
+                return true;
+            }
+            current = std::move(parents.back());
+            parents.pop_back();
+        }
+    }
+
     /*!
     @brief Serializes the JSON object @a document as a BSON document
 
@@ -29598,6 +30478,39 @@ class binary_writer
     @pre       document.type() == value_t::object
     */
     void write_bson_document(const BasicJsonType& document)
+    {
+        write_bson_document(document, bson_single_pass_sink());
+    }
+
+    /// the sink can overwrite: one pass, unless the error handler replaces or
+    /// drops ill-formed UTF-8, which changes the sizes the checks compute
+    void write_bson_document(const BasicJsonType& document, std::true_type /*single_pass*/)
+    {
+        const std::size_t start = oa.written();
+        if ((error_handler == error_handler_t::keep || error_handler == error_handler_t::strict)
+                && write_bson_document_single_pass(document))
+        {
+            return;
+        }
+        // a length does not fit: start over, so that it is reported as the
+        // two passes report it, before anything is written
+        oa.rewind(start);
+        write_bson_document_two_pass(document);
+    }
+
+    void write_bson_document(const BasicJsonType& document, std::false_type /*single_pass*/)
+    {
+        write_bson_document_two_pass(document);
+    }
+
+    /*!
+    @brief Serializes the JSON object @a document as a BSON document: the
+           sizes of all objects and arrays first, then the entries
+
+    @param[in] document  the JSON object to serialize
+    @pre       document.type() == value_t::object
+    */
+    void write_bson_document_two_pass(const BasicJsonType& document)
     {
         std::vector<std::size_t> nested_sizes;
         const std::size_t document_size = calc_bson_sizes(document, nested_sizes);
@@ -30328,6 +31241,25 @@ class binary_writer
         }
     }
 
+    /// write the head and the characters of @a value, at most
+    /// max_text_in_reservation of them, in one reservation
+    JSON_HEDLEY_ALWAYS_INLINE void write_cbor_string_reserved(const string_t& value)
+    {
+        CharType* const out = oa.reserve(value.size() + 2);
+        CharType* p = out;
+        if (value.size() <= 0x17)
+        {
+            *p++ = to_char_type(static_cast<std::uint8_t>(0x60 + value.size()));
+        }
+        else
+        {
+            *p++ = to_char_type(0x78);
+            *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+        }
+        copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+        oa.commit(static_cast<std::size_t>(p - out) + value.size());
+    }
+
     /*!
     @brief write a CBOR text string
 
@@ -30349,19 +31281,7 @@ class binary_writer
             // the string is written as it is: head and characters in one reservation
             if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
             {
-                CharType* const out = oa.reserve(value.size() + 2);
-                CharType* p = out;
-                if (value.size() <= 0x17)
-                {
-                    *p++ = to_char_type(static_cast<std::uint8_t>(0x60 + value.size()));
-                }
-                else
-                {
-                    *p++ = to_char_type(0x78);
-                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
-                }
-                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
-                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                write_cbor_string_reserved(value);
                 return;
             }
         }
@@ -30375,6 +31295,13 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_cbor_checked_string(const string_t& value, const BasicJsonType& context)
     {
+        if (error_handler == error_handler_t::strict && value.size() <= max_text_in_reservation)
+        {
+            check_utf8(value, context);
+            write_cbor_string_reserved(value);
+            return;
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -30388,6 +31315,27 @@ class binary_writer
     /////////////
     // MsgPack //
     /////////////
+
+    /// write the head and the characters of @a value, at most
+    /// max_text_in_reservation of them, in one reservation
+    JSON_HEDLEY_ALWAYS_INLINE void write_msgpack_string_reserved(const string_t& value)
+    {
+        CharType* const out = oa.reserve(value.size() + 2);
+        CharType* p = out;
+        if (value.size() <= 31)
+        {
+            // fixstr
+            *p++ = to_char_type(static_cast<std::uint8_t>(0xA0 | value.size()));
+        }
+        else
+        {
+            // str 8
+            *p++ = to_char_type(0xD9);
+            *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+        }
+        copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+        oa.commit(static_cast<std::size_t>(p - out) + value.size());
+    }
 
     /*!
     @brief write a MessagePack str
@@ -30406,21 +31354,7 @@ class binary_writer
             // the string is written as it is: head and characters in one reservation
             if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
             {
-                CharType* const out = oa.reserve(value.size() + 2);
-                CharType* p = out;
-                if (value.size() <= 31)
-                {
-                    // fixstr
-                    *p++ = to_char_type(static_cast<std::uint8_t>(0xA0 | value.size()));
-                }
-                else
-                {
-                    // str 8
-                    *p++ = to_char_type(0xD9);
-                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
-                }
-                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
-                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                write_msgpack_string_reserved(value);
                 return;
             }
         }
@@ -30433,6 +31367,13 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_msgpack_checked_string(const string_t& value, const BasicJsonType& context)
     {
+        if (error_handler == error_handler_t::strict && value.size() <= max_text_in_reservation)
+        {
+            check_utf8(value, context);
+            write_msgpack_string_reserved(value);
+            return;
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -32042,10 +32983,9 @@ class binary_writer
     static void check_utf8(const string_t& s, const BasicJsonType& context)
     {
         const auto* data = reinterpret_cast<const unsigned char*>(s.data());
-        const std::size_t valid = valid_utf8_prefix(data, s.size());
-        if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
+        if (JSON_HEDLEY_UNLIKELY(!valid_utf8_string(data, s.size())))
         {
-            throw_invalid_utf8(data, valid, context);
+            throw_invalid_utf8(data, valid_utf8_prefix(data, s.size()), context);
         }
     }
 
@@ -36246,6 +37186,23 @@ class serializer
             return;
         }
 
+        // 17 to 20 digits: the first one to four, then twice eight
+        if (magnitude_fits_64_bits(abs_value, std::integral_constant<bool, magnitude_has_at_most_64_bits>()))
+        {
+            const auto value = static_cast<std::uint64_t>(abs_value);
+            const std::uint64_t top = value / 10000000000000000u; // 1 to 1844
+            const std::uint64_t low16 = value - (top * 10000000000000000u);
+            const std::uint64_t middle = low16 / 100000000u;
+            const std::uint64_t first = dtoa_impl::eight_digit_bytes(top);
+            const auto leading = static_cast<unsigned>(count_leading_zeros(first) / 8); // (first is not 0)
+            char* const p = buffer_ptr + n_chars;
+            dtoa_impl::store_msb_first(p, (first << (8 * leading)) + 0x3030303030303030u);
+            dtoa_impl::store_msb_first(p + 8 - leading, dtoa_impl::eight_digit_bytes(middle) + 0x3030303030303030u);
+            dtoa_impl::store_msb_first(p + 16 - leading, dtoa_impl::eight_digit_bytes(low16 - (middle * 100000000u)) + 0x3030303030303030u);
+            write_buffer_pos += n_chars + 24 - leading;
+            return;
+        }
+
         n_chars += count_digits(abs_value);
 
         // spare 1 byte for '\0'
@@ -36389,6 +37346,23 @@ class serializer
         {
             put_literal(".0");
         }
+    }
+
+    /// whether every number_magnitude_t fits 64 bits
+    static constexpr bool magnitude_has_at_most_64_bits = std::numeric_limits<number_magnitude_t>::is_specialized
+        && std::numeric_limits<number_magnitude_t>::digits <= 64;
+
+    /// whether @a x fits 64 bits: always if number_magnitude_t has at most
+    /// 64 bits (selected by type, as the comparison would be reported as
+    /// always true), else compared
+    static bool magnitude_fits_64_bits(const number_magnitude_t& /*unused*/, std::true_type /*unused*/) noexcept
+    {
+        return true;
+    }
+
+    static bool magnitude_fits_64_bits(const number_magnitude_t& x, std::false_type /*unused*/) noexcept
+    {
+        return x <= 18446744073709551615u;
     }
 
     /*
@@ -36968,7 +37942,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // can be restored when json_pointer backwards compatibility is removed
     // friend ::nlohmann::json_pointer<StringType>;
 
-    template<typename BasicJsonType, typename InputType>
+    template<typename BasicJsonType, typename InputType, bool DiscardValues>
     friend class ::nlohmann::detail::parser;
     friend ::nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
@@ -37001,12 +37975,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false,
-        const bool ignore_trailing_commas = false,
-        const bool discard_number_values = false
+        const bool ignore_trailing_commas = false
                                  )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
+            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
     }
 
   private:
@@ -39935,7 +40908,9 @@ public:
                             const bool ignore_comments,
                             const bool ignore_trailing_commas)
     {
-        return parser(std::forward<InputAdapterType>(adapter), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
+        // the parser and lexer that discard the values of tokens (see lexer)
+        return ::nlohmann::detail::parser<basic_json, typename std::decay<InputAdapterType>::type, true>(std::forward<InputAdapterType>(adapter),
+                nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
     }
 
     /// generate SAX events from the input behind an already created adapter

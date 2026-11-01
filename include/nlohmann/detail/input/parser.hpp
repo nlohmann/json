@@ -72,14 +72,14 @@ This class implements a parser for JSON text. Nested arrays and objects are trac
 stack instead of recursion, so deeply nested input does not exhaust the call stack, and what is read
 is reported as SAX events.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, bool DiscardValues = false>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using lexer_t = lexer<BasicJsonType, InputAdapterType>;
+    using lexer_t = lexer<BasicJsonType, InputAdapterType, DiscardValues>;
     using token_type = typename lexer_t::token_type;
 
   public:
@@ -88,10 +88,9 @@ class parser
                     parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true,
                     const bool ignore_comments = false,
-                    const bool ignore_trailing_commas_ = false,
-                    const bool discard_number_values_ = false)
+                    const bool ignore_trailing_commas_ = false)
         : callback(std::move(cb))
-        , m_lexer(std::move(adapter), ignore_comments, discard_number_values_)
+        , m_lexer(std::move(adapter), ignore_comments)
         , allow_exceptions(allow_exceptions_)
         , ignore_trailing_commas(ignore_trailing_commas_)
     {

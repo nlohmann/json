@@ -19,6 +19,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <array>
 #include <cstdint>
 #include <fstream>
 #include <limits>
@@ -1164,7 +1165,13 @@ TEST_CASE("BSON keys from contiguous and stream input")
     // contiguous input reads a key up to its \x00-byte in one step, a stream
     // reads it byte by byte; both must give the same value or error for the
     // complete document and for every truncation of it
-    const json j = {{"", true}, {"k", {1, 2, 3}}, {std::string(40, 'x'), {{"nested key", "value"}}}};
+    json j = {{"", true}, {"k", {1, 2, 3}}, {std::string(40, 'x'), {{"nested key", "value"}}}};
+    // keys and array element names ("0" to "11") that end at every position of
+    // an 8-byte word, which contiguous input scans at a time
+    for (std::size_t length = 1; length <= 17; ++length)
+    {
+        j[std::string(length, static_cast<char>('a' + length))] = json::array({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, {11}});
+    }
     const std::vector<std::uint8_t> bson = json::to_bson(j);
     CHECK(json::from_bson(bson) == j);
 
@@ -1184,7 +1191,7 @@ TEST_CASE("BSON keys from contiguous and stream input")
         }
         try
         {
-            std::istringstream stream(std::string(input.begin(), input.end()));
+            std::istringstream stream(std::string(reinterpret_cast<const char*>(input.data()), input.size()));
             from_stream = json::from_bson(stream).dump();
         }
         catch (const json::parse_error& e)
@@ -1193,6 +1200,33 @@ TEST_CASE("BSON keys from contiguous and stream input")
         }
         CHECK(from_vector == from_stream);
     }
+}
+
+TEST_CASE("BSON array element names")
+{
+    // an array's element names are not part of the value, so they are not
+    // passed on; error_handler_t::strict still rejects ill-formed UTF-8 in them
+    const std::vector<std::uint8_t> bson =
+    {
+        0x1D, 0x00, 0x00, 0x00, // size (little endian)
+        0x04, 'a', 0x00,        // entry: array "a"
+        0x15, 0x00, 0x00, 0x00, // size (little endian)
+        0x08, 0xFF, 0x00, 0x01, // entry: boolean named "\xFF", true
+        0x08, '1', '2', '3', '4', '5', '6', '7', '8', '9', 0x00, 0x00, // entry: boolean named "123456789", false
+        0x00,                   // end of the array
+        0x00                    // end of the document
+    };
+    const json expected = {{"a", {true, false}}};
+
+    CHECK(json::from_bson(bson) == expected);
+    CHECK(json::from_bson(bson, true, true, json::error_handler_t::replace) == expected);
+    CHECK(json::from_bson(bson, true, true, json::error_handler_t::ignore) == expected);
+
+    json _;
+    CHECK_THROWS_WITH_AS(_ = json::from_bson(bson, true, true, json::error_handler_t::strict), "[json.exception.parse_error.113] parse error at byte 14: syntax error while parsing BSON key: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+
+    std::istringstream stream(std::string(reinterpret_cast<const char*>(bson.data()), bson.size()));
+    CHECK(json::from_bson(stream) == expected);
 }
 #endif
 
@@ -2266,4 +2300,154 @@ TEST_CASE("BSON large strings and binaries (chunked reader)")
             CHECK_THROWS_AS(_ = json::from_bson(truncated), json::parse_error);
         }
     }
+}
+
+TEST_CASE("BSON written in one pass and in two passes")
+{
+    // to_bson() into a returned vector writes each size once the object or
+    // array is complete; through an output adapter, all sizes are computed
+    // first. Both must produce the same bytes and throw the same exceptions.
+    const auto two_pass = [](const json & j, const json::error_handler_t handler)
+    {
+        std::vector<std::uint8_t> result;
+        json::to_bson(j, result, handler);
+        return result;
+    };
+
+    const auto check_same = [&](const json & j, const json::error_handler_t handler)
+    {
+        CAPTURE(j.dump(-1, ' ', true, json::error_handler_t::replace))
+        CAPTURE(static_cast<int>(handler))
+#if !defined(JSON_NOEXCEPTION)
+        std::string one_pass_error;
+        std::string two_pass_error;
+        std::vector<std::uint8_t> one;
+        std::vector<std::uint8_t> two;
+        try
+        {
+            one = json::to_bson(j, handler);
+        }
+        catch (const json::exception& e)
+        {
+            one_pass_error = e.what();
+        }
+        try
+        {
+            two = two_pass(j, handler);
+        }
+        catch (const json::exception& e)
+        {
+            two_pass_error = e.what();
+        }
+        CHECK(one_pass_error == two_pass_error);
+        CHECK(one == two);
+#else
+        CHECK(json::to_bson(j, handler) == two_pass(j, handler));
+#endif
+    };
+
+    const std::array<json::error_handler_t, 4> handlers = {{
+            json::error_handler_t::keep, json::error_handler_t::strict,
+            json::error_handler_t::replace, json::error_handler_t::ignore
+        }
+    };
+
+    SECTION("corpus")
+    {
+        for (const auto& value : utils::round_trip_corpus::values())
+        {
+            const json document = value.is_object() ? value : json{{"value", value}};
+            for (const auto handler : handlers)
+            {
+                check_same(document, handler);
+            }
+        }
+    }
+
+    SECTION("nesting and arrays of every length class")
+    {
+        json document = json::object();
+        document["empty object"] = json::object();
+        document["empty array"] = json::array();
+        for (const std::size_t n :
+                {
+                    1u, 9u, 10u, 11u, 99u, 100u, 101u, 1000u
+                })
+        {
+            json numbers = json::array();
+            json mixed = json::array();
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                numbers.push_back(i % 3 == 0 ? json(static_cast<double>(i) / 3) : json(static_cast<std::int64_t>(i) * 1000003));
+                switch (i % 4)
+                {
+                    case 0:
+                        mixed.push_back(json("s" + std::to_string(i)));
+                        break;
+                    case 1:
+                        mixed.push_back(json::array({i, json::object({{"k", i}})}));
+                        break;
+                    case 2:
+                        mixed.push_back(json(nullptr));
+                        break;
+                    default:
+                        mixed.push_back(json(i % 2 == 0));
+                        break;
+                }
+            }
+            document["numbers " + std::to_string(n)] = numbers;
+            document["mixed " + std::to_string(n)] = mixed;
+            document["nested " + std::to_string(n)] = json::object({{"a", numbers}, {"b", json::array({mixed, json::object()})}});
+        }
+        document["binary"] = json::binary({1, 2, 3}, 0x80);
+        document["binary old"] = json::binary({1, 2, 3}, 0x02);
+        for (const auto handler : handlers)
+        {
+            check_same(document, handler);
+        }
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    // every entry here throws, which aborts without exceptions
+    SECTION("errors at every position")
+    {
+        // an entry that cannot be written, at each place among valid ones
+        const std::string bad_utf8 = "\xC3\x28";
+        const std::array<json, 7> bad_entries =
+        {
+            {
+                json::object({{std::string("a\0b", 3), 1}}),
+                json::object({{"s", bad_utf8}}),
+                json::object({{bad_utf8, 1}}),
+                json::array({1, 2, bad_utf8}),
+                json::object({{"b", json::binary({1}, 0x100)}}),
+                json::object({{"d", json(json::value_t::discarded)}}),
+                json::array({json(json::value_t::discarded)}),
+            }
+        };
+        for (const auto& bad : bad_entries)
+        {
+            for (std::size_t pos = 0; pos < 4; ++pos)
+            {
+                json document = json::object();
+                json list = json::array();
+                for (std::size_t i = 0; i < 4; ++i)
+                {
+                    if (i == pos)
+                    {
+                        document["x" + std::to_string(i)] = bad;
+                        list.push_back(bad);
+                    }
+                    document["n" + std::to_string(i)] = json::array({i, "str", json::object({{"k", i}})});
+                    list.push_back(i);
+                }
+                document["list"] = list;
+                for (const auto handler : handlers)
+                {
+                    check_same(document, handler);
+                }
+            }
+        }
+    }
+#endif
 }

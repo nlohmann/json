@@ -13,6 +13,7 @@
     #include <nlohmann/detail/view/builder.hpp>
     #include <nlohmann/detail/view/materialize.hpp>
     #include <nlohmann/detail/view/string_ref.hpp>
+    #include <nlohmann/json_view.hpp> // json_document::accept
 #else
     #include <nlohmann/json_view.hpp> // the single header contains the internal headers
 #endif
@@ -59,7 +60,8 @@ built build(const std::string& text, bool comments, bool trailing_commas, bool s
         r.copy.assign(text.begin(), text.end());
         src = r.copy.data();
     }
-    r.ok = nlohmann::detail::view::build < FloatType, !nlohmann::detail::abi_config::strict_nul_handling > (*r.data, src, text.size(), comments, trailing_commas, sentinel, r.failure);
+    constexpr bool nul_is_end = !nlohmann::detail::abi_config::strict_nul_handling;
+    r.ok = nlohmann::detail::view::build<FloatType, nul_is_end>(*r.data, src, text.size(), comments, trailing_commas, sentinel, false, r.failure);
     r.data->src = src;
     r.data->base[0] = src;
     r.data->base[1] = r.data->arena.data();
@@ -169,6 +171,22 @@ void check_string(const std::string& content)
                 CHECK((b.ok && accepted ? value_of(b) == json::parse(text) : true));
             }
         }
+    }
+}
+
+// accept() stores no nodes: it must accept and reject what json::accept does, for all options and for inputs with
+// and without a terminating NUL
+void check_accept(const std::string& text)
+{
+    CAPTURE(text)
+    const std::vector<char> bytes(text.begin(), text.end());
+    for (int options = 0; options < 4; ++options)
+    {
+        const bool comments = (options & 1) != 0;
+        const bool trailing_commas = (options & 2) != 0;
+        const bool accepted = json::accept(text, comments, trailing_commas);
+        CHECK(nlohmann::json_document::accept(text, comments, trailing_commas) == accepted);
+        CHECK(nlohmann::json_document::accept(bytes, comments, trailing_commas) == accepted);
     }
 }
 
@@ -423,6 +441,133 @@ TEST_CASE("json_view builder")
         }
     }
 
+    SECTION("accept() without an index")
+    {
+        for (const char* text :
+                {
+                    "", " ", "\n", "null", "nul", "true", "[", "]", "[]", "{}", "[1,2,3]", "[1,2,3", "[1,2,3,]", "{\"a\":1,}", "{\"a\"}", "{\"a\":}",
+                    "[1] x", "[1][2]", "\xEF\xBB\xBF[1]", "[\"a\\", R"(["\u12"])", R"(["\ud800"])", "[\"\x01\"]", "[\"\xff\"]", "[01]", "[1.]",
+                    "[.5]", "[-]", "[1e]", "// c\n[1]", "/* c */ {\"a\" /* x */ : 1}", "/* c", "[1] // c", "1e400", "-1e400", "123456789012345678901234567890",
+                    R"({"a":1,"a":2})", "[[[]]]", R"("\u00e4\n\ud83d\ude00")"
+                })
+        {
+            check_accept(text);
+        }
+        // a null byte inside the text, and after it
+        check_accept(std::string("[1,\0]", 5));
+        check_accept(std::string("[1]\0", 4));
+        check_accept(std::string("\0", 1));
+
+        // generated documents and damaged copies, as for the builder above
+        generator g;
+        for (int i = 0; i < 2000; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            check_accept(text);
+            std::string damaged = text;
+            const auto at = static_cast<std::size_t>(g.r(static_cast<int>(damaged.size())));
+            static const char replacements[] = {'x', '"', '\\', ',', ':', ']', '}', '[', '{', '1', '-', '.', 'e', '\0', '\n', '/'}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            damaged[at] = replacements[g.r(16)];
+            check_accept(damaged);
+            check_accept(text.substr(0, at));
+        }
+
+        // nesting beyond the 64 levels that are kept on the builder's own stack, closed and not closed
+        for (const std::size_t depth :
+                {
+                    63u, 64u, 65u, 66u, 200u, 1000u
+                })
+        {
+            check_accept(std::string(depth, '[') + std::string(depth, ']'));
+            check_accept(std::string(depth, '[') + std::string(depth - 1, ']'));
+            std::string objects;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                objects += "{\"k\":";
+            }
+            objects += "1" + std::string(depth, '}');
+            check_accept(objects);
+            check_accept(objects.substr(0, objects.size() - 1));
+        }
+
+        // objects with enough members to get a hash index when they are indexed (and duplicate keys)
+        std::string large = "{";
+        for (int i = 0; i < 300; ++i)
+        {
+            large += (i == 0 ? "\"k" : ",\"k") + std::to_string(i % 200) + "\":" + std::to_string(i);
+        }
+        check_accept(large + "}");
+        check_accept(large);
+        check_accept("[" + large + "},{" + large.substr(1) + "}]");
+
+        // the overflow check uses the floating-point type of the document
+        using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        for (const char* text :
+                {
+                    "1e39", "-1e39", "3.4028235e38", "3.4028236e38", "[1.5e38, 3.5e38]", R"({"a": 1e-50, "b": 1e39})", "340282356779733661637539395458142568448"
+                })
+        {
+            CAPTURE(text)
+            CHECK(nlohmann::basic_json_document<float_json>::accept(text) == float_json::accept(text));
+        }
+
+        // strings are checked and not decoded: runs of text of every length from 0 to 40 between valid and invalid
+        // escapes, UTF-8 sequences and control characters, in values and in keys, cut near the end of the text
+        const std::array<const char*, 9> valid = {{"\\n", "\\\"", "\\\\", "\\/", "\\t", "\\u00e4", "\\u20ac", "\\ud83d\\ude00", "\\u0000"}};
+        const std::array<const char*, 12> invalid = {{"\\x", "\\ud800", "\\udc00", "\\u12G4", "\\u12", "\\ud83dx", "\\ud83d\\u0041", "\\ud83d\\ud83d", "\\", "\x01", "\x1f", "\x7f"}};
+        const std::array<const char*, 6> utf8 = {{"\xc3\xa4", "\xe2\x82\xac", "\xf0\x9f\x98\x80", "\xc3", "\xff", "\x80"}};
+        std::mt19937 rng(2029); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+        for (std::size_t run = 0; run <= 40; ++run)
+        {
+            for (int i = 0; i < 30; ++i)
+            {
+                std::string content = std::string(rng() % 20, 'a');
+                const auto pieces = 1 + (rng() % 6);
+                for (unsigned k = 0; k < pieces; ++k)
+                {
+                    content += valid[rng() % valid.size()];
+                    content += std::string(k == 0 ? run : rng() % 41, static_cast<char>('b' + (rng() % 20)));
+                    switch (rng() % 8)
+                    {
+                        case 0:
+                            content += utf8[rng() % 3];
+                            break;
+                        case 1:
+                            content += utf8[rng() % utf8.size()];
+                            break;
+                        case 2:
+                            content += invalid[rng() % invalid.size()];
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                for (const std::string& text :
+                        {
+                            "[\"" + content + "\"]", "{\"" + content + "\":1}", "[\"" + content, "[\"" + content.substr(0, content.size() - (rng() % 4)) + "\"]"
+                        })
+                {
+                    check_accept(text);
+                }
+            }
+        }
+    }
+
+    SECTION("escapes in a row")
+    {
+        for (const char* content :
+                {
+                    "\\n", R"(\n\t\\)", R"(\u00e9\u00e9\u4e2d)", "\\u00e9\\u00e", "\\u00e9\\", "\\n\\q", R"(\n\ud83d\ude00\n)",
+                    R"(\ud83d\ude00\ud83d)", R"(\n\n\n abc \n\n)", "\\n\x01", "\\n\xC3\x28", "\\n\\"
+                })
+        {
+            check_accept(std::string("[\"") + content + "\"]");
+            check_accept(std::string("[\"") + content);
+            check_accept(std::string("{\"") + content + "\":1}");
+        }
+    }
+
     SECTION("test files")
     {
         for (const char* name :
@@ -523,6 +668,54 @@ TEST_CASE("json_view builder: strings across vector blocks")
     }
 }
 
+TEST_CASE("json_view builder: fraction digits")
+{
+    // The digits of a fraction are skipped 16 bytes at a time where there are
+    // that many left (SSE2), and one at a time after that. Fractions of every
+    // length from 0 to 40 digits, followed by every kind of byte that ends a
+    // number or lies next to the digits in ASCII ('/' and ':'), as values, as
+    // keys' neighbours, and at the very end of the text (a vector without a
+    // terminating NUL). The length of the number is part of the value that
+    // the test compares with json::parse().
+    const std::string followers = ",]}/:.eE+-x \n\t\"09";
+    std::mt19937 rng(2028); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+    for (std::size_t digits = 0; digits <= 40; ++digits)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            std::string fraction;
+            for (std::size_t k = 0; k < digits; ++k)
+            {
+                fraction += static_cast<char>('0' + (rng() % 10));
+            }
+            const std::string number = std::string(rng() % 2 == 0 ? "-" : "") + std::to_string(rng() % 100000) + "." + fraction;
+            check_same(number);
+            check_same("[" + number + "]");
+            std::string pair;
+            pair.reserve(number.size() * 2 + 3);
+            pair += '[';
+            pair += number;
+            pair += ',';
+            pair += number;
+            pair += ']';
+            check_same(pair);
+            check_same("{\"a\":" + number + "}");
+            for (const char follower : followers)
+            {
+                check_same(number + follower);
+                check_same("[" + number + follower + "]");
+                check_same("[" + number + follower + std::string(rng() % 20, '1'));
+            }
+            // everything near the end of the text: the number cut in every place
+            for (std::size_t cut = 1; cut <= 18 && cut <= number.size(); ++cut)
+            {
+                check_same(number.substr(0, number.size() - cut));
+                check_same("[" + number.substr(0, number.size() - cut));
+            }
+        }
+    }
+}
+
 TEST_CASE("json_view builder: escapes between runs of text")
 {
     // The text between escapes is copied 16 bytes at a time where there are
@@ -573,6 +766,59 @@ TEST_CASE("json_view builder: escapes between runs of text")
             check_string(std::string(before, 'a') + escape + escape + std::string(before % 19, 'z'));
         }
     }
+}
+
+TEST_CASE("json_view builder: chains of unicode escapes")
+{
+    // Consecutive \uXXXX escapes are decoded in a loop of their own. Chains of
+    // every length from 1 to 40 of escapes that give one, two, and three
+    // bytes of UTF-8, in upper and lower case, followed by what ends a chain:
+    // the end of the string, text, another escape, UTF-8, and everything that
+    // is not a valid escape (a bad digit at every position of the last
+    // escape, a lone surrogate, a surrogate pair, a cut in every place).
+    const std::array<const char*, 8> chain = {{"\\u0041", "\\u00e4", "\\u00E4", "\\u20ac", "\\u3042", "\\uFFFF", "\\u0000", "\\u07ff"}};
+    const std::array<const char*, 12> ends = {{"", "abc", "\\n", "\\u00e9", "\\ud83d\\ude00", "\\ud83d", "\\ude00", "\\ud83d\\u0041", "\\u12G4", "\\u12", "\xc3\xa4", "\\"}};
+    std::mt19937 rng(2027); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+    for (std::size_t length = 1; length <= 40; ++length)
+    {
+        for (int i = 0; i < 20; ++i)
+        {
+            std::string content = std::string(rng() % 20, 'a');
+            for (std::size_t k = 0; k < length; ++k)
+            {
+                content += chain[rng() % chain.size()];
+            }
+            const std::string whole = content;
+            for (const char* end : ends)
+            {
+                check_string(whole + end);
+                check_string(whole + end + std::string(rng() % 19, 'z'));
+            }
+            // a bad digit at every position of every escape near the end of the chain
+            for (std::size_t back = 1; back <= 6 && back <= length; ++back)
+            {
+                for (std::size_t digit = 2; digit < 6; ++digit)
+                {
+                    std::string broken = whole;
+                    broken[broken.size() - (6 * back) + digit] = "gG\"\x01 z"[rng() % 6];
+                    check_string(broken);
+                }
+            }
+            // the text cut in every place of the last three escapes
+            for (std::size_t cut = 0; cut <= 18 && cut <= whole.size(); ++cut)
+            {
+                check_string(whole.substr(0, whole.size() - cut));
+            }
+        }
+    }
+    // a chain longer than the first growth of the arena, in a key and in a value
+    std::string long_chain;
+    for (int i = 0; i < 3000; ++i)
+    {
+        long_chain += chain[static_cast<std::size_t>(i) % chain.size()];
+    }
+    check_string(long_chain);
+    check_string(long_chain + "\\ud83d\\ude00" + long_chain);
 }
 
 TEST_CASE("json_view node integer bits")

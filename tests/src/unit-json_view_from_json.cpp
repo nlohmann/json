@@ -39,6 +39,7 @@ using nlohmann::ordered_json_document;
 
 #ifdef JSON_HAS_CPP_17
     #include <optional>
+    #include <string_view>
 #endif
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair; same() compares floating-point values on purpose
@@ -442,6 +443,30 @@ TEST_CASE("json_view from_json")
         CHECK(d.root().materialize().get<point>().x == 3);
     }
 
+    SECTION("escaped keys: members are found by their decoded names")
+    {
+        // keys are decoded before they are compared, as by parse(); a lookup
+        // that compares the raw bytes of the source would miss these members
+        const json_document d = json_document::parse(R"([{"\u0078": 1, "y": 2}, {"V\u0061lue": 3, "Te\u0078t": "t"}, {"\u0062": "escaped"}, {"x": 1, "\u0078": 3, "y": 2}])");
+        const json j = d.root().materialize();
+        CHECK(d.root()[0].get<point>().x == 1);
+        CHECK(d.root()[0].get<point>().y == 2);
+        CHECK((d.root()[0].get<point>() == j[0].get<point>()));
+        CHECK(d.root()[1].get<with_names>().value == 3);
+        CHECK(d.root()[1].get<with_names>().text == "t");
+        CHECK(d.root()[2].get<with_defaults>().b == "escaped");
+        CHECK(d.root()[2].get<with_defaults>().a == 1);
+        // a duplicate key written once plain and once escaped: still the first member
+        CHECK(d.root()[3].get<point>().x == 1);
+        CHECK(j[3].get<point>().x == 3);
+#if !defined(JSON_NOEXCEPTION) && !JSON_DIAGNOSTICS && !JSON_DIAGNOSTIC_POSITIONS
+        // an escaped backslash is part of the decoded key: "x\\" is not "x"
+        const json_document e = json_document::parse(R"({"x\\": 1, "y": 2})");
+        CHECK(exception_of_call([&] { static_cast<void>(e.root().get<point>()); }) == exception_of_call([&] { static_cast<void>(e.root().materialize().get<point>()); }));
+        CHECK(exception_of_call([&] { static_cast<void>(e.root().get<point>()); }) == "[json.exception.out_of_range.403] key 'x' not found");
+#endif
+    }
+
     SECTION("editable documents and ordered_json")
     {
         json_editable_document e = json_editable_document::parse(R"({"x": 1, "y": 2})");
@@ -465,6 +490,71 @@ TEST_CASE("json_view from_json")
     }
 #endif
 }
+
+#ifdef JSON_HAS_CPP_17
+namespace view_from_json
+{
+// a string_view member is not copied: it points into the source text or, for a
+// string with escape sequences, into the buffer of decoded strings of the document
+struct named_view
+{
+    // initialized for GCC -Weffc++
+    // NOLINTNEXTLINE(readability-redundant-member-init)
+    std::string_view name{};
+    int n = 0;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(named_view, name, n)
+};
+}  // namespace view_from_json
+
+TEST_CASE("json_view from_json: string_view members borrow from the document")
+{
+    using view_from_json::named_view;
+
+    // whether all of s is inside the bytes of text
+    const auto within = [](std::string_view s, std::string_view text)
+    {
+        const auto first = reinterpret_cast<std::uintptr_t>(text.data());
+        const auto begin = reinterpret_cast<std::uintptr_t>(s.data());
+        return begin >= first && begin + s.size() <= first + text.size();
+    };
+
+    SECTION("a string without escapes points into the source text")
+    {
+        const std::string text = R"({"name": "hello", "n": 1})";
+        const json_document d = json_document::parse(text);
+        REQUIRE_FALSE(d.owns_source());
+        const auto r = d.root().get<named_view>();
+        CHECK(r.name == "hello");
+        CHECK(r.n == 1);
+        CHECK(within(r.name, text));
+        CHECK(within(r.name, d.source()));
+    }
+
+    SECTION("a string with escapes points into the document, not into the source text")
+    {
+        const std::string text = R"({"name": "a\nb", "n": 2})";
+        json_document d = json_document::parse(text);
+        REQUIRE_FALSE(d.owns_source());
+        const auto r = d.root().get<named_view>();
+        CHECK(r.name == "a\nb");
+        CHECK(r.n == 2);
+        CHECK_FALSE(within(r.name, text));
+        // valid as long as the document is alive, even if the document is moved
+        const json_document moved = std::move(d);
+        CHECK(r.name == "a\nb");
+        CHECK(moved.root().get<named_view>().name == r.name);
+    }
+
+    SECTION("a document that owns its text keeps the members readable while it is alive")
+    {
+        const json_document d = json_document::parse(std::string(R"({"name": "owned", "n": 3})"));
+        REQUIRE(d.owns_source());
+        const auto r = d.root().get<named_view>();
+        CHECK(r.name == "owned");
+        CHECK(within(r.name, d.source()));
+    }
+}
+#endif
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
 DOCTEST_GCC_SUPPRESS_WARNING_POP

@@ -23,6 +23,7 @@ using nlohmann::json;
 #include <cstdint>
 #include <sstream>
 #include <iomanip>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -246,6 +247,51 @@ TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint3
         const json j = maximum;
         CHECK(j.dump() == std::to_string(maximum));
     }
+}
+
+TEST_CASE("integers of every digit count are written like std::to_string")
+{
+    // dump_integer() writes up to 16 digits in two groups of eight and 17 to
+    // 20 digits as one to four digits and two groups of eight
+    std::vector<std::uint64_t> values;
+    std::uint64_t power = 1;
+    for (int digits = 1; digits <= 20; ++digits)
+    {
+        values.push_back(power);                     // 1 followed by zeros
+        values.push_back(power + 1);
+        values.push_back((power * 2) - 1);
+        if (digits < 20)
+        {
+            values.push_back((power * 10) - 1);      // all 9s
+            values.push_back((power * 10) - power);  // 9 followed by zeros
+            power *= 10;
+        }
+    }
+    values.push_back((std::numeric_limits<std::uint64_t>::max)());
+    values.push_back(static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()));
+    values.push_back(static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1);
+    std::uint64_t state = 0x9E3779B97F4A7C15u;
+    for (int i = 0; i < 20000; ++i)
+    {
+        state = (state * 6364136223846793005u) + 1442695040888963407u;
+        values.push_back(state >> (state % 61));     // every bit length
+    }
+
+    for (const auto v : values)
+    {
+        CAPTURE(v)
+        CHECK(json(v).dump() == std::to_string(v));
+        if (v <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
+        {
+            const auto s = static_cast<std::int64_t>(v);
+            CHECK(json(s).dump() == std::to_string(s));
+            CHECK(json(-s).dump() == std::to_string(-s));
+        }
+    }
+    CHECK(json((std::numeric_limits<std::int64_t>::min)()).dump() == "-9223372036854775808");
+
+    // in a container, so the digits are followed by other output
+    CHECK(json::array({std::uint64_t{18446744073709551615u}, std::int64_t{-1234567890123456789}, 1}).dump() == "[18446744073709551615,-1234567890123456789,1]");
 }
 
 TEST_CASE("dump with binary values")
