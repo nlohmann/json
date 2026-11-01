@@ -397,6 +397,14 @@ TEST_CASE("locale with a multi-byte decimal point")
 
         // a value the locale-independent paths convert is not affected
         CHECK(json::parse("12.5") == 12.5);
+
+        // dump() of a long double that takes the snprintf path replaces the
+        // whole decimal point, not only its first byte (#5993)
+        CHECK(long_double_json(1.5L).dump() == "1.5");
+        CHECK(long_double_json(2.0L).dump() == "2.0");
+        CHECK(long_double_json(-0.25L).dump() == "-0.25");
+        CHECK(long_double_json::parse(long_double_json(1.5e-7L).dump()) == long_double_json(1.5e-7L));
+        CHECK(long_double_json::parse(ld.dump()) == expected_long_double);
     }
     if (!tested)
     {
