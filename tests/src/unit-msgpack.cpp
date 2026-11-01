@@ -2275,7 +2275,8 @@ TEST_CASE("MessagePack arrays of scalars from contiguous and non-contiguous inpu
         std::string bytewise_error;
         try
         {
-            static_cast<void>(json::from_msgpack(contiguous));
+            json _;
+            _ = json::from_msgpack(contiguous);
         }
         catch (const json::parse_error& e)
         {
@@ -2283,7 +2284,8 @@ TEST_CASE("MessagePack arrays of scalars from contiguous and non-contiguous inpu
         }
         try
         {
-            static_cast<void>(json::from_msgpack(bytewise.begin(), bytewise.end()));
+            json _;
+            _ = json::from_msgpack(bytewise.begin(), bytewise.end());
         }
         catch (const json::parse_error& e)
         {
