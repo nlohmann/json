@@ -121,9 +121,19 @@ true
 ## What is the same as `parse()`
 
 - **Accept/reject.** [`accept()`](https://json.nlohmann.me/api/basic_json_document/accept/index.md) and [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) accept and reject exactly the same inputs as [`basic_json::accept()`](https://json.nlohmann.me/api/basic_json/accept/index.md)/[`basic_json::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md), with the same `ignore_comments` and `ignore_trailing_commas` options.
+
 - **Errors.** A failing parse throws the same exception — the same id, message, and position — because on failure the library's own parser is run on the same bytes to produce the diagnostic. Valid input never pays for this, and the replay builds no values: it costs about a lexing pass up to the error. `allow_exceptions == false` skips the replay and gives a [discarded](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) document instead of throwing, just as it gives a discarded value for `basic_json::parse()`.
+
 - **Number classification.** An integer literal that does not fit into the 64-bit integer type becomes a floating-point value, exactly as it does for `basic_json::parse()`.
-- **Macros.** [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) and [`JSON_NOEXCEPTION`](https://json.nlohmann.me/api/macros/json_noexception/index.md)/[`JSON_THROW_USER`](https://json.nlohmann.me/api/macros/json_throw_user/index.md) behave the same way they do for `<nlohmann/json.hpp>`. These are the macros that change what the parser accepts or how it reports errors. The others either do not apply ([`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) needs parent pointers in `basic_json` values) or only affect the values `materialize()` produces, through `BasicJsonType`.
+
+- **Macros.** [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) and [`JSON_NOEXCEPTION`](https://json.nlohmann.me/api/macros/json_noexception/index.md)/[`JSON_THROW_USER`](https://json.nlohmann.me/api/macros/json_throw_user/index.md) behave the same way they do for `<nlohmann/json.hpp>`. These are the macros that change what the parser accepts or how it reports errors. Two more macros add context to the exceptions of views, as they do for those of `basic_json`:
+
+  - With [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md), an exception names the JSON Pointer path of the value within the document.
+  - With [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md), an exception names the bytes of the value in the source text.
+
+  A view has neither parent pointers nor stored positions, so both are found from the document's index when the exception is thrown. This takes time linear in the size of the document. One exception has neither: `key()` of an iterator over an array or a primitive value ([`invalid_iterator.207`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator207)), because a view's iterator does not know the value it iterates over.
+
+  The other macros only affect the values `materialize()` produces, through `BasicJsonType`.
 
 ## What is different
 
@@ -134,7 +144,6 @@ true
 - **Objects iterate in document order.** [`begin()`](https://json.nlohmann.me/api/basic_json_view/begin/index.md)/ [`end()`](https://json.nlohmann.me/api/basic_json_view/end/index.md) and [`items()`](https://json.nlohmann.me/api/basic_json_view/items/index.md) visit an object's members in the order they appear in the source text. `basic_json`'s default `object_t` is a `std::map`, which sorts by key, so iterating a [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md)d value can print members in a different order than iterating the view they came from.
 - **Chained access is safe.** [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) with a missing key, an index out of range, or an unresolvable JSON pointer returns a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view, and `operator[]` on a discarded view returns a discarded view without throwing: `v["a"]["b"][0]` can be tested once at the end. Type errors on values that exist (a key on an array, an index on an object) still throw, and [`at`](https://json.nlohmann.me/api/basic_json_view/at/index.md) throws for every missing value.
 - **Duplicate keys: lookups find the first member, `parse()` keeps the last.** See [Duplicate keys](#duplicate-keys) below.
-- **No [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) path.** Exceptions thrown by `basic_json_view`'s own element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the view has no `basic_json` value to point at, so the exception is created without one, regardless of how `BasicJsonType` was built.
 - **Ordering comparisons are not provided** by `basic_json_view` — there is no `operator<`. [`operator==`](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md) and [`operator!=`](https://json.nlohmann.me/api/basic_json_view/operator_ne/index.md) are provided, though: two views, or a view and a `BasicJsonType` value, compare equal exactly when [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) or [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) would produce equal values for them, without ever building a tree to do it. For ordering, too, [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) is the way to get a value you can compare.
 
 ## Duplicate keys
@@ -177,6 +186,27 @@ Two conversions never copy at all:
 - [`number_token()`](https://json.nlohmann.me/api/basic_json_view/number_token/index.md) returns a number exactly as it was written in the source, e.g. `"1.50"`, `"1E2"`, or an integer with more digits than any number type holds, instead of rounding it into a `double`/`int64_t` the way `get<T>()` (and [`basic_json::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md)) would.
 
 Both results are only valid as long as the view — and, for a string with no escapes, the borrowed source text — is.
+
+### `string_view` members
+
+A struct whose member is a `std::string_view` (C++17) can be decoded from a view with the `NLOHMANN_DEFINE_TYPE_*` macros, and the member is not copied either: for a string without escape sequences it points into the document's source text, and for a string with escape sequences into the document's buffer of decoded strings. The member is valid as long as the document is alive and, for a document that [borrows its source text](#ownership-and-lifetime) (as [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) does for an lvalue `std::string`, a `std::string_view`, or a C string), as long as that text is.
+
+```
+struct record
+{
+    std::string_view name;
+    int count;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(record, name, count)
+};
+
+const std::string text = R"({"name": "widget", "count": 3})";
+const json_document doc = json_document::parse(text);  // borrows text
+const record r = doc.root().get<record>();             // r.name points into text, valid while text and doc are
+```
+
+Decoding into a `string_view` from a `json` value dangles at once
+
+The same struct also compiles with `json::parse(text).get<record>()`, but there `name` points into the temporary `json` value, which is destroyed at the end of the statement. Use a named [`json_document`](https://json.nlohmann.me/api/json_document/index.md), as above, to decode such a struct.
 
 ## Writing generic code
 
@@ -227,10 +257,7 @@ void from_json(const J& j, person& p)
 
 Its body may only use what views and `basic_json` have in common: the type checks, `at()`, `operator[]`, `contains()`, `value()`, `size()`, iteration and `items()`, and `get<T>()`/`get_to()`. An unconstrained `template<typename BasicJsonType> void from_json(const BasicJsonType& j, person& p)`, as in [arbitrary type conversions](https://json.nlohmann.me/features/arbitrary_types/index.md), is never called with a view, as it might use `basic_json` functions a view does not have; such a type is converted through `materialize()`. A `from_json()` for `json` only is converted through `materialize()` as well.
 
-Two things differ when a `from_json()` reads the view:
-
-- **Duplicate keys.** Members looked up by name (`at()`, `value()`, ... and thus the macros) find the **first** member with a repeated key, see [Duplicate keys](#duplicate-keys); `materialize().get<T>()` would see the last one. Containers built from an object, such as `std::map`, keep the **last** value either way, as [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) does.
-- **[`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md).** Exceptions thrown by the view carry no path to the value.
+One thing differs when a `from_json()` reads the view: members looked up by name (`at()`, `value()`, ... and thus the macros) find the **first** member with a repeated key, see [Duplicate keys](#duplicate-keys); `materialize().get<T>()` would see the last one. Containers built from an object, such as `std::map`, keep the **last** value either way, as [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) does.
 
 `to_json()` is unaffected: it writes `basic_json` values, never views.
 

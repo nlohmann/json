@@ -13,9 +13,15 @@ function never throws an exception for invalid input, and the returned `#!cpp bo
 is returned.
 
 The result is the same as that of `BasicJsonType::accept()` by design; the difference is how the check is made. This
-function runs the document's index builder (and discards the index), while `BasicJsonType::accept()` runs the SAX
-parser with a handler that ignores every event. Use this one if you go on to parse the same input with
-[`parse()`](parse.md) anyway, so that both use the same code; either is fine for a plain yes/no answer.
+function runs the document's builder, which checks the text as [`parse()`](parse.md) does, while
+`BasicJsonType::accept()` runs the SAX parser with a handler that ignores every event. Use this one if you go on to
+parse the same input with [`parse()`](parse.md) anyway, so that both use the same code; either is fine for a plain
+yes/no answer.
+
+When both `ignore_comments` and `ignore_trailing_commas` are `#!cpp false` (the default), the builder writes no index.
+With either option set, it builds the index as [`parse()`](parse.md) does and discards it: the result is the same, only
+the time differs. (Neither option needs the index; the variant that skips it exists only for the default options to
+keep the code size down.)
 
 ## Template parameters
 

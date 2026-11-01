@@ -18,7 +18,7 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 
 Throws [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302) if the value is not a string; example: `"type must be string, but is array"`.
 
-This exception does not carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) path: the view has no `BasicJsonType` value to point at, so the exception is created without one, even if `BasicJsonType` was built with `JSON_DIAGNOSTICS` enabled.
+As for `BasicJsonType`, with [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) the exception names the JSON Pointer path of the value within the document, and with [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) its bytes in the source text (when [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) sets them).
 
 ## Complexity
 

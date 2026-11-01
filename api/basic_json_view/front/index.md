@@ -18,7 +18,7 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 
 Throws [`invalid_iterator.214`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator214) if the view is [null](https://json.nlohmann.me/api/basic_json_view/is_null/index.md) or [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md), or if it is an empty array or object.
 
-This exception does not carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) path: the view has no `BasicJsonType` value to point at, so the exception is created without one, even if `BasicJsonType` was built with `JSON_DIAGNOSTICS` enabled.
+As for `BasicJsonType`, with [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) the exception names the JSON Pointer path of the value within the document, and with [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) its bytes in the source text (when [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) sets them).
 
 ## Complexity
 

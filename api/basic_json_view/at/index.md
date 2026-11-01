@@ -53,7 +53,7 @@ Strong guarantee: there are no changes to the view or the document it refers to.
    - Throws [`out_of_range.403`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range403) if a reference token names an object member that does not exist.
    - Throws [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) if `ptr` cannot be resolved because a reference token is used on a primitive value.
 
-None of these exceptions carry a [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) path: the view has no `BasicJsonType` value to point at, so the exception is created without one, even if `BasicJsonType` was built with `JSON_DIAGNOSTICS` enabled.
+As for `BasicJsonType`, with [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) these exceptions name the JSON Pointer path of the value within the document, and with [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) its bytes in the source text (when [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) sets them).
 
 ## Complexity
 

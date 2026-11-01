@@ -9,7 +9,9 @@ static bool accept(InputType&& input,
 
 Checks whether the input is valid JSON, accepting and rejecting exactly what [`BasicJsonType::accept()`](https://json.nlohmann.me/api/basic_json/accept/index.md) does, with the same options. Unlike [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md), this function never throws an exception for invalid input, and the returned `bool` is the only result — no document is returned.
 
-The result is the same as that of `BasicJsonType::accept()` by design; the difference is how the check is made. This function runs the document's index builder (and discards the index), while `BasicJsonType::accept()` runs the SAX parser with a handler that ignores every event. Use this one if you go on to parse the same input with [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) anyway, so that both use the same code; either is fine for a plain yes/no answer.
+The result is the same as that of `BasicJsonType::accept()` by design; the difference is how the check is made. This function runs the document's builder, which checks the text as [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) does, while `BasicJsonType::accept()` runs the SAX parser with a handler that ignores every event. Use this one if you go on to parse the same input with [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) anyway, so that both use the same code; either is fine for a plain yes/no answer.
+
+When both `ignore_comments` and `ignore_trailing_commas` are `false` (the default), the builder writes no index. With either option set, it builds the index as [`parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) does and discards it: the result is the same, only the time differs. (Neither option needs the index; the variant that skips it exists only for the default options to keep the code size down.)
 
 ## Template parameters
 

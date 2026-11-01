@@ -6,6 +6,8 @@ This page collects the library's built-in debugger integrations and other debugg
 
 The repository ships [`nlohmann_json.natvis`](https://github.com/nlohmann/json/blob/develop/nlohmann_json.natvis) at its root, a [Natvis](https://learn.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects) file that gives `json`/`ordered_json` values a friendly, key/value debugger view instead of showing raw internal fields, when debugging with the MSVC debug engine (`cppvsdbg`) in Visual Studio or VS Code.
 
+The file also has visualizers for `json_document` and `json_view` (and their `ordered_json`/editable variants). They show the value of the document or view, and its elements as an expandable list. Because a document is only a flat index into the source text, the strings of the direct elements are shown, but the elements of nested arrays and objects are shown as index nodes (their kind, size, and numbers; strings only by length). Arrays and objects that have been edited in a `json_editable_document` are not expanded. The visualizers read the internal layout of the MSVC STL (`std::array`, `std::unique_ptr`).
+
 The checked-in visualizers cover namespace variants with zero, one, or two ABI tags. Configurations with three or more ABI tags are not covered and may show raw internal fields instead. To generate a Natvis file for such a configuration:
 
 1. Check out the release tag of the library version you use.
@@ -24,7 +26,7 @@ The checked-in visualizers cover namespace variants with zero, one, or two ABI t
 
 1. Use the generated file instead of `nlohmann_json.natvis`.
 
-`--abi-tags` can be repeated for several configurations, and `--all` generates every combination (about 60 MB for 12 ABI tags, doubling with each further tag). See [`tools/generate_natvis`](https://github.com/nlohmann/json/tree/develop/tools/generate_natvis) for all options.
+`--abi-tags` can be repeated for several configurations, and `--all` generates every combination (about 60 MB for 11 ABI tags, doubling with each further tag). See [`tools/generate_natvis`](https://github.com/nlohmann/json/tree/develop/tools/generate_natvis) for all options.
 
 Debug engines that wrap LLDB instead of the MSVC debug engine (for example, `codelldb` in VS Code) only have partial/experimental Natvis support, and commonly fall back to showing raw internal fields even with the `.natvis` file present. Switching to `cppvsdbg` where available, or checking your debug extension's own Natvis support/version, are the next things to try if this happens. There is currently no bundled LLDB-native pretty-printer script in this repository.
 
