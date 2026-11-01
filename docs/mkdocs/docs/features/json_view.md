@@ -253,6 +253,34 @@ Two conversions never copy at all:
 
 Both results are only valid as long as the view — and, for a string with no escapes, the borrowed source text — is.
 
+### `string_view` members
+
+A struct whose member is a `#!cpp std::string_view` (C++17) can be decoded from a view with the
+`NLOHMANN_DEFINE_TYPE_*` macros, and the member is not copied either: for a string without escape sequences it points
+into the document's source text, and for a string with escape sequences into the document's buffer of decoded strings.
+The member is valid as long as the document is alive and, for a document that
+[borrows its source text](#ownership-and-lifetime) (as [`parse()`](../api/basic_json_document/parse.md) does for
+an lvalue `#!cpp std::string`, a `#!cpp std::string_view`, or a C string), as long as that text is.
+
+```cpp
+struct record
+{
+    std::string_view name;
+    int count;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(record, name, count)
+};
+
+const std::string text = R"({"name": "widget", "count": 3})";
+const json_document doc = json_document::parse(text);  // borrows text
+const record r = doc.root().get<record>();             // r.name points into text, valid while text and doc are
+```
+
+!!! warning "Decoding into a `string_view` from a `json` value dangles at once"
+
+    The same struct also compiles with `#!cpp json::parse(text).get<record>()`, but there `name` points into the
+    temporary `json` value, which is destroyed at the end of the statement. Use a named
+    [`json_document`](../api/json_document.md), as above, to decode such a struct.
+
 ## Writing generic code
 
 A view's type names its `BasicJsonType` and its [`view_mode`](../api/view_mode.md):
