@@ -19,6 +19,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <array>
 #include <cstdint>
 #include <fstream>
 #include <limits>
@@ -2312,9 +2313,11 @@ TEST_CASE("BSON written in one pass and in two passes")
 #endif
     };
 
-    const json::error_handler_t handlers[] = {json::error_handler_t::keep, json::error_handler_t::strict,
-                                              json::error_handler_t::replace, json::error_handler_t::ignore
-                                             };
+    const std::array<json::error_handler_t, 4> handlers = {{
+            json::error_handler_t::keep, json::error_handler_t::strict,
+            json::error_handler_t::replace, json::error_handler_t::ignore
+        }
+    };
 
     SECTION("corpus")
     {
@@ -2335,7 +2338,7 @@ TEST_CASE("BSON written in one pass and in two passes")
         document["empty array"] = json::array();
         for (const std::size_t n :
                 {
-                    std::size_t(1), std::size_t(9), std::size_t(10), std::size_t(11), std::size_t(99), std::size_t(100), std::size_t(101), std::size_t(1000)
+                    1u, 9u, 10u, 11u, 99u, 100u, 101u, 1000u
                 })
         {
             json numbers = json::array();
@@ -2343,7 +2346,21 @@ TEST_CASE("BSON written in one pass and in two passes")
             for (std::size_t i = 0; i < n; ++i)
             {
                 numbers.push_back(i % 3 == 0 ? json(static_cast<double>(i) / 3) : json(static_cast<std::int64_t>(i) * 1000003));
-                mixed.push_back(i % 4 == 0 ? json("s" + std::to_string(i)) : i % 4 == 1 ? json::array({i, json::object({{"k", i}})}) : i % 4 == 2 ? json(nullptr) : json(i % 2 == 0));
+                switch (i % 4)
+                {
+                    case 0:
+                        mixed.push_back(json("s" + std::to_string(i)));
+                        break;
+                    case 1:
+                        mixed.push_back(json::array({i, json::object({{"k", i}})}));
+                        break;
+                    case 2:
+                        mixed.push_back(json(nullptr));
+                        break;
+                    default:
+                        mixed.push_back(json(i % 2 == 0));
+                        break;
+                }
             }
             document["numbers " + std::to_string(n)] = numbers;
             document["mixed " + std::to_string(n)] = mixed;
@@ -2363,15 +2380,17 @@ TEST_CASE("BSON written in one pass and in two passes")
     {
         // an entry that cannot be written, at each place among valid ones
         const std::string bad_utf8 = "\xC3\x28";
-        const json bad_entries[] =
+        const std::array<json, 7> bad_entries =
         {
-            json::object({{std::string("a\0b", 3), 1}}),
-            json::object({{"s", bad_utf8}}),
-            json::object({{bad_utf8, 1}}),
-            json::array({1, 2, bad_utf8}),
-            json::object({{"b", json::binary({1}, 0x100)}}),
-            json::object({{"d", json(json::value_t::discarded)}}),
-            json::array({json(json::value_t::discarded)}),
+            {
+                json::object({{std::string("a\0b", 3), 1}}),
+                json::object({{"s", bad_utf8}}),
+                json::object({{bad_utf8, 1}}),
+                json::array({1, 2, bad_utf8}),
+                json::object({{"b", json::binary({1}, 0x100)}}),
+                json::object({{"d", json(json::value_t::discarded)}}),
+                json::array({json(json::value_t::discarded)}),
+            }
         };
         for (const auto& bad : bad_entries)
         {
