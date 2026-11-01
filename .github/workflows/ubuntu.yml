@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   ci_test_gcc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: gcc:latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -130,7 +130,7 @@ jobs:
         run: cmake --build build --target ${{ matrix.target }}
 
   ci_static_analysis_clang:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: silkeh/clang:22
     strategy:
       matrix:
@@ -149,7 +149,7 @@ jobs:
         run: cmake --build build --target ${{ matrix.target }}
 
   ci_cmake_options:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: ubuntu:24.04
     strategy:
       matrix:
@@ -209,7 +209,7 @@ jobs:
           fail-on-error: false
 
   ci_test_compilers_gcc_old:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         compiler: ['4.8', '4.9', '5', '6']
@@ -251,7 +251,7 @@ jobs:
         run: cmake --build build --target ci_test_compiler_g++-${{ matrix.compiler }}
 
   ci_test_compilers_gcc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         # older GCC docker images (4, 5, 6) fail to check out code
@@ -269,7 +269,7 @@ jobs:
         run: cmake --build build --target ci_test_compiler_default
 
   ci_test_compilers_clang:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         compiler: ['3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15-bullseye', '16', '17', '18', '19', '20', '21', '22', 'latest']
@@ -289,7 +289,7 @@ jobs:
         run: cmake --build build --target ci_test_compiler_default
 
   ci_test_standards_gcc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: gcc:latest
     strategy:
       matrix:
@@ -306,7 +306,7 @@ jobs:
         run: cmake --build build --target ci_test_gcc_cxx${{ matrix.standard }}
 
   ci_test_standards_clang:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: silkeh/clang:latest
     strategy:
       matrix:
@@ -330,7 +330,7 @@ jobs:
         if: ${{ matrix.stdlib == 'libstdcxx' }}
 
   ci_cuda_example:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -356,7 +356,7 @@ jobs:
     strategy:
       matrix:
         container: ['gcc:latest', 'silkeh/clang:latest']
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -383,7 +383,7 @@ jobs:
         run: cmake --build build --target ci_module_cpp20
 
   ci_icpc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Intel discontinued the classic icc/icpc compiler in oneAPI 2024.0; this is
     # Intel's own last officially published image that still includes it.
     container: intel/oneapi-hpckit:2023.2.1-devel-ubuntu22.04
@@ -402,7 +402,7 @@ jobs:
         run: cmake --build build --target ci_icpc
 
   ci_icpx:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: intel/oneapi-hpckit:latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -416,7 +416,7 @@ jobs:
         run: cmake --build build --target ci_icpx
 
   ci_nvhpc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: nvcr.io/nvidia/nvhpc:25.5-devel-cuda12.9-ubuntu22.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
