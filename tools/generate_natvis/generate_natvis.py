@@ -95,7 +95,7 @@ if __name__ == '__main__':
                                 'optional) of one configuration to add to the default namespaces; can be repeated')
     selection.add_argument('--all', action='store_true',
                            help='Generate the namespaces for every combination of ABI tags; the file size doubles '
-                                'with each ABI tag (about 60 MB for 12 tags)')
+                                'with each ABI tag (about 60 MB for 11 tags)')
     parser.add_argument('--list-tags', action='store_true',
                         help='List the ABI tags with the macros that enable them, and exit')
     parser.add_argument('--output', metavar='FILE',
