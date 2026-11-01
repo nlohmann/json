@@ -65,7 +65,9 @@ the same index, which is now a different value.
 
 ## Exception safety
 
-Strong exception safety: if an exception occurs, the original value stays intact.
+Strong exception safety: if an exception occurs, the original value stays intact. This includes an exception thrown
+while the new elements are copied (for example, `std::bad_alloc`): elements and members that were already added
+are removed again.
 
 ## Exceptions
 
