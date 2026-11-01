@@ -19495,11 +19495,7 @@ class binary_reader
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
             std::size_t size = 0;
-            // a dead store, as Infer says: every case that reaches the read
-            // assigns accepted; the initializer is for clang-tidy's
-            // cppcoreguidelines-init-variables
-            // @infer-ignore DEAD_STORE
-            bool accepted = true;
+            bool accepted = false;
             switch (head)
             {
                 case 0x18:
@@ -20404,11 +20400,7 @@ class binary_reader
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
             std::size_t size = 0;
-            // a dead store, as Infer says: every case that reaches the read
-            // assigns accepted; the initializer is for clang-tidy's
-            // cppcoreguidelines-init-variables
-            // @infer-ignore DEAD_STORE
-            bool accepted = true;
+            bool accepted = false;
             switch (head)
             {
                 case 0xC0: // nil
