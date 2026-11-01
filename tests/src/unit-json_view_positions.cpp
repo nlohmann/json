@@ -300,6 +300,27 @@ TEST_CASE("json_view materialize() source positions")
             static_cast<void>(j.at("list").at(1).get<int>());
         }));
     }
+
+    SECTION("exception about the root value (#5987)")
+    {
+        const json_document root = json_document::parse("true");
+        const json_document nested = json_document::parse("[1, true]");
+        CHECK(json_view_test::exception_of_call([&]
+        {
+            static_cast<void>(root.root().get<std::string>());
+        }) == "[json.exception.type_error.302] (bytes 0-4) type must be string, but is boolean");
+#if JSON_DIAGNOSTICS
+        CHECK(json_view_test::exception_of_call([&]
+        {
+            static_cast<void>(nested.root()[1].get<std::string>());
+        }) == "[json.exception.type_error.302] (/1) (bytes 4-8) type must be string, but is boolean");
+#else
+        CHECK(json_view_test::exception_of_call([&]
+        {
+            static_cast<void>(nested.root()[1].get<std::string>());
+        }) == "[json.exception.type_error.302] (bytes 4-8) type must be string, but is boolean");
+#endif
+    }
 #endif
 
     SECTION("edited documents")
@@ -551,12 +572,8 @@ TEST_CASE("json_view exceptions name the path and the bytes of the value")
         expected_zz += "(bytes 12-35) key 'zz' not found";
         CHECK(exception_of_call([&] { static_cast<void>(d.root().at(json::json_pointer("/people/0/zz"))); }) == expected_zz);
 
-        // the root has no path, and with JSON_DIAGNOSTICS then no bytes either (as basic_json)
-        std::string expected_missing = "[json.exception.out_of_range.403] ";
-#if !JSON_DIAGNOSTICS
-        expected_missing += "(bytes 0-79) ";
-#endif
-        expected_missing += "key 'missing' not found";
+        // the root has no path, but still its bytes (#5987)
+        const std::string expected_missing = "[json.exception.out_of_range.403] (bytes 0-79) key 'missing' not found";
         CHECK(exception_of_call([&] { static_cast<void>(d.root().at("missing")); }) == expected_missing);
     }
 
