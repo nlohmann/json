@@ -16946,9 +16946,13 @@ class json_sax_dom_parser : public json_sax_dom_error_state
     {
         if (JSON_HEDLEY_LIKELY(member.is_null()))
         {
-            // a new member is null and holds nothing: construct the value
-            // over it instead of destroying and swapping
-            ::new (static_cast<void*>(&member)) BasicJsonType(std::forward<Value>(v));
+            // a new member is null and holds nothing: move the value over it
+            // instead of destroying and swapping. The value is created first,
+            // because creating a container or a string can throw, and a
+            // constructor that was interrupted must not have touched the
+            // member (#5985); the move constructor is noexcept
+            BasicJsonType value(std::forward<Value>(v));
+            ::new (static_cast<void*>(&member)) BasicJsonType(std::move(value));
         }
         else
         {
