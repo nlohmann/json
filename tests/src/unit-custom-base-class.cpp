@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <algorithm>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>
@@ -493,5 +494,94 @@ TEST_CASE("Regression test for issue #5674 - copy construction must not require 
             }
         }
         CHECK(*c == 1);
+    }
+}
+
+// counts the constructions and destructions of the base class (#5995)
+struct counting_base
+{
+    static std::size_t constructions;
+    static std::size_t destructions;
+
+    counting_base() noexcept
+    {
+        ++constructions;
+    }
+    counting_base(const counting_base& /*unused*/) noexcept
+    {
+        ++constructions;
+    }
+    counting_base(counting_base&& /*unused*/) noexcept
+    {
+        ++constructions;
+    }
+    counting_base& operator=(const counting_base& /*unused*/) noexcept = default;
+    counting_base& operator=(counting_base&& /*unused*/) noexcept = default;
+    ~counting_base()
+    {
+        ++destructions;
+    }
+
+    static void reset() noexcept
+    {
+        constructions = 0;
+        destructions = 0;
+    }
+};
+
+std::size_t counting_base::constructions = 0;
+std::size_t counting_base::destructions = 0;
+
+using json_with_counting_base = nlohmann::json::with_base_class_t<counting_base>;
+
+TEST_CASE("destroying a value does not construct the custom base class")
+{
+    // regression test for #5995: destroying an array or object used a
+    // default-constructed basic_json as a stand-in, which constructed a base
+    // class that belonged to no value (and could allocate in the noexcept
+    // destructor); now every destroyed value destroys exactly its own base
+    // object, and none is constructed
+    const auto check_destroy = [](std::unique_ptr<json_with_counting_base> j, std::size_t values)
+    {
+        counting_base::reset();
+        j.reset();
+        CHECK(counting_base::constructions == 0);
+        CHECK(counting_base::destructions == values);
+    };
+
+    SECTION("scalar")
+    {
+        check_destroy(std::unique_ptr<json_with_counting_base>(new json_with_counting_base(42)), 1);
+    }
+
+    SECTION("array and object")
+    {
+        check_destroy(std::unique_ptr<json_with_counting_base>(new json_with_counting_base(json_with_counting_base::parse(R"({"a":[1,2,3],"b":{"c":true}})"))), 7);
+        check_destroy(std::unique_ptr<json_with_counting_base>(new json_with_counting_base(json_with_counting_base::array())), 1);
+    }
+
+    SECTION("nested deeper than the recursion depth limit")
+    {
+        // alternating arrays and objects, so both kinds of container are
+        // walked by destroy_walk()
+        constexpr std::size_t depth = 1000;
+        std::unique_ptr<json_with_counting_base> j(new json_with_counting_base(json_with_counting_base::array({1, 2})));
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            json_with_counting_base outer = (i % 2 == 0) ? json_with_counting_base::object() : json_with_counting_base::array();
+            if (outer.is_object())
+            {
+                outer["x"] = std::move(*j);
+                outer["y"] = nullptr;
+            }
+            else
+            {
+                outer.push_back(std::move(*j));
+                outer.push_back(true);
+            }
+            *j = std::move(outer);
+        }
+        // the innermost array with its two elements, and two values per level
+        check_destroy(std::move(j), 3 + (2 * depth));
     }
 }
