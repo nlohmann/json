@@ -26653,6 +26653,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <algorithm> // max
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
@@ -26876,14 +26877,16 @@ class output_vector_sink
         return position();
     }
 
-    /// @brief replace @a length characters written before, from position @a pos
+    /// @brief replace the 4 bytes written before at position @a pos with
+    ///        those of @a n, in the byte order of the machine
     ///
     /// Lets a writer put a length in front of data it has written since, such
     /// as the size of a BSON document, without computing it in advance.
-    void overwrite(const std::size_t pos, const CharType* s, const std::size_t length) noexcept
+    void overwrite(const std::size_t pos, const std::uint32_t n) noexcept
     {
-        JSON_ASSERT(pos + length <= position());
-        std::memcpy(v->data() + pos, s, length * sizeof(CharType));
+        static_assert(sizeof(CharType) == 1, "overwrite() writes bytes");
+        JSON_ASSERT(pos + sizeof(n) <= position());
+        std::memcpy(v->data() + pos, &n, sizeof(n));
     }
 
     /// drop the characters written from position @a pos on
@@ -29592,25 +29595,29 @@ class binary_writer
     template<typename SinkType>
     using sink_written_t = decltype(std::declval<const SinkType&>().written());
 
+    /// whether every integer fits the 64 bits BSON has, so that writing an
+    /// array of numbers needs no range check
+    static constexpr bool bson_integers_fit_64_bits =
+        std::numeric_limits<typename BasicJsonType::number_integer_t>::is_specialized
+        && std::numeric_limits<typename BasicJsonType::number_integer_t>::digits <= std::numeric_limits<std::int64_t>::digits
+        && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::is_specialized
+        && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::digits <= std::numeric_limits<std::uint64_t>::digits;
+
     /*!
     @brief whether BSON documents can be written in a single pass: the sink
-           can overwrite what it has written (output_vector_sink), and every
-           integer fits the 64 bits BSON has, so that writing an array of
-           numbers needs no range check
+           can overwrite what it has written (output_vector_sink), and
+           @ref bson_integers_fit_64_bits
     */
-    using bson_single_pass_sink = std::integral_constant < bool,
-          is_detected<sink_written_t, OutputSinkType>::value
-          && std::numeric_limits<typename BasicJsonType::number_integer_t>::is_specialized
-          && std::numeric_limits<typename BasicJsonType::number_integer_t>::digits <= std::numeric_limits<std::int64_t>::digits
-          && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::is_specialized
-          && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::digits <= std::numeric_limits<std::uint64_t>::digits >;
+    using bson_single_pass_sink = conjunction<is_detected<sink_written_t, OutputSinkType>, std::integral_constant<bool, bson_integers_fit_64_bits>>;
 
     /// write a placeholder for the size of an object or array whose entries
-    /// follow; @return its position, for @ref patch_bson_size
+    /// follow; @return its position, for @ref close_bson_container
     std::size_t write_bson_size_placeholder()
     {
         const std::size_t pos = oa.written();
-        write_number<std::int32_t>(0, true);
+        // zero in any byte order
+        const std::array<CharType, sizeof(std::int32_t)> zero{};
+        oa.write_characters(zero.data(), zero.size());
         return pos;
     }
 
@@ -29625,9 +29632,8 @@ class binary_writer
         {
             return false;
         }
-        std::array<CharType, sizeof(std::int32_t)> bytes{};
-        store_little_endian<std::int32_t>(bytes.data(), static_cast<std::int32_t>(size));
-        oa.overwrite(pos, bytes.data(), bytes.size());
+        const auto le_size = static_cast<std::uint32_t>(size);
+        oa.overwrite(pos, is_little_endian ? le_size : byteswap(le_size));
         return true;
     }
 
@@ -29668,8 +29674,7 @@ class binary_writer
             nothing large has been written then, and the caller writes the
             document in two passes, which reports that error
     */
-    template < typename SinkType = OutputSinkType,
-               typename std::enable_if < is_detected<sink_written_t, SinkType>::value, int >::type = 0 >
+    template<typename SinkType = OutputSinkType, typename std::enable_if<is_detected<sink_written_t, SinkType>::value, int>::type = 0>
     bool write_bson_document_single_pass(const BasicJsonType& document)
     {
         const std::size_t start = oa.written();

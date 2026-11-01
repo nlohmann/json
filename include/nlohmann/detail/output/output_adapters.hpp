@@ -11,6 +11,7 @@
 #include <algorithm> // max
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
@@ -233,14 +234,16 @@ class output_vector_sink
         return position();
     }
 
-    /// @brief replace @a length characters written before, from position @a pos
+    /// @brief replace the 4 bytes written before at position @a pos with
+    ///        those of @a n, in the byte order of the machine
     ///
     /// Lets a writer put a length in front of data it has written since, such
     /// as the size of a BSON document, without computing it in advance.
-    void overwrite(const std::size_t pos, const CharType* s, const std::size_t length) noexcept
+    void overwrite(const std::size_t pos, const std::uint32_t n) noexcept
     {
-        JSON_ASSERT(pos + length <= position());
-        std::memcpy(v->data() + pos, s, length * sizeof(CharType));
+        static_assert(sizeof(CharType) == 1, "overwrite() writes bytes");
+        JSON_ASSERT(pos + sizeof(n) <= position());
+        std::memcpy(v->data() + pos, &n, sizeof(n));
     }
 
     /// drop the characters written from position @a pos on
