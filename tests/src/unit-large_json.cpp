@@ -12,7 +12,10 @@
 using nlohmann::json;
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <utility>
 
 TEST_CASE("tests on very large JSONs")
 {
@@ -137,6 +140,56 @@ TEST_CASE("tests on deeply nested JSONs")
                 std::size_t object_depth = 0;
                 CHECK(*innermost_value(object_copy, object_depth) == 1);
                 CHECK(object_depth == d);
+            }
+        }
+
+        SECTION("leaf values of every type below the bound of the recursive descent")
+        {
+            // the elements and members of the containers below the bound are
+            // copied one by one, whatever their type
+            const json leaves = json::array(
+            {
+                nullptr, true, false, -1, std::uint64_t{1}, 1.5, "text", json::binary({1, 2, 3})
+            });
+            const json members =
+            {
+                {"null", nullptr}, {"boolean", true}, {"integer", -1}, {"unsigned", std::uint64_t{1}},
+                {"float", 1.5}, {"string", "text"}, {"binary", json::binary({1, 2, 3})}
+            };
+
+            for (const bool objects :
+                    {
+                        false, true
+                    })
+            {
+                CAPTURE(objects)
+
+                json j = objects ? members : leaves;
+                for (std::size_t i = 0; i < 300; ++i)
+                {
+                    json wrapper = objects ? json::object() : json::array();
+                    if (objects)
+                    {
+                        wrapper["a"] = std::move(j);
+                    }
+                    else
+                    {
+                        wrapper.push_back(std::move(j));
+                    }
+                    j = std::move(wrapper);
+                }
+
+                const json copy(j); // NOLINT(performance-unnecessary-copy-initialization): the copy is what is tested
+
+                const json* current = &copy;
+                for (std::size_t i = 0; i < 300; ++i)
+                {
+                    current = objects ? &current->at("a") : &current->front();
+                }
+
+                // the innermost value is shallow: it is safe to compare
+                CHECK(*current == (objects ? members : leaves));
+                CHECK(current->size() == (objects ? members.size() : leaves.size()));
             }
         }
 

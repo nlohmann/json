@@ -101,6 +101,10 @@ TEST_CASE("json_view dump")
         CHECK(d.root().dump(0, ' ', false, json_view::number_format::source) == "[\n1.50,\n1E2,\n-0,\n-0.0,\n123456789012345678901234567890,\n18446744073709551615,\n-9223372036854775808,\n0.1,\n1e-7,\n5e-324\n]");
         CHECK(d.root().dump(-1, ' ', true, json_view::number_format::source) == "[1.50,1E2,-0,-0.0,123456789012345678901234567890,18446744073709551615,-9223372036854775808,0.1,1e-7,5e-324]");
 
+        CHECK(d.root().dump(0, ' ', true, json_view::number_format::source) == d.root().dump(0, ' ', false, json_view::number_format::source));
+        const json_document escaped = json_document::parse("[\"\xC3\xA9\", 1.50, {\"\xF0\x9F\x98\x80\": 1E2}]");
+        CHECK(escaped.root().dump(1, ' ', true, json_view::number_format::source) == "[\n \"\\u00e9\",\n 1.50,\n {\n  \"\\ud83d\\ude00\": 1E2\n }\n]");
+
         // float tokens of up to 17 significant digits in every spelling: those
         // of at most 15 digits are written from their digits, the others
         // through the conversion; both as dump() writes them
@@ -230,6 +234,29 @@ TEST_CASE("json_view dump")
                 }
             }
             CHECK(editable.root().dump() == expected.dump());
+        }
+
+        // tokens of 16 and 17 digits with few digits after the point, and with a value of 0, which are
+        // converted by the general algorithm; padded, as a token near the end of the text is not read in this way
+        {
+            const std::string padding(40, ' ');
+            for (const char* token :
+                    {
+                        "123456789012.3456", "-123456789012.3456", "1234567890123.456", "12345678901234.56", "123456789012345.6", "1234567890123456.0",
+                        "0.0000000000000000", "-0.0000000000000000", "0.000000000000000", "1234567890123.4567", "99999999999999.999"
+                    })
+            {
+                CAPTURE(token)
+                const std::string text = std::string("[") + token + padding + "]";
+                const json_document d = json_document::parse(text);
+                const json j = json::parse(text);
+                CHECK(d.root()[0].get<double>() == j[0].get<double>());
+                CHECK(d.root().dump() == j.dump());
+                // a float document converts the tokens as well
+                using json_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+                const nlohmann::basic_json_document<json_float> float_doc = nlohmann::basic_json_document<json_float>::parse(text);
+                CHECK(float_doc.root()[0].get<float>() == json_float::parse(text)[0].get<float>());
+            }
         }
 
         // random doubles, written as parse() and dump() would

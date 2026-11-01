@@ -277,6 +277,17 @@ TEST_CASE("json_view from_json")
         CHECK(true);
     }
 
+    SECTION("a map with enum keys from a view that is not an object")
+    {
+        // an object is read with the keys as the enum's names; any other
+        // value is read as an array of pairs, like a map of any other key type
+        const json_document d = json_document::parse(R"({"pairs": [["red", 1], ["green", 2]], "number": 1})");
+        const json j = d.root().materialize();
+        const json_view v = d.root();
+        CHECK(same<std::map<color, int>>(v, j, "pairs"));
+        CHECK((v["pairs"].get<std::map<color, int>>() == std::map<color, int> {{color::red, 1}, {color::green, 2}}));
+    }
+
     SECTION("std types: the same values as from the materialized value")
     {
         const json_document d = json_document::parse(R"({"ints": [3, 1, 2, 1], "strings": ["b", "a", "b"], "pairs": [[1, "x"], [2, "y"]],

@@ -16,6 +16,7 @@ using nlohmann::ordered_json;
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 TEST_CASE("ordered_json")
 {
@@ -513,5 +514,89 @@ TEST_CASE("parsing random trees of arrays and objects")
         CHECK(ordered == ordered_expected);
         CHECK(ordered.dump() == ordered_expected.dump());
         CHECK(json::parse(text).dump() == expected.dump());
+    }
+}
+
+TEST_CASE("object_key_index")
+{
+    // the hash table of the DOM parser finds the position of a key in an
+    // ordered_json object; the parser creates it for exactly 64 elements, but
+    // it is correct for any number of elements it is given
+    using nlohmann::detail::object_key_index;
+    const std::size_t not_found = object_key_index::npos;
+
+    for (const std::size_t initial :
+            {
+                std::size_t{0}, std::size_t{10}, std::size_t{64}, std::size_t{65}, std::size_t{300}
+            })
+    {
+        CAPTURE(initial)
+
+        // the hashes are not distinct on purpose: elements with the same
+        // hash are told apart by the caller
+        const auto hash_of = [](std::size_t position)
+        {
+            return (position % 50) * 0x9E3779B97F4A7C15ull;
+        };
+
+        std::vector<std::size_t> hashes;
+        for (std::size_t i = 0; i < initial; ++i)
+        {
+            hashes.push_back(hash_of(i));
+        }
+        object_key_index index(std::move(hashes));
+
+        // the elements that are there
+        for (std::size_t i = 0; i < initial; ++i)
+        {
+            CHECK(index.find(hash_of(i), [i](std::size_t position)
+            {
+                return position == i;
+            }) == i);
+        }
+        CHECK(index.find(hash_of(1), [](std::size_t /*position*/)
+        {
+            return false;
+        }) == not_found);
+
+        // elements that are added later, until the table grows
+        for (std::size_t i = initial; i < initial + 600; ++i)
+        {
+            index.add(hash_of(i));
+            CHECK(index.find(hash_of(i), [i](std::size_t position)
+            {
+                return position == i;
+            }) == i);
+        }
+        CHECK(index.find(hash_of(initial), [initial](std::size_t position)
+        {
+            return position == initial;
+        }) == initial);
+    }
+}
+
+TEST_CASE("JSON pointers on ordered_json")
+{
+    using pointer = ordered_json::json_pointer;
+
+    SECTION("operator[] inserts a missing key at the end")
+    {
+        ordered_json j = {{"z", 1}, {"x", {{"y", 2}}}};
+
+        j[pointer("/a")] = 3;
+        j[pointer("/x/b")] = 4;
+
+        CHECK(j == ordered_json({{"z", 1}, {"x", {{"y", 2}, {"b", 4}}}, {"a", 3}}));
+        CHECK(j.dump() == R"({"z":1,"x":{"y":2,"b":4},"a":3})");
+    }
+
+    SECTION("unflatten of a flattened object whose keys are not sorted")
+    {
+        // the prefixes /a and /c denote arrays; a key of /a follows one of /c
+        const ordered_json flat = {{"/a/0/p", 1}, {"/c/0/x", 2}, {"/a/0/q", 3}, {"/a/1/p", 4}};
+        const ordered_json expected = {{"a", {{{"p", 1}, {"q", 3}}, {{"p", 4}}}}, {"c", {{{"x", 2}}}}};
+
+        CHECK(flat.unflatten() == expected);
+        CHECK(expected.flatten().unflatten() == expected);
     }
 }
