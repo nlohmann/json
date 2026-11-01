@@ -68,7 +68,7 @@ struct view_access
     template<typename View>
     static error_site site(const View& v) noexcept
     {
-        return error_site(v.m_doc, v.m_node);
+        return {v.m_doc, v.m_node};
     }
 };
 

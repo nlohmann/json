@@ -4574,7 +4574,7 @@ struct view_access
     template<typename View>
     static error_site site(const View& v) noexcept
     {
-        return error_site(v.m_doc, v.m_node);
+        return {v.m_doc, v.m_node};
     }
 };
 
@@ -10130,7 +10130,7 @@ class basic_json_view
     /// this value as the context of an exception
     detail::view::error_site site() const noexcept
     {
-        return detail::view::error_site(m_doc, m_node);
+        return {m_doc, m_node};
     }
 
     using json_side_t = detail::view::json_side<BasicJsonType, string_view_t>;
