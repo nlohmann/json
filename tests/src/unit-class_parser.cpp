@@ -3007,20 +3007,20 @@ TEST_CASE("accept() agrees with parse() on strings, which it checks without copy
             closed += '"';
             std::vector<std::string> texts;
             texts.push_back(closed);
-            texts.push_back("[");
+            texts.emplace_back("[");
             texts.back() += closed;
             texts.back() += ']';
-            texts.push_back("{");
+            texts.emplace_back("{");
             texts.back() += closed;
             texts.back() += ":1}";
-            texts.push_back("{\"k\":");
+            texts.emplace_back("{\"k\":");
             texts.back() += closed;
             texts.back() += ',';
             texts.back() += closed;
             texts.back() += ":[";
             texts.back() += closed;
             texts.back() += "]}";
-            texts.push_back("[");
+            texts.emplace_back("[");
             texts.back() += opened;
             for (const std::string& text : texts)
             {
