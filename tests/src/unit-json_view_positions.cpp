@@ -521,7 +521,8 @@ TEST_CASE("json_view exceptions name the path and the bytes of the value")
         std::string text = "7";
         for (int level = 0; level < 40; ++level)
         {
-            text = R"([[1, [2]], )" + text + R"(, {"k": [3, {"l": [4]}]}, [5, [6, [7]]]])";
+            text.insert(0, R"([[1, [2]], )");
+            text += R"(, {"k": [3, {"l": [4]}]}, [5, [6, [7]]]])";
         }
         CAPTURE(text)
         const json j = json::parse(text);
