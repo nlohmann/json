@@ -23,6 +23,7 @@ using nlohmann::json;
 #include <cstdint>
 #include <fstream>
 #include <limits>
+#include <list>
 #include <sstream>
 #include <vector>
 #include "make_test_data_available.hpp"
@@ -1199,6 +1200,31 @@ TEST_CASE("BSON keys from contiguous and stream input")
             from_stream = e.what();
         }
         CHECK(from_vector == from_stream);
+
+        // error_handler_t::strict checks the array element names in place on
+        // contiguous input and byte by byte otherwise; the names are
+        // well-formed, so both give the same value or error as above
+        std::string strict_from_vector;
+        std::string strict_from_list;
+        try
+        {
+            strict_from_vector = json::from_bson(input, true, true, json::error_handler_t::strict).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            strict_from_vector = e.what();
+        }
+        try
+        {
+            const std::list<std::uint8_t> list(input.begin(), input.end());
+            strict_from_list = json::from_bson(list.begin(), list.end(), true, true, json::error_handler_t::strict).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            strict_from_list = e.what();
+        }
+        CHECK(strict_from_vector == from_vector);
+        CHECK(strict_from_list == from_vector);
     }
 }
 
@@ -1227,6 +1253,18 @@ TEST_CASE("BSON array element names")
 
     std::istringstream stream(std::string(reinterpret_cast<const char*>(bson.data()), bson.size()));
     CHECK(json::from_bson(stream) == expected);
+
+    // input that is not contiguous reads the names byte by byte and must reject
+    // the same name
+    const std::list<std::uint8_t> list(bson.begin(), bson.end());
+    CHECK_THROWS_WITH_AS(_ = json::from_bson(list.begin(), list.end(), true, true, json::error_handler_t::strict), "[json.exception.parse_error.113] parse error at byte 14: syntax error while parsing BSON key: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+
+    // without exceptions, the rejected name ends the parse
+    CHECK(json::from_bson(bson, true, false, json::error_handler_t::strict).is_discarded());
+
+    // well-formed names pass the check without being stored
+    const json valid = {{"a", {true, false, {{"k", json::array({1, 2})}}}}};
+    CHECK(json::from_bson(json::to_bson(valid), true, true, json::error_handler_t::strict) == valid);
 }
 #endif
 
