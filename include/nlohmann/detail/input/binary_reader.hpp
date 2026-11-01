@@ -22,6 +22,7 @@
     #include <bit>  //byteswap
 #endif
 
+#include <nlohmann/detail/bit_ops.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/json_sax.hpp>
@@ -1139,22 +1140,24 @@ class binary_reader
                 return get_half_float(false);
 
             case 0xFA: // Single-Precision Float (four-byte IEEE 754)
-            {
-                float number{};
-                return get_number(number) && emit_float(number);
-            }
+                return get_cbor_float<float>();
 
             case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
-            {
-                double number{};
-                return get_number(number) && emit_float(number);
-            }
+                return get_cbor_float<double>();
 
             default: // anything else (0xFF is handled inside the other types)
             {
                 return unexpected_byte("invalid byte", "value");
             }
         }
+    }
+
+    /// read a single- or double-precision float
+    template<typename NumberType>
+    bool get_cbor_float()
+    {
+        NumberType number{};
+        return get_number(number) && emit_float(number);
     }
 
     /*!
@@ -4176,7 +4179,12 @@ class binary_reader
     `char_traits<char_type>::eof()` in that case.
 
     @return character read from the input
+
+    @note always inlined: GCC otherwise stops inlining the stream adapter's
+          get_character() into parse_cbor_internal once that function grows
+          (+0.45 % instructions for CBOR from a std::istringstream with GCC 13)
     */
+    JSON_HEDLEY_ALWAYS_INLINE
     char_int_type get()
     {
         ++chars_read;
@@ -4220,6 +4228,27 @@ class binary_reader
         while (current == 'N');
 
         return current;
+    }
+
+    /// reverse the byte order of a double with a single byteswap(): GCC does
+    /// not merge the byte-wise swap of the generic version into one
+    static void byte_swap(double& number) noexcept
+    {
+        static_assert(sizeof(double) == sizeof(std::uint64_t), "double must have 64 bits");
+        std::uint64_t bits{};
+        std::memcpy(&bits, &number, sizeof(bits));
+        bits = byteswap(bits);
+        std::memcpy(&number, &bits, sizeof(bits));
+    }
+
+    /// reverse the byte order of a float with a single byteswap()
+    static void byte_swap(float& number) noexcept
+    {
+        static_assert(sizeof(float) == sizeof(std::uint32_t), "float must have 32 bits");
+        std::uint32_t bits{};
+        std::memcpy(&bits, &number, sizeof(bits));
+        bits = byteswap(bits);
+        std::memcpy(&number, &bits, sizeof(bits));
     }
 
     template<class NumberType>
