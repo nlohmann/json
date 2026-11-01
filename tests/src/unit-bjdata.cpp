@@ -4787,7 +4787,8 @@ TEST_CASE("BJData optimized arrays from contiguous and non-contiguous input")
         std::string bytewise_error;
         try
         {
-            static_cast<void>(json::from_bjdata(contiguous));
+            json _;
+            _ = json::from_bjdata(contiguous);
         }
         catch (const json::exception& e)
         {
@@ -4795,7 +4796,8 @@ TEST_CASE("BJData optimized arrays from contiguous and non-contiguous input")
         }
         try
         {
-            static_cast<void>(json::from_bjdata(bytewise.begin(), bytewise.end()));
+            json _;
+            _ = json::from_bjdata(bytewise.begin(), bytewise.end());
         }
         catch (const json::exception& e)
         {

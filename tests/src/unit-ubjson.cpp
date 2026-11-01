@@ -3436,7 +3436,8 @@ TEST_CASE("UBJSON optimized arrays from contiguous and non-contiguous input")
         std::string bytewise_error;
         try
         {
-            static_cast<void>(json::from_ubjson(contiguous));
+            json _;
+            _ = json::from_ubjson(contiguous);
         }
         catch (const json::exception& e)
         {
@@ -3444,7 +3445,8 @@ TEST_CASE("UBJSON optimized arrays from contiguous and non-contiguous input")
         }
         try
         {
-            static_cast<void>(json::from_ubjson(bytewise.begin(), bytewise.end()));
+            json _;
+            _ = json::from_ubjson(bytewise.begin(), bytewise.end());
         }
         catch (const json::exception& e)
         {
