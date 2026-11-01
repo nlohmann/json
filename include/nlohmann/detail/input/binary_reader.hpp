@@ -1705,10 +1705,13 @@ class binary_reader
     than 9 bytes (the longest of these values) are left in the input, leaving
     those to @ref parse_cbor_value, which reads them the same way.
 
+    Out of line, so that @ref parse_cbor_value stays small enough to be inlined.
+
     @param[in,out] remaining  the number of elements of the array not yet read
     @return whether the SAX parser accepted the values
     */
-    bool parse_cbor_scalar_run(std::size_t& remaining)
+    JSON_HEDLEY_NEVER_INLINE
+    bool parse_cbor_scalar_run(std::size_t& remaining, std::true_type /*bulk*/)
     {
         while (remaining != 0 && ia.bulk_remaining() >= 9)
         {
@@ -1818,20 +1821,11 @@ class binary_reader
     */
     bool enter_cbor_array(const std::size_t len)
     {
-        return enter_array(len) && (len == 0 || parse_cbor_array_start(std::integral_constant<bool, bulk_scan> {}));
-    }
-
-    /// read the scalars the array just opened begins with; out of line, so
-    /// that @ref parse_cbor_value stays small enough to be inlined into
-    /// @ref parse_cbor_internal
-    JSON_HEDLEY_NEVER_INLINE
-    bool parse_cbor_array_start(std::true_type /*bulk*/)
-    {
-        return parse_cbor_scalar_run(container_stack.back().remaining);
+        return enter_array(len) && (len == 0 || parse_cbor_scalar_run(container_stack.back().remaining, std::integral_constant<bool, bulk_scan> {}));
     }
 
     /// input that is not contiguous: every value is read by parse_cbor_value
-    bool parse_cbor_array_start(std::false_type /*bulk*/) const noexcept
+    bool parse_cbor_scalar_run(std::size_t& /*remaining*/, std::false_type /*bulk*/) const noexcept
     {
         return true;
     }
@@ -2620,10 +2614,13 @@ class binary_reader
     than 9 bytes (the longest of these values) are left in the input, leaving
     those to @ref parse_msgpack_value, which reads them the same way.
 
+    Out of line, so that @ref parse_msgpack_value stays small enough to be inlined.
+
     @param[in,out] remaining  the number of elements of the array not yet read
     @return whether the SAX parser accepted the values
     */
-    bool parse_msgpack_scalar_run(std::size_t& remaining)
+    JSON_HEDLEY_NEVER_INLINE
+    bool parse_msgpack_scalar_run(std::size_t& remaining, std::true_type /*bulk*/)
     {
         while (remaining != 0 && ia.bulk_remaining() >= 9)
         {
@@ -2730,19 +2727,11 @@ class binary_reader
     */
     bool enter_msgpack_array(const std::size_t len)
     {
-        return enter_array(len) && (len == 0 || parse_msgpack_array_start(std::integral_constant<bool, bulk_scan> {}));
-    }
-
-    /// read the scalars the array just opened begins with; out of line, so
-    /// that @ref parse_msgpack_value stays small enough to be inlined
-    JSON_HEDLEY_NEVER_INLINE
-    bool parse_msgpack_array_start(std::true_type /*bulk*/)
-    {
-        return parse_msgpack_scalar_run(container_stack.back().remaining);
+        return enter_array(len) && (len == 0 || parse_msgpack_scalar_run(container_stack.back().remaining, std::integral_constant<bool, bulk_scan> {}));
     }
 
     /// input that is not contiguous: every value is read by parse_msgpack_value
-    bool parse_msgpack_array_start(std::false_type /*bulk*/) const noexcept
+    bool parse_msgpack_scalar_run(std::size_t& /*remaining*/, std::false_type /*bulk*/) const noexcept
     {
         return true;
     }
