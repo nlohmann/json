@@ -1,6 +1,6 @@
 <svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 560 604" role="img" aria-labelledby="nj-blog-overview nj-blog-overview-d" xmlns="http://www.w3.org/2000/svg">
 <title id="nj-blog-overview">Speedup of 3.13.0 over 3.12.0 per workload, Apple M1 Max, Apple clang</title>
-<desc id="nj-blog-overview-d">Horizontal bars of the speedup, more is better. twitter.json 3.1x; citm_catalog.json 4.2x; canada.json 3.4x; canada.json, indented 6.7x; citm, ordered_json 6.8x; twitter, std::ifstream 2.4x; citm, FILE* 4.7x; citm, accept() 6.9x; dump() twitter 6.7x; dump() canada 2.9x; dump(4) citm 4.7x; to_cbor() twitter 4.5x; twitter, memory 3.2x; twitter, FILE* 6.4x; diff() canada 10x; iterate canada 2.8x; copy + destroy citm 1.11x; == citm 1.07x.</desc>
+<desc id="nj-blog-overview-d">Horizontal bars of the speedup, more is better. twitter.json 3.1x; citm_catalog.json 4.2x; canada.json 3.5x; canada.json, indented 6.6x; citm, ordered_json 6.7x; twitter, std::ifstream 2.4x; citm, FILE* 4.7x; citm, accept() 7.6x; dump() twitter 6.7x; dump() canada 2.9x; dump(4) citm 4.6x; to_cbor() twitter 4.5x; twitter, memory 3.2x; twitter, FILE* 6.5x; diff() canada 10x; iterate canada 2.7x; copy + destroy citm 1.11x; == citm 1.07x.</desc>
 <text class="nj-charts-panel" x="8" y="20">Parsing</text>
 <text class="nj-charts-panel" x="8" y="244">Writing</text>
 <text class="nj-charts-panel" x="8" y="372">Reading C&#8203;BOR</text>
@@ -28,53 +28,53 @@
 <line class="nj-charts-grid" x1="520" y1="8" x2="520" y2="560"/>
 <text class="nj-charts-tick" x="520" y="576">11&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="42" text-anchor="end">twitter.json</text>
-<path class="nj-charts-c1" d="M190 30 H278.4 Q282.4 30 282.4 34 V41 Q282.4 45 278.4 45 H190 Z"><title>twitter.json: 3.1&#215;</title></path>
-<text class="nj-charts-val" x="287.4" y="42">3.1&#215;</text>
+<path class="nj-charts-c1" d="M190 30 H279 Q283 30 283 34 V41 Q283 45 279 45 H190 Z"><title>twitter.json: 3.1&#215;</title></path>
+<text class="nj-charts-val" x="288" y="42">3.1&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="66" text-anchor="end">citm_catalog.json</text>
 <path class="nj-charts-c1" d="M190 54 H311.7 Q315.7 54 315.7 58 V65 Q315.7 69 311.7 69 H190 Z"><title>citm_catalog.json: 4.2&#215;</title></path>
 <text class="nj-charts-val" x="320.7" y="66">4.2&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="90" text-anchor="end">canada.json</text>
-<path class="nj-charts-c1" d="M190 78 H287.4 Q291.4 78 291.4 82 V89 Q291.4 93 287.4 93 H190 Z"><title>canada.json: 3.4&#215;</title></path>
-<text class="nj-charts-val" x="296.4" y="90">3.4&#215;</text>
+<path class="nj-charts-c1" d="M190 78 H289.5 Q293.5 78 293.5 82 V89 Q293.5 93 289.5 93 H190 Z"><title>canada.json: 3.5&#215;</title></path>
+<text class="nj-charts-val" x="298.5" y="90">3.5&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="114" text-anchor="end">canada.json, indented</text>
-<path class="nj-charts-c1" d="M190 102 H386.1 Q390.1 102 390.1 106 V113 Q390.1 117 386.1 117 H190 Z"><title>canada.json, indented: 6.7&#215;</title></path>
-<text class="nj-charts-val" x="395.1" y="114">6.7&#215;</text>
+<path class="nj-charts-c1" d="M190 102 H383.1 Q387.1 102 387.1 106 V113 Q387.1 117 383.1 117 H190 Z"><title>canada.json, indented: 6.6&#215;</title></path>
+<text class="nj-charts-val" x="392.1" y="114">6.6&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="138" text-anchor="end">citm, ordered_json</text>
-<path class="nj-charts-c1" d="M190 126 H388.8 Q392.8 126 392.8 130 V137 Q392.8 141 388.8 141 H190 Z"><title>citm, ordered_json: 6.8&#215;</title></path>
-<text class="nj-charts-val" x="397.8" y="138">6.8&#215;</text>
+<path class="nj-charts-c1" d="M190 126 H386.1 Q390.1 126 390.1 130 V137 Q390.1 141 386.1 141 H190 Z"><title>citm, ordered_json: 6.7&#215;</title></path>
+<text class="nj-charts-val" x="395.1" y="138">6.7&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="162" text-anchor="end">twitter, std::ifstream</text>
 <path class="nj-charts-c1" d="M190 150 H259.2 Q263.2 150 263.2 154 V161 Q263.2 165 259.2 165 H190 Z"><title>twitter, std::ifstream: 2.4&#215;</title></path>
 <text class="nj-charts-val" x="268.2" y="162">2.4&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="186" text-anchor="end">citm, FILE*</text>
-<path class="nj-charts-c1" d="M190 174 H326.7 Q330.7 174 330.7 178 V185 Q330.7 189 326.7 189 H190 Z"><title>citm, FILE*: 4.7&#215;</title></path>
-<text class="nj-charts-val" x="335.7" y="186">4.7&#215;</text>
+<path class="nj-charts-c1" d="M190 174 H327.6 Q331.6 174 331.6 178 V185 Q331.6 189 327.6 189 H190 Z"><title>citm, FILE*: 4.7&#215;</title></path>
+<text class="nj-charts-val" x="336.6" y="186">4.7&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="210" text-anchor="end">citm, accept()</text>
-<path class="nj-charts-c1" d="M190 198 H393.6 Q397.6 198 397.6 202 V209 Q397.6 213 393.6 213 H190 Z"><title>citm, accept(): 6.9&#215;</title></path>
-<text class="nj-charts-val" x="402.6" y="210">6.9&#215;</text>
+<path class="nj-charts-c1" d="M190 198 H414.9 Q418.9 198 418.9 202 V209 Q418.9 213 414.9 213 H190 Z"><title>citm, accept(): 7.6&#215;</title></path>
+<text class="nj-charts-val" x="423.9" y="210">7.6&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="266" text-anchor="end">dump() twitter</text>
-<path class="nj-charts-c1" d="M190 254 H387.9 Q391.9 254 391.9 258 V265 Q391.9 269 387.9 269 H190 Z"><title>dump() twitter: 6.7&#215;</title></path>
-<text class="nj-charts-val" x="396.9" y="266">6.7&#215;</text>
+<path class="nj-charts-c1" d="M190 254 H386.4 Q390.4 254 390.4 258 V265 Q390.4 269 386.4 269 H190 Z"><title>dump() twitter: 6.7&#215;</title></path>
+<text class="nj-charts-val" x="395.4" y="266">6.7&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="290" text-anchor="end">dump() canada</text>
 <path class="nj-charts-c1" d="M190 278 H273.6 Q277.6 278 277.6 282 V289 Q277.6 293 273.6 293 H190 Z"><title>dump() canada: 2.9&#215;</title></path>
 <text class="nj-charts-val" x="282.6" y="290">2.9&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="314" text-anchor="end">dump(4) citm</text>
-<path class="nj-charts-c1" d="M190 302 H326.1 Q330.1 302 330.1 306 V313 Q330.1 317 326.1 317 H190 Z"><title>dump(4) citm: 4.7&#215;</title></path>
-<text class="nj-charts-val" x="335.1" y="314">4.7&#215;</text>
+<path class="nj-charts-c1" d="M190 302 H323.7 Q327.7 302 327.7 306 V313 Q327.7 317 323.7 317 H190 Z"><title>dump(4) citm: 4.6&#215;</title></path>
+<text class="nj-charts-val" x="332.7" y="314">4.6&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="338" text-anchor="end">to_cbor() twitter</text>
-<path class="nj-charts-c1" d="M190 326 H319.5 Q323.5 326 323.5 330 V337 Q323.5 341 319.5 341 H190 Z"><title>to_cbor() twitter: 4.5&#215;</title></path>
-<text class="nj-charts-val" x="328.5" y="338">4.5&#215;</text>
+<path class="nj-charts-c1" d="M190 326 H320.1 Q324.1 326 324.1 330 V337 Q324.1 341 320.1 341 H190 Z"><title>to_cbor() twitter: 4.5&#215;</title></path>
+<text class="nj-charts-val" x="329.1" y="338">4.5&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="394" text-anchor="end">twitter, memory</text>
-<path class="nj-charts-c1" d="M190 382 H282.3 Q286.3 382 286.3 386 V393 Q286.3 397 282.3 397 H190 Z"><title>twitter, memory: 3.2&#215;</title></path>
-<text class="nj-charts-val" x="291.3" y="394">3.2&#215;</text>
+<path class="nj-charts-c1" d="M190 382 H282.9 Q286.9 382 286.9 386 V393 Q286.9 397 282.9 397 H190 Z"><title>twitter, memory: 3.2&#215;</title></path>
+<text class="nj-charts-val" x="291.9" y="394">3.2&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="418" text-anchor="end">twitter, FILE*</text>
-<path class="nj-charts-c1" d="M190 406 H377.4 Q381.4 406 381.4 410 V417 Q381.4 421 377.4 421 H190 Z"><title>twitter, FILE*: 6.4&#215;</title></path>
-<text class="nj-charts-val" x="386.4" y="418">6.4&#215;</text>
+<path class="nj-charts-c1" d="M190 406 H381 Q385 406 385 410 V417 Q385 421 381 421 H190 Z"><title>twitter, FILE*: 6.5&#215;</title></path>
+<text class="nj-charts-val" x="390" y="418">6.5&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="474" text-anchor="end">diff() canada</text>
-<path class="nj-charts-c1" d="M190 462 H500.4 Q504.4 462 504.4 466 V473 Q504.4 477 500.4 477 H190 Z"><title>diff() canada: 10&#215;</title></path>
-<text class="nj-charts-val" x="509.4" y="474">10&#215;</text>
+<path class="nj-charts-c1" d="M190 462 H498.9 Q502.9 462 502.9 466 V473 Q502.9 477 498.9 477 H190 Z"><title>diff() canada: 10&#215;</title></path>
+<text class="nj-charts-val" x="507.9" y="474">10&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="498" text-anchor="end">iterate canada</text>
-<path class="nj-charts-c1" d="M190 486 H270.6 Q274.6 486 274.6 490 V497 Q274.6 501 270.6 501 H190 Z"><title>iterate canada: 2.8&#215;</title></path>
-<text class="nj-charts-val" x="279.6" y="498">2.8&#215;</text>
+<path class="nj-charts-c1" d="M190 486 H267 Q271 486 271 490 V497 Q271 501 267 501 H190 Z"><title>iterate canada: 2.7&#215;</title></path>
+<text class="nj-charts-val" x="276" y="498">2.7&#215;</text>
 <text class="nj-charts-rowlabel nj-charts-tick--r" x="182" y="522" text-anchor="end">copy + destroy citm</text>
 <path class="nj-charts-c1" d="M190 510 H219.3 Q223.3 510 223.3 514 V521 Q223.3 525 219.3 525 H190 Z"><title>copy + destroy citm: 1.11&#215;</title></path>
 <text class="nj-charts-val" x="228.3" y="522">1.11&#215;</text>

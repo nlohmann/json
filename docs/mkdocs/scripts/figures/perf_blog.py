@@ -201,22 +201,22 @@ def digits():
 # ---------- overview: speedup per workload (Google Benchmark rows, 3.12.0 time / 3.13.0 time) ----------
 # (group, label, speedup), copied from the table "The short version"
 OVERVIEW = [
-    ("Parsing", "twitter.json", 3.08),
+    ("Parsing", "twitter.json", 3.10),
     ("Parsing", "citm_catalog.json", 4.19),
-    ("Parsing", "canada.json", 3.38),
-    ("Parsing", "canada.json, indented", 6.67),
-    ("Parsing", "citm, ordered_json", 6.76),
+    ("Parsing", "canada.json", 3.45),
+    ("Parsing", "canada.json, indented", 6.57),
+    ("Parsing", "citm, ordered_json", 6.67),
     ("Parsing", "twitter, std::ifstream", 2.44),
-    ("Parsing", "citm, FILE*", 4.69),
-    ("Parsing", "citm, accept()", 6.92),
-    ("Writing", "dump() twitter", 6.73),
+    ("Parsing", "citm, FILE*", 4.72),
+    ("Parsing", "citm, accept()", 7.63),
+    ("Writing", "dump() twitter", 6.68),
     ("Writing", "dump() canada", 2.92),
-    ("Writing", "dump(4) citm", 4.67),
-    ("Writing", "to_cbor() twitter", 4.45),
-    ("Reading CBOR", "twitter, memory", 3.21),
-    ("Reading CBOR", "twitter, FILE*", 6.38),
-    ("Values", "diff() canada", 10.48),
-    ("Values", "iterate canada", 2.82),
+    ("Writing", "dump(4) citm", 4.59),
+    ("Writing", "to_cbor() twitter", 4.47),
+    ("Reading CBOR", "twitter, memory", 3.23),
+    ("Reading CBOR", "twitter, FILE*", 6.50),
+    ("Values", "diff() canada", 10.43),
+    ("Values", "iterate canada", 2.70),
     ("Values", "copy + destroy citm", 1.11),
     ("Values", "== citm", 1.07),
 ]
@@ -396,15 +396,15 @@ def timeline():
 # ---------- cliffs: 3.12.0 and 3.13.0 times on a log axis ----------
 # (operation, 3.12.0 ms, 3.13.0 ms), copied from the table in "Fix the algorithm first"
 CLIFFS = [
-    ("diff() 64k numbers vs []", 4102, 9.98),
-    ("diff() 20k objects vs half", 119, 3.85),
-    ("parse() callback, 32k objects", 1334, 11.5),
-    ("operator< nested 24 deep", 62.6, 0.002),
-    ("operator< citm, 10x", 274, 3.81),
+    ("diff() 64k numbers vs []", 4101, 10.1),
+    ("diff() 20k objects vs half", 119, 3.83),
+    ("parse() callback, 32k objects", 1348, 11.5),
+    ("operator< nested 24 deep", 63.6, 0.002),
+    ("operator< citm, 10x", 273, 3.80),
     ("flatten() citm, ordered_json", 253, 1.37),
-    ("to_bson() 200 deep, 100x", 19.5, 0.566),
-    ("push_back() 100k, diagnostics", 1514, 4.98),
-    ("at(i) 10k, diagnostics", 43.2, 0.081),
+    ("to_bson() 200 deep, 100x", 19.5, 0.357),
+    ("push_back() 100k, diagnostics", 1525, 5.14),
+    ("at(i) 10k, diagnostics", 43.9, 0.080),
 ]
 
 
@@ -453,43 +453,44 @@ def heldout():
     for plat, _, _ in HELDOUT:
         for f in files:
             libs = data[plat][f]
-            best = min(libs, key=lambda l: libs[l]["us"])
+            # the fastest other library: below 1 json_document is the fastest, and the distance shows by how much
+            best = min((l for l in libs if l != "nlohmann json_document"), key=lambda l: libs[l]["us"])
             rel[plat, f] = libs["nlohmann json_document"]["us"] / libs[best]["us"]
             winner[plat, f] = UC_LIBS.get(best, best)
     files.sort(key=lambda f: (rel["x86-gcc", f], rel["mac", f]))
     W, L, R = 620, 262, 486
-    lo, hi = 1.0, 1.55
+    lo, hi = 0.4, 1.15
     X = lambda r: L + (r - lo) / (hi - lo) * (R - L)
     top, pitch = 58, 20
     axis_y = top + pitch * len(files)
     b, desc = [], []
-    for t in (1.0, 1.1, 1.2, 1.3, 1.4, 1.5):
+    for t in (0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1):
         b.append('<line class="nj-charts-grid" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(t), top - 8, X(t), axis_y))
         b.append('<text class="nj-charts-tick" x="%g" y="%g">%.1f%s</text>' % (X(t), axis_y + 16, t, TIMES))
-    b.append('<text class="nj-charts-tick" x="%g" y="%g">json&#95;document&#8217;s time / the fastest library&#8217;s, less is better</text>' % ((L + R) / 2, axis_y + 34))
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">json&#95;document&#8217;s time / the fastest other library&#8217;s, less is better</text>' % ((L + R) / 2, axis_y + 34))
     x = 8
     for plat, name, cls in HELDOUT:
         b.append('<circle class="%s" cx="%g" cy="14" r="5"/><text class="nj-charts-leg" x="%g" y="18.5">%s</text>' % (cls, x + 5, x + 15, esc_md(name)))
         x += 30 + 7.6 * len(name)
-    b.append('<text class="nj-charts-tick nj-charts-tick--l" x="%g" y="%g">fastest on x86-64</text>' % (R + 14, top - 10))
+    b.append('<text class="nj-charts-tick nj-charts-tick--l" x="%g" y="%g">next on x86-64</text>' % (R + 14, top - 10))
     for i, f in enumerate(files):
         y = top + i * pitch + 6
         b.append('<text class="nj-charts-rowlabel nj-charts-code" x="%g" y="%g" text-anchor="end">%s</text>' % (L - 10, y + 4, esc_md(f)))
         for k, (plat, name, cls) in enumerate(HELDOUT):
             r = rel[plat, f]
             b.append('<circle class="%s" cx="%.1f" cy="%g" r="4.5"><title>%s, %s: %.2f%s the time of %s</title></circle>'
-                     % (cls, X(min(r, hi)), y - 3.5 + 7 * k, esc_md(f), esc_md(name), r, TIMES, esc_md(winner[plat, f]) if r > 1.0005 else "the fastest (it is the fastest)"))
+                     % (cls, X(max(lo, min(r, hi))), y - 3.5 + 7 * k, esc_md(f), esc_md(name), r, TIMES, esc_md(winner[plat, f])))
         w = winner["x86-gcc", f]
         b.append('<text class="nj-charts-tick nj-charts-tick--l%s" x="%g" y="%g">%s</text>'
-                 % ("" if w.startswith("nlohmann") else " nj-charts-best", R + 14, y + 4, esc_md("json_document" if w.startswith("nlohmann") else w)))
+                 % (" nj-charts-best" if rel["x86-gcc", f] > 1.0005 else "", R + 14, y + 4, esc_md(w)))
         desc.append("%s: Mac %.2f, x86-64 %.2f (%s)" % (f, rel["mac", f], rel["x86-gcc", f], w))
     b.append('<line class="nj-charts-ref" x1="%g" y1="%g" x2="%g" y2="%g"/>' % (X(1), top - 8, X(1), axis_y))
-    b.append('<text class="nj-charts-tick" x="%g" y="%g">fastest</text>' % (X(1), top - 14))
-    wins = {p: sum(rel[p, f] < 1.0005 for f in files) for p, _, _ in HELDOUT}
+    b.append('<text class="nj-charts-tick" x="%g" y="%g">as fast as the next</text>' % (X(1), top - 14))
+    wins = {p: sum(rel[p, f] < 1 for f in files) for p, _, _ in HELDOUT}
     print("heldout: json_document fastest on %s" % wins)
     write("perf_blog_heldout.svg", W, axis_y + 44, "nj-charts--blog", "nj-blog-heldout",
-          "Validating 19 files 3.13.0 was not tuned on: json_document's time relative to the fastest library per file",
-          "Dot plot per file, less is better; 1.0 means json_document is the fastest fully validating library. "
+          "Validating 19 files 3.13.0 was not tuned on: json_document's time relative to the fastest other library per file",
+          "Dot plot per file, less is better; below 1.0 json_document is the fastest fully validating library. "
           + "; ".join(desc) + ".", b)
 
 
