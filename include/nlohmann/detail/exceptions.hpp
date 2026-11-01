@@ -431,6 +431,28 @@ std::nullptr_t exception_context(const View& /*unused*/) noexcept
     return nullptr;
 }
 
+namespace view
+{
+// the path and bytes of the value of a view (defined in <nlohmann/detail/view/errors.hpp>)
+template<typename View>
+std::string diagnostics_of(const View& v);
+}  // namespace view
+
+// what goes in front of the message of an exception about j: nothing for a
+// basic_json value (exception_context() passes the value itself), the context
+// basic_json would add (JSON_DIAGNOSTICS, JSON_DIAGNOSTIC_POSITIONS) for a view
+template<typename BasicJsonType, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+const char* exception_prefix(const BasicJsonType& /*unused*/) noexcept
+{
+    return "";
+}
+
+template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
+std::string exception_prefix(const View& v)
+{
+    return view::diagnostics_of(v);
+}
+
 /*!
 @brief throws because @a j does not have the type a conversion expects
 @param[in] expected  the expected type(s), e.g. "array" or "binary or array"
@@ -442,7 +464,7 @@ JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_type_must_be(const cha
 {
     static_cast<void>(expected); // unused when JSON_NOEXCEPTION is defined
     static_cast<void>(j);
-    JSON_THROW(type_error::create(exception_id::type_mismatch, concat("type must be ", expected, ", but is ", j.type_name()), exception_context(j)));
+    JSON_THROW(type_error::create(exception_id::type_mismatch, concat(exception_prefix(j), "type must be ", expected, ", but is ", j.type_name()), exception_context(j)));
 }
 
 /*!

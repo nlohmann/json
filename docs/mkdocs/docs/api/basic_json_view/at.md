@@ -68,9 +68,10 @@ Strong guarantee: there are no changes to the view or the document it refers to.
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if `ptr` cannot be resolved
       because a reference token is used on a primitive value.
 
-None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) path: the view has no
-`BasicJsonType` value to point at, so the exception is created without one, even if `BasicJsonType` was built with
-`JSON_DIAGNOSTICS` enabled.
+As for `BasicJsonType`, with [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) these exceptions name the JSON
+Pointer path of the value within the document, and with
+[`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) its bytes in the source text (when
+[`materialize()`](materialize.md) sets them).
 
 ## Complexity
 
