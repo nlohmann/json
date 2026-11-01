@@ -18474,11 +18474,13 @@ class binary_reader
 
             const std::size_t element_type_parse_position = chars_read;
             // an array's elements are named "0", "1", ... in the wire format,
-            // and those names are not passed on: they are skipped unless
-            // error_handler_t::strict must reject ill-formed UTF-8 in them
+            // and those names are not passed on: they are skipped, and only
+            // checked if error_handler_t::strict must reject ill-formed UTF-8
             const bool is_object = container_stack.back().is_object;
             key.clear();
-            if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key, is_object || error_handler == error_handler_t::strict)))
+            if (JSON_HEDLEY_UNLIKELY(!(is_object || error_handler != error_handler_t::strict
+                                       ? get_bson_cstr(key, is_object)
+                                       : check_bson_cstr(key, std::integral_constant<bool, bulk_scan> {}))))
             {
                 return false;
             }
@@ -18502,7 +18504,7 @@ class binary_reader
     @param[in] store  whether the characters are needed; if not (the names of
                       an array's elements), they are skipped and @a result may
                       be left unchanged, and they are not checked against
-                      @ref error_handler
+                      @ref error_handler (@ref check_bson_cstr checks them)
     @return `true` if the \\x00-byte indicating the end of the string was
              encountered before the EOF; false` indicates an unexpected EOF.
     */
@@ -18559,6 +18561,42 @@ class binary_reader
         chars_read += length + 1;
         current = 0x00;
         return true;
+    }
+
+    /*!
+    @brief skip a C-style string that error_handler_t::strict must check
+
+    The names of an array's elements are not passed on. On contiguous input,
+    a well-formed name is checked in place and skipped without being copied.
+    Otherwise (no \\x00-byte in the input that can be scanned, or ill-formed
+    UTF-8), it is read by @ref get_bson_cstr, which reports the error.
+
+    @param[in,out] result  an empty string, which may receive the name
+    @return whether the name was read and is well-formed
+    */
+    bool check_bson_cstr(string_t& result, std::true_type /*bulk*/)
+    {
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining != 0)
+        {
+            const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+            const std::size_t length = find_zero_byte(data, remaining);
+            if (length != remaining && JSON_HEDLEY_LIKELY(valid_utf8_string(data, length)))
+            {
+                // consume the string and its \x00-byte, as get_bson_cstr does
+                ia.bulk_skip(length + 1);
+                chars_read += length + 1;
+                current = 0x00;
+                return true;
+            }
+        }
+        return get_bson_cstr(result);
+    }
+
+    /// input that is not contiguous: the name is read and checked byte by byte
+    bool check_bson_cstr(string_t& result, std::false_type /*bulk*/)
+    {
+        return get_bson_cstr(result);
     }
 
     /// input that is not contiguous: C-style strings are read byte by byte
