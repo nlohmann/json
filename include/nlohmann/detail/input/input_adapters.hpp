@@ -545,12 +545,9 @@ class input_stream_adapter
     std::char_traits<char>::int_type get_character_slow()
     {
 #if !JSON_DISABLE_STREAM_BULK_SCAN
-        // sbumpc() refills the get area if it is exhausted
-        const bool refill = streambuf_access::get_ptr(sb) == streambuf_access::get_end(sb);
-        if (JSON_HEDLEY_UNLIKELY(refill))
-        {
-            save_token_segment();
-        }
+        // the get area is exhausted (get_character() handles the other case),
+        // so sbumpc() refills it
+        save_token_segment();
 #endif
 
         auto res = sb->sbumpc();
@@ -563,16 +560,12 @@ class input_stream_adapter
             is->clear(is->rdstate() | std::ios::eofbit);
         }
 #if !JSON_DISABLE_STREAM_BULK_SCAN
-        else if (JSON_HEDLEY_UNLIKELY(refill))
+        else
         {
             // the consumed character is at gptr() - 1, unless the streambuf
             // has no get area and returned it from uflow()
             const char* const next = streambuf_access::get_ptr(sb);
             after_refill(res, next != nullptr && next != streambuf_access::get_begin(sb));
-        }
-        else
-        {
-            current_in_get_area = true; // LCOV_EXCL_LINE (called only when the get area is exhausted)
         }
 #endif
         return res;

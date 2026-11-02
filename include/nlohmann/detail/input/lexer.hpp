@@ -300,14 +300,16 @@ class lexer : public lexer_base<BasicJsonType>
     /// calls would (including the position and token bookkeeping of a
     /// streaming adapter, see bulk_consume) and leaves @a current holding the last of
     /// the 4 digits, just as the last such get() would; the codepoint is
-    /// written to @a out. Makes no state change and returns false for a
-    /// pending unget, fewer than 4 remaining bytes, or any of the 4 bytes not
-    /// being a hex digit, so the caller falls back unchanged to the
-    /// per-character loop, which then reports the same diagnostic (stopping
-    /// at the first invalid digit) as before this optimization.
+    /// written to @a out. Makes no state change and returns false for fewer
+    /// than 4 remaining bytes or any of the 4 bytes not being a hex digit, so
+    /// the caller falls back unchanged to the per-character loop, which then
+    /// reports the same diagnostic (stopping at the first invalid digit) as
+    /// before this optimization.
     bool get_codepoint_bulk(std::true_type /*bulk*/, int& out)
     {
-        if (next_unget || ia.bulk_remaining() < 4)
+        // no unget is pending inside a string (see get_after_string_run())
+        JSON_ASSERT(!next_unget);
+        if (ia.bulk_remaining() < 4)
         {
             return false;
         }
@@ -1409,7 +1411,7 @@ scan_number_done:
                 return token_type::value_unsigned;
             }
         }
-        else if (number_type == token_type::value_integer)
+        else // value_integer (the callers handle value_float themselves)
         {
             if (parse_integer_signed(first, last, value_integer))
             {
@@ -1780,7 +1782,10 @@ scan_number_done:
     /// the error at the right character
     JSON_HEDLEY_ALWAYS_INLINE bool scan_literal_bulk(const char* rest, const std::size_t length, std::true_type /*bulk*/)
     {
-        if (next_unget || ia.bulk_remaining() < length
+        // called right after scan_after_whitespace() read current (see
+        // get_after_string_run()), so no unget is pending
+        JSON_ASSERT(!next_unget);
+        if (ia.bulk_remaining() < length
                 || std::memcmp(ia.bulk_data(), rest, length) != 0)
         {
             return false;

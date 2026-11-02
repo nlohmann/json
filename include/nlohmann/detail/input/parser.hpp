@@ -575,10 +575,7 @@ class parser
     {
         std::string error_msg = "syntax error ";
 
-        if (!context.empty())
-        {
-            error_msg += concat("while parsing ", context, ' ');
-        }
+        error_msg += concat("while parsing ", context, ' ');
 
         error_msg += "- ";
 

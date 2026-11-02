@@ -1737,7 +1737,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
         key_stack.push_back(val);
 
         // add discarded value at the given key and store the reference for later
-        if (keep && ref_stack.back())
+        if (keep)
         {
             auto& obj = *ref_stack.back()->m_data.m_value.object;
             // a single lookup: insert the placeholder, or find the existing member
@@ -1794,7 +1794,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
 
         const string_t object_key = pop_container();
 
-        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_structured())
+        if (!ref_stack.empty() && ref_stack.back())
         {
             // remove discarded value
             remove_discarded_value(*ref_stack.back(), object_key);
@@ -1960,8 +1960,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
     */
     string_t current_key() const
     {
-        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_object()
-                && !key_stack.empty())
+        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_object())
         {
             return key_stack.back();
         }
