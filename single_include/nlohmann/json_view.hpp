@@ -2479,8 +2479,9 @@ indent_done:
             {
                 ++p;
             }
-            else if (NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
+            else if (!negative || NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
             {
+                // (without a sign, the dispatch saw a digit)
                 p = skip_digits(p + 1, e);
             }
             else
@@ -3549,9 +3550,9 @@ class view_side
         return m_view.size();
     }
 
-    string_view_t string() const
+    string_view_t string() const noexcept
     {
-        return m_view.get_string();
+        return {m_view.m_doc->str(*m_view.m_node), m_view.m_node->len};
     }
 
     bool boolean() const noexcept
@@ -3580,28 +3581,19 @@ class view_side
         return string_view_t(m_view.m_doc->str(*m_view.m_node), m_view.m_node->len);
     }
 
-    /// a number, boolean, or null as a basic_json value (no allocation)
+    /// a number as a basic_json value (no allocation); only called for numbers
     BasicJsonType scalar() const
     {
-        switch (m_view.type())
+        const value_t t = m_view.type();
+        if (t == value_t::number_integer)
         {
-            case value_t::number_integer:
-                return BasicJsonType(m_view.template get<typename BasicJsonType::number_integer_t>());
-            case value_t::number_unsigned:
-                return BasicJsonType(m_view.template get<typename BasicJsonType::number_unsigned_t>());
-            case value_t::number_float:
-                return BasicJsonType(m_view.template get<typename BasicJsonType::number_float_t>());
-            case value_t::boolean:
-                return BasicJsonType(m_view.template get<bool>());
-            case value_t::null:
-            case value_t::object:
-            case value_t::array:
-            case value_t::string:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                return BasicJsonType(nullptr);
+            return BasicJsonType(m_view.template get<typename BasicJsonType::number_integer_t>());
         }
+        if (t == value_t::number_unsigned)
+        {
+            return BasicJsonType(m_view.template get<typename BasicJsonType::number_unsigned_t>());
+        }
+        return BasicJsonType(m_view.template get<typename BasicJsonType::number_float_t>());
     }
 
     /// start at the first element of this array
@@ -3683,9 +3675,9 @@ class json_side
         return m_json->size();
     }
 
-    string_view_t string() const
+    string_view_t string() const noexcept
     {
-        const auto& s = m_json->template get_ref<const typename BasicJsonType::string_t&>();
+        const auto& s = *m_json->template get_ptr<const typename BasicJsonType::string_t*>();
         return string_view_t(s.data(), s.size());
     }
 
@@ -4478,14 +4470,9 @@ struct position_source
         return token{end - start};
     }
 
-    /// the range [first, last), or none if either is npos
+    /// the range [first, last)
     void set(std::size_t first, std::size_t last) noexcept
     {
-        if (first == std::string::npos || last == std::string::npos)
-        {
-            clear();
-            return;
-        }
         start = first;
         end = last;
     }
@@ -4604,11 +4591,11 @@ struct position_source
                 first = n.off;
                 last = n.off + 4u;
                 break;
-            case node_kind::object:
+            case node_kind::object: // LCOV_EXCL_LINE
             case node_kind::array:
             case node_kind::link:
             default:
-                break;
+                break; // LCOV_EXCL_LINE
         }
         // (a crafted image can point past the text)
         if (last == std::string::npos || last > d.size)
@@ -5027,10 +5014,6 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
         end = p.end;
         return;
     }
-    if ((n->flags & node_flags::is_new) != 0 || n->off >= d.size)
-    {
-        return;
-    }
     // the open brackets: n, then the last element as long as it is a non-empty container
     std::size_t closing = 0;
     std::size_t pos = std::string::npos;
@@ -5076,8 +5059,7 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
 
 /// the context basic_json puts in front of the message of an exception about
 /// a value: "(/path) " with JSON_DIAGNOSTICS (none for the root), then
-/// "(bytes a-b) " with JSON_DIAGNOSTIC_POSITIONS (with JSON_DIAGNOSTICS, only
-/// if there is a path)
+/// "(bytes a-b) " with JSON_DIAGNOSTIC_POSITIONS (also for the root)
 ///
 /// This and the throw helpers that take an error_site are templates, so that
 /// the path and range code is instantiated only where an exception can be
@@ -5098,19 +5080,19 @@ std::string diagnostics(const error_site site)
     std::string context;
 #if JSON_DIAGNOSTICS
     std::vector<std::string> tokens;
-    const bool found = edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens);
-    if (!found || tokens.empty())
+    // a value that is not found leaves no tokens, like the root
+    static_cast<void>(edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens));
+    if (!tokens.empty())
     {
-        // context is still empty; returning it keeps the copy elided (-Wnrvo)
-        return context;
+        // the root value has no path, but still has a byte range
+        std::string path;
+        for (const std::string& token : tokens)
+        {
+            path.push_back('/');
+            path += detail::escape(token);
+        }
+        context = concat('(', path, ") ");
     }
-    std::string path;
-    for (const std::string& token : tokens)
-    {
-        path.push_back('/');
-        path += detail::escape(token);
-    }
-    context = concat('(', path, ") ");
 #endif
 #if JSON_DIAGNOSTIC_POSITIONS
     std::size_t start = 0;
@@ -5262,10 +5244,12 @@ struct throwing_sax
         return true;
     }
 
+    // LCOV_EXCL_START (throw_parse_failure parses JSON only)
     bool binary(binary_t& /*unused*/)
     {
         return true;
     }
+    // LCOV_EXCL_STOP
 
     bool start_object(std::size_t /*unused*/)
     {
@@ -5488,7 +5472,7 @@ inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
         e.moved_cap[n->off] = cap;
         return;
     }
-    reserve_moved(d);
+    // every caller has called reserve_moved() (see above), so neither push_back() can throw
     e.moved.push_back(seq);
     e.moved_cap.push_back(cap);
     n->off = static_cast<std::uint32_t>(e.moved.size() - 1);
@@ -5573,7 +5557,7 @@ inline node* find_parent(const document_data& d, const node* target)
     }
     if (target == lo)
     {
-        return nullptr;
+        return nullptr; // LCOV_EXCL_LINE (the root, or a new value's root, which is linked)
     }
     for (;;)
     {
@@ -6194,11 +6178,11 @@ NLOHMANN_VIEW_NOINLINE inline void check_utf8_scan(const unsigned char* p, std::
         }
         if (*q >= 0x80)
         {
-            check_utf8_bytewise(p, n, static_cast<std::size_t>(q - p));
-            return; // not reached: the scan stopped at ill-formed UTF-8
+            break; // ill-formed UTF-8: reported below
         }
         ++q; // a quote, backslash, or control character
     }
+    check_utf8_bytewise(p, n, static_cast<std::size_t>(q - p));
 }
 
 inline void check_utf8(const char* s, std::size_t n)
@@ -7792,10 +7776,6 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     d.edits.reset();
     d.base[2] = nullptr;
     d.owned.clear();
-    if (d.owned_image.empty() || image != d.owned_image.data())
-    {
-        d.owned_image.clear();
-    }
     d.arena.clear();
     d.indexes.clear();
     d.index_slots.clear();
@@ -8511,6 +8491,7 @@ class output_buffer
         : m_out(sized(out, estimate))
         , m_pos(&m_out[0])
         , m_end(m_pos + m_out.size())
+        , m_reserved((std::max)(estimate, m_out.size()))
     {}
 
     void finish()
@@ -8580,11 +8561,12 @@ class output_buffer
         const auto used = static_cast<std::size_t>(m_pos - m_out.data());
         // (a step does not go beyond the reserved estimate, so that a good
         // estimate is never copied to a larger allocation; not a clamp: the
-        // lower bound used + n + 256 can exceed capacity(), and then it must win)
-        const std::size_t size = (std::max)((std::min)(m_out.size() + step, m_out.capacity()), used + n + 256);
-        if (size > m_out.capacity())
+        // lower bound used + n + 256 can exceed m_reserved, and then it must win)
+        const std::size_t size = (std::max)((std::min)(m_out.size() + step, m_reserved), used + n + 256);
+        if (size > m_reserved)
         {
-            m_out.reserve((std::max)(m_out.capacity() * 2, size));
+            m_reserved = (std::max)(m_reserved * 2, size);
+            m_out.reserve(m_reserved);
         }
         m_out.resize(size);
         m_pos = &m_out[0] + used;
@@ -8594,6 +8576,9 @@ class output_buffer
     StringType& m_out;
     char* m_pos;
     char* m_end;
+    /// what was last passed to reserve(), a lower bound of the capacity
+    /// (StringType need not have a capacity() member)
+    std::size_t m_reserved;
 };
 
 /// The length of the run at s that dump() writes unchanged without
@@ -9105,7 +9090,7 @@ class view_serializer
             {
                 invalid_utf8(s, n.len); // (the scan stopped at ill-formed UTF-8)
             }
-            write_codepoint<false>(s[i], s + i, 1); // a quote, a backslash, or a control character
+            write_escaped(s[i]); // a quote, a backslash, or a control character
             ++i;
         }
         m_out.put('"');
@@ -9853,18 +9838,8 @@ class view_serializer
     /// a float node as dump() writes it
     void write_float_node(const node& n)
     {
-        write_float_node(n, fast_double {});
-    }
-
-    void write_float_node(const node& n, std::false_type /*other*/)
-    {
+        // (only for types other than double: doubles go through write_double_ahead())
         write_float(float_value<number_float_t>(m_doc, n));
-    }
-
-    void write_float_node(const node& n, std::true_type /*double*/)
-    {
-        m_out.reserve(64);
-        m_out.set_cursor(write_double_at(m_out.cursor(), n));
     }
 
     /*!
@@ -9961,10 +9936,11 @@ class view_serializer
     {
         const string_t dumped = BasicJsonType(string_t(reinterpret_cast<const char*>(s), n)).dump(); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         static_cast<void>(dumped);
-    }
+    } // LCOV_EXCL_LINE (dump() throws: the callers pass only ill-formed UTF-8)
 
-    template<bool EnsureAscii>
-    void write_codepoint(std::uint32_t codepoint, const unsigned char* bytes, std::size_t len)
+    /// write the escape sequence of a quote, a backslash or a control
+    /// character (the only bytes a run of plain output stops at)
+    void write_escaped(std::uint32_t codepoint)
     {
         switch (codepoint)
         {
@@ -9992,20 +9968,7 @@ class view_serializer
             default:
                 break;
         }
-        if (codepoint <= 0x1F || (EnsureAscii && codepoint >= 0x7F))
-        {
-            if (codepoint <= 0xFFFF)
-            {
-                write_u_escape(codepoint);
-            }
-            else
-            {
-                write_u_escape(0xD7C0u + (codepoint >> 10u));
-                write_u_escape(0xDC00u + (codepoint & 0x3FFu));
-            }
-            return;
-        }
-        m_out.put(reinterpret_cast<const char*>(bytes), len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) LCOV_EXCL_LINE (printable characters are copied in runs)
+        write_u_escape(codepoint); // (a control character)
     }
 
     void write_u_escape(std::uint32_t u)
@@ -10067,12 +10030,37 @@ namespace view
 template<typename T>
 struct value_tag {};
 
+/// whether basic_json reads T with a dedicated from_json() overload that does
+/// not accept a boolean: exactly number_integer_t, number_unsigned_t and
+/// number_float_t (the other arithmetic types convert a boolean to 0 or 1)
+template<typename T, typename BasicJsonType>
+struct rejects_boolean : std::integral_constant < bool,
+    std::is_same<T, typename BasicJsonType::number_integer_t>::value
+    || std::is_same<T, typename BasicJsonType::number_unsigned_t>::value
+    || std::is_same<T, typename BasicJsonType::number_float_t>::value >
+{};
+
+/// a boolean as T: 0 or 1
+template<typename T>
+NLOHMANN_VIEW_ALWAYS_INLINE T boolean_as(const document_data& /*d*/, const node& n, std::false_type /*rejects*/)
+{
+    return static_cast<T>((n.flags & node_flags::is_true) != 0);
+}
+
+/// a boolean as number_integer_t, number_unsigned_t or number_float_t: type_error.302, as in basic_json
+template<typename T>
+[[noreturn]] NLOHMANN_VIEW_ALWAYS_INLINE T boolean_as(const document_data& d, const node& n, std::true_type /*rejects*/)
+{
+    throw_type_error(error_site(&d, &n), exception_id::type_mismatch, "type must be number, but is ", value_type_name(static_cast<value_t>(n.kind)));
+}
+
 /*!
 @brief the number or boolean of a node converted to an arithmetic type
 
 As basic_json's get<T>() for arithmetic types: integers and floats are
-converted with static_cast, booleans give 0 or 1, and other types throw
-type_error.302.
+converted with static_cast, booleans give 0 or 1 (but throw type_error.302 for
+number_integer_t, number_unsigned_t and number_float_t, as basic_json does),
+and other types throw type_error.302.
 */
 template<typename T, typename BasicJsonType>
 NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const node& n)
@@ -10086,7 +10074,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const nod
         case value_t::number_float:
             return static_cast<T>(float_value<typename BasicJsonType::number_float_t>(d, n));
         case value_t::boolean:
-            return static_cast<T>((n.flags & node_flags::is_true) != 0);
+            return boolean_as<T>(d, n, rejects_boolean<T, BasicJsonType> {});
         case value_t::null:
         case value_t::object:
         case value_t::array:
@@ -11799,9 +11787,11 @@ class basic_json_document
         {
             // (as before: the library's adapter decides what a null stream yields)
             detail::view::append_adapter(buf, detail::input_adapter(file));
-            return;
         }
-        detail::view::append_file(buf, file);
+        else
+        {
+            detail::view::append_file(buf, file);
+        }
     }
 #endif
 

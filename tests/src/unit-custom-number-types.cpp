@@ -337,6 +337,52 @@ TEST_CASE("custom number types: integers beyond 64 bits")
         CHECK(wide_json::to_bson(fit_members) == nlohmann::json::to_bson(fit_members64));
     }
 
+    SECTION("MessagePack integers of every width")
+    {
+        // an integer of a number type wider than 64 bits is written with the
+        // smallest MessagePack integer that holds it, as for 64-bit types
+        const wide_json widths = wide_json::array(
+        {
+            make_int(-33), make_int(-100), make_int(-128), make_int(-129), make_int(-32768), make_int(-32769), make_int(-2147483648LL), make_int(-2147483649LL),
+            make_int(128), make_int(255), make_int(256), make_int(300), make_int(65535), make_int(65536), make_int(70000), make_int(4294967295LL), make_int(4294967296LL),
+            make_uint(128), make_uint(255), make_uint(256), make_uint(300), make_uint(65535), make_uint(65536), make_uint(70000), make_uint(4294967295ULL), make_uint(4294967296ULL)
+        });
+        const nlohmann::json widths64 = nlohmann::json::array(
+        {
+            -33, -100, -128, -129, -32768, -32769, -2147483648LL, -2147483649LL,
+            128, 255, 256, 300, 65535, 65536, 70000, 4294967295LL, 4294967296LL,
+            128u, 255u, 256u, 300u, 65535u, 65536u, 70000u, 4294967295ULL, 4294967296ULL
+        });
+        CHECK(wide_json::to_msgpack(widths) == nlohmann::json::to_msgpack(widths64));
+
+        // as single values, too
+        CHECK(wide_json::to_msgpack(make_int(-100)) == std::vector<std::uint8_t>({0xD0, 0x9C}));
+        CHECK(wide_json::to_msgpack(make_int(300)) == std::vector<std::uint8_t>({0xCD, 0x01, 0x2C}));
+        CHECK(wide_json::to_msgpack(make_int(70000)) == std::vector<std::uint8_t>({0xCE, 0x00, 0x01, 0x11, 0x70}));
+        CHECK(wide_json::to_msgpack(make_uint(300)) == std::vector<std::uint8_t>({0xCD, 0x01, 0x2C}));
+        CHECK(wide_json::to_msgpack(make_uint(70000)) == std::vector<std::uint8_t>({0xCE, 0x00, 0x01, 0x11, 0x70}));
+    }
+
+    SECTION("dump")
+    {
+        // beyond 64 bits, the digits are counted before they are written
+        CHECK(make_int(0).dump() == "0");
+        CHECK(make_int(two_64).dump() == "18446744073709551616");
+        CHECK(make_int(-two_64).dump() == "-18446744073709551616");
+        CHECK(make_int(two_100).dump() == "1267650600228229401496703205376");
+        CHECK(make_int(-two_100).dump() == "-1267650600228229401496703205376");
+        // powers of ten, where the count of digits ends on a single digit or two
+        const int128 ten_20 = static_cast<int128>(100000000000ULL) * static_cast<int128>(1000000000ULL);
+        CHECK(make_int(ten_20).dump() == "100000000000000000000");
+        CHECK(make_int(-ten_20).dump() == "-100000000000000000000");
+        CHECK(make_int(ten_20 * 10).dump() == "1000000000000000000000");
+        CHECK(make_int(ten_20 * 100).dump() == "10000000000000000000000");
+        CHECK(make_int(ten_20 * 1000).dump() == "100000000000000000000000");
+        CHECK(make_uint(static_cast<uint128>(ten_20) * 10u).dump() == "1000000000000000000000");
+        CHECK(make_uint((std::numeric_limits<uint128>::max)()).dump() == "340282366920938463463374607431768211455");
+        CHECK(make_int((std::numeric_limits<int128>::min)()).dump() == "-170141183460469231731687303715884105728");
+    }
+
     SECTION("BJData ND-array")
     {
         // an ND-array element beyond 64 bits does not fit any dtype, so the
@@ -416,4 +462,24 @@ TEST_CASE("custom number types")
         CHECK(minus_two_float == minus_two);
     }
 
+}
+
+TEST_CASE("custom number types: 32-bit integers in the binary formats")
+{
+    // integers narrower than 64 bits are widened (a signed one with its sign)
+    // before the CBOR, MessagePack, and UBJSON writers pick their encoding
+    using json32 = nlohmann::json::with_integers_t<std::int32_t, std::uint32_t>;
+    json32 values = json32::array();
+    values.push_back(std::uint32_t{0});
+    values.push_back(std::uint32_t{200});
+    values.push_back(std::uint32_t{4294967295u});
+    values.push_back(std::int32_t{-1});
+    values.push_back(std::int32_t{-2147483647 - 1});
+    REQUIRE(values[2].is_number_unsigned());
+    REQUIRE(values[4].is_number_integer());
+
+    const nlohmann::json values64 = {0u, 200u, 4294967295u, -1, -2147483648LL};
+    CHECK(json32::to_cbor(values) == nlohmann::json::to_cbor(values64));
+    CHECK(json32::to_msgpack(values) == nlohmann::json::to_msgpack(values64));
+    CHECK(json32::to_ubjson(values) == nlohmann::json::to_ubjson(values64));
 }

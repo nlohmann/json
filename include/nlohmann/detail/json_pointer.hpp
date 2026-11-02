@@ -304,7 +304,7 @@ class json_pointer
         result.reference_tokens.insert(result.reference_tokens.end(), lhs.reference_tokens.begin(), lhs.reference_tokens.end());
         result.reference_tokens.insert(result.reference_tokens.end(), rhs.reference_tokens.begin(), rhs.reference_tokens.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
@@ -315,7 +315,7 @@ class json_pointer
         result.reference_tokens.insert(result.reference_tokens.end(), lhs.reference_tokens.begin(), lhs.reference_tokens.end());
         result.reference_tokens.push_back(std::move(token));
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
@@ -2180,7 +2180,7 @@ class json_pointer
                     {
                         // create an entry in the array
                         current = &current->operator[](array_index<BasicJsonType>(token));
-                        break;
+                        break; // LCOV_EXCL_LINE (needs an array index with 10 or more digits: more than 1e9 elements)
                     }
 
                     /*
@@ -2217,7 +2217,7 @@ class json_pointer
         json_pointer<string_t> result;
         result.reference_tokens = reference_tokens;
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     json_pointer<string_t> convert()&&
     {

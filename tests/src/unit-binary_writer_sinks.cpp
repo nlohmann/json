@@ -14,7 +14,9 @@ using nlohmann::json;
 #include <array>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -767,3 +769,69 @@ TEST_CASE("a write that throws leaves the same bytes in every kind of output")
     }
 }
 #endif
+
+#if !defined(JSON_NOEXCEPTION)
+namespace
+{
+
+// an adapter whose every write fails
+class failing_adapter : public nlohmann::detail::output_adapter_protocol<char>
+{
+  public:
+    [[noreturn]] void write_character(char /*c*/) override
+    {
+        throw std::runtime_error("write failed");
+    }
+
+    [[noreturn]] void write_characters(const char* /*s*/, std::size_t /*length*/) override
+    {
+        throw std::runtime_error("write failed");
+    }
+};
+
+} // namespace
+#endif
+
+TEST_CASE("output adapters")
+{
+    SECTION("writing a single character")
+    {
+        // the writers pass whole buffers on, but an adapter takes single
+        // characters as well
+        std::vector<char> as_vector;
+        nlohmann::detail::output_vector_adapter<char> vector_adapter(as_vector);
+        vector_adapter.write_character('a');
+        vector_adapter.write_character('b');
+        CHECK(as_vector == std::vector<char>({'a', 'b'}));
+
+        std::ostringstream as_stream;
+        nlohmann::detail::output_stream_adapter<char> stream_adapter(as_stream);
+        stream_adapter.write_character('c');
+        stream_adapter.write_character('d');
+        CHECK(as_stream.str() == "cd");
+
+        std::string as_string;
+        nlohmann::detail::output_string_adapter<char> string_adapter(as_string);
+        string_adapter.write_character('e');
+        string_adapter.write_character('f');
+        CHECK(as_string == "ef");
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("a sink that is destroyed with characters left over")
+    {
+        // the destructor passes the pending characters on, as a write that
+        // threw leaves them there; the adapter failing then must not escape
+        {
+            nlohmann::detail::output_adapter_sink<char> sink(std::make_shared<failing_adapter>());
+            sink.write_character('x');
+        }
+
+        // while flush() reports the failure
+        nlohmann::detail::output_adapter_sink<char> sink(std::make_shared<failing_adapter>());
+        sink.write_character('x');
+        CHECK_THROWS_AS(sink.flush(), std::runtime_error&);
+        // (the character counts as written, so there is nothing left for the destructor)
+    }
+#endif
+}

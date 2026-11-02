@@ -547,6 +547,10 @@ TEST_CASE("json_view edits: errors")
     CHECK_THROWS_WITH_AS(d.set(json::json_pointer("/a/01"), 1), "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
     CHECK_THROWS_WITH_AS(d.set(root, json_editable_view()), "[json.exception.type_error.302] type must be a value, but is discarded", json::type_error&);
     CHECK_THROWS_WITH_AS(d.set(root, json::binary({1, 2})), "[json.exception.type_error.319] cannot store a binary value in a json_document", json::type_error&);
+    CHECK_THROWS_WITH_AS(d.set(root, json(json::value_t::discarded)), "[json.exception.type_error.302] type must be a value, but is discarded", json::type_error&);
+    // (an index that does not fit the document, in a null: basic_json would pad it with 4 Gi nulls)
+    CHECK_THROWS_AS(d.set(json::json_pointer("/z/4294967295"), 1), json::out_of_range&);
+    CHECK(root["z"].is_null());
 
 #if !defined(JSON_NOEXCEPTION)
     // invalid UTF-8 is rejected when it enters the document, with the error
@@ -570,6 +574,19 @@ TEST_CASE("json_view edits: errors")
     // nothing of the failed edits is visible
     CHECK(root.dump() == R"({"o":{"a":1},"a":[1,2],"n":1,"z":null})");
     static_cast<void>(other);
+}
+
+TEST_CASE("json_view edits: a container that was added is replaced by a scalar")
+{
+    // the view of an element that push_back() added is that of the new value itself, not of
+    // the slot that links to it: replacing it by a scalar has to find the container it is in
+    json_editable_document d = json_editable_document::parse(R"({"a": [1]})");
+    d.push_back(d.root()["a"], json::array({2, 3}));
+    d.push_back(d.root()["a"], json::object({{"k", json::array({4, 5})}}));
+    d.set(d.root()["a"][1], 6);
+    d.set(d.root()["a"][2]["k"], "s");
+    CHECK(d.root().dump() == R"({"a":[1,6,{"k":"s"}]})");
+    CHECK(d.root().materialize() == json::parse(R"({"a":[1,6,{"k":"s"}]})"));
 }
 
 #if !defined(JSON_NOEXCEPTION)

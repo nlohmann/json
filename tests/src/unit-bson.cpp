@@ -82,8 +82,20 @@ class huge_string_t : public std::string
         return result;
     }
 
+    // returns a copy of @a s whose size() pretends to be @a n
+    static huge_string_t as_size(const std::string& s, const size_type n)
+    {
+        huge_string_t result(s);
+        result.fake_size = n;
+        return result;
+    }
+
     size_type size() const noexcept
     {
+        if (fake_size != 0)
+        {
+            return fake_size;
+        }
         if (pretend_huge)
         {
             // one byte more than the BSON length field can represent
@@ -94,6 +106,7 @@ class huge_string_t : public std::string
 
   private:
     bool pretend_huge = false;
+    size_type fake_size = 0;
 };
 
 using huge_string_json = nlohmann::json::with_string_t<huge_string_t>;
@@ -266,6 +279,17 @@ TEST_CASE("BSON")
             j["s"] = huge_string_t::as_huge("value");
 
             CHECK_THROWS_WITH_AS(huge_string_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647", huge_string_json::out_of_range&);
+        }
+
+        SECTION("an array element that no longer fits the document")
+        {
+            // the string fits the length field, but not the document that
+            // holds it; nothing of it is written
+            const auto limit = static_cast<std::string::size_type>((std::numeric_limits<std::int32_t>::max)());
+            huge_string_json j;
+            j["a"] = huge_string_json::array({huge_string_t::as_size("value", limit - 8)});
+
+            CHECK_THROWS_AS(huge_string_json::to_bson(j), huge_string_json::out_of_range&);
         }
 
         SECTION("document")
@@ -897,6 +921,38 @@ TEST_CASE("BSON")
 
             json _;
             CHECK_THROWS_AS(_ = json::from_bson(input), json::parse_error&);
+        }
+
+        SECTION("binary member with subtype 0x02 (old binary) with a truncated inner length")
+        {
+            // the inner length field is cut off by the end of the input
+            std::vector<std::uint8_t> const input =
+            {
+                0x0F, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, 'a', 0x00, // entry: binary
+                0x08, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x02, // "old binary" subtype
+                0x01 // first byte of the inner length
+            };
+
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.110] parse error at byte 14: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
+            CHECK(json::from_bson(input, true, false).is_discarded());
+        }
+
+        SECTION("string member that is cut off by the end of the input")
+        {
+            std::vector<std::uint8_t> const input =
+            {
+                0x0F, 0x00, 0x00, 0x00, // size (little endian)
+                0x02, 'a', 0x00, // entry: string
+                0x0A, 0x00, 0x00, 0x00, // size of the string (little endian)
+                'b', 'c' // the string ends early
+            };
+
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.110] parse error at byte 14: syntax error while parsing BSON string: unexpected end of input", json::parse_error&);
+            CHECK(json::from_bson(input, true, false).is_discarded());
         }
 
         SECTION("Some more complex document")
@@ -2173,6 +2229,25 @@ value = depth % 2 == 0 ? json{{"a", std::move(value)}, {"b", {1, "x"}}} :
         CHECK_THROWS_AS(json::to_bson(value, output), json::out_of_range&);
         CHECK(output.empty());
     }
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("U+0000 in a long key is found at any position")
+    {
+        // the key is searched eight characters at a time
+        for (const std::string& key :
+                {
+                    std::string("abc\0defghijkl", 12), std::string("abcdefgh\0ijkl", 13), std::string("abcdefghijklmnop\0", 17), std::string("\0abcdefghijkl", 13),
+                    std::string("abcdefghijklmno\0", 16)
+                })
+        {
+            CAPTURE(key)
+            const json value = json::object({{key, 1}});
+            std::vector<std::uint8_t> output;
+            CHECK_THROWS_AS(json::to_bson(value, output), json::out_of_range&);
+            CHECK(output.empty());
+        }
+    }
+#endif
 
     SECTION("a binary subtype that doesn't fit a byte is rejected before anything is written (#5675)")
     {
