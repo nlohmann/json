@@ -886,8 +886,7 @@ public:
             // CustomBaseClass, whose constructor may allocate (#5995).
             data cur;
             cur.m_type = t;
-            using std::swap;
-            swap(cur.m_value, *this);
+            std::swap(cur.m_value, *this);
 
             destroy_bounded(cur, 0);
         }
