@@ -255,8 +255,9 @@ std::string diagnostics(const error_site site)
     std::string context;
 #if JSON_DIAGNOSTICS
     std::vector<std::string> tokens;
-    const bool found = edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens);
-    if (found && !tokens.empty())
+    // a value that is not found leaves no tokens, like the root
+    static_cast<void>(edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens));
+    if (!tokens.empty())
     {
         // the root value has no path, but still has a byte range
         std::string path;
