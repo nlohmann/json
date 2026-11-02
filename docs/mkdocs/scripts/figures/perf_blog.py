@@ -201,24 +201,24 @@ def digits():
 # ---------- overview: speedup per workload (Google Benchmark rows, 3.12.0 time / 3.13.0 time) ----------
 # (group, label, speedup), copied from the table "The short version"
 OVERVIEW = [
-    ("Parsing", "twitter.json", 3.06),
-    ("Parsing", "citm_catalog.json", 4.07),
-    ("Parsing", "canada.json", 3.31),
-    ("Parsing", "canada.json, indented", 6.34),
-    ("Parsing", "citm, ordered_json", 6.52),
-    ("Parsing", "twitter, std::ifstream", 2.46),
-    ("Parsing", "citm, FILE*", 4.70),
-    ("Parsing", "citm, accept()", 6.96),
-    ("Writing", "dump() twitter", 6.59),
-    ("Writing", "dump() canada", 2.94),
-    ("Writing", "dump(4) citm", 4.54),
-    ("Writing", "to_cbor() twitter", 4.30),
-    ("Reading CBOR", "twitter, memory", 3.19),
+    ("Parsing", "twitter.json", 3.02),
+    ("Parsing", "citm_catalog.json", 4.11),
+    ("Parsing", "canada.json", 3.41),
+    ("Parsing", "canada.json, indented", 6.59),
+    ("Parsing", "citm, ordered_json", 6.71),
+    ("Parsing", "twitter, std::ifstream", 2.44),
+    ("Parsing", "citm, FILE*", 4.71),
+    ("Parsing", "citm, accept()", 7.04),
+    ("Writing", "dump() twitter", 6.66),
+    ("Writing", "dump() canada", 2.93),
+    ("Writing", "dump(4) citm", 4.63),
+    ("Writing", "to_cbor() twitter", 4.48),
+    ("Reading CBOR", "twitter, memory", 3.18),
     ("Reading CBOR", "twitter, FILE*", 6.41),
-    ("Values", "diff() canada", 10.21),
-    ("Values", "iterate canada", 2.79),
+    ("Values", "diff() canada", 10.34),
+    ("Values", "iterate canada", 2.71),
     ("Values", "copy + destroy citm", 1.11),
-    ("Values", "== citm", 1.05),
+    ("Values", "== citm", 1.04),
 ]
 
 
@@ -396,15 +396,15 @@ def timeline():
 # ---------- cliffs: 3.12.0 and 3.13.0 times on a log axis ----------
 # (operation, 3.12.0 ms, 3.13.0 ms), copied from the table in "Fix the algorithm first"
 CLIFFS = [
-    ("diff() 64k numbers vs []", 4113, 10.1),
-    ("diff() 20k objects vs half", 119, 3.90),
-    ("parse() callback, 32k objects", 1363, 11.5),
-    ("operator< nested 24 deep", 63.7, 0.002),
-    ("operator< citm, 10x", 274, 3.83),
+    ("diff() 64k numbers vs []", 4140, 10.5),
+    ("diff() 20k objects vs half", 119, 3.99),
+    ("parse() callback, 32k objects", 1361, 12.1),
+    ("operator< nested 24 deep", 64.0, 0.002),
+    ("operator< citm, 10x", 278, 3.86),
     ("flatten() citm, ordered_json", 253, 1.37),
-    ("to_bson() 200 deep, 100x", 19.8, 0.352),
-    ("push_back() 100k, diagnostics", 1541, 5.11),
-    ("at(i) 10k, diagnostics", 44.0, 0.084),
+    ("to_bson() 200 deep, 100x", 19.9, 0.349),
+    ("push_back() 100k, diagnostics", 1532, 5.04),
+    ("at(i) 10k, diagnostics", 43.6, 0.081),
 ]
 
 

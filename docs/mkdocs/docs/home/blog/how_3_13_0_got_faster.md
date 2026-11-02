@@ -5,10 +5,10 @@
 <!-- Before publishing: set the date to the release date, and measure every number of this post again with the
      v3.13.0 tag (Appendix G describes the setup; tests/benchmarks/json_view/others/README.md has the commands of the
      comparison). Also refresh the line counts and the compile times in "The price". The numbers below are from
-     develop b2674a4a2f with the open non-draft pull requests #5990, #5991, #5992, #5996, #5997, #5998, #5999 and
-     #6000 merged (local branch local/all-prs-1101 at 71d735b73f): suite, timeline endpoint, Appendix D and the scalar
-     runs 11-02. The comparison with other libraries is from 10-31 (develop 9c349b1d7c with the then open pull
-     requests); the changes since don't touch json_document parsing, validation or dump(). -->
+     develop b2674a4a2f with the open non-draft pull requests #5990-#5992, #5996-#6006 and #6008 merged (local branch
+     local/all-prs-1102 at f970185114): suite, timeline endpoint, Appendix D and the scalar runs 11-02 (afternoon). The
+     comparison with other libraries is from 10-31 (develop 9c349b1d7c with the then open pull requests); json_document
+     parse, accept, dump and compare run the same instructions (within 0.25 %) with the headers of 11-02. -->
 
 Since 2016, the [README](https://github.com/nlohmann/json#readme) of this library has said this about speed:
 
@@ -64,7 +64,7 @@ The rows above are chosen to show the range. All 182 benchmarks of the suite:
 
 <p class="nj-caption" markdown>How many of the suite's 182 benchmarks got how much faster. The two below 1× are copying `citm_catalog.json` and `twitter.json` without destroying the copy. Every row is in [Appendix B](#b-3120-against-3130).</p>
 
-The median benchmark got 2.9× as fast. Copying and comparing values gained the least, and the largest
+The median benchmark got 3.0× as fast. Copying and comparing values gained the least, and the largest
 gains come from fixing algorithms rather than tuning them (theme <a class="nj-theme" href="#theme-7" title="theme 7">7</a>).
 
 Eight themes did most of the work:
@@ -687,8 +687,9 @@ with GCC.
 The binary readers also stopped taking every element through their general dispatch. When an array opens, the
 CBOR and MessagePack readers read the numbers, booleans and nulls that follow in one loop, and the UBJSON and BJData
 readers do the same for arrays with a type marker. Reading an array of a million integers from CBOR or MessagePack
-got 43 to 45 % faster, and `canada.json` 10 to 12 %. The loop is not free: 1,000 arrays nested in each other read 6 to
-8 % slower than without it, because each of them enters the loop only to find another array. We kept it.
+got 42 to 47 % faster, and `canada.json` 10 %. Arrays of one element skip the loop: in 1,000 arrays nested in each
+other, each entered it only to find another array, which cost 6 to 8 %. Now the loop costs nested arrays nothing
+measurable, and 100,000 arrays `[1,2]` up to 1.5 %.
 
 ### Smaller ones
 
@@ -1054,7 +1055,7 @@ loop). The walk allocates nothing and calls nothing that can throw, which fixed 
 destructor flattened children into a `std::vector`, which ignored the allocator type and could let `std::bad_alloc`
 escape from a `noexcept` destructor. A test checks with a counting allocator that destroying any value allocates
 nothing. Against 3.12.0, destroying a parsed document is
-1.24 to 1.55 times as fast in our suite, and destroying an array of one million small objects 1.37 times.
+1.24 to 1.55 times as fast in our suite, and destroying an array of one million small objects 1.39 times.
 
 ## <span class="nj-theme">8</span> Build a different data structure { #theme-8 }
 
@@ -1485,24 +1486,24 @@ The rows of the first chart:
 
 | workload | 3.12.0 | 3.13.0 | speedup |
 | --- | --: | --: | --: |
-| `json::parse()` of `twitter.json` | 3.14 ms | 1.03 ms | 3.1× |
-| `json::parse()` of `citm_catalog.json` | 7.16 ms | 1.76 ms | 4.1× |
-| `json::parse()` of `canada.json` | 14.8 ms | 4.48 ms | 3.3× |
-| `json::parse()` of `canada.json`, indented by 4 spaces | 33.1 ms | 5.22 ms | 6.3× |
-| `ordered_json::parse()` of `citm_catalog.json` | 10.7 ms | 1.63 ms | 6.5× |
-| `json::parse()` of `twitter.json` from an `std::ifstream` | 3.29 ms | 1.34 ms | 2.5× |
-| `json::parse()` of `citm_catalog.json` from a `FILE*` | 34.0 ms | 7.25 ms | 4.7× |
-| `json::accept()` of `citm_catalog.json` | 6.28 ms | 0.902 ms | 7.0× |
-| `dump()` of `twitter.json` | 1.37 ms | 0.207 ms | 6.6× |
-| `dump()` of `canada.json` | 6.63 ms | 2.25 ms | 2.9× |
-| `dump(4)` of `citm_catalog.json` | 1.89 ms | 0.417 ms | 4.5× |
-| `to_cbor()` of `twitter.json` | 0.625 ms | 0.145 ms | 4.3× |
-| `from_cbor()` of `twitter.json` from memory | 3.00 ms | 0.942 ms | 3.2× |
-| `from_cbor()` of `twitter.json` from a `FILE*` | 9.66 ms | 1.51 ms | 6.4× |
-| `diff()` of `canada.json` with every eighth scalar changed | 37.5 ms | 3.67 ms | 10.2× |
-| iterating over every value of `canada.json` | 0.859 ms | 0.308 ms | 2.8× |
-| copying `citm_catalog.json` and destroying the copy | 1.60 ms | 1.44 ms | 1.11× |
-| `==` of `citm_catalog.json` and a copy | 0.263 ms | 0.252 ms | 1.05× |
+| `json::parse()` of `twitter.json` | 3.18 ms | 1.05 ms | 3.0× |
+| `json::parse()` of `citm_catalog.json` | 7.30 ms | 1.78 ms | 4.1× |
+| `json::parse()` of `canada.json` | 15.1 ms | 4.42 ms | 3.4× |
+| `json::parse()` of `canada.json`, indented by 4 spaces | 33.9 ms | 5.15 ms | 6.6× |
+| `ordered_json::parse()` of `citm_catalog.json` | 10.9 ms | 1.62 ms | 6.7× |
+| `json::parse()` of `twitter.json` from an `std::ifstream` | 3.32 ms | 1.36 ms | 2.4× |
+| `json::parse()` of `citm_catalog.json` from a `FILE*` | 34.6 ms | 7.35 ms | 4.7× |
+| `json::accept()` of `citm_catalog.json` | 6.38 ms | 0.907 ms | 7.0× |
+| `dump()` of `twitter.json` | 1.39 ms | 0.209 ms | 6.7× |
+| `dump()` of `canada.json` | 6.69 ms | 2.29 ms | 2.9× |
+| `dump(4)` of `citm_catalog.json` | 1.92 ms | 0.415 ms | 4.6× |
+| `to_cbor()` of `twitter.json` | 0.634 ms | 0.142 ms | 4.5× |
+| `from_cbor()` of `twitter.json` from memory | 3.04 ms | 0.954 ms | 3.2× |
+| `from_cbor()` of `twitter.json` from a `FILE*` | 9.82 ms | 1.53 ms | 6.4× |
+| `diff()` of `canada.json` with every eighth scalar changed | 38.1 ms | 3.69 ms | 10.3× |
+| iterating over every value of `canada.json` | 0.868 ms | 0.321 ms | 2.7× |
+| copying `citm_catalog.json` and destroying the copy | 1.62 ms | 1.46 ms | 1.11× |
+| `==` of `citm_catalog.json` and a copy | 0.265 ms | 0.255 ms | 1.04× |
 
 <p class="nj-table-caption" markdown>Time per call with 3.12.0 and 3.13.0, Google Benchmark suite on an Apple M1 Max, median of 8 runs; the speedup is the old time divided by the new one. The parse rows do not include destroying the result (the suite pauses the timer for that).</p>
 
@@ -1510,188 +1511,188 @@ The rows of the first chart:
 
     | benchmark | 3.12.0 | 3.13.0 | speedup |
     | --- | --: | --: | --: |
-    | `Accept/canada` | 12.5 ms | 2.29 ms | 5.48× |
-    | `Accept/citm_catalog` | 6.28 ms | 902 µs | 6.96× |
-    | `Accept/floats` | 112 ms | 22 ms | 5.10× |
-    | `Accept/jeopardy` | 213 ms | 57 ms | 3.74× |
-    | `Accept/signed_ints` | 113 ms | 27.4 ms | 4.15× |
-    | `Accept/small_signed_ints` | 55.2 ms | 17.5 ms | 3.16× |
-    | `Accept/twitter` | 2.44 ms | 469 µs | 5.19× |
-    | `Accept/unsigned_ints` | 112 ms | 28.7 ms | 3.90× |
-    | `BinaryToCbor/1024` | 291 ns | 104 ns | 2.78× |
-    | `BinaryToCbor/128` | 245 ns | 114 ns | 2.14× |
-    | `BinaryToCbor/16384` | 957 ns | 417 ns | 2.30× |
-    | `BinaryToCbor/16` | 242 ns | 48.6 ns | 4.98× |
-    | `BinaryToCbor/2048` | 315 ns | 124 ns | 2.54× |
-    | `BinaryToCbor/256` | 264 ns | 89.9 ns | 2.94× |
-    | `BinaryToCbor/32768` | 1.54 µs | 794 ns | 1.95× |
-    | `BinaryToCbor/32` | 248 ns | 49.4 ns | 5.02× |
-    | `BinaryToCbor/4096` | 399 ns | 169 ns | 2.36× |
-    | `BinaryToCbor/512` | 290 ns | 101 ns | 2.88× |
-    | `BinaryToCbor/64` | 247 ns | 82 ns | 3.01× |
-    | `BinaryToCbor/8192` | 507 ns | 249 ns | 2.04× |
-    | `BinaryToCbor/8` | 244 ns | 48.6 ns | 5.02× |
-    | `Copy/canada` | 3.6 ms | 2.84 ms | 1.27× |
-    | `Copy/citm_catalog` | 1.6 ms | 1.44 ms | 1.11× |
-    | `Copy/twitter` | 792 µs | 718 µs | 1.10× |
-    | `CopyAssign/canada` | 3.63 ms | 2.88 ms | 1.26× |
-    | `CopyAssign/citm_catalog` | 1.64 ms | 1.49 ms | 1.10× |
-    | `CopyAssign/twitter` | 799 µs | 735 µs | 1.09× |
-    | `CopyOnly/canada` | 1.51 ms | 1.49 ms | 1.01× |
-    | `CopyOnly/citm_catalog` | 733 µs | 782 µs | 0.94× |
-    | `CopyOnly/twitter` | 395 µs | 399 µs | 0.99× |
-    | `CopyRing/canada` | 3.64 ms | 2.88 ms | 1.27× |
-    | `CopyRing/citm_catalog` | 1.66 ms | 1.51 ms | 1.10× |
-    | `CopyRing/twitter` | 838 µs | 768 µs | 1.09× |
-    | `DestroyOnly/canada` | 2.1 ms | 1.36 ms | 1.55× |
-    | `DestroyOnly/citm_catalog` | 864 µs | 670 µs | 1.29× |
-    | `DestroyOnly/twitter` | 399 µs | 322 µs | 1.24× |
-    | `Diff/canada` | 37.5 ms | 3.67 ms | 10.2× |
-    | `Diff/citm_catalog` | 6.65 ms | 1.07 ms | 6.19× |
-    | `Diff/twitter` | 4.74 ms | 637 µs | 7.44× |
-    | `Dump/canada / -` | 6.63 ms | 2.25 ms | 2.94× |
-    | `Dump/canada / 4` | 8.7 ms | 2.98 ms | 2.92× |
-    | `Dump/citm_catalog / -` | 1.36 ms | 291 µs | 4.67× |
-    | `Dump/citm_catalog / 4` | 1.89 ms | 417 µs | 4.54× |
-    | `Dump/floats / -` | 62.3 ms | 23.2 ms | 2.68× |
-    | `Dump/floats / 4` | 70 ms | 24.1 ms | 2.90× |
-    | `Dump/jeopardy / -` | 201 ms | 29.9 ms | 6.73× |
-    | `Dump/jeopardy / 4` | 218 ms | 33.9 ms | 6.43× |
-    | `Dump/signed_ints / -` | 23.2 ms | 10.5 ms | 2.21× |
-    | `Dump/signed_ints / 4` | 31.5 ms | 11.1 ms | 2.84× |
-    | `Dump/small_signed_ints / -` | 17.5 ms | 7.83 ms | 2.24× |
-    | `Dump/small_signed_ints / 4` | 24.6 ms | 8.63 ms | 2.85× |
-    | `Dump/twitter / -` | 1.37 ms | 207 µs | 6.59× |
-    | `Dump/twitter / 4` | 1.55 ms | 249 µs | 6.24× |
-    | `Dump/unsigned_ints / -` | 23.1 ms | 7.94 ms | 2.92× |
-    | `Dump/unsigned_ints / 4` | 31.3 ms | 8.36 ms | 3.75× |
-    | `Equal/canada` | 451 µs | 332 µs | 1.36× |
-    | `Equal/citm_catalog` | 263 µs | 252 µs | 1.05× |
-    | `Equal/twitter` | 139 µs | 127 µs | 1.10× |
-    | `Flatten/canada` | 28 ms | 11 ms | 2.55× |
-    | `Flatten/citm_catalog` | 6.34 ms | 2.97 ms | 2.13× |
-    | `Flatten/twitter` | 3.45 ms | 2.01 ms | 1.72× |
-    | `FlattenOrdered/citm_catalog` | 249 ms | 1.37 ms | 181× |
-    | `FlattenOrdered/twitter` | 48.9 ms | 846 µs | 57.8× |
-    | `FromBinaryBuffer/bjdata / canada` | 8.13 ms | 4.08 ms | 1.99× |
-    | `FromBinaryBuffer/bjdata / twitter` | 3.07 ms | 948 µs | 3.24× |
-    | `FromBinaryBuffer/bjdata_optimized / canada` | 8.57 ms | 2.43 ms | 3.53× |
-    | `FromBinaryBuffer/bjdata_optimized / twitter` | 3.08 ms | 948 µs | 3.25× |
-    | `FromBinaryBuffer/bson / canada` | 9.32 ms | 4.25 ms | 2.19× |
-    | `FromBinaryBuffer/bson / citm_catalog` | 3.8 ms | 1.55 ms | 2.45× |
-    | `FromBinaryBuffer/bson / twitter` | 3.05 ms | 910 µs | 3.35× |
-    | `FromBinaryBuffer/cbor / canada` | 8.27 ms | 2.06 ms | 4.01× |
-    | `FromBinaryBuffer/cbor / citm_catalog` | 3.63 ms | 1.42 ms | 2.56× |
-    | `FromBinaryBuffer/cbor / floats` | 29 ms | 5.39 ms | 5.37× |
-    | `FromBinaryBuffer/cbor / jeopardy` | 355 ms | 112 ms | 3.18× |
-    | `FromBinaryBuffer/cbor / signed_ints` | 35 ms | 9.53 ms | 3.67× |
-    | `FromBinaryBuffer/cbor / twitter` | 3 ms | 942 µs | 3.18× |
-    | `FromBinaryBuffer/msgpack / canada` | 8.23 ms | 2.05 ms | 4.01× |
-    | `FromBinaryBuffer/msgpack / citm_catalog` | 3.68 ms | 1.4 ms | 2.63× |
-    | `FromBinaryBuffer/msgpack / jeopardy` | 352 ms | 107 ms | 3.28× |
-    | `FromBinaryBuffer/msgpack / twitter` | 2.98 ms | 921 µs | 3.24× |
-    | `FromBinaryBuffer/ubjson / canada` | 8.14 ms | 4.1 ms | 1.98× |
-    | `FromBinaryBuffer/ubjson / citm_catalog` | 3.76 ms | 1.71 ms | 2.19× |
-    | `FromBinaryBuffer/ubjson / jeopardy` | 363 ms | 112 ms | 3.24× |
-    | `FromBinaryBuffer/ubjson / twitter` | 3.08 ms | 945 µs | 3.26× |
-    | `FromBinaryBuffer/ubjson_optimized / canada` | 8.39 ms | 2.38 ms | 3.52× |
-    | `FromBinaryBuffer/ubjson_optimized / twitter` | 3.08 ms | 944 µs | 3.26× |
-    | `FromBinaryFile/bjdata / twitter` | 10.3 ms | 1.89 ms | 5.44× |
-    | `FromBinaryFile/bson / twitter` | 9.95 ms | 1.76 ms | 5.64× |
-    | `FromBinaryFile/cbor / canada` | 14 ms | 4.39 ms | 3.18× |
-    | `FromBinaryFile/cbor / twitter` | 9.66 ms | 1.51 ms | 6.41× |
-    | `FromBinaryFile/ubjson / canada` | 13.4 ms | 6.2 ms | 2.16× |
-    | `FromBinaryFile/ubjson / twitter` | 10.2 ms | 1.89 ms | 5.40× |
-    | `FromBinaryShape/containers / bjdata` | 14 ms | 6.96 ms | 2.02× |
-    | `FromBinaryShape/containers / bson` | 16.8 ms | 7.56 ms | 2.23× |
-    | `FromBinaryShape/containers / cbor` | 13.6 ms | 3.88 ms | 3.50× |
-    | `FromBinaryShape/containers / msgpack` | 13.5 ms | 3.82 ms | 3.53× |
-    | `FromBinaryShape/containers / ubjson_optimized` | 14.6 ms | 4.45 ms | 3.28× |
-    | `FromBinaryShape/containers / ubjson` | 14 ms | 6.98 ms | 2.01× |
-    | `FromBinaryShape/nested / bjdata` | 94.6 µs | 37.8 µs | 2.50× |
-    | `FromBinaryShape/nested / bson` | 101 µs | 41.4 µs | 2.43× |
-    | `FromBinaryShape/nested / cbor` | 92 µs | 37.3 µs | 2.47× |
-    | `FromBinaryShape/nested / msgpack` | 90.7 µs | 36.4 µs | 2.50× |
-    | `FromBinaryShape/nested / ubjson` | 94.5 µs | 37.9 µs | 2.49× |
-    | `FromBinaryShape/scalars / bjdata` | 24.2 ms | 11.2 ms | 2.15× |
-    | `FromBinaryShape/scalars / cbor` | 25 ms | 5.53 ms | 4.52× |
-    | `FromBinaryShape/scalars / msgpack` | 24 ms | 5.47 ms | 4.39× |
-    | `FromBinaryShape/scalars / ubjson` | 24.4 ms | 11.4 ms | 2.14× |
-    | `FromCborChunkedString/10000 chunks` | 89 µs | 81.6 µs | 1.09× |
-    | `FromMsgpack/canada` | 14 ms | 4.41 ms | 3.17× |
-    | `FromMsgpack/citm_catalog` | 8.79 ms | 2.22 ms | 3.96× |
-    | `FromMsgpack/floats` | 58.7 ms | 27.4 ms | 2.15× |
-    | `FromMsgpack/jeopardy` | 1,120 ms | 179 ms | 6.22× |
-    | `FromMsgpack/signed_ints` | 61.1 ms | 32.1 ms | 1.90× |
-    | `FromMsgpack/small_signed_ints` | 61.9 ms | 33.2 ms | 1.86× |
-    | `FromMsgpack/twitter` | 9.66 ms | 1.45 ms | 6.65× |
-    | `FromMsgpack/unsigned_ints` | 54.7 ms | 27.2 ms | 2.01× |
-    | `GetArray<std::array<int, 1000>>` | 2.21 µs | 630 ns | 3.51× |
-    | `GetArray<std::deque<int>>` | 7.97 µs | 1.16 µs | 6.88× |
-    | `GetArray<std::set<int>>` | 57.3 µs | 40.7 µs | 1.41× |
-    | `GetArray<std::vector<int>>` | 6.55 µs | 657 ns | 9.96× |
-    | `GetMap/citm_catalog` | 3.36 ms | 2.36 ms | 1.43× |
-    | `GetVectorDouble/floats` | 6.57 ms | 644 µs | 10.2× |
-    | `GetVectorInt/signed_ints` | 7.91 ms | 3.37 ms | 2.35× |
-    | `Iterate/canada` | 859 µs | 308 µs | 2.79× |
-    | `Iterate/citm_catalog` | 293 µs | 179 µs | 1.64× |
-    | `Iterate/twitter` | 85.9 µs | 61.5 µs | 1.40× |
-    | `JsonPointerAt/citm_catalog` | 1.8 ms | 1.11 ms | 1.63× |
-    | `JsonPointerAt/twitter` | 778 µs | 582 µs | 1.34× |
-    | `JsonPointerContains/citm_catalog` | 2.67 ms | 1.25 ms | 2.14× |
-    | `JsonPointerContains/twitter` | 1.27 ms | 610 µs | 2.09× |
-    | `JsonPointerParse/citm_catalog` | 5.61 ms | 2.17 ms | 2.59× |
-    | `JsonPointerParse/twitter` | 2.4 ms | 980 µs | 2.45× |
-    | `JsonPointerToString/citm_catalog` | 6.56 ms | 1.86 ms | 3.52× |
-    | `JsonPointerToString/twitter` | 2.15 ms | 795 µs | 2.70× |
-    | `ParseFILE/canada` | 51.8 ms | 13.8 ms | 3.74× |
-    | `ParseFILE/citm_catalog` | 34 ms | 7.25 ms | 4.70× |
-    | `ParseFILE/twitter` | 13.3 ms | 3.28 ms | 4.06× |
-    | `ParseFile/canada` | 17.2 ms | 6.2 ms | 2.78× |
-    | `ParseFile/citm_catalog` | 7.59 ms | 2.4 ms | 3.16× |
-    | `ParseFile/floats` | 127 ms | 47.2 ms | 2.68× |
-    | `ParseFile/jeopardy` | 320 ms | 156 ms | 2.06× |
-    | `ParseFile/signed_ints` | 123 ms | 44.9 ms | 2.75× |
-    | `ParseFile/small_signed_ints` | 62.2 ms | 32.5 ms | 1.91× |
-    | `ParseFile/twitter` | 3.29 ms | 1.34 ms | 2.46× |
-    | `ParseFile/unsigned_ints` | 119 ms | 46 ms | 2.59× |
-    | `ParseIndented/canada / 4` | 33.1 ms | 5.22 ms | 6.34× |
-    | `ParseIndented/citm_catalog / 4` | 7.15 ms | 1.76 ms | 4.06× |
-    | `ParseIndented/jeopardy / 4` | 330 ms | 130 ms | 2.54× |
-    | `ParseIndented/twitter / 4` | 3.53 ms | 1.09 ms | 3.24× |
-    | `ParseStreamValues/ndjson` | 6.99 ms | 3.7 ms | 1.89× |
-    | `ParseStreamValues/numbers` | 1.9 ms | 380 µs | 5.02× |
-    | `ParseString/canada` | 14.8 ms | 4.48 ms | 3.31× |
-    | `ParseString/citm_catalog` | 7.16 ms | 1.76 ms | 4.07× |
-    | `ParseString/floats` | 117 ms | 28.6 ms | 4.09× |
-    | `ParseString/jeopardy` | 297 ms | 127 ms | 2.34× |
-    | `ParseString/signed_ints` | 118 ms | 31 ms | 3.80× |
-    | `ParseString/small_signed_ints` | 60.2 ms | 24 ms | 2.51× |
-    | `ParseString/twitter` | 3.14 ms | 1.03 ms | 3.06× |
-    | `ParseString/unsigned_ints` | 117 ms | 32.2 ms | 3.64× |
-    | `ParseStringOrdered/canada` | 14.9 ms | 4.37 ms | 3.40× |
-    | `ParseStringOrdered/citm_catalog` | 10.7 ms | 1.63 ms | 6.52× |
-    | `ParseStringOrdered/jeopardy` | 356 ms | 110 ms | 3.24× |
-    | `ParseStringOrdered/twitter` | 4.3 ms | 903 µs | 4.76× |
-    | `Patch/canada` | 9.91 ms | 3.33 ms | 2.97× |
-    | `Patch/citm_catalog` | 2.49 ms | 1.6 ms | 1.55× |
-    | `Patch/twitter` | 1.44 ms | 846 µs | 1.70× |
-    | `SaxParse/canada` | 12.7 ms | 3.18 ms | 3.98× |
-    | `SaxParse/citm_catalog` | 6.3 ms | 948 µs | 6.64× |
-    | `SaxParse/twitter` | 2.44 ms | 471 µs | 5.18× |
-    | `ToCbor/canada` | 1.36 ms | 546 µs | 2.49× |
-    | `ToCbor/citm_catalog` | 1.01 ms | 256 µs | 3.93× |
-    | `ToCbor/floats` | 8.79 ms | 1.88 ms | 4.69× |
-    | `ToCbor/jeopardy` | 70.8 ms | 21.2 ms | 3.35× |
-    | `ToCbor/signed_ints` | 11.2 ms | 2.74 ms | 4.07× |
-    | `ToCbor/small_signed_ints` | 10.1 ms | 2.37 ms | 4.25× |
-    | `ToCbor/twitter` | 625 µs | 145 µs | 4.30× |
-    | `ToCbor/unsigned_ints` | 7.92 ms | 2.75 ms | 2.88× |
-    | `ToJsonStrings/copy` | 5.77 ms | 5.52 ms | 1.04× |
-    | `ToJsonStrings/move` | 5.77 ms | 3.02 ms | 1.91× |
-    | `Unflatten/canada` | 40.5 ms | 10.7 ms | 3.79× |
-    | `Unflatten/citm_catalog` | 9.52 ms | 3.42 ms | 2.78× |
-    | `Unflatten/twitter` | 4.47 ms | 2.08 ms | 2.15× |
+    | `Accept/canada` | 12.7 ms | 2.32 ms | 5.47× |
+    | `Accept/citm_catalog` | 6.38 ms | 907 µs | 7.04× |
+    | `Accept/floats` | 113 ms | 22.3 ms | 5.07× |
+    | `Accept/jeopardy` | 219 ms | 57.5 ms | 3.81× |
+    | `Accept/signed_ints` | 115 ms | 27.7 ms | 4.16× |
+    | `Accept/small_signed_ints` | 55.9 ms | 17.7 ms | 3.16× |
+    | `Accept/twitter` | 2.46 ms | 475 µs | 5.18× |
+    | `Accept/unsigned_ints` | 114 ms | 29.1 ms | 3.91× |
+    | `BinaryToCbor/1024` | 303 ns | 102 ns | 2.98× |
+    | `BinaryToCbor/128` | 247 ns | 115 ns | 2.14× |
+    | `BinaryToCbor/16384` | 949 ns | 408 ns | 2.33× |
+    | `BinaryToCbor/16` | 240 ns | 48.7 ns | 4.92× |
+    | `BinaryToCbor/2048` | 320 ns | 119 ns | 2.68× |
+    | `BinaryToCbor/256` | 265 ns | 88.1 ns | 3.01× |
+    | `BinaryToCbor/32768` | 1.53 µs | 801 ns | 1.91× |
+    | `BinaryToCbor/32` | 249 ns | 48.5 ns | 5.14× |
+    | `BinaryToCbor/4096` | 412 ns | 169 ns | 2.43× |
+    | `BinaryToCbor/512` | 289 ns | 97.3 ns | 2.97× |
+    | `BinaryToCbor/64` | 249 ns | 83.9 ns | 2.97× |
+    | `BinaryToCbor/8192` | 511 ns | 248 ns | 2.07× |
+    | `BinaryToCbor/8` | 243 ns | 48.5 ns | 5.01× |
+    | `Copy/canada` | 3.65 ms | 2.87 ms | 1.27× |
+    | `Copy/citm_catalog` | 1.62 ms | 1.46 ms | 1.11× |
+    | `Copy/twitter` | 799 µs | 726 µs | 1.10× |
+    | `CopyAssign/canada` | 3.67 ms | 2.88 ms | 1.27× |
+    | `CopyAssign/citm_catalog` | 1.65 ms | 1.49 ms | 1.11× |
+    | `CopyAssign/twitter` | 808 µs | 739 µs | 1.09× |
+    | `CopyOnly/canada` | 1.52 ms | 1.5 ms | 1.01× |
+    | `CopyOnly/citm_catalog` | 743 µs | 782 µs | 0.95× |
+    | `CopyOnly/twitter` | 400 µs | 403 µs | 0.99× |
+    | `CopyRing/canada` | 3.68 ms | 2.89 ms | 1.28× |
+    | `CopyRing/citm_catalog` | 1.69 ms | 1.51 ms | 1.12× |
+    | `CopyRing/twitter` | 850 µs | 770 µs | 1.10× |
+    | `DestroyOnly/canada` | 2.13 ms | 1.37 ms | 1.55× |
+    | `DestroyOnly/citm_catalog` | 876 µs | 674 µs | 1.30× |
+    | `DestroyOnly/twitter` | 401 µs | 323 µs | 1.24× |
+    | `Diff/canada` | 38.1 ms | 3.69 ms | 10.3× |
+    | `Diff/citm_catalog` | 6.78 ms | 1.07 ms | 6.34× |
+    | `Diff/twitter` | 4.83 ms | 639 µs | 7.55× |
+    | `Dump/canada / -` | 6.69 ms | 2.29 ms | 2.93× |
+    | `Dump/canada / 4` | 8.91 ms | 3.01 ms | 2.96× |
+    | `Dump/citm_catalog / -` | 1.39 ms | 291 µs | 4.78× |
+    | `Dump/citm_catalog / 4` | 1.92 ms | 415 µs | 4.63× |
+    | `Dump/floats / -` | 63.2 ms | 23.6 ms | 2.68× |
+    | `Dump/floats / 4` | 71.1 ms | 24.4 ms | 2.91× |
+    | `Dump/jeopardy / -` | 203 ms | 30.7 ms | 6.62× |
+    | `Dump/jeopardy / 4` | 219 ms | 34.6 ms | 6.32× |
+    | `Dump/signed_ints / -` | 23.7 ms | 10.6 ms | 2.24× |
+    | `Dump/signed_ints / 4` | 32 ms | 11.2 ms | 2.85× |
+    | `Dump/small_signed_ints / -` | 17.8 ms | 7.92 ms | 2.25× |
+    | `Dump/small_signed_ints / 4` | 25 ms | 8.76 ms | 2.85× |
+    | `Dump/twitter / -` | 1.39 ms | 209 µs | 6.66× |
+    | `Dump/twitter / 4` | 1.58 ms | 246 µs | 6.43× |
+    | `Dump/unsigned_ints / -` | 23.6 ms | 8 ms | 2.95× |
+    | `Dump/unsigned_ints / 4` | 31.9 ms | 8.42 ms | 3.79× |
+    | `Equal/canada` | 454 µs | 336 µs | 1.35× |
+    | `Equal/citm_catalog` | 265 µs | 255 µs | 1.04× |
+    | `Equal/twitter` | 140 µs | 128 µs | 1.10× |
+    | `Flatten/canada` | 28.4 ms | 11.1 ms | 2.57× |
+    | `Flatten/citm_catalog` | 6.37 ms | 3 ms | 2.12× |
+    | `Flatten/twitter` | 3.48 ms | 2.04 ms | 1.70× |
+    | `FlattenOrdered/citm_catalog` | 251 ms | 1.39 ms | 181× |
+    | `FlattenOrdered/twitter` | 48.9 ms | 860 µs | 56.9× |
+    | `FromBinaryBuffer/bjdata / canada` | 8.22 ms | 4.07 ms | 2.02× |
+    | `FromBinaryBuffer/bjdata / twitter` | 3.11 ms | 958 µs | 3.25× |
+    | `FromBinaryBuffer/bjdata_optimized / canada` | 8.68 ms | 2.4 ms | 3.62× |
+    | `FromBinaryBuffer/bjdata_optimized / twitter` | 3.12 ms | 952 µs | 3.28× |
+    | `FromBinaryBuffer/bson / canada` | 9.43 ms | 4.2 ms | 2.24× |
+    | `FromBinaryBuffer/bson / citm_catalog` | 3.86 ms | 1.56 ms | 2.47× |
+    | `FromBinaryBuffer/bson / twitter` | 3.07 ms | 924 µs | 3.32× |
+    | `FromBinaryBuffer/cbor / canada` | 8.34 ms | 2.06 ms | 4.05× |
+    | `FromBinaryBuffer/cbor / citm_catalog` | 3.68 ms | 1.44 ms | 2.56× |
+    | `FromBinaryBuffer/cbor / floats` | 29 ms | 5.43 ms | 5.33× |
+    | `FromBinaryBuffer/cbor / jeopardy` | 357 ms | 113 ms | 3.17× |
+    | `FromBinaryBuffer/cbor / signed_ints` | 35.6 ms | 9.69 ms | 3.68× |
+    | `FromBinaryBuffer/cbor / twitter` | 3.04 ms | 954 µs | 3.18× |
+    | `FromBinaryBuffer/msgpack / canada` | 8.33 ms | 2.06 ms | 4.03× |
+    | `FromBinaryBuffer/msgpack / citm_catalog` | 3.68 ms | 1.41 ms | 2.61× |
+    | `FromBinaryBuffer/msgpack / jeopardy` | 355 ms | 109 ms | 3.25× |
+    | `FromBinaryBuffer/msgpack / twitter` | 3.03 ms | 935 µs | 3.24× |
+    | `FromBinaryBuffer/ubjson / canada` | 8.24 ms | 4.08 ms | 2.02× |
+    | `FromBinaryBuffer/ubjson / citm_catalog` | 3.81 ms | 1.72 ms | 2.21× |
+    | `FromBinaryBuffer/ubjson / jeopardy` | 364 ms | 113 ms | 3.21× |
+    | `FromBinaryBuffer/ubjson / twitter` | 3.11 ms | 957 µs | 3.25× |
+    | `FromBinaryBuffer/ubjson_optimized / canada` | 8.48 ms | 2.37 ms | 3.58× |
+    | `FromBinaryBuffer/ubjson_optimized / twitter` | 3.11 ms | 952 µs | 3.26× |
+    | `FromBinaryFile/bjdata / twitter` | 10.4 ms | 1.9 ms | 5.46× |
+    | `FromBinaryFile/bson / twitter` | 10.1 ms | 1.8 ms | 5.62× |
+    | `FromBinaryFile/cbor / canada` | 14.2 ms | 4.41 ms | 3.21× |
+    | `FromBinaryFile/cbor / twitter` | 9.82 ms | 1.53 ms | 6.41× |
+    | `FromBinaryFile/ubjson / canada` | 13.7 ms | 6.31 ms | 2.16× |
+    | `FromBinaryFile/ubjson / twitter` | 10.4 ms | 1.9 ms | 5.45× |
+    | `FromBinaryShape/containers / bjdata` | 14.2 ms | 7.17 ms | 1.98× |
+    | `FromBinaryShape/containers / bson` | 17 ms | 7.73 ms | 2.20× |
+    | `FromBinaryShape/containers / cbor` | 13.7 ms | 3.89 ms | 3.53× |
+    | `FromBinaryShape/containers / msgpack` | 13.7 ms | 3.84 ms | 3.56× |
+    | `FromBinaryShape/containers / ubjson_optimized` | 14.8 ms | 4.42 ms | 3.33× |
+    | `FromBinaryShape/containers / ubjson` | 14.2 ms | 7.17 ms | 1.98× |
+    | `FromBinaryShape/nested / bjdata` | 93.4 µs | 38 µs | 2.46× |
+    | `FromBinaryShape/nested / bson` | 99.8 µs | 42 µs | 2.38× |
+    | `FromBinaryShape/nested / cbor` | 92.9 µs | 35.1 µs | 2.64× |
+    | `FromBinaryShape/nested / msgpack` | 90.7 µs | 34.6 µs | 2.62× |
+    | `FromBinaryShape/nested / ubjson` | 93.9 µs | 38.1 µs | 2.47× |
+    | `FromBinaryShape/scalars / bjdata` | 24.4 ms | 11.4 ms | 2.15× |
+    | `FromBinaryShape/scalars / cbor` | 25.4 ms | 5.63 ms | 4.52× |
+    | `FromBinaryShape/scalars / msgpack` | 24.3 ms | 5.53 ms | 4.40× |
+    | `FromBinaryShape/scalars / ubjson` | 24.7 ms | 11.4 ms | 2.16× |
+    | `FromCborChunkedString/10000 chunks` | 89.8 µs | 81.4 µs | 1.10× |
+    | `FromMsgpack/canada` | 14.1 ms | 4.42 ms | 3.20× |
+    | `FromMsgpack/citm_catalog` | 8.88 ms | 2.25 ms | 3.94× |
+    | `FromMsgpack/floats` | 59.3 ms | 27.7 ms | 2.14× |
+    | `FromMsgpack/jeopardy` | 1,130 ms | 182 ms | 6.21× |
+    | `FromMsgpack/signed_ints` | 62.2 ms | 32.8 ms | 1.90× |
+    | `FromMsgpack/small_signed_ints` | 62.6 ms | 33.7 ms | 1.86× |
+    | `FromMsgpack/twitter` | 9.78 ms | 1.47 ms | 6.64× |
+    | `FromMsgpack/unsigned_ints` | 55.5 ms | 27.7 ms | 2.01× |
+    | `GetArray<std::array<int, 1000>>` | 2.23 µs | 640 ns | 3.49× |
+    | `GetArray<std::deque<int>>` | 8.13 µs | 1.16 µs | 7.00× |
+    | `GetArray<std::set<int>>` | 58.4 µs | 41.8 µs | 1.40× |
+    | `GetArray<std::vector<int>>` | 6.66 µs | 666 ns | 9.99× |
+    | `GetMap/citm_catalog` | 3.41 ms | 2.4 ms | 1.42× |
+    | `GetVectorDouble/floats` | 6.68 ms | 642 µs | 10.4× |
+    | `GetVectorInt/signed_ints` | 8.04 ms | 3.35 ms | 2.40× |
+    | `Iterate/canada` | 868 µs | 321 µs | 2.71× |
+    | `Iterate/citm_catalog` | 298 µs | 168 µs | 1.78× |
+    | `Iterate/twitter` | 87 µs | 62.1 µs | 1.40× |
+    | `JsonPointerAt/citm_catalog` | 1.83 ms | 1.14 ms | 1.60× |
+    | `JsonPointerAt/twitter` | 788 µs | 594 µs | 1.33× |
+    | `JsonPointerContains/citm_catalog` | 2.71 ms | 1.23 ms | 2.20× |
+    | `JsonPointerContains/twitter` | 1.29 ms | 609 µs | 2.13× |
+    | `JsonPointerParse/citm_catalog` | 5.67 ms | 2.17 ms | 2.61× |
+    | `JsonPointerParse/twitter` | 2.41 ms | 1 ms | 2.41× |
+    | `JsonPointerToString/citm_catalog` | 6.62 ms | 1.88 ms | 3.53× |
+    | `JsonPointerToString/twitter` | 2.18 ms | 806 µs | 2.70× |
+    | `ParseFILE/canada` | 52.3 ms | 13.9 ms | 3.77× |
+    | `ParseFILE/citm_catalog` | 34.6 ms | 7.35 ms | 4.71× |
+    | `ParseFILE/twitter` | 13.6 ms | 3.31 ms | 4.11× |
+    | `ParseFile/canada` | 17.4 ms | 6.14 ms | 2.84× |
+    | `ParseFile/citm_catalog` | 7.67 ms | 2.42 ms | 3.16× |
+    | `ParseFile/floats` | 127 ms | 47.2 ms | 2.70× |
+    | `ParseFile/jeopardy` | 328 ms | 155 ms | 2.12× |
+    | `ParseFile/signed_ints` | 125 ms | 45.4 ms | 2.75× |
+    | `ParseFile/small_signed_ints` | 63 ms | 32.6 ms | 1.93× |
+    | `ParseFile/twitter` | 3.32 ms | 1.36 ms | 2.44× |
+    | `ParseFile/unsigned_ints` | 121 ms | 46.6 ms | 2.59× |
+    | `ParseIndented/canada / 4` | 33.9 ms | 5.15 ms | 6.59× |
+    | `ParseIndented/citm_catalog / 4` | 7.23 ms | 1.78 ms | 4.05× |
+    | `ParseIndented/jeopardy / 4` | 335 ms | 131 ms | 2.55× |
+    | `ParseIndented/twitter / 4` | 3.59 ms | 1.12 ms | 3.20× |
+    | `ParseStreamValues/ndjson` | 7.01 ms | 3.71 ms | 1.89× |
+    | `ParseStreamValues/numbers` | 1.89 ms | 381 µs | 4.98× |
+    | `ParseString/canada` | 15.1 ms | 4.42 ms | 3.41× |
+    | `ParseString/citm_catalog` | 7.3 ms | 1.78 ms | 4.11× |
+    | `ParseString/floats` | 119 ms | 27.6 ms | 4.30× |
+    | `ParseString/jeopardy` | 303 ms | 128 ms | 2.36× |
+    | `ParseString/signed_ints` | 120 ms | 31.2 ms | 3.84× |
+    | `ParseString/small_signed_ints` | 60.6 ms | 24.1 ms | 2.52× |
+    | `ParseString/twitter` | 3.18 ms | 1.05 ms | 3.02× |
+    | `ParseString/unsigned_ints` | 119 ms | 32.2 ms | 3.69× |
+    | `ParseStringOrdered/canada` | 15.1 ms | 4.37 ms | 3.45× |
+    | `ParseStringOrdered/citm_catalog` | 10.9 ms | 1.62 ms | 6.71× |
+    | `ParseStringOrdered/jeopardy` | 361 ms | 110 ms | 3.29× |
+    | `ParseStringOrdered/twitter` | 4.36 ms | 906 µs | 4.81× |
+    | `Patch/canada` | 9.98 ms | 3.37 ms | 2.96× |
+    | `Patch/citm_catalog` | 2.53 ms | 1.61 ms | 1.57× |
+    | `Patch/twitter` | 1.46 ms | 851 µs | 1.71× |
+    | `SaxParse/canada` | 12.8 ms | 3.22 ms | 3.97× |
+    | `SaxParse/citm_catalog` | 6.41 ms | 983 µs | 6.52× |
+    | `SaxParse/twitter` | 2.48 ms | 478 µs | 5.19× |
+    | `ToCbor/canada` | 1.37 ms | 545 µs | 2.51× |
+    | `ToCbor/citm_catalog` | 1.02 ms | 257 µs | 3.99× |
+    | `ToCbor/floats` | 8.91 ms | 1.89 ms | 4.71× |
+    | `ToCbor/jeopardy` | 72 ms | 21.3 ms | 3.37× |
+    | `ToCbor/signed_ints` | 11.3 ms | 2.76 ms | 4.10× |
+    | `ToCbor/small_signed_ints` | 10.2 ms | 2.4 ms | 4.25× |
+    | `ToCbor/twitter` | 634 µs | 142 µs | 4.48× |
+    | `ToCbor/unsigned_ints` | 8 ms | 2.79 ms | 2.87× |
+    | `ToJsonStrings/copy` | 5.82 ms | 5.54 ms | 1.05× |
+    | `ToJsonStrings/move` | 5.82 ms | 3.02 ms | 1.92× |
+    | `Unflatten/canada` | 41.1 ms | 10.8 ms | 3.80× |
+    | `Unflatten/citm_catalog` | 9.7 ms | 3.46 ms | 2.80× |
+    | `Unflatten/twitter` | 4.52 ms | 2.11 ms | 2.14× |
 
 ### C. The timeline
 
@@ -1766,15 +1767,15 @@ one binary with six code layouts: they were equal within 0.2 %.
 
 | operation | 3.12.0 | 3.13.0 | speedup | cause | PR |
 | --- | --: | --: | --: | --- | --- |
-| `diff()` of an array of 64,000 numbers against an empty array | 4,113 ms | 10.1 ms | 408× | each `remove` was inserted at the front of the patch | [#5461][5461] |
-| `diff()` of an array of 20,000 objects against every second one of them | 119 ms | 3.90 ms | 30× | the same | [#5461][5461] |
-| `parse()` with a callback that rejects half of 32,000 objects | 1,363 ms | 11.5 ms | 119× | each rejected value was searched for from the start of its parent | [#5457][5457] |
-| `<` on two equal values nested 24 levels deep (C++11 to C++17) | 63.7 ms | 0.002 ms | exponential | `std::vector`'s `<` asks `a < b` and `b < a`, and both recurse | [#5390][5390] |
-| `<` on `citm_catalog.json` and a copy, 10× (C++11 to C++17) | 274 ms | 3.83 ms | 72× | the same | [#5390][5390] |
+| `diff()` of an array of 64,000 numbers against an empty array | 4,140 ms | 10.5 ms | 396× | each `remove` was inserted at the front of the patch | [#5461][5461] |
+| `diff()` of an array of 20,000 objects against every second one of them | 119 ms | 3.99 ms | 30× | the same | [#5461][5461] |
+| `parse()` with a callback that rejects half of 32,000 objects | 1,361 ms | 12.1 ms | 113× | each rejected value was searched for from the start of its parent | [#5457][5457] |
+| `<` on two equal values nested 24 levels deep (C++11 to C++17) | 64.0 ms | 0.002 ms | exponential | `std::vector`'s `<` asks `a < b` and `b < a`, and both recurse | [#5390][5390] |
+| `<` on `citm_catalog.json` and a copy, 10× (C++11 to C++17) | 278 ms | 3.86 ms | 72× | the same | [#5390][5390] |
 | `flatten()` of `citm_catalog.json` as `ordered_json` | 253 ms | 1.37 ms | 184× | every new key was looked up linearly | [#5834][5834] |
-| `to_bson()` of a value nested 200 levels deep, 100× | 19.8 ms | 0.352 ms | 56× | each document's size was computed by walking everything below it again | [#5553][5553], [#5979][5979] |
-| 100,000 × `push_back()` on an `ordered_json` with [`JSON_DIAGNOSTICS`](../../api/macros/json_diagnostics.md) | 1,541 ms | 5.11 ms | 301× | every insert re-pointed the parent pointers of all elements | [#5832][5832] |
-| 10,000 × `at(i)` on an `ordered_json` array with `JSON_DIAGNOSTICS` | 44.0 ms | 0.084 ms | 523× | the same | [#5832][5832] |
+| `to_bson()` of a value nested 200 levels deep, 100× | 19.9 ms | 0.349 ms | 57× | each document's size was computed by walking everything below it again | [#5553][5553], [#5979][5979] |
+| 100,000 × `push_back()` on an `ordered_json` with [`JSON_DIAGNOSTICS`](../../api/macros/json_diagnostics.md) | 1,532 ms | 5.04 ms | 304× | every insert re-pointed the parent pointers of all elements | [#5832][5832] |
+| 10,000 × `at(i)` on an `ordered_json` array with `JSON_DIAGNOSTICS` | 43.6 ms | 0.081 ms | 539× | the same | [#5832][5832] |
 
 <p class="nj-table-caption" markdown>Operations that were quadratic or worse in 3.12.0, timed with both versions (C++17, `-O3`, median of 3 interleaved runs).</p>
 
@@ -2257,8 +2258,8 @@ removed because 3.12.0 has no BON8.
 | machine | Apple M1 Max laptop on AC power, macOS 27.0.1 |
 | compiler | Apple clang 21, libc++ |
 | flags | `-O3 -flto -DNDEBUG`, the compiler's default standard, C++14 |
-| suite | 2 rounds × 4 repetitions per version, random interleaving, each round of a version started only when the load average was below 4 and repeated when it rose above 5 while running; the median of all 8 |
-| noise | the coefficient of variation was 3 % or less for 178 of the 182 rows with 3.12.0 and 177 with 3.13.0; the largest was 6.5 %, not counting one 3.13.0 run that a disturbance made 2.7× as slow |
+| suite | 3 rounds × 4 repetitions per version, random interleaving, each round of a version started only when the load average was below 4 and repeated when it rose above 5 while running; of 3.12.0 and 3.13.0, the round that differed from the other two by 3.7 % and 1.5 % overall was dropped; the median of the remaining 8 |
+| noise | the coefficient of variation was 3 % or less for 172 of the 182 rows with 3.12.0 and 174 with 3.13.0; the largest was 7.3 %, not counting one 3.12.0 run of a 1.5 µs benchmark that a disturbance made 1.4× as slow |
 | inputs | the files of [Appendix A](#a-test-files), and number-heavy files |
 
 <p class="nj-table-caption" markdown>Setup of the Google Benchmark comparison of 3.12.0 and 3.13.0.</p>
@@ -2437,7 +2438,7 @@ measure binary size or memory use.
   positions on error [#5809][5809];
   binary readers' copy [#5501][5501]; `ordered_json` growth [#5609][5609]; arrays at their final size
   [#5882][5882]; moving keys [#5458][5458], [#5855][5855]; separator check [#5592][5592]; CBOR keys [#5328][5328];
-  `accept()` without copies [#5978][5978]; runs of scalars in binary arrays [#5975][5975], [#5980][5980], [#5981][5981].
+  `accept()` without copies [#5978][5978]; runs of scalars in binary arrays [#5975][5975], [#5980][5980], [#5981][5981], [#6008][6008].
 - <a class="nj-theme" href="#theme-5" title="theme 5">5</a> **Read the assembly:** stack canary [#5854][5854]; exceptions and inlining [#5838][5838], [#5840][5840],
   [#5839][5839], [#5836][5836]; aliasing [#5633][5633]; forced inlining [#5878][5878]; branch-free selections
   [#5908][5908]; code size [#5902][5902].
@@ -2622,3 +2623,4 @@ These are the checks behind the themes:
 [5980]: https://github.com/nlohmann/json/pull/5980
 [5981]: https://github.com/nlohmann/json/pull/5981
 [5982]: https://github.com/nlohmann/json/pull/5982
+[6008]: https://github.com/nlohmann/json/pull/6008

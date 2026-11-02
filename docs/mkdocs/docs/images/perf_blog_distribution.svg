@@ -1,6 +1,6 @@
 <svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 560 250" role="img" aria-labelledby="nj-blog-dist nj-blog-dist-d" xmlns="http://www.w3.org/2000/svg">
 <title id="nj-blog-dist">Speedup of 3.13.0 over 3.12.0 for all 182 benchmarks of the suite</title>
-<desc id="nj-blog-dist-d">Bars counting the benchmarks per speedup range: below 1x: 2; 1 to 1.5x: 21; 1.5 to 2x: 14; 2 to 3x: 58; 3 to 5x: 57; 5 to 10x: 26; 10x or more: 4. Median 2.9x, geometric mean 3.0x.</desc>
+<desc id="nj-blog-dist-d">Bars counting the benchmarks per speedup range: below 1x: 2; 1 to 1.5x: 21; 1.5 to 2x: 14; 2 to 3x: 58; 3 to 5x: 58; 5 to 10x: 25; 10x or more: 4. Median 3.0x, geometric mean 3.0x.</desc>
 <line class="nj-charts-grid" x1="52" y1="196" x2="548" y2="196"/>
 <text class="nj-charts-tick nj-charts-tick--r" x="46" y="200">0</text>
 <line class="nj-charts-grid" x1="52" y1="144.571" x2="548" y2="144.571"/>
@@ -21,11 +21,11 @@
 <rect class="nj-charts-c1" x="272.6" y="46.9" width="54.9" height="149.1" rx="3"><title>2 to 3&#215;: 58</title></rect>
 <text class="nj-charts-val" x="300.0" y="41.9" text-anchor="middle">58</text>
 <text class="nj-charts-tick" x="300.0" y="212.0">2 to 3&#215;</text>
-<rect class="nj-charts-c1" x="343.4" y="49.4" width="54.9" height="146.6" rx="3"><title>3 to 5&#215;: 57</title></rect>
-<text class="nj-charts-val" x="370.9" y="44.4" text-anchor="middle">57</text>
+<rect class="nj-charts-c1" x="343.4" y="46.9" width="54.9" height="149.1" rx="3"><title>3 to 5&#215;: 58</title></rect>
+<text class="nj-charts-val" x="370.9" y="41.9" text-anchor="middle">58</text>
 <text class="nj-charts-tick" x="370.9" y="212.0">3 to 5&#215;</text>
-<rect class="nj-charts-c1" x="414.3" y="129.1" width="54.9" height="66.9" rx="3"><title>5 to 10&#215;: 26</title></rect>
-<text class="nj-charts-val" x="441.7" y="124.1" text-anchor="middle">26</text>
+<rect class="nj-charts-c1" x="414.3" y="131.7" width="54.9" height="64.3" rx="3"><title>5 to 10&#215;: 25</title></rect>
+<text class="nj-charts-val" x="441.7" y="126.7" text-anchor="middle">25</text>
 <text class="nj-charts-tick" x="441.7" y="212.0">5 to 10&#215;</text>
 <rect class="nj-charts-c1" x="485.1" y="185.7" width="54.9" height="10.3" rx="3"><title>10&#215; or more: 4</title></rect>
 <text class="nj-charts-val" x="512.6" y="180.7" text-anchor="middle">4</text>
