@@ -1616,9 +1616,9 @@ TEST_CASE("json_view get<T>() of a boolean (#5988)")
     SECTION("the exceptions of the exact number types")
     {
         const json_document d = json_document::parse("true");
-        CHECK_THROWS_WITH_AS(d.root().get<json::number_integer_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
-        CHECK_THROWS_WITH_AS(d.root().get<json::number_unsigned_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
-        CHECK_THROWS_WITH_AS(d.root().get<json::number_float_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(d.root().get<json::number_integer_t>(), json_view_test::message("type_error.302", "", 0, 4, "type must be number, but is boolean").c_str(), json::type_error&);
+        CHECK_THROWS_WITH_AS(d.root().get<json::number_unsigned_t>(), json_view_test::message("type_error.302", "", 0, 4, "type must be number, but is boolean").c_str(), json::type_error&);
+        CHECK_THROWS_WITH_AS(d.root().get<json::number_float_t>(), json_view_test::message("type_error.302", "", 0, 4, "type must be number, but is boolean").c_str(), json::type_error&);
         CHECK(d.root().get<int>() == 1);
         // get_to() and value() go through get<T>()
         json::number_float_t x = 0;
