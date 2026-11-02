@@ -46,6 +46,8 @@ C++ types, and finally serialize it again.
   [BJData](binary_formats/bjdata.md), [BON8](binary_formats/bon8.md), [BSON](binary_formats/bson.md),
   [CBOR](binary_formats/cbor.md), [MessagePack](binary_formats/messagepack.md), or [UBJSON](binary_formats/ubjson.md).
 - [Binary values](binary_values.md) — store and exchange raw byte sequences.
+- [Reading and writing files](files.md) — read and write files safely, including replacing a file without
+  corrupting it.
 
 ## How values are stored and configured
 

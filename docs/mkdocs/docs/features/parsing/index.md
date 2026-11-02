@@ -35,6 +35,8 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
+See [Reading and writing files](../files.md) for checking that the file was opened and for writing files safely.
+
 The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which
 is read as UTF-16 or UTF-32 — depending on the character type — and converted to UTF-8; see the
 [`parse`](../../api/basic_json/parse.md) page for an example. A single input may contain only one JSON value.
