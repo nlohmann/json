@@ -1113,21 +1113,14 @@ class serializer
                 {
                     // the code point is at least 0x60 (smaller ones are handled
                     // above) and is not printable ASCII (which the scanner
-                    // copies): it is DEL (0x7F) under EnsureAscii or a non-ASCII
-                    // character
+                    // copies). Under EnsureAscii it is DEL (0x7F): every
+                    // well-formed multi-byte character is escaped by
+                    // write_u_escapes() above, so decode() only ever accepts a
+                    // single byte here, and nothing of it was buffered
                     if (EnsureAscii)
                     {
                         JSON_ASSERT(codepoint == 0x7F);
-                        if (error_handler == error_handler_t::keep)
-                        {
-                            // this character was buffered as raw bytes below
-                            // in case it turned out to be part of an
-                            // ill-formed sequence (which is kept as is); now
-                            // that it decoded to a well-formed code point,
-                            // undo that and \u-escape it like any other
-                            // character instead
-                            bytes = bytes_after_last_accept;
-                        }
+                        JSON_ASSERT(bytes == bytes_after_last_accept);
                         write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
                     }
                     else

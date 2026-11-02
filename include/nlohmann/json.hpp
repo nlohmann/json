@@ -1579,7 +1579,7 @@ public:
         auto src_it = src_object.cbegin();
         for (auto& element : *dst.m_data.m_value.object)
         {
-            if (JSON_HEDLEY_LIKELY(src_it != src_object.cend() && copy_keys_equal(src_it->first, element.first)))
+            if (JSON_HEDLEY_LIKELY(copy_keys_equal(src_it->first, element.first)))
             {
                 copy_shallow(src_it->second, element.second, worklist);
                 ++src_it;
@@ -5438,8 +5438,15 @@ public:
                 return (*lhs.m_data.m_value.object) op (*rhs.m_data.m_value.object);                                   \
             }                                                                                            \
             \
-            JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                 \
-            \
+                /* same-type scalars never get here: the inline fast path of the operator handles them */ \
+            case value_t::null:                                                                          \
+            case value_t::boolean:                                                                       \
+            case value_t::number_integer:                                                                \
+            case value_t::number_unsigned:                                                               \
+            case value_t::number_float:                                                                  \
+                JSON_ASSERT(false); /* NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) */ \
+                return (unordered_result);                                                               \
+                \
             case value_t::string:                                                                        \
                 return (*lhs.m_data.m_value.string) op (*rhs.m_data.m_value.string);                                   \
                 \
@@ -5479,7 +5486,7 @@ public:
                ? (number_integer_t(-1) op number_integer_t(1))                                           \
                : (static_cast<number_unsigned_t>(lhs.m_data.m_value.number_integer) op rhs.m_data.m_value.number_unsigned); \
     }                                                                                             \
-    else if(compares_unordered(lhs, rhs))\
+    else if(lhs_type == value_t::discarded || rhs_type == value_t::discarded)\
     {\
         return (unordered_result);\
     }\
