@@ -401,7 +401,7 @@ CLIFFS = [
     ("parse() callback, 32k objects", 1361, 12.1),
     ("operator< nested 24 deep", 64.0, 0.002),
     ("operator< citm, 10x", 278, 3.86),
-    ("flatten() citm, ordered_json", 253, 1.37),
+    ("flatten() citm, ordered_json", 251, 1.39),
     ("to_bson() 200 deep, 100x", 19.9, 0.349),
     ("push_back() 100k, diagnostics", 1532, 5.04),
     ("at(i) 10k, diagnostics", 43.6, 0.081),
