@@ -107,8 +107,23 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     explicit iter_impl(pointer object) noexcept : m_object(object)
     {
         JSON_ASSERT(m_object != nullptr);
-        // m_it is value-initialized: its iterators are singular, and the
-        // primitive iterator is in its "uninitialized" state
+
+        // m_it is already value-initialized, so this is not needed for
+        // correctness; it is kept because GCC generates faster loops with it
+        // (iterating a parsed document is 0.5-2.7 % slower without it, #6005)
+        if (m_object->is_object())
+        {
+            m_it.object_iterator = typename object_t::iterator();
+        }
+        else if (m_object->is_array())
+        {
+            m_it.array_iterator = typename array_t::iterator();
+        }
+        else
+        {
+            // primitive (is_primitive(), including discarded)
+            m_it.primitive_iterator = primitive_iterator_t();
+        }
     }
 
     /*!
