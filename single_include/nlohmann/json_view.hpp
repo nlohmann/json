@@ -8511,6 +8511,7 @@ class output_buffer
         : m_out(sized(out, estimate))
         , m_pos(&m_out[0])
         , m_end(m_pos + m_out.size())
+        , m_reserved((std::max)(estimate, m_out.size()))
     {}
 
     void finish()
@@ -8580,11 +8581,12 @@ class output_buffer
         const auto used = static_cast<std::size_t>(m_pos - m_out.data());
         // (a step does not go beyond the reserved estimate, so that a good
         // estimate is never copied to a larger allocation; not a clamp: the
-        // lower bound used + n + 256 can exceed capacity(), and then it must win)
-        const std::size_t size = (std::max)((std::min)(m_out.size() + step, m_out.capacity()), used + n + 256);
-        if (size > m_out.capacity())
+        // lower bound used + n + 256 can exceed m_reserved, and then it must win)
+        const std::size_t size = (std::max)((std::min)(m_out.size() + step, m_reserved), used + n + 256);
+        if (size > m_reserved)
         {
-            m_out.reserve((std::max)(m_out.capacity() * 2, size));
+            m_reserved = (std::max)(m_reserved * 2, size);
+            m_out.reserve(m_reserved);
         }
         m_out.resize(size);
         m_pos = &m_out[0] + used;
@@ -8594,6 +8596,9 @@ class output_buffer
     StringType& m_out;
     char* m_pos;
     char* m_end;
+    /// what was last passed to reserve(), a lower bound of the capacity
+    /// (StringType need not have a capacity() member)
+    std::size_t m_reserved;
 };
 
 /// The length of the run at s that dump() writes unchanged without
