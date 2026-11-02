@@ -492,7 +492,7 @@ TEST_CASE("alternative string type with json_view")
     using alt_document = nlohmann::basic_json_document<alt_json, nlohmann::view_mode::read_only>;
     using alt_editable_document = nlohmann::basic_json_document<alt_json, nlohmann::view_mode::editable>;
 
-    const char* text = "{\"a\":[1,\"x\\u00e4\"],\"b\":{\"c\":true,\"d\":null},\"e\":2.5}";
+    const char* text = R"({"a":[1,"x\u00e4"],"b":{"c":true,"d":null},"e":2.5})";
     const alt_json j = alt_json::parse(text);
 
     SECTION("read-only document")
