@@ -28,7 +28,7 @@ This type is a [`basic_json_view`](basic_json_view/index.md) of a value of a [`j
 
 - [`json_document`](json_document.md) - the document type this view refers into
 - [`ordered_json_view`](ordered_json_view.md) - the corresponding view for `ordered_json_document`
-- [Zero-copy JSON views](../features/json_view.md) - how to parse, inspect and edit a document without building a tree
+- [Zero-copy JSON views](../features/json_view/index.md) - how to parse, inspect and edit a document without building a tree
 
 ## Version history
 

@@ -52,7 +52,7 @@ Constant.
 
 - [`parse`](parse.md) - deserialize from a compatible input
 - [`is_discarded`](is_discarded.md) - return whether the last parse failed
-- [Zero-copy JSON views](../../features/json_view.md#ownership-and-lifetime) - who owns the source text and for how long
+- [Zero-copy JSON views](../../features/json_view/lifetime.md) - who owns the source text and for how long
 
 ## Version history
 

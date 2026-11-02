@@ -58,7 +58,7 @@ placeholder for "no value yet" and later be assigned a real view.
 - [`is_discarded`](is_discarded.md) - return whether the view is invalid
 - [`root`](../basic_json_document/root.md) - the view of a document's root value
 - [`view_mode`](../view_mode.md) - whether a document and its views can be edited
-- [Zero-copy JSON views](../../features/json_view.md#ownership-and-lifetime) - how long a view stays valid
+- [Zero-copy JSON views](../../features/json_view/lifetime.md) - how long a view stays valid
 
 ## Version history
 

@@ -56,7 +56,7 @@ The public headers are in [`include/nlohmann`](https://github.com/nlohmann/json/
 - [`json_view.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_view.hpp) is a separate,
   optional header that defines [`basic_json_document`](../api/basic_json_document/index.md) and
   [`basic_json_view`](../api/basic_json_view/index.md), a flat-index, read-only, non-owning way to look at a parsed
-  JSON text; see [Zero-copy JSON views](../features/json_view.md). It builds on `json.hpp` internals (it requires the
+  JSON text; see [Zero-copy JSON views](../features/json_view/index.md). It builds on `json.hpp` internals (it requires the
   same library version) and has its own `detail/view/` subdirectory.
 
 Everything else lives in [`detail/`](https://github.com/nlohmann/json/tree/develop/include/nlohmann/detail) and namespace `nlohmann::detail`, which is not part of the public API. Paths
@@ -175,7 +175,7 @@ maintains the invariant that the pointer matching `m_type` is never null; `asser
 
 ## Node index of JSON views
 
-A [`basic_json_document`](../api/basic_json_document/index.md) (see [Zero-copy JSON views](../features/json_view.md))
+A [`basic_json_document`](../api/basic_json_document/index.md) (see [Zero-copy JSON views](../features/json_view/index.md))
 does not build a tree of values. Its parser
 ([`detail/view/builder.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/builder.hpp))
 writes a flat array of 16-byte nodes, one per value and one per object key, in document order. A
@@ -466,7 +466,7 @@ release. Besides the components above, it contains:
 - [`adl_serializer`](../api/adl_serializer/index.md) - customization point for type conversions
 - [`json_sax`](../api/json_sax/index.md) - interface of the SAX parser events
 - [SAX Interface](../features/parsing/sax_interface.md) - how to consume parser events without building a DOM
-- [Zero-copy JSON views](../features/json_view.md) - the flat node index that backs views and documents
+- [Zero-copy JSON views](../features/json_view/index.md) - the flat node index that backs views and documents
 - [Template Parameter Requirements](../features/types/template_parameters.md) - the template parameters of basic_json
 - [Serialization](../features/serialization.md) - the output side of the library
 - [`nlohmann` Namespace](../features/namespace.md) - how the library namespace is structured

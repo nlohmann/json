@@ -74,7 +74,7 @@ compile; see [`parse`](parse.md#notes).
 
 - [`parse`](parse.md) - deserialize from a compatible input, borrowing it where possible
 - [`owns_source`](owns_source.md) - return whether the document holds its own copy of the text
-- [Zero-copy JSON views](../../features/json_view.md#ownership-and-lifetime) - borrowing or copying the source text
+- [Zero-copy JSON views](../../features/json_view/lifetime.md) - borrowing or copying the source text
 
 ## Version history
 

@@ -24,7 +24,7 @@ static basic_json_document load(std::vector<std::uint8_t>&& image,
 
 In every overload, the node index is copied into storage the document itself owns — so that it is properly aligned,
 and, for an [editable](index.md#edits) document, can be edited — while the text and the decoded strings stay in
-`image`. The hash indexes [large objects](../../features/json_view.md) use for lookup are rebuilt, exactly as after
+`image`. The hash indexes [large objects](../../features/json_view/index.md) use for lookup are rebuilt, exactly as after
 parsing.
 
 ## Parameters
@@ -172,7 +172,7 @@ returned document, and any [view](../basic_json_view/index.md) taken from it, is
 - [`save`](save.md) - write the document as an image
 - [`owns_source`](owns_source.md) - return whether the document holds its own copy of the text
 - [`parse`](parse.md) - deserialize from JSON text instead of an image
-- [Images](../../features/json_view.md#images) - why and when to use images
+- [Images](../../features/json_view/images.md) - why and when to use images
 
 ## Version history
 

@@ -96,7 +96,7 @@ Like [`set`](set.md) on a member or an element, `push_back` never moves an exist
 - [`root`](root.md) - the view of the root value
 - [`BasicJsonType::push_back`](../basic_json/push_back.md) - the corresponding function of `basic_json`
 - [Edits](index.md#edits) - what an edit guarantees, for every overload
-- [Zero-copy JSON views](../../features/json_view.md#editing-a-document) - what an edit guarantees and costs
+- [Zero-copy JSON views](../../features/json_view/editing.md) - what an edit guarantees and costs
 
 ## Version history
 
