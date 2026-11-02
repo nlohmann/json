@@ -1553,11 +1553,19 @@ TEST_CASE("regression tests 1")
 
         SECTION("a missing member of an object")
         {
+            my_json j = make();
+#ifdef JSON_NO_THREAD_LOCAL
+            // the objects below the outermost one are not copied by their
+            // object_t here, but member by member, which keeps their
+            // timestamps correct: "c" is not mistaken for "b" and is inserted
+            CHECK(j[my_json::json_pointer("/k/a/c/d")].is_null());
+            CHECK(j["x"]["a"].dump() == R"({"b":1,"c":{"d":null}})");
+#else
             // the timestamp of "c" is that of "b" again, so that emplace()
             // finds the member "b", a number, which has no member "d"
-            my_json j = make();
             CHECK_THROWS_AS(j[my_json::json_pointer("/k/a/c/d")], my_json::out_of_range&);
             CHECK(j["x"]["a"].dump() == R"({"b":1})");
+#endif
         }
 
         SECTION("a null value is converted to an object")

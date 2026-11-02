@@ -139,20 +139,20 @@ namespace
 class strict_key
 {
   public:
-    strict_key() = default;
-
     strict_key(const char* value)
         : m_value(value)
     {}
 
     strict_key(const std::string& /*value*/) = delete;
 
+#if JSON_DIAGNOSTICS
     // Required by JSON_DIAGNOSTICS, which reads object keys through data()
     // when building the path of an exception.
     const char* data() const noexcept
     {
         return m_value.data();
     }
+#endif
 
     friend bool operator<(const strict_key& lhs, const strict_key& rhs)
     {
@@ -168,11 +168,6 @@ strict_key make_strict_key(const std::string& key)
     return strict_key(key.c_str());
 }
 
-strict_key make_strict_key(const strict_key& key)
-{
-    return key;
-}
-
 template<class Key, class Value, class Compare, class Allocator>
 class strict_object
     : public std::map <
@@ -184,16 +179,6 @@ class strict_object
 {
   public:
     strict_object() = default;
-
-    // the range of another object type, whose keys are made into strict_keys
-    template<class Iterator>
-    strict_object(Iterator first, Iterator last)
-    {
-        for (; first != last; ++first)
-        {
-            this->emplace(make_strict_key(first->first), Value(std::move(first->second)));
-        }
-    }
 };
 
 template<typename T, typename = void>

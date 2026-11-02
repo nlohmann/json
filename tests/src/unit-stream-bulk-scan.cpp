@@ -109,6 +109,14 @@ class oversized_get_area_streambuf : public std::streambuf
         setg(m_data.data(), m_data.data(), m_data.data() + claimed_size);
     }
 
+    // Give the get area back its real size, so that the adapter may read the
+    // character at the read position when it is destroyed (with
+    // JSON_PRECISE_STREAM_POSITION, it consumes the last character returned).
+    void restore_get_area()
+    {
+        setg(m_data.data(), m_data.data(), m_data.data() + m_data.size());
+    }
+
   private:
     std::array<char, 8> m_data{{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}};
 };
@@ -458,14 +466,16 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
     SECTION("skipping more characters than gbump() takes at once")
     {
         // gbump() takes an int, but a get area can be larger
-        if (sizeof(std::size_t) < 8)
+        const std::size_t claimed = sizeof(std::size_t) < 8 ? 0 : std::size_t{3} << 30u;
+        oversized_get_area_streambuf buf(claimed);
+        if (claimed == 0 || static_cast<std::size_t>(buf.in_avail()) != claimed)
         {
-            MESSAGE("a get area larger than an int needs a 64-bit size_t");
+            // a 32-bit size_t, or a standard library whose streambuf stores
+            // the size of the get area in an int (MSVC)
+            MESSAGE("a get area larger than an int is not supported");
         }
         else
         {
-            const std::size_t claimed = std::size_t{3} << 30u;
-            oversized_get_area_streambuf buf(claimed);
             std::istream is(&buf);
             nlohmann::detail::input_stream_adapter ia(is);
             CHECK(ia.get_character() == 'a');
@@ -477,6 +487,8 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
 
             ia.bulk_skip(ia.bulk_remaining());
             CHECK(ia.bulk_remaining() == 0);
+
+            buf.restore_get_area();
         }
     }
 #endif

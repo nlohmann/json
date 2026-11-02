@@ -247,15 +247,15 @@ TEST_CASE("json_view dump")
                     })
             {
                 CAPTURE(token)
-                const std::string text = std::string("[") + token + padding + "]";
-                const json_document d = json_document::parse(text);
-                const json j = json::parse(text);
-                CHECK(d.root()[0].get<double>() == j[0].get<double>());
-                CHECK(d.root().dump() == j.dump());
+                const std::string padded = std::string("[") + token + padding + "]";
+                const json_document padded_document = json_document::parse(padded);
+                const json padded_json = json::parse(padded);
+                CHECK(padded_document.root()[0].get<double>() == padded_json[0].get<double>());
+                CHECK(padded_document.root().dump() == padded_json.dump());
                 // a float document converts the tokens as well
                 using json_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
-                const nlohmann::basic_json_document<json_float> float_doc = nlohmann::basic_json_document<json_float>::parse(text);
-                CHECK(float_doc.root()[0].get<float>() == json_float::parse(text)[0].get<float>());
+                const nlohmann::basic_json_document<json_float> float_doc = nlohmann::basic_json_document<json_float>::parse(padded);
+                CHECK(float_doc.root()[0].get<float>() == json_float::parse(padded)[0].get<float>());
             }
         }
 
