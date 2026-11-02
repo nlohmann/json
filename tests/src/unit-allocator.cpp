@@ -1026,7 +1026,10 @@ TEST_CASE("insert() provides its documented exception guarantees (#5986)")
 }
 #endif
 
-#if !defined(JSON_NOEXCEPTION)
+// the no-exceptions CI job has no std::bad_alloc to catch; with iterator
+// debugging (MSVC STL debug builds) containers allocate inside noexcept
+// functions, so failing an allocation there terminates the program
+#if !defined(JSON_NOEXCEPTION) && !(defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
 namespace
 {
 // the allocation numbered sweep_fail_at (counted from 1) throws; 0 never fails
