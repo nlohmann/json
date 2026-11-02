@@ -543,6 +543,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ////////////////////////
 
   JSON_PRIVATE_UNLESS_TESTED:
+    // the type and value of a basic_json without its base class (defined
+    // below); the destruction helpers of json_value use it as a stand-in
+    struct data;
+
     /*!
     @brief a JSON value
 
@@ -719,27 +723,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         explicit json_value(array_t* value) noexcept : array(value) {}
 
 private:
-        // raw, allocation-free transfer of m_data from src to dst: no
-        // set_parents()/assert_invariant() (the former is O(#children) per
-        // call under JSON_DIAGNOSTICS, which would make the walk below
-        // quadratic); dst takes ownership, src is left as value_t::null.
-        static void take(basic_json& dst, basic_json& src) noexcept
+        // raw, allocation-free transfer of the type and value from src to
+        // dst: no set_parents()/assert_invariant() (the former is
+        // O(#children) per call under JSON_DIAGNOSTICS, which would make the
+        // walk below quadratic); dst takes ownership, src is left as
+        // value_t::null.
+        static void take(data& dst, data& src) noexcept
         {
-            dst.m_data.m_type = src.m_data.m_type;
-            dst.m_data.m_value = src.m_data.m_value;
-            src.m_data.m_type = value_t::null;
+            dst.m_type = src.m_type;
+            dst.m_value = src.m_value;
+            src.m_type = value_t::null;
         }
 
         // true if v is not an array/object, or is an already-empty one
-        static bool has_no_children(const basic_json& v) noexcept
+        static bool has_no_children(const data& v) noexcept
         {
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                return v.m_data.m_value.array->empty();
+                return v.m_value.array->empty();
             }
-            if (v.m_data.m_type == value_t::object)
+            if (v.m_type == value_t::object)
             {
-                return v.m_data.m_value.object->empty();
+                return v.m_value.object->empty();
             }
             return true;
         }
@@ -748,21 +753,21 @@ private:
         // its own, i.e. v can be freed in one go (its destructor then
         // destroys scalars and empty containers only, so it recurses at most
         // one level deep); stops at the first structured child it meets
-        static bool all_children_leaves(const basic_json& v) noexcept
+        static bool all_children_leaves(const data& v) noexcept
         {
             // array_t only needs forward iterators (see custom_array_type)
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                const auto& a = *v.m_data.m_value.array;
+                const auto& a = *v.m_value.array;
                 return std::all_of(a.begin(), a.end(), [](const basic_json & el)
                 {
-                    return has_no_children(el);
+                    return has_no_children(el.m_data);
                 });
             }
-            const auto& o = *v.m_data.m_value.object;
+            const auto& o = *v.m_value.object;
             return std::all_of(o.begin(), o.end(), [](const typename object_t::value_type & el)
             {
-                return has_no_children(el.second);
+                return has_no_children(el.second.m_data);
             });
         }
 
@@ -794,30 +799,30 @@ private:
 
         // the child of a non-empty array/object v that the walk in
         // destroy_container() continues with (see walk_child_it() above)
-        static basic_json& walk_child(basic_json& v)
+        static data& walk_child(data& v)
         {
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                return v.m_data.m_value.array->back();
+                return v.m_value.array->back().m_data;
             }
-            JSON_ASSERT(v.m_data.m_type == value_t::object);
-            return walk_child_it(*v.m_data.m_value.object)->second;
+            JSON_ASSERT(v.m_type == value_t::object);
+            return walk_child_it(*v.m_value.object)->second.m_data;
         }
 
         // removes walk_child(v) from a non-empty array/object v; this never
         // allocates, and since it is only ever called when that child is a
         // scalar or an already-empty array/object, destroying it never
         // recurses more than one level deep (see destroy() below)
-        static void pop_walk_child(basic_json& v)
+        static void pop_walk_child(data& v)
         {
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                v.m_data.m_value.array->pop_back();
+                v.m_value.array->pop_back();
             }
             else
             {
-                JSON_ASSERT(v.m_data.m_type == value_t::object);
-                v.m_data.m_value.object->erase(walk_child_it(*v.m_data.m_value.object));
+                JSON_ASSERT(v.m_type == value_t::object);
+                v.m_value.object->erase(walk_child_it(*v.m_value.object));
             }
         }
 
@@ -826,23 +831,23 @@ private:
         // recurses at most one level deep); this is the same allocator-based
         // free the old recursive implementation used, just factored out so
         // every level of the walk in destroy() can share it
-        static void free_container(basic_json& v) noexcept
+        static void free_container(data& v) noexcept
         {
             JSON_ASSERT(has_no_children(v) || all_children_leaves(v));
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
                 AllocatorType<array_t> alloc;
-                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.array);
-                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.array, 1);
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_value.array);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_value.array, 1);
             }
             else
             {
-                JSON_ASSERT(v.m_data.m_type == value_t::object);
+                JSON_ASSERT(v.m_type == value_t::object);
                 AllocatorType<object_t> alloc;
-                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.object);
-                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.object, 1);
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_value.object);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_value.object, 1);
             }
-            v.m_data.m_type = value_t::null; // avoid a double free if v is later destructed
+            v.m_type = value_t::null; // avoid a double free if v is later destructed
         }
 
 public:
@@ -873,14 +878,15 @@ public:
 
             // This json_value is not itself a basic_json, so the top-level
             // container is first moved into a local stand-in ("cur"); a
-            // default-constructed basic_json has a null pointer in its
-            // m_value (see data::m_value's initializer), so swapping it
-            // with *this leaves this union's own pointer null, and it is
-            // never looked at or freed a second time.
-            basic_json cur;
-            cur.m_data.m_type = t;
-            using std::swap;
-            swap(cur.m_data.m_value, *this);
+            // default-constructed data has a null pointer in its m_value
+            // (see data::m_value's initializer), so swapping it with *this
+            // leaves this union's own pointer null, and it is never looked
+            // at or freed a second time. The stand-ins are data, not
+            // basic_json, so that destroying a value never constructs a
+            // CustomBaseClass, whose constructor may allocate (#5995).
+            data cur;
+            cur.m_type = t;
+            std::swap(cur.m_value, *this);
 
             destroy_bounded(cur, 0);
         }
@@ -889,7 +895,7 @@ public:
         // The first recursion_depth_limit() levels are destroyed by plain
         // recursion, which is the fastest way and cannot throw; anything
         // nested deeper is handed to destroy_walk(), which uses no call stack.
-        static void destroy_bounded(basic_json& v, std::size_t depth) noexcept
+        static void destroy_bounded(data& v, std::size_t depth) noexcept
         {
             if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
             {
@@ -897,23 +903,23 @@ public:
                 return;
             }
 
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                for (auto& child : *v.m_data.m_value.array)
+                for (auto& child : *v.m_value.array)
                 {
                     if (child.m_data.m_type == value_t::array || child.m_data.m_type == value_t::object)
                     {
-                        destroy_bounded(child, depth + 1);
+                        destroy_bounded(child.m_data, depth + 1);
                     }
                 }
             }
             else
             {
-                for (auto& child : *v.m_data.m_value.object)
+                for (auto& child : *v.m_value.object)
                 {
                     if (child.second.m_data.m_type == value_t::array || child.second.m_data.m_type == value_t::object)
                     {
-                        destroy_bounded(child.second, depth + 1);
+                        destroy_bounded(child.second.m_data, depth + 1);
                     }
                 }
             }
@@ -940,18 +946,15 @@ public:
         // array/object, which neither allocates nor recurses more
         // than one level deep.
         //
-        // This json_value is not itself a basic_json, so the
-        // top-level container is first moved into a local stand-in
-        // ("cur"); a default-constructed basic_json has a null
-        // pointer in its m_value (see data::m_value's initializer),
-        // so swapping it with *this leaves this union's own pointer
-        // null, and it is never looked at or freed a second time.
-        static void destroy_walk(basic_json& top) noexcept
+        // Like destroy_container(), the walk keeps the containers it
+        // holds in data stand-ins (cur, prev, gp, tmp), which never
+        // construct a CustomBaseClass.
+        static void destroy_walk(data& top) noexcept
         {
-            basic_json cur;
+            data cur;
             take(cur, top);
 
-            basic_json prev; // value_t::null: no parent
+            data prev; // value_t::null: no parent
 
             // true right after cur was entered: its children have not been
             // looked at yet. If none of them has children of its own, cur is
@@ -965,7 +968,7 @@ public:
                 fresh = false;
                 if (has_no_children(cur) || (fresh_now && all_children_leaves(cur)))
                 {
-                    if (prev.m_data.m_type == value_t::null)
+                    if (prev.m_type == value_t::null)
                     {
                         free_container(cur);
                         return; // back at the top with nothing left to do
@@ -974,7 +977,7 @@ public:
                     // ascend: detach the grandparent link from prev's
                     // walk_child() slot, drop that (now null) slot, free cur
                     // (it is empty), then move up one level
-                    basic_json gp;
+                    data gp;
                     take(gp, walk_child(prev));
                     pop_walk_child(prev);
 
@@ -985,7 +988,7 @@ public:
                     continue;
                 }
 
-                basic_json& cur_child_ref = walk_child(cur);
+                data& cur_child_ref = walk_child(cur);
 
                 if (has_no_children(cur_child_ref))
                 {
@@ -997,7 +1000,7 @@ public:
                 // descend into the non-empty child, reversing the
                 // link: its slot takes over prev, and the child becomes
                 // the new cur
-                basic_json tmp;
+                data tmp;
                 take(tmp, cur_child_ref);
                 take(cur_child_ref, prev);
                 take(prev, cur);
