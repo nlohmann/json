@@ -3211,12 +3211,32 @@ TEST_CASE("BJData")
 #endif
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
 
-#if SIZE_MAX != 0xffffffff
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX), "[json.exception.out_of_range.408] syntax error while parsing BJData size: excessive ndarray size caused overflow", json::out_of_range&);
-#else
+                // the first dimension is 2^64-1, which is rejected as a count (see below)
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
-#endif
                 CHECK(json::from_bjdata(vMX, true, false).is_discarded());
+            }
+
+            SECTION("optimized array: count equal to SIZE_MAX")
+            {
+                // the reader marks a container without a count by SIZE_MAX, so
+                // a count of that value must not be read as "no count"
+                // (it used to parse as [1])
+                json _;
+#if SIZE_MAX != 0xffffffff
+                std::vector<uint8_t> const vM = {'[', '#', 'M', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'i', 0x01, ']'};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK(json::from_bjdata(vM, true, false).is_discarded());
+                // one less is an ordinary excessive count
+                std::vector<uint8_t> const vM1 = {'[', '#', 'M', 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'i', 0x01, ']'};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM1), "[json.exception.out_of_range.408] excessive array size: 18446744073709551614", json::out_of_range&);
+#else
+                std::vector<uint8_t> const vm = {'[', '#', 'm', 0xFF, 0xFF, 0xFF, 0xFF, 'i', 0x01, ']'};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vm), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK(json::from_bjdata(vm, true, false).is_discarded());
+                std::vector<uint8_t> const vL = {'[', '#', 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 'i', 0x01, ']'};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK(json::from_bjdata(vL, true, false).is_discarded());
+#endif
             }
 
             SECTION("optimized array: integer value overflow")

@@ -3124,6 +3124,27 @@ class binary_reader
     }
 
     /*!
+    @brief store the count of an optimized container (or the length of a string)
+
+    A count equal to npos is rejected: npos marks a container whose count is
+    not known, so a count of that value would be read as "no count" (compare
+    get_cbor_container_size()). No container can hold that many elements.
+
+    @param[in]  count   the count read from the input
+    @param[out] result  set to @a count unless it is rejected
+    @return whether @a count is usable
+    */
+    bool store_ubjson_count(const std::size_t count, std::size_t& result)
+    {
+        if (JSON_HEDLEY_UNLIKELY(count == npos))
+        {
+            return out_of_range_error(exception_id::container_too_large, "integer value overflow", "size");
+        }
+        result = count;
+        return true;
+    }
+
+    /*!
     @brief read a UBJSON/BJData optimized-container count of a signed marker
            type ('i', 'I', 'l', 'L') and narrow it to std::size_t
 
@@ -3153,8 +3174,7 @@ class binary_reader
         {
             return out_of_range_error(exception_id::container_too_large, "integer value overflow", "size");
         }
-        result = static_cast<std::size_t>(number); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
-        return true;
+        return store_ubjson_count(static_cast<std::size_t>(number), result); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
     }
 
     /*!
@@ -3231,8 +3251,7 @@ class binary_reader
                 {
                     return false;
                 }
-                result = conditional_static_cast<std::size_t>(number);
-                return true;
+                return store_ubjson_count(conditional_static_cast<std::size_t>(number), result);
             }
 
             case 'M':
@@ -3250,8 +3269,7 @@ class binary_reader
                 {
                     return out_of_range_error(exception_id::container_too_large, "integer value overflow", "size");
                 }
-                result = detail::conditional_static_cast<std::size_t>(number);
-                return true;
+                return store_ubjson_count(detail::conditional_static_cast<std::size_t>(number), result);
             }
 
             case '[':
