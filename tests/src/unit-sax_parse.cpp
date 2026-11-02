@@ -483,6 +483,17 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
                 {{"s", "a"}, {"inner", {{"a", 1}}}},
                 2
             },
+            // BSON: so is a document whose size is too small for its content,
+            // which is read up to its terminator
+            {
+                json::input_format_t::bson, bson_document(
+                {
+                    bson_element(0x03, "inner", bson_document({bson_element(0x10, "a", bson_int32(1)), bson_element(0x10, "b", bson_int32(2))}, -7)),
+                    bson_element(0x10, "after", bson_int32(3)),
+                }),
+                {{"inner", {{"a", 1}, {"b", 2}}}, {"after", 3}},
+                1
+            },
         };
 
         for (const auto& repair : repairs)
@@ -548,12 +559,12 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
         CHECK(nested.errors == 1);
         CHECK(nested.value == json({1}));
 
-        // a BJData ndarray whose element type has no name: the object that
-        // holds the ndarray was already begun
+        // a BJData ndarray whose element type is not valid: the type is
+        // checked before the object that would hold the ndarray is begun
         const auto ndarray = parse_binary_recovering({'[', '$', 0x01, '#', '[', '$', 'i', '#', 'i', 2, 2, 3}, json::input_format_t::bjdata);
         CHECK(ndarray.errors == 1);
         CHECK(ndarray.balanced);
-        CHECK(ndarray.value == json::object());
+        CHECK(ndarray.value == nullptr);
 
         // a skipped member that the input ends in
         const auto truncated = parse_binary_recovering({0xA2, 0x01, 0x82, 0x01}, json::input_format_t::cbor);
@@ -561,9 +572,11 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
         CHECK(truncated.balanced);
         CHECK(truncated.value == json::object());
 
-        // a BSON element of an unknown type in a document whose size cannot be right
+        // a BSON element of an unknown type in a document whose size cannot be
+        // right: the size is reported when it is read, and the element ends
+        // the document, as its end is not known
         const auto bson = parse_binary_recovering(bson_document({bson_element(0x10, "a", bson_int32(1)), bson_element(0x42, "x", bytes(3))}, -10), json::input_format_t::bson);
-        CHECK(bson.errors == 1);
+        CHECK(bson.errors == 2);
         CHECK(bson.value == json({{"a", 1}, {"x", nullptr}}));
     }
 

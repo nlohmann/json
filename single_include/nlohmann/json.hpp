@@ -18954,6 +18954,9 @@ class binary_reader
         std::int32_t declared_size = 0;
         /// whether to close this container with end_object() or end_array()
         bool is_object;
+        /// BSON, when recovering: the declared size was reported as wrong, so
+        /// the document ends at its terminator, within the enclosing document
+        bool size_repaired = false;
     };
 
     /*!
@@ -19045,16 +19048,18 @@ class binary_reader
     since at least 5 bytes are always consumed.
 
     When recovering from errors, a document whose size does not match is
-    accepted: its terminator was found, so everything in it has been read.
+    accepted: its terminator was found, so everything in it has been read. A
+    size that was already reported as wrong (see @ref repair_bson_document_size)
+    is not reported again.
 
     @param[in] document_start  value of chars_read before the size prefix
     @param[in] document_size   the declared document size
     @return whether the declared size matches the number of bytes read, or
             the mismatch is repaired
     */
-    bool check_bson_document_size(const std::size_t document_start, const std::int32_t document_size)
+    bool check_bson_document_size(const std::size_t document_start, const std::int32_t document_size, const bool size_repaired)
     {
-        if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
+        if (JSON_HEDLEY_UNLIKELY(!size_repaired && (document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start)))
         {
             static_cast<void>(bson_document_size_error(document_size, chars_read - document_start));
             return repair_requested();
@@ -19072,7 +19077,7 @@ class binary_reader
     bool can_skip_to_bson_document_end() const noexcept
     {
         const container_frame& top = container_stack.back();
-        return top.declared_size >= 5 && top.start_position + static_cast<std::size_t>(top.declared_size) - 1 >= chars_read;
+        return !top.size_repaired && top.declared_size >= 5 && top.start_position + static_cast<std::size_t>(top.declared_size) - 1 >= chars_read;
     }
 
     /*!
@@ -19204,20 +19209,38 @@ class binary_reader
         }
 
         // the smallest document is the size prefix and the terminator
+        bool size_repaired = false;
+        std::size_t document_end = 0;
         if (JSON_HEDLEY_UNLIKELY(document_size < 5))
         {
-            return bson_document_size_error("document size ", document_size, " is less than 5");
+            static_cast<void>(bson_document_size_error("document size ", document_size, " is less than 5"));
+            if (!repair_requested())
+            {
+                return false;
+            }
+            size_repaired = true;
         }
-
-        // the declared size bounds where the document ends: an embedded
-        // document must end before the terminator of the document that contains it
-        const auto unsigned_size = static_cast<std::size_t>(document_size);
-        const std::size_t document_end = unsigned_size > (std::numeric_limits<std::size_t>::max)() - document_start
-                                         ? (std::numeric_limits<std::size_t>::max)()
-                                         : document_start + unsigned_size;
-        if (JSON_HEDLEY_UNLIKELY(!container_stack.empty() && document_end >= container_stack.back().end_position))
+        else
         {
-            return bson_document_size_error("document size ", document_size, " exceeds the size of the enclosing document");
+            // the declared size bounds where the document ends: an embedded
+            // document must end before the terminator of the document that contains it
+            const auto unsigned_size = static_cast<std::size_t>(document_size);
+            document_end = unsigned_size > (std::numeric_limits<std::size_t>::max)() - document_start
+                           ? (std::numeric_limits<std::size_t>::max)()
+                           : document_start + unsigned_size;
+            if (JSON_HEDLEY_UNLIKELY(!container_stack.empty() && document_end >= container_stack.back().end_position))
+            {
+                static_cast<void>(bson_document_size_error("document size ", document_size, " exceeds the size of the enclosing document"));
+                if (!repair_requested())
+                {
+                    return false;
+                }
+                size_repaired = true;
+            }
+        }
+        if (size_repaired)
+        {
+            document_end = enclosing_bson_document_end();
         }
 
         if (JSON_HEDLEY_UNLIKELY(!enter_container(is_object, detail::unknown_size())))
@@ -19229,7 +19252,22 @@ class binary_reader
         frame.start_position = document_start;
         frame.end_position = document_end;
         frame.declared_size = document_size;
+        frame.size_repaired = size_repaired;
         return true;
+    }
+
+    /*!
+    @brief where a BSON document whose size is wrong ends at the latest
+
+    When recovering, such a document is read up to its terminator, which must
+    come before the terminator of the document that contains it.
+
+    @return the end of the innermost open document, or the largest position if
+            no document is open
+    */
+    std::size_t enclosing_bson_document_end() const noexcept
+    {
+        return container_stack.empty() ? (std::numeric_limits<std::size_t>::max)() : container_stack.back().end_position;
     }
 
     /*!
@@ -19264,7 +19302,7 @@ class binary_reader
                 // the container_stack element it would otherwise alias
                 const container_frame top = container_stack.back();
 
-                if (JSON_HEDLEY_UNLIKELY(!check_bson_document_size(top.start_position, top.declared_size)))
+                if (JSON_HEDLEY_UNLIKELY(!check_bson_document_size(top.start_position, top.declared_size, top.size_repaired)))
                 {
                     return false;
                 }
@@ -19290,7 +19328,15 @@ class binary_reader
             // document its own terminator, within the declared size
             if (JSON_HEDLEY_UNLIKELY(chars_read + 2 > container_stack.back().end_position))
             {
-                return bson_document_size_error("document size ", container_stack.back().declared_size, " is too small for its content");
+                static_cast<void>(bson_document_size_error("document size ", container_stack.back().declared_size, " is too small for its content"));
+                if (!repair_requested())
+                {
+                    return false;
+                }
+                // read on up to the terminator, within the enclosing document
+                const std::size_t depth = container_stack.size();
+                container_stack.back().size_repaired = true;
+                container_stack.back().end_position = depth > 1 ? container_stack[depth - 2].end_position : (std::numeric_limits<std::size_t>::max)();
             }
 
             const std::size_t element_type_parse_position = chars_read;
