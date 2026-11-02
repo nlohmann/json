@@ -33480,7 +33480,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
-#include <cstring> // memcpy, memset, strlen
+#include <cstring> // memcpy, memset
 #include <iterator> // next
 #include <limits> // numeric_limits
 #include <string> // string, char_traits
@@ -37349,7 +37349,7 @@ class serializer
         const auto* loc = std::localeconv();
         JSON_ASSERT(loc != nullptr);
         const char* const decimal_point = (loc->decimal_point == nullptr) ? "" : loc->decimal_point;
-        const std::size_t decimal_point_len = std::strlen(decimal_point);
+        const std::size_t decimal_point_len = std::char_traits<char>::length(decimal_point);
 
         // convert decimal point to '.'
         if (decimal_point_len != 0 && !(decimal_point_len == 1 && decimal_point[0] == '.'))
