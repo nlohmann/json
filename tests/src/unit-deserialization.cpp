@@ -1195,6 +1195,28 @@ TEST_CASE("deserialization")
 #endif
 }
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+TEST_CASE("deserialization from a pointer and a length (deprecated)")
+{
+    // the unit test build disables -Wdeprecated-declarations (see
+    // cmake/clang_flags.cmake)
+    const std::string text = R"({"foo": [1, 2, 3]})";
+    const std::string invalid = R"({"foo": )";
+
+    SECTION("parse")
+    {
+        const json j = json::parse({text.data(), text.size()});
+        CHECK(j == json({{"foo", {1, 2, 3}}}));
+    }
+
+    SECTION("accept")
+    {
+        CHECK(json::accept({text.data(), text.size()}));
+        CHECK_FALSE(json::accept({invalid.data(), invalid.size()}));
+    }
+}
+#endif
+
 // select the types to test - char8_t is only available since C++20 if and only
 // if __cpp_char8_t is defined.
 #define TYPE_LIST(...) __VA_ARGS__

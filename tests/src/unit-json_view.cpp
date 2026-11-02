@@ -31,9 +31,11 @@ using json_view_test::has_duplicate_keys;
 #include <ios>
 #include <istream>
 #include <iterator>
+#include <functional>
 #include <limits>
 #include <list>
 #include <map>
+#include <new>
 #include <random>
 #include <sstream>
 #include <string>
@@ -98,6 +100,37 @@ template<typename View>
 using bool_conversion_t = decltype(static_cast<bool>(std::declval<View>()));
 
 #if !defined(JSON_NOEXCEPTION)
+// an allocator that never has room
+template<typename T>
+struct failing_allocator
+{
+    using value_type = T;
+
+    failing_allocator() = default;
+
+    template<typename U>
+    explicit failing_allocator(const failing_allocator<U>& /*other*/) noexcept {}
+
+    T* allocate(std::size_t /*n*/) // NOLINT(readability-convert-member-functions-to-static)
+    {
+        throw std::bad_alloc();
+    }
+
+    void deallocate(T* /*p*/, std::size_t /*n*/) noexcept {} // NOLINT(readability-convert-member-functions-to-static)
+
+    template<typename U>
+    bool operator==(const failing_allocator<U>& /*other*/) const noexcept
+    {
+        return true;
+    }
+
+    template<typename U>
+    bool operator!=(const failing_allocator<U>& /*other*/) const noexcept
+    {
+        return false;
+    }
+};
+
 // the exception parse() throws for a text, or "" if it accepts it
 std::string parse_exception(const std::string& text, bool comments = false, bool trailing_commas = false)
 {
@@ -235,7 +268,9 @@ TEST_CASE("json_view")
                 {
                     "", " ", "[", "]", "{", "[1,]", "{\"a\":1,}", "[1 2]", "{\"a\" 1}", "{1:2}", "tru", "nul", "fals", "truex", "-", "01", "1.", ".5", "1e",
                     "\"", "\"abc", "\"\\x\"", "\"\\u12\"", "\"\\ud800\"", "\"\\udc00\"", "\"\x01\"", "\"\xff\"", "\"\xc3\"", "[1]x", "/", "/*", "[\n  1,\n  x\n]", // NOLINT(modernize-raw-string-literal)
-                    "1e400", "-1e400", "[1.7976931348623159e308]", "{\"a\":\n{\"b\": [1, 2,\n 3 x]}}"
+                    "1e400", "-1e400", "[1.7976931348623159e308]", "{\"a\":\n{\"b\": [1, 2,\n 3 x]}}",
+                    // (an error after every kind of value: the error is found by replaying the parser)
+                    "[null, true, -1, 1, 1.5, \"s\", {\"a\": 1} 2]", "{\"a\": null, \"b\": -1, \"c\": 1.5, \"d\": \"s\", \"e\": {}, 1}"
                 })
         {
             CAPTURE(text)
@@ -368,6 +403,10 @@ TEST_CASE("json_view")
         CHECK(from_stream.root().materialize() == expected);
         const std::list<char> list(text.begin(), text.end());
         CHECK(json_document::parse(list.begin(), list.end()).owns_source());
+        // (an input that is not valid)
+        const std::list<char> bad_list{'[', '1', ','};
+        json_document from_bad_list;
+        CHECK_THROWS_AS(from_bad_list = json_document::parse(bad_list.begin(), bad_list.end()), json::parse_error&);
         CHECK(materialized<json_document>(list.begin(), list.end()) == expected);
 
         // iterator pairs: pointers are borrowed, and so are contiguous library
@@ -1510,6 +1549,17 @@ TEST_CASE("json_view values")
         // a duplicate key: the last value, as parse()
         const json_document dup = json_document::parse(R"({"a":1,"a":2})");
         CHECK((dup.root().get<std::map<std::string, int>>() == std::map<std::string, int> {{"a", 2}}));
+
+        // a map of views from something that is not an object
+        using view_map = std::map<std::string, json_view>;
+        const json_document not_an_object = json_document::parse("[1,2]");
+        CHECK_THROWS_WITH_AS(not_an_object.root().get<view_map>(), json_view_test::message("type_error.302", "", 0, 5, "type must be object, but is array").c_str(), json::type_error&);
+#if !defined(JSON_NOEXCEPTION)
+        // (and one that cannot allocate its nodes)
+        using failing_map = std::map<std::string, json_view, std::less<std::string>, failing_allocator<std::pair<const std::string, json_view>>>;
+        const json_document one_member = json_document::parse(R"({"a":1})");
+        CHECK_THROWS_AS(one_member.root().get<failing_map>(), std::bad_alloc&);
+#endif
 
         const json_view invalid{};
         CHECK_THROWS_WITH_AS(invalid.get<int>(), "[json.exception.type_error.302] type must be number, but is discarded", json::type_error&);

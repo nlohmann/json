@@ -1809,6 +1809,30 @@ TEST_CASE("CBOR")
             CHECK(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01}), true, false).is_discarded());
         }
 
+        SECTION("tag in front of a key that is cut off by the end of the input")
+        {
+            // 0xD8: the tag number is in the next byte, which is missing
+            const std::vector<std::uint8_t> input = {0xA1, 0xD8};
+            json _;
+            for (const auto handler :
+                    {
+                        json::cbor_tag_handler_t::ignore, json::cbor_tag_handler_t::store
+                    })
+            {
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(input, true, true, handler), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+                CHECK(json::from_cbor(input, true, false, handler).is_discarded());
+            }
+        }
+
+        SECTION("chunk of an indefinite-length string that is cut off by the end of the input")
+        {
+            // the second byte announces a chunk of three bytes, but two follow
+            const std::vector<std::uint8_t> input = {0x7F, 0x63, 'a', 'b'};
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
+            CHECK(json::from_cbor(input, true, false).is_discarded());
+        }
+
         SECTION("tag in front of a key")
         {
             const auto ignore = json::cbor_tag_handler_t::ignore;

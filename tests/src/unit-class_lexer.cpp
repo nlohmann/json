@@ -2092,6 +2092,12 @@ TEST_CASE("UTF-8 validators accept the same sequences")
         }
     };
 
+    // an ASCII byte is a sequence of its own
+    for (unsigned lead = 0; lead < 0x80; ++lead)
+    {
+        CHECK(nlohmann::detail::utf8_shape(static_cast<std::uint8_t>(lead)).length == 1);
+    }
+
     for (unsigned lead = 0x80; lead <= 0xFF; ++lead)
     {
         const auto shape = nlohmann::detail::utf8_shape(static_cast<std::uint8_t>(lead));
@@ -2156,4 +2162,73 @@ TEST_CASE("UTF-8 validators accept the same sequences")
             }
         }
     }
+}
+
+TEST_CASE("float_bigint")
+{
+    // the big integer of the exact comparison of a float token with the
+    // midpoint between two floats (digit_comparison())
+    using nlohmann::detail::float_bigint;
+
+    SECTION("zero")
+    {
+        // shifting zero keeps it zero, whatever the distance
+        float_bigint zero(0);
+        zero.shift_left(0);
+        zero.shift_left(5);
+        zero.shift_left(64);
+        CHECK(zero.compare(float_bigint(0)) == 0);
+        CHECK(zero.compare(float_bigint(1)) == -1);
+        CHECK(float_bigint(1).compare(zero) == 1);
+    }
+
+    SECTION("compare numbers of different lengths")
+    {
+        // the number with more 32-bit limbs is the greater one
+        const float_bigint small(0xFFFFFFFFu);
+        const float_bigint large(std::uint64_t{1} << 32u);
+        CHECK(small.compare(large) == -1);
+        CHECK(large.compare(small) == 1);
+        CHECK(large.compare(large) == 0);
+
+        // a shift can add a limb
+        float_bigint shifted(1);
+        shifted.shift_left(32);
+        CHECK(shifted.compare(large) == 0);
+        shifted.shift_left(1);
+        CHECK(shifted.compare(large) == 1);
+        CHECK(large.compare(shifted) == -1);
+    }
+
+    SECTION("compare numbers of the same length")
+    {
+        CHECK(float_bigint(2).compare(float_bigint(3)) == -1);
+        CHECK(float_bigint(3).compare(float_bigint(2)) == 1);
+        CHECK(float_bigint(3).compare(float_bigint(3)) == 0);
+        CHECK(float_bigint((std::uint64_t{3} << 32u) | 1u).compare(float_bigint((std::uint64_t{3} << 32u) | 2u)) == -1);
+    }
+}
+
+TEST_CASE("serialization of short strings")
+{
+    // the serializer takes strings of up to 32 characters that need no
+    // escaping by a table lookup of its own where the scan is not vectorized
+    // (this file is built that way, too, with JSON_NO_SIMD)
+    for (const std::string& s :
+            {
+                std::string(), std::string("a"), std::string("hello"), std::string("0123456789abcdef"), std::string("0123456789abcdef0123456789abcdef"),
+                std::string("0123456789abcdef0123456789abcdef0")
+            })
+    {
+        CAPTURE(s)
+        const json j = s;
+        CHECK(j.dump() == "\"" + s + "\"");
+        CHECK(j.dump(-1, ' ', true) == "\"" + s + "\"");
+        CHECK(json({{s, s}}).dump() == "{\"" + s + "\":\"" + s + "\"}");
+    }
+
+    // a character that needs an escape
+    CHECK(json("a\"b").dump() == "\"a\\\"b\"");
+    CHECK(json("caf\xC3\xA9").dump() == "\"caf\xC3\xA9\"");
+    CHECK(json("caf\xC3\xA9").dump(-1, ' ', true) == "\"caf\\u00e9\"");
 }

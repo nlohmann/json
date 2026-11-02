@@ -598,7 +598,7 @@ class parser
         }
 
         return error_msg;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
   private:
     /// callback function

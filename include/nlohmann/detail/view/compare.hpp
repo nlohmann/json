@@ -428,28 +428,19 @@ class view_side
         return string_view_t(m_view.m_doc->str(*m_view.m_node), m_view.m_node->len);
     }
 
-    /// a number, boolean, or null as a basic_json value (no allocation)
+    /// a number as a basic_json value (no allocation); only called for numbers
     BasicJsonType scalar() const
     {
-        switch (m_view.type())
+        const value_t t = m_view.type();
+        if (t == value_t::number_integer)
         {
-            case value_t::number_integer:
-                return BasicJsonType(m_view.template get<typename BasicJsonType::number_integer_t>());
-            case value_t::number_unsigned:
-                return BasicJsonType(m_view.template get<typename BasicJsonType::number_unsigned_t>());
-            case value_t::number_float:
-                return BasicJsonType(m_view.template get<typename BasicJsonType::number_float_t>());
-            case value_t::boolean:
-                return BasicJsonType(m_view.template get<bool>());
-            case value_t::null:
-            case value_t::object:
-            case value_t::array:
-            case value_t::string:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                return BasicJsonType(nullptr);
+            return BasicJsonType(m_view.template get<typename BasicJsonType::number_integer_t>());
         }
+        if (t == value_t::number_unsigned)
+        {
+            return BasicJsonType(m_view.template get<typename BasicJsonType::number_unsigned_t>());
+        }
+        return BasicJsonType(m_view.template get<typename BasicJsonType::number_float_t>());
     }
 
     /// start at the first element of this array

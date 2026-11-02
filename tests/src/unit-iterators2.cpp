@@ -18,6 +18,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <iterator>
+
 #if JSON_HAS_RANGES
     #include <algorithm>
     #include <ranges>
@@ -663,6 +665,23 @@ TEST_CASE("iterators 2")
                 }
             }
         }
+    }
+
+    SECTION("reverse iterators of a const value")
+    {
+        const json j_array = {1, 2, 3};
+        const json j_object = {{"one", 1}, {"two", 2}};
+
+        // rbegin() and rend() of a const value are crbegin() and crend()
+        CHECK(j_array.rbegin() == j_array.crbegin());
+        CHECK(j_array.rend() == j_array.crend());
+        CHECK(*j_array.rbegin() == 3);
+        CHECK(std::distance(j_array.rbegin(), j_array.rend()) == 3);
+
+        CHECK(j_object.rbegin() == j_object.crbegin());
+        CHECK(j_object.rend() == j_object.crend());
+        CHECK(j_object.rbegin().key() == "two");
+        CHECK(std::distance(j_object.rbegin(), j_object.rend()) == 2);
     }
 
     SECTION("reverse iterator arithmetic")

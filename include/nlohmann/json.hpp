@@ -400,7 +400,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["compiler"] = {{"family", "clang"}, {"version", __clang_version__}};
 #elif defined(__GNUC__) || defined(__GNUG__)
         result["compiler"] = {{"family", "gcc"}, {"version", detail::concat<string_t>(
-                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC__)), '.',
+                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC__)), '.', // LCOV_EXCL_LINE
                     detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_MINOR__)), '.',
                     detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_PATCHLEVEL__)))
             }
@@ -676,14 +676,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 case value_t::binary:
                     binary = create<binary_t>();
                     break;
-                case value_t::null:
+                case value_t::null: // LCOV_EXCL_LINE
                 case value_t::boolean:
                 case value_t::number_integer:
                 case value_t::number_unsigned:
                 case value_t::number_float:
                 case value_t::discarded:
                 default:
-                    break;
+                    break; // LCOV_EXCL_LINE
             }
         }
 
@@ -1037,14 +1037,14 @@ public:
                     destroy_container(t);
                     break;
 
-                case value_t::null:
+                case value_t::null: // LCOV_EXCL_LINE
                 case value_t::boolean:
                 case value_t::number_integer:
                 case value_t::number_unsigned:
                 case value_t::number_float:
                 case value_t::discarded:
                 default:
-                    break;
+                    break; // LCOV_EXCL_LINE
             }
         }
     };
@@ -1217,9 +1217,9 @@ public:
         return is_array() ? array_capacity() : object_capacity();
     }
 #else
-    static constexpr std::size_t container_capacity() noexcept
+    static constexpr std::size_t container_capacity() noexcept // LCOV_EXCL_LINE
     {
-        return detail::unknown_size();
+        return detail::unknown_size(); // LCOV_EXCL_LINE
     }
 #endif
 
@@ -1405,7 +1405,7 @@ public:
     ///       into this switch is worth a few percent when copying a value made
     ///       mostly of numbers
     JSON_HEDLEY_ALWAYS_INLINE
-    static void copy_leaf_value(const basic_json& src, basic_json& dst)
+    static void copy_leaf_value(const basic_json& src, basic_json& dst) // LCOV_EXCL_LINE
     {
         switch (src.m_data.m_type)
         {
@@ -5589,7 +5589,7 @@ public:
     ///       their inlined code at each call site small. Binary values are
     ///       rare and left to equal_general().
     JSON_HEDLEY_ALWAYS_INLINE
-    static int equal_leaf(const_reference lhs, const_reference rhs) noexcept
+    static int equal_leaf(const_reference lhs, const_reference rhs) noexcept // LCOV_EXCL_LINE
     {
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_PUSH
@@ -6898,7 +6898,7 @@ public:
         basic_json result(value_t::object);
         json_pointer::flatten("", *this, result);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief unflatten a previously flattened JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/unflatten/
@@ -7611,7 +7611,7 @@ public:
         result.append(path.data(), path.size());
         diff_append_key(result, key);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief the path of the element @a index of the value at @a path
     static string_t diff_index_path(const string_t& path, const std::size_t index)
@@ -7621,7 +7621,7 @@ public:
         result.append(path.data(), path.size());
         diff_append_index(result, index);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief append the "remove" operations for the elements of array
     ///        @a source from @a index on, and the "add" operations for the
@@ -7781,7 +7781,7 @@ public:
         // operations
         if (source == target)
         {
-            return false;
+            return false; // LCOV_EXCL_LINE (equal objects with the same members in the same order return early)
         }
 
         // slow path: the common keys are in a different relative

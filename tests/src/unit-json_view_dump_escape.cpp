@@ -214,6 +214,24 @@ TEST_CASE("json_view dump: escaping, nesting, and output buffers")
         CHECK(d.root()["a"].dump(-1, ' ', true).size() == 2 + (5000 * 6));
     }
 
+    SECTION("the estimate for a value that is followed by many decoded strings")
+    {
+        // (the end of the value in the source is not known when the nodes after it have decoded strings)
+        std::string text = "[7";
+        for (int i = 0; i < 20; ++i)
+        {
+            text += R"(,"\n")";
+        }
+        text += ",8]";
+        const json_document d = json_document::parse(text);
+        CHECK(d.root()[0].dump() == "7");
+        CHECK(d.root()[1].dump() == R"("\n")");
+        CHECK(d.root().dump() == json::parse(text).dump());
+        // the same with a container
+        const json_document nested = json_document::parse(R"([[7],)" + text.substr(3));
+        CHECK(nested.root()[0].dump() == "[7]");
+    }
+
     SECTION("ensure_ascii with strings of the source, decoded strings, and edited strings")
     {
         // plain ASCII, non-ASCII, escaped (decoded), and mixed strings, as values and as keys;
@@ -256,6 +274,28 @@ TEST_CASE("json_view dump: escaping, nesting, and output buffers")
             e.set(e.root()["list"][4], std::string("plain again"));
             k["list"][4] = "plain again";
             CHECK(e.root().dump(-1, ' ', true) == k.dump(-1, ' ', true));
+        }
+    }
+
+    SECTION("the length of the run that ensure_ascii copies")
+    {
+        // (dump() only asks for strings with a byte to escape, so a run that ends the string is checked here)
+        for (const std::size_t length :
+                {
+                    std::size_t{0}, std::size_t{1}, std::size_t{15}, std::size_t{16}, std::size_t{17}, std::size_t{31}, std::size_t{32}, std::size_t{48}, std::size_t{50}
+                })
+        {
+            CAPTURE(length)
+            // a run of printable characters, followed by a byte that is not copied and more text
+            std::string text(length, 'a');
+            text += "\"abcdefghijklmnopqrstuvwxyz";
+            const auto* const bytes = reinterpret_cast<const unsigned char*>(text.data()); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            const auto* const end = bytes + text.size();
+            CHECK(nlohmann::detail::view::ascii_copyable_run(bytes, length, end) == length);
+            CHECK(nlohmann::detail::view::ascii_copyable_run(bytes, length + 1, end) == length);
+            CHECK(nlohmann::detail::view::ascii_copyable_run(bytes, length + 5, end) == length);
+            // the end of the buffer right after the run
+            CHECK(nlohmann::detail::view::ascii_copyable_run(bytes, length, bytes + length) == length);
         }
     }
 

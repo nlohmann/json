@@ -572,7 +572,7 @@ class input_stream_adapter
         }
         else
         {
-            current_in_get_area = true;
+            current_in_get_area = true; // LCOV_EXCL_LINE (called only when the get area is exhausted)
         }
 #endif
         return res;

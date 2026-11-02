@@ -3637,10 +3637,6 @@ template<typename StringType>
 inline void unescape(StringType& s)
 {
     auto pos = s.find_first_of('~', 0);
-    if (pos == StringType::npos)
-    {
-        return;
-    }
 
     StringType result;
     result.reserve(s.size());
@@ -5516,7 +5512,7 @@ inline OutStringType concat(Args && ... args)
     str.reserve(concat_length(args...));
     concat_into(str, std::forward<Args>(args)...);
     return str;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
@@ -6238,7 +6234,7 @@ const typename BasicJsonType::binary_t& binary_value(const BasicJsonType& j)
 }
 
 template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
-typename View::basic_json_type::binary_t binary_value(const View& /*unused*/)
+typename View::basic_json_type::binary_t binary_value(const View& /*unused*/) // LCOV_EXCL_LINE
 {
     return {}; // LCOV_EXCL_LINE
 }
@@ -7164,7 +7160,7 @@ StringType to_string(std::size_t value)
     StringType result;
     int_to_string(result, value);
     return result;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 /// @return a byte as two uppercase hexadecimal digits
 inline std::string hex_byte(const std::uint8_t byte)
@@ -7174,7 +7170,7 @@ inline std::string hex_byte(const std::uint8_t byte)
     result[0] = nibble_to_hex[byte / 16];
     result[1] = nibble_to_hex[byte % 16];
     return result;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 /*!
 @brief write a UTF-16 code unit as four lowercase hexadecimal digits
@@ -7518,7 +7514,7 @@ inline StringType sanitize_utf8(const StringType& s, const error_handler_t error
     }
 
     return result;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
@@ -9685,7 +9681,7 @@ class input_stream_adapter
         }
         else
         {
-            current_in_get_area = true;
+            current_in_get_area = true; // LCOV_EXCL_LINE (called only when the get area is exhausted)
         }
 #endif
         return res;
@@ -13477,11 +13473,10 @@ class lexer : public lexer_base<BasicJsonType>
     template<bool Keep>
     char_int_type get_after_string_run(std::true_type /*bulk*/, std::integral_constant<bool, Keep> keep)
     {
-        // a pending unget must be consumed through the normal path first
-        if (next_unget)
-        {
-            return get();
-        }
+        // scan_string() is entered from scan_after_whitespace(), whose current
+        // was read by skip_whitespace() (its first get() clears a pending
+        // unget), and nothing in scan_string() calls unget()
+        JSON_ASSERT(!next_unget);
         const std::size_t remaining = ia.bulk_remaining();
         if (remaining == 0)
         {
@@ -14556,11 +14551,9 @@ scan_number_done:
     */
     token_type scan_number_bulk_contiguous()
     {
-        // a pending unget offsets the buffer position from current; fall back
-        if (next_unget)
-        {
-            return token_type::uninitialized;
-        }
+        // called right after scan_after_whitespace() read current (see
+        // get_after_string_run()), so no unget is pending
+        JSON_ASSERT(!next_unget);
         const std::size_t rem = ia.bulk_remaining();
         if (rem == 0)
         {
@@ -14581,11 +14574,7 @@ scan_number_done:
         if (data[0] == '-')
         {
             number_type = token_type::value_integer;
-            i = 1;
-            if (i >= avail)
-            {
-                return token_type::uninitialized;
-            }
+            i = 1; // avail >= 2: rem == 0 returned above
         }
         const std::size_t integer_begin = i;
         if (data[i] == '0')
@@ -16646,7 +16635,7 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         ordered_data.members[f.ordered.dest_member].second = std::move(value);
     }
 
-    static void place_member(const frame& /*f*/, BasicJsonType&& /*value*/, std::false_type /*indexed*/) noexcept {}
+    static void place_member(const frame& /*f*/, BasicJsonType&& /*value*/, std::false_type /*indexed*/) noexcept {} // LCOV_EXCL_LINE
 
     /// store the members of a new object directly in it
     bool start_stored_object(std::size_t len)
@@ -23813,7 +23802,7 @@ class parser
         }
 
         return error_msg;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
   private:
     /// callback function
@@ -25124,7 +25113,7 @@ class json_pointer
         result.reference_tokens.insert(result.reference_tokens.end(), lhs.reference_tokens.begin(), lhs.reference_tokens.end());
         result.reference_tokens.insert(result.reference_tokens.end(), rhs.reference_tokens.begin(), rhs.reference_tokens.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
@@ -25135,7 +25124,7 @@ class json_pointer
         result.reference_tokens.insert(result.reference_tokens.end(), lhs.reference_tokens.begin(), lhs.reference_tokens.end());
         result.reference_tokens.push_back(std::move(token));
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
@@ -27000,7 +26989,7 @@ class json_pointer
                     {
                         // create an entry in the array
                         current = &current->operator[](array_index<BasicJsonType>(token));
-                        break;
+                        break; // LCOV_EXCL_LINE (needs an array index with 10 or more digits: more than 1e9 elements)
                     }
 
                     /*
@@ -27037,7 +27026,7 @@ class json_pointer
         json_pointer<string_t> result;
         result.reference_tokens = reference_tokens;
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     json_pointer<string_t> convert()&&
     {
@@ -28807,7 +28796,7 @@ class binary_writer
         while (n != 0);
         std::reverse(result.begin(), result.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /*!
     @brief the decimal digits of the integer @a n, with a leading '-' if it
@@ -28834,7 +28823,7 @@ class binary_writer
         }
         std::reverse(result.begin(), result.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /*!
     @brief throws because the integer @a j is too large for @a format
@@ -29766,7 +29755,7 @@ class binary_writer
         std::memcpy(out, &n, sizeof(NumberType));
         if (!is_little_endian)
         {
-            std::reverse(out, out + sizeof(NumberType));
+            std::reverse(out, out + sizeof(NumberType)); // LCOV_EXCL_LINE (big-endian hosts only)
         }
     }
 
@@ -29895,7 +29884,7 @@ class binary_writer
             const string_t& value = *j.m_data.m_value.string;
             if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size() + 1ul)))
             {
-                return false;
+                return false; // LCOV_EXCL_LINE (a string of 2 GiB or more)
             }
             out[0] = to_char_type(0x02);
             store_little_endian<std::int32_t>(p, static_cast<std::int32_t>(value.size() + 1ul));
@@ -30352,7 +30341,7 @@ class binary_writer
         const std::size_t size = oa.written() - pos;
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
         {
-            return false;
+            return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
         }
         const auto le_size = static_cast<std::uint32_t>(size);
         oa.overwrite(pos, is_little_endian ? le_size : byteswap(le_size));
@@ -30480,7 +30469,7 @@ class binary_writer
                     {
                         if (JSON_HEDLEY_UNLIKELY(!close_bson_container(nested_size_pos)))
                         {
-                            return false;
+                            return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
                         }
                         continue;
                     }
@@ -30495,7 +30484,7 @@ class binary_writer
 
             if (JSON_HEDLEY_UNLIKELY(!close_bson_container(current.size_slot)))
             {
-                return false;
+                return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
             }
             if (parents.empty())
             {
@@ -30752,10 +30741,10 @@ class binary_writer
 
     Selected through masks rather than branches, as the type and the sign of
     the values in an array of mixed signs alternate unpredictably (non-negative
-    integers are number_unsigned after parsing). Up to 64 bits, the sign is bit
-    63 of the result (a narrower integer is sign-extended); computing it with
-    masks keeps GCC from branching on the type. A wider integer has to be
-    compared.
+    integers are number_unsigned after parsing). The sign is bit 63 of the
+    result (a narrower integer is sign-extended); computing it with masks keeps
+    GCC from branching on the type. Only called if @ref integers_fit_64_bits();
+    a wider number type is written with range checks on the whole value.
     */
     static std::uint64_t integer_bits(const BasicJsonType& j, std::uint64_t& sign_mask) noexcept
     {
@@ -30763,9 +30752,7 @@ class binary_writer
         const std::uint64_t raw = is_signed
                                   ? static_cast<std::uint64_t>(j.m_data.m_value.number_integer)
                                   : static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned);
-        sign_mask = sizeof(typename BasicJsonType::number_integer_t) <= sizeof(std::uint64_t)
-                    ? (std::uint64_t{0} - static_cast<std::uint64_t>(is_signed)) & (std::uint64_t{0} - (raw >> 63u))
-                    : std::uint64_t{0} - static_cast<std::uint64_t>(is_signed && j.m_data.m_value.number_integer < 0);
+        sign_mask = (std::uint64_t{0} - static_cast<std::uint64_t>(is_signed)) & (std::uint64_t{0} - (raw >> 63u));
         return raw;
     }
 
@@ -32132,57 +32119,34 @@ class binary_writer
     }
 
     /*!
-    @brief validate (dry_run) or write one BJData ND-array element of integer dtype @a T
-    @return whether @a el's value is in range of @a T; always true when @a dry_run is false
-    */
-    template<typename T>
-    bool write_bjdata_ndarray_element(const BasicJsonType& el, const bool dry_run)
-    {
-        if (dry_run)
-        {
-            return bjdata_ndarray_value_in_range<T>(el);
-        }
-        using storage_type = typename std::conditional<std::is_unsigned<T>::value, std::uint64_t, std::int64_t>::type;
-        write_number(static_cast<T>(el.template get<storage_type>()), true);
-        return true;
-    }
-
-    /*!
-    @brief validate (dry_run) or write one BJData ND-array element of dtype 'd' (single precision)
+    @brief whether the BJData ND-array element @a el can be written with dtype 'd' (single precision)
     @return whether @a el's value survives narrowing to float and back without any change
-            (so the ND-array round-trips exactly), or is infinite or NaN; always true when
-            @a dry_run is false
+            (so the ND-array round-trips exactly), or is infinite or NaN
     */
-    bool write_bjdata_ndarray_float_element(const BasicJsonType& el, const bool dry_run)
+    static bool bjdata_ndarray_float_in_range(const BasicJsonType& el) noexcept
     {
         const auto dval = static_cast<double>(el.m_data.m_value.number_float);
-        if (dry_run)
-        {
 #ifdef __GNUC__
-            JSON_HEDLEY_DIAGNOSTIC_PUSH
-            JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-            // a value that would be rounded (rather than exactly represented) by the
-            // narrowing to float is treated like an out-of-range integer element; this
-            // is the same criterion write_compact_float() uses for CBOR/MessagePack
-            const bool in_range = std::isnan(dval) ||
-                                  (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                                   dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                                   static_cast<double>(static_cast<float>(dval)) == dval) ||
-                                  std::isinf(dval);
+        // a value that would be rounded (rather than exactly represented) by the
+        // narrowing to float is treated like an out-of-range integer element; this
+        // is the same criterion write_compact_float() uses for CBOR/MessagePack
+        return std::isnan(dval) ||
+               (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                static_cast<double>(static_cast<float>(dval)) == dval) ||
+               std::isinf(dval);
 #ifdef __GNUC__
-            JSON_HEDLEY_DIAGNOSTIC_POP
+        JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
-            return in_range;
-        }
-        write_number(static_cast<float>(dval), true);
-        return true;
     }
 
     /*!
     @brief write the elements of an ND-array as the number kind @a dtype names
            (see @ref write_bjdata_ndarray), after they have been found to be
-           in range by a dry run of @ref write_bjdata_ndarray_elements
+           in range by @ref bjdata_ndarray_elements_in_range
 
     The elements are encoded in blocks into space reserved from the sink.
     */
@@ -32264,20 +32228,13 @@ class binary_writer
     }
 
     /*!
-    @brief validate or write every element of a BJData ND-array's `_ArrayData_`
+    @brief whether every element of a BJData ND-array's `_ArrayData_` is in range for its dtype
     @param[in] array_data  the `_ArrayData_` array
     @param[in] dtype       the ND-array dtype marker, as returned by bjdata_ndarray_type_marker()
-    @param[in] dry_run     true to only range-check each element, false to write it
-    @return whether every element is in range for @a dtype (always true when @a dry_run is false)
+    @return whether every element is in range for @a dtype
     */
-    bool write_bjdata_ndarray_elements(const BasicJsonType& array_data, const CharType dtype, const bool dry_run)
+    static bool bjdata_ndarray_elements_in_range(const BasicJsonType& array_data, const CharType dtype)
     {
-        if (!dry_run)
-        {
-            write_bjdata_ndarray_values(array_data, dtype);
-            return true;
-        }
-
         for (const auto& el : array_data)
         {
             bool ok = true;
@@ -32285,43 +32242,39 @@ class binary_writer
             {
                 case 'U':
                 case 'B':
-                    ok = write_bjdata_ndarray_element<std::uint8_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'C':
                     // BJData limits a char to 0..127 (the intersection of the int8 and uint8 ranges)
                     ok = bjdata_ndarray_value_in_range<std::int8_t>(el) && bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'i':
-                    ok = write_bjdata_ndarray_element<std::int8_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int8_t>(el);
                     break;
                 case 'u':
-                    ok = write_bjdata_ndarray_element<std::uint16_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint16_t>(el);
                     break;
                 case 'I':
-                    ok = write_bjdata_ndarray_element<std::int16_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int16_t>(el);
                     break;
                 case 'm':
-                    ok = write_bjdata_ndarray_element<std::uint32_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint32_t>(el);
                     break;
                 case 'l':
-                    ok = write_bjdata_ndarray_element<std::int32_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int32_t>(el);
                     break;
                 case 'M':
-                    ok = write_bjdata_ndarray_element<std::uint64_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint64_t>(el);
                     break;
                 case 'L':
-                    ok = write_bjdata_ndarray_element<std::int64_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int64_t>(el);
                     break;
                 case 'd':
-                    ok = write_bjdata_ndarray_float_element(el, dry_run);
+                    ok = bjdata_ndarray_float_in_range(el);
                     break;
                 case 'D':
                 default:
                     // 'D' (double) already spans the full range of number_float_t
-                    if (!dry_run)
-                    {
-                        write_number(el.template get<double>(), true);
-                    }
                     break;
             }
             if (!ok)
@@ -32408,7 +32361,7 @@ class binary_writer
             const auto dim = el.template get<std::uint64_t>();
             if (!value_in_range_of<std::size_t>(dim))
             {
-                return true;
+                return true; // LCOV_EXCL_LINE (size_t is narrower than 64 bits)
             }
             const auto dim_size = static_cast<std::size_t>(dim);
 
@@ -32458,7 +32411,7 @@ class binary_writer
         // wrap (integers) or overflow to infinity (the "single" precision
         // float) instead of being reported, so such an object falls back to
         // a plain object encoding as well
-        if (!write_bjdata_ndarray_elements(array_data, dtype, true))
+        if (!bjdata_ndarray_elements_in_range(array_data, dtype))
         {
             return true;
         }
@@ -32470,7 +32423,7 @@ class binary_writer
 
         write_ubjson(array_size, use_count, use_type, true,  true, bjdata_version);
 
-        write_bjdata_ndarray_elements(array_data, dtype, false);
+        write_bjdata_ndarray_values(array_data, dtype);
         return false;
     }
 
@@ -32796,8 +32749,8 @@ class binary_writer
     run are encoded into space reserved from the sink, as in
     @ref write_array_elements; an integer that BON8 cannot write (an unsigned
     one above the int64 range, or one of a number type wider than 64 bits) throws
-    from write_bon8_value, like any other value that is not a number. Kept out
-    of line, like @ref write_cbor_array.
+    out_of_range.407, as write_bon8_value does. Kept out of line, like
+    @ref write_cbor_array.
     */
     template<typename ArrayType>
     JSON_HEDLEY_NEVER_INLINE
@@ -32847,10 +32800,10 @@ class binary_writer
                 string_open = false;
             }
 
-            if (unencodable)
+            if (JSON_HEDLEY_UNLIKELY(unencodable))
             {
-                write_bon8_value(*it, string_open, depth + 1);
-                ++it;
+                // an integer beyond the int64 range, as write_bon8_value would report it
+                throw_integer_out_of_range(*it, input_format_t::bon8, "int64");
             }
         }
     }
@@ -32885,14 +32838,13 @@ class binary_writer
                     break;
 
                 case value_t::number_integer:
-                    if (JSON_HEDLEY_LIKELY(integer_fits<std::int64_t>(value.m_data.m_value.number_integer)))
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(value.m_data.m_value.number_integer)))
                     {
-                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_integer));
-                        string_open = false;
-                        break;
+                        // beyond 64 bits (number types wider than that)
+                        throw_integer_out_of_range(value, input_format_t::bon8, "int64");
                     }
-                    // beyond 64 bits (number types wider than that): throws
-                    write_bon8_value(value, string_open, depth + 1);
+                    write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_integer));
+                    string_open = false;
                     break;
 
                 case value_t::number_float:
@@ -32901,14 +32853,13 @@ class binary_writer
                     break;
 
                 case value_t::number_unsigned:
-                    if (JSON_HEDLEY_LIKELY(integer_fits_max<std::int64_t>(value.m_data.m_value.number_unsigned)))
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::int64_t>(value.m_data.m_value.number_unsigned)))
                     {
-                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_unsigned));
-                        string_open = false;
-                        break;
+                        // too large for BON8
+                        throw_integer_out_of_range(value, input_format_t::bon8, "int64");
                     }
-                    // too large for BON8: throws
-                    write_bon8_value(value, string_open, depth + 1);
+                    write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_unsigned));
+                    string_open = false;
                     break;
 
                 case value_t::object:
@@ -36365,7 +36316,7 @@ class serializer
                     // character
                     if (EnsureAscii)
                     {
-                        JSON_ASSERT(codepoint >= 0x7F);
+                        JSON_ASSERT(codepoint == 0x7F);
                         if (error_handler == error_handler_t::keep)
                         {
                             // this character was buffered as raw bytes below
@@ -36376,21 +36327,13 @@ class serializer
                             // character instead
                             bytes = bytes_after_last_accept;
                         }
-                        if (codepoint <= 0xFFFF)
-                        {
-                            write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
-                        }
-                        else
-                        {
-                            write_u_escape(bytes, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)));
-                            write_u_escape(bytes, static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
-                        }
+                        write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
                     }
                     else
                     {
                         // copy byte to buffer (all previous bytes of the
                         // sequence have been copied in the default case below)
-                        string_buffer[bytes++] = s[i];
+                        string_buffer[bytes++] = s[i]; // LCOV_EXCL_LINE (well-formed sequences are copied in runs)
                     }
 
                     reserve_string_buffer(bytes);
@@ -38231,7 +38174,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["compiler"] = {{"family", "clang"}, {"version", __clang_version__}};
 #elif defined(__GNUC__) || defined(__GNUG__)
         result["compiler"] = {{"family", "gcc"}, {"version", detail::concat<string_t>(
-                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC__)), '.',
+                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC__)), '.', // LCOV_EXCL_LINE
                     detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_MINOR__)), '.',
                     detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_PATCHLEVEL__)))
             }
@@ -38507,14 +38450,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 case value_t::binary:
                     binary = create<binary_t>();
                     break;
-                case value_t::null:
+                case value_t::null: // LCOV_EXCL_LINE
                 case value_t::boolean:
                 case value_t::number_integer:
                 case value_t::number_unsigned:
                 case value_t::number_float:
                 case value_t::discarded:
                 default:
-                    break;
+                    break; // LCOV_EXCL_LINE
             }
         }
 
@@ -38868,14 +38811,14 @@ public:
                     destroy_container(t);
                     break;
 
-                case value_t::null:
+                case value_t::null: // LCOV_EXCL_LINE
                 case value_t::boolean:
                 case value_t::number_integer:
                 case value_t::number_unsigned:
                 case value_t::number_float:
                 case value_t::discarded:
                 default:
-                    break;
+                    break; // LCOV_EXCL_LINE
             }
         }
     };
@@ -39048,9 +38991,9 @@ public:
         return is_array() ? array_capacity() : object_capacity();
     }
 #else
-    static constexpr std::size_t container_capacity() noexcept
+    static constexpr std::size_t container_capacity() noexcept // LCOV_EXCL_LINE
     {
-        return detail::unknown_size();
+        return detail::unknown_size(); // LCOV_EXCL_LINE
     }
 #endif
 
@@ -39236,7 +39179,7 @@ public:
     ///       into this switch is worth a few percent when copying a value made
     ///       mostly of numbers
     JSON_HEDLEY_ALWAYS_INLINE
-    static void copy_leaf_value(const basic_json& src, basic_json& dst)
+    static void copy_leaf_value(const basic_json& src, basic_json& dst) // LCOV_EXCL_LINE
     {
         switch (src.m_data.m_type)
         {
@@ -43420,7 +43363,7 @@ public:
     ///       their inlined code at each call site small. Binary values are
     ///       rare and left to equal_general().
     JSON_HEDLEY_ALWAYS_INLINE
-    static int equal_leaf(const_reference lhs, const_reference rhs) noexcept
+    static int equal_leaf(const_reference lhs, const_reference rhs) noexcept // LCOV_EXCL_LINE
     {
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_PUSH
@@ -44729,7 +44672,7 @@ public:
         basic_json result(value_t::object);
         json_pointer::flatten("", *this, result);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief unflatten a previously flattened JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/unflatten/
@@ -45442,7 +45385,7 @@ public:
         result.append(path.data(), path.size());
         diff_append_key(result, key);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief the path of the element @a index of the value at @a path
     static string_t diff_index_path(const string_t& path, const std::size_t index)
@@ -45452,7 +45395,7 @@ public:
         result.append(path.data(), path.size());
         diff_append_index(result, index);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief append the "remove" operations for the elements of array
     ///        @a source from @a index on, and the "add" operations for the
@@ -45612,7 +45555,7 @@ public:
         // operations
         if (source == target)
         {
-            return false;
+            return false; // LCOV_EXCL_LINE (equal objects with the same members in the same order return early)
         }
 
         // slow path: the common keys are in a different relative

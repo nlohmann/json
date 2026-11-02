@@ -1705,9 +1705,11 @@ class basic_json_document
         {
             // (as before: the library's adapter decides what a null stream yields)
             detail::view::append_adapter(buf, detail::input_adapter(file));
-            return;
         }
-        detail::view::append_file(buf, file);
+        else
+        {
+            detail::view::append_file(buf, file);
+        }
     }
 #endif
 

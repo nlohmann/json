@@ -2312,6 +2312,23 @@ TEST_CASE("BJData")
             CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
+        SECTION("every event of an ndarray of chars")
+        {
+            // the elements of an ndarray of 'C' are read one by one
+            std::vector<uint8_t> const v = {'[', '$', 'C', '#', '[', '$', 'U', '#', 'U', 2, 2, 2, 'a', 'b', 'c', 'd'};
+            // start_object, key, string, key, start_array, 2 numbers, end_array,
+            // key, start_array, 4 chars, end_array, end_object
+            constexpr int events = 16;
+            for (int allowed = 0; allowed < events; ++allowed)
+            {
+                CAPTURE(allowed)
+                SaxCountdown scp(allowed);
+                CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            }
+            SaxCountdown scp(events);
+            CHECK(json::sax_parse(v, &scp, json::input_format_t::bjdata));
+        }
+
         SECTION("start_array() in ndarray _ArrayData_")
         {
             std::vector<uint8_t> const v = {'[', '$', 'U', '#', '[', 'i', 2, 'i', 3, ']', 6, 5, 4, 3, 2, 1};
@@ -3094,6 +3111,15 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v = {'C', 130};
                 json _;
                 CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82");
+            }
+
+            SECTION("ndarray of chars cut off by the end of the input")
+            {
+                // 2x2 chars announced, three present
+                std::vector<uint8_t> const v = {'[', '$', 'C', '#', '[', '$', 'U', '#', 'U', 2, 2, 2, 'a', 'b', 'c'};
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 16: syntax error while parsing BJData char: unexpected end of input", json::parse_error&);
+                CHECK(json::from_bjdata(v, true, false).is_discarded());
             }
         }
 
