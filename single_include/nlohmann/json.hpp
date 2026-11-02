@@ -37353,7 +37353,7 @@ class serializer
         const std::size_t decimal_point_len = std::char_traits<char>::length(decimal_point);
 
         // convert decimal point to '.'
-        if (decimal_point_len != 0 && !(decimal_point_len == 1 && decimal_point[0] == '.'))
+        if ((decimal_point_len > 1) || (decimal_point_len == 1 && decimal_point[0] != '.'))
         {
             const auto first = number_buffer.begin();
             const auto last = first + len;
