@@ -16937,13 +16937,33 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         {
             // a new member is null and holds nothing: construct the value
             // over it instead of destroying and swapping
-            ::new (static_cast<void*>(&member)) BasicJsonType(std::forward<Value>(v));
+            construct_member(member, std::forward<Value>(v), std::is_nothrow_constructible<BasicJsonType, Value> {});
         }
         else
         {
             // the key occurred before
             member = BasicJsonType(std::forward<Value>(v));
         }
+    }
+
+    /// constructing the value cannot throw (for example a number or a boolean): construct it in place
+    template<typename Value>
+    JSON_HEDLEY_ALWAYS_INLINE
+    static void construct_member(BasicJsonType& member, Value&& v, std::true_type /*nothrow*/)
+    {
+        ::new (static_cast<void*>(&member)) BasicJsonType(std::forward<Value>(v));
+    }
+
+    /// constructing the value can throw (for example a container or a string), and a
+    /// constructor that was interrupted must not have touched the member (#5985):
+    /// create the value first, then move it over the member (the move constructor is
+    /// noexcept)
+    template<typename Value>
+    JSON_HEDLEY_ALWAYS_INLINE
+    static void construct_member(BasicJsonType& member, Value&& v, std::false_type /*may throw*/)
+    {
+        BasicJsonType value(std::forward<Value>(v));
+        ::new (static_cast<void*>(&member)) BasicJsonType(std::move(value));
     }
 
     /// a custom base class may care about the lifetime of the value
