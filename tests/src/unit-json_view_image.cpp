@@ -819,6 +819,13 @@ TEST_CASE("json_view images: errors")
             static_cast<void>(d);
         }) == prefix + "too short");
 
+        // an image that is moved into the document is checked as well
+        CHECK(exception_of([&]
+        {
+            const json_document d = json_document::load(std::vector<std::uint8_t>(10, 0));
+            static_cast<void>(d);
+        }) == prefix + "too short");
+
         std::vector<std::uint8_t> bad = image;
         bad[0] = 'X';
         CHECK(load_result(bad, image_check::full) == prefix + "unknown format");

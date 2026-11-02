@@ -692,7 +692,7 @@ TEST_CASE("json_view builder: fraction digits")
             check_same(number);
             check_same("[" + number + "]");
             std::string pair;
-            pair.reserve(number.size() * 2 + 3);
+            pair.reserve((number.size() * 2) + 3);
             pair += '[';
             pair += number;
             pair += ',';

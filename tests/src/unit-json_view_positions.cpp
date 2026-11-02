@@ -20,6 +20,7 @@ using nlohmann::ordered_json;
 using nlohmann::json_document;
 using nlohmann::json_editable_document;
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -300,6 +301,27 @@ TEST_CASE("json_view materialize() source positions")
             static_cast<void>(j.at("list").at(1).get<int>());
         }));
     }
+
+    SECTION("exception about the root value (#5987)")
+    {
+        const json_document root = json_document::parse("true");
+        const json_document nested = json_document::parse("[1, true]");
+        CHECK(json_view_test::exception_of_call([&]
+        {
+            static_cast<void>(root.root().get<std::string>());
+        }) == "[json.exception.type_error.302] (bytes 0-4) type must be string, but is boolean");
+#if JSON_DIAGNOSTICS
+        CHECK(json_view_test::exception_of_call([&]
+        {
+            static_cast<void>(nested.root()[1].get<std::string>());
+        }) == "[json.exception.type_error.302] (/1) (bytes 4-8) type must be string, but is boolean");
+#else
+        CHECK(json_view_test::exception_of_call([&]
+        {
+            static_cast<void>(nested.root()[1].get<std::string>());
+        }) == "[json.exception.type_error.302] (bytes 4-8) type must be string, but is boolean");
+#endif
+    }
 #endif
 
     SECTION("edited documents")
@@ -427,6 +449,31 @@ TEST_CASE("json_view materialize() source positions")
             CHECK(same_positions(m[std::string("a") + '\n'][2], j[std::string("a") + '\n'][2]));
         }
 
+        SECTION("a damaged text: the end of a container is not found")
+        {
+            // (the text of an image is not checked with image_check::none)
+            const std::string array_text = "[1,2]";
+            const std::vector<std::uint8_t> original = json_document::parse(array_text).save();
+            const auto at = std::search(original.begin(), original.end(), array_text.begin(), array_text.end());
+            REQUIRE(at != original.end());
+            const auto closing = static_cast<std::size_t>(at - original.begin()) + array_text.size() - 1;
+            // not a closing bracket, a slash that starts no comment, and the end of the text
+            for (const char replacement :
+                    {
+                        'x', '/', ' '
+                    })
+            {
+                CAPTURE(replacement)
+                std::vector<std::uint8_t> damaged = original;
+                damaged[closing] = static_cast<std::uint8_t>(replacement);
+                const json_document d = json_document::load(damaged, json_document::image_check::none);
+                const json m = d.root().materialize();
+                CHECK(range(m) == "none");
+                CHECK(range(m[0]) == "1-2");
+                CHECK(range(m[1]) == "3-4");
+            }
+        }
+
 #if !defined(JSON_NOEXCEPTION)
         SECTION("a decoded string's position must be within the text")
         {
@@ -461,6 +508,7 @@ TEST_CASE("json_view exceptions name the path and the bytes of the value")
         {
             "null", "true", "42", "\"s\"", "[]", "{}", "[1, [2, [3, []]]]", R"({"a": {"b": [1, {"c": null}]}, "d": "e"})",
             R"({"a/b": {"~": [1]}, "\u0041\n": {"x": "\t"}, "": [{}]})",
+            R"({"a\u0000b": [1, "x"], "c": {"d\u0000": 2}})", // (the path of a key ends at a null byte, as in basic_json)
             R"([1 /* ] */, {"a": [] // }
 , "b": {} } , ])",
             "\n\t[\r\n  1 ,\n  {\n    \"a\" : [ ]\n  }\n]\n",
@@ -512,6 +560,49 @@ TEST_CASE("json_view exceptions name the path and the bytes of the value")
         CHECK(exception_of_call([&] { static_cast<void>(d.root()["a"][2]["n"][0].get<int>()); }) == expected);
     }
 
+    SECTION("views of values that are no longer part of the document, and of no value")
+    {
+        const std::string expected_string = "[json.exception.type_error.302] type must be number, but is string";
+        static_cast<void>(expected_string);
+        // (a value that is not found has no path, and with it no bytes)
+        {
+            json_editable_document d = json_editable_document::parse(R"(["x", ["y"]])");
+            const auto removed = d.root()[0];
+            d.erase(d.root(), 0);
+#if JSON_DIAGNOSTICS
+            CHECK(exception_of_call([&] { static_cast<void>(removed.get<int>()); }) == expected_string);
+#endif
+            // (the root is a scalar now: the value cannot be in it)
+            d.set(d.root(), 5);
+#if JSON_DIAGNOSTICS
+            CHECK(exception_of_call([&] { static_cast<void>(removed.get<int>()); }) == expected_string);
+#endif
+            CHECK(d.root().get<int>() == 5);
+        }
+        {
+            json_editable_document d = json_editable_document::parse(R"(["x"])");
+            const auto removed = d.root()[0];
+            d.set(d.root(), 5);
+#if JSON_DIAGNOSTICS
+            CHECK(exception_of_call([&] { static_cast<void>(removed.get<int>()); }) == expected_string);
+#endif
+        }
+        // a view of no value has no context
+        CHECK(exception_of_call([&] { static_cast<void>(nlohmann::json_view().get<int>()); }) == "[json.exception.type_error.302] type must be number, but is discarded");
+    }
+
+    SECTION("an array whose last element was replaced by a new container has no bytes")
+    {
+        json_editable_document d = json_editable_document::parse(R"({"a": [1, [2]], "b": 1})");
+        d.set(d.root()["a"][1], json::array({3}));
+        std::string expected = "[json.exception.type_error.302] ";
+#if JSON_DIAGNOSTICS
+        expected += "(/a) ";
+#endif
+        expected += "type must be number, but is array";
+        CHECK(exception_of_call([&] { static_cast<void>(d.root()["a"].get<int>()); }) == expected);
+    }
+
     SECTION("deep documents with siblings after every nested container")
     {
         // the search for the path pushes and pops one frame per level (the
@@ -521,7 +612,8 @@ TEST_CASE("json_view exceptions name the path and the bytes of the value")
         std::string text = "7";
         for (int level = 0; level < 40; ++level)
         {
-            text = R"([[1, [2]], )" + text + R"(, {"k": [3, {"l": [4]}]}, [5, [6, [7]]]])";
+            text.insert(0, R"([[1, [2]], )");
+            text += R"(, {"k": [3, {"l": [4]}]}, [5, [6, [7]]]])";
         }
         CAPTURE(text)
         const json j = json::parse(text);
@@ -550,12 +642,8 @@ TEST_CASE("json_view exceptions name the path and the bytes of the value")
         expected_zz += "(bytes 12-35) key 'zz' not found";
         CHECK(exception_of_call([&] { static_cast<void>(d.root().at(json::json_pointer("/people/0/zz"))); }) == expected_zz);
 
-        // the root has no path, and with JSON_DIAGNOSTICS then no bytes either (as basic_json)
-        std::string expected_missing = "[json.exception.out_of_range.403] ";
-#if !JSON_DIAGNOSTICS
-        expected_missing += "(bytes 0-79) ";
-#endif
-        expected_missing += "key 'missing' not found";
+        // the root has no path, but still its bytes (#5987)
+        const std::string expected_missing = "[json.exception.out_of_range.403] (bytes 0-79) key 'missing' not found";
         CHECK(exception_of_call([&] { static_cast<void>(d.root().at("missing")); }) == expected_missing);
     }
 

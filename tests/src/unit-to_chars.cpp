@@ -928,3 +928,49 @@ TEST_CASE("short decimals")
         }
     }
 }
+
+TEST_CASE("decimals of up to 17 digits")
+{
+    // write_decimal() lays out digits * 10^exp as format_buffer() does; to_chars()
+    // calls it for the doubles whose digits write_shortest() does not convert at
+    // once, and the digits may be as many as 17
+    const auto written = [](std::uint64_t digits, int exp) -> std::string
+    {
+        std::array<char, 64> buf{}; // (up to 41 bytes are written)
+        char* const end = nlohmann::detail::dtoa_impl::write_decimal(buf.data(), digits, exp);
+        return {buf.data(), end};
+    };
+
+    SECTION("fixed notation")
+    {
+        CHECK(written(1, 0) == "1.0");
+        CHECK(written(1234, -2) == "12.34");
+        CHECK(written(123, 2) == "12300.0");
+        CHECK(written(50000000000u, -1) == "5000000000.0");
+        CHECK(written(100000000u, -8) == "1.0");
+        CHECK(written(12345678u, -12) == "1.2345678e-05");
+        CHECK(written(1234, 11) == "123400000000000.0");
+        // the point moves left of the first digit
+        CHECK(written(5, -3) == "0.005");
+        CHECK(written(12345678901234567u, -20) == "0.00012345678901234567");
+    }
+
+    SECTION("exponent notation")
+    {
+        CHECK(written(5, -5) == "5e-05");
+        CHECK(written(1234, 12) == "1.234e+15");
+        CHECK(written(5, -324) == "5e-324");
+    }
+
+    SECTION("17 digits")
+    {
+        CHECK(written(12345678901234567u, -16) == "1.2345678901234567");
+        CHECK(written(12345678901234567u, -19) == "0.0012345678901234567");
+        CHECK(written(12345678901234567u, 5) == "1.2345678901234567e+21");
+        CHECK(written(99999999999999999u, -17) == "0.99999999999999999");
+        CHECK(written(10000000000000001u, -16) == "1.0000000000000001");
+        // trailing zeros are not written
+        CHECK(written(10000000000000000u, -17) == "0.1");
+        CHECK(written(12000000000000000u, -15) == "12.0");
+    }
+}
