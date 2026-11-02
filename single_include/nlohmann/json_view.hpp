@@ -2473,20 +2473,20 @@ indent_done:
             if (negative)
             {
                 ++p;
+                if (NLOHMANN_VIEW_UNLIKELY(cur() < '0' || cur() > '9'))
+                {
+                    return fail(error_code::number_after_minus);
+                }
             }
             const unsigned char* const int_start = p;
             if (cur() == '0')
             {
                 ++p;
             }
-            else if (!negative || NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
-            {
-                // (without a sign, the dispatch saw a digit)
-                p = skip_digits(p + 1, e);
-            }
             else
             {
-                return fail(error_code::number_after_minus);
+                // (a digit: the dispatch or the check after the sign saw it)
+                p = skip_digits(p + 1, e);
             }
             const auto int_digits = static_cast<std::size_t>(p - int_start);
             std::size_t frac_digits = 0;
@@ -5080,8 +5080,12 @@ std::string diagnostics(const error_site site)
     std::string context;
 #if JSON_DIAGNOSTICS
     std::vector<std::string> tokens;
-    // a value that is not found leaves no tokens, like the root
-    static_cast<void>(edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens));
+    const bool found = edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens);
+    if (!found)
+    {
+        // a value that is not found has no path, and with it no bytes
+        return context;
+    }
     if (!tokens.empty())
     {
         // the root value has no path, but still has a byte range
