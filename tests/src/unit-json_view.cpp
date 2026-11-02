@@ -1578,7 +1578,15 @@ void check_boolean_get_parity()
             CHECK(view_value == static_cast<T>(b));
         }
 #else
-        CHECK(j.get<T>() == d.root().template get<T>());
+        // without exceptions, the combinations that throw (number_integer_t, number_unsigned_t, number_float_t)
+        // cannot be run: JSON_THROW aborts
+        const bool throws = std::is_same<T, json::number_integer_t>::value
+                            || std::is_same<T, json::number_unsigned_t>::value
+                            || std::is_same<T, json::number_float_t>::value;
+        if (!throws)
+        {
+            CHECK(j.get<T>() == d.root().template get<T>());
+        }
 #endif
     }
 }
