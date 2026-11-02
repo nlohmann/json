@@ -18360,7 +18360,7 @@ class binary_reader
     */
     bool check_bson_document_size(const std::size_t document_start, const std::int32_t document_size)
     {
-        if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
+        if (JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(document_size) != chars_read - document_start))
         {
             return bson_document_size_error(document_size, chars_read - document_start);
         }
@@ -21091,16 +21091,13 @@ class binary_reader
         {
             if (size_and_type.second != 0)
             {
-                if (size_and_type.second != 'N')
+                for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    for (std::size_t i = 0; i < size_and_type.first; ++i)
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, no_ndarray, size_and_type.second)))
                     {
-                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, no_ndarray, size_and_type.second)))
-                        {
-                            return false;
-                        }
-                        dim.push_back(dimlen);
+                        return false;
                     }
+                    dim.push_back(dimlen);
                 }
             }
             else
@@ -21302,11 +21299,9 @@ class binary_reader
                     // follow the documented _ArrayType_, _ArraySize_, _ArrayData_ order
                     if (ndarray_dtype != 0)
                     {
+                        // every optimized type marker is_valid_optimized_type() accepts for BJData has a name
                         const char* type_name = bjd_type_name(ndarray_dtype);
-                        if (JSON_HEDLEY_UNLIKELY(type_name == nullptr))
-                        {
-                            return unexpected_byte("invalid byte", "type");
-                        }
+                        JSON_ASSERT(type_name != nullptr);
 
                         string_t type_key = "_ArrayType_";
                         string_t type = type_name; // sax->string() takes a reference
@@ -21389,12 +21384,6 @@ class binary_reader
         if (current == '$')
         {
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
-            if (input_format == input_format_t::bjdata
-                    && JSON_HEDLEY_UNLIKELY(is_bjd_excluded_optimized_type(result.second)))
-            {
-                return optimized_type_error();
-            }
-
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("type")))
             {
                 return false;
@@ -21422,7 +21411,7 @@ class binary_reader
             // an ndarray was read here only if the flag flipped; when it was
             // seeded true, get_ubjson_size_value() already rejected the nested
             // dimension vector
-            if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
+            if (is_ndarray && !inside_ndarray)
             {
                 result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
             }
@@ -21432,7 +21421,7 @@ class binary_reader
         if (current == '#')
         {
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
-            if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
+            if (is_ndarray && !inside_ndarray)
             {
                 return last_byte_error(exception_id::unexpected_byte, "ndarray requires both type and size", "size");
             }
@@ -21606,7 +21595,6 @@ class binary_reader
     JSON_HEDLEY_NEVER_INLINE
     bool parse_ubjson_typed_run(std::size_t& remaining, const char_int_type type, std::true_type /*bulk*/)
     {
-        const bool bjdata = input_format == input_format_t::bjdata;
         switch (type)
         {
             case 'U':
@@ -21620,11 +21608,11 @@ class binary_reader
             case 'L':
                 return parse_ubjson_typed_run<std::int64_t>(remaining);
             case 'u':
-                return !bjdata || parse_ubjson_typed_run<std::uint16_t>(remaining);
+                return parse_ubjson_typed_run<std::uint16_t>(remaining);
             case 'm':
-                return !bjdata || parse_ubjson_typed_run<std::uint32_t>(remaining);
+                return parse_ubjson_typed_run<std::uint32_t>(remaining);
             case 'M':
-                return !bjdata || parse_ubjson_typed_run<std::uint64_t>(remaining);
+                return parse_ubjson_typed_run<std::uint64_t>(remaining);
             case 'd':
                 return parse_ubjson_typed_run<float>(remaining);
             case 'D':
@@ -21705,7 +21693,7 @@ class binary_reader
         // if bit-8 of size_and_type.second is set to 1, encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
         // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
 
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
+        if ((size_and_type.second & (1 << 8)) != 0)
         {
             size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
 
@@ -21764,7 +21752,7 @@ class binary_reader
         }
 
         // If BJData type marker is 'B' decode as binary
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && size_and_type.second == 'B')
+        if (size_and_type.first != npos && size_and_type.second == 'B')
         {
             binary_t result;
             return get_binary(size_and_type.first, result) && sax->binary(result);
@@ -21813,7 +21801,7 @@ class binary_reader
         }
 
         // do not accept ND-array size in objects in BJData
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
+        if ((size_and_type.second & (1 << 8)) != 0)
         {
             return last_byte_error(exception_id::unexpected_byte, "BJData object does not support ND-array size in optimized format", "object");
         }
@@ -31101,22 +31089,19 @@ class binary_writer
                 // negative fixnum
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int8_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)())
             {
                 // int 8
                 oa.write_character(to_char_type(0xD0));
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int16_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)())
             {
                 // int 16
                 oa.write_character(to_char_type(0xD1));
                 write_number(static_cast<std::int16_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int32_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)())
             {
                 // int 32
                 oa.write_character(to_char_type(0xD2));
