@@ -30394,7 +30394,6 @@ class binary_writer
             nothing large has been written then, and the caller writes the
             document in two passes, which reports that error
     */
-    template<typename SinkType = OutputSinkType, typename std::enable_if<is_detected<sink_written_t, SinkType>::value, int>::type = 0>
     bool write_bson_document_single_pass(const BasicJsonType& document)
     {
         const std::size_t start = oa.written();
