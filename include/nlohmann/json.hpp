@@ -5388,8 +5388,7 @@ public:
     /// @name lexicographical comparison operators
     /// @{
 
-    // the same-type cases for non-owning scalars, shared by JSON_IMPLEMENT_OPERATOR
-    // and JSON_IMPLEMENT_SCALAR_FAST
+    // the same-type cases for non-owning scalars, used by JSON_IMPLEMENT_SCALAR_FAST
 #define JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                     \
   case value_t::null:                                                                                  \
         return (null_result);                                                                            \
@@ -5411,7 +5410,7 @@ public:
     // because any negative signed value is smaller than any unsigned value.
     // Otherwise, the non-negative signed value is cast to unsigned before the
     // comparison to avoid wraparound.
-#define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result, deep_result, may_descend) \
+#define JSON_IMPLEMENT_OPERATOR(op, unordered_result, default_result, deep_result, may_descend)          \
     const auto lhs_type = lhs.type();                                                                    \
     const auto rhs_type = rhs.type();                                                                    \
     \
@@ -5548,7 +5547,7 @@ public:
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
+        JSON_IMPLEMENT_OPERATOR( ==, false, false,
                                  compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
@@ -5562,7 +5561,6 @@ public:
         // default_result is used if we cannot compare values. In that case,
         // we compare types.
         JSON_IMPLEMENT_OPERATOR(<=>, // *NOPAD*
-                                std::partial_ordering::equivalent,
                                 std::partial_ordering::unordered,
                                 lhs_type <=> rhs_type, // *NOPAD*
                                 to_partial_ordering(compare_iteratively<true>(lhs, rhs, false)), true)
@@ -5574,7 +5572,7 @@ public:
         // default_result is used if we cannot compare values. In that case,
         // we compare types. Note we have to call the operator explicitly,
         // because MSVC has problems otherwise.
-        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
+        JSON_IMPLEMENT_OPERATOR( <, false, operator<(lhs_type, rhs_type),
                                  compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
     }
 #endif
