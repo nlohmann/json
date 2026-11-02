@@ -881,7 +881,7 @@ void check_strong_guarantee(const std::function<BasicJsonType()>& make,
         {
             CHECK(j.dump() == before);
             CHECK(children_name_their_parent(j));
-            const BasicJsonType copy(j);
+            const BasicJsonType copy(j); // NOLINT(performance-unnecessary-copy-initialization): the copy is the point, it allocates
             CHECK(copy.dump() == before);
         }
     }
@@ -917,7 +917,7 @@ void check_insert_strong_guarantee()
                 j.push_back(std::string(64, 'd'));
                 j.erase(3);
             }
-            return j;
+            return json_t(std::move(j));
         };
 
         for (const bool at_end :

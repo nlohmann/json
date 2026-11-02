@@ -42752,6 +42752,8 @@ public:
             : m_value(v), m_old_size(old_size) {}
         array_append_rollback(const array_append_rollback&) = delete;
         array_append_rollback& operator=(const array_append_rollback&) = delete;
+        array_append_rollback(array_append_rollback&&) = delete;
+        array_append_rollback& operator=(array_append_rollback&&) = delete;
 
         void commit() noexcept
         {
@@ -42890,6 +42892,8 @@ public:
         explicit object_clear_on_failure(basic_json* v) noexcept : m_value(v) {}
         object_clear_on_failure(const object_clear_on_failure&) = delete;
         object_clear_on_failure& operator=(const object_clear_on_failure&) = delete;
+        object_clear_on_failure(object_clear_on_failure&&) = delete;
+        object_clear_on_failure& operator=(object_clear_on_failure&&) = delete;
 
         void commit() noexcept
         {
@@ -42920,6 +42924,8 @@ public:
         object_insert_rollback(basic_json* v, SourceIterator first) : m_value(v), m_first(first) {}
         object_insert_rollback(const object_insert_rollback&) = delete;
         object_insert_rollback& operator=(const object_insert_rollback&) = delete;
+        object_insert_rollback(object_insert_rollback&&) = delete;
+        object_insert_rollback& operator=(object_insert_rollback&&) = delete;
 
         /// call before each run of up to 64 members is inserted; may throw, which leaves the log complete
         void start_chunk()
@@ -42960,7 +42966,7 @@ public:
                 for (std::size_t i = 0; i < m_count; ++i, ++it)
                 {
                     const std::size_t chunk = i / 64;
-                    const std::uint64_t word = chunk >= m_flushed ? m_word : (chunk < inline_words ? m_inline[chunk] : m_more[chunk - inline_words]);
+                    const std::uint64_t word = logged_word(chunk);
                     if (((word >> (i % 64)) & 1U) != 0)
                     {
                         object.erase(it->first);
@@ -42973,14 +42979,24 @@ public:
 private:
         static constexpr std::size_t inline_words = 4;
 
+        /// the log word of a chunk: the one being filled, an inline one, or an overflow one
+        std::uint64_t logged_word(std::size_t chunk) const
+        {
+            if (chunk >= m_flushed)
+            {
+                return m_word;
+            }
+            return chunk < inline_words ? m_inline[chunk] : m_more[chunk - inline_words];
+        }
+
         basic_json* m_value;
         SourceIterator m_first;
         bool m_committed = false;
         std::size_t m_count = 0;
         std::size_t m_flushed = 0;
         std::uint64_t m_word = 0;
-        std::uint64_t m_inline[inline_words] {};
-        std::vector<std::uint64_t> m_more {};
+        std::array<std::uint64_t, inline_words> m_inline {};
+        std::vector<std::uint64_t> m_more;
     };
 
   public:
