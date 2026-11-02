@@ -108,6 +108,9 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
+        // m_it is already value-initialized, so this is not needed for
+        // correctness; it is kept because GCC generates faster loops with it
+        // (iterating a parsed document is 0.5-2.7 % slower without it, #6005)
         if (m_object->is_object())
         {
             m_it.object_iterator = typename object_t::iterator();

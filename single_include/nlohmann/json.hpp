@@ -24104,6 +24104,9 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
+        // m_it is already value-initialized, so this is not needed for
+        // correctness; it is kept because GCC generates faster loops with it
+        // (iterating a parsed document is 0.5-2.7 % slower without it, #6005)
         if (m_object->is_object())
         {
             m_it.object_iterator = typename object_t::iterator();
@@ -36306,21 +36309,14 @@ class serializer
                 {
                     // the code point is at least 0x60 (smaller ones are handled
                     // above) and is not printable ASCII (which the scanner
-                    // copies): it is DEL (0x7F) under EnsureAscii or a non-ASCII
-                    // character
+                    // copies). Under EnsureAscii it is DEL (0x7F): every
+                    // well-formed multi-byte character is escaped by
+                    // write_u_escapes() above, so decode() only ever accepts a
+                    // single byte here, and nothing of it was buffered
                     if (EnsureAscii)
                     {
                         JSON_ASSERT(codepoint == 0x7F);
-                        if (error_handler == error_handler_t::keep)
-                        {
-                            // this character was buffered as raw bytes below
-                            // in case it turned out to be part of an
-                            // ill-formed sequence (which is kept as is); now
-                            // that it decoded to a well-formed code point,
-                            // undo that and \u-escape it like any other
-                            // character instead
-                            bytes = bytes_after_last_accept;
-                        }
+                        JSON_ASSERT(bytes == bytes_after_last_accept);
                         write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
                     }
                     else
@@ -39347,7 +39343,7 @@ public:
         auto src_it = src_object.cbegin();
         for (auto& element : *dst.m_data.m_value.object)
         {
-            if (JSON_HEDLEY_LIKELY(src_it != src_object.cend() && copy_keys_equal(src_it->first, element.first)))
+            if (JSON_HEDLEY_LIKELY(copy_keys_equal(src_it->first, element.first)))
             {
                 copy_shallow(src_it->second, element.second, worklist);
                 ++src_it;
@@ -43206,8 +43202,15 @@ public:
                 return (*lhs.m_data.m_value.object) op (*rhs.m_data.m_value.object);                                   \
             }                                                                                            \
             \
-            JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                 \
-            \
+                /* same-type scalars never get here: the inline fast path of the operator handles them */ \
+            case value_t::null:                                                                          \
+            case value_t::boolean:                                                                       \
+            case value_t::number_integer:                                                                \
+            case value_t::number_unsigned:                                                               \
+            case value_t::number_float:                                                                  \
+                JSON_ASSERT(false); /* NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) */ \
+                return (unordered_result);                                                               \
+                \
             case value_t::string:                                                                        \
                 return (*lhs.m_data.m_value.string) op (*rhs.m_data.m_value.string);                                   \
                 \
@@ -43247,7 +43250,7 @@ public:
                ? (number_integer_t(-1) op number_integer_t(1))                                           \
                : (static_cast<number_unsigned_t>(lhs.m_data.m_value.number_integer) op rhs.m_data.m_value.number_unsigned); \
     }                                                                                             \
-    else if(compares_unordered(lhs, rhs))\
+    else if(lhs_type == value_t::discarded || rhs_type == value_t::discarded)\
     {\
         return (unordered_result);\
     }\
