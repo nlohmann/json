@@ -16957,7 +16957,7 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         }
     }
 
-    /// constructing the value cannot throw (a number, a boolean): construct it in place
+    /// constructing the value cannot throw (for example a number or a boolean): construct it in place
     template<typename Value>
     JSON_HEDLEY_ALWAYS_INLINE
     static void construct_member(BasicJsonType& member, Value&& v, std::true_type /*nothrow*/)
@@ -16965,9 +16965,10 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         ::new (static_cast<void*>(&member)) BasicJsonType(std::forward<Value>(v));
     }
 
-    /// constructing the value can throw (a container, a string), and a constructor
-    /// that was interrupted must not have touched the member (#5985): create the
-    /// value first, then move it over the member (the move constructor is noexcept)
+    /// constructing the value can throw (for example a container or a string), and a
+    /// constructor that was interrupted must not have touched the member (#5985):
+    /// create the value first, then move it over the member (the move constructor is
+    /// noexcept)
     template<typename Value>
     JSON_HEDLEY_ALWAYS_INLINE
     static void construct_member(BasicJsonType& member, Value&& v, std::false_type /*may throw*/)
