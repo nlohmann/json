@@ -1555,6 +1555,7 @@ TEST_CASE("regression tests 1")
         {
             my_json j = make();
 #ifdef JSON_NO_THREAD_LOCAL
+            // (set by the user, or by the library for clang with MinGW)
             // the objects below the outermost one are not copied by their
             // object_t here, but member by member, which keeps their
             // timestamps correct: "c" is not mistaken for "b" and is inserted

@@ -534,9 +534,10 @@ TEST_CASE("object_key_index")
 
         // the hashes are not distinct on purpose: elements with the same
         // hash are told apart by the caller
-        const auto hash_of = [](std::size_t position)
+        const auto hash_of = [](std::size_t position) -> std::size_t
         {
-            return (position % 50) * 0x9E3779B97F4A7C15ull;
+            // truncated to 32 bits where std::size_t is that small
+            return static_cast<std::size_t>((position % 50) * 0x9E3779B97F4A7C15ull);
         };
 
         std::vector<std::size_t> hashes;
