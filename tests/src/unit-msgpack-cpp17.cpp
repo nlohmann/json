@@ -122,7 +122,8 @@ TEST_CASE("JSON text with std::byte")
     SECTION("invalid text")
     {
         CHECK_FALSE(json::accept(to_bytes("[1,\n2,")));
-        CHECK_THROWS_WITH_AS(json::parse(to_bytes("[1,\n2,")),
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::parse(to_bytes("[1,\n2,")),
                              "[json.exception.parse_error.101] parse error at line 2, column 3: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
     }
 }

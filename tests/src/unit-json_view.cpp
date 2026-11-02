@@ -111,7 +111,7 @@ struct failing_allocator
     template<typename U>
     explicit failing_allocator(const failing_allocator<U>& /*other*/) noexcept {}
 
-    T* allocate(std::size_t /*n*/) // NOLINT(readability-convert-member-functions-to-static)
+    [[noreturn]] T* allocate(std::size_t /*n*/) // NOLINT(readability-convert-member-functions-to-static)
     {
         throw std::bad_alloc();
     }
