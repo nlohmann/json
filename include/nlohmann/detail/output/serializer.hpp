@@ -2096,8 +2096,9 @@ class serializer
         JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
 
         // look up the locale's decimal point now, matching what
-        // snprintf_float() just used (see lexer::get_decimal_point()); it is a
-        // string, which can be longer than one byte (U+066B in ps_AF, #5993).
+        // snprintf_float() just used (see get_decimal_point() in
+        // number_parse.hpp); it is a string, which can be longer than one
+        // byte (U+066B in ps_AF, #5993).
         // A thousands separator needs no handling: %g never groups digits.
         const auto* loc = std::localeconv();
         JSON_ASSERT(loc != nullptr);
@@ -2114,11 +2115,15 @@ class serializer
             if (dec_pos != last)
             {
                 *dec_pos = '.';
-                // move the fraction and exponent behind the '.' (a no-op for a one-byte decimal point)
-                // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::copy returns an iterator, see https://github.com/nlohmann/json/issues/3081
-                const auto end = std::copy(dec_pos + static_cast<std::ptrdiff_t>(decimal_point_len), last, dec_pos + 1);
-                *end = '\0';
-                len = end - first;
+                if (decimal_point_len > 1)
+                {
+                    // move the fraction and exponent behind the '.' (std::copy
+                    // allows the overlap, as the destination is before the source)
+                    // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::copy returns an iterator, see https://github.com/nlohmann/json/issues/3081
+                    const auto end = std::copy(dec_pos + static_cast<std::ptrdiff_t>(decimal_point_len), last, dec_pos + 1);
+                    *end = '\0';
+                    len = end - first;
+                }
             }
         }
 
