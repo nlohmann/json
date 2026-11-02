@@ -641,7 +641,7 @@ class view_serializer
             {
                 invalid_utf8(s, n.len); // (the scan stopped at ill-formed UTF-8)
             }
-            write_codepoint<false>(s[i], s + i, 1); // a quote, a backslash, or a control character
+            write_escaped(s[i]); // a quote, a backslash, or a control character
             ++i;
         }
         m_out.put('"');
@@ -1489,8 +1489,9 @@ class view_serializer
         static_cast<void>(dumped);
     } // LCOV_EXCL_LINE (dump() throws: the callers pass only ill-formed UTF-8)
 
-    template<bool EnsureAscii>
-    void write_codepoint(std::uint32_t codepoint, const unsigned char* bytes, std::size_t len)
+    /// write the escape sequence of a quote, a backslash or a control
+    /// character (the only bytes a run of plain output stops at)
+    void write_escaped(std::uint32_t codepoint)
     {
         switch (codepoint)
         {
@@ -1518,12 +1519,7 @@ class view_serializer
             default:
                 break;
         }
-        if (codepoint <= 0x1F || (EnsureAscii && codepoint >= 0x7F))
-        {
-            write_u_escape(codepoint); // (a single byte: the only caller passes s[i])
-            return;
-        }
-        m_out.put(reinterpret_cast<const char*>(bytes), len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) LCOV_EXCL_LINE (printable characters are copied in runs)
+        write_u_escape(codepoint); // (a control character)
     }
 
     void write_u_escape(std::uint32_t u)

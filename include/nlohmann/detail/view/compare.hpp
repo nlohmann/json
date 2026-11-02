@@ -397,9 +397,9 @@ class view_side
         return m_view.size();
     }
 
-    string_view_t string() const
+    string_view_t string() const noexcept
     {
-        return m_view.get_string();
+        return {m_view.m_doc->str(*m_view.m_node), m_view.m_node->len};
     }
 
     bool boolean() const noexcept
@@ -522,9 +522,9 @@ class json_side
         return m_json->size();
     }
 
-    string_view_t string() const
+    string_view_t string() const noexcept
     {
-        const auto& s = m_json->template get_ref<const typename BasicJsonType::string_t&>();
+        const auto& s = *m_json->template get_ptr<const typename BasicJsonType::string_t*>();
         return string_view_t(s.data(), s.size());
     }
 

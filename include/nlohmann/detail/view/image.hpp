@@ -787,10 +787,6 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     d.edits.reset();
     d.base[2] = nullptr;
     d.owned.clear();
-    if (d.owned_image.empty() || image != d.owned_image.data())
-    {
-        d.owned_image.clear();
-    }
     d.arena.clear();
     d.indexes.clear();
     d.index_slots.clear();

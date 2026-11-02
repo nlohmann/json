@@ -185,10 +185,6 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
         end = p.end;
         return;
     }
-    if ((n->flags & node_flags::is_new) != 0 || n->off >= d.size)
-    {
-        return;
-    }
     // the open brackets: n, then the last element as long as it is a non-empty container
     std::size_t closing = 0;
     std::size_t pos = std::string::npos;

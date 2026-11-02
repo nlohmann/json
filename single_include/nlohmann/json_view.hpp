@@ -2479,8 +2479,9 @@ indent_done:
             {
                 ++p;
             }
-            else if (NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
+            else if (!negative || NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
             {
+                // (without a sign, the dispatch saw a digit)
                 p = skip_digits(p + 1, e);
             }
             else
@@ -3549,9 +3550,9 @@ class view_side
         return m_view.size();
     }
 
-    string_view_t string() const
+    string_view_t string() const noexcept
     {
-        return m_view.get_string();
+        return {m_view.m_doc->str(*m_view.m_node), m_view.m_node->len};
     }
 
     bool boolean() const noexcept
@@ -3674,9 +3675,9 @@ class json_side
         return m_json->size();
     }
 
-    string_view_t string() const
+    string_view_t string() const noexcept
     {
-        const auto& s = m_json->template get_ref<const typename BasicJsonType::string_t&>();
+        const auto& s = *m_json->template get_ptr<const typename BasicJsonType::string_t*>();
         return string_view_t(s.data(), s.size());
     }
 
@@ -5013,10 +5014,6 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
         end = p.end;
         return;
     }
-    if ((n->flags & node_flags::is_new) != 0 || n->off >= d.size)
-    {
-        return;
-    }
     // the open brackets: n, then the last element as long as it is a non-empty container
     std::size_t closing = 0;
     std::size_t pos = std::string::npos;
@@ -5476,7 +5473,7 @@ inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
         e.moved_cap[n->off] = cap;
         return;
     }
-    reserve_moved(d);
+    // every caller has called reserve_moved() (see above), so neither push_back() can throw
     e.moved.push_back(seq);
     e.moved_cap.push_back(cap);
     n->off = static_cast<std::uint32_t>(e.moved.size() - 1);
@@ -7780,10 +7777,6 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     d.edits.reset();
     d.base[2] = nullptr;
     d.owned.clear();
-    if (d.owned_image.empty() || image != d.owned_image.data())
-    {
-        d.owned_image.clear();
-    }
     d.arena.clear();
     d.indexes.clear();
     d.index_slots.clear();
@@ -9093,7 +9086,7 @@ class view_serializer
             {
                 invalid_utf8(s, n.len); // (the scan stopped at ill-formed UTF-8)
             }
-            write_codepoint<false>(s[i], s + i, 1); // a quote, a backslash, or a control character
+            write_escaped(s[i]); // a quote, a backslash, or a control character
             ++i;
         }
         m_out.put('"');
@@ -9941,8 +9934,9 @@ class view_serializer
         static_cast<void>(dumped);
     } // LCOV_EXCL_LINE (dump() throws: the callers pass only ill-formed UTF-8)
 
-    template<bool EnsureAscii>
-    void write_codepoint(std::uint32_t codepoint, const unsigned char* bytes, std::size_t len)
+    /// write the escape sequence of a quote, a backslash or a control
+    /// character (the only bytes a run of plain output stops at)
+    void write_escaped(std::uint32_t codepoint)
     {
         switch (codepoint)
         {
@@ -9970,12 +9964,7 @@ class view_serializer
             default:
                 break;
         }
-        if (codepoint <= 0x1F || (EnsureAscii && codepoint >= 0x7F))
-        {
-            write_u_escape(codepoint); // (a single byte: the only caller passes s[i])
-            return;
-        }
-        m_out.put(reinterpret_cast<const char*>(bytes), len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) LCOV_EXCL_LINE (printable characters are copied in runs)
+        write_u_escape(codepoint); // (a control character)
     }
 
     void write_u_escape(std::uint32_t u)
