@@ -1673,6 +1673,31 @@ TEST_CASE("UBJSON")
                     return true;
                 });
                 CHECK_THROWS_AS(scp2.start_array((std::numeric_limits<std::size_t>::max)() - 1), json::out_of_range&);
+
+                // without exceptions, the error is reported to the caller
+                json l;
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp3(l, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                {
+                    return true;
+                }, false);
+                CHECK_FALSE(scp3.start_array((std::numeric_limits<std::size_t>::max)() - 1));
+                CHECK(scp3.is_errored());
+            }
+
+            SECTION("array with a known size, read without exceptions")
+            {
+                std::vector<uint8_t> const v_ubjson = {'[', '#', 'i', 2, 'i', 1, 'i', 2};
+                json j;
+                nlohmann::detail::json_sax_dom_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> sax(j, false);
+                CHECK(json::sax_parse(v_ubjson, &sax, json::input_format_t::ubjson));
+                CHECK(j == json({1, 2}));
+
+                // the readers reject a size this large before they announce
+                // it, so it can only reach start_array() directly
+                json k;
+                nlohmann::detail::json_sax_dom_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> sax2(k, false);
+                CHECK_FALSE(sax2.start_array((std::numeric_limits<std::size_t>::max)() - 1));
+                CHECK(sax2.is_errored());
             }
         }
     }

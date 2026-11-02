@@ -106,6 +106,12 @@ TEST_CASE("JSON pointers")
         CHECK_THROWS_WITH_AS(p.pop_back(),
                              "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
 
+        // the top of a pointer is its first reference token
+        const json::json_pointer nonempty("/foo/bar/0");
+        CHECK(nonempty.top() == json::json_pointer("/foo"));
+        CHECK(nonempty.top().to_string() == "/foo");
+        CHECK(json::json_pointer("/a~1b").top() == json::json_pointer("/a~1b"));
+
         SECTION("array index error")
         {
             json v = {1, 2, 3, 4};
@@ -696,6 +702,16 @@ TEST_CASE("JSON pointers")
         json const j_error = {{"", 42}, {"/foo", 17}};
         CHECK_THROWS_WITH_AS(j_error.unflatten(),
                              "[json.exception.type_error.313] invalid value to unflatten", json::type_error&);
+
+        // error for an invalid escape sequence in a key
+        CHECK_THROWS_WITH_AS(json({{"/a~2", 1}}).unflatten(),
+        "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(json({{"/a/b", 1}, {"/c~", 1}}).unflatten(),
+        "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
+
+        // error for an element of an array that is also a container
+        CHECK_THROWS_WITH_AS(json({{"/a/0", 1}, {"/a/0/x", 2}}).unflatten(),
+        "[json.exception.type_error.313] invalid value to unflatten", json::type_error&);
 
         // explicit roundtrip check
         CHECK(j.flatten().unflatten() == j);

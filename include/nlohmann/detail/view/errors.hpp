@@ -185,10 +185,6 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
         end = p.end;
         return;
     }
-    if ((n->flags & node_flags::is_new) != 0 || n->off >= d.size)
-    {
-        return;
-    }
     // the open brackets: n, then the last element as long as it is a non-empty container
     std::size_t closing = 0;
     std::size_t pos = std::string::npos;
@@ -234,8 +230,7 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
 
 /// the context basic_json puts in front of the message of an exception about
 /// a value: "(/path) " with JSON_DIAGNOSTICS (none for the root), then
-/// "(bytes a-b) " with JSON_DIAGNOSTIC_POSITIONS (with JSON_DIAGNOSTICS, only
-/// if there is a path)
+/// "(bytes a-b) " with JSON_DIAGNOSTIC_POSITIONS (also for the root)
 ///
 /// This and the throw helpers that take an error_site are templates, so that
 /// the path and range code is instantiated only where an exception can be
@@ -256,19 +251,19 @@ std::string diagnostics(const error_site site)
     std::string context;
 #if JSON_DIAGNOSTICS
     std::vector<std::string> tokens;
-    const bool found = edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens);
-    if (!found || tokens.empty())
+    // a value that is not found leaves no tokens, like the root
+    static_cast<void>(edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens));
+    if (!tokens.empty())
     {
-        // context is still empty; returning it keeps the copy elided (-Wnrvo)
-        return context;
+        // the root value has no path, but still has a byte range
+        std::string path;
+        for (const std::string& token : tokens)
+        {
+            path.push_back('/');
+            path += detail::escape(token);
+        }
+        context = concat('(', path, ") ");
     }
-    std::string path;
-    for (const std::string& token : tokens)
-    {
-        path.push_back('/');
-        path += detail::escape(token);
-    }
-    context = concat('(', path, ") ");
 #endif
 #if JSON_DIAGNOSTIC_POSITIONS
     std::size_t start = 0;
@@ -420,10 +415,12 @@ struct throwing_sax
         return true;
     }
 
+    // LCOV_EXCL_START (throw_parse_failure parses JSON only)
     bool binary(binary_t& /*unused*/)
     {
         return true;
     }
+    // LCOV_EXCL_STOP
 
     bool start_object(std::size_t /*unused*/)
     {

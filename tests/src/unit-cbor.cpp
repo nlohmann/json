@@ -1809,6 +1809,30 @@ TEST_CASE("CBOR")
             CHECK(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01}), true, false).is_discarded());
         }
 
+        SECTION("tag in front of a key that is cut off by the end of the input")
+        {
+            // 0xD8: the tag number is in the next byte, which is missing
+            const std::vector<std::uint8_t> input = {0xA1, 0xD8};
+            json _;
+            for (const auto handler :
+                    {
+                        json::cbor_tag_handler_t::ignore, json::cbor_tag_handler_t::store
+                    })
+            {
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(input, true, true, handler), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+                CHECK(json::from_cbor(input, true, false, handler).is_discarded());
+            }
+        }
+
+        SECTION("chunk of an indefinite-length string that is cut off by the end of the input")
+        {
+            // the second byte announces a chunk of three bytes, but two follow
+            const std::vector<std::uint8_t> input = {0x7F, 0x63, 'a', 'b'};
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
+            CHECK(json::from_cbor(input, true, false).is_discarded());
+        }
+
         SECTION("tag in front of a key")
         {
             const auto ignore = json::cbor_tag_handler_t::ignore;
@@ -2517,6 +2541,34 @@ TEST_CASE("CBOR arrays of scalars from contiguous and non-contiguous input")
         SaxCountdown from_bytewise(events);
         CHECK(json::sax_parse(cbor, &from_contiguous, json::input_format_t::cbor, true, false, false, tags)
               == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::cbor, true, false, false, tags));
+    }
+}
+
+TEST_CASE("CBOR arrays of one element from contiguous and non-contiguous input")
+{
+    // contiguous input leaves an array of one element to the general path
+    // rather than to the loop that reads arrays of scalars; both inputs must
+    // still give the same events, value, or error for the complete document
+    // and for every truncation of it, with enough bytes after each array that
+    // the loop could have been entered
+    const json j = json::parse(R"({"a": [[[[1.5]]]], "b": [7], "c": [{"x": 2.5}], "d": ["s"], "e": [[1, 2]], "f": [null], "g": 1.25})");
+    const std::vector<std::uint8_t> bytes = json::to_cbor(j);
+
+    CHECK(json::from_cbor(bytes) == j);
+
+    for (std::size_t length = 0; length <= bytes.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> contiguous(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(length));
+        const std::list<std::uint8_t> bytewise(contiguous.begin(), contiguous.end());
+
+        CHECK(json::from_cbor(contiguous, true, false).dump() == json::from_cbor(bytewise.begin(), bytewise.end(), true, false).dump());
+
+        SaxEventLogger from_contiguous;
+        SaxEventLogger from_bytewise;
+        CHECK(json::sax_parse(contiguous, &from_contiguous, json::input_format_t::cbor, true, false)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::cbor, true, false));
+        CHECK(from_contiguous.events == from_bytewise.events);
     }
 }
 

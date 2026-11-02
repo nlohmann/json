@@ -868,3 +868,23 @@ TEST_CASE("Parent pointers stay consistent for object types not known to keep th
     obj["1"].push_back(42);
     CHECK_THROWS_WITH_AS(obj["1"].at(5), "[json.exception.out_of_range.401] (/1) array index 5 is out of range", relocating_json::out_of_range&);
 }
+
+TEST_CASE("patch_inplace() with a patch that is stored inside the patched value")
+{
+    // the patch is modified-while-iterated if it is not copied first: it is a
+    // descendant of the value it is applied to, which only the parent pointers
+    // (JSON_DIAGNOSTICS) reveal
+    json j =
+    {
+        {"patch", {{{"op", "add"}, {"path", "/x"}, {"value", 1}}, {{"op", "remove"}, {"path", "/patch/0"}}}},
+        {"y", 2}
+    };
+
+    j.patch_inplace(j["patch"]);
+
+    CHECK(j.size() == 3);
+    CHECK(j["x"] == 1);
+    CHECK(j["y"] == 2);
+    CHECK(j["patch"].size() == 1);
+    CHECK(j["patch"][0]["op"] == "remove");
+}

@@ -91,7 +91,7 @@ const typename BasicJsonType::binary_t& binary_value(const BasicJsonType& j)
 }
 
 template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
-typename View::basic_json_type::binary_t binary_value(const View& /*unused*/)
+typename View::basic_json_type::binary_t binary_value(const View& /*unused*/) // LCOV_EXCL_LINE
 {
     return {}; // LCOV_EXCL_LINE
 }

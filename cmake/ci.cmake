@@ -348,20 +348,20 @@ add_custom_target(ci_test_no_thread_local
 
 add_custom_target(ci_test_coverage
     COMMAND CXX=g++ ${CMAKE_COMMAND}
-        -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS="--coverage;-fprofile-arcs;-ftest-coverage"
+        -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS="--coverage;-fprofile-arcs;-ftest-coverage;-fvar-tracking-assignments"
         -DJSON_BuildTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_coverage
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_coverage
     COMMAND cd ${PROJECT_BINARY_DIR}/build_coverage && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
 
     COMMAND CXX=g++ ${CMAKE_COMMAND}
-        -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS="-m32;--coverage;-fprofile-arcs;-ftest-coverage"
+        -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS="-m32;--coverage;-fprofile-arcs;-ftest-coverage;-fvar-tracking-assignments"
         -DJSON_BuildTests=ON -DJSON_32bitTest=ONLY
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_coverage32
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_coverage32
     COMMAND cd ${PROJECT_BINARY_DIR}/build_coverage32 && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
 
-    COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1 --ignore-errors mismatch --ignore-errors unused --ignore-errors inconsistent
+    COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc branch_coverage=1 --ignore-errors mismatch --ignore-errors unused --ignore-errors inconsistent
     COMMAND ${LCOV_TOOL} -e json.info ${SRC_FILES} --output-file json.info.filtered --rc branch_coverage=1 --ignore-errors unused --ignore-errors inconsistent
     COMMAND ${CMAKE_SOURCE_DIR}/tests/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
     COMMAND ${GENHTML_TOOL} --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage --ignore-errors inconsistent json.info.filtered.noexcept

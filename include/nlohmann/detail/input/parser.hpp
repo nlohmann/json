@@ -573,14 +573,7 @@ class parser
 
     std::string exception_message(const token_type expected, const std::string& context)
     {
-        std::string error_msg = "syntax error ";
-
-        if (!context.empty())
-        {
-            error_msg += concat("while parsing ", context, ' ');
-        }
-
-        error_msg += "- ";
+        std::string error_msg = concat("syntax error while parsing ", context, " - ");
 
         if (last_token == token_type::parse_error)
         {
@@ -598,7 +591,7 @@ class parser
         }
 
         return error_msg;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
   private:
     /// callback function

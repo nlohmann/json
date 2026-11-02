@@ -96,11 +96,11 @@ NLOHMANN_VIEW_NOINLINE inline void check_utf8_scan(const unsigned char* p, std::
         }
         if (*q >= 0x80)
         {
-            check_utf8_bytewise(p, n, static_cast<std::size_t>(q - p));
-            return; // not reached: the scan stopped at ill-formed UTF-8
+            break; // ill-formed UTF-8: reported below
         }
         ++q; // a quote, backslash, or control character
     }
+    check_utf8_bytewise(p, n, static_cast<std::size_t>(q - p));
 }
 
 inline void check_utf8(const char* s, std::size_t n)

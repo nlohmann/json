@@ -210,3 +210,23 @@ TEST_CASE("regression test #5476 - array type without reserve()")
         CHECK(json::from_cbor(truncated, true, false).is_discarded());
     }
 }
+
+TEST_CASE("array type with std::deque nested beyond the recursion limit")
+{
+    // the binary writers finish a value nested deeper than
+    // recursion_depth_limit() with an explicit stack of frames; with the
+    // iterators of std::deque, these frames are copied and moved through
+    // their own special members
+    deque_json j = 1;
+    for (int i = 0; i < 200; ++i)
+    {
+        deque_json outer = deque_json::array();
+        outer.push_back(std::move(j));
+        j = std::move(outer);
+    }
+
+    // 200 arrays of one element each (0x81) around the integer 1
+    std::vector<std::uint8_t> expected(200, 0x81);
+    expected.push_back(0x01);
+    CHECK(deque_json::to_cbor(j) == expected);
+}

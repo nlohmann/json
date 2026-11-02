@@ -33,12 +33,37 @@ namespace view
 template<typename T>
 struct value_tag {};
 
+/// whether basic_json reads T with a dedicated from_json() overload that does
+/// not accept a boolean: exactly number_integer_t, number_unsigned_t and
+/// number_float_t (the other arithmetic types convert a boolean to 0 or 1)
+template<typename T, typename BasicJsonType>
+struct rejects_boolean : std::integral_constant < bool,
+    std::is_same<T, typename BasicJsonType::number_integer_t>::value
+    || std::is_same<T, typename BasicJsonType::number_unsigned_t>::value
+    || std::is_same<T, typename BasicJsonType::number_float_t>::value >
+{};
+
+/// a boolean as T: 0 or 1
+template<typename T>
+NLOHMANN_VIEW_ALWAYS_INLINE T boolean_as(const document_data& /*d*/, const node& n, std::false_type /*rejects*/)
+{
+    return static_cast<T>((n.flags & node_flags::is_true) != 0);
+}
+
+/// a boolean as number_integer_t, number_unsigned_t or number_float_t: type_error.302, as in basic_json
+template<typename T>
+[[noreturn]] NLOHMANN_VIEW_ALWAYS_INLINE T boolean_as(const document_data& d, const node& n, std::true_type /*rejects*/)
+{
+    throw_type_error(error_site(&d, &n), exception_id::type_mismatch, "type must be number, but is ", value_type_name(static_cast<value_t>(n.kind)));
+}
+
 /*!
 @brief the number or boolean of a node converted to an arithmetic type
 
 As basic_json's get<T>() for arithmetic types: integers and floats are
-converted with static_cast, booleans give 0 or 1, and other types throw
-type_error.302.
+converted with static_cast, booleans give 0 or 1 (but throw type_error.302 for
+number_integer_t, number_unsigned_t and number_float_t, as basic_json does),
+and other types throw type_error.302.
 */
 template<typename T, typename BasicJsonType>
 NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const node& n)
@@ -52,7 +77,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const nod
         case value_t::number_float:
             return static_cast<T>(float_value<typename BasicJsonType::number_float_t>(d, n));
         case value_t::boolean:
-            return static_cast<T>((n.flags & node_flags::is_true) != 0);
+            return boolean_as<T>(d, n, rejects_boolean<T, BasicJsonType> {});
         case value_t::null:
         case value_t::object:
         case value_t::array:

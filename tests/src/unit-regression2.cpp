@@ -441,6 +441,10 @@ TEST_CASE("regression tests 2")
 
         float_json j2 = {1000.0, 2000.0, 3000.0};
         CHECK(float_json::from_ubjson(float_json::to_ubjson(j2, true, true)) == j2);
+
+        // half-precision floats of both signs are converted to the float type
+        CHECK(float_json::from_cbor(std::vector<std::uint8_t> {0xF9, 0xC0, 0x00}) == -2.0f);
+        CHECK(float_json::from_cbor(std::vector<std::uint8_t> {0xF9, 0x3C, 0x00}) == 1.0f);
     }
 
     SECTION("issue #1045 - Using STL algorithms with JSON containers with expected results?")
