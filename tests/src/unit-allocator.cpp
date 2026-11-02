@@ -844,13 +844,21 @@ bool children_name_their_parent(const BasicJsonType& j)
     return true;
 }
 
+enum class guarantee
+{
+    basic, // the value stays valid and keeps its type
+    strong // the value is unchanged
+};
+
 // Runs op on a fresh value make() with the 0th, 1st, 2nd, ... allocation made
 // by the library failing in turn, until op completes. Every failed attempt
-// must have thrown std::bad_alloc and left the value exactly as it was, with
-// all parent pointers intact (copying a value asserts the invariant).
+// must have thrown std::bad_alloc and left the value valid, with all parent
+// pointers intact (copying a value asserts the invariant), and for the strong
+// guarantee exactly as it was.
 template<class BasicJsonType>
-void check_strong_guarantee(const std::function<BasicJsonType()>& make,
-                            const std::function<void(BasicJsonType&)>& op)
+void check_exception_guarantee(guarantee g,
+                               const std::function<BasicJsonType()>& make,
+                               const std::function<void(BasicJsonType&)>& op)
 {
     fail_at_alloc_call = -1;
 
@@ -863,6 +871,7 @@ void check_strong_guarantee(const std::function<BasicJsonType()>& make,
 
         BasicJsonType j = make();
         const std::string before = j.dump();
+        const auto type_before = j.type();
 
         alloc_call_count = 0;
         fail_at_alloc_call = static_cast<long>(n);
@@ -879,10 +888,14 @@ void check_strong_guarantee(const std::function<BasicJsonType()>& make,
 
         if (!completed)
         {
-            CHECK(j.dump() == before);
+            CHECK((j.type() == type_before));
             CHECK(children_name_their_parent(j));
             const BasicJsonType copy(j); // NOLINT(performance-unnecessary-copy-initialization): the copy is the point, it allocates
-            CHECK(copy.dump() == before);
+            CHECK(copy.dump() == j.dump());
+            if (g == guarantee::strong)
+            {
+                CHECK(j.dump() == before);
+            }
         }
     }
 
@@ -891,7 +904,7 @@ void check_strong_guarantee(const std::function<BasicJsonType()>& make,
 }
 
 template<class BasicJsonType>
-void check_insert_strong_guarantee()
+void check_insert_exception_guarantees()
 {
     using json_t = BasicJsonType;
     using make_t = std::function<json_t()>;
@@ -929,7 +942,7 @@ void check_insert_strong_guarantee()
 
             SECTION("insert(pos, const basic_json&)")
             {
-                check_strong_guarantee<json_t>(make, [&](json_t& j)
+                check_exception_guarantee<json_t>(guarantee::strong, make, [&](json_t& j)
                 {
                     j.insert(at_end ? j.end() : j.begin() + 1, val);
                 });
@@ -937,7 +950,7 @@ void check_insert_strong_guarantee()
 
             SECTION("insert(pos, basic_json&&)")
             {
-                check_strong_guarantee<json_t>(make, [&](json_t& j)
+                check_exception_guarantee<json_t>(guarantee::strong, make, [&](json_t& j)
                 {
                     j.insert(at_end ? j.end() : j.begin() + 1, json_t(val));
                 });
@@ -945,7 +958,7 @@ void check_insert_strong_guarantee()
 
             SECTION("insert(pos, size_type, const basic_json&)")
             {
-                check_strong_guarantee<json_t>(make, [&](json_t& j)
+                check_exception_guarantee<json_t>(guarantee::basic, make, [&](json_t& j)
                 {
                     j.insert(at_end ? j.end() : j.begin() + 1, 3, val);
                 });
@@ -953,7 +966,7 @@ void check_insert_strong_guarantee()
 
             SECTION("insert(pos, const_iterator, const_iterator)")
             {
-                check_strong_guarantee<json_t>(make, [&](json_t& j)
+                check_exception_guarantee<json_t>(guarantee::basic, make, [&](json_t& j)
                 {
                     j.insert(at_end ? j.end() : j.begin() + 1, source.begin(), source.end());
                 });
@@ -961,7 +974,7 @@ void check_insert_strong_guarantee()
 
             SECTION("insert(pos, initializer_list_t)")
             {
-                check_strong_guarantee<json_t>(make, [&](json_t& j)
+                check_exception_guarantee<json_t>(guarantee::basic, make, [&](json_t& j)
                 {
                     j.insert(at_end ? j.end() : j.begin() + 1, {val, val});
                 });
@@ -975,7 +988,7 @@ void check_insert_strong_guarantee()
 
         SECTION("no member exists yet")
         {
-            check_strong_guarantee<json_t>([]()
+            check_exception_guarantee<json_t>(guarantee::basic, []()
             {
                 return json_t({{"a", 1}});
             }, [&](json_t& j)
@@ -986,7 +999,7 @@ void check_insert_strong_guarantee()
 
         SECTION("some members exist already")
         {
-            check_strong_guarantee<json_t>([]()
+            check_exception_guarantee<json_t>(guarantee::basic, []()
             {
                 return json_t({{"a", 1}, {"n", std::string(64, 'x')}});
             }, [&](json_t& j)
@@ -998,16 +1011,16 @@ void check_insert_strong_guarantee()
 }
 } // namespace
 
-TEST_CASE("insert() provides the strong exception guarantee (#5986)")
+TEST_CASE("insert() provides its documented exception guarantees (#5986)")
 {
     SECTION("std::map-backed object_t")
     {
-        check_insert_strong_guarantee<nlohmann::json::with_allocator_t<nth_alloc_fails_allocator>>();
+        check_insert_exception_guarantees<nlohmann::json::with_allocator_t<nth_alloc_fails_allocator>>();
     }
 
     SECTION("ordered_map-backed object_t")
     {
-        check_insert_strong_guarantee<nlohmann::ordered_json::with_allocator_t<nth_alloc_fails_allocator>>();
+        check_insert_exception_guarantees<nlohmann::ordered_json::with_allocator_t<nth_alloc_fails_allocator>>();
     }
 }
 #endif

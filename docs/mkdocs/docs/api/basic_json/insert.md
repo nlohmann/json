@@ -65,9 +65,17 @@ the same index, which is now a different value.
 
 ## Exception safety
 
-Strong exception safety: if an exception occurs, the original value stays intact. This includes an exception thrown
-while the new elements are copied (for example, `std::bad_alloc`): elements and members that were already added
-are removed again.
+1. Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+2. Basic guarantee: if an exception is thrown while the elements are copied (for example, `std::bad_alloc`), the JSON
+   value may be partially modified, but it stays a valid array.
+3. Basic guarantee: if an exception is thrown while the elements are copied (for example, `std::bad_alloc`), the JSON
+   value may be partially modified, but it stays a valid array.
+4. Basic guarantee: if an exception is thrown while the elements are copied (for example, `std::bad_alloc`), the JSON
+   value may be partially modified, but it stays a valid array.
+5. Basic guarantee: if an exception is thrown while the members are copied (for example, `std::bad_alloc`), the JSON
+   value may be partially modified, but it stays a valid object.
+
+The exceptions listed below are thrown before the JSON value is changed.
 
 ## Exceptions
 

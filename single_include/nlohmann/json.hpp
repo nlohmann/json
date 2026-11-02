@@ -42706,6 +42706,30 @@ public:
         return {it, res.second};
     }
 
+  private:
+    /// Sets the parents of a value when it goes out of scope, also when an
+    /// exception is thrown: a container insertion that throws may already
+    /// have added elements, whose parents must be set for the value to stay
+    /// valid (basic exception guarantee). Does nothing without JSON_DIAGNOSTICS.
+    class set_parents_on_exit
+    {
+      public:
+        explicit set_parents_on_exit(basic_json* v) noexcept : m_value(v) {}
+        set_parents_on_exit(const set_parents_on_exit&) = delete;
+        set_parents_on_exit& operator=(const set_parents_on_exit&) = delete;
+        set_parents_on_exit(set_parents_on_exit&&) = delete;
+        set_parents_on_exit& operator=(set_parents_on_exit&&) = delete;
+
+        ~set_parents_on_exit()
+        {
+            m_value->set_parents();
+        }
+
+      private:
+        basic_json* m_value;
+    };
+
+  public:
     /// Helper for insertion of an iterator
     /// @note: This uses std::distance to support GCC 4.8,
     ///        see https://github.com/nlohmann/json/pull/1257
@@ -42715,6 +42739,7 @@ public:
         iterator result(this);
         JSON_ASSERT(m_data.m_value.array != nullptr);
 
+        const set_parents_on_exit parents(this);
         auto insert_pos = std::distance(m_data.m_value.array->begin(), pos.m_it.array_iterator);
         m_data.m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
         result.m_it.array_iterator = m_data.m_value.array->begin() + insert_pos;
@@ -42723,298 +42748,35 @@ public:
         // result.m_it.array_iterator = m_data.m_value.array->insert(pos.m_it.array_iterator, cnt, val);
         // but the return value of insert is missing in GCC 4.8, so it is written this way instead.
 
-        set_parents();
         return result;
     }
 
-  private:
-    /// whether copying a value cannot throw: the types whose copy allocates nothing
-    /// (a mask of the types, tested with one shift)
-    static bool copy_cannot_throw(const basic_json& v) noexcept
-    {
-        constexpr unsigned scalar_types = (1U << static_cast<unsigned>(value_t::null)) |
-                                          (1U << static_cast<unsigned>(value_t::boolean)) |
-                                          (1U << static_cast<unsigned>(value_t::number_integer)) |
-                                          (1U << static_cast<unsigned>(value_t::number_unsigned)) |
-                                          (1U << static_cast<unsigned>(value_t::number_float)) |
-                                          (1U << static_cast<unsigned>(value_t::discarded));
-        return ((1U << static_cast<unsigned>(v.m_data.m_type)) & scalar_types) != 0;
-    }
-
-    /// Undoes an array insertion that did not complete: erases the elements
-    /// appended at the end and sets the parents, which the container may have
-    /// left stale when it reallocated. Does nothing on the success path but
-    /// setting the parents.
-    class array_append_rollback
-    {
-      public:
-        array_append_rollback(basic_json* v, std::size_t old_size) noexcept
-            : m_value(v), m_old_size(old_size) {}
-        array_append_rollback(const array_append_rollback&) = delete;
-        array_append_rollback& operator=(const array_append_rollback&) = delete;
-        array_append_rollback(array_append_rollback&&) = delete;
-        array_append_rollback& operator=(array_append_rollback&&) = delete;
-
-        void commit() noexcept
-        {
-            m_committed = true;
-        }
-
-        ~array_append_rollback()
-        {
-            if (!m_committed)
-            {
-                auto& arr = *m_value->m_data.m_value.array;
-                arr.erase(arr.begin() + static_cast<typename array_t::difference_type>(m_old_size), arr.end());
-            }
-            m_value->set_parents();
-        }
-
-      private:
-        basic_json* m_value;
-        std::size_t m_old_size;
-        bool m_committed = false;
-    };
-
-    /// Inserts the elements that fill() appends to the array at pos. Copying
-    /// elements into the middle of a vector (vector::insert) leaves the array
-    /// changed when a copy throws. Appending is safe (elements are moved on
-    /// reallocation, and moving a basic_json cannot throw): if fill() throws,
-    /// the appended elements are erased again; if it succeeds, they are
-    /// rotated into place, which cannot throw either.
-    template<typename Fill>
-    iterator insert_by_appending(const const_iterator& pos, Fill fill)
-    {
-        JSON_ASSERT(m_data.m_value.array != nullptr);
-        auto& arr = *m_data.m_value.array;
-        const auto old_size = arr.size();
-        const auto insert_pos = std::distance(arr.begin(), pos.m_it.array_iterator);
-
-        array_append_rollback rollback(this, old_size);
-        fill(arr);
-        if (static_cast<std::size_t>(insert_pos) != old_size)
-        {
-            std::rotate(arr.begin() + insert_pos, arr.begin() + static_cast<typename array_t::difference_type>(old_size), arr.end());
-        }
-        rollback.commit();
-
-        iterator result(this);
-        result.m_it.array_iterator = arr.begin() + insert_pos;
-        return result;
-    }
-
-    /// inserts a copy of val after checking the arguments; copy before the array is touched
-    JSON_HEDLEY_NEVER_INLINE
-    iterator insert_checked(const const_iterator& pos, const basic_json& val)
-    {
-        // insert only works for arrays
-        if (JSON_HEDLEY_UNLIKELY(!is_array()))
-        {
-            throw_insert_wrong_type(*this);
-        }
-
-        // check if iterator pos fits to this JSON value
-        if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
-        {
-            throw_iterator_from_other_value(this);
-        }
-
-        basic_json tmp(val);
-        return insert_iterator(pos, std::move(tmp));
-    }
-
-    /// inserts cnt copies of val after checking the arguments
-    JSON_HEDLEY_NEVER_INLINE
-    iterator insert_checked(const const_iterator& pos, size_type cnt, const basic_json& val)
-    {
-        // insert only works for arrays
-        if (JSON_HEDLEY_UNLIKELY(!is_array()))
-        {
-            throw_insert_wrong_type(*this);
-        }
-
-        // check if iterator pos fits to this JSON value
-        if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
-        {
-            throw_iterator_from_other_value(this);
-        }
-
-        if (copy_cannot_throw(val))
-        {
-            return insert_iterator(pos, cnt, val);
-        }
-
-        return insert_by_appending(pos, [cnt, &val](array_t& arr)
-        {
-            // no reserve(): val may refer to an element of this array
-            for (size_type i = 0; i < cnt; ++i)
-            {
-                arr.push_back(val);
-            }
-        });
-    }
-
-    /// inserts copies of the elements of the array range [first, last); appending
-    /// them is no slower than vector::insert, also for numbers, so no type check
-    template<typename ArrayIterator>
-    JSON_HEDLEY_NEVER_INLINE
-    iterator insert_range(const_iterator pos, ArrayIterator first, ArrayIterator last) // NOLINT(performance-unnecessary-value-param)
-    {
-        return insert_by_appending(pos, [first, last](array_t& arr)
-        {
-            detail::reserve_array(arr, arr.size() + static_cast<std::size_t>(std::distance(first, last)), detail::priority_tag<1> {});
-            for (auto it = first; it != last; ++it)
-            {
-                arr.push_back(*it);
-            }
-        });
-    }
-
-    /// inserts member v at the end of the object, with a hint where the container takes one
-    template<typename Object>
-    static auto insert_member(Object& o, const typename Object::value_type& v, detail::priority_tag<1> /*unused*/)
-    -> decltype(o.insert(o.end(), v), void())
-    {
-        o.insert(o.end(), v);
-    }
-
-    template<typename Object>
-    static void insert_member(Object& o, const typename Object::value_type& v, detail::priority_tag<0> /*unused*/)
-    {
-        o.insert(v);
-    }
-
-    /// Undoes an object range insertion into an empty object that did not
-    /// complete: all members present were added by it, so clear the object.
-    class object_clear_on_failure
-    {
-      public:
-        explicit object_clear_on_failure(basic_json* v) noexcept : m_value(v) {}
-        object_clear_on_failure(const object_clear_on_failure&) = delete;
-        object_clear_on_failure& operator=(const object_clear_on_failure&) = delete;
-        object_clear_on_failure(object_clear_on_failure&&) = delete;
-        object_clear_on_failure& operator=(object_clear_on_failure&&) = delete;
-
-        void commit() noexcept
-        {
-            m_committed = true;
-        }
-
-        ~object_clear_on_failure()
-        {
-            if (!m_committed)
-            {
-                m_value->m_data.m_value.object->clear();
-            }
-        }
-
-      private:
-        basic_json* m_value;
-        bool m_committed = false;
-    };
-
-    /// Undoes an object range insertion that did not complete: erases the
-    /// members it added, then sets the parents. Which members were added is
-    /// remembered as one bit per source member (no allocation for the first
-    /// 256 members), so the happy path costs a size comparison per member.
-    template<typename SourceIterator>
-    class object_insert_rollback
-    {
-public:
-        object_insert_rollback(basic_json* v, SourceIterator first) : m_value(v), m_first(first) {}
-        object_insert_rollback(const object_insert_rollback&) = delete;
-        object_insert_rollback& operator=(const object_insert_rollback&) = delete;
-        object_insert_rollback(object_insert_rollback&&) = delete;
-        object_insert_rollback& operator=(object_insert_rollback&&) = delete;
-
-        /// call before each run of up to 64 members is inserted; may throw, which leaves the log complete
-        void start_chunk()
-        {
-            if (m_count != 0)
-            {
-                if (m_flushed < inline_words)
-                {
-                    m_inline[m_flushed] = m_word;
-                }
-                else
-                {
-                    m_more.push_back(m_word);
-                }
-                ++m_flushed;
-                m_word = 0;
-            }
-        }
-
-        /// call after a member was inserted (or found to exist)
-        void record(bool added) noexcept
-        {
-            m_word |= static_cast<std::uint64_t>(added) << (m_count % 64);
-            ++m_count;
-        }
-
-        void commit() noexcept
-        {
-            m_committed = true;
-        }
-
-        ~object_insert_rollback()
-        {
-            if (!m_committed)
-            {
-                auto& object = *m_value->m_data.m_value.object;
-                auto it = m_first;
-                for (std::size_t i = 0; i < m_count; ++i, ++it)
-                {
-                    const std::size_t chunk = i / 64;
-                    const std::uint64_t word = logged_word(chunk);
-                    if (((word >> (i % 64)) & 1U) != 0)
-                    {
-                        object.erase(it->first);
-                    }
-                }
-            }
-            m_value->set_parents();
-        }
-
-private:
-        static constexpr std::size_t inline_words = 4;
-
-        /// the log word of a chunk: the one being filled, an inline one, or an overflow one
-        std::uint64_t logged_word(std::size_t chunk) const
-        {
-            if (chunk >= m_flushed)
-            {
-                return m_word;
-            }
-            return chunk < inline_words ? m_inline[chunk] : m_more[chunk - inline_words];
-        }
-
-        basic_json* m_value;
-        SourceIterator m_first;
-        bool m_committed = false;
-        std::size_t m_count = 0;
-        std::size_t m_flushed = 0;
-        std::uint64_t m_word = 0;
-        std::array<std::uint64_t, inline_words> m_inline {};
-        std::vector<std::uint64_t> m_more;
-    };
-
-  public:
     /// @brief inserts element into array
     /// @sa https://json.nlohmann.me/api/basic_json/insert/
     iterator insert(const_iterator pos, const basic_json& val) // NOLINT(performance-unnecessary-value-param)
     {
-        // The common cases are inlined: an array, a fitting iterator, and either
-        // a value whose copy cannot throw or the end position (vector::insert
-        // has no effects on failure there). Everything else, including the
-        // exceptions, is out of line.
-        if (JSON_HEDLEY_UNLIKELY(!is_array() || pos.m_object != this ||
-                                 (!copy_cannot_throw(val) && pos.m_it.array_iterator != m_data.m_value.array->end())))
+        // insert only works for arrays
+        if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            return insert_checked(pos, val);
+            throw_insert_wrong_type(*this);
         }
 
-        return insert_iterator(pos, val);
+        // check if iterator pos fits to this JSON value
+        if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
+        {
+            throw_iterator_from_other_value(this);
+        }
+
+        // vector::insert has no effects if copying a single element to the
+        // end throws; elsewhere, it may already have shifted the elements, so
+        // copy first and insert by move, which cannot throw but by allocating
+        if (pos.m_it.array_iterator == m_data.m_value.array->end())
+        {
+            return insert_iterator(pos, val);
+        }
+
+        basic_json tmp(val);
+        return insert_iterator(pos, std::move(tmp));
     }
 
     /// @brief inserts element into array
@@ -43043,12 +42805,19 @@ private:
     /// @sa https://json.nlohmann.me/api/basic_json/insert/
     iterator insert(const_iterator pos, size_type cnt, const basic_json& val) // NOLINT(performance-unnecessary-value-param)
     {
-        // see the single-element overload
-        if (JSON_HEDLEY_UNLIKELY(!is_array() || pos.m_object != this || !copy_cannot_throw(val)))
+        // insert only works for arrays
+        if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            return insert_checked(pos, cnt, val);
+            throw_insert_wrong_type(*this);
         }
 
+        // check if iterator pos fits to this JSON value
+        if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
+        {
+            throw_iterator_from_other_value(this);
+        }
+
+        // insert to array and return iterator
         return insert_iterator(pos, cnt, val);
     }
 
@@ -43085,7 +42854,8 @@ private:
             detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterators first and last must point to arrays", this);
         }
 
-        return insert_range(pos, first.m_it.array_iterator, last.m_it.array_iterator);
+        // insert to array and return iterator
+        return insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
     }
 
     /// @brief inserts elements from initializer list into array
@@ -43138,34 +42908,8 @@ private:
             detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterators first and last must point to objects", this);
         }
 
-        // Strong exception safety: range insertion into the container offers
-        // only the basic guarantee, so insert member by member (as the
-        // container does) and, if one insertion throws, erase the members this
-        // call added.
-        auto& object = *m_data.m_value.object;
-        if (object.empty())
-        {
-            // all members are new, so the container's own (faster) range
-            // insertion can be used, and a failure leaves only new members
-            object_clear_on_failure clear_on_failure(this);
-            object.insert(first.m_it.object_iterator, last.m_it.object_iterator);
-            clear_on_failure.commit();
-            set_parents();
-            return;
-        }
-
-        object_insert_rollback<decltype(first.m_it.object_iterator)> rollback(this, first.m_it.object_iterator);
-        for (auto it = first.m_it.object_iterator; it != last.m_it.object_iterator;)
-        {
-            rollback.start_chunk();
-            for (std::size_t i = 0; i < 64 && it != last.m_it.object_iterator; ++i, ++it)
-            {
-                const auto old_size = object.size();
-                insert_member(object, *it, detail::priority_tag<1> {});
-                rollback.record(object.size() != old_size);
-            }
-        }
-        rollback.commit();
+        const set_parents_on_exit parents(this);
+        m_data.m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
     }
 
     /// @brief updates a JSON object from another object, overwriting existing keys
