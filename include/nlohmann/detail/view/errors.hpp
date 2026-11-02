@@ -230,7 +230,8 @@ void value_range(const document_data& d, const node* n, std::size_t& start, std:
 
 /// the context basic_json puts in front of the message of an exception about
 /// a value: "(/path) " with JSON_DIAGNOSTICS (none for the root), then
-/// "(bytes a-b) " with JSON_DIAGNOSTIC_POSITIONS (also for the root)
+/// "(bytes a-b) " with JSON_DIAGNOSTIC_POSITIONS (also for the root); with
+/// JSON_DIAGNOSTICS, nothing for a value that is no longer part of the document
 ///
 /// This and the throw helpers that take an error_site are templates, so that
 /// the path and range code is instantiated only where an exception can be
@@ -251,8 +252,14 @@ std::string diagnostics(const error_site site)
     std::string context;
 #if JSON_DIAGNOSTICS
     std::vector<std::string> tokens;
-    // a value that is not found leaves no tokens, like the root
-    static_cast<void>(edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens));
+    // a value that is no longer part of the document has no path, and its
+    // node still holds the bytes it had in the source: no context at all
+    const bool found = edited ? value_path<true>(d, site.value(), tokens) : value_path<false>(d, site.value(), tokens);
+    if (!found)
+    {
+        // context is still empty; returning it keeps the copy elided (-Wnrvo)
+        return context;
+    }
     if (!tokens.empty())
     {
         // the root value has no path, but still has a byte range
