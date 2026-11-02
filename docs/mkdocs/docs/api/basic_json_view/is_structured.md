@@ -37,8 +37,8 @@ Constant.
 
 ## See also
 
-- [is_primitive](is_primitive.md) - return whether the type is primitive
-- [size](size.md), [empty](empty.md) - the number of elements, and whether there are none
+- [`is_primitive`](is_primitive.md) - return whether the type is primitive
+- [`size`](size.md), [`empty`](empty.md) - the number of elements, and whether there are none
 - [`BasicJsonType::is_structured`](../basic_json/is_structured.md) - the corresponding function of `basic_json`
 
 ## Version history

@@ -24,25 +24,32 @@
 // with different flags would have different definitions of the same inline
 // functions): the check is compiled for SSSE3 with a function attribute and
 // used where the CPU has SSSE3 (all x86-64 CPUs since about 2011), else the
-// portable check. JSON_VIEW_USE_SSSE3 skips the CPU check (for code compiled
-// for SSSE3 anyway); JSON_VIEW_NO_SIMD selects the portable code.
+// portable check. Code compiled for SSSE3 anyway (-mssse3 or more) skips the
+// CPU check. JSON_NO_SIMD selects the portable code, as in the lexer.
 // NLOHMANN_VIEW_NO_TARGET_ATTRIBUTE (set by the GCC module interface, where GCC
 // ignores the target attribute and then rejects the SSSE3 intrinsics) keeps the
 // check portable without disabling the SSE2 code.
-#if !defined(JSON_VIEW_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && NLOHMANN_VIEW_LITTLE_ENDIAN
+//
+// The vector UTF-8 check (utf8_lookup4) is adapted from simdjson
+// (https://github.com/simdjson/simdjson, Daniel Lemire, Geoff Langdale, John
+// Keiser, and contributors, available under the Apache 2.0 and MIT licenses;
+// used here under the MIT license): the "lookup4" algorithm and tables of
+// J. Keiser and D. Lemire, "Validating UTF-8 In Less Than One Instruction Per
+// Byte" (2021).
+#if !defined(JSON_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && NLOHMANN_VIEW_LITTLE_ENDIAN
     #include <arm_neon.h>
     #define NLOHMANN_VIEW_NEON 1
 #else
     #define NLOHMANN_VIEW_NEON 0
 #endif
 // (x86 only: other targets can define __SSE2__ as well, e.g., WebAssembly with -msse2, but have no <cpuid.h>)
-#if !defined(JSON_VIEW_NO_SIMD) && !NLOHMANN_VIEW_NEON && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
+#if !defined(JSON_NO_SIMD) && !NLOHMANN_VIEW_NEON && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && (defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2))
     #include <emmintrin.h>
     #define NLOHMANN_VIEW_SSE2 1
 #else
     #define NLOHMANN_VIEW_SSE2 0
 #endif
-#if NLOHMANN_VIEW_SSE2 && defined(JSON_VIEW_USE_SSSE3)
+#if NLOHMANN_VIEW_SSE2 && defined(__SSSE3__)
     #include <tmmintrin.h>
     #define NLOHMANN_VIEW_SSSE3 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #else
@@ -282,9 +289,12 @@ compares, and the UTF-8 check covers the bytes up to it. Returns where the
 string scan stops, like scan_string_run: before ill-formed UTF-8 and for the
 last bytes of the input, the bytes are checked one sequence at a time. Out of
 line, so that no constants of the check occupy registers in the parse loop.
-On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()).
+On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()). Not cloned: with
+the calls of accept()'s builder, GCC 16 would clone it without plain (always
+string_plain()), and calling the clone made json_document::parse() run 0.7-1.2 %
+more instructions.
 */
-NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e, const std::uint8_t* plain) noexcept
+NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE NLOHMANN_VIEW_NOCLONE inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e, const std::uint8_t* plain) noexcept
 {
     using lookup = utf8_lookup4<>;
     const unsigned char* block = p;

@@ -287,23 +287,6 @@ external dependency and is not defined by default.
 
 See [full documentation of `JSON_USE_SIMDUTF`](../api/macros/json_use_simdutf.md).
 
-## `JSON_VIEW_NO_SIMD`
-
-When defined, the parser of [`basic_json_document`](../api/basic_json_document/index.md)
-(`<nlohmann/json_view.hpp>`) uses only portable C++ to scan strings, instead of vector instructions (SSE2 on x86-64,
-NEON on AArch64). The same input is accepted or rejected either way; only the speed differs. It is not defined by
-default.
-
-See [full documentation of `JSON_VIEW_NO_SIMD`](../api/macros/json_view_no_simd.md).
-
-## `JSON_VIEW_USE_SSSE3`
-
-When defined on x86-64, the parser of [`basic_json_document`](../api/basic_json_document/index.md)
-(`<nlohmann/json_view.hpp>`) validates non-ASCII text in strings with SSSE3 without asking the CPU first. It is not
-defined by default.
-
-See [full documentation of `JSON_VIEW_USE_SSSE3`](../api/macros/json_view_use_ssse3.md).
-
 ## `NLOHMANN_DEFINE_TYPE_*(...)`, `NLOHMANN_DEFINE_DERIVED_TYPE_*(...)`
 
 The library defines 12 macros to simplify the serialization/deserialization of types. See the page on
@@ -339,3 +322,17 @@ These macros are defined by the library and contain the version numbers accordin
 [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 See [full documentation of `NLOHMANN_JSON_VERSION_MAJOR`, `NLOHMANN_JSON_VERSION_MINOR`, and `NLOHMANN_JSON_VERSION_PATCH`](../api/macros/nlohmann_json_version_major.md).
+
+## See also
+
+- [Macros](../api/macros/index.md) - reference of all macros
+- [Runtime Assertions](assertions.md) - runtime assertions in detail
+- [`nlohmann` Namespace](namespace.md) - the library namespace and its macros
+- [Working Without Exceptions](no_exceptions.md) - using the library without exceptions
+- [Modules](modules.md) - macros and C++20 modules
+- [Exceptions](../home/exceptions.md) - all exceptions and their error codes
+- [CMake](../integration/cmake.md) - set macros via CMake options
+- [Compile times](../integration/compile_times.md) - reduce compile times with macros
+- [Architecture](../home/architecture.md) - how the library is put together
+- [Specializing enum conversion](enum_conversion.md) - enum macros
+- [Arbitrary Type Conversions](arbitrary_types.md) - type conversion macros

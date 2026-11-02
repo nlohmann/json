@@ -69,7 +69,8 @@ struct parse_failure
 };
 
 /// FloatType: the number_float_t of the document, whose overflow parse() rejects
-template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Sentinel>
+/// Store: false for accept(): the grammar, number, string and UTF-8 checks run as for parse(), but no node is written
+template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Sentinel, bool Store>
 class builder
 {
   public:
@@ -173,31 +174,16 @@ class builder
         }
         if (p[1] == '/')
         {
-            p += 2;
-            // (as in parse(), a null byte is the end of the input, so it is
-            // left for the caller to see)
-            while (p != m_end && *p != '\n' && *p != '\r' && !(NulIsEnd && *p == 0))
-            {
-                ++p;
-            }
-            return p;
+            return skip_line_comment<NulIsEnd>(p + 2, m_end);
         }
         if (p[1] == '*')
         {
-            p += 2;
-            for (;;)
+            p = find_block_comment_end<NulIsEnd>(p + 2, m_end);
+            if (p == m_end || *p != '*')
             {
-                if (p == m_end || (NulIsEnd && *p == 0))
-                {
-                    return fail_at(error_code::comment_unterminated, p);
-                }
-                if (*p == '*' && p + 1 != m_end && p[1] == '/')
-                {
-                    p += 2;
-                    return p;
-                }
-                ++p;
+                return fail_at(error_code::comment_unterminated, p);
             }
+            return p + 2;
         }
         ++p;
         return fail_at(error_code::comment_start, p);
@@ -260,11 +246,87 @@ class builder
         return p;
     }
 
+    /// the string from p, the first backslash, control character, ill-formed UTF-8 byte, or the end, checked and not
+    /// decoded (accept() stores nothing, so the arena is not written): the checks, errors and error positions of
+    /// slow_string(), for everything up to the closing quote
+    NLOHMANN_VIEW_NOINLINE decoded check_string(const unsigned char* p)
+    {
+        const unsigned char* const end = m_end;
+        for (;;)
+        {
+            if (p == end)
+            {
+                return failed(error_code::string_missing_quote, p);
+            }
+            const unsigned char c = *p;
+            if (c == '"')
+            {
+                ++p;
+                return decoded{p, 0, 0};
+            }
+            if (c != '\\')
+            {
+                return failed(c < 0x20 ? error_code::string_control_character : error_code::string_utf8, p);
+            }
+            ++p;
+            if (p == end)
+            {
+                return failed(error_code::string_missing_quote, p);
+            }
+            const unsigned char d = *p++;
+            if (d == 'u')
+            {
+                const int cp = hex4(p); // (moves p past the four digits)
+                if (NLOHMANN_VIEW_UNLIKELY(cp < 0))
+                {
+                    return failed(error_code::string_unicode_hex, p);
+                }
+                if (NLOHMANN_VIEW_UNLIKELY((cp & 0xF800) == 0xD800)) // a surrogate
+                {
+                    if (cp >= 0xDC00)
+                    {
+                        return failed(error_code::string_surrogate_low, p);
+                    }
+                    if (end - p < 2 || p[0] != '\\' || p[1] != 'u')
+                    {
+                        return failed(error_code::string_surrogate_high, p);
+                    }
+                    p += 2;
+                    const int lo = hex4(p); // (moves p past the four digits)
+                    if (lo < 0)
+                    {
+                        return failed(error_code::string_unicode_hex, p);
+                    }
+                    if (lo < 0xDC00 || lo > 0xDFFF)
+                    {
+                        return failed(error_code::string_surrogate_high, p);
+                    }
+                }
+            }
+            else if (!(d == '"' || d == '\\' || d == '/' || d == 'b' || d == 'f' || d == 'n' || d == 'r' || d == 't'))
+            {
+                --p;
+                return failed(error_code::string_escape, p);
+            }
+            if (p != end && *p == '\\')
+            {
+                continue; // (escapes in a row: no run of text between them)
+            }
+            p = scan_string_run(p, end); // the text up to the next backslash, quote, control character, or ill-formed UTF-8
+        }
+    }
+
     /// s points to the start of the string, p to a backslash, a control
     /// character, an ill-formed UTF-8 byte, or the end: decode the string into
     /// the arena
     NLOHMANN_VIEW_NOINLINE decoded slow_string(const unsigned char* s, const unsigned char* p)
     {
+        if (!enabled(Store))
+        {
+            // (accept(): the string is checked, not decoded)
+            static_cast<void>(s);
+            return check_string(p);
+        }
         // single-character escapes; 0: invalid (and 'u', handled separately)
         static const std::array<char, 128> simple_escape =
         {
@@ -358,6 +420,21 @@ class builder
                 }
                 arena_ensure(w, w_end, 4);
                 w = put_utf8(w, cp);
+                // A chain of unicode escapes ("\u3042\u3044\u3046", as Python's json.dumps writes non-ASCII text) is
+                // decoded here, without going round the loop above for each of them. Anything else (a surrogate, a
+                // bad digit, fewer than six bytes) leaves p at the backslash: the loop above handles it, and reports
+                // the same error at the same position as it would without this loop.
+                while (end - p >= 6 && p[0] == '\\' && p[1] == 'u')
+                {
+                    const int next = hex_codepoint(p + 2);
+                    if (next < 0 || (next & 0xF800) == 0xD800)
+                    {
+                        break;
+                    }
+                    p += 6;
+                    arena_ensure(w, w_end, 4);
+                    w = put_utf8(w, next);
+                }
             }
             else if (NLOHMANN_VIEW_LIKELY(d < 128 && simple_escape[d] != 0))
             {
@@ -543,7 +620,15 @@ run_found:
     NLOHMANN_VIEW_NOINLINE void arena_grow(std::size_t n)
     {
         const std::size_t used = arena_used();
-        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, used + n + 256));
+        std::size_t wanted = used + n + 256;
+        if (m_doc.arena.empty())
+        {
+            // the first growth: a decoded string is never longer than its source,
+            // so a fraction of the input (capped, as the buffer is zero-filled)
+            // covers the escapes of a typical document without regrowing it
+            wanted = (std::max)(wanted, (std::min)((static_cast<std::size_t>(m_end - m_begin) / 4) + 16, std::size_t{4096}));
+        }
+        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, wanted));
         m_arena_write = m_doc.arena.data() + used;
         m_arena_end = m_doc.arena.data() + m_doc.arena.size();
     }
@@ -617,10 +702,13 @@ run_found:
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool run()
         {
-            cold.m_doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
-            base = cold.m_doc.nodes;
-            out = base;
-            cap = base + cold.m_doc.node_capacity;
+            if (enabled(Store))
+            {
+                cold.m_doc.reserve(estimate_nodes(reinterpret_cast<const char*>(b), static_cast<std::size_t>(e - b)));
+                base = cold.m_doc.nodes;
+                out = base;
+                cap = base + cold.m_doc.node_capacity;
+            }
 
             if (e - p >= 3 && p[0] == 0xEF && p[1] == 0xBB && p[2] == 0xBF)
             {
@@ -639,11 +727,11 @@ run_found:
             switch (cur())
             {
                 case '{':
-                    open(value_t::object);
+                    open(node_kind::object);
                     ++p;
                     goto obj_first;
                 case '[':
-                    open(value_t::array);
+                    open(node_kind::array);
                     ++p;
                     goto arr_first;
                 default:
@@ -665,11 +753,11 @@ run_found:
             if (NLOHMANN_VIEW_UNLIKELY(!string<true>())) { return false; }      \
             break;                                                              \
         case '{':                                                               \
-            open(value_t::object);                                              \
+            open(node_kind::object);                                              \
             ++p;                                                                \
             goto obj_first;                                                     \
         case '[':                                                               \
-            open(value_t::array);                                               \
+            open(node_kind::array);                                               \
             ++p;                                                                \
             goto arr_first;                                                     \
         case '-':                                                               \
@@ -804,7 +892,10 @@ close_object:
             // an array pays nothing for this)
             if (NLOHMANN_VIEW_UNLIKELY(cur_count >= document_data::index_min_members))
             {
-                cold.note_large_object(cur_idx);
+                if (enabled(Store))
+                {
+                    cold.note_large_object(cur_idx);
+                }
             }
 
 close_container:
@@ -886,17 +977,17 @@ root_done:
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_true()
         {
-            return literal("true", value_t::boolean, node_flags::is_true);
+            return literal("true", node_kind::boolean, node_flags::is_true);
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_false()
         {
-            return literal("false", value_t::boolean, 0);
+            return literal("false", node_kind::boolean, 0);
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE bool literal_null()
         {
-            return literal("null", value_t::null, 0);
+            return literal("null", node_kind::null, 0);
         }
 
         /// skip whitespace (and comments); false on a malformed comment
@@ -962,8 +1053,14 @@ indent_done:
 
         /// append a node: (kind, flags, extra, off) and the second word (len, or
         /// an integer's value); two stores on little-endian targets
-        NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(value_t k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
+        NLOHMANN_VIEW_ALWAYS_INLINE node* push_node(node_kind k, std::uint8_t flags, std::uint16_t extra, std::size_t off, std::uint64_t second)
         {
+            if (!enabled(Store))
+            {
+                // accept(): nothing is stored, so what computes the arguments is not run either. base and out stay
+                // null: their difference, which open() takes, is 0.
+                return out;
+            }
             if (NLOHMANN_VIEW_UNLIKELY(out == cap))
             {
                 const auto n = static_cast<std::size_t>(out - base);
@@ -978,7 +1075,7 @@ indent_done:
             std::memcpy(reinterpret_cast<unsigned char*>(n), &first, 8);
             std::memcpy(reinterpret_cast<unsigned char*>(n) + 8, &second, 8);
 #else
-            n->kind = static_cast<std::uint8_t>(k);
+            n->kind = k;
             n->flags = flags;
             n->extra = extra;
             n->off = static_cast<std::uint32_t>(off);
@@ -990,7 +1087,7 @@ indent_done:
             return n;
         }
 
-        NLOHMANN_VIEW_ALWAYS_INLINE void open(value_t k)
+        NLOHMANN_VIEW_ALWAYS_INLINE void open(node_kind k)
         {
             // (base is read after push_node(), which moves the node array when it
             // grows; in one expression the order of the two is unspecified)
@@ -1017,14 +1114,17 @@ indent_done:
             max_depth = (std::max)(max_depth, depth);
             cur_idx = idx;
             cur_count = 0;
-            cur_is_object = k == value_t::object;
+            cur_is_object = k == node_kind::object;
         }
 
         NLOHMANN_VIEW_ALWAYS_INLINE void close()
         {
-            node& n = base[cur_idx];
-            n.len = cur_count;
-            n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
+            if (enabled(Store))
+            {
+                node& n = base[cur_idx];
+                n.len = cur_count;
+                n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
+            }
             if (--depth != 0)
             {
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
@@ -1047,7 +1147,7 @@ indent_done:
 
         /// the literal `text` at p (N counts the terminating NUL)
         template<std::size_t N>
-        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], value_t k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
+        NLOHMANN_VIEW_ALWAYS_INLINE bool literal(const char (&text)[N], node_kind k, std::uint8_t flags) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): a string literal
         {
             const std::size_t n = N - 1;
             if (NLOHMANN_VIEW_UNLIKELY(e - p < static_cast<std::ptrdiff_t>(n) || std::memcmp(p, text, n) != 0))
@@ -1089,7 +1189,7 @@ indent_done:
             {
                 ++p;
                 const unsigned char* const f0 = p;
-                p = skip_digits(p, e);
+                p = skip_fraction_digits(p, e);
                 if (NLOHMANN_VIEW_UNLIKELY(p == f0))
                 {
                     return fail(error_code::number_after_dot);
@@ -1126,23 +1226,23 @@ indent_done:
                 is_float = true;
             }
 
-            value_t kind = value_t::number_float;
+            node_kind kind = node_kind::number_float;
             if (!is_float)
             {
                 // integers that do not fit become floats, as in parse()
                 if (negative)
                 {
-                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? value_t::number_float : value_t::number_integer;
+                    kind = digits_exceed(int_start, int_digits, "9223372036854775808") ? node_kind::number_float : node_kind::number_integer;
                 }
                 else
                 {
-                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? value_t::number_float : value_t::number_unsigned;
+                    kind = digits_exceed(int_start, int_digits, "18446744073709551615") ? node_kind::number_float : node_kind::number_unsigned;
                 }
             }
             // parse() rejects floats that overflow; only numbers whose magnitude
             // could reach the largest FloatType (1e308 for double, 1e38 for
             // float) need the conversion
-            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::int64_t>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == value_t::number_float))
+            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::int64_t>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == node_kind::number_float))
             {
                 if (builder::float_overflows(s, p))
                 {
@@ -1152,7 +1252,7 @@ indent_done:
             }
             const auto layout = static_cast<std::uint16_t>((int_digits < 255 ? int_digits : 255) | ((frac_digits < 255 ? frac_digits : 255) << 8));
             auto second = static_cast<std::uint64_t>(p - s);
-            if (kind != value_t::number_float)
+            if (kind != node_kind::number_float)
             {
                 // integers are converted now, while their digits are in cache
                 const std::uint64_t m = int_digits <= 19 ? parse_upto19(int_start, static_cast<unsigned>(int_digits), e)
@@ -1175,7 +1275,7 @@ indent_done:
             p = scan_string_run<Value>(p, e);
             if (NLOHMANN_VIEW_LIKELY(cur() == '"'))
             {
-                push_node(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
+                push_node(node_kind::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
                 ++p;
                 return true;
             }
@@ -1185,41 +1285,58 @@ indent_done:
                 return false;
             }
             p = r.p;
-            push_node(value_t::string, node_flags::escaped, 0, r.start, r.len);
+#if JSON_DIAGNOSTIC_POSITIONS
+            // the decoded string is in the arena: next keeps the source offset
+            // of the opening quote plus one (0: unknown) for materialize()
+            const std::uint64_t second = static_cast<std::uint64_t>(r.len) | (static_cast<std::uint64_t>(s - b) << 32);
+#else
+            const std::uint64_t second = r.len;
+#endif
+            push_node(node_kind::string, node_flags::escaped, 0, r.start, second);
             return true;
         }
     };
 };
 
 /// run the builder with compile-time options
-template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd>
+template<typename FloatType, bool Comments, bool TrailingCommas, bool NulIsEnd, bool Store>
 inline bool build_with(document_data& d, const char* src, std::size_t size, bool sentinel, parse_failure& failure)
 {
     if (sentinel)
     {
-        builder<FloatType, Comments, TrailingCommas, NulIsEnd, true> bld(d, src, size);
+        builder<FloatType, Comments, TrailingCommas, NulIsEnd, true, Store> bld(d, src, size);
         const bool ok = bld.run();
         failure = bld.failure();
         return ok;
     }
-    builder<FloatType, Comments, TrailingCommas, NulIsEnd, false> bld(d, src, size);
+    builder<FloatType, Comments, TrailingCommas, NulIsEnd, false, Store> bld(d, src, size);
     const bool ok = bld.run();
     failure = bld.failure();
     return ok;
 }
 
 /// sentinel: src[size] is readable and 0 (e.g. std::string); FloatType: the
-/// number_float_t of the document
+/// number_float_t of the document; validate_only: accept(), only the result is
+/// used
 template<typename FloatType, bool NulIsEnd>
-inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, parse_failure& failure)
+inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, bool validate_only,
+                  parse_failure& failure)
 {
+    if (validate_only && !comments && !trailing_commas)
+    {
+        // accept() of plain JSON: nothing is stored. The other option sets
+        // could skip the stores just as well; they keep the builder that
+        // stores only so that there are two more instantiations of the parse
+        // loop, not eight.
+        return build_with<FloatType, false, false, NulIsEnd, false>(d, src, size, sentinel, failure);
+    }
     if (comments)
     {
-        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd>(d, src, size, sentinel, failure)
-               : build_with<FloatType, true, false, NulIsEnd>(d, src, size, sentinel, failure);
+        return trailing_commas ? build_with<FloatType, true, true, NulIsEnd, true>(d, src, size, sentinel, failure)
+               : build_with<FloatType, true, false, NulIsEnd, true>(d, src, size, sentinel, failure);
     }
-    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd>(d, src, size, sentinel, failure)
-           : build_with<FloatType, false, false, NulIsEnd>(d, src, size, sentinel, failure);
+    return trailing_commas ? build_with<FloatType, false, true, NulIsEnd, true>(d, src, size, sentinel, failure)
+           : build_with<FloatType, false, false, NulIsEnd, true>(d, src, size, sentinel, failure);
 }
 
 }  // namespace view

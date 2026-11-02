@@ -33,10 +33,10 @@ struct adl_serializer {
 ## See also
 
 - [Arbitrary type conversions](../../features/arbitrary_types.md) - how to make your types convertible
-- [**get**](../basic_json/get.md) / [**get_to**](../basic_json/get_to.md) - convert a JSON value to a C++ type
-- [**basic_json**](../basic_json/basic_json.md) - construct a JSON value from a C++ value
-- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE**](../macros/nlohmann_define_type_intrusive.md) - generate the conversion functions for a type
-- [Specializing enum conversion](../../features/enum_conversion.md)
+- [`get`](../basic_json/get.md) - / [`get_to`](../basic_json/get_to.md) - convert a JSON value to a C++ type
+- [`basic_json`](../basic_json/basic_json.md) - construct a JSON value from a C++ value
+- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](../macros/nlohmann_define_type_intrusive.md) - generate the conversion functions for a type
+- [Specializing enum conversion](../../features/enum_conversion.md) - serializing enums as JSON strings
 
 ## Version history
 

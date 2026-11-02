@@ -42,8 +42,11 @@ Constant.
 
 ## See also
 
-- [get](get.md) get a value (explicit conversion)
-- [get_ref](get_ref.md) get a reference to the stored value
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [`binary`](binary.md) - create a binary value
+- [`is_binary`](is_binary.md) - check whether a value is binary
+- [`get`](get.md) - get a value (explicit conversion)
+- [`get_ref`](get_ref.md) - get a reference to the stored value
 
 ## Version history
 

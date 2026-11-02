@@ -22,9 +22,9 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if the value is not a string; example:
 `"type must be string, but is array"`.
 
-This exception does not carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) path: the view has no
-`BasicJsonType` value to point at, so the exception is created without one, even if `BasicJsonType` was built with
-`JSON_DIAGNOSTICS` enabled.
+As for `BasicJsonType`, with [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) the exception names the JSON Pointer
+path of the value within the document, and with [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md)
+its bytes in the source text (when [`materialize()`](materialize.md) sets them).
 
 ## Complexity
 
@@ -41,8 +41,8 @@ counterpart, except that it returns a view instead of a reference to a value tha
 document, the returned [`string_view_t`](index.md#member-types) is valid as long as the caller's buffer; for an owned
 one, as long as the document.
 
-The returned [`string_view_t`](index.md#member-types) is valid exactly as long as the view that produced it -- see the
-[validity rules](index.md) of `basic_json_view` -- and, for a string with no escapes, for as long as the document's
+The returned [`string_view_t`](index.md#member-types) is valid exactly as long as the view that produced it — see the
+[validity rules](index.md) of `basic_json_view` — and, for a string with no escapes, for as long as the document's
 source text, which for a borrowed document must remain valid **and unmodified** for as long as the document exists,
 since floating-point values and unescaped strings are read from the source lazily.
 
@@ -52,8 +52,8 @@ since floating-point values and unescaped strings are read from the source lazil
 
     The example below pulls one field out of a JSON text that stands in for a large API response, and shows that no
     `#!cpp std::string` was allocated for it: the returned view still points inside the original buffer. A field that
-    contains an escape sequence cannot point into the original text -- it was decoded once into the document's own
-    buffer instead -- but still avoids a per-field allocation.
+    contains an escape sequence cannot point into the original text — it was decoded once into the document's own
+    buffer instead — but still avoids a per-field allocation.
 
     ```cpp
     --8<-- "examples/basic_json_view__get_string.cpp"
@@ -67,9 +67,10 @@ since floating-point values and unescaped strings are read from the source lazil
 
 ## See also
 
-- [get](get.md) - convert the value to a given type (`#!cpp get<string_view_t>()` is equivalent to this function)
-- [number_token](number_token.md) - a number's token text, without a copy
+- [`get`](get.md) - convert the value to a given type (`#!cpp get<string_view_t>()` is equivalent to this function)
+- [`number_token`](number_token.md) - a number's token text, without a copy
 - [`BasicJsonType::get_ref`](../basic_json/get_ref.md) - the closest counterpart of `basic_json`
+- [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - borrowing strings instead of copying them
 
 ## Version history
 

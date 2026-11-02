@@ -182,7 +182,7 @@ const node* element_at(const document_data& d, const node* array, std::size_t id
 template<bool Editable>
 const node* last_child(const document_data& d, const node* container) noexcept
 {
-    const std::size_t value_offset = container->kind == static_cast<std::uint8_t>(value_t::object) ? 1 : 0;
+    const std::size_t value_offset = container->kind == node_kind::object ? 1 : 0;
     const node* const end = navigation<Editable>::end(d, container);
     const node* last = navigation<Editable>::first(d, container);
     if (value_offset == 0 && container->next == container->len + 1u && (!navigation<Editable>::editable() || (container->flags & node_flags::moved) == 0))

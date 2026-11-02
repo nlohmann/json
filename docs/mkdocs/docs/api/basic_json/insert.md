@@ -185,10 +185,11 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## See also
 
-- [emplace](emplace.md) add a value to an object
-- [emplace_back](emplace_back.md) add a value to an array
-- [push_back](push_back.md) add a value to an array/object
-- [update](update.md) merges objects
+- [`emplace`](emplace.md) - add a value to an object
+- [`emplace_back`](emplace_back.md) - add a value to an array
+- [`push_back`](push_back.md) - add a value to an array/object
+- [`update`](update.md) - merges objects
+- [Modifying values](../../features/modifying_values.md) - the article on modifying values
 
 ## Version history
 

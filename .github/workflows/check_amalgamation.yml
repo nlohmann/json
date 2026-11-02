@@ -19,10 +19,10 @@ permissions:
 jobs:
   save:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -163,9 +163,9 @@ jobs:
           python3 $GENERATOR --list-tags
           TAG_COUNT=$(python3 $GENERATOR --list-tags | wc -l)
 
-          python3 $GENERATOR --abi-tags diag,_dp,_vns --abi-tags _diag --output $RUNNER_TEMP/abi_tags.natvis
-          grep -q '<!-- Namespace nlohmann::json_abi_diag_dp_vns -->' $RUNNER_TEMP/abi_tags.natvis
-          grep -q '<!-- Namespace nlohmann::json_abi_diag_dp_vns_v[0-9_]* -->' $RUNNER_TEMP/abi_tags.natvis
+          python3 $GENERATOR --abi-tags diag,_dp,_ns --abi-tags _diag --output $RUNNER_TEMP/abi_tags.natvis
+          grep -q '<!-- Namespace nlohmann::json_abi_diag_dp_ns -->' $RUNNER_TEMP/abi_tags.natvis
+          grep -q '<!-- Namespace nlohmann::json_abi_diag_dp_ns_v[0-9_]* -->' $RUNNER_TEMP/abi_tags.natvis
           test $(grep -c '<!-- Namespace ' $RUNNER_TEMP/abi_tags.natvis) -eq $(( $(grep -c '<!-- Namespace ' nlohmann_json.natvis) + 2 ))
 
           python3 $GENERATOR --all --output $RUNNER_TEMP/all.natvis

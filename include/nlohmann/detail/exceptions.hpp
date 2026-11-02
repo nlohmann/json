@@ -102,7 +102,7 @@ enum class exception_id : int
     type_not_serializable = 317, ///< a value cannot be serialized to the requested binary format
     enum_key_duplicate = 318, ///< an enum-keyed map has two keys that serialize to the same string
     document_binary_value = 319, ///< a binary value is stored in a json_document
-    document_image_unsupported = 320, ///< a json_document image cannot be saved or loaded (discarded document, big-endian target)
+    document_image_unsupported = 320, ///< a discarded json_document cannot be saved as an image
     discarded_value_used = 321, ///< a discarded value is used
     // out_of_range
     array_index_out_of_range = 401, ///< an array index is out of range
@@ -417,6 +417,42 @@ void templated_json_throw(ExceptionType exception)
     (void)exception;
 }
 
+// the context of an exception about j: j itself for a basic_json value (whose
+// path JSON_DIAGNOSTICS shows), none for a view of <nlohmann/json_view.hpp>
+template<typename BasicJsonType, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+const BasicJsonType * exception_context(const BasicJsonType& j) noexcept
+{
+    return &j;
+}
+
+template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
+std::nullptr_t exception_context(const View& /*unused*/) noexcept
+{
+    return nullptr;
+}
+
+namespace view
+{
+// the path and bytes of the value of a view (defined in <nlohmann/detail/view/errors.hpp>)
+template<typename View>
+std::string diagnostics_of(const View& v);
+}  // namespace view
+
+// what goes in front of the message of an exception about j: nothing for a
+// basic_json value (exception_context() passes the value itself), the context
+// basic_json would add (JSON_DIAGNOSTICS, JSON_DIAGNOSTIC_POSITIONS) for a view
+template<typename BasicJsonType, enable_if_t<is_basic_json<BasicJsonType>::value, int> = 0>
+const char* exception_prefix(const BasicJsonType& /*unused*/) noexcept
+{
+    return "";
+}
+
+template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
+std::string exception_prefix(const View& v)
+{
+    return view::diagnostics_of(v);
+}
+
 /*!
 @brief throws because @a j does not have the type a conversion expects
 @param[in] expected  the expected type(s), e.g. "array" or "binary or array"
@@ -428,7 +464,7 @@ JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE void throw_type_must_be(const cha
 {
     static_cast<void>(expected); // unused when JSON_NOEXCEPTION is defined
     static_cast<void>(j);
-    JSON_THROW(type_error::create(exception_id::type_mismatch, concat("type must be ", expected, ", but is ", j.type_name()), &j));
+    JSON_THROW(type_error::create(exception_id::type_mismatch, concat(exception_prefix(j), "type must be ", expected, ", but is ", j.type_name()), exception_context(j)));
 }
 
 /*!

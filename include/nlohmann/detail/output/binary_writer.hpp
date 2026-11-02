@@ -1684,7 +1684,15 @@ class binary_writer
             throw_subtype_out_of_range(value.subtype(), "the BSON binary subtype", j);
         }
 
-        return sizeof(std::int32_t) + value.size() + 1ul;
+        // the "old binary" subtype 0x02 repeats the payload size in an inner
+        // int32 in front of the payload
+        return sizeof(std::int32_t) + (is_bson_old_binary(value) ? sizeof(std::int32_t) : 0ul) + value.size() + 1ul;
+    }
+
+    /// @return whether @a value has the BSON subtype 0x02 ("binary (old)")
+    static bool is_bson_old_binary(const binary_t& value) noexcept
+    {
+        return value.has_subtype() && value.subtype() == 0x02;
     }
 
     /*!
@@ -1697,9 +1705,17 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x05);
 
-        write_number<std::int32_t>(to_bson_length(value.size()), true);
+        const bool old_binary = is_bson_old_binary(value);
+
+        // the length field counts the inner int32 of the old binary subtype
+        write_number<std::int32_t>(to_bson_length(value.size() + (old_binary ? sizeof(std::int32_t) : 0ul)), true);
 
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
+
+        if (old_binary)
+        {
+            write_number<std::int32_t>(to_bson_length(value.size()), true);
+        }
 
         write_bytes(value.data(), value.size());
     }
@@ -1860,7 +1876,8 @@ class binary_writer
            (or the header of a string or binary value) in one reservation
     @return whether the entry was written; false for a discarded value, a
             string or binary value whose length does not fit the length
-            field, in which case nothing was written
+            field, or a binary value with subtype 0x02, in which case nothing
+            was written
     @pre    @a name is at most bson_scalar_max_name_size characters long and is
             not changed by the error handler
     */
@@ -1921,7 +1938,9 @@ class binary_writer
         if (j.is_binary())
         {
             const binary_t& value = *j.m_data.m_value.binary;
-            if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size())))
+            // the old binary subtype 0x02 has an inner length that the single
+            // reservation has no room for; write_bson_binary writes it
+            if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size()) || is_bson_old_binary(value)))
             {
                 return false;
             }
@@ -2069,7 +2088,8 @@ class binary_writer
         /// arrays: the first index with one more digit; only maintained by
         /// @ref calc_bson_sizes
         std::uint64_t index_boundary = 10;
-        /// @ref calc_bson_sizes only: where its size goes in the table
+        /// @ref calc_bson_sizes: where its size goes in the table; @ref
+        /// write_bson_document_single_pass: the position of its size field
         std::size_t size_slot;
         /// @ref calc_bson_sizes only: the size of its entries seen so far
         std::size_t entries_size = 0;
@@ -2320,6 +2340,199 @@ class binary_writer
         }
     }
 
+    template<typename SinkType>
+    using sink_written_t = decltype(std::declval<const SinkType&>().written());
+
+    /// whether every integer fits the 64 bits BSON has, so that writing an
+    /// array of numbers needs no range check
+    static constexpr bool bson_integers_fit_64_bits =
+        std::numeric_limits<typename BasicJsonType::number_integer_t>::is_specialized
+        && std::numeric_limits<typename BasicJsonType::number_integer_t>::digits <= std::numeric_limits<std::int64_t>::digits
+        && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::is_specialized
+        && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::digits <= std::numeric_limits<std::uint64_t>::digits;
+
+    /*!
+    @brief whether BSON documents can be written in a single pass: the sink
+           can overwrite what it has written (output_vector_sink), and
+           @ref bson_integers_fit_64_bits
+    */
+    using bson_single_pass_sink = conjunction<is_detected<sink_written_t, OutputSinkType>, std::integral_constant<bool, bson_integers_fit_64_bits>>;
+
+    /// write a placeholder for the size of an object or array whose entries
+    /// follow; @return its position, for @ref close_bson_container
+    std::size_t write_bson_size_placeholder()
+    {
+        const std::size_t pos = oa.written();
+        // zero in any byte order
+        const std::array<CharType, sizeof(std::int32_t)> zero{};
+        oa.write_characters(zero.data(), zero.size());
+        return pos;
+    }
+
+    /// end the object or array whose size is at @a pos and write its size
+    /// there: everything from that field to the terminating null byte
+    /// @return false (and the size is not written) if it does not fit
+    bool close_bson_container(const std::size_t pos)
+    {
+        oa.write_character(to_char_type(0x00));
+        const std::size_t size = oa.written() - pos;
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
+        {
+            return false;
+        }
+        const auto le_size = static_cast<std::uint32_t>(size);
+        oa.overwrite(pos, is_little_endian ? le_size : byteswap(le_size));
+        return true;
+    }
+
+    /*!
+    @brief check the value @a j of a BSON entry as @ref calc_bson_value_size
+           does, for @ref write_bson_document_single_pass
+    @return at least the size of the value
+    A number, boolean, or null needs no check there (its integers have at most
+    64 bits) and has at most 8 characters; a discarded value is rejected with
+    the same exception when it is written.
+    */
+    std::size_t check_bson_value(const BasicJsonType& j)
+    {
+        return (j.is_string() || j.is_binary()) ? calc_bson_value_size(j) : 8;
+    }
+
+    /// whether an entry of @a entry_size characters keeps the document that
+    /// begins at @a start, closed by @a open_containers null bytes, within
+    /// the 32-bit size of BSON
+    bool bson_entry_fits(const std::size_t start, const std::size_t entry_size, const std::size_t open_containers) const noexcept
+    {
+        const auto limit = static_cast<std::size_t>((std::numeric_limits<std::int32_t>::max)());
+        const std::size_t written = oa.written() - start;
+        return written <= limit && entry_size <= limit - written && open_containers <= limit - written - entry_size;
+    }
+
+    /*!
+    @brief Serializes the JSON object @a document as a BSON document in a
+           single pass, writing the size of each object and array once it is
+           complete
+
+    Checks every key and value as @ref calc_bson_sizes does, in the same
+    order, so the same exception is thrown; the output written up to then is
+    discarded with the vector it was written to.
+
+    @return false as soon as the document or a string, binary value, object,
+            or array in it would be larger than the 32-bit BSON sizes allow;
+            nothing large has been written then, and the caller writes the
+            document in two passes, which reports that error
+    */
+    template<typename SinkType = OutputSinkType, typename std::enable_if<is_detected<sink_written_t, SinkType>::value, int>::type = 0>
+    bool write_bson_document_single_pass(const BasicJsonType& document)
+    {
+        const std::size_t start = oa.written();
+        // the object or array whose entries are being written (with the
+        // position of its size), and the ones it is in
+        bson_frame current(&document, write_bson_size_placeholder());
+        std::vector<bson_frame> parents;
+
+        while (true)
+        {
+            const BasicJsonType* nested = nullptr;
+            std::size_t nested_size_pos = 0;
+            if (current.value->is_object())
+            {
+                const auto& object = *current.value->m_data.m_value.object;
+                while (nested == nullptr && current.member != object.cend())
+                {
+                    const auto& el = *current.member;
+                    ++current.member;
+                    const std::size_t header_size = calc_bson_entry_header_size(el.first, el.second);
+                    const std::size_t value_size = el.second.is_structured() ? 0 : check_bson_value(el.second);
+                    if (JSON_HEDLEY_UNLIKELY(!bson_entry_fits(start, header_size + value_size, parents.size() + 1)))
+                    {
+                        return false;
+                    }
+                    if (el.second.is_structured())
+                    {
+                        write_bson_entry_header(el.first, el.second.is_object() ? 0x03 : 0x04);
+                        nested_size_pos = write_bson_size_placeholder();
+                        nested = &el.second;
+                    }
+                    else
+                    {
+                        write_bson_value(el.first, el.second);
+                    }
+                }
+            }
+            else
+            {
+                const auto& array = *current.value->m_data.m_value.array;
+                while (nested == nullptr && current.index < array.size())
+                {
+                    if (is_bson_fixed_size(array[current.index]))
+                    {
+                        write_bson_array_fixed_entries(current);
+                        if (current.index == array.size())
+                        {
+                            break;
+                        }
+                    }
+
+                    // a string, binary value, object or array
+                    const BasicJsonType& el = array[current.index];
+                    const string_t index_name(current.index_name.data(), current.index_name_size);
+                    current.next_index();
+                    const std::size_t value_size = el.is_structured() ? 0 : check_bson_value(el);
+                    if (JSON_HEDLEY_UNLIKELY(!bson_entry_fits(start, 2 + index_name.size() + value_size, parents.size() + 1)))
+                    {
+                        return false;
+                    }
+                    if (el.is_structured())
+                    {
+                        write_bson_entry_header(index_name, el.is_object() ? 0x03 : 0x04);
+                        nested_size_pos = write_bson_size_placeholder();
+                        nested = &el;
+                    }
+                    else
+                    {
+                        write_bson_value(index_name, el);
+                    }
+                }
+            }
+
+            if (nested != nullptr)
+            {
+                if (nested->is_array())
+                {
+                    // an array of booleans, numbers and null is written without a frame on the stack
+                    bson_frame leaf(nested, nested_size_pos);
+                    write_bson_array_fixed_entries(leaf);
+                    if (leaf.index == nested->m_data.m_value.array->size())
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(!close_bson_container(nested_size_pos)))
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+                    parents.push_back(std::move(current));
+                    current = std::move(leaf);
+                    continue;
+                }
+                parents.push_back(std::move(current));
+                current = bson_frame(nested, nested_size_pos);
+                continue;
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!close_bson_container(current.size_slot)))
+            {
+                return false;
+            }
+            if (parents.empty())
+            {
+                return true;
+            }
+            current = std::move(parents.back());
+            parents.pop_back();
+        }
+    }
+
     /*!
     @brief Serializes the JSON object @a document as a BSON document
 
@@ -2331,6 +2544,39 @@ class binary_writer
     @pre       document.type() == value_t::object
     */
     void write_bson_document(const BasicJsonType& document)
+    {
+        write_bson_document(document, bson_single_pass_sink());
+    }
+
+    /// the sink can overwrite: one pass, unless the error handler replaces or
+    /// drops ill-formed UTF-8, which changes the sizes the checks compute
+    void write_bson_document(const BasicJsonType& document, std::true_type /*single_pass*/)
+    {
+        const std::size_t start = oa.written();
+        if ((error_handler == error_handler_t::keep || error_handler == error_handler_t::strict)
+                && write_bson_document_single_pass(document))
+        {
+            return;
+        }
+        // a length does not fit: start over, so that it is reported as the
+        // two passes report it, before anything is written
+        oa.rewind(start);
+        write_bson_document_two_pass(document);
+    }
+
+    void write_bson_document(const BasicJsonType& document, std::false_type /*single_pass*/)
+    {
+        write_bson_document_two_pass(document);
+    }
+
+    /*!
+    @brief Serializes the JSON object @a document as a BSON document: the
+           sizes of all objects and arrays first, then the entries
+
+    @param[in] document  the JSON object to serialize
+    @pre       document.type() == value_t::object
+    */
+    void write_bson_document_two_pass(const BasicJsonType& document)
     {
         std::vector<std::size_t> nested_sizes;
         const std::size_t document_size = calc_bson_sizes(document, nested_sizes);
@@ -3061,6 +3307,25 @@ class binary_writer
         }
     }
 
+    /// write the head and the characters of @a value, at most
+    /// max_text_in_reservation of them, in one reservation
+    JSON_HEDLEY_ALWAYS_INLINE void write_cbor_string_reserved(const string_t& value)
+    {
+        CharType* const out = oa.reserve(value.size() + 2);
+        CharType* p = out;
+        if (value.size() <= 0x17)
+        {
+            *p++ = to_char_type(static_cast<std::uint8_t>(0x60 + value.size()));
+        }
+        else
+        {
+            *p++ = to_char_type(0x78);
+            *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+        }
+        copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+        oa.commit(static_cast<std::size_t>(p - out) + value.size());
+    }
+
     /*!
     @brief write a CBOR text string
 
@@ -3082,19 +3347,7 @@ class binary_writer
             // the string is written as it is: head and characters in one reservation
             if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
             {
-                CharType* const out = oa.reserve(value.size() + 2);
-                CharType* p = out;
-                if (value.size() <= 0x17)
-                {
-                    *p++ = to_char_type(static_cast<std::uint8_t>(0x60 + value.size()));
-                }
-                else
-                {
-                    *p++ = to_char_type(0x78);
-                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
-                }
-                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
-                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                write_cbor_string_reserved(value);
                 return;
             }
         }
@@ -3108,6 +3361,13 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_cbor_checked_string(const string_t& value, const BasicJsonType& context)
     {
+        if (error_handler == error_handler_t::strict && value.size() <= max_text_in_reservation)
+        {
+            check_utf8(value, context);
+            write_cbor_string_reserved(value);
+            return;
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -3121,6 +3381,27 @@ class binary_writer
     /////////////
     // MsgPack //
     /////////////
+
+    /// write the head and the characters of @a value, at most
+    /// max_text_in_reservation of them, in one reservation
+    JSON_HEDLEY_ALWAYS_INLINE void write_msgpack_string_reserved(const string_t& value)
+    {
+        CharType* const out = oa.reserve(value.size() + 2);
+        CharType* p = out;
+        if (value.size() <= 31)
+        {
+            // fixstr
+            *p++ = to_char_type(static_cast<std::uint8_t>(0xA0 | value.size()));
+        }
+        else
+        {
+            // str 8
+            *p++ = to_char_type(0xD9);
+            *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+        }
+        copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+        oa.commit(static_cast<std::size_t>(p - out) + value.size());
+    }
 
     /*!
     @brief write a MessagePack str
@@ -3139,21 +3420,7 @@ class binary_writer
             // the string is written as it is: head and characters in one reservation
             if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
             {
-                CharType* const out = oa.reserve(value.size() + 2);
-                CharType* p = out;
-                if (value.size() <= 31)
-                {
-                    // fixstr
-                    *p++ = to_char_type(static_cast<std::uint8_t>(0xA0 | value.size()));
-                }
-                else
-                {
-                    // str 8
-                    *p++ = to_char_type(0xD9);
-                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
-                }
-                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
-                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                write_msgpack_string_reserved(value);
                 return;
             }
         }
@@ -3166,6 +3433,13 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_msgpack_checked_string(const string_t& value, const BasicJsonType& context)
     {
+        if (error_handler == error_handler_t::strict && value.size() <= max_text_in_reservation)
+        {
+            check_utf8(value, context);
+            write_msgpack_string_reserved(value);
+            return;
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -3829,7 +4103,7 @@ class binary_writer
     A C++11 `constexpr` function cannot contain a `switch`, so this is a plain
     comparison chain instead; it is only reached once per ND-array candidate
     object. Keep in sync with binary_reader's `bjd_type_name()`, which maps
-    the other way.
+    the other way (it also reads "half", which is never written).
     */
     static CharType bjdata_ndarray_type_marker(const string_t& name)
     {
@@ -4037,9 +4311,12 @@ class binary_writer
             switch (dtype)
             {
                 case 'U':
-                case 'C':
                 case 'B':
                     ok = write_bjdata_ndarray_element<std::uint8_t>(el, dry_run);
+                    break;
+                case 'C':
+                    // BJData limits a char to 0..127 (the intersection of the int8 and uint8 ranges)
+                    ok = bjdata_ndarray_value_in_range<std::int8_t>(el) && bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'i':
                     ok = write_bjdata_ndarray_element<std::int8_t>(el, dry_run);
@@ -4772,10 +5049,9 @@ class binary_writer
     static void check_utf8(const string_t& s, const BasicJsonType& context)
     {
         const auto* data = reinterpret_cast<const unsigned char*>(s.data());
-        const std::size_t valid = valid_utf8_prefix(data, s.size());
-        if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
+        if (JSON_HEDLEY_UNLIKELY(!valid_utf8_string(data, s.size())))
         {
-            throw_invalid_utf8(data, valid, context);
+            throw_invalid_utf8(data, valid_utf8_prefix(data, s.size()), context);
         }
     }
 

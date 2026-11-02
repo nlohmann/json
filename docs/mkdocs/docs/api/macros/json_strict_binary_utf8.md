@@ -92,11 +92,13 @@ The default value is `0` (disabled, the behavior of version 3.12.0 and earlier i
 
 ## See also
 
-- [**to_cbor**](../basic_json/to_cbor.md) - create a CBOR serialization of a JSON value
-- [**to_ubjson**](../basic_json/to_ubjson.md) - create a UBJSON serialization of a JSON value
-- [**to_bjdata**](../basic_json/to_bjdata.md) - create a BJData serialization of a JSON value
-- [**to_bson**](../basic_json/to_bson.md) - create a BSON serialization of a JSON value
-- [**error_handler_t**](../basic_json/error_handler_t.md) - how [`dump`](../basic_json/dump.md) treats ill-formed UTF-8
+- [Binary formats](../../features/binary_formats/index.md) - overview of the supported binary formats
+- [`from_cbor`](../basic_json/from_cbor.md) - also affected when parsing CBOR strings
+- [`to_cbor`](../basic_json/to_cbor.md) - create a CBOR serialization of a JSON value
+- [`to_ubjson`](../basic_json/to_ubjson.md) - create a UBJSON serialization of a JSON value
+- [`to_bjdata`](../basic_json/to_bjdata.md) - create a BJData serialization of a JSON value
+- [`to_bson`](../basic_json/to_bson.md) - create a BSON serialization of a JSON value
+- [`error_handler_t`](../basic_json/error_handler_t.md) - how [`dump`](../basic_json/dump.md) treats ill-formed UTF-8
 
 ## Version history
 

@@ -28,10 +28,24 @@ using nlohmann::detail::view::node;
 #include <random>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include <test_data.hpp>
+
+namespace json_view_image_test
+{
+// whether a document type has save() and load() (only on little-endian targets)
+template<typename T, typename = void>
+struct has_save : std::false_type {};
+template<typename T>
+struct has_save<T, decltype(static_cast<void>(std::declval<const T&>().save()))> : std::true_type {};
+template<typename T, typename = void>
+struct has_load : std::false_type {};
+template<typename T>
+struct has_load<T, decltype(static_cast<void>(T::load(std::declval<const std::vector<std::uint8_t>&>())))> : std::true_type {};
+} // namespace json_view_image_test
 
 #if !(defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 
@@ -171,6 +185,11 @@ std::uint32_t rng()
 
 TEST_CASE("json_view images: round trips")
 {
+    static_assert(json_view_image_test::has_save<json_document>::value, "save() on a little-endian target");
+    static_assert(json_view_image_test::has_load<json_document>::value, "load() on a little-endian target");
+    static_assert(json_view_image_test::has_save<ordered_json_editable_document>::value, "save() on a little-endian target");
+    static_assert(json_view_image_test::has_load<ordered_json_editable_document>::value, "load() on a little-endian target");
+
     SECTION("small documents")
     {
         for (const char* text :
@@ -480,7 +499,7 @@ TEST_CASE("json_view images: edited documents")
             {
                 CAPTURE(i)
                 CHECK((node_at(image, i).flags & nlohmann::detail::view::node_flags::linked) == 0);
-                CHECK(node_at(image, i).kind != nlohmann::detail::view::kind_link);
+                CHECK((node_at(image, i).kind != nlohmann::detail::view::node_kind::link));
             }
             for (const image_check check :
                     {
@@ -682,6 +701,64 @@ TEST_CASE("json_view images: ownership")
 #if !defined(JSON_NOEXCEPTION)
 TEST_CASE("json_view images: errors")
 {
+    SECTION("float tokens: a changed byte is accepted if the text is still a number with the digits the node records")
+    {
+        for (const char* const token :
+                {
+                    "-12.375", "0.5", "123456.0", "-0.0", "9999999999999999999.5", "0.000000000000000000000001", "1.25e10", "5E-3"
+                })
+        {
+            CAPTURE(token)
+            const std::string text = std::string("[") + token + "]";
+            const json_document d = json_document::parse(text);
+            const std::vector<std::uint8_t> image = d.save();
+            const std::size_t at = text_at(image) + 1; // the first byte of the token
+            const std::uint16_t recorded = node_at(image, 1).extra;
+            CHECK(loaded_dump(image) == json::parse(text).dump());
+            for (std::size_t pos = 0; token[pos] != '\0'; ++pos)
+            {
+                for (unsigned int byte = 0; byte < 256; ++byte)
+                {
+                    std::vector<std::uint8_t> changed = image;
+                    changed[at + pos] = static_cast<std::uint8_t>(byte);
+                    std::string t = token;
+                    t[pos] = static_cast<char>(byte);
+                    // the digits of the integer part and of the fraction of the changed token
+                    std::size_t integer = 0;
+                    std::size_t fraction = 0;
+                    std::size_t k = (t[0] == '-') ? 1 : 0;
+                    for (; k < t.size() && t[k] >= '0' && t[k] <= '9'; ++k)
+                    {
+                        ++integer;
+                    }
+                    if (k < t.size() && t[k] == '.')
+                    {
+                        for (++k; k < t.size() && t[k] >= '0' && t[k] <= '9'; ++k)
+                        {
+                            ++fraction;
+                        }
+                    }
+                    // (as a JSON text, the token may have white space around it)
+                    const bool float_token = json::accept(t) && t.find_first_of(std::string(" \t\r\n\0", 5)) == std::string::npos && (t.find('.') != std::string::npos || t.find_first_of("eE") != std::string::npos) // NOLINT(abseil-string-find-str-contains)
+                                             && ((integer | (fraction << 8U)) == recorded);
+                    CAPTURE(pos)
+                    CAPTURE(byte)
+                    std::string result;
+                    try
+                    {
+                        result = loaded_dump(changed);
+                    }
+                    catch (const json::parse_error& e)
+                    {
+                        CHECK(std::string(e.what()) == check_failed);
+                        result = "rejected";
+                    }
+                    CHECK((result != "rejected") == float_token);
+                }
+            }
+        }
+    }
+
     SECTION("invalid UTF-8 of a decoded string: the compact dump writes it, the others throw")
     {
         const json_document d = json_document::parse(R"({"k\n":"\u00e9x"})");
@@ -810,13 +887,13 @@ TEST_CASE("json_view images: check")
         {
             rejected(corrupted(image, 12, [&](node & n)
             {
-                n.kind = kind;
+                n.kind = static_cast<nlohmann::detail::view::node_kind>(kind);
             }), true);
         }
         // a key that is not a string
         rejected(corrupted(image, 1, [](node & n)
         {
-            n.kind = 0;
+            n.kind = nlohmann::detail::view::node_kind::null;
             n.len = 0;
             n.off = 0;
         }), true);
@@ -960,11 +1037,11 @@ TEST_CASE("json_view images: check")
         }), true);
         rejected(corrupted(image, 0, [](node & n)
         {
-            n.kind = 2; // an array: the "keys" are values, and the counts do not match
+            n.kind = nlohmann::detail::view::node_kind::array; // an array: the "keys" are values, and the counts do not match
         }), true);
         const std::vector<std::uint8_t> as_array = corrupted(image, 16, [](node & n)
         {
-            n.kind = 2; // {} as []: fine
+            n.kind = nlohmann::detail::view::node_kind::array; // {} as []: fine
         });
         CHECK(load_result(as_array, image_check::full).empty());
         const std::string expected_dump = R"({"s":"x\"y","i":-12,"u":7,"f":1.5e+300,"b":true,"n":null,"a":["t",[]]})";
@@ -1013,13 +1090,13 @@ TEST_CASE("json_view images: check")
         rejected(at_token(u6, 0, '8'), false);      // 8 != 7
         rejected(corrupted(image, 4, [](node & n)
         {
-            n.kind = 6; // "-12" as unsigned: a sign
+            n.kind = nlohmann::detail::view::node_kind::number_unsigned; // "-12" as unsigned: a sign
             n.extra = 3;
         }), false);
         // a non-negative number_integer (as edits write it): fine
         const std::vector<std::uint8_t> positive = corrupted(image, 6, [](node & n)
         {
-            n.kind = 5;
+            n.kind = nlohmann::detail::view::node_kind::number_integer;
             n.extra = 0;
         });
         CHECK(load_result(positive, image_check::full).empty());
@@ -1027,7 +1104,7 @@ TEST_CASE("json_view images: check")
         CHECK(pos.root()["u"].is_number_integer());
         rejected(corrupted(image, 8, [](node & n)
         {
-            n.kind = 6; // a float token as integer
+            n.kind = nlohmann::detail::view::node_kind::number_unsigned; // a float token as integer
             n.extra = 7;
         }), false);
     }
@@ -1197,7 +1274,7 @@ TEST_CASE("json_view images: check")
         {
             std::vector<std::uint8_t> b = img;
             node n = node_at(b, i);
-            n.kind = kind;
+            n.kind = static_cast<nlohmann::detail::view::node_kind>(kind);
             n.extra = extra;
             set_node(b, i, n);
             return load_result(b, image_check::full);
@@ -1275,8 +1352,12 @@ TEST_CASE("json_view images: damaged images")
 
 TEST_CASE("json_view images: big-endian targets")
 {
+    // the image format is little-endian: save() and load() do not exist here
+    static_assert(!json_view_image_test::has_save<json_document>::value, "no save() on a big-endian target");
+    static_assert(!json_view_image_test::has_load<json_document>::value, "no load() on a big-endian target");
+    static_assert(!json_view_image_test::has_save<json_editable_document>::value, "no save() on a big-endian target");
     const json_document d = json_document::parse("[1]");
-    CHECK_THROWS_WITH_AS(d.save(), "[json.exception.type_error.320] json_document images need a little-endian target", json::type_error&);
+    CHECK(d.root().size() == 1);
 }
 
 #endif

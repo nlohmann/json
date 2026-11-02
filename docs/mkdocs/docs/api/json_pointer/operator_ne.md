@@ -107,8 +107,8 @@ tokens.
 
 ## See also
 
-- [operator==](operator_eq.md) compare for equality
-- [operator<=>](operator_spaceship.md) comparison: 3-way (C++20)
+- [`operator==`](operator_eq.md) - compare for equality
+- [`operator<=>`](operator_spaceship.md) - comparison: 3-way (C++20)
 
 ## Version history
 

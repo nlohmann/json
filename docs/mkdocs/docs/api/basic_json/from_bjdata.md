@@ -82,8 +82,11 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs
 - Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string could not be parsed
   successfully, or if a string value or object key is not valid UTF-8 and `error_handler` is `strict`
+- Throws [parse_error.115](../../home/exceptions.md#jsonexceptionparse_error115) if the text of a high-precision
+  number (`H`) is not a valid number
 - Throws [out_of_range.408](../../home/exceptions.md#jsonexceptionout_of_range408) if the size of an optimized container
-  or n-dimensional array cannot be represented by `std::size_t`
+  cannot be represented by `std::size_t` or exceeds the container's `max_size()`, or if the product of the dimensions of
+  an n-dimensional array overflows
 
 ## Complexity
 
@@ -107,12 +110,16 @@ Linear in the size of the input.
 
 ## See also
 
-- [to_bjdata](to_bjdata.md) create a BJData serialization of a JSON value
-- [from_cbor](from_cbor.md) create a JSON value from an input in CBOR format
-- [from_msgpack](from_msgpack.md) create a JSON value from an input in MessagePack format
-- [from_bson](from_bson.md) create a JSON value from an input in BSON format
-- [from_ubjson](from_ubjson.md) create a JSON value from an input in UBJSON format
-- [from_bon8](from_bon8.md) create a JSON value from an input in BON8 format
+- [BJData](../../features/binary_formats/bjdata.md) - the format, its byte layout and how values are mapped
+- [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Parsing untrusted input](../../features/parsing/untrusted_input.md) - limits and safe handling of hostile data
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [`to_bjdata`](to_bjdata.md) - create a BJData serialization of a JSON value
+- [`from_cbor`](from_cbor.md) - create a JSON value from an input in CBOR format
+- [`from_msgpack`](from_msgpack.md) - create a JSON value from an input in MessagePack format
+- [`from_bson`](from_bson.md) - create a JSON value from an input in BSON format
+- [`from_ubjson`](from_ubjson.md) - create a JSON value from an input in UBJSON format
+- [`from_bon8`](from_bon8.md) - create a JSON value from an input in BON8 format
 
 ## Version history
 

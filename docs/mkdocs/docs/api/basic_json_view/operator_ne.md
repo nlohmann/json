@@ -15,7 +15,7 @@ bool operator!=(const BasicJsonType& lhs, const basic_json_view& rhs);
 
 Since `operator!=` is defined as the negation of [`operator==`](operator_eq.md), it follows the same rules for
 special cases: for instance, since a [discarded](is_discarded.md) view is never equal to anything by default (see
-[operator=='s Notes](operator_eq.md#notes)), it is never *unequal* to anything either -- `#!cpp discarded != discarded`
+[operator=='s Notes](operator_eq.md#notes)), it is never *unequal* to anything either — `#!cpp discarded != discarded`
 is also `#!cpp false`, exactly as for a discarded `BasicJsonType` value.
 
 ## Parameters
@@ -46,7 +46,7 @@ Linear, as [`operator==`](operator_eq.md#complexity).
 
 ## Notes
 
-See the [Notes](operator_eq.md#notes) of `operator==` -- in particular for how an object's members are compared
+See the [Notes](operator_eq.md#notes) of `operator==` — in particular for how an object's members are compared
 (order matters for [`ordered_json_view`](../ordered_json_view.md) but not for [`json_view`](../json_view.md)) and
 for how discarded views compare.
 
@@ -58,7 +58,7 @@ the way to get a `BasicJsonType` value that supports it.
 ??? example
 
     The example below asserts, as a test would, that a received document differs from an unwanted value, and shows
-    that -- as for [`json`](../json.md)/[`ordered_json`](../ordered_json.md) -- reordering an object's members is
+    that — as for [`json`](../json.md)/[`ordered_json`](../ordered_json.md) — reordering an object's members is
     detected as a difference for an `ordered_json_view` but not for a `json_view`.
 
     ```cpp
@@ -73,8 +73,8 @@ the way to get a `BasicJsonType` value that supports it.
 
 ## See also
 
-- [operator==](operator_eq.md) - compare for equality
-- [materialize](materialize.md) - build a `BasicJsonType` value, e.g. to keep comparing after the document is gone
+- [`operator==`](operator_eq.md) - compare for equality
+- [`materialize`](materialize.md) - build a `BasicJsonType` value, e.g. to keep comparing after the document is gone
 - [`BasicJsonType::operator!=`](../basic_json/operator_ne.md) - the corresponding function of `basic_json`
 
 ## Version history

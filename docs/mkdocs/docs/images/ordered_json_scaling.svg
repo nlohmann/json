@@ -1,0 +1,31 @@
+<svg class="nj-fig nj-charts nj-charts--scaling" viewBox="0 0 440 238" role="img" aria-labelledby="nj-charts-sc nj-charts-sc-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-charts-sc">Time to parse a flat object of n keys, json against ordered_json, logarithmic axes</title>
+<desc id="nj-charts-sc-d">2000 keys: json 0.7 ms, ordered_json 3.6 ms (5x). 4000 keys: 0.8 ms and 14.0 ms (19x). 8000 keys: 1.6 ms and 67.8 ms (43x). 16000 keys: 3.3 ms and 181.6 ms (54x).</desc>
+<line class="nj-charts-grid" x1="66" y1="176.187" x2="330" y2="176.187"/>
+<text class="nj-charts-tick nj-charts-tick--r" x="60" y="180.187">1 ms</text>
+<line class="nj-charts-grid" x1="66" y1="111.521" x2="330" y2="111.521"/>
+<text class="nj-charts-tick nj-charts-tick--r" x="60" y="115.521">10 ms</text>
+<line class="nj-charts-grid" x1="66" y1="46.8538" x2="330" y2="46.8538"/>
+<text class="nj-charts-tick nj-charts-tick--r" x="60" y="50.8538">100 ms</text>
+<line class="nj-charts-axis" x1="66" y1="210" x2="330" y2="210"/>
+<text class="nj-charts-tick" x="66" y="226">2&#8201;000</text>
+<text class="nj-charts-tick" x="154" y="226">4&#8201;000</text>
+<text class="nj-charts-tick" x="242" y="226">8&#8201;000</text>
+<text class="nj-charts-tick" x="330" y="226">16&#8201;000</text>
+<polyline class="nj-charts-json" points="66,186.204 154,182.454 242,162.987 330,142.657"/>
+<circle class="nj-charts-json-dot" cx="66" cy="186.204" r="4.5"><title>json, 2000 keys: 0.7 ms</title></circle>
+<circle class="nj-charts-json-dot" cx="154" cy="182.454" r="4.5"><title>json, 4000 keys: 0.8 ms</title></circle>
+<circle class="nj-charts-json-dot" cx="242" cy="162.987" r="4.5"><title>json, 8000 keys: 1.6 ms</title></circle>
+<circle class="nj-charts-json-dot" cx="330" cy="142.657" r="4.5"><title>json, 16000 keys: 3.3 ms</title></circle>
+<text class="nj-charts-val nj-charts-name-json" x="340" y="140.657">json</text>
+<text class="nj-charts-val" x="340" y="155.657">3.3 ms</text>
+<text class="nj-charts-val" x="72" y="202.204">0.7 ms</text>
+<polyline class="nj-charts-ojson" points="66,140.213 154,102.071 242,57.7677 330,30.0977"/>
+<circle class="nj-charts-ojson-dot" cx="66" cy="140.213" r="4.5"><title>ordered_json, 2000 keys: 3.6 ms</title></circle>
+<circle class="nj-charts-ojson-dot" cx="154" cy="102.071" r="4.5"><title>ordered_json, 4000 keys: 14 ms</title></circle>
+<circle class="nj-charts-ojson-dot" cx="242" cy="57.7677" r="4.5"><title>ordered_json, 8000 keys: 67.8 ms</title></circle>
+<circle class="nj-charts-ojson-dot" cx="330" cy="30.0977" r="4.5"><title>ordered_json, 16000 keys: 181.6 ms</title></circle>
+<text class="nj-charts-val nj-charts-name-ojson" x="340" y="28.0977">ordered_json</text>
+<text class="nj-charts-val" x="340" y="43.0977">181.6 ms</text>
+<text class="nj-charts-val" x="72" y="160.213">3.6 ms</text>
+</svg>

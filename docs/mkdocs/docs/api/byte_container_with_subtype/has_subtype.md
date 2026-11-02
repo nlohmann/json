@@ -36,9 +36,10 @@ Constant.
 
 ## See also
 
-- [set_subtype](set_subtype.md) sets the binary subtype
-- [clear_subtype](clear_subtype.md) clears the binary subtype
-- [subtype](subtype.md) return the binary subtype
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [`set_subtype`](set_subtype.md) - sets the binary subtype
+- [`clear_subtype`](clear_subtype.md) - clears the binary subtype
+- [`subtype`](subtype.md) - return the binary subtype
 
 ## Version history
 

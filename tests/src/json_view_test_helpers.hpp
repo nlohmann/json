@@ -15,6 +15,7 @@
 #include <nlohmann/json_view.hpp>
 
 #include <algorithm> // any_of
+#include <cstddef> // size_t
 #include <functional> // function
 #include <random> // mt19937
 #include <string> // string
@@ -86,6 +87,27 @@ inline bool has_duplicate_keys(const nlohmann::ordered_json_view& v)
     {
         return e.is_structured() && has_duplicate_keys(e);
     });
+}
+
+// the message of an exception about the value at path (a JSON pointer, "" for
+// the root) whose source bytes are [start, end): the context basic_json adds
+// with JSON_DIAGNOSTICS and JSON_DIAGNOSTIC_POSITIONS, if enabled, then what
+inline std::string message(const std::string& id, const std::string& path, std::size_t start, std::size_t end, const std::string& what)
+{
+#if JSON_DIAGNOSTIC_POSITIONS
+    const std::string positions = "(bytes " + std::to_string(start) + "-" + std::to_string(end) + ") ";
+#else
+    const std::string positions;
+    static_cast<void>(start);
+    static_cast<void>(end);
+#endif
+#if JSON_DIAGNOSTICS
+    const std::string context = path.empty() ? "" : "(" + path + ") " + positions;
+#else
+    const std::string& context = positions;
+    static_cast<void>(path);
+#endif
+    return "[json.exception." + id + "] " + context + what;
 }
 
 #if !defined(JSON_NOEXCEPTION)

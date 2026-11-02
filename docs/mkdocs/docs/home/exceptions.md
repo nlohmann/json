@@ -6,34 +6,34 @@
 
 All exceptions inherit from class `json::exception` (which in turn inherits from `std::exception`). It is used as the base class for all exceptions thrown by the `basic_json` class. This class can hence be used as "wildcard" to catch exceptions.
 
-``` mermaid
-classDiagram
-  direction LR
-    class `std::exception` {
-        <<interface>>
-    }
+The map shows the class tree and every exception id documented on this page; click an id to jump to its section.
 
-    class `json::exception` {
-        +const int id
-        +const char* what() const
-    }
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/exception_map.svg"
+</div>
 
-    class `json::parse_error` {
-        +const std::size_t byte
-    }
+<p class="nj-caption" markdown>The exception classes from `std::exception` down to the five families, each with the ids it can throw. Every id chip links to the section that describes it.</p>
 
-    class `json::invalid_iterator`
-    class `json::type_error`
-    class `json::out_of_range`
-    class `json::other_error`
+Which exception an element access throws depends on the function and on the type of the value:
 
-    `std::exception` <|-- `json::exception`
-    `json::exception` <|-- `json::parse_error`
-    `json::exception` <|-- `json::invalid_iterator`
-    `json::exception` <|-- `json::type_error`
-    `json::exception` <|-- `json::out_of_range`
-    `json::exception` <|-- `json::other_error`
+```mermaid
+flowchart LR
+    S{{"which call?"}} -->|"at(key)"| A{{"j is"}}
+    A -->|"object, key missing"| A1["out_of_range.403"]
+    A -->|"array or null"| A2["type_error.304"]
+    S -->|"at(index)"| B{{"j is"}}
+    B -->|"array, index >= size()"| B1["out_of_range.401"]
+    B -->|"object or null"| B2["type_error.304"]
+    S -->|"non-const operator[](key)"| C{{"j is"}}
+    C -->|"object or null"| C1["no exception: a missing key is inserted as null"]
+    C -->|"array"| C2["type_error.305"]
+    S -->|"value(key, default)"| D{{"j is"}}
+    D -->|"object, key missing"| D1["no exception: returns the default"]
+    D -->|"object, incompatible value type"| D2["type_error.302"]
+    D -->|"array or null"| D3["type_error.306"]
 ```
+
+<p class="nj-caption" markdown>Exceptions thrown by element access. Start at the call on the left, follow the edge that matches the type of `j`, and read the exception id (or "no exception") in the box at the end.</p>
 
 ### Switch off exceptions
 
@@ -230,7 +230,7 @@ JSON uses the `\uxxxx` format to describe Unicode characters. Code points above 
 !!! failure "Example message"
 
     ```
-    parse error at 14: missing or wrong low surrogate
+    [json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate
     ```
 
 !!! note
@@ -244,7 +244,7 @@ Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are inva
 !!! failure "Example message"
 
     ```
-    parse error: code points above 0x10FFFF are invalid
+    [json.exception.parse_error.103] parse error: code points above 0x10FFFF are invalid
     ```
 
 !!! note
@@ -330,7 +330,7 @@ where they cannot be resolved.
 ### json.exception.parse_error.110
 
 When parsing a [binary format](../features/binary_formats/index.md), the byte vector ends before the complete value has
-been read.
+been read, or (with `strict = true`) further bytes follow the value.
 
 !!! failure "Example messages"
 
@@ -346,7 +346,7 @@ been read.
 
 ### json.exception.parse_error.112
 
-An unexpected byte was read in a [binary format](../features/binary_formats/index.md) or length information is invalid ([BSON](../features/binary_formats/bson.md)).
+An unexpected byte was read in a [binary format](../features/binary_formats/index.md) or length information is invalid ([BSON](../features/binary_formats/bson.md)). In [BON8](../features/binary_formats/bon8.md), this exception is also thrown for a key that is not a string and for ill-formed UTF-8.
 
 !!! failure "Example messages"
 
@@ -371,15 +371,21 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
     ```
     [json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)
     ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 2: syntax error while parsing BON8 string: invalid UTF-8 byte: 0x80
+    ```
 
 ### json.exception.parse_error.113
 
 A string could not be read from a [binary format](../features/binary_formats/index.md): either a value that is not a
 string was read where one was required (for instance as a map key), the string's length specification is invalid, or
 the string's bytes are not valid UTF-8 and the `error_handler` parameter of the corresponding `from_*` function is
-set to `strict`. By default (`error_handler_t::keep`), the bytes of a string are not checked for valid UTF-8 on read;
-see the ill-formed UTF-8 notes on the individual [binary format](../features/binary_formats/index.md) pages for how
+set to `strict`. By default (`error_handler_t::keep`), the bytes of a string are not checked for valid UTF-8 on read.
+This applies to the `from_*` functions that have an `error_handler` parameter; `from_bon8` does not have one.
+See the ill-formed UTF-8 notes on the individual [binary format](../features/binary_formats/index.md) pages for how
 such a string is handled depending on `error_handler`.
+[`from_bon8()`](../api/basic_json/from_bon8.md) never throws this exception: BON8 non-string keys and ill-formed UTF-8
+are reported as [parse_error.112](#jsonexceptionparse_error112).
 
 CBOR and MessagePack allow map keys of any type, but JSON object keys are always strings. Maps with keys of any other
 type (for instance integers or `null`) are therefore not supported; see the notes on
@@ -418,12 +424,15 @@ The parsing of the corresponding BSON record type is not implemented (yet).
 
 ### json.exception.parse_error.115
 
-A UBJSON high-precision number could not be parsed.
+A UBJSON or BJData high-precision number could not be parsed.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A
+    ```
+    ```
+    [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1A
     ```
 
 ### json.exception.parse_error.116
@@ -812,6 +821,9 @@ The binary writers [`to_cbor()`](../api/basic_json/to_cbor.md), [`to_ubjson()`](
 as well for a string value or object key that is not valid UTF-8 if their `error_handler` is `strict` (the default if
 [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) is enabled). So does
 [`to_msgpack()`](../api/basic_json/to_msgpack.md) if `error_handler_t::strict` is passed.
+[`to_bon8()`](../api/basic_json/to_bon8.md) always throws this exception for such a string or key, regardless of
+[`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md), because the end of a BON8 string is determined
+from its UTF-8 encoding.
 
 !!! failure "Example message"
 
@@ -883,16 +895,11 @@ from JSON text.
 
 [`basic_json_document::save()`](../api/basic_json_document/save.md) cannot write an
 [image](../features/json_view.md#images) of a [discarded](../api/basic_json_document/is_discarded.md) document.
-[`save()`](../api/basic_json_document/save.md) and [`load()`](../api/basic_json_document/load.md) also throw this
-exception on a big-endian target, since the image format is little-endian only.
 
 !!! failure "Example messages"
 
     ```
     [json.exception.type_error.320] cannot save a discarded json_document
-    ```
-    ```
-    [json.exception.type_error.320] json_document images need a little-endian target
     ```
 
 !!! note
@@ -940,7 +947,7 @@ The provided array index `i` is larger than `size-1`.
 !!! failure "Example message"
 
     ```
-    array index 3 is out of range
+    [json.exception.out_of_range.401] array index 3 is out of range
     ```
 
 ### json.exception.out_of_range.402
@@ -950,7 +957,7 @@ The special array index `-` in a JSON Pointer never describes a valid element of
 !!! failure "Example message"
 
     ```
-    array index '-' (3) is out of range
+    [json.exception.out_of_range.402] array index '-' (3) is out of range
     ```
 
 ### json.exception.out_of_range.403
@@ -960,7 +967,7 @@ The provided key was not found in the JSON object.
 !!! failure "Example message"
 
     ```
-    key 'foo' not found
+    [json.exception.out_of_range.403] key 'foo' not found
     ```
 
 ### json.exception.out_of_range.404
@@ -971,7 +978,7 @@ contains other characters (e.g., `1a`), or `-` where it cannot be used.
 !!! failure "Example message"
 
     ```
-    unresolved reference token 'foo'
+    [json.exception.out_of_range.404] unresolved reference token 'foo'
     ```
 
 ### json.exception.out_of_range.405
@@ -983,7 +990,7 @@ also thrown when the parent or a reference token of an empty JSON Pointer is req
 !!! failure "Example message"
 
     ```
-    JSON pointer has no parent
+    [json.exception.out_of_range.405] JSON pointer has no parent
     ```
 
 ### json.exception.out_of_range.406
@@ -995,7 +1002,7 @@ double-precision number when `number_float_t` is `#!cpp float`.
 !!! failure "Example messages"
 
     ```
-    number overflow parsing '10E1000'
+    [json.exception.out_of_range.406] number overflow parsing '10E1000'
     ```
     ```
     [json.exception.out_of_range.406] syntax error while parsing CBOR value: number overflow
@@ -1006,7 +1013,8 @@ double-precision number when `number_float_t` is `#!cpp float`.
 An integer number cannot be represented by the binary format it is serialized to:
 
 - [BON8](../features/binary_formats/bon8.md) only stores integers that fit into int64, so
-  [`to_bon8`](../api/basic_json/to_bon8.md) throws for unsigned integers greater than 9223372036854775807.
+  [`to_bon8`](../api/basic_json/to_bon8.md) throws for unsigned integers greater than 9223372036854775807 and, with a
+  number type wider than 64 bits, for any integer outside the int64 range.
 - [CBOR](../features/binary_formats/cbor.md), [MessagePack](../features/binary_formats/messagepack.md), and
   [BSON](../features/binary_formats/bson.md) store integers in at most 64 bits. With the default number types, every
   integer fits, but a [`number_integer_t`](../api/basic_json/number_integer_t.md) or
@@ -1025,15 +1033,15 @@ exception, because they serialize integers beyond 64 bits as high-precision numb
     - Since version 3.12.0, integer numbers beyond int64 are serialized as uint64 BSON numbers.
 
     Before version 3.13.0, CBOR, MessagePack, and BSON silently truncated integers wider than 64 bits, and BJData
-    truncated unsigned integers wider than 64 bits.
+    truncated unsigned integers wider than 64 bits that were elements of ND-arrays with `"_ArrayType_": "uint64"`.
 
 !!! failure "Example messages"
 
     ```
-    integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
+    [json.exception.out_of_range.407] integer number 18446744073709551615 cannot be represented by BON8 as it does not fit int64
     ```
     ```
-    integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
+    [json.exception.out_of_range.407] integer number 1267650600228229401496703205376 cannot be represented by CBOR as it does not fit [-2^64, 2^64-1]
     ```
 
 ### json.exception.out_of_range.408
@@ -1045,13 +1053,13 @@ or the encoded length for [CBOR](../features/binary_formats/cbor.md).
 The exception is also thrown for a [UBJSON](../features/binary_formats/ubjson.md) array of a type that is encoded by its
 marker alone (`Z`, `T` or `F`) whose declared count exceeds 1,048,576 (`1 << 20`). Such an array has no payload, so its
 count alone decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values.
-[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the size and type annotation,
-so any value it produces can still be read back.
+[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the `$` type annotation (the `#`
+count and one marker per element are kept), so any value it produces can still be read back.
 
 !!! failure "Example messages"
 
     ```
-    excessive array size: 8658170730974374167
+    [json.exception.out_of_range.408] excessive array size: 8658170730974374167
     ```
     ```
     [json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size
@@ -1070,7 +1078,7 @@ Key identifiers to be serialized to BSON cannot contain code point U+0000, since
 !!! failure "Example message"
 
     ```
-    BSON key cannot contain code point U+0000 (at byte 2)
+    [json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)
     ```
 
 ### json.exception.out_of_range.410
@@ -1082,9 +1090,14 @@ a JSON pointer exceeds the range of `size_type` (e.g., on 32-bit platforms).
 !!! failure "Example message"
 
     ```
-    enum value out of range
-    array index 18446744073709551616 exceeds size_type
+    [json.exception.out_of_range.410] enum value out of range
+    [json.exception.out_of_range.410] array index 18446744073709551615 exceeds size_type
     ```
+
+    The second message is thrown, for instance, by `#!cpp json::parse("[1, 2]").at("/18446744073709551615"_json_pointer)`
+    on a 64-bit platform, where `size_type` is `#!cpp std::size_t` and this index is `SIZE_MAX`. An index that does not
+    fit into 64 bits (such as `18446744073709551616`) is not reported as 410 but as
+    [`out_of_range.404`](#jsonexceptionout_of_range404).
 
 ### json.exception.out_of_range.411
 
@@ -1093,12 +1106,14 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 !!! failure "Example message"
 
     ```
-    cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
+    [json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
     ```
 
 !!! note
 
     This exception was added in version 3.13.0. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
+
+    A `null` parent is rejected as well. Before version 3.13.0, an `add` into a `null` parent silently converted it to an object (e.g., `add` at `/foo/bar` turned `{"foo":null}` into `{"foo":{"bar":1}}`).
 
 ### json.exception.out_of_range.412
 
@@ -1109,10 +1124,10 @@ is thrown when a value is too large to be described by such a length field.
 !!! failure "Example messages"
 
     ```
-    BSON length 2147483661 exceeds maximum of 2147483647
+    [json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647
     ```
     ```
-    MessagePack length 4294967296 exceeds maximum of 4294967295
+    [json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295
     ```
 
 !!! note
@@ -1129,7 +1144,7 @@ A JSON Patch `remove` operation cannot be applied because the target location's 
 !!! failure "Example message"
 
     ```
-    cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
+    [json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
     ```
 
 !!! note
@@ -1143,7 +1158,7 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 !!! failure "Example message"
 
     ```
-    cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
+    [json.exception.out_of_range.414] cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
     ```
 
 !!! note
@@ -1153,12 +1168,16 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 ### json.exception.out_of_range.415
 
 MessagePack's ext type and BSON's binary subtype are each stored in a single byte. This exception is thrown when serializing a
-[`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255.
+[`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255, the largest value the library can store in that byte.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.out_of_range.415] subtype 70000 is too large for the MessagePack ext type (max 255)
+    ```
+
+    ```
+    [json.exception.out_of_range.415] subtype 70000 is too large for the BSON binary subtype (max 255)
     ```
 
 !!! note
@@ -1229,7 +1248,9 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 ### json.exception.other_error.502
 
 [`to_ubjson`](../api/basic_json/to_ubjson.md) and [`to_bjdata`](../api/basic_json/to_bjdata.md) were called with
-`use_type = true` but `use_size = false`. UBJSON requires a size marker (`#`) after a type marker (`$`).
+`use_type = true` but `use_size = false`, and the value contains a non-empty array or object (or, with BJData Draft 3,
+any binary value). UBJSON requires a size marker (`#`) after a type marker (`$`); scalars and empty arrays or objects
+do not throw.
 
 !!! failure "Example message"
 
@@ -1241,3 +1262,15 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 
     This exception was added in version 3.13.0. Before that, debug builds aborted on an assertion and release builds
     wrote a `$` marker without `#`, which [`from_ubjson`](../api/basic_json/from_ubjson.md) then rejected.
+
+## See also
+
+- [`exception`](../api/basic_json/exception.md) - base class of all exceptions thrown by the library
+- [`parse_error`](../api/basic_json/parse_error.md) - exceptions indicating a parse error
+- [`invalid_iterator`](../api/basic_json/invalid_iterator.md) - exceptions indicating errors with iterators
+- [`type_error`](../api/basic_json/type_error.md) - exceptions indicating a wrong type
+- [`out_of_range`](../api/basic_json/out_of_range.md) - exceptions indicating access out of range
+- [`other_error`](../api/basic_json/other_error.md) - exceptions indicating other library errors
+- [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md) - switch off exceptions
+- [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) - extended exception messages with the path of the failing value
+- [Working Without Exceptions](../features/no_exceptions.md) - use the library without exceptions

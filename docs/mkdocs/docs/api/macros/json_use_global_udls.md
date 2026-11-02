@@ -97,10 +97,11 @@ When the macro is not defined, the library behaves as if it were defined to its 
 
 ## See also
 
-- [`operator""_json`](../operator_literal_json.md)
-- [`operator""_json_pointer`](../operator_literal_json_pointer.md)
+- [`operator""_json`](../operator_literal_json.md) - user-defined string literal for JSON values
+- [`operator""_json_pointer`](../operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 - [`JSON_NO_AUTOMATIC_UDLS`](json_no_automatic_udls.md) - do not include the user-defined string literals automatically
 - [:simple-cmake: JSON_GlobalUDLs](../../integration/cmake.md#json_globaludls) - CMake option to control the macro
+- [Creating JSON values](../../features/creating_values.md) - the article on creating JSON values
 
 ## Version history
 

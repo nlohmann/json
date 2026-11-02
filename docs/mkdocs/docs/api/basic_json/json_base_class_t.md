@@ -57,7 +57,7 @@ same name. Hidden members remain accessible via [`as_base_class`](as_base_class.
 
 ## See also
 
-- [as_base_class](as_base_class.md) - access the custom base class
+- [`as_base_class`](as_base_class.md) - access the custom base class
 - [Template Parameter Requirements](../../features/types/template_parameters.md#custombaseclass) - the requirements for `CustomBaseClass`
 
 ## Version history

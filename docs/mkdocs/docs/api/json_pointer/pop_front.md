@@ -36,8 +36,8 @@ Linear in the number of reference tokens in the `json_pointer`.
 
 ## See also
 
-- [front](front.md) return first reference token
-- [push_front](push_front.md) append an unescaped token at the start of the pointer
+- [`front`](front.md) - return first reference token
+- [`push_front`](push_front.md) - append an unescaped token at the start of the pointer
 
 ## Version history
 

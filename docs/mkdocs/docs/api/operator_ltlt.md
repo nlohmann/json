@@ -37,7 +37,8 @@ the stream `o`
 1. Throws [`type_error.316`](../home/exceptions.md#jsonexceptiontype_error316) if a string stored inside the JSON
    value is not UTF-8 encoded. Note that unlike the [`dump`](basic_json/dump.md) member functions, no `error_handler`
    can be set.
-2. None.
+2. Throws no library exceptions. As the string representation is built with [`to_string`](json_pointer/to_string.md),
+   `#!cpp std::bad_alloc` is possible.
 
 ## Complexity
 
@@ -85,10 +86,11 @@ Linear.
 
 ## See also
 
-- [dump](basic_json/dump.md) - serialize to a JSON-formatted string
+- [`dump`](basic_json/dump.md) - serialize to a JSON-formatted string
 - [`basic_json_view::operator<<`](basic_json_view/operator_ltlt.md) - the corresponding operator for
   `basic_json_view`
 - [Serialization](../features/serialization.md) - the serialization article
+- [`JSON_NO_IO`](macros/json_no_io.md) - remove stream and file I/O
 
 ## Version history
 

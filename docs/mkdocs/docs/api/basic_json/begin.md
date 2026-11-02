@@ -7,7 +7,12 @@ const_iterator begin() const noexcept;
 
 Returns an iterator to the first element.
 
-![Illustration from cppreference.com](../../images/range-begin-end.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-begin-end.svg"
+</div>
+
+<p class="nj-caption" markdown>`begin()` points to the first element and `end()` to the position after the last element;
+the dashed cell is the past-the-last position, which must not be dereferenced.</p>
 
 ## Return value
 
@@ -39,12 +44,12 @@ Constant.
 
 ## See also
 
-- [end](end.md) returns an iterator to one past the last element
-- [cbegin](cbegin.md) returns a const iterator to the first element
-- [rbegin](rbegin.md) returns a reverse iterator to the last element
-- [items](items.md) returns an iteration proxy to access keys and values during range-based for loops
+- [`end`](end.md) - returns an iterator to one past the last element
+- [`cbegin`](cbegin.md) - returns a const iterator to the first element
+- [`rbegin`](rbegin.md) - returns a reverse iterator to the last element
+- [`items`](items.md) - returns an iteration proxy to access keys and values during range-based for loops
 - [Iterators](../../features/iterators.md) - the article on iterators
-- [basic_json_view::begin](../basic_json_view/begin.md) - the same iteration on a zero-copy view (in document order,
+- [`basic_json_view::begin`](../basic_json_view/begin.md) - the same iteration on a zero-copy view (in document order,
   not sorted by key)
 
 ## Version history

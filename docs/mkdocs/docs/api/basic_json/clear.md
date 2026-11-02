@@ -54,8 +54,9 @@ All iterators, pointers, and references related to this container are invalidate
 
 ## See also
 
-- [erase](erase.md) removes elements from a JSON value
-- [empty](empty.md) checks whether the JSON value has no elements
+- [`erase`](erase.md) - removes elements from a JSON value
+- [`empty`](empty.md) - checks whether the JSON value has no elements
+- [Modifying values](../../features/modifying_values.md) - the article on modifying values
 
 ## Version history
 

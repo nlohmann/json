@@ -949,3 +949,10 @@ There is no official package published to the [ESP-IDF Component Registry](https
 new release and can be used as an unofficial component/package for ESP-IDF and PlatformIO projects. As the library
 is header-only, it can otherwise be used directly by adding its `include/` directory to your component's/project's
 include paths, like any other integration method described on this page.
+
+## See also
+
+- [CMake](cmake.md) - use the library from CMake
+- [Pkg-config](pkg-config.md) - use the library with pkg-config
+- [`meta`](../api/basic_json/meta.md) - query the library version at run time
+- [`NLOHMANN_JSON_VERSION_MAJOR`](../api/macros/nlohmann_json_version_major.md) - library version macros

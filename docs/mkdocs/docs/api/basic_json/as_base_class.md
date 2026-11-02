@@ -46,7 +46,8 @@ The function is equivalent to `static_cast<json_base_class_t&>(j)` (or `static_c
 
 ## See also
 
-- [json_base_class_t](json_base_class_t.md) - type of the custom base class
+- [`json_base_class_t`](json_base_class_t.md) - type of the custom base class
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the `CustomBaseClass` template parameter
 
 ## Version history
 

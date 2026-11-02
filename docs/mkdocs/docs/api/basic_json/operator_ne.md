@@ -93,9 +93,9 @@ Linear.
 
 ## See also
 
-- [operator==](operator_eq.md) comparison: equal
-- [operator<=>](operator_spaceship.md) comparison: 3-way (C++20)
-- [basic_json_view::operator!=](../basic_json_view/operator_ne.md) - the same comparison on a zero-copy view, without
+- [`operator==`](operator_eq.md) - comparison: equal
+- [`operator<=>`](operator_spaceship.md) - comparison: 3-way (C++20)
+- [`basic_json_view::operator!=`](../basic_json_view/operator_ne.md) - the same comparison on a zero-copy view, without
   building a `basic_json` value for it
 
 ## Version history

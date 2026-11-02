@@ -40,6 +40,9 @@ classDiagram
     style json_invalid_iterator fill:#CCCCFF
 ```
 
+<p class="nj-caption" markdown>Class hierarchy of the library's exceptions; arrows point from a derived class to its
+base class, and the highlighted box is `basic_json::invalid_iterator`.</p>
+
 ## Member functions
 
 - **what** - returns explanatory string
@@ -66,12 +69,14 @@ classDiagram
 
 ## See also
 
-- [`exception`](exception.md) for the base class of all exceptions thrown by the library
-- [List of iterator errors](../../home/exceptions.md#iterator-errors)
-- [`parse_error`](parse_error.md) for exceptions indicating a parse error
-- [`type_error`](type_error.md) for exceptions indicating executing a member function with a wrong type
-- [`out_of_range`](out_of_range.md) for exceptions indicating access out of the defined range
-- [`other_error`](other_error.md) for exceptions indicating other library errors
+- [`exception`](exception.md) - the base class of all exceptions thrown by the library
+- [List of iterator errors](../../home/exceptions.md#iterator-errors) - overview of iterator errors (`invalid_iterator`)
+- [`parse_error`](parse_error.md) - exceptions indicating a parse error
+- [`type_error`](type_error.md) - exceptions indicating executing a member function with a wrong type
+- [`out_of_range`](out_of_range.md) - exceptions indicating access out of the defined range
+- [`other_error`](other_error.md) - exceptions indicating other library errors
+- [Exceptions](../../home/exceptions.md) - all exceptions and their error codes
+- [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) - extended exception messages with the path of the failing value
 
 ## Version history
 

@@ -41,7 +41,7 @@ represent a byte array in modern C++.
     [`byte_container_with_subtype`](../byte_container_with_subtype/index.md) derives directly from it. Its
     `value_type` must additionally be exactly one byte wide (e.g., `std::uint8_t`/`char`/`std::byte`): the binary
     serializers (CBOR, MessagePack, BSON, UBJSON) read and write the container's raw bytes via
-    `reinterpret_cast`, which is only correct for byte-sized elements -- a container like
+    `reinterpret_cast`, which is only correct for byte-sized elements — a container like
     `#!cpp std::vector<std::intptr_t>` will not work as `BinaryType`. The elements must be stored contiguously, and
     the binary readers additionally require `resize()` and `operator[]`. See
     [Template Parameter Requirements](../../features/types/template_parameters.md#binarytype) for the full list.
@@ -90,8 +90,9 @@ type `#!cpp binary_t*` must be dereferenced.
 
 - MessagePack
     - If a subtype is given and the binary array contains exactly 1, 2, 4, 8, or 16 elements, the fixext family (fixext1,
-      fixext2, fixext4, fixext8) is used. For other sizes, the ext family (ext8, ext16, ext32) is used. The subtype is
-      then added as a signed 8-bit integer.
+      fixext2, fixext4, fixext8, fixext16) is used. For other sizes, the ext family (ext8, ext16, ext32) is used. The
+      subtype is then written as the signed 8-bit ext type: subtypes 128 to 255 map to the negative (reserved) ext
+      types, and on reading the ext type is exposed as an unsigned subtype from 0 to 255.
     - If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
 - BSON
@@ -117,7 +118,9 @@ type `#!cpp binary_t*` must be dereferenced.
 
 ## See also
 
-- [byte_container_with_subtype](../byte_container_with_subtype/index.md)
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [Binary formats](../../features/binary_formats/index.md) - formats that can store binary values
+- [`byte_container_with_subtype`](../byte_container_with_subtype/index.md) - container type used by binary values
 
 ## Version history
 

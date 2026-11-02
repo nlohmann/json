@@ -5,7 +5,7 @@ value_t type() const noexcept;
 ```
 
 Returns the type of the value this view refers to, as a value from the [`value_t`](../basic_json/value_t.md)
-enumeration -- the same enumeration [`BasicJsonType::type()`](../basic_json/type.md) uses.
+enumeration — the same enumeration [`BasicJsonType::type()`](../basic_json/type.md) uses.
 
 ## Return value
 
@@ -44,8 +44,8 @@ JSON text has no binary values, so `type()` only distinguishes the eight ordinar
 
 ## See also
 
-- [is_null](is_null.md), [is_boolean](is_boolean.md), [is_number](is_number.md), [is_string](is_string.md),
-  [is_array](is_array.md), [is_object](is_object.md) - type-specific predicates built on `type()`
+- [`is_null`](is_null.md), [`is_boolean`](is_boolean.md), [`is_number`](is_number.md), [`is_string`](is_string.md),
+  [`is_array`](is_array.md), [`is_object`](is_object.md) - type-specific predicates built on `type()`
 - [`BasicJsonType::type`](../basic_json/type.md) - the corresponding function of `basic_json`
 
 ## Version history

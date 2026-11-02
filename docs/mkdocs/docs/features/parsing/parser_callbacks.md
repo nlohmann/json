@@ -31,6 +31,13 @@ table describes the values of the parameters `depth`, `event`, and `parsed`.
 | `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
 | `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/callback_events.svg"
+</div>
+
+<p class="nj-caption" markdown>Each coloured dot marks where the parser reports a `parse_event_t` event while reading
+the JSON text on the left; the legend on the right names the event per colour.</p>
+
 ??? example "Example: sequence of callback events"
 
     When parsing the following JSON text,
@@ -95,7 +102,7 @@ was called:
 
 The JSON specification leaves the handling of objects with repeated keys up to the implementation. As described in
 [`object_t`](../../api/basic_json/object_t.md#behavior), it is unspecified which value for a repeated key ends up in
-the resulting `#!c json` value -- once parsing has produced that value, the duplicate is already gone, because object
+the resulting `#!c json` value — once parsing has produced that value, the duplicate is already gone, because object
 storage maps each key to a single value. If duplicate keys should instead be treated as an error, a parser callback
 can detect them while the object is still being read, before that ambiguity ever applies.
 
@@ -122,7 +129,7 @@ This approach has three limitations:
   maintaining a stack of the enclosing keys and array indices in the callback as well.
 
 A [SAX interface](sax_interface.md) does not lift the position limitation: its `key` function receives no position
-either -- only `parse_error` is passed the byte position.
+either — only `parse_error` is passed the byte position.
 
 ## Recipe: streaming a large homogeneous array
 
@@ -171,3 +178,11 @@ tracking the maximum `depth` seen and throwing once it is exceeded:
 
     json::parse(input, callback);
     ```
+
+## See also
+
+- [Parsing](index.md) - overview of the parsing functions
+- [SAX Interface](sax_interface.md) - guide to event-based parsing
+- [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input
+- [`parser_callback_t`](../../api/basic_json/parser_callback_t.md) - callback function type for the parser
+- [`parse_event_t`](../../api/basic_json/parse_event_t.md) - enumeration of parser events

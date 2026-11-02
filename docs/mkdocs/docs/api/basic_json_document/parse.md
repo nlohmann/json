@@ -24,7 +24,7 @@ Both overloads accept the same JSON text as [`BasicJsonType::parse()`](../basic_
 the input) instead of a tree of `BasicJsonType` values. They accept every input `BasicJsonType::parse()` takes, and in
 addition a pointer to a null-terminated wide string (which `BasicJsonType::parse()` rejects). Contiguous inputs of
 single-byte characters that stay alive can be borrowed; all others (streams, `#!cpp FILE*`, wide characters, which
-must be converted to UTF-8, and non-contiguous iterators) are read into a copy that the document owns -- see the
+must be converted to UTF-8, and non-contiguous iterators) are read into a copy that the document owns — see the
 Notes. Use [`parse_copy()`](parse_copy.md) to get an owned copy of a borrowable input
 as well.
 
@@ -82,8 +82,8 @@ discarded; see [`is_discarded`](is_discarded.md).
 
 ## Exceptions
 
-Throws the same exception [`BasicJsonType::parse()`](../basic_json/parse.md) throws for the same input and options --
-the same exception id, message, and position -- because on a failing input the library's own parser is run on the
+Throws the same exception [`BasicJsonType::parse()`](../basic_json/parse.md) throws for the same input and options —
+the same exception id, message, and position — because on a failing input the library's own parser is run on the
 same bytes to produce the diagnostic. This replay runs only for a failing input, and costs about a lexing pass up to
 the error (its SAX handler builds no values); with `allow_exceptions` set to `#!cpp false`, it is skipped and a
 discarded document is returned instead. Additionally throws
@@ -100,7 +100,7 @@ Linear in the length of the input.
 
 | `input`                                                                             | ownership                                                    |
 |--------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| lvalue byte container (`std::string`, `std::vector<char>`, ...), `std::string_view`, C string, character array | **borrowed** -- `input` must outlive the document |
+| lvalue byte container (`std::string`, `std::vector<char>`, ...), `std::string_view`, C string, character array | **borrowed** — `input` must outlive the document |
 | non-const rvalue `#!cpp std::string`                                                  | **owned**, moved in without a copy                            |
 | other rvalue byte container (including a `#!cpp const` rvalue `#!cpp std::string`)  | **owned**, copied                                             |
 | stream, `#!cpp FILE*`, wide characters, or anything else read through the general input adapter | **owned**, read into a buffer (a stream is read to its end) |
@@ -117,8 +117,8 @@ See [`owns_source`](owns_source.md) to check which happened after a call, and th
 **Numbers.** As for [`BasicJsonType::parse()`](../basic_json/parse.md), an integer literal too large for the 64-bit
 integer type becomes a floating-point value.
 
-**No lengths.** An integer argument that is not a `#!cpp bool` where the flags are expected -- for example
-`#!cpp parse(ptr, len)` -- does not compile (the overload is deleted). Such a call would convert `len` to
+**No lengths.** An integer argument that is not a `#!cpp bool` where the flags are expected — for example
+`#!cpp parse(ptr, len)` — does not compile (the overload is deleted). Such a call would convert `len` to
 `allow_exceptions` and read `ptr` as a null-terminated string, past the end of a buffer that has none. To parse a
 buffer of a given length, pass a pair of pointers: `#!cpp parse(ptr, ptr + len)`. The same holds for
 [`parse_copy`](parse_copy.md), [`accept`](accept.md), and [`read`](read.md).
@@ -151,11 +151,11 @@ buffer of a given length, pass a pair of pointers: `#!cpp parse(ptr, ptr + len)`
 
 ## See also
 
-- [parse_copy](parse_copy.md) - deserialize a copy of a compatible input
-- [accept](accept.md) - check whether the input is valid JSON
-- [read](read.md) - (re-)parse into this document, reusing its memory
-- [owns_source](owns_source.md) - return whether the document holds its own copy of the text
-- [load](load.md) - read a document from an image instead of parsing JSON text
+- [`parse_copy`](parse_copy.md) - deserialize a copy of a compatible input
+- [`accept`](accept.md) - check whether the input is valid JSON
+- [`read`](read.md) - (re-)parse into this document, reusing its memory
+- [`owns_source`](owns_source.md) - return whether the document holds its own copy of the text
+- [`load`](load.md) - read a document from an image instead of parsing JSON text
 - [`BasicJsonType::parse`](../basic_json/parse.md) - the corresponding function of `basic_json`
 
 ## Version history

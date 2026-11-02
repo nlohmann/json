@@ -128,8 +128,9 @@ matter. For instance, `nlohmann::json::with_object_t<nlohmann::ordered_map>` is 
 
 ## See also
 
-- [basic_json](index.md#template-parameters) - the template parameters that can be replaced
-- [json_base_class_t](json_base_class_t.md) - the type used for `CustomBaseClass`
+- [`basic_json`](index.md#template-parameters) - the template parameters that can be replaced
+- [`json_base_class_t`](json_base_class_t.md) - the type used for `CustomBaseClass`
+- [Template Parameter Requirements](../../features/types/template_parameters.md) - requirements on the template parameters
 
 ## Version history
 

@@ -91,11 +91,11 @@ if __name__ == '__main__':
                               'include/nlohmann/detail/abi_macros.hpp below "repo_root")')
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument('--abi-tags', action='append', default=[], metavar='TAGS',
-                           help='Comma-separated list of ABI tags (e.g. "_diag,_dp,_vns", leading underscores are '
+                           help='Comma-separated list of ABI tags (e.g. "_diag,_dp,_ns", leading underscores are '
                                 'optional) of one configuration to add to the default namespaces; can be repeated')
     selection.add_argument('--all', action='store_true',
                            help='Generate the namespaces for every combination of ABI tags; the file size doubles '
-                                'with each ABI tag (about 60 MB for 12 tags)')
+                                'with each ABI tag (about 60 MB for 11 tags)')
     parser.add_argument('--list-tags', action='store_true',
                         help='List the ABI tags with the macros that enable them, and exit')
     parser.add_argument('--output', metavar='FILE',

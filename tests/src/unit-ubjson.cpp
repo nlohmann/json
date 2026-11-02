@@ -21,12 +21,15 @@ using nlohmann::json;
 
 #include <iostream>
 #include <fstream>
+#include <list>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "sax_event_loggers.hpp"
 using utils::SaxCountdown;
+using utils::SaxEventLogger;
 
 
 TEST_CASE("UBJSON")
@@ -2023,7 +2026,7 @@ TEST_CASE("UBJSON")
             CHECK(json::from_ubjson(v0, true, false).is_discarded());
 
             std::vector<uint8_t> const vi = {'[', '$', '#'};
-            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vi), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing UBJSON type: marker 0x23 is not a permitted optimized array type", json::parse_error&);
             CHECK(json::from_ubjson(vi, true, false).is_discarded());
 
             std::vector<uint8_t> const vT = {'[', '$', 'T'};
@@ -3346,5 +3349,126 @@ TEST_CASE("UBJSON large strings (chunked reader)")
             json _;
             CHECK_THROWS_AS(_ = json::from_ubjson(truncated), json::parse_error);
         }
+    }
+}
+
+TEST_CASE("UBJSON optimized container type marker is validated for count 0")
+{
+    // the '$' type marker must be a legal marker even if no element follows
+    SECTION("invalid marker")
+    {
+        for (const char marker :
+                {'x', 'E', 'B', 'u', 'm', 'M', 'h'
+                })
+        {
+            for (const char open :
+                    {'[', '{'
+                    })
+            {
+                for (const int count :
+                        {
+                            0, 1
+                        })
+                {
+                    CAPTURE(marker)
+                    CAPTURE(open)
+                    CAPTURE(count)
+                    const std::vector<std::uint8_t> v = {static_cast<std::uint8_t>(open), '$', static_cast<std::uint8_t>(marker), '#', 'i', static_cast<std::uint8_t>(count)};
+                    json _;
+                    CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
+                    CHECK(json::from_ubjson(v, true, false).is_discarded());
+                }
+            }
+        }
+    }
+
+    SECTION("error message")
+    {
+        const std::vector<std::uint8_t> v = {'[', '$', 'x', '#', 'i', 0};
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing UBJSON type: marker 0x78 is not a permitted optimized array type", json::parse_error&);
+    }
+
+    SECTION("valid marker")
+    {
+        for (const char marker :
+                {'Z', 'N', 'T', 'F', 'i', 'U', 'I', 'l', 'L', 'd', 'D', 'H', 'C', 'S', '[', '{'
+                })
+        {
+            CAPTURE(marker)
+            const std::vector<std::uint8_t> va = {'[', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};
+            const std::vector<std::uint8_t> vo = {'{', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};
+            CHECK(json::from_ubjson(va) == json::array());
+            CHECK(json::from_ubjson(vo) == json::object());
+        }
+    }
+}
+
+TEST_CASE("UBJSON optimized arrays from contiguous and non-contiguous input")
+{
+    // contiguous input reads the numbers of an array with a type marker in
+    // one loop, other input number by number; both must give the same events,
+    // value, or error for the complete document and for every truncation of
+    // it, and stop at every event a SAX handler rejects
+    json document =
+    {
+        {"u8", {0, 200, 255}},
+        {"i8", {-5, 100, -128}},
+        {"i16", {-30000, 1000, 30000}},
+        {"i32", {-2000000000, 5, 70000}},
+        {"i64", {-9000000000000000000LL, 1, 5000000000LL}},
+        {"f64", {1.5, -0.1, 2.5}},
+        {"pairs", {{1.25, -3.75}, {1.25, -3.75}, json::array()}},
+        {"mixed", {1, "a", 2.5, nullptr}},
+    };
+    const std::vector<std::uint8_t> encoded = json::to_ubjson(document, true, true);
+    CHECK(json::from_ubjson(encoded) == document);
+
+    for (std::size_t length = 0; length <= encoded.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> contiguous(encoded.begin(), encoded.begin() + static_cast<std::ptrdiff_t>(length));
+        const std::list<std::uint8_t> bytewise(contiguous.begin(), contiguous.end());
+
+        CHECK(json::from_ubjson(contiguous, true, false).dump() == json::from_ubjson(bytewise.begin(), bytewise.end(), true, false).dump());
+#if !defined(JSON_NOEXCEPTION)
+        std::string contiguous_error;
+        std::string bytewise_error;
+        try
+        {
+            json _;
+            _ = json::from_ubjson(contiguous);
+        }
+        catch (const json::exception& e)
+        {
+            contiguous_error = e.what();
+        }
+        try
+        {
+            json _;
+            _ = json::from_ubjson(bytewise.begin(), bytewise.end());
+        }
+        catch (const json::exception& e)
+        {
+            bytewise_error = e.what();
+        }
+        CHECK(contiguous_error == bytewise_error);
+#endif
+
+        SaxEventLogger from_contiguous;
+        SaxEventLogger from_bytewise;
+        CHECK(json::sax_parse(contiguous, &from_contiguous, json::input_format_t::ubjson)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::ubjson));
+        CHECK(from_contiguous.events == from_bytewise.events);
+    }
+
+    for (int events = 0; events <= 80; ++events)
+    {
+        CAPTURE(events)
+        const std::list<std::uint8_t> bytewise(encoded.begin(), encoded.end());
+        SaxCountdown from_contiguous(events);
+        SaxCountdown from_bytewise(events);
+        CHECK(json::sax_parse(encoded, &from_contiguous, json::input_format_t::ubjson)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::ubjson));
     }
 }

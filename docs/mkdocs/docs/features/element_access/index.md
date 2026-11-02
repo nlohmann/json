@@ -12,15 +12,22 @@ Testing whether a key or index exists before accessing it is also possible, with
 [`contains`](../../api/basic_json/contains.md) or [`find`](../../api/basic_json/find.md) (which returns an iterator to
 the value, or `end()` if it is not found).
 
+How do I get a value out? Start at the top and follow the first question that applies:
+
 ```mermaid
 flowchart TD
-    A["accessing a value"] --> B{"must it exist?"}
-    B -->|"yes, missing is an error"| C["at() -- throws"]
-    B -->|"yes, but checking is my job"| D["operator[] -- unchecked"]
-    B -->|"no, a fallback is fine"| E["value() -- default value"]
-    A --> F{"just testing first?"}
-    F -->|"yes"| G["contains() / find()"]
+    A["getting a value out"] --> P{{"nested path such as /server/port?"}}
+    P -->|"yes"| JP["JSON Pointer: at(ptr), value(ptr, default), contains(ptr)"]
+    P -->|"no, one key or index"| T{{"only testing whether it exists?"}}
+    T -->|"yes"| CF["contains() / find()"]
+    T -->|"no"| M{{"may it be missing?"}}
+    M -->|"yes, a fallback is fine"| V["value(key, default)"]
+    M -->|"yes, and missing is an error"| AT["at(): throws out_of_range"]
+    M -->|"no, it exists and its type is known"| OP["operator[] and get#lt;T#gt;()"]
+    OP -.- W["non-const operator[] inserts null for a missing key"]
 ```
+
+<p class="nj-caption" markdown>Decision tree for reading a value: the labels on the arrows are the answers to the questions, and the boxes name the functions to use. The dashed line marks a side effect of the non-const `operator[]`.</p>
 
 ## Does this key exist?
 
@@ -63,9 +70,16 @@ if (auto it = j.find("name"); it != j.end())
 
 ## See also
 
-- [**operator[]**](../../api/basic_json/operator%5B%5D.md) - unchecked access
-- [**at**](../../api/basic_json/at.md) - checked access
-- [**value**](../../api/basic_json/value.md) - access with default value
-- [**contains**](../../api/basic_json/contains.md) and [**find**](../../api/basic_json/find.md) - test for existence
-- [**front**](../../api/basic_json/front.md) and [**back**](../../api/basic_json/back.md) - first and last element
-- [**items**](../../api/basic_json/items.md) - iterate over keys and values
+- [`operator[]`](../../api/basic_json/operator%5B%5D.md) - unchecked access
+- [`at`](../../api/basic_json/at.md) - checked access
+- [`value`](../../api/basic_json/value.md) - access with default value
+- [`contains`](../../api/basic_json/contains.md) - and [`find`](../../api/basic_json/find.md) - test for existence
+- [`front`](../../api/basic_json/front.md) - and [`back`](../../api/basic_json/back.md) - first and last element
+- [`items`](../../api/basic_json/items.md) - iterate over keys and values
+- [Checked access: at](checked_access.md) - access with range checking
+- [Unchecked access: operator[]](unchecked_access.md) - access without range checking
+- [Access with default value: value](default_value.md) - fall back to a default instead of throwing
+- [Iterators](../iterators.md) - visit all elements of arrays and objects
+- [JSON Pointer](../json_pointer.md) - address nested values with a single string
+- [Modifying values](../modifying_values.md) - add, merge and remove elements
+- [`basic_json`](../../api/basic_json/index.md) - all member functions

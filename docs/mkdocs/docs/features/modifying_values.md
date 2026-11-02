@@ -99,10 +99,14 @@ editable document types, such as [`json_editable_document`](../api/json_editable
 
 ## See also
 
-- [`push_back`](../api/basic_json/push_back.md) / [`emplace_back`](../api/basic_json/emplace_back.md) - append to an array
+- [`push_back`](../api/basic_json/push_back.md) - / [`emplace_back`](../api/basic_json/emplace_back.md) - append to an array
 - [`emplace`](../api/basic_json/emplace.md) - insert into an object if the key is absent
 - [`update`](../api/basic_json/update.md) - merge objects (shallow, or recursive with `merge_objects`)
 - [`merge_patch`](../api/basic_json/merge_patch.md) - apply an RFC 7396 merge patch
-- [`erase`](../api/basic_json/erase.md) / [`clear`](../api/basic_json/clear.md) - remove elements
-- [JSON Patch and Diff](json_patch.md) and [JSON Merge Patch](merge_patch.md) - structured modifications
+- [`erase`](../api/basic_json/erase.md) - / [`clear`](../api/basic_json/clear.md) - remove elements
+- [JSON Patch and Diff](json_patch.md) - and [JSON Merge Patch](merge_patch.md) - structured modifications
 - [Editing a document](json_view.md#editing-a-document) - change a parsed document in place
+- [`insert`](../api/basic_json/insert.md) - insert elements at an iterator position or merge a range
+- [`operator+=`](../api/basic_json/operator+=.md) - shorthand for `push_back`
+- [Element Access](element_access/index.md) - read elements
+- [Iterators](iterators.md) - iterate over elements

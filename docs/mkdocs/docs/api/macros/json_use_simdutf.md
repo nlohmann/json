@@ -24,7 +24,7 @@ simdutf library. When it is not defined, no simdutf header is included and there
 
     simdutf requires C++17 and its header rejects older standards with an `#!cpp #error`. The backend is therefore only
     compiled in from C++17 on. In C++11 and C++14 the macro has no effect and the scalar validator is used, which
-    accepts and rejects exactly the same input -- only throughput differs. Setting the macro project-wide is therefore
+    accepts and rejects exactly the same input — only throughput differs. Setting the macro project-wide is therefore
     safe even when some translation units are built with an older standard.
 
 !!! warning "Define consistently"
@@ -73,6 +73,8 @@ By default, `#!cpp JSON_USE_SIMDUTF` is not defined and the portable C++11 scala
 
 - [:simple-cmake: JSON_TestSimdutf](../../integration/cmake.md#json_testsimdutf) - CMake option to build the unit
   tests against the simdutf backend
+- [Parsing](../../features/parsing/index.md) - overview of the parsing functions
+- [Serialization](../../features/serialization.md) - pretty-printing, UTF-8 handling, and number output
 
 ## Version history
 

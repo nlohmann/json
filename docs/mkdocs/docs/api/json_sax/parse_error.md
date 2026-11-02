@@ -62,10 +62,11 @@ Either way, [`sax_parse`](../basic_json/sax_parse.md) returns `#!cpp false`.
 
 ## See also
 
-- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [`sax_parse`](../basic_json/sax_parse.md) - SAX parser
 - [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - the article on handling parse errors without
   exceptions
 - [Error Recovery](../../features/parsing/error_recovery.md) - the article on recovering from parse errors
+- [SAX Interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
 
 ## Version history
 

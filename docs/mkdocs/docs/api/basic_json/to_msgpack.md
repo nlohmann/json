@@ -53,7 +53,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   value, array, or object exceeds 4294967295, the maximum MessagePack can store; example:
   `"MessagePack length 4294967296 exceeds maximum of 4294967295"`
 - Throws [`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415) if the subtype of a binary value
-  exceeds 255, the maximum of the MessagePack ext type; example:
+  exceeds 255, the largest value the library can store in the one-byte MessagePack ext type; example:
   `"subtype 70000 is too large for the MessagePack ext type (max 255)"`
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key in `j` is
   not valid UTF-8 and `error_handler` is `strict`
@@ -97,12 +97,15 @@ Linear in the size of the JSON value `j`.
 
 ## See also
 
-- [from_msgpack](from_msgpack.md) create a JSON value from an input in MessagePack format
-- [to_cbor](to_cbor.md) create a CBOR serialization of a JSON value
-- [to_bson](to_bson.md) create a BSON serialization of a JSON value
-- [to_ubjson](to_ubjson.md) create a UBJSON serialization of a JSON value
-- [to_bjdata](to_bjdata.md) create a BJData serialization of a JSON value
-- [to_bon8](to_bon8.md) create a BON8 serialization of a JSON value
+- [MessagePack](../../features/binary_formats/messagepack.md) - the format, its byte layout and how values are mapped
+- [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [`from_msgpack`](from_msgpack.md) - create a JSON value from an input in MessagePack format
+- [`to_cbor`](to_cbor.md) - create a CBOR serialization of a JSON value
+- [`to_bson`](to_bson.md) - create a BSON serialization of a JSON value
+- [`to_ubjson`](to_ubjson.md) - create a UBJSON serialization of a JSON value
+- [`to_bjdata`](to_bjdata.md) - create a BJData serialization of a JSON value
+- [`to_bon8`](to_bon8.md) - create a BON8 serialization of a JSON value
 
 ## Version history
 

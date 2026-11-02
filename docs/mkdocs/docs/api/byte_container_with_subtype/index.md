@@ -6,7 +6,7 @@ class byte_container_with_subtype : public BinaryType;
 ```
 
 This type extends the template parameter `BinaryType` provided to [`basic_json`](../basic_json/index.md) with a subtype
-used by BSON and MessagePack. This type exists so that the user does not have to specify a type themselves with a
+used by BSON, CBOR, and MessagePack. This type exists so that the user does not have to specify a type themselves with a
 specific naming scheme in order to override the binary type.
 
 ## Template parameters
@@ -32,9 +32,9 @@ specific naming scheme in order to override the binary type.
 ## See also
 
 - [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
-- [**binary**](../basic_json/binary.md) - create a binary array value
-- [**get_binary**](../basic_json/get_binary.md) - get a reference to the stored binary value
-- [**binary_t**](../basic_json/binary_t.md) - type for binary arrays
+- [`binary`](../basic_json/binary.md) - create a binary array value
+- [`get_binary`](../basic_json/get_binary.md) - get a reference to the stored binary value
+- [`binary_t`](../basic_json/binary_t.md) - type for binary arrays
 - [Binary formats](../../features/binary_formats/index.md) - formats that can store binary values
 
 ## Version history

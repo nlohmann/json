@@ -80,7 +80,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [`parse_error.110`](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
   the end of the input was not reached when `strict` was set to true
 - Throws [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs (e.g., an
-  invalid string or byte array length)
+  invalid string or byte array length, an invalid inner length of a binary value with subtype `0x02`, or a document size
+  that does not match the content; `strict` does not affect the document size checks)
 - Throws [`parse_error.114`](../../home/exceptions.md#jsonexceptionparse_error114) if an unsupported BSON record type is
   encountered
 - Throws [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) if a string value or object key is
@@ -108,13 +109,17 @@ Linear in the size of the input.
 
 ## See also
 
-- [BSON specification](http://bsonspec.org/spec.html)
-- [to_bson](to_bson.md) for the analogous serialization
-- [from_cbor](from_cbor.md) for the related CBOR format
-- [from_msgpack](from_msgpack.md) for the related MessagePack format
-- [from_ubjson](from_ubjson.md) for the related UBJSON format
-- [from_bjdata](from_bjdata.md) for the related BJData format
-- [from_bon8](from_bon8.md) for the related BON8 format
+- [BSON](../../features/binary_formats/bson.md) - the format, its byte layout and how values are mapped
+- [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Parsing untrusted input](../../features/parsing/untrusted_input.md) - limits and safe handling of hostile data
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [BSON specification](http://bsonspec.org/spec.html) - specification of the BSON format
+- [`to_bson`](to_bson.md) - the analogous serialization
+- [`from_cbor`](from_cbor.md) - the related CBOR format
+- [`from_msgpack`](from_msgpack.md) - the related MessagePack format
+- [`from_ubjson`](from_ubjson.md) - the related UBJSON format
+- [`from_bjdata`](from_bjdata.md) - the related BJData format
+- [`from_bon8`](from_bon8.md) - the related BON8 format
 
 ## Version history
 

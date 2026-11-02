@@ -9,7 +9,11 @@ As for other containers, [`begin()`](../api/basic_json/begin.md) returns an iter
 placeholder and cannot be dereferenced. In case of null values, empty arrays, or empty objects, `begin()` will return
 `end()`.
 
-![Illustration from cppreference.com](../images/range-begin-end.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-begin-end.svg"
+</div>
+
+<p class="nj-caption" markdown>The range of `begin()` and `end()`: `begin()` refers to the first element, `end()` to the position after the last element, which must not be dereferenced.</p>
 
 ### Iteration order for objects
 
@@ -112,7 +116,11 @@ for (auto& [key, val] : j_object.items())
 [`rbegin()`](../api/basic_json/rbegin.md) and [`rend()`](../api/basic_json/rend.md) return iterators in the reverse
 sequence.
     
-![Illustration from cppreference.com](../images/range-rbegin-rend.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-rbegin-rend.svg"
+</div>
+
+<p class="nj-caption" markdown>The range of `rbegin()` and `rend()` over the same elements: `rbegin()` refers to the last element and `rend()` to the position before the first one. Each reverse iterator stores an iterator to the element after the one it refers to.</p>
 
 ??? example "Example: reverse iteration with `rbegin()` and `rend()`"
 
@@ -159,3 +167,13 @@ Note that "value" means a JSON value in this setting, not values stored in the u
 | Operations | invalidated iterators |
 |------------|-----------------------|
 | `clear`    | all                   |
+
+## See also
+
+- [`begin`](../api/basic_json/begin.md) - / [`end`](../api/basic_json/end.md) - iterators to the first and one past the last element
+- [`rbegin`](../api/basic_json/rbegin.md) - / [`rend`](../api/basic_json/rend.md) - reverse iterators
+- [`cbegin`](../api/basic_json/cbegin.md) - / [`cend`](../api/basic_json/cend.md) - const iterators
+- [`items`](../api/basic_json/items.md) - iterate over keys and values
+- [Object Order](object_order.md) - iteration order of object keys
+- [Element Access](element_access/index.md) - access single elements
+- [Modifying values](modifying_values.md) - add and remove elements (including iterator invalidation rules)

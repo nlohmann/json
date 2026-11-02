@@ -8,8 +8,9 @@
 
 // Same-feature-set benchmark: read-only JSON documents with random access.
 //
-//   json_view      nlohmann/json_view.hpp (fresh document per parse / reused)
-//   yyjson         yyjson_read(): immutable document, random access
+//   json_view      nlohmann/json_view.hpp (fresh document per parse / reused;
+//                  "(editable)": json_editable_document, same read API)
+//   yyjson        yyjson_read(): immutable document, random access
 //   simdjson DOM   dom::parser (reused, as recommended; "fresh": a new parser
 //                  per parse): immutable, random access
 // references (different feature sets):
@@ -19,7 +20,11 @@
 //
 // Workloads: parse (build + free), traverse (visit everything, convert every
 // number, touch every string and key), select (a few fields per document),
-// dump (compact serialization of the parsed document).
+// dump (compact serialization of the parsed document), and parse+dump (a fresh
+// document, then its dump, in one timed call). json_view converts floating-point
+// numbers lazily (when read or dumped), yyjson and simdjson DOM while parsing:
+// for float-heavy documents, traverse (which includes the parse) and parse+dump
+// are the fair reading of the parse and dump rows.
 // All engines run interleaved in every round, each timed call after an untimed
 // one of the same engine; the best round is reported.
 #include <nlohmann/json_view.hpp>
@@ -43,6 +48,8 @@
 
 using nlohmann::json;
 using nlohmann::json_document;
+using nlohmann::json_editable_document;
+using nlohmann::json_editable_view;
 using nlohmann::json_view;
 
 static volatile double g_sink;
@@ -55,7 +62,8 @@ struct stats
 
 // ---------------- traversal ----------------
 
-static void walk(json_view v, stats& st)
+template<class V>
+static void walk_view(V v, stats& st)
 {
     ++st.nodes;
     switch (v.type())
@@ -64,30 +72,40 @@ static void walk(json_view v, stats& st)
             for (auto it = v.begin(); it != v.end(); ++it)
             {
                 st.str += it.key().size();
-                walk(*it, st);
+                walk_view<V>(*it, st);
             }
             break;
         case json::value_t::array:
-            for (const json_view e : v)
+            for (const V e : v)
             {
-                walk(e, st);
+                walk_view<V>(e, st);
             }
             break;
         case json::value_t::string:
             st.str += v.get_string().size();
             break;
         case json::value_t::number_integer:
-            st.num += static_cast<double>(v.get<std::int64_t>());
+            st.num += static_cast<double>(v.template get<std::int64_t>());
             break;
         case json::value_t::number_unsigned:
-            st.num += static_cast<double>(v.get<std::uint64_t>());
+            st.num += static_cast<double>(v.template get<std::uint64_t>());
             break;
         case json::value_t::number_float:
-            st.num += v.get<double>();
+            st.num += v.template get<double>();
             break;
         default:
             break;
     }
+}
+
+static void walk(json_view v, stats& st)
+{
+    walk_view<json_view>(v, st);
+}
+
+static void walk(json_editable_view v, stats& st)
+{
+    walk_view<json_editable_view>(v, st);
 }
 
 static void walk(const json& j, stats& st)
@@ -300,20 +318,21 @@ static void walk(const boost::json::value& v, stats& st)
 // status (one tweet): id, user.screen_name, retweet_count
 // rpc: method, params.minuend, id
 
-static double pick(const std::string& name, json_view r)
+template<class V>
+static double pick_view(const std::string& name, V r)
 {
     double acc = 0;
     if (name == "twitter" || name == "status")
     {
-        auto one = [&](json_view s)
+        auto one = [&](V s)
         {
-            acc += static_cast<double>(s["id"].get<std::uint64_t>());
+            acc += static_cast<double>(s["id"].template get<std::uint64_t>());
             acc += static_cast<double>(s["user"]["screen_name"].get_string().size());
-            acc += static_cast<double>(s["retweet_count"].get<std::int64_t>());
+            acc += static_cast<double>(s["retweet_count"].template get<std::int64_t>());
         };
         if (name == "twitter")
         {
-            for (const json_view s : r["statuses"])
+            for (const V s : r["statuses"])
             {
                 one(s);
             }
@@ -325,20 +344,20 @@ static double pick(const std::string& name, json_view r)
     }
     else if (name == "citm_catalog")
     {
-        for (const json_view p : r["performances"])
+        for (const V p : r["performances"])
         {
-            acc += static_cast<double>(p["id"].get<std::uint64_t>() + p["eventId"].get<std::uint64_t>() + p["seatCategories"].size());
+            acc += static_cast<double>(p["id"].template get<std::uint64_t>() + p["eventId"].template get<std::uint64_t>() + p["seatCategories"].size());
         }
         acc += static_cast<double>(r["events"].size());
     }
     else if (name == "canada")
     {
-        const json_view g = r["features"][0]["geometry"];
+        const V g = r["features"][0]["geometry"];
         acc += static_cast<double>(r["type"].get_string().size() + g["type"].get_string().size() + g["coordinates"].size());
     }
     else if (name == "jeopardy")
     {
-        for (const json_view q : r)
+        for (const V q : r)
         {
             acc += q["round"].get_string() == "Final Jeopardy!" ? 1 : 0;
             acc += static_cast<double>(q["category"].get_string().size());
@@ -347,9 +366,19 @@ static double pick(const std::string& name, json_view r)
     else if (name == "rpc")
     {
         acc += static_cast<double>(r["method"].get_string().size());
-        acc += static_cast<double>(r["params"]["minuend"].get<std::int64_t>() + r["id"].get<std::int64_t>());
+        acc += static_cast<double>(r["params"]["minuend"].template get<std::int64_t>() + r["id"].template get<std::int64_t>());
     }
     return acc;
+}
+
+static double pick(const std::string& name, json_view r)
+{
+    return pick_view<json_view>(name, r);
+}
+
+static double pick(const std::string& name, json_editable_view r)
+{
+    return pick_view<json_editable_view>(name, r);
 }
 
 static double pick(const std::string& name, const json& r)
@@ -634,15 +663,35 @@ int main(int argc, char** argv)
         walk(json::parse(dc.text), a);
         auto d = json_document::parse(dc.text);
         walk(d.root(), b);
+        auto ed = json_editable_document::parse(dc.text);
+        stats e;
+        walk(ed.root(), e);
         yyjson_doc* y = yyjson_read(dc.text.data(), dc.text.size(), 0);
         walk(yyjson_doc_get_root(y), c);
         simdjson::dom::parser p;
         walk(p.parse(dc.text).value(), dd);
-        const bool ok = a.nodes == b.nodes && a.nodes == c.nodes && a.nodes == dd.nodes && a.str == b.str && a.str == c.str && a.str == dd.str
+        const bool ok = a.nodes == b.nodes && a.nodes == e.nodes && a.str == e.str && std::fabs(a.num - e.num) <= 1e-9 * std::fabs(a.num) && a.nodes == c.nodes && a.nodes == dd.nodes && a.str == b.str && a.str == c.str && a.str == dd.str
                         && std::fabs(a.num - b.num) <= 1e-9 * std::fabs(a.num) && std::fabs(a.num - c.num) <= 1e-9 * std::fabs(a.num);
-        const double pa = pick(dc.name, json::parse(dc.text)), pb = pick(dc.name, d.root()), pc = pick(dc.name, yyjson_doc_get_root(y)), pd = pick(dc.name, p.parse(dc.text).value());
-        std::printf("check %-13s traverse %s select %s\n", dc.name.c_str(), ok ? "OK" : "MISMATCH", (pa == pb && pa == pc && pa == pd) ? "OK" : "MISMATCH");
+        const double pa = pick(dc.name, json::parse(dc.text)), pb = pick(dc.name, d.root()), pe = pick(dc.name, ed.root()), pc = pick(dc.name, yyjson_doc_get_root(y)), pd = pick(dc.name, p.parse(dc.text).value());
+        std::printf("check %-13s traverse %s select %s\n", dc.name.c_str(), ok ? "OK" : "MISMATCH", (pa == pb && pa == pe && pa == pc && pa == pd) ? "OK" : "MISMATCH");
         yyjson_doc_free(y);
+
+        // the dumps of the engines may format floats differently, so only: every dump is non-empty, and the
+        // dump of json_view (also editable) and of json::parse parse back to the same number of nodes
+        const std::string dj = json::parse(dc.text).dump();
+        const std::string dv = d.root().dump();
+        const std::string de = ed.root().dump();
+        std::size_t yn = 0;
+        yyjson_doc* y2 = yyjson_read(dc.text.data(), dc.text.size(), 0);
+        char* yo = yyjson_write(y2, 0, &yn);
+        const bool dumps_ok = !dj.empty() && !dv.empty() && !de.empty() && yo != nullptr && yn > 0 && !simdjson::to_string(p.parse(dc.text).value()).empty();
+        std::free(yo);
+        yyjson_doc_free(y2);
+        stats sj_nodes, sv_nodes, se_nodes;
+        walk(json::parse(dj), sj_nodes);
+        walk(json::parse(dv), sv_nodes);
+        walk(json::parse(de), se_nodes);
+        std::printf("check %-13s dump %s\n", dc.name.c_str(), (dumps_ok && sj_nodes.nodes == a.nodes && sv_nodes.nodes == a.nodes && se_nodes.nodes == a.nodes) ? "OK" : "MISMATCH");
     }
 
     std::FILE* csv = std::fopen("bench_view.csv", "w");
@@ -669,6 +718,7 @@ int main(int argc, char** argv)
         workloads.push_back({"parse", {
                 {"json_view", [&] { auto d = json_document::parse(s); g_sink = static_cast<double>(d.node_count()); }},
                 {"json_view (reused)", [&] { reused.read(s); g_sink = static_cast<double>(reused.node_count()); }},
+                {"json_view (editable)", [&] { auto d = json_editable_document::parse(s); g_sink = static_cast<double>(d.root().size()); }},
                 {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); g_sink = static_cast<double>(yyjson_doc_get_val_count(d)); yyjson_doc_free(d); }},
                 {"simdjson DOM", [&] { auto e = sj.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
                 {"simdjson DOM (fresh)", [&] { simdjson::dom::parser p; auto e = p.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
@@ -680,6 +730,7 @@ int main(int argc, char** argv)
         workloads.push_back({"traverse", {
                 {"json_view", [&] { auto d = json_document::parse(s); stats st; walk(d.root(), st); g_sink = st.num; }},
                 {"json_view (reused)", [&] { reused.read(s); stats st; walk(reused.root(), st); g_sink = st.num; }},
+                {"json_view (editable)", [&] { auto d = json_editable_document::parse(s); stats st; walk(d.root(), st); g_sink = st.num; }},
                 {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); stats st; walk(yyjson_doc_get_root(d), st); g_sink = st.num; yyjson_doc_free(d); }},
                 {"simdjson DOM", [&] { stats st; walk(sj.parse(ps).value_unsafe(), st); g_sink = st.num; }},
                 {"simdjson OD", [&] { auto d = od.iterate(ps).value_unsafe(); stats st; walk_od(d.get_value().value_unsafe(), st); g_sink = st.num; }},
@@ -691,15 +742,31 @@ int main(int argc, char** argv)
         workloads.push_back({"select", {
                 {"json_view", [&] { auto d = json_document::parse(s); g_sink = pick(name, d.root()); }},
                 {"json_view (reused)", [&] { reused.read(s); g_sink = pick(name, reused.root()); }},
+                {"json_view (editable)", [&] { auto d = json_editable_document::parse(s); g_sink = pick(name, d.root()); }},
                 {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); g_sink = pick(name, yyjson_doc_get_root(d)); yyjson_doc_free(d); }},
                 {"simdjson DOM", [&] { g_sink = pick(name, sj.parse(ps).value_unsafe()); }},
                 {"simdjson OD", [&] { auto d = od.iterate(ps).value_unsafe(); g_sink = pick_od(name, d); }},
                 {"json::parse", [&] { json j = json::parse(s); g_sink = pick(name, j); }},
             }});
+        // pipeline: a fresh document, then a dump of it, in one timed call
+        // (simdjson DOM reuses its parser, as in the parse row); the traverse
+        // workload above is already parse+traverse
+        workloads.push_back({"parse+dump", {
+                {"json_view", [&] { auto d = json_document::parse(s); std::string o = d.root().dump(); g_sink = static_cast<double>(o.size()); }},
+                {"json_view (editable)", [&] { auto d = json_editable_document::parse(s); std::string o = d.root().dump(); g_sink = static_cast<double>(o.size()); }},
+                {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); std::size_t n = 0; char* o = yyjson_write(d, 0, &n); g_sink = static_cast<double>(n); std::free(o); yyjson_doc_free(d); }},
+                {"simdjson DOM", [&] { std::string o = simdjson::to_string(sj.parse(ps).value_unsafe()); g_sink = static_cast<double>(o.size()); }},
+#if JSON_VIEW_BENCH_BOOST
+                {"Boost.JSON", [&] { boost::json::monotonic_resource mr; auto v = boost::json::parse(s, &mr); std::string o = boost::json::serialize(v); g_sink = static_cast<double>(o.size()); }},
+#endif
+                {"json::parse", [&] { json j = json::parse(s); std::string o = j.dump(); g_sink = static_cast<double>(o.size()); }},
+            }});
         {
             // serialization of an already parsed document
             static json_document vd;
             vd.read(s);
+            static json_editable_document ed = json_editable_document::parse(s);
+            ed = json_editable_document::parse(s);
             static yyjson_doc* yd = nullptr;
             if (yd)
             {
@@ -713,6 +780,7 @@ int main(int argc, char** argv)
             jd = json::parse(s);
             workloads.push_back({"dump", {
                     {"json_view", [&] { std::string o = vd.root().dump(); g_sink = static_cast<double>(o.size()); }},
+                    {"json_view (editable)", [&] { std::string o = ed.root().dump(); g_sink = static_cast<double>(o.size()); }},
                     {"yyjson", [&] { std::size_t n = 0; char* o = yyjson_write(yd, 0, &n); g_sink = static_cast<double>(n); std::free(o); }},
                     {"simdjson DOM", [&] { std::string o = simdjson::to_string(se); g_sink = static_cast<double>(o.size()); }},
                     {"json::parse", [&] { std::string o = jd.dump(); g_sink = static_cast<double>(o.size()); }},
@@ -740,7 +808,7 @@ int main(int argc, char** argv)
                 }
             }
             const double ref = best[0];
-            std::printf("%-13s %-9s", dc.name.c_str(), wl.first.c_str());
+            std::printf("%-13s %-14s", dc.name.c_str(), wl.first.c_str());
             for (std::size_t k = 0; k < wl.second.size(); ++k)
             {
                 const double us = best[k] / 1e3;

@@ -74,6 +74,11 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs, for instance
   an invalid byte, a string that is not valid UTF-8, or an object key that is not a string
 
+The UTF-8 validity of strings is always checked, independent of
+[`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md), because the end of a BON8 string is determined from
+its encoding. Duplicate object keys are accepted; the last value wins (see
+[BON8](../../features/binary_formats/bon8.md)).
+
 ## Complexity
 
 Linear in the size of the input.
@@ -96,12 +101,15 @@ Linear in the size of the input.
 
 ## See also
 
-- [to_bon8](to_bon8.md) create a BON8 serialization of a JSON value
-- [from_cbor](from_cbor.md) create a JSON value from an input in CBOR format
-- [from_msgpack](from_msgpack.md) create a JSON value from an input in MessagePack format
-- [from_bson](from_bson.md) create a JSON value from an input in BSON format
-- [from_ubjson](from_ubjson.md) create a JSON value from an input in UBJSON format
-- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
+- [BON8](../../features/binary_formats/bon8.md) - the format, its byte layout and how values are mapped
+- [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Parsing untrusted input](../../features/parsing/untrusted_input.md) - limits and safe handling of hostile data
+- [`to_bon8`](to_bon8.md) - create a BON8 serialization of a JSON value
+- [`from_cbor`](from_cbor.md) - create a JSON value from an input in CBOR format
+- [`from_msgpack`](from_msgpack.md) - create a JSON value from an input in MessagePack format
+- [`from_bson`](from_bson.md) - create a JSON value from an input in BSON format
+- [`from_ubjson`](from_ubjson.md) - create a JSON value from an input in UBJSON format
+- [`from_bjdata`](from_bjdata.md) - create a JSON value from an input in BJData format
 
 ## Version history
 

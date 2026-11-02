@@ -36,11 +36,12 @@ Constant.
 
 ## See also
 
-- [is_array](is_array.md) checks whether the JSON value is an array
-- [is_structured](is_structured.md) checks whether the JSON value is structured (array or object)
-- [type](type.md) returns the type of the JSON value
-- [object_t](object_t.md) the type used to store JSON objects
-- [basic_json_view::is_object](../basic_json_view/is_object.md) - the same check on a zero-copy view
+- [`is_array`](is_array.md) - checks whether the JSON value is an array
+- [`is_structured`](is_structured.md) - checks whether the JSON value is structured (array or object)
+- [`type`](type.md) - returns the type of the JSON value
+- [`object_t`](object_t.md) - the type used to store JSON objects
+- [`basic_json_view::is_object`](../basic_json_view/is_object.md) - the same check on a zero-copy view
+- [Types](../../features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

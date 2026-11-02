@@ -3,7 +3,7 @@
 <small>Defined in header `<nlohmann/json_view.hpp>`</small>
 
 ```cpp
-using ordered_json_document = basic_json_document<ordered_json>;
+using ordered_json_document = basic_json_document<ordered_json, view_mode::read_only>;
 ```
 
 This type is a [`basic_json_document`](basic_json_document/index.md) of the [`ordered_json`](ordered_json.md)
@@ -29,9 +29,10 @@ of object keys, instead of sorting them like [`json_document`](json_document.md)
 
 ## See also
 
-- [ordered_json_view](ordered_json_view.md) - a view of a value of an `ordered_json_document`
-- [json_document](json_document.md) - the corresponding document for the default `json` specialization
-- [Object Order](../features/object_order.md)
+- [`ordered_json_view`](ordered_json_view.md) - a view of a value of an `ordered_json_document`
+- [`json_document`](json_document.md) - the corresponding document for the default `json` specialization
+- [Object Order](../features/object_order.md) - preserving the insertion order of object keys
+- [Zero-copy JSON views](../features/json_view.md) - how to parse, inspect and edit a document without building a tree
 
 ## Version history
 

@@ -105,7 +105,10 @@ class view_iterator
     }
 
     /// the key of the current object member; throws invalid_iterator.207 for
-    /// other iterators, like basic_json's iterators
+    /// other iterators, like basic_json's iterators (but without the context
+    /// JSON_DIAGNOSTICS and JSON_DIAGNOSTIC_POSITIONS add: the iterator does not
+    /// know the value it iterates over, and keeping it would make iterators
+    /// larger, which keeps GCC from inlining recursive walks)
     string_view_t key() const
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_value_offset == 0))

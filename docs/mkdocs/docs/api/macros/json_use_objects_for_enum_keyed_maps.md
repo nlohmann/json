@@ -129,9 +129,9 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## See also
 
-- [Specializing enum conversion](../../features/enum_conversion.md)
-- [**NLOHMANN_JSON_SERIALIZE_ENUM**](nlohmann_json_serialize_enum.md) - serialize/deserialize an enum
-- [**NLOHMANN_JSON_SERIALIZE_ENUM_STRICT**](nlohmann_json_serialize_enum_strict.md) - serialize/deserialize an enum with
+- [Specializing enum conversion](../../features/enum_conversion.md) - serializing enums as JSON strings
+- [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md) - serialize/deserialize an enum
+- [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](nlohmann_json_serialize_enum_strict.md) - serialize/deserialize an enum with
   exceptions
 
 ## Version history

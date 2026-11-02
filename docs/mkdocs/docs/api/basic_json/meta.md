@@ -48,8 +48,11 @@ Constant.
 
 ## See also
 
-- [**NLOHMANN_JSON_VERSION_MAJOR**/**NLOHMANN_JSON_VERSION_MINOR**/**NLOHMANN_JSON_VERSION_PATCH**](../macros/nlohmann_json_version_major.md)
-  \- library version information
+- [`NLOHMANN_JSON_VERSION_MAJOR`](../macros/nlohmann_json_version_major.md) /
+  [`NLOHMANN_JSON_VERSION_MINOR`](../macros/nlohmann_json_version_major.md) /
+  [`NLOHMANN_JSON_VERSION_PATCH`](../macros/nlohmann_json_version_major.md) - library version information
+- [Integration](../../integration/index.md) - integrate the library
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
 
 ## Version history
 

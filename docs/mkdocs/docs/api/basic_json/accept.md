@@ -148,15 +148,20 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 
 ## See also
 
-- [parse](parse.md) - deserialize from a compatible input
-- [sax_parse](sax_parse.md) - parse input using the SAX interface
-- [operator>>](../operator_gtgt.md) - deserialize from stream
+- [`parse`](parse.md) - deserialize from a compatible input
+- [`sax_parse`](sax_parse.md) - parse input using the SAX interface
+- [`operator>>`](../operator_gtgt.md) - deserialize from stream
 - [`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
   instead of treating it as end of input
 - [`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md) - read a `std::istream` one character
   at a time
 - [`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md) - read a `FILE*` with the locking stdio
   functions
+- [Parsing](../../features/parsing/index.md) - overview of the parsing functions
+- [Comments](../../features/comments.md) - ignore `//` and `/* */` comments while parsing
+- [Trailing Commas](../../features/trailing_commas.md) - accept trailing commas in arrays and objects
+- [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - handling parse errors and locating them in the input
+- [Parsing Untrusted Input](../../features/parsing/untrusted_input.md) - limits and checks for input you do not control
 
 ## Version history
 

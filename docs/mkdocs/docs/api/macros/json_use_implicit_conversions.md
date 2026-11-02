@@ -82,9 +82,10 @@ By default, implicit conversions are enabled.
 
 ## See also
 
-- [**operator ValueType**](../basic_json/operator_ValueType.md) - get a value (implicit)
-- [**get**](../basic_json/get.md) - get a value (explicit)
+- [`operator ValueType`](../basic_json/operator_ValueType.md) - get a value (implicit)
+- [`get`](../basic_json/get.md) - get a value (explicit)
 - [:simple-cmake: JSON_ImplicitConversions](../../integration/cmake.md#json_implicitconversions) - CMake option to control the macro
+- [Converting values](../../features/conversions.md) - implicit conversions and how to disable them
 
 ## Version history
 

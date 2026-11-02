@@ -29,7 +29,9 @@ using nlohmann::json;
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "sax_event_loggers.hpp"
 using utils::SaxCountdown;
+using utils::SaxEventLogger;
 
 
 TEST_CASE("CBOR")
@@ -1807,6 +1809,93 @@ TEST_CASE("CBOR")
             CHECK(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01}), true, false).is_discarded());
         }
 
+        SECTION("tag in front of a key")
+        {
+            const auto ignore = json::cbor_tag_handler_t::ignore;
+            const auto store = json::cbor_tag_handler_t::store;
+            const json expected = {{"a", 10}};
+
+            // the tags are skipped in front of a text string key, like in
+            // front of a value
+            const std::vector<std::vector<std::uint8_t>> tagged =
+            {
+                {0xA1, 0xC0, 0x61, 0x61, 0x0A},                         // tag in the head
+                {0xA1, 0xD8, 0x05, 0x61, 0x61, 0x0A},                   // 1-byte tag number
+                {0xA1, 0xD9, 0x01, 0x2C, 0x61, 0x61, 0x0A},             // 2-byte tag number
+                {0xA1, 0xDA, 0x00, 0x01, 0x00, 0x00, 0x61, 0x61, 0x0A}, // 4-byte tag number
+                {0xA1, 0xDB, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x61, 0x61, 0x0A}, // 8-byte tag number
+                {0xA1, 0xC0, 0xD8, 0x05, 0xC1, 0x61, 0x61, 0x0A},       // chained tags
+                {0xBF, 0xC0, 0x61, 0x61, 0x0A, 0xFF},                   // indefinite-length map
+                {0xBF, 0x61, 0x62, 0x01, 0xC0, 0x61, 0x61, 0x0A, 0xFF}, // second key tagged
+                {0xA1, 0xC0, 0x7F, 0x61, 0x61, 0xFF, 0x0A},             // indefinite-length text key
+                {0xA1, 0xC0, 0x61, 0x61, 0xC0, 0x0A},                   // tagged key and value
+            };
+
+            for (const auto& input : tagged)
+            {
+                CAPTURE(input)
+                json const j_ignore = json::from_cbor(input, true, true, ignore);
+                json const j_store = json::from_cbor(input, true, true, store);
+                CHECK(j_ignore.at("a") == 10);
+                CHECK(j_store.at("a") == 10);
+                CHECK(j_ignore == j_store);
+            }
+            CHECK(json::from_cbor(tagged[0], true, true, ignore) == expected);
+            CHECK(json::from_cbor(tagged[1], true, true, store) == expected);
+
+            // nested maps
+            CHECK(json::from_cbor(std::vector<std::uint8_t>({0xA1, 0xC0, 0x61, 0x61, 0xA1, 0xD8, 0x05, 0x61, 0x62, 0x01}), true, true, ignore) == json{{"a", {{"b", 1}}}});
+
+            // the tag handler error still rejects every tag
+            for (const auto& input : tagged)
+            {
+                CAPTURE(input)
+                json _;
+                CHECK_THROWS_AS(_ = json::from_cbor(input), json::parse_error&);
+            }
+            {
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xA1, 0xD8, 0x05, 0x61, 0x61, 0x0A})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR object key: only string keys are supported, but found a tag; last byte: 0xD8", json::parse_error&);
+            }
+
+            // a tag does not turn a key of another type into a text string
+            {
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xA1, 0xC0, 0x01, 0x01}), true, true, ignore), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR object key: only string keys are supported, but found an unsigned integer; last byte: 0x01", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xA1, 0xD8, 0x05, 0x41, 0x61, 0x01}), true, true, store), "[json.exception.parse_error.113] parse error at byte 4: syntax error while parsing CBOR object key: only string keys are supported, but found a byte string; last byte: 0x41", json::parse_error&);
+                CHECK(json::from_cbor(std::vector<std::uint8_t>({0xA1, 0xC0, 0x01, 0x01}), true, false, ignore).is_discarded());
+            }
+
+            // end of input after the tag, or inside the tag number
+            {
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xA1, 0xC0}), true, true, ignore), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xA1, 0xD8}), true, true, ignore), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xA1, 0xDB, 0x00, 0x00}), true, true, store), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xBF, 0xC0}), true, true, store), json::parse_error&);
+            }
+
+            // SAX: the key event is reported without the tag (start_object,
+            // key, number_unsigned, end_object are four events)
+            {
+                const std::vector<std::uint8_t> input = {0xA1, 0xC0, 0x61, 0x61, 0x0A};
+                SaxCountdown four(4);
+                CHECK(json::sax_parse(input, &four, json::input_format_t::cbor, true, false, false, ignore));
+                SaxCountdown three(3);
+                CHECK(!json::sax_parse(input, &three, json::input_format_t::cbor, true, false, false, ignore));
+                SaxCountdown error_handler(4);
+                CHECK(!json::sax_parse(input, &error_handler, json::input_format_t::cbor));
+            }
+
+            // a long chain of tags needs no recursion
+            {
+                std::vector<std::uint8_t> input = {0xA1};
+                input.insert(input.end(), 100000, 0xC0);
+                input.insert(input.end(), {0x61, 0x61, 0x0A});
+                CHECK(json::from_cbor(input, true, true, ignore) == expected);
+            }
+        }
+
         SECTION("non-string key (see #2766 and #3381)")
         {
             // only text strings map to JSON object keys; any other key is
@@ -1915,9 +2004,10 @@ TEST_CASE("CBOR")
         {
             json _;
 
-            // the chunks are concatenated as is, without checking that each
-            // chunk is valid UTF-8 on its own (RFC 8949, Section 3.2.3), so
-            // a code point split across two chunks yields a valid string
+            // with the default error handler keep, the chunks are concatenated
+            // as is, without checking that each chunk is valid UTF-8 on its
+            // own (RFC 8949, Section 3.2.3), so a code point split across two
+            // chunks yields a valid string
             CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xc3, 0x61, 0xa9, 0xff})));
             CHECK(_ == "\xc3\xa9");
             CHECK(_.dump() == "\"\xc3\xa9\"");
@@ -1935,6 +2025,63 @@ TEST_CASE("CBOR")
 
             // valid multi-byte chunks are accepted
             CHECK(json::from_cbor(std::vector<uint8_t>({0x7f, 0x62, 0xc3, 0xa9, 0x62, 0xc3, 0xb6, 0xff})) == "\xc3\xa9\xc3\xb6");
+        }
+
+        SECTION("ill-formed UTF-8 in a chunk of an indefinite-length string (RFC 8949, Section 3.2.3)")
+        {
+            const auto strict = json::error_handler_t::strict;
+            const auto replace = json::error_handler_t::replace;
+            const auto ignore = json::error_handler_t::ignore;
+            const auto keep = json::error_handler_t::keep;
+            const auto tags = json::cbor_tag_handler_t::error;
+
+            // a code point split over two chunks
+            const std::vector<std::uint8_t> split = {0x7f, 0x61, 0xc3, 0x61, 0xa9, 0xff};
+            // a 4-byte code point split over two chunks
+            const std::vector<std::uint8_t> split_emoji = {0x7f, 0x62, 0xf0, 0x9f, 0x62, 0x98, 0x80, 0xff};
+            // the same in an object key
+            const std::vector<std::uint8_t> split_key = {0xa1, 0x7f, 0x61, 0xc3, 0x61, 0xa9, 0xff, 0x01};
+            // a valid chunk followed by one with a truncated code point
+            const std::vector<std::uint8_t> truncated = {0x7f, 0x62, 0x41, 0xc3, 0x61, 0xa9, 0xff};
+
+            // strict: the string is invalid
+            for (const auto& input :
+                    {
+                        split, split_emoji, split_key, truncated
+                    })
+            {
+                CAPTURE(input)
+                json _;
+                CHECK_THROWS_AS(_ = json::from_cbor(input, true, true, tags, strict), json::parse_error&);
+                CHECK(json::from_cbor(input, true, false, tags, strict).is_discarded());
+            }
+            {
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(split, true, true, tags, strict), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(split_key, true, true, tags, strict), "[json.exception.parse_error.113] parse error at byte 4: syntax error while parsing CBOR key: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            }
+
+            // replace and ignore: every chunk is sanitized on its own
+            CHECK(json::from_cbor(split, true, true, tags, replace) == "\xEF\xBF\xBD\xEF\xBF\xBD");
+            CHECK(json::from_cbor(split, true, true, tags, ignore) == "");
+            CHECK(json::from_cbor(truncated, true, true, tags, replace) == "A\xEF\xBF\xBD\xEF\xBF\xBD");
+            CHECK(json::from_cbor(truncated, true, true, tags, ignore) == "A");
+            CHECK(json::from_cbor(split_key, true, true, tags, replace) == json{{"\xEF\xBF\xBD\xEF\xBF\xBD", 1}});
+
+            // keep: unchanged, the chunks are concatenated as is
+            CHECK(json::from_cbor(split, true, true, tags, keep) == "\xc3\xa9");
+            CHECK(json::from_cbor(split_emoji, true, true, tags, keep) == "\xf0\x9f\x98\x80");
+
+            // conforming input is unaffected by the error handler
+            const std::vector<std::uint8_t> valid = {0x7f, 0x62, 0xc3, 0xa9, 0x64, 0xf0, 0x9f, 0x98, 0x80, 0x60, 0xff};
+            for (const auto handler :
+                    {
+                        strict, replace, ignore, keep
+                    })
+            {
+                CHECK(json::from_cbor(valid, true, true, tags, handler) == "\xc3\xa9\xf0\x9f\x98\x80");
+                CHECK(json::from_cbor(std::vector<std::uint8_t>({0x7f, 0xff}), true, true, tags, handler) == "");
+            }
         }
 
         SECTION("many chunks in indefinite-length string")
@@ -2299,6 +2446,78 @@ TEST_CASE("CBOR SAX parsing stops at every event")
     const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
     CHECK(count_events(json::to_cbor(j)) == 20);
     CHECK(count_events(std::vector<std::uint8_t>({0xBF, 0x61, 'a', 0x9F, 0x01, 0xFF, 0xFF})) == 6);
+}
+
+TEST_CASE("CBOR arrays of scalars from contiguous and non-contiguous input")
+{
+    // contiguous input reads the integers, floats, booleans, and nulls an
+    // array begins with in one loop, other input value by value; both must
+    // give the same events, value, or error for the complete document and for
+    // every truncation of it, and stop at every event a SAX handler rejects
+    const std::vector<std::uint8_t> cbor =
+    {
+        0xA3,                                                       // map(3)
+        0x61, 'a',                                                  // "a"
+        0x98, 0x16,                                                 // array(22)
+        0x00, 0x17, 0x18, 0xFF, 0x19, 0x01, 0x00,                   // 0, 23, 255, 256
+        0x1A, 0x00, 0x01, 0x00, 0x00,                               // 65536
+        0x1B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,       // 18446744073709551615
+        0x20, 0x37, 0x38, 0xFF, 0x39, 0x01, 0x00,                   // -1, -24, -256, -257
+        0x3A, 0x00, 0x01, 0x00, 0x00,                               // -65537
+        0x3B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,       // -18446744073709551616 (a float)
+        0x3B, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,       // -9223372036854775808
+        0xF4, 0xF5, 0xF6,                                           // false, true, null
+        0xFA, 0x3F, 0xC0, 0x00, 0x00,                               // 1.5 (float32)
+        0xFB, 0xBF, 0xB9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9A,       // -0.1
+        0xF9, 0x3C, 0x00,                                           // 1.0 (float16, ends the loop)
+        0x01, 0x61, 'a',                                            // 1, "a"
+        0xFB, 0x40, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       // 2.5
+        0x61, 'b',                                                  // "b"
+        0x83,                                                       // array(3)
+        0x82, 0xFB, 0x3F, 0xF4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // [1.25,
+        0xFB, 0xC0, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       //  -3.75]
+        0x82, 0xFB, 0x3F, 0xF4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // [1.25,
+        0xFB, 0xC0, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       //  -3.75]
+        0x80,                                                       // []
+        0x61, 'c',                                                  // "c"
+        0x84, 0xA0, 0x01, 0xC1, 0x02, 0x81, 0x03                    // [{}, 1, tag(1) 2, [3]]
+    };
+    const auto tags = json::cbor_tag_handler_t::ignore;
+
+    const json j = json::from_cbor(cbor, true, true, tags);
+    CHECK(j["a"].size() == 22);
+    CHECK(j["a"][5] == 18446744073709551615u);
+    CHECK(j["a"][11].is_number_float());
+    CHECK(j["a"][11] == -18446744073709551616.0);
+    CHECK(j["a"][12] == (std::numeric_limits<std::int64_t>::min)());
+    CHECK(j["a"][17] == -0.1);
+    CHECK(j["b"] == json::parse("[[1.25, -3.75], [1.25, -3.75], []]"));
+    CHECK(j["c"] == json::parse("[{}, 1, 2, [3]]"));
+
+    for (std::size_t length = 0; length <= cbor.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> contiguous(cbor.begin(), cbor.begin() + static_cast<std::ptrdiff_t>(length));
+        const std::list<std::uint8_t> bytewise(contiguous.begin(), contiguous.end());
+
+        CHECK(json::from_cbor(contiguous, true, false, tags).dump() == json::from_cbor(bytewise.begin(), bytewise.end(), true, false, tags).dump());
+
+        SaxEventLogger from_contiguous;
+        SaxEventLogger from_bytewise;
+        CHECK(json::sax_parse(contiguous, &from_contiguous, json::input_format_t::cbor, true, false, false, tags)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::cbor, true, false, false, tags));
+        CHECK(from_contiguous.events == from_bytewise.events);
+    }
+
+    for (int events = 0; events <= 60; ++events)
+    {
+        CAPTURE(events)
+        const std::list<std::uint8_t> bytewise(cbor.begin(), cbor.end());
+        SaxCountdown from_contiguous(events);
+        SaxCountdown from_bytewise(events);
+        CHECK(json::sax_parse(cbor, &from_contiguous, json::input_format_t::cbor, true, false, false, tags)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::cbor, true, false, false, tags));
+    }
 }
 
 TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")

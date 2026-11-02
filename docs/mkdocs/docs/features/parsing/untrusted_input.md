@@ -1,7 +1,7 @@
 # Parsing Untrusted Input
 
-This page is for applications that parse JSON -- or one of the supported [binary formats](../binary_formats/index.md)
-(BJData, BON8, BSON, CBOR, MessagePack, UBJSON) -- from a source they do not fully control, such as a network
+This page is for applications that parse JSON — or one of the supported [binary formats](../binary_formats/index.md)
+(BJData, BON8, BSON, CBOR, MessagePack, UBJSON) — from a source they do not fully control, such as a network
 connection, an uploaded file, or another process. It summarizes what the library already does for such input and what
 remains the caller's responsibility, linking to the pages that cover each aspect in detail rather than repeating them.
 
@@ -50,12 +50,12 @@ stack, however deeply it is nested.
     [SAX handler](sax_interface.md) (for the JSON parser or a binary format alike) and throwing once your limit is
     exceeded.
 
-Once a value has been parsed, operations that walk it recursively -- serializing it with
+Once a value has been parsed, operations that walk it recursively — serializing it with
 [`dump`](../../api/basic_json/dump.md), hashing it, copying it, comparing two values with `#!cpp ==`, `#!cpp <`, or (in
 C++20) `#!cpp <=>`, merging with [`update`](../../api/basic_json/update.md), applying a
 [`merge_patch`](../../api/basic_json/merge_patch.md), creating a patch with [`diff`](../../api/basic_json/diff.md) or
 [`merge_diff`](../../api/basic_json/merge_diff.md), [`flatten`](../../api/basic_json/flatten.md), and the binary
-writers (`to_cbor`, `to_msgpack`, ...) -- descend at most 128 levels on the call stack and continue
+writers (`to_cbor`, `to_msgpack`, ...) — descend at most 128 levels on the call stack and continue
 below that with an explicit stack instead, so none of them can exhaust the stack either, however deeply the value is
 nested. Destroying a value (its destructor) never recurses at all, regardless of nesting depth, for the same reason.
 
@@ -63,12 +63,12 @@ nested. Destroying a value (its destructor) never recurses at all, regardless of
 
 The library does not limit the overall size of a JSON text; a value nested or wide enough will use memory
 proportional to the input. If you parse untrusted input of unbounded size, check the size of the file or stream
-yourself before -- or while -- handing it to `parse()`.
+yourself before — or while — handing it to `parse()`.
 
 For the binary formats, an announced size is never trusted outright:
 
 - Reading a string or binary value copies the input in bounded 4096-byte chunks and grows the result as bytes are
-  actually consumed, rather than allocating the announced length up front -- a truncated input runs out of bytes
+  actually consumed, rather than allocating the announced length up front — a truncated input runs out of bytes
   (reported as a parse error) instead of triggering an oversized allocation.
 - When an array announces its number of elements and the array container supports `reserve()` (as `#!cpp std::vector`,
   the default, does), the library reserves storage for at most 16384 of them upfront, regardless of how large the
@@ -91,7 +91,7 @@ Invalid UTF-8 is rejected while parsing, not just while serializing:
 
 A `#!cpp '\0'` (NUL) byte *inside* a quoted JSON string is always rejected (it must be escaped as `\u0000`). A NUL byte
 *outside* of a string is different: by default it is silently treated as the end of the input, so trailing bytes after
-it -- including further, otherwise well-formed JSON -- are silently ignored rather than rejected. Since untrusted input
+it — including further, otherwise well-formed JSON — are silently ignored rather than rejected. Since untrusted input
 that happens to embed a NUL is a way to make part of it disappear without a parse error, see the
 [FAQ entry](../../home/faq.md#nul-bytes-in-the-input) and consider defining
 [`JSON_STRICT_NUL_HANDLING`](../../api/macros/json_strict_nul_handling.md) to `1` to reject a NUL byte like any other
@@ -116,7 +116,7 @@ silently resolving them one way or another, see the
 
 ## Numbers
 
-A number whose value cannot be represented -- for instance `1E1000`, which overflows `double` -- is rejected while
+A number whose value cannot be represented — for instance `1E1000`, which overflows `double` — is rejected while
 parsing as [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406) rather than silently becoming
 infinity. An integer that is syntactically valid but does not fit the 64-bit integer types is not rejected; it is
 instead stored as a `double`, which may lose precision for very large values. See
@@ -130,6 +130,17 @@ parameters of [`parse()`](../../api/basic_json/parse.md) or [`accept()`](../../a
 enable either for input whose conformance you cannot otherwise control, since interoperability with strictly
 conforming JSON consumers is exactly what the default rejects.
 
+## JSON Pointers and flattened keys
+
+A [JSON Pointer](../json_pointer.md) can come from untrusted input as well, for instance as a path in a request or as a
+key of a flattened object. The non-const [`operator[]`](../../api/basic_json/operator%5B%5D.md) with a JSON Pointer and
+[`unflatten`](../../api/basic_json/unflatten.md) create missing values, and when an array index lies beyond the end of
+an array, they fill the array with `#!json null` values up to that index. The memory used therefore grows with the
+index, not with the size of the pointer: on a 64-bit platform, the index `10000000` allocates about 160 MB, the index
+`100000000` about 1.6 GB. The library does not limit the index. For pointers from untrusted input, check the array
+indices (or the pointer as a whole) before using them, or use [`at`](../../api/basic_json/at.md) or
+[`contains`](../../api/basic_json/contains.md), which never add values.
+
 ## Checklist
 
 - Wrap parsing in a `#!cpp try`/`#!cpp catch` block, or use `allow_exceptions=false`/`accept()` if your environment
@@ -139,12 +150,14 @@ conforming JSON consumers is exactly what the default rejects.
   [SAX handler](sax_interface.md); the library bounds the call stack but not memory use.
 - Bound the size of the input itself before parsing, independent of the library's own bounded allocations for binary
   format lengths.
-- Decide up front how you want a string with invalid UTF-8 -- from any source, not only parsing -- to be serialized
+- Decide up front how you want a string with invalid UTF-8 — from any source, not only parsing — to be serialized
   (`strict`, `replace`, or `ignore`), rather than discovering it from an uncaught `type_error.316`.
 - If a stray NUL byte silently truncating trailing input is a problem for your input format, define
   `JSON_STRICT_NUL_HANDLING`.
 - Decide whether duplicate object keys should be an error for your application, and add a callback if so.
 - Do not enable `ignore_comments` or `ignore_trailing_commas` for input that must be strictly conforming JSON.
+- Check the array indices of untrusted JSON Pointers and flattened keys before passing them to the non-const
+  `operator[]` or `unflatten()`, which fill arrays with `#!json null` values up to the index.
 
 For the broader design rationale and how it is tested (fuzzing, sanitizers, static analysis), see the
 [assurance case](../../community/assurance_case.md) and [quality assurance](../../community/quality_assurance.md). To
@@ -160,3 +173,9 @@ report a security issue in the library itself, follow the [security policy](../.
 - [Number handling](../types/number_handling.md) - number ranges and overflow behavior
 - [Assurance case](../../community/assurance_case.md) - the library's threat model and countermeasures
 - [Security policy](../../community/security_policy.md) - how to report a vulnerability
+- [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input
+- [`accept`](../../api/basic_json/accept.md) - check if the input is valid JSON
+- [`sax_parse`](../../api/basic_json/sax_parse.md) - generate SAX events
+- [`parser_callback_t`](../../api/basic_json/parser_callback_t.md) - callback function type for the parser
+- [`JSON_STRICT_NUL_HANDLING`](../../api/macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
+- [`JSON_DIAGNOSTIC_POSITIONS`](../../api/macros/json_diagnostic_positions.md) - record start and end positions of parsed values

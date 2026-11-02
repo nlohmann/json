@@ -373,6 +373,23 @@ TEST_CASE("alternative string type")
         CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/bar")));
     }
 
+    SECTION("non-const operator[](json_pointer)")
+    {
+        // creating values must compile without string_t::begin()
+        alt_json j = alt_json::parse(R"({"a":{"b":[1]},"c":null})");
+        const alt_json before = j;
+        j[alt_json::json_pointer("/a/b/3/x/-/y")] = 1; // pad, append, create
+        j[alt_json::json_pointer("/a/z")] = 2;         // insert a key
+        j[alt_json::json_pointer("/c/0/q")] = 3;       // convert null
+        j[alt_json::json_pointer("/a/b/-")] = 4;       // append
+        CHECK(j.dump() == R"({"a":{"b":[1,null,null,{"x":[{"y":1}]},4],"z":2},"c":[{"q":3}]})");
+
+        // a failing access leaves the value unchanged
+        j = before;
+        CHECK_THROWS_AS(j[alt_json::json_pointer("/a/n/99999999999999999999999")], alt_json::out_of_range&);
+        CHECK(j == before);
+    }
+
     SECTION("operator/(std::size_t)")
     {
         // json_pointer::operator/=(std::size_t) must compile without string_t

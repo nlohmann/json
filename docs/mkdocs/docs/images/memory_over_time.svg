@@ -1,0 +1,20 @@
+<svg class="nj-fig nj-fig--sax-mem" viewBox="0 0 660 312" role="img" aria-labelledby="fig-sax-mem-title fig-sax-mem-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-sax-mem-title">Illustrative memory use over time while a large array of records is parsed, not a measurement.</title>
+<desc id="fig-sax-mem-desc">Four curves. D&#8203;OM, parse(): rises steadily until the whole tree is in memory. json_document: starts at about the size of the text, which it keeps, and grows a little while its index is built. Parser callback that discards every record: stays flat at the size of one record. S&#8203;AX: stays flat and lowest, because no value is built and only what the handler keeps is in memory.</desc>
+<path class="nj-sax-axis" d="M56 36 V272 H448"/>
+<text class="fg-h" x="16" y="24">memory</text>
+<text class="fg-note fg-note--l" x="56" y="294">time: records parsed</text>
+<text class="fg-note fg-note--r nj-sax-illus" x="648" y="24">illustrative, not a measurement</text>
+<path class="nj-sax-curve nj-sax-c-dom" d="M56 268 L440 52"/>
+<path class="nj-sax-curve nj-sax-c-doc" d="M56 168 L440 146"/>
+<path class="nj-sax-curve nj-sax-c-cb" d="M56 250 L88 238 L88 250 L120 238 L120 250 L152 238 L152 250 L184 238 L184 250 L216 238 L216 250 L248 238 L248 250 L280 238 L280 250 L312 238 L312 250 L344 238 L344 250 L376 238 L376 250 L408 238 L408 250 L440 238 L440 250"/>
+<path class="nj-sax-curve nj-sax-c-sax" d="M56 264 H440"/>
+<text class="nj-sax-lab nj-sax-c-dom" x="456" y="48">D&#8203;OM: parse()</text>
+<text class="fg-note fg-note--l" x="456" y="65">the whole tree</text>
+<text class="nj-sax-lab nj-sax-c-doc" x="456" y="142">json_document</text>
+<text class="fg-note fg-note--l" x="456" y="159">the text plus its index</text>
+<text class="nj-sax-lab nj-sax-c-cb" x="456" y="227">callback, discard</text>
+<text class="fg-note fg-note--l" x="456" y="244">one record at a time</text>
+<text class="nj-sax-lab nj-sax-c-sax" x="456" y="269">S&#8203;AX</text>
+<text class="fg-note fg-note--l" x="456" y="286">only what the handler keeps</text>
+</svg>

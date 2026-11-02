@@ -1,0 +1,207 @@
+/* figures: sax (SAX event stepper on features/parsing/sax_interface.md, js/fig-sax.js; memory_over_time.svg and
+   chunk_buffering.svg on features/parsing/large_and_partial_input.md). Event colours are the --cb-* variables of the
+   parser-callback figure in brand.css, which .nj-fig provides. */
+
+/* ---------- stepper ---------- */
+.md-typeset .nj-sax {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .9rem 1.4rem;
+    margin: 1.5rem 0;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 8px;
+    background: var(--md-default-bg-color);
+    font-size: .74rem;
+}
+@media screen and (min-width: 45em) {
+    .md-typeset .nj-sax {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+        grid-template-areas: "ctl ctl" "text text" "ev state" "status status";
+    }
+    .md-typeset .nj-sax > .nj-sax__controls { grid-area: ctl; }
+    .md-typeset .nj-sax > .nj-sax__lane--text { grid-area: text; }
+    .md-typeset .nj-sax > .nj-sax__lane--events { grid-area: ev; }
+    .md-typeset .nj-sax > .nj-sax__lane--state { grid-area: state; }
+    .md-typeset .nj-sax > .nj-sax__status { grid-area: status; }
+}
+.md-typeset .nj-sax p { margin: 0; }
+.md-typeset .nj-sax .nj-sax__h {
+    margin: 0 0 .45rem;
+    color: var(--md-default-fg-color--light);
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+.md-typeset .nj-sax .nj-sax__h code { font-size: .95em; }
+.md-typeset .nj-sax .nj-sax__text code {
+    display: inline-block;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: .35rem .6rem;
+    font-size: .95rem;
+    white-space: pre;
+    word-break: normal;
+}
+.nj-sax .nj-sax-unread { color: var(--md-default-fg-color--light); }
+.nj-sax .nj-sax-unread--never { color: var(--md-default-fg-color--lighter); text-decoration: line-through; text-decoration-color: var(--md-default-fg-color--lighter); }
+.nj-sax .nj-sax-read { color: var(--md-code-fg-color); }
+.nj-sax .nj-sax-tok { border-radius: 3px; box-shadow: inset 0 -3px 0 var(--nj-sax-ev, var(--cb-v)); background: color-mix(in srgb, var(--nj-sax-ev, var(--cb-v)) 22%, transparent); }
+.nj-sax .nj-sax-tok--os, .nj-sax .nj-sax-ev--os { --nj-sax-ev: var(--cb-os); }
+.nj-sax .nj-sax-tok--oe, .nj-sax .nj-sax-ev--oe { --nj-sax-ev: var(--cb-oe); }
+.nj-sax .nj-sax-tok--k, .nj-sax .nj-sax-ev--k { --nj-sax-ev: var(--cb-k); }
+.nj-sax .nj-sax-tok--as, .nj-sax .nj-sax-ev--as { --nj-sax-ev: var(--cb-as); }
+.nj-sax .nj-sax-tok--ae, .nj-sax .nj-sax-ev--ae { --nj-sax-ev: var(--cb-ae); }
+.nj-sax .nj-sax-tok--v, .nj-sax .nj-sax-ev--v { --nj-sax-ev: var(--cb-v); }
+
+/* event ticker */
+.md-typeset .nj-sax ol.nj-sax__events {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: nj-sax;
+}
+.md-typeset .nj-sax ol.nj-sax__events > li {
+    position: relative;
+    margin: 0 0 .2rem;
+    padding: .12rem .4rem .12rem 2.6rem;
+    border-radius: 5px;
+    counter-increment: nj-sax;
+    line-height: 1.5;
+}
+.md-typeset .nj-sax ol.nj-sax__events > li::before {
+    content: counter(nj-sax);
+    position: absolute;
+    left: .35rem;
+    top: .2rem;
+    width: 1.1rem;
+    color: var(--md-default-fg-color--lighter);
+    font-size: .64rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+.md-typeset .nj-sax ol.nj-sax__events > li::after {
+    content: "";
+    position: absolute;
+    left: 1.75rem;
+    top: 50%;
+    width: .55rem;
+    height: .55rem;
+    margin-top: -.275rem;
+    border-radius: 50%;
+    background: var(--nj-sax-ev);
+}
+.md-typeset .nj-sax ol.nj-sax__events code { background: none; padding: 0; font-size: .8rem; }
+.nj-sax .nj-sax-ev--todo { opacity: .42; }
+.nj-sax .nj-sax-ev--skip { opacity: .42; text-decoration: line-through; }
+.nj-sax .nj-sax-ev--skip::after { background: var(--md-default-fg-color--lighter) !important; }
+.nj-sax .nj-sax-ev--cur { background: color-mix(in srgb, var(--nj-sax-ev) 16%, transparent); }
+.md-typeset .nj-sax .nj-sax-ev--false > code::after {
+    content: " \2192  false";
+    color: var(--nj-red);
+    font-weight: 600;
+}
+
+/* handler state */
+.md-typeset .nj-sax pre.nj-sax__tree { margin: 0 0 .6rem; }
+.md-typeset .nj-sax pre.nj-sax__tree > code { padding: .5rem .7rem; font-size: .76rem; line-height: 1.45; }
+.nj-sax .nj-sax-hit { border-radius: 3px; background: color-mix(in srgb, var(--nj-blue) 22%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--nj-blue) 55%, transparent); }
+.nj-sax .nj-sax-dim { color: var(--md-default-fg-color--lighter); }
+.md-typeset .nj-sax .nj-sax__stackh { margin: 0 0 .3rem; color: var(--md-default-fg-color--light); font-size: .66rem; font-weight: 600; }
+.md-typeset .nj-sax ol.nj-sax__stack {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: .25rem;
+    margin: 0 0 .6rem;
+    padding: 0;
+    list-style: none;
+}
+.md-typeset .nj-sax ol.nj-sax__stack > li {
+    margin: 0;
+    padding: .2rem .5rem;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-left: 3px solid var(--nj-blue);
+    border-radius: 4px;
+}
+.md-typeset .nj-sax ol.nj-sax__stack > li.nj-sax-dim { border-left-color: var(--md-default-fg-color--lightest); }
+.md-typeset .nj-sax ol.nj-sax__stack code { background: none; padding: 0; }
+.md-typeset .nj-sax .nj-sax__note { color: var(--md-default-fg-color--light); font-size: .75rem; line-height: 1.5; }
+.md-typeset .nj-sax dl.nj-sax__kv {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .35rem .8rem;
+    margin: 0 0 .6rem;
+}
+.md-typeset .nj-sax dl.nj-sax__kv dt { color: var(--md-default-fg-color--light); font-weight: 600; }
+.md-typeset .nj-sax dl.nj-sax__kv dd { margin: 0; }
+
+/* controls */
+.nj-sax .nj-sax__controls { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+.nj-sax .nj-sax__btns, .nj-sax .nj-sax__modes { display: flex; flex-wrap: wrap; gap: .35rem; }
+.nj-sax .nj-sax__modes { margin-left: auto; }
+.md-typeset .nj-sax .nj-sax-btn {
+    min-height: 2.2rem;
+    padding: .3rem .8rem;
+    border: 1px solid color-mix(in srgb, var(--nj-blue) 55%, var(--md-default-bg-color));
+    border-radius: 6px;
+    background: var(--md-default-bg-color);
+    color: var(--nj-blue);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.md-typeset .nj-sax .nj-sax-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--nj-blue) 10%, var(--md-default-bg-color)); }
+.md-typeset .nj-sax .nj-sax-btn--main, .md-typeset .nj-sax .nj-sax-btn[aria-pressed="true"] {
+    border-color: var(--nj-band);
+    background: var(--nj-band);
+    color: #fff;
+}
+.md-typeset .nj-sax .nj-sax-btn--main:hover:not(:disabled), .md-typeset .nj-sax .nj-sax-btn[aria-pressed="true"]:hover {
+    background: var(--md-primary-fg-color--light);
+}
+.md-typeset .nj-sax .nj-sax-btn:disabled { opacity: .4; cursor: default; }
+.md-typeset .nj-sax .nj-sax-btn:focus-visible, .nj-sax .nj-sax__stop input:focus-visible {
+    outline: 2px solid var(--nj-blue);
+    outline-offset: 2px;
+}
+.nj-sax .nj-sax__stop { display: inline-flex; gap: .45rem; align-items: center; min-height: 2.2rem; cursor: pointer; }
+.nj-sax .nj-sax__stop input { width: 1.05rem; height: 1.05rem; margin: 0; accent-color: var(--nj-red); }
+.nj-sax .nj-sax__stop:has(input:disabled) { opacity: .45; cursor: default; }
+.md-typeset .nj-sax .nj-sax__status {
+    padding-top: .6rem;
+    border-top: 1px solid var(--md-default-fg-color--lightest);
+    color: var(--md-default-fg-color--light);
+    font-size: .72rem;
+    min-height: 2.6em;
+}
+@media screen and (max-width: 44.984375em) {
+    .md-typeset .nj-sax { padding: .8rem; }
+    .md-typeset .nj-sax .nj-sax-btn { min-height: 44px; min-width: 44px; }
+    .nj-sax .nj-sax__stop { min-height: 44px; }
+    .nj-sax .nj-sax__modes { margin-left: 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .nj-sax .nj-sax__events > li { transition: opacity .2s, background-color .2s; }
+}
+
+/* ---------- static SVG figures ---------- */
+.md-typeset svg.nj-fig--sax-mem { min-width: 34rem; max-width: 40rem; }
+.md-typeset svg.nj-fig--sax-buf { min-width: 36rem; max-width: 42rem; }
+.nj-fig .nj-sax-axis { fill: none; stroke: var(--fg-line); stroke-width: 1.5; }
+.nj-fig .nj-sax-illus { font-style: italic; }
+.nj-fig .nj-sax-curve { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.nj-fig .nj-sax-c-dom { --nj-sax-c: var(--nj-red); }
+.nj-fig .nj-sax-c-doc { --nj-sax-c: var(--nj-hl-type); }
+.nj-fig .nj-sax-c-cb { --nj-sax-c: var(--nj-hl-number); }
+.nj-fig .nj-sax-c-sax { --nj-sax-c: var(--nj-blue); }
+.nj-fig .nj-sax-curve.nj-sax-c-doc { stroke-dasharray: 9 5; }
+.nj-fig .nj-sax-curve { stroke: var(--nj-sax-c); }
+.nj-fig .nj-sax-lab { fill: var(--nj-sax-c); font-size: 14.5px; font-weight: 700; }
+.nj-fig .nj-sax-old { fill: color-mix(in srgb, currentColor 10%, var(--md-default-bg-color)); }
+.nj-fig .nj-sax-new { fill: color-mix(in srgb, var(--md-typeset-a-color) 18%, var(--md-default-bg-color)); stroke: var(--md-typeset-a-color); stroke-width: 1; }
+.nj-fig .nj-sax-buf { fill: currentColor; font-family: var(--md-code-font-family), monospace; font-size: 14px; white-space: pre; }
+.nj-fig .nj-sax-sep { stroke: var(--fg-line); stroke-width: 1; stroke-dasharray: 3 3; }
+.nj-fig .nj-sax-status { font-size: 14px; font-weight: 600; }
+.nj-fig .nj-sax-s-wait { fill: var(--nj-blue); }
+.nj-fig .nj-sax-s-ok { fill: var(--nj-hl-string); }
+.nj-fig .nj-sax-s-err { fill: var(--nj-red); }

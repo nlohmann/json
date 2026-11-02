@@ -41,8 +41,9 @@ strings and, for an owned document, the text).
 
 ## See also
 
-- [memory_usage](memory_usage.md) - the number of bytes held by the document
-- [shrink_to_fit](shrink_to_fit.md) - release unused index capacity
+- [`memory_usage`](memory_usage.md) - the number of bytes held by the document
+- [`shrink_to_fit`](shrink_to_fit.md) - release unused index capacity
+- [Zero-copy JSON views](../../features/json_view.md#the-idea) - the flat node index and its memory
 
 ## Version history
 

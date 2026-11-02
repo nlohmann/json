@@ -88,6 +88,8 @@ The default value is `0` (disabled, the deprecated functions can still be called
   deprecated functions and the version they were deprecated in
 - [Migration guide: replace deprecated functions](../../integration/migration_guide.md#replace-deprecated-functions) -
   how to replace each deprecated function
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
+- [CMake](../../integration/cmake.md) - the corresponding CMake option
 
 ## Version history
 

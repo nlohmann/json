@@ -69,8 +69,12 @@ replaced by calling [`std::abort`](https://en.cppreference.com/w/cpp/utility/pro
 
 ## See also
 
-- [Switch off exceptions](../../home/exceptions.md#switch-off-exceptions) for more information how to switch off exceptions
-- [JSON_NOEXCEPTION](json_noexception.md) - switch off exceptions
+- [Switch off exceptions](../../home/exceptions.md#switch-off-exceptions) - more information how to switch off
+  exceptions
+- [`JSON_NOEXCEPTION`](json_noexception.md) - switch off exceptions
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
+- [Working Without Exceptions](../../features/no_exceptions.md) - using the library without exceptions
+- [`exception`](../basic_json/exception.md) - base class of all exceptions thrown by the library
 
 ## Version history
 

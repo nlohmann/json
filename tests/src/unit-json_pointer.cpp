@@ -29,8 +29,63 @@ using nlohmann::json;
 #include <map>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+namespace
+{
+// the non-const operator[] must throw for pointer and leave the value parsed
+// from init unchanged (strong exception safety)
+template<typename Json>
+void check_strong_guarantee(const char* init, const std::string& pointer, const char* message)
+{
+    CAPTURE(init)
+    CAPTURE(pointer)
+    Json j = Json::parse(init);
+    const Json before = Json::parse(init);
+    const typename Json::json_pointer ptr(pointer);
+    CHECK_THROWS_WITH_AS(j[ptr], message, typename Json::exception&);
+    CHECK(j == before);
+}
+
+// as above, for an index that fits into size_type, but not into an array
+template<typename Json>
+void check_strong_guarantee_length_error(const char* init, const std::string& pointer)
+{
+    CAPTURE(init)
+    CAPTURE(pointer)
+    Json j = Json::parse(init);
+    const Json before = Json::parse(init);
+    const typename Json::json_pointer ptr(pointer);
+    CHECK_THROWS_AS(j[ptr], std::length_error&);
+    CHECK(j == before);
+}
+
+template<typename Json>
+void check_strong_guarantee_cases()
+{
+    const char* const unresolved = "[json.exception.out_of_range.404] unresolved reference token '99999999999999999999999'";
+
+    // the first change converts a null value
+    check_strong_guarantee<Json>("null", "/99999999999999999999999", unresolved);
+    check_strong_guarantee<Json>("null", "/a/99999999999999999999999", unresolved);
+    check_strong_guarantee<Json>(R"({"a":null})", "/a/b/-/99999999999999999999999", unresolved);
+    // the first change inserts a key into an object
+    check_strong_guarantee<Json>("{}", "/a/99999999999999999999999", unresolved);
+    check_strong_guarantee<Json>(R"({"a":{"b":1}})", "/a/c/d/99999999999999999999999", unresolved);
+    // the first change pads or appends to an array
+    check_strong_guarantee<Json>(R"({"a":[1]})", "/a/5/99999999999999999999999", unresolved);
+    check_strong_guarantee<Json>(R"({"a":[1]})", "/a/-/x/1/99999999999999999999999", unresolved);
+    // an index that does not fit into size_type
+    check_strong_guarantee<Json>("null", "/x/18446744073709551615",
+                                 "[json.exception.out_of_range.410] array index 18446744073709551615 exceeds size_type");
+    // an index that fits into size_type, but not into an array
+    const auto too_large = std::to_string((std::numeric_limits<typename Json::size_type>::max)() - 1);
+    check_strong_guarantee_length_error<Json>("null", "/" + too_large);
+    check_strong_guarantee_length_error<Json>(R"({"a":[[1]]})", "/a/0/3/" + too_large);
+}
+} // namespace
 
 TEST_CASE("JSON pointers")
 {
@@ -493,6 +548,89 @@ TEST_CASE("JSON pointers")
         }
     }
 
+    SECTION("creating intermediate levels")
+    {
+        SECTION("tokens that are valid array indices create arrays")
+        {
+            json j;
+            j["/0"_json_pointer] = 1;
+            CHECK(j == json({1}));
+
+            json j2;
+            j2["/2"_json_pointer] = 1;
+            CHECK(j2 == json({nullptr, nullptr, 1}));
+
+            json j3;
+            j3["/-"_json_pointer] = 1;
+            CHECK(j3 == json({1}));
+
+            json j4;
+            j4["/foo/0/0"_json_pointer] = 1;
+            CHECK(j4 == json({{"foo", {{1}}}}));
+        }
+
+        SECTION("tokens that are no valid array indices create objects")
+        {
+            json j;
+            j["/one"_json_pointer] = 1;
+            CHECK(j == json({{"one", 1}}));
+
+            // leading '0' can never be a valid array index (RFC 6901, Sect. 4)
+            json j2;
+            j2["/01"_json_pointer] = 1;
+            CHECK(j2 == json({{"01", 1}}));
+
+            // the empty token is a valid object key, but no valid array index
+            json j3;
+            j3["/"_json_pointer] = 1;
+            CHECK(j3 == json({{"", 1}}));
+        }
+
+        SECTION("creating a level yields the same result as reusing it (#5357)")
+        {
+            json j;
+            j["/a/b/01/d"_json_pointer] = "value";
+
+            json j_init = json::object();
+            j_init["/a/b"_json_pointer] = json::object();
+            j_init["/a/b/01/d"_json_pointer] = "value";
+
+            const json expected = json::parse(R"({"a":{"b":{"01":{"d":"value"}}}})");
+            CHECK(j == expected);
+            CHECK(j_init == expected);
+
+            // unflatten uses the same key
+            const json flat = {{"/a/b/01/d", "value"}};
+            CHECK(flat.unflatten() == expected);
+        }
+
+        SECTION("existing arrays still reject invalid indices")
+        {
+            json j = {1, 2, 3};
+            CHECK_THROWS_WITH_AS(j["/01"_json_pointer],
+                                 "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j.at("/01"_json_pointer),
+                                 "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
+        }
+
+        SECTION("a failing operator[] leaves the value unchanged")
+        {
+            check_strong_guarantee_cases<json>();
+            check_strong_guarantee_cases<nlohmann::ordered_json>();
+        }
+
+        SECTION("a successful operator[] still creates the same values")
+        {
+            json j = {{"a", {1}}};
+            j["/a/3/x/-/y"_json_pointer] = 1;
+            CHECK(j == json::parse(R"({"a":[1,null,null,{"x":[{"y":1}]}]})"));
+            j["/a/-"_json_pointer] = 2;
+            j["/a/0"_json_pointer] = 3;
+            j["/b"_json_pointer] = 4;
+            CHECK(j == json::parse(R"({"a":[3,null,null,{"x":[{"y":1}]},2],"b":4})"));
+        }
+    }
+
     SECTION("flatten")
     {
         json j =
@@ -779,6 +917,46 @@ TEST_CASE("JSON pointers")
         CHECK(ptr.to_string() == "/object/~1");
     }
 
+    SECTION("appending a pointer to itself")
+    {
+        // operator/= must not pass iterators into its own token vector to
+        // insert(); each pointer is appended to itself and must yield the
+        // pointer whose string representation is the original one twice
+        const std::vector<std::string> pointers =
+        {
+            "",
+            "/",
+            "/a",
+            "/a/b",
+            "/foo/0/-",
+            "/a~1b/~0c/~01",
+            "/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17"
+        };
+
+        for (const auto& s : pointers)
+        {
+            CAPTURE(s)
+            json::json_pointer ptr(s);
+            const json::json_pointer expected(s + s);
+
+            const json::json_pointer& ret = (ptr /= ptr);
+            CHECK(&ret == &ptr);
+            CHECK(ptr == expected);
+            CHECK(ptr.to_string() == s + s);
+
+            // appending to itself again doubles the pointer once more
+            ptr /= ptr;
+            std::string quadruple = s + s;
+            quadruple += quadruple;
+            CHECK(ptr.to_string() == quadruple);
+
+            // operator/ appends to a copy and leaves the operand unchanged
+            const json::json_pointer original(s);
+            CHECK((original / original) == expected);
+            CHECK(original.to_string() == s);
+        }
+    }
+
     SECTION("equality comparison")
     {
         std::string ptr_string{"/foo/bar"};
@@ -1043,6 +1221,56 @@ TEST_CASE("flatten of structured values")
         const nlohmann::ordered_json flat_object = nlohmann::ordered_json::parse(R"({"/b/1": 2})");
         CHECK(flat_object.unflatten() == nlohmann::ordered_json::parse(R"({"b": {"1": 2}})"));
     }
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("an object with the key \"0\" next to a non-index key does not round-trip")
+    {
+        // the third documented case in which j != j.flatten().unflatten()
+        const json value = {{"a", {{"0", 1}, {"b", 2}}}};
+        const json flat = value.flatten();
+        CHECK(flat == json({{"/a/0", 1}, {"/a/b", 2}}));
+        CHECK_THROWS_WITH_AS(flat.unflatten(),
+                             "[json.exception.parse_error.109] parse error: array index 'b' is not a number", json::parse_error&);
+
+        // the same for other keys that are not valid array indices
+        CHECK_THROWS_WITH_AS(json({{"/a/0", 1}, {"/a/1a", 2}}).unflatten(),
+        "[json.exception.out_of_range.404] unresolved reference token '1a'", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(json({{"/a/0", 1}, {"/a/-", 2}}).unflatten(),
+        "[json.exception.out_of_range.404] unresolved reference token '-'", json::out_of_range&);
+    }
+
+    SECTION("unflatten with the empty token among array indices")
+    {
+        CHECK_THROWS_WITH_AS(json({{"/a/0", 1}, {"/a/", 2}}).unflatten(),
+        "[json.exception.out_of_range.404] unresolved reference token ''", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(json({{"/a/0", 1}, {"/a/1", 2}, {"/a/", 3}}).unflatten(),
+        "[json.exception.out_of_range.404] unresolved reference token ''", json::out_of_range&);
+
+        // without an index "0", the empty token is an ordinary object key
+        CHECK(json({{"/a/", 2}}).unflatten() == json({{"a", {{"", 2}}}}));
+    }
+
+    SECTION("value() with the empty pointer on a primitive root")
+    {
+        // unlike at(), value() rejects primitive values before it looks at the pointer
+        const json number = 1;
+        CHECK(number.at(""_json_pointer) == 1);
+        CHECK_THROWS_WITH_AS(number.value(""_json_pointer, 7),
+                             "[json.exception.type_error.306] cannot use value() with number", json::type_error&);
+
+        const json string = "s";
+        CHECK_THROWS_WITH_AS(string.value(""_json_pointer, 7),
+                             "[json.exception.type_error.306] cannot use value() with string", json::type_error&);
+
+        // contains() accepts the empty pointer on every value
+        CHECK(number.contains(""_json_pointer));
+        CHECK_FALSE(number.contains("/a"_json_pointer));
+
+        // arrays and objects return the default for a missing location
+        CHECK(json::array().value(""_json_pointer, json(7)) == json::array());
+        CHECK(json::array().value("/0"_json_pointer, 7) == 7);
+    }
+#endif
 
     SECTION("objects and arrays interleaved")
     {

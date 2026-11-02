@@ -150,7 +150,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // can be restored when json_pointer backwards compatibility is removed
     // friend ::nlohmann::json_pointer<StringType>;
 
-    template<typename BasicJsonType, typename InputType>
+    template<typename BasicJsonType, typename InputType, bool DiscardValues>
     friend class ::nlohmann::detail::parser;
     friend ::nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
@@ -159,7 +159,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     friend class ::nlohmann::detail::binary_writer;
     template<typename BasicJsonType, typename InputType, typename SAX, bool AllowRecovery>
     friend class ::nlohmann::detail::binary_reader;
-    template<typename BasicJsonType, typename InputAdapterType, bool Collect>
+    template<typename BasicJsonType, typename InputAdapterType, bool Collect, typename LexerType>
     friend class ::nlohmann::detail::json_sax_dom_parser;
     template<typename BasicJsonType, typename InputAdapterType>
     friend class ::nlohmann::detail::json_sax_dom_binary_parser;
@@ -183,12 +183,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false,
-        const bool ignore_trailing_commas = false,
-        const bool discard_number_values = false
+        const bool ignore_trailing_commas = false
     )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
+               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
     }
 
   private:
@@ -3117,7 +3116,9 @@ public:
                             const bool ignore_comments,
                             const bool ignore_trailing_commas)
     {
-        return parser(std::forward<InputAdapterType>(adapter), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
+        // the parser and lexer that discard the values of tokens (see lexer)
+        return ::nlohmann::detail::parser<basic_json, typename std::decay<InputAdapterType>::type, true>(std::forward<InputAdapterType>(adapter),
+                nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
     }
 
     /// generate SAX events from the input behind an already created adapter
@@ -6951,6 +6952,25 @@ public:
     /// @sa https://json.nlohmann.me/api/basic_json/patch/
     void patch_inplace(const basic_json& json_patch)
     {
+        // the operations below change *this while iterating json_patch: apply
+        // a copy when a value is applied as patch to itself or, with
+        // JSON_DIAGNOSTICS, to a value stored inside it
+        // NOLINTNEXTLINE(misc-const-correctness): only the JSON_DIAGNOSTICS build modifies it
+        bool patch_aliases_this = (&json_patch == this);
+#if JSON_DIAGNOSTICS
+        for (const basic_json* p = json_patch.m_parent; !patch_aliases_this && p != nullptr; p = p->m_parent)
+        {
+            patch_aliases_this = (p == this);
+        }
+#endif
+        if (JSON_HEDLEY_UNLIKELY(patch_aliases_this))
+        {
+            // NOLINTNEXTLINE(performance-unnecessary-copy-initialization): *this is modified below
+            const basic_json json_patch_copy = json_patch;
+            patch_inplace(json_patch_copy);
+            return;
+        }
+
         basic_json& result = *this;
         // the valid JSON Patch operations
         enum class patch_operations {add, remove, replace, move, copy, test, invalid};
@@ -7004,7 +7024,6 @@ public:
 
             switch (parent.m_data.m_type)
             {
-                case value_t::null:
                 case value_t::object:
                 {
                     // use operator[] to add value
@@ -7036,6 +7055,7 @@ public:
 
                 // the parent of an "add" target must be an object or array
                 // (see #4292)
+                case value_t::null:
                 case value_t::string:
                 case value_t::boolean:
                 case value_t::number_integer:

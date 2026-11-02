@@ -153,8 +153,8 @@ contained in `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[
 
 ## See also
 
-- [insert](insert.md) add values to an array/object
-- [merge_patch](merge_patch.md) applies a JSON Merge Patch
+- [`insert`](insert.md) - add values to an array/object
+- [`merge_patch`](merge_patch.md) - applies a JSON Merge Patch
 - [Modifying values](../../features/modifying_values.md) - the article on modifying values
 
 ## Version history

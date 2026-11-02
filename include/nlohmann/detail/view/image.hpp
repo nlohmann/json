@@ -80,7 +80,8 @@ constexpr std::uint64_t image_limit = 0xFFFFFFF0u;
 /// Copy the current structure of an edited document into nodes in document
 /// order, as the parser would have written them. Text written by edits is
 /// appended to text_tail (number tokens) and arena_tail (strings); floats that
-/// are not finite become null, as dump() writes them.
+/// are not finite become null, as dump() writes them. Nodes keep the flag
+/// is_new: they have no source position (JSON_DIAGNOSTIC_POSITIONS).
 inline void compact_nodes(const document_data& d, std::size_t arena_size, std::vector<node>& out, std::string& text_tail, std::string& arena_tail)
 {
     struct frame
@@ -103,21 +104,23 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
             arena_tail.append(d.str(s), s.len);
             r.flags = node_flags::escaped;
         }
+        r.flags = static_cast<std::uint8_t>(r.flags | (s.flags & node_flags::is_new));
         return r;
     };
     const auto copy_node = [&](const node * v)
     {
         node r = *v;
+        const auto is_new = static_cast<std::uint8_t>(v->flags & node_flags::is_new);
         switch (static_cast<value_t>(v->kind))
         {
             case value_t::object:
             case value_t::array:
-                r.flags = 0;
+                r.flags = is_new;
                 r.extra = 0;
                 r.off = (v->flags & (node_flags::moved | node_flags::is_new)) != 0 ? 0 : v->off;
                 r.len = 0;  // counted below
                 r.next = 0; // set when the container is complete
-                stack.push_back(frame{d.first_child_edited(v), d.child_end_edited(v), out.size(), 0, v->kind == static_cast<std::uint8_t>(value_t::object)});
+                stack.push_back(frame{d.first_child_edited(v), d.child_end_edited(v), out.size(), 0, v->kind == node_kind::object});
                 break;
             case value_t::string:
                 r = string_node(*v);
@@ -129,7 +132,7 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                     r.off = static_cast<std::uint32_t>(d.size + text_tail.size());
                     text_tail.append(d.str(*v), number_length(*v));
                 }
-                r.flags = 0;
+                r.flags = is_new;
                 break;
             case value_t::number_float:
                 if ((v->flags & node_flags::storage) == node_flags::edited)
@@ -138,23 +141,24 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
                     if (t[0] == 'n' || t[0] == 'i' || (v->len > 1 && t[1] == 'i'))
                     {
                         r = node{}; // nan and infinity: null, as dump() writes them
-                        r.kind = static_cast<std::uint8_t>(value_t::null);
+                        r.kind = node_kind::null;
+                        r.flags = is_new;
                         break;
                     }
                     r.off = static_cast<std::uint32_t>(d.size + text_tail.size());
                     text_tail.append(t, v->len);
                     r.extra = 0xFFFFu; // the digit layout is not recorded
                 }
-                r.flags = 0;
+                r.flags = is_new;
                 break;
             case value_t::boolean:
-                r.flags = static_cast<std::uint8_t>(v->flags & node_flags::is_true);
+                r.flags = static_cast<std::uint8_t>(v->flags & (node_flags::is_true | node_flags::is_new));
                 break;
             case value_t::null:
             case value_t::binary:
             case value_t::discarded:
             default:
-                r.flags = 0;
+                r.flags = is_new;
                 break;
         }
         out.push_back(r);
@@ -182,12 +186,10 @@ inline void compact_nodes(const document_data& d, std::size_t arena_size, std::v
     }
 }
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN // (the image format is little-endian: no save() elsewhere)
 /// the document as an image
 inline std::vector<std::uint8_t> save_image(const document_data& d)
 {
-#if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
-#endif
     const std::size_t arena_size = d.arena_size;
     std::vector<node> compacted;
     std::string text_tail;
@@ -221,7 +223,7 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     // extra of an object, and the same document saves to the same bytes
     for (std::size_t i = 0; i < count; ++i)
     {
-        if (nodes[i].kind == static_cast<std::uint8_t>(value_t::object) && nodes[i].extra != 0)
+        if (nodes[i].kind == node_kind::object && nodes[i].extra != 0)
         {
             std::memset(o + (i * sizeof(node)) + offsetof(node, extra), 0, sizeof(nodes[i].extra));
         }
@@ -243,6 +245,7 @@ inline std::vector<std::uint8_t> save_image(const document_data& d)
     *o = 0;
     return image;
 }
+#endif
 
 /// the parts of a number token that the checks need
 struct number_token
@@ -254,6 +257,81 @@ struct number_token
     bool negative;
     bool is_float; ///< a fraction or an exponent
 };
+
+/// advance over ASCII digits, eight bytes at a time
+inline const unsigned char* digit_run(const unsigned char* p, const unsigned char* e) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    while (e - p >= 8)
+    {
+        // (the digits become 0..9; a byte above 9, or with bit 7 set, is no digit. A carry
+        // out of a byte with bit 7 set only affects the bytes above, after the first one
+        // that count_trailing_zeros finds.)
+        const std::uint64_t x = read_eight_bytes(p) ^ (ones * 0x30u);
+        const std::uint64_t not_digit = ((x + (ones * 0x76u)) | x) & (ones * 0x80u);
+        if (not_digit != 0)
+        {
+            return p + (static_cast<std::size_t>(count_trailing_zeros(not_digit)) / 8);
+        }
+        p += 8;
+    }
+    while (p != e && is_digit(*p))
+    {
+        ++p;
+    }
+    return p;
+}
+
+/// whether the n bytes at p are ASCII digits (n > 0)
+inline bool all_digits(const unsigned char* p, std::size_t n) noexcept
+{
+    const auto digits = [](const unsigned char* q)
+    {
+        constexpr std::uint64_t ones = 0x0101010101010101ull;
+        const std::uint64_t x = read_eight_bytes(q) ^ (ones * 0x30u);
+        return (((x + (ones * 0x76u)) | x) & (ones * 0x80u)) == 0;
+    };
+    if (n >= 8)
+    {
+        for (std::size_t i = 0; i + 8 < n; i += 8)
+        {
+            if (!digits(p + i))
+            {
+                return false;
+            }
+        }
+        return digits(p + n - 8); // (overlapping the bytes before: they are digits)
+    }
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        if (!is_digit(p[i]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// Whether a float token has the shape that the parser records for most of
+/// them: [-]digits.digits, with the numbers of digits of the node's layout
+/// (extra). Then the token is a number of that layout, and the general scan
+/// that follows is not needed.
+inline bool plain_float_token(const unsigned char* s, std::size_t len, std::uint16_t extra) noexcept
+{
+    const std::size_t int_digits = extra & 0xFFu;
+    const std::size_t frac_digits = extra >> 8u;
+    if (int_digits == 0 || int_digits >= 255 || frac_digits == 0 || frac_digits >= 255 || len == 0)
+    {
+        return false;
+    }
+    const std::size_t negative = *s == '-' ? 1 : 0;
+    if (len != negative + int_digits + 1 + frac_digits)
+    {
+        return false;
+    }
+    const unsigned char* const p = s + negative;
+    return !(int_digits > 1 && *p == '0') && p[int_digits] == '.' && all_digits(p, int_digits) && all_digits(p + int_digits + 1, frac_digits);
+}
 
 /// whether [s, s + len) is a JSON number (the grammar the parser accepts)
 inline bool scan_number_token(const unsigned char* s, std::size_t len, number_token& t)
@@ -273,11 +351,7 @@ inline bool scan_number_token(const unsigned char* s, std::size_t len, number_to
     }
     else if (*p >= '1' && *p <= '9')
     {
-        do
-        {
-            ++p;
-        }
-        while (p != e && is_digit(*p));
+        p = digit_run(p + 1, e);
     }
     else
     {
@@ -289,10 +363,7 @@ inline bool scan_number_token(const unsigned char* s, std::size_t len, number_to
     if (p != e && *p == '.')
     {
         const unsigned char* const f0 = ++p;
-        while (p != e && is_digit(*p))
-        {
-            ++p;
-        }
+        p = digit_run(p, e);
         if (p == f0)
         {
             return false;
@@ -337,7 +408,7 @@ inline bool float_token_finite(const unsigned char* s, std::size_t len, const nu
     if (static_cast<std::int64_t>(t.int_digits) + t.exponent > 300)
     {
         node n{};
-        n.kind = static_cast<std::uint8_t>(value_t::number_float);
+        n.kind = node_kind::number_float;
         n.len = static_cast<std::uint32_t>(len);
         const auto v = float_value<double>(reinterpret_cast<const char*>(s), n); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         return v <= (std::numeric_limits<double>::max)() && v >= -(std::numeric_limits<double>::max)();
@@ -358,7 +429,7 @@ inline bool check_integer(const node& n, const unsigned char* text)
     }
     // the token's value is the stored one; number_integer nodes of edits can
     // be non-negative (as basic_json keeps the type of a value)
-    const bool integer = n.kind == static_cast<std::uint8_t>(value_t::number_integer);
+    const bool integer = n.kind == node_kind::number_integer;
     if (t.is_float || t.int_digits > 20 || (t.negative && !integer))
     {
         return false;
@@ -403,10 +474,15 @@ struct float_range
 template<typename Check>
 bool check_distinct_ranges(std::vector<byte_range>& ranges, Check check)
 {
-    std::sort(ranges.begin(), ranges.end(), [](const byte_range & a, const byte_range & b)
+    // (save() writes the ranges in the order of the nodes, which is sorted already)
+    const auto before = [](const byte_range & a, const byte_range & b)
     {
         return a.off != b.off ? a.off < b.off : a.len < b.len;
-    });
+    };
+    if (!std::is_sorted(ranges.begin(), ranges.end(), before))
+    {
+        std::sort(ranges.begin(), ranges.end(), before);
+    }
     std::size_t end = 0;
     for (std::size_t i = 0; i < ranges.size(); ++i)
     {
@@ -428,7 +504,8 @@ bool check_distinct_ranges(std::vector<byte_range>& ranges, Check check)
 /// record layouts that match it), tokens must not overlap.
 inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned char* text)
 {
-    std::sort(ranges.begin(), ranges.end(), [](const float_range & a, const float_range & b)
+    // (save() writes the tokens in the order of the nodes, which is sorted already)
+    const auto before = [](const float_range & a, const float_range & b)
     {
         if (a.off != b.off)
         {
@@ -439,7 +516,11 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
             return a.len < b.len;
         }
         return a.extra < b.extra;
-    });
+    };
+    if (!std::is_sorted(ranges.begin(), ranges.end(), before))
+    {
+        std::sort(ranges.begin(), ranges.end(), before);
+    }
     std::size_t end = 0;
     std::size_t i = 0;
     while (i < ranges.size())
@@ -449,14 +530,18 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
         {
             return false;
         }
-        number_token t{};
         const unsigned char* const s = text + r.off;
-        if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+        std::uint16_t layout = r.extra;
+        if (!plain_float_token(s, r.len, r.extra))
         {
-            return false;
+            number_token t{};
+            if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+            {
+                return false;
+            }
+            // the digit layout the parser records (or "many", as compaction writes it)
+            layout = float_layout(t);
         }
-        // the digit layout the parser records (or "many", as compaction writes it)
-        const std::uint16_t layout = float_layout(t);
         for (; i < ranges.size() && ranges[i].off == r.off && ranges[i].len == r.len; ++i)
         {
             if (ranges[i].extra != layout && ranges[i].extra != 0xFFFFu)
@@ -516,13 +601,15 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
     std::vector<float_range> floats;
     const auto check_string = [&](const node & n) -> bool
     {
-        if ((n.flags & ~node_flags::escaped) != 0 || n.extra != 0)
+        if ((n.flags & ~(node_flags::escaped | node_flags::is_new)) != 0 || n.extra != 0)
         {
             return false;
         }
         const bool decoded = (n.flags & node_flags::escaped) != 0;
         const std::size_t limit = decoded ? arena_size : text_size;
-        if (n.off > limit || n.len > limit - n.off)
+        // (next: the source offset of a decoded string's opening quote plus
+        // one, or 0; see node)
+        if (n.off > limit || n.len > limit - n.off || n.next > text_size)
         {
             return false;
         }
@@ -540,7 +627,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         {
             return false;
         }
-        if (n.kind != static_cast<std::uint8_t>(value_t::number_float))
+        if (n.kind != node_kind::number_float)
         {
             return (n.extra >> 8u) == 0;
         }
@@ -581,7 +668,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         const node& n = nodes[i];
         if (!stack.empty() && stack.back().object && stack.back().expect_key)
         {
-            if (n.kind != static_cast<std::uint8_t>(value_t::string) || !check_string(n))
+            if (n.kind != node_kind::string || !check_string(n))
             {
                 return false;
             }
@@ -594,13 +681,13 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
         {
             case value_t::null:
                 // (the offset of a literal is read to size the output of dump())
-                if (n.flags != 0 || n.extra != 0 || n.off > text_size)
+                if ((n.flags & ~node_flags::is_new) != 0 || n.extra != 0 || n.off > text_size)
                 {
                     return false;
                 }
                 break;
             case value_t::boolean:
-                if ((n.flags & ~node_flags::is_true) != 0 || n.extra != 0 || n.off > text_size)
+                if ((n.flags & ~(node_flags::is_true | node_flags::is_new)) != 0 || n.extra != 0 || n.off > text_size)
                 {
                     return false;
                 }
@@ -614,7 +701,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             case value_t::number_integer:
             case value_t::number_unsigned:
             case value_t::number_float:
-                if (n.flags != 0 || !number_in_bounds(n))
+                if ((n.flags & ~node_flags::is_new) != 0 || !number_in_bounds(n))
                 {
                     return false;
                 }
@@ -622,7 +709,7 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
                 {
                     // (the contents of float tokens are checked later; the token of an
                     // integer has at most 256 characters)
-                    if (n.kind == static_cast<std::uint8_t>(value_t::number_float))
+                    if (n.kind == node_kind::number_float)
                     {
                         floats.push_back(float_range{n.off, n.len, n.extra});
                     }
@@ -636,11 +723,11 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
             case value_t::object:
             {
                 const std::size_t limit = stack.empty() ? count : stack.back().end;
-                if (n.flags != 0 || n.extra != 0 || n.next == 0 || n.next > limit - i || n.off > text_size)
+                if ((n.flags & ~node_flags::is_new) != 0 || n.extra != 0 || n.next == 0 || n.next > limit - i || n.off > text_size)
                 {
                     return false;
                 }
-                stack.push_back(frame{i + n.next, n.len, 0, n.kind == static_cast<std::uint8_t>(value_t::object), true});
+                stack.push_back(frame{i + n.next, n.len, 0, n.kind == node_kind::object, true});
                 complete = false;
                 break;
             }
@@ -663,13 +750,11 @@ inline bool check_image(const node* nodes, std::size_t count, const unsigned cha
     throw_parse_error(exception_id::invalid_document_image, concat("invalid json_document image: ", what));
 }
 
+#if NLOHMANN_VIEW_LITTLE_ENDIAN // (the image format is little-endian: no load() elsewhere)
 /// Read an image into d. The text and the decoded strings stay in the image;
 /// the nodes are copied (so that they are aligned, and edits can change them).
 inline void load_image(document_data& d, const std::uint8_t* image, std::size_t size, image_check check)
 {
-#if !NLOHMANN_VIEW_LITTLE_ENDIAN
-    throw_type_error(exception_id::document_image_unsupported, "json_document images need a little-endian target"); // LCOV_EXCL_LINE
-#endif
     if (image == nullptr || size < sizeof(image_header))
     {
         throw_invalid_image("too short");
@@ -729,7 +814,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     for (std::size_t i = 0; i < count; ++i)
     {
         const node& n = d.nodes[i];
-        if (n.kind == static_cast<std::uint8_t>(value_t::object) && n.len >= document_data::index_min_members)
+        if (n.kind == node_kind::object && n.len >= document_data::index_min_members)
         {
             d.large_objects.push_back(static_cast<std::uint32_t>(i));
         }
@@ -738,6 +823,7 @@ inline void load_image(document_data& d, const std::uint8_t* image, std::size_t 
     std::vector<std::uint32_t>().swap(d.large_objects); // (only needed while building)
     d.discarded = false;
 }
+#endif
 
 }  // namespace view
 }  // namespace detail

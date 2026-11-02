@@ -60,7 +60,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const nod
         case value_t::binary:
         case value_t::discarded:
         default:
-            throw_type_error(exception_id::type_mismatch, "type must be number, but is ", value_type_name(static_cast<value_t>(n.kind)));
+            throw_type_error(error_site(&d, &n), exception_id::type_mismatch, "type must be number, but is ", value_type_name(static_cast<value_t>(n.kind)));
     }
 }
 
@@ -70,7 +70,7 @@ std::vector<U, A> vector_value(const View& v)
 {
     if (NLOHMANN_VIEW_UNLIKELY(!v.is_array()))
     {
-        throw_type_error(exception_id::type_mismatch, "type must be array, but is ", v.type_name());
+        throw_type_error(site_of(v), exception_id::type_mismatch, "type must be array, but is ", v.type_name());
     }
     std::vector<U, A> r;
     r.reserve(v.size());
@@ -88,7 +88,7 @@ Map map_value(const View& v)
 {
     if (NLOHMANN_VIEW_UNLIKELY(!v.is_object()))
     {
-        throw_type_error(exception_id::type_mismatch, "type must be object, but is ", v.type_name());
+        throw_type_error(site_of(v), exception_id::type_mismatch, "type must be object, but is ", v.type_name());
     }
     Map r;
     for (auto it = v.begin(); it != v.end(); ++it)
@@ -130,14 +130,16 @@ struct is_direct_value : std::integral_constant < bool,
 template<typename Traits, typename Alloc, typename BasicJsonType, typename View>
 struct is_direct_value<std::basic_string<char, Traits, Alloc>, BasicJsonType, View> : std::true_type {};
 
+// (vectors of these, which are faster than through from_json(), and containers
+// of views; other containers are read by the library's from_json())
 template<typename U, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : std::true_type {};
+struct is_direct_value<std::vector<U, A>, BasicJsonType, View> : is_direct_value<U, BasicJsonType, View> {};
 
-template<typename K, typename V, typename C, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::map<K, V, C, A>, BasicJsonType, View> : is_string_key<K> {};
+template<typename K, typename C, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::map<K, View, C, A>, BasicJsonType, View> : is_string_key<K> {};
 
-template<typename K, typename V, typename H, typename E, typename A, typename BasicJsonType, typename View>
-struct is_direct_value<std::unordered_map<K, V, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
+template<typename K, typename H, typename E, typename A, typename BasicJsonType, typename View>
+struct is_direct_value<std::unordered_map<K, View, H, E, A>, BasicJsonType, View> : is_string_key<K> {};
 
 }  // namespace view
 }  // namespace detail

@@ -1,0 +1,61 @@
+<svg class="nj-fig nj-jsonview " viewBox="0 0 840 572" role="img" aria-labelledby="fig-jvt-title fig-jvt-title-d" xmlns="http://www.w3.org/2000/svg">
+<title id="fig-jvt-title">When a json_view becomes invalid</title>
+<desc id="fig-jvt-title-d">Four timelines. First: a document borrows a std::string; when the string is destroyed, the document and every view taken from it dangle. Second: doc.read() re-parses the document; views taken before are invalid, a fresh view from root() is valid. Third: doc.shrink_to_fit() has the same effect. Fourth: moving the document does not invalidate its views; destroying the moved-to document does.</desc>
+<defs>
+<marker id="jvt-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="nj-jsonview-c-bad nj-jsonview-head" d="M0 1 L10 5 L0 9 z"/></marker>
+</defs>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="210" y="12" width="34" height="12" rx="3"/>
+<text class="nj-jsonview-note" x="252" y="23" xml:space="preserve">alive / valid</text>
+<rect class="nj-jsonview-bad" x="370" y="12" width="34" height="12" rx="3"/>
+<text class="nj-jsonview-note" x="412" y="23" xml:space="preserve">dangling: using it is undefined behavior</text>
+<path class="nj-jsonview-arr nj-jsonview-c-line" d="M210 44 L820 44"/>
+<text class="nj-jsonview-tiny" x="820" y="38" text-anchor="end" xml:space="preserve">time →</text>
+<text class="nj-jsonview-h nj-jsonview-sm2" x="16" y="74" xml:space="preserve">The borrowed text is destroyed</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="99" text-anchor="end" xml:space="preserve">std::string text</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="210" y="87" width="260" height="16" rx="3"/>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="127" text-anchor="end" xml:space="preserve">json_document doc</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="270" y="115" width="200" height="16" rx="3"/>
+<rect class="nj-jsonview-bad" x="470" y="115" width="350" height="16" rx="3"/>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="155" text-anchor="end" xml:space="preserve">json_view v</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="330" y="143" width="140" height="16" rx="3"/>
+<rect class="nj-jsonview-bad" x="470" y="143" width="350" height="16" rx="3"/>
+<path class="nj-jsonview-evt" d="M470 82 V168"/>
+<text class="nj-jsonview-tiny nj-jsonview-c-bad" x="474" y="80" xml:space="preserve">text destroyed</text>
+<text class="nj-jsonview-note nj-jsonview-onbad" x="476" y="155" xml:space="preserve">every view, and the document itself</text>
+<text class="nj-jsonview-h nj-jsonview-sm2" x="16" y="202" xml:space="preserve">The document is re-parsed</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="227" text-anchor="end" xml:space="preserve">json_document doc</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="210" y="215" width="610" height="16" rx="3"/>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="255" text-anchor="end" xml:space="preserve">json_view v</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="270" y="243" width="200" height="16" rx="3"/>
+<rect class="nj-jsonview-bad" x="470" y="243" width="350" height="16" rx="3"/>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="283" text-anchor="end" xml:space="preserve">v = doc.root()</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="530" y="271" width="290" height="16" rx="3"/>
+<path class="nj-jsonview-evt" d="M470 210 V296"/>
+<text class="nj-jsonview-tiny nj-jsonview-c-bad" x="474" y="208" xml:space="preserve">doc.read(other)</text>
+<text class="nj-jsonview-note nj-jsonview-onbad" x="476" y="255" xml:space="preserve">views taken before</text>
+<text class="nj-jsonview-note nj-jsonview-onok" x="536" y="283" xml:space="preserve">a fresh view is valid again</text>
+<text class="nj-jsonview-h nj-jsonview-sm2" x="16" y="330" xml:space="preserve">The document is shrunk</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="355" text-anchor="end" xml:space="preserve">json_document doc</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="210" y="343" width="610" height="16" rx="3"/>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="383" text-anchor="end" xml:space="preserve">json_view v</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="270" y="371" width="200" height="16" rx="3"/>
+<rect class="nj-jsonview-bad" x="470" y="371" width="350" height="16" rx="3"/>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="411" text-anchor="end" xml:space="preserve">v = doc.root()</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="530" y="399" width="290" height="16" rx="3"/>
+<path class="nj-jsonview-evt" d="M470 338 V424"/>
+<text class="nj-jsonview-tiny nj-jsonview-c-bad" x="474" y="336" xml:space="preserve">doc.shrink_to_fit()</text>
+<text class="nj-jsonview-note nj-jsonview-onbad" x="476" y="383" xml:space="preserve">views taken before</text>
+<text class="nj-jsonview-note nj-jsonview-onok" x="536" y="411" xml:space="preserve">a fresh view is valid again</text>
+<text class="nj-jsonview-h nj-jsonview-sm2" x="16" y="458" xml:space="preserve">The document is moved, then destroyed</text>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="483" text-anchor="end" xml:space="preserve">json_document doc</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="210" y="471" width="210" height="16" rx="3"/>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="511" text-anchor="end" xml:space="preserve">moved = std::move(doc)</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="420" y="499" width="260" height="16" rx="3"/>
+<text class="nj-jsonview-mono nj-jsonview-sm" x="198" y="539" text-anchor="end" xml:space="preserve">json_view v</text>
+<rect class="nj-jsonview-bar nj-jsonview-c-struct" x="270" y="527" width="410" height="16" rx="3"/>
+<rect class="nj-jsonview-bad" x="680" y="527" width="140" height="16" rx="3"/>
+<path class="nj-jsonview-evt nj-jsonview-evt--ok" d="M420 466 V552"/>
+<text class="nj-jsonview-tiny" x="424" y="464" xml:space="preserve">std::move: views stay valid</text>
+<path class="nj-jsonview-evt" d="M680 466 V552"/>
+<text class="nj-jsonview-tiny nj-jsonview-c-bad" x="684" y="464" xml:space="preserve">moved is destroyed</text>
+</svg>

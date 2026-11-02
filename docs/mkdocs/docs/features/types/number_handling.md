@@ -27,7 +27,11 @@ JSON defines the syntax of numbers as follows:
 
 The following railroad diagram from [json.org](https://json.org) visualizes the number syntax:
 
-![Syntax for JSON numbers](../../images/json_syntax_number.png)
+<div class="railroad-wrap" markdown>
+--8<-- "images/json_syntax_number.svg"
+</div>
+
+<p class="nj-caption" markdown>Read the diagram from left to right: every path along the lines spells a valid number, made of an optional minus sign, an integer part, an optional fraction, and an optional exponent.</p>
 
 ### Number interoperability
 
@@ -69,14 +73,16 @@ otherwise, it uses unsigned integer storage.
 
 ```mermaid
 flowchart TD
-    A["number literal"] --> B{"has a fraction (.) or exponent (e/E)?"}
+    A["number literal"] --> B{{"has a fraction (.) or exponent (e/E)?"}}
     B -->|"yes"| F["number_float_t"]
-    B -->|"no"| C{"has a leading minus sign?"}
+    B -->|"no"| C{{"has a leading minus sign?"}}
     C -->|"yes"| D["try number_integer_t"]
     C -->|"no"| E["try number_unsigned_t"]
     D -->|"overflow"| F
     E -->|"overflow"| F
 ```
+
+<p class="nj-caption" markdown>How the parser picks the storage type of a number literal: a fraction or exponent always gives `number_float_t`; otherwise the sign selects the signed or unsigned integer type, and a value that overflows it is stored as `number_float_t`.</p>
 
 !!! info "Notes"
 
@@ -130,6 +136,32 @@ The JSON number grammar allows for different ways to express zero, and this libr
 | `-0E0`  | `#!c double(-0.0)`     | `-0.0`        |
 
 That is, `-0` is stored as a signed integer, but the serialization does not reproduce the `-`.
+
+The literals mentioned on this page, parsed with `json::parse` and serialized with `dump()` (checked against the
+library; pick one or type it to see the row):
+
+<div class="nj-charts-num" markdown>
+
+| Literal | Stored as (`type()`) | `dump()` |
+|---------|----------------------|----------|
+| `0` | `number_unsigned` (`std::uint64_t`) | `0` |
+| `-0` | `number_integer` (`std::int64_t`) | `0` |
+| `-0.0` | `number_float` (`double`) | `-0.0` |
+| `1E3` | `number_float` (`double`) | `1000.0` |
+| `-12345678912345789123456789` | `number_float` (`double`) | `-1.2345678912345788e+25` |
+| `18446744073709551615` | `number_unsigned` (`std::uint64_t`) | `18446744073709551615` |
+| `18446744073709551616` | `number_float` (`double`) | `1.8446744073709552e+19` |
+| `-9223372036854775808` | `number_integer` (`std::int64_t`) | `-9223372036854775808` |
+| `1E400` | exception `out_of_range.406` | (nothing, parsing fails) |
+| `1E-400` | `number_float` (`double`) | `0.0` |
+| `3.141592653589793238462643383279` | `number_float` (`double`) | `3.141592653589793` |
+| `2555.5599999999999` | `number_float` (`double`) | `2555.56` |
+| `0.0000972439793401814` | `number_float` (`double`) | `9.72439793401814e-05` |
+| `12345E-5` | `number_float` (`double`) | `0.12345` |
+
+</div>
+
+<p class="nj-caption" markdown>Each row shows how a literal is stored and how `dump()` writes it back. The explorer only knows the literals in this list; other input is reported as not in the verified list.</p>
 
 ### Number serialization
 
@@ -329,6 +361,8 @@ the stored number:
 | [`type_name()`](../../api/basic_json/type_name.md)                   | `#!c "number"`    | `#!c "number"`   | `#!c "number"` | `#!c "string"` |
 | [`type()`](../../api/basic_json/type.md)                             | `number_unsigned` | `number_integer` | `number_float` | `string`       |
 
+<p class="nj-table-caption" markdown>Return value of each function for a value that stores an unsigned integer, a signed integer, or a floating-point number, and for a string for comparison.</p>
+
 ### Template number types
 
 The number types can be changed with template parameters.
@@ -362,3 +396,12 @@ The number types can be changed with template parameters.
 
     Note values should then be parsed with `json_ld::parse` rather than `json::parse` as the latter would parse
     floating-point values to `#!c double` before then converting them to `#!c long double`.
+
+## See also
+
+- [Types](index.md) - how all value types are stored
+- [Converting values](../conversions.md) - convert numbers to C++ types
+- [`number_integer_t`](../../api/basic_json/number_integer_t.md) - the signed integer type
+- [`number_unsigned_t`](../../api/basic_json/number_unsigned_t.md) - the unsigned integer type
+- [`number_float_t`](../../api/basic_json/number_float_t.md) - the floating-point type
+- [`is_number`](../../api/basic_json/is_number.md) - check for a number of any kind

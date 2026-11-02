@@ -1,0 +1,75 @@
+/* figures: exceptions (home/exceptions.md exception map, community/quality_assurance.md pipeline) */
+
+/* the generated SVGs hold a wide and a narrow drawing; show one of them */
+.md-typeset svg.nj-exceptions-map--wide, .md-typeset svg.nj-exceptions-qa--wide { max-width: 47.5rem; }
+.md-typeset svg.nj-exceptions-map--narrow, .md-typeset svg.nj-exceptions-qa--narrow { display: none; max-width: 24rem; }
+@media screen and (max-width: 37.5em) {
+    .md-typeset svg.nj-exceptions-map--wide, .md-typeset svg.nj-exceptions-qa--wide { display: none; }
+    .md-typeset svg.nj-exceptions-map--narrow, .md-typeset svg.nj-exceptions-qa--narrow { display: block; }
+}
+
+/* shared */
+.nj-fig { --nj-exceptions-line: color-mix(in srgb, currentColor 45%, var(--md-default-bg-color)); }
+.nj-fig .nj-exceptions-edge { stroke: var(--nj-exceptions-line); stroke-width: 1.5; fill: none; }
+.nj-fig .nj-exceptions-tri { fill: var(--md-default-bg-color); stroke: var(--nj-exceptions-line); stroke-width: 1.3; }
+.nj-fig .nj-exceptions-box {
+    fill: color-mix(in srgb, currentColor 4%, var(--md-default-bg-color));
+    stroke: color-mix(in srgb, currentColor 30%, var(--md-default-bg-color));
+    stroke-width: 1.5;
+}
+.nj-fig .nj-exceptions-box--fam {
+    fill: color-mix(in srgb, var(--md-typeset-a-color) 9%, var(--md-default-bg-color));
+    stroke: color-mix(in srgb, var(--md-typeset-a-color) 55%, var(--md-default-bg-color));
+}
+.nj-fig .nj-exceptions-name { fill: currentColor; font-family: var(--md-code-font-family), monospace; font-size: 14px; font-weight: 600; }
+.nj-fig .nj-exceptions-sub { fill: currentColor; fill-opacity: .68; font-size: 12.5px; }
+
+/* exception map: id chips are links */
+.nj-fig .nj-exceptions-chip rect {
+    fill: color-mix(in srgb, var(--md-typeset-a-color) 7%, var(--md-default-bg-color));
+    stroke: color-mix(in srgb, var(--md-typeset-a-color) 40%, var(--md-default-bg-color));
+    stroke-width: 1.2;
+    transition: fill .15s;
+}
+.nj-fig .nj-exceptions-chip--named rect {
+    fill: color-mix(in srgb, var(--md-typeset-a-color) 16%, var(--md-default-bg-color));
+    stroke: var(--md-typeset-a-color);
+}
+.nj-fig .nj-exceptions-id { fill: var(--md-typeset-a-color); font-family: var(--md-code-font-family), monospace; font-size: 13px; font-weight: 600; }
+.nj-fig .nj-exceptions-label { fill: currentColor; font-size: 12.5px; font-weight: 500; }
+.nj-fig a:hover rect, .nj-fig a:focus-visible rect {
+    fill: color-mix(in srgb, var(--md-typeset-a-color) 28%, var(--md-default-bg-color));
+}
+.nj-fig a:focus { outline: none; }
+.nj-fig a:focus-visible rect { stroke: var(--md-typeset-a-color); stroke-width: 2.5; }
+.nj-fig a:hover .nj-exceptions-name, .nj-fig a:focus-visible .nj-exceptions-name { text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) {
+    .nj-fig .nj-exceptions-chip rect { transition: none; }
+}
+
+/* quality assurance pipeline */
+.nj-fig { --nj-exceptions-push: var(--md-typeset-a-color); --nj-exceptions-sched: #a86400; --nj-exceptions-cont: #1a7f37; }
+[data-md-color-scheme="slate"] .nj-fig { --nj-exceptions-sched: #e3a33b; --nj-exceptions-cont: #56c46e; }
+.nj-fig .nj-exceptions-groupbox {
+    fill: color-mix(in srgb, currentColor 2.5%, var(--md-default-bg-color));
+    stroke: color-mix(in srgb, currentColor 22%, var(--md-default-bg-color));
+    stroke-width: 1.2;
+    stroke-dasharray: 5 4;
+}
+.nj-fig .nj-exceptions-group { fill: currentColor; fill-opacity: .68; font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+.nj-fig .nj-exceptions-card .nj-exceptions-box { fill: var(--md-default-bg-color); }
+.nj-fig .nj-exceptions-ctitle { fill: currentColor; font-size: 15px; font-weight: 700; }
+.nj-fig .nj-exceptions-line { fill: currentColor; fill-opacity: .8; font-size: 12.5px; }
+.nj-fig .nj-exceptions-badge { stroke-width: 1.2; }
+.nj-fig .nj-exceptions-badgetext { font-size: 11px; font-weight: 600; text-anchor: middle; }
+.nj-fig .nj-exceptions-badge--push { fill: color-mix(in srgb, var(--nj-exceptions-push) 12%, var(--md-default-bg-color)); stroke: var(--nj-exceptions-push); }
+.nj-fig .nj-exceptions-badge--sched { fill: color-mix(in srgb, var(--nj-exceptions-sched) 12%, var(--md-default-bg-color)); stroke: var(--nj-exceptions-sched); }
+.nj-fig .nj-exceptions-badge--cont { fill: color-mix(in srgb, var(--nj-exceptions-cont) 12%, var(--md-default-bg-color)); stroke: var(--nj-exceptions-cont); }
+.nj-fig .nj-exceptions-badgetext--push { fill: var(--nj-exceptions-push); }
+.nj-fig .nj-exceptions-badgetext--sched { fill: var(--nj-exceptions-sched); }
+.nj-fig .nj-exceptions-badgetext--cont { fill: var(--nj-exceptions-cont); }
+.nj-fig .nj-exceptions-stage { fill: var(--md-typeset-a-color); }
+.nj-fig .nj-exceptions-stagetext { fill: #fff; font-size: 14px; font-weight: 700; text-anchor: middle; }
+.nj-fig .nj-exceptions-stagesub { fill: #fff; fill-opacity: .85; font-size: 12px; text-anchor: middle; }
+[data-md-color-scheme="slate"] .nj-fig .nj-exceptions-stage { fill: #1747a6; }
+.nj-fig .nj-exceptions-qa .fg-head, .nj-exceptions-qa .fg-head { fill: var(--nj-exceptions-line); }

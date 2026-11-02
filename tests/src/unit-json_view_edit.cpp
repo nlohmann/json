@@ -532,18 +532,18 @@ TEST_CASE("json_view edits: errors")
 
     CHECK_THROWS_WITH_AS(d.set(other_editable.root(), 1), "[json.exception.invalid_iterator.202] view does not belong to this document", json::invalid_iterator&);
     CHECK_THROWS_WITH_AS(d.set(json_editable_view(), 1), "[json.exception.invalid_iterator.202] view does not belong to this document", json::invalid_iterator&);
-    CHECK_THROWS_WITH_AS(d.set(root["a"], "k", 1), "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.set(root["o"], 0, 1), "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.set(root["a"], 2, 1), "[json.exception.out_of_range.401] array index 2 is out of range", json::out_of_range&);
-    CHECK_THROWS_WITH_AS(d.set(root["a"], -1, 1), "[json.exception.out_of_range.401] array index -1 is out of range", json::out_of_range&);
-    CHECK_THROWS_WITH_AS(d.push_back(root["o"], 1), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.insert(root["n"], 0, 1), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.insert(root["a"], 3, 1), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
-    CHECK_THROWS_WITH_AS(d.erase(root["n"], "k"), "[json.exception.type_error.307] cannot use erase() with number", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.erase(root["o"], 0), "[json.exception.type_error.307] cannot use erase() with object", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.erase(root["a"], 2), "[json.exception.out_of_range.401] array index 2 is out of range", json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.set(root["a"], "k", 1), json_view_test::message("type_error.305", "/a", 21, 27, "cannot use operator[] with a string argument with array").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.set(root["o"], 0, 1), json_view_test::message("type_error.305", "/o", 6, 14, "cannot use operator[] with a numeric argument with object").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.set(root["a"], 2, 1), json_view_test::message("out_of_range.401", "/a", 21, 27, "array index 2 is out of range").c_str(), json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.set(root["a"], -1, 1), json_view_test::message("out_of_range.401", "/a", 21, 27, "array index -1 is out of range").c_str(), json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.push_back(root["o"], 1), json_view_test::message("type_error.308", "/o", 6, 14, "cannot use push_back() with object").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.insert(root["n"], 0, 1), json_view_test::message("type_error.309", "/n", 34, 35, "cannot use insert() with number").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.insert(root["a"], 3, 1), json_view_test::message("out_of_range.401", "/a", 21, 27, "array index 3 is out of range").c_str(), json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.erase(root["n"], "k"), json_view_test::message("type_error.307", "/n", 34, 35, "cannot use erase() with number").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.erase(root["o"], 0), json_view_test::message("type_error.307", "/o", 6, 14, "cannot use erase() with object").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.erase(root["a"], 2), json_view_test::message("out_of_range.401", "/a", 21, 27, "array index 2 is out of range").c_str(), json::out_of_range&);
     CHECK_THROWS_WITH_AS(d.erase(json::json_pointer("")), "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
-    CHECK_THROWS_WITH_AS(d.erase(json::json_pointer("/missing/x")), "[json.exception.out_of_range.403] key 'missing' not found", json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.erase(json::json_pointer("/missing/x")), json_view_test::message("out_of_range.403", "", 0, 47, "key 'missing' not found").c_str(), json::out_of_range&);
     CHECK_THROWS_WITH_AS(d.set(json::json_pointer("/a/01"), 1), "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
     CHECK_THROWS_WITH_AS(d.set(root, json_editable_view()), "[json.exception.type_error.302] type must be a value, but is discarded", json::type_error&);
     CHECK_THROWS_WITH_AS(d.set(root, json::binary({1, 2})), "[json.exception.type_error.319] cannot store a binary value in a json_document", json::type_error&);
@@ -941,3 +941,123 @@ TEST_CASE("json_view edits: duplicate keys")
         CHECK(d.root()["o"]["d"].get<int>() == 0);
     }
 }
+
+#if !defined(JSON_NOEXCEPTION)
+TEST_CASE("json_view edits: check_utf8 agrees with the byte-wise check")
+{
+    namespace dv = nlohmann::detail::view;
+
+    // "ok" or the exception message
+    const auto run = [](bool fast, const std::string & s) -> std::string
+    {
+        try
+        {
+            if (fast)
+            {
+                dv::check_utf8(s.data(), s.size());
+            }
+            else
+            {
+                dv::check_utf8_bytewise(reinterpret_cast<const unsigned char*>(s.data()), s.size(), 0);
+            }
+        }
+        catch (const json::type_error& e)
+        {
+            return {e.what()};
+        }
+        return {"ok"};
+    };
+    std::size_t errors = 0;
+    const auto same = [&](const std::string & s)
+    {
+        const std::string a = run(true, s);
+        const std::string b = run(false, s);
+        if (a != b)
+        {
+            INFO("fast: " << a << ", byte-wise: " << b << ", length " << s.size());
+            CHECK(a == b);
+        }
+        errors += b != "ok" ? 1u : 0u;
+    };
+
+    const std::vector<std::string> pieces =
+    {
+        "a", "Z", " ", "\"", "\\", "\n", "\x01", "\x7f", "\xc3\xa4", "\xe4\xb8\xad", "\xf0\x9f\x98\x80",
+        "\x80", "\xbf", "\xc0\x80", "\xc1\xbf", "\xc2", "\xe0\x80\x80", "\xe0\x9f\xbf", "\xed\xa0\x80", "\xed\xbf\xbf",
+        "\xf0\x80\x80\x80", "\xf0\x8f\xbf\xbf", "\xf4\x90\x80\x80", "\xf4\x8f\xbf\xbf", "\xf5", "\xf8", "\xff", "\xfe",
+        "\xe4\xb8", "\xf0\x9f\x98", "\xf0\x9f", "\xf0"
+    };
+
+    // every piece behind prefixes of every length, and followed by more bytes
+    for (std::size_t prefix = 0; prefix <= 64; ++prefix)
+    {
+        for (const auto& piece : pieces)
+        {
+            same(std::string(prefix, 'x') + piece);
+            same(std::string(prefix, 'x') + piece + "yz");
+            same(std::string(prefix, '"') + piece);
+            same(std::string(prefix, '\xc3') + piece);
+            same(std::string(prefix / 2, '\xc3').append(prefix / 2, '\xa4') + piece);
+            same(std::string(prefix, 'x') + "\xe4\xb8\xad" + piece);
+        }
+    }
+    // an invalid byte at every position of valid strings of every length
+    for (std::size_t len = 0; len <= 64; ++len)
+    {
+        const std::string ascii(len, 'a');
+        std::string mixed;
+        while (mixed.size() < len)
+        {
+            if (mixed.size() % 7 == 0)
+            {
+                mixed += "\xc3\xa4";
+            }
+            else if (mixed.size() % 11 == 0)
+            {
+                mixed += "\xf0\x9f\x98\x80";
+            }
+            else
+            {
+                mixed += "a";
+            }
+        }
+        same(ascii);
+        same(mixed);
+        for (std::size_t pos = 0; pos < len; ++pos)
+        {
+            for (const char bad :
+                    {'\x80', '\xc0', '\xc2', '\xe0', '\xf4', '\xff', '"', '\\', '\x1f'
+                    })
+            {
+                std::string s = ascii;
+                s[pos] = bad;
+                same(s);
+                s = mixed;
+                s[pos] = bad;
+                same(s);
+            }
+        }
+    }
+    // random bytes, biased to the interesting ones
+    std::mt19937 gen(5869); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+    static const std::array<unsigned char, 23> interesting = {{0x00, 0x1f, 0x22, 0x5c, 0x7f, 0x80, 0x8f, 0x90, 0x9f, 0xa0, 0xbf, 0xc0, 0xc2, 0xdf, 0xe0, 0xe1, 0xed, 0xef, 0xf0, 0xf1, 0xf4, 0xf5, 0xff}};
+    for (int i = 0; i < 100000; ++i)
+    {
+        std::string s(gen() % 80, 'a');
+        for (auto& c : s)
+        {
+            const unsigned r = gen() % 8;
+            if (r == 0)
+            {
+                c = static_cast<char>(gen() & 0xff);
+            }
+            else if (r == 1)
+            {
+                c = static_cast<char>(interesting[gen() % interesting.size()]);
+            }
+        }
+        same(s);
+    }
+    CHECK(errors > 1000);
+}
+#endif

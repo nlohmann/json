@@ -1,0 +1,30 @@
+<svg class="nj-fig nj-charts nj-charts--sizes" viewBox="0 0 340 220" role="img" aria-labelledby="nj-charts-bs-twitter nj-charts-bs-twitter-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-charts-bs-twitter">Size of twitter.json in each binary format relative to minified J&#8203;SON</title>
+<desc id="nj-charts-bs-twitter-d">B&#8203;JData 91.1 %; B&#8203;ON8 83.8 %; B&#8203;SON 95.2 %; C&#8203;BOR 86.3 %; MessagePack 86 %; U&#8203;BJSON 91.3 %. Smallest: B&#8203;ON8.</desc>
+<text class="nj-charts-panel" x="8" y="18">twitter.json</text>
+<line class="nj-charts-grid" x1="104" y1="40" x2="104" y2="196"/>
+<text class="nj-charts-tick" x="104" y="211">0 %</text>
+<line class="nj-charts-grid" x1="186.727" y1="40" x2="186.727" y2="196"/>
+<text class="nj-charts-tick" x="186.727" y="211">50 %</text>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="58.5">B&#8203;JData</text>
+<path class="nj-charts-c1 nj-charts-dim" d="M104 46 H250.729 Q254.729 46 254.729 50 V58 Q254.729 62 250.729 62 H104 Z"><title>twitter.json, B&#8203;JData: 91.1 % of minified J&#8203;SON</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt nj-charts-best" x="96" y="84.5">B&#8203;ON8</text>
+<path class="nj-charts-c2" d="M104 72 H238.651 Q242.651 72 242.651 76 V84 Q242.651 88 238.651 88 H104 Z"><title>twitter.json, B&#8203;ON8: 83.8 % of minified J&#8203;SON (smallest)</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="110.5">B&#8203;SON</text>
+<path class="nj-charts-c3 nj-charts-dim" d="M104 98 H257.513 Q261.513 98 261.513 102 V110 Q261.513 114 257.513 114 H104 Z"><title>twitter.json, B&#8203;SON: 95.2 % of minified J&#8203;SON</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="136.5">C&#8203;BOR</text>
+<path class="nj-charts-c4 nj-charts-dim" d="M104 124 H242.787 Q246.787 124 246.787 128 V136 Q246.787 140 242.787 140 H104 Z"><title>twitter.json, C&#8203;BOR: 86.3 % of minified J&#8203;SON</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="162.5">MessagePack</text>
+<path class="nj-charts-c5 nj-charts-dim" d="M104 150 H242.291 Q246.291 150 246.291 154 V162 Q246.291 166 242.291 166 H104 Z"><title>twitter.json, MessagePack: 86 % of minified J&#8203;SON</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="188.5">U&#8203;BJSON</text>
+<path class="nj-charts-c6 nj-charts-dim" d="M104 176 H251.06 Q255.06 176 255.06 180 V188 Q255.06 192 251.06 192 H104 Z"><title>twitter.json, U&#8203;BJSON: 91.3 % of minified J&#8203;SON</title></path>
+<line class="nj-charts-ref" x1="269.455" y1="36" x2="269.455" y2="196"/>
+<text class="nj-charts-tick nj-charts-tick--r" x="271.455" y="32">minified J&#8203;SON = 100 %</text>
+<text class="nj-charts-tick" x="269.455" y="211">100 %</text>
+<text class="nj-charts-val" x="259.729" y="58.5">91.1 %</text>
+<text class="nj-charts-val nj-charts-best" x="247.651" y="84.5">83.8 %</text>
+<text class="nj-charts-val" x="266.513" y="110.5">95.2 %</text>
+<text class="nj-charts-val" x="251.787" y="136.5">86.3 %</text>
+<text class="nj-charts-val" x="251.291" y="162.5">86.0 %</text>
+<text class="nj-charts-val" x="260.06" y="188.5">91.3 %</text>
+</svg>

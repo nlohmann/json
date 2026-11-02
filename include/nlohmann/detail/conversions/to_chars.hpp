@@ -19,6 +19,11 @@
 #include <type_traits> // conditional
 
 
+// The shortest-digit conversion of doubles (see zmij.hpp) and the writing of
+// its digits, including the conversion of the digits to text by Xiang JunBo
+// and the SIMD instruction sequence by Dougall Johnson, are ported from Zmij
+// by Victor Zverovich (https://github.com/vitaut/zmij, MIT license).
+//
 // SSE2 (every x86-64 CPU) and NEON (every 64-bit Arm CPU) convert the 16
 // digits of a double at once (unless JSON_NO_SIMD selects the portable code)
 #if !defined(JSON_NO_SIMD) && (defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC)))

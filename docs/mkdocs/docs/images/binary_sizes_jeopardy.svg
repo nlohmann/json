@@ -1,0 +1,30 @@
+<svg class="nj-fig nj-charts nj-charts--sizes" viewBox="0 0 340 220" role="img" aria-labelledby="nj-charts-bs-jeopardy nj-charts-bs-jeopardy-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-charts-bs-jeopardy">Size of jeopardy.json in each binary format relative to minified J&#8203;SON</title>
+<desc id="nj-charts-bs-jeopardy-d">B&#8203;JData 96.6 %; B&#8203;ON8 87.5 %; B&#8203;SON 106.7 %; C&#8203;BOR 88 %; MessagePack 87.9 %; U&#8203;BJSON 96.6 %. Smallest: B&#8203;ON8.</desc>
+<text class="nj-charts-panel" x="8" y="18">jeopardy.json</text>
+<line class="nj-charts-grid" x1="104" y1="40" x2="104" y2="196"/>
+<text class="nj-charts-tick" x="104" y="211">0 %</text>
+<line class="nj-charts-grid" x1="186.727" y1="40" x2="186.727" y2="196"/>
+<text class="nj-charts-tick" x="186.727" y="211">50 %</text>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="58.5">B&#8203;JData</text>
+<path class="nj-charts-c1 nj-charts-dim" d="M104 46 H259.829 Q263.829 46 263.829 50 V58 Q263.829 62 259.829 62 H104 Z"><title>jeopardy.json, B&#8203;JData: 96.6 % of minified J&#8203;SON</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt nj-charts-best" x="96" y="84.5">B&#8203;ON8</text>
+<path class="nj-charts-c2" d="M104 72 H244.773 Q248.773 72 248.773 76 V84 Q248.773 88 244.773 88 H104 Z"><title>jeopardy.json, B&#8203;ON8: 87.5 % of minified J&#8203;SON (smallest)</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="110.5">B&#8203;SON</text>
+<path class="nj-charts-c3 nj-charts-dim" d="M104 98 H276.54 Q280.54 98 280.54 102 V110 Q280.54 114 276.54 114 H104 Z"><title>jeopardy.json, B&#8203;SON: 106.7 % of minified J&#8203;SON</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="136.5">C&#8203;BOR</text>
+<path class="nj-charts-c4 nj-charts-dim" d="M104 124 H245.6 Q249.6 124 249.6 128 V136 Q249.6 140 245.6 140 H104 Z"><title>jeopardy.json, C&#8203;BOR: 88 % of minified J&#8203;SON</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="162.5">MessagePack</text>
+<path class="nj-charts-c5 nj-charts-dim" d="M104 150 H245.435 Q249.435 150 249.435 154 V162 Q249.435 166 245.435 166 H104 Z"><title>jeopardy.json, MessagePack: 87.9 % of minified J&#8203;SON</title></path>
+<text class="nj-charts-rowlabel nj-charts-fmt" x="96" y="188.5">U&#8203;BJSON</text>
+<path class="nj-charts-c6 nj-charts-dim" d="M104 176 H259.829 Q263.829 176 263.829 180 V188 Q263.829 192 259.829 192 H104 Z"><title>jeopardy.json, U&#8203;BJSON: 96.6 % of minified J&#8203;SON</title></path>
+<line class="nj-charts-ref" x1="269.455" y1="36" x2="269.455" y2="196"/>
+<text class="nj-charts-tick nj-charts-tick--r" x="271.455" y="32">minified J&#8203;SON = 100 %</text>
+<text class="nj-charts-tick" x="269.455" y="211">100 %</text>
+<text class="nj-charts-val" x="268.829" y="58.5">96.6 %</text>
+<text class="nj-charts-val nj-charts-best" x="253.773" y="84.5">87.5 %</text>
+<text class="nj-charts-val" x="285.54" y="110.5">106.7 %</text>
+<text class="nj-charts-val" x="254.6" y="136.5">88.0 %</text>
+<text class="nj-charts-val" x="254.435" y="162.5">87.9 %</text>
+<text class="nj-charts-val" x="268.829" y="188.5">96.6 %</text>
+</svg>

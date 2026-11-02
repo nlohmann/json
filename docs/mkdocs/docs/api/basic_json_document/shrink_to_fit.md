@@ -23,6 +23,10 @@ Linear in [`node_count()`](node_count.md) plus the length of the decoded strings
 
 ## Notes
 
+The node index of a small document (an estimate of up to 1024 nodes, which is up to about 4 KiB of minified text) is
+allocated together with the document's header, so that parsing needs one allocation. That part cannot be released
+separately: `shrink_to_fit()` only trims a node index that has its own allocation, and the decoded strings.
+
 !!! warning "Invalidates views"
 
     Unlike moving the document, `shrink_to_fit()` **invalidates every view taken from this document before the
@@ -49,9 +53,10 @@ possible would be an internal optimization only, not a guarantee to rely on.
 
 ## See also
 
-- [node_count](node_count.md) - the number of index entries
-- [memory_usage](memory_usage.md) - the number of bytes held by the document
-- [root](root.md) - the view of the root value
+- [`node_count`](node_count.md) - the number of index entries
+- [`memory_usage`](memory_usage.md) - the number of bytes held by the document
+- [`root`](root.md) - the view of the root value
+- [Zero-copy JSON views](../../features/json_view.md#ownership-and-lifetime) - what releasing memory invalidates
 
 ## Version history
 

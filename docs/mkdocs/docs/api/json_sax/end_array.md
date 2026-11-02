@@ -28,8 +28,9 @@ Whether parsing should proceed.
 
 ## See also
 
-- [start_array](start_array.md) - the beginning of an array was read
-- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [`start_array`](start_array.md) - the beginning of an array was read
+- [`sax_parse`](../basic_json/sax_parse.md) - SAX parser
+- [SAX Interface](../../features/parsing/sax_interface.md) - guide to event-based parsing
 
 ## Version history
 

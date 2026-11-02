@@ -26,11 +26,14 @@ using nlohmann::ordered_json;
 #include <limits>
 #include <iostream>
 #include <fstream>
+#include <list>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "sax_event_loggers.hpp"
 using utils::SaxCountdown;
+using utils::SaxEventLogger;
 
 
 // trait_test_arg and the "value_in_range_of trait" TEST_CASE_TEMPLATE_DEFINE
@@ -2916,6 +2919,35 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(out_single_ok) == json({{"_ArrayType_", "single"}, {"_ArraySize_", {2, 1}}, {"_ArrayData_", {1.5f, -1.5f}}}));
             }
 
+            SECTION("ndarray with _ArrayType_ \"char\" is limited to 0..127")
+            {
+                // both BJData drafts limit a char to 0..127; larger values must not
+                // be written as 'C' elements (the reader rejects them), so such an
+                // object stays a plain object that round-trips
+                for (const auto version :
+                        {
+                            json::bjdata_version_t::draft2, json::bjdata_version_t::draft3
+                        })
+                {
+                    json const j_ok = json({{"_ArrayType_", "char"}, {"_ArraySize_", {2, 2}}, {"_ArrayData_", {0, 97, 98, 127}}});
+                    const auto out_ok = json::to_bjdata(j_ok, true, true, version);
+                    CHECK(out_ok == std::vector<uint8_t>({'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 2, 2, 0, 97, 98, 127}));
+                    CHECK(json::from_bjdata(out_ok) == j_ok);
+
+                    for (const int bad :
+                            {
+                                128, 200, 255, 256, -1
+                            })
+                    {
+                        CAPTURE(bad)
+                        json const j_bad = json({{"_ArrayType_", "char"}, {"_ArraySize_", {2, 2}}, {"_ArrayData_", {97, 98, 99, bad}}});
+                        const auto out_bad = json::to_bjdata(j_bad, true, true, version);
+                        CHECK(out_bad.at(0) == '{');
+                        CHECK(json::from_bjdata(out_bad) == j_bad);
+                    }
+                }
+            }
+
             SECTION("ndarray annotation keys are read back in the documented order")
             {
                 // from_bjdata() must emit the annotation object's keys in the order
@@ -3134,7 +3166,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v1 = {'[', '#', 'i', 0xF1};
                 std::vector<uint8_t> const v2 = {'[', '$', 'I', '#', 'i', 0xF2};
                 std::vector<uint8_t> const v3 = {'[', '$', 'I', '#', '[', 'i', 0xF4, 'i', 0x02, ']'};
-                std::vector<uint8_t> const v4 = {'[', '$', 0xF6, '#', 'i', 0xF7};
+                std::vector<uint8_t> const v4 = {'[', '$', 'l', '#', 'i', 0xF7};
                 std::vector<uint8_t> const v5 = {'[', '$', 'I', '#', '[', 'i', 0xF5, 'i', 0xF1, ']'};
                 std::vector<uint8_t> const v6 = {'[', '#', '[', 'i', 0xF3, 'i', 0x02, ']'};
 
@@ -3324,6 +3356,44 @@ TEST_CASE("BJData")
                 }
             }
 
+            SECTION("ndarray of half-precision floats can be read")
+            {
+                // the 'h' element type is read as _ArrayType_ "half"
+                json _;
+                const std::vector<uint8_t> half = {'[', '$', 'h', '#', '[', '$', 'U', '#', 'U', 2, 2, 2, 0x00, 0x3C, 0x00, 0x40, 0x00, 0x42, 0x00, 0x44};
+                const json j_half = json::parse(R"({"_ArrayType_":"half","_ArraySize_":[2,2],"_ArrayData_":[1.0,2.0,3.0,4.0]})");
+                CHECK(json::from_bjdata(half) == j_half);
+
+                // the writer does not pack "half": it writes a plain object that reads back equal
+                CHECK(json::from_bjdata(json::to_bjdata(j_half)) == j_half);
+                CHECK(json::from_bjdata(json::to_bjdata(j_half, true, true, json::bjdata_version_t::draft3)) == j_half);
+
+                // truncated half data
+                CHECK_THROWS_AS(_ = json::from_bjdata(std::vector<uint8_t>(half.begin(), half.end() - 1)), json::parse_error&);
+            }
+
+            SECTION("ndarray of char rejects values above 127")
+            {
+                json _;
+                const std::vector<uint8_t> ok = {'[', '$', 'C', '#', '[', '$', 'U', '#', 'U', 2, 2, 2, 'a', 'b', 'c', 0x7F};
+                CHECK(json::from_bjdata(ok) == json::parse(R"({"_ArrayType_":"char","_ArraySize_":[2,2],"_ArrayData_":[97,98,99,127]})"));
+
+                std::vector<uint8_t> bad = ok;
+                bad.back() = 0xC8;
+                CHECK_THROWS_AS(_ = json::from_bjdata(bad), json::parse_error&);
+                CHECK(json::from_bjdata(bad, true, false).is_discarded());
+
+                // the same restriction holds for 1-D arrays
+                CHECK_THROWS_AS(_ = json::from_bjdata(std::vector<uint8_t>({'[', '$', 'C', '#', 'i', 1, 0xC8})), json::parse_error&);
+
+                // truncated input
+                CHECK_THROWS_AS(_ = json::from_bjdata(std::vector<uint8_t>(ok.begin(), ok.end() - 1)), json::parse_error&);
+
+                // 'B' (byte) elements may use the full range
+                const std::vector<uint8_t> byte_nd = {'[', '$', 'B', '#', '[', '$', 'U', '#', 'U', 2, 2, 2, 1, 2, 3, 0xC8};
+                CHECK(json::from_bjdata(byte_nd) == json::parse(R"({"_ArrayType_":"byte","_ArraySize_":[2,2],"_ArrayData_":[1,2,3,200]})"));
+            }
+
             SECTION("do not accept NTFZ markers in ndarray optimized type (with count)")
             {
                 json _;
@@ -3455,7 +3525,7 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(v0, true, false).is_discarded());
 
             std::vector<uint8_t> const vi = {'[', '$', '#'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vi), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x23 is not a permitted optimized array type", json::parse_error&);
             CHECK(json::from_bjdata(vi, true, false).is_discarded());
 
             std::vector<uint8_t> const vU = {'[', '$', 'U'};
@@ -4620,5 +4690,136 @@ TEST_CASE("BJData large strings and binaries (chunked reader)")
             json _;
             CHECK_THROWS_AS(_ = json::from_bjdata(truncated), json::parse_error);
         }
+    }
+}
+
+TEST_CASE("BJData optimized container type marker is validated for count 0")
+{
+    // the '$' type marker must be a legal marker even if no element follows
+    SECTION("invalid marker")
+    {
+        // 'Z', 'T', 'F', 'N', 'S', 'H', '[' and '{' are excluded in BJData
+        for (const char marker :
+                {'x', 'E', 'Z', 'T', 'F', 'N', 'S', 'H', '[', '{'
+                })
+        {
+            for (const char open :
+                    {'[', '{'
+                    })
+            {
+                for (const int count :
+                        {
+                            0, 1
+                        })
+                {
+                    CAPTURE(marker)
+                    CAPTURE(open)
+                    CAPTURE(count)
+                    const std::vector<std::uint8_t> v = {static_cast<std::uint8_t>(open), '$', static_cast<std::uint8_t>(marker), '#', 'i', static_cast<std::uint8_t>(count)};
+                    json _;
+                    CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
+                    CHECK(json::from_bjdata(v, true, false).is_discarded());
+                }
+            }
+        }
+    }
+
+    SECTION("error message")
+    {
+        const std::vector<std::uint8_t> v = {'[', '$', 'x', '#', 'i', 0};
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x78 is not a permitted optimized array type", json::parse_error&);
+    }
+
+    SECTION("valid marker")
+    {
+        for (const char marker :
+                {'i', 'U', 'I', 'u', 'l', 'm', 'L', 'M', 'h', 'd', 'D', 'C'
+                })
+        {
+            CAPTURE(marker)
+            const std::vector<std::uint8_t> va = {'[', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};
+            const std::vector<std::uint8_t> vo = {'{', '$', static_cast<std::uint8_t>(marker), '#', 'i', 0};
+            CHECK(json::from_bjdata(va) == json::array());
+            CHECK(json::from_bjdata(vo) == json::object());
+        }
+
+        // an optimized array of bytes is read as a binary value
+        const std::vector<std::uint8_t> vb = {'[', '$', 'B', '#', 'i', 0};
+        CHECK(json::from_bjdata(vb) == json::binary({}));
+    }
+}
+
+TEST_CASE("BJData optimized arrays from contiguous and non-contiguous input")
+{
+    // contiguous input reads the numbers of an array with a type marker in
+    // one loop, other input number by number; both must give the same events,
+    // value, or error for the complete document and for every truncation of
+    // it, and stop at every event a SAX handler rejects
+    json document =
+    {
+        {"u8", {0, 200, 255}},
+        {"i8", {-5, 100, -128}},
+        {"i16", {-30000, 1000, 30000}},
+        {"i32", {-2000000000, 5, 70000}},
+        {"i64", {-9000000000000000000LL, 1, 5000000000LL}},
+        {"f64", {1.5, -0.1, 2.5}},
+        {"pairs", {{1.25, -3.75}, {1.25, -3.75}, json::array()}},
+        {"mixed", {1, "a", 2.5, nullptr}},
+        {"u16", {40000, 1, 65535}},
+        {"u32", {4000000000U, 1, 70000}},
+        {"u64", {18446744073709551615ULL, 1, 5000000000ULL}},
+        {"nd", {{"_ArrayType_", "double"}, {"_ArraySize_", {2, 2}}, {"_ArrayData_", {1.5, -2.5, 3.5, -4.5}}}},
+        {"nd8", {{"_ArrayType_", "uint8"}, {"_ArraySize_", {3}}, {"_ArrayData_", {1, 2, 3}}}},
+    };
+    const std::vector<std::uint8_t> encoded = json::to_bjdata(document, true, true);
+    CHECK(json::from_bjdata(encoded) == document);
+
+    for (std::size_t length = 0; length <= encoded.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> contiguous(encoded.begin(), encoded.begin() + static_cast<std::ptrdiff_t>(length));
+        const std::list<std::uint8_t> bytewise(contiguous.begin(), contiguous.end());
+
+        CHECK(json::from_bjdata(contiguous, true, false).dump() == json::from_bjdata(bytewise.begin(), bytewise.end(), true, false).dump());
+#if !defined(JSON_NOEXCEPTION)
+        std::string contiguous_error;
+        std::string bytewise_error;
+        try
+        {
+            json _;
+            _ = json::from_bjdata(contiguous);
+        }
+        catch (const json::exception& e)
+        {
+            contiguous_error = e.what();
+        }
+        try
+        {
+            json _;
+            _ = json::from_bjdata(bytewise.begin(), bytewise.end());
+        }
+        catch (const json::exception& e)
+        {
+            bytewise_error = e.what();
+        }
+        CHECK(contiguous_error == bytewise_error);
+#endif
+
+        SaxEventLogger from_contiguous;
+        SaxEventLogger from_bytewise;
+        CHECK(json::sax_parse(contiguous, &from_contiguous, json::input_format_t::bjdata)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::bjdata));
+        CHECK(from_contiguous.events == from_bytewise.events);
+    }
+
+    for (int events = 0; events <= 80; ++events)
+    {
+        CAPTURE(events)
+        const std::list<std::uint8_t> bytewise(encoded.begin(), encoded.end());
+        SaxCountdown from_contiguous(events);
+        SaxCountdown from_bytewise(events);
+        CHECK(json::sax_parse(encoded, &from_contiguous, json::input_format_t::bjdata)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::bjdata));
     }
 }

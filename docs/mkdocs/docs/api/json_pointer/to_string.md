@@ -44,8 +44,8 @@ ptr == json_pointer(ptr.to_string());
 
 ## See also
 
-- [operator string_t](operator_string_t.md) return a string representation of the JSON pointer (deprecated)
-- [operator<<](../operator_ltlt.md) write a JSON pointer to a stream
+- [`operator string_t`](operator_string_t.md) - return a string representation of the JSON pointer (deprecated)
+- [`operator<<`](../operator_ltlt.md) - write a JSON pointer to a stream
 
 ## Version history
 

@@ -1,0 +1,176 @@
+/* figures: integration */
+
+/* namespace name builder (features/namespace.md, js/fig-integration.js) */
+.md-typeset .nj-integration-ns {
+    --nj-int-line: color-mix(in srgb, currentColor 30%, var(--md-default-bg-color));
+    display: block;
+    width: auto;
+    max-width: none;
+    margin: 1.5rem 0;
+    padding: .9rem 1rem;
+    text-align: left;
+    border: 1px solid var(--nj-int-line);
+    border-radius: 8px;
+}
+.md-typeset .nj-integration-ns__strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem .15rem;
+}
+.md-typeset .nj-integration-ns__seg {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+}
+.md-typeset .nj-integration-ns__seg code {
+    padding: .25em .5em;
+    border: 1.5px solid var(--nj-int-line);
+    border-radius: 6px;
+    background: var(--md-default-bg-color);
+    color: var(--md-default-fg-color);
+    font-size: .8rem;
+    font-weight: 600;
+    word-break: normal;
+}
+.md-typeset .nj-integration-ns__seg small {
+    max-width: 10rem;
+    margin-top: .25rem;
+    color: var(--md-default-fg-color--light);
+    font-size: .58rem;
+    line-height: 1.25;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+.md-typeset .nj-integration-ns__seg--sep code {
+    border-color: transparent;
+    padding-inline: .1em;
+}
+.md-typeset .nj-integration-ns__seg--abi code {
+    border-color: var(--md-typeset-a-color);
+    background: color-mix(in srgb, var(--md-typeset-a-color) 12%, var(--md-default-bg-color));
+    color: var(--md-typeset-a-color);
+}
+.md-typeset .nj-integration-ns__seg--tag code {
+    border-style: dashed;
+    border-color: var(--md-typeset-a-color);
+    color: var(--md-typeset-a-color);
+}
+.md-typeset .nj-integration-ns__seg--ver code {
+    background: color-mix(in srgb, currentColor 8%, var(--md-default-bg-color));
+}
+.md-typeset .nj-integration-ns figcaption {
+    max-width: none;
+    margin: .8rem 0 0;
+    font-size: .75rem;
+    text-align: left;
+    color: var(--md-default-fg-color--light);
+}
+.md-typeset .nj-integration-ns__controls {
+    margin-top: 1rem;
+    padding-top: .8rem;
+    border-top: 1px solid var(--nj-int-line);
+    font-size: .7rem;
+}
+.md-typeset .nj-integration-ns__version select {
+    min-height: 2rem;
+    margin-left: .3rem;
+    padding: 0 .4rem;
+    border: 1px solid var(--nj-int-line);
+    border-radius: 6px;
+    background: var(--md-default-bg-color);
+    color: var(--md-default-fg-color);
+    font: inherit;
+}
+.md-typeset .nj-integration-ns__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
+    gap: 0 1rem;
+    margin: .7rem 0 0;
+    padding: 0;
+    border: 0;
+}
+.md-typeset .nj-integration-ns__list legend {
+    padding: 0;
+    margin-bottom: .3rem;
+    font-weight: 600;
+}
+.md-typeset .nj-integration-ns__opt {
+    display: grid;
+    grid-template-columns: 1.1rem 1fr;
+    align-items: center;
+    gap: 0 .55rem;
+    min-height: 2.2rem;
+    padding: .15rem 0;
+    cursor: pointer;
+}
+.md-typeset .nj-integration-ns__meta {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 .45rem;
+}
+.md-typeset .nj-integration-ns__opt input {
+    grid-row: 1 / span 2;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
+    accent-color: var(--md-typeset-a-color);
+}
+.md-typeset .nj-integration-ns__opt input:focus-visible {
+    outline: 2px solid var(--md-accent-fg-color);
+    outline-offset: 2px;
+}
+.md-typeset .nj-integration-ns__opt code {
+    font-size: .64rem;
+    overflow-wrap: anywhere;
+}
+.md-typeset .nj-integration-ns__hint {
+    color: var(--md-typeset-a-color);
+    font-family: var(--md-code-font-family);
+    font-size: .64rem;
+}
+.md-typeset .nj-integration-ns__since {
+    color: var(--md-default-fg-color--light);
+    font-size: .6rem;
+}
+.md-typeset .nj-integration-ns__opt.is-unavailable {
+    cursor: not-allowed;
+    opacity: .5;
+}
+@media screen and (max-width: 44.984375em) {
+    .md-typeset .nj-integration-ns__opt {
+        min-height: 2.75rem;
+    }
+}
+
+/* roadmap lanes and release timeline (scripts/figures/integration.py, release_timeline.py) */
+.md-typeset svg.nj-fig--lanes { min-width: 44rem; max-width: 46rem; }
+.md-typeset svg.nj-fig--timeline { min-width: 44rem; max-width: 52rem; }
+.nj-fig .nj-int-lane { fill: color-mix(in srgb, var(--md-typeset-a-color) 10%, var(--md-default-bg-color)); stroke: var(--md-typeset-a-color); stroke-width: 1.5; }
+.nj-fig .nj-int-lane--future { fill: none; stroke-dasharray: 6 4; }
+.nj-fig .nj-int-lanetext { fill: var(--md-typeset-a-color); font-size: 15px; font-weight: 700; }
+.nj-fig .nj-int-text { fill: currentColor; font-size: 13px; }
+.nj-fig .nj-int-mute { fill: currentColor; fill-opacity: .7; font-size: 12.5px; }
+.nj-fig .nj-int-macro { fill: currentColor; font-family: var(--md-code-font-family), monospace; font-size: 12.5px; }
+.nj-fig .nj-int-val { fill: currentColor; font-family: var(--md-code-font-family), monospace; font-size: 13px; font-weight: 600; }
+.nj-fig .nj-int-row { fill: color-mix(in srgb, currentColor 4%, var(--md-default-bg-color)); }
+.nj-fig .nj-int-track { fill: color-mix(in srgb, currentColor 14%, var(--md-default-bg-color)); stroke: color-mix(in srgb, currentColor 45%, var(--md-default-bg-color)); stroke-width: 1.2; }
+.nj-fig .nj-int-track--on { fill: var(--md-typeset-a-color); stroke: var(--md-typeset-a-color); }
+.nj-fig .nj-int-knob { fill: var(--md-default-bg-color); stroke: color-mix(in srgb, currentColor 45%, var(--md-default-bg-color)); stroke-width: 1.2; }
+.nj-fig .nj-int-knob--on { stroke: var(--md-typeset-a-color); }
+.nj-fig .nj-int-axis { stroke: color-mix(in srgb, currentColor 45%, var(--md-default-bg-color)); stroke-width: 1.5; }
+.nj-fig .nj-int-grid { stroke: color-mix(in srgb, currentColor 14%, var(--md-default-bg-color)); stroke-width: 1; }
+.nj-fig .nj-int-minor { fill: var(--md-typeset-a-color); stroke: var(--md-default-bg-color); stroke-width: 1.5; }
+.nj-fig .nj-int-patch { fill: var(--md-default-bg-color); stroke: var(--md-typeset-a-color); stroke-width: 1.5; }
+.nj-fig .nj-int-major { fill: currentColor; fill-opacity: .7; font-size: 13px; font-weight: 600; }
+.nj-fig .nj-int-label { fill: currentColor; font-size: 12px; font-weight: 600; text-anchor: middle; }
+.nj-fig .nj-int-year { fill: currentColor; fill-opacity: .7; font-size: 12px; text-anchor: middle; }
+.nj-fig .nj-int-leader { stroke: color-mix(in srgb, currentColor 30%, var(--md-default-bg-color)); stroke-width: 1; }
+.nj-fig .nj-int-hit { fill: transparent; }
+
+/* roadmap: value pills (3.x default -> 4.0 value) */
+.nj-fig .nj-int-pill { fill: color-mix(in srgb, currentColor 8%, var(--md-default-bg-color)); stroke: color-mix(in srgb, currentColor 35%, var(--md-default-bg-color)); stroke-width: 1.2; }
+.nj-fig .nj-int-pill--v4 { fill: var(--md-typeset-a-color); stroke: var(--md-typeset-a-color); }
+.nj-fig .nj-int-val--v4 { fill: var(--md-default-bg-color); }

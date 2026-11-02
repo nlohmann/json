@@ -1,0 +1,803 @@
+/* nlohmann/json brand for Material for MkDocs (values from brand/kit/tokens.css) */
+
+@font-face {
+    font-family: "Inter";
+    src: url("fonts/Inter.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Inter";
+    src: url("fonts/Inter-Italic.woff2") format("woff2");
+    font-style: italic;
+    font-weight: 100 900;
+    font-display: swap;
+}
+@font-face {
+    font-family: "JetBrains Mono";
+    src: url("fonts/JetBrainsMono.woff2") format("woff2");
+    font-weight: 100 800;
+    font-display: swap;
+}
+@font-face {
+    font-family: "JetBrains Mono";
+    src: url("fonts/JetBrainsMono-Italic.woff2") format("woff2");
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+}
+
+:root {
+    --md-text-font: "Inter";
+    --md-code-font: "JetBrains Mono";
+}
+
+/* light */
+[data-md-color-scheme="default"] {
+    --nj-blue: #1747a6;
+    --nj-blue-deep: #10357d;
+    --nj-blue-soft: #eaf1fd;
+    --nj-band: #1747a6;
+    --nj-red: #d93a3f;
+    --nj-red-soft: #fdeced;
+    --nj-string: #b4322a;
+    --nj-comment: #646d7a;
+
+    --md-primary-fg-color: var(--nj-band);
+    --md-primary-fg-color--light: #1d55c4;
+    --md-primary-fg-color--dark: #10357d;
+    --md-accent-fg-color: var(--nj-blue-deep);
+    --md-accent-fg-color--transparent: rgba(23, 71, 166, .1);
+    --md-typeset-a-color: var(--nj-blue);
+    --md-default-fg-color: #0f1419;
+    --md-default-fg-color--light: #4a515c;
+    --md-default-fg-color--lighter: #8a919c;
+    --md-default-fg-color--lightest: #e3e6eb;
+    --md-typeset-color: #0f1419;
+    --md-code-bg-color: #f5f7fa;
+    --md-code-fg-color: #0f1419;
+}
+
+/* dark */
+[data-md-color-scheme="slate"] {
+    --nj-blue: #7aa7f5;
+    --nj-blue-deep: #a9c6f8;
+    --nj-blue-soft: #16233b;
+    --nj-band: #173e8c;
+    --nj-red: #f06a6e;
+    --nj-red-soft: #3a1c1e;
+    --nj-string: #f08a7e;
+    --nj-comment: #8b929e;
+
+    --md-hue: 220;
+    --md-primary-fg-color: var(--nj-band);
+    --md-primary-fg-color--light: #163f93;
+    --md-primary-fg-color--dark: #0c2556;
+    --md-accent-fg-color: var(--nj-blue-deep);
+    --md-accent-fg-color--transparent: rgba(122, 167, 245, .12);
+    --md-typeset-a-color: var(--nj-blue);
+    --md-default-bg-color: #0f1218;
+    --md-default-fg-color: #f2f4f7;
+    --md-default-fg-color--light: #b3b9c4;
+    --md-default-fg-color--lighter: #7b828e;
+    --md-default-fg-color--lightest: #272c36;
+    --md-typeset-color: #f2f4f7;
+    --md-code-bg-color: #171b23;
+    --md-code-fg-color: #f2f4f7;
+    --md-footer-bg-color: #0b0e13;
+    --md-footer-bg-color--dark: #08090d;
+}
+
+/* syntax colours (all at least 4.5:1 on the code panel in both schemes) */
+[data-md-color-scheme="default"] {
+    --nj-hl-keyword: #1747a6;
+    --nj-hl-type: #0d6e72;
+    --nj-hl-function: #6b3fb8;
+    --nj-hl-string: #23793a;
+    --nj-hl-escape: #0f5d2a;
+    --nj-hl-key: #10357d;
+    --nj-hl-number: #b04a07;
+    --nj-hl-preproc: #a3247a;
+}
+[data-md-color-scheme="slate"] {
+    --nj-hl-keyword: #7aa7f5;
+    --nj-hl-type: #4fd1c5;
+    --nj-hl-function: #c4a3ff;
+    --nj-hl-string: #7ed491;
+    --nj-hl-escape: #b2ecc0;
+    --nj-hl-key: #a9c6f8;
+    --nj-hl-number: #f5a65b;
+    --nj-hl-preproc: #f48fc8;
+}
+.md-typeset .highlight :is(.k, .kd, .kn, .kr, .kp, .kv, .ow) { color: var(--nj-hl-keyword); font-weight: 600; }
+.md-typeset .highlight :is(.kt, .nc, .nn, .na) { color: var(--nj-hl-type); }
+.md-typeset .highlight :is(.nf, .fm, .nb, .bp) { color: var(--nj-hl-function); }
+.md-typeset .highlight :is(.s, .s1, .s2, .sb, .sc, .sd, .sh, .sx, .sr, .ss, .sa, .dl, .cpf) { color: var(--nj-hl-string); }
+.md-typeset .highlight :is(.se, .si) { color: var(--nj-hl-escape); font-weight: 600; }
+.md-typeset .highlight .nt { color: var(--nj-hl-key); }
+.md-typeset .highlight :is(.m, .mi, .mf, .mh, .mo, .mb, .il, .kc) { color: var(--nj-hl-number); }
+.md-typeset .highlight .kc { font-weight: 500; }
+.md-typeset .highlight .cp { color: var(--nj-hl-preproc); }
+.md-typeset .highlight :is(.c, .c1, .cm, .ch, .cs) { color: var(--nj-comment); font-style: italic; }
+.md-typeset .highlight :is(.o, .p) { color: var(--md-default-fg-color--light); }
+.md-typeset .highlight :is(.n, .nx, .nv, .no, .ni, .nl, .py) { color: var(--md-code-fg-color); }
+.md-typeset .highlight .err { color: inherit; background: none; }
+
+/* typography: Inter with cv11/ss03, bold headlines with negative tracking */
+body {
+    font-feature-settings: "cv11", "ss03";
+}
+.md-typeset {
+    font-size: .85rem;          /* 17 px body */
+    line-height: 1.65;
+}
+.md-typeset h1 {
+    color: var(--md-typeset-color);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.1;
+}
+.md-typeset h2 {
+    font-weight: 800;
+    letter-spacing: -.025em;
+    line-height: 1.15;
+}
+.md-typeset h3 {
+    font-weight: 700;
+    letter-spacing: -.015em;
+}
+.md-typeset table:not([class]) {
+    font-variant-numeric: tabular-nums;
+}
+
+/* header and tabs: one blue band with the faint syntax pattern; wordmark instead of the site name.
+   A veil over the tile keeps the glyphs from running through the navigation text; the hero shows the pattern at full strength. */
+.md-header, .md-tabs {
+    --nj-veil: linear-gradient(color-mix(in srgb, var(--md-primary-fg-color) 62%, transparent), color-mix(in srgb, var(--md-primary-fg-color) 62%, transparent));
+    background-color: var(--md-primary-fg-color);
+    background-image: var(--nj-veil), url("pattern-on-blue.svg");
+    background-size: auto, 160px 160px;
+    background-position: 0 0, 0 0;
+}
+.md-tabs {
+    background-position: 0 0, 0 -48px;     /* continue the header's tile */
+}
+.md-header__button.md-logo img {
+    width: auto;
+    height: 1.5rem;
+}
+.md-header__topic:first-child .md-ellipsis {   /* the wordmark replaces the site name at every width */
+    display: none;
+}
+@media screen and (max-width: 76.234375em) {   /* Material hides the header logo here: show the wordmark on phones, too */
+    .md-header__button.md-logo {
+        display: block;
+        margin: 0 0 0 .2rem;
+        padding: .4rem .2rem;
+    }
+    .md-header__button[for="__drawer"] {
+        order: -1;
+    }
+}
+.md-nav__button.md-logo img {
+    width: auto;
+    height: 1.4rem;
+}
+
+/* shapes: 6 px corners on blocks, 4 px on inline code */
+.md-typeset pre > code, .md-typeset .highlight, .md-typeset .highlighttable,
+.md-typeset .admonition, .md-typeset details, .md-typeset .tabbed-set,
+.md-typeset .grid.cards > ul > li, .md-typeset .md-button {
+    border-radius: 6px;
+}
+.md-typeset code {
+    border-radius: 4px;
+}
+
+/* inline code: the font alone marks it, no grey box; linked code keeps the link colour */
+.md-typeset :not(pre) > code {
+    padding: 0;
+    background-color: transparent;
+    box-shadow: none;
+    color: inherit;
+    font-size: .88em;
+}
+.md-typeset .highlight pre > code, .md-typeset .highlighttable {
+    border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* callouts: 3 px left border; note/info/tip in blue on blue-soft, danger/bug in red on red-soft */
+.md-typeset .admonition, .md-typeset details {
+    border-width: 0 0 0 3px;
+    box-shadow: none;
+    font-size: .8rem;
+}
+.md-typeset :is(.admonition, details):is(.note, .info, .tip, .abstract, .example, .question) {
+    border-color: var(--nj-blue);
+    background-color: var(--nj-blue-soft);
+}
+.md-typeset :is(.note, .info, .tip, .abstract, .example, .question) > :is(.admonition-title, summary) {
+    background-color: transparent;
+}
+.md-typeset :is(.note, .info, .tip, .abstract, .example, .question) > :is(.admonition-title, summary)::before {
+    background-color: var(--nj-blue);
+}
+.md-typeset :is(.admonition, details):is(.danger, .bug, .failure) {
+    border-color: var(--nj-red);
+    background-color: var(--nj-red-soft);
+}
+.md-typeset :is(.danger, .bug, .failure) > :is(.admonition-title, summary) {
+    background-color: transparent;
+}
+.md-typeset :is(.danger, .bug, .failure) > :is(.admonition-title, summary)::before {
+    background-color: var(--nj-red);
+}
+
+/* buttons */
+.md-typeset .md-button--primary {
+    background-color: var(--nj-blue);
+    border-color: var(--nj-blue);
+}
+
+/* home page hero (overrides/home.html): blue band with the syntax pattern, headline, lead, buttons, code panel */
+.nj-hero {
+    --nj-hero-to: #123a8a;
+    color: #fff;
+    background-color: var(--md-primary-fg-color);
+    background-image: url("pattern-on-blue.svg"), linear-gradient(160deg, var(--md-primary-fg-color), var(--nj-hero-to));
+    background-size: 160px 160px, auto;
+    background-position: 0 -96px, 0 0;        /* continue the tile of header and tabs */
+}
+[data-md-color-scheme="slate"] .nj-hero {
+    --nj-hero-to: #0c2556;
+}
+.nj-hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 2.4rem;
+    align-items: center;
+    padding: 3rem .8rem 3.6rem;
+}
+.nj-hero__kicker {
+    display: inline-block;
+    margin: 0;
+    padding: .15rem .55rem;
+    border: 1px solid rgba(255, 255, 255, .35);
+    border-radius: 4px;
+    color: #bcd3fb;
+    font-family: var(--md-code-font-family);
+    font-size: .65rem;                         /* 13 px */
+    font-weight: 500;
+    letter-spacing: .02em;
+}
+.nj-hero__title {
+    margin: 0 0 .8rem;
+    color: #fff;
+    font-size: clamp(1.7rem, 4.2vw, 3.2rem);   /* 34-64 px */
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -.035em;
+}
+.nj-hero__title span {
+    color: #bcd3fb;
+}
+.nj-hero__lead {
+    max-width: 22em;
+    margin: 0 0 2rem;
+    color: rgba(255, 255, 255, .9);
+    font-size: clamp(1.1rem, 2.2vw, 1.6rem);   /* 22-32 px */
+    font-style: italic;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: -.015em;
+}
+.nj-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin: 0;
+}
+.nj-hero .md-button.nj-hero__button {
+    margin: 0;
+    padding: .55em 1.3em;
+    border: 1px solid rgba(255, 255, 255, .6);
+    border-radius: 6px;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 600;
+}
+.nj-hero .md-button--primary.nj-hero__button {
+    border-color: #fff;
+    background-color: #fff;
+    color: var(--md-primary-fg-color);
+}
+.nj-hero .md-button.nj-hero__button:is(:hover, :focus) {
+    border-color: #fff;
+    background-color: rgba(255, 255, 255, .12);
+    color: #fff;
+}
+.nj-hero .md-button--primary.nj-hero__button:is(:hover, :focus) {
+    background-color: #eaf1fd;
+    color: var(--md-primary-fg-color);
+}
+.nj-hero__code {
+    border-radius: 6px;
+    background-color: var(--md-code-bg-color);
+    box-shadow: 0 12px 32px rgba(5, 18, 48, .35);
+}
+.nj-hero__code pre {
+    margin: 0;
+    padding: 1.1rem 1.3rem;
+    overflow-x: auto;
+    color: var(--md-code-fg-color);
+    font-family: var(--md-code-font-family);
+    font-size: .7rem;                          /* 14 px */
+    line-height: 1.7;
+}
+.nj-hero__code .nj-k { color: var(--nj-hl-type); }
+.nj-hero__code .nj-s { color: var(--nj-hl-string); }
+.nj-hero__code .nj-n { color: var(--nj-hl-number); }
+.nj-hero__code .nj-c { color: var(--nj-comment); font-style: italic; }
+@media screen and (max-width: 59.984375em) {
+    .nj-hero__inner {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.8rem;
+        padding: 2rem .8rem 2.4rem;
+    }
+}
+@media screen and (max-width: 29.984375em) {
+    .nj-hero__code pre {
+        font-size: .6rem;
+    }
+}
+
+/* the hero carries the headline: keep the page's h1 for the title and screen readers only */
+body:has(.nj-hero) .md-content__inner > h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* cards: 1 px line border, 6 px corners, blue icon on soft blue, blue border on hover */
+.md-typeset .grid.cards > ul > li {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    background-color: var(--md-default-bg-color);
+    transition: border-color 150ms, box-shadow 150ms, transform 150ms;
+}
+.md-typeset .grid.cards > ul > li:is(:hover, :focus-within) {
+    border-color: var(--nj-blue);
+    box-shadow: 0 6px 18px rgba(23, 71, 166, .12);
+    transform: translateY(-1px);
+}
+.md-typeset .grid.cards > ul > li > hr {
+    display: none;
+}
+.md-typeset .grid.cards .twemoji.lg {
+    box-sizing: content-box;
+    margin-right: .5rem;
+    padding: .3rem;
+    border-radius: 6px;
+    background-color: var(--nj-blue-soft);
+    color: var(--nj-blue);
+}
+.md-typeset .grid.cards > ul > li > p:first-child strong {
+    font-size: .9rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+}
+.md-typeset .grid.cards > ul > li > p:last-child a {
+    font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+    .md-typeset .grid.cards > ul > li { transition: none; transform: none !important; }
+}
+
+/* home page: no table of contents, so keep the text at reading width and the cards in three columns */
+body:has(.nj-hero) .md-content {
+    max-width: 58rem;
+    margin: 0 auto;
+}
+@media screen and (min-width: 60em) {
+    body:has(.nj-hero) .md-typeset .grid.cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* lists: Material's indent, bullets as small blue squares, numbers in the secondary text colour */
+.md-typeset ul:not(.task-list, .md-annotation-list) > li {
+    position: relative;
+    list-style: none;
+}
+.md-typeset ul:not(.task-list, .md-annotation-list) > li::before {
+    content: "";
+    position: absolute;
+    top: .65em;                 /* middle of the first line at line-height 1.65 */
+    left: -.95em;
+    width: .36em;
+    height: .36em;
+    background-color: var(--nj-blue);
+}
+.md-typeset ol > li::marker {
+    color: var(--md-default-fg-color--light);
+    font-variant-numeric: tabular-nums;
+}
+.md-typeset .grid.cards > ul > li::before {
+    display: none;
+}
+
+/* wider page: Material's grid stops at 61rem (1220 px) */
+.md-grid {
+    max-width: 72rem;           /* 1440 px */
+}
+
+/* tables: full width, 1 px line border with 6 px corners, header row on the panel colour, 15 px text */
+.md-typeset__table {
+    display: block;             /* Material: inline-block, so tables only grow to their content */
+}
+.md-typeset table:not([class]) {
+    display: table;
+    width: 100%;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 6px;
+    font-size: .75rem;
+    line-height: 1.55;
+}
+.md-typeset table:not([class]) th {
+    padding: .65em 1em;
+    border-bottom: 1px solid var(--md-default-fg-color--lightest);
+    background-color: var(--md-code-bg-color);
+    color: var(--md-typeset-color);
+    font-weight: 600;
+    vertical-align: bottom;
+}
+.md-typeset table:not([class]) th:first-child { border-top-left-radius: 5px; }
+.md-typeset table:not([class]) th:last-child { border-top-right-radius: 5px; }
+.md-typeset table:not([class]) td {
+    padding: .65em 1em;
+    border-top: 1px solid var(--md-default-fg-color--lightest);
+}
+.md-typeset table:not([class]) tbody tr:first-child td {
+    border-top: 0;
+}
+.md-typeset table:not([class]) tbody tr:hover {
+    background-color: var(--nj-blue-soft);
+    box-shadow: none;
+}
+.md-typeset table:not([class]) td code {
+    white-space: nowrap;
+}
+/* numbers and header code stay on one line; a table wider than the screen scrolls sideways instead */
+.md-typeset table:not([class]) :is(td, th):is([align="right"], [style*="right"]),
+.md-typeset table:not([class]) th code {
+    white-space: nowrap;
+}
+@media screen and (max-width: 44.984375em) {
+    .md-typeset table:not([class]) {
+        font-size: .7rem;
+    }
+    .md-typeset table:not([class]) :is(th, td) {
+        padding: .55em .75em;
+    }
+}
+
+/* more room before headings (Material: h2 1.6em, h3 1.6em, h4-h6 1-1.25em) and at the end of each page (1.2rem) */
+.md-typeset h2 { margin-top: 2.4em; }
+.md-typeset h3 { margin-top: 2.2em; }
+.md-typeset h2 + h3 { margin-top: .8em; }
+.md-typeset :is(h4, h5, h6) { margin-top: 1.8em; }
+.md-content__inner {
+    margin-bottom: 4.8rem;      /* 96 px */
+}
+
+/* Mermaid diagrams: white boxes with a blue outline, grey lines, Inter; shapes and spacing in js/mermaid-brand.js */
+:root > * {
+    --md-mermaid-font-family: var(--md-text-font-family), sans-serif;
+    --md-mermaid-edge-color: var(--md-default-fg-color--lighter);
+    --md-mermaid-node-bg-color: var(--md-default-bg-color);
+    --md-mermaid-node-fg-color: var(--nj-blue);
+    --md-mermaid-label-bg-color: var(--md-default-bg-color);
+    --md-mermaid-label-fg-color: var(--md-default-fg-color);
+    --md-mermaid-sequence-actor-bg-color: var(--nj-blue-soft);
+    --md-mermaid-sequence-actor-line-color: var(--md-default-fg-color--lighter);
+    --md-mermaid-sequence-note-bg-color: var(--md-code-bg-color);
+    --md-mermaid-sequence-note-border-color: var(--md-default-fg-color--lightest);
+    --md-mermaid-sequence-number-fg-color: #fff;
+}
+
+/* a diagram wider than the column scrolls sideways (js/mermaid-brand.js stops shrinking it at 80 %) */
+.md-typeset .mermaid {
+    overflow-x: auto;
+}
+/* ... and one that is narrower than the column sits in the middle of it */
+.md-typeset .mermaid {
+    text-align: center;
+}
+
+/* external links (marked by js/external-links.js) get a small "open in new window" icon (Font Awesome
+   "external-link-alt") in front of them */
+.md-typeset a.nj-external::before {
+    content: "";
+    display: inline-block;
+    width: .72em;
+    height: .72em;
+    margin-right: .3em;
+    background-color: currentColor;
+    opacity: .65;
+    -webkit-mask: var(--nj-external-icon) no-repeat center / contain;
+    mask: var(--nj-external-icon) no-repeat center / contain;
+}
+:root {
+    --nj-external-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M432 320h-32a16 16 0 0 0-16 16v112H64V128h144a16 16 0 0 0 16-16V80a16 16 0 0 0-16-16H48A48 48 0 0 0 0 112v352a48 48 0 0 0 48 48h352a48 48 0 0 0 48-48V336a16 16 0 0 0-16-16zM488 0H360c-21.37 0-32.05 25.91-17 41l35.73 35.73L135 320.37a24 24 0 0 0 0 34L157.67 377a24 24 0 0 0 34 0l243.61-243.68L471 169c15 15 41 4.5 41-17V24a24 24 0 0 0-24-24z"/></svg>');
+}
+
+
+/* ---- polish pass ---- */
+
+/* header: a search field that reads as a field on the band, tabs with an active marker, readable GitHub facts */
+.md-header .md-search__form {
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, .12);
+    transition: background-color 150ms, border-color 150ms;
+}
+.md-header .md-search__form:hover {
+    border-color: rgba(255, 255, 255, .4);
+    background-color: rgba(255, 255, 255, .2);
+}
+.md-search__output {
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 16px 40px rgba(5, 18, 48, .28);
+}
+.md-search-result__link:focus-visible, .md-search-result__more summary:focus-visible {
+    outline: 2px solid var(--nj-blue);
+    outline-offset: -2px;
+}
+.md-tabs__link {
+    font-size: .72rem;
+    font-weight: 500;
+    opacity: .85;
+}
+.md-tabs__item--active .md-tabs__link, .md-tabs__link:hover {
+    opacity: 1;
+}
+.md-tabs__item--active {
+    box-shadow: inset 0 -2px 0 #fff;
+}
+.md-source__facts {
+    font-size: .62rem;
+}
+
+/* footer: deep brand blue instead of neutral black (the dark scheme keeps its own near-black) */
+[data-md-color-scheme="default"] {
+    --md-footer-bg-color: #0d2a66;
+    --md-footer-bg-color--dark: #0a2152;
+}
+.md-footer-meta .md-copyright, .md-footer-meta .md-copyright a {
+    color: rgba(255, 255, 255, .72);
+}
+.md-footer__link {
+    border-radius: 6px;
+    transition: background-color 150ms;
+}
+.md-footer__link:is(:hover, :focus-visible) {
+    background-color: rgba(255, 255, 255, .08);
+}
+
+/* page title: tighter to the first paragraph; page actions (view/edit source) stay in the background */
+.md-typeset h1 {
+    margin-bottom: 1rem;
+}
+.md-content__button {
+    opacity: .55;
+    transition: opacity 150ms;
+}
+.md-content__button:is(:hover, :focus-visible) {
+    opacity: 1;
+}
+body:has(.nj-hero) .md-content__button {
+    display: none;
+}
+
+/* sidebars: bold marker for the current page, rail and marker for the table of contents */
+.md-nav__link--active {
+    font-weight: 600;
+}
+.md-nav--secondary > .md-nav__list {
+    margin-left: -.1rem;
+    border-left: 1px solid color-mix(in srgb, var(--md-default-fg-color) 16%, transparent);
+}
+.md-nav--secondary .md-nav__link {
+    margin-left: -1px;
+    padding-left: .6rem;
+    border-left: 2px solid transparent;
+}
+.md-nav--secondary .md-nav__link--active {
+    border-left-color: var(--nj-blue);
+    color: var(--nj-blue);
+}
+.md-nav--secondary .md-nav__list .md-nav__list {
+    padding-left: .6rem;
+}
+.md-nav--secondary .md-nav__title {
+    font-size: .64rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+/* keyboard focus: one visible ring in the brand blue */
+.md-typeset a:focus-visible, .md-typeset .md-button:focus-visible, .md-typeset summary:focus-visible,
+.md-nav__link:focus-visible, .md-tabs__link:focus-visible, .md-top:focus-visible {
+    outline: 2px solid var(--nj-blue);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+.md-header :is(a, button, label):focus-visible, .nj-hero a:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* inline code must not stretch the line box (JetBrains Mono has tall metrics), abbreviations stay quiet */
+.md-typeset :not(pre) > code {
+    line-height: 1;
+}
+.md-typeset abbr {
+    border-bottom-color: var(--md-default-fg-color--lighter);
+}
+.md-typeset :is(h1, h2, h3, h4, a, .grid.cards > ul > li > p:first-child) abbr {
+    border-bottom-color: transparent;
+}
+
+/* number railroad diagram: inline SVG (docs/images/json_syntax_number.svg), follows the colour scheme */
+.md-typeset .railroad-wrap, .md-typeset .nj-fig-wrap {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+.md-typeset svg.railroad {
+    display: block;
+    width: 100%;
+    min-width: 36rem;
+    max-width: 52rem;
+    margin-inline: auto;
+    color: var(--md-default-fg-color);
+    font-family: var(--md-text-font-family), sans-serif;
+}
+.railroad .rr-t { fill: color-mix(in srgb, var(--md-typeset-a-color) 10%, transparent); stroke: var(--md-typeset-a-color); stroke-width: 2; }
+.railroad .rr-track, .railroad .rr-n { stroke: color-mix(in srgb, currentColor 60%, var(--md-default-bg-color)); stroke-opacity: 1; }   /* opaque, so overlapping segments do not darken */
+.railroad .rr-n { fill: color-mix(in srgb, currentColor 6%, transparent); stroke-width: 2; }
+.railroad .rr-bg { fill: var(--md-default-bg-color); }
+.railroad .rr-arrow { fill: currentColor; fill-opacity: .6; }
+.railroad text { fill: currentColor; text-anchor: middle; }
+.railroad .rr-c { font-family: var(--md-code-font-family), monospace; font-size: 16px; font-weight: 500; }
+.railroad .rr-b { font-size: 14.5px; font-weight: 500; }
+.railroad .rr-l { font-size: 14px; text-anchor: start; fill-opacity: .6; }
+.railroad .rr-name { font-size: 17px; font-weight: 700; fill-opacity: 1; }
+/* figures drawn as inline SVG (docs/images/callback_events.svg, range-*.svg): they follow the colour scheme */
+.md-typeset svg.nj-fig {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-inline: auto;
+    color: var(--md-default-fg-color);
+    font-family: var(--md-text-font-family), sans-serif;
+}
+.md-typeset svg.nj-fig--range { min-width: 30rem; max-width: 40rem; }
+.md-typeset svg.nj-fig--cb { max-width: 30rem; }
+.nj-fig { --fg-line: color-mix(in srgb, currentColor 55%, var(--md-default-bg-color)); }
+.nj-fig .fg-cell { fill: color-mix(in srgb, var(--md-typeset-a-color) 14%, var(--md-default-bg-color)); stroke: var(--fg-line); stroke-width: 1.5; }
+.nj-fig .fg-cell--end { fill: none; stroke-dasharray: 4 3; }
+.nj-fig .fg-pill { fill: color-mix(in srgb, var(--md-typeset-a-color) 10%, var(--md-default-bg-color)); stroke: var(--md-typeset-a-color); stroke-width: 1.5; }
+.nj-fig .fg-pilltext { fill: var(--md-typeset-a-color); font-family: var(--md-code-font-family), monospace; font-size: 14px; font-weight: 500; text-anchor: middle; }
+.nj-fig .fg-arrow { stroke: var(--fg-line); stroke-width: 1.5; fill: none; }
+.nj-fig .fg-arrow--dash { stroke-dasharray: 3 3; }
+.nj-fig .fg-head { fill: var(--fg-line); }
+.nj-fig .fg-note { fill: currentColor; fill-opacity: .7; font-size: 13.5px; text-anchor: middle; }
+.nj-fig .fg-note--r { text-anchor: end; }
+.nj-fig .fg-note--l { text-anchor: start; }
+.nj-fig .fg-h { fill: currentColor; fill-opacity: .7; font-size: 15px; font-weight: 600; }
+.nj-fig .fg-code { fill: currentColor; font-family: var(--md-code-font-family), monospace; font-size: 16px; white-space: pre; }
+.nj-fig .fg-leg { font-size: 15px; }
+.nj-fig { --cb-os: #4eb05a; --cb-oe: #1a6b34; --cb-k: #e5534b; --cb-as: #f0c000; --cb-ae: #b07d00; --cb-v: #1f6fd1; }
+[data-md-color-scheme="slate"] .nj-fig { --cb-os: #7ee787; --cb-oe: #2ea043; --cb-k: #ff7b72; --cb-as: #f2cc60; --cb-ae: #c69026; --cb-v: #58a6ff; }
+.nj-fig .cb-os { fill: var(--cb-os); }
+.nj-fig .cb-oe { fill: var(--cb-oe); }
+.nj-fig .cb-k { fill: var(--cb-k); }
+.nj-fig .cb-as { fill: var(--cb-as); }
+.nj-fig .cb-ae { fill: var(--cb-ae); }
+.nj-fig .cb-v { fill: var(--cb-v); }
+.md-typeset img[src*="json-light"], .md-typeset img[src*="json-dark"] {
+    border-radius: 8px;
+}
+.md-typeset img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* home page: content uses the same column as every other page */
+body:has(.nj-hero) .md-content {
+    max-width: none;
+    margin: 0;
+}
+.md-typeset .grid.cards {
+    width: auto;
+}
+
+/* 404 page (overrides/404.html) */
+.nj-404 {
+    max-width: 30rem;
+    padding: 2rem 0 3rem;
+}
+.nj-404__code {
+    margin: 0 0 .4rem;
+    color: var(--nj-blue);
+    font-family: var(--md-code-font-family);
+    font-size: .8rem;
+    font-weight: 500;
+}
+.md-typeset .nj-404 h1 {
+    margin-bottom: .8rem;
+}
+.nj-404 .md-button {
+    margin: .4rem .4rem 0 0;
+}
+
+/* touch targets and phones */
+@media screen and (max-width: 59.984375em) {
+    .md-nav__link {
+        padding-block: .2rem;
+    }
+}
+@media screen and (max-width: 29.984375em) {
+    .md-typeset h1 {
+        font-size: 1.7em;
+    }
+    .md-typeset .highlight pre > code {
+        font-size: .68rem;
+    }
+}
+
+/* figure captions: "Figure N." in bold, close to the figure, set in from the text column; figures and tables are
+   numbered per page, each with its own counter */
+.md-content__inner { counter-reset: nj-figure nj-table; }
+.md-typeset :is(.nj-caption, .nj-charts-caption) {
+    max-width: none;
+    margin: .3rem 2rem 1.5rem;
+    font-size: .75rem;
+    line-height: 1.5;
+    text-align: left;
+    color: var(--md-default-fg-color--light);
+}
+.md-typeset :is(.nj-fig-wrap, .railroad-wrap, .nj-charts-grid-wrap) + :is(.nj-caption, .nj-charts-caption) { margin-top: -1.1rem; }
+.md-typeset .nj-charts-grid-wrap + :is(.nj-caption, .nj-charts-caption) { margin-top: .3rem; }
+.md-typeset :is(.nj-caption, .nj-charts-caption)::before {
+    counter-increment: nj-figure;
+    content: "Figure " counter(nj-figure) ". ";
+    font-weight: 700;
+    color: var(--md-default-fg-color);
+}
+@media screen and (max-width: 44.9375em) {
+    .md-typeset :is(.nj-caption, .nj-charts-caption) { margin-inline: 1rem; }
+}
+
+/* table captions: "Table N." in bold, directly below the table, in the figure caption style */
+.md-typeset .nj-table-caption {
+    max-width: none;
+    margin: .3rem 2rem 1.5rem;
+    font-size: .75rem;
+    line-height: 1.5;
+    text-align: left;
+    color: var(--md-default-fg-color--light);
+}
+.md-typeset :is(.md-typeset__scrollwrap, .md-typeset__table) + .nj-table-caption { margin-top: -.4rem; }
+.md-typeset .nj-table-caption::before {
+    counter-increment: nj-table;
+    content: "Table " counter(nj-table) ". ";
+    font-weight: 700;
+    color: var(--md-default-fg-color);
+}
+@media screen and (max-width: 44.9375em) {
+    .md-typeset .nj-table-caption { margin-inline: 1rem; }
+}

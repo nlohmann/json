@@ -32,8 +32,10 @@ The exact mapping and its limitations are described on a [dedicated page](../../
     
     - an `std::istream` object
     - a `FILE` pointer
-    - a C-style array of characters
-    - a pointer to a null-terminated string of single byte characters
+    - a C-style array of characters (its terminating NUL is read as trailing data: `parse_error.110` unless `strict` is
+      `false`)
+    - a pointer to a null-terminated string of single byte characters (read up to the first 0x00 byte, which is a valid
+      CBOR byte)
     - a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
       (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
 
@@ -89,8 +91,14 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if unsupported features from CBOR were
   used in the given input or if the input is not valid CBOR
 - Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a map key is not a string (keys of
-  other types are not supported, as JSON object keys are always strings), or if a string value or object key is not
-  valid UTF-8 and `error_handler` is `strict`
+  other types are not supported, as JSON object keys are always strings), if the head of a string or byte string is
+  malformed (including a chunk of the wrong type or an indefinite-length string nested inside an indefinite-length
+  string), or if a string value or object key (or one chunk of an indefinite-length string) is not valid UTF-8 and
+  `error_handler` is `strict`
+- Throws [out_of_range.408](../../home/exceptions.md#jsonexceptionout_of_range408) if an array or map announces
+  a length that `std::size_t` cannot hold, or that equals `std::size_t(-1)` (for example `9B FF FF FF FF FF FF FF FF`)
+- Throws [out_of_range.406](../../home/exceptions.md#jsonexceptionout_of_range406) if a floating-point number does not
+  fit into `number_float_t`
 
 ## Complexity
 
@@ -114,12 +122,16 @@ Linear in the size of the input.
 
 ## See also
 
-- [to_cbor](to_cbor.md) create a CBOR serialization of a JSON value
-- [from_msgpack](from_msgpack.md) create a JSON value from an input in MessagePack format
-- [from_bson](from_bson.md) create a JSON value from an input in BSON format
-- [from_ubjson](from_ubjson.md) create a JSON value from an input in UBJSON format
-- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
-- [from_bon8](from_bon8.md) create a JSON value from an input in BON8 format
+- [CBOR](../../features/binary_formats/cbor.md) - the format, its byte layout and how values are mapped
+- [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
+- [Parsing untrusted input](../../features/parsing/untrusted_input.md) - limits and safe handling of hostile data
+- [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
+- [`to_cbor`](to_cbor.md) - create a CBOR serialization of a JSON value
+- [`from_msgpack`](from_msgpack.md) - create a JSON value from an input in MessagePack format
+- [`from_bson`](from_bson.md) - create a JSON value from an input in BSON format
+- [`from_ubjson`](from_ubjson.md) - create a JSON value from an input in UBJSON format
+- [`from_bjdata`](from_bjdata.md) - create a JSON value from an input in BJData format
+- [`from_bon8`](from_bon8.md) - create a JSON value from an input in BON8 format
 
 ## Version history
 

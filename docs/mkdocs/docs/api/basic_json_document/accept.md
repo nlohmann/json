@@ -9,13 +9,19 @@ static bool accept(InputType&& input,
 
 Checks whether the input is valid JSON, accepting and rejecting exactly what
 [`BasicJsonType::accept()`](../basic_json/accept.md) does, with the same options. Unlike [`parse()`](parse.md), this
-function never throws an exception for invalid input, and the returned `#!cpp bool` is the only result -- no document
+function never throws an exception for invalid input, and the returned `#!cpp bool` is the only result — no document
 is returned.
 
 The result is the same as that of `BasicJsonType::accept()` by design; the difference is how the check is made. This
-function runs the document's index builder (and discards the index), while `BasicJsonType::accept()` runs the SAX
-parser with a handler that ignores every event. Use this one if you go on to parse the same input with
-[`parse()`](parse.md) anyway, so that both use the same code; either is fine for a plain yes/no answer.
+function runs the document's builder, which checks the text as [`parse()`](parse.md) does, while
+`BasicJsonType::accept()` runs the SAX parser with a handler that ignores every event. Use this one if you go on to
+parse the same input with [`parse()`](parse.md) anyway, so that both use the same code; either is fine for a plain
+yes/no answer.
+
+When both `ignore_comments` and `ignore_trailing_commas` are `#!cpp false` (the default), the builder writes no index.
+With either option set, it builds the index as [`parse()`](parse.md) does and discards it: the result is the same, only
+the time differs. (Neither option needs the index; the variant that skips it exists only for the default options to
+keep the code size down.)
 
 ## Template parameters
 
@@ -69,8 +75,9 @@ compile; see [`parse`](parse.md#notes).
 
 ## See also
 
-- [parse](parse.md) - deserialize from a compatible input
+- [`parse`](parse.md) - deserialize from a compatible input
 - [`BasicJsonType::accept`](../basic_json/accept.md) - the corresponding function of `basic_json`
+- [Zero-copy JSON views](../../features/json_view.md#what-is-the-same-as-parse) - how parsing a document differs from, and matches, basic_json::parse
 
 ## Version history
 

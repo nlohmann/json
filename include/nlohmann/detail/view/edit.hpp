@@ -26,11 +26,10 @@
 #include <nlohmann/detail/view/lookup.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/node.hpp>
+#include <nlohmann/detail/view/scan.hpp>
+#include <nlohmann/detail/view/view_mode.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-
-template<typename BasicJsonType, bool Editable>
-class basic_json_view;
 
 namespace detail
 {
@@ -48,10 +47,9 @@ struct first_true<false, Conditions...> : std::integral_constant < int, 1 + firs
 /// (type_error.316 with the same message), so that an editable document
 /// only holds valid UTF-8: the error is at the first byte that no
 /// well-formed sequence can continue with (Unicode, Table 3-7).
-inline void check_utf8(const char* s, std::size_t n)
+NLOHMANN_VIEW_ALWAYS_INLINE void check_utf8_bytewise(const unsigned char* p, std::size_t n, std::size_t i)
 {
-    const auto* const p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-    for (std::size_t i = 0; i < n;)
+    while (i < n)
     {
         const unsigned char c = p[i];
         if (c < 0x80)
@@ -79,6 +77,43 @@ inline void check_utf8(const char* s, std::size_t n)
         }
         i += len;
     }
+}
+
+/// The long-string path of check_utf8(): skips well-formed runs with the
+/// parser's string scan (which stops at a quote, a backslash, or a control
+/// character, all legal here, and at ill-formed UTF-8); the byte-wise check
+/// runs only from where the scan found ill-formed UTF-8, to report it.
+NLOHMANN_VIEW_NOINLINE inline void check_utf8_scan(const unsigned char* p, std::size_t n)
+{
+    const unsigned char* const e = p + n;
+    const unsigned char* q = p;
+    for (;;)
+    {
+        q = scan_string_run<true>(q, e);
+        if (q == e)
+        {
+            return;
+        }
+        if (*q >= 0x80)
+        {
+            check_utf8_bytewise(p, n, static_cast<std::size_t>(q - p));
+            return; // not reached: the scan stopped at ill-formed UTF-8
+        }
+        ++q; // a quote, backslash, or control character
+    }
+}
+
+inline void check_utf8(const char* s, std::size_t n)
+{
+    const auto* const p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    if (NLOHMANN_VIEW_UNLIKELY(n >= 32))
+    {
+        check_utf8_scan(p, n);
+        return;
+    }
+    // short strings: the vector scan costs more than it saves; (the loop is
+    // inlined with a constant start, so this path is the plain byte-wise check)
+    check_utf8_bytewise(p, n, 0);
 }
 
 /*!
@@ -120,15 +155,15 @@ class editor
     View set(const View& object, string_view_t key, V&& value)
     {
         node* const o = own(object);
-        if (o->kind != static_cast<std::uint8_t>(value_t::object) && o->kind != static_cast<std::uint8_t>(value_t::null))
+        if (o->kind != node_kind::object && o->kind != node_kind::null)
         {
-            throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", object.type_name());
+            throw_type_error(site_of(object), exception_id::subscript_wrong_type, "cannot use operator[] with a string argument with ", object.type_name());
         }
         check_utf8(key.data(), key.size());
         const encoded e = encode(std::forward<V>(value));
-        if (o->kind == static_cast<std::uint8_t>(value_t::null))
+        if (o->kind == node_kind::null)
         {
-            become_empty(o, value_t::object);
+            become_empty(o, node_kind::object);
         }
         // an existing member: assign it (and drop later duplicates, so that
         // lookups, iteration, and materialize() agree)
@@ -171,11 +206,11 @@ class editor
     View set(const View& array, std::size_t idx, V&& value)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        if (a->kind != node_kind::array)
         {
-            throw_type_error(exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", array.type_name());
+            throw_type_error(site_of(array), exception_id::subscript_wrong_type, "cannot use operator[] with a numeric argument with ", array.type_name());
         }
-        check_index(idx, a->len);
+        check_index(a, idx, a->len);
         const encoded e = encode(std::forward<V>(value));
         node* const slot = const_cast<node*>(nav::value(element_at<true>(m_doc, a, idx))); // NOLINT(cppcoreguidelines-pro-type-const-cast)
         assign(slot, e, a, true);
@@ -188,14 +223,14 @@ class editor
     View push_back(const View& array, V&& value)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array) && a->kind != static_cast<std::uint8_t>(value_t::null))
+        if (a->kind != node_kind::array && a->kind != node_kind::null)
         {
-            throw_type_error(exception_id::push_back_wrong_type, "cannot use push_back() with ", array.type_name());
+            throw_type_error(site_of(array), exception_id::push_back_wrong_type, "cannot use push_back() with ", array.type_name());
         }
         const encoded e = encode(std::forward<V>(value));
-        if (a->kind == static_cast<std::uint8_t>(value_t::null))
+        if (a->kind == node_kind::null)
         {
-            become_empty(a, value_t::array);
+            become_empty(a, node_kind::array);
         }
         node* const slot = new_slot(e);
         node* const h = block_of(m_doc, a, 1);
@@ -212,11 +247,11 @@ class editor
     View insert(const View& array, std::size_t idx, V&& value)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        if (a->kind != node_kind::array)
         {
-            throw_type_error(exception_id::insert_wrong_type, "cannot use insert() with ", array.type_name());
+            throw_type_error(site_of(array), exception_id::insert_wrong_type, "cannot use insert() with ", array.type_name());
         }
-        check_index(idx, a->len + 1);
+        check_index(a, idx, a->len + 1);
         const encoded e = encode(std::forward<V>(value));
         node* const slot = new_slot(e);
         node* const h = block_of(m_doc, a, 1);
@@ -232,9 +267,9 @@ class editor
     std::size_t erase(const View& object, string_view_t key)
     {
         node* const o = own(object);
-        if (o->kind != static_cast<std::uint8_t>(value_t::object))
+        if (o->kind != node_kind::object)
         {
-            throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", object.type_name());
+            throw_type_error(site_of(object), exception_id::erase_wrong_type, "cannot use erase() with ", object.type_name());
         }
         for (const node* k = nav::first(m_doc, o), *end = nav::end(m_doc, o); k != end; k = document_data::after(k + 1))
         {
@@ -250,11 +285,11 @@ class editor
     void erase(const View& array, std::size_t idx)
     {
         node* const a = own(array);
-        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        if (a->kind != node_kind::array)
         {
-            throw_type_error(exception_id::erase_wrong_type, "cannot use erase() with ", array.type_name());
+            throw_type_error(site_of(array), exception_id::erase_wrong_type, "cannot use erase() with ", array.type_name());
         }
-        check_index(idx, a->len);
+        check_index(a, idx, a->len);
         node* const h = block_of(m_doc, a, 0);
         std::memmove(h + 1 + idx, h + 2 + idx, (h->next - 2 - idx) * sizeof(node));
         --h->next;
@@ -281,11 +316,11 @@ class editor
         return const_cast<node*>(v.m_node); // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to this document
     }
 
-    static void check_index(std::size_t idx, std::size_t limit)
+    void check_index(const node* array, std::size_t idx, std::size_t limit) const
     {
         if (idx >= limit)
         {
-            throw_array_index_out_of_range(idx);
+            throw_array_index_out_of_range(error_site(&m_doc, array), idx);
         }
     }
 
@@ -324,11 +359,11 @@ class editor
     }
 
     /// turn a null into an empty array/object in place
-    static void become_empty(node* n, value_t k) noexcept
+    static void become_empty(node* n, node_kind k) noexcept
     {
         const std::uint8_t linked = n->flags & node_flags::linked;
         *n = node{};
-        n->kind = static_cast<std::uint8_t>(k);
+        n->kind = k;
         n->flags = static_cast<std::uint8_t>(node_flags::is_new | linked);
         n->next = 1;
     }
@@ -405,8 +440,8 @@ class editor
     template<typename T>
     struct is_view : std::false_type {};
 
-    template<typename J, bool E>
-    struct is_view<basic_json_view<J, E>> : std::true_type {};
+    template<typename J, view_mode M>
+    struct is_view<basic_json_view<J, M>> : std::true_type {};
 
     template<typename V>
     encoded encode(V&& v)
@@ -421,8 +456,8 @@ class editor
     }
 
     /// a view of any document (copied; nothing is shared with it)
-    template<typename J, bool E>
-    encoded encode_impl(const basic_json_view<J, E>& v, encode_tag<0> /*view*/)
+    template<typename J, view_mode M>
+    encoded encode_impl(const basic_json_view<J, M>& v, encode_tag<0> /*view*/)
     {
         if (NLOHMANN_VIEW_UNLIKELY(v.m_node == nullptr))
         {
@@ -434,8 +469,8 @@ class editor
             r.scalar = copy_scalar(*v.m_doc, *v.m_node);
             return r;
         }
-        r.region = alloc_nodes(m_doc, count_nodes<E>(*v.m_doc, v.m_node));
-        fill_nodes<E>(*v.m_doc, v.m_node, r.region);
+        r.region = alloc_nodes(m_doc, count_nodes<M == view_mode::editable>(*v.m_doc, v.m_node));
+        fill_nodes<M == view_mode::editable>(*v.m_doc, v.m_node, r.region);
         edit_state_of(m_doc).regions.emplace(r.region, nullptr);
         return r;
     }
@@ -457,14 +492,14 @@ class editor
     encoded encode_impl(std::nullptr_t /*unused*/, encode_tag<2> /*null*/)
     {
         encoded r;
-        r.scalar = plain_node(value_t::null);
+        r.scalar = plain_node(node_kind::null);
         return r;
     }
 
     encoded encode_impl(bool b, encode_tag<3> /*boolean*/)
     {
         encoded r;
-        r.scalar = plain_node(value_t::boolean);
+        r.scalar = plain_node(node_kind::boolean);
         r.scalar.flags = static_cast<std::uint8_t>(r.scalar.flags | (b ? node_flags::is_true : 0));
         return r;
     }
@@ -493,10 +528,10 @@ class editor
         return encode_impl(BasicJsonType(std::forward<T>(x)), encode_tag<1> {});
     }
 
-    static node plain_node(value_t k) noexcept
+    static node plain_node(node_kind k) noexcept
     {
         node n{};
-        n.kind = static_cast<std::uint8_t>(k);
+        n.kind = k;
         n.flags = node_flags::is_new;
         return n;
     }
@@ -510,19 +545,19 @@ class editor
     template<typename T>
     node number_node(T x, std::integral_constant<int, 1> /*signed*/)
     {
-        return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(x)), value_t::number_integer);
+        return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(x)), node_kind::number_integer);
     }
 
     template<typename T>
     node number_node(T x, std::integral_constant<int, 2> /*unsigned*/)
     {
-        return integer_node(static_cast<std::uint64_t>(x), value_t::number_unsigned);
+        return integer_node(static_cast<std::uint64_t>(x), node_kind::number_unsigned);
     }
 
     /// an integer with its canonical token in the edit arena
-    node integer_node(std::uint64_t bits, value_t k)
+    node integer_node(std::uint64_t bits, node_kind k)
     {
-        const bool negative = k == value_t::number_integer && static_cast<std::int64_t>(bits) < 0;
+        const bool negative = k == node_kind::number_integer && static_cast<std::int64_t>(bits) < 0;
         std::uint64_t magnitude = negative ? 0 - bits : bits;
         std::array<char, 24> buf{};
         char* p = buf.data() + buf.size(); // NOLINT(misc-const-correctness): digits are written through p
@@ -541,7 +576,7 @@ class editor
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
         n.off = append_text(m_doc, p, len);
         // number_length() adds one for the sign of number_integer nodes
-        n.extra = static_cast<std::uint16_t>(k == value_t::number_integer ? len - 1 : len);
+        n.extra = static_cast<std::uint16_t>(k == node_kind::number_integer ? len - 1 : len);
         set_integer_bits(n, bits);
         return n;
     }
@@ -563,7 +598,7 @@ class editor
         {
             text = BasicJsonType(x).dump();
         }
-        node n = plain_node(value_t::number_float);
+        node n = plain_node(node_kind::number_float);
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
         n.extra = 0xFFFFu; // (the digit layout is not recorded)
         n.off = append_text(m_doc, text.data(), text.size());
@@ -578,7 +613,7 @@ class editor
         {
             throw_out_of_range(exception_id::document_too_large, "strings of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE
         }
-        node n = plain_node(value_t::string);
+        node n = plain_node(node_kind::string);
         n.flags = static_cast<std::uint8_t>(n.flags | node_flags::edited);
         n.off = append_text(m_doc, s, len);
         n.len = static_cast<std::uint32_t>(len);
@@ -600,10 +635,10 @@ class editor
                 return string_node(from.str(n), n.len);
             case value_t::number_integer:
             case value_t::number_unsigned:
-                return integer_node(integer_bits(n), static_cast<value_t>(n.kind));
+                return integer_node(integer_bits(n), n.kind);
             case value_t::number_float:
             {
-                node r = plain_node(value_t::number_float);
+                node r = plain_node(node_kind::number_float);
                 r.flags = static_cast<std::uint8_t>(r.flags | node_flags::edited);
                 r.off = append_text(m_doc, from.str(n), n.len);
                 r.len = n.len;
@@ -612,7 +647,7 @@ class editor
             }
             case value_t::boolean:
             {
-                node r = plain_node(value_t::boolean);
+                node r = plain_node(node_kind::boolean);
                 r.flags = static_cast<std::uint8_t>(r.flags | (n.flags & node_flags::is_true));
                 return r;
             }
@@ -622,7 +657,7 @@ class editor
             case value_t::binary:
             case value_t::discarded:
             default:
-                return plain_node(value_t::null);
+                return plain_node(node_kind::null);
         }
     }
 
@@ -631,17 +666,17 @@ class editor
         switch (j.type())
         {
             case value_t::null:
-                return plain_node(value_t::null);
+                return plain_node(node_kind::null);
             case value_t::boolean:
             {
-                node r = plain_node(value_t::boolean);
+                node r = plain_node(node_kind::boolean);
                 r.flags = static_cast<std::uint8_t>(r.flags | (j.template get<bool>() ? node_flags::is_true : 0));
                 return r;
             }
             case value_t::number_integer:
-                return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(j.template get<number_integer_t>())), value_t::number_integer);
+                return integer_node(static_cast<std::uint64_t>(static_cast<std::int64_t>(j.template get<number_integer_t>())), node_kind::number_integer);
             case value_t::number_unsigned:
-                return integer_node(static_cast<std::uint64_t>(j.template get<number_unsigned_t>()), value_t::number_unsigned);
+                return integer_node(static_cast<std::uint64_t>(j.template get<number_unsigned_t>()), node_kind::number_unsigned);
             case value_t::number_float:
                 return float_node(j.template get<number_float_t>());
             case value_t::string:
@@ -681,7 +716,7 @@ class editor
             ++r;
             if (is_container(*n))
             {
-                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object)});
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == node_kind::object});
             }
             // the next value: close finished containers, then step over the key
             for (;;)
@@ -728,9 +763,9 @@ class editor
             if (is_container(*n))
             {
                 node* const self = out++;
-                *self = plain_node(static_cast<value_t>(n->kind));
+                *self = plain_node(n->kind);
                 self->len = n->len;
-                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == static_cast<std::uint8_t>(value_t::object), self});
+                open.push_back(frame{walk::first(d, n), walk::end(d, n), n->kind == node_kind::object, self});
             }
             else
             {
@@ -819,7 +854,7 @@ class editor
             if (n->is_structured())
             {
                 node* const self = out++;
-                *self = plain_node(n->type());
+                *self = plain_node(static_cast<node_kind>(n->type()));
                 self->len = static_cast<std::uint32_t>(n->size());
                 open.push_back(frame{n->cbegin(), n->cend(), n->is_object(), self});
             }

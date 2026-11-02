@@ -85,9 +85,10 @@ Logarithmic in the size of the JSON object.
 
 ## See also
 
-- [find](find.md) find a value in an object
-- [contains](contains.md) checks whether a key exists
-- [basic_json_view::count](../basic_json_view/count.md) - the same check on a zero-copy view
+- [`find`](find.md) - find a value in an object
+- [`contains`](contains.md) - checks whether a key exists
+- [`basic_json_view::count`](../basic_json_view/count.md) - the same check on a zero-copy view
+- [Element Access](../../features/element_access/index.md#does-this-key-exist) - how to test whether a key exists
 
 ## Version history
 

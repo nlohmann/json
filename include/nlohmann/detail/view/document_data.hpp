@@ -82,14 +82,17 @@ struct document_data
     };
     std::unique_ptr<edit_state> edits; ///< created by the first edit
 
+    /// the most nodes that are allocated together with the header (16 KiB)
+    static constexpr std::size_t max_inline_nodes = 1024;
+
     /// One allocation for the header and room for `count` nodes, so that a
     /// small document needs one allocation instead of two. Large documents get
     /// a separate node array instead (so it can be trimmed). When a document
-    /// outgrows the inline array, that array stays unused: at most 256 nodes
-    /// (4 KiB), and only for documents whose estimate was too small.
+    /// outgrows the inline array, that array stays unused: at most 1024 nodes
+    /// (16 KiB), and only for documents whose estimate was too small.
     static document_data* create(std::size_t count)
     {
-        count = count <= 256 ? count : 0;
+        count = count <= max_inline_nodes ? count : 0;
         void* mem = ::operator new (sizeof(document_data) + (count * sizeof(node)));
         auto* d = new (mem) document_data(); // NOLINT(cppcoreguidelines-owning-memory): owned by the returned pointer, freed by deleter
         // (aligned: sizeof is a multiple of the alignment; through void*, as GCC's -Wcast-align wants)
@@ -232,7 +235,7 @@ struct document_data
     /// following loads.
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* deref(const node* n) noexcept
     {
-        return NLOHMANN_VIEW_LIKELY(n->kind != kind_link) ? n : follow_link(n);
+        return NLOHMANN_VIEW_LIKELY(n->kind != node_kind::link) ? n : follow_link(n);
     }
 
     static NLOHMANN_VIEW_NOINLINE const node* follow_link(const node* n) noexcept

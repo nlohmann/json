@@ -49,10 +49,11 @@ Constant.
 
 ## See also
 
-- [operator value_t](operator_value_t.md) implicit conversion operator equivalent to this named member function
-- [type_name](type_name.md) returns the type as a string, for use in error messages
-- [value_t](value_t.md) the enumeration of JSON types
-- [basic_json_view::type](../basic_json_view/type.md) - the same function on a zero-copy view
+- [`operator value_t`](operator_value_t.md) - implicit conversion operator equivalent to this named member function
+- [`type_name`](type_name.md) - returns the type as a string, for use in error messages
+- [`value_t`](value_t.md) - the enumeration of JSON types
+- [`basic_json_view::type`](../basic_json_view/type.md) - the same function on a zero-copy view
+- [Types](../../features/types/index.md) - the JSON value types and how they are stored
 
 ## Version history
 

@@ -25,7 +25,7 @@ Constant.
 ??? example
 
     The example below sums many measurements with `std::accumulate`, using `cbegin()`/[`cend()`](cend.md) as the
-    range -- the same way it would for any standard container -- without ever materializing the whole array into a
+    range — the same way it would for any standard container — without ever materializing the whole array into a
     `BasicJsonType` value.
 
     ```cpp
@@ -40,8 +40,8 @@ Constant.
 
 ## See also
 
-- [begin](begin.md) - returns an iterator to the first element
-- [cend](cend.md) - returns a const iterator to one past the last element
+- [`begin`](begin.md) - returns an iterator to the first element
+- [`cend`](cend.md) - returns a const iterator to one past the last element
 - [`BasicJsonType::cbegin`](../basic_json/cbegin.md) - the corresponding function of `basic_json`
 
 ## Version history

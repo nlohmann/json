@@ -32,8 +32,10 @@ The macros are defined according to the current library version.
 
 ## See also
 
-- [meta](../basic_json/meta.md) - returns version information on the library
-- [JSON_SKIP_LIBRARY_VERSION_CHECK](json_skip_library_version_check.md) - skip library version check
+- [`meta`](../basic_json/meta.md) - returns version information on the library
+- [`JSON_SKIP_LIBRARY_VERSION_CHECK`](json_skip_library_version_check.md) - skip library version check
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
+- [Integration](../../integration/index.md) - integrate the library
 
 ## Version history
 

@@ -23,7 +23,12 @@ table describes the values of the parameters `depth`, `event`, and `parsed`.
 | `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
 | `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
-![Example when certain parse events are triggered](../../images/callback_events.png)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/callback_events.svg"
+</div>
+
+<p class="nj-caption" markdown>Parse events for a small JSON text: each coloured dot marks the position at which the
+parser calls the callback, and the legend on the right names the event per colour.</p>
 
 Discarding a value (i.e., returning `#!cpp false`) has different effects depending on the context in which function was
 called:
@@ -57,6 +62,15 @@ called:
 
 Whether the JSON value which called the function during parsing should be kept (`#!cpp true`) or not (`#!cpp false`). In
 the latter case, it is skipped completely, or replaced by `null` if it is the top-level value.
+
+## Notes
+
+For a `parse_event_t::key` event, `parsed` holds the decoded object name, with the same guarantees as the `val`
+parameter of [`json_sax::key`](../json_sax/key.md#notes): all escape sequences are decoded and `\uXXXX` escapes are
+stored as UTF-8, so different spellings of the same name yield identical strings; the name is validated completely
+before the callback is called, so a name with an invalid escape sequence or ill-formed UTF-8 causes a parse error and
+no `key` event; no Unicode normalization or case conversion is applied; and a name that occurs several times in the
+same object yields one `key` event per occurrence.
 
 ## Examples
 
@@ -92,8 +106,9 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
 
 ## See also
 
-- [parse](parse.md) deserialize from a compatible input
-- [parse_event_t](parse_event_t.md) enumeration of parser events
+- [`parse`](parse.md) - deserialize from a compatible input
+- [`parse_event_t`](parse_event_t.md) - enumeration of parser events
+- [Parser Callbacks](../../features/parsing/parser_callbacks.md) - filter or inspect values while parsing
 
 ## Version history
 

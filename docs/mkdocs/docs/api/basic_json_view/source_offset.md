@@ -13,7 +13,7 @@ materializing anything.
   byte offset of the first byte of the value's token (for a string: the first byte after the opening quote) in
   [`source()`](../basic_json_document/source.md).
 - `#!cpp static_cast<std::size_t>(-1)` for a [discarded](is_discarded.md) view, and for a string that contains
-  escapes -- such a string was decoded once into the document's own buffer, so there is no single byte range in
+  escapes — such a string was decoded once into the document's own buffer, so there is no single byte range in
   `source()` left to point at.
 
 ## Exception safety
@@ -47,8 +47,9 @@ string, whose token length is not the same as its decoded [`size()`](size.md).
 
 ## See also
 
-- [source](../basic_json_document/source.md) - the parsed text
-- [is_string](is_string.md) - return whether the value is a string
+- [`source`](../basic_json_document/source.md) - the parsed text
+- [`is_string`](is_string.md) - return whether the value is a string
+- [Zero-copy JSON views](../../features/json_view.md#images) - images and the source text
 
 ## Version history
 

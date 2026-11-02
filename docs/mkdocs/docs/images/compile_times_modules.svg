@@ -1,0 +1,30 @@
+<svg class="nj-fig nj-charts nj-charts--compile" viewBox="0 0 440 282" role="img" aria-labelledby="nj-charts-mod nj-charts-mod-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-charts-mod">Compile time per translation unit with import nlohmann.json at -O0, and the one-off cost of the module</title>
+<desc id="nj-charts-mod-d">Horizontal bars, negative is faster, medians of nine runs, -std=c++20 for both. model TU, Apple clang: -48 % (1311 ms to 680 ms); model TU, G&#8203;CC 16: -47 % (2156 ms to 1153 ms); parsing TU, Apple clang: -42 % (1387 ms to 800 ms); parsing TU, G&#8203;CC 16: -36 % (2838 ms to 1810 ms); one-off build, Apple clang: 1630 ms; one-off build, G&#8203;CC 16: 2538 ms.</desc>
+<rect class="nj-charts-clang" x="8" y="10" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="26" y="20.5">Apple clang</text>
+<rect class="nj-charts-gcc" x="126" y="10" width="12" height="12" rx="3"/>
+<text class="nj-charts-leg" x="144" y="20.5">G&#8203;CC 16</text>
+<line class="nj-charts-grid" x1="68.6667" y1="58" x2="68.6667" y2="160"/>
+<text class="nj-charts-tick" x="68.6667" y="176">&#8722;50 %</text>
+<line class="nj-charts-grid" x1="220.333" y1="58" x2="220.333" y2="160"/>
+<text class="nj-charts-tick" x="220.333" y="176">&#8722;25 %</text>
+<text class="nj-charts-tick" x="372" y="176">0 %</text>
+<text class="nj-charts-tick nj-charts-tick--l" x="8" y="194">&#8592; faster per TU</text>
+<text class="nj-charts-rowlabel" x="8" y="62">model TU<tspan class="nj-charts-sub"> &#183; import nlohmann.json</tspan></text>
+<path class="nj-charts-clang" d="M372 70 H84.8 Q80.8 70 80.8 74 V78 Q80.8 82 84.8 82 H372 Z"><title>model TU, Apple clang: 1311 ms by default, 680 ms import nlohmann.json (&#8722;48 %)</title></path>
+<text class="nj-charts-val" x="377" y="80.5">&#8722;48 %</text>
+<path class="nj-charts-gcc" d="M372 84 H90.8667 Q86.8667 84 86.8667 88 V92 Q86.8667 96 90.8667 96 H372 Z"><title>model TU, G&#8203;CC 16: 2156 ms by default, 1153 ms import nlohmann.json (&#8722;47 %)</title></path>
+<text class="nj-charts-val" x="377" y="94.5">&#8722;47 %</text>
+<text class="nj-charts-rowlabel" x="8" y="114">parsing TU<tspan class="nj-charts-sub"> &#183; import nlohmann.json</tspan></text>
+<path class="nj-charts-clang" d="M372 122 H121.2 Q117.2 122 117.2 126 V130 Q117.2 134 121.2 134 H372 Z"><title>parsing TU, Apple clang: 1387 ms by default, 800 ms import nlohmann.json (&#8722;42 %)</title></path>
+<text class="nj-charts-val" x="377" y="132.5">&#8722;42 %</text>
+<path class="nj-charts-gcc" d="M372 136 H157.6 Q153.6 136 153.6 140 V144 Q153.6 148 157.6 148 H372 Z"><title>parsing TU, G&#8203;CC 16: 2838 ms by default, 1810 ms import nlohmann.json (&#8722;36 %)</title></path>
+<text class="nj-charts-val" x="377" y="146.5">&#8722;36 %</text>
+<line class="nj-charts-zero" x1="372" y1="58" x2="372" y2="160"/>
+<text class="nj-charts-rowlabel" x="8" y="222">One-off cost<tspan class="nj-charts-sub"> &#183; built once, reused by every TU</tspan></text>
+<rect class="nj-charts-clang" x="8" y="232.5" width="10" height="10" rx="2.5"/>
+<text class="nj-charts-val" x="24" y="242">Apple clang: 1630 ms once, saves 587 to 631 ms per TU</text>
+<rect class="nj-charts-gcc" x="8" y="252.5" width="10" height="10" rx="2.5"/>
+<text class="nj-charts-val" x="24" y="262">G&#8203;CC 16: 2538 ms once, saves 1003 to 1028 ms per TU</text>
+</svg>

@@ -40,9 +40,10 @@ document (`#!cpp owns_source() == false`) is only valid while the buffer it was 
 
 ## See also
 
-- [parse](parse.md) - deserialize from a compatible input
-- [parse_copy](parse_copy.md) - deserialize a copy of a compatible input, always owned
-- [source](source.md) - the parsed text
+- [`parse`](parse.md) - deserialize from a compatible input
+- [`parse_copy`](parse_copy.md) - deserialize a copy of a compatible input, always owned
+- [`source`](source.md) - the parsed text
+- [Zero-copy JSON views](../../features/json_view.md#ownership-and-lifetime) - who owns the source text and for how long
 
 ## Version history
 

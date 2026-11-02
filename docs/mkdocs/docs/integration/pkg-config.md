@@ -14,3 +14,9 @@ Users of the [Meson build system](package_managers.md#meson) will also be able t
 ```meson
 json = dependency('nlohmann_json', required: true)
 ```
+
+## See also
+
+- [Integration](index.md) - all ways to integrate the library
+- [CMake](cmake.md) - use the library from CMake
+- [Package Managers](package_managers.md) - install the library via package managers

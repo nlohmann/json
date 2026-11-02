@@ -92,12 +92,20 @@ Strong exception safety: if an exception occurs, the original value stays intact
     For the **const** version, an object key or array index in `ptr` that does not exist is not reported by an
     exception, but is undefined behavior (see the notes below). Use [`at`](at.md) for checked access.
 
+    If the **non-const** version throws, the value is left unchanged: values it created for earlier reference tokens
+    of `ptr` are removed again. This also holds for exceptions such as `#!cpp std::bad_alloc` or
+    `#!cpp std::length_error` thrown while padding an array up to a very large index. With custom
+    [template parameters](../../features/types/template_parameters.md), this requires that `erase()` of the object and
+    array types and the move operations of the custom base class do not throw.
+
 ## Complexity
 
 1. Constant if `idx` is in the range of the array. Otherwise, linear in `idx - size()`.
 2. Logarithmic in the size of the container.
 3. Logarithmic in the size of the container.
-4. Logarithmic in the size of the container.
+4. Linear in the number of reference tokens of `ptr`; for each of them, logarithmic in the size of the object, or
+   constant for an array. When the non-const version pads an array with `#!json null` values, it is additionally
+   linear in `idx - size()` for that array.
 
 ## Notes
 
@@ -137,10 +145,21 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
         When the JSON pointer traverses intermediate levels that don't exist at all yet (not just a missing
         leaf), each missing level is created as an array or an object depending on whether the corresponding
-        pointer token parses as a non-negative integer: a numeric token creates an array, a non-numeric token
-        creates an object. For example, on an initially `#!json null` value, `/foo/0/0/0` creates nested arrays,
-        while `/foo/one/one/one` creates nested objects. This is not specified by the JSON Pointer RFC; it is
-        this library's own, intentional disambiguation rule. See also [JSON Pointer](../../features/json_pointer.md).
+        pointer token is a valid array index: the token `0`, a sequence of digits that does not begin with `0`,
+        or the token `-` creates an array, and every other token creates an object. For example, on an
+        initially `#!json null` value, `/foo/0/0/0` creates nested arrays, while `/foo/one/one/one` creates
+        nested objects. Tokens such as `01` or the empty token cannot be array indices (cf. RFC 6901, Sect. 4)
+        and therefore create objects, just as they would if the level already existed as an object. This is not
+        specified by the JSON Pointer RFC; it is this library's own, intentional disambiguation rule. See also
+        [JSON Pointer](../../features/json_pointer.md).
+
+    !!! warning "Large array indices"
+
+        As the array is filled up with `#!json null` values to the given index, the memory used grows with the index
+        and not with the size of the pointer: on a 64-bit platform, the index `10000000` allocates about 160 MB.
+        The library does not limit the index, so check the array indices of a JSON pointer from untrusted input
+        before using it with the non-const version. See
+        [Parsing untrusted input](../../features/parsing/untrusted_input.md#json-pointers-and-flattened-keys).
 
 !!! warning "Deprecation"
 
@@ -271,13 +290,15 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## See also
 
-- documentation on [unchecked access](../../features/element_access/unchecked_access.md)
-- documentation on [runtime assertions](../../features/assertions.md)
-- see [`at`](at.md) for access by reference with range checking
-- see [`value`](value.md) for access with default value
-- [basic_json_view::operator[]](../basic_json_view/operator%5B%5D.md) - the same access on a zero-copy view (a duplicate
+- [Unchecked access](../../features/element_access/unchecked_access.md) - element access without range checking
+- [Runtime assertions](../../features/assertions.md) - assertions guarding against undefined behavior
+- [`at`](at.md) - access by reference with range checking
+- [`value`](value.md) - access with default value
+- [`basic_json_view::operator[]`](../basic_json_view/operator%5B%5D.md) - the same access on a zero-copy view (a duplicate
   key resolves to the first member, whereas `parse()` keeps the last; a missing key gives a discarded view instead of
   undefined behavior)
+- [Element Access](../../features/element_access/index.md) - overview of all ways to access elements
+- [JSON Pointer](../../features/json_pointer.md) - access nested values with a pointer
 
 ## Version history
 
@@ -291,4 +312,6 @@ Strong exception safety: if an exception occurs, the original value stays intact
 4. Added in version 2.0.0. A missing array index in the const version is guarded by a runtime assertion since
    version 3.13.0. Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) instead of
 [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) for a one-character array index that is not
-a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones.
+a digit (e.g., `/x`) in version 3.13.0, as it already did for longer ones. Fixed in version 3.13.0 to leave the value
+unchanged if the non-const version throws (strong exception safety, as documented); before, values created for earlier
+reference tokens of `ptr` were kept.

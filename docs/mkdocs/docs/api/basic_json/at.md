@@ -90,7 +90,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. Constant.
 2. Logarithmic in the size of the container.
 3. Logarithmic in the size of the container.
-4. Logarithmic in the size of the container.
+4. Linear in the number of reference tokens of `ptr`; for each of them, logarithmic in the size of the object, or
+   constant for an array.
 
 ## Notes
 
@@ -230,10 +231,12 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## See also
 
-- documentation on [checked access](../../features/element_access/checked_access.md)
-- [`operator[]`](operator%5B%5D.md) for unchecked access by reference
-- [`value`](value.md) for access with default value
-- [basic_json_view::at](../basic_json_view/at.md) - the same access on a zero-copy view
+- [Checked access](../../features/element_access/checked_access.md) - element access with range checking
+- [`operator[]`](operator%5B%5D.md) - unchecked access by reference
+- [`value`](value.md) - access with default value
+- [`basic_json_view::at`](../basic_json_view/at.md) - the same access on a zero-copy view
+- [Element Access](../../features/element_access/index.md) - overview of all ways to access elements
+- [JSON Pointer](../../features/json_pointer.md) - access nested values with a pointer
 
 ## Version history
 

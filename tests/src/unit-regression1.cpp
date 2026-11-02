@@ -1499,6 +1499,26 @@ TEST_CASE("regression tests 1")
         CHECK(order.dump() == R"({"a":2,"m":{"y":1,"b":2},"new_key":3})");
     }
 
+    SECTION("operator[](json_pointer) when emplace() finds a key the lookup does not")
+    {
+        // a copied fifo_map restarts its timestamps, so a new key "k" gets
+        // the timestamp of "x": the lookup does not find "k", but emplace()
+        // finds "x" and inserts nothing; the pointer then continues with the
+        // member of "x", as basic_json::operator[] does. The object_t is
+        // copied explicitly: copying the my_json would build the object
+        // member by member (with fresh timestamps) when built with
+        // JSON_NO_THREAD_LOCAL.
+        const my_json orig = my_json::parse(R"({"x":1})");
+        const std::array<const char*, 3> pointers = {{"/k/0", "/k/a/b", "/k/-"}};
+        for (const char* pointer : pointers)
+        {
+            CAPTURE(pointer)
+            my_json j(orig.get_ref<const my_json::object_t&>());
+            CHECK_THROWS_AS(j[my_json::json_pointer(pointer)], my_json::out_of_range&);
+            CHECK(j.dump() == R"({"x":1})");
+        }
+    }
+
     SECTION("issue #977 - Assigning between different json types")
     {
         foo_json lj = ns::foo{3};

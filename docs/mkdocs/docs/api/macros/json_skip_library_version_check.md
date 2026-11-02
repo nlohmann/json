@@ -45,8 +45,10 @@ By default, the macro is not defined.
 
 ## See also
 
-- [NLOHMANN_JSON_VERSION_MAJOR, NLOHMANN_JSON_VERSION_MINOR,
-  NLOHMANN_JSON_VERSION_PATCH](nlohmann_json_version_major.md) - library version information
+- [`NLOHMANN_JSON_VERSION_MAJOR` / `NLOHMANN_JSON_VERSION_MINOR` /
+  `NLOHMANN_JSON_VERSION_PATCH`](nlohmann_json_version_major.md) - library version information
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
+- [Integration](../../integration/index.md) - integrate the library
 
 ## Version history
 

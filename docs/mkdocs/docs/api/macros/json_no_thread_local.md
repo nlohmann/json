@@ -45,7 +45,8 @@ Copying and comparing fall back to working without the call stack there, as they
 
 ## See also
 
-- [FAQ: Thread safety](../../home/faq.md#thread-safety)
+- [FAQ: Thread safety](../../home/faq.md#thread-safety) - thread-safety guarantees of the library
+- [Supported Macros](../../features/macros.md) - guide to all supported macros
 
 ## Version history
 

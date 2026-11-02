@@ -6,7 +6,12 @@ const_iterator cbegin() const noexcept;
 
 Returns an iterator to the first element.
 
-![Illustration from cppreference.com](../../images/range-begin-end.svg)
+<div class="nj-fig-wrap" markdown>
+--8<-- "images/range-begin-end.svg"
+</div>
+
+<p class="nj-caption" markdown>`cbegin()` points to the first element, like `begin()`, and `end()` to the position after
+the last element; the dashed cell is the past-the-last position, which must not be dereferenced.</p>
 
 ## Return value
 
@@ -38,11 +43,11 @@ Constant.
 
 ## See also
 
-- [begin](begin.md) returns an iterator to the first element
-- [cend](cend.md) returns a const iterator to one past the last element
-- [crbegin](crbegin.md) returns a const reverse iterator to the last element
+- [`begin`](begin.md) - returns an iterator to the first element
+- [`cend`](cend.md) - returns a const iterator to one past the last element
+- [`crbegin`](crbegin.md) - returns a const reverse iterator to the last element
 - [Iterators](../../features/iterators.md) - the article on iterators
-- [basic_json_view::cbegin](../basic_json_view/cbegin.md) - the same iteration on a zero-copy view
+- [`basic_json_view::cbegin`](../basic_json_view/cbegin.md) - the same iteration on a zero-copy view
 
 ## Version history
 

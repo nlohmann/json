@@ -1,5 +1,6 @@
 # Project information
 site_name: JSON for Modern C++
+site_description: JSON for Modern C++ is a header-only C++11 library that makes JSON a first-class data type.
 site_author: Niels Lohmann
 site_url: https://json.nlohmann.me/
 
@@ -14,33 +15,38 @@ copyright: Copyright &copy; 2013-2026 Niels Lohmann
 # Configuration
 theme:
   name: material
+  custom_dir: overrides
   language: en
   palette:
     - media: '(prefers-color-scheme: light)'
       scheme: default
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: '(prefers-color-scheme: dark)'
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
   icon:
     repo: fontawesome/brands/github
-  font:
-    text: Roboto
-    code: JetBrains Mono
+  font: false
+  logo: images/wordmark-header.svg
   features:
     - navigation.instant
     - navigation.tracking
     - navigation.tabs
     - navigation.indexes
     - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
     - content.tabs.link
     - content.action.edit
     - content.action.view
@@ -174,6 +180,7 @@ nav:
           - 'begin': api/basic_json/begin.md
           - 'binary': api/basic_json/binary.md
           - 'binary_t': api/basic_json/binary_t.md
+          - 'bjdata_version_t': api/basic_json/bjdata_version_t.md
           - 'boolean_t': api/basic_json/boolean_t.md
           - 'cbegin': api/basic_json/cbegin.md
           - 'cbor_tag_handler_t': api/basic_json/cbor_tag_handler_t.md
@@ -362,6 +369,7 @@ nav:
           - 'Overview': api/adl_serializer/index.md
           - 'from_json': api/adl_serializer/from_json.md
           - 'to_json': api/adl_serializer/to_json.md
+      - 'is_json_view': api/is_json_view.md
       - 'json': api/json.md
       - 'json_document': api/json_document.md
       - 'json_editable_document': api/json_editable_document.md
@@ -411,6 +419,7 @@ nav:
       - 'ordered_json_editable_view': api/ordered_json_editable_view.md
       - 'ordered_json_view': api/ordered_json_view.md
       - 'ordered_map': api/ordered_map.md
+      - 'view_mode': api/view_mode.md
       - macros:
           - 'Overview': api/macros/index.md
           - 'JSON_ASSERT': api/macros/json_assert.md
@@ -445,8 +454,6 @@ nav:
           - 'JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON': api/macros/json_use_legacy_discarded_value_comparison.md
           - 'JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS': api/macros/json_use_objects_for_enum_keyed_maps.md
           - 'JSON_USE_SIMDUTF': api/macros/json_use_simdutf.md
-          - 'JSON_VIEW_NO_SIMD': api/macros/json_view_no_simd.md
-          - 'JSON_VIEW_USE_SSSE3': api/macros/json_view_use_ssse3.md
           - 'NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_derived_type.md
           - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_intrusive.md
           - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_non_intrusive.md
@@ -567,12 +574,18 @@ plugins:
         -1:                            # connection errors
           - 'https://repology.org/*'   # repology.org is suspended since 2026-09
           - 'http://2ak5ape.257.cz/'   # customers.md: kept although unreachable
-        401: ['https://fossies.org/*'] # answers the plugin's user agent with 401, browsers and curl with 200
+        400: ['https://www.meta.com/*'] # customers.md: answers the plugin's user agent with 400, browsers with 200
+        401:
+          - 'https://fossies.org/*'    # answers the plugin's user agent with 401, browsers and curl with 200
+          - 'https://mysupport.razer.com/*' # customers.md: same, browsers answer 200
+        419: ['https://news.ycombinator.com/*'] # answers the plugin's user agent with 419, browsers with 200
         404:
           - 'https://gitlab.b-data.ch/*' # answers the plugin's user agent with 404, browsers with 200
           # customers.md: kept although dead
           - 'https://www.cisco.com/c/dam/en_us/about/doing_business/open_source/docs/CiscoWebexDeskCamera-23-1622100417.pdf'
           - 'https://docs.cyberark.com/Downloads/Legal/Privileged%20Session%20Manager%20for%20SSH%20Third-Party%20Notices.pdf'
+          - 'https://docs.citrix.com/en-us/provisioning/2203-ltsr/downloads/pvs-third-party-notices-2203.pdf'
+          - 'https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/2305/downloads/third-party-notices-apps-and-desktops.pdf'
         500: ['https://marne.io/licenses'] # customers.md: kept although dead
       ignore_urls:
         - mailto:*
@@ -620,3 +633,22 @@ plugins:
 
 extra_css:
   - css/custom.css
+  - css/brand.css
+  - css/fig-sax.css
+  - css/fig-jsonview.css
+  - css/fig-exceptions.css
+  - css/fig-pointer.css
+  - css/fig-charts.css
+  - css/fig-integration.css
+  - css/fig-macros.css
+
+extra_javascript:
+  - js/mermaid-brand.js
+  - js/external-links.js
+  - js/fig-sax.js
+  - js/fig-jsonview.js
+  - js/fig-exceptions.js
+  - js/fig-pointer.js
+  - js/fig-charts.js
+  - js/fig-integration.js
+  - js/fig-macros.js

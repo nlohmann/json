@@ -111,8 +111,10 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## See also
 
-- [FAQ: Brace initialization yields arrays](../../home/faq.md#brace-initialization-yields-arrays)
-- [**basic_json(initializer_list_t)**](../basic_json/basic_json.md) - the affected constructor
+- [FAQ: Brace initialization yields arrays](../../home/faq.md#brace-initialization-yields-arrays) - why brace
+  initialization may create arrays
+- [`basic_json(initializer_list_t)`](../basic_json/basic_json.md) - the affected constructor
+- [Creating JSON values](../../features/creating_values.md) - initializer lists and braces
 
 ## Version history
 
