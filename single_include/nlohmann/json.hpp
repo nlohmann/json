@@ -19871,14 +19871,18 @@ class binary_reader
 
     Only the start of an array is tried, which covers arrays of numbers
     (e.g. coordinates) but costs arrays of other values only one call, not one
-    per element.
+    per element. An array of one element is not tried at all: that element is
+    mostly an object or an array (`[[...]]`, the single ring of a GeoJSON
+    polygon), for which the call would find no scalar, while a single scalar,
+    which the run would read faster, is rare. The benchmarks
+    `FromBinaryShape/nested` and `FromBinaryShape/singles` show both sides.
 
     @param[in] len  the number of elements
     @return whether the SAX parser accepted the array and the values read
     */
     bool enter_cbor_array(const std::size_t len)
     {
-        return enter_array(len) && (len == 0 || parse_cbor_scalar_run(std::integral_constant<bool, bulk_scan> {}));
+        return enter_array(len) && (len <= 1 || parse_cbor_scalar_run(std::integral_constant<bool, bulk_scan> {}));
     }
 
     /// input that is not contiguous: every value is read by parse_cbor_value
@@ -20779,12 +20783,16 @@ class binary_reader
     /*!
     @brief open a MessagePack array and read the scalars it begins with (see
            @ref parse_msgpack_scalar_run)
+
+    An array of one element is not tried, for the reason given at
+    @ref enter_cbor_array.
+
     @param[in] len  the number of elements
     @return whether the SAX parser accepted the array and the values read
     */
     bool enter_msgpack_array(const std::size_t len)
     {
-        return enter_array(len) && (len == 0 || parse_msgpack_scalar_run(std::integral_constant<bool, bulk_scan> {}));
+        return enter_array(len) && (len <= 1 || parse_msgpack_scalar_run(std::integral_constant<bool, bulk_scan> {}));
     }
 
     /// input that is not contiguous: every value is read by parse_msgpack_value
