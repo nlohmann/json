@@ -14,9 +14,11 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <cstddef>
 #include <fstream>
 #include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 #include "make_test_data_available.hpp"
 
@@ -2452,4 +2454,100 @@ TEST_CASE("JSON patch - diff behavior documented in the API reference")
         CHECK(json::diff(json::array({1}), json::object()) == R"([{"op": "replace", "path": "", "value": {}}])"_json);
         CHECK(json::diff(json(nullptr), json::array()) == R"([{"op": "replace", "path": "", "value": []}])"_json);
     }
+}
+
+TEST_CASE("JSON patch - operations that are left to json_pointer")
+{
+    // the usual operations on a plain pointer are applied without building a
+    // json_pointer; the following are not plain, and some are errors
+    SECTION("a path without a slash")
+    {
+        const json j = {{"a", 1}};
+
+        CHECK_THROWS_AS(j.patch(R"([{"op": "add", "path": "abc", "value": 1}])"_json), json::parse_error&);
+        CHECK_THROWS_AS(j.patch(R"([{"op": "remove", "path": "abc"}])"_json), json::parse_error&);
+    }
+
+    SECTION("remove with an escaped reference token")
+    {
+        const json j = {{"a/b", 1}, {"c~d", 2}, {"e", 3}};
+
+        CHECK(j.patch(R"([{"op": "remove", "path": "/a~1b"}])"_json) == json({{"c~d", 2}, {"e", 3}}));
+        CHECK(j.patch(R"([{"op": "remove", "path": "/c~0d"}])"_json) == json({{"a/b", 1}, {"e", 3}}));
+        CHECK_THROWS_AS(j.patch(R"([{"op": "remove", "path": "/missing~1key"}])"_json), json::out_of_range&);
+    }
+
+    SECTION("a path through a primitive value")
+    {
+        const json j = {{"a", 1}};
+
+        CHECK_THROWS_AS(j.patch(R"([{"op": "test", "path": "/a/b", "value": 1}])"_json), json::other_error&);
+        CHECK_THROWS_AS(j.patch(R"([{"op": "replace", "path": "/a/b", "value": 1}])"_json), json::out_of_range&);
+    }
+}
+
+TEST_CASE("JSON patch - diff of objects with many members")
+{
+    // more members than diff() keeps without allocating
+    for (const std::size_t members :
+            {
+                16u, 17u, 40u
+            })
+    {
+        CAPTURE(members)
+
+        json source = json::object();
+        json target = json::object();
+        for (std::size_t i = 0; i < members; ++i)
+        {
+            const std::string key = "key" + std::to_string(i);
+            source[key] = i;
+            // every third member differs
+            target[key] = (i % 3 == 0) ? i + 1 : i;
+        }
+        // the same keys, a removed and an added one
+        source["removed"] = true;
+        target["added"] = false;
+
+        const json patch = json::diff(source, target);
+        CHECK(source.patch(patch) == target);
+        CHECK(patch.size() == ((members + 2) / 3) + 2);
+
+        const nlohmann::ordered_json ordered_source = source;
+        const nlohmann::ordered_json ordered_target = target;
+        CHECK(ordered_source.patch(nlohmann::ordered_json::diff(ordered_source, ordered_target)) == ordered_target);
+    }
+}
+
+TEST_CASE("JSON patch - diff of leaf values below the bound of the recursive descent")
+{
+    // the values at the innermost level are diffed without recursion: equal
+    // leaves yield nothing, leaves of different types and different leaves
+    // are replaced
+    const std::size_t depth = 200;
+
+    json source = {1, "text", 3, {{"x", 1}, {"y", 2}}, true, nullptr};
+    json target = {1, 2, 4, {{"x", 1}, {"y", 3}}, true, nullptr};
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        source = json::array({std::move(source)});
+        target = json::array({std::move(target)});
+    }
+
+    const json patch = json::diff(source, target);
+    CHECK(patch.size() == 3);
+    CHECK(source.patch(patch) == target);
+
+    // the same with objects as the outer levels
+    json object_source = {{"equal", 1}, {"type", "text"}, {"value", 3}};
+    json object_target = {{"equal", 1}, {"type", 2}, {"value", 4}};
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        object_source = json::object({{"a", std::move(object_source)}});
+        object_target = json::object({{"a", std::move(object_target)}});
+    }
+
+    const json object_patch = json::diff(object_source, object_target);
+    CHECK(object_patch.size() == 2);
+    CHECK(object_source.patch(object_patch) == object_target);
 }

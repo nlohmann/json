@@ -47,6 +47,7 @@ class output_buffer
         : m_out(sized(out, estimate))
         , m_pos(&m_out[0])
         , m_end(m_pos + m_out.size())
+        , m_reserved((std::max)(estimate, m_out.size()))
     {}
 
     void finish()
@@ -116,11 +117,12 @@ class output_buffer
         const auto used = static_cast<std::size_t>(m_pos - m_out.data());
         // (a step does not go beyond the reserved estimate, so that a good
         // estimate is never copied to a larger allocation; not a clamp: the
-        // lower bound used + n + 256 can exceed capacity(), and then it must win)
-        const std::size_t size = (std::max)((std::min)(m_out.size() + step, m_out.capacity()), used + n + 256);
-        if (size > m_out.capacity())
+        // lower bound used + n + 256 can exceed m_reserved, and then it must win)
+        const std::size_t size = (std::max)((std::min)(m_out.size() + step, m_reserved), used + n + 256);
+        if (size > m_reserved)
         {
-            m_out.reserve((std::max)(m_out.capacity() * 2, size));
+            m_reserved = (std::max)(m_reserved * 2, size);
+            m_out.reserve(m_reserved);
         }
         m_out.resize(size);
         m_pos = &m_out[0] + used;
@@ -130,6 +132,9 @@ class output_buffer
     StringType& m_out;
     char* m_pos;
     char* m_end;
+    /// what was last passed to reserve(), a lower bound of the capacity
+    /// (StringType need not have a capacity() member)
+    std::size_t m_reserved;
 };
 
 /// The length of the run at s that dump() writes unchanged without
@@ -641,7 +646,7 @@ class view_serializer
             {
                 invalid_utf8(s, n.len); // (the scan stopped at ill-formed UTF-8)
             }
-            write_codepoint<false>(s[i], s + i, 1); // a quote, a backslash, or a control character
+            write_escaped(s[i]); // a quote, a backslash, or a control character
             ++i;
         }
         m_out.put('"');
@@ -1389,18 +1394,8 @@ class view_serializer
     /// a float node as dump() writes it
     void write_float_node(const node& n)
     {
-        write_float_node(n, fast_double {});
-    }
-
-    void write_float_node(const node& n, std::false_type /*other*/)
-    {
+        // (only for types other than double: doubles go through write_double_ahead())
         write_float(float_value<number_float_t>(m_doc, n));
-    }
-
-    void write_float_node(const node& n, std::true_type /*double*/)
-    {
-        m_out.reserve(64);
-        m_out.set_cursor(write_double_at(m_out.cursor(), n));
     }
 
     /*!
@@ -1497,10 +1492,11 @@ class view_serializer
     {
         const string_t dumped = BasicJsonType(string_t(reinterpret_cast<const char*>(s), n)).dump(); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         static_cast<void>(dumped);
-    }
+    } // LCOV_EXCL_LINE (dump() throws: the callers pass only ill-formed UTF-8)
 
-    template<bool EnsureAscii>
-    void write_codepoint(std::uint32_t codepoint, const unsigned char* bytes, std::size_t len)
+    /// write the escape sequence of a quote, a backslash or a control
+    /// character (the only bytes a run of plain output stops at)
+    void write_escaped(std::uint32_t codepoint)
     {
         switch (codepoint)
         {
@@ -1528,20 +1524,7 @@ class view_serializer
             default:
                 break;
         }
-        if (codepoint <= 0x1F || (EnsureAscii && codepoint >= 0x7F))
-        {
-            if (codepoint <= 0xFFFF)
-            {
-                write_u_escape(codepoint);
-            }
-            else
-            {
-                write_u_escape(0xD7C0u + (codepoint >> 10u));
-                write_u_escape(0xDC00u + (codepoint & 0x3FFu));
-            }
-            return;
-        }
-        m_out.put(reinterpret_cast<const char*>(bytes), len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) LCOV_EXCL_LINE (printable characters are copied in runs)
+        write_u_escape(codepoint); // (a control character)
     }
 
     void write_u_escape(std::uint32_t u)

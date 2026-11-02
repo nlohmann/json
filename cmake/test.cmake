@@ -178,8 +178,10 @@ function(_json_test_add_test test_name file main cxx_standard)
             COMMAND ${memcheck_command} $<TARGET_FILE:${test_target}> ${DOCTEST_TEST_FILTER}
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
+        # under Valgrind the slowest tests take close to 25 minutes, so ctest's
+        # default timeout of 1500 seconds leaves no headroom
         set_tests_properties(${test_target}_valgrind PROPERTIES
-            LABELS "valgrind" FIXTURES_REQUIRED TEST_DATA
+            LABELS "valgrind" FIXTURES_REQUIRED TEST_DATA TIMEOUT 3600
         )
     endif()
 endfunction()

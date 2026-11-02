@@ -120,6 +120,16 @@ overload (3).
     See [Number conversion](../../features/types/number_handling.md#number-conversion)
     for more information.
 
+!!! note "Booleans as numbers"
+
+    A JSON boolean converts to `#!cpp 0` or `#!cpp 1` for every arithmetic type **except** [`number_integer_t`](number_integer_t.md),
+    [`number_unsigned_t`](number_unsigned_t.md) and [`number_float_t`](number_float_t.md) (by default `#!cpp std::int64_t`,
+    `#!cpp std::uint64_t`, and `#!cpp double`), for which `#!cpp get<T>()` throws
+    [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) ("type must be number, but is boolean"). So
+    `#!cpp json(true).get<int>()` is `#!cpp 1`, while `#!cpp json(true).get<std::int64_t>()` and
+    `#!cpp json(true).get<double>()` throw. This is the behavior of all 3.x versions;
+    [`basic_json_view::get<T>()`](../basic_json_view/get.md) behaves the same.
+
 !!! note "`std::optional` conversions"
 
     Prior to version 3.13.0, `#!cpp get<std::optional<T>>()` (and other conversions to `std::optional<T>`) failed to

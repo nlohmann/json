@@ -1260,6 +1260,44 @@ TEST_CASE("value conversion")
     #undef JSON_HAS_CPP_17
 #endif
 
+TEST_CASE("get<T>() of a boolean (#5988)")
+{
+    // a boolean converts to 0/1 for every arithmetic type except number_integer_t, number_unsigned_t and
+    // number_float_t, whose dedicated from_json() overloads throw
+    const json t = true;
+    const json f = false;
+
+    SECTION("0 and 1")
+    {
+        // long and unsigned long are left out: they are std::int64_t and std::uint64_t on some platforms
+        CHECK(t.get<bool>() == true);
+        CHECK(f.get<bool>() == false);
+        CHECK(t.get<char>() == 1);
+        CHECK(t.get<signed char>() == 1);
+        CHECK(t.get<unsigned char>() == 1);
+        CHECK(t.get<short>() == 1); // NOLINT(google-runtime-int)
+        CHECK(t.get<unsigned short>() == 1); // NOLINT(google-runtime-int)
+        CHECK(t.get<int>() == 1);
+        CHECK(t.get<unsigned>() == 1);
+        CHECK(t.get<float>() == 1.0F);
+        CHECK(t.get<long double>() == 1.0L);
+        CHECK(f.get<int>() == 0);
+        CHECK(f.get<float>() == 0.0F);
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("number_integer_t, number_unsigned_t and number_float_t throw")
+    {
+        CHECK_THROWS_WITH_AS(t.get<json::number_integer_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(t.get<json::number_unsigned_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(t.get<json::number_float_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(f.get<json::number_integer_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(f.get<json::number_unsigned_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(f.get<json::number_float_t>(), "[json.exception.type_error.302] type must be number, but is boolean", json::type_error&);
+    }
+#endif
+}
+
 #ifdef JSON_HAS_CPP_14
     #undef JSON_HAS_CPP_14
 #endif

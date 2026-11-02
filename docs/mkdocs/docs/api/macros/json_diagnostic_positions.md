@@ -35,6 +35,9 @@ Note that enabling this macro increases the size of every JSON value by two `std
 overhead to parsing, copying JSON value objects, and the generation of error messages for exceptions. It also causes
 these values to be reported in those error messages.
 
+If [`JSON_DIAGNOSTICS`](json_diagnostics.md) is also set, the message contains the path and the byte range, such as
+`(/1) (bytes 4-8)`. An exception about the root value has no path and only the range, such as `(bytes 0-4)`.
+
 ## Default definition
 
 The default value is `0` (position diagnostics are switched off).

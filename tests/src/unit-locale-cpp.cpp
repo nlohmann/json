@@ -503,3 +503,206 @@ TEST_CASE("locale changes during a single dump() (#5709 item 3)")
     // fix #5597 made on the parser side
     CHECK(buf.data == "[\"" + padding + "\",1234.5]");
 }
+
+namespace
+{
+// a token whose first data() call switches LC_NUMERIC, so that the locale
+// changes between convert_float_locale_aware() looking up the decimal point
+// and strtod reading the token (the race of #5198, made deterministic)
+struct locale_switching_token
+{
+    using value_type = char;
+
+    locale_switching_token(std::string text_, const char* switch_to_)
+        : text(std::move(text_)), switch_to(switch_to_)
+    {}
+
+    std::size_t size() const
+    {
+        return text.size();
+    }
+
+    char& operator[](std::size_t i)
+    {
+        return text[i];
+    }
+
+    char* data()
+    {
+        if (!switched)
+        {
+            switched = std::setlocale(LC_NUMERIC, switch_to) != nullptr;
+        }
+        return &text[0];
+    }
+
+    std::string text;
+    const char* switch_to;
+    bool switched = false;
+};
+
+// set LC_NUMERIC to the first of @a names that is usable and has a decimal
+// point of @a min_size bytes at least (and at most @a max_size)
+bool use_decimal_point_locale(const std::vector<const char*>& names, std::size_t min_size, std::size_t max_size, const char*& used)
+{
+    for (const char* name : names)
+    {
+        if (std::setlocale(LC_NUMERIC, name) == nullptr)
+        {
+            continue;
+        }
+        const std::size_t size = std::string(std::localeconv()->decimal_point).size();
+        if (size >= min_size && size <= max_size)
+        {
+            used = name;
+            return true;
+        }
+    }
+    return false;
+}
+
+// convert a token with convert_float_locale_aware(); the token must be given
+// back as it was
+template<typename FloatType>
+FloatType convert_locale_aware(const std::string& text)
+{
+    std::string token = text;
+    const std::size_t dot = token.find('.');
+    FloatType value{};
+    nlohmann::detail::convert_float_locale_aware(token, dot, value);
+    CHECK(token == text);
+    return value;
+}
+
+template<typename FloatType>
+void check_locale_aware_conversions()
+{
+    CHECK(convert_locale_aware<FloatType>("3.5") == FloatType(3.5));
+    CHECK(convert_locale_aware<FloatType>("-0.25") == FloatType(-0.25));
+    CHECK(convert_locale_aware<FloatType>("1.25e2") == FloatType(125));
+    // no decimal point at all
+    CHECK(convert_locale_aware<FloatType>("12e1") == FloatType(120));
+    CHECK(convert_locale_aware<FloatType>("7") == FloatType(7));
+}
+} // namespace
+
+TEST_CASE("convert_float_locale_aware")
+{
+    const std::vector<const char*> single_byte_names = {"de_DE.UTF-8", "de_DE", "fr_FR.UTF-8", "fr_FR", "ru_RU.UTF-8"};
+    const std::vector<const char*> multi_byte_names = {"ar_EG.UTF-8", "ar_SA.UTF-8", "fa_IR.UTF-8", "ps_AF.UTF-8", "ar_EG", "fa_IR"};
+    const char* used = nullptr;
+
+    SECTION("decimal point '.'")
+    {
+        REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
+        check_locale_aware_conversions<float>();
+        check_locale_aware_conversions<double>();
+        check_locale_aware_conversions<long double>();
+    }
+
+    SECTION("single-byte decimal point other than '.'")
+    {
+        if (use_decimal_point_locale(single_byte_names, 1, 1, used) && std::localeconv()->decimal_point[0] != '.')
+        {
+            CAPTURE(used)
+            check_locale_aware_conversions<float>();
+            check_locale_aware_conversions<double>();
+            check_locale_aware_conversions<long double>();
+        }
+        else
+        {
+            MESSAGE("no locale with a single-byte decimal point other than '.' is usable");
+        }
+    }
+
+    SECTION("multi-byte decimal point")
+    {
+        if (use_decimal_point_locale(multi_byte_names, 2, 8, used))
+        {
+            CAPTURE(used)
+            check_locale_aware_conversions<float>();
+            check_locale_aware_conversions<double>();
+            check_locale_aware_conversions<long double>();
+        }
+        else
+        {
+            MESSAGE("no locale with a multi-byte decimal point is usable");
+        }
+    }
+
+    SECTION("a token that is not converted completely")
+    {
+        // the locale does not change, so there is nothing to retry: the
+        // value up to the garbage is kept
+        REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
+        std::string token = "1.5x";
+        double value = 0;
+        nlohmann::detail::convert_float_locale_aware(token, token.find('.'), value);
+        CHECK(value == 1.5);
+        CHECK(token == "1.5x");
+    }
+
+    SECTION("the locale changes before the conversion")
+    {
+        if (!use_decimal_point_locale(single_byte_names, 1, 1, used) || std::localeconv()->decimal_point[0] == '.')
+        {
+            MESSAGE("no locale with a single-byte decimal point other than '.' is usable");
+        }
+        else
+        {
+            const std::string comma_locale = used;
+            REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
+
+            // "C" -> comma locale: strtod stops at the '.', so the conversion is repeated
+            {
+                locale_switching_token token("1.5", comma_locale.c_str());
+                double value = 0;
+                nlohmann::detail::convert_float_locale_aware(token, 1, value);
+                if (token.switched)
+                {
+                    CHECK(value == 1.5);
+                    CHECK(token.text == "1.5");
+                }
+            }
+
+            // the same for the other floating-point types
+            REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
+            {
+                locale_switching_token token("2.25", comma_locale.c_str());
+                float value = 0;
+                nlohmann::detail::convert_float_locale_aware(token, 1, value);
+                if (token.switched)
+                {
+                    CHECK(value == 2.25f);
+                }
+            }
+            REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
+            {
+                locale_switching_token token("2.25", comma_locale.c_str());
+                long double value = 0;
+                nlohmann::detail::convert_float_locale_aware(token, 1, value);
+                if (token.switched)
+                {
+                    CHECK(value == 2.25L);
+                }
+            }
+
+            // comma locale -> multi-byte decimal point
+            const char* multi_byte = nullptr;
+            if (use_decimal_point_locale(multi_byte_names, 2, 8, multi_byte))
+            {
+                REQUIRE(std::setlocale(LC_NUMERIC, comma_locale.c_str()) != nullptr);
+                locale_switching_token token("1.5", multi_byte);
+                double value = 0;
+                nlohmann::detail::convert_float_locale_aware(token, 1, value);
+                if (token.switched)
+                {
+                    CHECK(value == 1.5);
+                    CHECK(token.text == "1.5");
+                }
+            }
+        }
+    }
+
+    CHECK(std::setlocale(LC_NUMERIC, "C") != nullptr);
+}
