@@ -12,6 +12,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <limits>
 #include <valarray>
 #if JSON_HAS_RANGES
     #include <ranges>
@@ -790,7 +791,7 @@ TEST_CASE("a failed allocation leaves the value unchanged")
 #if JSON_HAS_RANGES && !defined(__MINGW32__)
         const std::vector<int> numbers = {1, 2};
         next_construct_fails = true;
-        CHECK_THROWS_AS(nlohmann::to_json(j, numbers | std::views::filter([](int /*unused*/)
+        CHECK_THROWS_AS(nlohmann::to_json(j, numbers | std::views::filter([](int /*unused*/) noexcept
         {
             return true;
         })), std::bad_alloc&);
@@ -835,6 +836,26 @@ struct sweep_allocator
     {
         --sweep_live;
         std::allocator<T>().deallocate(p, n);
+    }
+
+    // GCC 4.8's std::map calls these on the allocator directly instead of
+    // going through std::allocator_traits
+    std::size_t max_size() const noexcept
+    {
+        return (std::numeric_limits<std::size_t>::max)() / sizeof(T);
+    }
+
+    template<class U, class... Args>
+    void construct(U* p, Args&& ... args) noexcept(noexcept(::new (static_cast<void*>(p)) U(std::forward<Args>(args)...)))
+    {
+        ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
+    }
+
+    template<class U>
+    void destroy(U* p) noexcept
+    {
+        static_cast<void>(p); // unused for trivially destructible types
+        p->~U();
     }
 
     template <class U>
@@ -912,9 +933,14 @@ TEST_CASE("parse() survives a failing allocation at every point (#5985)")
         });
     }
 
+    // With iterator debugging (MSVC STL debug builds, also used by clang-cl),
+    // containers allocate a debug proxy through the allocator inside their
+    // noexcept move constructors, so failing that allocation terminates the
+    // program instead of throwing std::bad_alloc. Nothing to check there.
+#if !(defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
     SECTION("parser callback")
     {
-        const auto keep_all = [](int /*depth*/, sweep_json::parse_event_t /*event*/, sweep_json& /*parsed*/)
+        const auto keep_all = [](int /*depth*/, sweep_json::parse_event_t /*event*/, sweep_json& /*parsed*/) noexcept
         {
             return true;
         };
@@ -932,12 +958,13 @@ TEST_CASE("parse() survives a failing allocation at every point (#5985)")
             return sweep_json::parse(text, drop_d);
         });
     }
+#endif
 
     SECTION("sax_parse into an existing value")
     {
         // a failed parse leaves the target in a state that is safe to destroy
         using sax_t = nlohmann::detail::json_sax_dom_parser<sweep_json, nlohmann::detail::iterator_input_adapter<const char*>>;
-        sweep_allocations_of<sweep_json>([&]
+        sweep_allocations_of<sweep_json>([&]() -> sweep_json
         {
             sweep_json value;
             sax_t sax(value, false);
