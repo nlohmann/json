@@ -513,8 +513,8 @@ struct locale_switching_token
 {
     using value_type = char;
 
-    locale_switching_token(std::string text_, const char* switch_to_)
-        : text(std::move(text_)), switch_to(switch_to_)
+    locale_switching_token(std::string text_, std::string switch_to_)
+        : text(std::move(text_)), switch_to(std::move(switch_to_))
     {}
 
     std::size_t size() const
@@ -531,13 +531,13 @@ struct locale_switching_token
     {
         if (!switched)
         {
-            switched = std::setlocale(LC_NUMERIC, switch_to) != nullptr;
+            switched = std::setlocale(LC_NUMERIC, switch_to.c_str()) != nullptr;
         }
         return &text[0];
     }
 
     std::string text;
-    const char* switch_to;
+    std::string switch_to;
     bool switched = false;
 };
 
