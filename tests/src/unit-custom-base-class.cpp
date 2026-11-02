@@ -544,7 +544,7 @@ TEST_CASE("destroying a value does not construct the custom base class")
     const auto check_destroy = [](std::unique_ptr<json_with_counting_base> j, std::size_t values)
     {
         counting_base::reset();
-        j.reset();
+        j = nullptr;
         CHECK(counting_base::constructions == 0);
         CHECK(counting_base::destructions == values);
     };
