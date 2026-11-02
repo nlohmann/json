@@ -5719,7 +5719,8 @@ class exception : public std::exception
     template<typename BasicJsonType>
     static std::string get_byte_positions(const BasicJsonType* leaf_element)
     {
-        if ((leaf_element->start_pos() != std::string::npos) && (leaf_element->end_pos() != std::string::npos))
+        // a value-initialized iterator has no value (invalid_iterator.212)
+        if (leaf_element != nullptr && leaf_element->start_pos() != std::string::npos && leaf_element->end_pos() != std::string::npos)
         {
             return concat("(bytes ", std::to_string(leaf_element->start_pos()), "-", std::to_string(leaf_element->end_pos()), ") ");
         }
