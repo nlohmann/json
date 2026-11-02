@@ -2479,9 +2479,8 @@ indent_done:
             {
                 ++p;
             }
-            else if (!negative || NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
+            else if (NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
             {
-                // (without a sign, the dispatch saw a digit)
                 p = skip_digits(p + 1, e);
             }
             else
