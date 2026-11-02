@@ -249,7 +249,7 @@ TEST_CASE("comparing a value-initialized iterator throws invalid_iterator.212")
     // such an iterator has no value to take the byte positions from; the
     // comparison used to dereference the null pointer instead of throwing
     json j = {1, 2};
-    json::iterator it{};
+    const json::iterator it{};
     CHECK_THROWS_WITH_AS(it == j.begin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers", json::invalid_iterator);
     CHECK_THROWS_WITH_AS(it < j.begin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers", json::invalid_iterator);
     CHECK_THROWS_WITH_AS(j.begin() == it, "[json.exception.invalid_iterator.212] cannot compare iterators of different containers", json::invalid_iterator);
