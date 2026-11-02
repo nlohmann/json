@@ -42747,6 +42747,30 @@ public:
         return {it, res.second};
     }
 
+  private:
+    /// Sets the parents of a value when it goes out of scope, also when an
+    /// exception is thrown: a container insertion that throws may already
+    /// have added elements, whose parents must be set for the value to stay
+    /// valid (basic exception guarantee). Does nothing without JSON_DIAGNOSTICS.
+    class set_parents_on_exit
+    {
+      public:
+        explicit set_parents_on_exit(basic_json* v) noexcept : m_value(v) {}
+        set_parents_on_exit(const set_parents_on_exit&) = delete;
+        set_parents_on_exit& operator=(const set_parents_on_exit&) = delete;
+        set_parents_on_exit(set_parents_on_exit&&) = delete;
+        set_parents_on_exit& operator=(set_parents_on_exit&&) = delete;
+
+        ~set_parents_on_exit()
+        {
+            m_value->set_parents();
+        }
+
+      private:
+        basic_json* m_value;
+    };
+
+  public:
     /// Helper for insertion of an iterator
     /// @note: This uses std::distance to support GCC 4.8,
     ///        see https://github.com/nlohmann/json/pull/1257
@@ -42756,6 +42780,7 @@ public:
         iterator result(this);
         JSON_ASSERT(m_data.m_value.array != nullptr);
 
+        const set_parents_on_exit parents(this);
         auto insert_pos = std::distance(m_data.m_value.array->begin(), pos.m_it.array_iterator);
         m_data.m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
         result.m_it.array_iterator = m_data.m_value.array->begin() + insert_pos;
@@ -42764,7 +42789,6 @@ public:
         // result.m_it.array_iterator = m_data.m_value.array->insert(pos.m_it.array_iterator, cnt, val);
         // but the return value of insert is missing in GCC 4.8, so it is written this way instead.
 
-        set_parents();
         return result;
     }
 
@@ -42784,8 +42808,16 @@ public:
             throw_iterator_from_other_value(this);
         }
 
-        // insert to array and return iterator
-        return insert_iterator(pos, val);
+        // vector::insert has no effects if copying a single element to the
+        // end throws; elsewhere, it may already have shifted the elements, so
+        // copy first and insert by move, which cannot throw but by allocating
+        if (pos.m_it.array_iterator == m_data.m_value.array->end())
+        {
+            return insert_iterator(pos, val);
+        }
+
+        basic_json tmp(val);
+        return insert_iterator(pos, std::move(tmp));
     }
 
     /// @brief inserts element into array
@@ -42917,8 +42949,8 @@ public:
             detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterators first and last must point to objects", this);
         }
 
+        const set_parents_on_exit parents(this);
         m_data.m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
-        set_parents();
     }
 
     /// @brief updates a JSON object from another object, overwriting existing keys
