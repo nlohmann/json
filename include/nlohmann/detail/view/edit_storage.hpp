@@ -158,7 +158,7 @@ inline void set_moved(document_data& d, node* n, node* seq, std::size_t cap)
         e.moved_cap[n->off] = cap;
         return;
     }
-    reserve_moved(d);
+    // every caller has called reserve_moved() (see above), so neither push_back() can throw
     e.moved.push_back(seq);
     e.moved_cap.push_back(cap);
     n->off = static_cast<std::uint32_t>(e.moved.size() - 1);
