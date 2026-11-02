@@ -9652,12 +9652,9 @@ class input_stream_adapter
     std::char_traits<char>::int_type get_character_slow()
     {
 #if !JSON_DISABLE_STREAM_BULK_SCAN
-        // sbumpc() refills the get area if it is exhausted
-        const bool refill = streambuf_access::get_ptr(sb) == streambuf_access::get_end(sb);
-        if (JSON_HEDLEY_UNLIKELY(refill))
-        {
-            save_token_segment();
-        }
+        // the get area is exhausted (get_character() handles the other case),
+        // so sbumpc() refills it
+        save_token_segment();
 #endif
 
         auto res = sb->sbumpc();
@@ -9670,16 +9667,12 @@ class input_stream_adapter
             is->clear(is->rdstate() | std::ios::eofbit);
         }
 #if !JSON_DISABLE_STREAM_BULK_SCAN
-        else if (JSON_HEDLEY_UNLIKELY(refill))
+        else
         {
             // the consumed character is at gptr() - 1, unless the streambuf
             // has no get area and returned it from uflow()
             const char* const next = streambuf_access::get_ptr(sb);
             after_refill(res, next != nullptr && next != streambuf_access::get_begin(sb));
-        }
-        else
-        {
-            current_in_get_area = true; // LCOV_EXCL_LINE (called only when the get area is exhausted)
         }
 #endif
         return res;
@@ -13334,14 +13327,16 @@ class lexer : public lexer_base<BasicJsonType>
     /// calls would (including the position and token bookkeeping of a
     /// streaming adapter, see bulk_consume) and leaves @a current holding the last of
     /// the 4 digits, just as the last such get() would; the codepoint is
-    /// written to @a out. Makes no state change and returns false for a
-    /// pending unget, fewer than 4 remaining bytes, or any of the 4 bytes not
-    /// being a hex digit, so the caller falls back unchanged to the
-    /// per-character loop, which then reports the same diagnostic (stopping
-    /// at the first invalid digit) as before this optimization.
+    /// written to @a out. Makes no state change and returns false for fewer
+    /// than 4 remaining bytes or any of the 4 bytes not being a hex digit, so
+    /// the caller falls back unchanged to the per-character loop, which then
+    /// reports the same diagnostic (stopping at the first invalid digit) as
+    /// before this optimization.
     bool get_codepoint_bulk(std::true_type /*bulk*/, int& out)
     {
-        if (next_unget || ia.bulk_remaining() < 4)
+        // no unget is pending inside a string (see get_after_string_run())
+        JSON_ASSERT(!next_unget);
+        if (ia.bulk_remaining() < 4)
         {
             return false;
         }
@@ -14443,7 +14438,7 @@ scan_number_done:
                 return token_type::value_unsigned;
             }
         }
-        else if (number_type == token_type::value_integer)
+        else // value_integer (the callers handle value_float themselves)
         {
             if (parse_integer_signed(first, last, value_integer))
             {
@@ -14814,7 +14809,10 @@ scan_number_done:
     /// the error at the right character
     JSON_HEDLEY_ALWAYS_INLINE bool scan_literal_bulk(const char* rest, const std::size_t length, std::true_type /*bulk*/)
     {
-        if (next_unget || ia.bulk_remaining() < length
+        // called right after scan_after_whitespace() read current (see
+        // get_after_string_run()), so no unget is pending
+        JSON_ASSERT(!next_unget);
+        if (ia.bulk_remaining() < length
                 || std::memcmp(ia.bulk_data(), rest, length) != 0)
         {
             return false;
@@ -17371,7 +17369,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
         key_stack.push_back(val);
 
         // add discarded value at the given key and store the reference for later
-        if (keep && ref_stack.back())
+        if (keep)
         {
             auto& obj = *ref_stack.back()->m_data.m_value.object;
             // a single lookup: insert the placeholder, or find the existing member
@@ -17428,7 +17426,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
 
         const string_t object_key = pop_container();
 
-        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_structured())
+        if (!ref_stack.empty() && ref_stack.back())
         {
             // remove discarded value
             remove_discarded_value(*ref_stack.back(), object_key);
@@ -17594,8 +17592,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
     */
     string_t current_key() const
     {
-        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_object()
-                && !key_stack.empty())
+        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_object())
         {
             return key_stack.back();
         }
@@ -23739,10 +23736,7 @@ class parser
     {
         std::string error_msg = "syntax error ";
 
-        if (!context.empty())
-        {
-            error_msg += concat("while parsing ", context, ' ');
-        }
+        error_msg += concat("while parsing ", context, ' ');
 
         error_msg += "- ";
 
