@@ -33,9 +33,10 @@ json read_json_file(const std::string& path)
   running program, which is often not the directory of the source file (see the
   [FAQ](../home/faq.md#parsing-a-file-fails-with-unexpected-end-of-input)).
 - **Don't read the file into a string first.** Parsing from a `#!cpp std::ifstream` is only about 10 to 20 % slower
-  than parsing a string that holds the whole file, and it needs no memory for the copy (see
-  [input sources and performance](parsing/index.md#input-sources-and-performance)). Read the file into a string only if
-  you need the text itself, for example for an error message.
+  than reading the whole file into a string with one `read()` and parsing that, and it needs no memory for the copy (see
+  [input sources and performance](parsing/index.md#input-sources-and-performance)). The common way to read a file with
+  `#!cpp std::istreambuf_iterator<char>` is so slow that it takes about twice as long as parsing from the stream. Read
+  the file into a string only if you need the text itself, for example for an error message.
 - `parse` requires the file to hold exactly one JSON value. Files with one value per line are read with
   [JSON Lines](parsing/json_lines.md); files too large for memory are covered in
   [Large, streamed, and partial input](parsing/large_and_partial_input.md).
@@ -75,6 +76,9 @@ void write_json_file(const std::string& path, const json& j)
 
 ## Replacing a file without corrupting it
 
+The library never writes a file itself, so this section is not about the library. It is general C++ advice for a
+problem users of the library keep running into.
+
 A program that crashes or is killed while it writes leaves a truncated file behind. To make sure readers see either the
 old or the new contents, write to a temporary file in the same directory and rename it over the original
 (C++17, `#!cpp <filesystem>`):
@@ -92,10 +96,10 @@ void replace_json_file(const std::filesystem::path& path, const json& j)
 }
 ```
 
-The temporary file must be in the same directory (more precisely, on the same file system) as the target, as a rename
-across file systems is a copy. On POSIX systems, the rename atomically replaces the file. Standard C++ has no way to
-flush a file to the disk (`fsync`), so this protects against a crashed program, but not necessarily against a power
-loss.
+The temporary file must be in the same directory (more precisely, on the same file system) as the target: a rename
+across file systems does not fall back to a copy, it fails and throws `#!cpp std::filesystem::filesystem_error`. On
+POSIX systems, the rename atomically replaces the file. Standard C++ has no way to flush a file to the disk (`fsync`),
+so this protects against a crashed program, but not necessarily against a power loss.
 
 ## Binary formats
 
