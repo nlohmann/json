@@ -1590,7 +1590,7 @@ TEST_CASE("json_view values")
         CHECK_THROWS_WITH_AS(not_an_object.root().get<view_map>(), json_view_test::message("type_error.302", "", 0, 5, "type must be object, but is array").c_str(), json::type_error&);
 #if !defined(JSON_NOEXCEPTION)
         // (and one that cannot allocate its nodes)
-        using failing_map = std::map<std::string, json_view, std::less<std::string>, failing_allocator<std::pair<const std::string, json_view>>>;
+        using failing_map = std::map<std::string, json_view, std::less<std::string>, failing_allocator<std::pair<const std::string, json_view>>>; // NOLINT(modernize-use-transparent-functors)
         const json_document one_member = json_document::parse(R"({"a":1})");
         CHECK_THROWS_AS(one_member.root().get<failing_map>(), std::bad_alloc&);
 #endif
