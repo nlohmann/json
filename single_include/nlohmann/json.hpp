@@ -33446,7 +33446,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // remove, fill, find, none_of, min
+#include <algorithm> // copy, none_of, min, search
 #include <array> // array
 #include <clocale> // localeconv, lconv
 #include <cmath> // isfinite
@@ -37300,31 +37300,35 @@ class serializer
         // check if the buffer was large enough
         JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
 
-        // look up the locale's thousands separator and decimal point now,
-        // matching what snprintf_float() just used (see lexer::get_decimal_point())
+        // look up the locale's decimal point now, matching what
+        // snprintf_float() just used (see get_decimal_point() in
+        // number_parse.hpp); it is a string, which can be longer than one
+        // byte (U+066B in ps_AF, #5993).
+        // A thousands separator needs no handling: %g never groups digits.
         const auto* loc = std::localeconv();
         JSON_ASSERT(loc != nullptr);
-        const char thousands_sep = (loc->thousands_sep == nullptr) ? '\0' : *loc->thousands_sep;
-        const char decimal_point = (loc->decimal_point == nullptr) ? '\0' : *loc->decimal_point;
-
-        // erase thousands separators
-        if (thousands_sep != '\0')
-        {
-            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::remove returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto end = std::remove(number_buffer.begin(), number_buffer.begin() + len, thousands_sep);
-            std::fill(end, number_buffer.end(), '\0');
-            JSON_ASSERT((end - number_buffer.begin()) <= len);
-            len = (end - number_buffer.begin());
-        }
+        const char* const decimal_point = (loc->decimal_point == nullptr) ? "" : loc->decimal_point;
+        const std::size_t decimal_point_len = std::char_traits<char>::length(decimal_point);
 
         // convert decimal point to '.'
-        if (decimal_point != '\0' && decimal_point != '.')
+        if ((decimal_point_len > 1) || (decimal_point_len == 1 && decimal_point[0] != '.'))
         {
-            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::find returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
-            if (dec_pos != number_buffer.end())
+            const auto first = number_buffer.begin();
+            const auto last = first + len;
+            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::search returns an iterator, see https://github.com/nlohmann/json/issues/3081
+            const auto dec_pos = std::search(first, last, decimal_point, decimal_point + decimal_point_len);
+            if (dec_pos != last)
             {
                 *dec_pos = '.';
+                if (decimal_point_len > 1)
+                {
+                    // move the fraction and exponent behind the '.' (std::copy
+                    // allows the overlap, as the destination is before the source)
+                    // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::copy returns an iterator, see https://github.com/nlohmann/json/issues/3081
+                    const auto end = std::copy(dec_pos + static_cast<std::ptrdiff_t>(decimal_point_len), last, dec_pos + 1);
+                    *end = '\0';
+                    len = end - first;
+                }
             }
         }
 
