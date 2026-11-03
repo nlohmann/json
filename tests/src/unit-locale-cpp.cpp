@@ -533,7 +533,7 @@ struct locale_switching_token
         {
             switched = std::setlocale(LC_NUMERIC, switch_to.c_str()) != nullptr;
         }
-        return &text[0];
+        return &text[0]; // NOLINT(readability-container-data-pointer): std::string::data() is const before C++17
     }
 
     std::string text;
@@ -655,7 +655,7 @@ TEST_CASE("convert_float_locale_aware")
 
             // "C" -> comma locale: strtod stops at the '.', so the conversion is repeated
             {
-                locale_switching_token token("1.5", comma_locale.c_str());
+                locale_switching_token token("1.5", comma_locale);
                 double value = 0;
                 nlohmann::detail::convert_float_locale_aware(token, 1, value);
                 if (token.switched)
@@ -668,7 +668,7 @@ TEST_CASE("convert_float_locale_aware")
             // the same for the other floating-point types
             REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
             {
-                locale_switching_token token("2.25", comma_locale.c_str());
+                locale_switching_token token("2.25", comma_locale);
                 float value = 0;
                 nlohmann::detail::convert_float_locale_aware(token, 1, value);
                 if (token.switched)
@@ -678,7 +678,7 @@ TEST_CASE("convert_float_locale_aware")
             }
             REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
             {
-                locale_switching_token token("2.25", comma_locale.c_str());
+                locale_switching_token token("2.25", comma_locale);
                 long double value = 0;
                 nlohmann::detail::convert_float_locale_aware(token, 1, value);
                 if (token.switched)

@@ -160,12 +160,12 @@ class strict_key
     }
 
   private:
-    std::string m_value{};
+    std::string m_value;
 };
 
 strict_key make_strict_key(const std::string& key)
 {
-    return strict_key(key.c_str());
+    return {key.c_str()};
 }
 
 template<class Key, class Value, class Compare, class Allocator>
@@ -224,7 +224,9 @@ TEST_CASE("converting a value with keys that cannot be made from a std::string n
         }
     }
 
-    const strict_json converted = value;
+    // direct-initialization: a copy-initialization makes GCC 4.8 instantiate the
+    // copy constructor, which needs a range constructor strict_object lacks
+    const strict_json converted(value);
 
     // at() needs to make a std::string of a key for its error message
     const auto member = [](const strict_json & object, const char* name) -> const strict_json &
